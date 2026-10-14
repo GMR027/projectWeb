@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: projectweb-files
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: {{ .Values.app.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projectweb
+  labels: { app: projectweb }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # el PVC es RWO
+  selector:
+    matchLabels: { app: projectweb }
+  template:
+    metadata:
+      labels: { app: projectweb }
+    spec:
+      initContainers:
+        - name: init
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z mysql 3306; do echo "esperando mysql"; sleep 2; done
+              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import
+              chown -R 33:33 /files
+          volumeMounts:
+            - { name: files, mountPath: /files }
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - { name: DB_HOST, value: mysql }
+            - { name: DB_NAME, value: {{ .Values.mysql.database | quote }} }
+            - { name: DB_USER, value: {{ .Values.mysql.user | quote }} }
+            - name: DB_PASS
+              valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_PASSWORD } }
+            - { name: APP_URL, value: "https://{{ .Values.host }}" }
+            - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
+            - { name: CONTACT_EMAIL, value: {{ .Values.app.contactEmail | quote }} }
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            tcpSocket: { port: 80 }
+            periodSeconds: 5
+          volumeMounts:
+            - { name: files, mountPath: /var/www/html/public/uploads, subPath: uploads }
+            - { name: files, mountPath: /var/www/html/public/exportaciones, subPath: exportaciones }
+            - { name: files, mountPath: /var/www/html/storage/archivos, subPath: archivos }
+            - { name: files, mountPath: /var/www/html/storage/fichas, subPath: fichas }
+            - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
+          resources: {{ toYaml .Values.app.resources | nindent 12 }}
+      volumes:
+        - name: files
+          persistentVolumeClaim: { claimName: projectweb-files }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: projectweb
+spec:
+  selector: { app: projectweb }
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: projectweb
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.bodySize | quote }}
+spec:
+  ingressClassName: {{ .Values.ingressClass }}
+  rules:
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: projectweb, port: { number: 80 } }
+  tls:
+    - hosts: [{{ .Values.host }}]
+      secretName: projectweb-cert

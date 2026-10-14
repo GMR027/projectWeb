@@ -1,0 +1,29 @@
+image:
+  repository: gmr27/projectweb
+  tag: latest
+  pullPolicy: Always
+
+host: projectweb.iguzman.com.mx
+ingressClass: public
+clusterIssuer: letsencrypt-prod
+bodySize: 110m
+
+# Secret creado por deploy.sh (claves: DB_PASSWORD, MYSQL_ROOT_PASSWORD)
+secretName: projectweb-db
+
+app:
+  timezone: America/Mazatlan
+  contactEmail: ""
+  storage: 5Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+
+mysql:
+  image: mysql:8
+  database: project
+  user: project
+  storage: 2Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }

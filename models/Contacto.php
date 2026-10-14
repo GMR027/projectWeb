@@ -9,7 +9,7 @@ class Contacto extends ActiveRecord
     protected static $columnasDB = ['id', 'nombre', 'empresa', 'puesto', 'correo', 'telefono', 'plan', 'proyectos_aprox', 'preferencia', 'origen', 'mensaje', 'ip', 'leido'];
 
     public const PLANES = ['Plan Pro', 'Plan Gold', 'Plan Corporativo', 'Aún no lo sé'];
-    public const PROYECTOS = ['1 a 5', '6 a 50', '51 a 500', 'Más de 500'];
+    public const PROYECTOS = ['1 a 10', '11 a 70', '71 a 500', 'Más de 500'];
     public const PREFERENCIAS = ['correo' => 'Correo electrónico', 'telefono' => 'Llamada telefónica', 'whatsapp' => 'WhatsApp'];
     public const ORIGENES = ['Búsqueda en internet', 'Recomendación', 'Redes sociales', 'Evento o expo', 'Otro'];
 

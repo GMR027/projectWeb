@@ -3,17 +3,17 @@ $planes = [
     [
         'id' => 'pro', 'nombre' => 'Plan Pro', 'precio' => '$500', 'destacado' => false,
         'lema' => 'Para contratistas que arrancan su control digital.',
-        'items' => ['Hasta <strong>5 proyectos</strong>', '<strong>500 MB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
+        'items' => ['Hasta <strong>10 proyectos</strong>', '<strong>1 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
     ],
     [
         'id' => 'gold', 'nombre' => 'Plan Gold', 'precio' => '$1,500', 'destacado' => true,
         'lema' => 'Para empresas con varias obras en paralelo.',
-        'items' => ['Hasta <strong>50 proyectos</strong>', '<strong>1 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
+        'items' => ['Hasta <strong>70 proyectos</strong>', '<strong>4 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
     ],
     [
         'id' => 'corporativo', 'nombre' => 'Plan Corporativo', 'precio' => '$2,500', 'destacado' => false,
         'lema' => 'Para grupos constructores y grandes portafolios.',
-        'items' => ['De <strong>50 a 500 proyectos</strong>', '<strong>5 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
+        'items' => ['De <strong>50 a 500 proyectos</strong>', '<strong>10 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
     ],
 ];
 $tour = [
@@ -290,7 +290,7 @@ $funciones = [
             <ul class="lp-list">
                 <li><i class="fa-solid fa-check"></i> Te contactamos por el medio que prefieras</li>
                 <li><i class="fa-solid fa-check"></i> Sin compromiso: resolvemos tus dudas primero</li>
-                <li><i class="fa-solid fa-check"></i> Planes de 5 a 500 proyectos</li>
+                <li><i class="fa-solid fa-check"></i> Planes de 10 a 500 proyectos</li>
             </ul>
             <?php if ($contacto): ?><p class="lp-contact-mail"><i class="fa-solid fa-envelope"></i> <a href="mailto:<?php echo s($contacto); ?>"><?php echo s($contacto); ?></a></p><?php endif; ?>
             <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-ghost lp-btn-lg" style="margin-top:2rem"><i class="fa-solid fa-play"></i> Probar el demo</a><?php endif; ?>

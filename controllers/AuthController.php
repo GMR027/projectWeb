@@ -25,7 +25,7 @@ class AuthController
                     Usuario::setAlerta('error', 'El usuario no existe o no está confirmado');
                 } else {
                     if ($usuarioDB->comprobarPassword($usuario->password)) {
-                        session_start();
+                        session_regenerate_id(true);
                         $_SESSION['id'] = $usuarioDB->id;
                         $_SESSION['nombre'] = $usuarioDB->nombre;
                         $_SESSION['email'] = $usuarioDB->email;
@@ -50,7 +50,6 @@ class AuthController
 
     public static function logout()
     {
-        session_start();
         $_SESSION = [];
         session_destroy();
         header('Location: /');   // al cerrar sesión se vuelve a la página principal

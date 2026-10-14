@@ -17,7 +17,7 @@ function css() {
   return src('src/scss/app.scss')
     .pipe(plumber())
     .pipe(sourcemaps.init())
-    .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
+    .pipe(sass({ style: 'compressed' }).on('error', sass.logError))
     .pipe(rename('app.css'))
     .pipe(sourcemaps.write('.'))
     .pipe(dest(paths.cssDest));
@@ -26,7 +26,7 @@ function css() {
 function cssLanding() {
   return src('src/scss/landing.scss')
     .pipe(plumber())
-    .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
+    .pipe(sass({ style: 'compressed' }).on('error', sass.logError))
     .pipe(dest(paths.cssDest));
 }
 

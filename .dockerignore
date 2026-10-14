@@ -1,0 +1,13 @@
+.git
+.env
+node_modules
+vendor
+public/uploads/*
+public/exportaciones/*
+storage/archivos/*
+storage/fichas/*
+storage/import/*
+helm
+deploy.sh
+*.md
+design

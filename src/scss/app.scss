@@ -3,27 +3,27 @@
 // ============================================================
 
 // Variables primero
-@import 'base/variables';
+@use 'base/variables';
 
 // Base
-@import 'base/base';
+@use 'base/base';
 
 // Componentes
-@import 'componentes/botones';
-@import 'componentes/formularios';
-@import 'componentes/cards';
-@import 'componentes/tablas';
-@import 'componentes/badges';
-@import 'componentes/alertas';
-@import 'componentes/modal';
+@use 'componentes/botones';
+@use 'componentes/formularios';
+@use 'componentes/cards';
+@use 'componentes/tablas';
+@use 'componentes/badges';
+@use 'componentes/alertas';
+@use 'componentes/modal';
 
 // Layout
-@import 'layout/layout';
+@use 'layout/layout';
 
 // Páginas
-@import 'paginas/dashboard';
-@import 'paginas/programa';
-@import 'paginas/lookahead';
-@import 'paginas/ajustes';
-@import 'paginas/reportes';
-@import 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas
+@use 'paginas/dashboard';
+@use 'paginas/programa';
+@use 'paginas/lookahead';
+@use 'paginas/ajustes';
+@use 'paginas/reportes';
+@use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas
