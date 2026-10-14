@@ -1,0 +1,23 @@
+{
+  "name": "po-programa-obra",
+  "version": "1.0.0",
+  "description": "Sistema de Programas de Obra",
+  "scripts": {
+    "dev": "gulp dev",
+    "build": "gulp"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-plumber": "^1.2.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-sass": "^5.1.0",
+    "gulp-sourcemaps": "^3.0.0",
+    "gulp-terser": "^2.1.0",
+    "sass": "^1.62.1"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1",
+    "konva": "^10.8.0"
+  }
+}

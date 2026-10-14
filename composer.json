@@ -1,0 +1,26 @@
+{
+  "name": "po/app",
+  "description": "Sistema de Programas de Obra",
+  "type": "project",
+  "require": {
+    "php": ">=8.0",
+    "vlucas/phpdotenv": "^5.5",
+    "phpmailer/phpmailer": "^6.8",
+    "dompdf/dompdf": "^3.0",
+    "phpoffice/phpspreadsheet": "^5.10",
+    "intervention/image": "^3"
+  },
+  "config": {
+    "audit": {
+      "block-insecure": false
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Model\\": "./models",
+      "Controllers\\": "./controllers",
+      "Classes\\": "./classes",
+      "MVC\\": "./"
+    }
+  }
+}

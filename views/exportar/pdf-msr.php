@@ -1,0 +1,104 @@
+<?php
+$colSt = ['A' => '#92D050', 'P' => '#FFEB9C', 'RA' => '#F79646'];
+$etq = ['A' => 'A', 'P' => 'P', 'RA' => 'RA'];
+$logoE = $img($logoEmpresa, 'build/img/logos');
+$logoC = $img($proyecto->contratista_logo, 'build/img/logos');
+$nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
+?>
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+    @page { margin: 7mm 7mm; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: 5.6pt; color: #000; }
+    table { border-collapse: collapse; width: 100%; }
+    .cab td { vertical-align: middle; padding: 0; }
+    .caja { border: 0.8pt solid #000; }
+    .datos { width: 100%; } .datos td { border: 0.4pt solid #000; font-size: 5.6pt; padding: 1pt 3pt; }
+    .leyenda td { border: 0.4pt solid #000; font-size: 5.4pt; padding: 1pt 3pt; }
+    .tabla th, .tabla td { border: 1pt solid #000; padding: 1.2pt 2pt; }
+    .tabla th { color: #fff; font-size: 5pt; text-align: center; font-weight: bold; }
+    .barra th { font-size: 6.4pt; padding: 3pt; border: 0; }
+    .sec td { background: #3F3F3F; color: #fff; font-weight: bold; font-size: 4.6pt; text-align: center; padding: 1pt; }
+    .c { text-align: center; } .m { font-family: DejaVu Sans Mono, monospace; }
+    .st { font-weight: bold; font-size: 6.4pt; }
+    .crit { background: #FF99FF; font-weight: bold; } .atr { background: #fca5a5; }
+    .prov { color: #1F497D; text-align: center; }
+    thead { display: table-header-group; } tr { page-break-inside: avoid; }
+</style></head><body>
+<table class="cab">
+    <tr>
+        <td style="width:22%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:38pt;max-width:130pt"><?php endif; ?></td>
+        <td style="width:31%;padding-left:6pt">
+            <div style="font-size:8pt;font-weight:bold">MSR -MATERIAL STATUS REPORT</div>
+            <div style="font-size:8pt;font-weight:bold">REPORTE DEL STATUS DE LOS MATERIALES</div>
+        </td>
+        <td style="width:25%" class="caja c"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:36pt;max-width:110pt;margin:2pt"><?php endif; ?></td>
+        <td style="width:22%;padding-left:6pt">
+            <table class="datos">
+                <tr><td colspan="2" style="text-align:right"><b>FECHA:</b> <b><?php echo s(fecha_larga_es()); ?></b></td></tr>
+                <tr><td style="width:30%">CLIENTE:</td><td><b><?php echo s($proyecto->contratista); ?></b></td></tr>
+                <tr><td>PROYECTO:</td><td><b><?php echo s($proyecto->nombre); ?></b></td></tr>
+                <tr><td>JOB No.</td><td><b><?php echo s($proyecto->numero_trabajo); ?></b></td></tr>
+                <tr><td>LOCALIZACIÓN:</td><td><b><?php echo s($proyecto->ubicacion); ?></b></td></tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td></td><td></td>
+        <td style="padding-top:4pt">
+            <div style="font-weight:bold;font-size:5.6pt">STATUS SUBMITTAL</div>
+            <table class="leyenda">
+                <tr><td class="c" style="background:#92D050;width:26pt"><b>A / AN</b></td><td><b>A</b> Aprobado / <b>AN</b> Aprobado con anotaciones</td></tr>
+                <tr><td class="c" style="background:#FFEB9C"><b>P</b></td><td>En revisión</td></tr>
+                <tr><td class="c" style="background:#F79646"><b>RA</b></td><td>Resubmitar para aprobación</td></tr>
+            </table>
+        </td>
+        <td style="padding:4pt 0 0 6pt;vertical-align:bottom">
+            <table class="leyenda">
+                <tr><td colspan="2"><b>Identificación tiempo de entrega</b></td></tr>
+                <tr><td style="background:#FF99FF;width:26pt"></td><td>Tiempo de entrega de Material Crítico</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<div style="height:5pt"></div>
+
+<table class="tabla">
+    <thead>
+        <tr class="barra"><th colspan="9" style="background:#17365D">STATUS DEL SUBMITTAL</th><th colspan="8" style="background:#0070C0">STATUS DE ENTREGA DEL MATERIAL O EQUIPO</th></tr>
+        <tr>
+            <th style="background:#17365D;width:30pt">ITEM PROLOG</th><th style="background:#17365D">Subcontractor submittal number</th><th style="background:#17365D">Spec Number</th><th style="background:#17365D;width:120pt">DESCRIPCIÓN</th>
+            <th style="background:#0C0C0C">FECHA REQUERIDA DE ENVIO DE SUBMITTAL (PROG)</th><th style="background:#7F7F7F">No. SUBMITTAL <?php echo s($nomC); ?></th><th style="background:#7F7F7F">Real Submittal Date</th><th style="background:#7F7F7F">AnswerDate</th><th style="background:#7F7F7F">Status</th>
+            <th style="background:#0070C0">Delivery Time Schedule (Days)</th><th style="background:#0070C0">FECHA COMPRA DE MATERIAL (PROG)</th><th style="background:#0070C0">FECHA DE INSTALACION (PROG)</th>
+            <th style="background:#1F497D">FECHA DE COMPRA (REAL)</th><th style="background:#1F497D">FECHA DE ENTREGA (PROG)</th><th style="background:#1F497D">FECHA DE ENTREGA (REAL)</th>
+            <th style="background:#0070C0">DATOS DEL PROVEEDOR</th><th style="background:#17365D;width:60pt">OBSERVACIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($secciones as $nombreSec => $lista): ?>
+        <?php if ($nombreSec !== ''): ?><tr class="sec"><td></td><td></td><td></td><td><?php echo s($nombreSec); ?></td><td colspan="13"></td></tr><?php endif; ?>
+        <?php foreach ($lista as $it): $dias = $it->diasEntrega(); $im = $img($it->mat_imagen, 'uploads/materiales'); ?>
+        <tr>
+            <td class="c"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:26pt;max-width:26pt"><?php endif; ?></td>
+            <td class="c"><?php echo s($it->sub_numero); ?></td>
+            <td class="c"><?php echo s($it->mat_referencia); ?></td>
+            <td><?php echo s($it->mat_nombre); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_envio_requerida)); ?></td>
+            <td class="c"><?php echo s($it->no_submittal_contratista); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_envio_real)); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_respuesta)); ?></td>
+            <td class="c st" style="background:<?php echo $colSt[$it->status] ?? '#fff'; ?>"><?php echo $etq[$it->status] ?? s($it->status); ?></td>
+            <td class="c <?php echo $it->esCritico($umbral) ? 'crit' : ''; ?>"><?php echo $dias !== null ? number_format($dias, 2) : ''; ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_compra_prog)); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_instalacion_prog)); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_compra_real)); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_entrega_prog)); ?></td>
+            <td class="c"><?php echo s(fecha_corta_es($it->fecha_entrega_real)); ?></td>
+            <td class="prov"><?php echo s($it->proveedor); ?></td>
+            <td><?php echo s($it->observaciones); ?></td>
+        </tr>
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+    </tbody>
+</table>
+</body></html>

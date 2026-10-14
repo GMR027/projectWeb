@@ -1,0 +1,183 @@
+// ============================================================
+// Badges y estados
+// ============================================================
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  border-radius: $radius-sm;
+  font-family: $font-mono;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: rgba(0, 180, 216, 0.12);
+  color: $secondary;
+  border: 1px solid rgba(0, 180, 216, 0.3);
+}
+
+.badge-admin { background-color: rgba(255, 90, 31, 0.15); color: $primary; border-color: rgba(255, 90, 31, 0.3); }
+.badge-cliente { background-color: rgba(0, 180, 216, 0.12); color: $secondary; border-color: rgba(0, 180, 216, 0.3); }
+.badge-visitante { background-color: rgba(107, 114, 128, 0.15); color: #9ca3af; border-color: rgba(107, 114, 128, 0.3); }
+.badge-pdf { background-color: rgba(239, 68, 68, 0.15); color: $danger; border-color: rgba(239, 68, 68, 0.3); }
+.badge-xml { background-color: rgba(76, 214, 251, 0.12); color: $info; border-color: rgba(76, 214, 251, 0.3); }
+.badge-pod { background-color: rgba(139, 92, 246, 0.12); color: #a78bfa; border-color: rgba(139, 92, 246, 0.3); }
+.badge-festivo { background-color: rgba(0, 180, 216, 0.12); color: $info; border-color: rgba(0, 180, 216, 0.3); }
+.badge-paro_tecnico { background-color: rgba(255, 181, 158, 0.12); color: #FFB59E; border-color: rgba(255, 181, 158, 0.3); }
+.badge-clima { background-color: rgba(76, 214, 251, 0.12); color: $info; border-color: rgba(76, 214, 251, 0.3); }
+.badge-otro { background-color: rgba(107, 114, 128, 0.15); color: #9ca3af; border-color: rgba(107, 114, 128, 0.3); }
+
+// Status de actividad
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 99px;
+  font-size: 1.15rem;
+  font-weight: 600;
+
+  &.status-completada {
+    background-color: rgba(5, 150, 105, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+  }
+  &.status-en_proceso {
+    background-color: rgba(217, 119, 6, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+  }
+  &.status-no_iniciada {
+    background-color: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+  &.status-activa {
+    background-color: rgba(220, 38, 38, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+  &.status-resuelta {
+    background-color: rgba(5, 150, 105, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+  }
+  &.status-cancelada {
+    background-color: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+}
+
+// Prioridad
+.badge-prio {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 99px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.prio-baja {
+    background-color: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+  &.prio-media {
+    background-color: rgba(2, 132, 199, 0.12);
+    color: var(--info);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+  }
+  &.prio-alta {
+    background-color: rgba(217, 119, 6, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+  }
+  &.prio-critica {
+    background-color: rgba(220, 38, 38, 0.18);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+  }
+}
+
+// Restricción dot (indicador en Gantt)
+.restriccion-dot {
+  color: $danger;
+  font-size: 1.6rem;
+  display: inline-block;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+// Lista de restricciones visibles en la tabla del programa
+.restricciones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.badge-restriccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: $radius-sm;
+  font-family: $font-mono;
+  font-size: 1.15rem;
+  font-weight: 600;
+  background-color: rgba(220, 38, 38, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  white-space: nowrap;
+  max-width: 100%;
+
+  i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.15); }
+}
+
+// Barra de progreso
+.barra-progreso {
+  width: 100%;
+  height: 0.6rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 99px;
+  overflow: hidden;
+
+  .barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $secondary 0%, $info 100%);
+    transition: width 0.3s ease;
+  }
+
+  &.barra-sm {
+    height: 0.4rem;
+  }
+
+  &.barra-status-completada .barra-fill { background: linear-gradient(90deg, $success, $info); }
+  &.barra-status-en_proceso .barra-fill { background: linear-gradient(90deg, $warning, $info); }
+  &.barra-status-no_iniciada .barra-fill { background: #6b7280; }
+}
+
+.progreso-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 12rem;
+
+  .barra-progreso { flex: 1; }
+}
+
+.progreso-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}

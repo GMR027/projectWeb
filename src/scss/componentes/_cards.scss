@@ -1,0 +1,74 @@
+// ============================================================
+// Cards
+// ============================================================
+
+.card {
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: $space-lg;
+  margin-bottom: $space-lg;
+  box-shadow: $shadow;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+}
+
+.card-titulo {
+  font-size: 1.8rem;
+  margin-bottom: $space-md;
+  padding-bottom: $space-sm;
+  border-bottom: 1px solid $border;
+}
+
+.empty-state {
+  text-align: center;
+  padding: $space-xl $space-md;
+  color: $text-muted;
+
+  .btn {
+    margin-top: $space-md;
+  }
+}
+
+// Stat cards
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: $space-md;
+  margin-bottom: $space-lg;
+}
+
+.stat-card {
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: $space-md $space-lg;
+  box-shadow: $shadow;
+}
+
+.stat-label {
+  font-family: $font-mono;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+  margin-bottom: 0.6rem;
+}
+
+.stat-valor {
+  font-family: $font-headline;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: $secondary;
+}
+
+.stat-danger {
+  color: $danger;
+}
+
+// Las tablas anchas se desplazan dentro de su tarjeta en vez de desbordarla
+.card { overflow-x: auto; }
+.form-grid-inline .campo input, .form-grid-inline .campo select, .festivo-form input, .festivo-form select { max-width: 100%; min-width: 0; box-sizing: border-box; }

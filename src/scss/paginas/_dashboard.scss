@@ -1,0 +1,126 @@
+// ============================================================
+// Dashboard / Proyectos
+// ============================================================
+
+.dashboard-hero {
+  margin-bottom: $space-lg;
+
+  h2 {
+    font-size: 3.2rem;
+    margin-bottom: 0.6rem;
+  }
+}
+
+.grid-proyectos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
+  gap: $space-md;
+
+  @media (max-width: $bp-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.proyecto-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+.proyecto-caratula {
+  position: relative;
+  width: calc(100% + #{$space-lg * 2});
+  height: 24rem;
+  margin: -#{$space-lg} -#{$space-lg} $space-md -#{$space-lg};
+  overflow: hidden;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.proyecto-caratula-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $space-lg;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+
+  h4 {
+    color: white;
+    margin: 0.8rem 0 0 0;
+    font-size: 2.4rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  }
+
+  .proyecto-codigo {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.3rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  }
+}
+
+.proyecto-header {
+  border-left: 3px solid $primary;
+  padding-left: $space-md;
+  margin-bottom: $space-md;
+
+  h4 {
+    margin: 0.4rem 0;
+  }
+}
+
+.proyecto-logo {
+  max-width: 6rem;
+  max-height: 6rem;
+  object-fit: contain;
+  margin-bottom: 0.8rem;
+  border-radius: $radius-sm;
+}
+
+.proyecto-codigo {
+  font-size: 1.1rem;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.proyecto-body {
+  flex: 1;
+}
+
+.proyecto-meta {
+  margin-top: $space-sm;
+  display: flex;
+  justify-content: space-between;
+  color: $text-muted;
+}
+
+.proyecto-acciones {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: $space-md;
+  flex-wrap: wrap;
+}
+
+.proyecto-detalle {
+  display: grid;
+  gap: $space-md;
+}
+
+.detalle-seccion {
+  h4 {
+    color: $secondary;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.6rem;
+  }
+}

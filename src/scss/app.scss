@@ -1,0 +1,29 @@
+// ============================================================
+// App principal — imports
+// ============================================================
+
+// Variables primero
+@import 'base/variables';
+
+// Base
+@import 'base/base';
+
+// Componentes
+@import 'componentes/botones';
+@import 'componentes/formularios';
+@import 'componentes/cards';
+@import 'componentes/tablas';
+@import 'componentes/badges';
+@import 'componentes/alertas';
+@import 'componentes/modal';
+
+// Layout
+@import 'layout/layout';
+
+// Páginas
+@import 'paginas/dashboard';
+@import 'paginas/programa';
+@import 'paginas/lookahead';
+@import 'paginas/ajustes';
+@import 'paginas/reportes';
+@import 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

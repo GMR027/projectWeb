@@ -1,0 +1,41 @@
+// ============================================================
+// Reporte diario y bitácora
+// ============================================================
+.rd-ver { display: grid; grid-template-columns: minmax(0, 1fr) 28rem; gap: 2rem; align-items: start;
+  @media (max-width: 80rem) { grid-template-columns: 1fr; }
+  .rd-principal { display: grid; gap: 1.6rem; }
+  .rd-lateral { position: sticky; top: 2rem; }
+}
+.rd-acts { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.rd-fotos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+  @media (max-width: 80rem) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 48rem) { grid-template-columns: repeat(2, 1fr); }
+  .rd-foto { display: block; position: relative; aspect-ratio: 4 / 3; border-radius: .6rem; overflow: hidden; background: rgba(255,255,255,.05); cursor: pointer;
+    img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease; }
+    &:hover img { transform: scale(1.04); }
+  }
+}
+.rd-fotos-edicion .rd-quitar { position: absolute; left: 0; right: 0; bottom: 0; padding: .4rem .8rem; background: rgba(0,0,0,.65); color: #fff; font-size: 1.2rem; display: flex; gap: .6rem; align-items: center;
+  input { width: auto; }
+}
+.rd-previa { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .8rem; margin-top: 1rem;
+  img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: .4rem; }
+}
+.rd-persona { display: flex; align-items: center; gap: 1.2rem; padding: 1rem 0; border-bottom: 1px solid $border;
+  &:last-child { border-bottom: 0; }
+  img, .rd-avatar-vacio { width: 5.6rem; height: 5.6rem; border-radius: 50%; object-fit: cover; flex: none; }
+}
+.rd-avatar { width: 4.4rem; height: 4.4rem; border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle; }
+.rd-avatar-vacio { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.08); color: #7b8794; }
+.bit-baja { background: rgba(107,114,128,.15); color: #9ca3af; border-color: rgba(107,114,128,.3); }
+.bit-media { background: rgba(0,180,216,.12); color: #00B4D8; border-color: rgba(0,180,216,.3); }
+.bit-alta { background: rgba(245,158,11,.15); color: #f59e0b; border-color: rgba(245,158,11,.35); }
+.bit-critica { background: rgba(239,68,68,.15); color: #ef4444; border-color: rgba(239,68,68,.35); }
+.rd-ver .card h3 { margin: 0 0 1.2rem; }
+.rd-ver .rd-principal { gap: 2rem; }
+.rd-lista-grande .accesos-lista { max-height: 46rem; font-size: 1.4rem; gap: 1rem; padding: 1.4rem; }
+
+.mi-entrada { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: .8rem; margin-bottom: 1rem;
+  @media (max-width: 80rem) { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 48rem) { grid-template-columns: 1fr; }
+}

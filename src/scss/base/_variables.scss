@@ -1,0 +1,101 @@
+// ============================================================
+// Variables — ProjectEn Theme System
+// ============================================================
+
+// Tipografía legible
+$font-headline: 'Inter', system-ui, -apple-system, sans-serif;
+$font-body: 'Inter', system-ui, -apple-system, sans-serif;
+$font-mono: 'Fira Code', 'Consolas', monospace;
+
+// Tema claro (9am - 6pm)
+:root[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-tertiary: #e8ecf1;
+  --surface: #ffffff;
+  --surface-raised: #f8f9fb;
+  --surface-hover: #f1f3f5;
+  --border: #e2e8f0;
+  --border-accent: #cbd5e1;
+  --text: #1a202c;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-glow: rgba(234, 88, 12, 0.15);
+  --secondary: #0284c7;
+  --secondary-glow: rgba(2, 132, 199, 0.15);
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0284c7;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  color-scheme: light;
+}
+
+// Tema oscuro (6pm - 7am)
+:root[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --surface: #1e293b;
+  --surface-raised: #334155;
+  --surface-hover: #475569;
+  --border: #334155;
+  --border-accent: #475569;
+  --text: #f1f5f9;
+  --text-muted: #cbd5e1;
+  --text-dim: #94a3b8;
+  --primary: #f97316;
+  --primary-hover: #ea580c;
+  --primary-glow: rgba(249, 115, 22, 0.25);
+  --secondary: #0ea5e9;
+  --secondary-glow: rgba(14, 165, 233, 0.25);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #06b6d4;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+// Asignar variables CSS a SASS
+$background: var(--bg-primary);
+$surface: var(--surface);
+$surface-raised: var(--surface-raised);
+$surface-hover: var(--surface-hover);
+$border: var(--border);
+$border-accent: var(--border-accent);
+$primary: var(--primary);
+$primary-hover: var(--primary-hover);
+$primary-glow: var(--primary-glow);
+$secondary: var(--secondary);
+$secondary-glow: var(--secondary-glow);
+$text: var(--text);
+$text-muted: var(--text-muted);
+$text-dim: var(--text-dim);
+$success: var(--success);
+$warning: var(--warning);
+$danger: var(--danger);
+$info: var(--info);
+$shadow: var(--shadow);
+$shadow-lg: var(--shadow-lg);
+
+// Spacing
+$space-xs: 0.4rem;
+$space-sm: 0.8rem;
+$space-md: 1.6rem;
+$space-lg: 2.4rem;
+$space-xl: 4rem;
+
+// Border radius
+$radius-sm: 0.4rem;
+$radius-md: 0.8rem;
+$radius-lg: 1.2rem;
+
+// Breakpoints
+$bp-mobile: 48rem;
+$bp-movil: 64rem;   // modo móvil de la app (menú hamburguesa, tablas resumidas)
+$bp-tablet: 80rem;

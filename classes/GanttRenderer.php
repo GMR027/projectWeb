@@ -1,0 +1,98 @@
+<?php
+
+namespace Classes;
+
+use Model\Proyecto;
+use Model\Partida;
+
+/**
+ * Prepara los datos para renderizar el Gantt en la vista.
+ * Retorna la estructura de semanas + filas (partidas y actividades) con posición calculada.
+ */
+class GanttRenderer
+{
+    private Proyecto $proyecto;
+    private Calendario $calendario;
+    private array $semanas;
+
+    public function __construct(Proyecto $proyecto)
+    {
+        $this->proyecto = $proyecto;
+        $this->calendario = new Calendario($proyecto->id);
+        $this->semanas = $this->calendario->generarSemanas($proyecto->fecha_inicio, $proyecto->fecha_fin);
+    }
+
+    public function getSemanas(): array
+    {
+        return $this->semanas;
+    }
+
+    public function getTotalSemanas(): int
+    {
+        return count($this->semanas);
+    }
+
+    /** Calcula columna inicio y fin (1-based) de una actividad en el grid de semanas */
+    public function calcularPosicion(string $fechaInicio, string $fechaFin): array
+    {
+        $colInicio = 1;
+        $colFin = 1;
+        foreach ($this->semanas as $i => $semana) {
+            if ($fechaInicio >= $semana['inicio'] && $fechaInicio <= $semana['fin']) {
+                $colInicio = $i + 1;
+            }
+            if ($fechaFin >= $semana['inicio'] && $fechaFin <= $semana['fin']) {
+                $colFin = $i + 1;
+            }
+        }
+        // Si la fecha_fin es posterior al rango, ajustar a última columna
+        if ($fechaFin > end($this->semanas)['fin']) {
+            $colFin = count($this->semanas);
+        }
+        if ($colFin < $colInicio) $colFin = $colInicio;
+        return [$colInicio, $colFin];
+    }
+
+    /**
+     * Genera el arreglo de filas del Gantt:
+     * [ { tipo: 'partida', data: Partida, colInicio, colFin }, { tipo: 'actividad', data: Actividad, ...}, ...]
+     */
+    public function getFilas(): array
+    {
+        $filas = [];
+        $partidas = $this->proyecto->getPartidas();
+        foreach ($partidas as $partida) {
+            $filas[] = [
+                'tipo' => 'partida',
+                'id' => $partida->id,
+                'codigo' => $partida->codigo,
+                'nombre' => $partida->nombre,
+                'color_bg' => $partida->color_bg,
+                'fecha_inicio' => $partida->fecha_inicio,
+                'fecha_fin' => $partida->fecha_fin,
+                'progreso' => $partida->getProgreso(),
+                'pos' => $partida->fecha_inicio && $partida->fecha_fin
+                    ? $this->calcularPosicion($partida->fecha_inicio, $partida->fecha_fin)
+                    : [1, 1]
+            ];
+            foreach ($partida->getActividades() as $act) {
+                $filas[] = [
+                    'tipo' => 'actividad',
+                    'id' => $act->id,
+                    'codigo' => $act->codigo,
+                    'nombre' => $act->nombre,
+                    'fecha_inicio' => $act->fecha_inicio,
+                    'fecha_fin' => $act->fecha_fin,
+                    'progreso' => (int)$act->progreso,
+                    'status' => $act->status,
+                    'hito' => $act->esHito(),
+                    'prioridad' => $act->prioridad,
+                    'tiene_restriccion' => $act->tieneRestriccionActiva(),
+                    'restricciones' => $act->getRestriccionesActivas(),
+                    'pos' => $this->calcularPosicion($act->fecha_inicio, $act->fecha_fin)
+                ];
+            }
+        }
+        return $filas;
+    }
+}

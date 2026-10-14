@@ -1,0 +1,158 @@
+// ============================================================
+// Modo móvil (≤ $bp-movil). No altera el diseño de escritorio.
+// ============================================================
+
+// Elementos que solo existen en móvil (ocultos por defecto)
+.btn-menu-movil, .sidebar-fondo, .solo-movil { display: none; }
+
+@media (max-width: $bp-movil) {
+  .solo-movil { display: block; }
+  span.solo-movil, a.solo-movil { display: inline; }
+  .hide-m { display: none !important; }
+
+  // ---------- Estructura: menú lateral → hamburguesa abajo a la izquierda ----------
+  .app-container { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; z-index: 1000; top: 0; left: 0; bottom: 0;
+    width: min(30rem, 86vw); height: 100vh; height: 100dvh;
+    transform: translateX(-104%); transition: transform .25s ease;
+    box-shadow: $shadow-lg;
+  }
+  body.menu-abierto .sidebar { transform: none; }
+  .sidebar-fondo {
+    display: block; position: fixed; inset: 0; z-index: 999; background: rgba(0, 0, 0, .55);
+    opacity: 0; pointer-events: none; transition: opacity .25s ease;
+  }
+  body.menu-abierto .sidebar-fondo { opacity: 1; pointer-events: auto; }
+  body.menu-abierto { overflow: hidden; }
+  .btn-menu-movil {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
+    width: 5.4rem; height: 5.4rem; border-radius: 50%; border: 0; cursor: pointer;
+    background: $primary; color: #fff; font-size: 2.2rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
+  }
+  .main-content { padding: 1.4rem 1.2rem 9rem; }
+
+  // La barra de herramientas del proyecto se sustituye por el menú
+  .breadcrumb-nav { display: none; }
+
+  // ---------- Encabezado de página ----------
+  .topbar { flex-direction: column; align-items: stretch; gap: 1rem; padding-bottom: 1.2rem; margin-bottom: 1.4rem; }
+  .page-title { font-size: 2.1rem; margin-bottom: 0; overflow-wrap: anywhere; }
+  .proyecto-periodo { display: none; }
+  .topbar-right { justify-content: space-between; gap: 1rem; }
+  .user-info { flex-direction: row; align-items: center; gap: .8rem; }
+
+  .page-header { flex-direction: column; align-items: stretch; gap: 1rem; margin-bottom: 1.4rem; }
+  .page-header h2 { font-size: 2rem; }
+  .page-header > div:last-child, .la-controles { display: flex; flex-wrap: wrap; gap: .8rem; width: 100%; }
+  .page-header .btn, .la-controles .btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+  .la-controles form, .la-controles .buscador-inline { flex: 1 1 100%; }
+  .la-controles select, .la-controles input[type=search] { width: 100%; }
+
+  .card { padding: 1.4rem; }
+
+  // ---------- Tablas resumidas ----------
+  .tabla { font-size: 1.3rem; }
+  .tabla thead th { padding: .8rem .8rem; }
+  .tabla tbody td { padding: .9rem .8rem; }
+  .tabla .acciones { flex-direction: column; align-items: stretch; gap: .5rem; min-width: 8rem; width: 8rem; white-space: nowrap; }
+  @media (max-width: 36rem) { .tabla .acciones { min-width: 7rem; width: 7rem; } }
+  .tabla .acciones .btn { width: 100%; padding: .7rem .8rem; font-size: 1.2rem; margin: 0 !important; text-align: center; justify-content: center; }
+  .tabla .acciones form { display: block !important; margin: 0 !important; }
+  .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  // Formularios
+  .form-grid { grid-template-columns: 1fr; }
+
+  // ---------- MSR: encabezado resumido y tabla con desplazamiento horizontal ----------
+  .msr-leyendas, .msr-cabecera .msr-logo { display: none !important; }
+  .msr-cabecera { grid-template-columns: 1fr !important; gap: 1rem; }
+  .msr-titulo { font-size: 1.3rem; }
+  .msr-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .msr-tabla .msr-input { min-width: 12.5rem; }
+  .msr-tabla .msr-desc { min-width: 20rem; }
+
+  // ---------- Ajustes: todo en columna ----------
+  .ajustes-grid { display: flex !important; flex-direction: column; gap: 1.6rem; }
+  .jornada-grid { grid-template-columns: repeat(2, 1fr); }
+
+  // ---------- Calendario compacto ----------
+  .calendario-mes { padding: .6rem; }
+  .calendario-grid { gap: .25rem; }
+  .calendario-dia-header { font-size: .9rem; padding: .5rem 0; letter-spacing: 0; }
+  .calendario-dia { min-height: 5.6rem; padding: .3rem; }
+  .calendario-dia .dia-numero { width: 2rem; font-size: 1.1rem; }
+  .calendario-dia .dia-badge, .calendario-dia .dia-actividad-nombre, .calendario-dia .dia-actividad-progreso, .calendario-dia .dia-actividad-mas { display: none; }
+  .calendario-dia .dia-actividad { padding: .2rem .3rem; margin-top: .2rem; }
+  .calendario-dia .dia-actividad-codigo { font-size: .9rem; }
+  .calendario-header { flex-direction: column; align-items: stretch; }
+
+  // ---------- 4WLA: actividad + semana actual ----------
+  .la-tabla .la-logos { display: none !important; }
+  .la-tabla .la-actividad .la-nombre { min-width: 0; width: auto; position: static; font-size: 1.2rem; text-align: left; }
+  .la-tabla { width: 100%; }
+  .la-tabla .la-comp { min-width: 5.4rem; width: 5.4rem; }
+  .la-tabla .la-id { min-width: 3.8rem; width: 3.8rem; font-size: 1rem; }
+  .la-tabla .la-act-cab { min-width: 0; width: auto; position: static; }
+  .la-tabla .la-id { position: static; }
+  .la-wrap { max-height: 70vh; }
+
+  // ---------- Programa de obra ----------
+  .programa-header { flex-direction: column; align-items: flex-start; padding: 0 0 1.2rem; margin-bottom: 1.2rem; }
+  .programa-logo { max-width: 4.4rem; max-height: 4.4rem; }
+  .programa-titulo h2 { font-size: 1.9rem; }
+  .programa-meta { width: 100%; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+  .programa-meta .mono { font-size: 1.3rem; }
+  .meta-item { align-items: flex-start; }
+  .programa-acciones { margin-bottom: 1.2rem; }
+  .programa-acciones > div { width: 100%; }
+  .programa-acciones .btn { flex: 1 1 auto; }
+  .tabla-programa .acciones { flex-direction: row; flex-wrap: wrap; min-width: 0; }
+  .tabla-programa .acciones .btn-action { margin: 0; }
+  .tabla-programa .acciones form { display: inline-flex !important; }
+  // En móvil solo se deja visible la acción de editar
+  .tabla-programa .acciones .btn-action:not(.btn-action-edit),
+  .tabla-programa .acciones .btn-fechas,
+  .tabla-programa .acciones form { display: none !important; }
+  .tabla-programa .fila-actividad td.indent { padding-left: 1.2rem; }
+  .tabla-programa td, .tabla-programa th { padding: .8rem .4rem; }
+  .tabla-programa td.fecha-editable, .tabla-programa .mono { font-size: 1.1rem; letter-spacing: -.02em; }
+  .tabla-programa th { font-size: 1rem; letter-spacing: 0; }
+  .tabla-programa .acciones { width: 5rem; padding: .4rem .2rem; gap: .3rem; justify-content: center; }
+  .tabla-programa .btn-action { width: 3rem; height: 3rem; font-size: 1.2rem; }
+  .tabla-programa { table-layout: fixed; width: 100%; }
+  // Solo actividad y acciones: las fechas se cambian desde el icono del calendario
+  .tabla-programa th:nth-child(3), .tabla-programa th:nth-child(4),
+  .tabla-programa td:nth-child(3), .tabla-programa td:nth-child(4) { display: none; }
+  .tabla-programa th.th-acciones { width: 6rem; }
+  .tabla-programa td.fecha-editable, .tabla-programa td.mono { white-space: nowrap; }
+  .tabla-programa td { overflow-wrap: anywhere; }
+  .card:has(.tabla-programa) { padding: 1rem .8rem; }
+  .card-titulo { font-size: 1.5rem; }
+  button.solo-movil.btn-action { display: inline-flex; }
+
+  // ---------- Portafolio / inicio: tarjetas de proyecto ----------
+  .proyecto-caratula { width: calc(100% + 2.8rem); margin: -1.4rem -1.4rem 1.2rem; height: 18rem; }
+  .proyecto-caratula-overlay { padding: 1.4rem; }
+  .proyecto-caratula-overlay h4 { font-size: 2rem; }
+  .proyecto-acciones { flex-wrap: wrap; }
+
+  // ---------- Last Planner: filtro arriba y un post-it por línea ----------
+  .lp-filtros { flex-direction: column; align-items: stretch; }
+  .lp-filtros .campo, .lp-filtros select, .lp-filtros label { width: 100%; min-width: 0; }
+  .lp-grid { flex-direction: column; align-items: center; gap: 1.6rem; }
+  .lp-tarjeta { zoom: .8; }   // el post-it mide 7 cm × 1.7 (≈ 450 px): se reduce para que quepa en la pantalla
+  @media (max-width: 36rem) { .lp-tarjeta { zoom: .7; } }
+  @media (max-width: 33rem) { .lp-tarjeta { zoom: .62; } }
+
+  .tabla td { overflow-wrap: anywhere; }
+  input, select, textarea { max-width: 100%; }
+}
+
+// Ventana de cambio de fechas (programa de obra)
+#modal-fechas { z-index: 1100; }
+#modal-fechas .modal-card { text-align: left; max-width: 38rem; }
+#modal-fechas h4 { margin-bottom: .4rem; }
+.mf-botones { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.4rem; }
+.mf-error { color: $danger; margin-top: 1rem; }

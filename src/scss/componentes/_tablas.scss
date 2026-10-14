@@ -1,0 +1,198 @@
+// ============================================================
+// Tablas
+// ============================================================
+
+.tabla-wrapper {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.3rem;
+
+  thead {
+    th {
+      text-align: left;
+      padding: 1rem;
+      font-family: $font-mono;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: $text-muted;
+      border-bottom: 2px solid $border-accent;
+      white-space: nowrap;
+      background-color: var(--bg-tertiary);
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: var(--surface-hover);
+      }
+    }
+
+    td {
+      padding: 1rem;
+      vertical-align: middle;
+    }
+  }
+}
+
+.tabla-programa {
+  .fila-partida {
+    background-color: var(--bg-tertiary);
+
+    td {
+      padding-top: 1.2rem;
+      padding-bottom: 1.2rem;
+      font-weight: 600;
+    }
+  }
+
+  .fila-actividad {
+    .indent {
+      padding-left: 2.4rem;
+    }
+  }
+}
+
+.acciones {
+  white-space: nowrap;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+
+  .btn + .btn,
+  .btn + form,
+  form + form {
+    margin-left: 0.4rem;
+  }
+}
+
+// ============ BOTONES DE ACCIÓN (cuadrados con icono) ============
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  padding: 0;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  background-color: var(--surface-hover);
+  color: $text-muted;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow;
+  }
+
+  i {
+    pointer-events: none;
+  }
+}
+
+.btn-action-add {
+  color: $success;
+
+  &:hover {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: $success;
+    color: $success;
+  }
+}
+
+.btn-action-edit {
+  color: $secondary;
+
+  &:hover {
+    background-color: rgba(2, 132, 199, 0.15);
+    border-color: $secondary;
+    color: $secondary;
+  }
+}
+
+.btn-action-delete {
+  color: $danger;
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: $danger;
+    color: $danger;
+  }
+}
+
+.btn-action-warning {
+  color: $warning;
+
+  &:hover {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: $warning;
+    color: $warning;
+  }
+}
+
+// ============ INPUTS DE FECHA EDITABLES EN TABLA ============
+.fecha-editable {
+  padding: 0.4rem !important;
+}
+
+.input-fecha {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background-color: var(--surface);
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  color: $text;
+  font-family: $font-mono;
+  font-size: 1.3rem;
+  transition: all 0.2s ease;
+  color-scheme: light dark; // Permite que el navegador ajuste controles nativos
+
+  &:hover {
+    border-color: $border-accent;
+    background-color: var(--surface-hover);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $secondary;
+    background-color: var(--surface);
+    box-shadow: 0 0 0 3px var(--secondary-glow);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // Asegurar que el calendario nativo del navegador use el tema correcto
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Forzar color scheme según el tema activo
+:root[data-theme="light"] .input-fecha {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] .input-fecha {
+  color-scheme: dark;
+}

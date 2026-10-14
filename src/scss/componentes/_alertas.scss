@@ -1,0 +1,42 @@
+// ============================================================
+// Alertas
+// ============================================================
+
+.alerta {
+  padding: 1.2rem 1.6rem;
+  border-radius: $radius-sm;
+  margin-bottom: $space-md;
+  font-size: 1.4rem;
+  border-left: 3px solid;
+  animation: slideDown 0.3s ease;
+  border: 1px solid;
+}
+
+.alerta-error {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--danger);
+  border-color: rgba(220, 38, 38, 0.3);
+  border-left-color: var(--danger);
+  border-left-width: 4px;
+}
+
+.alerta-exito {
+  background-color: rgba(5, 150, 105, 0.1);
+  color: var(--success);
+  border-color: rgba(5, 150, 105, 0.3);
+  border-left-color: var(--success);
+  border-left-width: 4px;
+}
+
+.alerta-info {
+  background-color: rgba(2, 132, 199, 0.1);
+  color: var(--secondary);
+  border-color: rgba(2, 132, 199, 0.3);
+  border-left-color: var(--secondary);
+  border-left-width: 4px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
