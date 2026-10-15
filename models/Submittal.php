@@ -82,7 +82,15 @@ class Submittal extends ActiveRecord
             $db->query("UPDATE submittals SET fecha_respuesta = NULL WHERE id = $sid");
             $items .= ", fecha_respuesta = NULL";
         }
-        $db->query("$items WHERE submittal_id = $sid");
+        $db->query("$items WHERE " . $this->condicionRenglones());
+    }
+
+    /** Renglones del paquete y los renglones sueltos (sin submittal) de sus mismos materiales: comparten status y fechas del submittal */
+    private function condicionRenglones(): string
+    {
+        $sid = (int)$this->id;
+        return "(submittal_id = $sid OR (submittal_id IS NULL AND proyecto_id = " . (int)$this->proyecto_id
+            . " AND material_id IN (SELECT material_id FROM submittal_materiales WHERE submittal_id = $sid)))";
     }
 
     /** Fecha del submittal y de respuesta → renglones del MSR (Real Submittal Date y AnswerDate) */
@@ -90,7 +98,7 @@ class Submittal extends ActiveRecord
     {
         $f = self::$db->escape_string($this->fecha);
         $r = $this->fecha_respuesta ? "'" . self::$db->escape_string($this->fecha_respuesta) . "'" : 'NULL';
-        self::$db->query("UPDATE msr_items SET fecha_envio_real = '$f', fecha_respuesta = $r WHERE submittal_id = " . (int)$this->id);
+        self::$db->query("UPDATE msr_items SET fecha_envio_real = '$f', fecha_respuesta = $r WHERE " . $this->condicionRenglones());
     }
 
     public static function deProyecto(int $proyectoId): array

@@ -117,6 +117,31 @@ class AccionesRapidas
                        ORDER BY (compra = 'pendiente') DESC, (fecha_compra_prog IS NULL), fecha_compra_prog ASC, nombre ASC LIMIT $L")),
                 'ver' => "/materiales$p&compra=pendiente"];
         }
+        if ($gestiona) {
+            // --- Actividades sin materiales asignados (para vincularlos desde la edición) ---
+            $baseA = "FROM actividades a JOIN partidas pa ON pa.id = a.partida_id
+                      WHERE pa.proyecto_id = $pid AND a.hito = 0 AND a.sin_material = 0
+                        AND NOT EXISTS (SELECT 1 FROM actividad_materiales am WHERE am.actividad_id = a.id)";
+            $secs[] = ['clave' => 'sinmat', 'titulo' => 'Actividades sin materiales', 'icono' => 'fa-cubes-stacked', 'abierta' => false,
+                'total' => $n("SELECT COUNT(*) $baseA"),
+                'items' => array_map(fn($f) => [
+                    'titulo' => $f['codigo'] . ' · ' . $f['nombre'],
+                    'sub' => $fecha($f['fecha_inicio']) . ' → ' . $fecha($f['fecha_fin']) . ' · ' . $f['pnom'],
+                    'chip' => '', 'url' => "/programa/actividades/editar$p&id=" . (int)$f['id'],
+                ], $q("SELECT a.id, a.codigo, a.nombre, a.fecha_inicio, a.fecha_fin, pa.nombre AS pnom $baseA ORDER BY a.fecha_inicio ASC, a.id ASC LIMIT $L")),
+                'ver' => "/planificador$p"];
+
+            // --- Materiales del catálogo que ninguna actividad usa todavía ---
+            $baseN = "FROM materiales m WHERE m.proyecto_id = $pid AND NOT EXISTS (SELECT 1 FROM actividad_materiales am WHERE am.material_id = m.id)";
+            $secs[] = ['clave' => 'matsin', 'titulo' => 'Materiales sin asignar', 'icono' => 'fa-link-slash', 'abierta' => false,
+                'total' => $n("SELECT COUNT(*) $baseN"),
+                'items' => array_map(fn($f) => [
+                    'titulo' => $f['nombre'],
+                    'sub' => trim(($f['referencia'] ? $f['referencia'] . ' · ' : '') . ($f['especialidad'] ?: 'Sin especialidad') . ' · ' . ($f['fecha_entrega_real'] ? 'entregado' : ($f['compra'] === 'comprado' ? 'comprado' : 'sin comprar'))),
+                    'chip' => '', 'url' => "/materiales/editar$p&id=" . (int)$f['id'],
+                ], $q("SELECT m.id, m.nombre, m.referencia, m.especialidad, m.compra, m.fecha_entrega_real $baseN ORDER BY m.especialidad ASC, m.nombre ASC LIMIT $L")),
+                'ver' => "/materiales$p"];
+        }
         return $secs;
     }
 }

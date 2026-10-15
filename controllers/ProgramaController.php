@@ -32,10 +32,43 @@ class ProgramaController
 
         $gantt = new GanttRenderer($proyecto);
         $semanas = $gantt->getSemanas();
-        $filas = $gantt->getFilas();
+        $todas = $gantt->getFilas();
         $calendario = new Calendario($proyectoId);
 
+        // Filtros (GET): partida, status, prioridad, restricción
+        $filtros = [
+            'partida' => filter_var($_GET['partida'] ?? null, FILTER_VALIDATE_INT) ?: 0,
+            'status' => in_array($_GET['status'] ?? '', ['no_iniciada', 'en_proceso', 'completada'], true) ? $_GET['status'] : '',
+            'prioridad' => in_array($_GET['prioridad'] ?? '', ['baja', 'media', 'alta', 'critica'], true) ? $_GET['prioridad'] : '',
+            'restriccion' => in_array($_GET['restriccion'] ?? '', ['con', 'sin'], true) ? $_GET['restriccion'] : '',
+        ];
+        $filas = $todas;
+        if (array_filter($filtros)) {
+            $filas = [];
+            $cabecera = null;
+            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'];
+            foreach ($todas as $f) {
+                if ($f['tipo'] === 'partida') {
+                    $cabecera = (!$filtros['partida'] || (int)$f['id'] === $filtros['partida']) ? $f : null;
+                    // Solo filtro por partida: se muestra aunque no tenga actividades
+                    if ($cabecera && !$hayFiltroAct) { $filas[] = $cabecera; $cabecera = null; }
+                    continue;
+                }
+                if (!$cabecera && $hayFiltroAct) continue;
+                if (!$hayFiltroAct) { if (!$filtros['partida'] || (int)$f['partida_id'] === $filtros['partida']) $filas[] = $f; continue; }
+                if ($filtros['status'] && $f['status'] !== $filtros['status']) continue;
+                if ($filtros['prioridad'] && $f['prioridad'] !== $filtros['prioridad']) continue;
+                if ($filtros['restriccion'] === 'con' && !$f['tiene_restriccion']) continue;
+                if ($filtros['restriccion'] === 'sin' && $f['tiene_restriccion']) continue;
+                if ($cabecera) { $filas[] = $cabecera; $cabecera = null; }
+                $filas[] = $f;
+            }
+        }
+
         $router->render('programa/index', [
+            'partidasFiltro' => array_values(array_filter($todas, fn($f) => $f['tipo'] === 'partida')),
+            'filtros' => $filtros,
+            'hayFiltros' => (bool)array_filter($filtros),
             'titulo' => 'Programa de Obra - ' . $proyecto->nombre,
             'proyecto' => $proyecto,
             'semanas' => $semanas,
@@ -115,6 +148,7 @@ class ProgramaController
             if ($resultado) {
                 // Recalcular fechas de la partida
                 $partida->recalcularFechas();
+                \Model\ActividadMaterial::sincronizarInstalacion((int)$partida->proyecto_id);
 
                 echo json_encode([
                     'success' => true,
@@ -309,6 +343,28 @@ class ProgramaController
     }
 
     // ==================== ACTIVIDADES ====================
+    /** Catálogo para el selector de materiales de la actividad (con estado de compra/entrega) */
+    private static function catalogoMateriales(int $proyectoId): array
+    {
+        return array_map(fn($m) => [
+            'id' => (int)$m->id, 'nombre' => $m->nombre, 'ref' => $m->referencia, 'esp' => $m->especialidad, 'img' => $m->imagen,
+            'cant' => $m->cantidad !== null ? rtrim(rtrim((string)$m->cantidad, '0'), '.') . ($m->unidad ? ' ' . $m->unidad : '') : '',
+            'estado' => $m->entregado() ? 'entregado' : ($m->compra === 'comprado' ? 'comprado' : 'pendiente'),
+        ], \Model\Material::deProyecto($proyectoId));
+    }
+
+    /** Guarda los materiales de la actividad si el formulario trae «Gestionar materiales» y refresca la instalación del MSR */
+    private static function guardarMaterialesActividad(int $actividadId, int $proyectoId): void
+    {
+        if (!empty($_POST['sin_material'])) {
+            // Una actividad que no requiere material no conserva vínculos
+            \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, []);
+        } elseif (!empty($_POST['gestionar_materiales'])) {
+            \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, (array)($_POST['materiales'] ?? []));
+        }
+        \Model\ActividadMaterial::sincronizarInstalacion($proyectoId);
+    }
+
     public static function crearActividad(Router $router)
     {
         redirigir_si_no_auth();
@@ -329,6 +385,7 @@ class ProgramaController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $actividad->sincronizar($_POST);
             $actividad->hito = !empty($_POST['hito']) ? 1 : 0;   // casilla: sin marcar no viaja en el POST
+            $actividad->sin_material = !empty($_POST['sin_material']) ? 1 : 0;
             $actividad->id = null;
             $alertas = $actividad->validar();
             // La partida elegida debe pertenecer a este proyecto
@@ -352,6 +409,7 @@ class ProgramaController
                     // Recalcular fechas de partida
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
+                    self::guardarMaterialesActividad((int)$resultado['id'], (int)$proyectoId);
                     header('Location: /programa?proyecto=' . $proyectoId . '&creado=actividad');
                     exit;
                 }
@@ -364,7 +422,11 @@ class ProgramaController
             'partidas' => $partidas,
             'partidaIdSeleccionada' => $partidaIdSeleccionada,
             'actividad' => $actividad,
-            'alertas' => $alertas
+            'alertas' => $alertas,
+            'catalogo' => self::catalogoMateriales((int)$proyectoId),
+            'seleccion' => !empty($_POST['gestionar_materiales'])
+                ? array_map('intval', (array)($_POST['materiales'] ?? [])) : [],
+            'gestionarMateriales' => !empty($_POST['gestionar_materiales']),
         ]);
     }
 
@@ -387,6 +449,7 @@ class ProgramaController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $actividad->sincronizar($_POST);
             $actividad->hito = !empty($_POST['hito']) ? 1 : 0;
+            $actividad->sin_material = !empty($_POST['sin_material']) ? 1 : 0;
             $actividad->id = $id;
             // Solo se puede mover a una partida del mismo proyecto
             $destino = Partida::find($actividad->partida_id);
@@ -404,6 +467,7 @@ class ProgramaController
                 $actividad->sincronizarStatus();
                 if ($actividad->guardar()) {
                     $partida->recalcularFechas();
+                    self::guardarMaterialesActividad((int)$id, (int)$proyecto->id);
                     header('Location: /programa?proyecto=' . $proyecto->id . '&editado=actividad');
                     exit;
                 }
@@ -416,7 +480,10 @@ class ProgramaController
             'partidas' => $partidas,
             'partida' => $partida,
             'actividad' => $actividad,
-            'alertas' => $alertas
+            'alertas' => $alertas,
+            'catalogo' => self::catalogoMateriales((int)$proyecto->id),
+            'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
+            'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
         ]);
     }
 
@@ -432,6 +499,7 @@ class ProgramaController
                 exigir_gestionar_proyecto(Proyecto::find($proyectoId));
                 $actividad->eliminar();
                 $partida->recalcularFechas();
+                \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);
                 header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=actividad');
                 exit;
             }

@@ -5,7 +5,7 @@ namespace Model;
 class Actividad extends ActiveRecord
 {
     protected static $tabla = 'actividades';
-    protected static $columnasDB = ['id', 'partida_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'orden'];
+    protected static $columnasDB = ['id', 'partida_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'orden'];
 
     public $id;
     public $partida_id;
@@ -20,6 +20,7 @@ class Actividad extends ActiveRecord
     public $status;
     public $pta;
     public $hito;
+    public $sin_material;
     public $orden;
 
     public function __construct($args = [])
@@ -37,6 +38,7 @@ class Actividad extends ActiveRecord
         $this->status = $args['status'] ?? 'no_iniciada';
         $this->pta = $args['pta'] ?? 1;
         $this->hito = (int)($args['hito'] ?? 0);
+        $this->sin_material = (int)($args['sin_material'] ?? 0);
         $this->orden = $args['orden'] ?? 0;
     }
 

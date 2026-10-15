@@ -79,6 +79,7 @@ class GanttRenderer
                 $filas[] = [
                     'tipo' => 'actividad',
                     'id' => $act->id,
+                    'partida_id' => $partida->id,
                     'codigo' => $act->codigo,
                     'nombre' => $act->nombre,
                     'fecha_inicio' => $act->fecha_inicio,

@@ -73,6 +73,10 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
             </a>
         <?php endforeach; ?>
         <?php if ($menuProyecto): ?>
+            <a href="/planificador?proyecto=<?php echo (int)$proyectoCtx; ?>" class="nav-link <?php echo pagina_actual('/planificador') ? 'active' : ''; ?>">
+                <i class="fa-solid fa-diagram-next nav-icon"></i>
+                <span>Planificador</span>
+            </a>
             <div class="nav-section">Proyecto actual</div>
             <?php foreach ($menuProyecto as $item): ?>
                 <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo pagina_actual($item['match']) ? 'active' : ''; ?>">

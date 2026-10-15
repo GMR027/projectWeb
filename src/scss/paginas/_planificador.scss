@@ -1,0 +1,21 @@
+@use '../base/variables' as *;
+
+// Planificador
+.plan-filtros { display: flex; flex-wrap: wrap; gap: 1.6rem; align-items: center; margin-bottom: 1.2rem; label { display: flex; align-items: center; gap: .8rem; font-size: 1.3rem; } }
+.plan-aviso { margin-bottom: 1.2rem; }
+.plan-lanes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem; align-items: start; margin-bottom: 2rem; @media (max-width: 60rem) { grid-template-columns: 1fr; } }
+.plan-lane { background: var(--bg-secondary); border: 1px solid $border; border-radius: 1.2rem; padding: 1.4rem; border-top: 4px solid var(--c);
+  header { margin-bottom: 1rem; h3 { display: flex; align-items: center; gap: .8rem; font-size: 1.6rem; b { margin-left: auto; background: var(--c); color: #fff; border-radius: 99rem; padding: 0 .9rem; font-size: 1.3rem; } } small { opacity: .7; } }
+  &.plan-lista { --c: #10b981; } &.plan-pronto { --c: #f59e0b; } &.plan-bloqueada { --c: #dc2626; }
+}
+.plan-card { background: var(--bg-primary, rgba(255,255,255,.03)); border: 1px solid $border; border-radius: .8rem; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+.plan-titulo { display: block; font-weight: 600; font-size: 1.35rem; color: inherit; text-decoration: none; &:hover { color: $primary; } }
+.plan-meta { display: flex; gap: 1rem; font-size: 1.15rem; opacity: .8; margin: .3rem 0 .5rem; }
+.plan-motivo { font-size: 1.15rem; margin: .2rem 0; &.n1 { color: #f59e0b; } &.n2 { color: #f87171; } &.n0 { opacity: .6; } }
+.plan-libera { font-size: 1.15rem; font-weight: 700; margin-top: .4rem; }
+.plan-inversa h3 { margin-bottom: 1.2rem; }
+.plan-mat { padding: 1rem 0; border-top: 1px solid $border; &:first-of-type { border-top: 0; }
+  .plan-mat-cab { display: flex; gap: 1.2rem; align-items: center; margin-bottom: .6rem; }
+  ul { list-style: none; margin: 0 0 0 7rem; padding: 0; li { margin: .3rem 0; font-size: 1.3rem; } a { color: inherit; text-decoration: none; &:hover { color: $primary; } } }
+}
+.plan-dot { display: inline-block; width: .9rem; height: .9rem; border-radius: 50%; margin-right: .4rem; &.plan-d-lista { background: #10b981; } &.plan-d-pronto { background: #f59e0b; } &.plan-d-bloqueada { background: #dc2626; } }

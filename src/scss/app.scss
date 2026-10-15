@@ -26,4 +26,5 @@
 @use 'paginas/lookahead';
 @use 'paginas/ajustes';
 @use 'paginas/reportes';
+@use 'paginas/planificador';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

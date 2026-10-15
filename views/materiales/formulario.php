@@ -37,6 +37,14 @@
                 <input type="url" id="link_web" name="link_web" value="<?php echo s($material->link_web); ?>" placeholder="https://…">
             </div>
             <div class="campo">
+                <label for="cantidad">Cantidad</label>
+                <input type="number" id="cantidad" name="cantidad" min="0" step="0.01" value="<?php echo $material->cantidad !== null && $material->cantidad !== '' ? s(rtrim(rtrim((string)$material->cantidad, '0'), '.')) : ''; ?>" placeholder="Opcional">
+            </div>
+            <div class="campo">
+                <label for="unidad">Unidad</label>
+                <input type="text" id="unidad" name="unidad" maxlength="30" value="<?php echo s($material->unidad); ?>" placeholder="pza, m, kg…">
+            </div>
+            <div class="campo">
                 <label for="imagen">Imagen (se guarda en miniatura)</label>
                 <input type="file" id="imagen" name="imagen" accept="image/*">
                 <?php if ($material->imagen): ?>

@@ -160,6 +160,9 @@ class MaterialController
         $material->especialidad = \Model\Especialidad::resolver((int)$proyecto->id, $_POST['especialidad'] ?? '');
         $material->link_web = trim($_POST['link_web'] ?? '') ?: null;
         $material->certificado_calidad = trim($_POST['certificado_calidad'] ?? '') ?: null;
+        $cant = str_replace(',', '.', trim($_POST['cantidad'] ?? ''));
+        $material->cantidad = $cant === '' ? null : (is_numeric($cant) ? $cant : 'x');
+        $material->unidad = mb_substr(trim($_POST['unidad'] ?? ''), 0, 30);
         $compraAnterior = $material->compra;
         foreach (['fecha_compra_prog', 'fecha_entrega_prog', 'fecha_entrega_real'] as $f) {
             $material->$f = trim($_POST[$f] ?? '') ?: null;

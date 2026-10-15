@@ -5,7 +5,7 @@ namespace Model;
 class Material extends ActiveRecord
 {
     protected static $tabla = 'materiales';
-    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'cantidad', 'unidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
     public const COMPRA = ['pendiente' => 'Pendiente', 'comprado' => 'Comprado'];
     private const FECHAS = ['fecha_compra_prog' => 'compra programada', 'fecha_compra_real' => 'compra real', 'fecha_entrega_prog' => 'entrega programada', 'fecha_entrega_real' => 'entrega real'];
 
@@ -18,6 +18,8 @@ class Material extends ActiveRecord
     public $imagen;
     public $ficha_tecnica;
     public $certificado_calidad;
+    public $cantidad;
+    public $unidad;
     public $compra;
     public $fecha_compra_prog;
     public $fecha_compra_real;
@@ -35,6 +37,8 @@ class Material extends ActiveRecord
         $this->imagen = $args['imagen'] ?? null;
         $this->ficha_tecnica = $args['ficha_tecnica'] ?? null;
         $this->certificado_calidad = $args['certificado_calidad'] ?? null;
+        $this->cantidad = $args['cantidad'] ?? null;
+        $this->unidad = $args['unidad'] ?? '';
         $this->compra = $args['compra'] ?? 'pendiente';
         foreach (array_keys(self::FECHAS) as $c) $this->$c = $args[$c] ?? null;
     }
@@ -47,6 +51,9 @@ class Material extends ActiveRecord
         }
         if (mb_strlen((string)$this->certificado_calidad) > 255) {
             self::$alertas['error'][] = 'El certificado de calidad es demasiado largo (máx. 255 caracteres)';
+        }
+        if ($this->cantidad !== null && $this->cantidad !== '' && (!is_numeric($this->cantidad) || $this->cantidad < 0 || $this->cantidad >= 1e10)) {
+            self::$alertas['error'][] = 'La cantidad no es válida';
         }
         foreach (self::FECHAS as $c => $etq) {
             if ($this->$c && !\DateTime::createFromFormat('Y-m-d', $this->$c)) {

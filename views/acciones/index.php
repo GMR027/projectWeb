@@ -46,7 +46,7 @@
                             </td>
                         <?php endif; ?>
                         <td class="acciones">
-                            <a href="<?php echo s($it['url']); ?>" class="btn btn-sm btn-ghost"><?php echo $sec['clave'] === 'restr' ? 'Editar actividad' : 'Abrir'; ?></a>
+                            <a href="<?php echo s($it['url']); ?>" class="btn btn-sm btn-ghost"><?php echo in_array($sec['clave'], ['restr', 'sinmat'], true) ? 'Editar actividad' : 'Abrir'; ?></a>
                             <?php if ($gestiona && $sec['clave'] === 'restr'): ?>
                                 <form method="POST" action="/programa/restricciones/resolver" style="display:inline">
                                     <input type="hidden" name="id" value="<?php echo (int)$it['rid']; ?>">

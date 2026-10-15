@@ -83,6 +83,7 @@ CREATE TABLE actividades (
     status ENUM('no_iniciada', 'en_proceso', 'completada') DEFAULT 'no_iniciada',
     pta TINYINT(1) NOT NULL DEFAULT 1, -- 4WLA: 1 = OK, 0 = pendiente (!)
     hito TINYINT(1) NOT NULL DEFAULT 0, -- 1 = hito (duración 0, inicio = fin)
+    sin_material TINYINT(1) NOT NULL DEFAULT 0, -- 1 = la actividad no requiere material
     orden INT DEFAULT 0,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
     UNIQUE KEY uq_actividad_codigo (partida_id, codigo)
@@ -200,6 +201,8 @@ CREATE TABLE materiales (
     imagen VARCHAR(100) DEFAULT NULL,
     ficha_tecnica VARCHAR(200) DEFAULT NULL,
     certificado_calidad VARCHAR(255) DEFAULT NULL,
+    cantidad DECIMAL(12,2) DEFAULT NULL,
+    unidad VARCHAR(30) NOT NULL DEFAULT '',
     compra ENUM('pendiente','comprado') NOT NULL DEFAULT 'pendiente',
     fecha_compra_prog DATE DEFAULT NULL,
     fecha_compra_real DATE DEFAULT NULL,
@@ -207,6 +210,15 @@ CREATE TABLE materiales (
     fecha_entrega_real DATE DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Materiales que usa cada actividad (Planificador)
+CREATE TABLE actividad_materiales (
+    actividad_id INT NOT NULL,
+    material_id INT NOT NULL,
+    PRIMARY KEY (actividad_id, material_id),
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE msrs (

@@ -44,6 +44,49 @@
     </div>
 </div>
 
+<form method="GET" action="/programa" class="card programa-filtros formulario">
+    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+    <div class="form-grid-inline">
+        <div class="campo">
+            <label for="f-partida">Partida</label>
+            <select id="f-partida" name="partida">
+                <option value="">Todas</option>
+                <?php foreach ($partidasFiltro as $p): ?>
+                    <option value="<?php echo s($p['id']); ?>"<?php echo (int)$filtros['partida'] === (int)$p['id'] ? ' selected' : ''; ?>><?php echo s($p['codigo'] . ' · ' . $p['nombre']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="campo">
+            <label for="f-status">Estatus</label>
+            <select id="f-status" name="status">
+                <option value="">Todos</option>
+                <?php foreach (['no_iniciada' => 'No iniciada', 'en_proceso' => 'En proceso', 'completada' => 'Completada'] as $k => $etq): ?>
+                    <option value="<?php echo $k; ?>"<?php echo $filtros['status'] === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="campo">
+            <label for="f-prioridad">Prioridad</label>
+            <select id="f-prioridad" name="prioridad">
+                <option value="">Todas</option>
+                <?php foreach (['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'critica' => 'Crítica'] as $k => $etq): ?>
+                    <option value="<?php echo $k; ?>"<?php echo $filtros['prioridad'] === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="campo">
+            <label for="f-restriccion">Restricción</label>
+            <select id="f-restriccion" name="restriccion">
+                <option value="">Todas</option>
+                <option value="con"<?php echo $filtros['restriccion'] === 'con' ? ' selected' : ''; ?>>Con restricción activa</option>
+                <option value="sin"<?php echo $filtros['restriccion'] === 'sin' ? ' selected' : ''; ?>>Sin restricción</option>
+            </select>
+        </div>
+        <?php if ($hayFiltros): ?><a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">Limpiar</a><?php endif; ?>
+    </div>
+</form>
+<script>document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventListener('change', () => s.form.submit()));</script>
+
 <!-- Tabla de actividades -->
 <div class="card">
     <h3 class="card-titulo"><i class="fa-solid fa-list"></i> Desglose WBS & Partidas</h3>
@@ -193,7 +236,7 @@
                     <?php endif; ?>
                 <?php endforeach; ?>
                 <?php if (empty($filas)): ?>
-                    <tr><td colspan="10" class="text-center text-muted">No hay partidas ni actividades. <?php if (puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
+                    <tr><td colspan="10" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

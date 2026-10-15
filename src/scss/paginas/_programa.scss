@@ -280,3 +280,5 @@
 .gantt-barra.gantt-hito { width: 1.6rem !important; min-width: 1.6rem; height: 1.6rem; padding: 0; margin: 0 auto; transform: rotate(45deg); border-radius: .2rem;
   .gantt-barra-texto, .gantt-barra-fill { display: none; } }
 .campo-check { display: flex !important; gap: .8rem; align-items: center; text-transform: none !important; letter-spacing: 0 !important; font-size: 1.3rem !important; input { width: auto !important; } }
+
+.programa-filtros { margin-bottom: $space-md; padding-block: $space-md; }

@@ -57,6 +57,7 @@
                 <label for="orden">Orden</label>
                 <input type="number" id="orden" name="orden" value="<?php echo s($actividad->orden); ?>" min="0">
             </div>
+            <?php include __DIR__ . '/_materiales-actividad.php'; ?>
         </div>
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
     </form>

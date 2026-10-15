@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>ProjectWeb · <?php echo s($titulo ?? 'Programas de obra'); ?></title>
     <meta name="description" content="ProjectWeb: programa de obra con Gantt, 4WLA, Last Planner, vPlan, curvas de productividad, MSR, reporte diario y exportación a PDF, Excel y MS Project.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
