@@ -24,6 +24,7 @@ spec:
     metadata:
       labels: { app: projectweb }
     spec:
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       initContainers:
         - name: init
           image: busybox:1.36
@@ -32,7 +33,7 @@ spec:
             - -c
             - |
               until nc -z mysql 3306; do echo "esperando mysql"; sleep 2; done
-              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import
+              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos
               chown -R 33:33 /files
           volumeMounts:
             - { name: files, mountPath: /files }
@@ -49,6 +50,8 @@ spec:
             - { name: APP_URL, value: "https://{{ .Values.host }}" }
             - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
             - { name: CONTACT_EMAIL, value: {{ .Values.app.contactEmail | quote }} }
+            - { name: VOLUMEN_ARCHIVOS_GB, value: {{ .Values.app.storage | trimSuffix "Gi" | quote }} }
+            - { name: VOLUMEN_BD_GB, value: {{ .Values.mysql.storage | trimSuffix "Gi" | quote }} }
           ports:
             - containerPort: 80
           readinessProbe:
@@ -60,6 +63,7 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/archivos, subPath: archivos }
             - { name: files, mountPath: /var/www/html/storage/fichas, subPath: fichas }
             - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
+            - { name: files, mountPath: /var/www/html/storage/respaldos, subPath: respaldos }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}
       volumes:
         - name: files

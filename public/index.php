@@ -12,6 +12,7 @@ use Controllers\BandejaController;
 use Controllers\ProyectoController;
 use Controllers\ProgramaController;
 use Controllers\AjustesController;
+use Controllers\SistemaController;
 use Controllers\CalendarioController;
 use Controllers\LookaheadController;
 use Controllers\MaterialController;
@@ -221,6 +222,11 @@ $router->post('/api/curvas/real', [CurvaController::class, 'guardarReal']);
 $router->get('/calendario', [CalendarioController::class, 'index']);
 
 // ========== AJUSTES Y EXPORTACIÓN ==========
+$router->get('/sistema', [SistemaController::class, 'ajustes']);
+$router->post('/sistema/respaldo/crear', [SistemaController::class, 'respaldoCrear']);
+$router->get('/sistema/respaldo/descargar', [SistemaController::class, 'respaldoDescargar']);
+$router->post('/sistema/respaldo/eliminar', [SistemaController::class, 'respaldoEliminar']);
+$router->post('/sistema/respaldo/restaurar', [SistemaController::class, 'respaldoRestaurar']);
 $router->get('/ajustes', [AjustesController::class, 'index']);
 $router->post('/ajustes/jornada', [AjustesController::class, 'guardarJornada']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);

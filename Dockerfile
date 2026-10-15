@@ -20,7 +20,7 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY . .
 RUN composer dump-autoload --optimize --no-dev \
     && rm -f /usr/bin/composer \
-    && mkdir -p public/uploads public/exportaciones storage/archivos storage/fichas storage/import \
+    && mkdir -p public/uploads public/exportaciones storage/archivos storage/fichas storage/import storage/respaldos \
     && chown -R www-data:www-data public/uploads public/exportaciones storage
 
 EXPOSE 80

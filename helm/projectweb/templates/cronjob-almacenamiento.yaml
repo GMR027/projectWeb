@@ -1,0 +1,39 @@
+# Foto diaria del espacio usado (alimenta la gráfica y el pronóstico de Ajustes)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: almacenamiento-snapshot
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector: {{ toYaml .Values.nodeSelector | nindent 12 }}
+          containers:
+            - name: snapshot
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              command: ["php", "database/snapshot_almacenamiento.php"]
+              env:
+                - { name: DB_HOST, value: mysql }
+                - { name: DB_NAME, value: {{ .Values.mysql.database | quote }} }
+                - { name: DB_USER, value: {{ .Values.mysql.user | quote }} }
+                - name: DB_PASS
+                  valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_PASSWORD } }
+                - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
+                - { name: VOLUMEN_ARCHIVOS_GB, value: {{ .Values.app.storage | trimSuffix "Gi" | quote }} }
+                - { name: VOLUMEN_BD_GB, value: {{ .Values.mysql.storage | trimSuffix "Gi" | quote }} }
+              volumeMounts:
+                - { name: files, mountPath: /var/www/html/public/uploads, subPath: uploads }
+                - { name: files, mountPath: /var/www/html/public/exportaciones, subPath: exportaciones }
+                - { name: files, mountPath: /var/www/html/storage/archivos, subPath: archivos }
+                - { name: files, mountPath: /var/www/html/storage/fichas, subPath: fichas }
+                - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
+          volumes:
+            - name: files
+              persistentVolumeClaim: { claimName: projectweb-files }

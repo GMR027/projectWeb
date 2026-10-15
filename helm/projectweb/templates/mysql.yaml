@@ -24,6 +24,7 @@ spec:
     metadata:
       labels: { app: mysql }
     spec:
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       containers:
         - name: mysql
           image: {{ .Values.mysql.image }}

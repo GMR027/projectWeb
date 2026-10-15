@@ -8,13 +8,17 @@ ingressClass: public
 clusterIssuer: letsencrypt-prod
 bodySize: 110m
 
+# Los volúmenes hostpath viven en este nodo
+nodeSelector:
+  kubernetes.io/hostname: master
+
 # Secret creado por deploy.sh (claves: DB_PASSWORD, MYSQL_ROOT_PASSWORD)
 secretName: projectweb-db
 
 app:
   timezone: America/Mazatlan
   contactEmail: ""
-  storage: 5Gi
+  storage: 45Gi
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }
@@ -23,7 +27,7 @@ mysql:
   image: mysql:8
   database: project
   user: project
-  storage: 2Gi
+  storage: 5Gi
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }
