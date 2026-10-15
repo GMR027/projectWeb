@@ -31,12 +31,18 @@ $funciones = [
     ['fa-note-sticky', 'Last Planner', 'Tarjetas por día y por partida listas para imprimir, con marcas de corte, calculadas desde tu programa.'],
     ['fa-map-location-dot', 'vPlan visual', 'Láminas con plano, tabla del programa, recovery y restricciones. El estado de la obra de un solo vistazo.'],
     ['fa-chart-line', 'Curvas de productividad', 'Planeado contra real por semana para cada material o frente de trabajo, con gráfica maestra.'],
-    ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, control de submittals y reporte de estatus de entrega de materiales.'],
+    ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, varios MSR por proyecto, control de submittals y estatus de compra y entrega de materiales. Las fechas se comparten entre catálogo, submittals y MSR.'],
     ['fa-clipboard-list', 'Reporte diario y bitácora', 'Personal, actividades y fotos del día en minutos. Bitácora por departamento con niveles de importancia.'],
     ['fa-handshake', 'Minutas de junta', 'Temas, responsables, compromisos y asistentes. Genera el PDF listo para enviar al cliente.'],
-    ['fa-triangle-exclamation', 'Restricciones', 'Registra lo que frena a cada actividad: materiales, RFI, submittals, clima. Se refleja en 4WLA y vPlan.'],
+    ['fa-bolt', 'Restricciones y acciones rápidas', 'Registra lo que frena a cada actividad y consulta en un solo lugar lo del día y la semana: restricciones, bitácora crítica, minutas, submittals y materiales pendientes.'],
     ['fa-file-export', 'Exportación multi-formato', 'PDF tabloide, Excel, LibreOffice, XML de MS Project y ProjectLibre. Un ZIP con todo el proyecto.'],
     ['fa-user-group', 'Accesos para visitantes', 'Crea accesos de solo lectura para que tu cliente o tu equipo consulten el avance de tus proyectos, sin poder modificar nada.'],
+];
+$ventajas = [
+    ['fa-layer-group', 'Una plataforma, no tres o cuatro programas', 'Gestionar un proyecto de forma tradicional exige varios programas distintos para llegar a lo que aquí ya viene integrado, con licencias que en promedio suman alrededor de <strong>$20,000 pesos</strong>.'],
+    ['fa-shield-halved', 'Información que cuadra a la primera', 'Hecha a mano, la información se daña, se pierde o no coincide entre archivos. Aquí las herramientas están integradas: capturas una vez y todo cuadra.'],
+    ['fa-mobile-screen-button', 'En cualquier equipo, sin reinstalar', 'Si cambias de computadora no recompras ni reinstalas licencias. Consulta y edita desde el celular, la tableta o la computadora.'],
+    ['fa-bolt', 'Acciones rápidas para no andar perdido', 'Las actividades del día y de la semana, las restricciones activas y tus pendientes de bitácora, minutas, submittals y materiales, juntos en un solo lugar.'],
 ];
 ?>
 
@@ -47,6 +53,7 @@ $funciones = [
         <label for="lp-menu" class="lp-burger" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
         <nav class="lp-links">
             <a href="#funciones">Funciones</a>
+            <a href="#ventajas">Ventajas</a>
             <a href="#recorrido">Recorrido</a>
             <a href="#planes">Planes</a>
             <a href="#contacto">Contacto</a>
@@ -62,13 +69,14 @@ $funciones = [
         <div class="lp-hero-txt lp-rev">
             <span class="lp-pill"><i class="fa-solid fa-bolt"></i> Control de obra en tiempo real</span>
             <h1>Tu programa de obra,<br><span class="lp-grad">siempre bajo control.</span></h1>
-            <p class="lp-lead">Gantt, lookahead, Last Planner, vPlan, materiales y reportes diarios en una sola plataforma. Menos hojas de cálculo, más obra entregada a tiempo.</p>
+            <p class="lp-lead">Gantt, lookahead, Last Planner, vPlan, materiales y reportes diarios en una sola plataforma. Menos programas, menos licencias y menos hojas de cálculo; más obra entregada a tiempo.</p>
             <div class="lp-cta">
                 <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-play"></i> Ver demo en vivo</a><?php endif; ?>
                 <a href="#planes" class="lp-btn lp-btn-ghost lp-btn-lg">Ver planes</a>
             </div>
             <ul class="lp-check">
-                <li><i class="fa-solid fa-circle-check"></i> Sin instalar nada</li>
+                <li><i class="fa-solid fa-circle-check"></i> Sin instalar nada ni comprar licencias</li>
+                <li><i class="fa-solid fa-circle-check"></i> Celular, tableta o computadora</li>
                 <li><i class="fa-solid fa-circle-check"></i> Exporta a PDF, Excel y MS Project</li>
                 <li><i class="fa-solid fa-circle-check"></i> Demo sin registro</li>
             </ul>
@@ -175,7 +183,26 @@ $funciones = [
     </div>
 </section>
 
-<section class="lp-sec lp-alt" id="producto">
+<section class="lp-sec lp-alt" id="ventajas">
+    <div class="lp-wrap">
+        <div class="lp-head lp-rev">
+            <span class="lp-eyebrow">¿Por qué ProjectWeb?</span>
+            <h2>Menos programas, menos costo,<br>menos estrés</h2>
+            <p>Todo lo que antes se repartía entre varios programas y archivos sueltos, ahora vive junto y disponible donde lo necesites.</p>
+        </div>
+        <div class="lp-grid">
+            <?php foreach ($ventajas as $i => [$ico, $t, $d]): ?>
+                <article class="lp-card lp-rev" style="--d:<?php echo $i * 70; ?>ms">
+                    <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
+                    <h3><?php echo s($t); ?></h3>
+                    <p><?php echo $d; ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="lp-sec" id="producto">
     <div class="lp-wrap">
         <div class="lp-show lp-rev">
             <div class="lp-show-txt">
@@ -274,6 +301,8 @@ $funciones = [
         <div class="lp-head lp-rev"><span class="lp-eyebrow">Preguntas frecuentes</span><h2>Lo que suelen preguntarnos</h2></div>
         <div class="lp-faq lp-rev">
             <details><summary>¿Puedo exportar mi programa a MS Project?</summary><p>Sí. Se exporta en XML (MSPDI) y lo abres en MS Project para guardarlo como .mpp. También en ProjectLibre, Excel, LibreOffice y PDF tabloide.</p></details>
+            <details><summary>¿Necesito instalar algo o comprar licencias de otros programas?</summary><p>No. ProjectWeb funciona desde el navegador y reúne lo que tradicionalmente exige tres o cuatro programas distintos, con sus licencias. Si quieres, sigues exportando a PDF, Excel o MS Project.</p></details>
+            <details><summary>¿Puedo trabajar desde el celular o si cambio de equipo?</summary><p>Sí. Entras con tu usuario desde el celular, la tableta o cualquier computadora y ves y editas la misma información, sin reinstalar ni volver a comprar nada.</p></details>
             <details><summary>¿Qué pasa si llego al límite de almacenamiento?</summary><p>Cada proyecto tiene su cuota según el plan. Al llegar al límite no se pueden subir más archivos hasta liberar espacio; lo ya guardado no se pierde.</p></details>
             <details><summary>¿En qué se diferencian los planes?</summary><p>En la cantidad de proyectos que puedes crear y el almacenamiento por proyecto. Todas las funciones están incluidas en cada plan.</p></details>
             <details><summary>¿El demo guarda mis cambios?</summary><p>No. El demo es de solo lectura y usa datos de ejemplo: no necesitas registrarte ni se guarda nada de lo que hagas.</p></details>

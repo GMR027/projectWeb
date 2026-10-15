@@ -19,12 +19,14 @@
             </div>
             <div class="campo">
                 <label for="especialidad">Especialidad</label>
-                <input type="text" id="especialidad" name="especialidad" value="<?php echo s($material->especialidad); ?>" list="lista-esp">
-                <datalist id="lista-esp">
-                    <?php foreach (array_unique(array_filter(array_map(fn($m) => $m->especialidad, \Model\Material::deProyecto((int)$proyecto->id)))) as $e): ?>
-                        <option value="<?php echo s($e); ?>">
+                <?php $catalogo = \Model\Especialidad::nombres((int)$proyecto->id); if ($material->especialidad && !in_array($material->especialidad, $catalogo, true)) $catalogo[] = $material->especialidad; ?>
+                <select id="especialidad" name="especialidad">
+                    <option value="">— Sin especialidad —</option>
+                    <?php foreach ($catalogo as $e): ?>
+                        <option value="<?php echo s($e); ?>"<?php echo $material->especialidad === $e ? ' selected' : ''; ?>><?php echo s($e); ?></option>
                     <?php endforeach; ?>
-                </datalist>
+                </select>
+                <small class="text-muted"><a href="/especialidades?proyecto=<?php echo s($proyecto->id); ?>">Administrar especialidades</a></small>
             </div>
             <div class="campo">
                 <label for="certificado_calidad">Certificado calidad</label>
@@ -50,6 +52,32 @@
                     <div class="text-sm"><a href="/materiales/ficha?id=<?php echo s($material->id); ?>" target="_blank"><i class="fa-solid fa-file-pdf"></i> <?php echo s($material->ficha_tecnica); ?></a>
                     · <label><input type="checkbox" name="quitar_ficha" value="1"> Quitar</label></div>
                 <?php endif; ?>
+            </div>
+        </div>
+        <h3 class="mt-2">Logística y entrega</h3>
+        <small class="text-muted">Estas fechas se reflejan automáticamente en el MSR.</small>
+        <div class="form-grid">
+            <div class="campo">
+                <label for="compra">Compra</label>
+                <select id="compra" name="compra">
+                    <?php foreach (\Model\Material::COMPRA as $k => $etq): ?>
+                        <option value="<?php echo $k; ?>"<?php echo $material->compra === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($material->fecha_compra_real): ?><small class="text-muted">Compra real: <?php echo formatear_fecha($material->fecha_compra_real); ?></small><?php endif; ?>
+            </div>
+            <div class="campo">
+                <label for="fecha_compra_prog">Fecha compra de material (prog.)</label>
+                <input type="date" id="fecha_compra_prog" name="fecha_compra_prog" value="<?php echo s($material->fecha_compra_prog); ?>">
+            </div>
+            <div class="campo">
+                <label for="fecha_entrega_prog">Fecha de entrega programada</label>
+                <input type="date" id="fecha_entrega_prog" name="fecha_entrega_prog" value="<?php echo s($material->fecha_entrega_prog); ?>">
+            </div>
+            <div class="campo">
+                <label for="fecha_entrega_real">Fecha de entrega real</label>
+                <input type="date" id="fecha_entrega_real" name="fecha_entrega_real" value="<?php echo s($material->fecha_entrega_real); ?>">
+                <small class="text-muted">También se llena con el botón «Entregado» del listado.</small>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Guardar</button>

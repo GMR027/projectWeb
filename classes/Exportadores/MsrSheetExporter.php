@@ -16,10 +16,18 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class MsrSheetExporter extends BaseExporter
 {
     private const NAVY = '17365D', NEGRO = '0C0C0C', GRIS = '7F7F7F', AZUL = '0070C0', AZUL_OSC = '1F497D', SECCION = '3F3F3F';
-    private const COLOR_STATUS = ['A' => '92D050', 'P' => 'FFEB9C', 'RA' => 'F79646'];
+    private const COLOR_STATUS = ['A' => '92D050', 'AN' => 'C5E384', 'P' => 'FFEB9C', 'RA' => 'F79646'];
     private const ROSA = 'FF99FF';
 
     private string $formato = 'xlsx';
+
+    private ?\Model\Msr $msr = null;
+
+    public function setMsr(?\Model\Msr $msr): self
+    {
+        $this->msr = $msr;
+        return $this;
+    }
 
     public function setFormato(string $f): self
     {
@@ -52,7 +60,7 @@ class MsrSheetExporter extends BaseExporter
 
     public function generar(string $nombreBase): string
     {
-        $d = MsrController::datos($this->proyecto);
+        $d = MsrController::datos($this->proyecto, $this->msr);
         $p = $this->proyecto;
         $libro = new Spreadsheet();
         $libro->getDefaultStyle()->getFont()->setName('Arial')->setSize(10);
@@ -94,7 +102,7 @@ class MsrSheetExporter extends BaseExporter
         // Leyenda de status
         $texto('I8', 'STATUS SUBMITTAL');
         $h->getStyle('I8')->getFont()->setBold(true)->setSize(9);
-        $ley = [9 => ['A / AN', 'A Aprobado / AN Aprobado con anotaciones', 'A'], 10 => ['P', 'En revisión', 'P'], 11 => ['RA', 'Resubmitar para aprobación', 'RA']];
+        $ley = [9 => ['A', 'Aprobado', 'A'], 10 => ['AN', 'Aprobado con anotaciones', 'AN'], 11 => ['P', 'En revisión', 'P'], 12 => ['RA', 'Resubmitar para aprobación', 'RA']];
         foreach ($ley as $r => [$k, $t, $st]) {
             $texto("I$r", $k);
             $h->mergeCells("J$r:L$r");
@@ -193,7 +201,8 @@ class MsrSheetExporter extends BaseExporter
 
             // Color automático de Status al editar el valor en la hoja (como en el archivo de referencia)
             $reglas = [];
-            foreach (['A', 'AN'] as $v) $reglas[$v] = self::COLOR_STATUS['A'];
+            $reglas['A'] = self::COLOR_STATUS['A'];
+            $reglas['AN'] = self::COLOR_STATUS['AN'];
             $reglas['P'] = self::COLOR_STATUS['P'];
             $reglas['RA'] = self::COLOR_STATUS['RA'];
             $condiciones = [];

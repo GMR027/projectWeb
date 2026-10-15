@@ -3,7 +3,10 @@
 namespace Controllers;
 
 use MVC\Router;
+use Model\Msr;
 use Model\MsrItem;
+use Model\Material;
+use Model\Submittal;
 use Model\Proyecto;
 use Model\Usuario;
 use Classes\MsrImportador;
@@ -11,26 +14,107 @@ use Classes\MsrImportador;
 /** MSR · Material Status Report */
 class MsrController
 {
+    /** MSR de la petición (GET/POST `msr` o `id`), solo si es del proyecto */
+    private static function msrDe(Proyecto $proyecto): ?Msr
+    {
+        $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
+        return Msr::deProyectoPorId((int)$proyecto->id, $f['id'] ?? $f['msr'] ?? null);
+    }
+
+    /** Listado de MSR del proyecto */
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
-        $router->render('msr/index', self::datos($proyecto) + [
-            'titulo' => 'MSR - ' . $proyecto->nombre,
+        $router->render('msr/listado', [
+            'titulo' => 'MSR - ' . $proyecto->nombre, 'proyecto' => $proyecto,
+            'msrs' => Msr::deProyecto((int)$proyecto->id), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
+        ]);
+    }
+
+    /** Un MSR (el reporte) */
+    public static function ver(Router $router)
+    {
+        $proyecto = proyecto_de_peticion();
+        $msr = self::msrDe($proyecto);
+        if (!$msr) {
+            header('Location: /msr?proyecto=' . $proyecto->id);
+            exit;
+        }
+        $router->render('msr/index', self::datos($proyecto, $msr) + [
+            'titulo' => $msr->nombre . ' - ' . $proyecto->nombre, 'msr' => $msr,
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
         ]);
     }
 
-    /** Datos del MSR (también los usan los exportadores) */
-    public static function datos(Proyecto $proyecto): array
+    public static function crear(Router $router)
     {
-        $items = MsrItem::deProyecto((int)$proyecto->id);
+        $proyecto = proyecto_de_peticion(true);
+        self::formulario($router, $proyecto, new Msr());
+    }
+
+    public static function editar(Router $router)
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $msr = self::msrDe($proyecto);
+        if (!$msr) {
+            header('Location: /msr?proyecto=' . $proyecto->id);
+            exit;
+        }
+        self::formulario($router, $proyecto, $msr);
+    }
+
+    private static function formulario(Router $router, Proyecto $proyecto, Msr $msr)
+    {
+        $alertas = [];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $msr->nombre = trim($_POST['nombre'] ?? '');
+            $msr->descripcion = trim($_POST['descripcion'] ?? '');
+            $msr->proyecto_id = $proyecto->id;
+            $partidasPost = array_values(array_filter($_POST['partidas'] ?? [], 'is_array'));
+            $alertas = $msr->validar();
+            foreach (Msr::validarPartidas($partidasPost) as $e) $alertas['error'][] = $e;
+            if (!$alertas) {
+                $r = $msr->guardar();
+                if (is_array($r)) $msr->id = $r['id'];
+                $msr->sincronizarPartidas($partidasPost);
+                header('Location: /msr/ver?proyecto=' . $proyecto->id . '&id=' . $msr->id);
+                exit;
+            }
+        }
+        $router->render('msr/formulario', [
+            'titulo' => $msr->id ? 'Editar MSR' : 'Nuevo MSR', 'proyecto' => $proyecto, 'msr' => $msr, 'alertas' => $alertas,
+            'partidas' => isset($partidasPost)
+                ? array_map(fn($p) => ['id' => (int)($p['id'] ?? 0), 'titulo' => trim($p['titulo'] ?? ''), 'materiales' => array_map('intval', $p['materiales'] ?? [])], $partidasPost)
+                : ($msr->id ? $msr->partidas() : []),
+            'catalogo' => array_map(fn($x) => ['id' => (int)$x->id, 'nombre' => $x->nombre, 'ref' => $x->referencia, 'esp' => $x->especialidad, 'img' => $x->imagen], \Model\Material::deProyecto((int)$proyecto->id)),
+        ]);
+    }
+
+    /** Elimina el MSR y sus renglones; sus paquetes de submittal quedan «Sin MSR» */
+    public static function eliminar()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        if ($msr = self::msrDe($proyecto)) $msr->eliminar();
+        header('Location: /msr?proyecto=' . $proyecto->id);
+        exit;
+    }
+
+    /** Datos del MSR (también los usan los exportadores); sin $msr, todos los renglones del proyecto */
+    public static function datos(Proyecto $proyecto, ?Msr $msr = null): array
+    {
+        $items = MsrItem::deProyecto((int)$proyecto->id, $msr ? (int)$msr->id : null);
         $secciones = [];
         foreach ($items as $it) {
             $secciones[$it->seccion][] = $it;
         }
+        // Partidas propias aún vacías también se muestran
+        if ($msr) foreach ($msr->partidas() as $p) {
+            if (!isset($secciones[$p['titulo']])) $secciones[$p['titulo']] = [];
+        }
         $dueno = Usuario::find($proyecto->usuario_id);
         return [
             'proyecto' => $proyecto,
+            'msr' => $msr,
             'items' => $items,
             'secciones' => $secciones,
             'umbral' => max(1, (int)$proyecto->msr_umbral_critico),
@@ -39,13 +123,24 @@ class MsrController
         ];
     }
 
-    /** Cambia el status en ciclo P → A → RA */
+    /** Cambia el status en ciclo P → A → RA; el submittal y todos sus renglones comparten el status */
     public static function status()
     {
         $item = self::itemEditable();
-        $item->status = MsrItem::STATUS_CICLO[$item->status] ?? 'P';
-        $item->guardar();
-        self::json(['success' => true, 'status' => $item->status]);
+        $nuevo = MsrItem::STATUS_CICLO[$item->status] ?? 'P';
+        $sub = $item->submittal_id ? Submittal::find($item->submittal_id) : null;
+        $respuesta = null;
+        if ($sub) {
+            $anterior = $sub->estatus;
+            $sub->estatus = array_search($nuevo, Submittal::STATUS_MSR, true) ?: 'enviado';
+            $sub->guardar();
+            $sub->sincronizarMsr($anterior);
+            $respuesta = $sub->fecha_respuesta;
+        } else {
+            $item->status = $nuevo;
+            $item->guardar();
+        }
+        self::json(['success' => true, 'status' => $nuevo, 'compartido' => (bool)$sub, 'fecha_respuesta' => $respuesta]);
     }
 
     /** Guarda un campo editable en línea */
@@ -63,11 +158,33 @@ class MsrController
         } else {
             $item->$campo = mb_substr($valor, 0, $campo === 'observaciones' ? 2000 : 200);
         }
+        if ($campo === 'fecha_envio_real' && $valor === '') self::json(['success' => false, 'error' => 'La fecha del submittal no puede quedar vacía'], 422);
         $item->guardar();
+
+        // Fechas compartidas: el material (compra/entrega) o el submittal (envío/respuesta) las comparten con todos sus renglones
+        $compartido = null;
+        $fecha = $item->$campo;
+        if (in_array($campo, ['fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'], true)) {
+            if ($mat = Material::find($item->material_id)) {
+                $mat->$campo = $fecha;
+                if ($campo === 'fecha_compra_real') $mat->compra = $fecha ? 'comprado' : 'pendiente';
+                $mat->guardar();
+                $mat->sincronizarMsr();
+                $compartido = ['attr' => 'mat', 'id' => (int)$mat->id];
+            }
+        } elseif (in_array($campo, ['fecha_envio_real', 'fecha_respuesta'], true)) {
+            if ($item->submittal_id && ($sub = Submittal::find($item->submittal_id))) {
+                if ($campo === 'fecha_envio_real') $sub->fecha = $fecha; else $sub->fecha_respuesta = $fecha;
+                $sub->guardar();
+                $sub->sincronizarFechas();
+                $compartido = ['attr' => 'sub', 'id' => (int)$sub->id];
+            }
+        }
+        $item = MsrItem::find($item->id);
         $umbral = max(1, (int)(Proyecto::find($item->proyecto_id)->msr_umbral_critico ?? 60));
         self::json([
             'success' => true, 'dias' => $item->diasEntrega(), 'critico' => $item->esCritico($umbral),
-            'atrasoCompra' => (bool)$item->compraAtrasada(), 'atrasoEntrega' => (bool)$item->entregaAtrasada(),
+            'atrasoCompra' => (bool)$item->compraAtrasada(), 'atrasoEntrega' => (bool)$item->entregaAtrasada(), 'compartido' => $compartido,
         ]);
     }
 
@@ -80,7 +197,8 @@ class MsrController
             $proyecto->msr_umbral_critico = $v;
             $proyecto->guardar();
         }
-        header('Location: /msr?proyecto=' . $proyecto->id);
+        $msr = self::msrDe($proyecto);
+        header('Location: ' . ($msr ? '/msr/ver?proyecto=' . $proyecto->id . '&id=' . $msr->id : '/msr?proyecto=' . $proyecto->id));
         exit;
     }
 
@@ -88,7 +206,8 @@ class MsrController
     public static function importar(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
-        $vista = ['titulo' => 'Importar MSR - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'previa' => null];
+        $msr = self::msrDe($proyecto) ?? Msr::asegurar((int)$proyecto->id);
+        $vista = ['titulo' => 'Importar MSR - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'previa' => null, 'msr' => $msr];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $f = $_FILES['archivo'] ?? null;
             $ok = $f && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name'])
@@ -113,11 +232,12 @@ class MsrController
         $proyecto = proyecto_de_peticion(true);
         try {
             @set_time_limit(180);
-            $r = MsrImportador::aplicar($_POST['token'] ?? '', $proyecto);
-            $q = http_build_query(['proyecto' => $proyecto->id, 'importado' => $r['renglones'], 'mat' => $r['materiales'], 'sub' => $r['submittals'], 'omitidos' => $r['omitidos']]);
-            header("Location: /msr?$q");
+            $msr = self::msrDe($proyecto) ?? Msr::asegurar((int)$proyecto->id);
+            $r = MsrImportador::aplicar($_POST['token'] ?? '', $proyecto, (int)$msr->id);
+            $q = http_build_query(['proyecto' => $proyecto->id, 'id' => $msr->id, 'importado' => $r['renglones'], 'mat' => $r['materiales'], 'sub' => $r['submittals'], 'omitidos' => $r['omitidos']]);
+            header("Location: /msr/ver?$q");
         } catch (\Throwable $e) {
-            header('Location: /msr/importar?proyecto=' . $proyecto->id . '&error=' . urlencode($e->getMessage()));
+            header('Location: /msr/importar?proyecto=' . $proyecto->id . '&msr=' . (int)($_POST['msr'] ?? 0) . '&error=' . urlencode($e->getMessage()));
         }
         exit;
     }
@@ -126,7 +246,7 @@ class MsrController
     {
         $proyecto = proyecto_de_peticion(true);
         MsrImportador::limpiar($_POST['token'] ?? '');
-        header('Location: /msr/importar?proyecto=' . $proyecto->id);
+        header('Location: /msr/importar?proyecto=' . $proyecto->id . '&msr=' . (int)($_POST['msr'] ?? 0));
         exit;
     }
 

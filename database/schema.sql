@@ -182,6 +182,14 @@ INSERT INTO usuarios (nombre, email, password, rol, confirmado) VALUES
 -- ============================================================
 -- MSR (materiales, submittals, reporte de estatus)
 -- ============================================================
+CREATE TABLE especialidades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    UNIQUE KEY uq_esp (proyecto_id, nombre),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE materiales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -192,27 +200,54 @@ CREATE TABLE materiales (
     imagen VARCHAR(100) DEFAULT NULL,
     ficha_tecnica VARCHAR(200) DEFAULT NULL,
     certificado_calidad VARCHAR(255) DEFAULT NULL,
+    compra ENUM('pendiente','comprado') NOT NULL DEFAULT 'pendiente',
+    fecha_compra_prog DATE DEFAULT NULL,
+    fecha_compra_real DATE DEFAULT NULL,
+    fecha_entrega_prog DATE DEFAULT NULL,
+    fecha_entrega_real DATE DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE msrs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(500) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE msr_partidas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    msr_id INT NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (msr_id) REFERENCES msrs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE submittals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
+    msr_id INT DEFAULT NULL,
     fecha DATE NOT NULL,
     numero_trabajo VARCHAR(50) NOT NULL DEFAULT '',
     departamento VARCHAR(100) NOT NULL DEFAULT '',
     para VARCHAR(150) NOT NULL DEFAULT '',
     numero_submittal VARCHAR(100) NOT NULL,
     especialidad VARCHAR(100) NOT NULL DEFAULT '',
+    estatus ENUM('enviado','rechazado','aprobado','aprobado_an') NOT NULL DEFAULT 'enviado',
+    fecha_respuesta DATE DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (msr_id) REFERENCES msrs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE submittal_materiales (
     submittal_id INT NOT NULL,
     material_id INT NOT NULL,
     PRIMARY KEY (submittal_id, material_id),
+    FOREIGN KEY (msr_id) REFERENCES msrs(id) ON DELETE CASCADE,
     FOREIGN KEY (submittal_id) REFERENCES submittals(id) ON DELETE CASCADE,
     FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -220,14 +255,15 @@ CREATE TABLE submittal_materiales (
 CREATE TABLE msr_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    submittal_id INT NOT NULL,
+    msr_id INT DEFAULT NULL,
+    submittal_id INT DEFAULT NULL,
     material_id INT NOT NULL,
     seccion VARCHAR(150) NOT NULL DEFAULT '',
     fecha_envio_requerida DATE DEFAULT NULL,
     no_submittal_contratista VARCHAR(100) NOT NULL DEFAULT '',
     fecha_envio_real DATE DEFAULT NULL,
     fecha_respuesta DATE DEFAULT NULL,
-    status ENUM('A','P','RA') NOT NULL DEFAULT 'P',
+    status ENUM('A','AN','P','RA') NOT NULL DEFAULT 'P',
     fecha_compra_prog DATE DEFAULT NULL,
     fecha_instalacion_prog DATE DEFAULT NULL,
     fecha_compra_real DATE DEFAULT NULL,

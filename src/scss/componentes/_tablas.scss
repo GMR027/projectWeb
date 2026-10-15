@@ -198,3 +198,36 @@
 :root[data-theme="dark"] .input-fecha {
   color-scheme: dark;
 }
+
+.btn-entregado.activo {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+
+// Toggle de estatus de submittal (enviado / rechazado / aprobado)
+.toggle-estatus {
+  display: inline-flex;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  border-radius: 0.8rem;
+  overflow: hidden;
+
+  .te-op {
+    padding: 0.4rem 1rem;
+    font-size: 1.2rem;
+    background: transparent;
+    color: inherit;
+    border: 0;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &:hover { opacity: 1; }
+    &.activo { opacity: 1; font-weight: 700; color: #fff; }
+    &.te-enviado.activo { background: #00b4d8; }
+    &.te-rechazado.activo { background: #dc2626; }
+    &.te-aprobado.activo { background: #10b981; }
+    &.te-aprobado_an.activo { background: #65a30d; }
+    &.te-pendiente.activo { background: #f59e0b; }
+    &.te-comprado.activo { background: #10b981; }
+  }
+}

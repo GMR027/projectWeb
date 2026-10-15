@@ -5,6 +5,7 @@ namespace Controllers;
 use MVC\Router;
 use Model\Material;
 use Model\Submittal;
+use Model\Msr;
 
 /** Paquetes de submittals (empaquetador de materiales) */
 class SubmittalController
@@ -22,6 +23,7 @@ class SubmittalController
         $paquetes = Submittal::deProyecto((int)$proyecto->id);
         $router->render('submittals/index', [
             'titulo' => 'Submittals - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'paquetes' => $paquetes,
+            'msrNombres' => array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombre], Msr::deProyecto((int)$proyecto->id)), 'n', 'id'),
             'conteos' => Submittal::conteos((int)$proyecto->id),
         ]);
     }
@@ -43,7 +45,8 @@ class SubmittalController
     public static function crear(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
-        $submittal = new Submittal(['numero_trabajo' => $proyecto->numero_trabajo ?? '']);
+        $msrId = Msr::deProyectoPorId((int)$proyecto->id, $_GET['msr'] ?? null)?->id ?? Msr::asegurar((int)$proyecto->id)->id;
+        $submittal = new Submittal(['numero_trabajo' => $proyecto->numero_trabajo ?? '', 'msr_id' => $msrId]);
         self::formulario($router, $proyecto, $submittal, []);
     }
 
@@ -65,7 +68,9 @@ class SubmittalController
             foreach (['fecha', 'numero_trabajo', 'departamento', 'para', 'numero_submittal', 'especialidad'] as $c) {
                 $submittal->$c = trim($_POST[$c] ?? '');
             }
+            $submittal->especialidad = \Model\Especialidad::resolver((int)$proyecto->id, $submittal->especialidad);
             $submittal->proyecto_id = $proyecto->id;
+            $submittal->msr_id = Msr::deProyectoPorId((int)$proyecto->id, $_POST['msr_id'] ?? null)?->id;
             $marcados = array_map('intval', $_POST['materiales'] ?? []);
             $alertas = $submittal->validar();
             if (!$alertas) {
@@ -79,8 +84,29 @@ class SubmittalController
         $router->render('submittals/formulario', [
             'titulo' => $submittal->id ? 'Editar submittal' : 'Nuevo submittal', 'proyecto' => $proyecto,
             'submittal' => $submittal, 'marcados' => $marcados, 'alertas' => $alertas,
-            'materiales' => Material::deProyecto((int)$proyecto->id),
+            'materiales' => Material::deProyecto((int)$proyecto->id), 'msrs' => Msr::deProyecto((int)$proyecto->id),
         ]);
+    }
+
+    /** Cicla el estatus: enviado → rechazado → aprobado (o fija el indicado) */
+    public static function estatus()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $s = self::submittalDe($proyecto);
+        $nuevo = $_POST['estatus'] ?? '';
+        if (!$s || !isset(Submittal::ESTATUS[$nuevo])) {
+            header('Content-Type: application/json');
+            http_response_code(422);
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        $anterior = $s->estatus;
+        $s->estatus = $nuevo;
+        $s->guardar();
+        $s->sincronizarMsr($anterior);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'estatus' => $nuevo]);
+        exit;
     }
 
     public static function eliminar()

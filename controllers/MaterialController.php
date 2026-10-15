@@ -35,15 +35,23 @@ class MaterialController
     {
         $proyecto = self::proyecto();
         $q = trim($_GET['q'] ?? '');
+        $fEsp = trim($_GET['especialidad'] ?? '');
+        $fEntrega = in_array($_GET['entrega'] ?? '', ['entregado', 'pendiente'], true) ? $_GET['entrega'] : '';
+        $fCompra = isset(Material::COMPRA[$_GET['compra'] ?? '']) ? $_GET['compra'] : '';
         $materiales = array_values(array_filter(
             Material::deProyecto((int)$proyecto->id),
-            fn($m) => $q === '' || stripos($m->nombre . ' ' . $m->referencia . ' ' . $m->especialidad, $q) !== false
+            fn($m) => ($q === '' || stripos($m->nombre . ' ' . $m->referencia . ' ' . $m->especialidad, $q) !== false)
+                && ($fEsp === '' || ($fEsp === '__sin' ? $m->especialidad === '' : $m->especialidad === $fEsp))
+                && ($fEntrega === '' || ($fEntrega === 'entregado') === $m->entregado())
+                && ($fCompra === '' || $m->compra === $fCompra)
         ));
         $router->render('materiales/index', [
             'titulo' => 'Materiales - ' . $proyecto->nombre,
             'proyecto' => $proyecto,
             'materiales' => $materiales,
             'q' => $q,
+            'fEsp' => $fEsp, 'fEntrega' => $fEntrega, 'fCompra' => $fCompra,
+            'especialidades' => \Model\Especialidad::nombres((int)$proyecto->id),
         ]);
     }
 
@@ -99,6 +107,26 @@ class MaterialController
         exit;
     }
 
+    /** Toggles de la tabla: compra (pendiente/comprado) y entregado */
+    public static function estado()
+    {
+        $proyecto = self::proyecto('POST');
+        $m = Material::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        header('Content-Type: application/json');
+        $campo = $_POST['campo'] ?? '';
+        if (!$m || (int)$m->proyecto_id !== (int)$proyecto->id || !in_array($campo, ['compra', 'entregado'], true)) {
+            http_response_code(422);
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        if ($campo === 'compra') $m->fijarCompra($_POST['valor'] ?? '');
+        else $m->fijarEntregado(($_POST['valor'] ?? '') === '1');
+        $m->guardar();
+        $m->sincronizarMsr();
+        echo json_encode(['success' => true, 'compra' => $m->compra, 'entregado' => $m->entregado(), 'fecha_entrega_real' => $m->fecha_entrega_real, 'fecha_compra_real' => $m->fecha_compra_real]);
+        exit;
+    }
+
     /** Descarga de ficha técnica (cualquiera que pueda ver el proyecto) */
     public static function ficha()
     {
@@ -129,9 +157,15 @@ class MaterialController
         $imagenActual = $material->imagen;
         $material->nombre = trim($_POST['nombre'] ?? '');
         $material->referencia = trim($_POST['referencia'] ?? '');
-        $material->especialidad = trim($_POST['especialidad'] ?? '');
+        $material->especialidad = \Model\Especialidad::resolver((int)$proyecto->id, $_POST['especialidad'] ?? '');
         $material->link_web = trim($_POST['link_web'] ?? '') ?: null;
         $material->certificado_calidad = trim($_POST['certificado_calidad'] ?? '') ?: null;
+        $compraAnterior = $material->compra;
+        foreach (['fecha_compra_prog', 'fecha_entrega_prog', 'fecha_entrega_real'] as $f) {
+            $material->$f = trim($_POST[$f] ?? '') ?: null;
+        }
+        $compraNueva = isset(Material::COMPRA[$_POST['compra'] ?? '']) ? $_POST['compra'] : 'pendiente';
+        if ($compraNueva !== $compraAnterior) $material->fijarCompra($compraNueva);
         $material->proyecto_id = $proyecto->id;
 
         $alertas = $material->validar();
@@ -183,7 +217,9 @@ class MaterialController
             $material->ficha_tecnica = null;
         }
 
-        $material->guardar();
+        $r = $material->guardar();
+        if (!$material->id && is_array($r)) $material->id = $r['id'];
+        $material->sincronizarMsr();
         return [];
     }
 }

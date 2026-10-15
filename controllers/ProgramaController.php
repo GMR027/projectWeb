@@ -497,7 +497,7 @@ class ProgramaController
                 $proyectoId = $partida->proyecto_id;
                 exigir_gestionar_proyecto(Proyecto::find($proyectoId));
                 $restriccion->eliminar();
-                header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=restriccion');
+                header('Location: ' . (self::volverA('/acciones', $proyectoId) ?? '/programa?proyecto=' . $proyectoId . '&eliminado=restriccion'));
                 exit;
             }
             header('Location: /proyectos');
@@ -517,11 +517,17 @@ class ProgramaController
                 exigir_gestionar_proyecto(Proyecto::find($partida->proyecto_id));
                 $restriccion->estado = 'resuelta';
                 $restriccion->guardar();
-                header('Location: /programa?proyecto=' . $partida->proyecto_id);
+                header('Location: ' . (self::volverA('/acciones', $partida->proyecto_id) ?? '/programa?proyecto=' . $partida->proyecto_id));
                 exit;
             }
             header('Location: /proyectos');
             exit;
         }
+    }
+
+    /** Destino de regreso permitido (solo la página de acciones rápidas del mismo proyecto) */
+    private static function volverA(string $ruta, $proyectoId): ?string
+    {
+        return ($_POST['volver'] ?? '') === $ruta ? $ruta . '?proyecto=' . (int)$proyectoId . '#acc-restr' : null;
     }
 }

@@ -266,10 +266,15 @@ class AjustesController
         $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setFechaReferencia($lunes)->generar("4WLA"));
         $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
 
-        if (\Model\MsrItem::deProyecto((int)$proyecto->id)) {
-            $agregar('03_MSR', 'MSR PDF', fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->generar("MSR"));
-            $agregar('03_MSR', 'MSR Excel', fn() => (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setFormato('xlsx')->generar("MSR"));
-        } else {
+        $hayMsr = false;
+        foreach (\Model\Msr::deProyecto((int)$proyecto->id) as $msr) {
+            if (!$msr->n_renglones) continue;
+            $hayMsr = true;
+            $base = 'MSR_' . slug_archivo($msr->nombre);
+            $agregar('03_MSR', "MSR PDF ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->generar($base));
+            $agregar('03_MSR', "MSR Excel ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato('xlsx')->generar($base));
+        }
+        if (!$hayMsr) {
             $omitidos[] = 'MSR: el proyecto no tiene renglones';
         }
 
@@ -371,9 +376,11 @@ class AjustesController
                     break;
                 case 'msr':
                     $salida = $_POST['salida'] ?? 'pdf';
+                    $msr = \Model\Msr::deProyectoPorId((int)$proyecto->id, $_POST['msr_id'] ?? null);
+                    if (!$msr) throw new \Exception('MSR no encontrado');
                     $exporter = in_array($salida, ['xlsx', 'ods'], true)
-                        ? (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setFormato($salida)
-                        : new \Classes\Exportadores\MsrPdfExporter($proyecto);
+                        ? (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato($salida)
+                        : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr);
                     break;
                 case 'submittal':
                     if (!puede_gestionar_proyecto($proyecto)) throw new \Exception('No autorizado');

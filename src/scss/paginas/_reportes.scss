@@ -41,3 +41,6 @@
   @media (max-width: 80rem) { grid-template-columns: 1fr 1fr; }
   @media (max-width: 48rem) { grid-template-columns: 1fr; }
 }
+
+// Selector de materiales de las partidas del MSR: el doble de alto
+.msr-partida .accesos-lista { max-height: 48rem; }

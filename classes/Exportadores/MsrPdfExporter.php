@@ -9,9 +9,17 @@ use Dompdf\Options;
 /** MSR en PDF A4 horizontal */
 class MsrPdfExporter extends BaseExporter
 {
+    private ?\Model\Msr $msr = null;
+
+    public function setMsr(?\Model\Msr $msr): self
+    {
+        $this->msr = $msr;
+        return $this;
+    }
+
     public function generar(string $nombreBase): string
     {
-        $datos = MsrController::datos($this->proyecto);
+        $datos = MsrController::datos($this->proyecto, $this->msr);
         $datos['img'] = fn(?string $archivo, string $carpeta) => self::imagenBase64($archivo, $carpeta);
         $datos['fechaReporte'] = date('d/m/Y');
         extract($datos);

@@ -335,6 +335,7 @@ foreach ($mats as [$ref, $nombre, $esp, $imgId, $cert]) {
     $img = $f ? Imagenes::miniatura($f) : null;
     $mid[$ref] = (int)$q("INSERT INTO materiales (proyecto_id, referencia, nombre, especialidad, imagen, certificado_calidad) VALUES ($pid, {$str($ref)}, {$str($nombre)}, {$str($esp)}, {$str($img)}, {$str($cert)})");
 }
+$q("INSERT IGNORE INTO especialidades (proyecto_id, nombre) SELECT DISTINCT proyecto_id, especialidad FROM materiales WHERE proyecto_id = $pid AND especialidad <> ''");
 $subs = [
     ['ALT-DEMO-001', 'Estructura', ['EST-VAR-8', 'CIV-CON-35'], -150, 'A'],
     ['ALT-DEMO-002', 'Estructura', ['EST-IPR-01'], -110, 'A'],
@@ -344,11 +345,12 @@ $subs = [
     ['ALT-DEMO-006', 'Seguridad electrónica', ['SEG-CAM-01', 'SEG-ACC-01'], -20, 'P'],
     ['ALT-DEMO-007', 'Acabados', ['ACA-PIS-60', 'ACA-FAC-01'], -12, 'P'],
 ];
+$msrId = (int)$q("INSERT INTO msrs (proyecto_id, nombre, descripcion) VALUES ($pid, 'MSR 1', 'Reporte principal de materiales')");
 $ord = 0;
 $provs = ['Estructura' => 'Aceros del Norte', 'Instalación eléctrica' => 'Schneider Electric', 'Hidrosanitaria' => 'Grundfos', 'Voz y datos' => 'Panduit', 'Seguridad electrónica' => 'Axis Communications', 'Acabados' => 'Interceramic'];
 foreach ($subs as [$num, $esp, $refs, $off, $st]) {
-    $sid = (int)$q("INSERT INTO submittals (proyecto_id, fecha, numero_trabajo, departamento, para, numero_submittal, especialidad) VALUES
-        ($pid, '" . $ymd((clone $hoy)->modify("$off days")) . "', 'JOB-DEMO-001', 'Ingeniería', 'Grupo Inmobiliario Aurora', {$str($num)}, {$str($esp)})");
+    $sid = (int)$q("INSERT INTO submittals (proyecto_id, msr_id, fecha, numero_trabajo, departamento, para, numero_submittal, especialidad) VALUES
+        ($pid, $msrId, '" . $ymd((clone $hoy)->modify("$off days")) . "', 'JOB-DEMO-001', 'Ingeniería', 'Grupo Inmobiliario Aurora', {$str($num)}, {$str($esp)})");
     foreach ($refs as $r) {
         $ord++;
         $q("INSERT INTO submittal_materiales (submittal_id, material_id) VALUES ($sid, {$mid[$r]})");
@@ -356,9 +358,9 @@ foreach ($subs as [$num, $esp, $refs, $off, $st]) {
         $resp = $st === 'P' ? null : (clone $envio)->modify('+6 days');
         $compra = $st === 'A' ? (clone $envio)->modify('+14 days') : null;
         $entrega = $st === 'A' ? (clone $envio)->modify('+40 days') : null;
-        $q("INSERT INTO msr_items (proyecto_id, submittal_id, material_id, seccion, fecha_envio_requerida, no_submittal_contratista, fecha_envio_real, fecha_respuesta, status,
+        $q("INSERT INTO msr_items (proyecto_id, msr_id, submittal_id, material_id, seccion, fecha_envio_requerida, no_submittal_contratista, fecha_envio_real, fecha_respuesta, status,
               fecha_compra_prog, fecha_instalacion_prog, fecha_compra_real, fecha_entrega_prog, fecha_entrega_real, proveedor, observaciones, orden) VALUES
-            ($pid, $sid, {$mid[$r]}, {$str(mb_strtoupper($esp))}, '" . $ymd((clone $envio)->modify('-3 days')) . "', {$str(900 + $ord)}, '" . $ymd($envio) . "',
+            ($pid, $msrId, $sid, {$mid[$r]}, {$str(mb_strtoupper($esp))}, '" . $ymd((clone $envio)->modify('-3 days')) . "', {$str(900 + $ord)}, '" . $ymd($envio) . "',
              {$str($resp ? $ymd($resp) : null)}, '$st', {$str($compra ? $ymd($compra) : null)}, '" . $ymd((clone $envio)->modify('+75 days')) . "',
              {$str($compra && $compra < $hoy ? $ymd($compra) : null)}, {$str($entrega ? $ymd($entrega) : null)}, {$str($entrega && $entrega < $hoy ? $ymd($entrega) : null)},
              {$str($provs[$esp] ?? '')}, '', $ord)");

@@ -77,7 +77,7 @@ class MsrImportador
             }
             $ultimoSub = $sub;
             $st = strtoupper($texto(9, $r));
-            $st = $st === 'AN' ? 'A' : (in_array($st, ['A', 'P', 'RA'], true) ? $st : 'P');
+            $st = in_array($st, ['A', 'AN', 'P', 'RA'], true) ? $st : 'P';
             $img = null;
             // La foto puede estar anclada en la fila o hasta 2 filas antes
             foreach ([$r, $r - 1, $r - 2] as $fr) {
@@ -114,7 +114,7 @@ class MsrImportador
     }
 
     /** Crea materiales, paquetes y renglones del MSR a partir de lo analizado */
-    public static function aplicar(string $token, Proyecto $proyecto): array
+    public static function aplicar(string $token, Proyecto $proyecto, int $msrId): array
     {
         $d = self::cargar($token, (int)$proyecto->id);
         if (!$d) throw new \Exception('La importación expiró o no es válida. Sube el archivo de nuevo.');
@@ -127,23 +127,35 @@ class MsrImportador
         foreach ($d['filas'] as $f) {
             $material = Material::buscar($pid, $f['nombre'], $f['referencia']);
             if (!$material) {
-                $material = new Material(['proyecto_id' => $pid, 'nombre' => $f['nombre'], 'referencia' => $f['referencia']]);
+                $material = new Material(['proyecto_id' => $pid, 'nombre' => $f['nombre'], 'referencia' => $f['referencia'],
+                    'especialidad' => \Model\Especialidad::resolver($pid, $f['seccion'])]);
+                self::fechasMaterial($material, $f);
                 if ($f['imagen'] && is_file("$dir/img/" . basename($f['imagen']))) {
                     $material->imagen = Imagenes::miniatura("$dir/img/" . basename($f['imagen']));
                 }
                 $material->id = $material->guardar()['id'];
                 $cont['materiales']++;
-            } elseif (!$material->imagen && $f['imagen'] && is_file("$dir/img/" . basename($f['imagen']))) {
-                $material->imagen = Imagenes::miniatura("$dir/img/" . basename($f['imagen']));
-                $material->guardar();
+            } else {
+                $cambio = false;
+                if (!$material->imagen && $f['imagen'] && is_file("$dir/img/" . basename($f['imagen']))) {
+                    $material->imagen = Imagenes::miniatura("$dir/img/" . basename($f['imagen']));
+                    $cambio = true;
+                }
+                if (!$material->especialidad && $f['seccion']) {
+                    $material->especialidad = \Model\Especialidad::resolver($pid, $f['seccion']);
+                    $cambio = true;
+                }
+                $cambio = self::fechasMaterial($material, $f) || $cambio;
+                if ($cambio) $material->guardar();
             }
 
             if (!isset($paquetes[$f['submittal']])) {
                 $sub = Submittal::buscarPorNumero($pid, $f['submittal']);
                 if (!$sub) {
                     $sub = new Submittal([
-                        'proyecto_id' => $pid, 'numero_trabajo' => $proyecto->numero_trabajo ?? '',
-                        'numero_submittal' => $f['submittal'],
+                        'proyecto_id' => $pid, 'msr_id' => $msrId, 'numero_trabajo' => $proyecto->numero_trabajo ?? '',
+                        'numero_submittal' => $f['submittal'], 'especialidad' => \Model\Especialidad::resolver($pid, $f['seccion']),
+                        'estatus' => ['A' => 'aprobado', 'AN' => 'aprobado_an', 'RA' => 'rechazado'][$f['status']] ?? 'enviado', 'fecha_respuesta' => $f['fecha_respuesta'],
                         'fecha' => $f['fecha_envio_real'] ?: ($f['fecha_envio_requerida'] ?: date('Y-m-d')),
                     ]);
                     $sub->id = $sub->guardar()['id'];
@@ -156,7 +168,7 @@ class MsrImportador
             $existente = MsrItem::consultarSQL("SELECT * FROM msr_items WHERE submittal_id = " . (int)$sub->id . " AND material_id = " . (int)$material->id . " LIMIT 1")[0] ?? null;
             if ($existente) { $cont['omitidos']++; continue; }
 
-            $item = new MsrItem(['proyecto_id' => $pid, 'submittal_id' => $sub->id, 'material_id' => $material->id, 'orden' => ++$orden + 100000]);
+            $item = new MsrItem(['proyecto_id' => $pid, 'msr_id' => $sub->msr_id ?: $msrId, 'submittal_id' => $sub->id, 'material_id' => $material->id, 'orden' => ++$orden + 100000]);
             foreach (['seccion', 'fecha_envio_requerida', 'no_submittal_contratista', 'fecha_envio_real', 'fecha_respuesta', 'status',
                       'fecha_compra_prog', 'fecha_instalacion_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real',
                       'proveedor', 'observaciones'] as $c) {
@@ -168,6 +180,17 @@ class MsrImportador
         }
         self::limpiar($token);
         return $cont;
+    }
+
+    /** Llena (solo vacíos) las fechas de compra y entrega del material con las del renglón; true si cambió algo */
+    private static function fechasMaterial(Material $m, array $f): bool
+    {
+        $cambio = false;
+        foreach (['fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'] as $c) {
+            if (!$m->$c && !empty($f[$c])) { $m->$c = $f[$c]; $cambio = true; }
+        }
+        if ($m->fecha_compra_real && $m->compra !== 'comprado') { $m->compra = 'comprado'; $cambio = true; }
+        return $cambio;
     }
 
     public static function limpiar(string $token): void

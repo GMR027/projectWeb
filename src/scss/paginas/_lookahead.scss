@@ -133,7 +133,7 @@
     td { border: 1px solid var(--text); padding: .2rem .8rem; }
     td:first-child:not([colspan]) { min-width: 8rem; text-align: center; font-weight: 700; color: #111; }
   }
-  .msr-ley .msr-st-A, .msr-ley .msr-st-P, .msr-ley .msr-st-RA { display: table-cell; border-radius: 0; }
+  .msr-ley .msr-st-A, .msr-ley .msr-st-AN, .msr-ley .msr-st-P, .msr-ley .msr-st-RA { display: table-cell; border-radius: 0; }
   .msr-crit-sw { background: #FF99FF; min-width: 8rem; }
   .msr-atraso-nota { display: block; margin-top: .6rem; }
   .msr-umbral { margin-left: auto; display: flex; gap: .6rem; align-items: center; input { width: 7rem; } }
@@ -159,6 +159,7 @@
 .msr-st { display: inline-block; min-width: 5.4rem; text-align: center; padding: .3rem .6rem; border-radius: .4rem; font-weight: 700; border: 0; color: #111; }
 .msr-st-btn { cursor: pointer; }
 .msr-st-A { background: #92D050; }
+.msr-st-AN { background: #C5E384; }
 .msr-st-P { background: #FFEB9C; }
 .msr-st-RA { background: #F79646; }
 td.msr-crit, b.msr-crit { background: #FF99FF; color: #111; padding: .3rem .6rem; border-radius: .3rem; }

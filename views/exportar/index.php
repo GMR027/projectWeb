@@ -125,6 +125,12 @@
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="msr">
+                <label class="text-sm text-muted" for="msr-id">MSR</label>
+                <select id="msr-id" name="msr_id" required>
+                    <?php foreach (\Model\Msr::deProyecto((int)$proyecto->id) as $mx): ?>
+                        <option value="<?php echo s($mx->id); ?>"><?php echo s($mx->nombre); ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <label class="text-sm text-muted" for="salida-msr">Formato de archivo</label>
                 <select id="salida-msr" name="salida">
                     <option value="pdf">PDF (.pdf)</option>

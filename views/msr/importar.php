@@ -1,16 +1,17 @@
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-file-import"></i> Importar MSR desde Excel</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · se importa en <strong><?php echo s($msr->nombre); ?></strong></p>
     </div>
-    <a href="/msr?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← MSR</a>
+    <a href="/msr/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($msr->id); ?>" class="btn btn-ghost">← <?php echo s($msr->nombre); ?></a>
 </div>
 
 <?php if (empty($previa)): ?>
 <div class="card">
     <p class="text-muted text-sm">Sube un MSR en .xlsx con el formato estándar (encabezado «Spec Number» en la columna C). Se crean los materiales con su foto en miniatura, un paquete por número de submittal y los renglones del MSR. Antes de guardar verás una vista previa.</p>
-    <form method="POST" action="/msr/importar?proyecto=<?php echo s($proyecto->id); ?>" enctype="multipart/form-data" class="formulario">
+    <form method="POST" action="/msr/importar?proyecto=<?php echo s($proyecto->id); ?>&msr=<?php echo s($msr->id); ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+        <input type="hidden" name="msr" value="<?php echo s($msr->id); ?>">
         <div class="campo"><label for="archivo">Archivo .xlsx</label><input type="file" id="archivo" name="archivo" accept=".xlsx" required></div>
         <button type="submit" class="btn btn-primary">Analizar archivo</button>
     </form>
@@ -27,11 +28,13 @@
     <div class="la-controles" style="margin:1rem 0">
         <form method="POST" action="/msr/importar/confirmar">
             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+        <input type="hidden" name="msr" value="<?php echo s($msr->id); ?>">
             <input type="hidden" name="token" value="<?php echo s($previa['token']); ?>">
             <button type="submit" class="btn btn-primary">Confirmar importación</button>
         </form>
         <form method="POST" action="/msr/importar/cancelar">
             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+        <input type="hidden" name="msr" value="<?php echo s($msr->id); ?>">
             <input type="hidden" name="token" value="<?php echo s($previa['token']); ?>">
             <button type="submit" class="btn btn-ghost">Cancelar</button>
         </form>

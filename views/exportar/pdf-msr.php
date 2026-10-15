@@ -1,6 +1,6 @@
 <?php
-$colSt = ['A' => '#92D050', 'P' => '#FFEB9C', 'RA' => '#F79646'];
-$etq = ['A' => 'A', 'P' => 'P', 'RA' => 'RA'];
+$colSt = ['A' => '#92D050', 'AN' => '#C5E384', 'P' => '#FFEB9C', 'RA' => '#F79646'];
+$etq = ['A' => 'A', 'AN' => 'AN', 'P' => 'P', 'RA' => 'RA'];
 $logoE = $img($logoEmpresa, 'build/img/logos');
 $logoC = $img($proyecto->contratista_logo, 'build/img/logos');
 $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
@@ -48,7 +48,8 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
         <td style="padding-top:4pt">
             <div style="font-weight:bold;font-size:5.6pt">STATUS SUBMITTAL</div>
             <table class="leyenda">
-                <tr><td class="c" style="background:#92D050;width:26pt"><b>A / AN</b></td><td><b>A</b> Aprobado / <b>AN</b> Aprobado con anotaciones</td></tr>
+                <tr><td class="c" style="background:#92D050;width:26pt"><b>A</b></td><td>Aprobado</td></tr>
+                <tr><td class="c" style="background:#C5E384"><b>AN</b></td><td>Aprobado con anotaciones</td></tr>
                 <tr><td class="c" style="background:#FFEB9C"><b>P</b></td><td>En revisión</td></tr>
                 <tr><td class="c" style="background:#F79646"><b>RA</b></td><td>Resubmitar para aprobación</td></tr>
             </table>
