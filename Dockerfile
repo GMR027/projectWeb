@@ -5,7 +5,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignor
 
 FROM php:8.3-apache
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libxml2-dev libonig-dev \
+        libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libxml2-dev libonig-dev poppler-utils \
     && docker-php-ext-configure gd --with-jpeg --with-freetype \
     && docker-php-ext-install -j"$(nproc)" mysqli gd zip mbstring exif \
     && rm -rf /var/lib/apt/lists/*

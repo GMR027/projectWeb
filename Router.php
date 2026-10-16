@@ -19,7 +19,7 @@ class Router
 
     public function comprobarRutas()
     {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) session_start();   // algún include ya pudo iniciarla
         $currentUrl = strtok($_SERVER['REQUEST_URI'], '?') ?: '/';
         // Normalizar: si el proyecto corre en subdirectorio, se limpia aquí
         $method = $_SERVER['REQUEST_METHOD'];
