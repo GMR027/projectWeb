@@ -5,6 +5,8 @@ $colsTabla = 6 + 2 * ((int)$rec1 + (int)$rec2);   // SEQ, TASK, START, FINISH + 
 $logoC = $proyecto->contratista_logo;
 $logoE = $proyecto->logoEmpresa();
 $planoImg = $lamina->marcas_png ?: $lamina->plano;
+$lkW = $lkH = 0.0;
+$enlaces = $lamina->marcas_png ? \Classes\EnlacesLamina::de($lamina->marcas_json, $lkW, $lkH) : [];
 $editarFila = fn($t, $campo) => $puedeEditar
     ? '<input type="date" class="vp-rec" data-actividad="' . (int)$t['actividad']->id . '" data-campo="' . $campo . '" value="' . s($t[$campo]) . '">'
     : s($fd($t[$campo]));
@@ -16,7 +18,6 @@ $editarFila = fn($t, $campo) => $puedeEditar
     </div>
     <div class="la-controles">
         <?php if ($puedeEditar): ?>
-            <?php if ($lamina->plano): ?><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-primary"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
             <a href="/vplan/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost">Editar lámina</a>
         <?php endif; ?>
         <a href="/vplan?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Láminas</a>
@@ -57,6 +58,8 @@ $editarFila = fn($t, $campo) => $puedeEditar
 </div>
 <?php endif; ?>
 
+<div class="vp-hoja" id="vp-hoja">
+<button type="button" class="vp-cerrar-ampliado no-print" id="vp-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 <div class="vp-lamina">
     <div class="vp-encabezado">
         <div class="vp-logo"><?php if ($logoC): ?><img src="/build/img/logos/<?php echo s($logoC); ?>" alt=""><?php endif; ?></div>
@@ -67,7 +70,7 @@ $editarFila = fn($t, $campo) => $puedeEditar
     <div class="vp-cuerpo<?php echo ($rec1 && $rec2) ? ' vp-con-rec2' : ($rec1 || $rec2 ? ' vp-con-rec' : ''); ?>">
         <div class="vp-izq">
             <div class="vp-plano">
-                <?php if ($planoImg): ?><img src="/uploads/vplan/<?php echo s($planoImg); ?>" alt="Plano"><?php else: ?><p class="text-muted">Sin imagen de plano. Súbela en «Editar lámina».</p><?php endif; ?>
+                <?php if ($planoImg): ?><?php if ($enlaces): ?><div class="vp-lk-wrap"><?php endif; ?><img src="/uploads/vplan/<?php echo s($planoImg); ?>" alt="Plano"><?php if ($enlaces): echo \Classes\EnlacesLamina::html($enlaces, $lkW, $lkH); ?></div><?php endif; ?><?php else: ?><p class="text-muted">Sin imagen de plano. Súbela en «Editar lámina».</p><?php endif; ?>
             </div>
             <div class="vp-simbologia-fila">
                 <div class="vp-simb-img"><?php if ($lamina->simbologia): ?><img src="/uploads/vplan/<?php echo s($lamina->simbologia); ?>" alt="Simbología"><?php endif; ?></div>
@@ -119,6 +122,7 @@ $editarFila = fn($t, $campo) => $puedeEditar
                 <?php if (!$tareas): ?><tr><td colspan="<?php echo $colsTabla; ?>" class="text-muted">Selecciona una partida con actividades en «Editar lámina».</td></tr><?php endif; ?>
                 </tbody>
             </table></div>
+            <?php if ($filtrada): ?><p class="text-sm text-muted no-print">Esta lámina muestra <?php echo count($tareas); ?> actividades de la partida (<?php echo s($partida->nombre); ?>). <?php if ($puedeEditar): ?><a href="/vplan/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>">Cambiar selección</a><?php endif; ?></p><?php endif; ?>
             <?php foreach ($tablas as $bloque): $t = $bloque['tabla']; ?>
                 <div class="vp-bloque">
                     <?php if ($puedeEditar): ?>
@@ -146,6 +150,132 @@ $editarFila = fn($t, $campo) => $puedeEditar
         <div>UPDATED: <?php $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']; echo $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y'); ?></div>
     </div>
 </div>
+</div><!-- /vp-hoja -->
+
+<section class="card vp-acciones no-print" id="vp-acciones">
+    <h3>Acciones</h3>
+    <div class="vp-acciones-menu">
+        <?php if ($puedeEditar && $lamina->plano): ?><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-primary"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
+        <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
+        <?php if ($puedeEditar): ?><button type="button" class="btn btn-primary" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>
+    </div>
+    <div class="vp-notas">
+        <h4>Notas</h4>
+        <p class="text-muted" id="vp-notas-vacio" hidden>Aún no hay notas en esta lámina.</p>
+        <ul class="vp-notas-lista" id="vp-notas-lista"></ul>
+    </div>
+</section>
+
+<?php if ($puedeEditar): ?>
+<div class="modal-overlay" id="vp-nota-modal" aria-hidden="true">
+    <form class="modal-card vp-nota-card" id="vp-nota-form" role="dialog" aria-modal="true" aria-labelledby="vp-nota-titulo">
+        <h3 class="modal-titulo" id="vp-nota-titulo">Crear nota</h3>
+        <p class="text-muted text-sm vp-nota-fecha">Fecha: <strong id="vp-nota-fecha"></strong> <span id="vp-nota-auto">(se pone automáticamente)</span></p>
+        <div class="campo">
+            <label for="vp-nota-descripcion">Descripción *</label>
+            <textarea id="vp-nota-descripcion" rows="5" maxlength="<?php echo (int)\Model\VplanNota::MAX_LARGO; ?>" required></textarea>
+        </div>
+        <p class="msr-error-txt text-sm" id="vp-nota-error" hidden></p>
+        <div class="modal-acciones">
+            <button type="button" class="btn btn-ghost" id="vp-nota-cancelar"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="vp-nota-guardar"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </div>
+    </form>
+</div>
+<?php endif; ?>
+
+<script>
+(function () {
+    const lamina = <?php echo (int)$lamina->id; ?>;
+    const puedeEditar = <?php echo $puedeEditar ? 'true' : 'false'; ?>;
+    const notas = <?php echo json_encode($notas, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ---- Ampliar: la lámina a pantalla completa, con botón de cerrar abajo a la izquierda ----
+    const hoja = document.getElementById('vp-hoja');
+    const modalConfirm = document.getElementById('modal-confirm');   // se mueve dentro de la lámina para que se vea a pantalla completa
+    const abrir = () => {
+        hoja.classList.add('vp-ampliado');
+        if (modalConfirm) hoja.appendChild(modalConfirm);
+        document.body.classList.add('vp-sin-scroll');
+        if (hoja.requestFullscreen) hoja.requestFullscreen().catch(() => {});   // si el navegador no lo permite, queda a pantalla completa de la página
+    };
+    const cerrar = () => {
+        hoja.classList.remove('vp-ampliado');
+        if (modalConfirm && modalConfirm.parentNode === hoja) document.body.appendChild(modalConfirm);
+        document.body.classList.remove('vp-sin-scroll');
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+    document.getElementById('vp-ampliar').addEventListener('click', abrir);
+    document.getElementById('vp-cerrar-ampliado').addEventListener('click', cerrar);
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) cerrar(); });   // Esc del navegador
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && hoja.classList.contains('vp-ampliado')) cerrar(); });
+
+    // ---- Notas ----
+    const lista = document.getElementById('vp-notas-lista'), vacio = document.getElementById('vp-notas-vacio');
+    const pintar = () => {
+        vacio.hidden = notas.length > 0;
+        lista.innerHTML = notas.map(n =>
+            '<li class="vp-nota" data-id="' + n.id + '">' +
+            '<div class="vp-nota-cab"><span class="vp-nota-fecha-txt"><i class="fa-regular fa-calendar"></i> ' + esc(n.fecha) + '</span>' +
+            (puedeEditar ? '<span class="vp-nota-acc"><button type="button" class="btn btn-sm btn-ghost" data-nota="editar"><i class="fa-solid fa-pen"></i> Editar</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" data-nota="borrar"><i class="fa-solid fa-trash-can"></i> Borrar</button></span>' : '') +
+            '</div><p class="vp-nota-texto">' + esc(n.descripcion) + '</p></li>'
+        ).join('');
+    };
+    pintar();
+    if (!puedeEditar) return;
+
+    const modal = document.getElementById('vp-nota-modal'), form = document.getElementById('vp-nota-form');
+    const area = document.getElementById('vp-nota-descripcion'), err = document.getElementById('vp-nota-error');
+    const btnGuardar = document.getElementById('vp-nota-guardar');
+    let editando = null;
+    const abrirModal = nota => {
+        editando = nota || null;
+        document.getElementById('vp-nota-titulo').textContent = nota ? 'Editar nota' : 'Crear nota';
+        const hoy = new Date(), p = n => String(n).padStart(2, '0');
+        document.getElementById('vp-nota-fecha').textContent = nota ? nota.fecha : p(hoy.getDate()) + '/' + p(hoy.getMonth() + 1) + '/' + hoy.getFullYear();
+        document.getElementById('vp-nota-auto').hidden = !!nota;
+        area.value = nota ? nota.descripcion : '';
+        err.hidden = true;
+        modal.classList.add('abierto'); modal.setAttribute('aria-hidden', 'false');
+        area.focus();
+    };
+    const cerrarModal = () => { modal.classList.remove('abierto'); modal.setAttribute('aria-hidden', 'true'); editando = null; };
+    document.getElementById('vp-nota-nueva').addEventListener('click', () => abrirModal());
+    document.getElementById('vp-nota-cancelar').addEventListener('click', cerrarModal);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('abierto')) cerrarModal(); });
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!area.value.trim()) { err.textContent = 'La descripción es obligatoria'; err.hidden = false; return; }
+        btnGuardar.disabled = true;
+        try {
+            const datos = { lamina, descripcion: area.value };
+            if (editando) datos.id = editando.id;
+            const d = await post('/api/vplan/nota/guardar', datos);
+            if (!d.success) { err.textContent = d.error || 'No se pudo guardar'; err.hidden = false; return; }
+            if (editando) notas[notas.findIndex(n => n.id === editando.id)] = d.nota; else notas.unshift(d.nota);
+            pintar(); cerrarModal();
+        } catch (_) { err.textContent = 'Error de conexión'; err.hidden = false; }
+        finally { btnGuardar.disabled = false; }
+    });
+
+    lista.addEventListener('click', async e => {
+        const b = e.target.closest('[data-nota]');
+        if (!b) return;
+        const nota = notas.find(n => n.id === +b.closest('.vp-nota').dataset.id);
+        if (!nota) return;
+        if (b.dataset.nota === 'editar') return abrirModal(nota);
+        const ok = await window.confirmarModal({ titulo: '¿Borrar esta nota?', mensaje: 'Esta acción no se puede deshacer.', aceptar: 'Sí, borrar', iconoBoton: 'fa-trash-can' });
+        if (!ok) return;
+        const d = await post('/api/vplan/nota/eliminar', { lamina, id: nota.id });
+        if (d.success) { notas.splice(notas.indexOf(nota), 1); pintar(); }
+    });
+})();
+</script>
 
 <?php if ($puedeEditar): ?>
 <script>

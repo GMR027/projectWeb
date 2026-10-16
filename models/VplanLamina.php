@@ -75,6 +75,27 @@ class VplanLamina extends ActiveRecord
         }
     }
 
+    /** Ids de las actividades elegidas para esta lámina (vacío = toda la partida) */
+    public function seleccion(): array
+    {
+        if (!$this->id) return [];
+        $res = self::$db->query("SELECT actividad_id FROM vplan_lamina_actividades WHERE lamina_id = " . (int)$this->id);
+        $out = [];
+        while ($r = $res->fetch_row()) $out[] = (int)$r[0];
+        return $out;
+    }
+
+    /** Reemplaza la selección. Los ids deben ser de la partida de la lámina; vacío = toda la partida */
+    public function guardarSeleccion(array $ids): void
+    {
+        $id = (int)$this->id;
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        self::$db->query("DELETE FROM vplan_lamina_actividades WHERE lamina_id = $id");
+        foreach ($ids as $aid) {
+            self::$db->query("INSERT IGNORE INTO vplan_lamina_actividades (lamina_id, actividad_id) VALUES ($id, $aid)");
+        }
+    }
+
     /** [actividad_id => fila de recovery] */
     public function recovery(): array
     {

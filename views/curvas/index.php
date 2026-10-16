@@ -5,6 +5,7 @@
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($curvas); ?> curva(s)</p>
     </div>
     <div class="la-controles">
+        <a href="/curvas/s?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-chart-line"></i> Curva S del programa</a>
         <a href="/curvas/maestra?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-chart-area"></i> Gráfica maestra</a>
         <?php if ($puedeEditar): ?><a href="/curvas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nueva curva</a><?php endif; ?>
     </div>

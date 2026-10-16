@@ -34,6 +34,13 @@ function bandeja_sin_leer(): int
     return \Model\Contacto::total('leido = 0') + \Model\Soporte::total('leido = 0');
 }
 
+/** Respuestas del administrador que el cliente en sesión aún no ha visto (aviso en Soporte) */
+function soporte_respuestas_nuevas(): int
+{
+    if (($_SESSION['rol'] ?? '') !== 'cliente' || empty($_SESSION['id'])) return 0;
+    return \Model\SoporteRespuesta::nuevasDeUsuario((int)$_SESSION['id']);
+}
+
 function is_auth(): bool
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
@@ -268,4 +275,118 @@ function fecha_larga_es($fecha = null): string
     $dias = [1 => 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
     $meses = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
     return $dias[(int)date('N', $t)] . ', ' . $meses[(int)date('n', $t)] . ' ' . date('d, Y', $t);
+}
+
+
+/** ¿La petición viene de un modal (iframe)? Los formularios se muestran sin menú y, al guardar, avisan a la página padre */
+function es_modal(): bool
+{
+    return ($_GET['modal'] ?? '') === '1';
+}
+
+/** Termina un guardado: en un modal avisa a la página que lo abrió; si no, redirige */
+function terminar_guardado(string $destino, string $evento = 'actividad-guardada'): void
+{
+    if (es_modal()) {
+        echo '<!DOCTYPE html><html><body><script>parent.postMessage({ tipo: ' . json_encode($evento) . ' }, location.origin);</script></body></html>';
+        exit;
+    }
+    header('Location: ' . $destino);
+    exit;
+}
+
+
+// ========== HERRAMIENTAS VISIBLES PARA EL VISITANTE ==========
+
+/** Clave de la herramienta a la que pertenece una ruta (o null si la ruta no es una herramienta restringible) */
+function herramienta_de_ruta(string $ruta): ?string
+{
+    $ruta = parse_url($ruta, PHP_URL_PATH) ?: '/';
+    foreach (\Model\Usuario::HERRAMIENTAS as $clave => [, $prefijos]) {
+        foreach ($prefijos as $p) {
+            if ($ruta === $p || str_starts_with($ruta, $p . '/')) return $clave;
+        }
+    }
+    return null;
+}
+
+/** Herramientas que el visitante en sesión puede usar (null = todas; siempre null para admin y cliente) */
+function herramientas_visitante(): ?array
+{
+    static $cache = false;
+    if ($cache !== false) return $cache;
+    if (!is_auth() || !is_visitante() || es_demo()) return $cache = null;
+    $u = \Model\Usuario::find((int)$_SESSION['id']);
+    return $cache = $u ? $u->herramientasPermitidas() : null;
+}
+
+function herramienta_permitida(?string $clave): bool
+{
+    if ($clave === null) return true;
+    $h = herramientas_visitante();
+    return $h === null || in_array($clave, $h, true);
+}
+
+/** Primera pantalla del proyecto a la que el usuario tiene acceso (el programa, salvo que se le haya ocultado) */
+function url_inicio_proyecto(int $proyectoId): string
+{
+    $h = herramientas_visitante();
+    $orden = ['programa', 'lookahead', 'vplan', 'lastplanner', 'reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'curvas', 'msr', 'calendario', 'graficos'];
+    foreach ($orden as $c) {
+        if ($h === null || in_array($c, $h, true)) return \Model\Usuario::HERRAMIENTAS[$c][1][0] . '?proyecto=' . $proyectoId;
+    }
+    return '/proyectos';
+}
+
+
+// ========== PROTECCIÓN CSRF ==========
+// Cada sesión tiene un código secreto. Se agrega solo a todos los formularios POST y a los fetch (ver csrf_inyectar) y el servidor
+// rechaza cualquier POST que no lo traiga (public/index.php), así una página ajena no puede enviar formularios en nombre del usuario.
+
+function csrf_token(): string
+{
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    return $_SESSION['csrf'] ??= bin2hex(random_bytes(32));
+}
+
+/** Comprueba el código de una petición que modifica datos; si falla, responde con el error y termina */
+function csrf_verificar(): void
+{
+    if (in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'OPTIONS'], true)) return;
+    $enviado = (string)($_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if ($enviado !== '' && hash_equals(csrf_token(), $enviado)) return;
+
+    $ruta = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    // Una subida mayor que post_max_size llega vacía: no es un ataque, es un archivo demasiado grande
+    $vacia = (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0 && empty($_POST) && empty($_FILES);
+    $msg = $vacia ? 'El archivo es demasiado grande para el servidor (revisa upload_max_filesize y post_max_size).' : 'La sesión caducó o la petición no es válida. Recarga la página e inténtalo de nuevo.';
+    http_response_code(419);
+    if (str_starts_with($ruta, '/api/') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => $msg]);
+        exit;
+    }
+    $volver = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH) ?: '/';
+    $host = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_HOST);
+    if ($host && $host !== ($_SERVER['SERVER_NAME'] ?? '') && $host !== explode(':', $_SERVER['HTTP_HOST'] ?? '')[0]) $volver = '/';
+    header('Location: ' . $volver . '?error=' . urlencode($msg));
+    exit;
+}
+
+/** Agrega el código a cada <form method="post"> (fuera de los <script>) y, en el <head>, el meta y la pieza que lo manda en fetch y en formularios creados por JavaScript */
+function csrf_inyectar(string $html): string
+{
+    $t = htmlspecialchars(csrf_token(), ENT_QUOTES);
+    $partes = preg_split('#(<script\b.*?</script>)#is', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    foreach ($partes as $i => $p) {
+        if ($i % 2 === 0) {
+            $partes[$i] = preg_replace_callback('#<form\b[^>]*\bmethod\s*=\s*["\']?post["\']?[^>]*>#i', fn($m) => $m[0] . '<input type="hidden" name="_csrf" value="' . $t . '">', $p);
+        }
+    }
+    $html = implode('', $partes);
+    $cabeza = '<meta name="csrf-token" content="' . $t . '"><script>(function(){var t=document.querySelector(\'meta[name=csrf-token]\').content,f=window.fetch;'
+        . 'window.fetch=function(u,o){o=o||{};var m=String(o.method||(u&&u.method)||"GET").toUpperCase();if(m!=="GET"&&m!=="HEAD"){var url=typeof u==="string"?u:(u&&u.url)||"";if(!/^[a-z]+:/i.test(url)||url.indexOf(location.origin)===0){var h=new Headers(o.headers||(u&&u.headers)||{});h.set("X-CSRF-Token",t);o.headers=h;}}return f.call(this,u,o);};'
+        . 'function poner(fm){if(!fm||String(fm.method).toLowerCase()!=="post"||fm.querySelector(\'input[name=_csrf]\'))return;var i=document.createElement("input");i.type="hidden";i.name="_csrf";i.value=t;fm.appendChild(i);}'
+        . 'document.addEventListener("submit",function(e){poner(e.target)},true);var s=HTMLFormElement.prototype.submit;HTMLFormElement.prototype.submit=function(){poner(this);return s.call(this)};})();</script>';
+    return preg_replace('#</head>#i', $cabeza . '</head>', $html, 1);
 }

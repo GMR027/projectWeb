@@ -155,7 +155,11 @@ class MaterialController
     {
         $anterior = ['nombre' => $material->nombre, 'especialidad' => $material->especialidad, 'ficha' => $material->ficha_tecnica];
         $imagenActual = $material->imagen;
-        $material->nombre = trim($_POST['nombre'] ?? '');
+        $material->nombre_base = mb_substr(trim($_POST['nombre_base'] ?? ''), 0, 255);
+        $material->marca = mb_substr(trim($_POST['marca'] ?? ''), 0, 100);
+        $material->modelo = mb_substr(trim($_POST['modelo'] ?? ''), 0, 100);
+        $material->valor_extra = mb_substr(trim($_POST['valor_extra'] ?? ''), 0, 150);
+        $material->armarNombre();
         $material->referencia = trim($_POST['referencia'] ?? '');
         $material->especialidad = \Model\Especialidad::resolver((int)$proyecto->id, $_POST['especialidad'] ?? '');
         $material->link_web = trim($_POST['link_web'] ?? '') ?: null;

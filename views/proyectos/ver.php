@@ -4,7 +4,7 @@
         <p class="text-muted"><?php echo s($proyecto->codigo); ?> · <?php echo s($proyecto->ubicacion); ?></p>
     </div>
     <div>
-        <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">Ver Proyecto</a>
+        <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-primary">Ver Proyecto</a>
         <a href="/proyectos" class="btn btn-ghost">← Volver</a>
     </div>
 </div>

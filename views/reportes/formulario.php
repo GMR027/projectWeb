@@ -19,7 +19,7 @@ foreach ($personal as $pid => $p) $itemsPers[] = ['id' => $pid, 'titulo' => $p->
             <div class="campo"><label>Proyecto</label><input type="text" value="<?php echo s($proyecto->nombre); ?>" disabled></div>
             <div class="campo"><label>Número de trabajo</label><input type="text" value="<?php echo s($proyecto->numero_trabajo); ?>" disabled></div>
             <div class="campo"><label for="fecha">Fecha *</label><input type="date" id="fecha" name="fecha" value="<?php echo s($reporte->fecha); ?>" required></div>
-            <div class="campo"><label for="area">Área</label><input type="text" id="area" name="area" maxlength="150" value="<?php echo s($reporte->area); ?>" placeholder="Ej: Área M,N"></div>
+            <div class="campo"><label for="area">Área</label><input type="text" id="area" name="area" maxlength="150" value="<?php echo s($reporte->area); ?>" placeholder="Ej: Zona norte"></div>
         </div>
 
         <div class="campo">

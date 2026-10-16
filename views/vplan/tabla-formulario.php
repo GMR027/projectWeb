@@ -13,8 +13,8 @@ $cols = $tabla->columnasOtro();
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if (!$esNueva): ?><input type="hidden" name="id" value="<?php echo s($tabla->id); ?>"><?php endif; ?>
         <div class="form-grid">
-            <div class="campo"><label for="titulo">Título impreso en la lámina *</label><input type="text" id="titulo" name="titulo" value="<?php echo s($tabla->titulo); ?>" required placeholder="Ej: PUNCH LIST / INSTALACION DE DISPOSITIVOS"></div>
-            <div class="campo"><label for="nombre_interno">Nombre en el catálogo</label><input type="text" id="nombre_interno" name="nombre_interno" value="<?php echo s($tabla->nombre_interno); ?>" maxlength="150" placeholder="Ej: Punch list · Área M,N"><small class="text-muted">Solo para distinguirla en la lista; no se imprime. Si lo dejas vacío se usa el título.</small></div>
+            <div class="campo"><label for="titulo">Título impreso en la lámina *</label><input type="text" id="titulo" name="titulo" value="<?php echo s($tabla->titulo); ?>" required placeholder="Ej: PUNCH LIST / DETALLES PENDIENTES"></div>
+            <div class="campo"><label for="nombre_interno">Nombre en el catálogo</label><input type="text" id="nombre_interno" name="nombre_interno" value="<?php echo s($tabla->nombre_interno); ?>" maxlength="150" placeholder="Ej: Punch list · Zona norte"><small class="text-muted">Solo para distinguirla en la lista; no se imprime. Si lo dejas vacío se usa el título.</small></div>
             <div class="campo">
                 <label for="tipo">Tipo</label>
                 <select id="tipo" name="tipo" <?php echo $esNueva ? '' : 'disabled'; ?>>

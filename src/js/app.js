@@ -107,6 +107,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ============ VISOR DE IMÁGENES ============
+  // Las fotos adjuntas (enlaces dentro de .bj-fotos) se amplían sobre la página, con botón X arriba a la derecha.
+  let visor = null;
+  const cerrarVisor = () => { if (visor) { visor.remove(); visor = null; } };
+  document.addEventListener('click', (e) => {
+    const enlace = e.target.closest('.bj-fotos a, img[data-visor]');
+    if (!enlace || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    cerrarVisor();
+    visor = document.createElement('div');
+    visor.className = 'visor-img';
+    visor.setAttribute('role', 'dialog');
+    visor.setAttribute('aria-modal', 'true');
+    visor.innerHTML = '<button type="button" class="visor-img-cerrar" aria-label="Cerrar imagen"><i class="fa-solid fa-xmark"></i></button><img alt="">';
+    visor.querySelector('img').src = enlace.dataset.visor || enlace.href;
+    visor.addEventListener('click', (ev) => { if (ev.target !== visor.querySelector('img')) cerrarVisor(); });
+    document.body.appendChild(visor);
+    visor.querySelector('button').focus();
+  });
+  // En fase de captura para que Esc cierre solo la imagen y no el modal que hay debajo
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && visor) { e.stopImmediatePropagation(); cerrarVisor(); }
+  }, true);
+
   // Auto-ocultar alertas después de 5 segundos
   const alertas = document.querySelectorAll('.alerta');
   alertas.forEach(alerta => {
@@ -244,4 +268,21 @@ document.addEventListener('DOMContentLoaded', () => {
       barra.style.zIndex = '1';
     });
   });
+});
+
+
+// Menús «Descargar» (details.gr-descargar): el menú se coloca fijo junto al botón para que las tablas con scroll no lo recorten, y se cierra al hacer clic fuera
+document.addEventListener('toggle', (e) => {
+  const d = e.target;
+  if (!(d instanceof HTMLDetailsElement) || !d.classList.contains('gr-descargar') || !d.open) return;
+  document.querySelectorAll('details.gr-descargar[open]').forEach((o) => { if (o !== d) o.open = false; });
+  const menu = d.querySelector('.gr-descargar-menu'), r = d.querySelector('summary').getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = (r.bottom + 4) + 'px';
+  menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+  menu.style.left = 'auto';
+}, true);
+window.addEventListener('scroll', () => { document.querySelectorAll('details.gr-descargar[open]').forEach((d) => { d.open = false; }); }, true);
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('details.gr-descargar[open]').forEach((d) => { if (!d.contains(e.target)) d.open = false; });
 });

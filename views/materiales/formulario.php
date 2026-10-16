@@ -10,8 +10,25 @@
         <?php if (!$esNuevo): ?><input type="hidden" name="id" value="<?php echo s($material->id); ?>"><?php endif; ?>
         <div class="form-grid">
             <div class="campo">
-                <label for="nombre">Nombre del material *</label>
-                <input type="text" id="nombre" name="nombre" value="<?php echo s($material->nombre); ?>" required>
+                <label for="nombre_base">Nombre del material (base) *</label>
+                <input type="text" id="nombre_base" name="nombre_base" maxlength="255" value="<?php echo s($material->nombreBase()); ?>" placeholder="Ej: Tubería conduit" required>
+            </div>
+            <div class="campo">
+                <label for="marca">Marca</label>
+                <input type="text" id="marca" name="marca" maxlength="100" value="<?php echo s($material->marca); ?>" placeholder="Opcional">
+            </div>
+            <div class="campo">
+                <label for="modelo">Modelo o tipo</label>
+                <input type="text" id="modelo" name="modelo" maxlength="100" value="<?php echo s($material->modelo); ?>" placeholder="Opcional">
+            </div>
+            <div class="campo">
+                <label for="valor_extra">Valor extra (dimensiones, capacidad, potencia…)</label>
+                <input type="text" id="valor_extra" name="valor_extra" maxlength="150" value="<?php echo s($material->valor_extra); ?>" placeholder="Opcional">
+            </div>
+            <div class="campo campo-full">
+                <label>Nombre completo</label>
+                <div class="mat-nombre-previo" id="nombre-previo" aria-live="polite"></div>
+                <small class="text-muted">Se arma solo uniendo nombre, marca, modelo y valor extra; los que dejes vacíos se omiten.</small>
             </div>
             <div class="campo">
                 <label for="referencia">Referencia (Spec Number)</label>
@@ -91,3 +108,14 @@
         <button type="submit" class="btn btn-primary">Guardar</button>
     </form>
 </div>
+<script>
+(function () {
+    const ids = ['nombre_base', 'marca', 'modelo', 'valor_extra'], salida = document.getElementById('nombre-previo');
+    const armar = () => {
+        const t = ids.map(i => document.getElementById(i).value.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
+        salida.textContent = t || '—';
+    };
+    ids.forEach(i => document.getElementById(i).addEventListener('input', armar));
+    armar();
+})();
+</script>

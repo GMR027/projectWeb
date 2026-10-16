@@ -47,10 +47,12 @@
             include __DIR__ . '/../templates/lista-accesos.php';
             ?>
         </div>
+        <?php $marcadas = $herramientasMarcadas ?? null; include __DIR__ . '/../templates/herramientas-visitante.php'; ?>
         <script>
             (function () {
                 const rol = document.getElementById('rol'), caja = document.getElementById('campo-accesos'), lim = document.getElementById('campo-limite');
-                const toggle = () => { caja.style.display = rol.value === 'admin' ? 'none' : ''; lim.style.display = rol.value === 'cliente' ? '' : 'none'; };
+                const herr = document.getElementById('campo-herramientas');
+                const toggle = () => { caja.style.display = rol.value === 'admin' ? 'none' : ''; lim.style.display = rol.value === 'cliente' ? '' : 'none'; herr.style.display = rol.value === 'visitante' ? '' : 'none'; };
                 rol.addEventListener('change', toggle); toggle();
             })();
         </script>

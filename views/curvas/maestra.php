@@ -4,7 +4,10 @@
         <h2><i class="fa-solid fa-chart-area"></i> Gráfica maestra</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · programa del <?php echo formatear_fecha($proyecto->fecha_inicio); ?> al <?php echo formatear_fecha($proyecto->fecha_fin); ?> · avance acumulado (%) de cada curva</p>
     </div>
-    <a href="/curvas?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Curvas</a>
+    <div class="la-controles">
+        <a href="/curvas/s?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-chart-line"></i> Curva S del programa</a>
+        <a href="/curvas?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Curvas</a>
+    </div>
 </div>
 <?php if (!$series): ?>
     <div class="card"><p class="text-muted">Aún no hay curvas. Crea al menos una para ver la gráfica maestra.</p></div>

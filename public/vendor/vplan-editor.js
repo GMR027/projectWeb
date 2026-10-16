@@ -8,20 +8,32 @@
   const COLORES_ESTADO = { completo: '#059669', proceso: '#d97706', espera: '#dc2626' };
   const $ = s => document.querySelector(s);
   const POLI = ['triangle', 'diamond', 'star', 'pentagon', 'hexagon', 'cross', 'xmark', 'check', 'blockarrow', 'chevron', 'trapezoid'];
-  const RECT = ['rect', 'rrect', 'image'];
+  const RECT = ['rect', 'rrect', 'image', 'link'];
+  const ICONOS_LINK = { link: '🔗', globe: '🌐', map: '📍', doc: '📄', photo: '📷', info: 'i', star: '★', flag: '🚩', video: '▶' };
+  let enExport = false, pend360 = null, cambiar360 = null;   // pend360: foto ya subida que espera el área; cambiar360: id del enlace cuya foto se reemplaza
   const ELIPSE = ['ellipse', 'zone'];
-  const LINEAS = ['line', 'arrow', 'darrow'];
+  const LINEAS = ['line', 'arrow', 'darrow', 'measure'];
   const CERRADAS = [...POLI, 'rect', 'rrect', 'ellipse', 'zone'];
 
-  const state = { tool: 'select', shapes: [], selId: null, past: [], future: [], W: 0, H: 0, clip: null };
+  // selId = marca elegida cuando hay una sola; sel = todas las elegidas (en el orden en que se eligieron)
+  const modoSel = () => state.tool === 'select' || state.tool === 'multi';   // «multi»: recuadro de selección sin Mayús
+  const state = { tool: 'select', shapes: [], layers: [], selId: null, sel: [], past: [], future: [], W: 0, H: 0, clip: null, escala: null, slides: null, idx: 0 };
+  const UNIDADES = { mm: 1, cm: 10, m: 1000, in: 25.4 };   // milímetros que vale cada unidad
+  const FUENTES = ['Arial', 'Verdana', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Courier New', 'Impact'];
+  let capaActiva = null;
   let stage, layer, trLayer, tr, bg, nodes = {};
   let sw = 4, seq = 1, sucio = false;
   const imgCache = {};
 
+  // Estilo del texto: negrita, cursiva, subrayado y tachado (también en tablas); `neg` fuerza negrita (encabezados)
+  const famDe = d => d.fontFamily || 'Arial';
+  const estiloDe = (d, neg) => [d.italic ? 'italic' : '', neg || d.bold ? 'bold' : ''].filter(Boolean).join(' ') || 'normal';
+  const decoDe = d => [d.underline ? 'underline' : '', d.strike ? 'line-through' : ''].filter(Boolean).join(' ');
+  const cssTexto = (d, neg) => ({ fontFamily: famDe(d), fontStyle: d.italic ? 'italic' : 'normal', fontWeight: neg || d.bold ? 'bold' : 'normal', textDecoration: decoDe(d) || 'none' });
   const uid = () => 's' + Date.now().toString(36) + (seq++);
   const clone = o => JSON.parse(JSON.stringify(o));
   const status = t => { $('#ve-estado').textContent = t; };
-  function dirty(v) { sucio = v; $('#ve-guardar').classList.toggle('ve-pend', v); }
+  function dirty(v) { sucio = v; $('#ve-guardar').classList.toggle('ve-pend', v); if (v && state.slides && state.slides[state.idx]) { state.slides[state.idx].dirty = true; programarMiniatura(); } if (v) programarAuto(); }
 
   // ---------- color con opacidad (porcentaje) ----------
   function rgba(hex, pct) {
@@ -32,16 +44,50 @@
     return `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
   }
 
+  // ---------- capas ----------
+  // state.layers va de la más baja a la más alta; cada marca guarda el id de su capa en `layer`.
+  const capaPor = id => state.layers.find(l => l.id === id);
+  const idxCapa = id => Math.max(0, state.layers.findIndex(l => l.id === id));
+  const nombreCapa = l => (l.name && l.name.trim()) || ('Capa ' + l.num);
+  const nuevaCapa = (num) => ({ id: 'c' + Date.now().toString(36) + (seq++), name: '', visible: true, locked: false, num });
+  const siguienteNumCapa = () => state.layers.reduce((m, l) => Math.max(m, l.num || 0), 0) + 1;
+  function asegurarCapas() {
+    if (!state.layers.length) state.layers = [nuevaCapa(1)];
+    state.layers.forEach((l, i) => { if (!l.num) l.num = i + 1; if (l.visible === undefined) l.visible = true; });
+    const primera = state.layers[0].id;
+    state.shapes.forEach(sh => { if (!capaPor(sh.layer)) sh.layer = primera; });
+    if (!capaPor(capaActiva)) capaActiva = state.layers[state.layers.length - 1].id;
+  }
+  // Marcas que se dibujan (capas visibles), de la capa más baja a la más alta
+  const ordenar = (shapes, layers, soloVisibles = true) => {
+    const cp = id => layers.find(l => l.id === id), ix = id => Math.max(0, layers.findIndex(l => l.id === id));
+    return [...shapes].filter(sh => !soloVisibles || (cp(sh.layer) || {}).visible !== false).sort((a, b) => ix(a.layer) - ix(b.layer));
+  };
+  const marcasOrdenadas = (soloVisibles = true) => ordenar(state.shapes, state.layers, soloVisibles);
+  function capaOk() {
+    const c = capaPor(capaActiva);
+    if (!c) return false;
+    if (!c.visible) { status('La capa activa «' + nombreCapa(c) + '» está oculta'); return false; }
+    if (c.locked) { status('La capa activa «' + nombreCapa(c) + '» está bloqueada'); return false; }
+    return true;
+  }
+
   // ---------- historial ----------
-  function commit(nuevas) {
-    state.past.push(clone(state.shapes));
+  const snap = () => ({ s: clone(state.shapes), l: clone(state.layers), e: clone(state.escala) });
+  function commit(nuevas, capas, escala) {
+    state.past.push(snap());
     if (state.past.length > 100) state.past.shift();
     state.future = [];
     state.shapes = nuevas || state.shapes;
+    if (capas) state.layers = capas;
+    if (escala !== undefined) state.escala = escala;
+    state.shapes.forEach(sh => { if (!sh.layer) sh.layer = capaActiva; });   // lo que se dibuja cae en la capa activa
+    asegurarCapas();
     render(); dirty(true);
   }
-  function undo() { if (!state.past.length) return; state.future.push(clone(state.shapes)); state.shapes = state.past.pop(); render(); dirty(true); }
-  function redo() { if (!state.future.length) return; state.past.push(clone(state.shapes)); state.shapes = state.future.pop(); render(); dirty(true); }
+  function restaurar(e) { state.shapes = e.s; state.layers = e.l; state.escala = e.e === undefined ? state.escala : e.e; asegurarCapas(); render(); dirty(true); }
+  function undo() { if (!state.past.length) return; state.future.push(snap()); restaurar(state.past.pop()); }
+  function redo() { if (!state.future.length) return; state.past.push(snap()); restaurar(state.future.pop()); }
 
   // ---------- geometría de polígonos en una caja w x h ----------
   function puntos(tipo, w, h) {
@@ -65,6 +111,76 @@
     return P;
   }
 
+  // ---------- tablas (grupo de celdas) ----------
+  // Celdas seleccionadas de la tabla activa (no forma parte del historial): claves «fila,columna»
+  let celdasSel = { id: null, set: new Set() };
+  const claveCelda = (r, c) => r + ',' + c;
+  const ultimosClics = [];
+  function resaltar(n, d) {
+    n.find('.resalte').forEach(x => x.destroy());
+    if (celdasSel.id !== d.id) return;
+    const g = geomTabla(d);
+    celdasSel.set.forEach(k => {
+      const [r, c] = k.split(',').map(Number);
+      if (r >= g.rows || c >= g.cols) return;
+      n.add(new Konva.Rect({ name: 'resalte', x: suma(g.cw, c), y: suma(g.rh, r), width: g.cw[c], height: g.rh[r], fill: 'rgba(255,90,31,.18)', stroke: '#ff5a1f', strokeWidth: Math.max(2, d.strokeWidth * 1.5), dash: [8, 5], listening: false }));
+    });
+  }
+  function refrescarCeldas() {
+    const d = state.shapes.find(s => s.id === celdasSel.id), n = d && nodes[d.id];
+    if (!n) return;
+    resaltar(n, d); layer.batchDraw(); panel(d);
+  }
+  function elegirCeldas(id, claves) { celdasSel = { id, set: new Set(claves) }; refrescarCeldas(); }
+
+  const suma = (arr, hasta) => arr.slice(0, hasta).reduce((a, b) => a + b, 0);
+  function geomTabla(d) {
+    const cols = d.cols || 3, rows = d.rows || 3;
+    const cw = d.colW && d.colW.length === cols ? d.colW : Array(cols).fill((d.w || 1) / cols);
+    const rh = d.rowH && d.rowH.length === rows ? d.rowH : Array(rows).fill((d.h || 1) / rows);
+    return { cols, rows, cw, rh };
+  }
+  const pad = d => Math.max(2, d.fontSize * 0.25);
+  // Fija las medidas de columnas y filas: con un clic, tamaño por defecto; arrastrando, el área dibujada
+  function normalizarTabla(d) {
+    const fs = d.fontSize, filaMin = fs * 2.2;
+    const ancho = d.w > 6 || d.h > 6 ? d.w : d.cols * fs * 7, alto = d.w > 6 || d.h > 6 ? d.h : d.rows * filaMin;
+    d.colW = Array(d.cols).fill(ancho / d.cols);
+    d.rowH = Array(d.rows).fill(Math.max(filaMin, alto / d.rows));
+    d.cells = Array.from({ length: d.rows }, () => Array(d.cols).fill(''));
+    d.w = suma(d.colW); d.h = suma(d.rowH);
+  }
+  function cambiarTamTabla(d, rows, cols) {
+    const g = geomTabla(d);
+    d.cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => (d.cells && d.cells[r] && d.cells[r][c]) || ''));
+    d.colW = Array.from({ length: cols }, (_, c) => g.cw[c] ?? g.cw[g.cw.length - 1]);
+    d.rowH = Array.from({ length: rows }, (_, r) => g.rh[r] ?? g.rh[g.rh.length - 1]);
+    d.rows = rows; d.cols = cols; d.w = suma(d.colW); d.h = suma(d.rowH);
+    ['cellFill', 'cellText'].forEach(m => { if (d[m]) Object.keys(d[m]).forEach(k => { const [r, c] = k.split(',').map(Number); if (r >= rows || c >= cols) delete d[m][k]; }); });
+  }
+  // Las filas crecen para que el texto de sus celdas quepa completo
+  function ajustarFilas(d) {
+    const g = geomTabla(d), p = pad(d);
+    d.rowH = g.rh.map((alto, r) => {
+      let necesito = d.fontSize * 1.6;
+      for (let c = 0; c < g.cols; c++) {
+        const txt = d.cells && d.cells[r] && d.cells[r][c];
+        if (!txt) continue;
+        const m = new Konva.Text({ text: txt, width: Math.max(10, g.cw[c] - 2 * p), fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d, d.header && r === 0), textDecoration: decoDe(d), wrap: 'word' });
+        necesito = Math.max(necesito, m.height() + 2 * p);
+      }
+      return Math.max(alto, necesito);
+    });
+    d.h = suma(d.rowH);
+  }
+  function celdaEn(n, d) {
+    const q = n.getAbsoluteTransform().copy().invert().point(stage.getPointerPosition()), g = geomTabla(d);
+    let c = -1, r = -1, x = 0, y = 0;
+    for (let i = 0; i < g.cols; i++) { if (q.x >= x && q.x < x + g.cw[i]) { c = i; break; } x += g.cw[i]; }
+    for (let i = 0; i < g.rows; i++) { if (q.y >= y && q.y < y + g.rh[i]) { r = i; break; } y += g.rh[i]; }
+    return c >= 0 && r >= 0 ? { r, c } : null;
+  }
+
   // ---------- nodos ----------
   const act = id => C.actividades.find(a => a.id === id);
   const colorLigado = d => { const a = act(d.actividad_id); return a ? COLORES_ESTADO[a.estado] : null; };
@@ -82,9 +198,9 @@
   }
   function crearNodo(d) {
     const lig = colorLigado(d);
-    const base = { id: d.id, x: d.x, y: d.y, rotation: d.rotation || 0, opacity: (d.opacity ?? 100) / 100, draggable: state.tool === 'select' };
+    const base = { id: d.id, x: d.x, y: d.y, rotation: d.rotation || 0, opacity: (d.opacity ?? 100) / 100, draggable: modoSel() };
     const esLinea = LINEAS.includes(d.type);
-    const stroke = lig && (esLinea || CERRADAS.includes(d.type)) && !d.fill ? lig : (esLinea ? (lig || d.stroke) : d.stroke);
+    const stroke = lig && d.type !== 'measure' && (esLinea || CERRADAS.includes(d.type)) && !d.fill ? lig : (esLinea ? (lig || d.stroke) : d.stroke);
     const relleno = d.fill ? rgba(lig && d.type !== 'text' ? lig : d.fill, d.fillAlpha) : undefined;
     const trazo = { stroke, strokeWidth: d.strokeWidth, dash: dashDe(d), lineJoin: 'round' };
     let n;
@@ -94,9 +210,48 @@
         n = new Konva.Arrow({ ...base, points: d.points, ...trazo, fill: stroke, pointerLength: d.strokeWidth * 4, pointerWidth: d.strokeWidth * 4, pointerAtBeginning: d.type === 'darrow', hitStrokeWidth: Math.max(20, d.strokeWidth * 3) }); break;
       case 'rect': n = new Konva.Rect({ ...base, width: d.w, height: d.h, fill: relleno, ...trazo }); break;
       case 'rrect': n = new Konva.Rect({ ...base, width: d.w, height: d.h, fill: relleno, cornerRadius: Math.min(d.w, d.h) * 0.2, ...trazo }); break;
+      case 'link': {   // área clicable: se ve al editar; el icono solo sale en las imágenes exportadas si d.showIcon
+        n = new Konva.Group({ ...base, rotation: 0 });
+        if (!enExport) n.add(new Konva.Rect({ width: d.w, height: d.h, fill: 'rgba(0,112,192,.16)', stroke: d.iconColor || '#0070c0', strokeWidth: 2, dash: [10, 6], strokeScaleEnabled: false }));
+        if (!enExport && d.label) {   // rótulo mientras se edita
+          const t = new Konva.Text({ text: d.label, fontSize: 22, fontStyle: 'bold', fill: '#ffffff', padding: 6, listening: false });
+          n.add(new Konva.Rect({ x: 0, y: d.h + 6, width: t.width(), height: t.height(), fill: 'rgba(11,19,43,.88)', cornerRadius: 12, listening: false }));
+          t.position({ x: 0, y: d.h + 6 }); n.add(t);
+        }
+        const ic = d.icon || 'link';
+        if (ic !== 'none' && (!enExport || d.showIcon)) {
+          const r = d.isize || Math.max(10, Math.min(22, Math.min(d.w, d.h) * 0.35)), col = d.iconColor || '#0070c0';
+          const glifo = ic === 'num' ? String(d.n || 1) : ICONOS_LINK[ic] || '🔗';
+          n.add(new Konva.Circle({ x: r + 3, y: r + 3, radius: r, fill: col, stroke: '#ffffff', strokeWidth: Math.max(1, r * 0.1), listening: false }));
+          n.add(new Konva.Text({ x: 3, y: 3, width: r * 2, height: r * 2, text: glifo, fontSize: ic === 'num' ? r * 1.1 : r * 1.15, fontStyle: ic === 'num' || ic === 'info' ? 'bold' : 'normal', fill: '#ffffff', align: 'center', verticalAlign: 'middle', listening: false }));
+        }
+        break;
+      }
       case 'ellipse': n = new Konva.Ellipse({ ...base, radiusX: d.rx, radiusY: d.ry, fill: relleno, ...trazo }); break;
       case 'zone': n = new Konva.Ellipse({ ...base, radiusX: d.rx, radiusY: d.ry, fill: relleno, ...trazo }); break;
-      case 'text': n = new Konva.Text({ ...base, text: d.text, fontSize: d.fontSize, fontFamily: 'Arial', fontStyle: d.bold ? 'bold' : 'normal', fill: lig || d.fill || '#000' }); break;
+      case 'text': {
+        const props = { text: d.text, fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d), textDecoration: decoDe(d), align: d.align || 'left', fill: lig || d.fill || '#000' };
+        if (!d.bg) { n = new Konva.Text({ ...base, ...props }); break; }
+        // Con fondo: rectángulo del tamaño del texto (más un margen) detrás del texto
+        const t = new Konva.Text(props), m = Math.max(3, d.fontSize * 0.3);
+        n = new Konva.Group({ ...base });
+        n.add(new Konva.Rect({ x: -m, y: -m, width: t.width() + 2 * m, height: t.height() + 2 * m, fill: rgba(d.bg, d.fillAlpha), cornerRadius: m * 0.6 }));
+        n.add(t);
+        break;
+      }
+      case 'measure': {
+        const [x1, y1, x2, y2] = d.points, len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
+        const fs = d.fontSize || 24, tick = Math.max(6, fs * 0.5), grosor = d.strokeWidth || 3;
+        n = new Konva.Group({ ...base });
+        n.add(new Konva.Line({ points: [x1, y1, x2, y2], stroke: d.stroke, strokeWidth: grosor, dash: dashDe(d), hitStrokeWidth: Math.max(20, grosor * 3) }));
+        const nx = -Math.sin(ang) * tick, ny = Math.cos(ang) * tick;
+        [[x1, y1], [x2, y2]].forEach(([px, py]) => n.add(new Konva.Line({ points: [px - nx, py - ny, px + nx, py + ny], stroke: d.stroke, strokeWidth: grosor })));
+        const t = new Konva.Text({ text: textoMedida(d, len), fontSize: fs, fontFamily: famDe(d), fontStyle: estiloDe(d, true), textDecoration: decoDe(d), fill: d.stroke, stroke: '#ffffff', strokeWidth: Math.max(2, fs * 0.16), fillAfterStrokeEnabled: true, listening: false });
+        let grados = ang * 180 / Math.PI; if (grados > 90 || grados <= -90) grados += 180;   // el texto siempre se lee derecho
+        t.offsetX(t.width() / 2); t.offsetY(t.height() + grosor + 2); t.position({ x: (x1 + x2) / 2, y: (y1 + y2) / 2 }); t.rotation(grados);
+        n.add(t);
+        break;
+      }
       case 'restr':
         n = new Konva.Group({ ...base });
         n.add(new Konva.Line({ points: [0, -d.size, d.size, 0, 0, d.size, -d.size, 0], closed: true, fill: '#dc2626', stroke: '#991b1b', strokeWidth: Math.max(1, d.size / 12) }));
@@ -107,6 +262,19 @@
         n.add(new Konva.Circle({ radius: d.size, fill: relleno || '#0070c0', stroke: d.stroke, strokeWidth: d.strokeWidth || 0 }));
         n.add(new Konva.Text({ text: String(d.n), fontSize: d.size * 1.05, fontStyle: 'bold', fill: d.textColor || '#fff', align: 'center', verticalAlign: 'middle', width: d.size * 2, height: d.size * 2, offsetX: d.size, offsetY: d.size }));
         break;
+      case 'table': {
+        const g = geomTabla(d), p = pad(d);
+        n = new Konva.Group({ ...base });
+        for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) {
+          const x = suma(g.cw, c), y = suma(g.rh, r), enc = d.header && r === 0;
+          const k = claveCelda(r, c);
+          n.add(new Konva.Rect({ x, y, width: g.cw[c], height: g.rh[r], fill: (d.cellFill && d.cellFill[k]) || (enc ? d.headerFill : d.fill), stroke: d.stroke, strokeWidth: d.strokeWidth }));
+          const txt = d.cells && d.cells[r] && d.cells[r][c];
+          if (txt) n.add(new Konva.Text({ x, y, width: g.cw[c], height: g.rh[r], text: txt, fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d, enc), textDecoration: decoDe(d), fill: (d.cellText && d.cellText[k]) || d.textColor || '#111111',
+            padding: p, verticalAlign: 'middle', align: enc ? 'center' : 'left', ellipsis: true, listening: false }));
+        }
+        break;
+      }
       case 'image': {
         const img = getImg(d.src);
         n = img ? new Konva.Image({ ...base, image: img, width: d.w, height: d.h })
@@ -121,41 +289,128 @@
 
   function render() {
     layer.destroyChildren(); nodes = {};
-    state.shapes.forEach(d => { const n = crearNodo(d); nodes[d.id] = n; layer.add(n); attach(n, d); });
-    select(state.shapes.some(s => s.id === state.selId) ? state.selId : null);
+    marcasOrdenadas().forEach(d => {
+      const n = crearNodo(d), c = capaPor(d.layer);
+      if (c && c.locked) { n.draggable(false); n.listening(false); }   // capa bloqueada: se ve pero no se toca
+      nodes[d.id] = n; layer.add(n); attach(n, d); if (d.type === 'table') resaltar(n, d);
+      if (d.comment && d.comment.trim()) insigniaComentario(n, d, !!(c && c.locked));
+    });
+    selectIds(state.selId && nodes[state.selId] ? [state.selId] : state.sel.filter(i => nodes[i]), false);
     layer.batchDraw();
     $('#ve-contador').textContent = state.shapes.length + ' marca(s)';
+    pintarCapas(); pintarEscala(); pintarComentarios();
   }
 
+  // ---------- comentarios sobre una marca: insignia amarilla en el editor (no sale en las imágenes exportadas) ----------
+  function insigniaComentario(n, d, bloqueada) {
+    const b = n.getClientRect({ relativeTo: layer }), r = Math.max(10, state.W / 120);
+    const g = new Konva.Group({ x: b.x + b.width, y: b.y, name: 'insignia', listening: !bloqueada });
+    g.add(new Konva.Circle({ radius: r, fill: '#facc15', stroke: '#a16207', strokeWidth: r * 0.12 }));
+    g.add(new Konva.Text({ text: '…', fontSize: r * 1.5, fontStyle: 'bold', fill: '#713f12', align: 'center', verticalAlign: 'middle', width: r * 2, height: r * 2, offsetX: r, offsetY: r }));
+    g.on('click tap', () => { if (modoSel()) { select(d.id); const t = document.querySelector('.ve-tabs [data-tab=props]'); if (t) t.click(); } });
+    g.on('mouseenter', () => { stage.container().style.cursor = 'pointer'; }); g.on('mouseleave', () => { stage.container().style.cursor = modoSel() ? 'default' : 'crosshair'; });
+    layer.add(g);
+  }
+  function pintarComentarios() {
+    const ul = $('#ve-coment-lista'); if (!ul) return;
+    const con = state.shapes.filter(x => x.comment && x.comment.trim());
+    $('#ve-coment-n').textContent = con.length ? '(' + con.length + ')' : '';
+    ul.innerHTML = con.map(x => '<li data-id="' + x.id + '"><b>' + esc(NOMBRE_TIPO[x.type] || 'Marca') + '</b> ' + esc(x.comment.length > 90 ? x.comment.slice(0, 90) + '…' : x.comment) + '</li>').join('');
+  }
+  const NOMBRE_TIPO = { text: 'Texto', table: 'Tabla', image: 'Imagen', measure: 'Medida', restr: 'Restricción', pin: 'Círculo', link: 'Hipervínculo', line: 'Línea', arrow: 'Flecha', darrow: 'Flecha', rect: 'Rectángulo', rrect: 'Rectángulo', ellipse: 'Elipse', zone: 'Zona' };
+
   // ---------- selección y transformación ----------
-  function select(id) {
-    state.selId = id;
-    const n = id && nodes[id];
-    const d = id && state.shapes.find(s => s.id === id);
-    tr.nodes(n ? [n] : []);
+  // Una o varias marcas elegidas (state.sel, en orden de elección); state.selId solo vale cuando hay exactamente una.
+  // Las marcas agrupadas (campo grp) se eligen siempre juntas.
+  const forma = id => state.shapes.find(x => x.id === id);
+  const grupoDe = id => { const d = forma(id); return d && d.grp ? state.shapes.filter(x => x.grp === d.grp).map(x => x.id) : [id]; };
+  let arrastre = null, marco = null, quitarAlSoltar = null;
+  function selectIds(ids, expandir = true) {
+    if (expandir) ids = ids.flatMap(grupoDe);
+    ids = [...new Set(ids)].filter(i => nodes[i]);
+    const unico = ids.length === 1 ? ids[0] : null;
+    if (celdasSel.id && celdasSel.id !== unico) { const on = nodes[celdasSel.id]; celdasSel = { id: null, set: new Set() }; if (on) { on.find('.resalte').forEach(x => x.destroy()); layer.batchDraw(); } }
+    const previa = state.selId;
+    state.sel = ids; state.selId = unico;
+    const d = unico && forma(unico);
+    if (d && previa !== unico && d.layer && d.layer !== capaActiva && capaPor(d.layer)) { capaActiva = d.layer; pintarCapas(); }   // al elegir una marca se activa su capa
+    tr.nodes(modoSel() ? ids.map(i => nodes[i]) : []);
     const esLinea = d && LINEAS.includes(d.type);
+    tr.rotateEnabled(!ids.some(i => (forma(i) || {}).type === 'link'));
     tr.keepRatio(!!d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr'));
     tr.enabledAnchors(esLinea ? ['middle-left', 'middle-right']
       : d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr' || d.type === 'text') ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
       : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']);
     trLayer.batchDraw();
-    panel(d || null);
+    panel(d || null); pintarAlinear();
   }
+  const select = id => selectIds(id ? [id] : [], !!id);
   function attach(n, d) {
-    n.on('mousedown touchstart', e => { if (state.tool === 'select') { e.cancelBubble = true; if (state.selId !== d.id) select(d.id); } });
-    n.on('dragend', () => { const nuevas = clone(state.shapes); const t = nuevas.find(s => s.id === d.id); t.x = n.x(); t.y = n.y(); commit(nuevas); });
-    n.on('transformend', () => {
-      const nuevas = clone(state.shapes); const t = nuevas.find(s => s.id === d.id);
+    n.on('mousedown touchstart', e => {
+      if (!modoSel()) return;
+      e.cancelBubble = true;
+      const mas = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey || state.tool === 'multi';
+      quitarAlSoltar = null;
+      if (mas && !(d.type === 'table' && state.sel.length === 1 && state.sel[0] === d.id)) {   // Mayús/Ctrl: suma o quita (en una tabla elegida, Mayús elige celdas)
+        if (state.sel.includes(d.id)) quitarAlSoltar = d.id;   // se quita solo si fue un clic; si arrastra, se mueve la selección completa
+        else selectIds([...state.sel, ...grupoDe(d.id)], false);
+      } else if (!state.sel.includes(d.id)) select(d.id);
+    });
+    n.on('click tap', () => {
+      if (quitarAlSoltar !== d.id) return;
+      quitarAlSoltar = null;
+      const g = grupoDe(d.id); selectIds(state.sel.filter(i => !g.includes(i)), false);
+    });
+    // Arrastrar: con varias marcas elegidas se mueven todas juntas; con el imán, saltan a la cuadrícula
+    n.on('dragstart', () => {
+      quitarAlSoltar = null;
+      arrastre = state.sel.length > 1 && state.sel.includes(d.id)
+        ? { id: d.id, x: n.x(), y: n.y(), otros: state.sel.filter(i => i !== d.id && nodes[i]).map(i => ({ id: i, x: nodes[i].x(), y: nodes[i].y() })) } : null;
+    });
+    n.on('dragmove', () => {
+      if (imanOn()) n.position(ajustar({ x: n.x(), y: n.y() }));
+      if (arrastre && arrastre.id === d.id) { const dx = n.x() - arrastre.x, dy = n.y() - arrastre.y; arrastre.otros.forEach(o => nodes[o.id].position({ x: o.x + dx, y: o.y + dy })); }
+    });
+    n.on('dragend', () => {
+      const nuevas = clone(state.shapes), ids = arrastre && arrastre.id === d.id ? [d.id, ...arrastre.otros.map(o => o.id)] : [d.id];
+      arrastre = null;
+      ids.forEach(i => { const t = nuevas.find(x => x.id === i); if (t && nodes[i]) { t.x = nodes[i].x(); t.y = nodes[i].y(); } });
+      commit(nuevas);
+    });
+    if (d.type === 'text') n.on('dblclick dbltap', () => editarTexto(d.id));
+    if (d.type === 'table') n.on('click tap', e => {
+      if (!modoSel()) return;
+      const dd = state.shapes.find(s => s.id === d.id), ce = dd && celdaEn(n, dd); if (!ce) return;
+      const k = claveCelda(ce.r, ce.c); ultimosClics.push(k); if (ultimosClics.length > 2) ultimosClics.shift();
+      const suma_ = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;   // Mayús o Ctrl: suma o quita celdas
+      const set = suma_ && celdasSel.id === d.id ? new Set(celdasSel.set) : new Set();
+      if (suma_ && set.has(k)) set.delete(k); else set.add(k);
+      elegirCeldas(d.id, set);
+    });
+    // Doble clic = escribir, pero no si fueron dos clics rápidos con Mayús/Ctrl en celdas distintas (selección múltiple)
+    if (d.type === 'table') n.on('dblclick dbltap', e => {
+      if (e.evt && (e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey)) return;
+      const ce = celdaEn(n, state.shapes.find(s => s.id === d.id) || d); if (!ce) return;
+      const k = claveCelda(ce.r, ce.c);
+      if (ultimosClics.length >= 2 && ultimosClics.slice(-2).some(x => x !== k)) return;
+      editarCelda(d.id, ce.r, ce.c);
+    });
+  }
+  // Al terminar de transformar (mover esquinas, rotar) se guardan todas las marcas elegidas en un solo paso
+  function aplicarTransformacion() {
+    const nuevas = clone(state.shapes);
+    tr.nodes().forEach(n => {
+      const t = nuevas.find(x => x.id === n.getAttr('vid')); if (!t) return;
       const sx = n.scaleX(), sy = n.scaleY();
       t.x = n.x(); t.y = n.y(); t.rotation = n.rotation();
-      if (POLI.includes(t.type) || RECT.includes(t.type)) { t.w = Math.max(4, t.w * sx); t.h = Math.max(4, t.h * sy); }
+      if (t.type === 'table') { const g = geomTabla(t); t.colW = g.cw.map(v => Math.max(10, v * sx)); t.rowH = g.rh.map(v => Math.max(10, v * sy)); t.w = suma(t.colW); t.h = suma(t.rowH); }
+      else if (POLI.includes(t.type) || RECT.includes(t.type)) { t.w = Math.max(4, t.w * sx); t.h = Math.max(4, t.h * sy); }
       else if (ELIPSE.includes(t.type)) { t.rx = Math.max(2, t.rx * sx); t.ry = Math.max(2, t.ry * sy); }
       else if (LINEAS.includes(t.type)) { t.points = t.points.map((v, i) => v * (i % 2 ? sy : sx)); }
       else if (t.type === 'text') { t.fontSize = Math.max(6, Math.round(t.fontSize * Math.max(sx, sy))); }
       else if (t.type === 'restr' || t.type === 'pin') { t.size = Math.max(8, t.size * Math.max(sx, sy)); }
-      commit(nuevas);
     });
-    if (d.type === 'text') n.on('dblclick dbltap', () => editarTexto(d.id));
+    commit(nuevas);
   }
   function actualizar(id, cambios) {
     const nuevas = clone(state.shapes); const t = nuevas.find(s => s.id === id); if (!t) return;
@@ -167,9 +422,10 @@
     const n = nodes[id], d = state.shapes.find(s => s.id === id); if (!n || !d) return;
     const ta = document.createElement('textarea');
     const pos = n.getAbsolutePosition(), box = stage.container().getBoundingClientRect(), sc = stage.scaleX();
-    Object.assign(ta.style, { position: 'fixed', left: box.left + pos.x + 'px', top: box.top + pos.y + 'px', fontSize: d.fontSize * sc + 'px', fontFamily: 'Arial', fontWeight: d.bold ? 'bold' : 'normal', lineHeight: 1.2,
+    Object.assign(ta.style, { position: 'fixed', left: box.left + pos.x + 'px', top: box.top + pos.y + 'px', fontSize: d.fontSize * sc + 'px', ...cssTexto(d), textAlign: d.align || 'left', lineHeight: 1.2,
       color: d.fill || '#000', background: 'rgba(255,255,255,.85)', border: '1px solid #0070c0', padding: '2px', margin: 0, minWidth: '120px', minHeight: d.fontSize * sc * 1.4 + 'px', zIndex: 10000, transformOrigin: 'left top', transform: 'rotate(' + (d.rotation || 0) + 'deg)' });
-    ta.value = d.text; document.body.appendChild(ta); ta.focus(); ta.select();
+    ta.value = d.text; (document.fullscreenElement || document.body).appendChild(ta);   // en pantalla completa solo se ve lo que está dentro del elemento ampliado
+    ta.focus(); ta.select();
     n.hide(); layer.batchDraw();
     let hecho = false;
     const fin = ok => { if (hecho) return; hecho = true; const v = ta.value; if (ta.parentNode) ta.remove(); n.show(); if (ok && v.trim() !== '' && v !== d.text) actualizar(id, { text: v }); else layer.batchDraw(); };
@@ -177,26 +433,109 @@
     ta.addEventListener('keydown', e => { if (e.key === 'Escape') fin(false); if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fin(true); } e.stopPropagation(); });
   }
 
+  // ---------- tabla: editar el texto de una celda (Tab / Mayús+Tab pasan a la siguiente / anterior) ----------
+  function editarCelda(id, r, c) {
+    const n = nodes[id], d = state.shapes.find(s => s.id === id); if (!n || !d || d.type !== 'table') return;
+    const g = geomTabla(d), p0 = n.getAbsoluteTransform().point({ x: suma(g.cw, c), y: suma(g.rh, r) });
+    const box = stage.container().getBoundingClientRect(), sc = stage.scaleX() * (n.scaleX() || 1), enc = d.header && r === 0;
+    const ta = document.createElement('textarea'), antes = (d.cells && d.cells[r] && d.cells[r][c]) || '';
+    Object.assign(ta.style, { position: 'fixed', left: box.left + p0.x + 'px', top: box.top + p0.y + 'px', width: g.cw[c] * sc + 'px', height: g.rh[r] * sc + 'px', boxSizing: 'border-box',
+      fontSize: d.fontSize * sc + 'px', ...cssTexto(d, enc), lineHeight: 1.2, color: d.textColor || '#111', background: '#fffbe6', border: '2px solid #0070c0',
+      padding: pad(d) * sc + 'px', margin: 0, resize: 'none', overflow: 'auto', zIndex: 10000, transformOrigin: 'left top', transform: 'rotate(' + (d.rotation || 0) + 'deg)', textAlign: enc ? 'center' : 'left' });
+    ta.value = antes; (document.fullscreenElement || document.body).appendChild(ta); ta.focus(); ta.select();
+    let hecho = false;
+    const fin = (ok, paso) => {
+      if (hecho) return; hecho = true;
+      const v = ta.value; if (ta.parentNode) ta.remove();
+      if (ok && v !== antes) {
+        const nuevas = clone(state.shapes), t = nuevas.find(s => s.id === id);
+        t.cells[r][c] = v; ajustarFilas(t); commit(nuevas);
+      }
+      if (paso) {
+        const i = r * g.cols + c + paso, total = g.rows * g.cols;
+        if (i >= 0 && i < total) setTimeout(() => editarCelda(id, Math.floor(i / g.cols), i % g.cols), 30);
+      }
+    };
+    ta.addEventListener('blur', () => fin(true));
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Escape') fin(false);
+      else if (e.key === 'Tab') { e.preventDefault(); fin(true, e.shiftKey ? -1 : 1); }
+      else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fin(true); }
+      e.stopPropagation();
+    });
+  }
+
   // ---------- panel de propiedades ----------
   function sincroniza(rango, num, valor) { $(rango).value = valor; $(num).value = valor; }
   function panel(d) {
-    const p = $('#ve-props'); p.querySelector('.ve-vacio').style.display = d ? 'none' : '';
+    const p = $('#ve-props'), vacio = p.querySelector('.ve-vacio');
+    if (!vacio.dataset.base) vacio.dataset.base = vacio.textContent;
+    vacio.textContent = state.sel.length > 1 ? 'Hay ' + state.sel.length + ' marcas elegidas: aliníalas, distribúyelas o agrúpalas arriba, y arrástralas para moverlas juntas. Elige una sola para editar sus propiedades.' : vacio.dataset.base;
+    vacio.style.display = d ? 'none' : '';
     p.querySelector('.ve-campos').style.display = d ? '' : 'none';
     if (!d) return;
     const mostrar = (sel, ok) => { const el = p.querySelector(sel); if (el) el.closest('.ve-f').style.display = ok ? '' : 'none'; };
-    const conTrazo = !['text', 'restr', 'image'].includes(d.type);
+    const esTabla = d.type === 'table';
+    const esLink = d.type === 'link';
+    const conTrazo = !['text', 'restr', 'image', 'link'].includes(d.type);
     const cerrada = CERRADAS.includes(d.type);
     const conRelleno = cerrada || d.type === 'pin';
+    const esTexto = d.type === 'text';
     $('#p-stroke').value = d.stroke || '#111111'; mostrar('#p-stroke', conTrazo);
-    $('#p-fill').value = d.fill && d.fill.startsWith('#') ? d.fill : (d.type === 'pin' ? '#0070c0' : '#ffffff'); mostrar('#p-fill', conRelleno || d.type === 'text');
+    $('#p-fill').value = d.fill && d.fill.startsWith('#') ? d.fill : (d.type === 'pin' ? '#0070c0' : '#ffffff'); mostrar('#p-fill', conRelleno || d.type === 'text' || esTabla);
     $('#p-nofill').checked = cerrada && !d.fill; mostrar('#p-nofill', cerrada);
-    sincroniza('#p-fa', '#p-fa-n', d.fillAlpha ?? 100); mostrar('#p-fa', conRelleno);
-    $('#p-sw').value = d.strokeWidth || sw; mostrar('#p-sw', conTrazo);
-    $('#p-dash').value = d.dash || 'solid'; mostrar('#p-dash', conTrazo && d.type !== 'pin');
+    sincroniza('#p-fa', '#p-fa-n', d.fillAlpha ?? 100); mostrar('#p-fa', conRelleno || (esTexto && !!d.bg));
+    $('#p-bg-on').checked = !!d.bg; $('#p-bg').value = d.bg || '#ffeb00'; mostrar('#p-bg-on', esTexto); mostrar('#p-bg', esTexto && !!d.bg);
+    sincroniza('#p-sw-r', '#p-sw', d.strokeWidth || sw); mostrar('#p-sw', conTrazo);
+    $('#p-dash').value = d.dash || 'solid'; mostrar('#p-dash', conTrazo && d.type !== 'pin' && !esTabla);
     sincroniza('#p-op', '#p-op-n', d.opacity ?? 100);
-    $('#p-fs').value = d.fontSize || 40; mostrar('#p-fs', d.type === 'text');
+    const conLetra = esTexto || esTabla || d.type === 'measure';
+    $('#p-fs').value = d.fontSize || 40; mostrar('#p-fs', conLetra);
+    mostrar('#p-b', conLetra); mostrar('#p-ff', conLetra); mostrar('#p-al', esTexto);
+    [['#p-b', d.bold], ['#p-i', d.italic], ['#p-u', d.underline], ['#p-s', d.strike]].forEach(([q, on]) => { $(q).classList.toggle('activo', !!on); $(q).setAttribute('aria-pressed', !!on); });
+    $('#p-ff').value = FUENTES.includes(d.fontFamily) ? d.fontFamily : 'Arial'; $('#p-al').value = d.align || 'left';
+    const esMedida = d.type === 'measure';
+    mostrar('#p-unit', esMedida); mostrar('#p-ref', esMedida);
+    if (esMedida) { $('#p-unit').value = UNIDADES[d.unit] ? d.unit : (state.escala ? state.escala.unit : 'cm'); $('#p-medida').textContent = textoMedida(d, Math.hypot(d.points[2], d.points[3])); }
+    p.querySelectorAll('.ve-enlace').forEach(el => { el.style.display = esLink ? '' : 'none'; });
+    if (esLink) {
+      const es360 = d.kind === '360' && (d.url || '').startsWith('/uploads/'), ext = !es360 && (d.kind || 'ext') !== 'int';
+      $('#p-lk-tipo').value = ext ? 'ext' : 'int'; $('#p-lk-ext').style.display = ext ? '' : 'none'; $('#p-lk-int').style.display = !es360 && !ext ? '' : 'none';
+      $('#p-lk-tipo-f').style.display = es360 ? 'none' : ''; $('#p-lk-360').style.display = es360 ? '' : 'none';
+      if (es360) { $('#p-lk-360-img').src = d.url || ''; $('#p-lk-360-med').textContent = 'Vista 360 interactiva: se abre en la sección View360.'; }
+      $('#p-lk-url').value = ext ? d.url || '' : ''; $('#p-lk-label').value = d.label || '';
+      $('#p-lk-icon').value = d.icon || 'link'; $('#p-lk-color').value = d.iconColor || '#0070c0'; $('#p-lk-num').value = d.n || 1;
+      $('#p-lk-num').closest('.ve-f').style.display = (d.icon || 'link') === 'num' ? '' : 'none';
+      sincroniza('#p-lk-size-r', '#p-lk-size', Math.round(d.isize || Math.max(10, Math.min(22, Math.min(d.w, d.h) * 0.35)))); $('#p-lk-show').checked = !!d.showIcon;
+      const ds = C.destinos || [], grupos = [...new Set(ds.map(x => x.grupo))];
+      $('#p-lk-dest').innerHTML = '<option value="">— Elegir destino —</option>' + grupos.map(g => '<optgroup label="' + esc(g) + '">' + ds.filter(x => x.grupo === g).map(x => '<option value="' + esc(x.url) + '">' + esc(x.etiqueta) + '</option>').join('') + '</optgroup>').join('');
+      $('#p-lk-dest').value = !ext && !es360 ? d.url || '' : '';
+      const a = $('#p-lk-abrir'); a.href = d.url || '#'; a.style.display = d.url && !es360 ? '' : 'none';
+    }
+    $('#p-coment').value = d.comment || '';
+    const esImg = d.type === 'image';
+    mostrar('#p-iw', esImg);
+    if (esImg) { $('#p-iw').value = Math.round(d.w); $('#p-ih').value = Math.round(d.h); }
+    if (esTabla) {
+      const g = geomTabla(d);
+      $('#p-rows').value = g.rows; $('#p-cols').value = g.cols; $('#p-hdr').checked = !!d.header;
+      $('#p-hfill').value = d.headerFill || '#dbe5f1'; $('#p-tc').value = d.textColor || '#111111';
+      $('#p-rh').value = Math.round(g.rh[0]); $('#p-cw').value = Math.round(g.cw[0]);
+    }
+    ['#p-rows', '#p-hdr', '#p-hfill', '#p-tc', '#p-rh'].forEach(q => mostrar(q, esTabla));
+    const nsel = esTabla && celdasSel.id === d.id ? [...celdasSel.set].filter(k => { const [r, c] = k.split(',').map(Number); const g = geomTabla(d); return r < g.rows && c < g.cols; }).length : 0;
+    $('#p-celdas').style.display = esTabla ? '' : 'none';
+    $('#p-celdas-n').textContent = nsel;
+    $('#p-celdas-cont').style.display = nsel ? '' : 'none';
+    $('#p-celdas-vacio').style.display = nsel ? 'none' : '';
+    if (nsel) {   // muestra el color de la primera celda seleccionada
+      const [r, c] = [...celdasSel.set][0].split(',').map(Number), k = claveCelda(r, c);
+      $('#p-cf').value = (d.cellFill && d.cellFill[k]) || (d.header && r === 0 ? d.headerFill : d.fill) || '#ffffff';
+      $('#p-ct').value = (d.cellText && d.cellText[k]) || d.textColor || '#111111';
+    }
     $('#p-n').value = d.n || 1; mostrar('#p-n', d.type === 'restr' || d.type === 'pin');
-    $('#p-act').value = d.actividad_id || ''; mostrar('#p-act', !['restr', 'image'].includes(d.type));
+    $('#p-capa').innerHTML = [...state.layers].reverse().map(l => '<option value="' + l.id + '">' + nombreCapa(l).replace(/[<&]/g, '') + '</option>').join(''); $('#p-capa').value = d.layer;
+    $('#p-act').value = d.actividad_id || ''; mostrar('#p-act', !['restr', 'image', 'table', 'link'].includes(d.type) && !C.modo);
   }
   function enlazarPanel() {
     const cur = () => state.shapes.find(s => s.id === state.selId);
@@ -204,11 +543,85 @@
     const on = (sel, ev, fn) => $(sel).addEventListener(ev, fn);
     on('#p-stroke', 'change', e => cur() && actualizar(state.selId, { stroke: e.target.value }));
     on('#p-fill', 'change', e => cur() && actualizar(state.selId, { fill: e.target.value }));
+    on('#p-bg-on', 'change', e => cur() && actualizar(state.selId, { bg: e.target.checked ? $('#p-bg').value : '' }));
+    on('#p-bg', 'change', e => cur() && actualizar(state.selId, { bg: e.target.value }));
     on('#p-nofill', 'change', e => cur() && actualizar(state.selId, { fill: e.target.checked ? '' : $('#p-fill').value }));
-    on('#p-sw', 'change', e => cur() && actualizar(state.selId, { strokeWidth: num(e.target.value, 1, 80, sw) }));
+    // Grosor: deslizador (se ve en vivo y se guarda al soltar) y cuadro numérico
+    on('#p-sw-r', 'input', e => { $('#p-sw').value = e.target.value; const nodo = nodes[state.selId]; if (nodo && nodo.strokeWidth && !(nodo instanceof Konva.Group)) { nodo.strokeWidth(+e.target.value); layer.batchDraw(); } });
+    on('#p-sw-r', 'change', e => cur() && actualizar(state.selId, { strokeWidth: num(e.target.value, 1, 80, sw) }));
+    on('#p-sw', 'change', e => { const v = num(e.target.value, 1, 80, sw); $('#p-sw-r').value = v; cur() && actualizar(state.selId, { strokeWidth: v }); });
+    // Estilo del texto (negrita, cursiva, subrayado, tachado), tipo de letra y alineación
+    ['b:bold', 'i:italic', 'u:underline', 's:strike'].forEach(par => { const [q, campo] = par.split(':'); on('#p-' + q, 'click', () => alternarEstilo(campo)); });
+    const urlOk = v => /^(https?:\/\/[^\s<>"']+|mailto:[^\s<>"']+|tel:[^\s<>"']+)$/i.test(v);
+    on('#p-lk-tipo', 'change', e => cur() && actualizar(state.selId, { kind: e.target.value, url: '' }));
+    on('#p-lk-url', 'change', e => {
+      const v = e.target.value.trim(), con = /^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(v) ? 'https://' + v : v;   // «maps.google.com/…» → https://…
+      if (v && !urlOk(con)) { status('Enlace no válido: usa http://, https://, mailto: o tel:'); e.target.value = (cur() || {}).url || ''; return; }
+      cur() && actualizar(state.selId, { url: con.slice(0, 500) });
+    });
+    on('#p-lk-dest', 'change', e => cur() && actualizar(state.selId, { url: e.target.value }));
+    on('#p-lk-icon', 'change', e => {
+      const c = cur(); if (!c) return; const cambios = { icon: e.target.value };
+      if (e.target.value === 'num' && !c.n) { const usados = state.shapes.filter(x => x.type === 'link' && x.icon === 'num').map(x => x.n || 0); cambios.n = (usados.length ? Math.max(...usados) : 0) + 1; }
+      actualizar(state.selId, cambios);
+    });
+    on('#p-lk-color', 'change', e => cur() && actualizar(state.selId, { iconColor: e.target.value }));
+    on('#p-lk-num', 'change', e => cur() && actualizar(state.selId, { n: num(e.target.value, 1, 999, 1) }));
+    // Tamaño del icono: el deslizador se ve en vivo y se guarda al soltar; también se puede escribir el valor
+    const verIcono = r => {   // redibuja el círculo y el glifo del icono sin crear un paso de historial
+      const n = nodes[state.selId], c = n && n.findOne('Circle'), t = n && n.find('Text').pop(), d = cur(); if (!c || !t || !d) return;
+      c.radius(r); c.position({ x: r + 3, y: r + 3 }); t.setAttrs({ width: r * 2, height: r * 2, fontSize: r * (d.icon === 'num' ? 1.1 : 1.15) }); layer.batchDraw();
+    };
+    on('#p-lk-size-r', 'input', e => { $('#p-lk-size').value = e.target.value; verIcono(+e.target.value); });
+    on('#p-lk-size-r', 'change', e => cur() && actualizar(state.selId, { isize: num(e.target.value, 6, 200, 18) }));
+    on('#p-lk-size', 'change', e => { const v = num(e.target.value, 6, 200, 18); $('#p-lk-size-r').value = Math.min(120, v); cur() && actualizar(state.selId, { isize: v }); });
+    on('#p-lk-show', 'change', e => cur() && actualizar(state.selId, { showIcon: e.target.checked }));
+    on('#p-lk-360-cambiar', 'click', () => { cambiar360 = state.selId; $('#ve-archivo-360').click(); });
+    on('#p-lk-label', 'change', e => cur() && actualizar(state.selId, { label: e.target.value.trim().slice(0, 120) }));
+    on('#p-coment', 'change', e => cur() && actualizar(state.selId, { comment: e.target.value.trim().slice(0, 600) }));
+    $('#ve-coment-lista').addEventListener('click', e => { const li = e.target.closest('li'); if (li) { select(li.dataset.id); const t = document.querySelector('.ve-tabs [data-tab=props]'); if (t) t.click(); } });
+    on('#p-ff', 'change', e => cur() && actualizar(state.selId, { fontFamily: e.target.value }));
+    on('#p-al', 'change', e => cur() && actualizar(state.selId, { align: e.target.value }));
+    on('#p-unit', 'change', e => cur() && actualizar(state.selId, { unit: e.target.value }));
+    on('#p-ref', 'click', async () => {
+      const d = cur(); if (!d || d.type !== 'measure') return;
+      const len = Math.hypot(d.points[2], d.points[3]), r = await pedirMedida({ titulo: 'Usar como referencia', texto: '¿Cuánto mide en la realidad este segmento? Se recalculan todas las medidas del dibujo.', valor: '', unidad: UNIDADES[d.unit] ? d.unit : 'cm' });
+      if (r) commit(undefined, undefined, { mmPorPx: r.valor * UNIDADES[r.unidad] / len, unit: r.unidad });
+    });
+    // Tamaño de una imagen (o gráfico) insertado: conserva la proporción
+    const tamImg = (campo) => () => { const d = cur(); if (!d || d.type !== 'image') return; const v = num($(campo === 'w' ? '#p-iw' : '#p-ih').value, 8, 20000, d[campo]), k = v / d[campo]; actualizar(d.id, { w: campo === 'w' ? v : d.w * k, h: campo === 'h' ? v : d.h * k }); };
+    on('#p-iw', 'change', tamImg('w')); on('#p-ih', 'change', tamImg('h'));
     on('#p-dash', 'change', e => cur() && actualizar(state.selId, { dash: e.target.value }));
-    on('#p-fs', 'change', e => cur() && actualizar(state.selId, { fontSize: num(e.target.value, 6, 400, 40) }));
+    on('#p-fs', 'change', e => {
+      const d = cur(); if (!d) return;
+      const fs = num(e.target.value, 6, 400, 40);
+      if (d.type === 'table') modTabla(t => { t.fontSize = fs; ajustarFilas(t); }); else actualizar(state.selId, { fontSize: fs });
+    });
+    // Tabla
+    const modTabla = fn => { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === state.selId); if (t && t.type === 'table') { fn(t); commit(nuevas); } };
+    const tamTabla = () => modTabla(t => cambiarTamTabla(t, num($('#p-rows').value, 1, 30, t.rows), num($('#p-cols').value, 1, 15, t.cols)));
+    on('#p-rows', 'change', tamTabla); on('#p-cols', 'change', tamTabla);
+    on('#p-hdr', 'change', e => modTabla(t => { t.header = e.target.checked; ajustarFilas(t); }));
+    on('#p-hfill', 'change', e => modTabla(t => { t.headerFill = e.target.value; }));
+    on('#p-tc', 'change', e => modTabla(t => { t.textColor = e.target.value; }));
+    on('#p-rh', 'change', e => modTabla(t => { const v = num(e.target.value, 8, 2000, t.rowH[0]); t.rowH = t.rowH.map(() => v); ajustarFilas(t); }));
+    // Celdas seleccionadas: relleno y color de texto propios; «Quitar» devuelve el color general de la tabla
+    const delSel = (campo, valor) => modTabla(t => {
+      const m = t[campo] = t[campo] || {};
+      celdasSel.set.forEach(k => { if (valor === null) delete m[k]; else m[k] = valor; });
+    });
+    on('#p-cf', 'change', e => delSel('cellFill', e.target.value)); on('#p-cf-x', 'click', () => delSel('cellFill', null));
+    on('#p-ct', 'change', e => delSel('cellText', e.target.value)); on('#p-ct-x', 'click', () => delSel('cellText', null));
+    const todas = (filtro) => { const d = cur(); if (!d || d.type !== 'table') return; const g = geomTabla(d), filas = new Set([...celdasSel.set].map(k => +k.split(',')[0])), cols = new Set([...celdasSel.set].map(k => +k.split(',')[1])), out = [];
+      for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) if (filtro(r, c, filas, cols)) out.push(claveCelda(r, c));
+      elegirCeldas(d.id, out); };
+    on('#b-c-fila', 'click', () => todas((r, c, f) => f.has(r)));
+    on('#b-c-col', 'click', () => todas((r, c, f, co) => co.has(c)));
+    on('#b-c-todo', 'click', () => todas(() => true));
+    on('#b-c-nada', 'click', () => todas(() => false));
+    on('#p-cw', 'change', e => modTabla(t => { const v = num(e.target.value, 10, 4000, t.colW[0]); t.colW = t.colW.map(() => v); t.w = suma(t.colW); ajustarFilas(t); }));
     on('#p-n', 'change', e => cur() && actualizar(state.selId, { n: num(e.target.value, 1, 99, 1) }));
+    on('#p-capa', 'change', e => { const d = cur(); if (!d) return; const nuevas = clone(state.shapes); nuevas.find(x => x.id === d.id).layer = e.target.value; capaActiva = e.target.value; commit(nuevas); });
     on('#p-act', 'change', e => cur() && actualizar(state.selId, { actividad_id: e.target.value ? +e.target.value : null }));
     // Opacidades en porcentaje: el deslizador se aplica en vivo y se guarda al soltar
     [['#p-op', '#p-op-n', 'opacity', 5], ['#p-fa', '#p-fa-n', 'fillAlpha', 0]].forEach(([r, n, campo, min]) => {
@@ -219,29 +632,137 @@
     on('#b-front', 'click', () => mover(1)); on('#b-back', 'click', () => mover(-1));
     on('#b-dup', 'click', duplicar); on('#b-del', 'click', borrar);
   }
-  function mover(dir) {
-    const i = state.shapes.findIndex(s => s.id === state.selId); if (i < 0) return;
-    const j = dir > 0 ? state.shapes.length - 1 : 0; if (i === j) return;
-    const nuevas = clone(state.shapes); const [x] = nuevas.splice(i, 1); dir > 0 ? nuevas.push(x) : nuevas.unshift(x); commit(nuevas);
+  const elegidas = () => (state.sel.length ? state.sel : (state.selId ? [state.selId] : [])).filter(i => forma(i));
+  function alternarEstilo(campo) {
+    const d = forma(state.selId); if (!d) return;
+    if (d.type === 'table') { modTablaFuera(t => { t[campo] = !t[campo]; ajustarFilas(t); }); return; }
+    actualizar(d.id, { [campo]: !d[campo] });
   }
-  function borrar() { if (!state.selId) return; const id = state.selId; state.selId = null; commit(clone(state.shapes).filter(s => s.id !== id)); }
-  function duplicar() { const d = state.shapes.find(s => s.id === state.selId); if (!d) return; const c = clone(d); c.id = uid(); c.x += 30; c.y += 30; state.selId = c.id; commit([...clone(state.shapes), c]); }
-  function copiar() { const d = state.shapes.find(s => s.id === state.selId); if (d) state.clip = clone(d); }
-  function pegar() { if (!state.clip) return; const c = clone(state.clip); c.id = uid(); c.x += 40; c.y += 40; state.clip = clone(c); state.selId = c.id; commit([...clone(state.shapes), c]); }
+  function modTablaFuera(fn) { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === state.selId); if (t) { fn(t); commit(nuevas); } }
+  function mover(dir) {
+    const ids = new Set(elegidas()); if (!ids.size) return;
+    const todas = clone(state.shapes), sel = todas.filter(x => ids.has(x.id)), resto = todas.filter(x => !ids.has(x.id));
+    commit(dir > 0 ? [...resto, ...sel] : [...sel, ...resto]);
+  }
+  function borrar() {
+    const ids = new Set(elegidas()); if (!ids.size) return;
+    state.selId = null; state.sel = [];
+    commit(clone(state.shapes).filter(s => !ids.has(s.id)));
+  }
+  // Copias con ids nuevos; los grupos copiados siguen agrupados entre sí pero separados del original
+  function clonarMarcas(lista, desp) {
+    const mapa = {};
+    return clone(lista).map(c => { c.id = uid(); if (c.grp) c.grp = mapa[c.grp] = mapa[c.grp] || ('g' + uid()); c.x += desp; c.y += desp; return c; });
+  }
+  function agregarYElegir(nuevos) {
+    state.sel = nuevos.map(c => c.id); state.selId = nuevos.length === 1 ? nuevos[0].id : null;
+    commit([...clone(state.shapes), ...nuevos]);
+  }
+  function duplicar() { const ds = elegidas().map(forma); if (ds.length) agregarYElegir(clonarMarcas(ds, 30)); }
+  function copiar() { const ds = elegidas().map(forma); if (ds.length) state.clip = clone(ds); }
+  function pegar() { if (!state.clip) return; const nuevos = clonarMarcas(state.clip, 40); state.clip = clone(nuevos); agregarYElegir(nuevos); }
+  function agrupar() { const ids = new Set(elegidas()); if (ids.size < 2) return; const g = 'g' + uid(); const nuevas = clone(state.shapes); nuevas.forEach(x => { if (ids.has(x.id)) x.grp = g; }); commit(nuevas); }
+  function desagrupar() { const ids = new Set(elegidas()); const nuevas = clone(state.shapes); nuevas.forEach(x => { if (ids.has(x.id)) delete x.grp; }); commit(nuevas); }
+
+  // ---------- alinear y distribuir (como en Inkscape) ----------
+  const cajaDe = id => nodes[id].getClientRect({ relativeTo: layer });
+  function alinear(modo) {
+    const ids = elegidas(); if (!ids.length) return;
+    const cajas = ids.map(id => ({ id, b: cajaDe(id) }));
+    const u = cajas.reduce((a, { b }) => ({ x1: Math.min(a.x1, b.x), y1: Math.min(a.y1, b.y), x2: Math.max(a.x2, b.x + b.width), y2: Math.max(a.y2, b.y + b.height) }), { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity });
+    let rel = $('#al-rel').value, ref = { x1: u.x1, y1: u.y1, x2: u.x2, y2: u.y2 }, fijo = null;
+    if (ids.length === 1 || rel === 'pag') ref = { x1: 0, y1: 0, x2: state.W, y2: state.H };
+    else if (rel !== 'sel') {
+      const area = c => c.b.width * c.b.height;
+      fijo = rel === 'prim' ? cajas[0] : rel === 'ult' ? cajas[cajas.length - 1] : cajas.reduce((a, c) => (rel === 'grande' ? area(c) > area(a) : area(c) < area(a)) ? c : a);
+      ref = { x1: fijo.b.x, y1: fijo.b.y, x2: fijo.b.x + fijo.b.width, y2: fijo.b.y + fijo.b.height };
+    }
+    const mov = {};
+    const poner = (c, dx, dy) => { if (c !== fijo && (dx || dy)) mov[c.id] = { dx: dx || 0, dy: dy || 0 }; };
+    cajas.forEach(c => {
+      const b = c.b;
+      switch (modo) {
+        case 'izq': poner(c, ref.x1 - b.x, 0); break;
+        case 'der': poner(c, ref.x2 - (b.x + b.width), 0); break;
+        case 'cx': poner(c, (ref.x1 + ref.x2) / 2 - (b.x + b.width / 2), 0); break;
+        case 'sup': poner(c, 0, ref.y1 - b.y); break;
+        case 'inf': poner(c, 0, ref.y2 - (b.y + b.height)); break;
+        case 'cy': poner(c, 0, (ref.y1 + ref.y2) / 2 - (b.y + b.height / 2)); break;
+      }
+    });
+    aplicarMovimientos(mov);
+  }
+  function distribuir(modo) {
+    const ids = elegidas(); if (ids.length < 3) { status('Elige al menos 3 marcas para distribuir'); return; }
+    const horiz = modo[0] === 'h', tipo = modo.slice(2);
+    const cajas = ids.map(id => { const b = cajaDe(id); return { id, a: horiz ? b.x : b.y, l: horiz ? b.width : b.height }; }).sort((p, q) => (p.a + p.l / 2) - (q.a + q.l / 2));
+    const n = cajas.length, mov = {};
+    const ponerEn = (c, nuevoA) => { const d = nuevoA - c.a; if (Math.abs(d) > 0.01) mov[c.id] = horiz ? { dx: d, dy: 0 } : { dx: 0, dy: d }; };
+    if (tipo === 'gap') {
+      const ordenadas = [...cajas].sort((p, q) => p.a - q.a), ini = ordenadas[0].a, fin = Math.max(...ordenadas.map(c => c.a + c.l));
+      const hueco = (fin - ini - ordenadas.reduce((t, c) => t + c.l, 0)) / (n - 1);
+      let pos = ini; ordenadas.forEach(c => { ponerEn(c, pos); pos += c.l + hueco; });
+    } else {
+      const ref = c => tipo === 'ini' ? c.a : tipo === 'fin' ? c.a + c.l : c.a + c.l / 2;
+      const primero = ref(cajas[0]), ultimo = ref(cajas[n - 1]);
+      cajas.forEach((c, i) => ponerEn(c, c.a + (primero + (ultimo - primero) * i / (n - 1) - ref(c))));
+    }
+    aplicarMovimientos(mov);
+  }
+  function aplicarMovimientos(mov) {
+    if (!Object.keys(mov).length) return;
+    const nuevas = clone(state.shapes);
+    nuevas.forEach(x => { const m = mov[x.id]; if (m) { x.x += m.dx; x.y += m.dy; } });
+    commit(nuevas);
+  }
+  function pintarAlinear() {
+    const caja = $('#ve-alinear'); if (!caja) return;
+    const n = elegidas().length;
+    caja.hidden = n < 1;
+    $('#ve-sel-n').textContent = n > 1 ? n + ' marcas elegidas' : (n === 1 ? '1 marca elegida' : '');
+    caja.querySelectorAll('[data-di]').forEach(b => { b.disabled = n < 3; });
+    const tp = document.querySelector('.ve-tabs [data-tab=props]'); if (tp) tp.classList.toggle('con-sel', n > 0);
+    $('#b-agrupar').disabled = n < 2;
+    $('#b-desagrupar').disabled = !elegidas().some(i => (forma(i) || {}).grp);
+    $('#al-rel').disabled = n < 2;
+    document.querySelectorAll('#ve-alinear .ve-solo-multi').forEach(el => { el.hidden = n < 2; });
+  }
+  function enlazarAlinear() {
+    const caja = $('#ve-alinear'); if (!caja) return;
+    caja.addEventListener('click', e => {
+      const a = e.target.closest('[data-al]'), d = e.target.closest('[data-di]');
+      if (a) alinear(a.dataset.al); else if (d && !d.disabled) distribuir(d.dataset.di);
+    });
+    $('#b-agrupar').addEventListener('click', agrupar); $('#b-desagrupar').addEventListener('click', desagrupar);
+  }
 
   // ---------- herramientas de dibujo ----------
   let dibujando = null, panning = null, poli = null;
-  const posRel = () => layer.getAbsoluteTransform().copy().invert().point(stage.getPointerPosition());
+  const posRel = (crudo) => { const p = layer.getAbsoluteTransform().copy().invert().point(stage.getPointerPosition()); return crudo ? p : ajustar(p); };   // con el imán activo, a la cuadrícula
+  const orto = () => $('#t-orto').checked;
+  const ortoDelta = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? [dx, 0] : [0, dy];   // solo horizontal o vertical
   const estiloBase = () => ({ stroke: $('#t-stroke').value, strokeWidth: sw, dash: 'solid', opacity: 100 });
   const LINEA_TOOLS = { line: {}, dash: { dash: 'dash' }, dashdot: { dash: 'dashdot' }, dot: { dash: 'dot' }, arrow: { _t: 'arrow' }, darrow: { _t: 'darrow' } };
   function nuevoDato(tool, p) {
     const e = estiloBase(), id = uid();
     if (LINEA_TOOLS[tool]) { const x = LINEA_TOOLS[tool]; return { id, type: x._t || 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, ...(x.dash ? { dash: x.dash } : {}) }; }
+    if (tool === 'measure') return { id, type: 'measure', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, dash: 'solid', fontSize: Math.max(10, Math.round(sw * 5)), unit: state.escala ? state.escala.unit : 'cm' };
+    if (tool === 'table') return { id, type: 'table', x: p.x, y: p.y, w: 1, h: 1, rows: 3, cols: 3, header: true, fontSize: Math.round(sw * 6), fill: '#ffffff', headerFill: '#dbe5f1', textColor: '#111111', rotation: 0, ...e, strokeWidth: Math.max(1, Math.round(sw / 2)) };
+    if (tool === 'v360') return { id, type: 'link', x: p.x, y: p.y, w: 1, h: 1, kind: '360', url: pend360.url, label: pend360.nombre, icon: 'globe', iconColor: '#e65100', showIcon: false, rotation: 0, opacity: 100 };
+    if (tool === 'link') return { id, type: 'link', x: p.x, y: p.y, w: 1, h: 1, kind: 'ext', url: '', label: '', icon: 'link', iconColor: '#0070c0', showIcon: false, rotation: 0, opacity: 100 };
     if (tool === 'ellipse') return { id, type: 'ellipse', x: p.x, y: p.y, rx: 1, ry: 1, fill: '', fillAlpha: 100, ...e };
     if (tool === 'zone') return { id, type: 'zone', x: p.x, y: p.y, rx: 1, ry: 1, fill: '#ffeb00', fillAlpha: 35, ...e, stroke: '#c8b400' };
     return { id, type: tool, x: p.x, y: p.y, w: 1, h: 1, fill: '', fillAlpha: 100, ...e };   // rect, rrect y polígonos
   }
   const FORMAS = ['rect', 'rrect', 'ellipse', 'zone', ...POLI];
+
+  // Punto de la polilínea respecto a su origen; en modo ortogonal (o con Mayús) el tramo sale horizontal o vertical
+  function puntoPoli(d, p, shift) {
+    const n = d.points.length, ref = n >= 4 ? [d.points[n - 4], d.points[n - 3]] : [0, 0];
+    let dx = p.x - d.x - ref[0], dy = p.y - d.y - ref[1];
+    if (orto() || shift) [dx, dy] = ortoDelta(dx, dy);
+    return [ref[0] + dx, ref[1] + dy];
+  }
 
   function finalizarPoli() {
     if (!poli) return;
@@ -254,10 +775,18 @@
   function configurarEventos() {
     stage.on('mousedown touchstart', e => {
       const esFondo = e.target === stage || e.target === bg;
-      if (state.tool === 'select') {
-        if (esFondo) { select(null); panning = { x: e.evt.clientX, y: e.evt.clientY, sx: stage.x(), sy: stage.y() }; }
+      if (modoSel()) {
+        if (!esFondo) return;
+        if (state.tool === 'multi' || e.evt.shiftKey) {   // recuadro de selección (Mayús suma a lo ya elegido)
+          const p = posRel(true), base = e.evt.shiftKey ? [...state.sel] : [];
+          if (!base.length) select(null);
+          const r = new Konva.Rect({ x: p.x, y: p.y, width: 0, height: 0, fill: 'rgba(0,112,192,.12)', stroke: '#0070c0', strokeWidth: 1.5 / stage.scaleX(), dash: [6 / stage.scaleX(), 4 / stage.scaleX()], listening: false });
+          trLayer.add(r); marco = { x0: p.x, y0: p.y, r, base }; return;
+        }
+        select(null); panning = { x: e.evt.clientX, y: e.evt.clientY, sx: stage.x(), sy: stage.y() };
         return;
       }
+      if (!capaOk()) return;
       if (['text', 'restr', 'pin', 'image'].includes(state.tool)) return;   // se crean en el clic
       const p = posRel();
       if (state.tool === 'poly') {
@@ -265,7 +794,9 @@
           const d = { id: uid(), type: 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...estiloBase(), round: true };
           poli = { d, nodo: crearNodo(d) }; layer.add(poli.nodo);
         } else {
-          poli.d.points.push(p.x - poli.d.x, p.y - poli.d.y);   // fija el punto temporal y abre otro
+          const q = puntoPoli(poli.d, p, e.evt.shiftKey);
+          poli.d.points[poli.d.points.length - 2] = q[0]; poli.d.points[poli.d.points.length - 1] = q[1];   // fija el punto temporal
+          poli.d.points.push(q[0], q[1]);                                                                    // y abre otro
         }
         return;
       }
@@ -277,11 +808,14 @@
       dibujando = { d, p0: p, nodo: crearNodo(d) }; layer.add(dibujando.nodo);
     });
     stage.on('mousemove touchmove', e => {
-      if (panning) { stage.position({ x: panning.sx + e.evt.clientX - panning.x, y: panning.sy + e.evt.clientY - panning.y }); return; }
+      marcarPuntero();
+      if (marco) { const p = posRel(true); marco.r.setAttrs({ x: Math.min(marco.x0, p.x), y: Math.min(marco.y0, p.y), width: Math.abs(p.x - marco.x0), height: Math.abs(p.y - marco.y0) }); trLayer.batchDraw(); return; }
+      if (panning) { stage.position({ x: panning.sx + e.evt.clientX - panning.x, y: panning.sy + e.evt.clientY - panning.y }); refrescarVista(); return; }
       if (poli) {
         const p = posRel(), d = poli.d, n = d.points.length;
         if (n === 2) d.points.push(0, 0);
-        d.points[d.points.length - 2] = p.x - d.x; d.points[d.points.length - 1] = p.y - d.y;
+        const q = puntoPoli(d, p, e.evt.shiftKey);
+        d.points[d.points.length - 2] = q[0]; d.points[d.points.length - 1] = q[1];
         poli.nodo.destroy(); poli.nodo = crearNodo(d); layer.add(poli.nodo); layer.batchDraw(); return;
       }
       if (!dibujando) return;
@@ -291,7 +825,7 @@
         if (Math.hypot(dx - ult[0], dy - ult[1]) < paso) return;
         d.points.push(dx, dy);
       } else if (LINEAS.includes(d.type)) {
-        if (e.evt.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }   // Mayús: recta horizontal/vertical
+        if (e.evt.shiftKey || orto()) [dx, dy] = ortoDelta(dx, dy);   // Mayús u «Ortogonal»: recta horizontal/vertical
         d.points = [0, 0, dx, dy];
       } else if (ELIPSE.includes(d.type)) {
         d.x = p0.x + dx / 2; d.y = p0.y + dy / 2; d.rx = Math.abs(dx) / 2; d.ry = Math.abs(dy) / 2;
@@ -300,14 +834,30 @@
     });
     window.addEventListener('mouseup', () => {
       panning = null;
+      if (marco) {   // elige lo que toca el recuadro
+        const { r, base } = marco, a = r.getClientRect({ relativeTo: layer }); marco = null; r.destroy(); trLayer.batchDraw();
+        const dentro = Object.keys(nodes).filter(id => {
+          const n = nodes[id]; if (!n.listening()) return false;
+          const b = n.getClientRect({ relativeTo: layer });
+          return b.x < a.x + a.width && b.x + b.width > a.x && b.y < a.y + a.height && b.y + b.height > a.y;
+        });
+        selectIds([...base, ...dentro]);
+        return;
+      }
       if (!dibujando) return;
       const { d, nodo, libre } = dibujando; nodo.destroy(); dibujando = null;
+      if (d.type === 'table') normalizarTabla(d);
       const dim = d.points ? (libre ? d.points.length : Math.hypot(d.points[2], d.points[3])) : Math.max(d.w || d.rx * 2 || 0, d.h || d.ry * 2 || 0);
-      if (dim > (libre ? 4 : 6)) { state.selId = d.id; commit([...clone(state.shapes), d]); if (!libre) setTool('select'); } else layer.batchDraw();
+      if (dim > (libre ? 4 : 6)) {
+        if (d.type === 'measure') { terminarMedida(d); return; }
+        state.selId = d.id; commit([...clone(state.shapes), d]); if (!libre) setTool('select');
+        if (d.type === 'link') { pend360 = null; const t = document.querySelector('.ve-tabs [data-tab=props]'); if (t) t.click(); setTimeout(() => { const u = d.kind === '360' ? $('#p-lk-label') : $('#p-lk-url'); if (u) u.focus(); }, 60); }
+      } else layer.batchDraw();
     });
     stage.on('dblclick dbltap', () => { if (state.tool === 'poly') finalizarPoli(); });
     stage.on('click tap', e => {
       if (!['text', 'restr', 'pin'].includes(state.tool)) return;
+      if (!capaOk()) return;
       const p = posRel();
       if (state.tool === 'text') {
         const d = { id: uid(), type: 'text', x: p.x, y: p.y, text: 'Texto', fontSize: Math.round(sw * 10), fill: $('#t-stroke').value, bold: true, rotation: 0, opacity: 100 };
@@ -326,9 +876,10 @@
       const k = e.evt.deltaY < 0 ? 1.12 : 1 / 1.12, nuevo = Math.min(8, Math.max(0.05, old * k));
       const o = { x: (ptr.x - stage.x()) / old, y: (ptr.y - stage.y()) / old };
       stage.scale({ x: nuevo, y: nuevo }); stage.position({ x: ptr.x - o.x * nuevo, y: ptr.y - o.y * nuevo });
-      $('#ve-zoom').textContent = Math.round(nuevo * 100) + '%';
+      $('#ve-zoom').textContent = Math.round(nuevo * 100) + '%'; refrescarVista();
     });
     document.addEventListener('keydown', e => {
+      if (e.key === 'F8') { e.preventDefault(); const o = $('#t-orto'); o.checked = !o.checked; status('Modo ortogonal ' + (o.checked ? 'activado' : 'desactivado')); return; }
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
       const k = e.key.toLowerCase();
       if (poli && (k === 'enter' || k === 'escape')) { e.preventDefault(); finalizarPoli(); return; }
@@ -338,38 +889,64 @@
       else if ((e.ctrlKey || e.metaKey) && k === 'v') pegar();
       else if ((e.ctrlKey || e.metaKey) && k === 'd') { e.preventDefault(); duplicar(); }
       else if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); guardar(); }
+      else if ((e.ctrlKey || e.metaKey) && k === 'a') { e.preventDefault(); selectIds(Object.keys(nodes).filter(id => nodes[id].listening()), false); }
+      else if ((e.ctrlKey || e.metaKey) && k === 'g') { e.preventDefault(); e.shiftKey ? desagrupar() : agrupar(); }
+      else if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(k) && state.selId && ['text', 'table', 'measure'].includes((forma(state.selId) || {}).type)) { e.preventDefault(); alternarEstilo({ b: 'bold', i: 'italic', u: 'underline' }[k]); }
+      else if (k === 'pageup' && state.slides) { e.preventDefault(); irALamina(state.idx - 1); }
+      else if (k === 'pagedown' && state.slides) { e.preventDefault(); irALamina(state.idx + 1); }
       else if (k === 'delete' || k === 'backspace') { e.preventDefault(); borrar(); }
       else if (k === 'escape') { setTool('select'); select(null); }
-      else if (k.startsWith('arrow') && state.selId) {
-        e.preventDefault(); const paso = e.shiftKey ? 10 : 1, d = state.shapes.find(s => s.id === state.selId);
-        actualizar(state.selId, { x: d.x + (k === 'arrowleft' ? -paso : k === 'arrowright' ? paso : 0), y: d.y + (k === 'arrowup' ? -paso : k === 'arrowdown' ? paso : 0) });
+      else if (k.startsWith('arrow') && elegidas().length) {
+        e.preventDefault(); const paso = e.shiftKey ? 10 : 1, dx = k === 'arrowleft' ? -paso : k === 'arrowright' ? paso : 0, dy = k === 'arrowup' ? -paso : k === 'arrowdown' ? paso : 0, mov = {};
+        elegidas().forEach(i => { mov[i] = { dx, dy }; });
+        aplicarMovimientos(mov);
       }
     });
   }
 
   function setTool(t) {
-    if (t === 'image') { $('#ve-archivo').click(); return; }
+    if (t === 'image') { if (capaOk()) $('#ve-archivo').click(); return; }
+    if (t === 'v360' && !pend360) { if (capaOk()) { cambiar360 = null; $('#ve-archivo-360').click(); } return; }
+    if (t !== 'v360') pend360 = null;
     if (poli) finalizarPoli();
     state.tool = t;
     document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('activo', b.dataset.tool === t));
-    Object.values(nodes).forEach(n => n.draggable(t === 'select'));
-    stage.container().style.cursor = t === 'select' ? 'default' : 'crosshair';
-    if (t !== 'select') { tr.nodes([]); trLayer.batchDraw(); }
+    Object.values(nodes).forEach(n => n.draggable(modoSel() && n.listening()));
+    stage.container().style.cursor = modoSel() ? 'default' : 'crosshair';
+    if (!modoSel()) { tr.nodes([]); trLayer.batchDraw(); }
+  }
+
+  // ---------- foto 360 de un hipervínculo «Vista 360» ----------
+  async function subirPanorama(file) {
+    if (!file) return;
+    const destino = cambiar360; cambiar360 = null;
+    if (file.size > 40 * 1024 * 1024) { status('La foto 360 no puede pesar más de 40 MB'); return; }
+    status('Subiendo foto 360…');
+    const fd = new FormData(); fd.append('proyecto', C.proyecto); fd.append('imagen', file);
+    try {
+      const r = await fetch((C.api && C.api.panorama) || '/api/view360/panorama', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!d.success) { status('Error: ' + (d.error || 'no se pudo subir la foto 360')); return; }
+      if (destino && forma(destino)) { actualizar(destino, { url: d.url }); status('Foto 360 reemplazada (' + d.ancho + ' × ' + d.alto + ' px)'); return; }
+      pend360 = { url: d.url, nombre: (file.name || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 60) };
+      setTool('v360');
+      status('Foto 360 cargada (' + d.ancho + ' × ' + d.alto + ' px). Dibuja ahora el área en el plano que abrirá la vista.');
+    } catch (e) { status('Error de conexión al subir la foto 360'); }
   }
 
   // ---------- imágenes dentro del editor ----------
-  async function subirImagen(file) {
+  async function subirImagen(file, fraccion = 0.3) {
     if (!file) return;
     status('Subiendo imagen…');
     const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('imagen', file);
     try {
-      const r = await fetch('/api/vplan/imagen', { method: 'POST', body: fd });
+      const r = await fetch((C.api && C.api.imagen) || '/api/vplan/imagen', { method: 'POST', body: fd });
       const d = await r.json();
       if (!d.success) { status('Error: ' + (d.error || 'no se pudo subir')); return; }
       const img = new Image();
       img.onload = () => {
         imgCache[d.src] = { img, ok: true };
-        const max = Math.min(state.W, state.H) * 0.3, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const max = Math.min(state.W, state.H) * fraccion, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
         const w = img.naturalWidth * k, h = img.naturalHeight * k;
         const c = layer.getAbsoluteTransform().copy().invert().point({ x: stage.width() / 2, y: stage.height() / 2 });
         const sh = { id: uid(), type: 'image', src: d.src, x: c.x - w / 2, y: c.y - h / 2, w, h, rotation: 0, opacity: 100 };
@@ -381,69 +958,701 @@
 
   // ---------- zoom / encuadre ----------
   function encuadrar() {
-    const c = $('#ve-lienzo'), w = c.clientWidth, h = c.clientHeight;
-    const k = Math.min(w / state.W, h / state.H);
+    const c = $('#ve-lienzo'), w = c.clientWidth, h = c.clientHeight, R = reglasOn() ? REGLA : 0;
+    const k = Math.min((w - R - 16) / state.W, (h - R - 16) / state.H);
     stage.size({ width: w, height: h }); stage.scale({ x: k, y: k });
-    stage.position({ x: (w - state.W * k) / 2, y: (h - state.H * k) / 2 });
+    stage.position({ x: R + (w - R - state.W * k) / 2, y: R + (h - R - state.H * k) / 2 });
     $('#ve-zoom').textContent = Math.round(k * 100) + '%';
+    refrescarVista();
+  }
+
+  // ---------- cuadrícula, imán y reglas ----------
+  const REGLA = 22;
+  let glayer = null, ptr = null;
+  const reglasOn = () => !!$('#t-reglas') && $('#t-reglas').checked;
+  const imanOn = () => !!$('#t-snap') && $('#t-snap').checked;
+  const pasoGrilla = () => Math.max(2, +($('#t-grid-n') || {}).value || 50);
+  function ajustar(p) { if (!imanOn()) return p; const g = pasoGrilla(); return { x: Math.round(p.x / g) * g, y: Math.round(p.y / g) * g }; }
+  const fmtNum = v => { const a = Math.abs(v); return String(+v.toFixed(a >= 100 ? 1 : a >= 1 ? 2 : 3)); };
+  function dibujarGrilla(ctx) {
+    if (!$('#t-grid').checked) return;
+    const k = stage.scaleX(), c = ctx._context;
+    let g = pasoGrilla(); while (g * k < 7) g *= 2;
+    const x0 = Math.max(0, -stage.x() / k), x1 = Math.min(state.W, (stage.width() - stage.x()) / k), y0 = Math.max(0, -stage.y() / k), y1 = Math.min(state.H, (stage.height() - stage.y()) / k);
+    c.save(); c.lineWidth = 1 / k;
+    [false, true].forEach(mayor => {
+      c.beginPath();
+      for (let i = Math.ceil(x0 / g); i * g <= x1; i++) if ((i % 5 === 0) === mayor) { c.moveTo(i * g, y0); c.lineTo(i * g, y1); }
+      for (let j = Math.ceil(y0 / g); j * g <= y1; j++) if ((j % 5 === 0) === mayor) { c.moveTo(x0, j * g); c.lineTo(x1, j * g); }
+      c.strokeStyle = mayor ? 'rgba(0,112,192,.65)' : 'rgba(0,112,192,.3)'; c.stroke();
+    });
+    c.restore();
+  }
+  // Paso «redondo» (1, 2, 5 × 10ⁿ) para las marcas de las reglas
+  const pasoBonito = min => { const mag = 10 ** Math.floor(Math.log10(min)), n = min / mag; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag; };
+  function dibujarReglas() {
+    const ch = $('#ve-regla-h'), cv = $('#ve-regla-v'); if (!ch || !cv || !stage) return;
+    const on = reglasOn(); ch.hidden = cv.hidden = !on; $('#ve-regla-esq').hidden = !on;
+    if (!on) return;
+    const cont = $('#ve-lienzo'), W = cont.clientWidth, H = cont.clientHeight, dpr = window.devicePixelRatio || 1, k = stage.scaleX();
+    const e = state.escala, f = e ? e.mmPorPx / UNIDADES[e.unit] : 1, un = e ? e.unit : 'px';   // unidades por píxel del dibujo
+    const porUnidad = k / f, paso = pasoBonito(64 / porUnidad), menor = paso / 5;
+    const pinta = (canvas, horiz) => {
+      const largo = (horiz ? W : H) - REGLA, ancho = REGLA;
+      const cw = Math.max(1, Math.round((horiz ? largo : ancho) * dpr)), chh = Math.max(1, Math.round((horiz ? ancho : largo) * dpr));
+      if (canvas.width !== cw || canvas.height !== chh) { canvas.width = cw; canvas.height = chh; canvas.style.width = (horiz ? largo : ancho) + 'px'; canvas.style.height = (horiz ? ancho : largo) + 'px'; }
+      const x = canvas.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, horiz ? largo : ancho, horiz ? ancho : largo);
+      x.fillStyle = '#1e2433'; x.fillRect(0, 0, horiz ? largo : ancho, horiz ? ancho : largo);
+      const origen = (horiz ? stage.x() : stage.y()) - REGLA;   // posición en la regla del 0 del dibujo
+      const u0 = (-origen / k) * f, u1 = ((largo - origen) / k) * f;
+      x.strokeStyle = '#9aa5b8'; x.fillStyle = '#cfd6df'; x.font = '10px sans-serif'; x.lineWidth = 1; x.textBaseline = 'top';
+      for (let i = Math.floor(u0 / menor); i * menor <= u1; i++) {
+        const u = i * menor, pos = Math.round(origen + (u / f) * k) + .5, mayor = i % 5 === 0, tam = mayor ? ancho : ancho * .35;
+        x.beginPath();
+        if (horiz) { x.moveTo(pos, ancho); x.lineTo(pos, ancho - tam); } else { x.moveTo(ancho, pos); x.lineTo(ancho - tam, pos); }
+        x.stroke();
+        if (mayor) {
+          const txt = String(+u.toFixed(6));
+          if (horiz) x.fillText(txt, pos + 3, 2); else { x.save(); x.translate(2, pos + 3); x.rotate(Math.PI / 2); x.fillText(txt, 0, 0); x.restore(); }
+        }
+      }
+      if (ptr) {   // marca roja donde está el puntero
+        x.strokeStyle = '#ff5a1f'; x.beginPath();
+        if (horiz) { x.moveTo(ptr.x - REGLA + .5, 0); x.lineTo(ptr.x - REGLA + .5, ancho); } else { x.moveTo(0, ptr.y - REGLA + .5); x.lineTo(ancho, ptr.y - REGLA + .5); }
+        x.stroke();
+      }
+    };
+    pinta(ch, true); pinta(cv, false);
+    const eq = $('#t-grid-eq'); if (eq) eq.textContent = e ? '≈ ' + fmtNum(pasoGrilla() * f) + ' ' + un : '';
+    $('#ve-regla-esq').textContent = un;
+  }
+  function enlazarVista() {
+    ['#t-grid', '#t-reglas'].forEach(q => $(q).addEventListener('change', () => { if (q === '#t-reglas') encuadrar(); else refrescarVista(); }));
+    $('#t-grid-n').addEventListener('input', refrescarVista);
+    $('#t-unidad').addEventListener('change', e => { if (state.escala) commit(undefined, undefined, { ...state.escala, unit: e.target.value }); });
+    $('#ve-escala-x').addEventListener('click', () => { if (state.escala) commit(undefined, undefined, null); });
+    window.addEventListener('mouseleave', () => { ptr = null; dibujarReglas(); });
+  }
+  function refrescarVista() { if (glayer) glayer.batchDraw(); dibujarReglas(); }
+  function marcarPuntero() { ptr = stage.getPointerPosition(); dibujarReglas(); }
+
+  // ---------- escala y medidas ----------
+  let escalaRender;   // al dibujar otra lámina, su propia escala
+  const escalaEf = () => escalaRender !== undefined ? escalaRender : state.escala;
+  function textoMedida(d, len) {
+    const e = escalaEf(); if (!e || !e.mmPorPx) return 'sin escala';
+    const u = UNIDADES[d.unit] ? d.unit : e.unit;
+    return fmtNum(len * e.mmPorPx / UNIDADES[u]) + ' ' + u;
+  }
+  function pedirMedida({ titulo, texto, valor = '', unidad = 'cm' }) {
+    return new Promise(res => {
+      const m = $('#ve-modal-medida'); if (!m) return res(null);
+      $('#mm-titulo').textContent = titulo; $('#mm-texto').textContent = texto; $('#mm-valor').value = valor; $('#mm-unidad').value = unidad; $('#mm-error').hidden = true;
+      m.classList.add('abierto'); m.setAttribute('aria-hidden', 'false'); setTimeout(() => $('#mm-valor').focus(), 30);
+      const fin = r => { m.classList.remove('abierto'); m.setAttribute('aria-hidden', 'true'); m.onkeydown = null; $('#mm-ok').onclick = null; $('#mm-cancelar').onclick = null; res(r); };
+      const aceptar = () => { const v = parseFloat($('#mm-valor').value); if (!(v > 0)) { $('#mm-error').textContent = 'Escribe una medida mayor que cero'; $('#mm-error').hidden = false; return; } fin({ valor: v, unidad: $('#mm-unidad').value }); };
+      $('#mm-ok').onclick = aceptar; $('#mm-cancelar').onclick = () => fin(null);
+      m.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); aceptar(); } else if (e.key === 'Escape') fin(null); e.stopPropagation(); };
+    });
+  }
+  async function terminarMedida(d) {
+    const len = Math.hypot(d.points[2], d.points[3]);
+    if (!state.escala) {
+      const r = await pedirMedida({ titulo: 'Medida de referencia', texto: 'Indica cuánto mide en la realidad el segmento que acabas de trazar. Con esa referencia se calculan las demás medidas del dibujo.' });
+      if (!r) { layer.batchDraw(); status('Medición cancelada'); return; }
+      d.unit = r.unidad; state.selId = d.id;
+      commit([...clone(state.shapes), d], undefined, { mmPorPx: r.valor * UNIDADES[r.unidad] / len, unit: r.unidad });
+    } else { d.unit = state.escala.unit; state.selId = d.id; commit([...clone(state.shapes), d]); }
+  }
+  function pintarEscala() {
+    const t = $('#ve-escala-txt'); if (!t) return;
+    const e = state.escala;
+    t.textContent = e ? '1 px = ' + fmtNum(e.mmPorPx) + ' mm' : 'Sin escala: traza una medida de referencia';
+    $('#t-unidad').disabled = !e; if (e) $('#t-unidad').value = e.unit;
+    $('#ve-escala-x').disabled = !e;
+    dibujarReglas();
   }
 
   // ---------- guardado ----------
-  async function exportarPng() {
-    await Promise.all(state.shapes.filter(s => s.type === 'image').map(s => new Promise(res => {
+  // Dibuja las marcas visibles en una imagen de ancho x alto píxeles. El contenido se ajusta (sin deformarse) y se centra;
+  // el espacio sobrante y el fondo transparente se controlan con `transparente`.
+  async function renderizar({ ancho, alto, mime = 'image/png', calidad = 0.92, transparente = false, datos, iconos = false }) {
+    const shapes = datos ? datos.shapes : state.shapes, layers = datos ? datos.layers || [] : state.layers, escala = datos ? datos.escala || null : state.escala;
+    await Promise.all(shapes.filter(s => s.type === 'image').map(s => new Promise(res => {
       const e = imgCache[s.src]; if (e && e.ok) return res();
       const img = new Image(); img.onload = () => { imgCache[s.src] = { img, ok: true }; res(); }; img.onerror = res; img.src = s.src;
     })));
+    const k = Math.min(ancho / state.W, alto / state.H);
     const cont = document.createElement('div'); cont.style.cssText = 'position:fixed;left:-99999px;top:0';
     document.body.appendChild(cont);
-    const st = new Konva.Stage({ container: cont, width: state.W, height: state.H });
+    const st = new Konva.Stage({ container: cont, width: ancho, height: alto });
     const ly = new Konva.Layer(); st.add(ly);
-    ly.add(new Konva.Rect({ width: state.W, height: state.H, fill: '#ffffff' }));
-    ly.add(new Konva.Image({ image: bg.image(), width: state.W, height: state.H }));
-    state.shapes.forEach(d => { const n = crearNodo(d); n.draggable(false); ly.add(n); });
+    const opaco = !transparente || mime === 'image/jpeg';
+    if (opaco) ly.add(new Konva.Rect({ width: ancho, height: alto, fill: '#ffffff' }));
+    const g = new Konva.Group({ x: (ancho - state.W * k) / 2, y: (alto - state.H * k) / 2, scaleX: k, scaleY: k });
+    ly.add(g);
+    if (bg instanceof Konva.Image) g.add(new Konva.Image({ image: bg.image(), width: state.W, height: state.H }));
+    else if (!transparente) g.add(fondoRect(state.W, state.H));   // fondo de plantilla del Editor
+    escalaRender = escala; enExport = true;
+    try { ordenar(shapes, layers).filter(d => d.type !== 'link' || (iconos && d.showIcon && d.icon !== 'none')).forEach(d => { const n = crearNodo(d); n.draggable(false); g.add(n); }); }   // las capas ocultas no salen
+    finally { escalaRender = undefined; enExport = false; }
     ly.draw();
-    const url = st.toDataURL({ mimeType: 'image/jpeg', quality: 0.92, pixelRatio: 1 });
+    const url = st.toDataURL({ mimeType: mime, quality: calidad, pixelRatio: 1 });
     st.destroy(); cont.remove();
     return url;
   }
-  async function guardar() {
-    status('Guardando…');
+  // Enlaces externos visibles, en píxeles de una exportación ancho × alto (los internos no van en el PDF)
+  function enlacesExternos(ancho, alto) {
+    const k = Math.min(ancho / state.W, alto / state.H), ox = (ancho - state.W * k) / 2, oy = (alto - state.H * k) / 2;
+    return state.shapes.filter(s => s.type === 'link' && (s.kind || 'ext') === 'ext' && s.url && (capaPor(s.layer) || {}).visible !== false)
+      .map(s => ({ x: ox + s.x * k, y: oy + s.y * k, w: s.w * k, h: s.h * k, url: s.url }));
+  }
+  // Imagen que se guarda con el trabajo (la que muestran la lámina, el PDF y las descargas)
+  const exportarPng = () => renderizar({ ancho: state.W, alto: state.H, mime: C.guardado === 'png' ? 'image/png' : 'image/jpeg', calidad: 0.92 });
+  let enCurso = null, autoPausado = false, tAuto = null;
+  const autoOn = () => { const c = $('#t-auto'); return !!c && c.checked; };
+  function programarAuto() {
+    clearTimeout(tAuto);
+    if (!autoOn() || autoPausado) return;
+    tAuto = setTimeout(async () => {
+      const ocupado = dibujando || poli || marco || document.querySelector('.modal-overlay.abierto') || (document.activeElement && ['TEXTAREA', 'INPUT', 'SELECT'].includes(document.activeElement.tagName));
+      if (!sucio) return;
+      if (ocupado) { programarAuto(); return; }
+      await guardar({ auto: true });
+    }, 12000);
+  }
+  // Una sola operación de guardado a la vez (manual o automática)
+  async function guardar(op = {}) {
+    const previa = enCurso;
+    const p = (async () => { if (previa) { try { await previa; } catch (_) {} } return guardarReal(op && op.auto ? op : {}); })();
+    enCurso = p;
+    try { return await p; } finally { if (enCurso === p) enCurso = null; }
+  }
+  async function guardarReal(op) {
+    if (op.auto && !sucio) return true;
+    status(op.auto ? 'Autoguardando…' : 'Guardando…');
     try {
-      const png = await exportarPng();
-      const r = await fetch('/api/vplan/marcas', { method: 'POST', body: new URLSearchParams({ lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: state.shapes }), png }) });
-      const d = await r.json();
-      if (!d.success) { status('Error: ' + (d.error || 'no se pudo guardar')); return false; }
-      dirty(false); status('Guardado ✔'); return true;
+      volcarActiva();
+      const lista = state.slides ? state.slides.filter(x => x.dirty) : [null];
+      for (const sl of lista) {
+        const datos = sl ? sl.data : { shapes: state.shapes, layers: state.layers, escala: state.escala };
+        const png = await renderizar({ ancho: state.W, alto: state.H, mime: C.guardado === 'png' ? 'image/png' : 'image/jpeg', calidad: 0.92, datos });
+        const cuerpo = { lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: datos.shapes, layers: datos.layers, escala: datos.escala || null }), png };
+        if (sl) { cuerpo.hoja = sl.id; cuerpo.version = sl.version || ''; }
+        const enviar = async () => (await fetch((C.api && C.api.marcas) || '/api/vplan/marcas', { method: 'POST', body: new URLSearchParams(cuerpo) })).json();
+        let d = await enviar();
+        if (!d.success && d.conflicto && op.auto) { autoPausado = true; status('Autoguardado en pausa: la lámina cambió en otra sesión. Guarda a mano para decidir.'); return false; }
+        if (!d.success && d.conflicto) {   // otra sesión guardó esta lámina mientras estaba abierta
+          const ok = await window.confirmarModal({ titulo: 'La lámina cambió en otra sesión', mensaje: d.error + ' Si sigues, tu versión reemplaza a la guardada. Para no perder nada, cancela, exporta tu trabajo y recarga la página.', aceptar: 'Reemplazar con mi versión', iconoBoton: 'fa-floppy-disk' });
+          if (!ok) { status('Guardado cancelado: la lámina cambió en otra sesión'); return false; }
+          cuerpo.forzar = '1'; d = await enviar();
+        }
+        if (!d.success) { status('Error: ' + (d.error || 'no se pudo guardar')); return false; }
+        if (sl) { sl.dirty = false; if (d.version) sl.version = d.version; }
+      }
+      autoPausado = false;
+      dirty(false); const hh = new Date(); status(op.auto ? 'Autoguardado ✔ ' + String(hh.getHours()).padStart(2, '0') + ':' + String(hh.getMinutes()).padStart(2, '0') : (lista.length || !state.slides ? 'Guardado ✔' : 'Sin cambios')); pintarLaminas(); return true;
     } catch (e) { status('Error al guardar'); return false; }
+  }
+
+
+  // ---------- láminas del gráfico (solo en el Editor): cada una con sus marcas, capas e historial ----------
+  const laminaAct = () => state.slides && state.slides[state.idx];
+  function volcarActiva() { const sl = laminaAct(); if (!sl) return; sl.data = { shapes: state.shapes, layers: state.layers, escala: state.escala }; sl.past = state.past; sl.future = state.future; }
+  function cargarLamina(i) {
+    const sl = state.slides[i]; state.idx = i;
+    state.shapes = clone(sl.data.shapes || []); state.layers = clone(sl.data.layers || []); state.escala = sl.data.escala || null;
+    state.past = sl.past; state.future = sl.future; state.selId = null; state.sel = []; capaActiva = null; celdasSel = { id: null, set: new Set() };
+    if (poli) { poli.nodo.destroy(); poli = null; }
+    asegurarCapas(); render(); pintarLaminas();
+  }
+  let tMini = null;
+  function programarMiniatura() { if (state.slides) { clearTimeout(tMini); tMini = setTimeout(actualizarMiniatura, 700); } }
+  async function actualizarMiniatura() {
+    clearTimeout(tMini); const sl = laminaAct(); if (!sl) return;
+    try { sl.thumb = await renderizar({ ancho: 240, alto: Math.max(20, Math.round(240 * state.H / state.W)), mime: 'image/jpeg', calidad: 0.7, datos: { shapes: state.shapes, layers: state.layers, escala: state.escala } }); } catch (_) {}
+    pintarLaminas();
+  }
+  function refrescarPend() { sucio = state.slides ? state.slides.some(x => x.dirty) : sucio; $('#ve-guardar').classList.toggle('ve-pend', sucio); }
+  async function irALamina(i) {
+    if (!state.slides || i < 0 || i >= state.slides.length || i === state.idx) return;
+    if (laminaAct().dirty) await actualizarMiniatura();
+    volcarActiva(); cargarLamina(i);
+  }
+  const apiLamina = async datos => {
+    try {
+      const r = await fetch(C.api.lamina, { method: 'POST', body: new URLSearchParams({ lamina: C.lamina, ...datos }) });
+      return await r.json();
+    } catch (_) { return { success: false, error: 'Error de conexión' }; }
+  };
+  const nombreLamina = (sl, i) => (sl.nombre && sl.nombre.trim()) || ('Lámina ' + (i + 1));
+  function pintarLaminas() {
+    const ul = $('#ve-lam-lista'); if (!ul || !state.slides) return;
+    ul.innerHTML = state.slides.map((sl, i) => '<li class="ve-lam' + (i === state.idx ? ' activa' : '') + '" data-i="' + i + '" draggable="true" title="Clic: abrir · doble clic en el nombre: renombrar · arrastra para reordenar">' +
+      '<span class="ve-lam-n">' + (i + 1) + '</span>' + (sl.thumb ? '<img src="' + esc(sl.thumb) + '" alt="">' : '<span class="ve-lam-vacia"></span>') +
+      '<span class="ve-lam-nombre">' + esc(nombreLamina(sl, i)) + '</span>' + (sl.dirty ? '<span class="ve-lam-pend" title="Con cambios sin guardar">●</span>' : '') + '</li>').join('');
+    $('#ve-lam-del').disabled = state.slides.length < 2;
+    const n = $('#ve-lam-total'); if (n) n.textContent = state.slides.length + ' lámina(s)';
+    const ex = $('#ex-alcance-campo'); if (ex) ex.hidden = state.slides.length < 2;
+  }
+  async function nuevaLamina() {
+    volcarActiva(); const d = await apiLamina({ accion: 'crear', despues: laminaAct().id });
+    if (!d.success) { status('Error: ' + (d.error || 'no se pudo crear')); return; }
+    state.slides.splice(state.idx + 1, 0, { id: d.id, nombre: d.nombre, data: { shapes: [], layers: [], escala: null }, past: [], future: [], thumb: '', dirty: true, version: d.version });   // en blanco pero «con cambios»: así se guarda y no se pierde al exportar
+    cargarLamina(state.idx + 1); refrescarPend(); status('Lámina creada');
+  }
+  async function duplicarLamina() {
+    if (!(await guardar())) return;
+    const d = await apiLamina({ accion: 'duplicar', hoja: laminaAct().id });
+    if (!d.success) { status('Error: ' + (d.error || 'no se pudo duplicar')); return; }
+    state.slides.splice(state.idx + 1, 0, { id: d.id, nombre: d.nombre, data: d.marcas || { shapes: [], layers: [], escala: null }, past: [], future: [], thumb: d.png || '', dirty: false, version: d.version || '' });
+    volcarActiva(); cargarLamina(state.idx + 1); status('Lámina duplicada');
+  }
+  async function eliminarLamina() {
+    if (state.slides.length < 2) return;
+    const sl = laminaAct();
+    const ok = await window.confirmarModal({ titulo: '¿Eliminar «' + nombreLamina(sl, state.idx) + '»?', mensaje: 'Se borran sus marcas e imágenes. No se puede deshacer.', aceptar: 'Sí, eliminar', iconoBoton: 'fa-trash-can' });
+    if (!ok) return;
+    const d = await apiLamina({ accion: 'eliminar', hoja: sl.id });
+    if (!d.success) { status('Error: ' + (d.error || 'no se pudo eliminar')); return; }
+    state.slides.splice(state.idx, 1);
+    cargarLamina(Math.min(state.idx, state.slides.length - 1)); refrescarPend(); status('Lámina eliminada');
+  }
+  function renombrarLamina(i) {
+    const li = $('#ve-lam-lista').querySelector('[data-i="' + i + '"]'), sl = state.slides[i]; if (!li) return;
+    const sp = li.querySelector('.ve-lam-nombre'), inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 've-capa-input'; inp.maxLength = 60; inp.value = sl.nombre || ''; inp.placeholder = 'Lámina ' + (i + 1);
+    sp.replaceWith(inp); inp.focus(); inp.select(); li.draggable = false;
+    let hecho = false;
+    const fin = async ok => {
+      if (hecho) return; hecho = true;
+      const v = inp.value.trim().slice(0, 60);
+      if (ok && v !== (sl.nombre || '')) { const d = await apiLamina({ accion: 'renombrar', hoja: sl.id, nombre: v }); if (d.success) sl.nombre = d.nombre; else status('Error: ' + (d.error || 'no se pudo renombrar')); }
+      pintarLaminas();
+    };
+    inp.addEventListener('blur', () => fin(true));
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); if (e.key === 'Escape') fin(false); e.stopPropagation(); });
+  }
+  function enlazarLaminas() {
+    const ul = $('#ve-lam-lista'); if (!ul) return;
+    $('#ve-lam-nueva').addEventListener('click', nuevaLamina); $('#ve-lam-dup').addEventListener('click', duplicarLamina); $('#ve-lam-del').addEventListener('click', eliminarLamina);
+    ul.addEventListener('click', e => { const li = e.target.closest('.ve-lam'); if (li && !e.target.closest('input')) irALamina(+li.dataset.i); });
+    ul.addEventListener('dblclick', e => { const sp = e.target.closest('.ve-lam-nombre'); if (sp) renombrarLamina(+sp.closest('.ve-lam').dataset.i); });
+    let origen = null;
+    ul.addEventListener('dragstart', e => { const li = e.target.closest('.ve-lam'); if (!li) return; origen = +li.dataset.i; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(origen)); } catch (_) {} });
+    ul.addEventListener('dragover', e => { if (origen === null) return; e.preventDefault(); const li = e.target.closest('.ve-lam'); ul.querySelectorAll('.ve-lam').forEach(x => x.classList.toggle('destino', x === li)); });
+    ul.addEventListener('dragend', () => { origen = null; ul.querySelectorAll('.destino').forEach(x => x.classList.remove('destino')); });
+    ul.addEventListener('drop', async e => {
+      e.preventDefault(); const li = e.target.closest('.ve-lam'); if (origen === null || !li) return;
+      const destino = +li.dataset.i, de = origen; origen = null;
+      if (destino === de) { pintarLaminas(); return; }
+      volcarActiva(); const activa = laminaAct().id;
+      const [x] = state.slides.splice(de, 1); state.slides.splice(destino, 0, x);
+      state.idx = state.slides.findIndex(z => z.id === activa); pintarLaminas();
+      const d = await apiLamina({ accion: 'ordenar', orden: state.slides.map(z => z.id).join(',') });
+      if (!d.success) status('Error: ' + (d.error || 'no se pudo reordenar'));
+    });
+  }
+
+  // ---------- símbolos y gráficos del proyecto: se insertan como imagen (una copia propia del archivo) ----------
+  async function aBlob(url, maxLado) {
+    if (!/\.svg(\?|$)/i.test(url)) { const r = await fetch(url); if (!r.ok) throw new Error('No se pudo leer la imagen'); return r.blob(); }
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const w = img.naturalWidth || 128, h = img.naturalHeight || 128, k = maxLado / Math.max(w, h);
+    const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    return new Promise(ok => cv.toBlob(ok, 'image/png'));
+  }
+  async function insertarDesdeUrl(url, fraccion) {
+    if (!capaOk()) return;
+    status('Insertando…');
+    try { const b = await aBlob(url, 512 * 2); await subirImagen(new File([b], 'imagen.png', { type: b.type || 'image/png' }), fraccion); }
+    catch (e) { status('No se pudo insertar: ' + (e.message || 'error')); }
+  }
+  function pintarSimbolos() {
+    const cont = $('#sim-lista'); if (!cont) return;
+    const q = ($('#sim-buscar').value || '').trim().toLowerCase();
+    const grupos = {};
+    (C.simbolos || []).filter(x => !q || (x.nombre + ' ' + x.cat).toLowerCase().includes(q)).forEach(x => { (grupos[x.cat] = grupos[x.cat] || []).push(x); });
+    cont.innerHTML = Object.keys(grupos).map(cat => '<h5>' + esc(cat) + '</h5><div class="ve-sims">' + grupos[cat].map(x =>
+      '<button type="button" class="ve-sim" data-src="' + esc(x.src) + '" title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('') || '<p class="text-muted text-sm">Sin resultados.</p>';
+    $('#sim-cajetines').innerHTML = (C.cajetines || []).map((c, i) => '<button type="button" class="btn btn-sm btn-ghost" data-caj="' + i + '" title="' + (c.orientacion === 'banda' ? 'Banda inferior' : 'Tabla en la esquina inferior derecha') + '"><i class="fa-solid fa-table-cells"></i> ' + esc(c.nombre) + '</button>').join('');
+    const gr = $('#sim-graficos');
+    gr.innerHTML = (C.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q)).map(x =>
+      '<button type="button" class="ve-sim ve-sim-gr" data-src="' + esc(x.src) + '" title="Insertar «' + esc(x.nombre) + '»"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') || '<p class="text-muted text-sm">No hay otros gráficos guardados en este proyecto.</p>';
+  }
+  // Cajetín: tabla con los datos del dibujo (proyecto, título, fecha…). Si la lámina ya tiene uno de la misma plantilla, se actualiza
+  function insertarCajetin(c) {
+    if (!capaOk()) return;
+    const hoy = new Date(), p2 = n => String(n).padStart(2, '0');
+    const vars = { proyecto: C.proyectoNombre || '', titulo: C.nombre || '', fecha: p2(hoy.getDate()) + '/' + p2(hoy.getMonth() + 1) + '/' + hoy.getFullYear(), autor: C.usuario || '',
+      lamina: String(state.slides ? state.idx + 1 : 1), total: String(state.slides ? state.slides.length : 1), escala: state.escala ? fmtNum(state.escala.mmPorPx) + ' mm/px' : '' };
+    const val = t => String(t || '').replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);
+    const filas = (c.filas || []).map(([e, v]) => [e || '', val(v)]);
+    if (!filas.length) return;
+    const banda = c.orientacion === 'banda', tw = state.W * Math.min(1, Math.max(0.15, (c.ancho || 28) / 100));
+    const d = { id: uid(), type: 'table', x: 0, y: 0, w: 1, h: 1, rows: banda ? 2 : filas.length, cols: banda ? filas.length : 2, header: banda, cajetin: c.id || 'base',
+      fontSize: Math.max(10, Math.round(tw / (banda ? filas.length * 9 : 20))), fill: '#ffffff', headerFill: '#dbe5f1', textColor: '#111111', stroke: '#111111', strokeWidth: Math.max(1, Math.round(state.W / 1200)), rotation: 0, opacity: 100 };
+    normalizarTabla(d);
+    d.colW = banda ? Array(d.cols).fill(tw / d.cols) : [tw * 0.38, tw * 0.62];
+    d.cells = banda ? [filas.map(f => f[0]), filas.map(f => f[1])] : filas.map(f => [f[0], f[1]]);
+    if (!banda) { d.cellFill = {}; filas.forEach((_, r) => { d.cellFill[r + ',0'] = '#dbe5f1'; }); }
+    d.w = suma(d.colW); ajustarFilas(d);
+    const margen = state.W * 0.02;
+    d.x = banda ? (state.W - d.w) / 2 : state.W - d.w - margen; d.y = state.H - d.h - margen;
+    const resto = clone(state.shapes).filter(x => !(x.type === 'table' && x.cajetin === d.cajetin));
+    state.selId = d.id; commit([...resto, d]); status('Cajetín «' + (c.nombre || '') + '» colocado');
+  }
+  async function importarSimbolos(archivos) {
+    if (!archivos || !archivos.length) return;
+    const fd = new FormData(); fd.append('proyecto', C.proyecto); [...archivos].forEach(f => fd.append('archivos[]', f));
+    status('Importando…');
+    try {
+      const d = await (await fetch('/api/simbolos/importar', { method: 'POST', body: fd })).json();
+      if (!d.success) { status('Error: ' + (d.error || 'no se pudo importar')); return; }
+      C.simbolos = d.simbolos; C.cajetines = d.cajetines; pintarSimbolos();
+      status('Importados: ' + d.importados + ' símbolo(s)' + (d.cajetines_nuevos ? ', ' + d.cajetines_nuevos + ' cajetín(es)' : '') + (d.omitidos ? ' · ' + d.omitidos + ' omitido(s)' : ''));
+    } catch (e) { status('Error al importar'); }
+  }
+  function enlazarSimbolos() {
+    if (!$('#sim-lista')) return;
+    pintarSimbolos();
+    $('#sim-importar').addEventListener('click', () => $('#sim-importar-archivo').click());
+    $('#sim-importar-archivo').addEventListener('change', e => { importarSimbolos(e.target.files); e.target.value = ''; });
+    $('#sim-cajetines').addEventListener('click', e => { const b = e.target.closest('[data-caj]'); if (b) insertarCajetin((C.cajetines || [])[+b.dataset.caj]); });
+    $('#sim-buscar').addEventListener('input', pintarSimbolos);
+    $('#ve-tab-simbolos').addEventListener('click', e => {
+      const b = e.target.closest('.ve-sim'); if (!b) return;
+      insertarDesdeUrl(b.dataset.src, b.classList.contains('ve-sim-gr') ? 0.5 : 0.1);
+    });
+  }
+
+  // ---------- modo presentación: pantalla completa, solo la lámina; flechas, clic o espacio para avanzar, Esc para salir ----------
+  async function presentar() {
+    const ov = $('#ve-presentacion'); if (!ov) return;
+    volcarActiva();
+    const datos = state.slides ? state.slides.map(x => x.data) : [{ shapes: state.shapes, layers: state.layers, escala: state.escala }];
+    status('Preparando la presentación…');
+    const k = Math.min(1, Math.min(2400, Math.round(screen.width * (window.devicePixelRatio || 1))) / state.W), w = Math.round(state.W * k), h = Math.round(state.H * k);
+    const imgs = [];
+    for (const dt of datos) imgs.push(await renderizar({ ancho: w, alto: h, mime: 'image/jpeg', calidad: 0.9, datos: dt }));
+    status('');
+    const img = ov.querySelector('img'), cnt = ov.querySelector('.ve-pres-n');
+    let i = state.slides ? state.idx : 0;
+    const ir = n => { i = Math.max(0, Math.min(imgs.length - 1, n)); img.src = imgs[i]; cnt.textContent = (i + 1) + ' / ' + imgs.length; };
+    const tecla = e => {
+      if (e.key === 'Escape') { cerrar(); return; }
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) ir(i + 1);
+      else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) ir(i - 1);
+      else if (e.key === 'Home') ir(0); else if (e.key === 'End') ir(imgs.length - 1); else return;
+      e.preventDefault(); e.stopPropagation();
+    };
+    const clic = e => { if (e.target.closest('.ve-pres-barra')) return; const r = ov.getBoundingClientRect(); ir(e.clientX < r.left + r.width * 0.3 ? i - 1 : i + 1); };
+    const cerrar = () => {
+      ov.hidden = true; document.removeEventListener('keydown', tecla, true); ov.removeEventListener('click', clic);
+      document.removeEventListener('fullscreenchange', salida); if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+    const salida = () => { if (!document.fullscreenElement) cerrar(); };
+    ov.querySelector('[data-pres=ant]').onclick = () => ir(i - 1); ov.querySelector('[data-pres=sig]').onclick = () => ir(i + 1); ov.querySelector('[data-pres=cerrar]').onclick = cerrar;
+    document.addEventListener('keydown', tecla, true); ov.addEventListener('click', clic);
+    ov.hidden = false; ir(i);
+    if (ov.requestFullscreen) { try { await ov.requestFullscreen(); document.addEventListener('fullscreenchange', salida); } catch (_) {} }
+  }
+
+  // ---------- pestañas del panel lateral ----------
+  function iniciarPestanas() {
+    const tabs = [...document.querySelectorAll('.ve-tabs [data-tab]')]; if (!tabs.length) return;
+    const ir = id => {
+      tabs.forEach(t => { const on = t.dataset.tab === id; t.classList.toggle('activa', on); t.setAttribute('aria-selected', on); });
+      document.querySelectorAll('.ve-tab-panel').forEach(p => { p.hidden = p.dataset.panel !== id; });
+      try { localStorage.setItem('ve-tab', id); } catch (_) {}
+    };
+    tabs.forEach(t => t.addEventListener('click', () => ir(t.dataset.tab)));
+    let guardada = null; try { guardada = localStorage.getItem('ve-tab'); } catch (_) {}
+    ir(tabs.some(t => t.dataset.tab === guardada) ? guardada : 'props');
+  }
+
+  // ---------- gestor de capas ----------
+  const IC = {
+    ojo: '<path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    ojoNo: '<path d="M17.940 17.940A10.070 10.070 0 0 1 12 19c-6.500 0-10-7-10-7a18.500 18.500 0 0 1 5.060-5.940M9.900 4.240A9.120 9.120 0 0 1 12 4c6.500 0 10 7 10 7a18.500 18.500 0 0 1-2.160 3.190M1 1l22 22"/>',
+    candado: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    abierto: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.500-2"/>',
+    sube: '<path d="M6 15l6-6 6 6"/>', baja: '<path d="M6 9l6 6 6-6"/>',
+    basura: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+  };
+  const ico = d => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function pintarCapas() {
+    const ul = $('#ve-capas-lista'); if (!ul) return;
+    const n = id => state.shapes.filter(x => x.layer === id).length;
+    ul.innerHTML = [...state.layers].reverse().map((l, i, arr) => {
+      const nombre = nombreCapa(l), arriba = state.layers.indexOf(l) === state.layers.length - 1, abajo = state.layers.indexOf(l) === 0;
+      return '<li class="ve-capa' + (l.id === capaActiva ? ' activa' : '') + (l.visible ? '' : ' oculta') + (l.locked ? ' bloqueada' : '') + '" data-id="' + l.id + '">' +
+        '<button type="button" class="ve-cb" data-op="ver" title="' + (l.visible ? 'Ocultar' : 'Mostrar') + ' capa" aria-pressed="' + !l.visible + '">' + ico(l.visible ? IC.ojo : IC.ojoNo) + '</button>' +
+        '<button type="button" class="ve-cb" data-op="bloq" title="' + (l.locked ? 'Desbloquear' : 'Bloquear') + ' capa" aria-pressed="' + l.locked + '">' + ico(l.locked ? IC.candado : IC.abierto) + '</button>' +
+        '<span class="ve-capa-nombre" data-op="activar" title="Clic: activar · doble clic: renombrar">' + esc(nombre) + '</span><span class="ve-capa-n">' + n(l.id) + '</span>' +
+        '<button type="button" class="ve-cb" data-op="sube" title="Subir capa"' + (arriba ? ' disabled' : '') + '>' + ico(IC.sube) + '</button>' +
+        '<button type="button" class="ve-cb" data-op="baja" title="Bajar capa"' + (abajo ? ' disabled' : '') + '>' + ico(IC.baja) + '</button>' +
+        '<button type="button" class="ve-cb ve-cb-del" data-op="borrar" title="Eliminar capa"' + (state.layers.length < 2 ? ' disabled' : '') + '>' + ico(IC.basura) + '</button></li>';
+    }).join('');
+  }
+  function renombrarCapa(id) {
+    const li = $('#ve-capas-lista').querySelector('[data-id="' + id + '"]'), l = capaPor(id); if (!li || !l) return;
+    const sp = li.querySelector('.ve-capa-nombre'), inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 've-capa-input'; inp.maxLength = 40; inp.value = l.name || ''; inp.placeholder = 'Capa ' + l.num;
+    sp.replaceWith(inp); inp.focus(); inp.select();
+    let hecho = false;
+    const fin = ok => {
+      if (hecho) return; hecho = true;
+      const v = inp.value.trim().slice(0, 40);
+      if (ok && v !== (l.name || '')) { const capas = clone(state.layers); capas.find(x => x.id === id).name = v; commit(undefined, capas); } else pintarCapas();
+    };
+    inp.addEventListener('blur', () => fin(true));
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); if (e.key === 'Escape') fin(false); e.stopPropagation(); });
+  }
+  function enlazarCapas() {
+    $('#ve-capa-nueva').addEventListener('click', () => {
+      const capas = clone(state.layers), c = nuevaCapa(siguienteNumCapa());
+      capas.push(c); capaActiva = c.id; commit(undefined, capas);
+      renombrarCapa(c.id);   // queda lista para escribir el nombre; vacío = «Capa N»
+    });
+    $('#ve-capas-lista').addEventListener('click', async e => {
+      const b = e.target.closest('[data-op]'), li = e.target.closest('.ve-capa'); if (!b || !li || b.disabled) return;
+      const id = li.dataset.id, l = capaPor(id), op = b.dataset.op;
+      const capas = clone(state.layers), i = capas.findIndex(x => x.id === id), c = capas[i];
+      if (op === 'activar') { capaActiva = id; pintarCapas(); return; }
+      if (op === 'ver') {
+        c.visible = !c.visible;
+        if (!c.visible && state.selId && (state.shapes.find(x => x.id === state.selId) || {}).layer === id) state.selId = null;
+        commit(undefined, capas);
+      } else if (op === 'bloq') {
+        c.locked = !c.locked;
+        if (c.locked && state.selId && (state.shapes.find(x => x.id === state.selId) || {}).layer === id) state.selId = null;
+        commit(undefined, capas);
+      } else if (op === 'sube' && i < capas.length - 1) { [capas[i], capas[i + 1]] = [capas[i + 1], capas[i]]; commit(undefined, capas); }
+      else if (op === 'baja' && i > 0) { [capas[i], capas[i - 1]] = [capas[i - 1], capas[i]]; commit(undefined, capas); }
+      else if (op === 'borrar') {
+        const cuantas = state.shapes.filter(x => x.layer === id).length;
+        const ok = await window.confirmarModal({ titulo: '¿Eliminar la capa «' + nombreCapa(l) + '»?', mensaje: cuantas ? 'Se eliminarán también sus ' + cuantas + ' marca(s). Puedes deshacerlo con Ctrl+Z.' : 'La capa está vacía.', aceptar: 'Sí, eliminar', iconoBoton: 'fa-trash-can' });
+        if (!ok) return;
+        capas.splice(i, 1);
+        if (capaActiva === id) capaActiva = capas[Math.min(i, capas.length - 1)].id;
+        if (state.selId && (state.shapes.find(x => x.id === state.selId) || {}).layer === id) state.selId = null;
+        commit(clone(state.shapes).filter(x => x.layer !== id), capas);
+      }
+    });
+    $('#ve-capas-lista').addEventListener('dblclick', e => { const sp = e.target.closest('.ve-capa-nombre'); if (sp) renombrarCapa(sp.closest('.ve-capa').dataset.id); });
+  }
+
+
+  // ZIP sin compresión (las imágenes ya vienen comprimidas): entradas [{nombre, datos: Uint8Array}] → Blob
+  const TABLA_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = TABLA_CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zipSinComprimir(archivos) {
+    const enc = new TextEncoder(), partes = [], central = []; let desp = 0;
+    const d = new Date(), hora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), fecha = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    archivos.forEach(a => {
+      const nom = enc.encode(a.nombre), crc = crc32(a.datos), tam = a.datos.length;
+      const lh = new DataView(new ArrayBuffer(30)); [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, hora, 2], [12, fecha, 2], [14, crc, 4], [18, tam, 4], [22, tam, 4], [26, nom.length, 2], [28, 0, 2]].forEach(([o, v, n]) => n === 4 ? lh.setUint32(o, v, true) : lh.setUint16(o, v, true));
+      partes.push(lh.buffer, nom, a.datos);
+      const ch = new DataView(new ArrayBuffer(46)); [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, hora, 2], [14, fecha, 2], [16, crc, 4], [20, tam, 4], [24, tam, 4], [28, nom.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, desp, 4]].forEach(([o, v, n]) => n === 4 ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true));
+      central.push(ch.buffer, nom);
+      desp += 30 + nom.length + tam;
+    });
+    const tamCentral = central.reduce((t, b) => t + (b.byteLength !== undefined ? b.byteLength : b.length), 0);
+    const fin = new DataView(new ArrayBuffer(22)); [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, archivos.length, 2], [10, archivos.length, 2], [12, tamCentral, 4], [16, desp, 4], [20, 0, 2]].forEach(([o, v, n]) => n === 4 ? fin.setUint32(o, v, true) : fin.setUint16(o, v, true));
+    return new Blob([...partes, ...central, fin.buffer], { type: 'application/zip' });
+  }
+
+  // ---------- exportar el gráfico (Editor): formato y tamaño a elección ----------
+  function enlazarExportar() {
+    const el = id => document.getElementById(id);
+    if (!el('ex-btn')) return;
+    const MAX_LADO = 10000, MAX_PX = 64e6, razon = () => state.W / state.H;
+    const EXT = { png: ['image/png', 'png'], jpg: ['image/jpeg', 'jpg'], webp: ['image/webp', 'webp'], pdf: ['image/png', 'pdf'], odp: ['image/png', 'odp'] };
+    const medidas = () => ({ w: Math.round(+el('ex-ancho').value) || 0, h: Math.round(+el('ex-alto').value) || 0 });
+    const valida = () => { const { w, h } = medidas(); return w >= 16 && h >= 16 && w <= MAX_LADO && h <= MAX_LADO && w * h <= MAX_PX; };
+    const info = () => {
+      const { w, h } = medidas();
+      el('ex-info').textContent = !valida() ? 'Usa entre 16 y ' + MAX_LADO + ' px por lado (máx. ' + Math.round(MAX_PX / 1e6) + ' millones de píxeles).' : w + ' × ' + h + ' px · ' + (w * h / 1e6).toFixed(1) + ' MP';
+      el('ex-info').classList.toggle('bj-error', !valida());
+      el('ex-btn').disabled = !valida();
+    };
+    const formato = () => {
+      const f = el('ex-formato').value;
+      el('ex-calidad-bloque').hidden = !['jpg', 'webp'].includes(f);
+      el('ex-transp').disabled = !['png', 'webp'].includes(f);
+      if (el('ex-transp').disabled) el('ex-transp').checked = false;
+    };
+    el('ex-preset').addEventListener('change', e => {
+      const m = /^(\d+)x(\d+)$/.exec(e.target.value); if (!m) return;
+      el('ex-ancho').value = m[1]; el('ex-alto').value = m[2];
+      el('ex-bloq').checked = Math.abs(+m[1] / +m[2] - razon()) < 0.01;   // otra proporción: el contenido se centra dentro del nuevo tamaño
+      info();
+    });
+    el('ex-ancho').addEventListener('input', () => { if (el('ex-bloq').checked) el('ex-alto').value = Math.round(+el('ex-ancho').value / razon()) || ''; el('ex-preset').value = 'custom'; info(); });
+    el('ex-alto').addEventListener('input', () => { if (el('ex-bloq').checked) el('ex-ancho').value = Math.round(+el('ex-alto').value * razon()) || ''; el('ex-preset').value = 'custom'; info(); });
+    el('ex-formato').addEventListener('change', formato);
+    el('ex-calidad').addEventListener('input', e => { el('ex-calidad-v').textContent = e.target.value + '%'; });
+    const slug = t => String(t || 'grafico').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'grafico';
+    const bajar = (blob, nombre) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); };
+    el('ex-btn').addEventListener('click', async () => {
+      if (!valida()) return;
+      const f = el('ex-formato').value, { w, h } = medidas(), [mime, ext] = EXT[f], estado = el('ex-estado');
+      const todas = !!state.slides && state.slides.length > 1 && el('ex-alcance').value === 'todas';
+      const hoy = new Date(), p = n => String(n).padStart(2, '0');
+      const base = hoy.getFullYear() + '_' + p(hoy.getMonth() + 1) + '_' + p(hoy.getDate()) + '_' + slug(C.nombre);
+      el('ex-btn').disabled = true; estado.textContent = 'Generando…';
+      try {
+        if (todas) {
+          volcarActiva();
+          if (f === 'pdf' || f === 'odp') {   // documento de varias páginas con las láminas guardadas, a su tamaño original
+            if (!(await guardar())) throw new Error('No se pudo guardar antes de exportar');
+            const r = await fetch(C.urls.descargar + '&formato=' + f);
+            if (!r.ok) throw new Error('No se pudo generar el archivo');
+            bajar(await r.blob(), base + '.' + ext);
+            estado.textContent = 'Listo ✔ ' + base + '.' + ext + ' (láminas a su tamaño original)';
+          } else {
+            const archivos = [];
+            for (let i = 0; i < state.slides.length; i++) {
+              estado.textContent = 'Generando lámina ' + (i + 1) + ' de ' + state.slides.length + '…';
+              const sl = state.slides[i];
+              const url = await renderizar({ ancho: w, alto: h, mime, calidad: +el('ex-calidad').value / 100, transparente: el('ex-transp').checked, datos: sl.data, iconos: true });
+              if (f === 'webp' && !url.startsWith('data:image/webp')) throw new Error('Este navegador no puede exportar WebP; usa PNG o JPG');
+              archivos.push({ nombre: p(i + 1) + '_' + slug(nombreLamina(sl, i)) + '.' + ext, datos: new Uint8Array(await (await fetch(url)).arrayBuffer()) });
+            }
+            bajar(zipSinComprimir(archivos), base + '.zip');
+            estado.textContent = 'Listo ✔ ' + base + '.zip (' + archivos.length + ' imágenes)';
+          }
+          return;
+        }
+        const nombre = base + '.' + ext;
+        const url = await renderizar({ ancho: w, alto: h, mime, calidad: +el('ex-calidad').value / 100, transparente: el('ex-transp').checked, iconos: f !== 'pdf' && f !== 'odp' });
+        if (f === 'pdf' || f === 'odp') {
+          const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('ancho', w); fd.append('alto', h); fd.append('png', url);
+          if (f === 'pdf') fd.append('enlaces', JSON.stringify(enlacesExternos(w, h)));
+          const r = await fetch(f === 'pdf' ? C.api.pdf : C.api.odp, { method: 'POST', body: fd });
+          if (!r.ok) { let m = 'No se pudo generar el archivo'; try { m = (await r.json()).error || m; } catch (_) {} throw new Error(m); }
+          bajar(await r.blob(), nombre);
+        } else {
+          if (f === 'webp' && !url.startsWith('data:image/webp')) throw new Error('Este navegador no puede exportar WebP; usa PNG o JPG');
+          bajar(await (await fetch(url)).blob(), nombre);
+        }
+        estado.textContent = 'Listo ✔ ' + nombre;
+      } catch (e) { estado.textContent = 'Error: ' + (e.message || 'no se pudo exportar'); }
+      finally { el('ex-btn').disabled = !valida(); }
+    });
+    formato(); info();
+  }
+
+  // ---------- paleta de colores preestablecida ----------
+  const PALETA = [['#111111', 'Negro'], ['#4b5563', 'Gris oscuro'], ['#9ca3af', 'Gris'], ['#ffffff', 'Blanco'],
+    ['#dc2626', 'Rojo'], ['#991b1b', 'Rojo oscuro'], ['#f97316', 'Naranja'], ['#d97706', 'Ámbar'],
+    ['#facc15', 'Amarillo'], ['#84cc16', 'Lima'], ['#059669', 'Verde'], ['#00b4d8', 'Turquesa'],
+    ['#0070c0', 'Azul'], ['#1e3a8a', 'Azul marino'], ['#7c3aed', 'Morado'], ['#ec4899', 'Rosa']];
+  // Cada selector de color recibe un botón con la paleta; el selector nativo queda para colores personalizados
+  function iniciarPaletas() {
+    document.querySelectorAll('.ve-barra input[type=color], #ve-props input[type=color]').forEach(inp => {
+      const w = document.createElement('span'); w.className = 've-color';
+      inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+      const b = document.createElement('button', {}); b.type = 'button'; b.className = 've-paleta-btn'; b.title = 'Paleta de colores'; b.setAttribute('aria-label', 'Paleta de colores');
+      b.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".6"/><circle cx="17.5" cy="10.5" r=".6"/><circle cx="8.5" cy="7.5" r=".6"/><circle cx="6.5" cy="12.5" r=".6"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
+      const pop = document.createElement('div'); pop.className = 've-paleta'; pop.hidden = true; pop.setAttribute('role', 'listbox');
+      PALETA.forEach(([hex, nombre]) => {
+        const sw_ = document.createElement('button'); sw_.type = 'button'; sw_.className = 've-sw'; sw_.style.background = hex; sw_.title = nombre + ' ' + hex; sw_.dataset.c = hex; sw_.setAttribute('aria-label', nombre);
+        pop.appendChild(sw_);
+      });
+      w.append(b, pop);
+      const cerrar = () => { pop.hidden = true; };
+      b.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.ve-paleta').forEach(x => { if (x !== pop) x.hidden = true; });
+        pop.hidden = !pop.hidden;
+        if (!pop.hidden) pop.querySelectorAll('.ve-sw').forEach(x => x.classList.toggle('activo', x.dataset.c === inp.value.toLowerCase()));
+      });
+      pop.addEventListener('click', e => {
+        const x = e.target.closest('.ve-sw'); if (!x) return;
+        inp.value = x.dataset.c;
+        inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true }));
+        cerrar();
+      });
+    });
+    document.addEventListener('click', e => { if (!e.target.closest('.ve-color')) document.querySelectorAll('.ve-paleta').forEach(x => { x.hidden = true; }); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.ve-paleta').forEach(x => { x.hidden = true; }); });
   }
 
   // ---------- arranque ----------
   function iniciar() {
-    const img = new Image();
-    img.onload = () => {
-      state.W = img.naturalWidth; state.H = img.naturalHeight; sw = Math.max(3, Math.round(state.W / 400));
-      $('#t-sw').value = sw;
-      stage = new Konva.Stage({ container: 'ek-stage', width: 800, height: 600 });
-      const lbg = new Konva.Layer(); stage.add(lbg);
-      bg = new Konva.Image({ image: img, width: state.W, height: state.H }); lbg.add(bg);
-      layer = new Konva.Layer(); stage.add(layer);
-      trLayer = new Konva.Layer(); stage.add(trLayer);
-      tr = new Konva.Transformer({ rotateEnabled: true, rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], borderStroke: '#0070c0', anchorStroke: '#0070c0', anchorSize: 10, keepRatio: false });
-      trLayer.add(tr);
+    if (C.plano) { const img = new Image(); img.onload = () => arrancar(img, img.naturalWidth, img.naturalHeight); img.src = C.plano; }
+    else if (C.fondo === 'imagen' && C.fondoImagen) {   // fondo personalizado: primero se carga la imagen
+      const f = new Image(); f.onload = () => { fondoImg = f; arrancar(null, C.ancho, C.alto); }; f.onerror = () => arrancar(null, C.ancho, C.alto); f.src = C.fondoImagen;
+    }
+    else arrancar(null, C.ancho, C.alto);   // Editor: lienzo libre (tamaño elegido y fondo de plantilla)
+  }
+  // Fondo de plantilla del Editor: color liso o tesela repetida
+  let fondoImg = null;   // imagen del fondo personalizado, ya cargada
+  function fondoRect(W, H) {
+    if (C.fondo === 'imagen') {   // imagen propia: se dibuja según sus ajustes (cubrir, contener, estirar o mosaico)
+      return new Konva.Shape({
+        width: W, height: H, fill: '#000',
+        sceneFunc: ctx => { VPFondos.dibujarImagen(ctx._context, W, H, fondoImg, C.fondoConfig); },
+        hitFunc: (ctx, shape) => { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.closePath(); ctx.fillStrokeShape(shape); }
+      });
+    }
+    const tesela = window.VPFondos && VPFondos.tesela(C.fondo);
+    return new Konva.Rect({ width: W, height: H, fill: C.fondoColor || '#ffffff', ...(tesela ? { fillPriority: 'pattern', fillPatternImage: tesela, fillPatternRepeat: 'repeat' } : {}) });
+  }
+  function arrancar(img, W, H) {
+    state.W = W; state.H = H; sw = Math.max(3, Math.round(W / 400));
+    $('#t-sw').value = sw; $('#t-sw-r').value = Math.min(60, sw);
+    stage = new Konva.Stage({ container: 'ek-stage', width: 800, height: 600 });
+    const lbg = new Konva.Layer(); stage.add(lbg);
+    if (img) bg = new Konva.Image({ image: img, width: W, height: H });
+    else {
+      bg = fondoRect(W, H);
+      if (window.VPFondos && VPFondos.esOscuro(C.fondo, C.fondoColor)) $('#t-stroke').value = '#ffffff';   // sobre fondo oscuro, trazo claro por defecto
+    }
+    lbg.add(bg);
+    glayer = new Konva.Layer({ listening: false }); stage.add(glayer);
+    glayer.add(new Konva.Shape({ listening: false, sceneFunc: dibujarGrilla }));
+    layer = new Konva.Layer(); stage.add(layer);
+    trLayer = new Konva.Layer(); stage.add(trLayer);
+    tr = new Konva.Transformer({ rotateEnabled: true, rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], borderStroke: '#0070c0', anchorStroke: '#0070c0', anchorSize: 10, keepRatio: false });
+    trLayer.add(tr);
+    tr.on('transformend', aplicarTransformacion);
+    if (C.laminas && C.laminas.length) {   // Editor: varias láminas; se abre la elegida (o la primera)
+      state.slides = C.laminas.map(l => ({ id: l.id, nombre: l.nombre || '', data: l.marcas || { shapes: [], layers: [], escala: null }, past: [], future: [], thumb: l.png || '', dirty: false, version: l.version || '' }));
+      const i = state.slides.findIndex(l => l.id === C.laminaActiva);
+      state.idx = i >= 0 ? i : 0;
+      const d0 = state.slides[state.idx].data;
+      state.shapes = clone(d0.shapes || []); state.layers = clone(d0.layers || []); state.escala = d0.escala || null;
+    } else {
       state.shapes = (C.marcas && C.marcas.shapes) ? C.marcas.shapes : [];
-      configurarEventos(); enlazarPanel(); encuadrar(); render(); dirty(false);
-      window.addEventListener('resize', encuadrar);
-      window.__vplan = { state, guardar, setTool, nodes: () => nodes };   // para pruebas
-      if (C.auto) guardar().then(ok => { if (ok) location.href = C.volver; });
-    };
-    img.src = C.plano;
+      state.layers = (C.marcas && C.marcas.layers) ? C.marcas.layers : [];
+      state.escala = (C.marcas && C.marcas.escala) || null;
+    }
+    const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
+    $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
+    asegurarCapas();
+    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); encuadrar(); render(); pintarLaminas(); dirty(false);
+    if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
+    window.addEventListener('resize', encuadrar);
+    if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }
+    window.__vplan = { state, guardar, insertarCajetin, presentar, importarSimbolos, setTool, selectIds, alinear, distribuir, agrupar, desagrupar, irALamina, zipSinComprimir, nodes: () => nodes, editarCelda, select, celdasSel: () => celdasSel, capaActiva: () => capaActiva, renderizar };   // para pruebas
+    if (C.auto) guardar().then(ok => { if (ok) location.href = C.volver; });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
     $('#ve-archivo').addEventListener('change', e => { subirImagen(e.target.files[0]); e.target.value = ''; });
-    $('#t-sw').addEventListener('change', e => { sw = Math.max(1, +e.target.value || sw); });
-    $('#ve-guardar').addEventListener('click', guardar);
+    $('#ve-archivo-360').addEventListener('change', e => { subirPanorama(e.target.files[0]); e.target.value = ''; });
+    $('#t-sw').addEventListener('change', e => { sw = Math.max(1, +e.target.value || sw); $('#t-sw-r').value = Math.min(60, sw); });
+    $('#t-sw-r').addEventListener('input', e => { sw = Math.max(1, +e.target.value || sw); $('#t-sw').value = sw; });
+    iniciarPaletas(); iniciarPestanas(); enlazarExportar();
+    const bp = document.getElementById('ve-presentar'); if (bp) bp.addEventListener('click', presentar);
+    $('#ve-guardar').addEventListener('click', () => guardar());
+    try { const c = $('#t-auto'); if (c) { c.checked = localStorage.getItem('ve-auto') !== '0'; c.addEventListener('change', () => { try { localStorage.setItem('ve-auto', c.checked ? '1' : '0'); } catch (_) {} autoPausado = false; programarAuto(); }); } } catch (_) {}
     $('#ve-undo').addEventListener('click', undo); $('#ve-redo').addEventListener('click', redo);
     $('#ve-fit').addEventListener('click', encuadrar);
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña)

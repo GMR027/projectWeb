@@ -25,8 +25,16 @@ use Controllers\CurvaController;
 use Controllers\LastPlannerController;
 use Controllers\VplanController;
 use Controllers\VplanTablaController;
+use Controllers\VplanNotaController;
+use Controllers\EditorController;
+use Controllers\SimboloController;
+use Controllers\IdiomaController;
+use Controllers\DependenciasController;
+use Controllers\EvidenciaController;
 use Controllers\ReporteController;
 use Controllers\BitacoraController;
+use Controllers\View360Controller;
+use Controllers\ManualController;
 use Controllers\ArchivoController;
 use Controllers\MinutaController;
 
@@ -57,9 +65,14 @@ $router->post('/soporte/crear', [SoporteController::class, 'crear']);
 $router->get('/soporte/editar', [SoporteController::class, 'editar']);
 $router->post('/soporte/editar', [SoporteController::class, 'editar']);
 $router->post('/soporte/eliminar', [SoporteController::class, 'eliminar']);
+$router->post('/api/soporte/vistas', [SoporteController::class, 'vistas']);
 $router->get('/bandeja', [BandejaController::class, 'index']);
 $router->get('/bandeja/ver', [BandejaController::class, 'ver']);
 $router->post('/bandeja/accion', [BandejaController::class, 'accion']);
+$router->post('/api/bandeja/leer', [BandejaController::class, 'leer']);
+$router->post('/api/bandeja/respuesta/guardar', [BandejaController::class, 'respuestaGuardar']);
+$router->post('/api/bandeja/respuesta/eliminar', [BandejaController::class, 'respuestaEliminar']);
+$router->get('/manual', [ManualController::class, 'index']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
 
 // ========== PROYECTOS ==========
@@ -73,6 +86,15 @@ $router->post('/proyectos/eliminar', [ProyectoController::class, 'eliminar']);
 
 // ========== PROGRAMA DE OBRA ==========
 $router->get('/programa', [ProgramaController::class, 'index']);
+$router->get('/dependencias', [DependenciasController::class, 'index']);
+$router->get('/api/dependencias/datos', [DependenciasController::class, 'datos']);
+$router->post('/api/dependencias/guardar', [DependenciasController::class, 'guardar']);
+$router->post('/api/dependencias/eliminar', [DependenciasController::class, 'eliminar']);
+$router->post('/api/dependencias/fijar', [DependenciasController::class, 'fijar']);
+$router->post('/api/dependencias/modo', [DependenciasController::class, 'modo']);
+$router->post('/api/dependencias/previa', [DependenciasController::class, 'previa']);
+$router->post('/api/dependencias/aplicar', [DependenciasController::class, 'aplicar']);
+$router->post('/api/dependencias/deshacer', [DependenciasController::class, 'deshacer']);
 $router->get('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar/confirmar', [ProgramaController::class, 'confirmarImportacion']);
@@ -153,6 +175,8 @@ $router->post('/api/vplan/imagen', [VplanController::class, 'subirImagen']);
 $router->get('/vplan/editor', [VplanController::class, 'editor']);
 $router->post('/api/vplan/marcas', [VplanController::class, 'guardarMarcas']);
 $router->post('/api/vplan/fila', [VplanTablaController::class, 'apiFila']);
+$router->post('/api/vplan/nota/guardar', [VplanNotaController::class, 'guardar']);
+$router->post('/api/vplan/nota/eliminar', [VplanNotaController::class, 'eliminar']);
 $router->get('/vplan/tablas', [VplanTablaController::class, 'index']);
 $router->get('/vplan/tablas/crear', [VplanTablaController::class, 'crear']);
 $router->post('/vplan/tablas/crear', [VplanTablaController::class, 'crear']);
@@ -231,15 +255,65 @@ $router->get('/curvas/editar', [CurvaController::class, 'editar']);
 $router->post('/curvas/editar', [CurvaController::class, 'editar']);
 $router->post('/curvas/eliminar', [CurvaController::class, 'eliminar']);
 $router->get('/curvas/ver', [CurvaController::class, 'ver']);
+$router->get('/curvas/s', [CurvaController::class, 'curvaS']);
+$router->post('/curvas/s/manual', [CurvaController::class, 'guardarCurvaSManual']);
 $router->get('/curvas/maestra', [CurvaController::class, 'maestra']);
 $router->post('/api/curvas/real', [CurvaController::class, 'guardarReal']);
 
 // ========== CALENDARIO ==========
 $router->get('/calendario', [CalendarioController::class, 'index']);
+// Editor de gráficos
+$router->get('/graficos', [EditorController::class, 'index']);
+$router->get('/graficos/categorias', [EditorController::class, 'categorias']);
+$router->get('/graficos/categorias/crear', [EditorController::class, 'categoriaCrear']);
+$router->post('/graficos/categorias/crear', [EditorController::class, 'categoriaCrear']);
+$router->get('/graficos/categorias/editar', [EditorController::class, 'categoriaEditar']);
+$router->post('/graficos/categorias/editar', [EditorController::class, 'categoriaEditar']);
+$router->post('/graficos/categorias/eliminar', [EditorController::class, 'categoriaEliminar']);
+$router->get('/graficos/crear', [EditorController::class, 'crear']);
+$router->post('/graficos/crear', [EditorController::class, 'crear']);
+$router->get('/graficos/abrir', [EditorController::class, 'abrir']);
+$router->get('/graficos/ver', [EditorController::class, 'ver']);
+$router->get('/graficos/descargar', [EditorController::class, 'descargar']);
+$router->post('/graficos/duplicar', [EditorController::class, 'duplicar']);
+$router->post('/graficos/eliminar', [EditorController::class, 'eliminar']);
+$router->post('/api/graficos/renombrar', [EditorController::class, 'renombrar']);
+$router->post('/api/graficos/marcas', [EditorController::class, 'guardarMarcas']);
+$router->post('/api/graficos/imagen', [EditorController::class, 'subirImagen']);
+$router->post('/api/graficos/pdf', [EditorController::class, 'pdf']);
+$router->post('/api/graficos/odp', [EditorController::class, 'odp']);
+$router->post('/api/graficos/lamina', [EditorController::class, 'lamina']);
+$router->get('/graficos/fondo', [EditorController::class, 'fondo']);
+$router->post('/graficos/fondo', [EditorController::class, 'fondo']);
+$router->post('/idioma', [IdiomaController::class, 'cambiar']);
+$router->get('/evidencias', [EvidenciaController::class, 'index']);
+$router->post('/evidencias/subir', [EvidenciaController::class, 'subir']);
+$router->post('/evidencias/eliminar', [EvidenciaController::class, 'eliminar']);
+$router->get('/simbolos', [SimboloController::class, 'index']);
+$router->post('/simbolos/guardar', [SimboloController::class, 'guardar']);
+$router->post('/simbolos/eliminar', [SimboloController::class, 'eliminar']);
+$router->post('/simbolos/cajetin', [SimboloController::class, 'guardarCajetin']);
+$router->post('/simbolos/cajetin/eliminar', [SimboloController::class, 'eliminarCajetin']);
+$router->get('/simbolos/exportar', [SimboloController::class, 'exportar']);
+
+// View360
+$router->get('/view360', [View360Controller::class, 'index']);
+$router->get('/view360/ver', [View360Controller::class, 'ver']);
+$router->get('/view360/crear', [View360Controller::class, 'crear']);
+$router->post('/view360/crear', [View360Controller::class, 'crear']);
+$router->get('/view360/editar', [View360Controller::class, 'editar']);
+$router->post('/view360/editar', [View360Controller::class, 'editar']);
+$router->post('/api/view360/nota/guardar', [View360Controller::class, 'notaGuardar']);
+$router->post('/api/view360/nota/eliminar', [View360Controller::class, 'notaEliminar']);
+$router->post('/api/view360/panorama', [View360Controller::class, 'panorama']);
+$router->post('/view360/eliminar', [View360Controller::class, 'eliminar']);
+$router->post('/api/simbolos/importar', [SimboloController::class, 'importar']);
+
 
 // ========== AJUSTES Y EXPORTACIÓN ==========
 $router->get('/sistema', [SistemaController::class, 'ajustes']);
 $router->post('/sistema/respaldo/crear', [SistemaController::class, 'respaldoCrear']);
+$router->post('/sistema/respaldo/programar', [SistemaController::class, 'respaldoProgramar']);
 $router->get('/sistema/respaldo/descargar', [SistemaController::class, 'respaldoDescargar']);
 $router->post('/sistema/respaldo/eliminar', [SistemaController::class, 'respaldoEliminar']);
 $router->post('/sistema/respaldo/restaurar', [SistemaController::class, 'respaldoRestaurar']);
@@ -251,4 +325,24 @@ $router->get('/exportar', [AjustesController::class, 'exportarIndex']);
 $router->post('/exportar/generar', [AjustesController::class, 'exportar']);
 $router->post('/exportar/todo', [AjustesController::class, 'exportarTodo']);
 
+csrf_verificar();   // todo POST necesita el código de la sesión
+// Un visitante solo entra a las herramientas que se le permitieron (también por enlace directo o API)
+if (is_auth() && is_visitante() && !herramienta_permitida(herramienta_de_ruta($_SERVER['REQUEST_URI'] ?? '/'))) {
+    if (str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '', '/api/')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'No tienes acceso a esta herramienta']);
+    } else {
+        header('Location: /proyectos?error=' . urlencode('No tienes acceso a esa herramienta'));
+    }
+    exit;
+}
+// Respaldo diario sin cron: si el admin entra después de la hora programada y falta el de hoy, se hace al terminar la petición
+if (is_auth() && is_admin() && \Classes\Respaldo::pendiente()) {
+    register_shutdown_function(function () {
+        ignore_user_abort(true);
+        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+        try { \Classes\Respaldo::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Respaldo programado: ' . $e->getMessage()); }
+    });
+}
 $router->comprobarRutas();

@@ -15,7 +15,7 @@ if ($rol === 'admin') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Mis Proyectos', 'match' => '/proyectos'];
     if (puede_crear_proyecto()) $menu[] = ['url' => '/proyectos/crear', 'icon' => 'fa-plus', 'label' => 'Nuevo Proyecto', 'match' => '/proyectos/crear'];
     $menu[] = ['url' => '/usuarios', 'icon' => 'fa-user-group', 'label' => 'Mis Visitantes', 'match' => '/usuarios'];
-    $menu[] = ['url' => '/soporte', 'icon' => 'fa-headset', 'label' => 'Soporte', 'match' => '/soporte'];
+    $menu[] = ['url' => '/soporte', 'icon' => 'fa-headset', 'label' => 'Soporte', 'match' => '/soporte', 'badge' => soporte_respuestas_nuevas()];
 } else {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos Asignados', 'match' => '/proyectos'];
 }
@@ -26,12 +26,14 @@ if ($proyectoCtx) {
     $proyectoSidebar = \Model\Proyecto::find($proyectoCtx);
     if ($proyectoSidebar && puede_ver_proyecto($proyectoSidebar)) {
         $menuProyecto[] = ['url' => "/programa?proyecto=$proyectoCtx", 'icon' => 'fa-list-check', 'label' => 'Programa', 'match' => '/programa'];
+        $menuProyecto[] = ['url' => "/dependencias?proyecto=$proyectoCtx", 'icon' => 'fa-diagram-project', 'label' => 'Dependencias de obra', 'match' => '/dependencias'];
         $menuProyecto[] = ['url' => "/lookahead?proyecto=$proyectoCtx", 'icon' => 'fa-binoculars', 'label' => 'Lookahead 4S', 'match' => '/lookahead'];
         $menuProyecto[] = ['url' => "/vplan?proyecto=$proyectoCtx", 'icon' => 'fa-map-location-dot', 'label' => 'vPlan', 'match' => '/vplan'];
         $menuProyecto[] = ['url' => "/lastplanner?proyecto=$proyectoCtx", 'icon' => 'fa-note-sticky', 'label' => 'Last Planner', 'match' => '/lastplanner'];
         $menuProyecto[] = ['url' => "/reportes?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-list', 'label' => 'Reporte diario', 'match' => '/reportes'];
         $menuProyecto[] = ['url' => "/bitacora?proyecto=$proyectoCtx", 'icon' => 'fa-book', 'label' => 'Bitácora de obra', 'match' => '/bitacora'];
         $menuProyecto[] = ['url' => "/minutas?proyecto=$proyectoCtx", 'icon' => 'fa-handshake', 'label' => 'Minutas', 'match' => '/minutas'];
+        $menuProyecto[] = ['url' => "/evidencias?proyecto=$proyectoCtx", 'icon' => 'fa-camera-retro', 'label' => 'Evidencias', 'match' => '/evidencias'];
         $menuProyecto[] = ['url' => "/archivos?proyecto=$proyectoCtx", 'icon' => 'fa-folder-open', 'label' => 'Archivo', 'match' => '/archivos'];
         $menuProyecto[] = ['url' => "/curvas?proyecto=$proyectoCtx", 'icon' => 'fa-chart-line', 'label' => 'Curvas de productividad', 'match' => '/curvas'];
         $menuProyecto[] = ['url' => "/msr?proyecto=$proyectoCtx", 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR · Materiales', 'match' => '/msr'];
@@ -40,15 +42,20 @@ if ($proyectoCtx) {
             $menuProyecto[] = ['url' => "/materiales?proyecto=$proyectoCtx", 'icon' => 'fa-cubes', 'label' => 'Catálogo de materiales', 'match' => '/materiales'];
         }
         $menuProyecto[] = ['url' => "/calendario?proyecto=$proyectoCtx", 'icon' => 'fa-calendar-days', 'label' => 'Calendario', 'match' => '/calendario'];
+        $menuProyecto[] = ['url' => "/graficos?proyecto=$proyectoCtx", 'icon' => 'fa-pen-ruler', 'label' => 'Editor', 'match' => '/graficos'];
+        $menuProyecto[] = ['url' => "/simbolos?proyecto=$proyectoCtx", 'icon' => 'fa-shapes', 'label' => 'Símbolos', 'match' => '/simbolos'];
+        $menuProyecto[] = ['url' => "/view360?proyecto=$proyectoCtx", 'icon' => 'fa-street-view', 'label' => 'View360', 'match' => '/view360'];
         if ($rol !== 'visitante') {
             $menuProyecto[] = ['url' => "/ajustes?proyecto=$proyectoCtx", 'icon' => 'fa-gear', 'label' => 'Ajustes', 'match' => '/ajustes'];
             $menuProyecto[] = ['url' => "/exportar?proyecto=$proyectoCtx", 'icon' => 'fa-file-export', 'label' => 'Exportar', 'match' => '/exportar'];
         }
     }
 }
+// Los visitantes solo ven las herramientas que se les permitieron
+$menuProyecto = array_values(array_filter($menuProyecto, fn($i) => herramienta_permitida(herramienta_de_ruta($i['match']))));
 // Acciones rápidas del proyecto en curso
 $accionesRapidas = [];
-if (!empty($proyectoSidebar) && $menuProyecto) {
+if (!empty($proyectoSidebar) && $menuProyecto && herramienta_permitida('acciones')) {
     try {
         $accionesRapidas = \Classes\AccionesRapidas::secciones((int)$proyectoSidebar->id, puede_gestionar_proyecto($proyectoSidebar));
     } catch (\Throwable $e) {
@@ -68,30 +75,32 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
         <?php foreach ($menu as $item): ?>
             <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $_SERVER['REQUEST_URI'] !== '/' && pagina_actual($item['match']) && !($item['match'] === '/proyectos' && pagina_actual('/proyectos/crear')) ? 'active' : ''; ?>">
                 <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
-                <span><?php echo s($item['label']); ?></span>
+                <span><?php echo s(t($item['label'])); ?></span>
                 <?php if (!empty($item['badge'])): ?><b class="nav-badge"><?php echo (int)$item['badge']; ?></b><?php endif; ?>
             </a>
         <?php endforeach; ?>
-        <?php if ($menuProyecto): ?>
+        <?php if ($menuProyecto || ($proyectoSidebar ?? null)): ?>
+            <?php if (herramienta_permitida('planificador')): ?>
             <a href="/planificador?proyecto=<?php echo (int)$proyectoCtx; ?>" class="nav-link <?php echo pagina_actual('/planificador') ? 'active' : ''; ?>">
                 <i class="fa-solid fa-diagram-next nav-icon"></i>
-                <span>Planificador</span>
+                <span><?php echo s(t('Planificador')); ?></span>
             </a>
-            <div class="nav-section">Proyecto actual</div>
+            <?php endif; ?>
+            <div class="nav-section"><?php echo s(t('Proyecto actual')); ?></div>
             <?php foreach ($menuProyecto as $item): ?>
                 <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo pagina_actual($item['match']) ? 'active' : ''; ?>">
                     <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
-                    <span><?php echo s($item['label']); ?></span>
+                    <span><?php echo s(t($item['label'])); ?></span>
                 </a>
             <?php endforeach; ?>
         <?php endif; ?>
         <?php if ($accionesRapidas): ?>
             <?php $totalAcciones = array_sum(array_column($accionesRapidas, 'total')); ?>
-            <div class="nav-section">Acciones rápidas</div>
+            <div class="nav-section"><?php echo s(t('Acciones rápidas')); ?></div>
             <?php if ($totalAcciones > 5): ?>
                 <a href="/acciones?proyecto=<?php echo (int)$proyectoSidebar->id; ?>" target="_blank" rel="noopener" class="nav-link acc-todas">
                     <i class="fa-solid fa-up-right-from-square nav-icon"></i>
-                    <span>Ver todas en otra pestaña</span>
+                    <span><?php echo s(t('Ver todas en otra pestaña')); ?></span>
                     <b class="nav-badge"><?php echo (int)$totalAcciones; ?></b>
                 </a>
             <?php endif; ?>
@@ -103,7 +112,7 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
                         <?php if ($sec['total']): ?><b class="nav-badge"><?php echo (int)$sec['total']; ?></b><?php endif; ?>
                     </summary>
                     <?php if (!$sec['items']): ?>
-                        <p class="acc-vacio">Nada pendiente</p>
+                        <p class="acc-vacio"><?php echo s(t('Nada pendiente')); ?></p>
                     <?php else: ?>
                         <ul class="acc-lista">
                             <?php foreach ($sec['items'] as $it): ?>
@@ -122,6 +131,10 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
         <?php endif; ?>
     </nav>
     <div class="sidebar-footer">
+        <a href="/manual<?php echo $proyectoCtx ? '?proyecto=' . (int)$proyectoCtx : ''; ?>" class="nav-link manual-link <?php echo pagina_actual('/manual') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-book-open nav-icon"></i>
+            <span><?php echo s(t('Manual de usuario')); ?></span>
+        </a>
         <div class="version-tag"><?php echo s($etiquetasRol[$rol] ?? 'Visitante'); ?> · v1.0.0</div>
     </div>
 </aside>

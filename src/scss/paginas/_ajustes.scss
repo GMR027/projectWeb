@@ -319,3 +319,13 @@
   .alm-amarillo { background: #f59e0b; }
   .alm-rojo { background: #ef4444; }
 }
+
+// Calendario: formulario de actividad en modal (iframe)
+.cal-modal-card { text-align: left; max-width: 90rem; width: 100%; height: min(90vh, 80rem); display: flex; flex-direction: column; padding: 1.6rem 2rem;
+  iframe { flex: 1; width: 100%; border: 0; border-radius: .6rem; background: transparent; }
+  iframe[hidden] { display: none; } }
+.cal-modal-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; h3 { margin: 0; } }
+body.cal-modal-abierto { overflow: hidden; }
+// Dentro del iframe
+body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } .card { box-shadow: none; border: 0; background: transparent; padding: 0; } }
+.mat-nombre-previo { padding: 1rem 1.2rem; border: 1px dashed var(--border); border-radius: .6rem; font-weight: 600; min-height: 4rem; overflow-wrap: anywhere; }

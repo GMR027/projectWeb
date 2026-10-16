@@ -8,7 +8,7 @@
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if (!$esNueva): ?><input type="hidden" name="id" value="<?php echo s($curva->id); ?>"><?php endif; ?>
         <div class="form-grid">
-            <div class="campo"><label for="nombre">Nombre de la curva *</label><input type="text" id="nombre" name="nombre" value="<?php echo s($curva->nombre); ?>" required placeholder="Ej: Instalación de cableado CCTV"></div>
+            <div class="campo"><label for="nombre">Nombre de la curva *</label><input type="text" id="nombre" name="nombre" value="<?php echo s($curva->nombre); ?>" required placeholder="Ej: Instalación de tubería"></div>
             <div class="campo">
                 <label for="material_id">Material a medir</label>
                 <select id="material_id" name="material_id">

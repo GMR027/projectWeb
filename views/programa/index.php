@@ -252,6 +252,9 @@
             <span><span class="dot dot-proceso"></span> En Proceso</span>
             <span><span class="dot dot-noiniciado"></span> No Iniciado</span>
             <span><span class="dot dot-restriccion"></span> Restricción</span>
+            <?php if (!empty($depFlechas)): ?>
+                <label class="campo-check gantt-dep-toggle"><input type="checkbox" id="gantt-dep-toggle" checked> <i class="fa-solid fa-diagram-project"></i> Dependencias</label>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -287,7 +290,7 @@
 
                 <!-- Celda con la barra: ocupa las columnas de su duración -->
                 <div class="gantt-cell gantt-bar-cell" style="grid-column: span <?php echo $span; ?>;">
-                    <div class="gantt-barra <?php echo $fila['tipo']; ?> <?php echo !empty($fila['hito']) ? 'gantt-hito' : ''; ?> status-<?php echo $fila['tipo'] === 'partida' ? 'partida' : s($fila['status']); ?>"
+                    <div<?php echo $fila['tipo'] === 'actividad' ? ' data-act="' . (int)$fila['id'] . '"' : ''; ?> class="gantt-barra <?php echo $fila['tipo']; ?> <?php echo !empty($fila['hito']) ? 'gantt-hito' : ''; ?> status-<?php echo $fila['tipo'] === 'partida' ? 'partida' : s($fila['status']); ?>"
                          title="<?php echo s($fila['codigo'] . ' — ' . $fila['nombre']); ?> | <?php echo formatear_fecha($fila['fecha_inicio']); ?> → <?php echo formatear_fecha($fila['fecha_fin']); ?> | <?php echo s($fila['progreso']); ?>%">
                         <?php if ($fila['tipo'] === 'actividad'): ?>
                             <div class="gantt-barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
@@ -307,6 +310,40 @@
         </div>
     </div>
 </div>
+
+<?php if (!empty($depFlechas)): ?>
+<script>
+(function () {
+    const rels = <?php echo json_encode($depFlechas, JSON_HEX_TAG); ?>;
+    const grid = document.querySelector('.gantt-grid'), chk = document.getElementById('gantt-dep-toggle');
+    if (!grid) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'gantt-deps'); grid.appendChild(svg);
+    function dibujar() {
+        svg.innerHTML = '';
+        if (chk && !chk.checked) return;
+        const g = grid.getBoundingClientRect();
+        svg.setAttribute('width', grid.scrollWidth); svg.setAttribute('height', grid.scrollHeight);
+        const caja = id => { const el = grid.querySelector('.gantt-barra[data-act="' + id + '"]'); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - g.left, r: r.right - g.left, y: r.top - g.top + r.height / 2, h: r.height }; };
+        let out = '';
+        rels.forEach(r => {
+            const A = caja(r.pred), B = caja(r.suc); if (!A || !B) return;
+            const salidaFin = r.tipo === 'FS' || r.tipo === 'FF', entraInicio = r.tipo === 'FS' || r.tipo === 'SS';
+            const x1 = salidaFin ? A.r : A.l, x2 = entraInicio ? B.l : B.r, d1 = salidaFin ? 1 : -1, d2 = entraInicio ? 1 : -1;
+            const ym = A.y < B.y ? A.y + (B.y - A.y) / 2 : A.y - (A.y - B.y) / 2;
+            const pts = [[x1, A.y], [x1 + d1 * 7, A.y], [x1 + d1 * 7, ym], [x2 - d2 * 7, ym], [x2 - d2 * 7, B.y], [x2, B.y]];
+            const cls = (r.critica ? ' crit' : '') + (r.conflicto ? ' conf' : '');
+            out += '<path class="gantt-dep' + cls + '" d="M' + pts.map(p => p.join(',')).join(' L') + '"/><path class="gantt-dep-punta' + cls + '" d="M' + x2 + ',' + B.y + ' l' + (-d2 * 6) + ',-3.5 l0,7 z"/>';
+        });
+        svg.innerHTML = out;
+    }
+    if (chk) chk.addEventListener('change', dibujar);
+    window.addEventListener('resize', dibujar);
+    if (window.ResizeObserver) new ResizeObserver(dibujar).observe(grid);
+    dibujar(); window.addEventListener('load', dibujar);
+})();
+</script>
+<?php endif; ?>
 
 <?php if (puede_gestionar_proyecto($proyecto)): ?>
 <!-- Cambio de fechas desde el icono (modo móvil) -->

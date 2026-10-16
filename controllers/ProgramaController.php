@@ -10,6 +10,7 @@ use Model\Restriccion;
 use Model\TipoRestriccion;
 use Classes\Calendario;
 use Classes\GanttRenderer;
+use Classes\Dependencias;
 
 class ProgramaController
 {
@@ -65,7 +66,19 @@ class ProgramaController
             }
         }
 
+        // Dependencias de obra: solo se dibujan si el modo no está apagado
+        $depFlechas = [];
+        if (($proyecto->modo_dependencias ?? 'apagado') !== 'apagado') {
+            $dd = Dependencias::datos($proyecto);
+            $crit = [];
+            foreach ($dd['actividades'] as $a) $crit[$a['id']] = $a['critica'];
+            foreach ($dd['relaciones'] as $r) {
+                $depFlechas[] = ['pred' => $r['pred'], 'suc' => $r['suc'], 'tipo' => $r['tipo'], 'conflicto' => $r['conflicto'], 'critica' => !empty($crit[$r['pred']]) && !empty($crit[$r['suc']])];
+            }
+        }
+
         $router->render('programa/index', [
+            'depFlechas' => $depFlechas,
             'partidasFiltro' => array_values(array_filter($todas, fn($f) => $f['tipo'] === 'partida')),
             'filtros' => $filtros,
             'hayFiltros' => (bool)array_filter($filtros),
@@ -149,9 +162,10 @@ class ProgramaController
                 // Recalcular fechas de la partida
                 $partida->recalcularFechas();
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$partida->proyecto_id);
+                $movidas = \Classes\Dependencias::propagar(Proyecto::find($partida->proyecto_id));   // modo automático
 
                 echo json_encode([
-                    'success' => true,
+                    'success' => true, 'dependientes_movidas' => $movidas,
                     'fecha_inicio' => $actividad->fecha_inicio,
                     'fecha_fin' => $actividad->fecha_fin,
                     'duracion_dias' => $actividad->duracion_dias,
@@ -410,8 +424,7 @@ class ProgramaController
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
                     self::guardarMaterialesActividad((int)$resultado['id'], (int)$proyectoId);
-                    header('Location: /programa?proyecto=' . $proyectoId . '&creado=actividad');
-                    exit;
+                    terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=actividad');
                 }
             }
         }
@@ -467,9 +480,9 @@ class ProgramaController
                 $actividad->sincronizarStatus();
                 if ($actividad->guardar()) {
                     $partida->recalcularFechas();
+                    \Classes\Dependencias::propagar($proyecto);   // modo automático: las sucesoras siguen a la actividad
                     self::guardarMaterialesActividad((int)$id, (int)$proyecto->id);
-                    header('Location: /programa?proyecto=' . $proyecto->id . '&editado=actividad');
-                    exit;
+                    terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=actividad');
                 }
             }
         }

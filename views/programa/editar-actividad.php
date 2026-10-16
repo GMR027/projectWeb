@@ -1,7 +1,9 @@
+<?php if (!es_modal()): ?>
 <div class="page-header">
     <h2>Editar Actividad — <?php echo s($proyecto->nombre); ?></h2>
     <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
 </div>
+<?php endif; ?>
 
 <div class="card">
     <form method="POST" class="formulario">
@@ -75,6 +77,12 @@
 </script>
 
     <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
+
+    <?php if (es_modal()): ?>
+        <p class="text-muted text-sm">Las restricciones se gestionan en la página completa de la actividad.</p>
+        <a href="/programa/actividades/editar?id=<?php echo s($actividad->id); ?>" target="_top" class="btn btn-ghost btn-sm"><i class="fa-solid fa-up-right-from-square"></i> Abrir actividad completa (restricciones)</a>
+</div>
+<?php return; endif; ?>
 
     <h4>Restricciones de esta Actividad</h4>
     <?php $restricciones = $actividad->getRestricciones(); ?>

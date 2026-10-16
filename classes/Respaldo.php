@@ -49,6 +49,95 @@ class Respaldo
         return $ruta !== null && @unlink($ruta);
     }
 
+    // ---------- respaldo programado ----------
+    public const PREFIJO_AUTO = 'auto';
+
+    private static function archivoConfig(): string
+    {
+        return self::dir() . '/programado.json';
+    }
+
+    /** Configuración del respaldo diario: ['activo' => bool, 'hora' => 'HH:MM', 'conservar' => int] */
+    public static function programado(): array
+    {
+        $c = json_decode((string)@file_get_contents(self::archivoConfig()), true);
+        $c = is_array($c) ? $c : [];
+        return [
+            'activo' => (bool)($c['activo'] ?? true),
+            'hora' => preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', (string)($c['hora'] ?? '')) ? $c['hora'] : '23:00',
+            'conservar' => max(1, min(30, (int)($c['conservar'] ?? 5))),
+        ];
+    }
+
+    public static function guardarProgramado(bool $activo, string $hora, int $conservar): void
+    {
+        $c = ['activo' => $activo, 'hora' => $hora, 'conservar' => $conservar];
+        file_put_contents(self::archivoConfig(), json_encode($c));
+        $c = self::programado();   // normaliza valores inválidos
+        file_put_contents(self::archivoConfig(), json_encode($c));
+    }
+
+    public static function esAutomatico(string $archivo): bool
+    {
+        return str_starts_with($archivo, self::PREFIJO_AUTO . '_');
+    }
+
+    /** Momento (timestamp) en que le toca el respaldo de hoy */
+    public static function horaDeHoy(?array $cfg = null): int
+    {
+        $cfg = $cfg ?? self::programado();
+        return (int)strtotime(date('Y-m-d') . ' ' . $cfg['hora'] . ':00');
+    }
+
+    /** Último respaldo automático (timestamp) o null */
+    public static function ultimoAutomatico(): ?int
+    {
+        foreach (self::listar() as $r) {
+            if (self::esAutomatico($r['archivo'])) return (int)$r['fecha'];
+        }
+        return null;
+    }
+
+    /** ¿Ya pasó la hora de hoy y aún no hay un respaldo automático desde entonces? */
+    public static function pendiente(): bool
+    {
+        $cfg = self::programado();
+        if (!$cfg['activo']) return false;
+        $toca = self::horaDeHoy($cfg);
+        return time() >= $toca && (self::ultimoAutomatico() ?? 0) < $toca;
+    }
+
+    /** Próximo respaldo programado (timestamp) */
+    public static function proximo(): int
+    {
+        $toca = self::horaDeHoy();
+        if (time() < $toca) return $toca;
+        return (self::ultimoAutomatico() ?? 0) < $toca ? time() : $toca + 86400;   // ahora: pendiente (se hace con el cron o en cuanto el admin entre)
+    }
+
+    /** Crea el respaldo automático y borra los más antiguos para conservar solo los últimos N. Devuelve el nombre del archivo */
+    public static function crearAutomatico(): string
+    {
+        $f = self::crear(self::PREFIJO_AUTO);
+        $autos = array_values(array_filter(self::listar(), fn($r) => self::esAutomatico($r['archivo'])));   // del más nuevo al más viejo
+        foreach (array_slice($autos, self::programado()['conservar']) as $viejo) self::eliminar($viejo['archivo']);
+        return $f;
+    }
+
+    /** Ejecuta el respaldo programado si corresponde (con candado para que dos procesos no lo hagan a la vez). null si no tocaba */
+    public static function ejecutarSiToca(bool $forzar = false): ?string
+    {
+        $lock = fopen(self::dir() . '/.lock', 'c');
+        if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return null;
+        try {
+            if (!$forzar && !self::pendiente()) return null;
+            return self::crearAutomatico();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
     /** Crea un respaldo y devuelve el nombre del archivo */
     public static function crear(string $nombre = ''): string
     {

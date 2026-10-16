@@ -19,6 +19,7 @@ CREATE TABLE usuarios (
     limite_proyectos INT NOT NULL DEFAULT 1,   -- proyectos que puede crear un cliente
     limite_almacenamiento_mb INT NOT NULL DEFAULT 300,   -- MB por proyecto de un cliente
     creado_por INT DEFAULT NULL,   -- cliente que creó a este visitante (máx. 2 por cliente)
+    herramientas TEXT NULL,        -- visitante: claves de las herramientas que ve (JSON); NULL = todas
     token VARCHAR(100) DEFAULT NULL,
     confirmado TINYINT(1) DEFAULT 0,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -45,6 +46,7 @@ CREATE TABLE proyectos (
     fecha_fin DATE NOT NULL,
     color VARCHAR(7) DEFAULT '#FF5A1F',
     usuario_id INT NOT NULL,
+    modo_dependencias ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -84,6 +86,7 @@ CREATE TABLE actividades (
     pta TINYINT(1) NOT NULL DEFAULT 1, -- 4WLA: 1 = OK, 0 = pendiente (!)
     hito TINYINT(1) NOT NULL DEFAULT 0, -- 1 = hito (duración 0, inicio = fin)
     sin_material TINYINT(1) NOT NULL DEFAULT 0, -- 1 = la actividad no requiere material
+    fecha_fija TINYINT(1) NOT NULL DEFAULT 0,   -- 1 = el modo automático de dependencias no la mueve
     orden INT DEFAULT 0,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
     UNIQUE KEY uq_actividad_codigo (partida_id, codigo)
@@ -195,7 +198,11 @@ CREATE TABLE materiales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
     referencia VARCHAR(100) NOT NULL DEFAULT '',
-    nombre VARCHAR(255) NOT NULL,
+    nombre_base VARCHAR(255) DEFAULT NULL,       -- nombre + marca + modelo + valor extra = nombre
+    marca VARCHAR(100) NOT NULL DEFAULT '',
+    modelo VARCHAR(100) NOT NULL DEFAULT '',
+    valor_extra VARCHAR(150) NOT NULL DEFAULT '',
+    nombre VARCHAR(255) NOT NULL,                -- nombre completo armado
     especialidad VARCHAR(100) NOT NULL DEFAULT '',
     link_web VARCHAR(500) DEFAULT NULL,
     imagen VARCHAR(100) DEFAULT NULL,
@@ -378,6 +385,97 @@ CREATE TABLE vplan_lamina_tablas (
     FOREIGN KEY (tabla_id) REFERENCES vplan_tablas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Actividades que muestra cada lámina (sin filas = toda la partida)
+CREATE TABLE vplan_lamina_actividades (
+    lamina_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    PRIMARY KEY (lamina_id, actividad_id),
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Notas de cada lámina
+CREATE TABLE vplan_notas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lamina_id INT NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha DATETIME NOT NULL,
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Editor de gráficos (ver database/migracion_editor_graficos.sql)
+-- Categorías de gráficos (ver database/migracion_editor_categorias.sql)
+CREATE TABLE editor_categorias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE editor_graficos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    categoria_id INT DEFAULT NULL,
+    ancho INT NOT NULL DEFAULT 1920,
+    alto INT NOT NULL DEFAULT 1080,
+    fondo VARCHAR(30) NOT NULL DEFAULT 'liso',
+    fondo_color VARCHAR(7) NOT NULL DEFAULT '#ffffff',
+    fondo_imagen VARCHAR(100) DEFAULT NULL,   -- fondo personalizado (imagen propia)
+    fondo_config TEXT,                        -- ajustes del fondo personalizado (JSON)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (categoria_id) REFERENCES editor_categorias(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Láminas de cada gráfico (ver database/migracion_editor_laminas.sql)
+CREATE TABLE editor_laminas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    grafico_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 1,
+    nombre VARCHAR(60) NOT NULL DEFAULT '',
+    marcas_json LONGTEXT,
+    marcas_png VARCHAR(100) DEFAULT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (grafico_id) REFERENCES editor_graficos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Biblioteca de símbolos por proyecto (ver database/migracion_simbolos.sql)
+CREATE TABLE simbolos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    categoria VARCHAR(60) NOT NULL DEFAULT '',
+    archivo VARCHAR(100) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- View360: gráficos interactivos con vistas 360 (ver database/migracion_view360.sql)
+CREATE TABLE view360_graficos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    version VARCHAR(30) NOT NULL DEFAULT '',
+    grafico_id INT DEFAULT NULL,   -- gráfico del Editor que sirve de lienzo (ver database/migracion_view360_fondo.sql)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (grafico_id) REFERENCES editor_graficos(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Notas de cada gráfico de View360 (ver database/migracion_view360_notas.sql)
+CREATE TABLE view360_notas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    view360_id INT NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha DATETIME NOT NULL,
+    FOREIGN KEY (view360_id) REFERENCES view360_graficos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Reporte diario y bitácora (ver database/migracion_reportes_bitacora.sql)
 
 CREATE TABLE personal (
@@ -500,9 +598,92 @@ CREATE TABLE IF NOT EXISTS soportes (
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS soporte_respuestas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    soporte_id INT NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha DATETIME NOT NULL,
+    visto TINYINT(1) NOT NULL DEFAULT 0,   -- 0 = el cliente aún no la ha visto
+    FOREIGN KEY (soporte_id) REFERENCES soportes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS soporte_respuesta_fotos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    respuesta_id INT NOT NULL,
+    archivo VARCHAR(100) NOT NULL,
+    FOREIGN KEY (respuesta_id) REFERENCES soporte_respuestas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Foto diaria del espacio usado en los volúmenes (archivos y base de datos) para estimar cuándo se llenan
 CREATE TABLE IF NOT EXISTS almacenamiento_historial (
     fecha DATE PRIMARY KEY,
     archivos_bytes BIGINT UNSIGNED NOT NULL DEFAULT 0,
     bd_bytes BIGINT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB;
+
+-- Cajetines reutilizables por proyecto (ver database/migracion_cajetines.sql)
+CREATE TABLE cajetines (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    orientacion ENUM('vertical','banda') NOT NULL DEFAULT 'vertical',
+    ancho TINYINT UNSIGNED NOT NULL DEFAULT 28,
+    filas_json TEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Evidencias fotográficas por actividad (ver database/migracion_evidencias.sql)
+CREATE TABLE evidencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    actividad_id INT DEFAULT NULL,
+    fecha DATE NOT NULL,
+    descripcion VARCHAR(300) NOT NULL DEFAULT '',
+    foto VARCHAR(100) NOT NULL,
+    usuario_id INT DEFAULT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Curva S (ver database/migracion_curva_s.sql)
+CREATE TABLE actividad_avance (
+    actividad_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    progreso TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY (actividad_id, fecha),
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE curva_s_manual (
+    proyecto_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    avance DECIMAL(5,2) NOT NULL,
+    PRIMARY KEY (proyecto_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Dependencias de obra (ver database/migracion_dependencias.sql; además proyectos.modo_dependencias y actividades.fecha_fija)
+CREATE TABLE actividad_dependencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    predecesora_id INT NOT NULL,
+    sucesora_id INT NOT NULL,
+    tipo ENUM('FS','SS','FF','SF') NOT NULL DEFAULT 'FS',
+    retraso INT NOT NULL DEFAULT 0,
+    UNIQUE KEY uq_dependencia (predecesora_id, sucesora_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (predecesora_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (sucesora_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE dependencias_cambios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cambios_json LONGTEXT NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

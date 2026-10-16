@@ -5,7 +5,7 @@ namespace Model;
 class Usuario extends ActiveRecord
 {
     protected static $tabla = 'usuarios';
-    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'token', 'confirmado'];
+    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'herramientas', 'token', 'confirmado'];
 
     public $id;
     public $nombre;
@@ -19,6 +19,43 @@ class Usuario extends ActiveRecord
     public $limite_proyectos;
     public $limite_almacenamiento_mb;
     public $creado_por;
+    public $herramientas;
+
+    /** Herramientas del proyecto que se pueden mostrar u ocultar a un visitante: clave => [etiqueta, prefijos de ruta] */
+    public const HERRAMIENTAS = [
+        'programa' => ['Programa', ['/programa']],
+        'dependencias' => ['Dependencias de obra', ['/dependencias', '/api/dependencias']],
+        'planificador' => ['Planificador', ['/planificador']],
+        'lookahead' => ['Lookahead 4S', ['/lookahead']],
+        'vplan' => ['vPlan', ['/vplan', '/api/vplan']],
+        'lastplanner' => ['Last Planner', ['/lastplanner']],
+        'reportes' => ['Reporte diario', ['/reportes']],
+        'bitacora' => ['Bitácora de obra', ['/bitacora']],
+        'minutas' => ['Minutas', ['/minutas']],
+        'evidencias' => ['Evidencias', ['/evidencias']],
+        'archivos' => ['Archivo', ['/archivos']],
+        'curvas' => ['Curvas de productividad', ['/curvas', '/api/curvas']],
+        'msr' => ['MSR · Materiales', ['/msr', '/api/msr']],
+        'calendario' => ['Calendario', ['/calendario']],
+        'graficos' => ['Editor y símbolos', ['/graficos', '/api/graficos', '/simbolos', '/api/simbolos']],
+        'view360' => ['View360', ['/view360', '/api/view360']],
+        'acciones' => ['Acciones rápidas', ['/acciones']],
+    ];
+
+    /** Claves permitidas al visitante (null = todas) */
+    public function herramientasPermitidas(): ?array
+    {
+        if ($this->herramientas === null || $this->herramientas === '') return null;
+        $d = json_decode((string)$this->herramientas, true);
+        return is_array($d) ? array_values(array_intersect(array_keys(self::HERRAMIENTAS), $d)) : null;
+    }
+
+    /** Casillas marcadas del formulario → JSON (null si están todas: «sin restricción») */
+    public static function herramientasDePost($marcadas): ?string
+    {
+        $validas = array_values(array_intersect(array_keys(self::HERRAMIENTAS), is_array($marcadas) ? $marcadas : []));
+        return count($validas) === count(self::HERRAMIENTAS) ? null : json_encode($validas);
+    }
 
     /** Visitantes (solo lectura) que un cliente puede crear */
     public const MAX_VISITANTES_CLIENTE = 2;
@@ -37,6 +74,7 @@ class Usuario extends ActiveRecord
         $this->limite_proyectos = $args['limite_proyectos'] ?? 1;
         $this->limite_almacenamiento_mb = $args['limite_almacenamiento_mb'] ?? 300;
         $this->creado_por = $args['creado_por'] ?? null;
+        $this->herramientas = $args['herramientas'] ?? null;
         $this->token = $args['token'] ?? '';
         $this->confirmado = $args['confirmado'] ?? 0;
     }

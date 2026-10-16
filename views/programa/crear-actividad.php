@@ -1,12 +1,14 @@
+<?php if (!es_modal()): ?>
 <div class="page-header">
     <h2>Nueva Actividad — <?php echo s($proyecto->nombre); ?></h2>
     <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
 </div>
+<?php endif; ?>
 
 <div class="card">
     <?php if (empty($partidas)): ?>
         <div class="alerta alerta-error">Primero debes crear al menos una partida.</div>
-        <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">Crear Partida</a>
+        <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary" target="_top">Crear Partida</a>
     <?php else: ?>
         <form method="POST" class="formulario" id="form-actividad">
             <div class="form-grid">

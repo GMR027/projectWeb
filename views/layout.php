@@ -3,7 +3,7 @@
 require_once __DIR__ . '/templates/breadcrumb.php';
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?php echo idioma_actual(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,7 +41,8 @@ require_once __DIR__ . '/templates/breadcrumb.php';
                 <?php
                 $pagina_actual = '';
                 $uri = $_SERVER['REQUEST_URI'] ?? '';
-                if (str_contains($uri, '/programa')) $pagina_actual = 'programa';
+                if (str_contains($uri, '/dependencias')) $pagina_actual = 'dependencias';
+                elseif (str_contains($uri, '/programa')) $pagina_actual = 'programa';
                 elseif (str_contains($uri, '/lookahead')) $pagina_actual = 'lookahead';
                 elseif (str_contains($uri, '/vplan')) $pagina_actual = 'vplan';
                 elseif (str_contains($uri, '/lastplanner')) $pagina_actual = 'lastplanner';
@@ -54,6 +55,10 @@ require_once __DIR__ . '/templates/breadcrumb.php';
                 elseif (str_contains($uri, '/submittals')) $pagina_actual = 'submittals';
                 elseif (str_contains($uri, '/materiales')) $pagina_actual = 'materiales';
                 elseif (str_contains($uri, '/calendario')) $pagina_actual = 'calendario';
+                elseif (str_contains($uri, '/graficos')) $pagina_actual = 'editor';
+                elseif (str_contains($uri, '/simbolos')) $pagina_actual = 'simbolos';
+                elseif (str_contains($uri, '/view360')) $pagina_actual = 'view360';
+                elseif (str_contains($uri, '/evidencias')) $pagina_actual = 'evidencias';
                 elseif (str_contains($uri, '/ajustes')) $pagina_actual = 'ajustes';
                 elseif (str_contains($uri, '/exportar')) $pagina_actual = 'exportar';
                 breadcrumb_proyecto($proyecto, $pagina_actual);

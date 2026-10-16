@@ -48,7 +48,7 @@
                     </div>
                 </div>
                 <div class="proyecto-acciones">
-                    <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary">Ver Proyecto</a>
+                    <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-sm btn-primary">Ver Proyecto</a>
                     <?php if (puede_gestionar_proyecto($proyecto)): ?>
                         <a href="/proyectos/editar?id=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <form method="POST" action="/proyectos/eliminar" style="display:inline" data-confirm="¿Eliminar proyecto?|Se eliminarán todas sus partidas, actividades, restricciones y calendario. Esta acción no se puede deshacer.">

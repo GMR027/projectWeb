@@ -109,6 +109,26 @@ class CurvaController
         ]);
     }
 
+    /** Curva S del programa: avance programado contra real */
+    public static function curvaS(Router $router)
+    {
+        $proyecto = proyecto_de_peticion();
+        $d = \Classes\CurvaS::calcular($proyecto);
+        $router->render('curvas/s', [
+            'titulo' => 'Curva S - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'datos' => $d,
+            'desde' => \Classes\CurvaS::primerHistorial((int)$proyecto->id), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
+        ]);
+    }
+
+    /** Avance real acumulado capturado a mano por semana (vacío = se calcula solo) */
+    public static function guardarCurvaSManual()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        \Classes\CurvaS::guardarManual((int)$proyecto->id, is_array($_POST['manual'] ?? null) ? $_POST['manual'] : []);
+        header('Location: /curvas/s?proyecto=' . $proyecto->id . '&ok=1');
+        exit;
+    }
+
     public static function maestra(Router $router)
     {
         $proyecto = proyecto_de_peticion();

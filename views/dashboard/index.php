@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="proyecto-acciones">
-                    <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary">Ver Proyecto</a>
+                    <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-sm btn-primary">Ver Proyecto</a>
                     <?php if (puede_descargar()): ?>
                         <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost">Ajustes</a>
                     <?php endif; ?>

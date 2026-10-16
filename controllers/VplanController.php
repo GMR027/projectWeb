@@ -60,6 +60,25 @@ class VplanController
             if ($l->id && (int)$l->partida_id !== (int)$partidaAnterior) $l->restr_auto = 0;   // otra partida: se reevalúa
             $alertas = $l->validar();
 
+            // Actividades que se muestran: solo las de la partida elegida; todas o ninguna = partida completa
+            $seleccion = [];
+            if ($partida && $l->partida_id) {
+                $idsPartida = array_map(fn($a) => (int)$a->id, $partida->getActividades());
+                $pedidas = array_unique(array_map('intval', (array)($_POST['actividades'] ?? [])));
+                $seleccion = array_values(array_intersect($pedidas, $idsPartida));
+                if ($pedidas && !$seleccion) $alertas['error'][] = 'Las actividades elegidas no pertenecen a la partida';
+                if (count($seleccion) === count($idsPartida)) $seleccion = [];   // todas marcadas = partida completa
+            }
+
+            // Subidas que el servidor rechazó antes de llegar aquí (más pesadas que upload_max_filesize / post_max_size): avisar en vez de ignorarlas
+            if (!empty($_SERVER['CONTENT_LENGTH']) && empty($_POST) && empty($_FILES)) {
+                $alertas['error'][] = 'Las imágenes superan el tamaño máximo permitido por el servidor (' . ini_get('post_max_size') . ' en total). Reduce su tamaño e inténtalo de nuevo.';
+            }
+            foreach (['plano', 'simbologia'] as $campo) {
+                $codigo = $_FILES[$campo]['error'] ?? UPLOAD_ERR_NO_FILE;
+                if ($codigo === UPLOAD_ERR_INI_SIZE || $codigo === UPLOAD_ERR_FORM_SIZE) $alertas['error'][] = "La imagen de $campo pesa más de lo que permite el servidor (" . ini_get('upload_max_filesize') . ').';
+                elseif (!in_array($codigo, [UPLOAD_ERR_OK, UPLOAD_ERR_NO_FILE], true)) $alertas['error'][] = "No se pudo subir la imagen de $campo (error $codigo). Inténtalo de nuevo.";
+            }
             foreach (['plano', 'simbologia'] as $campo) {
                 $hay = !empty($_FILES[$campo]['tmp_name']) && is_uploaded_file($_FILES[$campo]['tmp_name']);
                 if ($hay && !in_array(mime_content_type($_FILES[$campo]['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
@@ -93,8 +112,17 @@ class VplanController
                         }
                     }
                 }
+                $seleccionAnterior = $l->id ? $l->seleccion() : [];
                 $r = $l->guardar();
                 if (is_array($r)) $l->id = $r['id'];
+                if ((int)$l->partida_id !== (int)$partidaAnterior) $seleccionAnterior = [];
+                sort($seleccionAnterior);
+                sort($seleccion);
+                if ($seleccion !== $seleccionAnterior || (int)$l->partida_id !== (int)$partidaAnterior) {
+                    $l->guardarSeleccion($seleccion);
+                    $l->restr_auto = 0;   // otras actividades: se reevalúan las restricciones
+                    $l->guardar();
+                }
                 Vplan::asegurarRestricciones($l, $proyecto);
                 header('Location: /vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id);
                 exit;
@@ -102,8 +130,33 @@ class VplanController
         }
         $router->render('vplan/formulario', [
             'titulo' => $l->id ? 'Editar lámina' : 'Nueva lámina', 'proyecto' => $proyecto, 'lamina' => $l,
-            'partidas' => $partidas, 'alertas' => $alertas,
+            'partidas' => $partidas, 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $partidas, $l),
+            'seleccion' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', (array)($_POST['actividades'] ?? [])) : $l->seleccion(),
         ]);
+    }
+
+    /**
+     * Para el formulario: por partida, sus actividades con su número original y en qué OTRAS láminas ya se muestran.
+     * Una lámina sin selección muestra toda su partida.
+     */
+    private static function actividadesPorPartida($proyecto, array $partidas, VplanLamina $actual): array
+    {
+        $porPartida = [];   // partida_id => [actividad_id|'*' => [títulos]]
+        foreach (VplanLamina::deProyecto((int)$proyecto->id) as $o) {
+            if (!$o->partida_id || (int)$o->id === (int)$actual->id) continue;
+            $sel = $o->seleccion();
+            foreach ($sel ?: ['*'] as $aid) $porPartida[(int)$o->partida_id][$aid][] = $o->titulo;
+        }
+        $out = [];
+        foreach ($partidas as $p) {
+            $lista = [];
+            foreach ($p->getActividades() as $i => $a) {
+                $en = array_merge($porPartida[(int)$p->id]['*'] ?? [], $porPartida[(int)$p->id][(int)$a->id] ?? []);
+                $lista[] = ['id' => (int)$a->id, 'seq' => $i + 1, 'nombre' => $a->nombre, 'en' => array_values(array_unique($en))];
+            }
+            $out[(int)$p->id] = $lista;
+        }
+        return $out;
     }
 
     public static function eliminar()
@@ -132,6 +185,7 @@ class VplanController
         $router->render('vplan/ver', $datos + [
             'titulo' => 'vPlan - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l,
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
+            'notas' => array_map(fn($n) => $n->aArray(), \Model\VplanNota::deLamina((int)$l->id)),
             'catalogo' => array_values(array_filter(VplanTabla::deProyecto((int)$proyecto->id), fn($t) => !in_array((int)$t->id, $enLamina, true))),
             'desactualizada' => $l->marcas_json && $l->marcas_estados_hash !== $datos['hash'],
         ]);
@@ -151,10 +205,14 @@ class VplanController
             'titulo' => 'Marcas - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l,
             'config' => [
                 'lamina' => (int)$l->id, 'proyecto' => (int)$proyecto->id,
-                'plano' => '/uploads/vplan/' . $l->plano,
+                'plano' => '/uploads/vplan/' . $l->plano, 'nombre' => $l->titulo,
                 'marcas' => $l->marcas_json ? json_decode($l->marcas_json, true) : null,
                 'actividades' => array_map(fn($t) => ['id' => (int)$t['actividad']->id, 'seq' => $t['seq'], 'nombre' => $t['actividad']->nombre, 'estado' => $t['estado']], $datos['tareas']),
                 'restricciones' => $datos['restricciones'],
+                'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id), 'graficos' => \Model\Grafico::paraInsertar((int)$proyecto->id),
+                'urlSimbolos' => '/simbolos?proyecto=' . $proyecto->id,
+                'cajetines' => \Model\Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
+                'destinos' => \Classes\EnlacesLamina::destinos((int)$proyecto->id),
                 'hash' => $datos['hash'],
                 'auto' => !empty($_GET['auto']),
                 'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id,
@@ -257,6 +315,7 @@ class VplanController
         $out = [];
         foreach (($d['shapes'] ?? []) as $s) {
             if (($s['type'] ?? '') === 'image' && preg_match('#^/uploads/vplan/([a-f0-9]{32}\.(?:png|jpg))$#', (string)($s['src'] ?? ''), $m)) $out[] = $m[1];
+            if (($s['type'] ?? '') === 'link' && ($s['kind'] ?? '') === '360' && preg_match('#^/uploads/vplan/([a-f0-9]{32}\.(?:png|jpg))$#', (string)($s['url'] ?? ''), $m)) $out[] = $m[1];
         }
         return array_values(array_unique($out));
     }
@@ -299,6 +358,12 @@ class VplanController
             || ($v !== '' && (!$d || $d->format('Y-m-d') !== $v))) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Dato no válido']);
+            exit;
+        }
+        [$visibles] = Vplan::visibles($l, $partida);
+        if (!in_array((int)$act->id, array_map(fn($v) => (int)$v['actividad']->id, $visibles), true)) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => 'La actividad no está en esta lámina']);
             exit;
         }
         $l->guardarRecovery((int)$act->id, $_POST['campo'], $v === '' ? null : $v);

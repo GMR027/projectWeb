@@ -183,3 +183,4 @@
   align-items: center;
   margin-bottom: 0.6rem;
 }
+.badge-nueva { background-color: rgba(5, 150, 105, 0.15); color: #34d399; border-color: rgba(5, 150, 105, 0.45); margin-left: .4rem; &[hidden] { display: none; } }

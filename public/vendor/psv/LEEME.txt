@@ -1,0 +1,2 @@
+Photo Sphere Viewer 5.15.1 (MIT) y three.js 0.185.1 (MIT).
+Solo se usan en /view360/ver para abrir las fotos 360.

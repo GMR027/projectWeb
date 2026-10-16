@@ -5,7 +5,7 @@ namespace Model;
 class Proyecto extends ActiveRecord
 {
     protected static $tabla = 'proyectos';
-    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id'];
+    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias'];
 
     public $id;
     public $codigo;
@@ -23,6 +23,7 @@ class Proyecto extends ActiveRecord
     public $fecha_fin;
     public $color;
     public $usuario_id;
+    public $modo_dependencias;
 
     public function __construct($args = [])
     {
@@ -42,6 +43,7 @@ class Proyecto extends ActiveRecord
         $this->fecha_fin = $args['fecha_fin'] ?? '';
         $this->color = $args['color'] ?? '#FF5A1F';
         $this->usuario_id = $args['usuario_id'] ?? null;
+        $this->modo_dependencias = $args['modo_dependencias'] ?? 'apagado';
     }
 
     public function validar(): array

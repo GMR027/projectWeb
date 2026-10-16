@@ -102,6 +102,7 @@
 }
 
 .gantt-grid {
+  position: relative;
   display: grid;
   min-width: 100rem;
   border: 1px solid $border;
@@ -282,3 +283,9 @@
 .campo-check { display: flex !important; gap: .8rem; align-items: center; text-transform: none !important; letter-spacing: 0 !important; font-size: 1.3rem !important; input { width: auto !important; } }
 
 .programa-filtros { margin-bottom: $space-md; padding-block: $space-md; }
+
+// Flechas de dependencias sobre el Gantt
+.gantt-deps { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 4; overflow: visible; }
+.gantt-dep { fill: none; stroke: #94a3b8; stroke-width: 1.5; &.crit { stroke: #dc2626; stroke-width: 2; } &.conf { stroke: #f59e0b; stroke-dasharray: 5 3; } }
+.gantt-dep-punta { fill: #94a3b8; &.crit { fill: #dc2626; } &.conf { fill: #f59e0b; } }
+.gantt-dep-toggle { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; }

@@ -26,6 +26,7 @@ class SistemaController
             'pronArchivos' => Volumen::pronostico($historial, 'archivos', $archivos['usado'], $archivos['capacidad']),
             'pronBd' => Volumen::pronostico($historial, 'bd', $bd['usado'], $bd['capacidad']),
             'respaldos' => Respaldo::listar(),
+            'programado' => Respaldo::programado(), 'ultimoAuto' => Respaldo::ultimoAutomatico(), 'proximoAuto' => Respaldo::proximo(),
             'ok' => $_GET['ok'] ?? '',
             'error' => $_GET['error'] ?? '',
         ]);
@@ -46,6 +47,14 @@ class SistemaController
         } catch (\Throwable $e) {
             self::volver('error', $e->getMessage());
         }
+    }
+
+    /** Configura el respaldo diario automático */
+    public static function respaldoProgramar()
+    {
+        redirigir_si_no_admin();
+        Respaldo::guardarProgramado(!empty($_POST['activo']), (string)($_POST['hora'] ?? '23:00'), (int)($_POST['conservar'] ?? 5));
+        self::volver('ok', 'Respaldo programado actualizado.');
     }
 
     public static function respaldoDescargar()

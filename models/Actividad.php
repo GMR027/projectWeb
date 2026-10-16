@@ -5,7 +5,7 @@ namespace Model;
 class Actividad extends ActiveRecord
 {
     protected static $tabla = 'actividades';
-    protected static $columnasDB = ['id', 'partida_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'orden'];
+    protected static $columnasDB = ['id', 'partida_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'fecha_fija', 'orden'];
 
     public $id;
     public $partida_id;
@@ -21,6 +21,7 @@ class Actividad extends ActiveRecord
     public $pta;
     public $hito;
     public $sin_material;
+    public $fecha_fija;
     public $orden;
 
     public function __construct($args = [])
@@ -39,6 +40,7 @@ class Actividad extends ActiveRecord
         $this->pta = $args['pta'] ?? 1;
         $this->hito = (int)($args['hito'] ?? 0);
         $this->sin_material = (int)($args['sin_material'] ?? 0);
+        $this->fecha_fija = (int)($args['fecha_fija'] ?? 0);
         $this->orden = $args['orden'] ?? 0;
     }
 
@@ -74,6 +76,26 @@ class Actividad extends ActiveRecord
             $this->duracion_dias = 0;
             $this->fecha_fin = $this->fecha_inicio;
         }
+    }
+
+    /** Guarda y, si cambió el avance, anota el valor del día para la Curva S (cuando una actividad se marca completada queda su fecha) */
+    public function guardar()
+    {
+        $antes = null;
+        if (!is_null($this->id)) {
+            $r = self::$db->query('SELECT progreso FROM actividades WHERE id = ' . (int)$this->id);
+            $f = $r ? $r->fetch_row() : null;
+            $antes = $f ? (int)$f[0] : null;
+        }
+        $res = parent::guardar();
+        $id = is_array($res) ? ($res['id'] ?? $this->id) : $this->id;
+        if ($res && $id && (int)$this->progreso !== ($antes ?? 0)) {
+            try {
+                self::$db->query('INSERT INTO actividad_avance (actividad_id, fecha, progreso) VALUES (' . (int)$id . ', CURDATE(), ' . (int)$this->progreso . ') ON DUPLICATE KEY UPDATE progreso = VALUES(progreso)');
+            } catch (\Throwable $e) {   // migración de la Curva S pendiente: no debe impedir guardar la actividad
+            }
+        }
+        return $res;
     }
 
     /** Sincroniza status según progreso */

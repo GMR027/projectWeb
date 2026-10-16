@@ -31,6 +31,7 @@
             include __DIR__ . '/../templates/lista-accesos.php';
             ?>
         </div>
+        <?php $marcadas = $herramientasMarcadas ?? null; include __DIR__ . '/../templates/herramientas-visitante.php'; ?>
         <div class="campo">
             <label for="password"><?php echo $edita ? 'Nuevo password (dejar vacío para mantener)' : 'Password'; ?></label>
             <input type="password" id="password" name="password" <?php echo $edita ? '' : 'required'; ?> autocomplete="new-password">

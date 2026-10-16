@@ -1,6 +1,6 @@
 <header class="topbar">
     <div class="topbar-left">
-        <h1 class="page-title"><?php echo s($titulo ?? ''); ?></h1>
+        <h1 class="page-title"><?php echo s(t($titulo ?? '')); ?></h1>
         <?php if (isset($proyecto)): ?>
             <div class="proyecto-periodo">
                 <?php
@@ -40,11 +40,15 @@
         <div class="user-info">
             <span class="user-name"><?php echo s($_SESSION['nombre'] ?? 'Invitado'); ?></span>
             <span class="user-role badge badge-<?php echo s($_SESSION['rol'] ?? 'visitante'); ?>">
-                <?php echo s(ucfirst($_SESSION['rol'] ?? 'visitante')); ?>
+                <?php echo s(t(ucfirst($_SESSION['rol'] ?? 'visitante'))); ?>
             </span>
         </div>
+        <form method="POST" action="/idioma" class="idioma-sel" title="<?php echo s(t('Idioma')); ?>">
+            <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>">
+            <?php foreach (IDIOMAS as $cod => $nom): ?><button type="submit" name="idioma" value="<?php echo $cod; ?>" class="<?php echo idioma_actual() === $cod ? 'activo' : ''; ?>" aria-label="<?php echo s($nom); ?>"><?php echo strtoupper($cod); ?></button><?php endforeach; ?>
+        </form>
         <a href="/logout" class="btn btn-ghost btn-sm">
-            <i class="fa-solid fa-right-from-bracket"></i> Salir
+            <i class="fa-solid fa-right-from-bracket"></i> <?php echo s(t('Salir')); ?>
         </a>
     </div>
 </header>

@@ -1,3 +1,4 @@
+<?php $puedeGestionar = puede_gestionar_proyecto($proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-calendar-days"></i> Calendario del Proyecto</h2>
@@ -29,6 +30,11 @@
             $mesSiguiente = date('Y-m', strtotime($mesActual . '-01 +1 month'));
             $mesHoy = date('Y-m');
             ?>
+            <?php if ($puedeGestionar): ?>
+                <button type="button" class="btn btn-sm btn-primary" id="cal-crear-actividad" data-url="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>&modal=1">
+                    <i class="fa-solid fa-plus"></i> Crear Actividad
+                </button>
+            <?php endif; ?>
             <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesAnterior); ?>" class="btn btn-sm btn-ghost">
                 <i class="fa-solid fa-chevron-left"></i> Anterior
             </a>
@@ -103,6 +109,7 @@
                         <div class="dia-actividades">
                             <?php foreach (array_slice($actividadesPorDia[$dia], 0, 2) as $item): ?>
                                 <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>"
+                                   <?php echo $puedeGestionar ? 'data-editar-actividad="' . (int)$item['actividad']->id . '"' : ''; ?>
                                    class="dia-actividad status-<?php echo s($item['actividad']->status); ?>"
                                    title="<?php echo s($item['actividad']->codigo . ': ' . $item['actividad']->nombre . ' (' . $item['actividad']->progreso . '%)'); ?>">
                                     <div class="dia-actividad-codigo"><?php echo s($item['actividad']->codigo); ?></div>
@@ -154,7 +161,7 @@
                             <td class="mono hide-m"><?php echo s(implode(', ', $item['dias_en_mes'])); ?></td>
                             <?php if (puede_gestionar_proyecto($proyecto)): ?>
                                 <td>
-                                    <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>" class="btn btn-xs btn-ghost">
+                                    <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>" data-editar-actividad="<?php echo (int)$item['actividad']->id; ?>" class="btn btn-xs btn-ghost">
                                         <i class="fa-solid fa-pen"></i> Editar
                                     </a>
                                 </td>
@@ -168,3 +175,55 @@
         <p class="text-muted" style="margin-top: 2rem;">No hay actividades programadas en este mes.</p>
     <?php endif; ?>
 </div>
+
+<?php if ($puedeGestionar): ?>
+<div class="modal-overlay" id="cal-modal" aria-hidden="true">
+    <div class="modal-card cal-modal-card" role="dialog" aria-modal="true" aria-labelledby="cal-modal-titulo">
+        <div class="cal-modal-cab">
+            <h3 id="cal-modal-titulo">Actividad</h3>
+            <button type="button" class="btn btn-sm btn-ghost" id="cal-modal-cerrar" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-muted text-sm" id="cal-modal-cargando">Cargando…</p>
+        <iframe id="cal-modal-frame" title="Formulario de actividad"></iframe>
+    </div>
+</div>
+<script>
+(function () {
+    const modal = document.getElementById('cal-modal'), frame = document.getElementById('cal-modal-frame');
+    const titulo = document.getElementById('cal-modal-titulo'), cargando = document.getElementById('cal-modal-cargando');
+    const proyecto = <?php echo (int)$proyecto->id; ?>;
+    const abrir = (url, texto) => {
+        titulo.textContent = texto;
+        cargando.hidden = false;
+        frame.hidden = true;
+        frame.src = url;
+        modal.classList.add('abierto'); modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('cal-modal-abierto');
+    };
+    const cerrar = () => {
+        modal.classList.remove('abierto'); modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('cal-modal-abierto');
+        frame.src = 'about:blank';
+    };
+    frame.addEventListener('load', () => { if (frame.src !== 'about:blank') { cargando.hidden = true; frame.hidden = false; } });
+
+    document.getElementById('cal-crear-actividad').addEventListener('click', e => abrir(e.currentTarget.dataset.url, 'Nueva Actividad'));
+    // Clic en una actividad (del calendario o de la lista): se edita en el modal; con Ctrl/clic central sigue abriendo la página completa
+    document.addEventListener('click', e => {
+        const a = e.target.closest('[data-editar-actividad]');
+        if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        abrir('/programa/actividades/editar?id=' + encodeURIComponent(a.dataset.editarActividad) + '&modal=1', 'Editar Actividad');
+    });
+    document.getElementById('cal-modal-cerrar').addEventListener('click', cerrar);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('abierto')) cerrar(); });
+
+    // El formulario avisa al guardar: se recarga el calendario en el mismo mes
+    window.addEventListener('message', e => {
+        if (e.origin !== location.origin || e.source !== frame.contentWindow || !e.data || e.data.tipo !== 'actividad-guardada') return;
+        location.reload();
+    });
+})();
+</script>
+<?php endif; ?>

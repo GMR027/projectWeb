@@ -5,6 +5,7 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
     $items = [
         ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos', 'key' => 'proyectos'],
         ['url' => '/programa?proyecto=' . $proyecto->id, 'icon' => 'fa-list-check', 'label' => 'Programa', 'key' => 'programa'],
+        ['url' => '/dependencias?proyecto=' . $proyecto->id, 'icon' => 'fa-diagram-project', 'label' => 'Dependencias', 'key' => 'dependencias'],
         ['url' => '/lookahead?proyecto=' . $proyecto->id, 'icon' => 'fa-binoculars', 'label' => 'Lookahead 4S', 'key' => 'lookahead'],
         ['url' => '/vplan?proyecto=' . $proyecto->id, 'icon' => 'fa-map-location-dot', 'label' => 'vPlan', 'key' => 'vplan'],
         ['url' => '/lastplanner?proyecto=' . $proyecto->id, 'icon' => 'fa-note-sticky', 'label' => 'Last Planner', 'key' => 'lastplanner'],
@@ -20,12 +21,17 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
         $items[] = ['url' => '/materiales?proyecto=' . $proyecto->id, 'icon' => 'fa-cubes', 'label' => 'Materiales', 'key' => 'materiales'];
     }
     $items[] = ['url' => '/calendario?proyecto=' . $proyecto->id, 'icon' => 'fa-calendar-days', 'label' => 'Calendario', 'key' => 'calendario'];
+    $items[] = ['url' => '/evidencias?proyecto=' . $proyecto->id, 'icon' => 'fa-camera-retro', 'label' => 'Evidencias', 'key' => 'evidencias'];
+    $items[] = ['url' => '/graficos?proyecto=' . $proyecto->id, 'icon' => 'fa-pen-ruler', 'label' => 'Editor', 'key' => 'editor'];
+    $items[] = ['url' => '/simbolos?proyecto=' . $proyecto->id, 'icon' => 'fa-shapes', 'label' => 'Símbolos', 'key' => 'simbolos'];
+    $items[] = ['url' => '/view360?proyecto=' . $proyecto->id, 'icon' => 'fa-street-view', 'label' => 'View360', 'key' => 'view360'];
     if (!is_visitante()) {
         $items[] = ['url' => '/ajustes?proyecto=' . $proyecto->id, 'icon' => 'fa-gear', 'label' => 'Ajustes', 'key' => 'ajustes'];
     }
     if (puede_descargar()) {
         $items[] = ['url' => '/exportar?proyecto=' . $proyecto->id, 'icon' => 'fa-file-export', 'label' => 'Exportar', 'key' => 'exportar'];
     }
+    $items = array_values(array_filter($items, fn($i) => herramienta_permitida(herramienta_de_ruta($i['url']))));
     ?>
     <nav class="breadcrumb-nav">
         <div class="breadcrumb-container">
@@ -33,7 +39,7 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
                 <a href="<?php echo s($item['url']); ?>"
                    class="breadcrumb-item <?php echo $pagina_actual === $item['key'] ? 'active' : ''; ?>">
                     <i class="fa-solid <?php echo s($item['icon']); ?>"></i>
-                    <span><?php echo s($item['label']); ?></span>
+                    <span><?php echo s(t($item['label'])); ?></span>
                 </a>
             <?php endforeach; ?>
         </div>

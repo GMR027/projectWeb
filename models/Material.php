@@ -5,13 +5,17 @@ namespace Model;
 class Material extends ActiveRecord
 {
     protected static $tabla = 'materiales';
-    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'cantidad', 'unidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre_base', 'marca', 'modelo', 'valor_extra', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'cantidad', 'unidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
     public const COMPRA = ['pendiente' => 'Pendiente', 'comprado' => 'Comprado'];
     private const FECHAS = ['fecha_compra_prog' => 'compra programada', 'fecha_compra_real' => 'compra real', 'fecha_entrega_prog' => 'entrega programada', 'fecha_entrega_real' => 'entrega real'];
 
     public $id;
     public $proyecto_id;
     public $referencia;
+    public $nombre_base;
+    public $marca;
+    public $modelo;
+    public $valor_extra;
     public $nombre;
     public $especialidad;
     public $link_web;
@@ -31,6 +35,10 @@ class Material extends ActiveRecord
         $this->id = $args['id'] ?? null;
         $this->proyecto_id = $args['proyecto_id'] ?? null;
         $this->referencia = $args['referencia'] ?? '';
+        $this->nombre_base = $args['nombre_base'] ?? null;
+        $this->marca = $args['marca'] ?? '';
+        $this->modelo = $args['modelo'] ?? '';
+        $this->valor_extra = $args['valor_extra'] ?? '';
         $this->nombre = $args['nombre'] ?? '';
         $this->especialidad = $args['especialidad'] ?? '';
         $this->link_web = $args['link_web'] ?? null;
@@ -43,11 +51,33 @@ class Material extends ActiveRecord
         foreach (array_keys(self::FECHAS) as $c) $this->$c = $args[$c] ?? null;
     }
 
+    /** Nombre base para el formulario (los materiales anteriores al nombre compuesto usan su nombre completo) */
+    public function nombreBase(): string
+    {
+        return (string)($this->nombre_base ?? $this->nombre);
+    }
+
+    /** Une las partes con información (nombre base, marca, modelo/tipo, valor extra); las vacías se omiten */
+    public static function componerNombre(string ...$partes): string
+    {
+        $partes = array_filter(array_map(fn($p) => trim(preg_replace('/\s+/u', ' ', $p)), $partes), fn($p) => $p !== '');
+        return implode(' ', $partes);
+    }
+
+    /** Arma `nombre` a partir de sus partes */
+    public function armarNombre(): void
+    {
+        $this->nombre = self::componerNombre($this->nombreBase(), (string)$this->marca, (string)$this->modelo, (string)$this->valor_extra);
+    }
+
     public function validar(): array
     {
         self::$alertas = [];
-        if (!trim($this->nombre)) {
+        if (!trim($this->nombreBase())) {
             self::$alertas['error'][] = 'El nombre del material es obligatorio';
+        }
+        if (mb_strlen($this->nombre) > 255) {
+            self::$alertas['error'][] = 'El nombre completo (nombre + marca + modelo + valor extra) supera 255 caracteres';
         }
         if (mb_strlen((string)$this->certificado_calidad) > 255) {
             self::$alertas['error'][] = 'El certificado de calidad es demasiado largo (máx. 255 caracteres)';

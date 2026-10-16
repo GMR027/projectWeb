@@ -4,6 +4,7 @@ namespace Controllers;
 
 use MVC\Router;
 use Model\Soporte;
+use Model\SoporteRespuesta;
 
 /** Soporte: el cliente escribe al administrador. Cada cliente solo ve y edita lo suyo. */
 class SoporteController
@@ -23,12 +24,20 @@ class SoporteController
         return ($s && (int)$s->usuario_id === (int)$_SESSION['id']) ? $s : null;
     }
 
+    /** [soporte_id => [respuestas como arreglo]] de los mensajes del usuario */
+    private static function respuestasDe(array $mensajes): array
+    {
+        $por = SoporteRespuesta::deSoporte(array_map(fn($m) => (int)$m->id, $mensajes));
+        return array_map(fn($lista) => array_map(fn($r) => $r->aArray(), $lista), $por);
+    }
+
     public static function index(Router $router)
     {
         self::exigirCliente();
         $router->render('soporte/index', [
             'titulo' => 'Soporte',
-            'mensajes' => Soporte::deUsuario((int)$_SESSION['id']),
+            'mensajes' => $mensajes = Soporte::deUsuario((int)$_SESSION['id']),
+            'respuestas' => self::respuestasDe($mensajes),
             'soporte' => new Soporte(),
             'alertas' => [],
         ]);
@@ -46,7 +55,7 @@ class SoporteController
             exit;
         }
         $router->render('soporte/index', [
-            'titulo' => 'Soporte', 'mensajes' => Soporte::deUsuario((int)$_SESSION['id']), 'soporte' => $soporte, 'alertas' => $alertas,
+            'titulo' => 'Soporte', 'mensajes' => $mensajes = Soporte::deUsuario((int)$_SESSION['id']), 'respuestas' => self::respuestasDe($mensajes), 'soporte' => $soporte, 'alertas' => $alertas,
         ]);
     }
 
@@ -76,9 +85,25 @@ class SoporteController
     {
         self::exigirCliente();
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($s = self::propio(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)))) {
+            SoporteRespuesta::borrarFotosDeSoporte((int)$s->id);
             $s->eliminar();
         }
         header('Location: /soporte');
+        exit;
+    }
+
+    /** El cliente abrió las respuestas de uno de sus mensajes (JSON): se quitan como «nuevas» */
+    public static function vistas()
+    {
+        header('Content-Type: application/json');
+        $s = ($_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() && ($_SESSION['rol'] ?? '') === 'cliente') ? self::propio(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) : null;
+        if (!$s) {
+            http_response_code(403);
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        SoporteRespuesta::marcarVistas((int)$s->id);
+        echo json_encode(['success' => true, 'nuevas' => soporte_respuestas_nuevas()]);
         exit;
     }
 }

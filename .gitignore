@@ -1,0 +1,3 @@
+# Respaldos del sistema: cada .zip trae toda la base de datos (con usuarios y contraseñas) y todos los archivos
+/storage/respaldos/*
+!/storage/respaldos/.gitkeep

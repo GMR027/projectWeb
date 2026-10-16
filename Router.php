@@ -49,11 +49,15 @@ class Router
         $contenido = ob_get_clean();
 
         $layout = __DIR__ . '/views/layout.php';
-        if (isset($landingLayout) && $landingLayout) {
+        if (es_modal()) {
+            $layout = __DIR__ . '/views/layout-modal.php';   // formulario dentro de un modal (iframe)
+        } elseif (isset($landingLayout) && $landingLayout) {
             $layout = __DIR__ . '/views/layout-landing.php';
         } elseif (isset($authLayout) && $authLayout) {
             $layout = __DIR__ . '/views/layout-auth.php';
         }
+        ob_start();
         include_once $layout;
+        echo csrf_inyectar(ob_get_clean());
     }
 }

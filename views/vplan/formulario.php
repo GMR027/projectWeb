@@ -15,8 +15,20 @@
                     <?php foreach ($partidas as $p): ?><option value="<?php echo s($p->id); ?>" data-nombre="<?php echo s($p->nombre); ?>" <?php echo (int)$lamina->partida_id === (int)$p->id ? 'selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?>
                 </select>
             </div>
+            <div class="campo vp-acts-campo" id="vp-acts" hidden style="grid-column:1/-1">
+                <label>Actividades a mostrar en esta lámina</label>
+                <p class="text-sm text-muted">Marca solo las que quieras ver aquí; si marcas todas (o ninguna) se muestra la partida completa. Una actividad puede estar en varias láminas y conserva su número (SEQ) de la partida.</p>
+                <div class="vp-acts-atajos">
+                    <button type="button" class="btn btn-sm btn-ghost" data-atajo="todas">Todas</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-atajo="ninguna">Ninguna</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-atajo="invertir">Invertir</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-atajo="libres">Solo las que no están en otra lámina</button>
+                </div>
+                <p class="text-sm" id="vp-acts-resumen" aria-live="polite"></p>
+                <div id="vp-acts-lista" class="vp-acts-lista"></div>
+            </div>
             <div class="campo"><label for="titulo">Título de la lámina</label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida"></div>
-            <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: LUIS APARICIO / HÉCTOR MUÑIZ"></div>
+            <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: JUAN PÉREZ / ANA LÓPEZ"></div>
             <div class="campo">
                 <label for="plano">Imagen del plano (hasta Full HD o 4K)</label>
                 <input type="file" id="plano" name="plano" accept="image/*">
@@ -41,5 +53,49 @@
 (function () {
     const sel = document.getElementById('partida_id'), tit = document.getElementById('titulo');
     sel.addEventListener('change', () => { if (!tit.value.trim() && sel.selectedOptions[0]) tit.value = sel.selectedOptions[0].dataset.nombre || ''; });
+
+    // Selección de actividades de la partida
+    const datos = <?php echo json_encode($actividadesPorPartida, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const guardadas = new Set(<?php echo json_encode(array_map('intval', $seleccion)); ?>);
+    const partidaInicial = <?php echo (int)$lamina->partida_id; ?>;
+    const caja = document.getElementById('vp-acts'), lista = document.getElementById('vp-acts-lista'), resumen = document.getElementById('vp-acts-resumen');
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const cajas = () => [...lista.querySelectorAll('input[type=checkbox]')];
+
+    const actualizar = () => {
+        const cs = cajas(), marc = cs.filter(c => c.checked).length;
+        const libres = cs.filter(c => c.dataset.en === '' && !c.checked).length;
+        resumen.textContent = !cs.length ? '' :
+            (marc === 0 || marc === cs.length ? 'Se mostrará la partida completa (' + cs.length + ' actividades).' : 'Se mostrarán ' + marc + ' de ' + cs.length + ' actividades.') +
+            (libres ? ' ' + libres + ' sin marcar y sin estar en ninguna otra lámina.' : '');
+    };
+
+    const pintar = () => {
+        const acts = datos[sel.value] || [];
+        caja.hidden = !acts.length;
+        // al volver a la partida original se respeta la selección guardada; en otra partida, vacía
+        const usar = +sel.value === partidaInicial ? guardadas : new Set();
+        lista.innerHTML = acts.map(a =>
+            '<label class="vp-acts-item"><input type="checkbox" name="actividades[]" value="' + a.id + '" data-seq="' + a.seq + '" data-en="' + esc(a.en.join('|')) + '"' + (usar.has(a.id) ? ' checked' : '') + '> ' +
+            '<b>' + a.seq + '.</b> ' + esc(a.nombre) + (a.en.length ? ' <small class="text-muted">· también en: ' + esc(a.en.join(', ')) + '</small>' : '') + '</label>'
+        ).join('');
+        actualizar();
+    };
+    sel.addEventListener('change', pintar);
+    lista.addEventListener('change', actualizar);
+
+    caja.addEventListener('click', e => {
+        const b = e.target.closest('[data-atajo]');
+        if (!b) return;
+        const cs = cajas();
+        switch (b.dataset.atajo) {
+            case 'todas': cs.forEach(c => c.checked = true); break;
+            case 'ninguna': cs.forEach(c => c.checked = false); break;
+            case 'invertir': cs.forEach(c => c.checked = !c.checked); break;
+            case 'libres': cs.forEach(c => c.checked = c.dataset.en === ''); break;
+        }
+        actualizar();
+    });
+    pintar();
 })();
 </script>

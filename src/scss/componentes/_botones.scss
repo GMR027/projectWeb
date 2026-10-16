@@ -60,6 +60,18 @@
   }
 }
 
+.btn-success {
+  background-color: #059669;
+  color: #fff;
+  border: 1px solid #059669;
+
+  &:hover {
+    background-color: #047857;
+    border-color: #047857;
+    color: #fff;
+  }
+}
+
 .btn-danger {
   background-color: rgba(239, 68, 68, 0.15);
   color: $danger;

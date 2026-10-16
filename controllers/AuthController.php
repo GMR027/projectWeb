@@ -68,6 +68,7 @@ class AuthController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->sincronizar($_POST);
+            $usuario->herramientas = $usuario->rol === 'visitante' ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
             $usuario->logo = guardar_imagen_subida('logo', 'logos');
             $alertas = $usuario->validarNuevaCuenta();
             $usuario->validarLimiteProyectos();
@@ -100,7 +101,8 @@ class AuthController
             'alertas' => $alertas,
             'usuario' => $usuario,
             'proyectos' => Proyecto::all('nombre ASC'),
-            'asignados' => array_map('intval', $_POST['proyectos'] ?? [])
+            'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
+            'herramientasMarcadas' => $usuario->herramientasPermitidas(),
         ]);
     }
 
@@ -148,6 +150,7 @@ class AuthController
             $logoActual = $usuario->logo;
             $usuario->sincronizar($_POST);
             $usuario->id = $id;
+            $usuario->herramientas = $usuario->rol === 'visitante' ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
             $usuario->logo = guardar_imagen_subida('logo', 'logos') ?? $logoActual;
             $usuario->validarLimiteProyectos();
             if (!in_array($usuario->rol, ['admin', 'cliente', 'visitante'], true)) {
@@ -190,7 +193,8 @@ class AuthController
             'proyectos' => Proyecto::all('nombre ASC'),
             'asignados' => $_SERVER['REQUEST_METHOD'] === 'POST'
                 ? array_map('intval', $_POST['proyectos'] ?? [])
-                : ProyectoAcceso::proyectosDe((int)$id)
+                : ProyectoAcceso::proyectosDe((int)$id),
+            'herramientasMarcadas' => $usuario->herramientasPermitidas(),
         ]);
     }
 
@@ -288,7 +292,7 @@ class AuthController
             $usuario = new Usuario([
                 'nombre' => trim($_POST['nombre'] ?? ''), 'email' => trim($_POST['email'] ?? ''),
                 'password' => $_POST['password'] ?? '', 'password2' => $_POST['password2'] ?? '',
-                'rol' => 'visitante', 'creado_por' => $yo, 'confirmado' => 1,
+                'rol' => 'visitante', 'creado_por' => $yo, 'confirmado' => 1, 'herramientas' => Usuario::herramientasDePost($_POST['herr'] ?? []),
             ]);
             $usuario->validarNuevaCuenta();
             if (!Usuario::getAlertas() && Usuario::where('email', $usuario->email)) Usuario::setAlerta('error', 'El email ya está registrado');
@@ -308,6 +312,7 @@ class AuthController
             'titulo' => 'Nuevo visitante', 'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => $lleno,
             'proyectos' => Proyecto::whereAll('usuario_id', (string)$yo, 'nombre ASC'),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
+            'herramientasMarcadas' => $usuario->herramientasPermitidas(),
         ]);
     }
 
@@ -322,6 +327,7 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->nombre = trim($_POST['nombre'] ?? '');
             $usuario->email = trim($_POST['email'] ?? '');
+            $usuario->herramientas = Usuario::herramientasDePost($_POST['herr'] ?? []);
             if (!$usuario->nombre) Usuario::setAlerta('error', 'El nombre es obligatorio');
             if (!filter_var($usuario->email, FILTER_VALIDATE_EMAIL)) Usuario::setAlerta('error', 'Email no válido');
             $otro = Usuario::where('email', $usuario->email);
@@ -346,6 +352,7 @@ class AuthController
             'proyectos' => Proyecto::whereAll('usuario_id', (string)$_SESSION['id'], 'nombre ASC'),
             'asignados' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', $_POST['proyectos'] ?? [])
                 : array_values(array_intersect(ProyectoAcceso::proyectosDe((int)$usuario->id), $propios)),
+            'herramientasMarcadas' => $usuario->herramientasPermitidas(),
         ]);
     }
 

@@ -1,7 +1,7 @@
 <div class="form-grid">
     <div class="campo">
         <label for="codigo">Código del Proyecto *</label>
-        <input type="text" id="codigo" name="codigo" value="<?php echo s($proyecto->codigo); ?>" required placeholder="Ej: SECTOR-7 / ED-04">
+        <input type="text" id="codigo" name="codigo" value="<?php echo s($proyecto->codigo); ?>" required placeholder="Ej: PROY-01">
     </div>
     <div class="campo">
         <label for="nombre">Nombre *</label>
