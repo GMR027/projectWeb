@@ -6,7 +6,8 @@
  *
  * - Crea (o recrea) el proyecto ficticio "DEMO" (edificio corporativo multidisciplinario: obra civil, estructura,
  *   instalaciones eléctricas, hidrosanitarias, HVAC, voz y datos, acabados) con programa, restricciones, reportes diarios,
- *   bitácora, minutas, materiales, submittals/MSR, curvas de productividad y vPlan. Las fechas son relativas a hoy.
+ *   bitácora, minutas, materiales, submittals/MSR, curvas de productividad y vPlan (y, con seed_demo_extras.php, dependencias,
+ *   Archivo, Editor, Símbolos y View360). Las fechas son relativas a hoy.
  * - Crea el usuario de solo lectura «demo» (rol visitante) con acceso únicamente a ese proyecto.
  *   No tiene contraseña utilizable: se entra desde el botón «Demo» de la página principal (/demo).
  * - Las fotos se descargan de Unsplash (licencia gratuita) y se guardan en public/uploads.
@@ -65,6 +66,17 @@ if ($previo) {
         foreach ($db->query("SELECT imagen FROM personal WHERE proyecto_id=$id")->fetch_all(MYSQLI_ASSOC) as $r) Imagenes::eliminarEn('personal', $r['imagen']);
         foreach ($db->query("SELECT imagen FROM materiales WHERE proyecto_id=$id")->fetch_all(MYSQLI_ASSOC) as $r) Imagenes::eliminar($r['imagen']);
         foreach ($db->query("SELECT plano FROM vplan_laminas WHERE proyecto_id=$id")->fetch_all(MYSQLI_ASSOC) as $r) Imagenes::eliminarVplan($r['plano']);
+        // archivos de Archivo, Editor, Símbolos y View360 (las filas se van en cascada; lo vuelve a crear seed_demo_extras.php)
+        foreach (\Model\Archivo::consultarSQL("SELECT * FROM archivos WHERE proyecto_id=$id") as $ar) @unlink(\Model\Archivo::carpeta($id) . '/' . basename((string)$ar->archivo_guardado));
+        foreach (\Model\Simbolo::deProyecto($id) as $si) $si->eliminarArchivo();
+        foreach (\Model\Grafico::consultarSQL("SELECT * FROM editor_graficos WHERE proyecto_id=$id") as $gr) {
+            foreach (\Model\GraficoLamina::de((int)$gr->id) as $la) {
+                Imagenes::eliminarVplan($la->marcas_png);
+                foreach (json_decode((string)$la->marcas_json, true)['shapes'] ?? [] as $sh)
+                    if (($sh['type'] ?? '') === 'link' && preg_match('#^/uploads/vplan/([a-f0-9]{32}\.(png|jpg))$#', (string)($sh['url'] ?? ''), $mm)) Imagenes::eliminarVplan($mm[1]);
+            }
+            Imagenes::eliminarVplan($gr->fondo_imagen);
+        }
         $q("DELETE FROM proyectos WHERE id=$id");
     }
 }
@@ -410,5 +422,7 @@ $q("DELETE FROM usuarios WHERE email = 'demo@projectweb.demo'");
 $hash = password_hash(bin2hex(random_bytes(24)), PASSWORD_BCRYPT);   // contraseña aleatoria que nadie conoce
 $uid = (int)$q("INSERT INTO usuarios (nombre, email, password, rol, confirmado) VALUES ('Usuario Demo', 'demo@projectweb.demo', {$str($hash)}, 'visitante', 1)");
 $q("INSERT INTO proyecto_accesos (proyecto_id, usuario_id) VALUES ($pid, $uid)");
+
+require __DIR__ . '/seed_demo_extras.php';   // dependencias, Archivo, Editor, Símbolos y View360
 
 echo "Listo. Demo: proyecto $pid · usuario demo $uid (entra por /demo)\n";

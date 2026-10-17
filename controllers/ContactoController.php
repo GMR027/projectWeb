@@ -30,7 +30,7 @@ class ContactoController
             $responder(true);   // se finge éxito para no dar pistas al bot
         }
         // Límite por IP: 5 mensajes por hora
-        $ip = substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45);
+        $ip = substr(ip_cliente(), 0, 45);
         if (Contacto::total("ip = '" . Contacto::escapar($ip) . "' AND creado > (NOW() - INTERVAL 1 HOUR)") >= 5) {
             $responder(false, ['Has enviado varios mensajes seguidos. Intenta de nuevo en un rato o escríbenos por otro medio.']);
         }

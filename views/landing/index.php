@@ -22,7 +22,9 @@ $tour = [
     ['vplan', 'vPlan', 'fa-map-location-dot', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
     ['reportes', 'Reporte diario', 'fa-clipboard-list', 'Personal, actividades del programa y fotografías de cada día, listos para compartir con el cliente.'],
     ['msr', 'MSR · materiales', 'fa-truck-ramp-box', 'Estatus de submittals, compra y entrega de materiales con fotos y proveedores.'],
-    ['curvas', 'Curvas de productividad', 'fa-chart-line', 'Planeado contra real por semana, con gráfica y tabla acumulada.'],
+    ['dependencias', 'Dependencias y ruta crítica', 'fa-diagram-project', 'Relaciones FS, SS, FF y SF con retraso: la ruta crítica en rojo, las holguras y los conflictos, sin mover tus fechas hasta que tú lo decidas.'],
+    ['lastplanner', 'Last Planner', 'fa-note-sticky', 'Post-its por partida calculados desde el programa, con su estado y listos para imprimir.'],
+    ['curva-s', 'Curva S', 'fa-chart-area', 'Avance acumulado programado contra real, con desvío e índice SPI, para saber si la obra va en tiempo.'],
 ];
 $funciones = [
     ['fa-chart-gantt', 'Programa y Gantt', 'Partidas, actividades e hitos con fechas calculadas sobre el calendario real de la obra. Cambia una fecha y todo se recalcula.'],
@@ -30,18 +32,55 @@ $funciones = [
     ['fa-binoculars', 'Lookahead 4WLA', 'Semana actual + 4 semanas con PTA y limitaciones. Detecta qué actividades pueden arrancar y cuáles no.'],
     ['fa-note-sticky', 'Last Planner', 'Tarjetas por día y por partida listas para imprimir, con marcas de corte, calculadas desde tu programa.'],
     ['fa-map-location-dot', 'vPlan visual', 'Láminas con plano, tabla del programa, recovery y restricciones. El estado de la obra de un solo vistazo.'],
-    ['fa-chart-line', 'Curvas de productividad', 'Planeado contra real por semana para cada material o frente de trabajo, con gráfica maestra.'],
+    ['fa-chart-line', 'Curvas y Curva S', 'Planeado contra real por semana para cada material o frente de trabajo, y una Curva S que junta todas en el avance acumulado del programa.'],
     ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, varios MSR por proyecto, control de submittals y estatus de compra y entrega de materiales. Las fechas se comparten entre catálogo, submittals y MSR.'],
     ['fa-clipboard-list', 'Reporte diario y bitácora', 'Personal, actividades y fotos del día en minutos. Bitácora por departamento con niveles de importancia.'],
     ['fa-handshake', 'Minutas de junta', 'Temas, responsables, compromisos y asistentes. Genera el PDF listo para enviar al cliente.'],
     ['fa-bolt', 'Restricciones y acciones rápidas', 'Registra lo que frena a cada actividad y consulta en un solo lugar lo del día y la semana: restricciones, bitácora crítica, minutas, submittals y materiales pendientes.'],
     ['fa-file-export', 'Exportación multi-formato', 'PDF tabloide, Excel, LibreOffice, XML de MS Project y ProjectLibre. Un ZIP con todo el proyecto.'],
-    ['fa-user-group', 'Accesos para visitantes', 'Crea accesos de solo lectura para que tu cliente o tu equipo consulten el avance de tus proyectos, sin poder modificar nada.'],
+    ['fa-user-group', 'Accesos para visitantes', 'Crea accesos de solo lectura para que tu cliente o tu equipo consulten el avance de tus proyectos, sin poder modificar nada. Tú eliges qué herramientas ve cada visitante.'],
+    ['fa-diagram-project', 'Dependencias y ruta crítica', 'Relaciones FS, SS, FF y SF con retraso. Calcula la ruta crítica, las holguras y los conflictos; en modo automático recorre las sucesoras con vista previa y opción de deshacer.'],
+    ['fa-diagram-next', 'Planificador por material', 'Cruza las actividades pendientes con los materiales comprados y te dice qué puedes adelantar y qué está bloqueado por compra o restricción.'],
+    ['fa-camera-retro', 'Evidencias fotográficas', 'Línea de tiempo con las fotos del avance por actividad. Junta las de los reportes diarios y las que subas directo, agrupadas por día.'],
+    ['fa-folder-open', 'Archivo del proyecto', 'Planos, especificaciones y contratos con categoría, fecha y número de revisión, hasta 100 MB por archivo y cuota por proyecto.'],
+    ['fa-pen-ruler', 'Editor de gráficos', 'Lienzo para croquis, diagramas y láminas con varias hojas, categorías y descarga en PNG, PDF o presentación .odp.'],
+    ['fa-shapes', 'Biblioteca de símbolos', 'Cámaras, racks, extintores, luminarias, tableros y más para marcar tus planos. Puedes sumar los tuyos.'],
+    ['fa-street-view', 'View360', 'Un plano con zonas que abren fotos 360° de la obra: recorridos virtuales con notas para el cliente, sin viajar al sitio.'],
 ];
+if (!function_exists('cmp_celda')) {
+    function cmp_celda($v) {
+        $ico = ['si' => ['fa-circle-check', 'ok'], 'parcial' => ['fa-circle-half-stroke', 'mid'], 'no' => ['fa-circle-xmark', 'no']];
+        [$k, $txt] = $v;
+        return '<i class="fa-solid ' . $ico[$k][0] . ' lp-cmp-' . $ico[$k][1] . '"></i> <span>' . s($txt) . '</span>';
+    }
+}
+$comparativa = [
+    ['Programa, Gantt y calendario real', ['si', 'Con festivos, paros y clima'], ['si', 'Sí, en el programa'], ['parcial', 'Gantt básico']],
+    ['Ruta crítica y dependencias', ['si', 'FS, SS, FF, SF'], ['si', 'Sí'], ['parcial', 'Limitado']],
+    ['Last Planner y lookahead 4S', ['si', 'Calculados del programa'], ['no', 'A mano en Excel'], ['no', 'No incluido']],
+    ['Materiales, submittals y MSR', ['si', 'Ligados a las actividades'], ['no', 'Hojas aparte'], ['parcial', 'Campos personalizados']],
+    ['Reporte diario, bitácora, minutas', ['si', 'Con fotos y PDF'], ['no', 'Word y WhatsApp'], ['parcial', 'Comentarios sueltos']],
+    ['Evidencias, View360 y planos', ['si', 'Incluidos'], ['no', 'Carpetas aparte'], ['parcial', 'Adjuntos']],
+    ['Una sola captura para todo', ['si', 'Todo se actualiza junto'], ['no', 'Se captura varias veces'], ['parcial', 'Depende de integraciones']],
+    ['Acceso del cliente solo lectura', ['si', 'Por herramienta'], ['no', 'Se envían PDF'], ['parcial', 'Con licencia por usuario']],
+    ['Instalación y licencias', ['si', 'Solo navegador'], ['no', 'Licencias por equipo'], ['si', 'Navegador']],
+    ['Exporta a MS Project y Excel', ['si', 'PDF, Excel, ODS, XML, POD'], ['si', 'Nativo'], ['parcial', 'Solo CSV o Excel']],
+];
+$licenciaEquipo = 20000;                       // licencias de los programas que ProjectWeb reemplaza, por equipo (pago inicial)
+$planProAnual = 500 * 12;
+$ahorro = [];
+foreach ([1, 2, 3, 5] as $n) {
+    $trad = $licenciaEquipo * $n;
+    $ahorro[] = ['equipos' => $n, 'trad' => $trad, 'pw' => $planProAnual, 'ahorro' => $trad - $planProAnual, 'pct' => round(($trad - $planProAnual) / $trad * 100)];
+}
 $ventajas = [
     ['fa-layer-group', 'Una plataforma, no tres o cuatro programas', 'Gestionar un proyecto de forma tradicional exige varios programas distintos para llegar a lo que aquí ya viene integrado, con licencias que en promedio suman alrededor de <strong>$20,000 pesos</strong>.'],
     ['fa-shield-halved', 'Información que cuadra a la primera', 'Hecha a mano, la información se daña, se pierde o no coincide entre archivos. Aquí las herramientas están integradas: capturas una vez y todo cuadra.'],
     ['fa-mobile-screen-button', 'En cualquier equipo, sin reinstalar', 'Si cambias de computadora no recompras ni reinstalas licencias. Consulta y edita desde el celular, la tableta o la computadora.'],
+    ['fa-route', 'Ruta crítica sin otro software', 'Las dependencias, holguras y la ruta crítica viven junto al Gantt, sin exportar a un programa de escritorio para saber qué actividad no se puede atrasar.'],
+    ['fa-people-roof', 'Hecha para el control de obra', 'Last Planner, lookahead, restricciones, MSR y submittals ya vienen pensados para el contratista, no adaptados desde un gestor genérico de tareas.'],
+    ['fa-lock', 'Control de quién ve qué', 'Tres roles y accesos de visitante por herramienta: el cliente consulta avance y evidencias sin tocar el programa ni ver lo que no debe.'],
+    ['fa-cloud-arrow-up', 'Tu información respaldada', 'Respaldos programados y cuota de almacenamiento por proyecto: tus planos, fotos y reportes no dependen de la laptop de nadie.'],
     ['fa-bolt', 'Acciones rápidas para no andar perdido', 'Las actividades del día y de la semana, las restricciones activas y tus pendientes de bitácora, minutas, submittals y materiales, juntos en un solo lugar.'],
 ];
 ?>
@@ -54,6 +93,8 @@ $ventajas = [
         <nav class="lp-links">
             <a href="#funciones">Funciones</a>
             <a href="#ventajas">Ventajas</a>
+            <a href="#comparativa">Comparativa</a>
+            <a href="#ahorro">Ahorro</a>
             <a href="#recorrido">Recorrido</a>
             <a href="#planes">Planes</a>
             <a href="#contacto">Contacto</a>
@@ -69,7 +110,7 @@ $ventajas = [
         <div class="lp-hero-txt lp-rev">
             <span class="lp-pill"><i class="fa-solid fa-bolt"></i> Control de obra en tiempo real</span>
             <h1>Tu programa de obra,<br><span class="lp-grad">siempre bajo control.</span></h1>
-            <p class="lp-lead">Gantt, lookahead, Last Planner, vPlan, materiales y reportes diarios en una sola plataforma. Menos programas, menos licencias y menos hojas de cálculo; más obra entregada a tiempo.</p>
+            <p class="lp-lead">Gantt, ruta crítica, lookahead, Last Planner, vPlan, materiales, evidencias y reportes diarios en una sola plataforma. Menos programas, menos licencias y menos hojas de cálculo; más obra entregada a tiempo.</p>
             <div class="lp-cta">
                 <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-play"></i> Ver demo en vivo</a><?php endif; ?>
                 <a href="#planes" class="lp-btn lp-btn-ghost lp-btn-lg">Ver planes</a>
@@ -125,7 +166,7 @@ $ventajas = [
 
 <section class="lp-stats">
     <div class="lp-wrap lp-stats-in">
-        <div class="lp-rev"><b data-n="11">11</b><span>módulos conectados entre sí</span></div>
+        <div class="lp-rev"><b data-n="20">20</b><span>herramientas conectadas entre sí</span></div>
         <div class="lp-rev" style="--d:80ms"><b data-n="5">5</b><span>formatos de exportación</span></div>
         <div class="lp-rev" style="--d:160ms"><b data-n="10">10</b><span>disciplinas en el proyecto demo</span></div>
         <div class="lp-rev" style="--d:240ms"><b data-n="1" data-suf=" fuente">1 fuente</b><span>única de verdad para toda la obra</span></div>
@@ -199,6 +240,67 @@ $ventajas = [
                 </article>
             <?php endforeach; ?>
         </div>
+    </div>
+</section>
+
+<section class="lp-sec" id="comparativa">
+    <div class="lp-wrap">
+        <div class="lp-head lp-rev">
+            <span class="lp-eyebrow">Comparativa</span>
+            <h2>Lo que cambia frente a<br>las otras formas de llevar la obra</h2>
+            <p>Comparamos ProjectWeb con las dos maneras más comunes de controlar una obra hoy: combinar programas de escritorio y hojas de cálculo, o contratar un gestor de proyectos genérico.</p>
+        </div>
+        <div class="lp-cmp-wrap lp-rev">
+            <table class="lp-cmp">
+                <thead>
+                    <tr><th></th><th class="lp-cmp-us">ProjectWeb</th><th>Programas de escritorio + Excel</th><th>Gestor genérico de tareas</th></tr>
+                </thead>
+                <tbody>
+                <?php foreach ($comparativa as [$crit, $nosotros, $escritorio, $generico]): ?>
+                    <tr>
+                        <th scope="row"><?php echo s($crit); ?></th>
+                        <td class="lp-cmp-us"><?php echo cmp_celda($nosotros); ?></td>
+                        <td><?php echo cmp_celda($escritorio); ?></td>
+                        <td><?php echo cmp_celda($generico); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Comparación general por tipo de herramienta, no de un producto en particular. Los programas de escritorio siguen siendo útiles: por eso exportamos a MS Project, Excel y ProjectLibre.</p>
+    </div>
+</section>
+
+<section class="lp-sec lp-alt" id="ahorro">
+    <div class="lp-wrap">
+        <div class="lp-head lp-rev">
+            <span class="lp-eyebrow">Ahorro</span>
+            <h2>Cuánto te ahorras<br>al reunir todo en un solo lugar</h2>
+            <p>Armar lo que ProjectWeb ya incluye con programas de escritorio cuesta alrededor de <strong>$<?php echo number_format($licenciaEquipo); ?> MXN por equipo</strong> en licencias. Con el Plan Pro pagas <strong>$<?php echo number_format($planProAnual); ?> MXN al año</strong> por todas las funciones.</p>
+        </div>
+        <div class="lp-cmp-wrap lp-rev">
+            <table class="lp-cmp lp-ahorro">
+                <thead>
+                    <tr><th>Equipos de tu empresa</th><th>Licencias tradicionales</th><th class="lp-cmp-us">ProjectWeb Plan Pro (1.er año)</th><th>Ahorras en el primer año</th></tr>
+                </thead>
+                <tbody>
+                <?php foreach ($ahorro as $f): ?>
+                    <tr>
+                        <th scope="row"><?php echo (int)$f['equipos']; ?> <?php echo $f['equipos'] === 1 ? 'equipo' : 'equipos'; ?></th>
+                        <td>$<?php echo number_format($f['trad']); ?></td>
+                        <td class="lp-cmp-us">$<?php echo number_format($f['pw']); ?></td>
+                        <td class="lp-ahorro-n"><strong>$<?php echo number_format($f['ahorro']); ?></strong> <span><?php echo (int)$f['pct']; ?> % menos</span></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <ul class="lp-ahorro-extra lp-rev">
+            <li><i class="fa-solid fa-clock"></i><span><strong>Menos horas de captura.</strong> Capturas una vez y el programa, el lookahead, los reportes y el vPlan se actualizan juntos.</span></li>
+            <li><i class="fa-solid fa-laptop"></i><span><strong>Sin comprar de nuevo.</strong> Si cambias de computadora, no recompras ni reinstalas licencias: entras desde el navegador.</span></li>
+            <li><i class="fa-solid fa-people-arrows"></i><span><strong>Menos retrabajo.</strong> Todos ven la misma información, así no se corrigen datos distintos entre archivos.</span></li>
+        </ul>
+        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones ni actualizaciones, que harían mayor el ahorro. El Plan Pro es de $500 MXN al mes (1 año = $<?php echo number_format($planProAnual); ?>).</p>
     </div>
 </section>
 

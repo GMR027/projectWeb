@@ -43,25 +43,9 @@ class ProyectoController
 
             $proyecto->contratista_logo = guardar_imagen_subida('contratista_logo', 'logos');
 
-            // Procesar logo
-            if (!empty($_FILES['logo']['tmp_name'])) {
-                $carpeta = __DIR__ . '/../public/build/img/logos';
-                if (!is_dir($carpeta)) mkdir($carpeta, 0775, true);
-                $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-                $nombreArchivo = md5(uniqid()) . '.' . strtolower($ext);
-                move_uploaded_file($_FILES['logo']['tmp_name'], $carpeta . '/' . $nombreArchivo);
-                $proyecto->logo = $nombreArchivo;
-            }
-
-            // Procesar carátula
-            if (!empty($_FILES['caratula']['tmp_name'])) {
-                $carpeta = __DIR__ . '/../public/build/img/caratulas';
-                if (!is_dir($carpeta)) mkdir($carpeta, 0775, true);
-                $ext = pathinfo($_FILES['caratula']['name'], PATHINFO_EXTENSION);
-                $nombreArchivo = md5(uniqid()) . '.' . strtolower($ext);
-                move_uploaded_file($_FILES['caratula']['tmp_name'], $carpeta . '/' . $nombreArchivo);
-                $proyecto->caratula = $nombreArchivo;
-            }
+            // Logo y carátula: solo imágenes reales (tipo MIME comprobado, nombre y extensión decididos por el servidor)
+            $proyecto->logo = guardar_imagen_subida('logo', 'logos');
+            $proyecto->caratula = guardar_imagen_subida('caratula', 'caratulas');
 
             $alertas = $proyecto->validar();
             if (empty($alertas)) {
@@ -116,27 +100,8 @@ class ProyectoController
 
             $proyecto->contratista_logo = guardar_imagen_subida('contratista_logo', 'logos') ?? $contratistaLogoActual;
 
-            if (!empty($_FILES['logo']['tmp_name'])) {
-                $carpeta = __DIR__ . '/../public/build/img/logos';
-                if (!is_dir($carpeta)) mkdir($carpeta, 0775, true);
-                $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-                $nombreArchivo = md5(uniqid()) . '.' . strtolower($ext);
-                move_uploaded_file($_FILES['logo']['tmp_name'], $carpeta . '/' . $nombreArchivo);
-                $proyecto->logo = $nombreArchivo;
-            } else {
-                $proyecto->logo = $logoActual;
-            }
-
-            if (!empty($_FILES['caratula']['tmp_name'])) {
-                $carpeta = __DIR__ . '/../public/build/img/caratulas';
-                if (!is_dir($carpeta)) mkdir($carpeta, 0775, true);
-                $ext = pathinfo($_FILES['caratula']['name'], PATHINFO_EXTENSION);
-                $nombreArchivo = md5(uniqid()) . '.' . strtolower($ext);
-                move_uploaded_file($_FILES['caratula']['tmp_name'], $carpeta . '/' . $nombreArchivo);
-                $proyecto->caratula = $nombreArchivo;
-            } else {
-                $proyecto->caratula = $caratulaActual;
-            }
+            $proyecto->logo = guardar_imagen_subida('logo', 'logos') ?? $logoActual;
+            $proyecto->caratula = guardar_imagen_subida('caratula', 'caratulas') ?? $caratulaActual;
 
             $alertas = $proyecto->validar();
             if (empty($alertas)) {

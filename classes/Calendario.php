@@ -64,7 +64,7 @@ class Calendario
         $duracionDias = max(1, $duracionDias);
         $fecha = new \DateTime($fechaInicioYmd);
 
-        // Retroceder si la fecha de inicio cae en día inhábil
+        // Avanzar al siguiente día hábil si la fecha de inicio cae en día inhábil
         while (!$this->esHabil($fecha->format('Y-m-d'))) {
             $fecha->modify('+1 day');
         }

@@ -101,6 +101,26 @@ ul, ol { padding: 0; list-style: none; }
 }
 .lp-ico { display: grid; place-items: center; width: 4.8rem; height: 4.8rem; border-radius: 1.4rem; background: rgba($p, .14); color: $p2; font-size: 2rem; border: 1px solid rgba($p, .3); }
 
+// ---------- comparativa ----------
+.lp-cmp-wrap { overflow-x: auto; border: 1px solid $line; border-radius: $r; background: rgba($panel, .5); }
+.lp-cmp { width: 100%; min-width: 72rem; border-collapse: collapse; font-size: 1.45rem;
+  th, td { padding: 1.4rem 1.8rem; text-align: left; border-bottom: 1px solid $line; vertical-align: top; }
+  thead th { font-size: 1.3rem; text-transform: uppercase; letter-spacing: .08em; color: $muted; background: rgba($bg, .5); }
+  tbody th { font-weight: 600; color: $txt; }
+  td { color: $muted; }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+  .lp-cmp-us { background: rgba($p, .08); color: $txt; }
+  thead .lp-cmp-us { color: $p2; background: rgba($p, .16); }
+  i { margin-right: .4rem; }
+}
+.lp-cmp-ok { color: $ok; }
+.lp-cmp-mid { color: #f59e0b; }
+.lp-cmp-no { color: #ef4444; }
+.lp-ahorro { min-width: 64rem; td, th { font-size: 1.55rem; } }
+.lp-ahorro-n { color: $ok !important; span { display: inline-block; margin-left: .6rem; font-size: 1.25rem; color: $muted; } }
+.lp-ahorro-extra { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3.2rem; li { display: flex; gap: 1.4rem; align-items: flex-start; color: $muted; font-size: 1.45rem; i { color: $p2; font-size: 2rem; margin-top: .3rem; } strong { color: $txt; } } }
+.lp-cmp-nota { color: $muted; font-size: 1.35rem; margin-top: 1.6rem; text-align: center; i { color: $acc; margin-right: .6rem; } }
+
 // ---------- escaparates ----------
 .lp-show { display: grid; grid-template-columns: 1fr 1.1fr; gap: 6rem; align-items: center; & + & { margin-top: 9rem; } &.lp-inv .lp-show-txt { order: 2; } }
 .lp-show-txt h2 { font-size: clamp(2.8rem, 3.4vw, 4rem); line-height: 1.15; letter-spacing: -.025em; font-weight: 800; margin-bottom: 1.6rem; }
@@ -158,6 +178,7 @@ ul, ol { padding: 0; list-style: none; }
   .lp-mock { transform: none; }
   .lp-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-plans { grid-template-columns: 1fr; max-width: 48rem; margin: 0 auto; }
+  .lp-ahorro-extra { grid-template-columns: 1fr; }
   .lp-plan-top, .lp-plan-top.lp-rev.in { transform: none; }
   .lp-ol { grid-template-columns: 1fr; }
 }

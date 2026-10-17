@@ -390,3 +390,40 @@ function csrf_inyectar(string $html): string
         . 'document.addEventListener("submit",function(e){poner(e.target)},true);var s=HTMLFormElement.prototype.submit;HTMLFormElement.prototype.submit=function(){poner(this);return s.call(this)};})();</script>';
     return preg_replace('#</head>#i', $cabeza . '</head>', $html, 1);
 }
+
+// ========== IP DEL CLIENTE ==========
+
+/** ¿La IP está en alguno de los rangos (IP suelta o CIDR, separados por coma)? Sirve para IPv4 e IPv6 */
+function ip_en_rangos(string $ip, string $rangos): bool
+{
+    $bin = @inet_pton($ip);
+    if ($bin === false) return false;
+    foreach (array_filter(array_map('trim', explode(',', $rangos))) as $r) {
+        [$base, $bits] = array_pad(explode('/', $r, 2), 2, null);
+        $b = @inet_pton($base);
+        if ($b === false || strlen($b) !== strlen($bin)) continue;
+        $bits = $bits === null ? strlen($b) * 8 : max(0, min(strlen($b) * 8, (int)$bits));
+        $bytes = intdiv($bits, 8);
+        if (substr($bin, 0, $bytes) !== substr($b, 0, $bytes)) continue;
+        $resto = $bits % 8;
+        if ($resto === 0 || (ord($bin[$bytes]) >> (8 - $resto)) === (ord($b[$bytes]) >> (8 - $resto))) return true;
+    }
+    return false;
+}
+
+/**
+ * IP real del visitante. Detrás de un proxy (Ingress de Kubernetes) REMOTE_ADDR es la IP del proxy, así que solo si ésta
+ * está en TRUSTED_PROXIES (.env, p. ej. "10.1.0.0/16") se lee X-Forwarded-For, de derecha a izquierda, saltando los proxies de confianza.
+ * Sin TRUSTED_PROXIES se usa siempre REMOTE_ADDR (no se puede falsificar con cabeceras).
+ */
+function ip_cliente(): string
+{
+    $directa = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+    $confiables = trim((string)($_ENV['TRUSTED_PROXIES'] ?? getenv('TRUSTED_PROXIES') ?: ''));
+    if ($confiables === '' || !ip_en_rangos($directa, $confiables)) return $directa;
+    $lista = array_reverse(array_filter(array_map('trim', explode(',', (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')))));
+    foreach ($lista as $ip) {
+        if (filter_var($ip, FILTER_VALIDATE_IP) && !ip_en_rangos($ip, $confiables)) return $ip;
+    }
+    return $directa;
+}

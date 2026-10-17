@@ -13,6 +13,9 @@ nodeSelector:
   kubernetes.io/hostname: master
 
 # Secret creado por deploy.sh (claves: DB_PASSWORD, MYSQL_ROOT_PASSWORD)
+# Rangos desde los que se confía en X-Forwarded-For (pods del Ingress); sirve para el límite de mensajes por IP
+trustedProxies: "10.1.0.0/16"
+
 secretName: projectweb-db
 
 app:

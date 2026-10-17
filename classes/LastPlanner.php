@@ -14,6 +14,21 @@ class LastPlanner
     public const POR_TARJETA = 4;   // actividades por post-it; si hay más se genera otra tarjeta del mismo día
     private const MAX_DIAS = 800;
 
+    /** Días hábiles acumulados desde $ini: ['Y-m-d' => n]. Los días restantes entre dos fechas son acum[fin] - acum[día] */
+    private static function acumuladoHabil(Calendario $cal, string $ini, string $fin): array
+    {
+        $acum = [];
+        $n = 0;
+        $f = new \DateTime($ini);
+        $limite = new \DateTime($fin);
+        for ($i = 0; $f <= $limite && $i < self::MAX_DIAS; $i++, $f->modify('+1 day')) {
+            $k = $f->format('Y-m-d');
+            if ($cal->esHabil($k)) $n++;
+            $acum[$k] = $n;
+        }
+        return $acum;
+    }
+
     /**
      * @return array[] tarjetas ['fecha','partida','items'=>[['actividad','dias','completada','restriccion']],'parte','partes']
      */
@@ -32,15 +47,7 @@ class LastPlanner
         $fin = max(array_map(fn($a) => $a->fecha_fin, $acts));
 
         // Días hábiles acumulados desde el primer inicio; restantes(d, fin) = acum[fin] - acum[d]
-        $acum = [];
-        $n = 0;
-        $f = new \DateTime($ini);
-        $limite = new \DateTime($fin);
-        for ($i = 0; $f <= $limite && $i < self::MAX_DIAS; $i++, $f->modify('+1 day')) {
-            $k = $f->format('Y-m-d');
-            if ($cal->esHabil($k)) $n++;
-            $acum[$k] = $n;
-        }
+        $acum = self::acumuladoHabil($cal, $ini, $fin);
 
         $tarjetas = [];
         $d = new \DateTime(max($desde, $ini));
@@ -90,15 +97,8 @@ class LastPlanner
         $ini = min($proyecto->fecha_inicio, min(array_map(fn($x) => $x[1]->fecha_inicio, $acts)));
         $fin = max($proyecto->fecha_fin, max(array_map(fn($x) => $x[1]->fecha_fin, $acts)));
 
-        $acum = [];
-        $n = 0;
-        $f = new \DateTime($ini);
+        $acum = self::acumuladoHabil($cal, $ini, $fin);
         $limite = new \DateTime($fin);
-        for ($i = 0; $f <= $limite && $i < self::MAX_DIAS; $i++, $f->modify('+1 day')) {
-            $k = $f->format('Y-m-d');
-            if ($cal->esHabil($k)) $n++;
-            $acum[$k] = $n;
-        }
 
         $tarjetas = [];
         $d = new \DateTime($ini);

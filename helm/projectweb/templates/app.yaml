@@ -49,6 +49,7 @@ spec:
               valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_PASSWORD } }
             - { name: APP_URL, value: "https://{{ .Values.host }}" }
             - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
+            - { name: TRUSTED_PROXIES, value: {{ .Values.trustedProxies | quote }} }
             - { name: CONTACT_EMAIL, value: {{ .Values.app.contactEmail | quote }} }
             - { name: VOLUMEN_ARCHIVOS_GB, value: {{ .Values.app.storage | trimSuffix "Gi" | quote }} }
             - { name: VOLUMEN_BD_GB, value: {{ .Values.mysql.storage | trimSuffix "Gi" | quote }} }

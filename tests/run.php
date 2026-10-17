@@ -2,6 +2,7 @@
 // Pruebas rápidas de las piezas sin base de datos: php tests/run.php
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../includes/idioma.php';
+require __DIR__ . '/../includes/funciones.php';
 
 use Classes\SvgSeguro;
 use Classes\Exportadores\OdpExporter;
@@ -81,6 +82,18 @@ $_COOKIE['idioma'] = 'en';
 $ok('traduce al inglés', t('Ajustes') === 'Settings');
 $ok('texto compuesto «Sección - Proyecto»', t('Editor - Torre') === 'Editor - Torre' && t('Evidencias - Torre') === 'Evidence - Torre');
 $ok('texto sin traducción queda igual', t('Algo inventado') === 'Algo inventado');
+
+echo "IP del cliente (detrás de proxy)\n";
+$ok('IP dentro del rango CIDR', ip_en_rangos('10.1.219.129', '10.1.0.0/16') && !ip_en_rangos('10.2.0.1', '10.1.0.0/16'));
+$_SERVER['REMOTE_ADDR'] = '10.1.219.129';
+$_SERVER['HTTP_X_FORWARDED_FOR'] = '9.9.9.9, 201.1.2.3, 10.1.1.1';
+$_ENV['TRUSTED_PROXIES'] = '10.1.0.0/16';
+$ok('con proxy de confianza toma la primera IP no confiable desde la derecha (ignora la falsificada)', ip_cliente() === '201.1.2.3');
+$_ENV['TRUSTED_PROXIES'] = '';
+$ok('sin TRUSTED_PROXIES usa REMOTE_ADDR aunque venga X-Forwarded-For', ip_cliente() === '10.1.219.129');
+$_SERVER['REMOTE_ADDR'] = '200.5.5.5';
+$_ENV['TRUSTED_PROXIES'] = '10.1.0.0/16';
+$ok('si la conexión no viene del proxy se ignora X-Forwarded-For', ip_cliente() === '200.5.5.5');
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

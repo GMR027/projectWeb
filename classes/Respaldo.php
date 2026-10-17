@@ -121,7 +121,25 @@ class Respaldo
         $f = self::crear(self::PREFIJO_AUTO);
         $autos = array_values(array_filter(self::listar(), fn($r) => self::esAutomatico($r['archivo'])));   // del más nuevo al más viejo
         foreach (array_slice($autos, self::programado()['conservar']) as $viejo) self::eliminar($viejo['archivo']);
+        self::copiarFuera($f);
         return $f;
+    }
+
+    /**
+     * Copia el respaldo a otra ubicación (RESPALDO_COPIA_DIR en .env: otro disco, NFS, carpeta sincronizada…) para que no se pierda
+     * junto con los datos si falla el volumen. Conserva allí también los últimos N. Un fallo aquí no invalida el respaldo local.
+     */
+    public static function copiarFuera(string $archivo): bool
+    {
+        $destino = rtrim((string)($_ENV['RESPALDO_COPIA_DIR'] ?? getenv('RESPALDO_COPIA_DIR') ?: ''), '/');
+        $origen = self::ruta($archivo);
+        if ($destino === '' || !$origen) return false;
+        if (!is_dir($destino) && !@mkdir($destino, 0770, true)) { error_log("Respaldo: no se pudo crear $destino"); return false; }
+        if (!@copy($origen, "$destino/" . basename($origen))) { error_log("Respaldo: no se pudo copiar a $destino"); return false; }
+        $copias = glob("$destino/" . self::PREFIJO_AUTO . '_*.zip') ?: [];
+        rsort($copias);   // el nombre lleva la fecha: los más nuevos primero
+        foreach (array_slice($copias, self::programado()['conservar']) as $viejo) @unlink($viejo);
+        return true;
     }
 
     /** Ejecuta el respaldo programado si corresponde (con candado para que dos procesos no lo hagan a la vez). null si no tocaba */
