@@ -429,6 +429,57 @@ class ProgramaController
         }
     }
 
+    /** Elimina varias partidas y/o actividades a la vez («p12», «a34»); todas deben ser del mismo proyecto */
+    public static function eliminarVarias()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $proyectoId = filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $proyectoId ? Proyecto::find($proyectoId) : null;
+        if (!$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+
+        $partidas = $actividades = [];
+        foreach ((array)($_POST['sel'] ?? []) as $ref) {
+            if (preg_match('/^([pa])(\d+)$/', (string)$ref, $m)) {
+                if ($m[1] === 'p') $partidas[(int)$m[2]] = true; else $actividades[(int)$m[2]] = true;
+            }
+        }
+
+        $nPartidas = $nActividades = 0;
+        $tocadas = [];
+        foreach (array_keys($partidas) as $id) {
+            $partida = Partida::find($id);
+            if ($partida && (int)$partida->proyecto_id === (int)$proyectoId) {
+                $partida->eliminar();
+                $nPartidas++;
+            }
+        }
+        foreach (array_keys($actividades) as $id) {
+            $actividad = Actividad::find($id);   // ya no existe si su partida se eliminó arriba
+            $partida = $actividad ? Partida::find($actividad->partida_id) : null;
+            if ($partida && (int)$partida->proyecto_id === (int)$proyectoId) {
+                $actividad->eliminar();
+                $tocadas[(int)$partida->id] = $partida;
+                $nActividades++;
+            }
+        }
+        foreach ($tocadas as $partida) {
+            $partida->recalcularFechas();
+        }
+        if ($nPartidas || $nActividades) {
+            \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);
+        }
+        header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=varias&p=' . $nPartidas . '&a=' . $nActividades);
+        exit;
+    }
+
     // ==================== ACTIVIDADES ====================
     /** Catálogo para el selector de materiales de la actividad (con estado de compra/entrega) */
     private static function catalogoMateriales(int $proyectoId): array

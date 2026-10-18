@@ -46,7 +46,25 @@
   }
 }
 
+.barra-seleccion {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--primary);
+  border-radius: 0.8rem;
+  background: var(--bg-tertiary);
+
+  &[hidden] { display: none; }
+  .barra-seleccion-n { margin-right: auto; }
+}
+
 .tabla-programa {
+  .th-sel, .td-sel { width: 3.2rem; text-align: center; padding-left: 0.6rem; padding-right: 0.6rem; }
+  .fila-seleccionada { outline: 1px solid var(--primary); outline-offset: -1px; }
+
   .fila-partida {
     background-color: var(--bg-tertiary);
 

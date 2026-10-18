@@ -114,11 +114,22 @@
 <!-- Tabla de actividades -->
 <div class="card">
     <h3 class="card-titulo"><i class="fa-solid fa-list"></i> Desglose WBS & Partidas</h3>
+    <?php $puedeGestionar = puede_gestionar_proyecto($proyecto); ?>
+    <?php if ($puedeGestionar): ?>
+    <form method="POST" action="/programa/eliminar-varias" id="form-seleccion" class="barra-seleccion" hidden>
+        <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+        <span class="barra-seleccion-n"><b id="sel-n">0</b> seleccionadas</span>
+        <button type="button" class="btn btn-sm btn-ghost" id="sel-limpiar">Quitar selección</button>
+        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar seleccionadas</button>
+        <div id="sel-campos"></div>
+    </form>
+    <?php endif; ?>
     <div class="tabla-wrapper">
         <?php $revAct = array_column(\Classes\Revisiones::elementos((int)$proyecto->id, 'actividad'), null, 'ref'); $puedeRev = puede_revisar($proyecto); ?>
         <table class="tabla tabla-programa" data-proyecto="<?php echo (int)$proyecto->id; ?>">
             <thead>
                 <tr>
+                    <?php if ($puedeGestionar): ?><th class="th-sel"><input type="checkbox" id="sel-todo" title="Seleccionar todo" aria-label="Seleccionar todo"></th><?php endif; ?>
                     <th class="hide-m">WBS / Código</th>
                     <th><span class="hide-m">Nombre</span><span class="solo-movil">Actividad</span></th>
                     <th><span class="hide-m">Fecha </span>Inicio</th>
@@ -135,6 +146,7 @@
                 <?php foreach ($filas as $fila): ?>
                     <?php if ($fila['tipo'] === 'partida'): ?>
                         <tr class="fila-partida" id="fila-p<?php echo (int)$fila['id']; ?>" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
+                            <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
                             <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
                             <td class="mono"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
@@ -170,6 +182,7 @@
                         </tr>
                     <?php else: ?>
                         <tr class="fila-actividad" id="fila-a<?php echo (int)$fila['id']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>">
+                            <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="a<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar actividad"></td><?php endif; ?>
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
                             <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
                             <td class="fecha-editable">
@@ -261,7 +274,7 @@
                     <?php endif; ?>
                 <?php endforeach; ?>
                 <?php if (empty($filas)): ?>
-                    <tr><td colspan="10" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
+                    <tr><td colspan="11" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -435,4 +448,41 @@
     history.replaceState(null, '', url);
 })();
 </script>
-
+<?php if ($puedeGestionar): ?>
+<script>
+(function () {
+    const form = document.getElementById('form-seleccion');
+    if (!form) return;
+    const filas = [...document.querySelectorAll('.sel-fila')];
+    const todo = document.getElementById('sel-todo');
+    const cuenta = document.getElementById('sel-n');
+    const campos = document.getElementById('sel-campos');
+    const marcadas = () => filas.filter(c => c.checked);
+    const refrescar = () => {
+        const m = marcadas();
+        cuenta.textContent = m.length;
+        form.hidden = m.length === 0;
+        todo.checked = m.length > 0 && m.length === filas.length;
+        todo.indeterminate = m.length > 0 && m.length < filas.length;
+        filas.forEach(c => c.closest('tr').classList.toggle('fila-seleccionada', c.checked));
+    };
+    filas.forEach(c => c.addEventListener('change', refrescar));
+    todo.addEventListener('change', () => { filas.forEach(c => { c.checked = todo.checked; }); refrescar(); });
+    document.getElementById('sel-limpiar').addEventListener('click', () => { filas.forEach(c => { c.checked = false; }); refrescar(); });
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const m = marcadas();
+        const np = m.filter(c => c.value[0] === 'p').length, na = m.length - np;
+        const partes = [];
+        if (np) partes.push(np + (np === 1 ? ' partida (con todas sus actividades)' : ' partidas (con todas sus actividades)'));
+        if (na) partes.push(na + (na === 1 ? ' actividad' : ' actividades'));
+        const ok = await window.confirmarModal({ titulo: '¿Eliminar selección?', mensaje: 'Se eliminarán ' + partes.join(' y ') + ' y sus restricciones asociadas. Esta acción no se puede deshacer.' });
+        if (!ok) return;
+        campos.innerHTML = '';
+        m.forEach(c => { const i = document.createElement('input'); i.type = 'hidden'; i.name = 'sel[]'; i.value = c.value; campos.appendChild(i); });
+        form.submit();
+    });
+    refrescar();
+})();
+</script>
+<?php endif; ?>
