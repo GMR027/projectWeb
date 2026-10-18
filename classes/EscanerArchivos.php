@@ -173,8 +173,10 @@ class EscanerArchivos
         if (!self::antivirusConfigurado()) {
             return $requerido ? ['El antivirus no está configurado en el servidor; no se aceptan archivos por ahora'] : [];
         }
+        // En Kubernetes, un Service llamado «clamav» inyecta CLAMAV_PORT=tcp://ip:3310: solo vale un puerto numérico
+        $puerto = ctype_digit(self::conf('CLAMAV_PORT')) ? self::conf('CLAMAV_PORT') : '3310';
         $destino = self::conf('CLAMAV_SOCKET') !== '' ? 'unix://' . self::conf('CLAMAV_SOCKET')
-            : 'tcp://' . self::conf('CLAMAV_HOST') . ':' . (self::conf('CLAMAV_PORT') ?: '3310');
+            : 'tcp://' . self::conf('CLAMAV_HOST') . ':' . $puerto;
         $falla = $requerido ? ['No se pudo verificar el archivo con el antivirus; inténtalo de nuevo en unos minutos'] : [];
         // clamd puede estar recargando firmas o reiniciándose: se reintenta antes de rendirse
         $resp = '';
