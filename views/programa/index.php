@@ -28,11 +28,16 @@
     <div class="alerta alerta-exito">Programa importado: <?php echo (int)($_GET['partidas'] ?? 0); ?> partida(s) y <?php echo (int)$_GET['importado']; ?> actividad(es).</div>
 <?php endif; ?>
 
+<?php foreach (array_slice(\Classes\DatosObra::alertas((int)$proyecto->id), 0, 3) as $al): ?>
+    <div class="alerta <?php echo $al['nivel'] === 'critica' ? 'alerta-error' : 'alerta-aviso'; ?>"><i class="fa-solid fa-file-contract"></i> <?php echo s($al['texto']); ?> <a href="/datos-obra?proyecto=<?php echo s($proyecto->id); ?>">Ver contrato</a></div>
+<?php endforeach; ?>
+
 <div class="programa-acciones">
     <div>
         <?php if (puede_gestionar_proyecto($proyecto)): ?>
             <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nueva Partida</a>
             <a href="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-secondary">+ Nueva Actividad</a>
+            <a href="/programa/ordenar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-arrow-down-1-9"></i> Ordenar y renumerar</a>
             <a href="/programa/importar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-file-import"></i> Importar XML / POD</a>
         <?php endif; ?>
     </div>
@@ -129,7 +134,7 @@
             <tbody>
                 <?php foreach ($filas as $fila): ?>
                     <?php if ($fila['tipo'] === 'partida'): ?>
-                        <tr class="fila-partida" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
+                        <tr class="fila-partida" id="fila-p<?php echo (int)$fila['id']; ?>" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
                             <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
                             <td class="mono"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
@@ -164,7 +169,7 @@
                             <?php endif; ?>
                         </tr>
                     <?php else: ?>
-                        <tr class="fila-actividad" data-actividad-id="<?php echo s($fila['id']); ?>">
+                        <tr class="fila-actividad" id="fila-a<?php echo (int)$fila['id']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>">
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
                             <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
                             <td class="fecha-editable">
@@ -415,3 +420,19 @@
 })();
 </script>
 <?php endif; ?>
+<script>
+// Tras crear/editar una partida o actividad, lleva la pantalla hasta su fila
+(function () {
+    const m = /^([pa])(\d+)$/.exec(new URLSearchParams(location.search).get('foco') || '');
+    if (!m) return;
+    const fila = document.getElementById('fila-' + m[1] + m[2]);
+    if (fila) {
+        fila.scrollIntoView({ block: 'center' });
+        fila.classList.add('fila-foco');
+    }
+    const url = new URL(location.href);
+    url.searchParams.delete('foco');
+    history.replaceState(null, '', url);
+})();
+</script>
+

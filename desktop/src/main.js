@@ -16,6 +16,8 @@ const catalogo = require('./herramientas');
 const informes = require('./informes');
 const voz = require('./voz');
 const chat = require('./chat');
+const ensamblador = require('./ensamblador');
+const ordenarIA = require('./ordenarIA');
 
 // AppImage no puede instalar chrome-sandbox con setuid: si el sistema restringe los user namespaces, Chromium abortaría
 if (process.env.APPIMAGE) {
@@ -142,6 +144,31 @@ app.whenReady().then(() => {
     return j.proyectos;
   });
   ipcMain.handle('prog:cancelar', () => { cancelarProg = true; });
+  // Ensamblador: documentos → propuesta de partidas, materiales y submittals (solo la acepta el admin; el servidor aplica y deshace)
+  const ens = ensamblador.crear({ cfg, sesion: (u, o) => vista.webContents.session.fetch(u, o), avisar: p => win?.webContents.send('ens:progreso', p) });
+  const idEns = v => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Elige un proyecto.'); return n; };
+  ipcMain.handle('ens:estado', (_e, pid) => ens.estado(idEns(pid)));
+  ipcMain.handle('ens:subir', (_e, pid, ses, archivos) => ens.subir(idEns(pid), parseInt(ses, 10) || 0, (archivos || []).map(a => ({ nombre: String(a.nombre || 'documento'), datos: Buffer.from(a.datos) }))));
+  ipcMain.handle('ens:quitar', (_e, pid, ses, archivo) => ens.quitar(idEns(pid), parseInt(ses, 10), parseInt(archivo, 10)));
+  ipcMain.handle('ens:mensaje', (_e, o) => {
+    const c = cfg.leer(), conexion = c.proveedores.find(x => x.id === o.provId);
+    if (!conexion) throw new Error('Elige una conexión de IA (Ajustes → Configuración de IA).');
+    return ens.mensaje({ pid: idEns(o.pid), ses: parseInt(o.ses, 10), texto: String(o.texto || '').slice(0, 1000), modos: Array.isArray(o.modos) ? o.modos.map(String) : [], submittalId: parseInt(o.submittalId, 10) || 0, conexion, clave: cfg.secreto(conexion.id), revisar: !!o.revisar });
+  });
+  ipcMain.handle('ens:cancelar', () => ens.cancelar());
+  // Ordenar y renumerar por fechas: el servidor calcula, la IA explica, el admin elige qué ordenar y qué renumerar
+  const ord = ordenarIA.crear({ cfg, sesion: (u, o) => vista.webContents.session.fetch(u, o), avisar: p => win?.webContents.send('ord:progreso', p) });
+  ipcMain.handle('ord:propuesta', (_e, pid, provId) => {
+    const conexion = provId ? cfg.leer().proveedores.find(x => x.id === provId) : null;
+    return ord.propuesta(idEns(pid), conexion, conexion ? cfg.secreto(conexion.id) : '');
+  });
+  ipcMain.handle('ord:aplicar', (_e, pid, huella, sel) => ord.aplicar(idEns(pid), String(huella), (Array.isArray(sel) ? sel : []).map(x => ({ id: String(x.id), ordenar: !!x.ordenar, renumerar: !!x.renumerar }))));
+  ipcMain.handle('ord:rechazar', (_e, pid, modelo) => ord.rechazar(idEns(pid), String(modelo || '')));
+  ipcMain.handle('ord:deshacer', (_e, pid, id) => ord.deshacer(idEns(pid), parseInt(id, 10)));
+  ipcMain.handle('ens:aplicar', (_e, pid, id, items) => ens.aplicar(idEns(pid), parseInt(id, 10), (items || []).map(String)));
+  ipcMain.handle('ens:revertir', (_e, pid, id) => ens.revertir(idEns(pid), parseInt(id, 10)));
+  ipcMain.handle('ens:rechazar', (_e, pid, id) => ens.rechazar(idEns(pid), parseInt(id, 10)));
+  ipcMain.handle('ens:propuesta', (_e, pid, id) => ens.propuesta(idEns(pid), parseInt(id, 10)));
   // Herramientas IA: catálogo del menú y qué puede hacer la conexión elegida con cada una (la principal si no se indica)
   const fichasServidor = async () => {
     if (Date.now() - cacheFichas.t < 30000 && cacheFichas.lista.length) return cacheFichas.lista;
@@ -223,6 +250,15 @@ app.whenReady().then(() => {
   // Centro de IA dentro de la app: resultados guardados, espacio, pendientes y auditoría (solo rutas conocidas; el servidor exige sesión de administrador)
   const API_IA_GET = new Set(['/api/ia/centro', '/api/ia/pendientes', '/api/ia/analisis', '/api/ia/auditoria', '/api/ia/dias-sin-reporte', '/api/ia/informe']);
   const API_IA_POST = new Set(['/api/ia/biblioteca', '/propuestas-ia/aceptar', '/propuestas-ia/rechazar', '/api/ia/informe-resolver']);
+  // Comprobación ligera de que el servidor responde y de que hay sesión de administrador (indicador de conexión)
+  ipcMain.handle('srv:ping', async () => {
+    const t0 = Date.now();
+    try {
+      const r = await sesionWeb(cfg.leer().servidor + '/api/ia/herramientas', { credentials: 'include', signal: AbortSignal.timeout(8000) });
+      const j = await r.json().catch(() => null);
+      return { conectado: true, sesion: !!j?.success, ms: Date.now() - t0 };
+    } catch (x) { return { conectado: false, sesion: false, ms: Date.now() - t0, error: String(x.message || x) }; }
+  });
   ipcMain.handle('ia:api', async (_e, metodo, ruta, params) => {
     const srv = cfg.leer().servidor, post = metodo === 'POST';
     if (!(post ? API_IA_POST : API_IA_GET).has(ruta)) throw new Error('Ruta no permitida');

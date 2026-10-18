@@ -130,10 +130,11 @@ class InformesIAController
         $h = $GLOBALS['db']->real_escape_string($hasta);
         $existen = array_column($GLOBALS['db']->query("SELECT DISTINCT fecha FROM reportes_diarios WHERE proyecto_id = $pid AND fecha BETWEEN '$d' AND '$h'")->fetch_all(MYSQLI_ASSOC), 'fecha');
         $cal = new \Classes\Calendario($pid);
+        $con = \Classes\Herramientas\ReporteDiario::diasConCambios($pid, $desde, $hasta);
         $dias = [];
         for ($t = strtotime($desde); $t <= strtotime($hasta); $t += 86400) {
             $f = date('Y-m-d', $t);
-            if (!in_array($f, $existen, true)) $dias[] = ['fecha' => $f, 'habil' => $cal->esHabil($f)];
+            if (!in_array($f, $existen, true)) $dias[] = ['fecha' => $f, 'habil' => $cal->esHabil($f), 'sin_cambios' => !isset($con[$f])];
         }
         // borradores de reporte diario aún sin resolver: se retoman en vez de generarlos otra vez
         $borradores = [];
@@ -152,7 +153,7 @@ class InformesIAController
         $p = self::proyectoApi();
         $inf = Informes::obtener((int)$p->id, (int)($_GET['id'] ?? 0));
         if (!$inf) self::json(['success' => false, 'error' => 'Informe no encontrado'], 404);
-        self::json(['success' => true, 'id' => $inf['id'], 'titulo' => $inf['titulo'], 'estado' => $inf['estado'], 'aplicado' => (bool)$inf['aplicado_en'], 'origen' => $inf['origen'], 'secciones' => \Classes\Informes::sinVacias($inf['contenido'])['secciones']]);
+        self::json(['success' => true, 'id' => $inf['id'], 'titulo' => $inf['titulo'], 'estado' => $inf['estado'], 'aplicado' => (bool)$inf['aplicado_en'], 'origen' => $inf['origen'], 'sin_cambios' => !empty($inf['contenido']['aplicar']['sin_cambios']), 'secciones' => \Classes\Informes::sinVacias($inf['contenido'])['secciones']]);
     }
 
     /** Acepta (aplica: crea el reporte diario) o rechaza (descarta) un informe desde la app de escritorio */

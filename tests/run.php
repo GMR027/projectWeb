@@ -119,5 +119,14 @@ $c->estado = 'retirado';
 $ok('temporal retirado ya no está pendiente', !$c->retiroPendiente());
 $ok('la descripción es obligatoria', isset((new Model\CambioPartida(['descripcion' => ' ']))->validar()['error']));
 
+echo "Ensamblador y Renumeracion\n";
+$ok('norm quita acentos, signos y palabras vacías', Classes\Ensamblador::norm('Instalación de CÁMARAS (tipo domo)') === 'instalacion camaras domo');
+$ok('nombres iguales salvo acentos = 1', Classes\Ensamblador::similitud('Ingeniería', 'INGENIERIA') === 1.0);
+$ok('nombres distintos = parecido bajo', Classes\Ensamblador::similitud('Cimentación', 'Submittals') < 0.4);
+$ok('un nombre dentro de otro se acerca a coincidir', Classes\Ensamblador::similitud('Cámaras de videovigilancia', 'Instalación de cámaras de videovigilancia en área L') >= 0.65);
+$ok('esPregunta: con signo o palabra interrogativa y sin botones', Classes\Ensamblador::esPregunta('¿cuántas cámaras hay?', []) && !Classes\Ensamblador::esPregunta('¿cuántas?', ['materiales']) && !Classes\Ensamblador::esPregunta('agrega los materiales', []));
+$cod = Classes\Renumeracion::codigos([['id' => 9, 'actividades' => [4, 5]], ['id' => 3, 'actividades' => [7]]]);
+$ok('renumerar: partidas N.0 y actividades N.M en el nuevo orden', $cod[9] === '1.0' && $cod['a5'] === '1.2' && $cod[3] === '2.0' && $cod['a7'] === '2.1');
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

@@ -49,6 +49,45 @@
   <div id="prog-res" hidden></div>
   <div class="res-herr" id="prog-hist"></div>
 </section>
+<section id="ia-ord" hidden>
+  <h2>Ordenar y renumerar por fechas</h2>
+  <p class="nota">El sistema ordena partidas y actividades por su fecha de inicio y la IA explica cada cambio y avisa de lo dudoso. Tú eliges, grupo por grupo, qué <strong>ordenar</strong> y qué <strong>renumerar</strong>; nada cambia hasta que pulses «Aplicar» y se puede deshacer. Renumerar las partidas también ajusta el prefijo de las actividades.</p>
+  <div class="ens-barra">
+    <label>Proyecto <select id="ord-proyecto"></select></label>
+    <label>Conexión de IA <select id="ord-conexion"></select></label>
+    <button type="button" id="ord-ir">Calcular propuesta</button>
+  </div>
+  <progress id="ord-barra" max="1" hidden></progress>
+  <p id="ord-msg" class="msg" aria-live="polite"></p>
+  <div id="ord-res"></div>
+</section>
+<section id="ia-ens" hidden>
+  <h2>Ensamblador de documentos</h2>
+  <p class="nota">Sube un PDF, una presentación (.pptx), un documento de Word/OpenDocument o un texto. La IA lo lee y un asistente te pregunta qué hacer: agregar partidas nuevas, modificar las existentes si coincide el nombre, agregar materiales o armar un submittal (nuevo o existente). Lo propuesto aparece como lista de cambios: nada se aplica hasta que lo aceptes y se puede deshacer. El archivo original queda en el Archivero del proyecto.</p>
+  <div class="ens-barra">
+    <label>Proyecto <select id="ens-proyecto"></select></label>
+    <label>Conexión de IA <select id="ens-conexion"></select></label>
+    <button type="button" id="ens-nueva" class="sec" title="Empezar una conversación nueva con otros archivos">Nueva conversación</button>
+  </div>
+  <div id="ens-drop" class="ens-drop" tabindex="0">
+    <span>Arrastra aquí los archivos (PDF, PPTX, DOCX, ODT, TXT; hasta 50 MB cada uno)</span>
+    <button type="button" id="ens-elegir">Elegir archivos…</button>
+    <input type="file" id="ens-input" multiple hidden accept=".pdf,.pptx,.docx,.doc,.odt,.txt,.md">
+  </div>
+  <h3 id="ens-archivos-tit" hidden>Documentos de esta conversación</h3>
+  <ul id="ens-archivos" class="ens-archivos"></ul>
+  <div id="ens-chat" class="ens-chat" aria-live="polite"></div>
+  <div id="ens-chips" class="ens-chips"></div>
+  <select id="ens-sub" hidden aria-label="Submittal existente"></select>
+  <form id="ens-form" class="ens-form">
+    <textarea id="ens-texto" rows="2" placeholder="Escribe con tus palabras qué quieres hacer, o haz una pregunta sobre el documento…"></textarea>
+    <label class="nota"><input type="checkbox" id="ens-revisar" checked> Segunda pasada de revisión (la IA contrasta su extracción con el texto; tarda el doble pero comete menos errores)</label>
+    <div class="fila"><button type="submit" id="ens-enviar">Enviar</button><button type="button" id="ens-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="ens-barra" max="1" value="0" hidden></progress>
+    <p id="ens-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div class="res-herr" id="ens-hist"></div>
+</section>
 <nav id="cd-tabs" aria-label="Calidad de datos" hidden>
   <button data-cd="inc" class="sec on">🔎 Inconsistencias del programa</button>
   <button data-cd="mat" class="sec">🧱 Materiales y normativa</button>
@@ -134,6 +173,7 @@
 </section>
 <section id="ia-propuestas" hidden>
   <h2>Análisis inteligente</h2>
+  <div class="sync" data-sync><span class="sync-punto"></span><span class="sync-ico">⟳</span><span class="sync-txt">Conectando…</span><small class="sync-det"></small></div>
 <div id="vig-sec" class="subbloque vig-barra">
   <h3>Vigilancia continua <span id="vig-estado" class="etq"></span></h3>
   <p class="nota">Con la app abierta, comprueba cada cierto tiempo el proyecto que estás viendo con las reglas del sistema (no usa IA) y te avisa con una notificación si aparecen inconsistencias nuevas o si el avance, el fin del programa o las restricciones cambian de golpe.</p>
@@ -241,6 +281,7 @@
 </section>
 <section id="act" data-aj="servidor">
   <h2>Servidor y actualizaciones</h2>
+  <div class="sync" data-sync><span class="sync-punto"></span><span class="sync-ico">⟳</span><span class="sync-txt">Conectando…</span><small class="sync-det"></small></div>
   <p class="nota">El servidor es la dirección de tu Project Web: ahí inicias sesión. El token (solo para actualizar la app) se genera en Project Web → Ajustes → App de escritorio.</p>
   <form id="srv-form">
     <label>Servidor de Project Web <input id="srv-url" placeholder="https://tu-dominio"></label>
@@ -263,6 +304,8 @@
 </div>
 <script src="wav.js"></script>
 <script src="centro.js"></script>
+<script src="ensamblador.js"></script>
+<script src="ordenar-ia.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

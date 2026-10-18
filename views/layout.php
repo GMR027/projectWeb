@@ -52,6 +52,7 @@ require_once __DIR__ . '/templates/breadcrumb.php';
                 elseif (str_contains($uri, '/archivos')) $pagina_actual = 'archivos';
                 elseif (str_contains($uri, '/curvas')) $pagina_actual = 'curvas';
                 elseif (str_contains($uri, '/msr')) $pagina_actual = 'msr';
+                elseif (str_contains($uri, '/datos-obra')) $pagina_actual = 'datos-obra';
                 elseif (str_contains($uri, '/cambios') || str_contains($uri, '/lineas-base')) $pagina_actual = 'cambios';
                 elseif (str_contains($uri, '/submittals')) $pagina_actual = 'submittals';
                 elseif (str_contains($uri, '/materiales')) $pagina_actual = 'materiales';

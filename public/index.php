@@ -6,6 +6,7 @@ use MVC\Router;
 use Controllers\AuthController;
 use Controllers\ComparadorController;
 use Controllers\EscritorioApiController;
+use Controllers\EnsambladorController;
 use Controllers\AnalisisMaterialesController;
 use Controllers\CentroIAController;
 use Controllers\AppIAController;
@@ -56,6 +57,7 @@ use Controllers\View360Controller;
 use Controllers\ManualController;
 use Controllers\ArchivoController;
 use Controllers\MinutaController;
+use Controllers\DatosObraController;
 
 $router = new Router();
 
@@ -121,6 +123,10 @@ $router->post('/programa/importar/cancelar', [ProgramaController::class, 'cancel
 $router->post('/api/actividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaAjax']);
 $router->post('/api/actividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoAjax']);
 // Partidas
+$router->get('/programa/ordenar', [ProgramaController::class, 'ordenar']);
+$router->post('/programa/ordenar', [ProgramaController::class, 'guardarOrden']);
+$router->get('/programa/ordenar/detalle', [ProgramaController::class, 'detalleOrden']);
+$router->post('/programa/ordenar/deshacer', [ProgramaController::class, 'deshacerOrden']);
 $router->get('/programa/partidas/crear', [ProgramaController::class, 'crearPartida']);
 $router->post('/programa/partidas/crear', [ProgramaController::class, 'crearPartida']);
 $router->get('/programa/partidas/editar', [ProgramaController::class, 'editarPartida']);
@@ -255,6 +261,7 @@ $router->post('/bitacora/departamentos/editar', [BitacoraController::class, 'dep
 $router->post('/bitacora/departamentos/eliminar', [BitacoraController::class, 'departamentoEliminar']);
 
 // ========== MINUTAS ==========
+$router->get('/datos-obra', [DatosObraController::class, 'index']);
 $router->get('/minutas', [MinutaController::class, 'index']);
 $router->get('/minutas/ver', [MinutaController::class, 'ver']);
 $router->get('/minutas/pdf', [MinutaController::class, 'pdf']);
@@ -457,6 +464,19 @@ $router->post('/analisis-materiales/eliminar', [AnalisisMaterialesController::cl
 $router->post('/analisis-materiales/aceptar', [AnalisisMaterialesController::class, 'aceptar']);
 $router->post('/analisis-materiales/rechazar', [AnalisisMaterialesController::class, 'rechazar']);
 $router->post('/analisis-materiales/reabrir', [AnalisisMaterialesController::class, 'reabrir']);
+$router->get('/api/ensamblador/estado', [EnsambladorController::class, 'estado']);
+$router->post('/api/ensamblador/subir', [EnsambladorController::class, 'subir']);
+$router->post('/api/ensamblador/quitar', [EnsambladorController::class, 'quitar']);
+$router->post('/api/ensamblador/contexto', [EnsambladorController::class, 'contexto']);
+$router->post('/api/ensamblador/resultado', [EnsambladorController::class, 'resultado']);
+$router->get('/api/ensamblador/propuesta', [EnsambladorController::class, 'propuesta']);
+$router->post('/api/ensamblador/aplicar', [EnsambladorController::class, 'aplicar']);
+$router->post('/api/ensamblador/revertir', [EnsambladorController::class, 'revertir']);
+$router->post('/api/ensamblador/rechazar', [EnsambladorController::class, 'rechazar']);
+$router->get('/api/ordenar-ia/propuesta', [EnsambladorController::class, 'ordenarPropuesta']);
+$router->post('/api/ordenar-ia/aplicar', [EnsambladorController::class, 'ordenarAplicar']);
+$router->post('/api/ordenar-ia/rechazar', [EnsambladorController::class, 'ordenarRechazar']);
+$router->post('/api/ordenar-ia/deshacer', [EnsambladorController::class, 'ordenarDeshacer']);
 $router->get('/programador', [ProgramadorController::class, 'index']);
 $router->get('/api/programador/proyectos', [ProgramadorController::class, 'proyectos']);
 $router->get('/api/programador/contexto', [ProgramadorController::class, 'contexto']);

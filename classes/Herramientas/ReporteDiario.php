@@ -24,6 +24,29 @@ class ReporteDiario extends Base
         return 'Reporte diario ' . date('d/m/Y', strtotime($params['fecha'])) . ' · ' . ($params['area'] ?: 'General');
     }
 
+    /** Un día sin avances registrados, bitácora, entregas, hitos ni fotos no tiene nada que reportar */
+    public static function sinCambios(array $datos): bool
+    {
+        return !array_filter($datos['actividades'], fn($x) => $x['registro']) && !$datos['bitacora'] && !$datos['entregas'] && !$datos['hitos'] && !$datos['fotos'];
+    }
+
+    /** Fechas del periodo con algo que reportar (avance, bitácora, entrega de material, hito o foto); el resto son días sin cambios */
+    public static function diasConCambios(int $pid, string $desde, string $hasta): array
+    {
+        $d = self::db()->real_escape_string($desde);
+        $h = self::db()->real_escape_string($hasta);
+        $sql = [
+            "SELECT DISTINCT h.fecha f FROM actividad_avance h JOIN actividades a ON a.id = h.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND h.fecha BETWEEN '$d' AND '$h'",
+            "SELECT DISTINCT fecha f FROM bitacora WHERE proyecto_id = $pid AND fecha BETWEEN '$d' AND '$h'",
+            "SELECT DISTINCT fecha_entrega_real f FROM materiales WHERE proyecto_id = $pid AND fecha_entrega_real BETWEEN '$d' AND '$h'",
+            "SELECT DISTINCT fecha f FROM evidencias WHERE proyecto_id = $pid AND fecha BETWEEN '$d' AND '$h'",
+        ];
+        $con = [];
+        foreach ($sql as $q) foreach (self::filas($q) as $x) $con[$x['f']] = true;
+        foreach (Dependencias::actividades($pid) as $a) if ((int)$a['hito'] && $a['fecha_inicio'] >= $desde && $a['fecha_inicio'] <= $hasta) $con[$a['fecha_inicio']] = true;
+        return $con;
+    }
+
     public static function preparar(Proyecto $p, array $params): array
     {
         $pid = (int)$p->id;
@@ -89,7 +112,7 @@ class ReporteDiario extends Base
         if ($datos['bitacora']) $secs[] = Informes::lista('Bitácora del día', array_map(fn($b) => "[{$b['importancia']}] {$b['departamento']}: " . self::corto($b['descripcion'], 200), $datos['bitacora']));
         if ($datos['entregas']) $secs[] = Informes::lista('Materiales entregados', $datos['entregas']);
         if ($datos['restricciones']) $secs[] = Informes::lista('Restricciones activas', array_map(fn($r) => "{$r['tipo']}: " . self::corto($r['descripcion'], 160), $datos['restricciones']));
-        return ['secciones' => $secs, 'aplicar' => ['tipo' => 'reporte_diario', 'fecha' => $datos['fecha'], 'area' => $datos['area'], 'comentarios' => $comentarios . ($pendientes ? "\n\nPendientes:\n- " . implode("\n- ", $pendientes) : ''),
+        return ['secciones' => $secs, 'aplicar' => ['sin_cambios' => self::sinCambios($datos), 'tipo' => 'reporte_diario', 'fecha' => $datos['fecha'], 'area' => $datos['area'], 'comentarios' => $comentarios . ($pendientes ? "\n\nPendientes:\n- " . implode("\n- ", $pendientes) : ''),
             'actividades' => array_column($a, 'id'), 'personal' => $datos['personal']]];
     }
 }

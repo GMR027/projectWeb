@@ -16,6 +16,7 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
         ['url' => '/curvas?proyecto=' . $proyecto->id, 'icon' => 'fa-chart-line', 'label' => 'Curvas', 'key' => 'curvas'],
         ['url' => '/msr?proyecto=' . $proyecto->id, 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR', 'key' => 'msr'],
         ['url' => '/cambios?proyecto=' . $proyecto->id, 'icon' => 'fa-file-circle-exclamation', 'label' => 'Cambios', 'key' => 'cambios'],
+        ['url' => '/datos-obra?proyecto=' . $proyecto->id, 'icon' => 'fa-file-contract', 'label' => 'Datos de obra', 'key' => 'datos-obra'],
     ];
     if (puede_gestionar_proyecto($proyecto)) {
         $items[] = ['url' => '/submittals?proyecto=' . $proyecto->id, 'icon' => 'fa-boxes-packing', 'label' => 'Submittals', 'key' => 'submittals'];

@@ -39,6 +39,7 @@ if ($proyectoCtx) {
         $menuProyecto[] = ['url' => "/msr?proyecto=$proyectoCtx", 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR · Materiales', 'match' => '/msr'];
         $menuProyecto[] = ['url' => "/cambios?proyecto=$proyectoCtx", 'icon' => 'fa-file-circle-exclamation', 'label' => 'Órdenes de cambio', 'match' => '/cambios'];
         $menuProyecto[] = ['url' => "/lineas-base?proyecto=$proyectoCtx", 'icon' => 'fa-timeline', 'label' => 'Líneas base', 'match' => '/lineas-base'];
+        $menuProyecto[] = ['url' => "/datos-obra?proyecto=$proyectoCtx", 'icon' => 'fa-file-contract', 'label' => 'Datos de obra', 'match' => '/datos-obra'];
         if (puede_gestionar_proyecto($proyectoSidebar)) {
             $menuProyecto[] = ['url' => "/submittals?proyecto=$proyectoCtx", 'icon' => 'fa-boxes-packing', 'label' => 'Submittals', 'match' => '/submittals'];
             $menuProyecto[] = ['url' => "/materiales?proyecto=$proyectoCtx", 'icon' => 'fa-cubes', 'label' => 'Catálogo de materiales', 'match' => '/materiales'];

@@ -23,6 +23,10 @@ async function abrirSeccion(ruta) {
 const proyectoIA = () => $('#ia-menu-proyecto').value || proyectoActual;
 pw.alProyecto(p => { const cambio = p && p !== proyectoActual; proyectoActual = p || proyectoActual; if (cambio && modo === 'ia') { fijarProyectoMenu(p); pintarMenuIA(); } });
 Centro.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mostrar('web'); pw.irWeb(ruta).catch(x => { $('#hueco-msg').textContent = msgErr(x); }); });
+Ensamblador.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mostrar('web'); pw.irWeb(ruta).catch(x => { $('#hueco-msg').textContent = msgErr(x); }); });
+Ensamblador.alCambiar(() => pintarMenuIA());
+OrdenarIA.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mostrar('web'); pw.irWeb(ruta).catch(x => { $('#hueco-msg').textContent = msgErr(x); }); });
+OrdenarIA.alCambiar(() => pintarMenuIA());
 
 // Zoom de la vista (Ctrl +/−/0 también funcionan: los atiende el proceso principal y avisa aquí)
 function pintarZoom(z) {
@@ -62,6 +66,7 @@ function elegirAjuste(tab) {
   document.querySelectorAll('#panel-ajustes [data-aj]:not(button)').forEach(e => { e.hidden = e.dataset.aj !== tab; });
   guardado('aj-tab', tab);
   if (tab === 'ia') { elegirCategoria(categoria); pintarEstadoAjIA(); }
+  if (tab === 'servidor') sondearServidor();
 }
 function pintarTareas() {
   for (const [id, tarea] of [['#tarea-rapida', 'rapida'], ['#tarea-avanzada', 'avanzada']]) {
@@ -178,6 +183,7 @@ function pintarCalidad() {
   if (cdTab === 'inc') { pintarInconsistencias(); pintarHist('inconsistencias'); } else { pintarMateriales(); pintarHist('materiales'); pintarInteligentes(); }
 }
 function pintarAnalisis() {
+  sondearServidor();
   document.querySelectorAll('#pa-tabs button').forEach(b => b.classList.toggle('on', b.dataset.pa === paTab));
   pintarVigilancia();
   $('#pa-pend').hidden = paTab !== 'pend'; $('#pa-hist').hidden = paTab !== 'hist';
@@ -189,8 +195,11 @@ function elegirSeccionIA(sec) {
   if (webEnIA) { webEnIA = false; $('#ia-web').hidden = true; $('#ia-cuerpo').hidden = false; ajustarMarco(); }
   document.querySelectorAll('#ia-menu button').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
   $('#ia-prog').hidden = sec !== 'programador'; $('#ia-gen').hidden = sec !== 'gen'; $('#ia-propuestas').hidden = sec !== 'propuestas';
+  $('#ia-ens').hidden = sec !== 'ensamblador'; $('#ia-ord').hidden = sec !== 'ordenar-ia';
   $('#cd-tabs').hidden = sec !== 'calidad'; if (sec !== 'calidad') for (const x of ['#ia-inc', '#ia-mat', '#ia-int']) $(x).hidden = true;
   if (sec === 'programador') { pintarProgramador(); pintarHist('programador'); }
+  else if (sec === 'ensamblador') Ensamblador.pintar();
+  else if (sec === 'ordenar-ia') OrdenarIA.pintar();
   else if (sec === 'calidad') pintarCalidad();
   else if (sec === 'propuestas') pintarAnalisis();
   else pintarGenerica();
@@ -223,11 +232,11 @@ function repintarSeccion() {
 $('#ia-menu-proyecto').addEventListener('change', () => { fijarProyectoMenu($('#ia-menu-proyecto').value); pintarMenuIA(); repintarSeccion(); });
 for (const s of ['#prog-proyecto', '#inc-proyecto', '#mat-proyecto', '#int-proyecto', '#gen-proyecto']) $(s).addEventListener('change', e => { fijarProyectoMenu(e.target.value); pintarMenuIA(); });
 /** Icono y color de cada herramienta del menú (por id; las generadas por el servidor, por palabras del título; si no, por grupo) */
-const ICONOS = { config: ['⚙️', '#64748b'], calidad: ['🔎', '#ea580c'], programador: ['🗓️', '#7c3aed'], inconsistencias: ['🔎', '#ea580c'], materiales: ['🧱', '#0284c7'], inteligentes: ['🧠', '#c026d3'], propuestas: ['✨', '#f59e0b'], auditoria: ['📜', '#64748b'],
+const ICONOS = { ensamblador: ['🧩', '#0891b2'], 'ordenar-ia': ['🔢', '#0891b2'], config: ['⚙️', '#64748b'], calidad: ['🔎', '#ea580c'], programador: ['🗓️', '#7c3aed'], inconsistencias: ['🔎', '#ea580c'], materiales: ['🧱', '#0284c7'], inteligentes: ['🧠', '#c026d3'], propuestas: ['✨', '#f59e0b'], auditoria: ['📜', '#64748b'],
   informes: ['📄', '#0ea5e9'], normativa: ['⚖️', '#059669'], mapa: ['🗺️', '#14b8a6'], seguridad: ['🦺', '#eab308'], punch: ['✅', '#22c55e'], cambios: ['🔁', '#f97316'], tipoobra: ['🏗️', '#78716c'], grabaciones: ['🎙️', '#ef4444'] };
 const ICONOS_TITULO = [[/ejecutivo/i, ['📊', '#2563eb']], [/semanal/i, ['📈', '#0891b2']], [/reporte diario/i, ['📝', '#16a34a']], [/lookahead/i, ['🔭', '#6366f1']], [/simulador/i, ['🎲', '#a855f7']], [/clima/i, ['⛅', '#38bdf8']], [/riesgo/i, ['⚠️', '#dc2626']],
   [/causas/i, ['🧩', '#d97706']], [/voz|dictado/i, ['🎤', '#ec4899']], [/foto|visi/i, ['📷', '#8b5cf6']], [/minuta|reuni/i, ['🤝', '#0d9488']], [/seguridad|charla/i, ['🦺', '#eab308']], [/punch/i, ['✅', '#22c55e']], [/cierre|entrega/i, ['📦', '#84cc16']], [/normativa/i, ['⚖️', '#059669']]];
-const ICONOS_GRUPO = { config: ['⚙️', '#64748b'], control: ['🎛️', '#f59e0b'], planeacion: ['🗓️', '#6366f1'], campo: ['👷', '#16a34a'], datos: ['🔎', '#ea580c'], compras: ['🛒', '#0284c7'], documentos: ['📚', '#0d9488'], seguridad: ['🦺', '#eab308'], cierre: ['📦', '#84cc16'], centro: ['🌐', '#0ea5e9'] };
+const ICONOS_GRUPO = { ensamblador: ['🧩', '#0891b2'], config: ['⚙️', '#64748b'], control: ['🎛️', '#f59e0b'], planeacion: ['🗓️', '#6366f1'], campo: ['👷', '#16a34a'], datos: ['🔎', '#ea580c'], compras: ['🛒', '#0284c7'], documentos: ['📚', '#0d9488'], seguridad: ['🦺', '#eab308'], cierre: ['📦', '#84cc16'], centro: ['🌐', '#0ea5e9'] };
 const iconoHerr = h => ICONOS[h.id] || (ICONOS_TITULO.find(([re]) => re.test(h.titulo)) || [])[1] || ICONOS_GRUPO[h.grupo] || ['🔧', '#64748b'];
 let menuCentroAbierto = guardado('menu-centro') === '1';
 async function pintarMenuIA() {
@@ -430,6 +439,28 @@ function grabadora(campo) {
   }
   return caja;
 }
+// ---- Indicador de conexión y sincronización con el servidor (Ajustes → Servidor y Análisis inteligente) ----
+let syncEstado = { nivel: 'conectando', texto: 'Conectando…', det: '' }, syncBusy = false;
+function pintarSync() {
+  document.querySelectorAll('[data-sync]').forEach(c => {
+    c.className = 'sync sync-' + syncEstado.nivel;
+    c.querySelector('.sync-txt').textContent = syncEstado.texto; c.querySelector('.sync-det').textContent = syncEstado.det;
+  });
+}
+async function sondearServidor() {
+  if (syncBusy) return; syncBusy = true;
+  syncEstado = { ...syncEstado, nivel: syncEstado.nivel === 'ok' ? 'sincronizando' : 'conectando', texto: syncEstado.nivel === 'ok' ? 'Sincronizando…' : 'Conectando con el servidor…' }; pintarSync();
+  const hora = () => new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  try {
+    const r = await pw.pingServidor();
+    syncEstado = !r.conectado ? { nivel: 'error', texto: 'Sin conexión con el servidor', det: 'Reintentando cada 30 s' }
+      : !r.sesion ? { nivel: 'aviso', texto: 'Servidor conectado · falta iniciar sesión como administrador', det: r.ms + ' ms' }
+      : { nivel: 'ok', texto: 'Conectado y sincronizando', det: 'Última sincronización ' + hora() + ' · ' + r.ms + ' ms' };
+  } catch (x) { syncEstado = { nivel: 'error', texto: 'Sin conexión con el servidor', det: msgErr(x) }; }
+  syncBusy = false; pintarSync();
+}
+setInterval(() => { if (!$('#act').hidden || !$('#ia-propuestas').hidden) sondearServidor(); }, 30000);
+
 function pintarVigilancia() {
   const v = cfg?.vigilancia || {};
   $('#vig-activa').checked = !!v.activa; $('#vig-minutos').value = String(v.minutos || 30);
@@ -539,8 +570,8 @@ async function previoLote() {
   try {
     const r = await pw.apiIA('GET', '/api/ia/dias-sin-reporte', { proyecto: pid, desde, hasta });
     if (seq !== previoSeq) return;
-    const hab = r.dias.filter(d => d.habil).length;
-    out.textContent = r.dias.length ? 'Faltan ' + hab + ' día(s) laborables' + (r.dias.length > hab ? ' (y ' + (r.dias.length - hab) + ' no laborables)' : '') + ' por reporte entre ' + desde + ' y ' + hasta + '.' : 'Todos los días de este periodo ya tienen reporte.';
+    const hab = r.dias.filter(d => d.habil).length, vacios = r.dias.filter(d => d.sin_cambios).length;
+    out.textContent = r.dias.length ? 'Faltan ' + hab + ' día(s) laborables' + (r.dias.length > hab ? ' (y ' + (r.dias.length - hab) + ' no laborables)' : '') + ' por reporte entre ' + desde + ' y ' + hasta + '.' + (vacios ? ' ' + vacios + ' sin ningún cambio se omitirán.' : '') : 'Todos los días de este periodo ya tienen reporte.';
   } catch { if (seq === previoSeq) out.textContent = ''; }
 }
 $('#lote-modo').addEventListener('change', modoLote);
@@ -566,8 +597,9 @@ function pintarSecciones(secs) {
 }
 function tarjetaReporte(pid, inf, fecha) {
   const caja = el('div', null, 'rep'), cab = el('div', null, 'rep-cab'), t = el('div'), acc = el('div', null, 'rep-acc');
-  const estado = el('span', inf.aplicado ? 'Aceptado' : inf.estado === 'descartado' ? 'Rechazado' : 'Pendiente de revisar', 'rep-estado');
-  t.append(el('strong', fechaLarga(fecha)), el('small', (inf.origen === 'ia' ? 'Redactado con IA: revísalo antes de aceptar.' : 'Borrador automático (sin IA).')));
+  const vacio = !!inf.sin_cambios && !inf.aplicado, estado = el('span', inf.aplicado ? 'Aceptado' : inf.estado === 'descartado' ? 'Rechazado' : 'Pendiente de revisar', 'rep-estado');
+  if (vacio) caja.classList.add('sin-cambios');
+  t.append(el('strong', (vacio ? '🔴 ' : '') + fechaLarga(fecha)), vacio ? el('small', 'Sin cambios: no hubo avances, bitácora, entregas ni hitos. Considera rechazarlo.', 'rep-alerta') : '', el('small', (inf.origen === 'ia' ? 'Redactado con IA: revísalo antes de aceptar.' : 'Borrador automático (sin IA).')));
   const detalle = el('button', 'Ver a Detalle', 'sec'), ok = el('button', 'Aceptar'), no = el('button', 'Rechazar', 'sec');
   detalle.type = ok.type = no.type = 'button';
   const resolver = async accion => {
@@ -600,8 +632,11 @@ async function generarLote(sinIA) {
   $('#gen-cancelar').hidden = false; $('#gen-barra').hidden = false; pintarGenerica();
   try {
     const r = await pw.apiIA('GET', '/api/ia/dias-sin-reporte', { proyecto: pid, desde, hasta });
-    const dias = r.dias.filter(d => d.habil || $('#lote-todos').checked), bor = r.borradores || {};
-    if (!dias.length) { msg.textContent = 'No hay días sin reporte entre ' + desde + ' y ' + hasta + (r.con_reporte ? ' (' + r.con_reporte + ' ya tienen reporte).' : '.'); return; }
+    const todos = r.dias.filter(d => d.habil || $('#lote-todos').checked), bor = r.borradores || {};
+    // los días sin ningún cambio no se generan (salvo que ya exista un borrador, que se muestra marcado en rojo)
+    const dias = todos.filter(d => !d.sin_cambios || bor[d.fecha]), omitidos = todos.length - dias.length;
+    if (!dias.length) {
+      if (omitidos) { msg.textContent = 'Los ' + omitidos + ' día(s) sin reporte entre ' + desde + ' y ' + hasta + ' no tuvieron ningún cambio, así que se omitieron.'; return; } msg.textContent = 'No hay días sin reporte entre ' + desde + ' y ' + hasta + (r.con_reporte ? ' (' + r.con_reporte + ' ya tienen reporte).' : '.'); return; }
     $('#lote-res').hidden = false;
     let falla = 0;
     for (let i = 0; i < dias.length && !loteCancelado; i++) {
@@ -614,7 +649,7 @@ async function generarLote(sinIA) {
         $('#lote-lista').append(tarjetaReporte(pid, inf, f)); actualizarTituloLote();
       } catch (x) { if (/cancelado/i.test(msgErr(x))) break; falla++; const e = el('div', '✘ ' + f + ': ' + msgErr(x), 'rep error'); $('#lote-lista').append(e); }
     }
-    msg.textContent = (loteCancelado ? 'Cancelado. ' : 'Listo. ') + 'Revisa cada reporte: «Ver a Detalle» muestra toda la información; después acéptalo o recházalo.' + (falla ? ' ' + falla + ' día(s) fallaron.' : '');
+    msg.textContent = (loteCancelado ? 'Cancelado. ' : 'Listo. ') + 'Revisa cada reporte: «Ver a Detalle» muestra toda la información; después acéptalo o recházalo.' + (omitidos ? ' Se omitieron ' + omitidos + ' día(s) sin ningún cambio.' : '') + (falla ? ' ' + falla + ' día(s) fallaron.' : '');
   } catch (x) { msg.textContent = '✘ ' + msgErr(x); }
   finally { lotePref = ''; ejecutandoGen = false; $('#gen-barra').hidden = true; $('#gen-cancelar').hidden = true; pintarGenerica(); actualizarTituloLote(); }
 }

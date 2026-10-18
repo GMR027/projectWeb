@@ -12,6 +12,14 @@ $vols = [
     </div>
 </div>
 
+<div class="card" id="manual-admin" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-book-open"></i> Manual del administrador</h3>
+    <p class="text-muted text-sm" style="margin-bottom:1rem">Guía detallada, con ilustraciones, de cada sección: usuarios, respaldos, programa, app de escritorio, Centro de IA, Ensamblador, órdenes de cambio, líneas base y más.</p>
+    <a class="btn btn-primary" href="/manual#admin-guia"><i class="fa-solid fa-book-open"></i> Abrir el manual</a>
+    <a class="btn btn-ghost" href="/manual#escritorio">App de escritorio</a>
+    <a class="btn btn-ghost" href="/manual#centro-ia">Centro de IA</a>
+</div>
+
 <?php foreach ($vols as $i => $vol):
     $v = $vol['v'];
     $pct = $v['capacidad'] > 0 ? min(100, $v['usado'] / $v['capacidad'] * 100) : 0;

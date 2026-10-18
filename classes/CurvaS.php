@@ -29,6 +29,15 @@ class CurvaS
             $f['peso'] = (int)$f['hito'] ? 0 : max(0, (int)$f['duracion_dias']);
             $out[(int)$f['id']] = $f;
         }
+        // Con el catálogo de conceptos completo (importe en todas las actividades con duración) el avance se pesa por importe
+        try {
+            $imp = [];
+            $q = self::db()->query("SELECT actividad_id, importe FROM actividad_cantidades WHERE proyecto_id = $proyectoId AND importe > 0");
+            while ($q && ($g = $q->fetch_assoc())) $imp[(int)$g['actividad_id']] = (float)$g['importe'];
+            $pesadas = array_filter($out, fn($a) => $a['peso'] > 0);
+            if ($pesadas && !array_diff_key($pesadas, $imp)) foreach ($out as $id => $a) $out[$id]['peso'] = $a['peso'] > 0 ? $imp[$id] : 0;
+        } catch (\Throwable $e) {   // migración pendiente
+        }
         return $out;
     }
 

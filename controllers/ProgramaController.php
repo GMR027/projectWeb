@@ -256,6 +256,78 @@ class ProgramaController
     }
 
     // ==================== PARTIDAS ====================
+    /** Reordenar y renumerar partidas y actividades (web y app de escritorio) */
+    public static function ordenar(Router $router)
+    {
+        redirigir_si_no_auth();
+        $proyecto = Proyecto::find(filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT));
+        if (!$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+        $router->render('programa/ordenar', [
+            'titulo' => 'Ordenar y renumerar', 'proyecto' => $proyecto,
+            'estructura' => \Classes\Renumeracion::estructura((int)$proyecto->id),
+            'deshacer' => \Classes\Renumeracion::ultimaDeshacible((int)$proyecto->id),
+        ]);
+    }
+
+    /** Detalle de una partida o actividad para decidir antes de moverla (JSON) */
+    public static function detalleOrden()
+    {
+        redirigir_si_no_auth();
+        header('Content-Type: application/json');
+        $proyecto = Proyecto::find(filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT));
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $tipo = ($_GET['tipo'] ?? '') === 'partida' ? 'partida' : 'actividad';
+        $d = \Classes\Renumeracion::detalle((int)$proyecto->id, $tipo, (int)($_GET['id'] ?? 0));
+        echo json_encode($d ? ['success' => true] + $d : ['success' => false, 'error' => 'No se encontró'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public static function deshacerOrden()
+    {
+        redirigir_si_no_auth();
+        header('Content-Type: application/json');
+        $proyecto = Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT));
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $error = \Classes\Renumeracion::deshacer((int)$proyecto->id, (int)($_POST['id'] ?? 0));
+        if ($error !== '') http_response_code(409);
+        echo json_encode($error === '' ? ['success' => true] : ['success' => false, 'error' => $error], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public static function guardarOrden()
+    {
+        redirigir_si_no_auth();
+        header('Content-Type: application/json');
+        $proyecto = Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT));
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $orden = json_decode((string)($_POST['orden'] ?? ''), true);
+        $error = is_array($orden) ? \Classes\Renumeracion::validar((int)$proyecto->id, $orden) : 'Orden no válido';
+        if ($error !== '') {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => $error], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $r = \Classes\Renumeracion::aplicar((int)$proyecto->id, $orden, !empty($_POST['renumerar']));
+        echo json_encode(['success' => true] + $r);
+        exit;
+    }
+
     public static function crearPartida(Router $router)
     {
         redirigir_si_no_auth();
@@ -291,7 +363,7 @@ class ProgramaController
             if (empty($alertas)) {
                 $resultado = $partida->guardar();
                 if ($resultado['resultado']) {
-                    header('Location: /programa?proyecto=' . $proyectoId . '&creado=partida');
+                    header('Location: /programa?proyecto=' . $proyectoId . '&creado=partida&foco=p' . (int)$resultado['id']);
                     exit;
                 }
             }
@@ -325,7 +397,7 @@ class ProgramaController
             $alertas = $partida->validar();
             if (empty($alertas)) {
                 if ($partida->guardar()) {
-                    header('Location: /programa?proyecto=' . $proyecto->id . '&editado=partida');
+                    header('Location: /programa?proyecto=' . $proyecto->id . '&editado=partida&foco=p' . (int)$partida->id);
                     exit;
                 }
             }
@@ -426,7 +498,7 @@ class ProgramaController
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
                     self::guardarMaterialesActividad((int)$resultado['id'], (int)$proyectoId);
-                    terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=actividad');
+                    terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=actividad&foco=a' . (int)$resultado['id']);
                 }
             }
         }
@@ -484,7 +556,7 @@ class ProgramaController
                     $partida->recalcularFechas();
                     \Classes\Dependencias::propagar($proyecto);   // modo automático: las sucesoras siguen a la actividad
                     self::guardarMaterialesActividad((int)$id, (int)$proyecto->id);
-                    terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=actividad');
+                    terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=actividad&foco=a' . (int)$id);
                 }
             }
         }

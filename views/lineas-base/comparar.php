@@ -28,6 +28,29 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
     <div class="cb-kpi <?php echo $r['sin_justificar'] ? 'cb-kpi-alerta' : ''; ?>"><small>Sin justificar</small><strong><?php echo (int)$r['sin_justificar']; ?></strong><span>cambios sin orden de cambio</span></div>
 </div>
 
+<?php if (!empty($cmp['contrato'])): ?>
+<div class="card">
+    <h3>Contra el contrato</h3>
+    <p class="text-muted">Fechas contractuales tomadas de los documentos (Ensamblador). Un desfase positivo significa que el programa queda después de la fecha del contrato.</p>
+    <table class="tabla">
+        <thead><tr><th>Fecha contractual</th><th>Contrato</th><th>Línea base</th><th>Programa de hoy</th><th>Penalización</th></tr></thead>
+        <tbody>
+        <?php foreach ($cmp['contrato'] as $c):
+            $celda = fn(?string $f, ?int $d) => $f ? formatear_fecha($f) . ' <small class="' . ($d > 0 ? 'cb-tag cb-tag-critica' : 'text-muted') . '">' . ($d > 0 ? '+' : '') . $d . ' d</small>' : '—';
+        ?>
+            <tr>
+                <td><?php echo s($c['nombre']); ?><?php echo $c['actividad'] ? ' <small class="text-muted">(' . s($c['actividad']) . ')</small>' : ''; ?></td>
+                <td><?php echo formatear_fecha($c['fecha']); ?></td>
+                <td><?php echo $celda($c['base'], $c['d_base']); ?></td>
+                <td><?php echo $celda($c['actual'], $c['d_actual']); ?></td>
+                <td><?php echo $c['penalizacion'] !== '' ? s($c['penalizacion']) : '—'; ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php endif; ?>
+
 <?php if ($r['criticas_entran'] || $r['criticas_salen']): ?>
 <div class="card">
     <h3>Cambios en la ruta crítica</h3>

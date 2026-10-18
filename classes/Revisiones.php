@@ -26,6 +26,7 @@ class Revisiones
         'programador' => ['Programador de actividades', 'SELECT MAX(creado) f FROM programador_propuestas WHERE proyecto_id = %d'],
         'inteligentes' => ['Materiales inteligentes', 'SELECT MAX(verificado) f FROM material_verificaciones WHERE proyecto_id = %d'],
         'normativa' => ['Normativa y especificaciones', 'SELECT MAX(creado) f FROM normativa_aplicaciones WHERE proyecto_id = %d'],
+        'ensamblador' => ['Ensamblador de documentos', 'SELECT MAX(creado) f FROM ensamblador_propuestas WHERE proyecto_id = %d'],
     ];
 
     private static function db(): \mysqli

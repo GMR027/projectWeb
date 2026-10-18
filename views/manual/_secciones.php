@@ -59,6 +59,7 @@ HTML],
 
 ['id' => 'usuarios', 'titulo' => 'Usuarios y accesos', 'icono' => 'fa-users-gear', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Solo el administrador gestiona las cuentas. El listado permite <strong>buscar</strong>, <strong>editar</strong> y <strong>eliminar</strong> usuarios, y muestra cuántos proyectos tiene cada uno y su espacio por proyecto.</p>
+[[fig:usuarios]]
 <h4>Crear un usuario</h4>
 <ol>
 <li>Pulsa <strong>+ Nuevo Usuario</strong>.</li>
@@ -84,6 +85,7 @@ HTML],
 
 ['id' => 'bandeja', 'titulo' => 'Bandeja de entrada', 'icono' => 'fa-inbox', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Reúne en un solo lugar los <strong>mensajes del formulario de contacto</strong> de la página principal y los <strong>mensajes de soporte</strong> que escriben tus clientes. El menú lateral muestra el número de mensajes sin leer.</p>
+[[fig:bandeja]]
 <ul>
 <li><strong>Filtros:</strong> Todos, Contacto o Soporte.</li>
 <li><strong>Abrir</strong> un mensaje lo marca como leído; puedes volver a marcarlo como <em>no leído</em>.</li>
@@ -106,6 +108,7 @@ HTML],
 
 ['id' => 'sistema', 'titulo' => 'Ajustes del sistema', 'icono' => 'fa-gear', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>El <strong>Ajustes</strong> del menú general (distinto de los Ajustes de cada proyecto) administra el servidor completo.</p>
+[[fig:respaldos]]
 <h4>Almacenamiento del servidor</h4>
 <p>Muestra el espacio usado y, cada día, guarda una foto del uso para dibujar la gráfica <em>Evolución del espacio usado</em> (aparece cuando hay al menos dos días registrados). Sirve para estimar cuándo se llenará un volumen. Recuerda que los volúmenes no reservan espacio: comparten el disco con otras aplicaciones.</p>
 <h4>Respaldos</h4>
@@ -120,6 +123,7 @@ HTML],
 
 ['id' => 'programa', 'titulo' => 'Programa de obra', 'icono' => 'fa-list-check', 'roles' => $todos, 'herr' => 'programa', 'cuerpo' => <<<'HTML'
 <p>Es el corazón del sistema: el programa de obra organizado en <strong>partidas</strong> (capítulos o frentes, con su código WBS) y <strong>actividades</strong> dentro de cada partida. La página muestra, de arriba abajo, los datos del proyecto, los filtros, la tabla <em>Desglose WBS &amp; Partidas</em> y el <em>Diagrama de Gantt por Semanas</em>.</p>
+[[fig:programa]]
 <h4>Crear una partida</h4>
 <ol>
 <li>Pulsa <strong>+ Nueva Partida</strong>.</li>

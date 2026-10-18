@@ -289,3 +289,13 @@
 .gantt-dep { fill: none; stroke: #94a3b8; stroke-width: 1.5; &.crit { stroke: #dc2626; stroke-width: 2; } &.conf { stroke: #f59e0b; stroke-dasharray: 5 3; } }
 .gantt-dep-punta { fill: #94a3b8; &.crit { fill: #dc2626; } &.conf { fill: #f59e0b; } }
 .gantt-dep-toggle { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; }
+
+// Fila recién creada/editada: se resalta un momento
+.fila-foco td {
+  animation: fila-foco 2.4s ease-out;
+}
+
+@keyframes fila-foco {
+  0%, 60% { background-color: rgba(249, 115, 22, 0.35); }
+  100% { background-color: transparent; }
+}

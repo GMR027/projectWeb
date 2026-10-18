@@ -124,7 +124,45 @@ class LineasBase
             'fin_base' => $lb->fin_programado, 'fin_actual' => $finActual, 'd_fin' => $lb->fin_programado && $finActual ? $cal->difHab($lb->fin_programado, $finActual) : 0,
             'criticas_entran' => $entran, 'criticas_salen' => $salen, 'hay_ruta_critica' => (bool)$criticasAhora || (bool)$criticasAntes,
         ];
-        return ['linea' => $lb, 'filas' => $filas, 'resumen' => $resumen];
+        return ['linea' => $lb, 'filas' => $filas, 'resumen' => $resumen, 'contrato' => self::contrato($pid, $lb, $base, $actuales)];
+    }
+
+    /**
+     * Fechas contractuales (las que dejó el Ensamblador) frente a la línea base y al programa de hoy.
+     * Inicio y fin comparan el primer/último día; un hito se liga a la actividad de nombre parecido (≥ 0.65).
+     * Los desfases son en días naturales: positivo = el programa queda DESPUÉS de la fecha del contrato.
+     * @return array<int, array{tipo: string, nombre: string, fecha: string, penalizacion: string, base: ?string, actual: ?string, d_base: ?int, d_actual: ?int, actividad: ?string}>
+     */
+    public static function contrato(int $pid, LineaBase $lb, array $base, array $actuales): array
+    {
+        try {
+            $fechas = self::filas("SELECT tipo, nombre, fecha, penalizacion FROM proyecto_fechas_contrato WHERE proyecto_id = $pid ORDER BY fecha ASC, id ASC");
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+        $nombres = array_column($actuales, 'nombre', 'id');
+        $dias = fn(?string $a, string $b) => $a ? (int)round((strtotime($a) - strtotime($b)) / 86400) : null;
+        $out = [];
+        foreach ($fechas as $f) {
+            $b = $a = $act = null;
+            if ($f['tipo'] === 'inicio') {
+                $b = $base ? min(array_column($base, 'fecha_inicio')) : null;
+                $a = $actuales ? min(array_column($actuales, 'fecha_inicio')) : null;
+            } elseif ($f['tipo'] === 'fin') {
+                $b = $lb->fin_programado ?: ($base ? max(array_column($base, 'fecha_fin')) : null);
+                $a = $actuales ? max(array_column($actuales, 'fecha_fin')) : null;
+            } else {
+                [$id, $sim] = Ensamblador::mejor($f['nombre'], $nombres);
+                if ($id && $sim >= 0.65) {
+                    $act = $nombres[$id];
+                    $a = $actuales[$id]['fecha_fin'];
+                    $b = $base[$id]['fecha_fin'] ?? null;
+                }
+            }
+            $out[] = ['tipo' => $f['tipo'], 'nombre' => $f['nombre'], 'fecha' => $f['fecha'], 'penalizacion' => $f['penalizacion'], 'base' => $b, 'actual' => $a,
+                'd_base' => $dias($b, $f['fecha']), 'd_actual' => $dias($a, $f['fecha']), 'actividad' => $act];
+        }
+        return $out;
     }
 
     /** Materiales cuya fecha de entrega o compra cambió desde la línea base */

@@ -48,6 +48,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `classes/Exportadores/*` | PdfExporter (Dompdf), MspdiXmlExporter, PodExporter |
 | `views/programa/index.php` | Vista principal: tabla WBS + Gantt por semanas |
 | `views/ajustes/index.php` | Jornada semanal, festivos, centro de exportación |
+| `views/manual/*`, `controllers/ManualController.php` | Manual de usuario (`/manual`): `_secciones.php` (base), `_admin.php` (guía del administrador) e `_ilustraciones.php` (SVG; se insertan con `[[fig:nombre]]`). Al añadir una herramienta, documentarla ahí |
 
 ## 📚 Documentación por módulo (leer solo al tocarlo)
 
@@ -59,6 +60,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/redactor.md` | Redactor (documentos de texto, exportación DOCX/ODT/PDF) |
 | `docs/web-extras.md` | Landing/Demo, Bandeja/soporte/visitantes/importación y Buscador de listas |
 | `docs/cambios-lineas-base.md` | Órdenes de cambio (instalación/retiro, reubicación…), líneas base y comparación, cruce de materiales, resumen ejecutivo diario y modo sin conexión |
+| `docs/ensamblador.md` | **Ensamblador** de documentos (PDF/PPTX/DOCX → partidas, materiales, submittals con IA) y **Ordenar y renumerar** el programa (sin IA) |
 
 ## ⚠️ Common Gotchas
 

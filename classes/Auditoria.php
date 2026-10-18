@@ -8,7 +8,7 @@ namespace Classes;
  */
 class Auditoria
 {
-    public const HERRAMIENTAS = ['programador' => 'Programador de actividades', 'inconsistencias' => 'Inconsistencias de proyecto', 'materiales' => 'Análisis de materiales', 'informes' => 'Informes de IA', 'normativa' => 'Normativa y especificaciones', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list', 'plantillas' => 'Plantillas por tipo de obra'];
+    public const HERRAMIENTAS = ['programador' => 'Programador de actividades', 'inconsistencias' => 'Inconsistencias de proyecto', 'materiales' => 'Análisis de materiales', 'informes' => 'Informes de IA', 'normativa' => 'Normativa y especificaciones', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list', 'plantillas' => 'Plantillas por tipo de obra', 'ensamblador' => 'Ensamblador de documentos', 'ordenar' => 'Ordenar y renumerar'];
     public const EVENTOS = ['aplicado' => 'Aplicado', 'revertido' => 'Revertido', 'rechazado' => 'Rechazado', 'reabierto' => 'Reabierto'];
     public const POR_PAGINA = 50;
 
