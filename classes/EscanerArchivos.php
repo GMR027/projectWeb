@@ -144,23 +144,15 @@ class EscanerArchivos
         return self::conf('CLAMAV_HOST') !== '' || self::conf('CLAMAV_SOCKET') !== '';
     }
 
-    /** @return string[] */
-    private static function antivirus(string $ruta): array
+    /** Envía el archivo a clamd por INSTREAM; devuelve la respuesta ('' si no se pudo hablar con clamd) */
+    private static function enviarAClamd(string $destino, string $ruta): string
     {
-        $requerido = in_array(strtolower(self::conf('CLAMAV_REQUIRED')), ['1', 'true', 'si', 'sí'], true);
-        if (!self::antivirusConfigurado()) {
-            return $requerido ? ['El antivirus no está configurado en el servidor; no se aceptan archivos por ahora'] : [];
-        }
-        $destino = self::conf('CLAMAV_SOCKET') !== '' ? 'unix://' . self::conf('CLAMAV_SOCKET')
-            : 'tcp://' . self::conf('CLAMAV_HOST') . ':' . (self::conf('CLAMAV_PORT') ?: '3310');
         $errno = 0; $errstr = '';
-        $s = @stream_socket_client($destino, $errno, $errstr, 5);
-        $falla = $requerido ? ['No se pudo verificar el archivo con el antivirus; inténtalo de nuevo en unos minutos'] : [];
-        if (!$s) { error_log("EscanerArchivos: clamd inaccesible ($destino): $errstr"); return $falla; }
-
-        stream_set_timeout($s, 120);
+        $s = @stream_socket_client($destino, $errno, $errstr, 10);
+        if (!$s) return '';
         $h = @fopen($ruta, 'rb');
-        if (!$h) { fclose($s); return $falla; }
+        if (!$h) { fclose($s); return ''; }
+        stream_set_timeout($s, 300);
         fwrite($s, "zINSTREAM\0");
         while (!feof($h)) {
             $bloque = fread($h, 1 << 16);
@@ -171,6 +163,28 @@ class EscanerArchivos
         @fwrite($s, pack('N', 0));
         $resp = trim((string)stream_get_contents($s));
         fclose($s);
+        return trim($resp, "\0 ");
+    }
+
+    /** @return string[] */
+    private static function antivirus(string $ruta): array
+    {
+        $requerido = in_array(strtolower(self::conf('CLAMAV_REQUIRED')), ['1', 'true', 'si', 'sí'], true);
+        if (!self::antivirusConfigurado()) {
+            return $requerido ? ['El antivirus no está configurado en el servidor; no se aceptan archivos por ahora'] : [];
+        }
+        $destino = self::conf('CLAMAV_SOCKET') !== '' ? 'unix://' . self::conf('CLAMAV_SOCKET')
+            : 'tcp://' . self::conf('CLAMAV_HOST') . ':' . (self::conf('CLAMAV_PORT') ?: '3310');
+        $falla = $requerido ? ['No se pudo verificar el archivo con el antivirus; inténtalo de nuevo en unos minutos'] : [];
+        // clamd puede estar recargando firmas o reiniciándose: se reintenta antes de rendirse
+        $resp = '';
+        for ($intento = 1; $intento <= 3; $intento++) {
+            $resp = self::enviarAClamd($destino, $ruta);
+            if (str_ends_with($resp, 'OK') || str_ends_with($resp, 'FOUND')) break;
+            error_log("EscanerArchivos: intento $intento sin respuesta válida de clamd ($destino): " . ($resp === '' ? 'sin respuesta' : $resp));
+            if (str_contains($resp, 'size limit exceeded')) return ['El archivo supera el tamaño máximo que revisa el antivirus'];
+            if ($intento < 3) sleep(3);
+        }
 
         if (preg_match('/^stream: (.+) FOUND$/', $resp, $m)) {
             error_log("EscanerArchivos: malware detectado ({$m[1]})");
