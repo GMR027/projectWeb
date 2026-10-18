@@ -50,6 +50,23 @@ $fmt = fn($b) => \Classes\Almacenamiento::formato((int)$b);
     </table>
 </div>
 
+<?php if (is_admin()): $instaladores = \Classes\Instaladores::listar(); $verInst = \Classes\Instaladores::version(); ?>
+<div class="card" id="app-escritorio" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-desktop"></i> Aplicación de escritorio<?php echo $verInst ? ' · v' . s($verInst) : ''; ?></h3>
+    <p class="text-muted text-sm">Instala la aplicación en tu equipo para usar las herramientas de IA y el modo sin conexión. Solo la ve el administrador.</p>
+    <?php if ($instaladores): ?>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <?php foreach ($instaladores as $a): if (!preg_match('/\.(deb|AppImage|exe|dmg|rpm|zip)$/i', $a['nombre'])) continue; ?>
+            <a class="btn btn-primary" href="/sistema/instalador?archivo=<?php echo urlencode($a['nombre']); ?>"><i class="fa-solid fa-download"></i> <?php echo s($a['nombre']); ?> <span class="text-sm">(<?php echo number_format($a['tam'] / 1048576, 1); ?> MB)</span></a>
+        <?php endforeach; ?>
+        </div>
+    <?php else: ?>
+        <p class="text-muted">Aún no hay instaladores publicados. Súbelos desde <a href="/sistema#escritorio">Sistema</a>.</p>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/')): // el modo sin conexión es solo de la app de escritorio ?>
 <div class="card" id="sin-conexion" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-plane"></i> Modo sin conexión (este equipo)</h3>
     <p class="text-muted text-sm">Guarda en este equipo las pantallas que abres y los cambios de estado de las órdenes de cambio. Sin red puedes seguir consultando y marcando avances; al volver la conexión se suben solos. Si algo cambió en el servidor mientras tanto, se te pregunta cuál versión queda. También funciona dentro de la aplicación de escritorio. Las fotos y los archivos grandes requieren conexión.</p>
@@ -81,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
     pintar();
 });
 </script>
+<?php endif; ?>
 
 <?php if (($_SESSION['rol'] ?? '') === 'cliente'): ?>
 <div class="card" style="margin-bottom:2rem">
