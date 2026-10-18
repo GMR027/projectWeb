@@ -46,7 +46,7 @@ function atajosZoom(wc) {
 
 function ventana() {
   win = new BrowserWindow({
-    width: 1000, height: 760, minWidth: 760, minHeight: 560, title: 'Project Web Desktop', backgroundColor: '#0f172a',
+    width: 1000, height: 760, minWidth: 760, minHeight: 560, title: 'Project Web Desktop', icon: path.join(__dirname, 'icon.png'), backgroundColor: '#0f172a',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
   win.setMenuBarVisibility(false);

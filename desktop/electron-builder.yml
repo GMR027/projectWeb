@@ -11,6 +11,7 @@ linux:
   target:
     - { target: AppImage, arch: x64 }
     - { target: deb, arch: x64 }
+  icon: build/icon.png
   category: Office
   maintainer: Project Web <admin@po.local>
   synopsis: Herramientas de IA para el administrador de Project Web
