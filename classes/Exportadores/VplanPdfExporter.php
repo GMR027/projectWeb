@@ -44,6 +44,7 @@ class VplanPdfExporter extends BaseExporter
     // Geometría de la hoja tabloide horizontal (cm): contenido de 41.18 de ancho; el plano usa la mitad
     private const ANCHO_PLANO_CM = 20.1;
     private const ALTO_HOJA_CM = 25.9;
+    private const ANCHO_SCHEDULE_CM = 7.0;   // ancho de la simbología del schedule elegida en la lámina
 
     /**
      * Tamaño del plano en cm: ancho fijo a la mitad de la lámina y alto automático según la proporción.
@@ -51,7 +52,7 @@ class VplanPdfExporter extends BaseExporter
      * alta se reduce proporcionalmente para que todo quepa en la hoja (sin deformarla).
      * @return array{0:float,1:float}|null [ancho cm, alto cm]
      */
-    public static function ajustarPlano(?string $archivo, ?string $simbologia): ?array
+    public static function ajustarPlano(?string $archivo, ?string $simbologia, ?string $schedule = null): ?array
     {
         $ruta = $archivo ? Imagenes::CARPETA_VPLAN . '/' . basename($archivo) : null;
         $dim = $ruta && is_file($ruta) ? @getimagesize($ruta) : false;
@@ -59,6 +60,8 @@ class VplanPdfExporter extends BaseExporter
 
         // Altura que ocupa la fila de simbología (imagen de hasta 4.6 x 12 cm, o la leyenda como mínimo)
         $altoFila = 2.9;
+        $sc = $schedule ? Imagenes::CARPETA_VPLAN . '/' . basename($schedule) : null;
+        if ($sc && is_file($sc) && ($cd = @getimagesize($sc)) && $cd[0] > 0) $altoFila = min(4.6, self::ANCHO_SCHEDULE_CM * $cd[1] / $cd[0]);   // la simbología elegida marca el alto de la leyenda
         $rs = $simbologia ? Imagenes::CARPETA_VPLAN . '/' . basename($simbologia) : null;
         if ($rs && is_file($rs) && ($sd = @getimagesize($rs)) && $sd[0] > 0) {
             $altoFila = max($altoFila, min(4.6, 12 * $sd[1] / $sd[0]));
@@ -157,7 +160,9 @@ class VplanPdfExporter extends BaseExporter
             $d['lamina'] = $l;
             $d['plano'] = Imagenes::vplanBase64($l->marcas_png ?: $l->plano, 2200);
             $d['simb'] = Imagenes::vplanBase64($l->simbologia, 1000);
-            $d['plano_dim'] = self::ajustarPlano($l->marcas_png ?: $l->plano, $l->simbologia);
+            $schedule = $l->imagenSimbologiaSchedule();
+            $d['simb_schedule'] = Imagenes::vplanBase64($schedule, 1600);
+            $d['plano_dim'] = self::ajustarPlano($l->marcas_png ?: $l->plano, $l->simbologia, $schedule);
             // Letra más grande con la que la lámina completa cabe en una hoja
             $d['escala'] = $this->elegirEscala($d, $htmlDe);
             $paginas[] = $d;

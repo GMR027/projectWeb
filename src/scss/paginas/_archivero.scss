@@ -1,0 +1,74 @@
+@use '../base/variables' as *;
+
+// Archivo: archivero (carpetas virtuales)
+.archivero {
+  display: grid;
+  grid-template-columns: 24rem 1fr;
+  gap: $space-md;
+  align-items: start;
+
+  @media (max-width: 48rem) { grid-template-columns: 1fr; }
+}
+
+.archivero-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+}
+
+.archivero-carpetas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+
+  li { display: flex; align-items: center; gap: .2rem; }
+  a {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .7rem 1rem;
+    border-radius: $radius-md;
+    color: inherit;
+    text-decoration: none;
+    span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    em { font-style: normal; font-size: 1.2rem; opacity: .7; }
+    &:hover { background: rgba(128, 128, 128, .12); }
+    &.activa { background: rgba(249, 115, 22, .15); color: var(--primary); font-weight: 600; }
+  }
+  .btn-icono {
+    background: none;
+    border: 0;
+    color: inherit;
+    opacity: .5;
+    cursor: pointer;
+    padding: .5rem;
+    &:hover { opacity: 1; }
+  }
+}
+
+.archivero-mover {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  margin-bottom: $space-sm;
+}
+
+.archivero-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+  margin: $space-md 0;
+  label { display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; }
+}
+
+.col-sel { width: 3.2rem; }
+
+.badge-carpeta { font-size: 1.2rem; opacity: .75; }

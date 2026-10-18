@@ -1,0 +1,14 @@
+// Iconos de tipo de archivo: cada tipo con su color para distinguir PDF, documentos, hojas, imágenes…
+.ico-archivo { width: 1.6em; text-align: center; margin-right: .2rem; color: var(--text-muted);
+  &.ico-pdf { color: #e11d48; }
+  &.ico-doc { color: #2563eb; }
+  &.ico-hoja { color: #16a34a; }
+  &.ico-pres { color: #ea580c; }
+  &.ico-img { color: #0d9488; }
+  &.ico-zip { color: #ca8a04; }
+  &.ico-codigo { color: #7c3aed; }
+  &.ico-cad { color: #0891b2; } }
+.fa-file-pdf, .fa-file-word, .fa-file-excel, .fa-file-image, .fa-file-powerpoint { &.ico-archivo { font-size: inherit; } }
+.gr-descargar-menu .fa-file-pdf { color: #e11d48; } .gr-descargar-menu .fa-file-word { color: #2563eb; } .gr-descargar-menu .fa-file-excel { color: #16a34a; }
+.gr-descargar-menu .fa-file-powerpoint { color: #ea580c; } .gr-descargar-menu .fa-file-image, .gr-descargar-menu .fa-image { color: #0d9488; } .gr-descargar-menu .fa-file-lines { color: #2563eb; }
+.nombre-archivo { display: inline-flex; align-items: center; gap: .4rem; }

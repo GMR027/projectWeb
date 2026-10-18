@@ -50,6 +50,38 @@ $fmt = fn($b) => \Classes\Almacenamiento::formato((int)$b);
     </table>
 </div>
 
+<div class="card" id="sin-conexion" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-plane"></i> Modo sin conexión (este equipo)</h3>
+    <p class="text-muted text-sm">Guarda en este equipo las pantallas que abres y los cambios de estado de las órdenes de cambio. Sin red puedes seguir consultando y marcando avances; al volver la conexión se suben solos. Si algo cambió en el servidor mientras tanto, se te pregunta cuál versión queda. También funciona dentro de la aplicación de escritorio. Las fotos y los archivos grandes requieren conexión.</p>
+    <label class="campo-check"><input type="checkbox" id="po-offline-activar"> Activar el modo sin conexión en este equipo</label>
+    <div id="po-offline-acciones" hidden style="margin-top:1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="po-offline-bajar"><i class="fa-solid fa-download"></i> Descargar este proyecto para usarlo sin conexión</button>
+        <span id="po-offline-estado" class="text-muted text-sm"></span>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline) se carga al final de la página
+    const chk = document.getElementById('po-offline-activar'), acc = document.getElementById('po-offline-acciones'), est = document.getElementById('po-offline-estado');
+    if (!window.POOffline) { chk.disabled = true; est.textContent = 'Este navegador no admite el modo sin conexión.'; return; }
+    const pintar = async () => {
+        chk.checked = POOffline.activo(); acc.hidden = !chk.checked;
+        if (chk.checked) { const n = (await POOffline.listar().catch(() => [])).length; est.textContent = n ? n + ' cambio(s) en la cola' : ''; }
+    };
+    chk.addEventListener('change', async () => {
+        if (chk.checked) { const ok = await POOffline.activar(); if (!ok) est.textContent = 'No se pudo registrar el servicio sin conexión (requiere https o localhost).'; }
+        else await POOffline.desactivar();
+        pintar();
+    });
+    document.getElementById('po-offline-bajar').addEventListener('click', async e => {
+        e.target.disabled = true;
+        const n = await POOffline.precargar(new URLSearchParams(location.search).get('proyecto'), (h, t) => { est.textContent = 'Descargando ' + h + ' de ' + t + '…'; });
+        est.textContent = 'Listo: ' + n + ' pantalla(s) guardadas en este equipo.';
+        e.target.disabled = false;
+    });
+    pintar();
+});
+</script>
+
 <?php if (($_SESSION['rol'] ?? '') === 'cliente'): ?>
 <div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-headset"></i> <?php echo s(t('Soporte')); ?></h3>

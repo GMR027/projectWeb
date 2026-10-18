@@ -45,6 +45,28 @@
                     <label class="text-sm"><input type="checkbox" name="quitar_simbologia" value="1"> Quitar simbología</label>
                 <?php endif; ?>
             </div>
+            <div class="campo">
+                <label for="simbologia_grafico_id">Simbología del schedule</label>
+                <select id="simbologia_grafico_id" name="simbologia_grafico_id">
+                    <option value="">Tabla estándar (SYMBOLOGY FOR SCHEDULE)</option>
+                    <?php foreach ($simbologias ?? [] as $sg): ?><option value="<?php echo (int)$sg->id; ?>"<?php echo (int)$lamina->simbologia_grafico_id === (int)$sg->id ? ' selected' : ''; ?>><?php echo s($sg->nombre); ?></option><?php endforeach; ?>
+                </select>
+                <?php $previas = []; foreach ($simbologias ?? [] as $sg) $previas[(int)$sg->id] = $sg->imagenSimbologia(); ?>
+                <div id="simb-previa" class="text-sm" style="margin-top:.5rem" aria-live="polite"></div>
+                <script>
+                (function () {
+                    const sel = document.getElementById('simbologia_grafico_id'), caja = document.getElementById('simb-previa'), img = <?php echo json_encode($previas); ?>;
+                    const pinta = () => {
+                        caja.textContent = '';
+                        if (!sel.value) return;
+                        if (!img[sel.value]) { caja.className = 'text-sm text-muted'; caja.textContent = 'Esta simbología aún no tiene imagen: ábrela en Símbolos → Simbologías y guárdala. Mientras tanto se usa la tabla estándar.'; return; }
+                        const i = document.createElement('img'); i.src = '/uploads/vplan/' + img[sel.value]; i.alt = 'Vista previa'; i.style.maxWidth = '24rem'; i.style.maxHeight = '16rem'; i.style.border = '1px solid #8b95a5'; caja.appendChild(i);
+                    };
+                    sel.addEventListener('change', pinta); pinta();
+                })();
+                </script>
+                <small class="text-muted">Se crean y editan en <a href="/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>#simbologias">Símbolos → Simbologías</a>; si cambian, cambian en todas las láminas que las usan.</small>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Guardar lámina</button>
     </form>

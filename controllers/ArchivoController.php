@@ -5,6 +5,7 @@ namespace Controllers;
 use MVC\Router;
 use Model\Archivo;
 use Model\ArchivoCategoria;
+use Model\ArchivoCarpeta;
 
 /** Archivos del proyecto (pdf, office, libreoffice, imágenes…) con categorías */
 class ArchivoController
@@ -25,9 +26,18 @@ class ArchivoController
         $categorias = ArchivoCategoria::deProyecto((int)$proyecto->id);
         $filtro = filter_var($_GET['categoria'] ?? null, FILTER_VALIDATE_INT) ?: null;
         if ($filtro && !in_array($filtro, array_map(fn($c) => (int)$c->id, $categorias), true)) $filtro = null;
+        $carpetas = ArchivoCarpeta::deProyecto((int)$proyecto->id);
+        // carpeta: vacío = todas, 'sin' = sin carpeta, número = esa carpeta
+        $carpeta = null;
+        if (($_GET['carpeta'] ?? '') === 'sin') $carpeta = 0;
+        elseif ($c = filter_var($_GET['carpeta'] ?? null, FILTER_VALIDATE_INT)) {
+            if (in_array($c, array_map(fn($x) => (int)$x->id, $carpetas), true)) $carpeta = $c;
+        }
         $router->render('archivos/index', [
             'titulo' => 'Archivo - ' . $proyecto->nombre, 'proyecto' => $proyecto,
-            'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => Archivo::deProyecto((int)$proyecto->id, $filtro),
+            'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => Archivo::deProyecto((int)$proyecto->id, $filtro, $carpeta),
+            'carpetas' => $carpetas, 'carpeta' => $carpeta, 'sinCarpeta' => ArchivoCarpeta::sinCarpeta((int)$proyecto->id),
+            'totalArchivos' => count(Archivo::deProyecto((int)$proyecto->id)),
         ]);
     }
 
@@ -51,7 +61,9 @@ class ArchivoController
     {
         $proyecto = proyecto_de_peticion(true);
         $categorias = ArchivoCategoria::deProyecto((int)$proyecto->id);
+        $carpetas = ArchivoCarpeta::deProyecto((int)$proyecto->id);
         $alertas = [];
+        if (!self::esPost() && !$a->id && ($c = filter_var($_GET['carpeta'] ?? null, FILTER_VALIDATE_INT))) $a->carpeta_id = $c;   // subir desde una carpeta
         if (self::esPost()) {
             $a->proyecto_id = $proyecto->id;
             $a->fecha = trim($_POST['fecha'] ?? '');
@@ -59,6 +71,8 @@ class ArchivoController
             $a->numero_revision = trim($_POST['numero_revision'] ?? '');
             $cat = filter_var($_POST['categoria_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
             $a->categoria_id = $cat && in_array($cat, array_map(fn($c) => (int)$c->id, $categorias), true) ? $cat : null;
+            $car = filter_var($_POST['carpeta_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+            $a->carpeta_id = $car && in_array($car, array_map(fn($c) => (int)$c->id, $carpetas), true) ? $car : null;
             $alertas = $a->validar();
 
             $f = $_FILES['archivo'] ?? null;
@@ -69,6 +83,9 @@ class ArchivoController
                 if (!in_array($ext, Archivo::EXTENSIONES, true)) $alertas['error'][] = 'Tipo de archivo no permitido (.' . s($ext) . ')';
                 if ($f['size'] > Archivo::MAX_BYTES) $alertas['error'][] = 'El archivo supera los 100 MB';
                 elseif (!\Classes\Almacenamiento::cabe((int)$proyecto->id, (int)$f['size'])) $alertas['error'][] = \Classes\Almacenamiento::mensajeLleno((int)$proyecto->id);
+                elseif (in_array($ext, Archivo::EXTENSIONES, true)) {
+                    foreach (\Classes\EscanerArchivos::revisar($f['tmp_name'], $f['name']) as $motivo) $alertas['error'][] = $motivo;
+                }
             } elseif (!empty($f['error']) && $f['error'] !== UPLOAD_ERR_NO_FILE) {
                 $alertas['error'][] = 'No se pudo subir el archivo (¿supera el límite del servidor?)';
             }
@@ -96,7 +113,7 @@ class ArchivoController
         }
         $router->render('archivos/formulario', [
             'titulo' => $a->id ? 'Editar archivo' : 'Nuevo archivo', 'proyecto' => $proyecto, 'archivo' => $a, 'alertas' => $alertas,
-            'categorias' => $categorias, 'extensiones' => Archivo::EXTENSIONES,
+            'categorias' => $categorias, 'carpetas' => $carpetas, 'extensiones' => Archivo::EXTENSIONES,
         ]);
     }
 
@@ -126,10 +143,71 @@ class ArchivoController
         $nombre = preg_replace('/[\r\n"\\\\\/]+/', '_', $a->archivo_original);
         header('Content-Type: application/octet-stream');
         header('X-Content-Type-Options: nosniff');
+        header("Content-Security-Policy: sandbox; default-src 'none'");
         header('Content-Disposition: attachment; filename="' . $nombre . '"; filename*=UTF-8\'\'' . rawurlencode($nombre));
         header('Content-Length: ' . filesize($ruta));
         readfile($ruta);
         exit;
+    }
+
+    // ========================= ARCHIVERO (CARPETAS) =========================
+
+    private static function volverAlArchivero(int $proyectoId, string $extra = '')
+    {
+        header('Location: /archivos?proyecto=' . $proyectoId . $extra);
+        exit;
+    }
+
+    /** Crea una carpeta o, con `id`, la renombra */
+    public static function carpetaGuardar()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $c = self::idPeticion() ? ArchivoCarpeta::find(self::idPeticion()) : new ArchivoCarpeta();
+        if (!$c || ($c->id && (int)$c->proyecto_id !== (int)$proyecto->id)) self::volverAlArchivero((int)$proyecto->id);
+        $c->proyecto_id = $proyecto->id;
+        $c->nombre = trim($_POST['nombre'] ?? '');
+        $alertas = $c->validar();
+        if ($alertas) self::volverAlArchivero((int)$proyecto->id, '&error=' . urlencode($alertas['error'][0]));
+        $r = $c->guardar();
+        $id = $c->id ?: ($r['id'] ?? 0);
+        self::volverAlArchivero((int)$proyecto->id, '&carpeta=' . (int)$id . '&ok=1');
+    }
+
+    /** modo=solo: la carpeta desaparece y sus archivos quedan «sin carpeta»; modo=todo: también se borran sus archivos */
+    public static function carpetaEliminar()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $c = ArchivoCarpeta::find(self::idPeticion());
+        if ($c && (int)$c->proyecto_id === (int)$proyecto->id) {
+            if (($_POST['modo'] ?? '') === 'todo') {
+                foreach (Archivo::deProyecto((int)$proyecto->id, null, (int)$c->id) as $a) {
+                    if ($r = $a->ruta()) @unlink($r);
+                    $a->eliminar();
+                }
+            }
+            $c->eliminar();   // ON DELETE SET NULL deja los archivos restantes sin carpeta
+        }
+        self::volverAlArchivero((int)$proyecto->id, '&ok=1');
+    }
+
+    /** Mueve varios archivos a una carpeta (carpeta_id vacío/0 = sin carpeta) */
+    public static function mover()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $ids = array_filter(array_map('intval', (array)($_POST['ids'] ?? [])));
+        $destino = filter_var($_POST['carpeta_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+        if ($destino) {
+            $k = ArchivoCarpeta::find($destino);
+            if (!$k || (int)$k->proyecto_id !== (int)$proyecto->id) $destino = null;
+        }
+        foreach ($ids as $id) {
+            $a = Archivo::find($id);
+            if ($a && (int)$a->proyecto_id === (int)$proyecto->id) {
+                $a->carpeta_id = $destino;
+                $a->guardar();
+            }
+        }
+        self::volverAlArchivero((int)$proyecto->id, '&ok=1' . ($destino ? '&carpeta=' . $destino : ''));
     }
 
     // ========================= CATEGORÍAS =========================

@@ -85,20 +85,27 @@ class CurvaS
     }
 
     /** @return array{periodos: array, resumen: array, hayDatos: bool} */
-    public static function calcular(Proyecto $proyecto): array
+    public static function calcular(Proyecto $proyecto, ?array $alterno = null): array
     {
         $pid = (int)$proyecto->id;
         $acts = self::actividades($pid);
+        // $alterno [id => [inicio, fin]]: otro programa (p. ej. una propuesta del Programador) calculado en las mismas semanas bajo la clave 'alt'
+        $alt = null;
+        if ($alterno) {
+            $alt = $acts;
+            foreach ($alterno as $id => [$i, $f]) if (isset($alt[$id])) { $alt[$id]['fecha_inicio'] = $i; $alt[$id]['fecha_fin'] = $f; }
+        }
         $total = array_sum(array_column($acts, 'peso'));
         if (!$acts || $total <= 0) return ['periodos' => [], 'resumen' => [], 'hayDatos' => false];
 
-        $inicio = min(array_merge([$proyecto->fecha_inicio], array_column($acts, 'fecha_inicio')));
-        $fin = max(array_merge([$proyecto->fecha_fin], array_column($acts, 'fecha_fin')));
+        $inicio = min(array_merge([$proyecto->fecha_inicio], array_column($acts, 'fecha_inicio'), $alt ? array_column($alt, 'fecha_inicio') : []));
+        $fin = max(array_merge([$proyecto->fecha_fin], array_column($acts, 'fecha_fin'), $alt ? array_column($alt, 'fecha_fin') : []));
         $cal = new Calendario($pid);
         $hist = self::historial($pid);
         $manual = self::manual($pid);
         $hoy = date('Y-m-d');
         $cache = [];
+        $cacheAlt = [];
         $periodos = [];
         $f = new \DateTime($inicio);
         for ($i = 0; $i < self::MAX_SEMANAS && $f->format('Y-m-d') <= $fin; $i++) {
@@ -107,6 +114,13 @@ class CurvaS
             $plan = 0.0;
             foreach ($acts as $a) {
                 if ($a['peso'] > 0) $plan += $a['peso'] * self::fraccionPlan($a, $finSem, $cal, $cache);
+            }
+            $planAlt = null;
+            if ($alt) {
+                $planAlt = 0.0;
+                foreach ($alt as $a) {
+                    if ($a['peso'] > 0) $planAlt += $a['peso'] * self::fraccionPlan($a, $finSem, $cal, $cacheAlt);
+                }
             }
             $real = null;
             $esManual = false;
@@ -121,7 +135,7 @@ class CurvaS
                 }
                 $real = round($suma / $total * 100, 2);
             }
-            $periodos[] = ['inicio' => $ini, 'fin' => $finSem, 'plan' => round($plan / $total * 100, 2), 'real' => $real, 'manual' => $esManual];
+            $periodos[] = ['inicio' => $ini, 'fin' => $finSem, 'plan' => round($plan / $total * 100, 2), 'real' => $real, 'manual' => $esManual] + ($alt ? ['alt' => round($planAlt / $total * 100, 2)] : []);
             $f->modify('+7 days');
         }
 

@@ -39,6 +39,7 @@ $editarFila = fn($t, $campo) => $puedeEditar
             <option value="">— Elige de la lista —</option>
             <?php foreach ($catalogo as $c): ?><option value="<?php echo s($c->id); ?>"><?php echo s($c->etiqueta() . ' (' . (VplanTabla::TIPOS[$c->tipo] ?? $c->tipo) . ')'); ?></option><?php endforeach; ?>
         </select>
+        <label class="text-sm" title="Crea un duplicado con los mismos renglones; los cambios no afectan a las demás láminas"><input type="checkbox" name="copia" value="1"> Como copia independiente</label>
         <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
         <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">+ Crear tabla nueva</a>
     </form>
@@ -70,10 +71,16 @@ $editarFila = fn($t, $campo) => $puedeEditar
     <div class="vp-cuerpo<?php echo ($rec1 && $rec2) ? ' vp-con-rec2' : ($rec1 || $rec2 ? ' vp-con-rec' : ''); ?>">
         <div class="vp-izq">
             <div class="vp-plano">
+                <?php if ($puedeEditar && $lamina->plano): ?>
+                    <div class="vp-plano-esq no-print"><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="vp-plano-editar" title="Abrir el editor de marcas de este plano"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a></div>
+                <?php endif; ?>
                 <?php if ($planoImg): ?><?php if ($enlaces): ?><div class="vp-lk-wrap"><?php endif; ?><img src="/uploads/vplan/<?php echo s($planoImg); ?>" alt="Plano"><?php if ($enlaces): echo \Classes\EnlacesLamina::html($enlaces, $lkW, $lkH); ?></div><?php endif; ?><?php else: ?><p class="text-muted">Sin imagen de plano. Súbela en «Editar lámina».</p><?php endif; ?>
             </div>
             <div class="vp-simbologia-fila">
                 <div class="vp-simb-img"><?php if ($lamina->simbologia): ?><img src="/uploads/vplan/<?php echo s($lamina->simbologia); ?>" alt="Simbología"><?php endif; ?></div>
+                <?php if ($simbSchedule = $lamina->imagenSimbologiaSchedule()): ?>
+                <img class="vp-schedule-img" src="/uploads/vplan/<?php echo s($simbSchedule); ?>" alt="Simbología del schedule">
+                <?php else: ?>
                 <table class="vp-schedule">
                     <thead><tr><th colspan="2">SYMBOLOGY FOR SCHEDULE</th></tr></thead>
                     <tbody>
@@ -83,6 +90,7 @@ $editarFila = fn($t, $campo) => $puedeEditar
                         <tr><td class="vp-rombo-celda"><span class="vp-rombo vp-rombo-sm"></span></td><td>CONSTRAIN</td></tr>
                     </tbody>
                 </table>
+                <?php endif; ?>
             </div>
         </div>
 

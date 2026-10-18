@@ -441,7 +441,7 @@ HTML],
 <tbody>
 <tr><td><strong>Selección</strong></td><td>Seleccionar y mover (Esc), y selección múltiple con recuadro. Con Mayús o Ctrl + clic sumas marcas.</td></tr>
 <tr><td><strong>Líneas</strong></td><td>Continua, discontinua, trazo y punto, punteada, polilínea (clic por punto, doble clic o Enter para terminar), lápiz libre, flecha y flecha doble.</td></tr>
-<tr><td><strong>Formas</strong></td><td>Rectángulo, redondeado, elipse, triángulo, rombo, pentágono, hexágono, estrella, cruz, equis, palomita, flecha de bloque, chevron, trapecio y zona translúcida.</td></tr>
+<tr><td><strong>Formas</strong></td><td>Rectángulo, redondeado, elipse, triángulo, rombo, pentágono, hexágono, estrella, cruz, equis, palomita, flecha de bloque, chevron, trapecio y zona translúcida, más 22 formas extra (octágono, corazón, rayo, gota, globo de texto, bandera, flechas de bloque en cuatro direcciones, estrellas, etc.). Las líneas recuerdan el último color, grosor y opacidad usados.</td></tr>
 <tr><td><strong>Texto y marcadores</strong></td><td>Texto, tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
 <tr><td><strong>Medir</strong></td><td>Traza dos puntos; la primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas. Eliges la unidad (mm, cm, m, pulgadas).</td></tr>
 </tbody>
@@ -490,6 +490,29 @@ HTML],
 <tr><td>Ctrl + B / I / U</td><td>Negrita / cursiva / subrayado en texto</td></tr>
 </tbody>
 </table>
+HTML],
+
+['id' => 'redactor', 'titulo' => 'Redactor (documentos)', 'icono' => 'fa-file-pen', 'roles' => $todos, 'herr' => 'redactor', 'cuerpo' => <<<'HTML'
+<p>Escribe documentos como en Word o LibreOffice sin salir de la plataforma: informes, memorias, actas, oficios.</p>
+<h4>Crear un documento</h4>
+<ol>
+<li>Pulsa <strong>Nuevo documento</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong> (elige uno de la lista o escribe uno nuevo). La lista se agrupa por departamento.</li>
+<li>Elige el <strong>corrector</strong> (Español, English o ambos), la <strong>hoja</strong> (Carta, A4, Oficio, Tabloide) y su orientación.</li>
+</ol>
+<h4>Herramientas</h4>
+<ul>
+<li><strong>Texto:</strong> fuente, tamaño, negrita, cursiva, subrayado, tachado, sub/superíndice, color, resaltado, alineación, viñetas, numeración, sangría, interlineado y estilos (títulos, cita, código).</li>
+<li><strong>Cortar, copiar y pegar</strong> (también pegado sin formato; lo pegado desde Word o LibreOffice se limpia).</li>
+<li><strong>Tablas:</strong> inserta con filas y columnas; con el cursor dentro aparecen agregar/quitar fila o columna, color de celda y eliminar tabla. <kbd>Tab</kbd> pasa a la siguiente celda.</li>
+<li><strong>Imágenes</strong> (desde tu equipo, pegadas o gráficos del Editor; clic en la imagen para cambiar su tamaño y alineación) y <strong>figuras</strong> (rectángulo, círculo, triángulo, rombo, estrella, flecha, línea).</li>
+<li><strong>Hipervínculos:</strong> a una página web, a un correo o a <em>cualquier sección o documento de la plataforma</em> (programa, láminas, gráficos, otros documentos…). <kbd>Ctrl</kbd>+clic abre el enlace al editar.</li>
+<li><strong>Página:</strong> márgenes en cm (normal, estrecho, amplio, encuadernado o personalizados), numeración de páginas («Página N de M»), encabezado con nombre · departamento · fecha y <strong>salto de página</strong>.</li>
+<li><strong>Buscar y reemplazar</strong> (<kbd>Ctrl</kbd>+<kbd>F</kbd>).</li>
+</ul>
+<h4>Ortografía</h4>
+<p>Las palabras mal escritas se subrayan en rojo. <strong>Clic derecho</strong> sobre una de ellas para ver sugerencias, <em>Ignorar</em> o <em>Agregar al diccionario</em> (la palabra queda para todos los documentos del proyecto). Los diccionarios de español (México) e inglés van incluidos y funcionan sin internet.</p>
+<h4>Guardar y exportar</h4>
+<p>Se guarda solo cada 30 segundos y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Word (.docx), LibreOffice (.odt) o PDF con el nombre <code>Año_mes_día_Nombre</code>, y <strong>Imprimir</strong> abre el PDF listo para imprimir con la hoja, márgenes y numeración elegidos. La línea de corte de página en pantalla es aproximada; el PDF muestra la paginación exacta.</p>
 HTML],
 
 ['id' => 'simbolos', 'titulo' => 'Símbolos', 'icono' => 'fa-shapes', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'

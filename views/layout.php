@@ -52,12 +52,15 @@ require_once __DIR__ . '/templates/breadcrumb.php';
                 elseif (str_contains($uri, '/archivos')) $pagina_actual = 'archivos';
                 elseif (str_contains($uri, '/curvas')) $pagina_actual = 'curvas';
                 elseif (str_contains($uri, '/msr')) $pagina_actual = 'msr';
+                elseif (str_contains($uri, '/cambios') || str_contains($uri, '/lineas-base')) $pagina_actual = 'cambios';
                 elseif (str_contains($uri, '/submittals')) $pagina_actual = 'submittals';
                 elseif (str_contains($uri, '/materiales')) $pagina_actual = 'materiales';
                 elseif (str_contains($uri, '/calendario')) $pagina_actual = 'calendario';
                 elseif (str_contains($uri, '/graficos')) $pagina_actual = 'editor';
+                elseif (str_contains($uri, '/redactor')) $pagina_actual = 'redactor';
                 elseif (str_contains($uri, '/simbolos')) $pagina_actual = 'simbolos';
                 elseif (str_contains($uri, '/view360')) $pagina_actual = 'view360';
+                elseif (str_contains($uri, '/comparador')) $pagina_actual = 'comparador';
                 elseif (str_contains($uri, '/evidencias')) $pagina_actual = 'evidencias';
                 elseif (str_contains($uri, '/ajustes')) $pagina_actual = 'ajustes';
                 elseif (str_contains($uri, '/exportar')) $pagina_actual = 'exportar';
@@ -71,6 +74,8 @@ require_once __DIR__ . '/templates/breadcrumb.php';
     <button type="button" id="btn-menu" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     <div id="sidebar-fondo" class="sidebar-fondo"></div>
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
+    <script src="/vendor/paletas.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/paletas.js'); ?>"></script>
+    <script src="/vendor/selector-color.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/selector-color.js'); ?>"></script>
     <script src="/build/js/bundle.min.js?v=<?php echo filemtime(__DIR__ . '/../public/build/js/bundle.min.js'); ?>"></script>
 </body>
 </html>

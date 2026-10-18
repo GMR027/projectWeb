@@ -77,6 +77,14 @@ class VplanTablaController
         ]);
     }
 
+    public static function duplicar()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $copia = ($t = self::tablaDe($proyecto)) ? $t->duplicar() : null;
+        header('Location: ' . ($copia ? '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $copia->id : '/vplan/tablas?proyecto=' . $proyecto->id));
+        exit;
+    }
+
     public static function eliminar()
     {
         $proyecto = proyecto_de_peticion(true);

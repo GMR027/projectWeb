@@ -44,6 +44,25 @@
     </div>
 </div>
 
+<?php if (is_admin()): $pg = $propuestasGuardadas ?? []; ?>
+    <details class="card prg-guardadas"<?php echo $pg ? ' open' : ''; ?>>
+        <summary><i class="fa-solid fa-wand-magic-sparkles"></i> Propuestas del Programador de actividades (<?php echo count($pg); ?> guardada<?php echo count($pg) === 1 ? '' : 's'; ?>)</summary>
+        <?php if ($pg): ?>
+            <ul>
+                <?php foreach ($pg as $g): ?>
+                    <li>
+                        <a href="/programador?proyecto=<?php echo (int)$proyecto->id; ?>&propuesta=<?php echo (int)$g['id']; ?>"><strong><?php echo s($g['nombre'] ?: 'Propuesta ' . date('d/m/Y', strtotime($g['creado']))); ?></strong></a>
+                        <small class="text-muted"><?php echo s(date('d/m/Y H:i', strtotime($g['creado']))); ?> · fin <?php echo s(formatear_fecha($g['fin_propuesto'])); ?> (<?php echo $g['dif'] > 0 ? '+' : ''; ?><?php echo $g['dif']; ?> d háb.) · <?php echo $g['movidas']; ?> cambian · <?php echo $g['obstaculos']; ?> obstáculos · <?php echo $g['mejoras']; ?> mejoras</small>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else: ?>
+            <p class="text-muted">Aún no hay propuestas guardadas. Al analizar el proyecto con la IA, guarda la que te interese desde el Programador.</p>
+        <?php endif; ?>
+        <a href="/programador?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-sm btn-ghost">Abrir el Programador</a>
+    </details>
+<?php endif; ?>
+
 <form method="GET" action="/programa" class="card programa-filtros formulario">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
     <div class="form-grid-inline">
@@ -91,7 +110,8 @@
 <div class="card">
     <h3 class="card-titulo"><i class="fa-solid fa-list"></i> Desglose WBS & Partidas</h3>
     <div class="tabla-wrapper">
-        <table class="tabla tabla-programa">
+        <?php $revAct = array_column(\Classes\Revisiones::elementos((int)$proyecto->id, 'actividad'), null, 'ref'); $puedeRev = puede_revisar($proyecto); ?>
+        <table class="tabla tabla-programa" data-proyecto="<?php echo (int)$proyecto->id; ?>">
             <thead>
                 <tr>
                     <th class="hide-m">WBS / Código</th>
@@ -146,7 +166,7 @@
                     <?php else: ?>
                         <tr class="fila-actividad" data-actividad-id="<?php echo s($fila['id']); ?>">
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
-                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
+                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
                             <td class="fecha-editable">
                                 <?php if (puede_gestionar_proyecto($proyecto)): ?>
                                     <input type="date"

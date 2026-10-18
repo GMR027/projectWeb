@@ -131,6 +131,12 @@ function exigir_gestionar_proyecto($proyecto): void
     }
 }
 
+/** Marcar revisiones (✅ ⚠ ❌ y «revisado»): admin y cliente con acceso al proyecto; el visitante solo las ve */
+function puede_revisar($proyecto): bool
+{
+    return $proyecto && is_cliente() && puede_ver_proyecto($proyecto);
+}
+
 function puede_descargar(): bool
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
@@ -236,13 +242,37 @@ function archivo_icono(string $ext): string
     return match (true) {
         $ext === 'pdf' => 'fa-file-pdf',
         in_array($ext, ['doc', 'docx', 'odt', 'ott', 'rtf'], true) => 'fa-file-word',
-        in_array($ext, ['xls', 'xlsx', 'xlsm', 'ods', 'ots', 'csv'], true) => 'fa-file-excel',
+        in_array($ext, ['xls', 'xlsx', 'ods', 'ots', 'csv'], true) => 'fa-file-excel',
         in_array($ext, ['ppt', 'pptx', 'odp', 'otp'], true) => 'fa-file-powerpoint',
         in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'svg', 'odg', 'otg'], true) => 'fa-file-image',
         in_array($ext, ['zip', 'rar', '7z'], true) => 'fa-file-zipper',
-        in_array($ext, ['xml', 'dwg', 'dxf', 'mpp', 'pod'], true) => 'fa-file-code',
+        in_array($ext, ['xml', 'mpp', 'pod', 'kml'], true) => 'fa-file-code',
+        in_array($ext, ['dwg', 'dxf', 'dwt', 'dws', 'dwf', 'dgn', 'rvt', 'rfa', 'rte', 'rft', 'ifc', 'ifczip', 'skp', 'nwd', 'nwc', '3dm', 'stp', 'step', 'obj'], true) => 'fa-drafting-compass',
         default => 'fa-file',
     };
+}
+
+/** Clase de color del icono según el tipo de archivo (PDF, documento, hoja de cálculo, imagen…) para distinguirlos de un vistazo */
+function archivo_icono_clase(string $ext): string
+{
+    return match (true) {
+        $ext === 'pdf' => 'ico-pdf',
+        in_array($ext, ['doc', 'docx', 'odt', 'ott', 'rtf', 'txt'], true) => 'ico-doc',
+        in_array($ext, ['xls', 'xlsx', 'ods', 'ots', 'csv'], true) => 'ico-hoja',
+        in_array($ext, ['ppt', 'pptx', 'odp', 'otp'], true) => 'ico-pres',
+        in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'svg', 'odg', 'otg'], true) => 'ico-img',
+        in_array($ext, ['zip', 'rar', '7z'], true) => 'ico-zip',
+        in_array($ext, ['xml', 'mpp', 'pod', 'kml'], true) => 'ico-codigo',
+        in_array($ext, ['dwg', 'dxf', 'dwt', 'dws', 'dwf', 'dgn', 'rvt', 'rfa', 'rte', 'rft', 'ifc', 'ifczip', 'skp', 'nwd', 'nwc', '3dm', 'stp', 'step', 'obj'], true) => 'ico-cad',
+        default => 'ico-otro',
+    };
+}
+
+/** <i> del icono de un archivo por su extensión, con color propio del tipo */
+function archivo_icono_html(string $ext, string $titulo = ''): string
+{
+    $ext = strtolower($ext);
+    return '<i class="fa-solid ' . archivo_icono($ext) . ' ico-archivo ' . archivo_icono_clase($ext) . '"' . ($titulo !== '' ? ' title="' . htmlspecialchars($titulo, ENT_QUOTES) . '"' : '') . ' aria-hidden="true"></i>';
 }
 
 /** Proyecto indicado en la petición (campo "proyecto") validando permiso de ver o de gestionar */

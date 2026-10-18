@@ -1,0 +1,56 @@
+@use '../base/variables' as *;
+
+// Programador de actividades (IA): propuesta frente al programa actual
+.prg-vacio { max-width: 72rem; }
+.prg-barra { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: end; margin-bottom: 1.6rem; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
+.prg-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1.2rem; margin-bottom: 1.6rem;
+  .card { display: flex; flex-direction: column; gap: .3rem; padding: 1.2rem 1.4rem; }
+  small { color: var(--text-muted); font-size: 1.2rem; } strong { font-size: 1.9rem; } span { font-size: 1.2rem; color: var(--text-muted); } }
+.prg-mejor { color: var(--success); } .prg-peor { color: var(--danger); }
+.prg-aviso { margin: 0 0 1rem; padding: .8rem 1.2rem; border-radius: .8rem; background: rgba(245, 158, 11, .14); border: 1px solid var(--warning); font-size: 1.3rem; }
+.prg-seccion { margin-bottom: 1.6rem; h3 { margin: 0 0 1rem; } }
+.prg-obst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .8rem;
+  li { display: flex; gap: 1rem; padding: .9rem 1.1rem; border-radius: .8rem; border: 1px solid var(--border); border-left-width: .4rem; font-size: 1.3rem; p { margin: .3rem 0 0; } }
+  .sev-critica { border-left-color: var(--danger); } .sev-alta { border-left-color: var(--primary); } .sev-media { border-left-color: var(--warning); } .sev-baja { border-left-color: var(--secondary); } }
+.prg-sev { flex: none; align-self: flex-start; min-width: 6rem; text-align: center; font-weight: 700; font-size: 1.1rem; padding: .2rem .6rem; border-radius: 99rem; background: var(--bg-tertiary); }
+.prg-cab { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; margin-bottom: 1rem; h3 { margin: 0; }
+  .campo-check { margin: 0; font-size: 1.3rem; } }
+.prg-leyenda { font-size: 1.2rem; color: var(--text-muted); display: inline-flex; gap: .6rem; align-items: center; margin-left: auto;
+  i { display: inline-block; width: 1.6rem; height: .8rem; border-radius: .2rem; } .sw-actual { background: var(--text-dim); } .sw-prop { background: var(--secondary); } .sw-crit { background: var(--danger); } }
+.prg-tabla-wrap { overflow: auto; max-height: 75vh; }
+.prg-tabla { width: 100%; border-collapse: collapse; font-size: 1.3rem;
+  th, td { padding: .6rem .8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { position: sticky; top: 0; background: var(--surface); z-index: 2; }
+  .num { text-align: right; white-space: nowrap; } .fecha { white-space: nowrap; font-family: 'Fira Code', monospace; font-size: 1.2rem; }
+  td > small { display: block; } details { margin-top: .3rem; font-size: 1.2rem; p { margin: .3rem 0 0; } }
+  &.solo-cambios tr.igual { display: none; }
+  tr.fuera-partida { display: none; }
+  .prg-gantt-th { min-width: 36rem; } }
+.prg-gantt { position: relative; min-width: 36rem; height: 5rem;
+  i { position: absolute; height: .9rem; border-radius: .2rem; }
+  .prg-barra-actual { top: .9rem; background: var(--text-dim); opacity: .7; }
+  .prg-barra-prop { top: 2.4rem; background: var(--secondary); &.crit { background: var(--danger); } }
+  .prg-hoy { top: 0; bottom: 0; width: .1rem; background: var(--primary); opacity: .6; } }
+
+// Buscador de palabras que app.js agrega sobre las listas
+.buscador-tabla { display: flex; align-items: center; gap: .8rem; margin: 0 0 1rem; max-width: 46rem;
+  i { color: var(--text-muted); } input[type=search] { flex: 1; min-width: 0; padding: .6rem 1rem; }
+  .conteo { font-size: 1.2rem; color: var(--text-muted); white-space: nowrap; } }
+tr[hidden] { display: none; }
+
+.prg-guardar { display: flex; gap: .8rem; align-items: center; input[type=text] { min-width: 26rem; } }
+.prg-guardada { font-size: 1.3rem; font-weight: 600; color: var(--success); }
+.prg-guardadas { margin-bottom: 1.6rem; summary { cursor: pointer; font-weight: 600; }
+  ul { list-style: none; margin: 1rem 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+  li { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline; font-size: 1.3rem; } }
+
+.prg-exportar { display: inline-flex; gap: .4rem; }
+.prg-seg { display: flex; gap: .6rem; margin-top: .6rem; select, input { font-size: 1.2rem; padding: .3rem .6rem; } input { width: 16rem; } }
+.prg-obst li.est-atendido, .prg-obst li.est-descartado { opacity: .55; }
+.prg-acepta { white-space: nowrap; form { display: inline; } .prg-guardada { margin-right: .6rem; } }
+.prg-aviso-fila { font-size: 1.2rem; color: var(--warning); }
+.prg-cmp { max-width: 60rem; margin-bottom: 1.2rem; }
+.prg-curva { width: 100%; height: auto; max-height: 28rem; font-size: 1rem; fill: var(--text-muted);
+  .g { stroke: var(--border); stroke-width: 1; } .hoy { stroke: var(--warning); stroke-dasharray: 4 3; stroke-width: 1.2; }
+  polyline { fill: none; stroke-width: 2.2; stroke-linejoin: round; } .actual { stroke: var(--text-dim); } .prop { stroke: var(--secondary); } .real { stroke: var(--success); } }
+.prg-leyenda .sw-real { background: var(--success); }

@@ -5,9 +5,9 @@ namespace Model;
 class VplanLamina extends ActiveRecord
 {
     protected static $tabla = 'vplan_laminas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'partida_id', 'titulo', 'supervisor', 'recovery_cols', 'restr_auto', 'plano', 'simbologia', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'orden'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'partida_id', 'titulo', 'supervisor', 'recovery_cols', 'restr_auto', 'plano', 'simbologia', 'simbologia_grafico_id', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'orden'];
 
-    public $id, $proyecto_id, $partida_id, $titulo, $supervisor, $recovery_cols, $restr_auto, $plano, $simbologia, $marcas_json, $marcas_png, $marcas_estados_hash, $orden;
+    public $id, $proyecto_id, $partida_id, $titulo, $supervisor, $recovery_cols, $restr_auto, $plano, $simbologia, $simbologia_grafico_id, $marcas_json, $marcas_png, $marcas_estados_hash, $orden;
     // Unión (solo lectura)
     public $partida_nombre;
 
@@ -112,5 +112,13 @@ class VplanLamina extends ActiveRecord
         $aid = (int)$actividadId;
         $v = $valor === null ? 'NULL' : "'" . self::$db->escape_string($valor) . "'";
         self::$db->query("INSERT INTO vplan_recovery (lamina_id, actividad_id, $campo) VALUES ($id, $aid, $v) ON DUPLICATE KEY UPDATE $campo = $v");
+    }
+
+    /** Imagen de la simbología del schedule elegida (siempre la versión actual del gráfico); null = tabla estándar */
+    public function imagenSimbologiaSchedule(): ?string
+    {
+        if (!$this->simbologia_grafico_id) return null;
+        $g = Grafico::find((int)$this->simbologia_grafico_id);
+        return $g && $g->tipo === 'simbologia' && (int)$g->proyecto_id === (int)$this->proyecto_id ? $g->imagenSimbologia() : null;
     }
 }

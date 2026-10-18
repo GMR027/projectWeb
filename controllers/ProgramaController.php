@@ -78,6 +78,7 @@ class ProgramaController
         }
 
         $router->render('programa/index', [
+            'propuestasGuardadas' => is_admin() ? \Classes\Programador::guardadas((int)$proyecto->id) : [],
             'depFlechas' => $depFlechas,
             'partidasFiltro' => array_values(array_filter($todas, fn($f) => $f['tipo'] === 'partida')),
             'filtros' => $filtros,
@@ -377,6 +378,7 @@ class ProgramaController
             \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, (array)($_POST['materiales'] ?? []));
         }
         \Model\ActividadMaterial::sincronizarInstalacion($proyectoId);
+        \Classes\Normativa::guardarManuales('actividad', $actividadId, $proyectoId, $_POST);   // normativa capturada a mano en el formulario
     }
 
     public static function crearActividad(Router $router)

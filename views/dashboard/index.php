@@ -46,6 +46,7 @@
                         <span class="text-sm">Fin: <?php echo formatear_fecha($proyecto->fecha_fin); ?></span>
                     </div>
                 </div>
+                <?php include __DIR__ . '/../revisiones/_mini.php'; ?>
                 <div class="proyecto-acciones">
                     <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-sm btn-primary">Ver Proyecto</a>
                     <?php if (puede_descargar()): ?>

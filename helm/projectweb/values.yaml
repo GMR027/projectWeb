@@ -6,7 +6,7 @@ image:
 host: projectweb.iguzman.com.mx
 ingressClass: public
 clusterIssuer: letsencrypt-prod
-bodySize: 110m
+bodySize: 260m
 
 # Los volúmenes hostpath viven en este nodo
 nodeSelector:
@@ -34,3 +34,12 @@ mysql:
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }
+
+# Antivirus para los archivos subidos (clamd en su propio pod; la app envía cada archivo por red antes de guardarlo)
+clamav:
+  enabled: true
+  required: true      # si clamd no responde, se rechazan las subidas (falla cerrado)
+  image: clamav/clamav:1.4
+  resources:
+    requests: { cpu: 100m, memory: 1Gi }
+    limits: { memory: 2Gi }

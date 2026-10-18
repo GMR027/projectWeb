@@ -32,7 +32,7 @@
         <?php foreach ($materiales as $m): ?>
             <tr>
                 <td><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt=""><?php endif; ?></td>
-                <td><?php echo s($m->nombre); ?></td>
+                <td><?php echo s($m->nombre); ?> <?php $v = $verif[(int)$m->id] ?? null; echo \Classes\MaterialesInteligentes::badge($v, \Classes\MaterialesInteligentes::vigente($v, $m), false); ?></td>
                 <td><?php echo s($m->especialidad); ?></td>
             </tr>
         <?php endforeach; ?>

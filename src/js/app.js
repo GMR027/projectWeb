@@ -286,3 +286,70 @@ window.addEventListener('scroll', () => { document.querySelectorAll('details.gr-
 document.addEventListener('click', (e) => {
   document.querySelectorAll('details.gr-descargar[open]').forEach((d) => { if (!d.contains(e.target)) d.open = false; });
 });
+
+
+// ============================================================
+// Buscador de palabras en las listas
+// - Toda tabla .tabla con 5 o más filas recibe su caja de búsqueda (data-sin-buscador la excluye; data-buscable la fuerza con menos filas).
+// - Un input con data-filtra="selector" filtra esa tabla mientras se escribe (además de su búsqueda en el servidor, si la tiene).
+// - Ignora mayúsculas y acentos; varias palabras = todas deben aparecer. En el programa, la fila de partida se queda si coincide
+//   ella (se ven todas sus actividades) o alguna de sus actividades.
+// ============================================================
+(() => {
+  const norm = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+  const filtrar = (tabla, texto, conteo) => {
+    const palabras = norm(texto).split(/\s+/).filter(Boolean);
+    const filas = [...tabla.querySelectorAll(':scope > tbody > tr')].filter((tr) => !tr.querySelector(':scope > td[colspan]'));
+    const coincide = (tr) => { const t = tr._texto ??= norm(tr.textContent); return palabras.every((p) => t.includes(p)); };
+    // Agrupa cada actividad con su partida (en las demás tablas no hay grupos)
+    const grupoDe = new Map(), partidas = [];
+    let grupo = null;
+    filas.forEach((tr) => {
+      if (tr.classList.contains('fila-partida')) { grupo = { cab: tr, hijas: [], propia: coincide(tr) }; partidas.push(grupo); }
+      else if (grupo && tr.classList.contains('fila-actividad')) { grupo.hijas.push(tr); grupoDe.set(tr, grupo); }
+      else grupo = null;
+    });
+    const hechas = filas.filter((tr) => !tr.classList.contains('fila-partida'));
+    hechas.forEach((tr) => { tr.hidden = !(!palabras.length || coincide(tr) || grupoDe.get(tr)?.propia); });
+    partidas.forEach((g) => { g.cab.hidden = !(!palabras.length || g.propia || g.hijas.some((h) => !h.hidden)); });
+    const total = hechas.length, visibles = hechas.filter((tr) => !tr.hidden).length;
+    if (conteo) conteo.textContent = palabras.length ? `${visibles} de ${total}` : '';
+    let vacio = tabla._vacio;
+    if (palabras.length && !visibles) {
+      if (!vacio) {
+        vacio = tabla._vacio = document.createElement('tr');
+        vacio.className = 'sin-resultados';
+        vacio.innerHTML = `<td colspan="${tabla.querySelectorAll('thead th').length || 1}" class="text-center text-muted"></td>`;
+        tabla.tBodies[0].append(vacio);
+      }
+      vacio.firstChild.textContent = `Nada coincide con «${texto.trim()}».`;
+      vacio.hidden = false;
+    } else if (vacio) vacio.hidden = true;
+  };
+
+  const conectar = (input, tabla, conteo) => {
+    let t;
+    input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => filtrar(tabla, input.value, conteo), 80); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.value) { input.value = ''; filtrar(tabla, '', conteo); } });
+    if (input.value) filtrar(tabla, input.value, conteo);
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[data-filtra]').forEach((input) => {
+      const tabla = document.querySelector(input.dataset.filtra);
+      if (tabla) conectar(input, tabla, null);
+    });
+    document.querySelectorAll('.main-content table.tabla').forEach((tabla) => {
+      if (tabla.hasAttribute('data-sin-buscador') || tabla.closest('.modal-overlay, .modal-card') || !tabla.tBodies[0]) return;
+      if (document.querySelector(`input[data-filtra]`) && [...document.querySelectorAll('input[data-filtra]')].some((i) => document.querySelector(i.dataset.filtra) === tabla)) return;
+      const n = [...tabla.tBodies[0].rows].filter((tr) => !tr.querySelector(':scope > td[colspan]')).length;
+      if (n < (tabla.hasAttribute('data-buscable') ? 2 : 5)) return;
+      const caja = document.createElement('div');
+      caja.className = 'buscador-tabla';
+      caja.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Buscar en esta lista…" aria-label="Buscar en esta lista" autocomplete="off"><span class="conteo" aria-live="polite"></span>';
+      (tabla.parentElement.classList.contains('tabla-wrapper') ? tabla.parentElement : tabla).before(caja);
+      conectar(caja.querySelector('input'), tabla, caja.querySelector('.conteo'));
+    });
+  });
+})();

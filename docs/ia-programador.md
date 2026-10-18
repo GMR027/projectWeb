@@ -1,0 +1,14 @@
+# Programador (IA)
+
+_Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
+
+## 🧠 Programador de actividades (IA)
+
+- Solo admin. La app de escritorio (Herramientas IA → Programador de actividades) pide `GET /api/programador/contexto?proyecto=` (lotes de prompt armados por `classes/Programador.php`), manda cada lote al modelo elegido y devuelve las respuestas a `POST /api/programador/propuesta`; usa la sesión web de la vista (cookies + `X-CSRF-Token`), nunca API keys en el servidor.
+- La IA solo clasifica (administrativa/operativa), propone predecesoras/paralelismos (`accion: adelantar`) y señala obstáculos. Las fechas las calcula `RutaCritica` con el `Calendario`; lo terminado o con avance no se mueve. Obstáculos de materiales/submittals/restricciones se detectan también sin IA.
+- Por fases para ser rápido en CPU: (1, sin IA) se leen las actividades de la BD, se descartan las iniciadas/terminadas/hitos, se clasifican por palabras clave y se empacan por partida en paquetes de 10–22 actividades en líneas compactas; (2) la IA analiza cada paquete y devuelve **solo** lo que propone cambiar; (3) una llamada de integración (`/api/programador/integracion`) recibe solo un resumen por paquete y propone relaciones entre paquetes; (4) una llamada de revisión (`/api/programador/revision`, `Programador::revision()`) manda a la IA, como analista, un resumen de lo ya obtenido (cambios, ruta crítica, actividades aisladas, obstáculos, avisos) y devuelve `mejoras` (inconsistencias, relaciones faltantes, duraciones, riesgos no cubiertos, datos faltantes, oportunidades) que se guardan en `resumen.mejoras` y se ven en `/programador`; si falla, la propuesta se guarda igual. Un paquete ≈ 1.5k tokens.
+- Las propuestas viven en `programador_propuestas` (JSON, últimas 10 por proyecto) y se ven en `/programador?proyecto=`. **Nunca** modifican `actividades`; aún no hay botón «aplicar».
+- Acciones sobre una propuesta (`classes/ProgramadorAcciones.php`, solo admin, solo en `/programador`): **guardar** con nombre (`guardada`, no rota), **aceptar por partida** (único punto que escribe en `actividades` y `actividad_dependencias`: solo actividades sin avance ni fecha fija y cuyo programa actual aún coincide con el que vio la IA; respaldo en `programador_respaldos` y **deshacer**), impacto por partida, comparar dos propuestas, seguimiento (estado/responsable) de obstáculos y mejoras, Curva S programa actual vs propuesta (`CurvaS::calcular($p, $alterno)`) y exportar a Excel/PDF. Listadas en `/programa` (sección plegable «Propuestas del Programador»).
+- Migraciones: `database/migracion_programador.sql`, `migracion_programador_guardadas.sql`, `migracion_programador_acciones.sql`.
+- Pruebas con copia de BD: `DB_NAME` del entorno NO se respeta (phpdotenv/`$_ENV`); define `$_ENV['DB_NAME']` en un `auto_prepend_file` o script antes de cargar `includes/app.php` y comprueba con `select database()`.
+

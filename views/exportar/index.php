@@ -31,7 +31,7 @@
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="pdf">
                 <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar PDF</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
             </form>
         </div>
 
@@ -51,7 +51,7 @@
                 <label class="text-sm text-muted" for="fecha_ref">Semana de referencia</label>
                 <input type="date" id="fecha_ref" name="fecha_ref" value="<?php echo s($lunes->format('Y-m-d')); ?>" required>
                 <input type="text" name="nombre_base" value="4WLA" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar 4WLA</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar 4WLA</button>
             </form>
         </div>
 
@@ -68,7 +68,7 @@
                     <?php foreach ($laminasVplan as $lv): ?><option value="<?php echo s($lv->id); ?>"><?php echo s($lv->titulo); ?></option><?php endforeach; ?>
                 </select>
                 <input type="text" name="nombre_base" value="vPlan" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar vPlan</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar vPlan</button>
             </form>
         </div>
 
@@ -91,7 +91,7 @@
                     <option value="3">3 columnas × 3 filas (9 por hoja, margen mínimo)</option>
                 </select>
                 <input type="text" name="nombre_base" value="LastPlanner" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar Last Planner</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar Last Planner</button>
             </form>
         </div>
 
@@ -114,7 +114,7 @@
                     <option value="ods">LibreOffice Calc (.ods)</option>
                 </select>
                 <input type="text" name="nombre_base" value="Curva" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar curva</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar curva</button>
             </form>
         </div>
 
@@ -138,7 +138,7 @@
                     <option value="ods">LibreOffice Calc (.ods)</option>
                 </select>
                 <input type="text" name="nombre_base" value="MSR" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar MSR</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar MSR</button>
             </form>
         </div>
 
@@ -150,7 +150,7 @@
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="xml">
                 <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar XML</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-code"></i> Exportar XML</button>
             </form>
         </div>
 
@@ -162,7 +162,7 @@
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="pod">
                 <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block">Exportar POD</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-code"></i> Exportar POD</button>
             </form>
         </div>
     </div>

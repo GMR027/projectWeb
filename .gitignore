@@ -1,3 +1,15 @@
 # Respaldos del sistema: cada .zip trae toda la base de datos (con usuarios y contraseñas) y todos los archivos
 /storage/respaldos/*
 !/storage/respaldos/.gitkeep
+
+# Instaladores de la app de escritorio (pesan cientos de MB; viven en el volumen del clúster)
+/storage/instaladores/*
+!/storage/instaladores/.gitkeep
+
+# App de escritorio: dependencias y paquetes generados
+/desktop/node_modules/
+/desktop/release/
+/storage/grabaciones/*
+!/storage/grabaciones/.gitkeep
+/storage/normativa/*
+!/storage/normativa/.gitkeep

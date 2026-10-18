@@ -15,6 +15,7 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
         ['url' => '/archivos?proyecto=' . $proyecto->id, 'icon' => 'fa-folder-open', 'label' => 'Archivo', 'key' => 'archivos'],
         ['url' => '/curvas?proyecto=' . $proyecto->id, 'icon' => 'fa-chart-line', 'label' => 'Curvas', 'key' => 'curvas'],
         ['url' => '/msr?proyecto=' . $proyecto->id, 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR', 'key' => 'msr'],
+        ['url' => '/cambios?proyecto=' . $proyecto->id, 'icon' => 'fa-file-circle-exclamation', 'label' => 'Cambios', 'key' => 'cambios'],
     ];
     if (puede_gestionar_proyecto($proyecto)) {
         $items[] = ['url' => '/submittals?proyecto=' . $proyecto->id, 'icon' => 'fa-boxes-packing', 'label' => 'Submittals', 'key' => 'submittals'];
@@ -23,8 +24,10 @@ function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
     $items[] = ['url' => '/calendario?proyecto=' . $proyecto->id, 'icon' => 'fa-calendar-days', 'label' => 'Calendario', 'key' => 'calendario'];
     $items[] = ['url' => '/evidencias?proyecto=' . $proyecto->id, 'icon' => 'fa-camera-retro', 'label' => 'Evidencias', 'key' => 'evidencias'];
     $items[] = ['url' => '/graficos?proyecto=' . $proyecto->id, 'icon' => 'fa-pen-ruler', 'label' => 'Editor', 'key' => 'editor'];
+    $items[] = ['url' => '/redactor?proyecto=' . $proyecto->id, 'icon' => 'fa-file-pen', 'label' => 'Redactor', 'key' => 'redactor'];
     $items[] = ['url' => '/simbolos?proyecto=' . $proyecto->id, 'icon' => 'fa-shapes', 'label' => 'Símbolos', 'key' => 'simbolos'];
     $items[] = ['url' => '/view360?proyecto=' . $proyecto->id, 'icon' => 'fa-street-view', 'label' => 'View360', 'key' => 'view360'];
+    $items[] = ['url' => '/comparador?proyecto=' . $proyecto->id, 'icon' => 'fa-code-compare', 'label' => 'Comparador', 'key' => 'comparador'];
     if (!is_visitante()) {
         $items[] = ['url' => '/ajustes?proyecto=' . $proyecto->id, 'icon' => 'fa-gear', 'label' => 'Ajustes', 'key' => 'ajustes'];
     }

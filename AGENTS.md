@@ -49,6 +49,17 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `views/programa/index.php` | Vista principal: tabla WBS + Gantt por semanas |
 | `views/ajustes/index.php` | Jornada semanal, festivos, centro de exportación |
 
+## 📚 Documentación por módulo (leer solo al tocarlo)
+
+| Archivo | Contenido |
+|---|---|
+| `docs/ia-programador.md` | Programador (IA) — cuando se toque classes/Programador*.php, /programador |
+| `docs/ia-calidad-datos.md` | Inconsistencias, Análisis de materiales y Materiales inteligentes (IA) |
+| `docs/ia-centro-herramientas.md` | Centro de IA e Herramientas de IA fases 3-10 (informes, voz, chat, normativa, seguridad, punch…) y **Revisiones** (✅⚠❌ por proyecto, estado de uso de las herramientas) |
+| `docs/redactor.md` | Redactor (documentos de texto, exportación DOCX/ODT/PDF) |
+| `docs/web-extras.md` | Landing/Demo, Bandeja/soporte/visitantes/importación y Buscador de listas |
+| `docs/cambios-lineas-base.md` | Órdenes de cambio (instalación/retiro, reubicación…), líneas base y comparación, cruce de materiales, resumen ejecutivo diario y modo sin conexión |
+
 ## ⚠️ Common Gotchas
 
 1. **Recalcular fechas de partida:** Después de crear/editar/eliminar actividad, llamar `Partida::recalcularFechas()` para actualizar `fecha_inicio`/`fecha_fin` de la partida.
@@ -57,20 +68,9 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 4. **Hash de sesión admin por defecto:** El seed crea `admin@po.local / admin123`. **Cambiar en producción**.
 5. **Exportaciones** se generan en `public/exportaciones/` y se borran justo después de la descarga (sin historial). El servidor web necesita permisos de escritura ahí.
 6. **MSPDI XML:** Es compatible con MS Project pero NO es `.mpp` binario. El usuario abre el XML en MSP y guarda como .mpp desde allí.
-
-## 🌐 Landing y Demo
-
-- `/` muestra la página de presentación (`views/landing/index.php`, estilos `src/scss/landing.scss` → `public/build/css/landing.css`) si no hay sesión; con sesión, el dashboard. `/inicio` la muestra siempre.
-- `/demo` entra como el usuario de solo lectura `demo@projectweb.demo` (rol visitante) al proyecto con código `DEMO`. Se crea/recrea con `php database/seed_demo.php` (descarga fotos de Unsplash; fechas relativas a hoy). Al final ejecuta `database/seed_demo_extras.php` (dependencias/ruta crítica, Archivo, Editor, Símbolos y View360 con fotos 360 de Poly Haven CC0); también puede correrse solo y solo toca el proyecto DEMO.
-- Correo de contacto de los botones de planes: variable `CONTACT_EMAIL` en `.env`.
-- Ojo: en `@media` el `rem` vale 16px (no 10px del `html`), así que `48rem` = 768px.
-
-## 📥 Bandeja, soporte, visitantes e importación
-
-- Formulario de contacto de la landing → `POST /contacto` (`ContactoController`, tabla `contactos`; trampas anti-spam y 5 mensajes/hora por IP). El admin los ve en `/bandeja` junto con los mensajes de soporte (tabla `soportes`); el menú muestra el número de sin leer.
-- Rol cliente: `/soporte` (CRUD de sus propios mensajes) y `/usuarios` como «Mis Visitantes» (máx. `Usuario::MAX_VISITANTES_CLIENTE` = 2, siempre rol visitante, `creado_por` = el cliente; solo asigna sus propios proyectos). Nunca se toma rol/límites del formulario.
-- `/programa/importar`: importa XML MSPDI o .pod en XML (`classes/ProgramaImportador.php`, sin IA). Solo trae nombre, fechas, avance, hitos, prioridad, notas y niveles; predecesoras/recursos/calendarios no.
-- Capturas del recorrido de la landing: `public/build/img/landing/tour-*.jpg` (tomadas del demo: 8 pestañas del recorrido; hay que regenerarlas si cambia mucho la UI).
+7. **PHP:** `«$var»` en comillas dobles lee `»` como parte del nombre: usa `{$var}`. `array_merge(...$arregloConClavesTexto)` falla: usa `array_values()`.
+8. **Pruebas con copia de BD:** `DB_NAME` del entorno NO se respeta; crea `project_claude_<n>` (`mysqldump --no-data`), fija `$_ENV['DB_NAME']` en un `auto_prepend_file` y borra solo esa BD. No uses `project_test`.
+9. **Herramientas de IA nuevas:** llamar a `Auditoria::registrar()` al aplicar/revertir/rechazar y agregarlas al catálogo `desktop/src/herramientas.js` (detalle en `docs/ia-centro-herramientas.md`). Nada cambia datos sin que el admin acepte.
 
 ## 🔍 Need to Verify?
 
@@ -87,6 +87,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 - `vlucas/phpdotenv` — variables de entorno
 - `phpmailer/phpmailer` — emails (futuro: confirmación de cuenta, notificaciones)
 - `dompdf/dompdf` ^3.0 — generación de PDF
+- `phpoffice/phpword` ^1.4 — exportación DOCX/ODT del Redactor
 
 **NPM (dev):**
 - `gulp`, `gulp-sass`, `sass` — build pipeline
@@ -118,3 +119,7 @@ Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`
 - **Respaldos:** `RESPALDO_COPIA_DIR` (opcional) copia cada respaldo automático a otra ubicación fuera del volumen de datos.
 - **Apache:** `docker/apache.conf` desactiva PHP en `uploads`, `exportaciones` y `build/img`.
 - **Estudio del proyecto:** lecciones y extractos en `../clases/` (se regeneran con `clases/herramientas/generar_extractos.py`).
+
+## 🖥 App de escritorio (solo admin)
+
+- Código en `desktop/` (Electron, JS sin build). Instaladores en `storage/instaladores/` (volumen del clúster, fuera de git), gestionados desde `/sistema#escritorio` (`classes/Instaladores.php`). Las actualizaciones las consulta la app en `/api/escritorio/version` con un token de dispositivo (solo se guarda su hash). Las API keys viven cifradas en el equipo del admin, nunca en el servidor.

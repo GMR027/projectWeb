@@ -1,7 +1,7 @@
 <?php $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo s($grafico->nombre); ?></h2>
+        <h2><?php echo archivo_icono_html('png'); ?> <?php echo s($grafico->nombre); ?></h2>
         <p class="text-muted"><?php echo s(formatear_fecha($grafico->creado, 'd/m/Y H:i')); ?> · <?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?> px</p>
     </div>
     <div class="la-controles">

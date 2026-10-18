@@ -37,14 +37,28 @@ if ($proyectoCtx) {
         $menuProyecto[] = ['url' => "/archivos?proyecto=$proyectoCtx", 'icon' => 'fa-folder-open', 'label' => 'Archivo', 'match' => '/archivos'];
         $menuProyecto[] = ['url' => "/curvas?proyecto=$proyectoCtx", 'icon' => 'fa-chart-line', 'label' => 'Curvas de productividad', 'match' => '/curvas'];
         $menuProyecto[] = ['url' => "/msr?proyecto=$proyectoCtx", 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR · Materiales', 'match' => '/msr'];
+        $menuProyecto[] = ['url' => "/cambios?proyecto=$proyectoCtx", 'icon' => 'fa-file-circle-exclamation', 'label' => 'Órdenes de cambio', 'match' => '/cambios'];
+        $menuProyecto[] = ['url' => "/lineas-base?proyecto=$proyectoCtx", 'icon' => 'fa-timeline', 'label' => 'Líneas base', 'match' => '/lineas-base'];
         if (puede_gestionar_proyecto($proyectoSidebar)) {
             $menuProyecto[] = ['url' => "/submittals?proyecto=$proyectoCtx", 'icon' => 'fa-boxes-packing', 'label' => 'Submittals', 'match' => '/submittals'];
             $menuProyecto[] = ['url' => "/materiales?proyecto=$proyectoCtx", 'icon' => 'fa-cubes', 'label' => 'Catálogo de materiales', 'match' => '/materiales'];
         }
+        $menuProyecto[] = ['url' => "/plantillas?proyecto=$proyectoCtx", 'icon' => 'fa-layer-group', 'label' => 'Tipo de obra', 'match' => '/plantillas'];
+        $menuProyecto[] = ['url' => "/seguridad?proyecto=$proyectoCtx", 'icon' => 'fa-helmet-safety', 'label' => 'Seguridad y permisos', 'match' => '/seguridad'];
+        $menuProyecto[] = ['url' => "/punch?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-check', 'label' => 'Punch list', 'match' => '/punch'];
+        $menuProyecto[] = ['url' => "/mapa-avance?proyecto=$proyectoCtx", 'icon' => 'fa-map-location-dot', 'label' => 'Mapa de avance', 'match' => '/mapa-avance'];
+        $menuProyecto[] = ['url' => "/revisiones?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-check', 'label' => 'Revisiones', 'match' => '/revisiones'];
+        $menuProyecto[] = ['url' => "/normativa?proyecto=$proyectoCtx", 'icon' => 'fa-scale-balanced', 'label' => 'Normativa y especificaciones', 'match' => '/normativa'];
         $menuProyecto[] = ['url' => "/calendario?proyecto=$proyectoCtx", 'icon' => 'fa-calendar-days', 'label' => 'Calendario', 'match' => '/calendario'];
         $menuProyecto[] = ['url' => "/graficos?proyecto=$proyectoCtx", 'icon' => 'fa-pen-ruler', 'label' => 'Editor', 'match' => '/graficos'];
+        $menuProyecto[] = ['url' => "/redactor?proyecto=$proyectoCtx", 'icon' => 'fa-file-pen', 'label' => 'Redactor', 'match' => '/redactor'];
         $menuProyecto[] = ['url' => "/simbolos?proyecto=$proyectoCtx", 'icon' => 'fa-shapes', 'label' => 'Símbolos', 'match' => '/simbolos'];
         $menuProyecto[] = ['url' => "/view360?proyecto=$proyectoCtx", 'icon' => 'fa-street-view', 'label' => 'View360', 'match' => '/view360'];
+        if (is_admin()) $menuProyecto[] = ['url' => "/programador?proyecto=$proyectoCtx", 'icon' => 'fa-wand-magic-sparkles', 'label' => 'Programador de actividades', 'match' => '/programador'];
+        if (is_admin()) $menuProyecto[] = ['url' => "/inconsistencias?proyecto=$proyectoCtx", 'icon' => 'fa-magnifying-glass-chart', 'label' => 'Inconsistencias de proyecto', 'match' => '/inconsistencias'];
+        if (is_admin()) $menuProyecto[] = ['url' => "/analisis-materiales?proyecto=$proyectoCtx", 'icon' => 'fa-boxes-stacked', 'label' => 'Análisis de materiales', 'match' => '/analisis-materiales'];
+        if (is_admin()) $menuProyecto[] = ['url' => "/propuestas-ia?proyecto=$proyectoCtx", 'icon' => 'fa-robot', 'label' => 'Centro de IA', 'match' => '/propuestas-ia', 'tambien' => ['/informes-ia', '/grabaciones', '/historial-cambios', '/biblioteca-ia']];
+        $menuProyecto[] = ['url' => "/comparador?proyecto=$proyectoCtx", 'icon' => 'fa-code-compare', 'label' => 'Comparador de documentos', 'match' => '/comparador'];
         if ($rol !== 'visitante') {
             $menuProyecto[] = ['url' => "/ajustes?proyecto=$proyectoCtx", 'icon' => 'fa-gear', 'label' => 'Ajustes', 'match' => '/ajustes'];
             $menuProyecto[] = ['url' => "/exportar?proyecto=$proyectoCtx", 'icon' => 'fa-file-export', 'label' => 'Exportar', 'match' => '/exportar'];
@@ -73,7 +87,7 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
     </div>
     <nav class="sidebar-nav">
         <?php foreach ($menu as $item): ?>
-            <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $_SERVER['REQUEST_URI'] !== '/' && pagina_actual($item['match']) && !($item['match'] === '/proyectos' && pagina_actual('/proyectos/crear')) ? 'active' : ''; ?>">
+            <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $_SERVER['REQUEST_URI'] !== '/' && (pagina_actual($item['match']) || array_filter($item['tambien'] ?? [], 'pagina_actual')) && !($item['match'] === '/proyectos' && pagina_actual('/proyectos/crear')) ? 'active' : ''; ?>">
                 <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
                 <span><?php echo s(t($item['label'])); ?></span>
                 <?php if (!empty($item['badge'])): ?><b class="nav-badge"><?php echo (int)$item['badge']; ?></b><?php endif; ?>

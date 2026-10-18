@@ -23,7 +23,7 @@
                     <td>
                         <div class="gr-nombre">
                             <?php if ($g->portada): ?><img class="gr-mini" src="/uploads/vplan/<?php echo s($g->portada); ?>" alt="" loading="lazy"><?php else: ?><span class="gr-mini gr-mini-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?>
-                            <div><strong><?php echo s($g->nombre); ?></strong><?php if ((int)$g->num_laminas > 1): ?><br><small class="text-muted"><?php echo (int)$g->num_laminas; ?> láminas</small><?php endif; ?></div>
+                            <div><strong><?php echo archivo_icono_html('png', 'Gráfico (imagen)'); ?> <?php echo s($g->nombre); ?></strong><?php if ((int)$g->num_laminas > 1): ?><br><small class="text-muted"><?php echo (int)$g->num_laminas; ?> láminas</small><?php endif; ?></div>
                         </div>
                     </td>
                     <td class="hide-m"><?php echo $g->categoria_nombre ? s($g->categoria_nombre) : '<span class="text-muted">—</span>'; ?></td>
@@ -45,6 +45,10 @@
                             <form method="POST" action="/graficos/duplicar" style="display:inline">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">
                                 <button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button>
+                            </form>
+                            <form method="POST" action="/graficos/tipo" style="display:inline">
+                                <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia">
+                                <button type="submit" class="btn btn-sm btn-ghost" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"><i class="fa-solid fa-list-check"></i> Guardar como simbología</button>
                             </form>
                             <form method="POST" action="/graficos/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">

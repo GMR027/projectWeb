@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
+<title>Project Web Desktop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <button id="hamb" class="sec" aria-label="Abrir menú de Project Web" title="Menú de Project Web">☰</button>
+  <h1>Project Web Desktop</h1><span id="ver"></span>
+  <button id="ia-chip" class="chip sec" title="Estado de la IA conectada" hidden><i class="pto revisando"></i><span id="ia-chip-txt">IA</span></button>
+  <span id="zoom-barra" class="zoom" role="group" aria-label="Tamaño de la vista" title="Ctrl + y Ctrl − cambian el tamaño; Ctrl 0 lo restablece">
+    <button id="zoom-menos" class="sec" aria-label="Reducir">−</button><button id="zoom-pct" class="sec" aria-label="Restablecer al 100 %">100 %</button><button id="zoom-mas" class="sec" aria-label="Ampliar">+</button>
+  </span>
+  <button id="btn-ajustes" class="sec">Ajustes</button>
+  <button id="btn-ia" class="sec">Herramientas IA</button>
+</header>
+
+<div id="cuerpo">
+<div id="hueco"><p id="hueco-msg" class="nota"></p>
+  <div id="hueco-error" hidden><form id="err-form"><h2>Servidor de Project Web</h2><p id="err-detalle" class="msg"></p>
+    <label>Dirección del servidor <input id="err-url" placeholder="https://tu-dominio" required></label>
+    <button type="submit">Reintentar</button></form></div></div>
+
+<main id="panel-ia" class="panel" hidden>
+<aside id="ia-menu" aria-label="Herramientas IA">
+  <h3>Herramientas IA</h3>
+  <label class="menu-proy">Proyecto <select id="ia-menu-proyecto"></select></label>
+  <div id="ia-menu-lista"></div>
+  <p id="ia-menu-conn" class="nota"></p>
+</aside>
+<div id="ia-web" hidden></div>
+<div id="ia-cuerpo">
+<section id="ia-prog" hidden>
+  <h2>Programador de actividades</h2>
+  <p class="nota">La IA analiza las actividades del proyecto abierto (sin las partidas), las clasifica en administrativas y operativas, y revisa materiales, submittals, restricciones, bitácora y reportes diarios para proponer cómo ejecutarlas. Genera un programa <strong>propuesto</strong>: no reemplaza el actual. Las fechas las calcula el calendario del proyecto.</p>
+  <form id="prog-form">
+    <label>Proyecto <select id="prog-proyecto"></select></label>
+    <label>Conexión de IA <select id="prog-conexion"></select></label>
+    <p id="prog-estado" class="estado-ia"></p>
+    <p id="prog-capacidad" class="capacidad"></p>
+    <p class="nota" id="prog-aviso-conn">Los modelos pequeños o locales con poco contexto razonan peor: para proyectos grandes conviene una API o una suscripción.</p>
+    <div class="fila"><button type="submit" id="prog-ir">Analizar y generar propuesta</button><button type="button" id="prog-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="prog-barra" max="1" value="0" hidden></progress>
+    <p id="prog-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="prog-res" hidden></div>
+  <div class="res-herr" id="prog-hist"></div>
+</section>
+<nav id="cd-tabs" aria-label="Calidad de datos" hidden>
+  <button data-cd="inc" class="sec on">🔎 Inconsistencias del programa</button>
+  <button data-cd="mat" class="sec">🧱 Materiales y normativa</button>
+</nav>
+<section id="ia-inc" hidden>
+  <h2>Inconsistencias del programa</h2>
+  <p class="nota">La vigilancia continua (aviso automático de inconsistencias nuevas) se activa en <strong>Análisis inteligente</strong>. La IA revisa la información del proyecto abierto —actividades, fechas, avance, materiales, restricciones, bitácora y reportes diarios— y detecta contradicciones (además de las reglas automáticas del sistema). Cada inconsistencia llega con una <strong>solución propuesta</strong> que tú aceptas o rechazas en Project Web; nada se modifica sin tu aprobación.</p>
+  <form id="inc-form">
+    <label>Proyecto <select id="inc-proyecto"></select></label>
+    <label>Conexión de IA <select id="inc-conexion"></select></label>
+    <p id="inc-estado" class="estado-ia"></p>
+    <p id="inc-capacidad" class="capacidad"></p>
+    <div class="fila"><button type="submit" id="inc-ir">Detectar inconsistencias</button><button type="button" id="inc-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="inc-barra" max="1" value="0" hidden></progress>
+    <p id="inc-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="inc-res" hidden></div>
+  <div class="res-herr" id="inc-hist"></div>
+</section>
+<section id="ia-mat" hidden>
+  <h2>Análisis de materiales</h2>
+  <p class="nota">La IA revisa los materiales del proyecto abierto junto con sus submittals y el MSR (Reportes de materiales): detecta datos incompletos e inconsistencias y <strong>propone el nombre completo</strong> de cada material (nombre base + marca + modelo/tipo + valor extra). Las reglas automáticas del sistema se suman. Cada propuesta llega a Project Web, donde tú la aceptas o rechazas, y el análisis se puede guardar en el historial; nada se modifica sin tu aprobación.</p>
+  <form id="mat-form">
+    <label>Proyecto <select id="mat-proyecto"></select></label>
+    <label>Conexión de IA <select id="mat-conexion"></select></label>
+    <p id="mat-estado" class="estado-ia"></p>
+    <p id="mat-capacidad" class="capacidad"></p>
+    <div class="fila"><button type="submit" id="mat-ir">Analizar materiales</button><button type="button" id="mat-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="mat-barra" max="1" value="0" hidden></progress>
+    <p id="mat-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="mat-res" hidden></div>
+  <div class="res-herr" id="mat-hist"></div>
+</section>
+<section id="ia-int" hidden>
+  <h2>Materiales inteligentes</h2>
+  <p class="nota">Con la opción activa, cada material que se cree o modifique en el proyecto se compara (con IA) contra las normativas y especificaciones cargadas en Project Web. El resultado se guarda en el material, en «Normativas y especificaciones»; si no cumple recibes un aviso y también se advierte al incluirlo en un submittal. La verificación se hace solo desde esta app; en la web únicamente se consulta.</p>
+  <form id="int-form">
+    <label>Proyecto <select id="int-proyecto"></select></label>
+    <label class="campo-check"><input type="checkbox" id="int-activo"> Activar materiales inteligentes en este proyecto</label>
+    <p id="int-info" class="nota"></p>
+    <label>Conexión de IA <select id="int-conexion"></select></label>
+    <p id="int-estado" class="estado-ia"></p>
+    <p id="int-capacidad" class="capacidad"></p>
+    <div class="fila"><button type="submit" id="int-ir">Verificar materiales ahora</button><button type="button" id="int-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="int-barra" max="1" value="0" hidden></progress>
+    <p id="int-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="int-res" hidden></div>
+</section>
+<section id="ia-gen" hidden>
+  <h2 id="gen-titulo"></h2>
+  <p class="nota" id="gen-desc"></p>
+  <form id="gen-form">
+    <label>Proyecto <select id="gen-proyecto"></select></label>
+    <div id="gen-params"></div>
+    <label>Conexión de IA <select id="gen-conexion"></select></label>
+    <p id="gen-estado" class="estado-ia"></p>
+    <p id="gen-capacidad" class="capacidad"></p>
+    <div class="fila"><button type="submit" id="gen-ir">Generar con IA</button><button type="button" id="gen-sin" class="sec">Generar sin IA</button><button type="button" id="gen-cancelar" class="sec" hidden>Cancelar</button></div>
+    <progress id="gen-barra" max="1" value="0" hidden></progress>
+    <p id="gen-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="gen-res" hidden></div>
+  <form id="lote-form" hidden>
+    <h3>Reportes atrasados</h3>
+    <p class="nota">Genera de una vez los reportes diarios de fechas pasadas que aún no existen (por semana o por mes). Cada día queda como borrador para que lo revises: puedes <strong>aceptarlo</strong> (se crea el reporte diario) o <strong>rechazarlo</strong>.</p>
+    <div class="fila">
+      <label>Periodo <select id="lote-modo"><option value="mes" selected>Un mes</option><option value="semana">Una semana</option></select></label>
+      <label id="lote-fecha-l" hidden>Semana que incluye el día <input type="date" id="lote-fecha"></label>
+      <label id="lote-mes-l">Mes <input type="month" id="lote-mes"></label>
+      <span id="lote-rapido" class="fila"><button type="button" class="sec" data-mes="-1">Mes anterior</button><button type="button" class="sec" data-mes="0">Este mes</button></span>
+    </div>
+    <label class="campo-check"><input type="checkbox" id="lote-todos"> Incluir también los días no laborables</label>
+    <div class="fila"><button type="submit" id="lote-ir">Generar atrasados con IA</button><button type="button" id="lote-sin" class="sec">Generar sin IA</button></div>
+    <p id="lote-previo" class="nota" aria-live="polite"></p>
+    <p id="lote-msg" class="msg" aria-live="polite"></p>
+  </form>
+  <div id="lote-res" hidden>
+    <div class="fila lote-barra"><strong id="lote-titulo"></strong><span class="lote-acc"><button type="button" id="lote-aceptar-todos">Aceptar todos</button><button type="button" id="lote-rechazar-todos" class="sec">Rechazar todos</button></span></div>
+    <div id="lote-lista"></div>
+  </div>
+</section>
+<section id="ia-propuestas" hidden>
+  <h2>Análisis inteligente</h2>
+<div id="vig-sec" class="subbloque vig-barra">
+  <h3>Vigilancia continua <span id="vig-estado" class="etq"></span></h3>
+  <p class="nota">Con la app abierta, comprueba cada cierto tiempo el proyecto que estás viendo con las reglas del sistema (no usa IA) y te avisa con una notificación si aparecen inconsistencias nuevas o si el avance, el fin del programa o las restricciones cambian de golpe.</p>
+  <form id="vig-form">
+    <label class="campo-check"><input type="checkbox" id="vig-activa"> Vigilar el proyecto abierto en segundo plano</label>
+    <label>Cada <select id="vig-minutos"><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="60">1 hora</option><option value="120">2 horas</option></select></label>
+    <div class="fila"><button type="submit">Guardar</button><button type="button" id="vig-ahora" class="sec">Comprobar ahora</button></div>
+  </form>
+  <p id="vig-msg" class="msg"></p>
+</div>
+  <nav id="pa-tabs" aria-label="Propuestas e historial"><button data-pa="pend" class="sec on">✨ Pendientes de tu decisión</button><button data-pa="hist" class="sec">📜 Historial de cambios</button></nav>
+  <div id="pa-pend"><p class="nota">Todo lo que las herramientas de IA proponen y espera tu decisión. Aceptar aplica el cambio (queda en el historial y se puede revertir); rechazar lo descarta y no se vuelve a proponer.</p>
+  <div id="propuestas-res"></div></div>
+  <div id="pa-hist" hidden><p class="nota">Registro de cada cambio que se aplicó, revirtió o rechazó desde las herramientas de IA: quién, cuándo y con qué modelo. Desde aquí también puedes revertir.</p>
+  <div id="auditoria-res"></div></div>
+</section>
+</div>
+</main>
+
+<main id="panel-ajustes" class="panel ajustes" hidden>
+<h2>Ajustes</h2>
+<nav id="aj-tabs" class="aj-indice" aria-label="Secciones de Ajustes">
+  <button data-aj="ia" class="sec">🤖 Configuración de IA</button><button data-aj="voz" class="sec">🎤 Voz</button><button data-aj="vista" class="sec on">🎨 Apariencia</button><button data-aj="almacenamiento" class="sec">💾 Almacenamiento</button><button data-aj="servidor" class="sec">⬆️ Servidor y actualización</button><button data-aj="desinstalar" class="sec">🗑 Desinstalar</button>
+</nav>
+<div id="aj-ia" data-aj="ia" hidden>
+<section class="aj-intro"><h2>Configuración de IA</h2><p class="nota">Elige cómo trabaja la IA: un modelo <strong>local</strong> en tu equipo, una <strong>suscripción</strong> que ya pagas (CLI) o una <strong>API</strong> con tu clave. Las herramientas usan la conexión que elijas en cada una.</p><p id="aj-ia-conn" class="nota"></p></section>
+<section class="aj-intro" id="aj-tareas"><h2>Qué conexión usa cada tarea</h2>
+  <p class="nota">Elige un modelo distinto según el trabajo: uno ligero (puede ser local) para revisiones frecuentes y otro más potente para planear o redactar informes. Si lo dejas en «principal», se usa la conexión principal. En cada herramienta aún puedes cambiarla.</p>
+  <form id="tareas-form">
+    <label>Revisiones, verificaciones y chat <select id="tarea-rapida"></select></label>
+    <label>Planeación e informes (análisis avanzado) <select id="tarea-avanzada"></select></label>
+    <div class="fila"><button type="submit">Guardar</button></div>
+    <p id="tareas-msg" class="msg" aria-live="polite"></p>
+  </form></section>
+<nav id="ia-tabs" aria-label="Tipo de conexión de IA">
+  <button data-cat="local" class="sec on">IA local</button>
+  <button data-cat="suscripcion" class="sec">Suscripción</button>
+  <button data-cat="api" class="sec">API</button>
+  <button data-cat="guardadas" class="sec">Conexiones guardadas</button>
+</nav>
+<section id="ia-hw" hidden>
+  <h2>Tu equipo</h2>
+  <p id="hw-info" class="nota">Detectando hardware…</p>
+  <div id="hw-sug"></div>
+</section>
+<section id="ia-modelos" hidden>
+  <h2>Modelos en tu equipo (Ollama)</h2>
+  <p id="oll-estado" class="nota">Comprobando Ollama…</p>
+  <div id="oll-ayuda" hidden></div>
+  <progress id="oll-barra" max="100" value="0" hidden></progress>
+  <p id="oll-msg" class="msg" aria-live="polite"></p>
+  <div id="oll-lista"></div>
+</section>
+<section id="ia-form-sec">
+  <p id="ia-nota" class="nota"></p>
+  <form id="prov-form">
+    <h2 id="ia-titulo">Nueva conexión</h2>
+    <label>Nombre <input name="nombre" required maxlength="100"></label>
+    <label>Tipo <select name="tipo" id="prov-tipo"></select></label>
+    <label id="l-url"><span id="l-url-txt">Dirección del servicio</span> <input name="url" placeholder="URL base"></label>
+    <p id="url-ayuda" class="nota"></p>
+    <label id="l-modelo">Modelo <input name="modelo" list="lista-modelos" placeholder="llama3.1, gpt-4o…"></label>
+    <datalist id="lista-modelos"></datalist>
+    <label id="l-clave">API key <input name="clave" type="password" autocomplete="off"></label>
+    <div class="fila"><button type="button" id="prov-probar">Probar conexión</button><button type="submit">Guardar</button><button type="button" id="prov-modelos" class="sec">Listar modelos</button></div>
+    <p id="prov-msg" class="msg"></p>
+  </form>
+</section>
+<section id="ia-lista-sec" hidden>
+  <p class="nota">Las API keys se cifran con el llavero del sistema y nunca salen de este equipo.</p>
+  <div id="lista-prov"></div>
+</section>
+</div>
+
+<section id="vista-sec" data-aj="vista">
+  <h2>Tamaño de la vista</h2>
+  <p class="nota">Amplía o reduce Project Web si lo ves muy grande o muy chico. También con Ctrl + / Ctrl − y Ctrl 0 para volver al 100 %.</p>
+  <div class="fila zoom-fila"><button id="aj-zoom-menos" class="sec" aria-label="Reducir">−</button>
+    <input id="aj-zoom" type="range" min="50" max="200" step="10" value="100" aria-label="Tamaño de la vista"><button id="aj-zoom-mas" class="sec" aria-label="Ampliar">+</button>
+    <strong id="aj-zoom-val">100 %</strong><button id="aj-zoom-rest" class="sec">Restablecer</button></div>
+</section>
+<section id="tema-sec" data-aj="vista">
+  <h2>Tema</h2>
+  <p class="nota">Cambia entre modo oscuro y claro en las Herramientas de IA y en los ajustes de la app.</p>
+  <div class="fila"><label>Modo <select id="aj-tema"><option value="oscuro">Oscuro</option><option value="claro">Claro</option></select></label></div>
+</section>
+<section id="alm-sec" data-aj="almacenamiento">
+  <h2>Almacenamiento</h2>
+  <p class="nota">Espacio que ocupa el proyecto en Project Web (archivos, evidencias y lo que guardan las herramientas de IA), los lotes guardados con nombre y los datos de esta app en tu equipo.</p>
+  <div class="fila"><label>Proyecto <select id="alm-proyecto"></select></label><button type="button" id="alm-act" class="sec">Actualizar</button></div>
+  <div id="alm-res"></div>
+</section>
+<section id="voz-sec" data-aj="voz">
+  <h2>Voz y transcripción</h2>
+  <p class="nota">Para dictar y grabar reuniones. La transcripción se hace en este equipo (whisper.cpp o faster-whisper) o con una API compatible con OpenAI. Para español e inglés mezclados deja el idioma en «Detectar».</p>
+  <p id="voz-estado" class="msg"></p>
+  <form id="voz-form">
+    <label>Motor <select id="voz-motor"><option value="auto">Automático</option><option value="whisper-cli">whisper.cpp (whisper-cli)</option><option value="faster-whisper">faster-whisper (Python)</option><option value="openai">API compatible con OpenAI</option></select></label>
+    <label>Modelo (ruta del archivo ggml-*.bin, o nombre como base / small / whisper-1) <input id="voz-modelo" placeholder="/ruta/ggml-base.bin"></label>
+    <label>Idioma <select id="voz-idioma"><option value="auto">Detectar (español / inglés)</option><option value="es">Español</option><option value="en">Inglés</option></select></label>
+    <label>Conexión para «API compatible con OpenAI» <select id="voz-conexion"></select></label>
+    <div class="fila"><button type="submit">Guardar y comprobar</button></div>
+  </form>
+  <details><summary>¿Cómo instalo un motor?</summary><p class="nota" id="voz-ayuda"></p></details>
+</section>
+<section id="act" data-aj="servidor">
+  <h2>Servidor y actualizaciones</h2>
+  <p class="nota">El servidor es la dirección de tu Project Web: ahí inicias sesión. El token (solo para actualizar la app) se genera en Project Web → Ajustes → App de escritorio.</p>
+  <form id="srv-form">
+    <label>Servidor de Project Web <input id="srv-url" placeholder="https://tu-dominio"></label>
+    <label>Token de actualización <input id="srv-token" type="password" autocomplete="off" placeholder="(guardado)"></label>
+    <button type="submit">Guardar</button>
+  </form>
+  <p id="upd-ver" class="nota"></p>
+  <div class="fila"><button id="upd-buscar">Buscar actualización</button></div>
+  <progress id="upd-prog" max="1" value="0" hidden></progress>
+  <div id="upd-res"></div>
+</section>
+<section id="des-sec" data-aj="desinstalar">
+  <h2>Desinstalar la aplicación</h2>
+  <p class="nota" id="des-nota"></p>
+  <label class="campo-check"><input type="checkbox" id="des-datos"> Borrar también mis conexiones de IA, claves y ajustes de este equipo</label>
+  <div class="fila"><button type="button" id="des-ir" class="peligro">Desinstalar Project Web Desktop</button></div>
+  <p id="des-msg" class="msg" aria-live="polite"></p>
+</section>
+</main>
+</div>
+<script src="wav.js"></script>
+<script src="centro.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

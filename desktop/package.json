@@ -1,0 +1,19 @@
+{
+  "name": "projectweb-desktop",
+  "version": "0.1.0",
+  "description": "Project Web Desktop: herramientas de IA (modelos locales y de suscripción) para el administrador de Project Web",
+  "main": "src/main.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": { "name": "Project Web", "email": "admin@po.local" },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "dist": "electron-builder --linux --publish never",
+    "dist:dir": "electron-builder --linux --dir --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  }
+}

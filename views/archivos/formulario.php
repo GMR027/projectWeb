@@ -17,12 +17,19 @@
                 </select>
                 <?php if (!$categorias): ?><small class="text-muted">Aún no hay categorías. <a href="/archivos/categorias/crear?proyecto=<?php echo $id; ?>">Crea la primera</a>.</small><?php endif; ?>
             </div>
+            <div class="campo">
+                <label for="carpeta_id">Carpeta</label>
+                <select id="carpeta_id" name="carpeta_id">
+                    <option value="">— Sin carpeta —</option>
+                    <?php foreach ($carpetas as $c): ?><option value="<?php echo s($c->id); ?>" <?php echo (int)$archivo->carpeta_id === (int)$c->id ? 'selected' : ''; ?>><?php echo s($c->nombre); ?></option><?php endforeach; ?>
+                </select>
+            </div>
             <div class="campo"><label for="nombre">Nombre del archivo *</label><input type="text" id="nombre" name="nombre" maxlength="200" value="<?php echo s($archivo->nombre); ?>" required></div>
             <div class="campo"><label for="numero_revision">Número de revisión</label><input type="text" id="numero_revision" name="numero_revision" maxlength="30" value="<?php echo s($archivo->numero_revision); ?>" placeholder="Ej: 0, A, 02"></div>
             <div class="campo campo-full">
                 <label for="archivo"><?php echo $esNuevo ? 'Archivo *' : 'Reemplazar archivo (opcional)'; ?></label>
                 <input type="file" id="archivo" name="archivo" <?php echo $esNuevo ? 'required' : ''; ?> accept="<?php echo s('.' . implode(',.', $extensiones)); ?>">
-                <small class="text-muted">Máx. 100 MB. Permitidos: pdf, Word, Excel, PowerPoint, XML, LibreOffice (odt, ods, odp, odg, otg…), imágenes (jpg, png, gif, webp…), dwg/dxf, zip y similares.</small>
+                <small class="text-muted">Máx. 100 MB. Permitidos: pdf, Word, Excel, PowerPoint, XML, LibreOffice (odt, ods, odp, odg, otg…), imágenes (jpg, png, gif, webp…), planos y modelos (AutoCAD: dwg, dxf, dwt; Revit: rvt, rfa, rte, rft; IFC, SketchUp, Navisworks, Rhino…), zip, rar y 7z. Cada archivo se revisa en busca de virus, macros y ejecutables antes de guardarse.</small>
                 <?php if (!$esNuevo): ?><div class="text-sm" style="margin-top:.5rem">Actual: <span class="mono"><?php echo s($archivo->archivo_original); ?></span> · <?php echo s($archivo->tamanoLegible()); ?></div><?php endif; ?>
             </div>
         </div>

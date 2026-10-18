@@ -65,6 +65,7 @@
                     <input type="number" id="orden" name="orden" value="<?php echo s($actividad->orden); ?>" min="0">
                 </div>
                 <?php include __DIR__ . '/_materiales-actividad.php'; ?>
+            <?php $tipoEntidad = 'actividad'; $entidadId = null; include __DIR__ . '/../normativa/_seccion.php'; ?>
             </div>
             <button type="submit" class="btn btn-primary">Crear Actividad</button>
         </form>
@@ -82,3 +83,24 @@
 </script>
     <?php endif; ?>
 </div>
+
+<?php if (puede_gestionar_proyecto($proyecto)): ?>
+<script>
+    (function () {
+        var nombre = document.getElementById('nombre'), dur = document.getElementById('duracion_dias'); if (!nombre || !dur) return;
+        var aviso = document.createElement('small'); aviso.className = 'text-muted'; aviso.id = 'dur-sugerida'; aviso.style.display = 'block'; dur.parentNode.appendChild(aviso);
+        var t = null, excluir = <?php echo (int)($actividad->id ?? 0); ?>;
+        function consulta() {
+            if (nombre.value.trim().length < 6) { aviso.textContent = ''; return; }
+            fetch('/api/duracion-sugerida?proyecto=<?php echo (int)$proyecto->id; ?>&excluir=' + excluir + '&nombre=' + encodeURIComponent(nombre.value), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+                var s = j.sugerencia; aviso.replaceChildren();
+                if (!s) { aviso.textContent = ''; return; }
+                aviso.append('Actividades parecidas duran entre ' + s.min + ' y ' + s.max + ' d (mediana ' + s.p50 + ' d, ' + s.n + ' comparables). ');
+                var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-xs btn-ghost'; b.textContent = 'Usar ' + s.p50 + ' d'; b.addEventListener('click', function () { dur.value = s.p50; dur.dispatchEvent(new Event('input', { bubbles: true })); dur.dispatchEvent(new Event('change', { bubbles: true })); }); aviso.append(b);
+                if (s.ejemplos.length) aviso.append(' Ej.: ' + s.ejemplos.join('; '));
+            }).catch(function () {});
+        }
+        nombre.addEventListener('input', function () { clearTimeout(t); t = setTimeout(consulta, 600); }); consulta();
+    })();
+</script>
+<?php endif; ?>

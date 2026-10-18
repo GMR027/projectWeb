@@ -24,7 +24,7 @@ class Almacenamiento
     public static function desglose(int $proyectoId): array
     {
         $p = Proyecto::find($proyectoId);
-        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Logos y carátula' => 0];
+        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Redactor (documentos)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Logos y carátula' => 0];
 
         foreach (Archivo::deProyecto($proyectoId) as $a) $r['Archivos'] += self::tam((string)$a->ruta()) ?: 0;
 
@@ -40,7 +40,11 @@ class Almacenamiento
             foreach (array_unique($nombres) as $n) $r['vPlan (planos e imágenes)'] += self::tam(self::RAIZ . '/public/uploads/vplan/' . basename($n));
         }
         try {   // si la tabla del Editor aún no existe (migración pendiente), no debe bloquear las demás subidas
-            foreach (\Model\Grafico::deProyecto($proyectoId) as $g) $r['Editor (gráficos)'] += $g->bytes();
+            foreach (\Model\Grafico::deProyecto($proyectoId, null) as $g) $r['Editor (gráficos)'] += $g->bytes();
+        } catch (\Throwable $e) {
+        }
+        try {
+            foreach (\Model\RedactorDocumento::deProyecto($proyectoId) as $doc) $r['Redactor (documentos)'] += $doc->bytes();
         } catch (\Throwable $e) {
         }
         try {
@@ -55,6 +59,9 @@ class Almacenamiento
             if ($m->imagen) $r['Materiales (fotos y fichas)'] += self::tam(self::RAIZ . '/public/uploads/materiales/' . basename($m->imagen));
             if ($m->ficha_tecnica) $r['Materiales (fotos y fichas)'] += self::tam(self::RAIZ . "/storage/fichas/$proyectoId/" . basename($m->ficha_tecnica));
         }
+        $r['Grabaciones de reuniones'] = Grabaciones::bytes($proyectoId);
+        $r['Normativa y especificaciones'] = Normativa::bytes($proyectoId);
+        $r['Punch list (fotos)'] = Punch::bytes($proyectoId);
         if ($p) {
             foreach ([['logo', 'logos'], ['contratista_logo', 'logos'], ['caratula', 'caratulas']] as [$c, $dir]) {
                 if ($p->$c) $r['Logos y carátula'] += self::tam(self::RAIZ . "/public/build/img/$dir/" . basename($p->$c));

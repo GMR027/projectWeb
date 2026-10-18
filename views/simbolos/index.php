@@ -64,6 +64,42 @@
     <?php endif; ?>
 </div>
 
+<div class="card" id="simbologias">
+    <h3><?php echo s(t('Simbologías')); ?></h3>
+    <p class="text-muted text-sm">Las miniaturas son la imagen guardada: revísala aquí antes de usarla en una lámina. Leyendas (p. ej. «SYMBOLOGY FOR SCHEDULE») dibujadas con el Editor: formas, líneas, textos e imágenes. Se eligen en cada lámina del vPlan; si editas una, cambia en todas las láminas que la usan.</p>
+    <?php if ($puedeEditar): ?>
+    <div class="la-controles">
+        <a href="/graficos/crear?proyecto=<?php echo (int)$proyecto->id; ?>&tipo=simbologia" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva simbología</a>
+        <?php foreach (['rectangular' => ['Plantilla rectangular', 'fa-rectangle-list'], 'cuadrada' => ['Plantilla cuadrada', 'fa-square']] as $forma => [$etq, $ico]): ?>
+        <form method="POST" action="/graficos/simbologia-estandar" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="forma" value="<?php echo $forma; ?>">
+            <button type="submit" class="btn btn-ghost" title="Parte de las 4 filas actuales (COMPLETE, IN PROGRESS, ON HOLD, CONSTRAIN) y edítalas"><i class="fa-solid <?php echo $ico; ?>"></i> <?php echo $etq; ?> estándar</button></form>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+    <?php if (!$simbologias): ?>
+        <p class="text-muted">Aún no hay simbologías. Mientras tanto, las láminas muestran la tabla estándar.</p>
+    <?php else: ?>
+        <div class="sim-admin">
+        <?php foreach ($simbologias as $g): $img = $g->imagenSimbologia(); ?>
+            <div class="sim-tarjeta">
+                <div class="sim-img"><?php if ($img): ?><img src="/uploads/vplan/<?php echo s($img); ?>" alt="" loading="lazy"><?php else: ?><span class="text-sm" style="color:#475569;padding:.8rem;text-align:center">Sin imagen: ábrela en el Editor y guárdala</span><?php endif; ?></div>
+                <div class="sim-nombre"><?php echo s($g->nombre); ?></div>
+                <div class="text-muted text-sm"><?php echo (int)$g->ancho; ?> × <?php echo (int)$g->alto; ?> px</div>
+                <?php if ($puedeEditar): ?>
+                <a href="/graficos/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$g->id; ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-ruler"></i> Editar</a>
+                <form method="POST" action="/graficos/duplicar" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button></form>
+                <form method="POST" action="/graficos/tipo" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="grafico"><button type="submit" class="btn btn-sm btn-ghost" title="Devolverla a la lista de gráficos del Editor">Pasar a gráfico</button></form>
+                <form method="POST" action="/graficos/eliminar" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Las láminas del vPlan que la usan volverán a la tabla estándar.|Sí, eliminar">
+                    <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button>
+                </form>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
+
 <div class="card" id="cajetines">
     <h3><?php echo s(t('Cajetines')); ?></h3>
     <p class="text-muted text-sm">Tabla con los datos del dibujo que se inserta con un clic desde la pestaña «Símbolos» de los editores. Una fila por línea: <code>Etiqueta | valor</code>. Variables: <code>{proyecto}</code> <code>{titulo}</code> <code>{fecha}</code> <code>{autor}</code> <code>{lamina}</code> <code>{total}</code> <code>{escala}</code>. Ya existe uno «Estándar» para todos los proyectos.</p>

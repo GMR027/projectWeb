@@ -28,3 +28,5 @@
         </div>
     </div>
 </div>
+
+<div class="card"><h4><i class="fa-solid fa-clipboard-check"></i> Revisiones</h4><?php include __DIR__ . '/../revisiones/_mini.php'; ?></div>

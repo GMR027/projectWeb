@@ -109,6 +109,9 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
     <div class="fija"><table style="width:100%"><tr>
         <td style="vertical-align:bottom;width:60%"><?php if ($d['simb']): ?><img src="<?php echo $d['simb']; ?>" style="max-height:4.6cm;max-width:12cm"><?php endif; ?></td>
         <td style="vertical-align:bottom;text-align:right">
+            <?php if (!empty($d['simb_schedule'])): ?>
+            <img src="<?php echo $d['simb_schedule']; ?>" style="max-width:7cm;max-height:4.6cm">
+            <?php else: ?>
             <table class="leg" align="right" style="width:5.6cm">
                 <tr><td colspan="2" class="leg-tit">SYMBOLOGY FOR SCHEDULE</td></tr>
                 <tr><td class="sw verde"></td><td>COMPLETE</td></tr>
@@ -116,6 +119,7 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
                 <tr><td class="sw rojo"></td><td>ON HOLD</td></tr>
                 <tr><td class="sw c"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo(0); ?>" style="width:9pt"></td><td>CONSTRAIN</td></tr>
             </table>
+            <?php endif; ?>
         </td>
     </tr></table></div>
     <table class="pie"><tr><td><?php echo s($l->supervisor ? 'SUPERVISOR: ' . $l->supervisor : ''); ?></td><td style="text-align:right">UPDATED: <?php echo s($actualizado); ?></td></tr></table>

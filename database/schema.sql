@@ -266,7 +266,6 @@ CREATE TABLE submittal_materiales (
     submittal_id INT NOT NULL,
     material_id INT NOT NULL,
     PRIMARY KEY (submittal_id, material_id),
-    FOREIGN KEY (msr_id) REFERENCES msrs(id) ON DELETE CASCADE,
     FOREIGN KEY (submittal_id) REFERENCES submittals(id) ON DELETE CASCADE,
     FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -336,6 +335,7 @@ CREATE TABLE vplan_laminas (
     restr_auto TINYINT NOT NULL DEFAULT 0,
     plano VARCHAR(100) DEFAULT NULL,
     simbologia VARCHAR(100) DEFAULT NULL,
+    simbologia_grafico_id INT DEFAULT NULL,   -- simbología del schedule (gráfico del Editor); NULL = tabla estándar
     marcas_json LONGTEXT,
     marcas_png VARCHAR(100) DEFAULT NULL,
     marcas_estados_hash VARCHAR(64) DEFAULT NULL,
@@ -417,6 +417,7 @@ CREATE TABLE editor_graficos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
     nombre VARCHAR(150) NOT NULL,
+    tipo VARCHAR(12) NOT NULL DEFAULT 'grafico',   -- 'grafico' o 'simbologia' (ver database/migracion_simbologias.sql)
     categoria_id INT DEFAULT NULL,
     ancho INT NOT NULL DEFAULT 1920,
     alto INT NOT NULL DEFAULT 1080,
@@ -442,6 +443,8 @@ CREATE TABLE editor_laminas (
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (grafico_id) REFERENCES editor_graficos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+ALTER TABLE vplan_laminas ADD CONSTRAINT fk_lamina_simbologia FOREIGN KEY (simbologia_grafico_id) REFERENCES editor_graficos(id) ON DELETE SET NULL;
 
 -- Biblioteca de símbolos por proyecto (ver database/migracion_simbolos.sql)
 CREATE TABLE simbolos (
@@ -531,10 +534,20 @@ CREATE TABLE archivo_categorias (
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE archivo_carpetas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_arch_carpeta (proyecto_id, nombre),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE archivos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
     categoria_id INT DEFAULT NULL,
+    carpeta_id INT DEFAULT NULL,
     fecha DATE NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     numero_revision VARCHAR(30) NOT NULL DEFAULT '',
@@ -543,7 +556,8 @@ CREATE TABLE archivos (
     tamano INT UNSIGNED NOT NULL DEFAULT 0,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (categoria_id) REFERENCES archivo_categorias(id) ON DELETE SET NULL
+    FOREIGN KEY (categoria_id) REFERENCES archivo_categorias(id) ON DELETE SET NULL,
+    FOREIGN KEY (carpeta_id) REFERENCES archivo_carpetas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Minutas de junta y personal del contratista
@@ -686,4 +700,681 @@ CREATE TABLE dependencias_cambios (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cambios_json LONGTEXT NOT NULL,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+-- Conexiones de IA que el admin usa desde la app de escritorio (DictaFlow). No se guardan API keys.
+CREATE TABLE IF NOT EXISTS herramientas_ia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    tipo VARCHAR(20) NOT NULL,
+    url VARCHAR(255) NOT NULL DEFAULT '',
+    modelo VARCHAR(100) NOT NULL DEFAULT '',
+    notas VARCHAR(255) NOT NULL DEFAULT '',
+    activa TINYINT(1) NOT NULL DEFAULT 1,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Propuestas del Programador de actividades (IA). Son escenarios aparte: nunca modifican `actividades`.
+CREATE TABLE IF NOT EXISTS programador_propuestas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    fin_actual DATE DEFAULT NULL,
+    fin_propuesto DATE DEFAULT NULL,
+    resumen_json LONGTEXT NOT NULL,   -- totales, obstáculos y advertencias
+    filas_json LONGTEXT NOT NULL,     -- una fila por actividad: actual vs. propuesto + justificación
+    guardada TINYINT(1) NOT NULL DEFAULT 0,   -- guardada por el admin: no se borra al rotar las últimas 10
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    seguimiento_json LONGTEXT NULL,   -- estado/responsable de cada obstáculo y mejora
+    aceptadas_json LONGTEXT NULL,     -- partidas de la propuesta ya aceptadas en el programa
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Estado previo a aceptar una partida de una propuesta (para deshacer)
+CREATE TABLE IF NOT EXISTS programador_respaldos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    propuesta_id INT NOT NULL,
+    partida_id INT NOT NULL,
+    datos_json LONGTEXT NOT NULL,
+    deshecho TINYINT(1) NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Inconsistencias de proyecto: análisis (corridas) guardables y sus hallazgos, cada uno con una solución que el admin acepta o rechaza.
+CREATE TABLE IF NOT EXISTS inconsistencias_corridas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    guardada TINYINT(1) NOT NULL DEFAULT 0,       -- las no guardadas rotan (se conservan las 5 últimas)
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    del_sistema INT NOT NULL DEFAULT 0,
+    de_la_ia INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS inconsistencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    corrida_id INT NOT NULL,
+    huella CHAR(40) NOT NULL,                     -- identifica el hallazgo para no repetir lo ya resuelto o rechazado
+    categoria VARCHAR(30) NOT NULL,
+    severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
+    origen ENUM('sistema','ia') NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NOT NULL,
+    actividades_json TEXT NULL,                   -- ids de actividades implicadas
+    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado}
+    estado ENUM('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'pendiente',
+    antes_json TEXT NULL,                         -- valores previos a aplicar la solución (para revertir)
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    detectado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto_en DATETIME NULL,
+    UNIQUE KEY uq_corrida_huella (corrida_id, huella),
+    KEY idx_estado (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrida_id) REFERENCES inconsistencias_corridas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Registro de cada lote que revisó la IA en un análisis de inconsistencias: actividades cubiertas, qué devolvió y si falló.
+CREATE TABLE IF NOT EXISTS inconsistencias_lotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    corrida_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    titulo VARCHAR(150) NOT NULL,
+    estado ENUM('ok','error') NOT NULL DEFAULT 'ok',
+    error VARCHAR(500) NOT NULL DEFAULT '',
+    actividades_json MEDIUMTEXT NULL,             -- [{id, codigo, nombre}] cubiertas por el lote (al momento del análisis)
+    hallazgos_json MEDIUMTEXT NULL,               -- [{titulo, severidad, categoria, accion}] ya validados
+    respuesta_json MEDIUMTEXT NULL,               -- respuesta cruda de la IA (recortada)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_corrida (corrida_id, orden),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrida_id) REFERENCES inconsistencias_corridas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Análisis de materiales: cada corrida (análisis guardable) agrupa hallazgos con una solución que el admin acepta o rechaza.
+CREATE TABLE IF NOT EXISTS analisis_materiales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    guardada TINYINT(1) NOT NULL DEFAULT 0,       -- las no guardadas rotan (se conservan las 5 últimas)
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    del_sistema INT NOT NULL DEFAULT 0,
+    de_la_ia INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS analisis_materiales_hallazgos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    corrida_id INT NOT NULL,
+    huella CHAR(40) NOT NULL,
+    categoria VARCHAR(30) NOT NULL,
+    severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
+    origen ENUM('sistema','ia') NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    descripcion TEXT NOT NULL,
+    materiales_json TEXT NULL,                    -- ids de materiales implicados
+    submittals_json TEXT NULL,                    -- ids de submittals implicados
+    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado}
+    estado ENUM('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'pendiente',
+    antes_json TEXT NULL,                         -- valores previos a aplicar la solución (para revertir)
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    detectado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto_en DATETIME NULL,
+    UNIQUE KEY uq_corrida_huella (corrida_id, huella),
+    KEY idx_estado (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrida_id) REFERENCES analisis_materiales(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Registro de cada lote que revisó la IA en un análisis: materiales cubiertos, qué devolvió y si falló (para decidir y actuar después).
+CREATE TABLE IF NOT EXISTS analisis_materiales_lotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    corrida_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    titulo VARCHAR(150) NOT NULL,
+    estado ENUM('ok','error') NOT NULL DEFAULT 'ok',
+    error VARCHAR(500) NOT NULL DEFAULT '',
+    materiales_json MEDIUMTEXT NULL,              -- [{id, nombre}] analizados en el lote (nombre al momento del análisis)
+    hallazgos_json MEDIUMTEXT NULL,               -- [{titulo, severidad, categoria, accion, materiales}] ya validados
+    respuesta_json MEDIUMTEXT NULL,               -- respuesta cruda de la IA (recortada)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_corrida (corrida_id, orden),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (corrida_id) REFERENCES analisis_materiales(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Historial de cambios / auditoría global de las herramientas de IA. Solo se agregan filas: revertir o reabrir crea otro evento.
+CREATE TABLE IF NOT EXISTS auditoria_cambios (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    herramienta VARCHAR(30) NOT NULL,                 -- programador | inconsistencias | materiales | ...
+    evento ENUM('aplicado','revertido','rechazado','reabierto') NOT NULL,
+    accion VARCHAR(40) NOT NULL,
+    entidad_tipo VARCHAR(20) NOT NULL DEFAULT '',     -- actividad | partida | material | restriccion | dependencia | submittal | proyecto
+    entidad_id INT NULL,
+    entidad_nombre VARCHAR(255) NOT NULL DEFAULT '',
+    resumen VARCHAR(500) NOT NULL DEFAULT '',
+    antes_json MEDIUMTEXT NULL,
+    despues_json MEDIUMTEXT NULL,
+    referencia_id INT NULL,                           -- hallazgo, propuesta o corrida que originó el cambio
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto_fecha (proyecto_id, creado),
+    KEY idx_entidad (proyecto_id, entidad_tipo, entidad_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Informes generados por las herramientas de IA (reporte diario, resumen semanal, lookahead, minutas, cierre…). El contenido se calcula
+-- en el servidor; la IA solo redacta. Un informe es un borrador hasta que el admin lo aprueba, y algunos tipos se pueden aplicar a su módulo.
+CREATE TABLE IF NOT EXISTS informes_ia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo VARCHAR(30) NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    parametros_json TEXT NULL,
+    contenido_json LONGTEXT NOT NULL,             -- {secciones:[{titulo,tipo,...}], aplicar:{...}}
+    origen ENUM('sistema','ia') NOT NULL DEFAULT 'sistema',
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    estado ENUM('borrador','aprobado','descartado') NOT NULL DEFAULT 'borrador',
+    aplicado_en DATETIME NULL,
+    aplicado_ref VARCHAR(100) NOT NULL DEFAULT '',
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto_tipo (proyecto_id, tipo, creado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Grabaciones de reuniones (minutas) guardadas en el proyecto. El audio vive en storage/grabaciones/<proyecto>/ (no en public) y cuenta para la cuota.
+CREATE TABLE IF NOT EXISTS grabaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL DEFAULT '',
+    archivo VARCHAR(100) NOT NULL,
+    mime VARCHAR(60) NOT NULL DEFAULT '',
+    tamano INT UNSIGNED NOT NULL DEFAULT 0,
+    duracion_seg INT UNSIGNED NOT NULL DEFAULT 0,
+    transcripcion LONGTEXT NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id, creado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Vigilancia continua de anomalías (Inconsistencias): última foto del proyecto para detectar lo que cambió desde la comprobación anterior.
+CREATE TABLE IF NOT EXISTS vigilancia_estado (
+    proyecto_id INT PRIMARY KEY,
+    huellas_json LONGTEXT NOT NULL,        -- hallazgos del sistema vistos en la última comprobación
+    metricas_json TEXT NOT NULL,           -- avance global, fin del programa y conteos
+    nuevos_json LONGTEXT NULL,             -- lo nuevo (hallazgos y cambios bruscos) de la última comprobación
+    revisado DATETIME NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Normativa y especificaciones: PDFs (español o inglés) que se leen, se parten por cláusulas y se vinculan a materiales y actividades.
+CREATE TABLE IF NOT EXISTS normativa_documentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    tipo ENUM('norma','especificacion','otro') NOT NULL DEFAULT 'especificacion',
+    codigo VARCHAR(80) NOT NULL DEFAULT '',          -- p. ej. NOM-001-SEDE, CSI 27 15 00
+    idioma ENUM('es','en','mixto') NOT NULL DEFAULT 'es',
+    archivo VARCHAR(100) NOT NULL,                   -- en storage/normativa/<proyecto>/
+    tamano INT UNSIGNED NOT NULL DEFAULT 0,
+    paginas INT UNSIGNED NOT NULL DEFAULT 0,
+    fragmentos INT UNSIGNED NOT NULL DEFAULT 0,
+    estado ENUM('indexado','sin_texto','error') NOT NULL DEFAULT 'indexado',
+    nota VARCHAR(300) NOT NULL DEFAULT '',
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS normativa_fragmentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    documento_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    pagina INT UNSIGNED NOT NULL DEFAULT 1,
+    clausula VARCHAR(60) NOT NULL DEFAULT '',
+    titulo VARCHAR(250) NOT NULL DEFAULT '',
+    texto TEXT NOT NULL,
+    idioma ENUM('es','en') NOT NULL DEFAULT 'es',
+    csi CHAR(6) NULL,                                -- sección tipo CSI (27 15 00 → 271500) si el encabezado la trae
+    KEY idx_doc (documento_id),
+    KEY idx_csi (proyecto_id, csi),
+    FULLTEXT KEY ft_texto (titulo, texto),
+    FOREIGN KEY (documento_id) REFERENCES normativa_documentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS normativa_aplicaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    documento_id INT NULL,                           -- manual: documento (opcional)
+    fragmento_id INT NULL,                           -- cláusula concreta, si se conoce
+    entidad_tipo ENUM('actividad','material') NOT NULL,
+    entidad_id INT NOT NULL,
+    referencia VARCHAR(200) NOT NULL DEFAULT '',     -- texto libre en vinculaciones manuales (p. ej. «NOM-001 art. 250»)
+    requisito TEXT NULL,                             -- resumen del requisito (en español)
+    nota VARCHAR(500) NOT NULL DEFAULT '',
+    origen ENUM('manual','csi','palabras','ia') NOT NULL,
+    estado ENUM('propuesta','aceptada','rechazada') NOT NULL DEFAULT 'propuesta',
+    puntaje DECIMAL(5,2) NOT NULL DEFAULT 0,
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_entidad (proyecto_id, entidad_tipo, entidad_id),
+    KEY idx_estado (proyecto_id, estado),
+    UNIQUE KEY uq_vinculo (fragmento_id, entidad_tipo, entidad_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (documento_id) REFERENCES normativa_documentos(id) ON DELETE CASCADE,
+    FOREIGN KEY (fragmento_id) REFERENCES normativa_fragmentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Materiales inteligentes: con la opción activa, la app de escritorio verifica cada material contra la normativa y especificaciones cargadas
+-- (normativa_fragmentos) y guarda el resultado en el material. La web solo lo muestra.
+CREATE TABLE IF NOT EXISTS materiales_inteligentes (
+    proyecto_id INT NOT NULL PRIMARY KEY,
+    activo TINYINT(1) NOT NULL DEFAULT 0,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS material_verificaciones (
+    material_id INT NOT NULL PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    estado ENUM('aprobado','no_aprobado','revisar','sin_normativa') NOT NULL,
+    huella CHAR(32) NOT NULL,                        -- datos del material al verificar; si cambian, la verificación queda desactualizada
+    resumen VARCHAR(500) NOT NULL DEFAULT '',
+    info MEDIUMTEXT NULL,                            -- JSON: motivos[] y requisitos[] {documento, clausula, pagina, requisito, cumple}
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    verificado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id, estado),
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Redactor (ver database/migracion_redactor.sql)
+CREATE TABLE IF NOT EXISTS redactor_documentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    fecha DATE NOT NULL,
+    departamento VARCHAR(100) NOT NULL DEFAULT '',
+    idioma VARCHAR(8) NOT NULL DEFAULT 'es',          -- es, en o es+en (diccionarios del corrector)
+    papel VARCHAR(10) NOT NULL DEFAULT 'carta',       -- carta, a4, oficio, tabloide
+    orientacion VARCHAR(10) NOT NULL DEFAULT 'vertical',
+    margen_sup DECIMAL(4,2) NOT NULL DEFAULT 2.54,    -- cm
+    margen_inf DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    margen_izq DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    margen_der DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    numerar TINYINT(1) NOT NULL DEFAULT 1,            -- numerador de página
+    encabezado TINYINT(1) NOT NULL DEFAULT 0,         -- encabezado con nombre, departamento y fecha
+    rastrear TINYINT(1) NOT NULL DEFAULT 0,           -- control de cambios activo
+    marca_agua VARCHAR(40) NOT NULL DEFAULT '',       -- texto diagonal detrás de cada página
+    encabezado_texto VARCHAR(200) NOT NULL DEFAULT '',
+    pie_texto VARCHAR(200) NOT NULL DEFAULT '',
+    contenido LONGTEXT,                               -- HTML ya saneado (Classes\Redactor::limpiar)
+    comentarios LONGTEXT NULL,                        -- JSON de comentarios
+    creado_por INT DEFAULT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id, departamento),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Historial de versiones del documento (ver database/migracion_redactor_herramientas.sql)
+CREATE TABLE IF NOT EXISTS redactor_versiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    documento_id INT NOT NULL,
+    etiqueta VARCHAR(80) NOT NULL DEFAULT '',
+    usuario VARCHAR(100) NOT NULL DEFAULT '',
+    contenido LONGTEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_documento (documento_id, creado),
+    FOREIGN KEY (documento_id) REFERENCES redactor_documentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Palabras que el usuario agrega al diccionario del corrector (una lista por proyecto)
+CREATE TABLE IF NOT EXISTS redactor_palabras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    palabra VARCHAR(60) NOT NULL,
+    UNIQUE KEY uq_palabra (proyecto_id, palabra),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Clima por proyecto (Open-Meteo): ubicación geocodificada y días de pronóstico / registro real, para anomalías y días no hábiles probables.
+CREATE TABLE IF NOT EXISTS clima_proyecto (
+    proyecto_id INT PRIMARY KEY,
+    lugar VARCHAR(200) NOT NULL DEFAULT '',
+    lat DECIMAL(8,5) NOT NULL,
+    lon DECIMAL(8,5) NOT NULL,
+    actualizado DATETIME NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS clima_dias (
+    proyecto_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    precip_mm DECIMAL(6,1) NOT NULL DEFAULT 0,
+    prob INT NULL,                                   -- probabilidad de lluvia (solo pronóstico)
+    viento_kmh DECIMAL(5,1) NOT NULL DEFAULT 0,
+    tmax DECIMAL(4,1) NULL,
+    tmin DECIMAL(4,1) NULL,
+    tipo ENUM('pronostico','real') NOT NULL,
+    actualizado DATETIME NOT NULL,
+    PRIMARY KEY (proyecto_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Mapa de avance en planos: el color de las marcas del Editor (rojo/amarillo/verde) se traduce a un porcentaje de avance por actividad.
+CREATE TABLE IF NOT EXISTS mapa_avance_ajustes (
+    proyecto_id INT PRIMARY KEY,
+    rojo TINYINT UNSIGNED NOT NULL DEFAULT 0,        -- % de avance que vale una marca roja (no avanzado)
+    amarillo TINYINT UNSIGNED NOT NULL DEFAULT 50,   -- … amarilla (a medias)
+    verde TINYINT UNSIGNED NOT NULL DEFAULT 100,     -- … verde (terminado)
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Qué capa de una lámina corresponde a qué actividad (capa_id vacío = todas las marcas sin capa asignada)
+CREATE TABLE IF NOT EXISTS mapa_avance_capas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    lamina_id INT NOT NULL,
+    capa_id VARCHAR(40) NOT NULL DEFAULT '',
+    actividad_id INT NOT NULL,
+    UNIQUE KEY uq_capa (lamina_id, capa_id, actividad_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Una foto por día de lo que indican las marcas: sirve para ver el avance diario y su tendencia
+CREATE TABLE IF NOT EXISTS mapa_avance_instantaneas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    lamina_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    porcentaje DECIMAL(5,2) NOT NULL,
+    peso DECIMAL(12,2) NOT NULL DEFAULT 0,
+    detalle_json TEXT NULL,                          -- marcas rojas/amarillas/verdes
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_dia (lamina_id, actividad_id, fecha),
+    KEY idx_act (proyecto_id, actividad_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Seguridad e higiene (permisos de trabajo, incidentes) y punch list (pendientes de calidad con fotos antes/después).
+CREATE TABLE IF NOT EXISTS permisos_trabajo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo VARCHAR(30) NOT NULL,                       -- altura | caliente | espacio_confinado | excavacion | electrico | izaje | general
+    titulo VARCHAR(200) NOT NULL,
+    actividad_id INT NULL,
+    area VARCHAR(150) NOT NULL DEFAULT '',
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    contratista VARCHAR(150) NOT NULL DEFAULT '',
+    descripcion TEXT NULL,
+    riesgos TEXT NULL,
+    medidas_json TEXT NULL,                          -- [{texto, ok}]
+    vigente_desde DATE NOT NULL,
+    vigente_hasta DATE NOT NULL,
+    estado ENUM('borrador','solicitado','aprobado','rechazado','cerrado') NOT NULL DEFAULT 'solicitado',
+    origen ENUM('manual','ia') NOT NULL DEFAULT 'manual',
+    solicitado_por VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto_en DATETIME NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proy (proyecto_id, estado, vigente_hasta),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS seguridad_incidentes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    tipo ENUM('incidente','casi_accidente','acto_inseguro','condicion_insegura') NOT NULL,
+    severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
+    area VARCHAR(150) NOT NULL DEFAULT '',
+    actividad_id INT NULL,
+    descripcion TEXT NOT NULL,
+    acciones TEXT NULL,
+    estado ENUM('abierto','cerrado') NOT NULL DEFAULT 'abierto',
+    reportado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proy (proyecto_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS punch_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
+    actividad_id INT NULL,
+    ubicacion VARCHAR(200) NOT NULL DEFAULT '',
+    categoria VARCHAR(60) NOT NULL DEFAULT '',
+    severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    contratista VARCHAR(150) NOT NULL DEFAULT '',
+    fecha_limite DATE NULL,
+    estado ENUM('abierto','en_proceso','corregido','cerrado','rechazado') NOT NULL DEFAULT 'abierto',
+    foto_antes VARCHAR(100) NULL,
+    foto_despues VARCHAR(100) NULL,
+    origen ENUM('manual','inspeccion','ia') NOT NULL DEFAULT 'manual',
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cerrado_en DATETIME NULL,
+    KEY idx_proy (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Tipo de obra de cada proyecto (plantilla): da contexto a la IA, reglas de secuencia y una base de partidas/actividades.
+CREATE TABLE IF NOT EXISTS proyecto_plantilla (
+    proyecto_id INT PRIMARY KEY,
+    plantilla VARCHAR(30) NOT NULL,
+    base_aplicada TINYINT(1) NOT NULL DEFAULT 0,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Registro de cada vez que se identificó o se eligió el tipo de obra de un proyecto (referencia futura)
+CREATE TABLE IF NOT EXISTS proyecto_plantilla_historial (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    plantilla VARCHAR(30) NOT NULL,
+    origen ENUM('identificado','manual') NOT NULL DEFAULT 'manual',
+    confianza TINYINT UNSIGNED NOT NULL DEFAULT 0,       -- % de coincidencia al identificar
+    indicios VARCHAR(500) NOT NULL DEFAULT '',           -- palabras del proyecto que lo sustentan
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id, creado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Redactor: firmas, sellos y plantillas (ver database/migracion_redactor_revision.sql)
+-- Firmas manuscritas guardadas por usuario (imagen en uploads/firmas)
+CREATE TABLE IF NOT EXISTS redactor_firmas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    nombre VARCHAR(60) NOT NULL,
+    archivo VARCHAR(40) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_usuario (usuario_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Sellos de firma electrónica interna: quién firmó, cuándo y la huella del texto e imágenes en ese momento
+CREATE TABLE IF NOT EXISTS redactor_sellos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    documento_id INT NOT NULL,
+    usuario_id INT DEFAULT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    cargo VARCHAR(100) NOT NULL DEFAULT '',
+    huella CHAR(64) NOT NULL,
+    firmado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_doc (documento_id),
+    FOREIGN KEY (documento_id) REFERENCES redactor_documentos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Plantillas de documento creadas por el proyecto
+CREATE TABLE IF NOT EXISTS redactor_plantillas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(200) NOT NULL DEFAULT '',
+    papel VARCHAR(10) NOT NULL DEFAULT 'carta',
+    orientacion VARCHAR(10) NOT NULL DEFAULT 'vertical',
+    margen_sup DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    margen_inf DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    margen_izq DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    margen_der DECIMAL(4,2) NOT NULL DEFAULT 2.54,
+    contenido LONGTEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+-- Revisiones por proyecto: veredicto de normativa/especificaciones (materiales y actividades) y estado de uso de las herramientas de IA.
+CREATE TABLE IF NOT EXISTS revisiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo ENUM('material','actividad','herramienta') NOT NULL,
+    ref VARCHAR(60) NOT NULL,                          -- id del material/actividad o clave de la herramienta
+    veredicto ENUM('sin_evaluar','correcto','revisar','no_cumple') NOT NULL DEFAULT 'sin_evaluar',
+    revisado TINYINT(1) NOT NULL DEFAULT 0,
+    huella CHAR(32) NOT NULL DEFAULT '',               -- datos del elemento al revisar; si cambian, la revisión queda desactualizada
+    nota VARCHAR(500) NOT NULL DEFAULT '',
+    usuario_id INT NULL,
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    ejecutada_en DATETIME NULL,                        -- herramientas: última ejecución
+    huella_ejecucion CHAR(32) NOT NULL DEFAULT '',     -- herramientas: datos del proyecto en esa ejecución
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_revision (proyecto_id, tipo, ref),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Historial de cambios del estado: solo se agregan filas
+CREATE TABLE IF NOT EXISTS revisiones_historial (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo ENUM('material','actividad','herramienta') NOT NULL,
+    ref VARCHAR(60) NOT NULL,
+    nombre VARCHAR(255) NOT NULL DEFAULT '',
+    veredicto_antes VARCHAR(20) NOT NULL DEFAULT 'sin_evaluar',
+    veredicto_despues VARCHAR(20) NOT NULL DEFAULT 'sin_evaluar',
+    revisado_antes TINYINT(1) NOT NULL DEFAULT 0,
+    revisado_despues TINYINT(1) NOT NULL DEFAULT 0,
+    nota VARCHAR(500) NOT NULL DEFAULT '',
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto_fecha (proyecto_id, creado),
+    KEY idx_elemento (proyecto_id, tipo, ref),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Órdenes de cambio y líneas base (ver database/migracion_cambios.sql)
+CREATE TABLE ordenes_cambio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    numero VARCHAR(30) NOT NULL DEFAULT '',
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
+    solicitante VARCHAR(150) NOT NULL DEFAULT '',
+    estado ENUM('borrador','solicitada','aprobada','rechazada','ejecutada','cerrada') NOT NULL DEFAULT 'borrador',
+    fecha DATE NOT NULL,
+    impacto_costo DECIMAL(14,2) NOT NULL DEFAULT 0,
+    impacto_dias INT NOT NULL DEFAULT 0,
+    actividad_id INT NULL,                         -- actividad principal afectada (opcional)
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_oc_proyecto (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE cambio_partidas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    orden_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    tipo ENUM('instalacion_temporal','instalacion','reubicacion','demolicion','adicion','modificacion') NOT NULL DEFAULT 'modificacion',
+    descripcion VARCHAR(300) NOT NULL,
+    ubicacion_original VARCHAR(200) NOT NULL DEFAULT '',
+    ubicacion_nueva VARCHAR(200) NOT NULL DEFAULT '',
+    cantidad DECIMAL(12,2) NULL,
+    unidad VARCHAR(30) NOT NULL DEFAULT '',
+    actividad_id INT NULL,
+    material_id INT NULL,
+    requiere_retiro TINYINT(1) NOT NULL DEFAULT 0,
+    estado ENUM('pendiente','ejecutado','retirado','verificado','cancelado') NOT NULL DEFAULT 'pendiente',
+    fecha_prevista DATE NULL,
+    fecha_ejecucion DATE NULL,
+    fecha_retiro_prevista DATE NULL,
+    fecha_retiro_real DATE NULL,
+    notas VARCHAR(500) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_cp_proyecto (proyecto_id, estado),
+    FOREIGN KEY (orden_id) REFERENCES ordenes_cambio(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Líneas base: foto inmutable del programa (sin llaves foráneas a actividades: la foto sobrevive aunque se borre la actividad)
+CREATE TABLE lineas_base (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    notas VARCHAR(500) NOT NULL DEFAULT '',
+    fin_programado DATE NULL,
+    total_actividades INT NOT NULL DEFAULT 0,
+    criticas_json TEXT NULL,                       -- ids de actividades en ruta crítica al capturar
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_lb_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE lineas_base_actividades (
+    linea_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    codigo VARCHAR(50) NOT NULL DEFAULT '',
+    nombre VARCHAR(200) NOT NULL DEFAULT '',
+    partida VARCHAR(200) NOT NULL DEFAULT '',
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    duracion_dias INT NOT NULL DEFAULT 1,
+    progreso TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    hito TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (linea_id, actividad_id),
+    FOREIGN KEY (linea_id) REFERENCES lineas_base(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE lineas_base_materiales (
+    linea_id INT NOT NULL,
+    material_id INT NOT NULL,
+    nombre VARCHAR(255) NOT NULL DEFAULT '',
+    cantidad DECIMAL(12,2) NULL,
+    fecha_compra_prog DATE NULL,
+    fecha_entrega_prog DATE NULL,
+    PRIMARY KEY (linea_id, material_id),
+    FOREIGN KEY (linea_id) REFERENCES lineas_base(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

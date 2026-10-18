@@ -38,7 +38,7 @@ class SubmittalController
         }
         $router->render('submittals/ver', [
             'titulo' => 'Submittal ' . $submittal->numero_submittal, 'proyecto' => $proyecto,
-            'submittal' => $submittal, 'materiales' => $submittal->materiales(),
+            'submittal' => $submittal, 'materiales' => $submittal->materiales(), 'verif' => \Classes\MaterialesInteligentes::deProyecto((int)$proyecto->id),
         ]);
     }
 
@@ -73,6 +73,13 @@ class SubmittalController
             $submittal->msr_id = Msr::deProyectoPorId((int)$proyecto->id, $_POST['msr_id'] ?? null)?->id;
             $marcados = array_map('intval', $_POST['materiales'] ?? []);
             $alertas = $submittal->validar();
+            // Materiales inteligentes: un material no aprobado por la normativa solo se envía si se confirma expresamente
+            $malos = $alertas ? [] : \Classes\MaterialesInteligentes::noAprobados((int)$proyecto->id, $marcados);
+            $nuevosMalos = array_diff_key($malos, array_flip(array_map('intval', $submittal->id ? $submittal->idsMateriales() : [])));
+            if ($nuevosMalos && empty($_POST['confirmar_no_aprobados'])) {
+                $alertas['error'][] = 'Materiales NO aprobados por las normativas y especificaciones: ' . implode('; ', array_map(fn($m) => $m['nombre'] . ' (' . $m['resumen'] . ')', $nuevosMalos)) . '. Quítalos del paquete o marca la casilla de confirmación para enviarlos de todas formas.';
+                $pedirConfirmacion = true;
+            }
             if (!$alertas) {
                 $r = $submittal->guardar();
                 if (is_array($r)) $submittal->id = $r['id'];
@@ -85,6 +92,8 @@ class SubmittalController
             'titulo' => $submittal->id ? 'Editar submittal' : 'Nuevo submittal', 'proyecto' => $proyecto,
             'submittal' => $submittal, 'marcados' => $marcados, 'alertas' => $alertas,
             'materiales' => Material::deProyecto((int)$proyecto->id), 'msrs' => Msr::deProyecto((int)$proyecto->id),
+            'noAprobados' => \Classes\MaterialesInteligentes::noAprobados((int)$proyecto->id, array_map(fn($m) => (int)$m->id, Material::deProyecto((int)$proyecto->id))),
+            'pedirConfirmacion' => $pedirConfirmacion ?? false,
         ]);
     }
 

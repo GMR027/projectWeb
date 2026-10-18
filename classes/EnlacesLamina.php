@@ -7,7 +7,7 @@ class EnlacesLamina
 {
     private const GLIFOS = ['link' => '🔗', 'globe' => '🌐', 'map' => '📍', 'doc' => '📄', 'photo' => '📷', 'info' => 'i', 'star' => '★', 'flag' => '🚩', 'video' => '▶'];
     /** Módulos del sistema a los que puede apuntar un enlace interno (el resto de rutas se rechaza) */
-    private const PREFIJOS = ['/programa', '/dependencias', '/lookahead', '/materiales', '/submittals', '/msr', '/vplan', '/curvas', '/calendario', '/graficos', '/reportes', '/bitacora', '/minutas', '/archivos', '/evidencias', '/planificador', '/lastplanner', '/view360'];
+    private const PREFIJOS = ['/programa', '/dependencias', '/lookahead', '/materiales', '/submittals', '/msr', '/vplan', '/curvas', '/calendario', '/graficos', '/reportes', '/bitacora', '/minutas', '/archivos', '/evidencias', '/planificador', '/lastplanner', '/view360', '/redactor'];
 
     /** Devuelve la URL ya saneada o null si no es válida. $tipo: 'ext' (enlace externo) o 'int' (ruta del sistema) */
     public static function limpiar(string $tipo, string $url): ?string
@@ -63,7 +63,7 @@ class EnlacesLamina
         $q = '?proyecto=' . $proyectoId;
         $d = [];
         foreach ([['Programa', '/programa'], ['Dependencias de obra', '/dependencias'], ['Lookahead', '/lookahead'], ['Calendario', '/calendario'], ['Curvas', '/curvas'], ['Curva S', '/curvas/s'], ['Materiales', '/materiales'],
-            ['Submittals', '/submittals'], ['MSR', '/msr'], ['Láminas VPlan', '/vplan'], ['Gráficos', '/graficos'], ['View360', '/view360'], ['Reportes', '/reportes'], ['Bitácora', '/bitacora'], ['Minutas', '/minutas'], ['Archivos', '/archivos'], ['Evidencias', '/evidencias']] as [$n, $r]) {
+            ['Submittals', '/submittals'], ['MSR', '/msr'], ['Láminas VPlan', '/vplan'], ['Gráficos', '/graficos'], ['Redactor', '/redactor'], ['View360', '/view360'], ['Reportes', '/reportes'], ['Bitácora', '/bitacora'], ['Minutas', '/minutas'], ['Archivos', '/archivos'], ['Evidencias', '/evidencias']] as [$n, $r]) {
             $d[] = ['grupo' => 'Secciones', 'etiqueta' => $n, 'url' => $r . $q];
         }
         $db = $GLOBALS['db'];
@@ -74,6 +74,8 @@ class EnlacesLamina
             while ($f = $r->fetch_assoc()) $d[] = ['grupo' => 'Gráficos', 'etiqueta' => $f['nombre'], 'url' => '/graficos/ver' . $q . '&id=' . (int)$f['id']];
             $r = $db->query("SELECT id, numero_submittal FROM submittals WHERE proyecto_id = $proyectoId ORDER BY id DESC LIMIT 200");
             while ($f = $r->fetch_assoc()) $d[] = ['grupo' => 'Submittals', 'etiqueta' => $f['numero_submittal'], 'url' => '/submittals/ver' . $q . '&id=' . (int)$f['id']];
+            $r = $db->query("SELECT id, nombre FROM redactor_documentos WHERE proyecto_id = $proyectoId ORDER BY id DESC LIMIT 200");
+            while ($f = $r->fetch_assoc()) $d[] = ['grupo' => 'Documentos del Redactor', 'etiqueta' => $f['nombre'], 'url' => '/redactor/ver' . $q . '&id=' . (int)$f['id']];
         } catch (\Throwable $e) {   // tablas aún sin migrar
         }
         return $d;

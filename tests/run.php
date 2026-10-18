@@ -95,5 +95,29 @@ $_SERVER['REMOTE_ADDR'] = '200.5.5.5';
 $_ENV['TRUSTED_PROXIES'] = '10.1.0.0/16';
 $ok('si la conexión no viene del proxy se ignora X-Forwarded-For', ip_cliente() === '200.5.5.5');
 
+echo "Cruce de materiales y cronograma\n";
+$hoy = '2026-10-18';
+[$e] = Classes\CruceMateriales::evaluar('2026-10-25', ['fecha_entrega_real' => '2026-10-20'], $hoy);
+$ok('entregado = en sitio', $e === 'en_sitio');
+[$e, $d] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'pendiente', 'fecha_compra_prog' => '2026-10-15', 'fecha_entrega_prog' => '2026-10-20'], $hoy);
+$ok('compra pendiente con fecha pasada = compra vencida (3 días)', $e === 'compra_vencida' && $d === 3);
+[$e, $d] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado', 'fecha_entrega_prog' => '2026-10-28'], $hoy);
+$ok('entrega posterior a la necesidad = llega tarde (3 días)', $e === 'tarde' && $d === 3);
+[$e] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado'], $hoy);
+$ok('sin fecha de entrega', $e === 'sin_fecha');
+[$e] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado', 'fecha_entrega_prog' => '2026-10-22', 'sub' => 'rechazado'], $hoy);
+$ok('a tiempo pero con submittal sin aprobar', $e === 'submittal');
+[$e] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado', 'fecha_entrega_prog' => '2026-10-22', 'sub' => 'aprobado'], $hoy);
+$ok('a tiempo y aprobado', $e === 'a_tiempo');
+
+echo "Renglones de órdenes de cambio\n";
+$ok('lo temporal se cierra al retirarlo', Model\CambioPartida::estadosDe('instalacion_temporal', true) === ['pendiente', 'ejecutado', 'retirado', 'cancelado']);
+$ok('lo demás se cierra al verificarlo', Model\CambioPartida::estadosDe('reubicacion', false) === ['pendiente', 'ejecutado', 'verificado', 'cancelado']);
+$c = new Model\CambioPartida(['tipo' => 'instalacion_temporal', 'requiere_retiro' => 1, 'estado' => 'ejecutado']);
+$ok('temporal ya instalado = retiro pendiente', $c->retiroPendiente());
+$c->estado = 'retirado';
+$ok('temporal retirado ya no está pendiente', !$c->retiroPendiente());
+$ok('la descripción es obligatoria', isset((new Model\CambioPartida(['descripcion' => ' ']))->validar()['error']));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

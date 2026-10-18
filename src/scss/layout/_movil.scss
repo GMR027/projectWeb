@@ -5,7 +5,7 @@
 // ============================================================
 
 // Elementos que solo existen en móvil (ocultos por defecto)
-.btn-menu-movil, .sidebar-fondo, .solo-movil { display: none; }
+.solo-movil { display: none; }
 
 @media (max-width: $bp-movil) {
   .solo-movil { display: block; }

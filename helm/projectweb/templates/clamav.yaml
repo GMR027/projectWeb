@@ -1,0 +1,59 @@
+{{- if .Values.clamav.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamav
+  labels: { app: clamav }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: clamav }
+  template:
+    metadata:
+      labels: { app: clamav }
+    spec:
+      containers:
+        - name: clamav
+          image: {{ .Values.clamav.image }}
+          env:
+            # Los archivos del Archivo llegan hasta 100 MB
+            - { name: CLAMD_CONF_StreamMaxLength, value: "110M" }
+            - { name: CLAMD_CONF_MaxFileSize, value: "110M" }
+            - { name: CLAMD_CONF_MaxScanSize, value: "400M" }
+          ports:
+            - containerPort: 3310
+          startupProbe:   # carga las firmas al arrancar (varios minutos)
+            tcpSocket: { port: 3310 }
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket: { port: 3310 }
+            periodSeconds: 10
+          resources: {{ toYaml .Values.clamav.resources | nindent 12 }}
+---
+# Solo la app puede hablar con clamd
+apiVersion: v1
+kind: Service
+metadata:
+  name: clamav
+spec:
+  selector: { app: clamav }
+  ports:
+    - port: 3310
+      targetPort: 3310
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: clamav-solo-app
+spec:
+  podSelector:
+    matchLabels: { app: clamav }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: projectweb }
+      ports:
+        - port: 3310
+{{- end }}

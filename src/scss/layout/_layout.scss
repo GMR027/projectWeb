@@ -6,12 +6,8 @@
 
 .app-container {
   display: grid;
-  grid-template-columns: 24rem 1fr;
+  grid-template-columns: 1fr;   // el menú lateral queda oculto hasta pulsar la hamburguesa
   min-height: 100vh;
-
-  @media (max-width: $bp-mobile) {
-    grid-template-columns: 1fr;
-  }
 }
 
 // ============ SIDEBAR ============
@@ -26,11 +22,27 @@
   height: 100vh;
   overflow-y: auto;
 
-  @media (max-width: $bp-mobile) {
-    position: relative;
-    height: auto;
-  }
+  // Panel deslizable: oculto fuera de pantalla hasta abrir el menú hamburguesa
+  position: fixed; z-index: 1000; top: 0; left: 0; bottom: 0;
+  width: min(30rem, 86vw); height: 100dvh;
+  transform: translateX(-104%); transition: transform .25s ease;
+  box-shadow: $shadow-lg;
+  visibility: hidden;
 }
+body.menu-abierto .sidebar { transform: none; visibility: visible; }
+.sidebar-fondo {
+  display: block; position: fixed; inset: 0; z-index: 999; background: rgba(0, 0, 0, .55);
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+}
+body.menu-abierto .sidebar-fondo { opacity: 1; pointer-events: auto; }
+body.menu-abierto { overflow: hidden; }
+.btn-menu-movil {
+  display: flex; align-items: center; justify-content: center;
+  position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
+  width: 5.4rem; height: 5.4rem; border-radius: 50%; border: 0; cursor: pointer;
+  background: $primary; color: #fff; font-size: 2.2rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
+}
+@media print { .btn-menu-movil, .sidebar-fondo { display: none !important; } }
 
 .sidebar-header {
   margin-bottom: $space-lg;

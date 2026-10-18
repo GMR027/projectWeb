@@ -27,11 +27,18 @@
                 <label>Materiales del paquete</label>
                 <small class="text-muted">Cada material marcado genera su renglón en el MSR. <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>">Agregar material al catálogo</a></small>
                 <?php
-                $items = array_map(fn($m) => ['id' => (int)$m->id, 'titulo' => $m->nombre, 'detalle' => trim($m->especialidad . ' ' . $m->referencia)], $materiales);
+                $noAprobados = $noAprobados ?? [];
+                $items = array_map(fn($m) => ['id' => (int)$m->id, 'titulo' => $m->nombre . (isset($noAprobados[(int)$m->id]) ? ' ⚠ NO APROBADO por normativa: ' . $noAprobados[(int)$m->id]['resumen'] : ''), 'detalle' => trim($m->especialidad . ' ' . $m->referencia)], $materiales);
                 $nombreCampo = 'materiales';
                 $marcados = $marcados ?? [];
                 include __DIR__ . '/../templates/lista-accesos.php';
                 ?>
+                <?php if ($noAprobados): ?>
+                    <div class="norma-aviso" role="alert">
+                        <strong><i class="fa-solid fa-triangle-exclamation"></i> Hay materiales no aprobados por las normativas y especificaciones</strong> (marcados con ⚠ en la lista).
+                        <label class="campo-check"><input type="checkbox" name="confirmar_no_aprobados" value="1"<?php echo !empty($pedirConfirmacion) ? ' checked' : ''; ?>> Entiendo el riesgo: enviar el paquete aunque incluya materiales no aprobados</label>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Guardar paquete</button>

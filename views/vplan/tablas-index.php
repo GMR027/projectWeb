@@ -22,6 +22,11 @@
                 <td class="mono hide-m"><?php echo (int)$conteos[$t->id]; ?></td>
                 <td class="acciones">
                     <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
+                    <form method="POST" action="/vplan/tablas/duplicar" style="display:inline">
+                        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+                        <input type="hidden" name="id" value="<?php echo s($t->id); ?>">
+                        <button type="submit" class="btn btn-sm btn-ghost" title="Crear una copia independiente">Duplicar</button>
+                    </form>
                     <form method="POST" action="/vplan/tablas/eliminar" style="display:inline" data-confirm="¿Eliminar tabla?|Se quitará también de las láminas donde se use.">
                         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                         <input type="hidden" name="id" value="<?php echo s($t->id); ?>">

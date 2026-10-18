@@ -1,0 +1,26 @@
+@use '../base/variables' as *;
+
+// Comparador de documentos
+.cmp-fuentes { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; margin-bottom: 1.6rem; @media (max-width: 80rem) { grid-template-columns: 1fr; } }
+.cmp-fuente { border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 1rem; margin: 0; min-width: 0;
+  legend { font-weight: 700; padding: 0 .6rem; }
+  label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; }
+  .cmp-pag { flex-direction: row; align-items: center; gap: .8rem; input { width: 8rem; } } }
+.cmp-panel { display: flex; flex-direction: column; gap: 1.2rem; }
+.cmp-barra { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: center;
+  .cmp-grupo { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .cmp-mini { display: flex; gap: .6rem; align-items: center; font-size: 1.2rem; margin: 0; input[type=number] { width: 7.4rem; } input[type=range] { width: 14rem; accent-color: #0070c0; } } }
+.cmp-vista { position: relative; height: 72vh; min-height: 36rem; overflow: hidden; background: #3a3f4b; border: 1px solid var(--border); border-radius: .8rem; touch-action: none; cursor: grab; user-select: none;
+  &.moviendo { cursor: move; } &.arrastrando { cursor: grabbing; } }
+.cmp-capa { position: absolute; inset: 0; pointer-events: none; }
+.cmp-mundo { position: absolute; left: 0; top: 0; transform-origin: 0 0; canvas { display: block; position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #fff; } }
+.cmp-capa-b[data-modo=diff] { mix-blend-mode: difference; }
+.cmp-div { position: absolute; z-index: 5; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); cursor: ew-resize; touch-action: none;
+  &.v { top: 0; bottom: 0; width: .3rem; margin-left: -.15rem; }
+  &.h { left: 0; right: 0; height: .3rem; margin-top: -.15rem; cursor: ns-resize; }
+  span { position: absolute; width: 4rem; height: 4rem; border-radius: 50%; background: #0070c0; color: #fff; display: grid; place-items: center; box-shadow: 0 .2rem 1rem rgba(0, 0, 0, .5); }
+  &.v span { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  &.h span { top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); }
+  &[hidden] { display: none; } }
+.cmp-etq { position: absolute; z-index: 6; top: 1rem; padding: .2rem .9rem; border-radius: 99rem; background: rgba(0, 0, 0, .65); color: #fff; font-weight: 700; font-size: 1.3rem; pointer-events: none; }
+.cmp-etq-a { left: 1rem; } .cmp-etq-b { right: 1rem; }

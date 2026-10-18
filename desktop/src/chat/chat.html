@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'">
+<link rel="stylesheet" href="chat.css"><title>Pregunta a tu proyecto</title></head>
+<body>
+<button id="fab" aria-label="Pregunta a tu proyecto" title="Pregunta a tu proyecto"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M4 5h16v11H9l-5 4z"/><path stroke="#fff" stroke-width="2" stroke-linecap="round" d="M8 9.5h8M8 12.5h5"/></svg></button>
+<section id="panel" hidden aria-label="Chat del proyecto">
+  <header><div class="tit"><strong>Pregunta a tu proyecto</strong><select id="proyecto" aria-label="Proyecto sobre el que preguntas"></select></div><div><button id="limpiar" title="Limpiar la conversación" aria-label="Limpiar la conversación">Limpiar</button><button id="cerrar" aria-label="Cerrar" title="Cerrar">✕</button></div></header>
+  <p id="conexion"></p>
+  <div id="mensajes" aria-live="polite"></div>
+  <div id="sugerencias"></div>
+  <form id="forma"><input id="texto" autocomplete="off" maxlength="600" placeholder="Ej. ¿qué actividades están atrasadas?"><button type="submit" id="enviar">Enviar</button></form>
+</section>
+<script src="chat.js"></script>
+</body></html>

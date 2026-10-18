@@ -41,11 +41,12 @@ class EditorController
     public static function crear(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
-        $g = new Grafico(['proyecto_id' => $proyecto->id, 'nombre' => '']);
+        $tipo = ($_REQUEST['tipo'] ?? '') === 'simbologia' ? 'simbologia' : 'grafico';
+        $g = new Grafico(['proyecto_id' => $proyecto->id, 'nombre' => '', 'tipo' => $tipo] + ($tipo === 'simbologia' ? ['ancho' => 1200, 'alto' => 700] : []));
         $alertas = [];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $g = new Grafico([
-                'proyecto_id' => $proyecto->id, 'nombre' => $_POST['nombre'] ?? '', 'categoria_id' => GraficoCategoria::valida((int)$proyecto->id, $_POST['categoria_id'] ?? null), 'ancho' => $_POST['ancho'] ?? 0, 'alto' => $_POST['alto'] ?? 0,
+                'proyecto_id' => $proyecto->id, 'tipo' => $tipo, 'nombre' => $_POST['nombre'] ?? '', 'categoria_id' => GraficoCategoria::valida((int)$proyecto->id, $_POST['categoria_id'] ?? null), 'ancho' => $_POST['ancho'] ?? 0, 'alto' => $_POST['alto'] ?? 0,
                 'fondo' => $_POST['fondo'] ?? 'liso', 'fondo_color' => $_POST['fondo_color'] ?? '#ffffff',
             ]);
             $alertas = $g->validar();
@@ -73,7 +74,7 @@ class EditorController
                 exit;
             }
         }
-        $router->render('graficos/crear', ['titulo' => 'Nuevo gráfico', 'proyecto' => $proyecto, 'grafico' => $g, 'alertas' => $alertas, 'categorias' => GraficoCategoria::deProyecto((int)$proyecto->id)]);
+        $router->render('graficos/crear', ['titulo' => $tipo === 'simbologia' ? 'Nueva simbología' : 'Nuevo gráfico', 'proyecto' => $proyecto, 'grafico' => $g, 'alertas' => $alertas, 'categorias' => GraficoCategoria::deProyecto((int)$proyecto->id)]);
     }
 
     /** Configuración para el editor de marcas (Konva) */
@@ -99,7 +100,8 @@ class EditorController
             'urls' => ['descargar' => '/graficos/descargar?' . $q],
             'actividades' => [], 'restricciones' => [], 'hash' => '', 'auto' => false,
             'modo' => 'grafico', 'guardado' => 'png',
-            'volver' => \Model\View360Grafico::dePorGrafico((int)$g->id) ? '/view360?proyecto=' . $proyecto->id : '/graficos/ver?' . $q,
+            'volver' => $g->tipo === 'simbologia' ? '/simbolos?proyecto=' . $proyecto->id . '#simbologias' : (\Model\View360Grafico::dePorGrafico((int)$g->id) ? '/view360?proyecto=' . $proyecto->id : '/graficos/ver?' . $q),
+            'tipoGrafico' => $g->tipo,
             'api' => ['marcas' => '/api/graficos/marcas', 'imagen' => '/api/graficos/imagen', 'pdf' => '/api/graficos/pdf', 'odp' => '/api/graficos/odp', 'lamina' => '/api/graficos/lamina'],
         ];
     }
@@ -213,7 +215,7 @@ class EditorController
                 copy(Imagenes::CARPETA_VPLAN . '/' . basename($g->fondo_imagen), Imagenes::CARPETA_VPLAN . '/' . $fondo);
             }
             $nueva = new Grafico([
-                'proyecto_id' => $proyecto->id, 'nombre' => mb_substr($g->nombre, 0, 140) . ' (copia)', 'categoria_id' => $g->categoria_id, 'ancho' => $g->ancho, 'alto' => $g->alto,
+                'proyecto_id' => $proyecto->id, 'nombre' => mb_substr($g->nombre, 0, 140) . ' (copia)', 'tipo' => $g->tipo, 'categoria_id' => $g->categoria_id, 'ancho' => $g->ancho, 'alto' => $g->alto,
                 'fondo' => $g->fondo, 'fondo_color' => $g->fondo_color, 'fondo_imagen' => $fondo, 'fondo_config' => $g->fondo_config,
             ]);
             $nueva->id = $nueva->guardar()['id'];
@@ -221,10 +223,53 @@ class EditorController
                 $c = $l->copiarArchivos();
                 (new GraficoLamina(['grafico_id' => $nueva->id, 'orden' => $l->orden, 'nombre' => $l->nombre, 'marcas_json' => $c['json'], 'marcas_png' => $c['png']]))->guardar();
             }
-            header('Location: /graficos?proyecto=' . $proyecto->id . '&ok=1');
+            header('Location: ' . ($g->tipo === 'simbologia' ? '/simbolos?proyecto=' . $proyecto->id . '&ok=' . urlencode('Simbología duplicada') . '#simbologias' : '/graficos?proyecto=' . $proyecto->id . '&ok=1'));
             exit;
         }
         header('Location: /graficos?proyecto=' . $proyecto->id);
+        exit;
+    }
+
+    /** Marca un gráfico como simbología (o lo devuelve a gráfico normal) */
+    public static function cambiarTipo()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $a = 'graficos';
+        if ($g = self::graficoDe($proyecto, $_POST['id'] ?? null)) {
+            $g->tipo = ($_POST['tipo'] ?? '') === 'simbologia' ? 'simbologia' : 'grafico';
+            $g->guardar();
+            $a = $g->tipo === 'simbologia' ? 'simbolos' : 'graficos';
+        }
+        header('Location: /' . $a . '?proyecto=' . $proyecto->id . ($a === 'simbolos' ? '&ok=' . urlencode('Guardado como simbología') . '#simbologias' : ''));
+        exit;
+    }
+
+    /** Crea una simbología con las 4 filas del SYMBOLOGY FOR SCHEDULE estándar, lista para editar (forma: rectangular o cuadrada) */
+    public static function simbologiaEstandar()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $cuadrada = ($_POST['forma'] ?? '') === 'cuadrada';
+        // [lienzo ancho, alto, tamaño del título, primera fila y: paso, caja de color ancho/alto, x del texto, tamaño del texto]
+        [$W, $H, $tf, $y0, $paso, $cw, $ch, $tx, $fs] = $cuadrada ? [800, 800, 46, 190, 150, 120, 100, 190, 60] : [1200, 700, 72, 180, 125, 150, 95, 230, 66];
+        $g = new Grafico(['proyecto_id' => $proyecto->id, 'tipo' => 'simbologia', 'nombre' => 'Schedule estándar · ' . ($cuadrada ? 'cuadrada' : 'rectangular'), 'ancho' => $W, 'alto' => $H]);
+        $g->id = $g->guardar()['id'];
+        $id = 0;
+        $f = function (array $d) use (&$id) { return ['id' => 'sd' . (++$id), 'rotation' => 0, 'opacity' => 100] + $d; };
+        $formas = [
+            $f(['type' => 'rect', 'x' => 10, 'y' => 10, 'w' => $W - 20, 'h' => $H - 20, 'fill' => '#ffffff', 'fillAlpha' => 100, 'stroke' => '#000000', 'strokeWidth' => 4]),
+            $f(['type' => 'text', 'x' => 30, 'y' => 40, 'text' => 'SYMBOLOGY FOR SCHEDULE', 'fontSize' => $tf, 'fill' => '#000000', 'bold' => true, 'underline' => true]),
+            $f(['type' => 'line', 'x' => 0, 'y' => 0, 'points' => [10, $y0 - 30, $W - 10, $y0 - 30], 'stroke' => '#000000', 'strokeWidth' => 4]),
+        ];
+        $filas = [['COMPLETE', '#059669'], ['IN PROGRESS', '#d97706'], ['ON HOLD', '#dc2626'], ['CONSTRAIN', null]];
+        foreach ($filas as $i => [$texto, $color]) {
+            $y = $y0 + $i * $paso;
+            $formas[] = $color
+                ? $f(['type' => 'rect', 'x' => 40, 'y' => $y, 'w' => $cw, 'h' => $ch, 'fill' => $color, 'fillAlpha' => 100, 'stroke' => '#000000', 'strokeWidth' => 3])
+                : $f(['type' => 'diamond', 'x' => 40 + ($cw - $ch) / 2, 'y' => $y, 'w' => $ch, 'h' => $ch, 'fill' => '#dc2626', 'fillAlpha' => 100, 'stroke' => '#991b1b', 'strokeWidth' => 4]);
+            $formas[] = $f(['type' => 'text', 'x' => $tx, 'y' => $y + ($ch - $fs) / 2, 'text' => $texto, 'fontSize' => $fs, 'fill' => '#000000']);
+        }
+        (new GraficoLamina(['grafico_id' => $g->id, 'orden' => 1, 'marcas_json' => json_encode(['shapes' => $formas])]))->guardar();
+        header('Location: /graficos/abrir?proyecto=' . $proyecto->id . '&id=' . $g->id . '&regen=1');   // el editor genera la imagen al abrirla
         exit;
     }
 
@@ -358,11 +403,13 @@ class EditorController
     public static function eliminar()
     {
         $proyecto = proyecto_de_peticion(true);
+        $simb = false;
         if ($g = self::graficoDe($proyecto, $_POST['id'] ?? null)) {
+            $simb = $g->tipo === 'simbologia';
             $g->eliminarArchivos();
-            $g->eliminar();
+            $g->eliminar();   // las láminas del vPlan que la usaban vuelven a la tabla estándar (ON DELETE SET NULL)
         }
-        header('Location: /graficos?proyecto=' . $proyecto->id);
+        header('Location: ' . ($simb ? '/simbolos?proyecto=' . $proyecto->id . '&ok=' . urlencode('Simbología eliminada') . '#simbologias' : '/graficos?proyecto=' . $proyecto->id));
         exit;
     }
 

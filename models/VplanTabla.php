@@ -82,6 +82,19 @@ class VplanTabla extends ActiveRecord
         return $out;
     }
 
+    /** Copia independiente (mismas columnas y renglones) para usarla en otra lámina sin compartir datos */
+    public function duplicar(): self
+    {
+        $copia = new self([
+            'proyecto_id' => $this->proyecto_id, 'titulo' => $this->titulo, 'tipo' => $this->tipo,
+            'nombre_interno' => mb_substr($this->etiqueta(), 0, 140) . ' (copia)', 'columnas_json' => $this->columnas_json,
+        ]);
+        $r = $copia->guardar();
+        $copia->id = $r['id'];
+        $copia->guardarFilas($this->filas());
+        return $copia;
+    }
+
     /** Reemplaza todas las filas */
     public function guardarFilas(array $filas): void
     {

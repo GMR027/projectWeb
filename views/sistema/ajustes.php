@@ -70,6 +70,70 @@ $vols = [
     <p><strong><?php echo $fmt($disco['libre']); ?></strong> libres de <?php echo $fmt($disco['total']); ?> · <?php echo number_format($dp, 1); ?> % usado</p>
 </div>
 
+<div class="card" id="escritorio" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-desktop"></i> App de escritorio · Project Web Desktop (Linux)</h3>
+    <p class="text-muted text-sm">Solo el administrador ve, sube y descarga estos instaladores; clientes y visitantes no tienen acceso. Se guardan en el volumen del clúster. Para actualizar, usa «Reemplazar» en la fila: se sustituye el archivo y se avisa si el contenido cambió.</p>
+    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
+    <?php if ($instaladores): ?>
+        <table class="tabla"><thead><tr><th>Archivo</th><th>Tamaño</th><th>Subido</th><th>SHA-256</th><th></th></tr></thead><tbody>
+        <?php foreach ($instaladores as $a): ?>
+            <tr><td><code><?php echo s($a['nombre']); ?></code></td><td><?php echo s($fmt($a['tam'])); ?></td><td><?php echo s(date('Y-m-d H:i', $a['fecha'])); ?></td>
+                <td><code title="<?php echo s($a['sha']); ?>"><?php echo s(substr($a['sha'], 0, 12)); ?>…</code></td>
+                <td style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+                    <a class="btn btn-sm btn-primary" href="/sistema/instalador?archivo=<?php echo urlencode($a['nombre']); ?>"><i class="fa-solid fa-download"></i> Descargar</a>
+                    <form method="POST" action="/sistema/instalador/subir" enctype="multipart/form-data" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('¿Reemplazar <?php echo s($a['nombre']); ?> por el archivo elegido?')">
+                        <input type="hidden" name="reemplazar" value="<?php echo s($a['nombre']); ?>">
+                        <input type="file" name="instalador" required style="max-width:16rem">
+                        <button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-arrow-right-arrow-left"></i> Reemplazar</button>
+                    </form>
+                    <form method="POST" action="/sistema/instalador/eliminar" onsubmit="return confirm('¿Eliminar este instalador?')"><input type="hidden" name="archivo" value="<?php echo s($a['nombre']); ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form>
+                </td></tr>
+        <?php endforeach; ?>
+        </tbody></table>
+        <p class="text-muted text-sm" style="margin-top:1rem">Debian/Ubuntu/Zorin: <code>sudo apt install ./projectweb-desktop-linux-amd64.deb</code> · Cualquier distro: <code>chmod +x projectweb-desktop-linux-x86_64.AppImage &amp;&amp; ./projectweb-desktop-linux-x86_64.AppImage</code> · Verifica con <code>sha256sum -c SHA256SUMS.txt</code>.</p>
+    <?php else: ?>
+        <p class="text-muted">Aún no hay instaladores.</p>
+    <?php endif; ?>
+    <div style="border:1px solid var(--border);border-radius:1rem;padding:1.4rem;margin-top:1.4rem">
+        <h4 style="margin-bottom:.6rem"><i class="fa-solid fa-key"></i> Actualizaciones desde la app</h4>
+        <p class="text-muted text-sm">La app consulta aquí la versión publicada (<strong><?php echo s(\Classes\Instaladores::version() ?: 'sin latest-linux.yml'); ?></strong>) con un token. Súbelo junto al instalador para que detecte cambios. Al generar un token nuevo, el anterior deja de servir.</p>
+        <?php if ($tokenNuevo): ?><div class="alerta alerta-exito">Token (cópialo ahora, no se vuelve a mostrar): <code><?php echo s($tokenNuevo); ?></code></div><?php endif; ?>
+        <form method="POST" action="/sistema/instalador/token"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-rotate"></i> <?php echo $hayToken ? 'Generar token nuevo' : 'Generar token'; ?></button></form>
+    </div>
+    <form method="POST" action="/sistema/instalador/subir" enctype="multipart/form-data" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.4rem">
+        <label>Subir instalador nuevo (.deb, .rpm, .pacman, .AppImage, .tar.gz, SHA256SUMS.txt, latest-linux.yml) <input type="file" name="instalador" required></label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Subir</button>
+    </form>
+</div>
+
+<div class="card" id="herramientas" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-plug"></i> Conectar herramientas de IA</h3>
+    <p class="text-muted text-sm">Registro de las IA que usas con DictaFlow (local, CLI o API). <strong>Aquí no se guardan API keys</strong>: escríbelas solo en DictaFlow (Ajustes → proveedores) para que no queden en el servidor ni en los respaldos.</p>
+    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
+    <?php if ($herramientas): ?>
+        <table class="tabla"><thead><tr><th>Nombre</th><th>Tipo</th><th>URL / modelo</th><th>Estado</th><th></th></tr></thead><tbody>
+        <?php foreach ($herramientas as $h): ?>
+            <tr><td><?php echo s($h->nombre); ?><?php if ($h->notas): ?><br><small class="text-muted"><?php echo s($h->notas); ?></small><?php endif; ?></td>
+                <td><?php echo s(\Model\HerramientaIA::TIPOS[$h->tipo][0] ?? $h->tipo); ?></td>
+                <td><code><?php echo s(trim($h->url . ' ' . $h->modelo)); ?></code></td>
+                <td><?php echo $h->activa ? 'Activa' : 'Inactiva'; ?></td>
+                <td><form method="POST" action="/sistema/herramienta/eliminar" onsubmit="return confirm('¿Eliminar esta conexión?')"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form></td></tr>
+        <?php endforeach; ?>
+        </tbody></table>
+    <?php endif; ?>
+    <form method="POST" action="/sistema/herramienta" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.4rem">
+        <label>Nombre <input name="nombre" required maxlength="100" placeholder="Ollama del equipo"></label>
+        <label>Tipo <select name="tipo"><?php foreach (\Model\HerramientaIA::TIPOS as $k => $t): ?><option value="<?php echo s($k); ?>"><?php echo s($t[0]); ?></option><?php endforeach; ?></select></label>
+        <label>URL <input name="url" maxlength="255" placeholder="http://localhost:11434"></label>
+        <label>Modelo <input name="modelo" maxlength="100" placeholder="llama3.1"></label>
+        <label>Notas <input name="notas" maxlength="255"></label>
+        <label style="flex-direction:row;gap:.6rem;align-items:center"><input type="checkbox" name="activa" value="1" checked> Activa</label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Conectar</button>
+    </form>
+</div>
+
 <div class="card" id="respaldo" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-box-archive"></i> <?php echo s(t('Respaldo')); ?></h3>
     <p class="text-muted text-sm">Cada respaldo es un .zip con la base de datos completa (incluye usuarios y contraseñas) y todo el volumen de archivos. Al restaurar se reemplaza todo el sistema y se cierra tu sesión; antes se guarda un respaldo automático «antes_de_restaurar».</p>

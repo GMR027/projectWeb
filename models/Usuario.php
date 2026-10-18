@@ -36,9 +36,12 @@ class Usuario extends ActiveRecord
         'archivos' => ['Archivo', ['/archivos']],
         'curvas' => ['Curvas de productividad', ['/curvas', '/api/curvas']],
         'msr' => ['MSR · Materiales', ['/msr', '/api/msr']],
+        'cambios' => ['Órdenes de cambio y líneas base', ['/cambios', '/api/cambios', '/lineas-base']],
         'calendario' => ['Calendario', ['/calendario']],
         'graficos' => ['Editor y símbolos', ['/graficos', '/api/graficos', '/simbolos', '/api/simbolos']],
+        'redactor' => ['Redactor', ['/redactor', '/api/redactor']],
         'view360' => ['View360', ['/view360', '/api/view360']],
+        'comparador' => ['Comparador de documentos', ['/comparador']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
     ];
 

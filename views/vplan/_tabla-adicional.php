@@ -30,4 +30,5 @@ $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
 </table>
 <?php if ($puedeEditar): ?>
     <button type="button" class="btn btn-sm btn-ghost vp-agregar-dato no-print" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
+    <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost no-print"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>
 <?php endif; ?>

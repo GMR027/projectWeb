@@ -45,6 +45,28 @@ $ic = [
     'blockarrow' => '<path d="M3 9h9V4l9 8-9 8v-5H3z"/>',
     'chevron' => '<path d="M4 4h9l7 8-7 8H4l7-8z"/>',
     'trapezoid' => '<path d="M7 5h10l4 14H3z"/>',
+    'octagon' => '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/>',
+    'parallelogram' => '<path d="M8 5h13l-5 14H3z"/>',
+    'rtriangle' => '<path d="M4 4v16h16z"/>',
+    'house' => '<path d="M12 3l9 6.5V20H3V9.5z"/>',
+    'arrowleft' => '<path d="M21 9H12V4L3 12l9 8v-5h9z"/>',
+    'arrowup' => '<path d="M9 21v-9H4l8-9 8 9h-5v9z"/>',
+    'arrowdown' => '<path d="M9 3v9H4l8 9 8-9h-5V3z"/>',
+    'arrowlr' => '<path d="M2 12l6-8v4h8V4l6 8-6 8v-4H8v4z"/>',
+    'homeplate' => '<path d="M3 5h12l6 7-6 7H3z"/>',
+    'star4' => '<path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z"/>',
+    'star6' => '<path d="M12 2l3 6.5 7-.5-3.5 6 3.5 6-7-.5L12 22l-3-6.5-7 .5 3.5-6L2 8l7 .5z"/>',
+    'star8' => '<path d="M12 2l2 4.5 4.2-2.7-.7 4.9 4.9.7-2.7 4.2L22 12l-4.5 2 2.7 4.2-4.9.7.7 4.9-4.2-2.7L12 22l-2-4.5-4.2 2.7.7-4.9-4.9-.7L4.3 10 2 12l4.5-2-2.7-4.2 4.9-.7-.7-4.9L10 4.5z" transform="scale(.96) translate(.5 .5)"/>',
+    'heart' => '<path d="M12 20.5C4 14.5 3 10.5 3 8.5A4.8 4.8 0 0 1 12 6.6 4.8 4.8 0 0 1 21 8.5c0 2-1 6-9 12z"/>',
+    'moon' => '<path d="M16 3a9 9 0 1 0 5 15 7.5 7.5 0 0 1-5-15z"/>',
+    'semicircle' => '<path d="M3 17a9 9 0 0 1 18 0z"/>',
+    'bolt' => '<path d="M14 2L5 13h6l-2 9 9-12h-6z"/>',
+    'drop' => '<path d="M12 3C8 9 5 12 5 15.5a7 7 0 0 0 14 0C19 12 16 9 12 3z"/>',
+    'lshape' => '<path d="M5 4h6v9h8v7H5z"/>',
+    'tshape' => '<path d="M3 4h18v6h-6v10H9V10H3z"/>',
+    'ushape' => '<path d="M3 4h6v10h6V4h6v16H3z"/>',
+    'callout' => '<path d="M3 4h18v12h-9l-4 5v-5H3z"/>',
+    'flag' => '<path d="M5 3v18M5 4h15l-4 5 4 5H5"/>',
     'zone' => '<circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".28"/>',
     'text' => '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
     'table' => '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 14.5h18M9 4v16M15 4v16"/>',
@@ -68,9 +90,22 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             ['poly', 'Polilínea: clic en cada punto, doble clic o Enter para terminar'], ['pencil', 'Lápiz (trazo libre)'], ['arrow', 'Flecha'], ['darrow', 'Flecha doble']] as [$t, $ti]) echo $tool($t, $ti); ?>
     </div>
     <div class="ve-grupo" data-nombre="Formas">
-        <?php foreach ([['rect', 'Rectángulo'], ['rrect', 'Rectángulo redondeado'], ['ellipse', 'Elipse / círculo'], ['triangle', 'Triángulo'], ['diamond', 'Rombo'], ['pentagon', 'Pentágono'], ['hexagon', 'Hexágono'],
-            ['star', 'Estrella'], ['cross', 'Cruz (+)'], ['xmark', 'Equis (X)'], ['check', 'Palomita'], ['blockarrow', 'Flecha de bloque'], ['chevron', 'Chevron'], ['trapezoid', 'Trapecio'], ['zone', 'Zona translúcida']] as [$t, $ti]) echo $tool($t, $ti); ?>
+        <?php foreach ([['rect', 'Rectángulo'], ['rrect', 'Rectángulo redondeado'], ['ellipse', 'Elipse / círculo'], ['triangle', 'Triángulo'], ['diamond', 'Rombo'], ['zone', 'Zona translúcida']] as [$t, $ti]) echo $tool($t, $ti); ?>
+        <div class="ve-mas">
+            <button type="button" id="ve-mas-formas" class="ve-mas-btn" title="Más formas" aria-label="Más formas" aria-haspopup="true" aria-expanded="false"><?php echo $svg($ic['star']); ?><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="ve-mas-panel" id="ve-mas-panel" hidden>
+                <?php foreach ([['pentagon', 'Pentágono'], ['hexagon', 'Hexágono'], ['star', 'Estrella'], ['cross', 'Cruz (+)'], ['xmark', 'Equis (X)'], ['check', 'Palomita'], ['blockarrow', 'Flecha de bloque'], ['chevron', 'Chevron'], ['trapezoid', 'Trapecio'], ['octagon', 'Octágono'], ['parallelogram', 'Paralelogramo'], ['rtriangle', 'Triángulo rectángulo'], ['house', 'Casa / pentágono con punta'], ['arrowleft', 'Flecha de bloque izquierda'], ['arrowup', 'Flecha de bloque arriba'], ['arrowdown', 'Flecha de bloque abajo'], ['arrowlr', 'Flecha de bloque doble horizontal'], ['homeplate', 'Etiqueta / pentágono flecha'], ['star4', 'Estrella de 4 puntas'], ['star6', 'Estrella de 6 puntas'], ['star8', 'Estrella de 8 puntas'], ['heart', 'Corazón'], ['moon', 'Luna creciente'], ['semicircle', 'Semicírculo'], ['bolt', 'Rayo'], ['drop', 'Gota'], ['lshape', 'Forma en L'], ['tshape', 'Forma en T'], ['ushape', 'Forma en U'], ['callout', 'Globo de texto'], ['flag', 'Bandera']] as [$t, $ti]) echo $tool($t, $ti); ?>
+            </div>
+        </div>
     </div>
+    <?php
+    // Cambiar el fondo (Editor) o el plano (vPlan): guarda lo hecho y abre la pantalla correspondiente
+    $hrefFondo = isset($grafico) && isset($q) ? '/graficos/fondo?' . $q : (isset($lamina, $proyecto) ? '/vplan/editar?proyecto=' . $proyecto->id . '&id=' . $lamina->id : '');
+    if ($hrefFondo): ?>
+    <div class="ve-grupo" data-nombre="Fondo">
+        <button type="button" id="ve-fondo" class="ve-txt" data-href="<?php echo s($hrefFondo); ?>" title="Guarda los cambios y abre la pantalla para cambiar el fondo<?php echo isset($grafico) ? ', su color o el tamaño de la lámina' : ' (reemplazar la imagen del plano)'; ?>"><?php echo $svg($ic['image']); ?> <?php echo isset($grafico) ? 'Cambiar fondo' : 'Cambiar plano'; ?></button>
+    </div>
+    <?php endif; ?>
     <div class="ve-grupo" data-nombre="Texto y marcadores">
         <?php foreach ([['text', 'Texto'], ['table', 'Tabla: arrastra para dibujarla; doble clic en una celda para escribir (Tab pasa a la siguiente)'], ['restr', 'Rombo de restricción numerado'], ['pin', 'Círculo numerado'], ['image', 'Insertar imagen'], ['link', 'Hipervínculo: dibuja un área sobre el plano y asígnale un enlace externo o una sección del proyecto'], ['v360', 'Vista 360: carga una foto 360 (equirectangular, 2:1), dibuja el área en el plano y se abrirá como vista interactiva en View360']] as [$t, $ti]) echo $tool($t, $ti); ?>
         <input type="file" id="ve-archivo" accept="image/*" hidden>
@@ -93,6 +128,9 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <label class="ve-mini">Grosor
             <input type="range" id="t-sw-r" min="1" max="60" value="4" aria-label="Grosor de línea">
             <input type="number" id="t-sw" min="1" max="60" value="4"> <span class="text-muted">px</span></label>
+        <label class="ve-mini" title="Transparencia del trazo: 100 % es opaco; menos es más transparente">Opacidad
+            <input type="range" id="t-op" min="5" max="100" step="5" value="100" aria-label="Opacidad de la línea">
+            <input type="number" id="t-op-n" min="5" max="100" step="5" value="100"> <span class="text-muted">%</span></label>
         <label class="ve-mini ve-orto" title="Las líneas, flechas y polilíneas se trazan solo en horizontal o vertical (F8)"><input type="checkbox" id="t-orto"> Ortogonal <kbd>F8</kbd></label>
     </div>
     <div class="ve-grupo" data-nombre="Vista">
@@ -271,7 +309,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <div id="sim-cajetines" class="ve-btns" style="margin-bottom:1rem"></div>
         <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar">
         <div id="sim-lista"></div>
-        <h4 style="margin-top:1.2rem">Gráficos del proyecto</h4>
+        <h4 style="margin-top:1.2rem">Gráficos y simbologías del proyecto</h4>
         <div id="sim-graficos" class="ve-sims"></div>
         <p class="text-muted text-sm">Un clic lo inserta en el centro de la vista, en la capa activa. Luego arrastra las esquinas para cambiar su tamaño.</p>
     </aside>

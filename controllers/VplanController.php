@@ -57,6 +57,9 @@ class VplanController
             $l->titulo = trim($_POST['titulo'] ?? '') ?: ($partida ? $partida->nombre : '');
             $l->supervisor = mb_substr(trim($_POST['supervisor'] ?? ''), 0, 200);
             $l->proyecto_id = $proyecto->id;
+            $sg = (int)($_POST['simbologia_grafico_id'] ?? 0);
+            $simb = $sg ? \Model\Grafico::find($sg) : null;
+            $l->simbologia_grafico_id = $simb && $simb->tipo === 'simbologia' && (int)$simb->proyecto_id === (int)$proyecto->id ? $simb->id : null;
             if ($l->id && (int)$l->partida_id !== (int)$partidaAnterior) $l->restr_auto = 0;   // otra partida: se reevalúa
             $alertas = $l->validar();
 
@@ -130,7 +133,7 @@ class VplanController
         }
         $router->render('vplan/formulario', [
             'titulo' => $l->id ? 'Editar lámina' : 'Nueva lámina', 'proyecto' => $proyecto, 'lamina' => $l,
-            'partidas' => $partidas, 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $partidas, $l),
+            'partidas' => $partidas, 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id), 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $partidas, $l),
             'seleccion' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', (array)($_POST['actividades'] ?? [])) : $l->seleccion(),
         ]);
     }
@@ -328,7 +331,7 @@ class VplanController
         $t = VplanTabla::find(filter_var($_POST['tabla_id'] ?? null, FILTER_VALIDATE_INT));
         if ($l && $t && (int)$t->proyecto_id === (int)$proyecto->id) {
             match ($_POST['accion'] ?? '') {
-                'agregar' => $l->agregarTabla((int)$t->id),
+                'agregar' => $l->agregarTabla((int)(!empty($_POST['copia']) ? $t->duplicar()->id : $t->id)),
                 'quitar' => $l->quitarTabla((int)$t->id),
                 'subir' => $l->moverTabla((int)$t->id, -1),
                 'bajar' => $l->moverTabla((int)$t->id, 1),

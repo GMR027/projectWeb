@@ -1,9 +1,36 @@
 <?php $esNuevo = !$material->id; ?>
 <div class="page-header">
     <h2><?php echo $esNuevo ? 'Nuevo material' : 'Editar material'; ?></h2>
-    <a href="/materiales?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <div>
+        <?php if (!$esNuevo && is_admin()): ?><a href="/historial-cambios?proyecto=<?php echo s($proyecto->id); ?>&entidad_tipo=material&entidad_id=<?php echo s($material->id); ?>" class="btn btn-ghost" title="Cambios que las herramientas de IA hicieron a este material"><i class="fa-solid fa-clock-rotate-left"></i> Historial</a><?php endif; ?>
+        <a href="/materiales?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    </div>
 </div>
 
+<?php
+$verif = $verificacion ?? null;
+if ($verif || ($inteligentes ?? false)):
+    $vigente = $verif && \Classes\MaterialesInteligentes::vigente($verif, $material);
+?>
+<div class="card norma-detalle" id="normativas-especificaciones">
+    <h3><i class="fa-solid fa-scale-balanced"></i> Normativas y especificaciones <?php echo \Classes\MaterialesInteligentes::badge($verif, $vigente, $inteligentes ?? false); ?></h3>
+    <?php if (!$verif): ?>
+        <p class="text-muted">Materiales inteligentes está activo: al guardar, la app de escritorio comparará este material con la normativa y especificaciones del proyecto y aquí aparecerá el resultado. Esta información solo se escribe desde la app de escritorio.</p>
+    <?php else: ?>
+        <p><?php echo s($verif['resumen']); ?></p>
+        <?php if (!$vigente): ?><p class="text-muted"><small>El material cambió después de esta verificación; se volverá a verificar desde la app de escritorio.</small></p><?php endif; ?>
+        <?php if ($verif['info']['motivos']): ?><strong>Motivos</strong><ul><?php foreach ($verif['info']['motivos'] as $t): ?><li><?php echo s($t); ?></li><?php endforeach; ?></ul><?php endif; ?>
+        <?php if ($verif['info']['requisitos']): ?>
+            <strong>Requisitos aplicables</strong>
+            <ul><?php foreach ($verif['info']['requisitos'] as $q): ?>
+                <li><?php echo $q['cumple'] === true ? '✔' : ($q['cumple'] === false ? '✘' : '•'); ?> <?php echo s($q['requisito']); ?>
+                    <small class="text-muted">— <?php echo s($q['documento']); ?><?php echo $q['clausula'] !== '' ? ' · ' . s($q['clausula']) : ''; ?> · pág. <?php echo (int)$q['pagina']; ?></small></li>
+            <?php endforeach; ?></ul>
+        <?php endif; ?>
+        <small class="text-muted">Verificado el <?php echo s(formatear_fecha(substr((string)$verif['verificado'], 0, 10))); ?><?php echo $verif['modelo'] !== '' ? ' con ' . s($verif['modelo']) : ''; ?>.</small>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 <div class="card">
     <form method="POST" action="/materiales/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -105,6 +132,7 @@
                 <small class="text-muted">También se llena con el botón «Entregado» del listado.</small>
             </div>
         </div>
+            <?php $tipoEntidad = 'material'; $entidadId = $esNuevo ? null : $material->id; include __DIR__ . '/../normativa/_seccion.php'; ?>
         <button type="submit" class="btn btn-primary">Guardar</button>
     </form>
 </div>

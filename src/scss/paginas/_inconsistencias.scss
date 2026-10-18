@@ -1,0 +1,65 @@
+@use '../base/variables' as *;
+
+// Inconsistencias de proyecto: hallazgos con solución propuesta que el admin acepta o rechaza
+.inc-acciones { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; form { margin: 0; } }
+.inc-resumen a.card { text-decoration: none; color: inherit; }
+.inc-filtros { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin-bottom: 1.6rem; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
+.inc-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.2rem; }
+.inc-item { border-left: .4rem solid var(--border); transition: opacity .3s; p { margin: .5rem 0; font-size: 1.35rem; }
+  &.sev-critica { border-left-color: var(--danger); } &.sev-alta { border-left-color: var(--primary); } &.sev-media { border-left-color: var(--warning); } &.sev-baja { border-left-color: var(--secondary); }
+  &.hecha { opacity: .35; } &.est-rechazada { opacity: .75; } }
+.inc-cab { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline; strong { font-size: 1.5rem; } }
+.inc-acts a { font-family: 'Fira Code', monospace; margin-right: .8rem; }
+.inc-solucion { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: baseline; padding: .9rem 1.2rem; border-radius: .8rem; background: var(--bg-tertiary); font-size: 1.3rem; }
+.inc-tag { flex: none; font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--surface); border: 1px solid var(--border); }
+.inc-botones { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-top: 1rem; }
+.inc-estado { font-size: 1.3rem; font-weight: 600; }
+.inc-msg { font-size: 1.2rem; color: var(--text-muted); }
+
+.inc-masivo { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: center; margin-bottom: 1.2rem; }
+.inc-estructura { flex-basis: 100%; font-size: 1.25rem; color: var(--text-muted); b { color: var(--text); } }
+.inc-acts ul { margin: .4rem 0 0; padding-left: 1.8rem; columns: 2; font-size: 1.25rem; }
+.inc-acts summary { cursor: pointer; }
+
+// Centro de IA: historial de cambios y biblioteca
+.hist-tabla td { font-size: 1.25rem; }
+.hist-ev { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary);
+  &.ev-aplicado { color: var(--success); } &.ev-revertido, &.ev-reabierto { color: var(--warning); } &.ev-rechazado { color: var(--text-muted); } }
+.hist-det { margin-top: .4rem; }
+.hist-par { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; pre { margin: .3rem 0 0; padding: .6rem; background: var(--bg-tertiary); border-radius: .6rem; font-size: 1.1rem; max-height: 18rem; overflow: auto; white-space: pre-wrap; } }
+.hist-pag { display: flex; gap: 1.2rem; align-items: center; justify-content: center; margin: 1.6rem 0; }
+.hist-lista { list-style: none; margin: .8rem 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; }
+.bib-form { display: inline-flex; gap: .4rem; align-items: center; input[type=text] { width: 17rem; font-size: 1.2rem; padding: .3rem .6rem; } }
+
+// Informes de IA
+.inf-gen { display: grid; grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr)); gap: 1.2rem; }
+.inf-gen-item { display: flex; flex-direction: column; gap: .6rem; padding: 1.2rem; border: 1px solid var(--border); border-radius: .8rem; label { display: flex; flex-direction: column; gap: .3rem; font-size: 1.25rem; } small { font-size: 1.2rem; } button { align-self: flex-start; } }
+.inf-barra { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: center; margin-bottom: 1.6rem; form { margin: 0; } }
+.inf-doc { max-width: 110rem; }
+.inf-sec { margin-bottom: 2.2rem; h3 { margin: 0 0 .8rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); font-size: 1.6rem; } p { font-size: 1.4rem; line-height: 1.55; margin: .5rem 0; } ul { margin: .4rem 0; padding-left: 2rem; font-size: 1.35rem; li { margin: .25rem 0; } } }
+.inf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.inf-kpi { display: flex; flex-direction: column; gap: .2rem; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary); small { color: var(--text-muted); font-size: 1.15rem; } strong { font-size: 2rem; } span { color: var(--text-muted); font-size: 1.1rem; } }
+.inf-tabla-wrap { overflow: auto; max-height: 55vh; }
+.inf-tabla { width: 100%; border-collapse: collapse; font-size: 1.25rem; th, td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; } th { position: sticky; top: 0; background: var(--surface); } }
+.inf-vacio { color: var(--text-muted); font-size: 1.3rem; }
+
+// Normativa y especificaciones
+.normativa-seccion { border-top: 1px solid var(--border); padding-top: 1.2rem; }
+.norm-lista { list-style: none; margin: .6rem 0; padding: 0; display: flex; flex-direction: column; gap: .6rem;
+  li { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; padding: .7rem 1rem; border: 1px solid var(--border); border-radius: .8rem; font-size: 1.3rem; &.norm-propuesta { border-style: dashed; } } }
+.norm-filas { display: flex; flex-direction: column; gap: .6rem; margin: .6rem 0; }
+.norm-fila { display: grid; grid-template-columns: minmax(14rem, 1fr) 2fr 2fr auto; gap: .6rem; align-items: center; select, input { width: 100%; } }
+.norm-acciones { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin: .4rem 0; }
+@media (max-width: 48rem) { .norm-fila { grid-template-columns: 1fr; } }
+
+// Mapa de avance
+.mapa-sw { display: inline-block; width: 1.2rem; height: 1.2rem; border-radius: 50%; vertical-align: -.1rem; margin-right: .3rem; &.rojo { background: #dc2626; } &.amarillo { background: #eab308; } &.verde { background: #16a34a; } }
+.mapa-pct { font-size: 1.8rem; margin-left: auto; }
+
+// Centro de IA: pestañas comunes a Propuestas, Informes, Grabaciones, Historial y Biblioteca
+.centro-ia-tabs { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+  &__titulo { font-weight: 700; font-size: 1.4rem; margin-right: 1.2rem; color: var(--text-muted); }
+  &__tab { padding: .7rem 1.4rem; border-radius: 99rem; font-size: 1.3rem; text-decoration: none; color: var(--text-muted); border: 1px solid transparent;
+    &:hover { background: var(--bg-tertiary); color: inherit; }
+    &.activa { background: var(--bg-tertiary); border-color: var(--primary); color: var(--primary); font-weight: 600; } } }
+

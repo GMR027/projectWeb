@@ -14,13 +14,13 @@
     <?php if (empty($laminas)): ?>
         <p class="text-muted">Aún no hay láminas. Crea una por partida del programa de obra y sube el plano y su simbología.</p>
     <?php else: ?>
-    <table class="tabla">
+    <table class="tabla" data-buscable>
         <thead><tr><th class="hide-m">Plano</th><th>Lámina</th><th class="hide-m">Partida</th><th class="hide-m">Supervisor</th><th>Acciones</th></tr></thead>
         <tbody>
         <?php foreach ($laminas as $l): $img = $l->marcas_png ?: $l->plano; ?>
             <tr>
                 <td class="hide-m"><?php if ($img): ?><img class="vp-mini" src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endif; ?></td>
-                <td><a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($l->id); ?>"><?php echo s($l->titulo); ?></a></td>
+                <td><a class="nombre-archivo" href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($l->id); ?>"><?php echo archivo_icono_html('png', 'Lámina del vPlan'); ?> <?php echo s($l->titulo); ?></a></td>
                 <td class="hide-m"><?php echo s($l->partida_nombre); ?></td>
                 <td class="hide-m"><?php echo s($l->supervisor); ?></td>
                 <td class="acciones">

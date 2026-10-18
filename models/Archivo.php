@@ -5,17 +5,19 @@ namespace Model;
 class Archivo extends ActiveRecord
 {
     protected static $tabla = 'archivos';
-    protected static $columnasDB = ['id', 'proyecto_id', 'categoria_id', 'fecha', 'nombre', 'numero_revision', 'archivo_original', 'archivo_guardado', 'tamano'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'categoria_id', 'carpeta_id', 'fecha', 'nombre', 'numero_revision', 'archivo_original', 'archivo_guardado', 'tamano'];
 
-    /** Extensiones permitidas (se rechaza todo lo que pueda ejecutarse en el servidor o el navegador) */
-    public const EXTENSIONES = ['pdf', 'doc', 'docx', 'rtf', 'txt', 'csv', 'xls', 'xlsx', 'xlsm', 'ppt', 'pptx', 'xml',
+    /** Extensiones permitidas (se rechaza todo lo que pueda ejecutarse en el servidor o el navegador; además cada archivo pasa por Classes\EscanerArchivos) */
+    public const EXTENSIONES = ['pdf', 'doc', 'docx', 'rtf', 'txt', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'xml',
         'odt', 'ods', 'odp', 'odg', 'otg', 'ott', 'ots', 'otp', 'odf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'svg',
-        'dwg', 'dxf', 'zip', 'rar', '7z', 'mpp', 'pod'];
+        'dwg', 'dxf', 'dwt', 'dws', 'dwf', 'dgn', 'rvt', 'rfa', 'rte', 'rft', 'ifc', 'ifczip', 'skp', 'nwd', 'nwc', '3dm', 'stp', 'step', 'obj', 'kml',
+        'zip', 'rar', '7z', 'mpp', 'pod'];
     public const MAX_BYTES = 100 * 1024 * 1024;
 
     public $id;
     public $proyecto_id;
     public $categoria_id;
+    public $carpeta_id;
     public $fecha;
     public $nombre;
     public $numero_revision;
@@ -30,6 +32,7 @@ class Archivo extends ActiveRecord
         $this->id = $args['id'] ?? null;
         $this->proyecto_id = $args['proyecto_id'] ?? null;
         $this->categoria_id = $args['categoria_id'] ?? null;
+        $this->carpeta_id = $args['carpeta_id'] ?? null;
         $this->fecha = $args['fecha'] ?? date('Y-m-d');
         $this->nombre = $args['nombre'] ?? '';
         $this->numero_revision = $args['numero_revision'] ?? '';
@@ -49,9 +52,12 @@ class Archivo extends ActiveRecord
         return self::$alertas;
     }
 
-    public static function deProyecto(int $proyectoId, ?int $categoriaId = null): array
+    /** $carpeta: null = todas, 0 = sin carpeta, >0 = esa carpeta */
+    public static function deProyecto(int $proyectoId, ?int $categoriaId = null, ?int $carpeta = null): array
     {
         $w = $categoriaId ? " AND a.categoria_id = $categoriaId" : '';
+        if ($carpeta === 0) $w .= ' AND a.carpeta_id IS NULL';
+        elseif ($carpeta) $w .= " AND a.carpeta_id = $carpeta";
         return self::consultarSQL("SELECT a.*, c.nombre AS categoria_nombre FROM archivos a LEFT JOIN archivo_categorias c ON c.id = a.categoria_id
             WHERE a.proyecto_id = $proyectoId$w ORDER BY a.fecha DESC, a.id DESC");
     }

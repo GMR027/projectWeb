@@ -16,7 +16,7 @@ class SimboloController
         $proyecto = proyecto_de_peticion();
         $propios = Simbolo::deProyecto((int)$proyecto->id);
         $router->render('simbolos/index', [
-            'titulo' => 'Símbolos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'simbolos' => $propios, 'cajetines' => Cajetin::deProyecto((int)$proyecto->id),
+            'titulo' => 'Símbolos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'simbolos' => $propios, 'cajetines' => Cajetin::deProyecto((int)$proyecto->id), 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id),
             'predeterminados' => Simbolo::predeterminados(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
             'categorias' => array_values(array_unique(array_filter(array_map(fn($s) => $s->categoria, $propios)))),
         ]);

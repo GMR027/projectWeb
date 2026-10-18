@@ -1,18 +1,20 @@
 <?php use Model\Grafico;
-$edicion = !empty($edicion);   // «Tamaño y fondo» de un gráfico ya creado ?>
+$edicion = !empty($edicion);
+$esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de un gráfico ya creado ?>
 <div class="page-header">
-    <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo $edicion ? 'Tamaño y fondo · ' . s($grafico->nombre) : 'Nuevo gráfico'; ?></h2>
-    <a href="<?php echo $edicion ? '/graficos/abrir?proyecto=' . s($proyecto->id) . '&id=' . (int)$grafico->id : '/graficos?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo $edicion ? 'Tamaño y fondo · ' . s($grafico->nombre) : ($esSimb ? 'Nueva simbología' : 'Nuevo gráfico'); ?></h2>
+    <a href="<?php echo $edicion ? '/graficos/abrir?proyecto=' . s($proyecto->id) . '&id=' . (int)$grafico->id : ($esSimb ? '/simbolos?proyecto=' . s($proyecto->id) . '#simbologias' : '/graficos?proyecto=' . s($proyecto->id)); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 
 <div class="card">
     <form method="POST" action="/graficos/<?php echo $edicion ? 'fondo' : 'crear'; ?>" class="formulario" id="gr-form" enctype="multipart/form-data">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if ($edicion): ?><input type="hidden" name="id" value="<?php echo (int)$grafico->id; ?>"><?php endif; ?>
+        <?php if ($esSimb && !$edicion): ?><input type="hidden" name="tipo" value="simbologia"><?php endif; ?>
         <?php if (!$edicion): ?><div class="form-grid">
             <div class="campo campo-full">
                 <label for="nombre">Nombre *</label>
-                <input type="text" id="nombre" name="nombre" maxlength="150" value="<?php echo s($grafico->nombre); ?>" placeholder="Ej: Diagrama de conexiones" required autofocus>
+                <input type="text" id="nombre" name="nombre" maxlength="150" value="<?php echo s($grafico->nombre); ?>" placeholder="<?php echo $esSimb ? 'Ej: Simbología del schedule' : 'Ej: Diagrama de conexiones'; ?>" required autofocus>
                 <small class="text-muted">Fecha: <strong><?php echo date('d/m/Y'); ?></strong> (se pone automáticamente)</small>
             </div>
             <div class="campo campo-full">
@@ -43,7 +45,7 @@ $edicion = !empty($edicion);   // «Tamaño y fondo» de un gráfico ya creado ?
                 <select id="gr-tamano">
                     <?php foreach (Grafico::TAMANOS as $grupo => $lista): ?>
                         <optgroup label="<?php echo s($grupo); ?>">
-                            <?php foreach ($lista as $clave => [$etq, $w, $h]): ?><option value="<?php echo (int)$w . 'x' . (int)$h; ?>"<?php echo $clave === 'fullhd' ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?>
+                            <?php foreach ($lista as $clave => [$etq, $w, $h]): ?><option value="<?php echo (int)$w . 'x' . (int)$h; ?>"<?php echo $clave === ($esSimb ? 'simb-schedule' : 'fullhd') ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?>
                         </optgroup>
                     <?php endforeach; ?>
                     <option value="custom">Personalizado</option>

@@ -8,13 +8,14 @@ use Classes\Imagenes;
 class Grafico extends ActiveRecord
 {
     protected static $tabla = 'editor_graficos';
-    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'categoria_id', 'ancho', 'alto', 'fondo', 'fondo_color', 'fondo_imagen', 'fondo_config'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'tipo', 'categoria_id', 'ancho', 'alto', 'fondo', 'fondo_color', 'fondo_imagen', 'fondo_config'];
 
-    public $id, $proyecto_id, $nombre, $categoria_id, $ancho, $alto, $fondo, $fondo_color, $fondo_imagen, $fondo_config;
+    public $id, $proyecto_id, $nombre, $tipo, $categoria_id, $ancho, $alto, $fondo, $fondo_color, $fondo_imagen, $fondo_config;
     public $creado, $actualizado;   // los pone la BD
     public $laminasCache = null;
     public $portada, $num_laminas, $categoria_nombre;  // solo en la lista: imagen de la lámina 1 y cuántas láminas hay
 
+    public const TIPOS = ['grafico', 'simbologia'];
     public const LADO_MIN = 100;
     public const LADO_MAX = 8000;
 
@@ -80,6 +81,11 @@ class Grafico extends ActiveRecord
             'a3' => ['A3 420 × 297 mm', 4961, 3508],
             'tabloide' => ['Tabloide 17 × 11 in (como el vPlan)', 5100, 3300],
         ],
+        'Simbología (leyenda)' => [
+            'simb-schedule' => ['Leyenda del schedule 1200 × 700', 1200, 700],
+            'simb-cuadrada' => ['Leyenda cuadrada 800 × 800', 800, 800],
+            'simb-ancha' => ['Leyenda ancha 2400 × 700', 2400, 700],
+        ],
         'Redes y presentaciones' => [
             'cuadrado' => ['Cuadrado 1080 × 1080', 1080, 1080],
             'portada' => ['Portada 1200 × 630', 1200, 630],
@@ -92,6 +98,7 @@ class Grafico extends ActiveRecord
         $this->id = $args['id'] ?? null;
         $this->proyecto_id = $args['proyecto_id'] ?? null;
         $this->nombre = trim((string)($args['nombre'] ?? ''));
+        $this->tipo = in_array($args['tipo'] ?? '', self::TIPOS, true) ? $args['tipo'] : 'grafico';
         $this->categoria_id = $args['categoria_id'] ?? null;
         $this->ancho = (int)($args['ancho'] ?? 1920);
         $this->alto = (int)($args['alto'] ?? 1080);
@@ -114,17 +121,19 @@ class Grafico extends ActiveRecord
         return self::$alertas;
     }
 
-    public static function deProyecto(int $proyectoId): array
+    /** Gráficos del proyecto del tipo dado ('grafico' por defecto; null = todos, p. ej. para sumar el almacenamiento) */
+    public static function deProyecto(int $proyectoId, ?string $tipo = 'grafico'): array
     {
+        $filtro = $tipo !== null && in_array($tipo, self::TIPOS, true) ? " AND g.tipo = '$tipo'" : '';
         $lista = self::consultarSQL(
             "SELECT g.*, (SELECT l.marcas_png FROM editor_laminas l WHERE l.grafico_id = g.id ORDER BY l.orden, l.id LIMIT 1) AS portada,
                     (SELECT COUNT(*) FROM editor_laminas l WHERE l.grafico_id = g.id) AS num_laminas,
                     (SELECT c.nombre FROM editor_categorias c WHERE c.id = g.categoria_id) AS categoria_nombre
-             FROM editor_graficos g WHERE g.proyecto_id = $proyectoId" . self::sinView360() . " ORDER BY g.creado DESC, g.id DESC"
+             FROM editor_graficos g WHERE g.proyecto_id = $proyectoId" . $filtro . self::sinView360() . " ORDER BY g.creado DESC, g.id DESC"
         );
         // Todas las láminas del proyecto en una sola consulta (evita una consulta por gráfico)
         $porGrafico = [];
-        foreach (GraficoLamina::consultarSQL("SELECT l.* FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE g.proyecto_id = $proyectoId ORDER BY l.orden, l.id") as $l) $porGrafico[(int)$l->grafico_id][] = $l;
+        foreach (GraficoLamina::consultarSQL("SELECT l.* FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE g.proyecto_id = $proyectoId" . $filtro . " ORDER BY l.orden, l.id") as $l) $porGrafico[(int)$l->grafico_id][] = $l;
         foreach ($lista as $g) $g->laminasCache = $porGrafico[(int)$g->id] ?? [];
         return $lista;
     }
@@ -156,16 +165,29 @@ class Grafico extends ActiveRecord
         return array_values(array_unique($out));
     }
 
+    /** Simbologías del proyecto con su imagen (primera lámina): para listarlas y para elegirlas en una lámina del vPlan */
+    public static function simbologias(int $proyectoId): array
+    {
+        return self::deProyecto($proyectoId, 'simbologia');
+    }
+
+    /** Primera lámina guardada con imagen (la que se muestra como simbología) */
+    public function imagenSimbologia(): ?string
+    {
+        foreach ($this->laminas() as $l) if ($l->marcas_png) return $l->marcas_png;
+        return null;
+    }
+
     /** Imágenes de gráficos del proyecto para insertarlas en otro dibujo: [['nombre', 'src'], ...] (una por lámina guardada) */
     public static function paraInsertar(int $proyectoId, ?int $excluir = null): array
     {
         $out = [];
         try {
-            foreach (self::deProyecto($proyectoId) as $g) {
+            foreach (self::deProyecto($proyectoId, null) as $g) {
                 if ($excluir !== null && (int)$g->id === $excluir) continue;
                 $laminas = $g->laminas();
                 foreach ($laminas as $i => $l) {
-                    if ($l->marcas_png) $out[] = ['nombre' => $g->nombre . (count($laminas) > 1 ? ' · ' . $l->titulo($i + 1) : ''), 'src' => '/uploads/vplan/' . $l->marcas_png];
+                    if ($l->marcas_png) $out[] = ['id' => (int)$g->id, 'nombre' => ($g->tipo === 'simbologia' ? 'Simbología · ' : '') . $g->nombre . (count($laminas) > 1 ? ' · ' . $l->titulo($i + 1) : ''), 'src' => '/uploads/vplan/' . $l->marcas_png];
                 }
             }
         } catch (\Throwable $e) {   // migración pendiente

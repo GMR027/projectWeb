@@ -1,0 +1,43 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Revisiones: chip de veredicto (✅ ⚠ ❌ ⚪) + «revisado», menú y pantalla de resumen
+// ============================================================
+
+.rev-chip {
+  --rev-color: var(--text-dim);
+  display: inline-flex; align-items: center; gap: .6rem;
+  padding: .3rem .9rem; border-radius: 99px; font-size: 1.2rem; font-weight: 600; line-height: 1.4;
+  color: var(--rev-color); background: transparent; border: 1px solid var(--rev-color); text-decoration: none;
+  &.rev-correcto { --rev-color: var(--success); }
+  &.rev-revisar { --rev-color: var(--warning); }
+  &.rev-no_cumple { --rev-color: var(--danger); }
+  &.rev-cambio { --rev-color: var(--warning); border-style: dashed; }
+  &.rev-ok { background: var(--bg-hover, rgba(128, 128, 128, .12)); }
+  &.rev-no_cumple i:first-child { text-decoration: none; }
+  .rev-vistos { opacity: .85; font-size: 1.1rem; }
+}
+button.rev-chip { cursor: pointer; font-family: inherit; &:disabled { cursor: default; opacity: 1; } &:not(:disabled):hover { filter: brightness(1.15); } }
+
+.rev-menu {
+  position: absolute; z-index: 1000; min-width: 24rem; padding: 1rem; display: grid; gap: .5rem;
+  background: var(--bg-card, var(--bg)); color: var(--text); border: 1px solid var(--border-accent); border-radius: 1rem; box-shadow: 0 1rem 3rem rgba(0, 0, 0, .35);
+  button { display: flex; align-items: center; gap: .8rem; width: 100%; padding: .6rem .8rem; border: 0; border-radius: .6rem; background: transparent; color: var(--text); font: inherit; font-size: 1.3rem; cursor: pointer; text-align: left; &:hover, &.on { background: var(--primary-glow); } }
+  .rev-op-correcto i { color: var(--success); } .rev-op-revisar i { color: var(--warning); } .rev-op-no_cumple i { color: var(--danger); }
+  input[type=text] { width: 100%; padding: .6rem .8rem; font: inherit; font-size: 1.2rem; border: 1px solid var(--border); border-radius: .6rem; background: transparent; color: var(--text); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: .2rem 0; width: 100%; }
+}
+
+.rev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr)); gap: 1.6rem; margin-bottom: 2rem; }
+.rev-resumen h3 { margin: 0 0 1rem; font-size: 1.6rem; }
+.rev-cifras { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0; }
+.rev-barra { height: .8rem; border-radius: 99px; background: var(--border); overflow: hidden; margin-bottom: .6rem; span { display: block; height: 100%; background: var(--success); } }
+.rev-filtros, .rev-leyenda { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1.4rem; }
+.rev-aviso-entrada { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; }
+
+// En la sección de normativa del formulario
+.rev-fila { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.6rem; margin-bottom: 1.2rem; }
+.rev-pie { display: inline-flex; gap: .4rem; font-size: 1.2rem; color: var(--text-muted); }
+
+.rev-mini-caja { display: grid; gap: .6rem; padding: 0 1.6rem 1.2rem; }
+.rev-mini { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; color: inherit; text-decoration: none; > .text-sm { min-width: 9rem; } &:hover .text-sm { color: var(--primary); } .rev-chip { padding: .1rem .7rem; font-size: 1.1rem; } }

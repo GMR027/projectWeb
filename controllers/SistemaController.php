@@ -27,6 +27,9 @@ class SistemaController
             'pronBd' => Volumen::pronostico($historial, 'bd', $bd['usado'], $bd['capacidad']),
             'respaldos' => Respaldo::listar(),
             'programado' => Respaldo::programado(), 'ultimoAuto' => Respaldo::ultimoAutomatico(), 'proximoAuto' => Respaldo::proximo(),
+            'herramientas' => \Model\HerramientaIA::all('nombre ASC'),
+            'hayToken' => \Classes\Instaladores::hayToken(), 'tokenNuevo' => (function () { $t = $_SESSION['token_escritorio'] ?? ''; unset($_SESSION['token_escritorio']); return $t; })(),
+            'instaladores' => \Classes\Instaladores::listar(),
             'ok' => $_GET['ok'] ?? '',
             'error' => $_GET['error'] ?? '',
         ]);
@@ -66,6 +69,65 @@ class SistemaController
         header('Content-Disposition: attachment; filename="' . basename($ruta) . '"');
         header('Content-Length: ' . filesize($ruta));
         readfile($ruta);
+        exit;
+    }
+
+    /** Descarga de un instalador de DictaFlow (solo admin) */
+    public static function instalador()
+    {
+        redirigir_si_no_admin();
+        if (!\Classes\Instaladores::entregar((string)($_GET['archivo'] ?? ''))) { http_response_code(404); exit('Archivo no disponible'); }
+        exit;
+    }
+
+    /** Sube un instalador nuevo o reemplaza uno existente (mismo nombre) */
+    public static function instaladorSubir()
+    {
+        redirigir_si_no_admin();
+        try {
+            $r = \Classes\Instaladores::guardar($_FILES['instalador'] ?? [], $_POST['reemplazar'] ?? null);
+            $msg = !$r['reemplazo'] ? "Instalador subido: {$r['nombre']}" : ($r['cambio'] ? "Instalador reemplazado: {$r['nombre']} (el contenido cambió)" : "{$r['nombre']}: el archivo es idéntico al anterior, no hubo cambios");
+            header('Location: /sistema?ok=' . urlencode($msg) . '#escritorio');
+        } catch (\Throwable $e) {
+            header('Location: /sistema?error=' . urlencode($e->getMessage()) . '#escritorio');
+        }
+        exit;
+    }
+
+    /** Token para que la app de escritorio consulte actualizaciones (se muestra una sola vez) */
+    public static function tokenEscritorio()
+    {
+        redirigir_si_no_admin();
+        $_SESSION['token_escritorio'] = \Classes\Instaladores::generarToken();
+        header('Location: /sistema#escritorio');
+        exit;
+    }
+
+    public static function instaladorEliminar()
+    {
+        redirigir_si_no_admin();
+        \Classes\Instaladores::eliminar((string)($_POST['archivo'] ?? ''));
+        header('Location: /sistema?ok=' . urlencode('Instalador eliminado.') . '#escritorio');
+        exit;
+    }
+
+    public static function herramientaGuardar()
+    {
+        redirigir_si_no_admin();
+        $h = new \Model\HerramientaIA($_POST);
+        $alertas = $h->validar();
+        if ($alertas) { header('Location: /sistema?error=' . urlencode(implode('. ', $alertas['error'])) . '#herramientas'); exit; }
+        $h->guardar();
+        header('Location: /sistema?ok=' . urlencode('Herramienta conectada.') . '#herramientas');
+        exit;
+    }
+
+    public static function herramientaEliminar()
+    {
+        redirigir_si_no_admin();
+        $h = \Model\HerramientaIA::find((int)($_POST['id'] ?? 0));
+        if ($h) $h->eliminar();
+        header('Location: /sistema?ok=' . urlencode('Herramienta eliminada.') . '#herramientas');
         exit;
     }
 

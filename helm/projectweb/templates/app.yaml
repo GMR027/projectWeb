@@ -51,6 +51,10 @@ spec:
             - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
             - { name: TRUSTED_PROXIES, value: {{ .Values.trustedProxies | quote }} }
             - { name: CONTACT_EMAIL, value: {{ .Values.app.contactEmail | quote }} }
+{{- if .Values.clamav.enabled }}
+            - { name: CLAMAV_HOST, value: clamav }
+            - { name: CLAMAV_REQUIRED, value: {{ .Values.clamav.required | quote }} }
+{{- end }}
             - { name: VOLUMEN_ARCHIVOS_GB, value: {{ .Values.app.storage | trimSuffix "Gi" | quote }} }
             - { name: VOLUMEN_BD_GB, value: {{ .Values.mysql.storage | trimSuffix "Gi" | quote }} }
           ports:
@@ -65,6 +69,7 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/fichas, subPath: fichas }
             - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
             - { name: files, mountPath: /var/www/html/storage/respaldos, subPath: respaldos }
+            - { name: files, mountPath: /var/www/html/storage/instaladores, subPath: instaladores }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}
       volumes:
         - name: files
