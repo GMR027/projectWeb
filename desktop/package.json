@@ -1,10 +1,11 @@
 {
   "name": "projectweb-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Project Web Desktop: herramientas de IA (modelos locales y de suscripción) para el administrador de Project Web",
   "main": "src/main.js",
   "private": true,
   "license": "UNLICENSED",
+  "homepage": "https://projectweb.iguzman.com.mx",
   "author": { "name": "Project Web", "email": "admin@po.local" },
   "scripts": {
     "start": "electron .",
