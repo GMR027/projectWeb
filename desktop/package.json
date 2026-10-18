@@ -1,6 +1,6 @@
 {
   "name": "projectweb-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Project Web Desktop: herramientas de IA (modelos locales y de suscripción) para el administrador de Project Web",
   "main": "src/main.js",
   "private": true,
