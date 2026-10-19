@@ -21,11 +21,17 @@ class LastPlannerController
         $todas = ($_GET['partida'] ?? '') === 'todas';
         $partida = $todas ? null : ($partida ?? ($partidas[0] ?? null));
 
+        $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, '1900-01-01', '2999-12-31') : []);
+        $soloRestriccion = !empty($_GET['restriccion']);
+        if ($soloRestriccion) {
+            $tarjetas = array_values(array_filter($tarjetas, fn($t) => array_filter($t['items'], fn($i) => !empty($i['restriccion']))));
+        }
+
         $router->render('lastplanner/index', [
             'titulo' => 'Last Planner - ' . $proyecto->nombre,
             'proyecto' => $proyecto, 'partidas' => $partidas, 'partida' => $partida,
             'todas' => $todas,
-            'tarjetas' => $todas ? LastPlanner::tarjetasTodas($proyecto) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, '1900-01-01', '2999-12-31') : []),
+            'tarjetas' => $tarjetas, 'soloRestriccion' => $soloRestriccion,
         ]);
     }
 }

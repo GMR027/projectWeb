@@ -307,6 +307,10 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         </div>
         <h5>Cajetines</h5>
         <div id="sim-cajetines" class="ve-btns" style="margin-bottom:1rem"></div>
+        <div id="sim-sheetflow-caja" hidden>
+            <h5>Tablas de SheetFlow</h5>
+            <div id="sim-sheetflow" class="ve-btns" style="margin-bottom:1rem"></div>
+        </div>
         <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar">
         <div id="sim-lista"></div>
         <h4 style="margin-top:1.2rem">Gráficos y simbologías del proyecto</h4>

@@ -1,23 +1,26 @@
 <?php $esNueva = !$lamina->id; ?>
 <div class="page-header">
     <h2><?php echo $esNueva ? 'Nueva lámina de vPlan' : 'Editar lámina'; ?></h2>
-    <a href="/vplan?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <a href="<?php echo $lamina->paquete_id ? '/vplan/paquete?proyecto=' . s($proyecto->id) . '&id=' . s($lamina->paquete_id) : '/vplan?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 <div class="card">
     <form method="POST" action="/vplan/<?php echo $esNueva ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+        <?php if ($lamina->paquete_id): ?><input type="hidden" name="paquete" value="<?php echo s($lamina->paquete_id); ?>"><?php endif; ?>
         <?php if (!$esNueva): ?><input type="hidden" name="id" value="<?php echo s($lamina->id); ?>"><?php endif; ?>
         <div class="form-grid">
+            <?php if ($esNueva): ?>
             <div class="campo">
-                <label for="partida_id">Partida a mostrar *</label>
-                <select id="partida_id" name="partida_id" required>
-                    <option value="">— Selecciona —</option>
+                <label for="partida_id">Partida inicial</label>
+                <select id="partida_id" name="partida_id">
+                    <option value="">— Ninguna (la lámina empieza sin tareas) —</option>
                     <?php foreach ($partidas as $p): ?><option value="<?php echo s($p->id); ?>" data-nombre="<?php echo s($p->nombre); ?>" <?php echo (int)$lamina->partida_id === (int)$p->id ? 'selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?>
                 </select>
+                <small class="text-muted">Es solo el punto de partida: después, en «Modo diseño», puedes sumar otras partidas, elegir actividades y mover cada bloque donde quieras.</small>
             </div>
             <div class="campo vp-acts-campo" id="vp-acts" hidden style="grid-column:1/-1">
                 <label>Actividades a mostrar en esta lámina</label>
-                <p class="text-sm text-muted">Marca solo las que quieras ver aquí; si marcas todas (o ninguna) se muestra la partida completa. Una actividad puede estar en varias láminas y conserva su número (SEQ) de la partida.</p>
+                <p class="text-sm text-muted">Marca solo las que quieras ver aquí; si marcas todas (o ninguna) se muestra la partida completa. Una actividad puede estar en varias láminas.</p>
                 <div class="vp-acts-atajos">
                     <button type="button" class="btn btn-sm btn-ghost" data-atajo="todas">Todas</button>
                     <button type="button" class="btn btn-sm btn-ghost" data-atajo="ninguna">Ninguna</button>
@@ -27,7 +30,32 @@
                 <p class="text-sm" id="vp-acts-resumen" aria-live="polite"></p>
                 <div id="vp-acts-lista" class="vp-acts-lista"></div>
             </div>
-            <div class="campo"><label for="titulo">Título de la lámina</label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida"></div>
+            <?php endif; ?>
+            <div class="campo" style="grid-column:1/-1">
+                <label for="preset">Tamaño de la hoja</label>
+                <div class="vp-dis-fila">
+                    <select id="preset" name="preset">
+                        <?php foreach (\Classes\VplanDiseno::PRESETS as $k => $pr): ?><option value="<?php echo s($k); ?>"<?php echo $lamina->preset === $k ? ' selected' : ''; ?>><?php echo s($pr[0] . ' · ' . $pr[1] . '×' . $pr[2] . ' mm'); ?></option><?php endforeach; ?>
+                        <option value="personalizado"<?php echo $lamina->preset === 'personalizado' ? ' selected' : ''; ?>>Personalizada…</option>
+                    </select>
+                    <select id="orientacion" name="orientacion"><option value="horizontal">Horizontal</option><option value="vertical"<?php echo $lamina->alto_mm > $lamina->ancho_mm && $lamina->preset !== 'personalizado' ? ' selected' : ''; ?>>Vertical</option></select>
+                    <span id="preset-custom" class="vp-dis-fila" hidden>
+                        <input type="number" name="ancho" id="ancho" min="1" step="0.1" value="<?php echo (int)$lamina->ancho_mm; ?>" style="width:9rem" aria-label="Ancho"> ×
+                        <input type="number" name="alto" id="alto" min="1" step="0.1" value="<?php echo (int)$lamina->alto_mm; ?>" style="width:9rem" aria-label="Alto">
+                        <select name="unidad" aria-label="Unidad"><option value="mm">mm</option><option value="cm">cm</option><option value="in">pulgadas</option></select>
+                    </span>
+                </div>
+                <small class="text-muted">Los bloques conservan su lugar en proporción si cambias el tamaño después. Mínimo 100 mm, máximo 1500 mm por lado.</small>
+                <script>
+                (function () {
+                    const p = document.getElementById('preset'), c = document.getElementById('preset-custom'), o = document.getElementById('orientacion');
+                    const f = () => { c.hidden = p.value !== 'personalizado'; o.disabled = p.value === 'personalizado'; };
+                    p.addEventListener('change', f); f();
+                })();
+                </script>
+            </div>
+            <div class="campo"><label for="titulo">Título de la lámina</label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida inicial"></div>
+            <div class="campo"><label for="grupo">Grupo (disciplina, nivel…)</label><input type="text" id="grupo" name="grupo" value="<?php echo s($lamina->grupo); ?>" maxlength="100" placeholder="Opcional: agrupa las láminas en el vPlan"></div>
             <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: JUAN PÉREZ / ANA LÓPEZ"></div>
             <div class="campo">
                 <label for="plano">Imagen del plano (hasta Full HD o 4K)</label>
@@ -71,6 +99,7 @@
         <button type="submit" class="btn btn-primary">Guardar lámina</button>
     </form>
 </div>
+<?php if ($esNueva): ?>
 <script>
 (function () {
     const sel = document.getElementById('partida_id'), tit = document.getElementById('titulo');
@@ -121,3 +150,4 @@
     pintar();
 })();
 </script>
+<?php endif; ?>

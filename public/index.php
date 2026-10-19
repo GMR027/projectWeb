@@ -48,6 +48,7 @@ use Controllers\VplanNotaController;
 use Controllers\EditorController;
 use Controllers\SimboloController;
 use Controllers\RedactorController;
+use Controllers\SheetflowController;
 use Controllers\IdiomaController;
 use Controllers\DependenciasController;
 use Controllers\EvidenciaController;
@@ -139,6 +140,8 @@ $router->post('/programa/actividades/crear', [ProgramaController::class, 'crearA
 $router->get('/programa/actividades/editar', [ProgramaController::class, 'editarActividad']);
 $router->post('/programa/actividades/editar', [ProgramaController::class, 'editarActividad']);
 $router->post('/programa/actividades/eliminar', [ProgramaController::class, 'eliminarActividad']);
+$router->post('/programa/actividades/rapida', [ProgramaController::class, 'actividadRapida']);
+$router->post('/programa/actividades/mover', [ProgramaController::class, 'moverActividad']);
 // Restricciones
 $router->get('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
 $router->post('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
@@ -206,6 +209,14 @@ $router->post('/api/msr/campo', [MsrController::class, 'campo']);
 
 // ========== VPLAN ==========
 $router->get('/vplan', [VplanController::class, 'index']);
+$router->get('/vplan/paquete', [VplanController::class, 'paquete']);
+$router->post('/vplan/paquete/crear', [VplanController::class, 'paqueteCrear']);
+$router->post('/vplan/paquete/renombrar', [VplanController::class, 'paqueteRenombrar']);
+$router->post('/vplan/paquete/eliminar', [VplanController::class, 'paqueteEliminar']);
+$router->post('/vplan/paquete/grupo-visible', [VplanController::class, 'paqueteGrupoVisible']);
+$router->post('/api/vplan/lamina/ajustar', [VplanController::class, 'ajustarLamina']);
+$router->post('/vplan/lamina/mover', [VplanController::class, 'moverLamina']);
+$router->post('/vplan/lamina/duplicar', [VplanController::class, 'duplicarLamina']);
 $router->get('/vplan/crear', [VplanController::class, 'crear']);
 $router->post('/vplan/crear', [VplanController::class, 'crear']);
 $router->get('/vplan/editar', [VplanController::class, 'editar']);
@@ -218,6 +229,8 @@ $router->post('/vplan/lamina/recovery', [VplanController::class, 'recoveryCols']
 $router->post('/api/vplan/imagen', [VplanController::class, 'subirImagen']);
 $router->get('/vplan/editor', [VplanController::class, 'editor']);
 $router->post('/api/vplan/marcas', [VplanController::class, 'guardarMarcas']);
+$router->post('/api/vplan/diseno', [VplanController::class, 'guardarDiseno']);
+$router->post('/vplan/diseno/restablecer', [VplanController::class, 'restablecerDiseno']);
 $router->post('/api/vplan/fila', [VplanTablaController::class, 'apiFila']);
 $router->post('/api/vplan/nota/guardar', [VplanNotaController::class, 'guardar']);
 $router->post('/api/vplan/nota/eliminar', [VplanNotaController::class, 'eliminar']);
@@ -361,6 +374,20 @@ $router->post('/api/redactor/version', [RedactorController::class, 'version']);
 $router->post('/api/redactor/programa', [RedactorController::class, 'programa']);
 $router->post('/api/redactor/exportar-seleccion', [RedactorController::class, 'exportarSeleccion']);
 $router->post('/redactor/plantilla/eliminar', [RedactorController::class, 'eliminarPlantilla']);
+
+// SheetFlow (tablas reutilizables en vPlan, Editor y Redactor)
+$router->get('/sheetflow', [SheetflowController::class, 'index']);
+$router->get('/sheetflow/crear', [SheetflowController::class, 'crear']);
+$router->post('/sheetflow/crear', [SheetflowController::class, 'crear']);
+$router->get('/sheetflow/abrir', [SheetflowController::class, 'abrir']);
+$router->get('/sheetflow/ver', [SheetflowController::class, 'ver']);
+$router->get('/sheetflow/descargar', [SheetflowController::class, 'descargar']);
+$router->post('/sheetflow/duplicar', [SheetflowController::class, 'duplicar']);
+$router->post('/sheetflow/eliminar', [SheetflowController::class, 'eliminar']);
+$router->post('/sheetflow/a-vplan', [SheetflowController::class, 'aVplan']);
+$router->post('/api/sheetflow/guardar', [SheetflowController::class, 'guardar']);
+$router->post('/api/sheetflow/datos', [SheetflowController::class, 'datos']);
+$router->post('/api/sheetflow/imagen', [SheetflowController::class, 'imagen']);
 
 $router->get('/simbolos', [SimboloController::class, 'index']);
 $router->post('/simbolos/guardar', [SimboloController::class, 'guardar']);

@@ -5,9 +5,13 @@ namespace Classes;
 use Model\Partida;
 use Model\Proyecto;
 use Model\Restriccion;
+use Model\VplanBloque;
 use Model\VplanLamina;
 
-/** Datos de una lámina de vPlan: tareas del programa + recovery + restricciones numeradas + tablas adicionales */
+/**
+ * Datos de una lámina de vPlan. La lámina es un lienzo de bloques: cada bloque de tareas lista actividades de una o varias
+ * partidas (todas o solo algunas), con recovery por actividad, restricciones numeradas en toda la lámina y tablas adicionales.
+ */
 class Vplan
 {
     public static function estado($a): string
@@ -25,48 +29,110 @@ class Vplan
         return [$hex, $lum > 0.6 ? '#000000' : '#ffffff'];
     }
 
+    /** Cache por petición: partida => actividades, para no repetir consultas entre bloques */
+    private static array $actividadesDe = [];
+
+    private static function actividadesDePartida(Partida $p): array
+    {
+        return self::$actividadesDe[(int)$p->id] ??= $p->getActividades();
+    }
+
+    /** Fuentes de un bloque de tareas equivalentes a la configuración antigua de la lámina (una partida + selección) */
+    public static function fuentesAntiguas(VplanLamina $lamina): ?array
+    {
+        if (!$lamina->partida_id) return null;
+        $sel = $lamina->seleccion();
+        return [['partida' => (int)$lamina->partida_id, 'actividades' => $sel ?: null]];
+    }
+
     /**
-     * Actividades que muestra la lámina, cada una con su número (SEQ) original dentro de la partida.
-     * Sin selección guardada se muestra la partida completa. Devuelve [lista, hayFiltro].
-     * @return array{0: array<int, array{actividad: \Model\Actividad, seq: int}>, 1: bool}
+     * Qué muestra un bloque de tareas: grupos por partida con sus actividades. Numeración (SEQ):
+     *  - 'continuo' (por defecto): 1..n en el bloque;
+     *  - 'partida': la original de cada actividad dentro de su partida, con un renglón de subtítulo por partida.
+     * @return array{grupos: array, subtitulos: bool, titulo: string, color: array, seq: string}
      */
-    public static function visibles(VplanLamina $lamina, ?Partida $partida): array
+    public static function tareasDeBloque(VplanBloque $b, Proyecto $proyecto): array
     {
-        $todas = $partida ? $partida->getActividades() : [];
-        $sel = array_flip($lamina->seleccion());
-        $out = [];
-        foreach ($todas as $i => $a) {
-            if (!$sel || isset($sel[(int)$a->id])) $out[] = ['actividad' => $a, 'seq' => $i + 1];
+        $cfg = $b->config();
+        $modo = ($cfg['seq'] ?? 'continuo') === 'partida' ? 'partida' : 'continuo';
+        $grupos = [];
+        $vistas = [];
+        $n = 0;
+        foreach ((array)($cfg['fuentes'] ?? []) as $f) {
+            $partida = Partida::find((int)($f['partida'] ?? 0));
+            if (!$partida || (int)$partida->proyecto_id !== (int)$proyecto->id) continue;
+            $todas = self::actividadesDePartida($partida);
+            $sel = isset($f['actividades']) && is_array($f['actividades']) && $f['actividades'] ? array_flip(array_map('intval', $f['actividades'])) : null;
+            $tareas = [];
+            foreach ($todas as $i => $a) {
+                if (($sel && !isset($sel[(int)$a->id])) || isset($vistas[(int)$a->id])) continue;
+                $vistas[(int)$a->id] = true;
+                $tareas[] = ['actividad' => $a, 'seq_partida' => $i + 1];
+            }
+            if (!$tareas) continue;
+            foreach ($tareas as &$t) {
+                $n++;
+                $t['seq'] = $modo === 'partida' ? $t['seq_partida'] : $n;
+                $t['estado'] = self::estado($t['actividad']);
+            }
+            unset($t);
+            $grupos[] = ['partida' => $partida, 'tareas' => $tareas];
         }
-        if ($sel && !$out) {   // selección obsoleta (ya no hay ninguna de esas actividades): se muestra todo
-            foreach ($todas as $i => $a) $out[] = ['actividad' => $a, 'seq' => $i + 1];
-        }
-        return [$out, count($out) < count($todas)];
-    }
-
-    /** Condición SQL extra para limitar consultas de restricciones a las actividades visibles */
-    private static function filtroActividades(array $visibles, bool $filtrada): string
-    {
-        if (!$filtrada) return '';
-        $ids = array_map(fn($v) => (int)$v['actividad']->id, $visibles);
-        return ' AND a.id IN (' . implode(',', $ids ?: [0]) . ')';
+        $titulo = trim((string)($cfg['titulo'] ?? ''));
+        if ($titulo === '') $titulo = implode(' / ', array_map(fn($g) => $g['partida']->nombre, $grupos));
+        $color = trim((string)($cfg['color'] ?? ''));
+        return [
+            'grupos' => $grupos, 'subtitulos' => $modo === 'partida' && count($grupos) > 1, 'seq' => $modo,
+            'titulo' => mb_strtoupper($titulo),
+            'color' => self::colorTabla($color !== '' ? $color : ($grupos ? $grupos[0]['partida']->color_bg : null)),
+        ];
     }
 
     /**
-     * Si la partida tiene restricciones activas en alguna actividad, agrega por defecto la tabla de
+     * Restricciones activas de esas actividades, numeradas 1..n en el orden recibido.
+     * @return array{lista: array, porAct: array}
+     */
+    public static function restriccionesDe(array $idsActividad): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $idsActividad)));
+        if (!$ids) return ['lista' => [], 'porAct' => []];
+        $filas = [];
+        foreach (Restriccion::consultarSQL("SELECT r.* FROM restricciones r WHERE r.actividad_id IN (" . implode(',', $ids) . ") AND r.estado = 'activa' ORDER BY r.id") as $r) {
+            $filas[(int)$r->actividad_id][] = $r;
+        }
+        $lista = [];
+        $porAct = [];
+        $n = 0;
+        foreach ($ids as $id) {
+            foreach ($filas[$id] ?? [] as $r) {
+                $n++;
+                $porAct[$id][] = $n;
+                $lista[] = ['n' => $n, 'descripcion' => trim((string)$r->descripcion) ?: (trim((string)$r->codigo) ?: 'Restricción')];
+            }
+        }
+        return ['lista' => $lista, 'porAct' => $porAct];
+    }
+
+    /** Bloques de tareas ordenados como se leen en la hoja (arriba→abajo, izquierda→derecha) */
+    private static function tareasEnOrden(array $bloques): array
+    {
+        $bt = array_values(array_filter($bloques, fn($b) => $b->tipo === 'tareas' && empty($b->config()['oculto'])));   // un bloque oculto no cuenta (ni numera restricciones)
+        usort($bt, fn($a, $b) => [round((float)$a->y, 1), (float)$a->x] <=> [round((float)$b->y, 1), (float)$b->x]);
+        return $bt;
+    }
+
+    /**
+     * Si las actividades de la lámina tienen restricciones activas, agrega por defecto la tabla de
      * restricciones a la lámina (una sola vez: si luego se quita a mano, no se vuelve a agregar).
      */
     public static function asegurarRestricciones(VplanLamina $lamina, Proyecto $proyecto): void
     {
-        if ((int)$lamina->restr_auto === 1 || !$lamina->partida_id || !$lamina->id) return;
-        $partida = Partida::find($lamina->partida_id);
-        if (!$partida || (int)$partida->proyecto_id !== (int)$proyecto->id) return;
-        [$vis, $filtrada] = self::visibles($lamina, $partida);
-        $n = (int)Restriccion::consultarSQL(
-            "SELECT r.* FROM restricciones r JOIN actividades a ON a.id = r.actividad_id
-             WHERE a.partida_id = " . (int)$lamina->partida_id . " AND r.estado = 'activa'" . self::filtroActividades($vis, $filtrada) . " LIMIT 1"
-        ) ? 1 : 0;
-        if (!$n) return;   // sin restricciones todavía: se vuelve a evaluar en la siguiente visita
+        if ((int)$lamina->restr_auto === 1 || !$lamina->id) return;
+        $ids = [];
+        foreach (self::tareasEnOrden($lamina->bloques()) as $b) {
+            foreach (self::tareasDeBloque($b, $proyecto)['grupos'] as $g) foreach ($g['tareas'] as $t) $ids[] = (int)$t['actividad']->id;
+        }
+        if (!self::restriccionesDe($ids)['lista']) return;   // sin restricciones todavía: se vuelve a evaluar en la siguiente visita
 
         // Si la lámina ya tiene una tabla de restricciones (p. ej. con renglones manuales), no se duplica;
         // si no, se crea una propia de la lámina para que los renglones manuales no se compartan con otras láminas.
@@ -84,45 +150,79 @@ class Vplan
         $lamina->guardar();
     }
 
-    public static function datos(VplanLamina $lamina, Proyecto $proyecto): array
+    public static function textoFecha(): string
     {
+        $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        return $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
+    }
+
+    /** Textos que se calculan solos si el bloque no trae uno propio */
+    public static function textoDeBloque(VplanBloque $b, VplanLamina $lamina, Proyecto $proyecto): string
+    {
+        $c = $b->config();
+        $propio = trim((string)($c['texto'] ?? ''));
+        return match ($b->tipo) {
+            'titulo' => $propio !== '' ? $propio : ($proyecto->codigo ?: $proyecto->nombre) . "\n" . mb_strtoupper((string)$lamina->titulo),
+            'supervisor' => $propio !== '' ? $propio : ($lamina->supervisor ? 'SUPERVISOR: ' . $lamina->supervisor : ''),
+            'fecha' => $propio !== '' ? $propio : 'UPDATED: ' . self::textoFecha(),
+            default => $propio,
+        };
+    }
+
+    /**
+     * Todo lo que necesitan las vistas, el editor de marcas y el PDF.
+     * $bloques permite calcular con un diseño aún no guardado (se usa al crear el diseño por defecto).
+     */
+    /** Encabezado de la columna de recovery n: RECOVERY, RECOVERY 02, RECOVERY 03… */
+    public static function etiquetaRecovery(int $n): string
+    {
+        return $n <= 1 ? 'RECOVERY' : 'RECOVERY ' . str_pad((string)$n, 2, '0', STR_PAD_LEFT);
+    }
+
+    public static function datos(VplanLamina $lamina, Proyecto $proyecto, ?array $bloques = null): array
+    {
+        $bloques ??= $lamina->bloques();
         $partida = $lamina->partida_id ? Partida::find($lamina->partida_id) : null;
         if ($partida && (int)$partida->proyecto_id !== (int)$proyecto->id) $partida = null;
-        [$visibles, $filtrada] = self::visibles($lamina, $partida);
         $rec = $lamina->recovery();
 
-        // Restricciones activas del programa, numeradas 1..n en orden de actividad
-        $numPorAct = [];
-        $listaRestr = [];
-        if ($partida) {
-            $rows = Restriccion::consultarSQL(
-                "SELECT r.* FROM restricciones r JOIN actividades a ON a.id = r.actividad_id
-                 WHERE a.partida_id = " . (int)$partida->id . " AND r.estado = 'activa'" . self::filtroActividades($visibles, $filtrada) . " ORDER BY a.orden, a.codigo, r.id"
-            );
-            $n = 0;
-            foreach ($rows as $r) {
-                $n++;
-                $numPorAct[$r->actividad_id][] = $n;
-                $listaRestr[] = ['n' => $n, 'descripcion' => trim((string)$r->descripcion) ?: (trim((string)$r->codigo) ?: 'Restricción')];
-            }
+        // Qué muestra cada bloque de tareas y, con todo junto, las restricciones numeradas de la lámina
+        $bt = self::tareasEnOrden($bloques);
+        $base = [];
+        $orden = [];
+        foreach ($bt as $b) {
+            $base[spl_object_id($b)] = self::tareasDeBloque($b, $proyecto);
+            foreach ($base[spl_object_id($b)]['grupos'] as $g) foreach ($g['tareas'] as $t) $orden[] = (int)$t['actividad']->id;
         }
+        ['lista' => $listaRestr, 'porAct' => $numPorAct] = self::restriccionesDe($orden);
 
-        $tareas = [];
-        $usaR2 = false;
+        $nRec = max(0, min(VplanLamina::MAX_RECOVERY, (int)$lamina->recovery_n));
         $hash = [];
-        foreach ($visibles as ['actividad' => $a, 'seq' => $seq]) {
-            $r = $rec[(int)$a->id] ?? [];
-            if (!empty($r['r2_inicio']) || !empty($r['r2_fin'])) $usaR2 = true;
-            $tareas[] = [
-                'actividad' => $a, 'seq' => $seq, 'estado' => self::estado($a),
-                'r1_inicio' => $r['r1_inicio'] ?? null, 'r1_fin' => $r['r1_fin'] ?? null,
-                'r2_inicio' => $r['r2_inicio'] ?? null, 'r2_fin' => $r['r2_fin'] ?? null,
-                'restricciones' => $numPorAct[$a->id] ?? [],
-            ];
-            $hash[] = $a->id . ':' . $a->progreso . ':' . $a->status;
+        $tareas = [];       // todas las actividades de la lámina, una vez (para el editor de marcas)
+        $porBloque = [];
+        foreach ($bt as $b) {
+            $td = $base[spl_object_id($b)];
+            foreach ($td['grupos'] as &$g) {
+                foreach ($g['tareas'] as &$t) {
+                    $a = $t['actividad'];
+                    $r = $rec[(int)$a->id] ?? [];
+                    $t += [
+                        'rec' => array_map(fn($n) => ['inicio' => $r[$n]['inicio'] ?? null, 'fin' => $r[$n]['fin'] ?? null], $nRec ? range(1, $nRec) : []),
+                        'restricciones' => $numPorAct[(int)$a->id] ?? [],
+                    ];
+                    if (!isset($tareas[(int)$a->id])) {
+                        $tareas[(int)$a->id] = $t;
+                        $hash[] = $a->id . ':' . $a->progreso . ':' . $a->status;
+                    }
+                }
+                unset($t);
+            }
+            unset($g);
+            $porBloque[spl_object_id($b)] = $td;
         }
 
         $tablas = [];
+        $tablasPorId = [];
         foreach ($lamina->tablas() as $t) {
             $filas = $t->filas();
             if ($t->tipo === 'restricciones') {
@@ -134,13 +234,15 @@ class Vplan
                 foreach ($filas as $i => &$f) { $f['n'] = $i + 1; $f['_i'] = $i; }
                 unset($f);
             }
-            $tablas[] = ['tabla' => $t, 'campos' => $t->campos(), 'filas' => $filas, 'base' => $t->tipo === 'restricciones' ? count($listaRestr) : 0];
+            $tablas[] = $tablasPorId[(int)$t->id] = ['tabla' => $t, 'campos' => $t->campos(), 'filas' => $filas, 'base' => $t->tipo === 'restricciones' ? count($listaRestr) : 0];
         }
 
+        $primero = $bt ? $porBloque[spl_object_id($bt[0])] : null;
         return [
-            'partida' => $partida, 'filtrada' => $filtrada, 'tareas' => $tareas, 'usaR2' => $usaR2, 'rec1' => ((int)$lamina->recovery_cols & 1) === 1, 'rec2' => ((int)$lamina->recovery_cols & 2) === 2, 'restricciones' => $listaRestr,
-            'tablas' => $tablas, 'hash' => md5(implode('|', $hash)),
-            'colorTabla' => self::colorTabla($partida ? $partida->color_bg : null),
+            'partida' => $partida, 'bloques' => $bloques, 'porBloque' => $porBloque, 'tareas' => array_values($tareas),
+            'nRec' => $nRec, 'restricciones' => $listaRestr,
+            'tablas' => $tablas, 'tablasPorId' => $tablasPorId, 'hash' => md5(implode('|', $hash)),
+            'colorTabla' => $primero ? $primero['color'] : self::colorTabla($partida ? $partida->color_bg : null),
         ];
     }
 }

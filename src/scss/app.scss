@@ -34,5 +34,7 @@
 @use 'paginas/inconsistencias';
 @use 'paginas/archivero';
 @use 'paginas/redactor';
+@use 'paginas/sheetflow';
+@use 'paginas/vplan';
 @use 'paginas/cambios';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

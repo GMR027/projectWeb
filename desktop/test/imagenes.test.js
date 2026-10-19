@@ -28,8 +28,8 @@ test('las imágenes viajan en el formato de cada proveedor', async () => {
   s.close();
 });
 
-test('un agente CLI rechaza las imágenes con un mensaje claro', async () => {
-  await assert.rejects(prov.chat({ tipo: 'claude-code', modelo: '' }, '', [{ role: 'user', content: 'x' }], { imagenes: IMG }), /no admite imágenes/);
+test('un agente CLI sin soporte de imágenes (opencode) las rechaza con un mensaje claro', async () => {
+  await assert.rejects(prov.chat({ tipo: 'opencode', modelo: '' }, '', [{ role: 'user', content: 'x' }], { imagenes: IMG }), /no admite imágenes/);
 });
 
 test('informes: descarga las fotos del lote, las manda al modelo y etiqueta la respuesta con la clave', async () => {

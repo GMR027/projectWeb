@@ -34,9 +34,17 @@
         <?php endif; ?>
     </div>
     <div class="topbar-right">
-        <button id="toggle-theme" class="btn btn-ghost btn-sm" title="Cambiar tema">
+        <a href="/proyectos" class="btn btn-ghost btn-sm topbar-icono" title="<?php echo s(t('Proyectos')); ?>" aria-label="<?php echo s(t('Proyectos')); ?>">
+            <i class="fa-solid fa-house"></i>
+        </a>
+        <button id="toggle-theme" class="btn btn-ghost btn-sm topbar-icono" title="Cambiar tema" aria-label="Cambiar tema">
             <i class="fa-solid fa-moon"></i>
         </button>
+        <?php if (($_SESSION['rol'] ?? '') === 'admin'): ?>
+        <a href="/sistema" class="btn btn-ghost btn-sm topbar-icono" title="<?php echo s(t('Ajustes de app')); ?>" aria-label="<?php echo s(t('Ajustes de app')); ?>">
+            <i class="fa-solid fa-gear"></i>
+        </a>
+        <?php endif; ?>
         <div class="user-info">
             <span class="user-name"><?php echo s($_SESSION['nombre'] ?? 'Invitado'); ?></span>
             <span class="user-role badge badge-<?php echo s($_SESSION['rol'] ?? 'visitante'); ?>">
@@ -47,8 +55,8 @@
             <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>">
             <?php foreach (IDIOMAS as $cod => $nom): ?><button type="submit" name="idioma" value="<?php echo $cod; ?>" class="<?php echo idioma_actual() === $cod ? 'activo' : ''; ?>" aria-label="<?php echo s($nom); ?>"><?php echo strtoupper($cod); ?></button><?php endforeach; ?>
         </form>
-        <a href="/logout" class="btn btn-ghost btn-sm">
-            <i class="fa-solid fa-right-from-bracket"></i> <?php echo s(t('Salir')); ?>
+        <a href="/logout" class="btn btn-ghost btn-sm topbar-salir" title="<?php echo s(t('Salir')); ?>">
+            <i class="fa-solid fa-right-from-bracket"></i> <span class="hide-m"><?php echo s(t('Salir')); ?></span>
         </a>
     </div>
 </header>

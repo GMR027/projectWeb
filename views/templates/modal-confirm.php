@@ -10,6 +10,7 @@
             <button type="button" class="btn btn-ghost" id="modal-confirm-cancelar">
                 <i class="fa-solid fa-xmark"></i> Cancelar
             </button>
+            <button type="button" class="btn btn-primary" id="modal-confirm-extra" hidden></button>
             <button type="button" class="btn btn-danger" id="modal-confirm-aceptar">
                 <i class="fa-solid fa-trash-can"></i> Sí, eliminar
             </button>

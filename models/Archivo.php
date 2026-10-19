@@ -11,7 +11,7 @@ class Archivo extends ActiveRecord
     public const EXTENSIONES = ['pdf', 'doc', 'docx', 'rtf', 'txt', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'xml',
         'odt', 'ods', 'odp', 'odg', 'otg', 'ott', 'ots', 'otp', 'odf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'svg',
         'dwg', 'dxf', 'dwt', 'dws', 'dwf', 'dgn', 'rvt', 'rfa', 'rte', 'rft', 'ifc', 'ifczip', 'skp', 'nwd', 'nwc', '3dm', 'stp', 'step', 'obj', 'kml',
-        'zip', 'rar', '7z', 'mpp', 'pod'];
+        'zip', 'rar', '7z', 'mpp', 'pod', 'sheetflow'];
     public const MAX_BYTES = 100 * 1024 * 1024;
 
     public $id;

@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('pw', {
   menuWeb: inv('web:menu'),
   zoom: inv('web:zoom'),
   alZoom: fn => ipcRenderer.on('web:zoom', (_e, z) => fn(z)),
-  estadoConexion: inv('prov:estado'),
+  estadoConexion: inv('prov:estado'), usoClaude: inv('prov:uso'),
   activarConexion: inv('prov:activa'), guardarTareas: inv('prov:tareas'),
   ollamaEstado: inv('ollama:estado'),
   ollamaDescargar: inv('ollama:descargar'),

@@ -125,15 +125,35 @@
     </form>
     <?php endif; ?>
     <div class="tabla-wrapper">
-        <?php $revAct = array_column(\Classes\Revisiones::elementos((int)$proyecto->id, 'actividad'), null, 'ref'); $puedeRev = puede_revisar($proyecto); ?>
+        <?php
+        // Posición de cada actividad dentro de su partida (sobre el programa completo, aunque haya filtros) para los botones subir/bajar
+        $posAct = [];
+        if ($puedeGestionar) foreach (\Classes\Renumeracion::estructura((int)$proyecto->id) as $pp) foreach ($pp['actividades'] as $k => $aa) $posAct[$aa['id']] = [$k, count($pp['actividades'])];
+        $colsTabla = $puedeGestionar ? 11 : 9;
+        $partidaPrevia = null;
+        $filaRapida = function (array $p) use ($proyecto, $colsTabla) { ?>
+                    <tr class="fila-rapida">
+                        <td colspan="<?php echo (int)$colsTabla; ?>">
+                            <form method="POST" action="/programa/actividades/rapida" class="form-rapida">
+                                <input type="hidden" name="partida" value="<?php echo (int)$p['id']; ?>">
+                                <i class="fa-solid fa-plus"></i>
+                                <input type="text" name="nombre" maxlength="200" placeholder="Agregar actividad a <?php echo s($p['codigo']); ?> · <?php echo s($p['nombre']); ?> (nombre y Enter)" aria-label="Nombre de la nueva actividad" required>
+                                <input type="date" name="fecha_inicio" title="Inicio (vacío = día hábil siguiente a la última actividad)" aria-label="Inicio">
+                                <input type="number" name="duracion_dias" min="1" value="1" title="Duración en días hábiles" aria-label="Duración en días">
+                                <button type="submit" class="btn btn-sm">Agregar</button>
+                            </form>
+                        </td>
+                    </tr>
+        <?php };
+        $revAct = array_column(\Classes\Revisiones::elementos((int)$proyecto->id, 'actividad'), null, 'ref'); $puedeRev = puede_revisar($proyecto); ?>
         <table class="tabla tabla-programa" data-proyecto="<?php echo (int)$proyecto->id; ?>">
             <thead>
                 <tr>
                     <?php if ($puedeGestionar): ?><th class="th-sel"><input type="checkbox" id="sel-todo" title="Seleccionar todo" aria-label="Seleccionar todo"></th><?php endif; ?>
                     <th class="hide-m">WBS / Código</th>
                     <th><span class="hide-m">Nombre</span><span class="solo-movil">Actividad</span></th>
-                    <th><span class="hide-m">Fecha </span>Inicio</th>
-                    <th><span class="hide-m">Fecha </span>Fin</th>
+                    <th class="col-fecha"><span class="hide-m">Fecha </span>Inicio</th>
+                    <th class="col-fecha"><span class="hide-m">Fecha </span>Fin</th>
                     <th class="hide-m">Duración</th>
                     <th class="hide-m">Progreso</th>
                     <th class="hide-m">Status</th>
@@ -145,12 +165,13 @@
             <tbody>
                 <?php foreach ($filas as $fila): ?>
                     <?php if ($fila['tipo'] === 'partida'): ?>
+                    <?php if ($puedeGestionar && $partidaPrevia) $filaRapida($partidaPrevia); $partidaPrevia = $fila; ?>
                         <tr class="fila-partida" id="fila-p<?php echo (int)$fila['id']; ?>" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
                             <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
                             <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
-                            <td class="mono"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
-                            <td class="mono"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span></td>
+                            <td class="mono col-fecha"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
+                            <td class="mono col-fecha"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span></td>
                             <td class="hide-m">—</td>
                             <td class="hide-m">
                                 <div class="progreso-cell">
@@ -259,6 +280,12 @@
                                     <a href="/programa/restricciones/crear?actividad=<?php echo s($fila['id']); ?>" class="btn-action btn-action-warning" title="Agregar restricción">
                                         <i class="fa-solid fa-triangle-exclamation"></i>
                                     </a>
+                                    <?php [$posI, $posN] = $posAct[$fila['id']] ?? [0, 1]; ?>
+                                    <form method="POST" action="/programa/actividades/mover" style="display:inline" class="form-mover">
+                                        <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
+                                        <button type="submit" name="dir" value="arriba" class="btn-action btn-action-move" title="Subir (renumera la partida)"<?php echo $posI <= 0 ? ' disabled' : ''; ?>><i class="fa-solid fa-arrow-up"></i></button>
+                                        <button type="submit" name="dir" value="abajo" class="btn-action btn-action-move" title="Bajar (renumera la partida)"<?php echo $posI >= $posN - 1 ? ' disabled' : ''; ?>><i class="fa-solid fa-arrow-down"></i></button>
+                                    </form>
                                     <a href="/programa/actividades/editar?id=<?php echo s($fila['id']); ?>" class="btn-action btn-action-edit" title="Editar actividad">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
@@ -273,6 +300,7 @@
                         </tr>
                     <?php endif; ?>
                 <?php endforeach; ?>
+                <?php if ($puedeGestionar && $partidaPrevia) $filaRapida($partidaPrevia); ?>
                 <?php if (empty($filas)): ?>
                     <tr><td colspan="11" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
                 <?php endif; ?>

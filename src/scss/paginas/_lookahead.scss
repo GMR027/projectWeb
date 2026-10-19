@@ -107,7 +107,7 @@
     thead th { position: static; }
     .la-dias th { width: auto; min-width: 0; } }
   .vp-hoja { overflow: visible; max-width: none; }
-  .vp-hoja .vp-lamina { aspect-ratio: auto; min-width: 0; }
+  .vp-hoja .vp-lamina { min-width: 0; border: 0; border-radius: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
@@ -231,28 +231,68 @@ $vp-rojo: #dc2626;
 
 // Lámina: colores y proporciones de la plantilla de referencia (siempre sobre fondo blanco)
 .vp-hoja { max-width: 190rem; margin: 0 auto 2rem; overflow-x: auto; }
-// Proporción de hoja tabloide (17 x 11 in, apaisada): es la proporción mínima; si hay más renglones, crece hacia abajo
-.vp-lamina { aspect-ratio: 17 / 11; min-width: 96rem; display: flex; flex-direction: column; background: #fff; color: #000; font-family: Arial, sans-serif; padding: 2rem; border: 1px solid var(--border); border-radius: .6rem;
-  .vp-cuerpo { flex: 1; }
-  .vp-encabezado { display: grid; grid-template-columns: 1fr 3fr 1fr; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
-  .vp-logo img { max-height: 7rem; max-width: 100%; object-fit: contain; }
-  .vp-logo-der { text-align: right; }
-  .vp-titulo { text-align: center; span { display: block; font-size: 2.6rem; font-weight: 700; } strong { display: block; font-size: 2.8rem; line-height: 1.1; } }
-  .vp-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
+// La hoja es un lienzo con la proporción del tamaño elegido; sus bloques van en % y la letra escala con el ancho de la hoja (cqw)
+.vp-lamina { position: relative; container-type: inline-size; width: 100%; min-width: 64rem; background: #fff; color: #000; font-family: Arial, sans-serif; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden;
   .text-muted { color: #666; }
   .btn-ghost { color: #222; border-color: #999; }
   .btn-danger { color: #dc2626; }
-  .vp-plano { position: relative; }
+  .vp-blk { position: absolute; box-sizing: border-box; overflow: hidden; }
+  .vp-txt { display: flex; align-items: center; width: 100%; height: 100%; line-height: 1.15; overflow-wrap: anywhere; }
+  .vp-img { display: flex; align-items: center; width: 100%; height: 100%; img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; } }
+  .vp-b-simbologia .vp-img img, .vp-b-schedule .vp-img img { object-position: left bottom; }
+  .vp-plano-ajuste { position: absolute; }
+  .vp-plano-ajuste img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .vp-vacio-blk { margin: 0; padding: .6em; color: #666; font-size: 1.2rem; text-align: center; }
   // Zona activa en la esquina superior izquierda: al acercarse aparece «Editar marcas»
   .vp-plano-esq { position: absolute; top: 0; left: 0; width: 22rem; height: 9rem; z-index: 5; padding: .8rem; }
   .vp-plano-editar { display: inline-flex; align-items: center; gap: .6rem; padding: .6rem 1.2rem; border-radius: 99rem; background: #0070c0; color: #fff; font-size: 1.3rem; font-weight: 600; text-decoration: none; box-shadow: 0 .2rem 1rem rgba(0, 0, 0, .4); opacity: 0; transform: translateY(-.4rem); transition: opacity .15s, transform .15s; }
   .vp-plano-esq:hover .vp-plano-editar, .vp-plano-editar:focus-visible { opacity: 1; transform: none; }
   @media (hover: none) { .vp-plano-editar { opacity: .9; transform: none; } }
-  .vp-plano { border: 1px solid #ccc; min-height: 24rem; display: flex; align-items: flex-start; justify-content: flex-start; img { width: 100%; height: auto; max-height: 85vh; object-fit: contain; object-position: left top; display: block; } p { color: #666; padding: 1rem; } }
-  .vp-simbologia-fila { display: flex; gap: 2rem; align-items: flex-end; margin-top: 1.2rem; .vp-simb-img { flex: 1; img { max-height: 16rem; max-width: 100%; } } }
-  .vp-schedule-img { max-width: 24rem; max-height: 16rem; flex: none; }
-  .vp-schedule { border-collapse: collapse; font-size: 1.2rem; th { text-decoration: underline; text-align: left; } td { padding: .1rem .6rem .1rem .2rem; } td:first-child { width: 4.2rem; border: 1px solid #000; } }
-  .vp-pie { display: flex; justify-content: space-between; margin-top: 1.6rem; font-size: 1.2rem; color: $vp-rojo; }
+  .vp-b-plano { border: 1px solid transparent; }
+  .vp-schedule { border-collapse: collapse; th { text-decoration: underline; text-align: left; } td { padding: 0 .5em 0 .2em; } td:first-child { width: 3.4em; border: 1px solid #000; } }
+  // Tablas: toman la letra del bloque (em) y se ajustan solas al espacio que tienen
+  .vp-tab { width: 100%; height: 100%; overflow: hidden; }
+  .vp-tab .vp-tabla { font-size: 1em; margin-bottom: .6em; table-layout: fixed; overflow-wrap: anywhere;
+    th, td { padding: var(--vp-pad, .2em) calc(var(--vp-pad, .2em) * 1.8); }
+    // Los campos editables no deben cambiar la altura de los renglones: se ven como texto y muestran su borde al pasar el cursor
+    .vp-rec, .vp-in { font: inherit; line-height: 1.2; height: auto; padding: 0; margin: 0; border: 1px solid transparent; background: transparent; text-align: center; color: inherit; box-shadow: none; border-radius: .15em; -moz-appearance: textfield; appearance: textfield; }
+    .vp-rec:hover, .vp-in:hover, .vp-rec:focus, .vp-in:focus { border-color: #888; background: rgba(255, 255, 255, .85); color: #000; }
+    .vp-rec::-webkit-inner-spin-button, .vp-rec::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .vp-rec::-webkit-calendar-picker-indicator { margin: 0; padding: 0; width: .8em; opacity: .55; }
+    .vp-rec::-webkit-datetime-edit, .vp-rec::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+    textarea.vp-in { text-align: left; }
+    .vp-rec.msr-error, .vp-in.msr-error { border-color: #dc2626; }
+    .vp-adic-titulo { font-size: 1.25em; }
+    .vp-rombo { width: 1.7em; height: 1.7em; margin: .25em .45em; border-width: 1px; }
+    .vp-rombo-sm { width: 1.1em; height: 1.1em; margin: .1em; }
+    .vp-rombo-celda { width: 3.4em; }
+    .vp-subtitulo td { background: #e2e8f0; font-weight: 700; letter-spacing: .03em; padding: calc(var(--vp-pad, .2em) * .6) .6em; } }
+  .vp-tab { position: relative; }
+  // Botones de la tabla: aparecen al pasar el cursor por el bloque (no ocupan lugar en la hoja)
+  .vp-tab-acc { position: absolute; top: .2rem; right: .2rem; z-index: 6; display: flex; gap: .4rem; opacity: 0; transition: opacity .15s; font-size: 1.2rem; .btn { margin: 0; font-size: 1.2rem; } }
+  .vp-blk:hover .vp-tab-acc, .vp-tab-acc:focus-within { opacity: 1; }
+  .vp-tab textarea.vp-ta { min-height: 0; line-height: 1.2; }
+}
+// Modo diseño: cada bloque lleva una capa encima para arrastrarlo; sus campos no responden mientras se diseña
+.vp-dis-fila[hidden] { display: none; }
+.vp-dis-fila { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: center; margin-bottom: .8rem; > .campo { flex: 1; min-width: 12rem; } }
+.vp-pendiente { box-shadow: 0 0 0 .3rem rgba(245, 158, 11, .55); }
+.vp-fuentes { max-height: 36rem; overflow-y: auto; border: 1px solid var(--border); border-radius: .6rem; padding: .4rem .8rem;
+  .vp-fuente { border-bottom: 1px solid var(--border); padding: .3rem 0; summary { cursor: pointer; } .vp-acts-item { padding-left: 2.4rem; font-size: 1.25rem; } } }
+.vp-sheet.vp-diseno {
+  .vp-blk { outline: 1px dashed rgba(0, 112, 192, .55); outline-offset: -1px; }
+  .vp-blk > *:not(.vp-ov) { pointer-events: none; }
+  .vp-blk.vp-sel { outline: 2px solid #0070c0; }
+  .vp-b-nuevo { background: rgba(0, 112, 192, .08); }
+  .vp-ov { position: absolute; inset: 0; z-index: 20; cursor: move; touch-action: none; }
+  .vp-ov-etq { position: absolute; left: 0; top: 0; background: #0070c0; color: #fff; font-size: 1rem; line-height: 1; padding: .2rem .5rem; opacity: 0; pointer-events: none; }
+  .vp-blk:hover .vp-ov-etq, .vp-blk.vp-sel .vp-ov-etq { opacity: .95; }
+  .vp-h { position: absolute; width: 1rem; height: 1rem; background: #fff; border: 2px solid #0070c0; border-radius: 50%; display: none; box-sizing: border-box; }
+  .vp-sel .vp-h { display: block; }
+  .vp-h-n { left: calc(50% - .5rem); top: -.5rem; cursor: ns-resize; } .vp-h-s { left: calc(50% - .5rem); bottom: -.5rem; cursor: ns-resize; }
+  .vp-h-e { right: -.5rem; top: calc(50% - .5rem); cursor: ew-resize; } .vp-h-w { left: -.5rem; top: calc(50% - .5rem); cursor: ew-resize; }
+  .vp-h-ne { right: -.5rem; top: -.5rem; cursor: nesw-resize; } .vp-h-nw { left: -.5rem; top: -.5rem; cursor: nwse-resize; }
+  .vp-h-se { right: -.5rem; bottom: -.5rem; cursor: nwse-resize; } .vp-h-sw { left: -.5rem; bottom: -.5rem; cursor: nesw-resize; }
 }
 .vp-verde { background: $vp-verde !important; }
 .vp-amarillo { background: $vp-amarillo !important; }
@@ -370,9 +410,9 @@ $vp-rojo: #dc2626;
 }
 .vp-ta { resize: none; overflow: hidden; line-height: 1.25; min-height: 2.4rem; display: block; }
 .vp-in-estado { background: #fff; border-color: #bbb; font-size: 1rem; }
-.vp-acc { width: 3.4rem; }
+td.vp-acc { width: 3.4rem; }
 .vp-del { border: 0; background: transparent; color: #dc2626; cursor: pointer; font-size: 1.4rem; line-height: 1; &:hover { background: #fde2e4; } }
-.vp-agregar-dato { margin: -1rem 0 1.4rem; }
+.vp-agregar-dato { margin: 0; }
 .vp-tabla td { color: #000; }
 
 .ve-barra .ve-pin { display: inline-flex; width: 2rem; height: 2rem; border-radius: 50%; background: #0070c0; color: #fff; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; }
@@ -390,7 +430,7 @@ $vp-rojo: #dc2626;
 // Ampliar: lámina a pantalla completa
 .vp-cerrar-ampliado { display: none; }
 .vp-hoja.vp-ampliado { position: fixed; inset: 0; z-index: 1500; max-width: none; margin: 0; background: #fff; overflow: auto;
-  .vp-lamina { width: min(100vw, calc(100vh * 17 / 11)); min-width: 0; margin: 0 auto; border: 0; border-radius: 0; }
+  .vp-lamina { width: min(100vw, calc(100vh * var(--vp-ratio, 1.5455))); min-width: 0; margin: 0 auto; border: 0; border-radius: 0; }
   .vp-cerrar-ampliado { display: inline-flex; align-items: center; justify-content: center; position: fixed; left: 1.6rem; bottom: 1.6rem; width: 4.4rem; height: 4.4rem; border-radius: 50%; border: 0; background: #1c2541; color: #fff; font-size: 2rem; cursor: pointer; box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .35); z-index: 1; &:hover { background: $vp-rojo; } } }
 body.vp-sin-scroll { overflow: hidden; }
 
@@ -671,3 +711,17 @@ body.vp-sin-scroll { overflow: hidden; }
   .fg-pri-t { fill: var(--primary); } .fg-ok-t { fill: var(--success); } .fg-warn-t { fill: var(--warning); } .fg-bad-t { fill: var(--danger); }
   .fg-globo { fill: #ff5a1f; stroke: #fff; stroke-width: 1.5; } .fg-globo-t { fill: #fff; } }
 .sidebar-footer .manual-link { margin-bottom: .6rem; }
+
+// vPlan como paquete de láminas (áreas): lista de vPlan, gestor y navegación entre áreas
+.vp-nuevo-paquete { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.6rem; input[type=text] { min-width: 24rem; flex: 1; max-width: 48rem; } }
+.vp-paquetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.6rem; }
+.vp-paquete { h3 { margin: .8rem 0 .2rem; } .acciones { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; } }
+.vp-paquete-portada { display: flex; gap: .4rem; align-items: center; justify-content: center; height: 13rem; background: var(--bg-tertiary); border-radius: .6rem; overflow: hidden; color: var(--text-muted, #94a3b8); font-size: 4rem; img { flex: 1; min-width: 0; height: 100%; object-fit: cover; background: #fff; } }
+.vp-grupo { margin-bottom: 1.6rem; }
+.vp-grupo-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .8rem; h3 { margin: 0; } }
+.vp-paginas { width: 100%; td { vertical-align: middle; } .acciones { text-align: right; white-space: nowrap; } .vp-grupo-in { width: 16rem; } }
+.vp-paginas tr.vp-oculta { opacity: .5; }
+.vp-ojo-celda { width: 5rem; }
+.vp-ayuda { margin-bottom: 1rem; }
+// Bloques ocultos: en modo diseño se ven atenuados para poder volver a mostrarlos
+.vp-lamina .vp-b-oculto { opacity: .28; }

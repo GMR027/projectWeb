@@ -23,7 +23,7 @@ class VplanTablaController
         foreach ($tablas as $t) $conteos[$t->id] = count($t->filas());
         $router->render('vplan/tablas-index', [
             'titulo' => 'Tablas adicionales - ' . $proyecto->nombre, 'proyecto' => $proyecto,
-            'tablas' => $tablas, 'conteos' => $conteos,
+            'tablas' => $tablas, 'conteos' => $conteos, 'hojasSheetflow' => \Model\SheetflowHoja::resumen((int)$proyecto->id),
         ]);
     }
 
@@ -67,7 +67,7 @@ class VplanTablaController
             if ($tabla->tipo === 'otro' && !$tabla->columnasOtro()) $alertas['error'][] = 'Define al menos una columna';
             if (!$alertas) {
                 $tabla->guardar();
-                $tabla->guardarFilas(self::limpiarFilas($tabla, $_POST['filas'] ?? []));
+                if (!$tabla->hoja()) $tabla->guardarFilas(self::limpiarFilas($tabla, $_POST['filas'] ?? []));   // vinculada: los renglones son los de SheetFlow
                 header('Location: /vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $tabla->id . '&ok=1');
                 exit;
             }
@@ -95,7 +95,7 @@ class VplanTablaController
 
     private static function columnas(): string
     {
-        $c = array_slice(array_values(array_filter(array_map(fn($x) => mb_substr(trim((string)$x), 0, 40), (array)($_POST['columnas'] ?? [])), fn($x) => $x !== '')), 0, 5);
+        $c = array_slice(array_values(array_filter(array_map(fn($x) => mb_substr(trim((string)$x), 0, 40), (array)($_POST['columnas'] ?? [])), fn($x) => $x !== '')), 0, 8);
         return json_encode($c, JSON_UNESCAPED_UNICODE);
     }
 
@@ -128,12 +128,14 @@ class VplanTablaController
         $i = filter_var($_POST['indice'] ?? null, FILTER_VALIDATE_INT);
         $fallo = function (string $m) { http_response_code(422); echo json_encode(['success' => false, 'error' => $m]); exit; };
 
+        $hoja = $t->hoja();
+        if ($hoja && $accion === 'add' && \Classes\Sheetflow::matriz($hoja)['totales']) $fallo('La tabla de SheetFlow tiene fila de totales: agrega renglones en SheetFlow');
         if ($accion === 'add') {
             if (count($filas) >= 200) $fallo('Máximo 200 renglones');
             $nueva = [];
             foreach ($campos as $k => [$etq, $tipo]) $nueva[$k] = $tipo === 'estado' ? 'proceso' : '';
             $filas[] = $nueva;
-            $t->guardarFilas($filas);
+            if (!$hoja) $t->guardarFilas($filas);   // vinculada: el renglón existe en SheetFlow al escribir en él
             $idx = count($filas) - 1;
             $base = max(0, min(500, (int)($_POST['base'] ?? 0)));
             $fila = $nueva + ['n' => ($t->tipo === 'restricciones' ? $base : 0) + $idx + 1, '_i' => $idx];
@@ -146,16 +148,22 @@ class VplanTablaController
         }
         if ($i === false || $i === null || $i < 0 || $i >= count($filas)) $fallo('Renglón no válido');
         if ($accion === 'del') {
+            if ($hoja && ($m = \Classes\Sheetflow::quitarFila($hoja, $i))) $fallo($m);
             array_splice($filas, $i, 1);
-            $t->guardarFilas($filas);
+            if (!$hoja) $t->guardarFilas($filas);
             echo json_encode(['success' => true]);
             exit;
         }
         $campo = $_POST['campo'] ?? '';
         if ($accion !== 'set' || !isset($campos[$campo])) $fallo('Campo no válido');
         $valor = self::limpiarCampo($campos[$campo][1], (string)($_POST['valor'] ?? ''));
-        $filas[$i][$campo] = $valor;
-        $t->guardarFilas($filas);
+        if ($hoja) {   // vinculada: se escribe en SheetFlow y se devuelve lo que ahí se muestra
+            if ($m = \Classes\Sheetflow::cambiarCelda($hoja, $i, (int)substr($campo, 1), $valor)) $fallo($m);
+            $valor = \Classes\Sheetflow::filasVplan(\Model\SheetflowHoja::find($hoja->id), count($campos))[$i][$campo] ?? $valor;
+        } else {
+            $filas[$i][$campo] = $valor;
+            $t->guardarFilas($filas);
+        }
         echo json_encode(['success' => true, 'valor' => $valor]);
         exit;
     }

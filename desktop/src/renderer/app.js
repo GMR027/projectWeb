@@ -249,23 +249,26 @@ async function pintarMenuIA() {
   for (const g of r.grupos) {
     const hs = r.herramientas.filter(h => h.grupo === g.id && !h.oculto);
     if (!hs.length) continue;
+    const grupo = el('div', null, 'grupo'), botones = el('div', null, 'botones');
+    let t;
     if (g.id === 'centro') {   // páginas de Project Web: no son IA, van plegadas
-      const t = el('h4', (menuCentroAbierto ? '▾ ' : '▸ ') + g.titulo, 'plegable'); t.tabIndex = 0; t.setAttribute('role', 'button');
+      t = el('h4', (menuCentroAbierto ? '▾ ' : '▸ ') + (ICONOS_GRUPO.centro?.[0] || '') + ' ' + g.titulo, 'plegable'); t.tabIndex = 0; t.setAttribute('role', 'button');
       const alternar = () => { menuCentroAbierto = !menuCentroAbierto; guardado('menu-centro', menuCentroAbierto ? '1' : '0'); pintarMenuIA(); };
       t.addEventListener('click', alternar); t.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); alternar(); } });
-      lista.append(t);
-      if (!menuCentroAbierto && !webEnIA) continue;
-    } else lista.append(el('h4', g.titulo));
+    } else t = el('h4', (ICONOS_GRUPO[g.id] ? ICONOS_GRUPO[g.id][0] + ' ' : '') + g.titulo);
+    grupo.append(t, botones); lista.append(grupo);
+    if (g.id === 'centro' && !menuCentroAbierto && !webEnIA) { botones.hidden = true; continue; }
     for (const h of hs) {
       const e = r.estados[h.id], b = el('button');
       b.dataset.id = h.id; if (h.sec) b.dataset.sec = h.sec; if (h.web) b.dataset.web = h.web; if (h.gen) { b.dataset.gen = h.gen; b.dataset.sec = 'gen:' + h.gen; }
       const [ico, col] = iconoHerr(h), chip = el('i', ico, 'ico'); chip.style.setProperty('--ico', col); b.append(chip, el('span', h.titulo, 'tit'));
+      b.setAttribute('aria-label', h.titulo);
       if (h.web) { if (seccionActual === h.web && webEnIA) b.classList.add('on'); }
       else if (h.requiere) { const i = el('i', null, 'ind ' + e.estado); b.append(i); }
-      if (h.requiere) b.title = NOMBRE_ESTADO[e.estado] + (e.texto && e.estado !== 'ok' ? ': ' + e.texto : '');
+      b.title = h.titulo + (h.requiere ? ' — ' + NOMBRE_ESTADO[e.estado] + (e.texto && e.estado !== 'ok' ? ': ' + e.texto : '') : '');
       if (e.estado === 'bloqueado') b.disabled = true;
       if (h.sec && h.sec === actual) b.classList.add('on');
-      lista.append(b);
+      botones.append(b);
     }
   }
   marcarUsoMenu(lista).catch(() => {});
@@ -287,7 +290,7 @@ async function marcarUsoMenu(lista) {
     let t = txt;
     if (u.veredicto !== 'sin_evaluar') { m.textContent += ' ' + VALORACION[u.veredicto][0]; t += ' · ' + VALORACION[u.veredicto][1] + (u.revisado ? ' (revisado)' : ''); }
     else if (u.estado !== 'sin_ejecutar') t += u.revisado ? ' · revisado' : ' · resultados sin revisar';
-    m.title = t; b.append(m);
+    m.title = t; b.title = b.getAttribute('aria-label') + ' — ' + corto + (u.veredicto !== 'sin_evaluar' ? ' · ' + VALORACION[u.veredicto][1] : ''); b.append(m);
     const sub = el('small', corto + (u.veredicto !== 'sin_evaluar' ? ' · ' + VALORACION[u.veredicto][0] : u.estado !== 'sin_ejecutar' ? (u.revisado ? ' · revisada' : ' · sin revisar') : ''), 'sub ' + u.estado); sub.title = t; b.append(sub);
   }
 }
@@ -325,12 +328,29 @@ const pintarHist = (herr, abrir) => Centro.resultados($(HIST[herr]), herr, proye
 // ---- Estado de la IA conectada (chip de la cabecera, lista de conexiones y Programador) ----
 const estadoIA = {};   // id de conexión → {nivel: 'ok' | 'aviso' | 'error' | 'revisando', texto}
 const principal = () => cfg?.proveedores?.find(p => p.id === cfg.activa) || null;
+// Uso de la suscripción de Claude Code: barras de la ventana de 5 h y de 7 días (las informa el CLI) y tokens gastados hoy desde la app
+let usoClaude = null, usoTexto = '';
+const fmtTok = n => n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1e3 ? (n / 1e3).toFixed(1) + ' k' : String(n);
+function pintarUsoIA(p) {
+  const caja = $('#ia-uso'); usoTexto = '';
+  if (!p || p.tipo !== 'claude-code' || !usoClaude) { caja.hidden = true; return; }
+  const v = usoClaude.ventanas || {}, h = usoClaude.hoy || {}, filas = [['five_hour', '5 h'], ['seven_day', '7 d']].filter(([k]) => v[k]);
+  caja.replaceChildren(...filas.map(([k, et]) => {
+    const pct = Math.round(v[k].utilization * 100), b = el('span', null, 'barra-uso ' + (pct >= 90 ? 'alto' : pct >= 70 ? 'medio' : ''));
+    b.style.setProperty('--pct', Math.min(100, pct) + '%'); b.append(el('i', null)); const f = el('span', et + ' ' + pct + ' %', 'uso-et');
+    const w = el('span', null, 'uso-v'); w.append(f, b); w.title = 'Ventana de ' + (k === 'five_hour' ? '5 horas' : '7 días') + ': ' + pct + ' % usado' + (v[k].resetsAt ? ' · se renueva ' + new Date(v[k].resetsAt * 1000).toLocaleString() : ''); return w;
+  }));
+  usoTexto = '\n' + filas.map(([k, et]) => 'Suscripción ' + et + ': ' + Math.round(v[k].utilization * 100) + ' %').join(' · ') + '\nHoy en la app: ' + fmtTok((h.entrada || 0) + (h.salida || 0)) + ' tokens (' + fmtTok(h.salida || 0) + ' de salida, ' + fmtTok(h.cache || 0) + ' en caché) · ' + (h.llamadas || 0) + ' consultas';
+  caja.append(el('span', fmtTok((h.entrada || 0) + (h.salida || 0)) + ' tok hoy', 'uso-tok'));
+  caja.hidden = false;
+}
+async function leerUsoClaude(sondear) { try { usoClaude = await pw.usoClaude(sondear); } catch { /* sin datos */ } pintarChip(); }
 function pintarChip() {
   const p = principal(), chip = $('#ia-chip'), e = p && (estadoIA[p.id] || { nivel: 'revisando', texto: 'Comprobando…' });
   chip.hidden = !conSesion;
   chip.querySelector('i').className = 'pto ' + (e ? e.nivel : 'error');
   $('#ia-chip-txt').textContent = p ? 'IA: ' + (p.modelo || p.nombre) + ' · ' + ({ ok: 'lista', aviso: 'revisar', error: 'sin conexión', revisando: 'comprobando…' }[e.nivel]) : 'IA: sin conexión guardada';
-  chip.title = p ? p.nombre + '\n' + e.texto + '\n(clic: ver conexiones guardadas)' : 'Aún no hay una IA conectada. Clic para configurarla.';
+  pintarUsoIA(p); chip.title = p ? p.nombre + '\n' + e.texto + usoTexto + '\n(clic: ver conexiones guardadas)' : 'Aún no hay una IA conectada. Clic para configurarla.';
 }
 function pintarEstadoProg() {
   for (const [conn, caja] of [['#prog-conexion', '#prog-estado'], ['#inc-conexion', '#inc-estado'], ['#mat-conexion', '#mat-estado'], ['#int-conexion', '#int-estado'], ['#gen-conexion', '#gen-estado']]) {
@@ -346,8 +366,10 @@ async function refrescarEstado(id, silencioso = false) {
   if (!$('#ia-lista-sec').hidden) recargar();
 }
 const refrescarTodas = () => (cfg?.proveedores || []).forEach(p => refrescarEstado(p.id));
-$('#ia-chip').addEventListener('click', () => { refrescarTodas(); abrirAjustes('ia'); elegirCategoria('guardadas'); });
+$('#ia-chip').addEventListener('click', () => { leerUsoClaude('ya'); refrescarTodas(); abrirAjustes('ia'); elegirCategoria('guardadas'); });
 setInterval(() => { if (conSesion && principal()) refrescarEstado(principal().id, true); }, 30000);
+setInterval(() => { if (conSesion && principal()?.tipo === 'claude-code') leerUsoClaude(true); }, 60000);
+setTimeout(() => leerUsoClaude(true), 3000);
 
 let analizando = false;
 let proyectosProg = null;

@@ -142,6 +142,12 @@ HTML],
 <li><strong>Estatus automático:</strong> 0 % = No iniciada, 100 % = Completada, cualquier valor intermedio = En proceso.</li>
 <li><strong>Fechas de la partida:</strong> se recalculan solas con las de sus actividades cada vez que creas, editas o eliminas una.</li>
 </ul>
+<h4>Agregar y reordenar actividades</h4>
+<ul>
+<li><strong>Alta rápida:</strong> al final de cada partida hay una fila para escribir solo el nombre y pulsar Enter. El código sigue al de la partida (2.1, 2.2…) y, si no pones fecha, empieza el día hábil siguiente a la última actividad.</li>
+<li><strong>Subir y bajar:</strong> las flechas de cada actividad la mueven dentro de su partida y la partida <strong>renumera</strong> sus actividades automáticamente. El cambio queda en el historial de «Ordenar y renumerar» y se puede deshacer.</li>
+<li><strong>Eliminar una partida</strong> elimina también todas sus actividades (con sus restricciones, dependencias y materiales vinculados).</li>
+</ul>
 <h4>Cambiar las fechas rápidamente</h4>
 <p>En la tabla, el icono de <em>Cambiar fechas</em> de una actividad abre una ventana con las fechas de inicio y fin. Si mueves el inicio, el fin se corre con la misma duración; después puedes ajustar el fin.</p>
 <h4>Restricciones</h4>
@@ -236,18 +242,34 @@ HTML],
 HTML],
 
 ['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-map-location-dot', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
-<p>El vPlan es una <strong>lámina por partida</strong>: un plano sobre el que marcas visualmente el avance, acompañado de la tabla del programa, el recovery y otras tablas.</p>
+<p>El vPlan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
+<h4>vPlans y áreas</h4>
+<p>Puedes tener <strong>varios vPlan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada vPlan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del vPlan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
 <h4>Crear una lámina</h4>
 <ol>
-<li>En <strong>vPlan</strong> pulsa para crear una lámina y elige la <strong>partida*</strong>.</li>
+<li>En <strong>vPlan</strong> pulsa para crear una lámina. La <strong>partida inicial</strong> es opcional: solo arma el primer bloque de tareas.</li>
+<li>Elige el <strong>tamaño de la hoja</strong> (tabloide, carta, A4, A3, A2, A1, Arch D u otra medida en mm, cm o pulgadas) y su orientación.</li>
 <li>Escribe el <strong>título</strong> y el <strong>supervisor</strong>.</li>
 <li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda).</li>
-<li>Elige qué actividades muestra. Si no eliges ninguna, muestra toda la partida.</li>
-<li>Indica cuántas columnas de <strong>recovery</strong> quieres.</li>
+<li>Si elegiste partida, marca qué actividades muestra. Si no marcas ninguna, muestra toda la partida.</li>
+<li>Agrega las columnas de <strong>recovery</strong> que necesites (una o más) en el modo diseño, pestaña «Insertar».</li>
 </ol>
+<h4>Modo diseño: poner cada cosa donde quieras</h4>
+<p>En la lámina pulsa <strong>Modo diseño</strong>. Cada elemento es un bloque que arrastras para moverlo y redimensionas con las esquinas o los bordes (flechas para afinar, Supr para quitarlo; «Rejilla» alinea a 0.5 %). Las herramientas están en el panel de la derecha, en cuatro pestañas: <strong>Propiedades</strong>, <strong>Capas</strong>, <strong>Insertar</strong> y <strong>Hoja</strong>. A la izquierda de la lámina, el panel de <strong>láminas</strong> (con miniaturas, agrupadas) te deja cambiar de área con un clic.</p>
+<ul>
+<li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
+<li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
+<li><strong>Tareas (partidas):</strong> un bloque puede mostrar <strong>varias partidas</strong>, completas o solo algunas actividades, con su propio título y color. La numeración (SEQ) es <strong>continua 1..n</strong> o <strong>la de cada partida</strong>, con un subtítulo por partida. Puedes tener varios bloques de tareas en la misma lámina.</li>
+<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos (también las hojas de SheetFlow), con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque.</li>
+<li><strong>Capas:</strong> lista de todos los objetos; arrástralos para cambiar el orden (arriba = al frente), ocúltalos con el ojo, bloquéalos con el candado para no moverlos por error y renómbralos con doble clic.</li>
+<li><strong>Guías (como en Inkscape):</strong> arrastra desde las <strong>reglas</strong> (la de arriba da guías horizontales; la de la izquierda, verticales) y suelta dentro de la hoja. Los bloques se <strong>imantan</strong> a las guías, a los bordes y al centro de la hoja. Las guías también están en «Capas»: puedes ocultarlas, bloquearlas, escribir su posición en cm o quitarlas (o arrastrarlas fuera de la hoja). No se imprimen ni se exportan.</li>
+<li><strong>Recovery:</strong> en «Insertar» agregas tantas columnas de recovery como necesites (Recovery, Recovery 02, 03…) y quitas la última; las fechas capturadas se conservan.</li>
+<li><strong>Hoja:</strong> cambia el tamaño u orientación en cualquier momento; los bloques conservan su lugar en proporción. «Restablecer diseño estándar» vuelve a la disposición clásica.</li>
+</ul>
+<p class="manual-nota">Las restricciones se numeran en toda la lámina (en el orden en que se leen los bloques de tareas), así que un rombo con el mismo número es siempre la misma restricción.</p>
 <h4>La lámina (vista de lectura)</h4>
 <ul>
-<li>Arriba, el <strong>plano con sus marcas</strong>. Debajo, la tabla del programa: SEQ, tarea, inicio, fin, recovery, % y restricciones.</li>
+<li>El <strong>plano con sus marcas</strong> y las tablas del programa: SEQ, tarea, inicio, fin, recovery, % y restricciones, según el diseño de la lámina.</li>
 <li>Las fechas de <strong>recovery</strong> se editan directamente en la tabla (con permiso de edición).</li>
 <li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>vPlan → Tablas</em>.</li>
 <li><strong>Ampliar</strong> muestra la lámina a pantalla completa; Esc o el botón de cerrar la regresan.</li>
@@ -257,7 +279,7 @@ HTML],
 <p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
-<p class="manual-nota">Para imprimir una lámina o llevarla a PDF usa <em>Exportar → vPlan</em>: una lámina por página, en tabloide horizontal.</p>
+<p class="manual-nota">Para imprimir una lámina o llevarla a PDF usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
 HTML],
 
 ['id' => 'lastplanner', 'titulo' => 'Last Planner', 'icono' => 'fa-note-sticky', 'roles' => $todos, 'herr' => 'lastplanner', 'cuerpo' => <<<'HTML'
@@ -519,6 +541,34 @@ HTML],
 <p>Se guarda solo cada 30 segundos y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Word (.docx), LibreOffice (.odt) o PDF con el nombre <code>Año_mes_día_Nombre</code>, y <strong>Imprimir</strong> abre el PDF listo para imprimir con la hoja, márgenes y numeración elegidos. La línea de corte de página en pantalla es aproximada; el PDF muestra la paginación exacta.</p>
 HTML],
 
+['id' => 'sheetflow', 'titulo' => 'SheetFlow (tablas)', 'icono' => 'fa-table-cells', 'roles' => $todos, 'herr' => 'sheetflow', 'cuerpo' => <<<'HTML'
+<p>Crea <strong>tablas</strong> como en una hoja de cálculo (materiales, presupuestos, asistencias, registros) y úsalas en el <strong>vPlan</strong>, el <strong>Editor</strong> y el <strong>Redactor</strong> sin volver a capturarlas.</p>
+<h4>Crear una tabla</h4>
+<ol>
+<li>Pulsa <strong>Nueva tabla</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong>; la lista se agrupa por departamento.</li>
+<li>Elige el punto de partida: <strong>en blanco</strong>, una <strong>plantilla</strong> (control de materiales, presupuesto, restricciones, asistencia semanal o el programa de obra) o <strong>importa</strong> un archivo <code>.xlsx</code>, <code>.ods</code> o <code>.csv</code> (primera hoja; la primera fila son los encabezados).</li>
+</ol>
+<h4>El editor</h4>
+<ul>
+<li><strong>Celdas:</strong> clic para elegir, arrastra o <kbd>Mayús</kbd>+flechas para varias; <kbd>Enter</kbd> o doble clic para editar; <kbd>Supr</kbd> borra. <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>V</kbd> copian y pegan, también desde Excel o LibreOffice. <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> deshacen y rehacen.</li>
+<li><strong>Renglones y columnas:</strong> inserta arriba/abajo o a los lados, elimina, y ordena por la columna elegida. Hasta 30 columnas y 1 000 renglones.</li>
+<li><strong>Tipo de columna:</strong> texto, número, moneda, porcentaje o fecha (da formato y alineación). Cada columna numérica puede tener un <strong>total</strong> al pie (suma, promedio, mínimo, máximo) y cualquier columna puede <strong>contar</strong>.</li>
+<li><strong>Fórmulas:</strong> empieza con <code>=</code>. Operadores <code>+ − * / ^</code>, referencias como <code>C2</code> o <code>C2:C10</code> (el encabezado es la fila 1) y funciones <code>SUMA, PROMEDIO, MIN, MAX, CONTAR, REDONDEAR, SI</code>. Al insertar o eliminar renglones y columnas las referencias se ajustan solas.</li>
+<li><strong>Formato de celdas</strong> (pestaña <em>Inicio</em>): tamaño de letra, negrita, cursiva, subrayado, color de letra y de relleno, alineación y <strong>bordes</strong> (todos, exterior, arriba, abajo, izquierda, derecha o ninguno, con color, grosor y estilo: continuo, guiones, puntos o doble). El ancho de cada columna se cambia arrastrando el borde de su letra.</li>
+<li><strong>Imagen en una celda:</strong> pestaña <em>Insertar › Insertar en celda…</em> (logotipos, fotos). La imagen se ve también en el PDF, Excel y las tablas del Redactor.</li>
+<li><strong>Funciones condicionales:</strong> <code>SI, Y, O, NO, SI.ERROR, SUMAR.SI, CONTAR.SI, PROMEDIO.SI</code>; en <em>Datos › Insertar función</em> hay un ejemplo de cada una. Por ejemplo <code>=SI(E2&gt;=D2;"Completo";"Pendiente")</code> o <code>=SUMAR.SI(B2:B9;"Estructura";E2:E9)</code>.</li>
+<li><strong>Estilo de la tabla</strong> (pestaña <em>Vista</em>): color del encabezado y de su texto, renglones alternos, líneas de cuadrícula y zoom.</li>
+<li>Se guarda solo unos segundos después de cada cambio y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Excel (.xlsx), CSV o PDF, o abre el PDF para imprimir. También puedes descargar el archivo propio <strong>.sheetflow</strong> (con su icono rosa en la sección Archivo) y volver a importarlo con <em>Nueva tabla</em>.</li>
+</ul>
+<h4>Usar la tabla en otras herramientas (vínculos vivos)</h4>
+<ul>
+<li><strong>vPlan:</strong> en SheetFlow (<em>A vPlan</em>) o en <em>vPlan › Tablas adicionales › Crear desde SheetFlow</em> se crea una tabla vinculada (hasta 8 columnas y 200 renglones) que luego agregas a las láminas. Lo que cambies en SheetFlow se ve en la lámina, y lo que edites en la lámina se escribe en SheetFlow (no se pueden editar celdas con fórmula ni el renglón de totales desde la lámina).</li>
+<li><strong>Redactor:</strong> <em>Insertar › Tabla › Origen › Tablas de SheetFlow</em>. La tabla se actualiza sola al abrir, ver y exportar el documento; para cambiarla, edítala en SheetFlow.</li>
+<li><strong>Editor:</strong> panel <em>Símbolos › Tablas de SheetFlow</em>. Se actualiza al abrir el gráfico (guarda para conservar el cambio) y la puedes mover y cambiar de tamaño.</li>
+</ul>
+<p class="manual-nota">Si borras la tabla de SheetFlow, la de vPlan se queda con sus últimos datos y las del Redactor y el Editor con lo último que se guardó.</p>
+HTML],
+
 ['id' => 'simbolos', 'titulo' => 'Símbolos', 'icono' => 'fa-shapes', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'
 <p>La <strong>biblioteca de símbolos</strong> del proyecto: imágenes reutilizables que insertas en el vPlan y en el Editor (cámaras, extintores, tableros, señales…).</p>
 <ul>
@@ -570,13 +620,13 @@ HTML],
 <table class="tabla manual-tabla">
 <thead><tr><th>Documento</th><th>Qué genera</th></tr></thead>
 <tbody>
-<tr><td><strong>PDF Ejecutivo</strong></td><td>Gantt + tabla en tabloide (11×17") horizontal, ajustado a una hoja si es posible; se pagina cada 12 semanas.</td></tr>
+<tr><td><strong>Programa de obra</strong></td><td>Eliges el formato: <em>PDF ejecutivo</em> (Gantt + tabla en tabloide 11×17" horizontal, paginado según la duración), <em>Microsoft Project (.xml)</em> en formato MSPDI (ábrelo en Project y guárdalo como .mpp; no es un .mpp binario) o <em>ProjectLibre (.pod)</em>.</td></tr>
 <tr><td><strong>4WLA</strong></td><td>Lookahead de 4 semanas: semana actual + 4 con X por día, PTA y limitaciones. Tabloide horizontal; en .xlsx / .ods queda editable. Eliges el formato y la <em>semana de referencia</em>.</td></tr>
-<tr><td><strong>vPlan</strong></td><td>Plano con la tabla del programa, recovery y tablas adicionales; una lámina por página en tabloide. Eliges la lámina.</td></tr>
+<tr><td><strong>vPlan</strong></td><td>Plano con la tabla del programa, recovery y tablas adicionales; una lámina por página, al tamaño de hoja de cada lámina. Eliges la lámina.</td></tr>
 <tr><td><strong>Last Planner</strong></td><td>Post-its de 7×7 cm por día y partida, en hojas carta con marcas de corte. Eliges la partida y las tarjetas por fila.</td></tr>
 <tr><td><strong>Curvas de productividad</strong></td><td>Una curva con su tabla y gráfica, o la gráfica maestra con todas. PDF carta horizontal; .xlsx / .ods con tabla y gráfica.</td></tr>
 <tr><td><strong>MSR</strong></td><td>Status de submittals y entrega de materiales con fotos. PDF en A4 horizontal; .xlsx / .ods editables.</td></tr>
-<tr><td><strong>Microsoft Project (.xml)</strong></td><td>XML en formato MSPDI, compatible con MS Project. Ábrelo en Project y guárdalo como .mpp desde allí (no es un .mpp binario). También hay una variante con extensión .pod.</td></tr>
+<tr><td><strong>Reportes de obra (PDF)</strong></td><td>Reporte diario (un día o un mes), Bitácora (por día, mes, departamento o importancia), Minutas (por importancia, día o mes), Submittals (uno, varios o todos), Materiales (por especialidad, estatus de compra o entrega) y Evidencias (por día, semana, mes o actividad). Carta vertical; los filtros se combinan y los vacíos no filtran.</td></tr>
 </tbody>
 </table>
 <p class="manual-nota">Solo administradores y clientes pueden exportar; los visitantes no.</p>

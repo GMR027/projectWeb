@@ -1,174 +1,59 @@
 <?php
 use Model\VplanTabla;
 $fd = fn($f) => $f ? formatear_fecha($f) : '';
-$colsTabla = 6 + 2 * ((int)$rec1 + (int)$rec2);   // SEQ, TASK, START, FINISH + recovery + %, CONSTRAINS
-$logoC = $proyecto->contratista_logo;
-$logoE = $proyecto->logoEmpresa();
-$planoImg = $lamina->marcas_png ?: $lamina->plano;
-$lkW = $lkH = 0.0;
-$enlaces = $lamina->marcas_png ? \Classes\EnlacesLamina::de($lamina->marcas_json, $lkW, $lkH) : [];
-$editarFila = fn($t, $campo) => $puedeEditar
-    ? '<input type="date" class="vp-rec" data-actividad="' . (int)$t['actividad']->id . '" data-campo="' . $campo . '" value="' . s($t[$campo]) . '">'
-    : s($fd($t[$campo]));
+$modoDiseno = $puedeEditar && !empty($_GET['diseno']);
+$q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$lamina->id;
+$volver = $paquete ? '/vplan/paquete?proyecto=' . (int)$proyecto->id . '&id=' . (int)$paquete->id : '/vplan?proyecto=' . (int)$proyecto->id;
+$conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 ?>
 <div class="page-header no-print">
     <div>
         <h2><i class="fa-solid fa-map-location-dot"></i> <?php echo s($lamina->titulo); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo $partida ? 'Partida ' . s($partida->codigo . ' · ' . $partida->nombre) : 'Sin partida'; ?></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?><?php echo $paquete ? ' · ' . s($paquete->nombre) : ''; ?> · Hoja <?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?> mm</p>
     </div>
-    <div class="la-controles">
-        <?php if ($puedeEditar): ?>
-            <a href="/vplan/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost">Editar lámina</a>
-        <?php endif; ?>
-        <a href="/vplan?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Láminas</a>
+    <div class="vp-herr">
+        <?php if ($conNav && !$modoDiseno): ?><button type="button" class="btn btn-ghost" data-vp-nav-toggle aria-pressed="true" title="Mostrar u ocultar las láminas para tener más espacio"><i class="fa-solid fa-table-columns"></i> Láminas</button><?php endif; ?>
+        <?php if ($puedeEditar && !$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary"><i class="fa-solid fa-vector-square"></i> Modo diseño</a><?php endif; ?>
+        <?php if ($puedeEditar && $lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
+        <?php if ($puedeEditar): ?><a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> Datos de la lámina</a><?php endif; ?>
+        <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
+        <?php if ($puedeEditar): ?><button type="button" class="btn btn-ghost" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>
+        <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>
     </div>
 </div>
 
+<?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del vPlan.</div><?php endif; ?>
 <?php if ($puedeEditar && $desactualizada): ?>
 <div class="alerta alerta-error no-print">El avance del programa cambió desde que se dibujaron las marcas: el plano está desactualizado.
-    <a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>&auto=1" class="btn btn-sm btn-primary" style="margin-left:1rem">Actualizar plano</a></div>
-<?php endif; ?>
-<?php if ($puedeEditar): ?>
-<div class="card vp-barra no-print">
-    <form method="POST" action="/vplan/lamina/tabla" class="vp-agregar-tabla">
-        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-        <input type="hidden" name="lamina" value="<?php echo s($lamina->id); ?>">
-        <input type="hidden" name="accion" value="agregar">
-        <label for="tabla_id" class="text-sm">Agregar tabla adicional:</label>
-        <select id="tabla_id" name="tabla_id" required>
-            <option value="">— Elige de la lista —</option>
-            <?php foreach ($catalogo as $c): ?><option value="<?php echo s($c->id); ?>"><?php echo s($c->etiqueta() . ' (' . (VplanTabla::TIPOS[$c->tipo] ?? $c->tipo) . ')'); ?></option><?php endforeach; ?>
-        </select>
-        <label class="text-sm" title="Crea un duplicado con los mismos renglones; los cambios no afectan a las demás láminas"><input type="checkbox" name="copia" value="1"> Como copia independiente</label>
-        <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
-        <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">+ Crear tabla nueva</a>
-    </form>
-    <div class="vp-recovery-btns">
-        <?php foreach ([['agregar', '1', !$rec1, 'Agregar Recovery', 'btn-primary'], ['agregar', '2', !$rec2, 'Agregar Recovery 02', 'btn-primary'],
-                        ['quitar', '1', $rec1, 'Quitar Recovery', 'btn-danger'], ['quitar', '2', $rec2, 'Quitar Recovery 02', 'btn-danger']] as [$acc, $cual, $mostrar, $texto, $clase]): if (!$mostrar) continue; ?>
-            <form method="POST" action="/vplan/lamina/recovery" style="display:inline"<?php echo $acc === 'quitar' ? ' data-confirm="¿Quitar ' . s($texto === 'Quitar Recovery 02' ? 'Recovery 02' : 'Recovery') . '?|Se oculta la columna de la lámina; las fechas capturadas se conservan.|Sí, quitar"' : ''; ?>>
-                <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-                <input type="hidden" name="lamina" value="<?php echo s($lamina->id); ?>">
-                <input type="hidden" name="accion" value="<?php echo $acc; ?>">
-                <input type="hidden" name="cual" value="<?php echo $cual; ?>">
-                <button type="submit" class="btn btn-sm <?php echo $clase; ?>"<?php echo $acc === 'quitar' ? ' ' : ''; ?>><?php echo s($texto); ?></button>
-            </form>
-        <?php endforeach; ?>
-        <span class="text-muted text-sm">Las fechas capturadas se conservan aunque quites la columna.</span>
-    </div>
-</div>
+    <a href="/vplan/editor?<?php echo $q; ?>&auto=1" class="btn btn-sm btn-primary" style="margin-left:1rem">Actualizar plano</a></div>
 <?php endif; ?>
 
+<?php if ($modoDiseno) include __DIR__ . '/_diseno-barra.php'; ?>
+<div class="vp-shell<?php echo $conNav ? ' vp-con-nav' : ''; ?><?php echo $modoDiseno ? ' vp-shell-diseno' : ''; ?>" id="vp-shell">
+<?php if ($conNav) include __DIR__ . '/_nav-laminas.php'; ?>
+<div class="vp-dis-wrap<?php echo $modoDiseno ? ' vp-dis-on' : ''; ?>">
+<?php if ($modoDiseno): ?>
+<div class="vp-reglas" id="vp-reglas">
+    <div class="vp-regla-esq"></div>
+    <div class="vp-regla-celda vp-regla-celda-x"><canvas class="vp-regla" id="vp-regla-x" title="Arrastra hacia la hoja para crear una guía horizontal"></canvas></div>
+    <div class="vp-regla-celda vp-regla-celda-y"><canvas class="vp-regla" id="vp-regla-y" title="Arrastra hacia la hoja para crear una guía vertical"></canvas></div>
+    <div class="vp-reglas-hoja">
+<?php endif; ?>
 <div class="vp-hoja" id="vp-hoja">
 <button type="button" class="vp-cerrar-ampliado no-print" id="vp-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
-<div class="vp-lamina">
-    <div class="vp-encabezado">
-        <div class="vp-logo"><?php if ($logoC): ?><img src="/build/img/logos/<?php echo s($logoC); ?>" alt=""><?php endif; ?></div>
-        <div class="vp-titulo"><span><?php echo s($proyecto->codigo ?: $proyecto->nombre); ?></span><strong><?php echo s(mb_strtoupper($lamina->titulo)); ?></strong></div>
-        <div class="vp-logo vp-logo-der"><?php if ($logoE): ?><img src="/build/img/logos/<?php echo s($logoE); ?>" alt=""><?php endif; ?></div>
-    </div>
-
-    <div class="vp-cuerpo<?php echo ($rec1 && $rec2) ? ' vp-con-rec2' : ($rec1 || $rec2 ? ' vp-con-rec' : ''); ?>">
-        <div class="vp-izq">
-            <div class="vp-plano">
-                <?php if ($puedeEditar && $lamina->plano): ?>
-                    <div class="vp-plano-esq no-print"><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="vp-plano-editar" title="Abrir el editor de marcas de este plano"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a></div>
-                <?php endif; ?>
-                <?php if ($planoImg): ?><?php if ($enlaces): ?><div class="vp-lk-wrap"><?php endif; ?><img src="/uploads/vplan/<?php echo s($planoImg); ?>" alt="Plano"><?php if ($enlaces): echo \Classes\EnlacesLamina::html($enlaces, $lkW, $lkH); ?></div><?php endif; ?><?php else: ?><p class="text-muted">Sin imagen de plano. Súbela en «Editar lámina».</p><?php endif; ?>
-            </div>
-            <div class="vp-simbologia-fila">
-                <div class="vp-simb-img"><?php if ($lamina->simbologia): ?><img src="/uploads/vplan/<?php echo s($lamina->simbologia); ?>" alt="Simbología"><?php endif; ?></div>
-                <?php if ($simbSchedule = $lamina->imagenSimbologiaSchedule()): ?>
-                <img class="vp-schedule-img" src="/uploads/vplan/<?php echo s($simbSchedule); ?>" alt="Simbología del schedule">
-                <?php else: ?>
-                <table class="vp-schedule">
-                    <thead><tr><th colspan="2">SYMBOLOGY FOR SCHEDULE</th></tr></thead>
-                    <tbody>
-                        <tr><td class="vp-verde"></td><td>COMPLETE</td></tr>
-                        <tr><td class="vp-amarillo"></td><td>IN PROGRESS</td></tr>
-                        <tr><td class="vp-rojo"></td><td>ON HOLD</td></tr>
-                        <tr><td class="vp-rombo-celda"><span class="vp-rombo vp-rombo-sm"></span></td><td>CONSTRAIN</td></tr>
-                    </tbody>
-                </table>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="vp-der">
-            <div class="vp-scroll"><table class="vp-tabla vp-programa" style="--vp-c:<?php echo s($colorTabla[0]); ?>;--vp-t:<?php echo s($colorTabla[1]); ?>">
-                <thead>
-                    <tr><th colspan="<?php echo $colsTabla; ?>" class="vp-adic-titulo"><?php echo $partida ? s(mb_strtoupper($partida->nombre)) : 'SIN PARTIDA'; ?></th></tr>
-                    <tr>
-                        <?php $rs = ($rec1 || $rec2) ? 2 : 1; ?><th rowspan="<?php echo $rs; ?>"># SEQ</th><th rowspan="<?php echo $rs; ?>" class="vp-task">TASK</th><th rowspan="<?php echo $rs; ?>">START</th><th rowspan="<?php echo $rs; ?>">FINISH</th>
-                        <?php if ($rec1): ?><th colspan="2">RECOVERY</th><?php endif; ?><?php if ($rec2): ?><th colspan="2">RECOVERY 02</th><?php endif; ?>
-                        <th rowspan="<?php echo $rs; ?>">%</th><th rowspan="<?php echo $rs; ?>">CONSTRAINS</th>
-                    </tr>
-                    <?php if ($rec1 || $rec2): ?><tr><?php if ($rec1): ?><th>START</th><th>FINISH</th><?php endif; ?><?php if ($rec2): ?><th>START</th><th>FINISH</th><?php endif; ?></tr><?php endif; ?>
-                </thead>
-                <tbody>
-                <?php foreach ($tareas as $t): $a = $t['actividad']; $p = (int)$a->progreso; ?>
-                    <tr>
-                        <td class="c"><?php echo (int)$t['seq']; ?></td>
-                        <td><?php echo s($a->nombre); ?></td>
-                        <td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="inicio" value="' . s($a->fecha_inicio) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_inicio)); ?></td>
-                        <td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="fin" value="' . s($a->fecha_fin) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_fin)); ?></td>
-                        <?php if ($rec1): ?>
-                            <td class="c"><?php echo $editarFila($t, 'r1_inicio'); ?></td>
-                            <td class="c"><?php echo $editarFila($t, 'r1_fin'); ?></td>
-                        <?php endif; ?>
-                        <?php if ($rec2): ?>
-                            <td class="c vp-rojo-txt"><?php echo $editarFila($t, 'r2_inicio'); ?></td>
-                            <td class="c vp-rojo-txt"><?php echo $editarFila($t, 'r2_fin'); ?></td>
-                        <?php endif; ?>
-                        <td class="c vp-pct-act <?php echo $p >= 100 ? 'vp-verde' : ($p > 0 ? 'vp-amarillo' : ''); ?>"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" value="' . $p . '" title="Mismo avance que el programa de obra">' : $p . '%'; ?></td>
-                        <td class="c">
-                            <?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><span class="vp-rombo"><b><?php echo (int)$n; ?></b></span><?php endforeach;
-                            elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (!$tareas): ?><tr><td colspan="<?php echo $colsTabla; ?>" class="text-muted">Selecciona una partida con actividades en «Editar lámina».</td></tr><?php endif; ?>
-                </tbody>
-            </table></div>
-            <?php if ($filtrada): ?><p class="text-sm text-muted no-print">Esta lámina muestra <?php echo count($tareas); ?> actividades de la partida (<?php echo s($partida->nombre); ?>). <?php if ($puedeEditar): ?><a href="/vplan/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>">Cambiar selección</a><?php endif; ?></p><?php endif; ?>
-            <?php foreach ($tablas as $bloque): $t = $bloque['tabla']; ?>
-                <div class="vp-bloque">
-                    <?php if ($puedeEditar): ?>
-                        <div class="vp-bloque-acciones no-print">
-                            <?php foreach ([['subir', '↑'], ['bajar', '↓'], ['quitar', '✕']] as [$acc, $ico]): ?>
-                                <form method="POST" action="/vplan/lamina/tabla" style="display:inline"<?php echo $acc === 'quitar' ? ' data-confirm="¿Quitar tabla de la lámina?|La tabla sigue en el catálogo; solo se quita de esta lámina.|Sí, quitar"' : ''; ?>>
-                                    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-                                    <input type="hidden" name="lamina" value="<?php echo s($lamina->id); ?>">
-                                    <input type="hidden" name="tabla_id" value="<?php echo s($t->id); ?>">
-                                    <input type="hidden" name="accion" value="<?php echo $acc; ?>">
-                                    <button type="submit" class="btn btn-sm <?php echo $acc === 'quitar' ? 'btn-danger' : 'btn-ghost'; ?>" title="<?php echo $acc; ?>"><?php echo $ico; ?></button>
-                                </form>
-                            <?php endforeach; ?>
-                            <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost">Editar datos</a>
-                        </div>
-                    <?php endif; ?>
-                    <?php include __DIR__ . '/_tabla-adicional.php'; ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <div class="vp-pie">
-        <div><?php echo s($lamina->supervisor ? 'SUPERVISOR: ' . $lamina->supervisor : ''); ?></div>
-        <div>UPDATED: <?php $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']; echo $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y'); ?></div>
+<?php include __DIR__ . '/_hoja.php'; ?>
+</div><!-- /vp-hoja -->
+<?php if ($modoDiseno): ?>
     </div>
 </div>
-</div><!-- /vp-hoja -->
+<?php endif; ?>
+<?php if ($modoDiseno) include __DIR__ . '/_diseno-panel.php'; ?>
+</div>
+</div><!-- /vp-shell -->
 
 <section class="card vp-acciones no-print" id="vp-acciones">
-    <h3>Acciones</h3>
-    <div class="vp-acciones-menu">
-        <?php if ($puedeEditar && $lamina->plano): ?><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-primary"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
-        <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
-        <?php if ($puedeEditar): ?><button type="button" class="btn btn-primary" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>
-    </div>
     <div class="vp-notas">
-        <h4>Notas</h4>
+        <h4><i class="fa-solid fa-note-sticky"></i> Notas</h4>
         <p class="text-muted" id="vp-notas-vacio" hidden>Aún no hay notas en esta lámina.</p>
         <ul class="vp-notas-lista" id="vp-notas-lista"></ul>
     </div>
@@ -295,7 +180,7 @@ $editarFila = fn($t, $campo) => $puedeEditar
     document.querySelectorAll('.vp-rec:not(.vp-fecha-act):not(.vp-progreso-act)').forEach(inp => inp.addEventListener('change', async () => {
         inp.classList.remove('msr-error');
         try {
-            const d = await post('/api/vplan/recovery', { lamina, actividad: inp.dataset.actividad, campo: inp.dataset.campo, valor: inp.value });
+            const d = await post('/api/vplan/recovery', { lamina, actividad: inp.dataset.actividad, n: inp.dataset.n, campo: inp.dataset.campo, valor: inp.value });
             if (!d.success) inp.classList.add('msr-error');
         } catch (_) { inp.classList.add('msr-error'); }
     }));
@@ -389,8 +274,27 @@ $editarFila = fn($t, $campo) => $puedeEditar
     const crecer = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
     const crecerTodos = () => document.querySelectorAll('.vp-ta').forEach(crecer);
     document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('vp-ta')) crecer(e.target); });
-    new MutationObserver(crecerTodos).observe(document.querySelector('.vp-lamina'), { childList: true, subtree: true });
+    new MutationObserver(crecerTodos).observe(document.querySelector('.vp-sheet'), { childList: true, subtree: true });
     window.addEventListener('load', crecerTodos); crecerTodos();
 })();
 </script>
+<?php endif; ?>
+
+<?php if ($modoDiseno): ?>
+<script>
+window.VP_DISENO = <?php echo json_encode([
+    'lamina' => (int)$lamina->id, 'proyecto' => (int)$proyecto->id, 'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $lamina->id,
+    'bloques' => array_map(fn($b) => $b->aArray(), $bloques),
+    'partidas' => $partidasDiseno,
+    'presets' => \Classes\VplanDiseno::PRESETS,
+    'tamano' => ['preset' => $lamina->preset, 'ancho_mm' => (int)$lamina->ancho_mm, 'alto_mm' => (int)$lamina->alto_mm],
+    'tablas' => array_reduce($tablas, function ($c, $t) { $c[(int)$t['tabla']->id] = ['titulo' => $t['tabla']->etiqueta()]; return $c; }, []),
+    'tipos' => \Model\VplanBloque::TIPOS,
+    'guias' => $lamina->guias(),
+    'catalogo' => $catalogoTablas,
+    'recovery' => ['n' => (int)$lamina->recovery_n, 'max' => \Model\VplanLamina::MAX_RECOVERY],
+    'etiquetasRecovery' => array_map(fn($n) => \Classes\Vplan::etiquetaRecovery($n), range(1, \Model\VplanLamina::MAX_RECOVERY)),
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+</script>
+<script src="/vendor/vplan-diseno.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-diseno.js"); ?>"></script>
 <?php endif; ?>

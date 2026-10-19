@@ -95,7 +95,7 @@ $pid = (int)$proyecto->id;
                 <?php if ($g['con_texto']): $t = Grabaciones::texto($pid, (int)$g['id']); ?>
                     <details><summary>Transcripción (<?php echo mb_strlen($t); ?> caracteres)</summary><p style="white-space:pre-wrap;font-size:1.3rem"><?php echo s($t); ?></p></details>
                 <?php endif; ?>
-                <form method="post" action="/grabaciones/eliminar" onsubmit="return confirm('¿Eliminar esta grabación y su audio? No se puede deshacer.')" style="margin-top:.8rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$g['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i> Eliminar</button></form>
+                <form method="post" action="/grabaciones/eliminar" data-confirmar="¿Eliminar esta grabación y su audio? No se puede deshacer." style="margin-top:.8rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$g['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i> Eliminar</button></form>
             </li>
         <?php endforeach; ?>
     </ul>

@@ -82,7 +82,7 @@ foreach ($lista as $x) $ref[$x['herramienta'] . ':' . $x['id']] = $nombre($x);
                                 <button class="btn btn-sm btn-primary" type="submit"><i class="fa-regular fa-bookmark"></i> Guardar</button>
                             <?php endif; ?>
                         </form>
-                        <form method="post" action="/biblioteca-ia/eliminar" onsubmit="return confirm('¿Eliminar este análisis? Los cambios ya aplicados al proyecto se conservan, pero ya no podrás revertirlos desde la herramienta.')">
+                        <form method="post" action="/biblioteca-ia/eliminar" data-confirmar="¿Eliminar este análisis? Los cambios ya aplicados al proyecto se conservan, pero ya no podrás revertirlos desde la herramienta.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="herramienta" value="<?php echo s($x['herramienta']); ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>">
                             <button class="btn btn-sm btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>

@@ -2,41 +2,70 @@
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-map-location-dot"></i> vPlan · Plan visual</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($laminas); ?> lámina(s)</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($paquetes); ?> vPlan</p>
     </div>
     <div class="la-controles">
         <a href="/exportar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</a>
-        <?php if ($puedeEditar): ?><a href="/vplan/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nueva lámina</a><?php endif; ?>
     </div>
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>
-<div class="card">
-    <?php if (empty($laminas)): ?>
-        <p class="text-muted">Aún no hay láminas. Crea una por partida del programa de obra y sube el plano y su simbología.</p>
-    <?php else: ?>
-    <table class="tabla" data-buscable>
-        <thead><tr><th class="hide-m">Plano</th><th>Lámina</th><th class="hide-m">Partida</th><th class="hide-m">Supervisor</th><th>Acciones</th></tr></thead>
-        <tbody>
-        <?php foreach ($laminas as $l): $img = $l->marcas_png ?: $l->plano; ?>
-            <tr>
-                <td class="hide-m"><?php if ($img): ?><img class="vp-mini" src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endif; ?></td>
-                <td><a class="nombre-archivo" href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($l->id); ?>"><?php echo archivo_icono_html('png', 'Lámina del vPlan'); ?> <?php echo s($l->titulo); ?></a></td>
-                <td class="hide-m"><?php echo s($l->partida_nombre); ?></td>
-                <td class="hide-m"><?php echo s($l->supervisor); ?></td>
-                <td class="acciones">
-                    <a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($l->id); ?>" class="btn btn-sm btn-ghost">Ver</a>
-                    <?php if ($puedeEditar): ?>
-                        <a href="/vplan/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($l->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/vplan/eliminar" style="display:inline" data-confirm="¿Eliminar lámina?|Se borrarán sus imágenes y las marcas dibujadas.">
-                            <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-                            <input type="hidden" name="id" value="<?php echo s($l->id); ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">✕</button>
-                        </form>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-    <?php endif; ?>
+
+<?php if ($puedeEditar): ?>
+<form method="POST" action="/vplan/paquete/crear" class="card vp-nuevo-paquete">
+    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+    <label for="vp-np-nombre" class="text-sm">Nuevo vPlan:</label>
+    <input type="text" id="vp-np-nombre" name="nombre" maxlength="200" placeholder="Ej: Videovigilancia, Fase 2, Torre A…" required>
+    <button type="submit" class="btn btn-primary btn-sm">+ Crear vPlan</button>
+    <span class="text-sm text-muted">Cada vPlan reúne las láminas (una por área) que quieras gestionar juntas.</span>
+</form>
+<?php endif; ?>
+
+<?php if (!$paquetes): ?>
+    <div class="card"><p class="text-muted">Aún no hay vPlan. <?php echo $puedeEditar ? 'Crea el primero arriba y agrégale una lámina por área.' : ''; ?></p></div>
+<?php else: ?>
+<div class="vp-paquetes">
+    <?php foreach ($paquetes as $p): ?>
+    <div class="card vp-paquete">
+        <a class="vp-paquete-portada" href="/vplan/paquete?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>" aria-label="Abrir <?php echo s($p->nombre); ?>">
+            <?php foreach ($portadas[(int)$p->id] ?? [] as $img): ?><img src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endforeach; ?>
+            <?php if (empty($portadas[(int)$p->id])): ?><i class="fa-solid fa-map-location-dot"></i><?php endif; ?>
+        </a>
+        <div class="vp-paquete-cuerpo">
+        <h3><a href="/vplan/paquete?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>"><?php echo s($p->nombre); ?></a></h3>
+        <div class="vp-paquete-meta">
+            <span class="vp-chip-meta"><i class="fa-solid fa-layer-group"></i> <?php echo (int)$p->total; ?> lámina<?php echo (int)$p->total === 1 ? '' : 's'; ?></span>
+            <?php if ($puedeEditar && (int)$p->visibles !== (int)$p->total): ?><span class="vp-chip-meta"><i class="fa-regular fa-eye"></i> <?php echo (int)$p->visibles; ?> visible<?php echo (int)$p->visibles === 1 ? '' : 's'; ?></span><?php endif; ?>
+        </div>
+        <div class="vp-acc">
+            <a href="/vplan/paquete?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-folder-open"></i> Abrir</a>
+            <?php if ($puedeEditar): ?>
+            <button type="button" class="vp-ib vp-renombrar-btn" title="Cambiar el título" aria-label="Cambiar el título de <?php echo s($p->nombre); ?>"><i class="fa-solid fa-pen"></i></button>
+            <form method="POST" action="/vplan/paquete/eliminar" style="display:inline" data-confirm="¿Eliminar el vPlan «<?php echo s($p->nombre); ?>»?|Se borrarán sus <?php echo (int)$p->total; ?> lámina(s) con sus imágenes y marcas. Esta acción no se puede deshacer.|Sí, eliminar">
+                <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($p->id); ?>">
+                <button type="submit" class="vp-ib vp-ib-peligro" title="Eliminar vPlan" aria-label="Eliminar <?php echo s($p->nombre); ?>"><i class="fa-solid fa-trash-can"></i></button>
+            </form>
+            <?php endif; ?>
+        </div>
+        <?php if ($puedeEditar): ?>
+        <form method="POST" action="/vplan/paquete/renombrar" class="vp-renombrar" hidden>
+            <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($p->id); ?>"><input type="hidden" name="volver" value="lista">
+            <input type="text" name="nombre" value="<?php echo s($p->nombre); ?>" maxlength="200" aria-label="Nombre del vPlan" required>
+            <button type="submit" class="vp-ib vp-ib-ok" title="Guardar el título"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="vp-ib vp-renombrar-cancelar" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>
+        </form>
+        <?php endif; ?>
+        </div>
+    </div>
+    <?php endforeach; ?>
 </div>
+<?php endif; ?>
+<script>
+document.addEventListener('click', e => {
+    const abre = e.target.closest('.vp-renombrar-btn'), cierra = e.target.closest('.vp-renombrar-cancelar');
+    if (!abre && !cierra) return;
+    const card = e.target.closest('.vp-paquete'), f = card.querySelector('.vp-renombrar');
+    f.hidden = !abre;
+    card.querySelector('.vp-acc').hidden = !!abre;
+    if (abre) f.querySelector('input[name=nombre]').select();
+});
+</script>

@@ -208,3 +208,18 @@ button.peligro { background:#dc2626; color:#fff; } #alm-sec, #des-sec { height:a
 .ens-item span { display:flex; flex-direction:column; } .ens-item input { margin-top:.25rem; }
 .ens-res { display:flex; flex-direction:column; gap:.2rem; }
 .chip-casilla { display:inline-flex; align-items:center; gap:.3rem; font-size:.85rem; background:var(--card); border:1px solid var(--borde); border-radius:.6rem; padding:.2rem .6rem; cursor:pointer; } .ens-item .fila { align-items:center; }
+
+/* Herramientas IA: menú lateral con nombre, agrupado por categoría */
+#ia-menu .botones { display:flex; flex-direction:column; gap:.2rem; } #ia-menu .botones[hidden] { display:none; }
+
+/* Uso de la suscripción (Claude Code) en el chip de la IA */
+.uso-ia { display:inline-flex; align-items:center; gap:.7rem; margin-left:.6rem; padding-left:.7rem; border-left:1px solid var(--borde); font-size:.72rem; } .uso-ia[hidden] { display:none; }
+.uso-v { display:inline-flex; flex-direction:column; gap:.15rem; min-width:3.8rem; } .uso-et { color:var(--tenue); font-variant-numeric:tabular-nums; }
+.barra-uso { display:block; height:.35rem; border-radius:1rem; background:var(--borde); overflow:hidden; } .barra-uso i { display:block; width:var(--pct); height:100%; background:#22c55e; border-radius:1rem; }
+.barra-uso.medio i { background:#f59e0b; } .barra-uso.alto i { background:#ef4444; }
+.uso-tok { color:var(--tenue); font-variant-numeric:tabular-nums; }
+
+/* Categorías del menú de Herramientas IA: bloque con cabecera propia */
+#ia-menu-lista { gap:.7rem; }
+#ia-menu .grupo { display:flex; flex-direction:column; gap:.15rem; padding:.4rem .3rem .5rem; border:1px solid var(--borde); border-radius:.8rem; }
+#ia-menu .grupo h4 { margin:0 0 .25rem; padding:.2rem .5rem .4rem; font-size:.74rem; color:var(--txt); border-bottom:1px solid var(--borde); }

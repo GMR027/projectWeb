@@ -46,15 +46,15 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
     <?php else: ?>
         <table class="tabla" data-proyecto="<?php echo s($proyecto->id); ?>">
             <thead>
-                <tr><th>Revisión</th><th>Imagen</th><th class="hide-m">Referencia</th><th>Material</th><th class="hide-m">Especialidad</th><?php if ($inteligentes || $verif): ?><th>Normativa</th><?php endif; ?><th>Compra</th><th>Entrega</th><th class="hide-m">Web</th><th class="hide-m">Ficha</th><th class="hide-m">Certificado calidad</th><th>Acciones</th></tr>
+                <tr><th>Revisión</th><th class="hide-m">Imagen</th><th class="hide-m">Referencia</th><th class="col-mat">Material</th><th class="hide-m">Especialidad</th><?php if ($inteligentes || $verif): ?><th>Normativa</th><?php endif; ?><th>Compra</th><th>Entrega</th><th class="hide-m">Web</th><th class="hide-m">Ficha</th><th class="hide-m">Certificado calidad</th><th>Acciones</th></tr>
             </thead>
             <tbody>
             <?php $revs = $revisiones ?? []; $puedeRev = puede_revisar($proyecto); foreach ($materiales as $m): ?>
                 <tr>
                     <td><?php echo \Classes\Revisiones::chip('material', (string)$m->id, \Classes\Revisiones::estado($revs[(string)$m->id] ?? null, \Classes\Revisiones::huellaMaterial((array)$m)), $puedeRev, $m->nombre); ?></td>
-                    <td><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt=""><?php else: ?><span class="mat-thumb mat-thumb-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?></td>
+                    <td class="hide-m"><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt=""><?php else: ?><span class="mat-thumb mat-thumb-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?></td>
                     <td class="mono hide-m"><?php echo s($m->referencia); ?></td>
-                    <td><?php echo s($m->nombre); ?></td>
+                    <td class="col-mat"><?php echo s($m->nombre); ?></td>
                     <td class="hide-m"><?php echo s($m->especialidad); ?></td>
                     <?php if ($inteligentes || $verif): ?><td><?php $v = $verif[(int)$m->id] ?? null; echo \Classes\MaterialesInteligentes::badge($v, \Classes\MaterialesInteligentes::vigente($v, $m), $inteligentes); ?></td><?php endif; ?>
                     <td>

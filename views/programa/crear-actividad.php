@@ -38,6 +38,7 @@
                 <div class="campo">
                     <label for="fecha_inicio">Fecha de Inicio *</label>
                     <input type="date" id="fecha_inicio" name="fecha_inicio" value="<?php echo s($actividad->fecha_inicio); ?>" required>
+                    <small class="text-muted">Sugerida: día hábil siguiente a la última actividad. Puedes cambiarla.</small>
                 </div>
                                 <div class="campo campo-full">
                     <label class="campo-check"><input type="checkbox" id="hito" name="hito" value="1" <?php echo (int)$actividad->hito === 1 ? 'checked' : ''; ?>> Es un hito (duración 0: empieza y termina el mismo día)</label>
@@ -70,6 +71,14 @@
             <button type="submit" class="btn btn-primary">Crear Actividad</button>
         </form>
 <script>
+(function () {
+    // Al cambiar de partida se sugiere su fecha, salvo que el usuario ya haya tocado la fecha
+    const sugeridas = <?php echo json_encode($sugeridas ?? [], JSON_FORCE_OBJECT); ?>;
+    const sel = document.getElementById('partida_id'), fi = document.getElementById('fecha_inicio');
+    let tocada = false;
+    fi?.addEventListener('input', () => { tocada = true; });
+    sel?.addEventListener('change', () => { if (!tocada && sugeridas[sel.value]) fi.value = sugeridas[sel.value]; });
+})();
 (function () {
     const h = document.getElementById('hito'), d = document.getElementById('duracion_dias');
     if (!h || !d) return;

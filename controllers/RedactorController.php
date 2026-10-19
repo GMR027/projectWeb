@@ -87,8 +87,9 @@ class RedactorController
             exit;
         }
         $router->render('redactor/abrir', [
-            'titulo' => 'Redactor - ' . $d->nombre, 'proyecto' => $proyecto, 'documento' => $d,
+            'titulo' => 'Redactor - ' . $d->nombre, 'proyecto' => $proyecto, 'documento' => self::conSheetflow($d),
             'departamentos' => RedactorDocumento::departamentos((int)$proyecto->id),
+            'hojasSheetflow' => \Model\SheetflowHoja::resumen((int)$proyecto->id),
             'config' => [
                 'id' => (int)$d->id, 'proyecto' => (int)$proyecto->id, 'version' => (string)$d->actualizado,
                 'palabras' => RedactorDocumento::palabras((int)$proyecto->id),
@@ -97,6 +98,7 @@ class RedactorController
                 'maxFirmas' => RedactorFirmas::MAX_POR_USUARIO,
                 'destinos' => EnlacesLamina::destinos((int)$proyecto->id),
                 'imagenes' => self::imagenesInsertables((int)$proyecto->id),
+                'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id),
                 'fuentes' => Redactor::FUENTES,
                 'papeles' => array_map(fn($p) => [$p[1], $p[2]], RedactorDocumento::PAPELES),
                 'api' => ['guardar' => '/api/redactor/guardar', 'imagen' => '/api/redactor/imagen', 'palabra' => '/api/redactor/palabra', 'firma' => '/api/redactor/firma', 'firmaBorrar' => '/api/redactor/firma/borrar', 'sellar' => '/api/redactor/sellar', 'plantilla' => '/api/redactor/plantilla', 'versiones' => '/api/redactor/versiones', 'version' => '/api/redactor/version', 'programa' => '/api/redactor/programa', 'exportarSeleccion' => '/api/redactor/exportar-seleccion'],
@@ -119,6 +121,14 @@ class RedactorController
         return $out;
     }
 
+    /** Copia del documento con las tablas vinculadas a SheetFlow al día (no se guarda hasta que se edite) */
+    private static function conSheetflow(RedactorDocumento $d): RedactorDocumento
+    {
+        $c = clone $d;
+        $c->contenido = \Classes\Sheetflow::refrescarHtml((string)$d->contenido, (int)$d->proyecto_id);
+        return $c;
+    }
+
     public static function ver(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -128,7 +138,7 @@ class RedactorController
             exit;
         }
         $router->render('redactor/ver', [
-            'titulo' => 'Redactor - ' . $d->nombre, 'proyecto' => $proyecto, 'documento' => $d,
+            'titulo' => 'Redactor - ' . $d->nombre, 'proyecto' => $proyecto, 'documento' => self::conSheetflow($d),
             'puedeEditar' => puede_gestionar_proyecto($proyecto), 'puedeDescargar' => puede_descargar(),
             'comentarios' => json_decode((string)$d->comentarios, true) ?: [], 'sellos' => RedactorFirmas::sellos($d),
         ]);

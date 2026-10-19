@@ -325,13 +325,28 @@ CREATE TABLE curva_reales (
 -- ============================================================
 -- VPLAN (láminas de plan visual y tablas adicionales)
 -- ============================================================
+-- Un vPlan (paquete) agrupa las láminas (una por área) de un proyecto
+CREATE TABLE vplan_paquetes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE vplan_laminas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
+    paquete_id INT DEFAULT NULL,
     partida_id INT DEFAULT NULL,
     titulo VARCHAR(200) NOT NULL,
     supervisor VARCHAR(200) NOT NULL DEFAULT '',
-    recovery_cols TINYINT NOT NULL DEFAULT 0,
+    ancho_mm SMALLINT UNSIGNED NOT NULL DEFAULT 432,   -- tamaño del lienzo (por defecto tabloide horizontal)
+    alto_mm SMALLINT UNSIGNED NOT NULL DEFAULT 279,
+    preset VARCHAR(20) NOT NULL DEFAULT 'tabloide',
+    recovery_cols TINYINT NOT NULL DEFAULT 0,   -- en desuso: máscara anterior a recovery_n
+    recovery_n TINYINT NOT NULL DEFAULT 0,      -- cuántas columnas de Recovery tiene la lámina
     restr_auto TINYINT NOT NULL DEFAULT 0,
     plano VARCHAR(100) DEFAULT NULL,
     simbologia VARCHAR(100) DEFAULT NULL,
@@ -339,10 +354,28 @@ CREATE TABLE vplan_laminas (
     marcas_json LONGTEXT,
     marcas_png VARCHAR(100) DEFAULT NULL,
     marcas_estados_hash VARCHAR(64) DEFAULT NULL,
+    guias_json TEXT,                          -- guías del modo diseño [{id,eje,pos,visible,bloqueada,nombre}]
     orden INT NOT NULL DEFAULT 0,
+    visible TINYINT NOT NULL DEFAULT 1,       -- 0 = oculta (no sale en listas ni en el PDF)
+    grupo VARCHAR(100) NOT NULL DEFAULT '',   -- disciplina, nivel…: agrupa las láminas en el gestor
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (paquete_id) REFERENCES vplan_paquetes(id) ON DELETE CASCADE,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Bloques posicionables de la lámina (x, y, w, h en % de la hoja)
+CREATE TABLE vplan_bloques (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lamina_id INT NOT NULL,
+    tipo VARCHAR(20) NOT NULL,
+    x DECIMAL(7,3) NOT NULL DEFAULT 0,
+    y DECIMAL(7,3) NOT NULL DEFAULT 0,
+    w DECIMAL(7,3) NOT NULL DEFAULT 20,
+    h DECIMAL(7,3) NOT NULL DEFAULT 10,
+    z INT NOT NULL DEFAULT 0,
+    config_json TEXT,
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE vplan_recovery (
@@ -353,6 +386,17 @@ CREATE TABLE vplan_recovery (
     r2_inicio DATE DEFAULT NULL,
     r2_fin DATE DEFAULT NULL,
     PRIMARY KEY (lamina_id, actividad_id),
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE vplan_recovery_n (
+    lamina_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    n TINYINT NOT NULL,
+    inicio DATE DEFAULT NULL,
+    fin DATE DEFAULT NULL,
+    PRIMARY KEY (lamina_id, actividad_id, n),
     FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -1053,6 +1097,26 @@ CREATE TABLE IF NOT EXISTS redactor_palabras (
     UNIQUE KEY uq_palabra (proyecto_id, palabra),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- SheetFlow: tablas (hojas de cálculo ligeras) del proyecto, reutilizables en vPlan, Editor y Redactor
+CREATE TABLE IF NOT EXISTS sheetflow_hojas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    fecha DATE NOT NULL,
+    departamento VARCHAR(100) NOT NULL DEFAULT '',
+    descripcion VARCHAR(300) NOT NULL DEFAULT '',
+    datos LONGTEXT,                                   -- JSON saneado (Classes\Sheetflow::limpiar): cols, rows, calc, tot, estilo
+    creado_por INT DEFAULT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_proyecto (proyecto_id, departamento),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabla de vPlan creada desde SheetFlow (permite «Actualizar desde SheetFlow»); si se borra la hoja solo se pierde el vínculo
+ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
+ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;
 
 -- Clima por proyecto (Open-Meteo): ubicación geocodificada y días de pronóstico / registro real, para anomalías y días no hábiles probables.
 CREATE TABLE IF NOT EXISTS clima_proyecto (

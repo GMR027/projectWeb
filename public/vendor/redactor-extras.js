@@ -225,6 +225,7 @@
         estado('Cargando la tabla…');
         return post(C.api.programa, { tabla: tipo }).then(function (d) {
             if (!d.success || !d.filas.length) { estado(d.success ? 'No hay datos para esa tabla' : (d.error || 'No se pudo leer la tabla'), true); return false; }
+            if (d.html) { R.restaurarSeleccion(); R.insertarEnRaiz(d.html + '<p><br></p>'); return true; }
             insertarTabla(d.columnas, d.filas.map(function (f) { return '<tr>' + f.map(function (c) { return td(esc(c)); }).join('') + '</tr>'; }).join(''));
             return true;
         });

@@ -54,3 +54,21 @@ test('hardware: recomienda según VRAM o RAM', () => {
   assert.ok(cpu.aviso && cpu.modelos.find(m => m.recomendado).tam <= 5);
   assert.strictEqual(recomendar({ ramGB: 2, gpus: [] }).modelos.length, 0);
 });
+
+test('claude-code: manda historial, sistema e imágenes a un CLI falso y devuelve el resultado', async () => {
+  const fs = require('fs'), os = require('os'), path = require('path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fakeclaude-')), anterior = process.env.PATH;
+  // el «claude» falso vuelca sus argumentos y los archivos del cwd, y responde en el formato stream-json
+  fs.writeFileSync(path.join(dir, 'claude'), '#!/usr/bin/env node\nconst fs=require("fs");const a=process.argv.slice(2);\nconsole.log(JSON.stringify({type:"result",is_error:false,result:JSON.stringify({a,archivos:fs.readdirSync(".")})}));\n', { mode: 0o755 });
+  process.env.PATH = dir + path.delimiter + anterior;
+  try {
+    const m = [{ role: 'system', content: 'SIS' }, { role: 'user', content: 'soy Edgar' }, { role: 'assistant', content: 'hola Edgar' }, { role: 'user', content: '¿quién soy?' }];
+    const r = JSON.parse(await chat({ tipo: 'claude-code' }, '', m, {}));
+    assert.ok(r.a[1].includes('Usuario: soy Edgar') && r.a[1].includes('Asistente: hola Edgar') && r.a[1].endsWith('¿quién soy?'));
+    assert.deepStrictEqual(r.a.slice(r.a.indexOf('--append-system-prompt'), r.a.indexOf('--append-system-prompt') + 2), ['--append-system-prompt', 'SIS']);
+    assert.deepStrictEqual(r.a.slice(r.a.indexOf('--tools'), r.a.indexOf('--tools') + 2), ['--tools', '']);   // sin imágenes no hay herramientas
+    const ci = JSON.parse(await chat({ tipo: 'claude-code' }, '', [{ role: 'user', content: 'mira' }], { imagenes: [{ mime: 'image/png', base64: 'AA==' }] }));
+    assert.deepStrictEqual(ci.archivos, ['imagen-1.png']);
+    assert.ok(ci.a.includes('Read'));
+  } finally { process.env.PATH = anterior; fs.rmSync(dir, { recursive: true, force: true }); }
+});

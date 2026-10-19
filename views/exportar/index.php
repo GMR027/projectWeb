@@ -9,6 +9,7 @@
     </div>
 </div>
 
+<?php if (!empty($_GET['error'])): ?><div class="alerta alerta-error"><?php echo s($_GET['error']); ?></div><?php endif; ?>
 <div class="card">
     <p class="text-muted text-sm" style="margin-bottom: 2rem;">Genera entregables del programa de obra. El archivo se nombra automáticamente <strong>año-mes-día-nombre-CÓDIGO-EMPRESA</strong> (p. ej. <?php echo s(date('Y-m-d') . '-Programa-' . slug_archivo($proyecto->codigo) . ($proyecto->empresa ? '-' . slug_archivo($proyecto->empresa) : '')); ?>); el nombre es el que escribas en cada recuadro. En las curvas de productividad, el nombre de la curva va antes (p. ej. Control-Curva).</p>
 
@@ -25,13 +26,18 @@
     <div class="exportadores-grid">
         <div class="exportador-card">
             <div class="exportador-icono pdf">📄</div>
-            <h4>PDF Ejecutivo</h4>
-            <p class="text-sm text-muted">Gantt + tabla en formato tabloide (11×17") horizontal, ajustado a 1 hoja si es posible.</p>
+            <h4>Programa de obra</h4>
+            <p class="text-sm text-muted">PDF ejecutivo (Gantt + tabla en tabloide 11×17" horizontal), XML MSPDI para MS Project (ábrelo y guárdalo como .mpp) o POD para ProjectLibre.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
-                <input type="hidden" name="formato" value="pdf">
+                <label class="text-sm text-muted" for="prog_formato">Formato de archivo</label>
+                <select id="prog_formato" name="formato">
+                    <option value="pdf">PDF ejecutivo (.pdf)</option>
+                    <option value="xml">Microsoft Project (.xml)</option>
+                    <option value="pod">ProjectLibre (.pod)</option>
+                </select>
                 <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar programa</button>
             </form>
         </div>
 
@@ -58,14 +64,19 @@
         <div class="exportador-card">
             <div class="exportador-icono pdf">🗺️</div>
             <h4>vPlan · láminas</h4>
-            <p class="text-sm text-muted">Plano con tabla del programa, recovery y tablas adicionales. Tabloide (11×17") horizontal, una lámina por página.</p>
+            <p class="text-sm text-muted">Plano con tablas del programa, recovery y tablas adicionales. Una lámina por página, con el tamaño de hoja de cada una. «Todas» lleva solo las láminas <strong>visibles</strong>.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="vplan">
+                <label class="text-sm text-muted" for="vp_paquete">vPlan</label>
+                <select id="vp_paquete" name="paquete_id">
+                    <option value="0">Todos los vPlan</option>
+                    <?php foreach ($paquetesVplan as $pv): ?><option value="<?php echo s($pv->id); ?>"<?php echo (int)$vplanElegido === (int)$pv->id ? ' selected' : ''; ?>><?php echo s($pv->nombre); ?> (<?php echo (int)$pv->visibles; ?> visible(s))</option><?php endforeach; ?>
+                </select>
                 <label class="text-sm text-muted" for="vp_lamina">Lámina</label>
                 <select id="vp_lamina" name="lamina_id">
-                    <option value="todas">Todas las láminas</option>
-                    <?php foreach ($laminasVplan as $lv): ?><option value="<?php echo s($lv->id); ?>"><?php echo s($lv->titulo); ?></option><?php endforeach; ?>
+                    <option value="todas">Todas las visibles del vPlan elegido</option>
+                    <?php foreach ($laminasVplan as $lv): ?><option value="<?php echo s($lv->id); ?>"><?php echo s($lv->titulo . ((int)$lv->visible ? '' : ' (oculta)')); ?></option><?php endforeach; ?>
                 </select>
                 <input type="text" name="nombre_base" value="vPlan" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar vPlan</button>
@@ -142,27 +153,116 @@
             </form>
         </div>
 
+        <?php /* Reportes de obra en PDF */ ?>
         <div class="exportador-card">
-            <div class="exportador-icono xml">📊</div>
-            <h4>Microsoft Project (.xml)</h4>
-            <p class="text-sm text-muted">XML MSPDI compatible con MS Project. Ábrelo en MSP y guárdalo como .mpp.</p>
+            <div class="exportador-icono pdf">📋</div>
+            <h4>Reporte diario</h4>
+            <p class="text-sm text-muted">Un día (o todo un mes, un reporte por página) con actividades, personal, comentarios y fotos. Se aplica el primero que llenes: día o mes.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
-                <input type="hidden" name="formato" value="xml">
-                <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-code"></i> Exportar XML</button>
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="reporte">
+                <label class="text-sm text-muted" for="rd_fecha">Día</label>
+                <input type="date" id="rd_fecha" name="fecha">
+                <label class="text-sm text-muted" for="rd_mes">Mes</label>
+                <input type="month" id="rd_mes" name="mes">
+                <input type="text" name="nombre_base" value="Reporte-diario" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar reporte diario</button>
             </form>
         </div>
 
         <div class="exportador-card">
-            <div class="exportador-icono pod">📁</div>
-            <h4>ProjectLibre (.pod)</h4>
-            <p class="text-sm text-muted">Compatible con ProjectLibre (alternativa open-source a MS Project).</p>
+            <div class="exportador-icono pdf">📓</div>
+            <h4>Bitácora</h4>
+            <p class="text-sm text-muted">Registros por día, mes, departamento y/o nivel de importancia. Los filtros se combinan; los vacíos no filtran.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
-                <input type="hidden" name="formato" value="pod">
-                <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-code"></i> Exportar POD</button>
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="bitacora">
+                <label class="text-sm text-muted" for="bi_fecha">Día</label>
+                <input type="date" id="bi_fecha" name="fecha">
+                <label class="text-sm text-muted" for="bi_mes">Mes</label>
+                <input type="month" id="bi_mes" name="mes">
+                <label class="text-sm text-muted" for="bi_dep">Departamento</label>
+                <select id="bi_dep" name="departamento"><option value="">Todos</option><?php foreach ($departamentosBitacora as $dp): ?><option value="<?php echo s($dp); ?>"><?php echo s($dp); ?></option><?php endforeach; ?></select>
+                <label class="text-sm text-muted" for="bi_imp">Importancia</label>
+                <select id="bi_imp" name="importancia"><option value="">Todas</option><?php foreach (\Model\Bitacora::IMPORTANCIAS as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
+                <input type="text" name="nombre_base" value="Bitacora" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar bitácora</button>
+            </form>
+        </div>
+
+        <div class="exportador-card">
+            <div class="exportador-icono pdf">🤝</div>
+            <h4>Minutas</h4>
+            <p class="text-sm text-muted">Minutas completas (asistentes, temas y compromisos), una por página, por importancia, día o mes.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="minutas">
+                <label class="text-sm text-muted" for="mi_fecha">Día</label>
+                <input type="date" id="mi_fecha" name="fecha">
+                <label class="text-sm text-muted" for="mi_mes">Mes</label>
+                <input type="month" id="mi_mes" name="mes">
+                <label class="text-sm text-muted" for="mi_imp">Importancia</label>
+                <select id="mi_imp" name="importancia"><option value="">Todas</option><?php foreach (\Model\Bitacora::IMPORTANCIAS as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
+                <input type="text" name="nombre_base" value="Minutas" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar minutas</button>
+            </form>
+        </div>
+
+        <div class="exportador-card">
+            <div class="exportador-icono pdf">📦</div>
+            <h4>Submittals</h4>
+            <p class="text-sm text-muted">Uno o varios paquetes de submittal con sus materiales, uno por página. Sin elegir ninguno se exportan todos (Ctrl/⌘ para elegir varios).</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="submittals">
+                <label class="text-sm text-muted" for="su_ids">Submittals</label>
+                <select id="su_ids" name="submittal_ids[]" multiple size="6"><?php foreach ($submittals as $sb): ?><option value="<?php echo s($sb->id); ?>"><?php echo s($sb->numero_submittal . ($sb->especialidad ? ' · ' . $sb->especialidad : '')); ?></option><?php endforeach; ?></select>
+                <input type="text" name="nombre_base" value="Submittals" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar submittals</button>
+            </form>
+        </div>
+
+        <div class="exportador-card">
+            <div class="exportador-icono pdf">🧱</div>
+            <h4>Materiales</h4>
+            <p class="text-sm text-muted">Listado de materiales con foto, por especialidad, estatus de compra y/o estado de entrega.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="materiales">
+                <label class="text-sm text-muted" for="ma_esp">Especialidad</label>
+                <select id="ma_esp" name="especialidad"><option value="">Todas</option><?php foreach ($especialidades as $e): ?><option value="<?php echo s($e); ?>"><?php echo s($e); ?></option><?php endforeach; ?></select>
+                <label class="text-sm text-muted" for="ma_compra">Estatus de compra</label>
+                <select id="ma_compra" name="compra"><option value="">Todos</option><?php foreach (\Model\Material::COMPRA as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
+                <label class="text-sm text-muted" for="ma_entrega">Entrega</label>
+                <select id="ma_entrega" name="entrega"><option value="">Todos</option><option value="entregado">Entregados</option><option value="por_entregar">Por entregar</option></select>
+                <input type="text" name="nombre_base" value="Materiales" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar materiales</button>
+            </form>
+        </div>
+
+        <div class="exportador-card">
+            <div class="exportador-icono pdf">📷</div>
+            <h4>Evidencias</h4>
+            <p class="text-sm text-muted">Fotos de reportes diarios y evidencias subidas, agrupadas por fecha. Se aplica el primero que llenes: día, semana o mes.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="reportes">
+                <input type="hidden" name="tipo" value="evidencias">
+                <label class="text-sm text-muted" for="ev_fecha">Día</label>
+                <input type="date" id="ev_fecha" name="fecha">
+                <label class="text-sm text-muted" for="ev_semana">Semana (cualquier día de ella)</label>
+                <input type="date" id="ev_semana" name="semana">
+                <label class="text-sm text-muted" for="ev_mes">Mes</label>
+                <input type="month" id="ev_mes" name="mes">
+                <label class="text-sm text-muted" for="ev_act">Actividad</label>
+                <select id="ev_act" name="actividad_id"><option value="">Todas</option><?php foreach ($actividadesEvidencia as [$aid, $anom]): ?><option value="<?php echo s($aid); ?>"><?php echo s($anom); ?></option><?php endforeach; ?></select>
+                <input type="text" name="nombre_base" value="Evidencias" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar evidencias</button>
             </form>
         </div>
     </div>

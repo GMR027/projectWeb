@@ -5,9 +5,9 @@ namespace Model;
 class VplanTabla extends ActiveRecord
 {
     protected static $tabla = 'vplan_tablas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'titulo', 'nombre_interno', 'tipo', 'columnas_json'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'titulo', 'nombre_interno', 'tipo', 'columnas_json', 'sheetflow_id'];
 
-    public $id, $proyecto_id, $titulo, $nombre_interno, $tipo, $columnas_json;
+    public $id, $proyecto_id, $titulo, $nombre_interno, $tipo, $columnas_json, $sheetflow_id;
 
     public const TIPOS = [
         'punch' => 'Punch list',
@@ -31,6 +31,7 @@ class VplanTabla extends ActiveRecord
         $this->nombre_interno = $args['nombre_interno'] ?? null;
         $this->tipo = $args['tipo'] ?? 'punch';
         $this->columnas_json = $args['columnas_json'] ?? null;
+        $this->sheetflow_id = $args['sheetflow_id'] ?? null;
     }
 
     public function validar(): array
@@ -52,9 +53,25 @@ class VplanTabla extends ActiveRecord
         return trim((string)$this->nombre_interno) !== '' ? (string)$this->nombre_interno : (string)$this->titulo;
     }
 
-    /** Columnas de la tabla "otro" (nombres) */
+    private $hojaCache = false;
+
+    /** Hoja de SheetFlow a la que está vinculada (null si no lo está o ya no existe: entonces valen los datos propios) */
+    public function hoja(): ?SheetflowHoja
+    {
+        if ($this->hojaCache === false) {
+            $h = $this->sheetflow_id ? SheetflowHoja::find((int)$this->sheetflow_id) : null;
+            $this->hojaCache = $h && (int)$h->proyecto_id === (int)$this->proyecto_id ? $h : null;
+        }
+        return $this->hojaCache;
+    }
+
+    /** Columnas de la tabla "otro" (nombres); si está vinculada, las de SheetFlow en este momento */
     public function columnasOtro(): array
     {
+        if ($h = $this->hoja()) {
+            $n = array_slice(\Classes\Sheetflow::matriz($h)['columnas'], 0, 8);
+            return array_map(fn($x, $i) => mb_substr($x !== '' ? $x : 'Col. ' . ($i + 1), 0, 40), $n, array_keys($n));
+        }
         $c = json_decode((string)$this->columnas_json, true);
         return is_array($c) ? array_values(array_filter(array_map('strval', $c), fn($x) => $x !== '')) : [];
     }
@@ -73,6 +90,7 @@ class VplanTabla extends ActiveRecord
     /** Filas (arrays de datos) en orden */
     public function filas(): array
     {
+        if ($h = $this->hoja()) return \Classes\Sheetflow::filasVplan($h, count($this->columnasOtro()));
         $res = self::$db->query("SELECT datos FROM vplan_tabla_filas WHERE tabla_id = " . (int)$this->id . " ORDER BY orden, id");
         $out = [];
         while ($r = $res->fetch_assoc()) {
@@ -87,7 +105,7 @@ class VplanTabla extends ActiveRecord
     {
         $copia = new self([
             'proyecto_id' => $this->proyecto_id, 'titulo' => $this->titulo, 'tipo' => $this->tipo,
-            'nombre_interno' => mb_substr($this->etiqueta(), 0, 140) . ' (copia)', 'columnas_json' => $this->columnas_json,
+            'nombre_interno' => mb_substr($this->etiqueta(), 0, 140) . ' (copia)', 'columnas_json' => $this->hoja() ? json_encode($this->columnasOtro(), JSON_UNESCAPED_UNICODE) : $this->columnas_json,
         ]);
         $r = $copia->guardar();
         $copia->id = $r['id'];

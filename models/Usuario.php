@@ -40,6 +40,7 @@ class Usuario extends ActiveRecord
         'calendario' => ['Calendario', ['/calendario']],
         'graficos' => ['Editor y símbolos', ['/graficos', '/api/graficos', '/simbolos', '/api/simbolos']],
         'redactor' => ['Redactor', ['/redactor', '/api/redactor']],
+        'sheetflow' => ['SheetFlow (tablas)', ['/sheetflow', '/api/sheetflow']],
         'view360' => ['View360', ['/view360', '/api/view360']],
         'comparador' => ['Comparador de documentos', ['/comparador']],
         'acciones' => ['Acciones rápidas', ['/acciones']],

@@ -1361,6 +1361,11 @@
     cont.innerHTML = Object.keys(grupos).map(cat => '<h5>' + esc(cat) + '</h5><div class="ve-sims">' + grupos[cat].map(x =>
       '<button type="button" class="ve-sim" data-src="' + esc(x.src) + '" title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('') || '<p class="text-muted text-sm">Sin resultados.</p>';
     $('#sim-cajetines').innerHTML = (C.cajetines || []).map((c, i) => '<button type="button" class="btn btn-sm btn-ghost" data-caj="' + i + '" title="' + (c.orientacion === 'banda' ? 'Banda inferior' : 'Tabla en la esquina inferior derecha') + '"><i class="fa-solid fa-table-cells"></i> ' + esc(c.nombre) + '</button>').join('');
+    const sfCaja = $('#sim-sheetflow-caja');
+    if (sfCaja) {
+      sfCaja.hidden = !(C.sheetflow || []).length;
+      $('#sim-sheetflow').innerHTML = (C.sheetflow || []).map((h, i) => '<button type="button" class="btn btn-sm btn-ghost" data-sf="' + i + '" title="Inserta una copia de la tabla (' + h.filas + ' renglones × ' + h.cols + ' columnas)"><i class="fa-solid fa-table-cells"></i> ' + esc(h.nombre) + '</button>').join('');
+    }
     const gr = $('#sim-graficos');
     gr.innerHTML = (C.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q)).map(x =>
       '<button type="button" class="ve-sim ve-sim-gr" data-src="' + esc(x.src) + '" title="Insertar «' + esc(x.nombre) + '»"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') || '<p class="text-muted text-sm">No hay otros gráficos guardados en este proyecto.</p>';
@@ -1387,6 +1392,57 @@
     const resto = clone(state.shapes).filter(x => !(x.type === 'table' && x.cajetin === d.cajetin));
     state.selId = d.id; commit([...resto, d]); status('Cajetín «' + (c.nombre || '') + '» colocado');
   }
+  // Tabla de SheetFlow: forma `table` del Editor con `sheetflow: id`; al abrir el gráfico se vuelve a leer (vínculo vivo)
+  function tablaDeSheetflow(r, id) {
+    const filas = r.filas.slice(0, 120), conTot = !!r.totales, nc = r.columnas.length;
+    const cells = [r.columnas.map(c => c || ' ')].concat(filas, conTot ? [r.totales] : []);
+    const fs = Math.max(10, Math.round(state.W / 90)), pd = Math.max(2, fs * 0.25);
+    let colW = Array.from({ length: nc }, (_, c) => Math.min(fs * 28, Math.max(fs * 4, Math.max(...cells.map(f => String(f[c] || '').length)) * fs * 0.6 + 2 * pd)));
+    const total = suma(colW), tope = state.W * 0.92;
+    if (total > tope) colW = colW.map(w => w * tope / total);
+    const e = r.estilo || {};
+    const d = { id: uid(), type: 'table', x: 0, y: 0, w: 1, h: 1, rows: cells.length, cols: nc, header: true, fontSize: fs, fill: '#ffffff', headerFill: e.enc || '#1f3a5f', textColor: '#111111', stroke: '#444444', strokeWidth: 1, rotation: 0, opacity: 100,
+      sheetflow: id, cells, colW, rowH: cells.map(() => fs * 2.2), cellText: {}, cellFill: {} };
+    for (let c = 0; c < nc; c++) d.cellText['0,' + c] = e.encTxt || '#ffffff';
+    if (conTot) for (let c = 0; c < nc; c++) d.cellFill[(cells.length - 1) + ',' + c] = '#e2e8f0';
+    d.w = suma(colW); ajustarFilas(d);
+    return d;
+  }
+  async function leerSheetflow(id) {
+    const fd = new FormData(); fd.append('id', id);
+    return (await fetch((C.api || {}).sheetflow || '/api/sheetflow/datos', { method: 'POST', body: fd })).json();
+  }
+  async function insertarSheetflow(h) {
+    if (!capaOk() || !h) return;
+    status('Cargando la tabla…');
+    try {
+      const r = await leerSheetflow(h.id);
+      if (!r.success) { status('No se pudo leer la tabla: ' + (r.error || 'error')); return; }
+      const d = tablaDeSheetflow(r, h.id);
+      d.x = Math.max(0, (state.W - d.w) / 2); d.y = Math.max(state.H * 0.02, Math.min((state.H - d.h) / 2, state.H - d.h));
+      state.selId = d.id; commit([...clone(state.shapes), d]);
+      status('Tabla «' + r.nombre + '» insertada (vinculada: se actualiza al abrir el gráfico)');
+    } catch (err) { status('No se pudo insertar la tabla'); }
+  }
+  // Al abrir: las tablas vinculadas toman los datos actuales de SheetFlow (conservan posición, giro y opacidad). Si ya no existe la hoja, se dejan como están
+  async function refrescarSheetflow() {
+    const lista = state.shapes.filter(x => x.type === 'table' && x.sheetflow);
+    if (!lista.length) return;
+    let cambiadas = 0;
+    for (const id of [...new Set(lista.map(x => x.sheetflow))]) {
+      try {
+        const r = await leerSheetflow(id); if (!r.success) continue;
+        const n = tablaDeSheetflow(r, id);
+        state.shapes = state.shapes.map(x => {
+          if (x.type !== 'table' || x.sheetflow !== id) return x;
+          if (JSON.stringify(x.cells) === JSON.stringify(n.cells) && x.headerFill === n.headerFill) return x;
+          cambiadas++;
+          return Object.assign({}, n, { id: x.id, x: x.x, y: x.y, rotation: x.rotation, opacity: x.opacity, layer: x.layer, comment: x.comment });
+        });
+      } catch (err) { /* sin conexión: se queda la copia guardada */ }
+    }
+    if (cambiadas) { render(); dirty(true); status(cambiadas + ' tabla(s) actualizada(s) desde SheetFlow · guarda para conservar el cambio'); }
+  }
   async function importarSimbolos(archivos) {
     if (!archivos || !archivos.length) return;
     const fd = new FormData(); fd.append('proyecto', C.proyecto); [...archivos].forEach(f => fd.append('archivos[]', f));
@@ -1403,6 +1459,8 @@
     pintarSimbolos();
     $('#sim-importar').addEventListener('click', () => $('#sim-importar-archivo').click());
     $('#sim-importar-archivo').addEventListener('change', e => { importarSimbolos(e.target.files); e.target.value = ''; });
+    const sfLista = $('#sim-sheetflow');
+    if (sfLista) sfLista.addEventListener('click', e => { const b = e.target.closest('[data-sf]'); if (b) insertarSheetflow((C.sheetflow || [])[+b.dataset.sf]); });
     $('#sim-cajetines').addEventListener('click', e => { const b = e.target.closest('[data-caj]'); if (b) insertarCajetin((C.cajetines || [])[+b.dataset.caj]); });
     $('#sim-buscar').addEventListener('input', pintarSimbolos);
     $('#ve-tab-simbolos').addEventListener('click', e => {
@@ -1684,7 +1742,7 @@
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
     $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
     asegurarCapas();
-    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); encuadrar(); render(); pintarLaminas(); dirty(false);
+    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }
@@ -1724,8 +1782,9 @@
       const a = e.target.closest('a[href]');
       if (!a || !sucio || a.target === '_blank') return;
       e.preventDefault();
-      const ok = await window.confirmarModal({ titulo: '¿Salir sin guardar?', mensaje: 'Tienes cambios sin guardar en las marcas del plano. Si sales ahora se perderán.', aceptar: 'Salir sin guardar', iconoBoton: 'fa-right-from-bracket' });
-      if (ok) { sucio = false; location.href = a.href; }
+      const r = await window.confirmarModal({ titulo: '¿Salir sin guardar?', mensaje: 'Tienes cambios sin guardar en las marcas del plano. Si sales ahora se perderán.', tono: 'aviso', icono: 'fa-floppy-disk', aceptar: 'Salir sin guardar', iconoBoton: 'fa-right-from-bracket', extra: 'Guardar y salir', cancelar: 'Seguir editando' });
+      if (r === 'extra') { const g = await guardar(); if (g !== false) { sucio = false; location.href = a.href; } return; }
+      if (r) { sucio = false; location.href = a.href; }
     });
     window.addEventListener('beforeunload', e => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
     iniciar();

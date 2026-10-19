@@ -109,6 +109,8 @@ class Redactor
                 if (preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $v) || preg_match(RedactorFirmas::SRC, $v)) $e->setAttribute('src', $v);
             } elseif ($n === 'id' && preg_match('/^h[1-6]$/', $t)) {
                 if (preg_match('/^rd-h\d{1,4}$/', $v)) $e->setAttribute('id', $v);
+            } elseif ($n === 'data-sf' && $t === 'table') {
+                if (preg_match('/^\d{1,9}$/', $v)) $e->setAttribute($n, $v);
             } elseif ($n === 'data-cid') {
                 if (preg_match('/^c\d{1,6}$/', $v)) $e->setAttribute($n, $v);
             } elseif (in_array($n, ['data-tid', 'data-autor', 'data-fecha'], true) && ($t === 'ins' || $t === 'del')) {
@@ -281,7 +283,7 @@ class Redactor
     /** Contenido listo para exportar: cambios resueltos o marcados y, si se piden, comentarios y firmas al final */
     private static function contenidoExportable(RedactorDocumento $d, array $opc): string
     {
-        $html = (string)$d->contenido;
+        $html = Sheetflow::refrescarHtml((string)$d->contenido, (int)$d->proyecto_id);
         $html = !empty($opc['cambios']) ? self::marcarCambios($html) : self::resolverCambios($html, true);
         $html = self::regenerarIndice($html);
         if (!empty($opc['comentarios'])) {

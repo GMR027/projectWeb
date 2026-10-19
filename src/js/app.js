@@ -47,13 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============ MODAL DE CONFIRMACIÓN ============
   // Un solo modal para toda la aplicación (en lugar de confirm() / alert() del navegador):
   //  - Formularios con data-confirm="titulo|mensaje|texto del botón (opcional)".
-  //  - window.confirmarModal({ titulo, mensaje, aceptar, icono }) -> Promise<boolean>
+  //  - window.confirmarModal({ titulo, mensaje, aceptar, icono, tono: 'peligro'|'aviso'|'info', extra: 'Texto' }) -> Promise<true|false|'extra'>
+  //    (con `extra` aparece un tercer botón que resuelve 'extra', p. ej. «Guardar y salir»)
   //  - window.avisoModal(titulo, mensaje) -> Promise (solo botón "Entendido")
   const modal = document.getElementById('modal-confirm');
   const modalTitulo = document.getElementById('modal-confirm-titulo');
   const modalMensaje = document.getElementById('modal-confirm-mensaje');
   const modalCancelar = document.getElementById('modal-confirm-cancelar');
   const modalAceptar = document.getElementById('modal-confirm-aceptar');
+  const modalExtra = document.getElementById('modal-confirm-extra');
   const modalIcono = modal?.querySelector('.modal-icono i');
   const aceptarPorDefecto = modalAceptar ? modalAceptar.innerHTML : '';
   let resolverModal = null;
@@ -75,8 +77,15 @@ document.addEventListener('DOMContentLoaded', () => {
     modalAceptar.innerHTML = opciones.aceptar
       ? '<i class="fa-solid ' + (opciones.iconoBoton || 'fa-check') + '"></i> ' + opciones.aceptar
       : aceptarPorDefecto;
-    modalAceptar.className = 'btn ' + (opciones.tipo === 'aviso' ? 'btn-primary' : 'btn-danger');
     if (modalIcono) modalIcono.className = 'fa-solid ' + (opciones.icono || (opciones.tipo === 'aviso' ? 'fa-circle-info' : 'fa-triangle-exclamation'));
+    const tono = opciones.tono || (opciones.tipo === 'aviso' ? 'info' : 'peligro');
+    modal.dataset.tono = tono;
+    modalAceptar.className = 'btn ' + (tono === 'peligro' || opciones.extra ? 'btn-danger' : 'btn-primary');
+    if (modalExtra) {
+      modalExtra.hidden = !opciones.extra;
+      modalExtra.innerHTML = opciones.extra ? '<i class="fa-solid ' + (opciones.iconoExtra || 'fa-floppy-disk') + '"></i> ' + opciones.extra : '';
+    }
+    modalCancelar.innerHTML = '<i class="fa-solid fa-xmark"></i> ' + (opciones.cancelar || 'Cancelar');
     modalCancelar.style.display = opciones.soloAceptar ? 'none' : '';
     resolverModal = resolve;
     modal.classList.add('abierto');
@@ -96,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && modal?.classList.contains('abierto')) cerrarModal(false);
   });
   modalAceptar?.addEventListener('click', () => cerrarModal(true));
+  modalExtra?.addEventListener('click', () => cerrarModal('extra'));
 
   document.querySelectorAll('form[data-confirm]').forEach((form) => {
     form.addEventListener('submit', (e) => {
@@ -103,6 +113,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const partes = (form.dataset.confirm || '').split('|');
       window.confirmarModal({ titulo: partes[0]?.trim(), mensaje: partes[1]?.trim(), aceptar: partes[2]?.trim() }).then((ok) => {
         if (ok) form.submit();
+      });
+    });
+  });
+
+  // Formularios con data-confirmar="mensaje": confirmación con el modal y título genérico.
+  document.querySelectorAll('form[data-confirmar]').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const enviador = e.submitter;
+      window.confirmarModal({ titulo: '¿Continuar?', mensaje: form.dataset.confirmar }).then((ok) => {
+        if (!ok) return;
+        if (enviador && enviador.name) {
+          const h = document.createElement('input');
+          h.type = 'hidden'; h.name = enviador.name; h.value = enviador.value;
+          form.appendChild(h);
+        }
+        form.submit();
       });
     });
   });

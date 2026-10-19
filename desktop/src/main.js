@@ -110,6 +110,7 @@ function crearVista() {
 
 app.whenReady().then(() => {
   cfg = crear(app.getPath('userData'), safeStorage);
+  prov.usoConfigurar(path.join(app.getPath('userData'), 'uso-claude.json'));
   ipcMain.handle('web:ir', (_e, ruta) => {
     const srv = cfg.leer().servidor;
     if (!srv) throw new Error('Configura primero el servidor de Project Web (Servidor y actualizaciones).');
@@ -387,6 +388,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('web:menu', () => vista.webContents.executeJavaScript("document.getElementById('btn-menu')?.click()"));
   ipcMain.handle('web:zoom', (_e, z) => cambiarZoom(actual => (z && typeof z === 'object' ? actual + (Number(z.delta) || 0) : z)));   // número = valor; {delta} = relativo (evita carreras entre clics rápidos)
+  ipcMain.handle('prov:uso', (_e, sondear) => (sondear ? prov.usoSondear(sondear === 'ya' ? 0 : 10) : prov.uso()));
   ipcMain.handle('prov:estado', (_e, id) => {
     const p = cfg.leer().proveedores.find(x => x.id === id);
     return p ? prov.estado(p, cfg.secreto(p.id)) : { nivel: 'error', texto: 'Conexión no encontrada' };

@@ -8,6 +8,12 @@ $cols = $tabla->columnasOtro();
     <h2><?php echo $esNueva ? 'Nueva tabla adicional' : 'Editar tabla: ' . s($tabla->titulo); ?></h2>
     <a href="/vplan/tablas?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Tablas</a>
 </div>
+<?php if (!$esNueva && $tabla->hoja()): ?>
+<div class="card">
+    <i class="fa-solid fa-link"></i> <strong>Vinculada a <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$tabla->sheetflow_id; ?>"><?php echo s($tabla->hoja()->nombre); ?></a> (SheetFlow).</strong>
+    Columnas y renglones se leen en vivo de esa tabla; lo que edites en la lámina se escribe allá. Aquí solo cambias el título y el nombre en el catálogo.
+</div>
+<?php endif; ?>
 <div class="card">
     <form method="POST" action="/vplan/tablas/<?php echo $esNueva ? 'crear' : 'editar'; ?>" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -23,14 +29,14 @@ $cols = $tabla->columnasOtro();
                 <?php if (!$esNueva): ?><small class="text-muted">El tipo no se puede cambiar una vez creada la tabla.</small><?php endif; ?>
             </div>
             <div class="campo campo-full" id="bloque-columnas" style="<?php echo $tabla->tipo === 'otro' ? '' : 'display:none'; ?>">
-                <label>Columnas (hasta 5)</label>
+                <label>Columnas (hasta 8)</label>
                 <div class="vp-cols">
-                    <?php for ($i = 0; $i < 5; $i++): ?><input type="text" name="columnas[]" maxlength="40" value="<?php echo s($cols[$i] ?? ''); ?>" placeholder="Columna <?php echo $i + 1; ?>"><?php endfor; ?>
+                    <?php for ($i = 0; $i < 8; $i++): ?><input type="text" name="columnas[]" maxlength="40" value="<?php echo s($cols[$i] ?? ''); ?>" placeholder="Columna <?php echo $i + 1; ?>"><?php endfor; ?>
                 </div>
             </div>
         </div>
 
-        <?php if (!$esNueva && $campos): ?>
+        <?php if (!$esNueva && $campos && !$tabla->hoja()): ?>
             <div class="vp-renglones-cab">
                 <h4>Renglones <span class="text-muted text-sm">(<span id="vp-total"><?php echo count($filas); ?></span>)</span></h4>
                 <button type="button" class="btn btn-ghost btn-sm" id="vp-agregar">+ Agregar renglón</button>

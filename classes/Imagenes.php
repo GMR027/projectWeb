@@ -47,6 +47,15 @@ class Imagenes
         }
     }
 
+    /** Copia un archivo de vPlan con otro nombre (para que cada lámina sea dueña del suyo); null si no existe */
+    public static function copiarVplan(?string $nombre): ?string
+    {
+        $ruta = $nombre ? self::CARPETA_VPLAN . '/' . basename($nombre) : null;
+        if (!$ruta || !is_file($ruta)) return null;
+        $nuevo = md5(uniqid('', true)) . '.' . pathinfo($ruta, PATHINFO_EXTENSION);
+        return @copy($ruta, self::CARPETA_VPLAN . '/' . $nuevo) ? $nuevo : null;
+    }
+
     public static function eliminarVplan(?string $nombre): void
     {
         if ($nombre) @unlink(self::CARPETA_VPLAN . '/' . basename($nombre));

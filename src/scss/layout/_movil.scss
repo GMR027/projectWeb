@@ -43,7 +43,23 @@
   .page-title { font-size: 2.1rem; margin-bottom: 0; overflow-wrap: anywhere; }
   .proyecto-periodo { display: none; }
   .topbar-right { justify-content: space-between; gap: 1rem; }
-  .user-info { flex-direction: row; align-items: center; gap: .8rem; }
+  .topbar-right { flex-wrap: wrap; align-items: center; }
+  .user-info { flex-direction: row; align-items: center; gap: .6rem; flex-wrap: wrap; min-width: 0; }
+  .idioma-sel { flex: 0 0 auto; margin-right: 0; button { padding: .5rem .9rem; } }
+  .topbar-right .btn { flex: 0 0 auto; }
+  .topbar-right .topbar-salir { width: 3.6rem; padding: 0; }
+  .programa-filtros .form-grid-inline { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .programa-filtros .form-grid-inline .campo { min-width: 0; }
+  .programa-filtros .form-grid-inline .campo:last-child, .programa-filtros .form-grid-inline > :not(.campo) { grid-column: 1 / -1; }
+  .tabla-programa th.th-acciones { font-size: 0; }
+  .tabla-programa th.th-acciones::after { content: '\270E'; font-size: 1.4rem; }
+  // Evita que cualquier contenido ensanche la página
+  .main-content { min-width: 0; overflow-x: clip; }
+  .card, .formulario { max-width: 100%; }
+  input[type=file] { width: 100%; max-width: 100%; min-width: 0; font-size: 1.2rem; }
+  form[style*="display:flex"] > *, form[style*="display: flex"] > * { min-width: 0; max-width: 100%; }
+  form[style*="flex-wrap"] > label, form[style*="flex-wrap"] > div { flex: 1 1 100%; }
+  .card input:not([type=checkbox]):not([type=radio]), .card select, .card textarea { max-width: 100%; min-width: 0; }
 
   .page-header { flex-direction: column; align-items: stretch; gap: 1rem; margin-bottom: 1.4rem; }
   .page-header h2 { font-size: 2rem; }
@@ -58,8 +74,11 @@
   .tabla { font-size: 1.3rem; }
   .tabla thead th { padding: .8rem .8rem; }
   .tabla tbody td { padding: .9rem .8rem; }
-  .tabla .acciones { flex-direction: column; align-items: stretch; gap: .5rem; min-width: 8rem; width: 8rem; white-space: nowrap; }
-  @media (max-width: 36rem) { .tabla .acciones { min-width: 7rem; width: 7rem; } }
+  .tabla .acciones { flex-direction: column; align-items: stretch; gap: .5rem; min-width: 8.6rem; width: 8.6rem; white-space: nowrap; }
+  @media (max-width: 36rem) { .tabla .acciones { min-width: 8.2rem; width: 8.2rem; } }
+  .tabla td.acciones { display: table-cell; vertical-align: middle; }
+  .tabla td.acciones > * + * { margin-top: .5rem !important; }
+  .tabla td.acciones .btn { display: flex; }
   .tabla .acciones .btn { width: 100%; padding: .7rem .8rem; font-size: 1.2rem; margin: 0 !important; text-align: center; justify-content: center; }
   .tabla .acciones form { display: block !important; margin: 0 !important; }
   .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -110,24 +129,27 @@
   .programa-acciones { margin-bottom: 1.2rem; }
   .programa-acciones > div { width: 100%; }
   .programa-acciones .btn { flex: 1 1 auto; }
-  .tabla-programa .acciones { flex-direction: row; flex-wrap: wrap; min-width: 0; }
+  // La celda de acciones vuelve a ser celda de tabla (con display:flex se desplazaba y no se veía)
+  .tabla-programa td.acciones { display: table-cell; flex-direction: row; min-width: 0; text-align: center; vertical-align: middle; white-space: nowrap; }
   .tabla-programa .acciones .btn-action { margin: 0; }
   .tabla-programa .acciones form { display: inline-flex !important; }
-  // En móvil solo se deja visible la acción de editar
+  // En móvil solo se dejan visibles editar y (en actividades) cambiar fechas
   .tabla-programa .acciones .btn-action:not(.btn-action-edit),
-  .tabla-programa .acciones .btn-fechas,
   .tabla-programa .acciones form { display: none !important; }
+  .tabla-programa td.acciones > * + * { margin-top: 0 !important; }
+  .tabla-programa .acciones .btn-action { margin: 0 .1rem; }
   .tabla-programa .fila-actividad td.indent { padding-left: 1.2rem; }
   .tabla-programa td, .tabla-programa th { padding: .8rem .4rem; }
   .tabla-programa td.fecha-editable, .tabla-programa .mono { font-size: 1.1rem; letter-spacing: -.02em; }
   .tabla-programa th { font-size: 1rem; letter-spacing: 0; }
-  .tabla-programa .acciones { width: 5rem; padding: .4rem .2rem; gap: .3rem; justify-content: center; }
+  .tabla-programa .acciones { width: 7.4rem; padding: .4rem .2rem; }
   .tabla-programa .btn-action { width: 3rem; height: 3rem; font-size: 1.2rem; }
   .tabla-programa { table-layout: fixed; width: 100%; }
   // Solo actividad y acciones: las fechas se cambian desde el icono del calendario
-  .tabla-programa th:nth-child(3), .tabla-programa th:nth-child(4),
-  .tabla-programa td:nth-child(3), .tabla-programa td:nth-child(4) { display: none; }
-  .tabla-programa th.th-acciones { width: 6rem; }
+  .tabla-programa .col-fecha, .tabla-programa td.fecha-editable { display: none; }
+  .tabla-programa .th-sel, .tabla-programa .td-sel { width: 3.4rem; }
+  .tabla-programa td:not(.td-sel):not(.acciones) { min-width: 0; }
+  .tabla-programa th.th-acciones { width: 7.4rem; }
   .tabla-programa td.fecha-editable, .tabla-programa td.mono { white-space: nowrap; }
   .tabla-programa td { overflow-wrap: anywhere; }
   .card:has(.tabla-programa) { padding: 1rem .8rem; }
@@ -149,7 +171,20 @@
   @media (max-width: 33rem) { .lp-tarjeta { zoom: .62; } }
 
   .tabla td { overflow-wrap: anywhere; }
+  // Estados, botones y selectores nunca se parten letra por letra
+  .tabla .badge, .tabla .btn, .tabla .toggle-estatus, .tabla .te-op, .tabla .chip { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; }
+  .tabla .acciones .btn { white-space: nowrap; }
+  .tabla td:has(.toggle-estatus), .tabla td:has(.badge) { overflow-wrap: normal; }
+  // Tablas anchas fuera de .tabla-wrapper: desplazamiento horizontal propio
+  :not(.tabla-wrapper):not(.msr-wrap):not(.la-wrap) > table.tabla:not(.tabla-programa) { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .tabla:has(thead th:nth-child(4)):not(.tabla-programa) { min-width: 46rem; }
+  .tabla-wrapper .tabla:has(thead th:nth-child(4)):not(.tabla-programa) { min-width: 46rem; }
+  .tabla .col-mat { min-width: 16rem; }
+  .tabla-programa td:has(.badge) { overflow-wrap: anywhere; }
   input, select, textarea { max-width: 100%; }
+  label, .campo, form > div { min-width: 0; max-width: 100%; }
+  select { width: 100%; text-overflow: ellipsis; }
+  select[multiple] { width: 100%; }
 }
 
 // Ventana de cambio de fechas (programa de obra)

@@ -21,12 +21,12 @@ $destino = ['reporte_diario' => 'Crear el reporte diario', 'minuta' => 'Crear la
 <div class="card inf-barra">
     <span>Estado: <strong><?php echo s(Informes::ESTADOS[$inf['estado']]); ?></strong><?php echo $inf['aplicado_en'] ? ' · aplicado el ' . s(date('d/m/Y H:i', strtotime($inf['aplicado_en']))) . ' (' . s($inf['aplicado_ref']) . ')' : ''; ?></span>
     <?php if ($destino && !$inf['aplicado_en']): ?>
-        <form method="post" action="/informes-ia/aplicar" onsubmit="return confirm('<?php echo s($destino); ?> con el contenido de este informe?')"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$inf['id']; ?>"><button class="btn btn-sm btn-primary" type="submit"><i class="fa-solid fa-check"></i> <?php echo s($destino); ?></button></form>
+        <form method="post" action="/informes-ia/aplicar" data-confirmar="<?php echo s($destino); ?> con el contenido de este informe?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$inf['id']; ?>"><button class="btn btn-sm btn-primary" type="submit"><i class="fa-solid fa-check"></i> <?php echo s($destino); ?></button></form>
     <?php endif; ?>
     <?php foreach (['aprobado' => 'Aprobar', 'descartado' => 'Descartar', 'borrador' => 'Volver a borrador'] as $e => $n): if ($e === $inf['estado']) continue; ?>
         <form method="post" action="/informes-ia/estado"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$inf['id']; ?>"><input type="hidden" name="estado" value="<?php echo $e; ?>"><button class="btn btn-sm btn-ghost" type="submit"><?php echo $n; ?></button></form>
     <?php endforeach; ?>
-    <form method="post" action="/informes-ia/eliminar" onsubmit="return confirm('¿Eliminar este informe?')"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$inf['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
+    <form method="post" action="/informes-ia/eliminar" data-confirmar="¿Eliminar este informe?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$inf['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
 </div>
 
 <div class="card inf-doc"><?php echo Informes::html($inf['contenido']); ?></div>

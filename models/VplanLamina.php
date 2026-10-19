@@ -5,13 +5,14 @@ namespace Model;
 class VplanLamina extends ActiveRecord
 {
     protected static $tabla = 'vplan_laminas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'partida_id', 'titulo', 'supervisor', 'recovery_cols', 'restr_auto', 'plano', 'simbologia', 'simbologia_grafico_id', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'orden'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'paquete_id', 'partida_id', 'titulo', 'supervisor', 'ancho_mm', 'alto_mm', 'preset', 'recovery_cols', 'recovery_n', 'restr_auto', 'plano', 'simbologia', 'simbologia_grafico_id', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'guias_json', 'orden', 'visible', 'grupo'];
 
-    public $id, $proyecto_id, $partida_id, $titulo, $supervisor, $recovery_cols, $restr_auto, $plano, $simbologia, $simbologia_grafico_id, $marcas_json, $marcas_png, $marcas_estados_hash, $orden;
+    public $id, $proyecto_id, $paquete_id, $partida_id, $titulo, $supervisor, $ancho_mm, $alto_mm, $preset, $recovery_cols, $recovery_n, $restr_auto, $plano, $simbologia, $simbologia_grafico_id, $marcas_json, $marcas_png, $marcas_estados_hash, $guias_json, $orden, $visible, $grupo;
     // Unión (solo lectura)
     public $partida_nombre;
 
-    public const CAMPOS_RECOVERY = ['r1_inicio', 'r1_fin', 'r2_inicio', 'r2_fin'];
+    /** Máximo de columnas de Recovery en una lámina */
+    public const MAX_RECOVERY = 6;
 
     public function __construct($args = [])
     {
@@ -20,8 +21,14 @@ class VplanLamina extends ActiveRecord
         }
         $this->titulo = $args['titulo'] ?? '';
         $this->supervisor = $args['supervisor'] ?? '';
-        $this->orden = $args['orden'] ?? 0;
+        $this->orden = (int)($args['orden'] ?? 0);
+        $this->visible = (int)($args['visible'] ?? 1);
+        $this->grupo = $args['grupo'] ?? '';
+        $this->ancho_mm = (int)($args['ancho_mm'] ?? 432);
+        $this->alto_mm = (int)($args['alto_mm'] ?? 279);
+        $this->preset = $args['preset'] ?? 'tabloide';
         $this->recovery_cols = (int)($args['recovery_cols'] ?? 0);
+        $this->recovery_n = max(0, min(self::MAX_RECOVERY, (int)($args['recovery_n'] ?? 0)));
         $this->restr_auto = (int)($args['restr_auto'] ?? 0);
     }
 
@@ -37,8 +44,70 @@ class VplanLamina extends ActiveRecord
         return self::consultarSQL(
             "SELECT l.*, p.nombre AS partida_nombre FROM vplan_laminas l
              LEFT JOIN partidas p ON p.id = l.partida_id
-             WHERE l.proyecto_id = $proyectoId ORDER BY COALESCE(p.orden, 9999), p.codigo, l.orden, l.id"
+             LEFT JOIN vplan_paquetes q ON q.id = l.paquete_id
+             WHERE l.proyecto_id = $proyectoId ORDER BY COALESCE(q.orden, 9999), q.id, l.orden, l.id"
         );
+    }
+
+    /** Láminas visibles del proyecto en el orden de los vPlan (lo que sale en el PDF de «todas») */
+    public static function visiblesDeProyecto(int $proyectoId, ?int $paqueteId = null): array
+    {
+        return array_values(array_filter(self::deProyecto($proyectoId), fn($l) => (int)$l->visible === 1 && (!$paqueteId || (int)$l->paquete_id === $paqueteId)));
+    }
+
+    public static function siguienteOrden(int $paqueteId): int
+    {
+        return (int)self::$db->query("SELECT COALESCE(MAX(orden),0)+1 FROM vplan_laminas WHERE paquete_id = $paqueteId")->fetch_row()[0];
+    }
+
+    /** Intercambia el lugar con la lámina vecina del mismo vPlan (dir -1 sube, +1 baja) */
+    public function mover(int $dir): void
+    {
+        $ids = array_map(fn($l) => (int)$l->id, VplanPaquete::find($this->paquete_id)?->laminas() ?? []);
+        $i = array_search((int)$this->id, $ids, true);
+        $j = $i === false ? false : $i + ($dir < 0 ? -1 : 1);
+        if ($i === false || $j < 0 || $j >= count($ids)) return;
+        [$ids[$i], $ids[$j]] = [$ids[$j], $ids[$i]];
+        foreach ($ids as $orden => $id) self::$db->query("UPDATE vplan_laminas SET orden = " . ($orden + 1) . " WHERE id = $id");
+    }
+
+    /**
+     * Copia el diseño de la lámina como una lámina nueva del mismo vPlan: tamaño, bloques, tablas (copias
+     * independientes con sus renglones), simbología y supervisor. NO copia el plano ni las marcas: se sube el del área nueva.
+     */
+    public function duplicar(): self
+    {
+        $origen = $this->bloques();
+        $copia = new self([
+            'proyecto_id' => $this->proyecto_id, 'paquete_id' => $this->paquete_id, 'partida_id' => $this->partida_id,
+            'titulo' => mb_substr((string)$this->titulo, 0, 180) . ' (copia)', 'supervisor' => $this->supervisor,
+            'ancho_mm' => $this->ancho_mm, 'alto_mm' => $this->alto_mm, 'preset' => $this->preset, 'recovery_cols' => $this->recovery_cols, 'recovery_n' => $this->recovery_n, 'guias_json' => $this->guias_json,
+            'restr_auto' => $this->restr_auto, 'simbologia_grafico_id' => $this->simbologia_grafico_id, 'grupo' => $this->grupo, 'visible' => 1,
+            'orden' => self::siguienteOrden((int)$this->paquete_id),
+        ]);
+        if ($this->simbologia && \Classes\Almacenamiento::cabe((int)$this->proyecto_id, (int)@filesize(\Classes\Imagenes::CARPETA_VPLAN . '/' . basename($this->simbologia)))) {
+            $copia->simbologia = \Classes\Imagenes::copiarVplan($this->simbologia);
+        }
+        $copia->id = $copia->guardar()['id'];
+        $porId = [];
+        foreach ($this->tablas() as $t) $porId[(int)$t->id] = $t;
+        $nuevas = [];
+        foreach ($origen as $b) {
+            $nb = new VplanBloque(['lamina_id' => $copia->id, 'tipo' => $b->tipo, 'x' => $b->x, 'y' => $b->y, 'w' => $b->w, 'h' => $b->h, 'z' => $b->z]);
+            $cfg = $b->config();
+            if ($b->tipo === 'tabla') {
+                $t = $porId[(int)($cfg['tabla_id'] ?? 0)] ?? null;
+                if (!$t) continue;
+                $nt = $t->duplicar();
+                $nt->nombre_interno = mb_substr($t->etiqueta(), 0, 120) . ' · ' . mb_substr((string)$copia->titulo, 0, 60);
+                $nt->guardar();
+                self::$db->query("INSERT INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES (" . (int)$copia->id . ", " . (int)$nt->id . ", " . (int)$b->z . ")");
+                $cfg['tabla_id'] = (int)$nt->id;
+            }
+            $nb->setConfig($cfg);
+            $nb->guardar();
+        }
+        return $copia;
     }
 
     /** Tablas adicionales de la lámina, en orden */
@@ -55,11 +124,69 @@ class VplanLamina extends ActiveRecord
         $id = (int)$this->id;
         $orden = (int)self::$db->query("SELECT COALESCE(MAX(orden),0)+1 FROM vplan_lamina_tablas WHERE lamina_id = $id")->fetch_row()[0];
         self::$db->query("INSERT IGNORE INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($id, " . (int)$tablaId . ", $orden)");
+        $this->bloquesCache = null;
+        $this->bloques();   // crea el bloque de la tabla nueva
     }
 
     public function quitarTabla(int $tablaId): void
     {
         self::$db->query("DELETE FROM vplan_lamina_tablas WHERE lamina_id = " . (int)$this->id . " AND tabla_id = " . (int)$tablaId);
+        $this->bloquesCache = null;
+        $this->bloques();   // retira su bloque
+    }
+
+    private ?array $bloquesCache = null;
+
+    public function olvidarBloques(): void
+    {
+        $this->bloquesCache = null;
+    }
+
+    /**
+     * Bloques de la lámina. Una lámina anterior a los bloques se convierte aquí, la primera vez que se pide, a un
+     * diseño idéntico al que tenía. Además cada tabla adicional de la lámina tiene su bloque (se crea o se retira).
+     * @return \Model\VplanBloque[]
+     */
+    public function bloques(): array
+    {
+        if (!$this->id) return [];
+        if ($this->bloquesCache !== null) return $this->bloquesCache;
+        $id = (int)$this->id;
+        $lock = "vplan_bloques_$id";
+        self::$db->query("SELECT GET_LOCK('$lock', 10)")->free();   // dos peticiones a la vez no deben crear el diseño dos veces
+        try {
+            $bloques = VplanBloque::deLamina($id);
+            if (!$bloques) {
+                $seq = $this->seleccion() ? 'partida' : 'continuo';
+                foreach (\Classes\VplanDiseno::porDefecto($this, \Classes\Vplan::fuentesAntiguas($this), $seq) as $b) {
+                    $b->lamina_id = $id;
+                    $b->id = $b->guardar()['id'];
+                    $bloques[] = $b;
+                }
+            }
+            $miembros = array_map(fn($t) => (int)$t->id, $this->tablas());
+            $conBloque = [];
+            foreach ($bloques as $k => $b) {
+                if ($b->tipo !== 'tabla') continue;
+                $tid = (int)($b->config()['tabla_id'] ?? 0);
+                if (!in_array($tid, $miembros, true) || isset($conBloque[$tid])) {   // la tabla ya no está en la lámina (o está repetida)
+                    $b->eliminar();
+                    unset($bloques[$k]);
+                } else {
+                    $conBloque[$tid] = true;
+                }
+            }
+            $bloques = array_values($bloques);
+            foreach ($this->tablas() as $t) {
+                if (isset($conBloque[(int)$t->id])) continue;
+                $nuevo = \Classes\VplanDiseno::posicionNueva($this, $t, $bloques);
+                $nuevo->id = $nuevo->guardar()['id'];
+                $bloques[] = $nuevo;
+            }
+        } finally {
+            self::$db->query("SELECT RELEASE_LOCK('$lock')")->free();
+        }
+        return $this->bloquesCache = $bloques;
     }
 
     /** Intercambia el orden con la tabla vecina (dir -1 sube, +1 baja) */
@@ -96,22 +223,30 @@ class VplanLamina extends ActiveRecord
         }
     }
 
-    /** [actividad_id => fila de recovery] */
+    /** [actividad_id => [n => ['inicio' => fecha|null, 'fin' => fecha|null]]] */
     public function recovery(): array
     {
-        $res = self::$db->query("SELECT * FROM vplan_recovery WHERE lamina_id = " . (int)$this->id);
+        $res = self::$db->query("SELECT actividad_id, n, inicio, fin FROM vplan_recovery_n WHERE lamina_id = " . (int)$this->id);
         $out = [];
-        while ($r = $res->fetch_assoc()) $out[(int)$r['actividad_id']] = $r;
+        while ($r = $res->fetch_assoc()) $out[(int)$r['actividad_id']][(int)$r['n']] = ['inicio' => $r['inicio'], 'fin' => $r['fin']];
         return $out;
     }
 
-    public function guardarRecovery(int $actividadId, string $campo, ?string $valor): void
+    /** $campo: 'inicio' | 'fin'; $n: 1..MAX_RECOVERY */
+    public function guardarRecovery(int $actividadId, int $n, string $campo, ?string $valor): void
     {
-        if (!in_array($campo, self::CAMPOS_RECOVERY, true)) return;
+        if (!in_array($campo, ['inicio', 'fin'], true) || $n < 1 || $n > self::MAX_RECOVERY) return;
         $id = (int)$this->id;
         $aid = (int)$actividadId;
         $v = $valor === null ? 'NULL' : "'" . self::$db->escape_string($valor) . "'";
-        self::$db->query("INSERT INTO vplan_recovery (lamina_id, actividad_id, $campo) VALUES ($id, $aid, $v) ON DUPLICATE KEY UPDATE $campo = $v");
+        self::$db->query("INSERT INTO vplan_recovery_n (lamina_id, actividad_id, n, $campo) VALUES ($id, $aid, $n, $v) ON DUPLICATE KEY UPDATE $campo = $v");
+    }
+
+    /** Guías del modo diseño: [{id, eje: 'v'|'h', pos: % de la hoja, visible, bloqueada, nombre}] */
+    public function guias(): array
+    {
+        $g = json_decode((string)$this->guias_json, true);
+        return is_array($g) ? array_values($g) : [];
     }
 
     /** Imagen de la simbología del schedule elegida (siempre la versión actual del gráfico); null = tabla estándar */

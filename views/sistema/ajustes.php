@@ -90,12 +90,12 @@ $vols = [
                 <td><code title="<?php echo s($a['sha']); ?>"><?php echo s(substr($a['sha'], 0, 12)); ?>…</code></td>
                 <td style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
                     <a class="btn btn-sm btn-primary" href="/sistema/instalador?archivo=<?php echo urlencode($a['nombre']); ?>"><i class="fa-solid fa-download"></i> Descargar</a>
-                    <form method="POST" action="/sistema/instalador/subir" enctype="multipart/form-data" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('¿Reemplazar <?php echo s($a['nombre']); ?> por el archivo elegido?')">
+                    <form method="POST" action="/sistema/instalador/subir" enctype="multipart/form-data" style="display:flex;gap:.4rem;align-items:center" data-confirmar="¿Reemplazar <?php echo s($a['nombre']); ?> por el archivo elegido?">
                         <input type="hidden" name="reemplazar" value="<?php echo s($a['nombre']); ?>">
                         <input type="file" name="instalador" required style="max-width:16rem">
                         <button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-arrow-right-arrow-left"></i> Reemplazar</button>
                     </form>
-                    <form method="POST" action="/sistema/instalador/eliminar" onsubmit="return confirm('¿Eliminar este instalador?')"><input type="hidden" name="archivo" value="<?php echo s($a['nombre']); ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form>
+                    <form method="POST" action="/sistema/instalador/eliminar" data-confirmar="¿Eliminar este instalador?"><input type="hidden" name="archivo" value="<?php echo s($a['nombre']); ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form>
                 </td></tr>
         <?php endforeach; ?>
         </tbody></table>
@@ -127,7 +127,7 @@ $vols = [
                 <td><?php echo s(\Model\HerramientaIA::TIPOS[$h->tipo][0] ?? $h->tipo); ?></td>
                 <td><code><?php echo s(trim($h->url . ' ' . $h->modelo)); ?></code></td>
                 <td><?php echo $h->activa ? 'Activa' : 'Inactiva'; ?></td>
-                <td><form method="POST" action="/sistema/herramienta/eliminar" onsubmit="return confirm('¿Eliminar esta conexión?')"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form></td></tr>
+                <td><form method="POST" action="/sistema/herramienta/eliminar" data-confirmar="¿Eliminar esta conexión?"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form></td></tr>
         <?php endforeach; ?>
         </tbody></table>
     <?php endif; ?>
@@ -172,7 +172,7 @@ $vols = [
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> <?php echo s(t('Generar respaldo')); ?></button>
         </form>
         <form method="POST" action="/sistema/respaldo/restaurar" enctype="multipart/form-data" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap"
-              onsubmit="return confirm('Se reemplazarán TODA la base de datos y TODOS los archivos por los del respaldo. ¿Continuar?')">
+              data-confirmar="Se reemplazarán TODA la base de datos y TODOS los archivos por los del respaldo. ¿Continuar?">
             <div><label class="text-sm text-muted">Restaurar desde mi equipo (.zip)</label><br>
                 <input type="file" name="respaldo" accept=".zip" required></div>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Subir y restaurar</button>
@@ -192,11 +192,11 @@ $vols = [
                 <td class="mono" style="text-align:right"><?php echo $fmt($r['bytes']); ?></td>
                 <td style="white-space:nowrap">
                     <a class="btn btn-sm btn-ghost" href="/sistema/respaldo/descargar?archivo=<?php echo urlencode($r['archivo']); ?>" title="Descargar"><i class="fa-solid fa-download"></i></a>
-                    <form method="POST" action="/sistema/respaldo/restaurar" style="display:inline" onsubmit="return confirm('Se reemplazarán TODA la base de datos y TODOS los archivos por los de este respaldo. ¿Restaurar?')">
+                    <form method="POST" action="/sistema/respaldo/restaurar" style="display:inline" data-confirmar="Se reemplazarán TODA la base de datos y TODOS los archivos por los de este respaldo. ¿Restaurar?">
                         <input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-sm btn-ghost" title="Restaurar"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     </form>
-                    <form method="POST" action="/sistema/respaldo/eliminar" style="display:inline" onsubmit="return confirm('¿Eliminar este respaldo?')">
+                    <form method="POST" action="/sistema/respaldo/eliminar" style="display:inline" data-confirmar="¿Eliminar este respaldo?">
                         <input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-sm btn-ghost" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                     </form>

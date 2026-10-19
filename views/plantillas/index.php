@@ -50,7 +50,7 @@ $pid = (int)$proyecto->id;
     <div class="card prg-seccion"><h3>Base de partidas y actividades</h3>
         <ul><?php foreach ($actual['partidas'] as [$c, $n, $acts]): ?><li><strong><?php echo s($c . ' ' . $n); ?></strong>: <?php echo s(implode('; ', array_map(fn($a) => $a[0] . ' (' . $a[1] . ' d)', $acts))); ?></li><?php endforeach; ?></ul>
         <?php if ($puede): if ($partidas > 0): ?><p class="text-muted">Este proyecto ya tiene <?php echo (int)$partidas; ?> partida(s): la base solo se puede crear en un proyecto vacío.</p>
-        <?php else: ?><form method="post" action="/plantillas/aplicar" onsubmit="return confirm('Se crearán las partidas y actividades de la base a partir de la fecha de inicio del proyecto. ¿Continuar?')"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Crear la base en este proyecto</button></form><?php endif; endif; ?>
+        <?php else: ?><form method="post" action="/plantillas/aplicar" data-confirmar="Se crearán las partidas y actividades de la base a partir de la fecha de inicio del proyecto. ¿Continuar?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Crear la base en este proyecto</button></form><?php endif; endif; ?>
     </div>
 <?php endif; ?>
 

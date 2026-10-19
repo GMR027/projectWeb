@@ -195,6 +195,12 @@ class RedactorDocumento extends ActiveRecord
     /** Tablas adicionales del proyecto para insertar en el documento: columnas + filas de texto */
     public static function tablaExtra(int $proyectoId, string $tipo): ?array
     {
+        if (preg_match('/^sf:(\d+)$/', $tipo, $m)) {   // tabla de SheetFlow del mismo proyecto
+            $h = SheetflowHoja::find((int)$m[1]);
+            if (!$h || (int)$h->proyecto_id !== $proyectoId) return null;
+            $t = \Classes\Sheetflow::matriz($h);
+            return ['columnas' => $t['columnas'], 'filas' => $t['totales'] ? array_merge($t['filas'], [$t['totales']]) : $t['filas'], 'html' => \Classes\Sheetflow::htmlRedactor($h)];
+        }
         $fecha = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '';
         $q = match ($tipo) {
             'materiales' => ['cols' => ['Referencia', 'Material', 'Especialidad', 'Cantidad', 'Unidad', 'Compra', 'Entrega prog.'],

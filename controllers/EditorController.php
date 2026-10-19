@@ -95,14 +95,14 @@ class EditorController
             'laminaActiva' => (int)($_GET['hoja'] ?? 0), 'regen' => !empty($_GET['regen']),
             'simbolos' => Simbolo::paraEditor((int)$proyecto->id), 'graficos' => Grafico::paraInsertar((int)$proyecto->id, (int)$g->id),
             'urlSimbolos' => '/simbolos?proyecto=' . $proyecto->id,
-            'cajetines' => Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
+            'sheetflow' => \Model\SheetflowHoja::resumen((int)$proyecto->id), 'cajetines' => Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
             'destinos' => EnlacesLamina::destinos((int)$proyecto->id),
             'urls' => ['descargar' => '/graficos/descargar?' . $q],
             'actividades' => [], 'restricciones' => [], 'hash' => '', 'auto' => false,
             'modo' => 'grafico', 'guardado' => 'png',
             'volver' => $g->tipo === 'simbologia' ? '/simbolos?proyecto=' . $proyecto->id . '#simbologias' : (\Model\View360Grafico::dePorGrafico((int)$g->id) ? '/view360?proyecto=' . $proyecto->id : '/graficos/ver?' . $q),
             'tipoGrafico' => $g->tipo,
-            'api' => ['marcas' => '/api/graficos/marcas', 'imagen' => '/api/graficos/imagen', 'pdf' => '/api/graficos/pdf', 'odp' => '/api/graficos/odp', 'lamina' => '/api/graficos/lamina'],
+            'api' => ['sheetflow' => '/api/sheetflow/datos', 'marcas' => '/api/graficos/marcas', 'imagen' => '/api/graficos/imagen', 'pdf' => '/api/graficos/pdf', 'odp' => '/api/graficos/odp', 'lamina' => '/api/graficos/lamina'],
         ];
     }
 

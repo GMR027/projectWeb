@@ -6,6 +6,10 @@ $campos = $bloque['campos'];
 $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
 ?>
 <table class="vp-tabla vp-adic vp-adic-<?php echo s($t->tipo); ?>" data-tabla="<?php echo (int)$t->id; ?>" data-base="<?php echo (int)($bloque['base'] ?? 0); ?>" data-tipo="<?php echo s($t->tipo); ?>">
+    <colgroup>
+        <?php foreach (\Classes\VplanDiseno::columnasTabla($t->tipo, count($campos)) as $w): ?><col style="width:<?php echo $w; ?>%"><?php endforeach; ?>
+        <?php for ($i = 0; $i < ($t->tipo === 'secundarias' ? $extra * 2 : $extra); $i++): ?><col style="width:3.2em"><?php endfor; ?>
+    </colgroup>
     <?php if ($t->tipo === 'punch'): ?>
         <thead>
             <tr><th rowspan="2" colspan="2" class="vp-adic-titulo"><?php echo s($t->titulo); ?></th><th colspan="2">DATE</th><th rowspan="2">%</th><?php if ($extra): ?><th rowspan="2" class="no-print"></th><?php endif; ?></tr>
@@ -29,6 +33,8 @@ $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
     </tbody>
 </table>
 <?php if ($puedeEditar): ?>
-    <button type="button" class="btn btn-sm btn-ghost vp-agregar-dato no-print" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
-    <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost no-print"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>
+    <div class="vp-tab-acc no-print">
+        <button type="button" class="btn btn-sm btn-primary vp-agregar-dato" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
+        <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>
+    </div>
 <?php endif; ?>

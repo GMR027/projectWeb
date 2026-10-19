@@ -420,7 +420,7 @@ class ProgramaController
             if ($partida) {
                 $proyectoId = $partida->proyecto_id;
                 exigir_gestionar_proyecto(Proyecto::find($proyectoId));
-                $partida->eliminar();
+                $partida->eliminarConActividades();
                 header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=partida');
                 exit;
             }
@@ -457,7 +457,7 @@ class ProgramaController
         foreach (array_keys($partidas) as $id) {
             $partida = Partida::find($id);
             if ($partida && (int)$partida->proyecto_id === (int)$proyectoId) {
-                $partida->eliminar();
+                $partida->eliminarConActividades();
                 $nPartidas++;
             }
         }
@@ -554,7 +554,31 @@ class ProgramaController
             }
         }
 
+        // Fecha recomendada: día hábil siguiente al fin de la última actividad (de la partida; si no tiene, del proyecto)
+        $finProyecto = null;
+        $sugeridas = [];
+        $finPartida = [];
+        foreach ($partidas as $p) {
+            $fin = null;
+            foreach ($p->getActividades() as $a) if ($a->fecha_fin && (!$fin || $a->fecha_fin > $fin)) $fin = $a->fecha_fin;
+            $finPartida[$p->id] = $fin;
+            if ($fin && (!$finProyecto || $fin > $finProyecto)) $finProyecto = $fin;
+        }
+        foreach ($partidas as $p) {
+            $fin = $finPartida[$p->id] ?: $finProyecto;
+            $d = new \DateTime($fin ?: ($p->fecha_inicio ?: $proyecto->fecha_inicio));
+            if ($fin) {
+                do { $d->modify('+1 day'); } while (!$calendario->esHabil($d->format('Y-m-d')) && $d->format('Y') < 2100);
+            }
+            $sugeridas[$p->id] = $d->format('Y-m-d');
+        }
+        if (empty($actividad->fecha_inicio)) {
+            $sel = $partidaIdSeleccionada ?: ($partidas[0]->id ?? null);
+            $actividad->fecha_inicio = $sugeridas[$sel] ?? ($finProyecto ? max($sugeridas) : $proyecto->fecha_inicio);
+        }
+
         $router->render('programa/crear-actividad', [
+            'sugeridas' => $sugeridas,
             'titulo' => 'Nueva Actividad',
             'proyecto' => $proyecto,
             'partidas' => $partidas,
@@ -566,6 +590,117 @@ class ProgramaController
                 ? array_map('intval', (array)($_POST['materiales'] ?? [])) : [],
             'gestionarMateriales' => !empty($_POST['gestionar_materiales']),
         ]);
+    }
+
+    /** Prefijo de los códigos de las actividades de una partida: «3.0» → «3» */
+    private static function prefijoPartida(Partida $partida): string
+    {
+        return preg_replace('/\.0+$/', '', (string)$partida->codigo);
+    }
+
+    /** Alta rápida desde la tabla del programa: solo nombre (y, si se quiere, inicio y duración); el código sigue al de la última actividad de la partida */
+    public static function actividadRapida()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $partida = Partida::find(filter_var($_POST['partida'] ?? null, FILTER_VALIDATE_INT));
+        if (!$partida) {
+            header('Location: /proyectos');
+            exit;
+        }
+        $proyectoId = (int)$partida->proyecto_id;
+        $proyecto = Proyecto::find($proyectoId);
+        exigir_gestionar_proyecto($proyecto);
+        $volver = '/programa?proyecto=' . $proyectoId;
+
+        $nombre = trim((string)($_POST['nombre'] ?? ''));
+        if ($nombre === '') {
+            header('Location: ' . $volver . '&error=' . urlencode('Escribe el nombre de la actividad.'));
+            exit;
+        }
+        $existentes = $partida->getActividades();
+        $calendario = new Calendario($proyectoId);
+        $inicio = (string)($_POST['fecha_inicio'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $inicio)) {
+            // Sin fecha: el día hábil siguiente a la última actividad de la partida (o el inicio de la partida / del proyecto)
+            $finMax = null;
+            foreach ($existentes as $a) if ($a->fecha_fin && (!$finMax || $a->fecha_fin > $finMax)) $finMax = $a->fecha_fin;
+            $d = new \DateTime($finMax ?: ($partida->fecha_inicio ?: $proyecto->fecha_inicio));
+            if ($finMax) {
+                do { $d->modify('+1 day'); } while (!$calendario->esHabil($d->format('Y-m-d')) && $d->format('Y') < 2100);
+            }
+            $inicio = $d->format('Y-m-d');
+        }
+        $duracion = max(1, min(3650, (int)($_POST['duracion_dias'] ?? 1)));
+
+        // Código = prefijo de la partida + siguiente número libre; orden = al final de la partida
+        $usados = array_flip(array_map(fn($a) => $a->codigo, $existentes));
+        $prefijo = self::prefijoPartida($partida);
+        $n = count($existentes) + 1;
+        while (isset($usados[$prefijo . '.' . $n])) $n++;
+        $orden = 1;
+        foreach ($existentes as $a) $orden = max($orden, (int)$a->orden + 1);
+
+        $actividad = new Actividad([
+            'partida_id' => $partida->id, 'codigo' => $prefijo . '.' . $n, 'nombre' => mb_substr($nombre, 0, 200),
+            'fecha_inicio' => $inicio, 'duracion_dias' => $duracion, 'orden' => $orden,
+        ]);
+        $actividad->fecha_fin = $calendario->calcularFechaFin($inicio, $duracion);
+        $actividad->sincronizarStatus();
+        $r = $actividad->guardar();
+        if (!$r || empty($r['resultado'])) {
+            header('Location: ' . $volver . '&error=' . urlencode('No se pudo crear la actividad.'));
+            exit;
+        }
+        $partida->recalcularFechas();
+        \Model\ActividadMaterial::sincronizarInstalacion($proyectoId);
+        header('Location: ' . $volver . '&creado=actividad&foco=a' . (int)$r['id']);
+        exit;
+    }
+
+    /** Sube o baja una actividad dentro de su partida y renumera las actividades de esa partida (1.1, 1.2…) */
+    public static function moverActividad()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $actividad = Actividad::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        $partida = $actividad ? Partida::find($actividad->partida_id) : null;
+        if (!$partida) {
+            header('Location: /proyectos');
+            exit;
+        }
+        $proyectoId = (int)$partida->proyecto_id;
+        exigir_gestionar_proyecto(Proyecto::find($proyectoId));
+        $delta = ($_POST['dir'] ?? '') === 'arriba' ? -1 : 1;
+
+        $orden = [];
+        foreach (\Classes\Renumeracion::estructura($proyectoId) as $p) {
+            $orden[] = ['id' => $p['id'], 'actividades' => array_column($p['actividades'], 'id')];
+        }
+        $prefijo = self::prefijoPartida($partida);
+        foreach ($orden as &$p) {
+            if ((int)$p['id'] !== (int)$partida->id) continue;
+            $i = array_search((int)$actividad->id, $p['actividades'], true);
+            $j = $i === false ? false : $i + $delta;
+            if ($i !== false && isset($p['actividades'][$j])) {
+                [$p['actividades'][$i], $p['actividades'][$j]] = [$p['actividades'][$j], $p['actividades'][$i]];
+            }
+            // Renumera solo las actividades de esta partida, en su nuevo orden
+            $codigos = [];
+            foreach ($p['actividades'] as $k => $aid) $codigos['a' . $aid] = $prefijo . '.' . ($k + 1);
+        }
+        unset($p);
+        if (!empty($codigos)) {
+            \Classes\Renumeracion::aplicar($proyectoId, $orden, false, $codigos, 'mover actividad');
+        }
+        header('Location: /programa?proyecto=' . $proyectoId . '&foco=a' . (int)$actividad->id);
+        exit;
     }
 
     public static function editarActividad(Router $router)

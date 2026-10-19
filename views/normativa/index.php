@@ -82,7 +82,7 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
                     <a class="btn btn-sm btn-ghost" href="/normativa/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$d['id']; ?>" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i></a>
                     <?php if ($puede): ?>
                         <form method="post" action="/normativa/reindexar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$d['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit" title="Volver a leer el PDF"><i class="fa-solid fa-rotate"></i></button></form>
-                        <form method="post" action="/normativa/eliminar" onsubmit="return confirm('¿Eliminar el documento, sus cláusulas y los vínculos que tenga?')"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$d['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
+                        <form method="post" action="/normativa/eliminar" data-confirmar="¿Eliminar el documento, sus cláusulas y los vínculos que tenga?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$d['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
                     <?php endif; ?>
                 </td>
             </tr>

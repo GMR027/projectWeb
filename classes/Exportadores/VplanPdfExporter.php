@@ -8,10 +8,18 @@ use Classes\Vplan;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-/** Láminas de vPlan en PDF tabloide horizontal (una lámina por página) */
+/** Láminas de vPlan en PDF, cada una al tamaño de hoja que tenga (una lámina por página) */
 class VplanPdfExporter extends BaseExporter
 {
     private string $lamina = 'todas';
+    private int $paquete = 0;
+
+    /** Limita «todas» a las láminas de un vPlan (0 = todos los vPlan del proyecto) */
+    public function setPaquete(int $paquete): self
+    {
+        $this->paquete = $paquete;
+        return $this;
+    }
 
     public function setLamina(string $lamina): self
     {
@@ -72,77 +80,45 @@ class VplanPdfExporter extends BaseExporter
         return [round($dim[0] * $k, 2), round($dim[1] * $k, 2)];
     }
 
-    // Escalas de la columna derecha: [clase CSS, tamaño de letra pt, relleno vertical de celda pt]
-    private const ESCALAS = [['e0', 9.0, 3.0], ['e1', 7.5, 2.0], ['e2', 6.2, 1.5], ['e3', 5.2, 0.9], ['e4', 4.4, 0.5]];
-    private const ALTO_COLUMNA_PT = 612;   // ≈ 21.6 cm: hoja − encabezado − pie
-
-    /** Alto estimado (pt) de la columna derecha con una escala dada */
-    private static function estimarAlto(array $d, float $f, float $p): float
-    {
-        $ancho = 20.5;                                                  // cm de la mitad derecha
-        $cpl = fn(float $cm) => max(8, (int)floor($cm / (0.55 * $f * 0.03528)));   // caracteres por línea
-        $fila = fn(int $lineas) => $lineas * 1.25 * $f + 2 * $p + 0.8;
-        $lin = fn(string $t, float $cm) => max(1, (int)ceil(mb_strlen($t) / $cpl($cm)));
-
-        $nRec = (int)$d['rec1'] + (int)$d['rec2'];
-        $anchoTarea = max(3.5, $ancho - 1.0 - 3.8 - 3.8 * $nRec - 1.2 - 2.4);
-        $h = $fila(1) * 3;                                              // título + 2 filas de encabezado
-        foreach ($d['tareas'] as $t) $h += $fila($lin((string)$t['actividad']->nombre, $anchoTarea));
-        $h += 7;
-        foreach ($d['tablas'] as $b) {
-            $tipo = $b['tabla']->tipo;
-            $h += $fila(1) * ($tipo === 'restricciones' ? 1 : ($tipo === 'punch' ? 3 : 2));
-            foreach ($b['filas'] as $f2) {
-                $texto = (string)($f2['descripcion'] ?? $f2['elemento'] ?? '');
-                $h += $fila($lin($texto, $tipo === 'punch' ? 13.5 : ($tipo === 'restricciones' ? 18.5 : ($tipo === 'secundarias' ? 7.5 : 5.5))));
-            }
-            $h += 7;
-        }
-        return $h;
-    }
-
-    /**
-     * Elige la letra más grande con la que la lámina cabe en una sola hoja. Parte de una estimación y lo
-     * comprueba renderizando la lámina sola (el estimador por sí mismo se queda corto con textos largos).
-     */
-    private function elegirEscala(array $d, \Closure $htmlDe): string
-    {
-        $inicio = 0;
-        foreach (self::ESCALAS as $i => [$clase, $f, $p]) {
-            if (self::estimarAlto($d, $f, $p) <= self::ALTO_COLUMNA_PT) { $inicio = $i; break; }
-            $inicio = count(self::ESCALAS) - 1;
-        }
-        for ($i = $inicio; $i < count(self::ESCALAS); $i++) {
-            $d['escala'] = self::ESCALAS[$i][0];
-            if ($this->contarPaginas($htmlDe([$d])) <= 1) return $d['escala'];
-        }
-        return 'e4';
-    }
-
-    private function nuevoDompdf(string $html): Dompdf
+    private function nuevoDompdf(string $html, float $anchoMm, float $altoMm): Dompdf
     {
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('tabloid', 'landscape');
+        $dompdf->setPaper([0, 0, $anchoMm * 72 / 25.4, $altoMm * 72 / 25.4]);
         return $dompdf;
     }
 
-    private function contarPaginas(string $html): int
+    private function contarPaginas(string $html, VplanLamina $l): int
     {
-        $dompdf = $this->nuevoDompdf($html);
+        $dompdf = $this->nuevoDompdf($html, (float)$l->ancho_mm, (float)$l->alto_mm);
         $dompdf->render();
         return $dompdf->getCanvas()->get_page_count();
+    }
+
+    /**
+     * Las tablas se ajustan al espacio de su bloque con una estimación; se comprueba renderizando la lámina sola
+     * y, si algo se sale de la hoja (más de una página), se baja la letra de todas las tablas un paso más.
+     */
+    private function elegirAjuste(array $d, \Closure $htmlDe): int
+    {
+        for ($extra = 0; $extra < 3; $extra++) {
+            $d['extra'] = $extra;
+            if ($this->contarPaginas($htmlDe([$d]), $d['lamina']) <= 1) return $extra;
+        }
+        return 2;
     }
 
     public function generar(string $nombreBase): string
     {
         $proyecto = $this->proyecto;
-        $laminas = VplanLamina::deProyecto((int)$proyecto->id);
+        // Una lámina elegida se exporta aunque esté oculta; «todas» lleva solo las visibles, en el orden de los vPlan
         if ($this->lamina !== 'todas') {
-            $laminas = array_values(array_filter($laminas, fn($l) => (int)$l->id === (int)$this->lamina));
+            $laminas = array_values(array_filter(VplanLamina::deProyecto((int)$proyecto->id), fn($l) => (int)$l->id === (int)$this->lamina));
+        } else {
+            $laminas = VplanLamina::visiblesDeProyecto((int)$proyecto->id, $this->paquete ?: null);
         }
         if (!$laminas) throw new \Exception('No hay láminas para exportar');
 
@@ -160,19 +136,37 @@ class VplanPdfExporter extends BaseExporter
             $d['lamina'] = $l;
             $d['plano'] = Imagenes::vplanBase64($l->marcas_png ?: $l->plano, 2200);
             $d['simb'] = Imagenes::vplanBase64($l->simbologia, 1000);
-            $schedule = $l->imagenSimbologiaSchedule();
-            $d['simb_schedule'] = Imagenes::vplanBase64($schedule, 1600);
-            $d['plano_dim'] = self::ajustarPlano($l->marcas_png ?: $l->plano, $l->simbologia, $schedule);
-            // Letra más grande con la que la lámina completa cabe en una hoja
-            $d['escala'] = $this->elegirEscala($d, $htmlDe);
+            $d['simb_schedule'] = Imagenes::vplanBase64($l->imagenSimbologiaSchedule(), 1600);
+            $d['extra'] = $this->elegirAjuste($d, $htmlDe);
             $paginas[] = $d;
         }
 
-        $dompdf = $this->nuevoDompdf($htmlDe($paginas));
-        $dompdf->render();
-
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        $tamanos = array_unique(array_map(fn($d) => $d['lamina']->ancho_mm . 'x' . $d['lamina']->alto_mm, $paginas));
+        if (count($tamanos) === 1) {
+            $dompdf = $this->nuevoDompdf($htmlDe($paginas), (float)$laminas[0]->ancho_mm, (float)$laminas[0]->alto_mm);
+            $dompdf->render();
+            file_put_contents($ruta, $dompdf->output());
+            return $ruta;
+        }
+
+        // Láminas de tamaños distintos: un PDF por lámina y se unen en orden (un PDF no puede mezclar tamaños con Dompdf)
+        $unir = trim((string)@shell_exec('command -v pdfunite'));
+        if ($unir === '') throw new \Exception('Las láminas tienen tamaños de hoja distintos y el servidor no puede unirlas en un solo PDF. Exporta las láminas de una en una.');
+        $partes = [];
+        try {
+            foreach ($paginas as $i => $d) {
+                $dompdf = $this->nuevoDompdf($htmlDe([$d]), (float)$d['lamina']->ancho_mm, (float)$d['lamina']->alto_mm);
+                $dompdf->render();
+                $parte = $ruta . ".parte$i.pdf";
+                file_put_contents($parte, $dompdf->output());
+                $partes[] = $parte;
+            }
+            exec(escapeshellarg($unir) . ' ' . implode(' ', array_map('escapeshellarg', $partes)) . ' ' . escapeshellarg($ruta) . ' 2>&1', $salida, $codigo);
+            if ($codigo !== 0 || !is_file($ruta)) throw new \Exception('No se pudieron unir las láminas en un solo PDF');
+        } finally {
+            foreach ($partes as $parte) @unlink($parte);
+        }
         return $ruta;
     }
 }

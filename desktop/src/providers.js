@@ -1,6 +1,6 @@
 'use strict';
 // Conexión con modelos: Ollama (local), APIs compatibles con OpenAI, API de Anthropic y agentes CLI (Claude Code, opencode)
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -12,12 +12,47 @@ const TIPOS = {
   ollama: { etiqueta: 'Ollama (local)', url: 'http://localhost:11434', clave: false },
   openai: { etiqueta: 'API compatible con OpenAI', url: 'https://api.openai.com/v1', clave: true },
   anthropic: { etiqueta: 'API de Anthropic', url: 'https://api.anthropic.com', clave: true },
-  'claude-code': { etiqueta: 'Claude Code (CLI, tu suscripción)', bin: 'claude', args: p => ['-p', p] },
+  'claude-code': { etiqueta: 'Claude Code (CLI, tu suscripción)', bin: 'claude', args: p => ['-p', p], imagenes: true },
   'opencode-api': { etiqueta: 'opencode Zen (API key)', url: 'https://opencode.ai/zen/v1', clave: true },
   opencode: { etiqueta: 'opencode (CLI)', bin: 'opencode', args: p => ['run', p] },
 };
 const esOpenAI = t => t === 'openai' || t === 'opencode-api';   // opencode Zen habla el protocolo de OpenAI
 const TIMEOUT_MS = 120000;
+
+// Uso de la suscripción de Claude Code: % de las ventanas de 5 h / 7 días (las informa el propio CLI) y tokens gastados hoy desde esta app
+let usoArchivo = null;
+let usoCli = { ventanas: {}, actualizado: 0, hoy: { fecha: '', entrada: 0, salida: 0, cache: 0, costo: 0, llamadas: 0 } };
+function usoConfigurar(ruta) { usoArchivo = ruta; try { usoCli = { ...usoCli, ...JSON.parse(fs.readFileSync(ruta, 'utf8')) }; } catch { /* sin datos previos */ } }
+const usoGuardar = () => { if (usoArchivo) fs.writeFile(usoArchivo, JSON.stringify(usoCli), () => {}); };
+const diaActual = () => new Date().toLocaleDateString('sv');
+function usoVentanas(info) {
+  const w = info?.unifiedWindows || (info?.rateLimitType ? { [info.rateLimitType]: { utilization: info.utilization, resetsAt: info.resetsAt } } : null);
+  if (!w) return;
+  for (const [k, v] of Object.entries(w)) if (typeof v?.utilization === 'number') usoCli.ventanas[k] = { utilization: v.utilization, resetsAt: v.resetsAt };
+  usoCli.actualizado = Date.now(); usoGuardar();
+}
+function usoResultado(r) {
+  const u = r?.usage; if (!u) return;
+  if (usoCli.hoy.fecha !== diaActual()) usoCli.hoy = { fecha: diaActual(), entrada: 0, salida: 0, cache: 0, costo: 0, llamadas: 0 };
+  const h = usoCli.hoy;
+  h.entrada += u.input_tokens || 0; h.salida += u.output_tokens || 0; h.cache += (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+  h.costo += r.total_cost_usd || 0; h.llamadas++; usoGuardar();
+}
+const uso = () => (usoCli.hoy.fecha === diaActual() ? usoCli : { ...usoCli, hoy: { fecha: diaActual(), entrada: 0, salida: 0, cache: 0, costo: 0, llamadas: 0 } });
+/** Consulta mínima para que el CLI informe el % de uso de la suscripción (solo si el dato tiene más de `minutos`) */
+function usoSondear(minutos = 10) {
+  if (Date.now() - usoCli.actualizado < minutos * 60000) return Promise.resolve(uso());
+  return new Promise(resolve => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'pwd-'));
+    const hijo = spawn('claude', ['-p', 'ok', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--tools', ''], { cwd, env: entorno(), stdio: ['ignore', 'pipe', 'ignore'] });
+    let resto = '';
+    const fin = () => { clearTimeout(tope); fs.rm(cwd, { recursive: true, force: true }, () => {}); resolve(uso()); };
+    const tope = setTimeout(() => { hijo.kill(); }, 45000);
+    const linea = l => { try { const j = JSON.parse(l); if (j.type === 'rate_limit_event') usoVentanas(j.rate_limit_info); else if (j.type === 'result') usoResultado(j); } catch { /* línea parcial */ } };
+    hijo.stdout.on('data', d => { resto += d; const ps = resto.split('\n'); resto = ps.pop(); ps.forEach(linea); });
+    hijo.on('error', fin); hijo.on('close', fin);
+  });
+}
 
 function urlBase(p) {
   const u = new URL(p.url || TIPOS[p.tipo].url);
@@ -54,14 +89,78 @@ async function http(url, opciones, timeout = TIMEOUT_MS) {
   return j;
 }
 
+/** Al abrir la app desde el menú (no desde un terminal) el PATH no incluye donde suelen instalarse los agentes CLI */
+function entorno() {
+  const extra = [path.join(os.homedir(), '.local', 'bin'), path.join(os.homedir(), '.claude', 'local'), path.join(os.homedir(), '.npm-global', 'bin'), path.join(os.homedir(), '.bun', 'bin'), '/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin'];
+  const actual = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+  return { ...process.env, PATH: [...actual, ...extra.filter(d => !actual.includes(d))].join(path.delimiter) };
+}
+
+function errorCli(bin, err, errout) {
+  return new Error(err.code === 'ENOENT' ? bin + ' no está instalado o no está en el PATH' : (errout || err.message).trim().slice(0, 400));
+}
+
 function cli(bin, args, timeout = TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     // cwd temporal: el agente no debe tocar ningún proyecto del usuario
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'pwd-'));
-    execFile(bin, args, { cwd, timeout, maxBuffer: 8 * 1024 * 1024 }, (err, out, errout) => {
+    execFile(bin, args, { cwd, timeout, maxBuffer: 8 * 1024 * 1024, env: entorno() }, (err, out, errout) => {
       fs.rm(cwd, { recursive: true, force: true }, () => {});
-      if (err) reject(new Error(err.code === 'ENOENT' ? bin + ' no está instalado o no está en el PATH' : (errout || err.message).trim().slice(0, 400)));
+      if (err) reject(errorCli(bin, err, errout));
       else resolve(out.trim());
+    });
+  });
+}
+
+/** Los agentes CLI reciben un solo texto: la instrucción de sistema (si hay) y el historial completo van dentro de él */
+function guion(mensajes) {
+  const dialogo = mensajes.filter(m => m.role !== 'system');
+  const ultimo = dialogo.pop();
+  if (!ultimo) return '';
+  if (!dialogo.length) return ultimo.content;
+  return 'Conversación hasta ahora:\n\n' + dialogo.map(m => (m.role === 'assistant' ? 'Asistente' : 'Usuario') + ': ' + m.content).join('\n\n')
+    + '\n\nResponde ahora al último mensaje del usuario, teniendo en cuenta lo anterior:\n\n' + ultimo.content;
+}
+const sistemaDe = mensajes => mensajes.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+const EXT_IMG = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
+
+/**
+ * Claude Code con la sesión de suscripción del terminal: historial e instrucción de sistema completos, imágenes (se dejan en la
+ * carpeta temporal y se leen con la herramienta Read, lo único permitido) y progreso en streaming.
+ */
+function claudeCode(mensajes, opts, timeout) {
+  return new Promise((resolve, reject) => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'pwd-'));
+    const limpiar = () => fs.rm(cwd, { recursive: true, force: true }, () => {});
+    let prompt = guion(mensajes);
+    const rutas = (opts.imagenes || []).map((im, i) => {
+      const f = 'imagen-' + (i + 1) + '.' + (EXT_IMG[im.mime] || 'jpg');
+      fs.writeFileSync(path.join(cwd, f), Buffer.from(im.base64, 'base64'));
+      return f;
+    });
+    if (rutas.length) prompt = 'Se adjuntan ' + rutas.length + ' imagen(es) en estos archivos: ' + rutas.join(', ') + '. Ábrelas con la herramienta Read antes de responder.\n\n' + prompt;
+    const sistema = sistemaDe(mensajes);
+    const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence',
+      ...(rutas.length ? ['--tools', 'Read', '--allowedTools', 'Read'] : ['--tools', '']), ...(sistema ? ['--append-system-prompt', sistema] : [])];
+    const hijo = spawn('claude', args, { cwd, env: entorno(), stdio: ['ignore', 'pipe', 'pipe'] });
+    let resto = '', final = null, n = 0, errtxt = '', terminado = false;
+    const acabar = (f, v) => { if (terminado) return; terminado = true; clearTimeout(tope); limpiar(); f(v); };
+    const tope = setTimeout(() => { hijo.kill(); acabar(reject, new Error('Tiempo de espera agotado (' + Math.round(timeout / 60000) + ' min)')); }, timeout);
+    opts.alAvanzar?.({ tokens: 0, fase: 'leyendo' });
+    const linea = l => {
+      let j; try { j = JSON.parse(l); } catch { return; }
+      if (j.type === 'stream_event' && j.event?.delta?.type === 'text_delta') { n++; if (n % 5 === 0) opts.alAvanzar?.({ tokens: n, fase: 'escribiendo' }); }
+      else if (j.type === 'rate_limit_event') usoVentanas(j.rate_limit_info);
+      else if (j.type === 'result') { final = j; usoResultado(j); }
+    };
+    hijo.stdout.on('data', d => { resto += d; const partes = resto.split('\n'); resto = partes.pop(); partes.forEach(linea); });
+    hijo.stderr.on('data', d => { errtxt += d; });
+    hijo.on('error', e => acabar(reject, errorCli('claude', e, '')));
+    hijo.on('close', () => {
+      if (resto.trim()) linea(resto);
+      if (final && !final.is_error) { opts.alAvanzar?.({ tokens: n, fase: 'listo' }); return acabar(resolve, String(final.result ?? '').trim()); }
+      const motivo = String(final?.result || errtxt || 'Claude Code terminó sin respuesta').trim();
+      acabar(reject, new Error(/log ?in|auth|credential|401/i.test(motivo) ? 'Claude Code no tiene sesión: ejecuta «claude» en el terminal e inicia sesión (/login). ' + motivo.slice(0, 200) : motivo.slice(0, 400)));
     });
   });
 }
@@ -87,9 +186,10 @@ async function chat(p, clave, mensajes, opts = {}) {
   const timeout = opts.timeout || TIMEOUT_MS;
   const t = TIPOS[p.tipo];
   if (!t) throw new Error('Tipo de conexión desconocido');
-  if (opts.imagenes?.length && t.bin) throw new Error('Esta conexión (agente de línea de comandos) no admite imágenes: usa Ollama con un modelo de visión o una API con visión.');
+  if (opts.imagenes?.length && t.bin && !t.imagenes) throw new Error('Esta conexión (agente de línea de comandos) no admite imágenes: usa Ollama con un modelo de visión o una API con visión.');
+  if (p.tipo === 'claude-code') return claudeCode(mensajes, opts, timeout);
+  if (t.bin) return cli(t.bin, t.args([sistemaDe(mensajes), guion(mensajes)].filter(Boolean).join('\n\n')), timeout);
   mensajes = conImagenes(p.tipo, mensajes, opts.imagenes);
-  if (t.bin) return cli(t.bin, t.args(mensajes.filter(m => m.role === 'user').pop()?.content || ''), timeout);
   if (!p.modelo) throw new Error('Indica el modelo en la conexión');
   const base = urlBase(p);
   if (p.tipo === 'ollama') {
@@ -117,7 +217,7 @@ async function detectarCli() {
   const r = {};
   for (const [k, t] of Object.entries(TIPOS)) {
     if (!t.bin) continue;
-    r[k] = await new Promise(res => execFile('which', [t.bin], e => res(!e)));
+    r[k] = await new Promise(res => execFile('which', [t.bin], { env: entorno() }, e => res(!e)));
   }
   return r;
 }
@@ -128,7 +228,12 @@ async function probar(p, clave) {
   if (!t) throw new Error('Tipo de conexión desconocido');
   if (t.bin) {
     const v = await cli(t.bin, ['--version']);
-    return t.bin + ' instalado (' + v.split('\n')[0] + '). La sesión de suscripción se valida al usarlo.';
+    if (p.tipo === 'claude-code') {   // además de la instalación, comprueba que haya sesión iniciada
+      const e = JSON.parse(await cli(t.bin, ['auth', 'status']).catch(() => '{}'));
+      if (!e.loggedIn) throw new Error('Claude Code está instalado (' + v.split('\n')[0] + ') pero no hay sesión: ejecuta «claude» en el terminal e inicia sesión (/login).');
+      return 'Claude Code instalado (' + v.split('\n')[0] + ') con la sesión de ' + (e.authMethod || 'suscripción') + ' iniciada.';
+    }
+    return t.bin + ' instalado (' + v.split('\n')[0] + ').';
   }
   if (p.tipo === 'ollama') {
     const lista = await modelos(p, clave);
@@ -252,4 +357,4 @@ async function estado(p, clave) {
   }
 }
 
-module.exports = { estado, TIPOS, probar, chat, modelos, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
+module.exports = { uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };

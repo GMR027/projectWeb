@@ -75,7 +75,7 @@ $hoyPos = $min ? round((strtotime($r['hoy'] ?? date('Y-m-d')) - strtotime($min))
                 <button class="btn btn-sm btn-primary" type="submit"><i class="fa-regular fa-bookmark"></i> Guardar propuesta</button>
             <?php endif; ?>
         </form>
-        <form method="post" action="/programador/eliminar" onsubmit="return confirm('¿Eliminar esta propuesta? El programa actual no se toca.')">
+        <form method="post" action="/programador/eliminar" data-confirmar="¿Eliminar esta propuesta? El programa actual no se toca.">
             <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$propuesta['id']; ?>">
             <button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i> Eliminar propuesta</button>
         </form>
@@ -144,12 +144,12 @@ $hoyPos = $min ? round((strtotime($r['hoy'] ?? date('Y-m-d')) - strtotime($min))
                     <td class="prg-acepta">
                         <?php if ($x['aceptada']): ?>
                             <span class="prg-guardada"><i class="fa-solid fa-check"></i> Aceptada <?php echo s(date('d/m/Y', strtotime($x['aceptada']['fecha']))); ?></span>
-                            <form method="post" action="/programador/deshacer" onsubmit="return confirm('¿Deshacer? Las actividades de esta partida vuelven a como estaban antes de aceptar (se pierden ediciones hechas después).')">
+                            <form method="post" action="/programador/deshacer" data-confirmar="¿Deshacer? Las actividades de esta partida vuelven a como estaban antes de aceptar (se pierden ediciones hechas después).">
                                 <input type="hidden" name="proyecto" value="<?php echo $pidP; ?>"><input type="hidden" name="id" value="<?php echo (int)$propuesta['id']; ?>"><input type="hidden" name="partida" value="<?php echo (int)$x['id']; ?>">
                                 <button class="btn btn-sm btn-ghost" type="submit">Deshacer</button>
                             </form>
                         <?php elseif ($x['aplicables'] > 0): ?>
-                            <form method="post" action="/programador/aceptar" onsubmit="return confirm('¿Aceptar la propuesta de «<?php echo s(addslashes($x['nombre'])); ?>»? Se actualizarán <?php echo (int)$x['aplicables']; ?> actividades en el programa de obra.')">
+                            <form method="post" action="/programador/aceptar" data-confirmar="¿Aceptar la propuesta de «<?php echo s($x['nombre']); ?>»? Se actualizarán <?php echo (int)$x['aplicables']; ?> actividades en el programa de obra.">
                                 <input type="hidden" name="proyecto" value="<?php echo $pidP; ?>"><input type="hidden" name="id" value="<?php echo (int)$propuesta['id']; ?>"><input type="hidden" name="partida" value="<?php echo (int)$x['id']; ?>">
                                 <button class="btn btn-sm btn-primary" type="submit"><i class="fa-solid fa-check"></i> Aceptar (<?php echo (int)$x['aplicables']; ?>)</button>
                             </form>

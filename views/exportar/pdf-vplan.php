@@ -1,5 +1,5 @@
 <?php
-// Variables: $paginas, $proyecto, $logoC, $logoE
+// Variables: $paginas, $proyecto, $logoC, $logoE (cada página trae su lámina, sus bloques y su tamaño de hoja)
 use Model\VplanTabla;
 $fd = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '';
 $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
@@ -8,72 +8,137 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>
-    @page { margin: 0.9cm 1cm; }
+    @page { margin: 0; }
     body { font-family: DejaVu Sans, sans-serif; color: #000; margin: 0; }
-    .hoja { position: relative; height: 25.9cm; page-break-after: always; }
+    .hoja { position: relative; overflow: hidden; page-break-after: always; }
     .hoja.ultima { page-break-after: auto; }
+    .blk { position: absolute; }
     table { border-collapse: collapse; }
-    .cab { width: 100%; } .cab td { vertical-align: middle; padding: 0; }
-    .titulo { text-align: center; font-weight: bold; font-size: 20pt; line-height: 1.1; }
-    .titulo small { display: block; font-size: 22pt; }
-    .plano { width: 20.1cm; text-align: center; }
-    .plano img { border: 1pt solid #444; }
-    .fija { position: absolute; left: 0; bottom: 0.9cm; width: 20.1cm; }
-    .fija td { padding: 0; border: none; }
     .t { width: 100%; margin-bottom: 7pt; }
-    .t th, .t td { border: 0.7pt solid #000; padding: 1.5pt 3pt; vertical-align: middle; }
+    .t th, .t td { border: 0.7pt solid #000; vertical-align: middle; }
     .t th { background: #5b82b4; color: #fff; text-align: center; font-weight: bold; }
     .c { text-align: center; }
-    .e0 { font-size: 9pt; } .e1 { font-size: 7.5pt; } .e2 { font-size: 6.2pt; } .e3 { font-size: 5.2pt; } .e4 { font-size: 4.4pt; }
-    .e0 .t th, .e0 .t td { padding: 3pt 4pt; } .e1 .t th, .e1 .t td { padding: 2pt 3pt; } .e2 .t th, .e2 .t td { padding: 1.5pt 3pt; } .e3 .t th, .e3 .t td { padding: 0.9pt 2pt; } .e4 .t th, .e4 .t td { padding: 0.5pt 1.5pt; }
     .tit { font-size: 1.25em; letter-spacing: 0.04em; }
     .punch th { background: #fff0c4; color: #000; } .sec th { background: #bfe3f7; color: #000; } .otro th { background: #d9d9d9; color: #000; }
+    .t .subt td { background: #e2e8f0; font-weight: bold; }
     .verde { background: #059669; } .amarillo { background: #d97706; } .rojo { background: #dc2626; color: #fff; }
     .rojotxt { color: #dc2626; }
-    .rb { width: 1pt; }
-    .leg { border: 0.8pt solid #000; background: #fff; } .leg td { border: none; padding: 0 4pt; font-size: 7pt; white-space: nowrap; } .leg td.sw { border: 0.7pt solid #000; width: 22pt; } .leg td.leg-tit { text-decoration: underline; font-weight: bold; padding: 2pt 4pt; border-bottom: 0.8pt solid #000; }
-    .pie { position: absolute; bottom: 0; left: 0; width: 100%; font-size: 7.5pt; color: #dc2626; }
-    .pie td { border: none; padding: 0; }
+    .leg { border: 0.8pt solid #000; background: #fff; } .leg td { border: none; padding: 0 4pt; white-space: nowrap; } .leg td.sw { border: 0.7pt solid #000; width: 22pt; } .leg td.leg-tit { text-decoration: underline; font-weight: bold; padding: 2pt 4pt; border-bottom: 0.8pt solid #000; }
 </style></head><body>
-<?php foreach ($paginas as $pi => $d): $l = $d['lamina']; $rec1 = $d['rec1']; $rec2 = $d['rec2']; ?>
-<style>.pc<?php echo $pi; ?> th { background: <?php echo s($d['colorTabla'][0]); ?>; color: <?php echo s($d['colorTabla'][1]); ?>; }</style>
-<div class="hoja <?php echo $pi === count($paginas) - 1 ? 'ultima' : ''; ?>">
-    <table class="cab"><tr>
-        <td style="width:20%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:48pt;max-width:150pt"><?php endif; ?></td>
-        <td class="titulo"><?php echo s($proyecto->codigo ?: $proyecto->nombre); ?><small><?php echo s(mb_strtoupper($l->titulo)); ?></small></td>
-        <td style="width:20%;text-align:right"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:48pt;max-width:150pt"><?php endif; ?></td>
-    </tr></table>
-    <div style="height:6pt"></div>
-    <table style="width:100%"><tr>
-        <td style="width:50%;vertical-align:top;padding-right:0.4cm">
-            <?php // Plano centrado en su mitad; si es angosto queda al centro ?>
-            <div class="plano"><?php if ($d['plano'] && $d['plano_dim']): ?><img src="<?php echo $d['plano']; ?>" style="width:<?php echo $d['plano_dim'][0]; ?>cm;height:<?php echo $d['plano_dim'][1]; ?>cm"><?php else: ?>&nbsp;<?php endif; ?></div>
-        </td>
-        <td style="vertical-align:top" class="<?php echo $d['escala']; ?>">
-            <table class="t pc<?php echo $pi; ?>">
-                <tr><th colspan="<?php echo 6 + 2 * ((int)$rec1 + (int)$rec2); ?>" class="tit"><?php echo s(mb_strtoupper($d['partida'] ? $d['partida']->nombre : '')); ?></th></tr>
-                <?php $rs = ($rec1 || $rec2) ? 2 : 1; ?>
-                <tr><th rowspan="<?php echo $rs; ?>"># SEQ</th><th rowspan="<?php echo $rs; ?>" style="width:30%">TASK</th><th rowspan="<?php echo $rs; ?>">START</th><th rowspan="<?php echo $rs; ?>">FINISH</th><?php if ($rec1): ?><th colspan="2">RECOVERY</th><?php endif; ?><?php if ($rec2): ?><th colspan="2">RECOVERY 02</th><?php endif; ?><th rowspan="<?php echo $rs; ?>">%</th><th rowspan="<?php echo $rs; ?>">CONSTRAINS</th></tr>
-                <?php if ($rec1 || $rec2): ?><tr><?php if ($rec1): ?><th>START</th><th>FINISH</th><?php endif; ?><?php if ($rec2): ?><th>START</th><th>FINISH</th><?php endif; ?></tr><?php endif; ?>
-                <?php foreach ($d['tareas'] as $t): $a = $t['actividad']; $p = (int)$a->progreso; ?>
-                    <tr>
-                        <td class="c"><?php echo (int)$t['seq']; ?></td>
-                        <td><?php echo s($a->nombre); ?></td>
-                        <td class="c"><?php echo s($fd($a->fecha_inicio)); ?></td><td class="c"><?php echo s($fd($a->fecha_fin)); ?></td>
-                        <?php if ($rec1): ?><td class="c"><?php echo s($fd($t['r1_inicio'])); ?></td><td class="c"><?php echo s($fd($t['r1_fin'])); ?></td><?php endif; ?>
-                        <?php if ($rec2): ?><td class="c rojotxt"><?php echo s($fd($t['r2_inicio'])); ?></td><td class="c rojotxt"><?php echo s($fd($t['r2_fin'])); ?></td><?php endif; ?>
-                        <td class="c <?php echo $p >= 100 ? 'verde' : ($p > 0 ? 'amarillo' : ''); ?>"><?php echo $p; ?>%</td>
-                        <td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:13pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
-
-            <?php foreach ($d['tablas'] as $b): $tb = $b['tabla']; $campos = $b['campos']; ?>
+<?php
+$fd = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '';
+$MM = 72 / 25.4;   // mm -> pt
+foreach ($paginas as $pi => $d):
+    $l = $d['lamina'];
+    $K = \Classes\VplanDiseno::factor($l);
+    $W = $l->ancho_mm * $MM; $H = $l->alto_mm * $MM;
+    $nRec = (int)$d['nRec'];
+    $alin = ['izquierda' => 'left', 'centro' => 'center', 'derecha' => 'right'];
+    // Imagen ajustada al bloque sin deformarla; $ax/$ay = 0 pega a la izquierda/arriba, 0.5 centra, 1 a la derecha/abajo
+    $ajustar = function (?string $archivo, string $src, float $bw, float $bh, float $ax, float $ay, string $extra = ''): string {
+        $ruta = $archivo ? \Classes\Imagenes::CARPETA_VPLAN . '/' . basename($archivo) : null;
+        $dim = $ruta && is_file($ruta) ? @getimagesize($ruta) : false;
+        if (!$dim || !$dim[0] || !$dim[1]) return '';
+        $k = min($bw / $dim[0], $bh / $dim[1]);
+        $w = $dim[0] * $k; $h = $dim[1] * $k;
+        return '<img src="' . $src . '" style="position:absolute;left:' . round(($bw - $w) * $ax, 2) . 'pt;top:' . round(($bh - $h) * $ay, 2) . 'pt;width:' . round($w, 2) . 'pt;height:' . round($h, 2) . 'pt;' . $extra . '">';
+    };
+?>
+<div class="hoja <?php echo $pi === count($paginas) - 1 ? 'ultima' : ''; ?>" style="width:<?php echo floor($W); ?>pt;height:<?php echo floor($H) - 2; ?>pt">
+<?php foreach ($d['bloques'] as $bi => $b):
+    $cfg = $b->config();
+    if (!empty($cfg['oculto'])) continue;
+    $bw = (float)$b->w / 100 * $W; $bh = (float)$b->h / 100 * $H;
+    $caja = 'left:' . round((float)$b->x / 100 * $W, 2) . 'pt;top:' . round((float)$b->y / 100 * $H, 2) . 'pt;width:' . round($bw, 2) . 'pt;height:' . round($bh, 2) . 'pt;';
+    switch ($b->tipo):
+        case 'titulo': case 'supervisor': case 'fecha': case 'texto':
+            $texto = \Classes\Vplan::textoDeBloque($b, $l, $proyecto);
+            $propio = trim((string)($cfg['texto'] ?? '')) !== '';
+            $def = ['titulo' => 20, 'supervisor' => 7.5, 'fecha' => 7.5, 'texto' => 10][$b->tipo];
+            $al = $cfg['alinear'] ?? ['titulo' => 'centro', 'supervisor' => 'izquierda', 'fecha' => 'derecha', 'texto' => 'izquierda'][$b->tipo];
+            $pie = in_array($b->tipo, ['supervisor', 'fecha'], true);
+            $fs = (!empty($cfg['tamano']) ? (float)$cfg['tamano'] : $def) * $K;
+            $color = !empty($cfg['color']) ? $cfg['color'] : ($pie ? '#dc2626' : '#000');
+            ?>
+            <div class="blk" style="<?php echo $caja; ?>"><table style="width:<?php echo round($bw, 2); ?>pt;height:<?php echo round($bh, 2); ?>pt"><tr><td style="vertical-align:middle;text-align:<?php echo $alin[$al]; ?>;font-size:<?php echo round($fs, 2); ?>pt;line-height:1.1;color:<?php echo s($color); ?>;<?php echo ($b->tipo === 'titulo' || !empty($cfg['negrita'])) ? 'font-weight:bold;' : ''; ?>">
+                <?php foreach (explode("\n", $texto) as $i => $ln): ?><div<?php echo ($b->tipo === 'titulo' && !$propio && $i === 1) ? ' style="font-size:' . round($fs * 1.1, 2) . 'pt"' : ''; ?>><?php echo s($ln); ?></div><?php endforeach; ?>
+            </td></tr></table></div>
+            <?php break;
+        case 'logo':
+            $es = ($cfg['cual'] ?? '') === 'empresa';
+            $al = $cfg['alinear'] ?? ($es ? 'derecha' : 'izquierda');
+            $src = $es ? $logoE : $logoC;
+            $arch = $es ? $proyecto->logoEmpresa() : $proyecto->contratista_logo;
+            if ($src && $arch):
+                $ruta = __DIR__ . '/../../public/build/img/logos/' . basename($arch);
+                $dim = is_file($ruta) ? @getimagesize($ruta) : false;
+                if ($dim && $dim[0] && $dim[1]): $kk = min($bw / $dim[0], $bh / $dim[1]); $w = $dim[0] * $kk; $h = $dim[1] * $kk; ?>
+                    <div class="blk" style="<?php echo $caja; ?>"><img src="<?php echo $src; ?>" style="position:absolute;left:<?php echo round(($bw - $w) * ['izquierda' => 0, 'centro' => 0.5, 'derecha' => 1][$al], 2); ?>pt;top:<?php echo round(($bh - $h) / 2, 2); ?>pt;width:<?php echo round($w, 2); ?>pt;height:<?php echo round($h, 2); ?>pt"></div>
+                <?php endif;
+            endif;
+            break;
+        case 'plano': ?>
+            <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->marcas_png ?: $l->plano, (string)$d['plano'], $bw, $bh, 0.5, 0.5, 'border:0.8pt solid #444;'); ?></div>
+            <?php break;
+        case 'simbologia': ?>
+            <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->simbologia, (string)$d['simb'], $bw, $bh, 0, 1); ?></div>
+            <?php break;
+        case 'schedule':
+            if (!empty($d['simb_schedule'])): ?>
+                <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->imagenSimbologiaSchedule(), $d['simb_schedule'], $bw, $bh, 1, 1); ?></div>
+            <?php else: $fs = 7 * $K; ?>
+                <div class="blk" style="<?php echo $caja; ?>"><table style="width:<?php echo round($bw, 2); ?>pt;height:<?php echo round($bh, 2); ?>pt"><tr><td style="vertical-align:bottom;text-align:right;padding:0"><table class="leg" align="right" style="font-size:<?php echo round($fs, 2); ?>pt;width:<?php echo round(5.6 / 2.54 * 72 * $K, 1); ?>pt">
+                    <tr><td colspan="2" class="leg-tit">SYMBOLOGY FOR SCHEDULE</td></tr>
+                    <tr><td class="sw verde"></td><td>COMPLETE</td></tr>
+                    <tr><td class="sw amarillo"></td><td>IN PROGRESS</td></tr>
+                    <tr><td class="sw rojo"></td><td>ON HOLD</td></tr>
+                    <tr><td class="sw c"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo(0); ?>" style="width:<?php echo round(9 * $K, 1); ?>pt"></td><td>CONSTRAIN</td></tr>
+                </table></td></tr></table></div>
+            <?php endif;
+            break;
+        case 'tareas':
+        case 'tabla':
+            if ($b->tipo === 'tareas') {
+                $td = $d['porBloque'][spl_object_id($b)] ?? null;
+                if (!$td) break;
+                $idx = \Classes\VplanDiseno::escalaTareas($l, $b, $td, $nRec);
+            } else {
+                $bt = $d['tablasPorId'][(int)($cfg['tabla_id'] ?? 0)] ?? null;
+                if (!$bt) break;
+                $idx = \Classes\VplanDiseno::escalaTabla($l, $b, $bt);
+            }
+            $idx = min(count(\Classes\VplanDiseno::ESCALAS) - 1, $idx + (int)($d['extra'] ?? 0));
+            [, $fz, $pz] = \Classes\VplanDiseno::ESCALAS[$idx];
+            $fs = round($fz * $K, 2); $pv = round($pz * $K, 2); $ph = round($pz * $K * 1.8 + 0.5, 2);
+            ?>
+            <style>.bk<?php echo $pi . '_' . $bi; ?> .t th, .bk<?php echo $pi . '_' . $bi; ?> .t td { padding: <?php echo $pv; ?>pt <?php echo $ph; ?>pt; }<?php if ($b->tipo === 'tareas'): ?> .bk<?php echo $pi . '_' . $bi; ?> th { background: <?php echo s($td['color'][0]); ?>; color: <?php echo s($td['color'][1]); ?>; }<?php endif; ?></style>
+            <div class="blk bk<?php echo $pi . '_' . $bi; ?>" style="<?php echo $caja; ?>font-size:<?php echo $fs; ?>pt">
+            <?php if ($b->tipo === 'tareas'): ?>
+                <table class="t">
+                    <tr><th colspan="<?php echo 6 + 2 * $nRec; ?>" class="tit"><?php echo s($td['titulo']); ?></th></tr>
+                    <?php $rs = $nRec ? 2 : 1; $cw = \Classes\VplanDiseno::columnasTareas(\Classes\VplanDiseno::anchoRefCm($b), $nRec, $fz, $pz); $ci = 4; ?>
+                    <tr><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[0]; ?>%"># SEQ</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[1]; ?>%">TASK</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[2]; ?>%">START</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[3]; ?>%">FINISH</th><?php for ($r = 1; $r <= $nRec; $r++): ?><th colspan="2"><?php echo \Classes\Vplan::etiquetaRecovery($r); ?></th><?php endfor; ?><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[4 + 2 * $nRec]; ?>%">%</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[5 + 2 * $nRec]; ?>%">CONSTRAINS</th></tr>
+                    <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th style="width:<?php echo $cw[2 + 2 * $r]; ?>%">START</th><th style="width:<?php echo $cw[3 + 2 * $r]; ?>%">FINISH</th><?php endfor; ?></tr><?php endif; ?>
+                    <?php foreach ($td['grupos'] as $g): ?>
+                        <?php if ($td['subtitulos']): ?><tr class="subt"><td colspan="<?php echo 6 + 2 * $nRec; ?>"><?php echo s(mb_strtoupper($g['partida']->nombre)); ?></td></tr><?php endif; ?>
+                        <?php foreach ($g['tareas'] as $t): $a = $t['actividad']; $pg = (int)$a->progreso; ?>
+                        <tr>
+                            <td class="c"><?php echo (int)$t['seq']; ?></td>
+                            <td><?php echo s($a->nombre); ?></td>
+                            <td class="c"><?php echo s($fd($a->fecha_inicio)); ?></td><td class="c"><?php echo s($fd($a->fecha_fin)); ?></td>
+                            <?php foreach ($t['rec'] as $r => $rc): ?><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['inicio'])); ?></td><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['fin'])); ?></td><?php endforeach; ?>
+                            <td class="c <?php echo $pg >= 100 ? 'verde' : ($pg > 0 ? 'amarillo' : ''); ?>"><?php echo $pg; ?>%</td>
+                            <td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:<?php echo round($fz * 1.45 * $K, 1); ?>pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </table>
+            <?php else: $b2 = $bt; $tb = $b2['tabla']; $campos = $b2['campos']; ?>
                 <?php if ($tb->tipo === 'punch'): ?>
                     <table class="t punch">
-                        <tr><th rowspan="2" colspan="2" class="tit"><?php echo s($tb->titulo); ?></th><th colspan="2">DATE</th><th rowspan="2">%</th></tr>
-                        <tr><th>START</th><th>FINISH</th></tr>
-                        <?php foreach ($b['filas'] as $f): $p = $f['pct'] ?? ''; ?>
+                        <tr><th rowspan="2" colspan="2" class="tit"><?php echo s($tb->titulo); ?></th><th colspan="2">DATE</th><th rowspan="2" style="width:10%">%</th></tr>
+                        <tr><th style="width:20%">START</th><th style="width:20%">FINISH</th></tr>
+                        <?php foreach ($b2['filas'] as $f): $p = $f['pct'] ?? ''; ?>
                             <tr><td class="c" style="width:6%"><?php echo (int)$f['n']; ?></td><td><?php echo s($f['descripcion'] ?? ''); ?></td><td class="c"><?php echo s($fd($f['inicio'] ?? '')); ?></td><td class="c"><?php echo s($fd($f['fin'] ?? '')); ?></td>
                                 <td class="c <?php echo $p !== '' && (int)$p >= 100 ? 'verde' : ($p !== '' && (int)$p > 0 ? 'amarillo' : ''); ?>"><?php echo $p === '' ? '' : (int)$p . '%'; ?></td></tr>
                         <?php endforeach; ?>
@@ -81,48 +146,32 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
                 <?php elseif ($tb->tipo === 'restricciones'): ?>
                     <table class="t">
                         <tr><th colspan="2" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <?php foreach ($b['filas'] as $f): ?>
-                            <tr><td class="c" style="width:9%"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$f['n']); ?>" style="width:14pt"></td><td><?php echo s($f['descripcion'] ?? ''); ?></td></tr>
+                        <?php foreach ($b2['filas'] as $f): ?>
+                            <tr><td class="c" style="width:9%"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$f['n']); ?>" style="width:<?php echo round($fz * 1.55 * $K, 1); ?>pt"></td><td><?php echo s($f['descripcion'] ?? ''); ?></td></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php elseif ($tb->tipo === 'secundarias'): ?>
                     <table class="t sec">
                         <tr><th colspan="3" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <tr><th>ELEMENTO</th><th>FECHA</th><th>FECHA (RECOVERY)</th></tr>
-                        <?php foreach ($b['filas'] as $f): $est = $f['estado'] ?? 'proceso'; $cl = ['completo' => 'verde', 'proceso' => 'amarillo', 'espera' => 'rojo'][$est] ?? ''; ?>
+                        <tr><th style="width:50%">ELEMENTO</th><th style="width:25%">FECHA</th><th style="width:25%">FECHA (RECOVERY)</th></tr>
+                        <?php foreach ($b2['filas'] as $f): $est = $f['estado'] ?? 'proceso'; $cl = ['completo' => 'verde', 'proceso' => 'amarillo', 'espera' => 'rojo'][$est] ?? ''; ?>
                             <tr class="<?php echo $cl; ?>"><td class="<?php echo $cl; ?>"><?php echo s($f['elemento'] ?? ''); ?></td><td class="c <?php echo $cl; ?>"><?php echo s($f['fecha'] ?? ''); ?></td><td class="c <?php echo $cl; ?>"><?php echo s($f['recovery'] ?? ''); ?></td></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php else: ?>
                     <table class="t otro">
                         <tr><th colspan="<?php echo count($campos) + 1; ?>" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <tr><th>N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
-                        <?php foreach ($b['filas'] as $f): ?>
+                        <tr><th style="width:8%">N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
+                        <?php foreach ($b2['filas'] as $f): ?>
                             <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td><?php echo s($f[$k] ?? ''); ?></td><?php endforeach; ?></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php endif; ?>
-            <?php endforeach; ?>
-        </td>
-    </tr></table>
-    <?php // Simbología y SYMBOLOGY FOR SCHEDULE: fijas abajo, justo encima del supervisor ?>
-    <div class="fija"><table style="width:100%"><tr>
-        <td style="vertical-align:bottom;width:60%"><?php if ($d['simb']): ?><img src="<?php echo $d['simb']; ?>" style="max-height:4.6cm;max-width:12cm"><?php endif; ?></td>
-        <td style="vertical-align:bottom;text-align:right">
-            <?php if (!empty($d['simb_schedule'])): ?>
-            <img src="<?php echo $d['simb_schedule']; ?>" style="max-width:7cm;max-height:4.6cm">
-            <?php else: ?>
-            <table class="leg" align="right" style="width:5.6cm">
-                <tr><td colspan="2" class="leg-tit">SYMBOLOGY FOR SCHEDULE</td></tr>
-                <tr><td class="sw verde"></td><td>COMPLETE</td></tr>
-                <tr><td class="sw amarillo"></td><td>IN PROGRESS</td></tr>
-                <tr><td class="sw rojo"></td><td>ON HOLD</td></tr>
-                <tr><td class="sw c"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo(0); ?>" style="width:9pt"></td><td>CONSTRAIN</td></tr>
-            </table>
             <?php endif; ?>
-        </td>
-    </tr></table></div>
-    <table class="pie"><tr><td><?php echo s($l->supervisor ? 'SUPERVISOR: ' . $l->supervisor : ''); ?></td><td style="text-align:right">UPDATED: <?php echo s($actualizado); ?></td></tr></table>
+            </div>
+            <?php break;
+    endswitch;
+endforeach; ?>
 </div>
 <?php endforeach; ?>
 </body></html>

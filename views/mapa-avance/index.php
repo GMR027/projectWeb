@@ -25,7 +25,7 @@ $nomAct = fn($id) => isset($actividades[$id]) ? $actividades[$id]['codigo'] . ' 
         <button class="btn btn-sm btn-ghost" type="submit">Guardar</button>
     </form>
     <p class="text-muted text-sm">Ejemplo: una lámina con 100 m de línea roja, 200 m amarilla y 300 m verde da (100·0 + 200·50 + 300·100) ÷ 600 = 66.7 %. Cualquier otro color (morado, azul, naranja, gris…) se ignora y no afecta el cálculo. Las marcas se asignan a la actividad vinculada a la lámina o, si prefieres, por <em>capa</em> (abajo).</p>
-    <form method="post" action="/mapa-avance/calcular" class="inc-filtros" onsubmit="return confirm('Se guardará la foto de hoy y se crearán propuestas de avance. No se cambia nada hasta que aceptes. ¿Continuar?')">
+    <form method="post" action="/mapa-avance/calcular" class="inc-filtros" data-confirmar="Se guardará la foto de hoy y se crearán propuestas de avance. No se cambia nada hasta que aceptes. ¿Continuar?">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Proponer cambios cuando la diferencia sea de al menos <input type="number" name="umbral" min="1" max="50" value="5" style="width:6rem"> puntos</label>
         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-calculator"></i> Calcular y proponer avance</button>

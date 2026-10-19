@@ -197,6 +197,20 @@
         var f = this.files[0]; this.value = ''; if (!f) return;
         subirImagen(f, function (src) { ponerImagen(src); $('rd-p-imagen').hidden = true; });
     });
+    // Símbolo de la biblioteca: se pasa a PNG (los SVG no se exportan bien) y se sube como imagen del documento
+    var selSimbolo = $('rd-img-simbolo');
+    if (selSimbolo) selSimbolo.addEventListener('change', function () {
+        var s = this.value; this.value = ''; if (!s) return;
+        var im = new Image();
+        im.onload = function () {
+            var k = 256 / Math.max(im.naturalWidth || 256, im.naturalHeight || 256), cv = document.createElement('canvas');
+            cv.width = Math.round((im.naturalWidth || 256) * k); cv.height = Math.round((im.naturalHeight || 256) * k);
+            cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+            cv.toBlob(function (b) { if (b) subirImagen(b, function (src) { ponerImagen(src, 96); $('rd-p-imagen').hidden = true; }); else estado('No se pudo preparar el símbolo', true); }, 'image/png');
+        };
+        im.onerror = function () { estado('No se pudo cargar el símbolo', true); };
+        im.src = s;
+    });
     var selEditor = $('rd-img-editor');
     if (selEditor) selEditor.addEventListener('change', function () { var s = this.value; this.value = ''; if (s) { ponerImagen(s); $('rd-p-imagen').hidden = true; } });
 

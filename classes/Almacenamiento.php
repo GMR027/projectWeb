@@ -24,7 +24,7 @@ class Almacenamiento
     public static function desglose(int $proyectoId): array
     {
         $p = Proyecto::find($proyectoId);
-        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Redactor (documentos)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Logos y carátula' => 0];
+        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Redactor (documentos)' => 0, 'SheetFlow (tablas)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Logos y carátula' => 0];
 
         foreach (Archivo::deProyecto($proyectoId) as $a) $r['Archivos'] += self::tam((string)$a->ruta()) ?: 0;
 
@@ -45,6 +45,10 @@ class Almacenamiento
         }
         try {
             foreach (\Model\RedactorDocumento::deProyecto($proyectoId) as $doc) $r['Redactor (documentos)'] += $doc->bytes();
+        } catch (\Throwable $e) {
+        }
+        try {
+            $r['SheetFlow (tablas)'] += \Model\SheetflowHoja::bytesDe($proyectoId);
         } catch (\Throwable $e) {
         }
         try {

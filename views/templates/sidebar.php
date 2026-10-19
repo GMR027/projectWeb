@@ -10,7 +10,7 @@ if ($rol === 'admin') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Portafolio de Proyectos', 'match' => '/proyectos'];
     $menu[] = ['url' => '/usuarios', 'icon' => 'fa-users-gear', 'label' => 'Usuarios y Accesos', 'match' => '/usuarios'];
     $menu[] = ['url' => '/bandeja', 'icon' => 'fa-inbox', 'label' => 'Bandeja de entrada', 'match' => '/bandeja', 'badge' => bandeja_sin_leer()];
-    $menu[] = ['url' => '/sistema', 'icon' => 'fa-gear', 'label' => 'Ajustes', 'match' => '/sistema'];
+    $menu[] = ['url' => '/sistema', 'icon' => 'fa-gear', 'label' => 'Ajustes de app', 'match' => '/sistema'];
 } elseif ($rol === 'cliente') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Mis Proyectos', 'match' => '/proyectos'];
     if (puede_crear_proyecto()) $menu[] = ['url' => '/proyectos/crear', 'icon' => 'fa-plus', 'label' => 'Nuevo Proyecto', 'match' => '/proyectos/crear'];
@@ -20,54 +20,14 @@ if ($rol === 'admin') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos Asignados', 'match' => '/proyectos'];
 }
 
-// Accesos del proyecto en curso (solo si el usuario puede verlo)
-$menuProyecto = [];
+// Accesos del proyecto en curso (solo si el usuario puede verlo): mismas categorías que la barra de iconos
+require_once __DIR__ . '/herramientas-proyecto.php';
+$gruposProyecto = [];
 if ($proyectoCtx) {
     $proyectoSidebar = \Model\Proyecto::find($proyectoCtx);
-    if ($proyectoSidebar && puede_ver_proyecto($proyectoSidebar)) {
-        $menuProyecto[] = ['url' => "/programa?proyecto=$proyectoCtx", 'icon' => 'fa-list-check', 'label' => 'Programa', 'match' => '/programa'];
-        $menuProyecto[] = ['url' => "/dependencias?proyecto=$proyectoCtx", 'icon' => 'fa-diagram-project', 'label' => 'Dependencias de obra', 'match' => '/dependencias'];
-        $menuProyecto[] = ['url' => "/lookahead?proyecto=$proyectoCtx", 'icon' => 'fa-binoculars', 'label' => 'Lookahead 4S', 'match' => '/lookahead'];
-        $menuProyecto[] = ['url' => "/vplan?proyecto=$proyectoCtx", 'icon' => 'fa-map-location-dot', 'label' => 'vPlan', 'match' => '/vplan'];
-        $menuProyecto[] = ['url' => "/lastplanner?proyecto=$proyectoCtx", 'icon' => 'fa-note-sticky', 'label' => 'Last Planner', 'match' => '/lastplanner'];
-        $menuProyecto[] = ['url' => "/reportes?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-list', 'label' => 'Reporte diario', 'match' => '/reportes'];
-        $menuProyecto[] = ['url' => "/bitacora?proyecto=$proyectoCtx", 'icon' => 'fa-book', 'label' => 'Bitácora de obra', 'match' => '/bitacora'];
-        $menuProyecto[] = ['url' => "/minutas?proyecto=$proyectoCtx", 'icon' => 'fa-handshake', 'label' => 'Minutas', 'match' => '/minutas'];
-        $menuProyecto[] = ['url' => "/evidencias?proyecto=$proyectoCtx", 'icon' => 'fa-camera-retro', 'label' => 'Evidencias', 'match' => '/evidencias'];
-        $menuProyecto[] = ['url' => "/archivos?proyecto=$proyectoCtx", 'icon' => 'fa-folder-open', 'label' => 'Archivo', 'match' => '/archivos'];
-        $menuProyecto[] = ['url' => "/curvas?proyecto=$proyectoCtx", 'icon' => 'fa-chart-line', 'label' => 'Curvas de productividad', 'match' => '/curvas'];
-        $menuProyecto[] = ['url' => "/msr?proyecto=$proyectoCtx", 'icon' => 'fa-truck-ramp-box', 'label' => 'MSR · Materiales', 'match' => '/msr'];
-        $menuProyecto[] = ['url' => "/cambios?proyecto=$proyectoCtx", 'icon' => 'fa-file-circle-exclamation', 'label' => 'Órdenes de cambio', 'match' => '/cambios'];
-        $menuProyecto[] = ['url' => "/lineas-base?proyecto=$proyectoCtx", 'icon' => 'fa-timeline', 'label' => 'Líneas base', 'match' => '/lineas-base'];
-        $menuProyecto[] = ['url' => "/datos-obra?proyecto=$proyectoCtx", 'icon' => 'fa-file-contract', 'label' => 'Datos de obra', 'match' => '/datos-obra'];
-        if (puede_gestionar_proyecto($proyectoSidebar)) {
-            $menuProyecto[] = ['url' => "/submittals?proyecto=$proyectoCtx", 'icon' => 'fa-boxes-packing', 'label' => 'Submittals', 'match' => '/submittals'];
-            $menuProyecto[] = ['url' => "/materiales?proyecto=$proyectoCtx", 'icon' => 'fa-cubes', 'label' => 'Catálogo de materiales', 'match' => '/materiales'];
-        }
-        $menuProyecto[] = ['url' => "/plantillas?proyecto=$proyectoCtx", 'icon' => 'fa-layer-group', 'label' => 'Tipo de obra', 'match' => '/plantillas'];
-        $menuProyecto[] = ['url' => "/seguridad?proyecto=$proyectoCtx", 'icon' => 'fa-helmet-safety', 'label' => 'Seguridad y permisos', 'match' => '/seguridad'];
-        $menuProyecto[] = ['url' => "/punch?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-check', 'label' => 'Punch list', 'match' => '/punch'];
-        $menuProyecto[] = ['url' => "/mapa-avance?proyecto=$proyectoCtx", 'icon' => 'fa-map-location-dot', 'label' => 'Mapa de avance', 'match' => '/mapa-avance'];
-        $menuProyecto[] = ['url' => "/revisiones?proyecto=$proyectoCtx", 'icon' => 'fa-clipboard-check', 'label' => 'Revisiones', 'match' => '/revisiones'];
-        $menuProyecto[] = ['url' => "/normativa?proyecto=$proyectoCtx", 'icon' => 'fa-scale-balanced', 'label' => 'Normativa y especificaciones', 'match' => '/normativa'];
-        $menuProyecto[] = ['url' => "/calendario?proyecto=$proyectoCtx", 'icon' => 'fa-calendar-days', 'label' => 'Calendario', 'match' => '/calendario'];
-        $menuProyecto[] = ['url' => "/graficos?proyecto=$proyectoCtx", 'icon' => 'fa-pen-ruler', 'label' => 'Editor', 'match' => '/graficos'];
-        $menuProyecto[] = ['url' => "/redactor?proyecto=$proyectoCtx", 'icon' => 'fa-file-pen', 'label' => 'Redactor', 'match' => '/redactor'];
-        $menuProyecto[] = ['url' => "/simbolos?proyecto=$proyectoCtx", 'icon' => 'fa-shapes', 'label' => 'Símbolos', 'match' => '/simbolos'];
-        $menuProyecto[] = ['url' => "/view360?proyecto=$proyectoCtx", 'icon' => 'fa-street-view', 'label' => 'View360', 'match' => '/view360'];
-        if (is_admin()) $menuProyecto[] = ['url' => "/programador?proyecto=$proyectoCtx", 'icon' => 'fa-wand-magic-sparkles', 'label' => 'Programador de actividades', 'match' => '/programador'];
-        if (is_admin()) $menuProyecto[] = ['url' => "/inconsistencias?proyecto=$proyectoCtx", 'icon' => 'fa-magnifying-glass-chart', 'label' => 'Inconsistencias de proyecto', 'match' => '/inconsistencias'];
-        if (is_admin()) $menuProyecto[] = ['url' => "/analisis-materiales?proyecto=$proyectoCtx", 'icon' => 'fa-boxes-stacked', 'label' => 'Análisis de materiales', 'match' => '/analisis-materiales'];
-        if (is_admin()) $menuProyecto[] = ['url' => "/propuestas-ia?proyecto=$proyectoCtx", 'icon' => 'fa-robot', 'label' => 'Centro de IA', 'match' => '/propuestas-ia', 'tambien' => ['/informes-ia', '/grabaciones', '/historial-cambios', '/biblioteca-ia']];
-        $menuProyecto[] = ['url' => "/comparador?proyecto=$proyectoCtx", 'icon' => 'fa-code-compare', 'label' => 'Comparador de documentos', 'match' => '/comparador'];
-        if ($rol !== 'visitante') {
-            $menuProyecto[] = ['url' => "/ajustes?proyecto=$proyectoCtx", 'icon' => 'fa-gear', 'label' => 'Ajustes', 'match' => '/ajustes'];
-            $menuProyecto[] = ['url' => "/exportar?proyecto=$proyectoCtx", 'icon' => 'fa-file-export', 'label' => 'Exportar', 'match' => '/exportar'];
-        }
-    }
+    if ($proyectoSidebar && puede_ver_proyecto($proyectoSidebar)) $gruposProyecto = herramientas_proyecto($proyectoSidebar);
 }
-// Los visitantes solo ven las herramientas que se les permitieron
-$menuProyecto = array_values(array_filter($menuProyecto, fn($i) => herramienta_permitida(herramienta_de_ruta($i['match']))));
+$menuProyecto = array_merge(...array_values($gruposProyecto ?: [[]]));
 // Acciones rápidas del proyecto en curso
 $accionesRapidas = [];
 if (!empty($proyectoSidebar) && $menuProyecto && herramienta_permitida('acciones')) {
@@ -95,18 +55,14 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
             </a>
         <?php endforeach; ?>
         <?php if ($menuProyecto || ($proyectoSidebar ?? null)): ?>
-            <?php if (herramienta_permitida('planificador')): ?>
-            <a href="/planificador?proyecto=<?php echo (int)$proyectoCtx; ?>" class="nav-link <?php echo pagina_actual('/planificador') ? 'active' : ''; ?>">
-                <i class="fa-solid fa-diagram-next nav-icon"></i>
-                <span><?php echo s(t('Planificador')); ?></span>
-            </a>
-            <?php endif; ?>
-            <div class="nav-section"><?php echo s(t('Proyecto actual')); ?></div>
-            <?php foreach ($menuProyecto as $item): ?>
-                <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo pagina_actual($item['match']) ? 'active' : ''; ?>">
-                    <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
-                    <span><?php echo s(t($item['label'])); ?></span>
-                </a>
+            <?php foreach ($gruposProyecto as $nombreGrupo => $itemsGrupo): ?>
+                <div class="nav-section"><?php echo s(t($nombreGrupo)); ?></div>
+                <?php foreach ($itemsGrupo as $item): ?>
+                    <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo pagina_actual($item['match']) || array_filter($item['tambien'], 'pagina_actual') ? 'active' : ''; ?>">
+                        <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
+                        <span><?php echo s(t($item['label'])); ?></span>
+                    </a>
+                <?php endforeach; ?>
             <?php endforeach; ?>
         <?php endif; ?>
         <?php if ($accionesRapidas): ?>

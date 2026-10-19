@@ -202,6 +202,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
             <option value="@ordenes">Órdenes de cambio</option>
             <option value="@bitacora">Bitácora</option>
         </optgroup>
+        <?php if (!empty($hojasSheetflow)): ?><optgroup label="Tablas de SheetFlow"><?php foreach ($hojasSheetflow as $h): ?><option value="@sf:<?php echo (int)$h['id']; ?>"><?php echo s($h['nombre']); ?></option><?php endforeach; ?></optgroup><?php endif; ?>
     </select></label>
     <span id="rd-t-medidas" class="rd-t-medidas">
     <label>Filas <input type="number" id="rd-t-filas" min="1" max="50" value="3"></label>
@@ -218,6 +219,11 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <input type="file" id="rd-img-archivo" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
     <label>Elegir una del documento <select id="rd-img-lista"><option value="">— ninguna —</option></select></label>
     <span class="text-sm text-muted">Para ajustar el texto (a un lado, delante, detrás…) haz clic en la imagen.</span>
+    <?php if (!empty($config['simbolos'])): ?>
+        <label>o un símbolo de la biblioteca
+            <select id="rd-img-simbolo"><option value="">— Elegir —</option><?php $cat = null; foreach ($config['simbolos'] as $sm): if ($sm['cat'] !== $cat): if ($cat !== null) echo '</optgroup>'; $cat = $sm['cat']; echo '<optgroup label="' . s($cat) . '">'; endif; ?><option value="<?php echo s($sm['src']); ?>"><?php echo s($sm['nombre']); ?></option><?php endforeach; if ($cat !== null) echo '</optgroup>'; ?></select>
+        </label>
+    <?php endif; ?>
     <?php if ($config['imagenes']): ?>
         <label>o un gráfico del Editor
             <select id="rd-img-editor"><option value="">— Elegir —</option><?php foreach ($config['imagenes'] as $im): ?><option value="<?php echo s($im['src']); ?>"><?php echo s($im['nombre']); ?></option><?php endforeach; ?></select>
@@ -353,6 +359,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
             <option value="@bitacora">Bitácora</option>
             <option value="@festivos">Festivos y paros</option>
         </optgroup>
+        <?php if (!empty($hojasSheetflow)): ?><optgroup label="Tablas de SheetFlow"><?php foreach ($hojasSheetflow as $h): ?><option value="@sf:<?php echo (int)$h['id']; ?>"><?php echo s($h['nombre']); ?></option><?php endforeach; ?></optgroup><?php endif; ?>
     </select></label>
     <button type="button" class="btn btn-sm btn-primary" id="rd-x-prog-ok">Insertar</button>
     <span class="text-sm text-muted">Toma los datos tal como están ahora; no se actualizan solos.</span>

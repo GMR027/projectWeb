@@ -2,7 +2,7 @@
 // Español => English
 return [
     // Menú
-    'Inicio' => 'Home', 'Portafolio de Proyectos' => 'Project portfolio', 'Usuarios y Accesos' => 'Users & access', 'Bandeja de entrada' => 'Inbox', 'Ajustes' => 'Settings',
+    'Inicio' => 'Home', 'Portafolio de Proyectos' => 'Project portfolio', 'Usuarios y Accesos' => 'Users & access', 'Bandeja de entrada' => 'Inbox', 'Ajustes' => 'Settings', 'Ajustes de app' => 'App settings', 'Ajustes de proyecto' => 'Project settings',
     'Mis Proyectos' => 'My projects', 'Nuevo Proyecto' => 'New project', 'Mis Visitantes' => 'My visitors', 'Soporte' => 'Support', 'Proyectos Asignados' => 'Assigned projects',
     'Programa' => 'Schedule', 'Dependencias de obra' => 'Work dependencies', 'Dependencias' => 'Dependencies', 'Lookahead 4S' => 'Lookahead 4W', 'vPlan' => 'vPlan', 'Last Planner' => 'Last Planner', 'Reporte diario' => 'Daily report', 'Bitácora de obra' => 'Site log', 'Bitácora' => 'Site log',
     'Minutas' => 'Minutes', 'Evidencias' => 'Evidence', 'Archivo' => 'Files', 'Curvas de productividad' => 'Productivity curves', 'Curvas' => 'Curves', 'MSR · Materiales' => 'MSR · Materials', 'MSR' => 'MSR',
@@ -27,4 +27,8 @@ return [
     // Sistema
     'Respaldo' => 'Backup', 'Respaldo diario automático' => 'Automatic daily backup', 'Activado' => 'Enabled', 'Hora' => 'Time', 'Generar respaldo' => 'Create backup', 'Automático' => 'Automatic',
     'Disco del servidor' => 'Server disk',
+    // Barra de herramientas del proyecto
+    'Herramientas del proyecto' => 'Project tools', 'Navegación' => 'Navigation', 'Proyecto' => 'Project', 'Planeación' => 'Planning', 'Campo' => 'Field', 'Materiales y cambios' => 'Materials & changes', 'Documentos y diseño' => 'Documents & design',
+    'Inteligencia artificial' => 'Artificial intelligence',
+    'Administración' => 'Administration', 'Especialidades' => 'Specialties', 'Informes de IA' => 'AI reports', 'Grabaciones de reuniones' => 'Meeting recordings', 'Historial de cambios de IA' => 'AI change history', 'Biblioteca de IA' => 'AI library', 'Acciones rápidas' => 'Quick actions',
 ];

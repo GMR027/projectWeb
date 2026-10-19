@@ -209,7 +209,13 @@ class AjustesController
             'proyecto' => $proyecto,
             'lunes' => \Controllers\LookaheadController::lunesDe(''),
             'curvas' => \Model\Curva::deProyecto((int)$proyecto->id),
-            'laminasVplan' => \Model\VplanLamina::deProyecto((int)$proyecto->id)
+            'laminasVplan' => \Model\VplanLamina::deProyecto((int)$proyecto->id),
+            'paquetesVplan' => \Model\VplanPaquete::deProyecto((int)$proyecto->id),
+            'vplanElegido' => (int)($_GET['vplan'] ?? 0),
+            'departamentosBitacora' => array_map(fn($d) => $d->nombre, \Model\BitacoraDepartamento::deProyecto((int)$proyecto->id)),
+            'especialidades' => array_map(fn($e) => $e->nombre, \Model\Especialidad::deProyecto((int)$proyecto->id)),
+            'submittals' => \Model\Submittal::deProyecto((int)$proyecto->id),
+            'actividadesEvidencia' => array_merge(...array_values(array_map(fn($p) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $p->getActividades()), $proyecto->getPartidas()))) ?: []
         ]);
     }
 
@@ -288,10 +294,10 @@ class AjustesController
             $omitidos[] = 'Curvas de productividad: el proyecto no tiene curvas';
         }
 
-        if (\Model\VplanLamina::deProyecto((int)$proyecto->id)) {
+        if (\Model\VplanLamina::visiblesDeProyecto((int)$proyecto->id)) {
             $agregar('05_vPlan', 'vPlan PDF (todas las láminas)', fn() => (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina('todas')->generar("vPlan"));
         } else {
-            $omitidos[] = 'vPlan: el proyecto no tiene láminas';
+            $omitidos[] = 'vPlan: el proyecto no tiene láminas visibles';
         }
 
         $leeme = "Exportación completa de {$proyecto->nombre} ({$proyecto->codigo})\r\nGenerada: " . date('d/m/Y H:i') . "\r\n"
@@ -355,7 +361,7 @@ class AjustesController
                     }
                     break;
                 case 'vplan':
-                    $exporter = (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina($_POST['lamina_id'] ?? 'todas');
+                    $exporter = (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina($_POST['lamina_id'] ?? 'todas')->setPaquete((int)($_POST['paquete_id'] ?? 0));
                     break;
                 case 'lastplanner':
                     $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setOpciones(
@@ -387,6 +393,11 @@ class AjustesController
                     $sub = \Model\Submittal::find(filter_var($_POST['submittal_id'] ?? null, FILTER_VALIDATE_INT));
                     if (!$sub || (int)$sub->proyecto_id !== (int)$proyecto->id) throw new \Exception('Submittal no encontrado');
                     $exporter = (new \Classes\Exportadores\SubmittalPdfExporter($proyecto))->setSubmittal($sub);
+                    break;
+                case 'reportes':
+                    $f = $_POST;
+                    $f['submittal_ids'] = (array)($_POST['submittal_ids'] ?? []);
+                    $exporter = (new \Classes\Exportadores\ReportesPdfExporter($proyecto))->setOpciones((string)($_POST['tipo'] ?? ''), $f);
                     break;
                 case 'xml':
                     $exporter = new \Classes\Exportadores\MspdiXmlExporter($proyecto);
