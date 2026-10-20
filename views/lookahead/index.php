@@ -59,6 +59,7 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
     </div>
     <button type="button" class="btn btn-primary btn-sm" id="la-guardar-ajustes">Guardar ajustes</button>
 
+    <?php if (is_admin()): ?>
     <h4 class="mt-2">Limitaciones</h4>
     <p class="text-muted text-sm">Son las mismas del programa de obra, Last Planner y demás herramientas: renombrarlas o agregarlas aquí las cambia en todos los proyectos.</p>
     <div id="la-limitaciones">
@@ -76,6 +77,7 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
             <button type="button" class="btn btn-ghost btn-sm" data-accion="guardar" title="Agregar"><i class="fa-solid fa-plus"></i></button>
         </div>
     </div>
+    <?php endif; ?>
 </details>
 <?php endif; ?>
 

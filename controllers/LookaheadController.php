@@ -142,10 +142,15 @@ class LookaheadController
         exit;
     }
 
-    /** Crea (sin id), renombra/recolorea (con id) o elimina (accion=eliminar) una limitación. Son comunes a todos los proyectos. */
+    /** Crea (sin id), renombra/recolorea (con id) o elimina (accion=eliminar) una limitación. Son comunes a todos los proyectos: solo el administrador. */
     public static function guardarLimitacion()
     {
         self::gestorOFalla();
+        if (!is_admin()) {   // los tipos son de todos los proyectos: solo el administrador los cambia
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Solo el administrador puede cambiar las limitaciones']);
+            exit;
+        }
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
         $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 50);
         $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '#FF5A1F';
