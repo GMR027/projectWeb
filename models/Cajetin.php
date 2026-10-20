@@ -36,7 +36,7 @@ class Cajetin extends ActiveRecord
         return is_array($d) ? array_values(array_filter(array_map(fn($f) => is_array($f) ? [mb_substr((string)($f[0] ?? ''), 0, 60), mb_substr((string)($f[1] ?? ''), 0, 120)] : null, $d))) : [];
     }
 
-    /** Texto del formulario (una fila por línea, «Etiqueta | valor») → JSON de filas (máx. 12) */
+    /** Texto del formulario (una fila por línea, «Etiqueta | valor») → JSON de filas (máx. 20) */
     public static function filasDeTexto(string $texto): string
     {
         $filas = [];
@@ -44,7 +44,7 @@ class Cajetin extends ActiveRecord
             if (trim($linea) === '') continue;
             [$e, $v] = array_pad(explode('|', $linea, 2), 2, '');
             $filas[] = [trim($e), trim($v)];
-            if (count($filas) >= 12) break;
+            if (count($filas) >= 20) break;
         }
         return json_encode($filas, JSON_UNESCAPED_UNICODE);
     }
@@ -73,6 +73,15 @@ class Cajetin extends ActiveRecord
         try {
             foreach (self::deProyecto($proyectoId) as $c) $out[] = $c->aArray();
         } catch (\Throwable $e) {   // migración pendiente
+        }
+        // Las variables nuevas ({codigo}, {avance_real}…) se resuelven aquí; las de siempre las llena cada editor según su lámina
+        try {
+            $ctx = new \Classes\EstampaContexto(\Model\Proyecto::find($proyectoId));
+            foreach ($out as &$c) {
+                $c['filas'] = array_map(fn($f) => [\Classes\Estampas::texto((string)$f[0], $ctx, true), \Classes\Estampas::texto((string)$f[1], $ctx, true)], $c['filas']);
+            }
+            unset($c);
+        } catch (\Throwable $e) {
         }
         return $out;
     }

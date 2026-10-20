@@ -77,6 +77,18 @@ $vertical = $lamina->alto_mm > $lamina->ancho_mm;
         <h4 class="vp-cap-tit"><i class="fa-solid fa-shapes"></i> Bloques</h4>
         <div class="vp-ins-grid" id="vp-ins-bloques"></div>
 
+        <h4 class="vp-cap-tit"><i class="fa-solid fa-icons"></i> Símbolos</h4>
+        <p class="text-sm text-muted">Un clic coloca una copia en el centro de la hoja. Las simbologías las creas con la herramienta de <a href="/simbolos?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">Simbologías</a> y aparecen aquí.</p>
+        <button type="button" class="btn btn-sm btn-ghost" id="vp-sim-todas" hidden title="Inserta todas las simbologías del proyecto"><i class="fa-solid fa-layer-group"></i> Insertar todas las simbologías</button>
+        <input type="search" id="vp-sim-buscar" placeholder="Buscar símbolo…" aria-label="Buscar símbolo">
+        <div id="vp-sim-estado" class="text-sm text-muted" aria-live="polite"></div>
+        <div id="vp-sim-lista"></div>
+        <h5 class="vp-ins-grupo">Cajetines</h5>
+        <div id="vp-sim-cajetines" class="vp-ins-grid"></div>
+        <h5 class="vp-ins-grupo">Estampas inteligentes</h5>
+        <p class="text-sm text-muted">Bloques que se llenan solos con datos del proyecto (fecha, avance, actividades del día…).</p>
+        <div id="vp-sim-estampas" class="vp-ins-grid"></div>
+
         <h4 class="vp-cap-tit"><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
         <input type="search" id="vp-ins-buscar" placeholder="Buscar tabla…" aria-label="Buscar tabla">
         <div id="vp-ins-tablas" class="vp-ins-tablas"></div>

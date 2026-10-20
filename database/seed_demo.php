@@ -424,5 +424,6 @@ $uid = (int)$q("INSERT INTO usuarios (nombre, email, password, rol, confirmado) 
 $q("INSERT INTO proyecto_accesos (proyecto_id, usuario_id) VALUES ($pid, $uid)");
 
 require __DIR__ . '/seed_demo_extras.php';   // dependencias, Archivo, Editor, Símbolos y View360
+require __DIR__ . '/seed_demo_nuevas.php';   // órdenes de cambio, líneas base, Redactor, SheetFlow, MSR configurable, vPlan libre, Comparador
 
 echo "Listo. Demo: proyecto $pid · usuario demo $uid (entra por /demo)\n";

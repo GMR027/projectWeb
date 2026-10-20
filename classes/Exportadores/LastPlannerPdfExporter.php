@@ -29,7 +29,18 @@ class LastPlannerPdfExporter extends BaseExporter
         } elseif ($this->partida !== 'todas') {
             $partidas = array_values(array_filter($partidas, fn($p) => (int)$p->id === (int)$this->partida));
         }
-        $porPagina = $this->columnas * 3;
+        // Con una estampa como plantilla, las tarjetas miden lo que mide la estampa y se acomodan las que quepan en la hoja carta
+        $plantilla = \Model\Estampa::lastPlanner((int)$this->proyecto->id);
+        $wcm = $hcm = 7.0;
+        $filas = 3;
+        $cols = $this->columnas;
+        if ($plantilla) {
+            [$wu, $hu] = \Classes\Estampas::dimensiones($plantilla->config());
+            [$wcm, $hcm] = [max(1.5, $wu * 0.035278), max(1.5, $hu * 0.035278)];
+            $cols = max(1, (int)floor((21.0 + 0.3) / ($wcm + 0.3)));
+            $filas = max(1, (int)floor((27.0 + 0.3) / ($hcm + 0.3)));
+        }
+        $porPagina = $cols * $filas;
         $paginas = [];
         $total = 0;
         if ($this->partida === 'juntas') {
@@ -46,7 +57,6 @@ class LastPlannerPdfExporter extends BaseExporter
             throw new \Exception('La partida no tiene actividades');
         }
 
-        $cols = $this->columnas;
         $proyecto = $this->proyecto;
         $logo = MsrPdfExporter::imagenBase64($proyecto->logo ?: $proyecto->logoEmpresa(), 'build/img/logos');
         ob_start();

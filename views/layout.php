@@ -82,6 +82,7 @@ require_once __DIR__ . '/templates/breadcrumb.php';
                 elseif (str_contains($uri, '/simbolos')) $pagina_actual = 'simbolos';
                 elseif (str_contains($uri, '/view360')) $pagina_actual = 'view360';
                 elseif (str_contains($uri, '/comparador')) $pagina_actual = 'comparador';
+                elseif (str_contains($uri, '/traductor')) $pagina_actual = 'traductor';
                 elseif (str_contains($uri, '/evidencias')) $pagina_actual = 'evidencias';
                 elseif (str_contains($uri, '/ajustes')) $pagina_actual = 'ajustes';
                 elseif (str_contains($uri, '/exportar')) $pagina_actual = 'exportar';

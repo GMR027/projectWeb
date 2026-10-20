@@ -134,7 +134,7 @@ function exigir_gestionar_proyecto($proyecto): void
 /** Marcar revisiones (✅ ⚠ ❌ y «revisado»): admin y cliente con acceso al proyecto; el visitante solo las ve */
 function puede_revisar($proyecto): bool
 {
-    return $proyecto && is_cliente() && puede_ver_proyecto($proyecto);
+    return $proyecto && is_admin() && puede_ver_proyecto($proyecto);   // Revisiones: solo el administrador (ni clientes ni demo)
 }
 
 function puede_descargar(): bool
@@ -458,4 +458,17 @@ function ip_cliente(): string
         if (filter_var($ip, FILTER_VALIDATE_IP) && !ip_en_rangos($ip, $confiables)) return $ip;
     }
     return $directa;
+}
+
+/**
+ * Atributos de la burbuja de ayuda (src/js/ayuda.js) para un enlace de herramienta: título, qué hace y sección del manual.
+ * Con $conTitulo la burbuja también muestra el nombre (útil en la barra de iconos, que no lo escribe).
+ */
+function atributos_ayuda(array $item, bool $conTitulo = false): string
+{
+    if (empty($item['ayuda'])) return $conTitulo ? ' title="' . s(t($item['label'])) . '"' : '';
+    $proy = (int)($_GET['proyecto'] ?? $_POST['proyecto'] ?? 0);
+    $manual = !empty($item['manual']) ? '/manual' . ($proy ? '?proyecto=' . $proy : '') . '#' . $item['manual'] : '';
+    return ' data-ayuda="' . s(t($item['ayuda'])) . '"' . ($manual ? ' data-manual="' . s($manual) . '"' : '')
+        . ($conTitulo ? ' data-ayuda-titulo="' . s(t($item['label'])) . '"' : '');
 }

@@ -69,6 +69,7 @@ class Archivo extends ActiveRecord
 
     public function ruta(): ?string
     {
+        if ($this->id && $this->extension() === 'pdf') \Classes\EnsamblePdf::refrescar($this);   // ensamble vivo: se regenera si cambió una fuente
         $r = self::carpeta((int)$this->proyecto_id) . '/' . basename((string)$this->archivo_guardado);
         return is_file($r) ? $r : null;
     }

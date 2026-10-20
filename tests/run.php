@@ -26,7 +26,11 @@ $ok('valores fuera de rango se corrigen', $c['modo'] === 'cubrir' && $c['repX'] 
 echo "Cajetin\n";
 $f = json_decode(Cajetin::filasDeTexto("Proyecto | {proyecto}\n\nRevisó |\n"), true);
 $ok('una fila por línea, sin líneas vacías', $f === [['Proyecto', '{proyecto}'], ['Revisó', '']]);
-$ok('máximo 12 filas', count(json_decode(Cajetin::filasDeTexto(str_repeat("a | b\n", 30)), true)) === 12);
+$ok('máximo 20 filas', count(json_decode(Cajetin::filasDeTexto(str_repeat("a | b\n", 30)), true)) === 20);
+
+echo "Traductor\n";
+$ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
+$ok('textos sin letras no llaman al motor', Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-'] || !Classes\Traductor::configurado());
 
 echo "OdpExporter\n";
 $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
@@ -127,6 +131,21 @@ $ok('un nombre dentro de otro se acerca a coincidir', Classes\Ensamblador::simil
 $ok('esPregunta: con signo o palabra interrogativa y sin botones', Classes\Ensamblador::esPregunta('¿cuántas cámaras hay?', []) && !Classes\Ensamblador::esPregunta('¿cuántas?', ['materiales']) && !Classes\Ensamblador::esPregunta('agrega los materiales', []));
 $cod = Classes\Renumeracion::codigos([['id' => 9, 'actividades' => [4, 5]], ['id' => 3, 'actividades' => [7]]]);
 $ok('renumerar: partidas N.0 y actividades N.M en el nuevo orden', $cod[9] === '1.0' && $cod['a5'] === '1.2' && $cod[3] === '2.0' && $cod['a7'] === '2.1');
+
+echo "Estampas inteligentes\n";
+use Classes\Estampas;
+$ok('fecha: corta, larga y completa', Estampas::formatear('2026-10-15', 'fecha') === '15/10/2026' && Estampas::formatear('2026-10-15', 'fecha', 'largo') === '15 de octubre de 2026'
+    && Estampas::formatear('2026-10-15', 'fecha', 'completo') === 'jueves 15 de octubre de 2026' && Estampas::formatear('2026-10-05', 'fecha', 'corto') === '05 oct');
+$ok('números: enteros sin decimales y decimales pedidos', Estampas::formatear(5, 'num') === '5' && Estampas::formatear(0.8912, 'num') === '0.89' && Estampas::formatear(0.8912, 'num', '1') === '0.9' && Estampas::formatear(34.8, 'pct') === '34.8');
+$ok('un valor vacío no escribe nada', Estampas::formatear(null, 'texto') === '' && Estampas::formatear('', 'fecha') === '');
+$ok('semáforo «mayor es mejor»', Estampas::semaforo(0.97, 'mayor', 0.95, 0.85) === 'verde' && Estampas::semaforo(0.9, 'mayor', 0.95, 0.85) === 'amarillo' && Estampas::semaforo(0.8, 'mayor', 0.95, 0.85) === 'rojo');
+$ok('semáforo «menor es mejor»', Estampas::semaforo(0, 'menor', 0, 3) === 'verde' && Estampas::semaforo(2, 'menor', 0, 3) === 'amarillo' && Estampas::semaforo(4, 'menor', 0, 3) === 'rojo');
+$r = Estampas::reemplazar('Corte {corte:largo} · {desconocida} · {proyecto}', fn($k, $f) => $k === 'corte' ? "[$k/$f]" : ($k === 'proyecto' ? 'Torre' : null));
+$ok('variables {campo} y {campo:formato}; las desconocidas se dejan', $r === 'Corte [corte/largo] · {desconocida} · Torre');
+$ok('catálogo: todo campo trae grupo, etiqueta y tipo válidos', !array_filter(Estampas::CAMPOS, fn($c) => !isset(Estampas::GRUPOS[$c[0]]) || !in_array($c[2], ['texto', 'fecha', 'num', 'pct'], true) || $c[1] === ''));
+$lista = fn($p) => ($p['config']['modo'] ?? '') === 'lienzo' ? ($p['config']['elementos'] ?? []) : ($p['config']['etiquetas'] ?? []);
+$ok('plantillas: todas con contenido y campos del catálogo', !array_filter(Estampas::plantillas(), fn($p) => !$lista($p) || array_filter($lista($p), fn($e) => isset($e['campo']) && !isset(Estampas::CAMPOS[$e['campo']]))));
+$ok('semáforos por defecto apuntan a campos numéricos', !array_filter(array_keys(Estampas::SEMAFORO), fn($k) => !in_array(Estampas::CAMPOS[$k][2] ?? '', ['num', 'pct'], true)));
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

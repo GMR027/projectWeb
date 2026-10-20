@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>ProjectWeb · <?php echo s($titulo ?? 'Programas de obra'); ?></title>
-    <meta name="description" content="ProjectWeb: programa de obra con Gantt, 4WLA, Last Planner, vPlan, curvas de productividad, MSR, reporte diario y exportación a PDF, Excel y MS Project.">
+    <meta name="description" content="ProjectWeb: programa de obra con Gantt, 4WLA, Last Planner, vPlan, órdenes de cambio, líneas base, Redactor, SheetFlow, MSR, reporte diario y exportación a PDF, Excel y MS Project.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">

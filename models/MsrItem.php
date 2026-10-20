@@ -5,7 +5,7 @@ namespace Model;
 class MsrItem extends ActiveRecord
 {
     protected static $tabla = 'msr_items';
-    protected static $columnasDB = ['id', 'proyecto_id', 'msr_id', 'submittal_id', 'material_id', 'seccion', 'fecha_envio_requerida', 'no_submittal_contratista', 'fecha_envio_real', 'fecha_respuesta', 'status', 'fecha_compra_prog', 'fecha_instalacion_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real', 'proveedor', 'observaciones', 'orden'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'msr_id', 'submittal_id', 'material_id', 'seccion', 'fecha_envio_requerida', 'no_submittal_contratista', 'fecha_envio_real', 'fecha_respuesta', 'status', 'fecha_compra_prog', 'fecha_instalacion_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real', 'proveedor', 'observaciones', 'extras_json', 'orden'];
 
     /** Campos editables en línea y su tipo */
     public const EDITABLES = [
@@ -19,7 +19,7 @@ class MsrItem extends ActiveRecord
 
     public $id, $proyecto_id, $msr_id, $submittal_id, $material_id, $seccion, $fecha_envio_requerida, $no_submittal_contratista,
         $fecha_envio_real, $fecha_respuesta, $status, $fecha_compra_prog, $fecha_instalacion_prog, $fecha_compra_real,
-        $fecha_entrega_prog, $fecha_entrega_real, $proveedor, $observaciones, $orden;
+        $fecha_entrega_prog, $fecha_entrega_real, $proveedor, $observaciones, $extras_json, $orden;
     // Datos de unión (solo lectura)
     public $mat_nombre, $mat_referencia, $mat_imagen, $sub_numero;
 
@@ -31,6 +31,26 @@ class MsrItem extends ActiveRecord
         $this->status = $args['status'] ?? 'P';
         foreach (['seccion', 'no_submittal_contratista', 'proveedor', 'observaciones'] as $c) $this->$c = $args[$c] ?? '';
         $this->orden = $args['orden'] ?? 0;
+    }
+
+    public static function getDB(): \mysqli
+    {
+        return self::$db;
+    }
+
+    /** Valor de una columna de texto libre del usuario (txt_N) */
+    public function extra(string $k): string
+    {
+        $d = json_decode((string)$this->extras_json, true);
+        return is_array($d) ? (string)($d[$k] ?? '') : '';
+    }
+
+    public function fijarExtra(string $k, string $v): void
+    {
+        $d = json_decode((string)$this->extras_json, true);
+        $d = is_array($d) ? $d : [];
+        if ($v === '') unset($d[$k]); else $d[$k] = $v;
+        $this->extras_json = $d ? json_encode($d, JSON_UNESCAPED_UNICODE) : null;
     }
 
     /** Renglones del MSR con datos del material y del paquete */

@@ -37,7 +37,7 @@ class ArchivoController
             'titulo' => 'Archivo - ' . $proyecto->nombre, 'proyecto' => $proyecto,
             'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => Archivo::deProyecto((int)$proyecto->id, $filtro, $carpeta),
             'carpetas' => $carpetas, 'carpeta' => $carpeta, 'sinCarpeta' => ArchivoCarpeta::sinCarpeta((int)$proyecto->id),
-            'totalArchivos' => count(Archivo::deProyecto((int)$proyecto->id)),
+            'totalArchivos' => count(Archivo::deProyecto((int)$proyecto->id)), 'ensamblados' => \Model\Ensamble::archivosVivos((int)$proyecto->id),
         ]);
     }
 
@@ -145,6 +145,35 @@ class ArchivoController
         header('X-Content-Type-Options: nosniff');
         header("Content-Security-Policy: sandbox; default-src 'none'");
         header('Content-Disposition: attachment; filename="' . $nombre . '"; filename*=UTF-8\'\'' . rawurlencode($nombre));
+        header('Content-Length: ' . filesize($ruta));
+        readfile($ruta);
+        exit;
+    }
+
+    /** Muestra el archivo en el navegador (PDF, imágenes, texto; la ofimática se convierte a PDF). Mismo permiso que descargar */
+    public static function ver()
+    {
+        redirigir_si_no_auth();
+        $a = Archivo::find(self::idPeticion());
+        $proyecto = $a ? \Model\Proyecto::find($a->proyecto_id) : null;
+        if (!$proyecto) { http_response_code(404); exit; }
+        exigir_ver_proyecto($proyecto);
+        if (!puede_descargar()) { http_response_code(403); exit('No autorizado'); }
+        $ext = $a->extension();
+        $tipo = \Classes\VistaArchivo::tipo($ext);
+        $ruta = $a->ruta();
+        if (!$tipo || !$ruta) { http_response_code(404); exit('Este archivo no se puede ver en el navegador'); }
+        $mime = \Classes\VistaArchivo::mime($ext);
+        if ($tipo === 'convertir') {
+            $ruta = \Classes\VistaArchivo::pdfDe($ruta, $ext);
+            if (!$ruta) { http_response_code(500); exit('No se pudo convertir el documento para verlo; descárgalo.'); }
+            $mime = 'application/pdf';
+        }
+        $nombre = preg_replace('/[\r\n"\\\\\/]+/', '_', $tipo === 'convertir' ? pathinfo($a->archivo_original, PATHINFO_FILENAME) . '.pdf' : $a->archivo_original);
+        header('Content-Type: ' . $mime);
+        header('X-Content-Type-Options: nosniff');
+        if ($mime !== 'application/pdf') header("Content-Security-Policy: sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'");   // con sandbox el visor de PDF del navegador no abre
+        header('Content-Disposition: inline; filename="' . $nombre . '"; filename*=UTF-8\'\'' . rawurlencode($nombre));
         header('Content-Length: ' . filesize($ruta));
         readfile($ruta);
         exit;

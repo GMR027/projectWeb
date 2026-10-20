@@ -48,7 +48,11 @@ class MinutaController
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
-        $router->render('minutas/index', ['titulo' => 'Minutas - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'minutas' => Minuta::deProyecto((int)$proyecto->id)]);
+        $minutas = Minuta::deProyecto((int)$proyecto->id);
+        $porDepto = [];
+        foreach ($minutas as $m) $porDepto[$m->departamento !== '' ? $m->departamento : \Classes\Carpetas::SIN][] = $m;
+        uksort($porDepto, fn($a, $b) => ($a === \Classes\Carpetas::SIN) <=> ($b === \Classes\Carpetas::SIN) ?: strcasecmp($a, $b));   // «Sin departamento» al final
+        $router->render('minutas/index', ['titulo' => 'Minutas - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'minutas' => $minutas, 'porDepto' => $porDepto]);
     }
 
     /** Datos ya resueltos de una minuta (personas por nombre) para la vista y el PDF */
@@ -125,6 +129,7 @@ class MinutaController
             $m->fecha = trim($_POST['fecha'] ?? '');
             $m->nombre = trim($_POST['nombre'] ?? '');
             $m->importancia = $_POST['importancia'] ?? '';
+            $m->departamento = mb_substr(trim((string)($_POST['departamento'] ?? '')), 0, 100);
             $m->setIds('contratista_json', array_filter(array_map('intval', (array)($_POST['contratista'] ?? [])), fn($i) => isset($contratista[$i])));
             $m->setIds('personal_json', array_filter(array_map('intval', (array)($_POST['personal'] ?? [])), fn($i) => isset($personal[$i])));
             $m->setItems('temas_json', self::items('temas'));

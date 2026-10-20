@@ -25,8 +25,24 @@
             <ul class="text-sm text-muted"><?php foreach (array_slice($previa['avisos'], 0, 50) as $a): ?><li><?php echo s($a); ?></li><?php endforeach; ?></ul>
         </details>
     <?php endif; ?>
+    <?php if (!empty($nuevas)): ?>
+    <div class="card" style="margin:1rem 0">
+        <strong>Partidas del Excel que no existen en este MSR</strong>
+        <p class="text-muted text-sm">Por defecto se crean como partidas nuevas. Si ya tienes una con otro nombre (por ejemplo, la renombraste), elige a cuál unir sus materiales.</p>
+        <?php foreach ($nuevas as $i => $nombre): ?>
+            <div class="campo" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                <span style="min-width:18rem">«<?php echo s($nombre); ?>» →</span>
+                <select name="union[<?php echo $i; ?>][a]" form="form-confirmar">
+                    <option value="">Crear partida nueva</option>
+                    <?php foreach ($existentes as $ex): ?><option value="<?php echo s($ex); ?>">Unir a «<?php echo s($ex); ?>»</option><?php endforeach; ?>
+                </select>
+                <input type="hidden" name="union[<?php echo $i; ?>][de]" value="<?php echo s($nombre); ?>" form="form-confirmar">
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <div class="la-controles" style="margin:1rem 0">
-        <form method="POST" action="/msr/importar/confirmar">
+        <form method="POST" action="/msr/importar/confirmar" id="form-confirmar">
             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <input type="hidden" name="msr" value="<?php echo s($msr->id); ?>">
             <input type="hidden" name="token" value="<?php echo s($previa['token']); ?>">

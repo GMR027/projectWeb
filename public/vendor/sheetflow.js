@@ -445,8 +445,7 @@
             if (x.ok && x.d.success) { version = x.d.version; sucio = false; estado('Guardado ' + new Date().toLocaleTimeString()); return true; }
             if (x.d.conflicto) {
                 estado('Conflicto de versión', true);
-                if (confirm(x.d.error + '\n\n¿Guardar de todos modos y reemplazar esa versión?')) return guardar(true, true);
-                return false;
+                return window.confirmarModal({ titulo: 'Conflicto de versión', mensaje: x.d.error + ' ¿Guardar de todos modos y reemplazar esa versión?', aceptar: 'Reemplazar' }).then(function (ok) { return ok ? guardar(true, true) : false; });
             }
             estado(x.d.error || 'No se pudo guardar', true); return false;
         }).catch(function () { guardando = false; estado('Sin conexión: no se pudo guardar', true); return false; });

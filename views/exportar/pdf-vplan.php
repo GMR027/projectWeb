@@ -83,6 +83,30 @@ foreach ($paginas as $pi => $d):
         case 'simbologia': ?>
             <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->simbologia, (string)$d['simb'], $bw, $bh, 0, 1); ?></div>
             <?php break;
+        case 'imagen':
+            $arch = (string)($cfg['archivo'] ?? '');
+            $src = $arch !== '' ? \Classes\Imagenes::vplanBase64($arch, 1000) : null;
+            $al = ['izquierda' => 0, 'centro' => 0.5, 'derecha' => 1][$cfg['alinear'] ?? 'centro'] ?? 0.5;
+            if ($src): ?><div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($arch, $src, $bw, $bh, $al, 0.5); ?></div><?php endif;
+            break;
+        case 'cajetin':
+            $cj = \Classes\Vplan::cajetinDeBloque($b, $l, $proyecto);
+            $fs = (!empty($cfg['tamano']) ? (float)$cfg['tamano'] : 7) * $K; ?>
+            <div class="blk" style="<?php echo $caja; ?>font-size:<?php echo round($fs, 2); ?>pt"><table class="t" style="width:<?php echo round($bw, 2); ?>pt">
+                <?php if ($cj['banda']): ?>
+                <tr><?php foreach ($cj['filas'] as $f): ?><th><?php echo s($f[0]); ?></th><?php endforeach; ?></tr>
+                <tr><?php foreach ($cj['filas'] as $f): ?><td class="c"><?php echo s($f[1]); ?></td><?php endforeach; ?></tr>
+                <?php else: foreach ($cj['filas'] as $f): ?>
+                <tr><th style="width:38%;text-align:left"><?php echo s($f[0]); ?></th><td><?php echo s($f[1]); ?></td></tr>
+                <?php endforeach; endif; ?>
+            </table></div>
+            <?php break;
+        case 'estampa':
+            $est = \Model\Estampa::disponible() ? \Model\Estampa::find((int)($cfg['estampa_id'] ?? 0)) : null;
+            if ($est && (int)$est->proyecto_id === (int)$proyecto->id): ?>
+                <div class="blk" style="<?php echo $caja; ?>"><?php echo \Classes\Estampas::renderGuardada($est, $proyecto, $l, \Classes\Vplan::opcionesEstampa($cfg), 'pt', $K); ?></div>
+            <?php endif;
+            break;
         case 'schedule':
             if (!empty($d['simb_schedule'])): ?>
                 <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->imagenSimbologiaSchedule(), $d['simb_schedule'], $bw, $bh, 1, 1); ?></div>

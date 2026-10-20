@@ -1,0 +1,11 @@
+
+== Imágenes del proyecto demo (database/seed_demo_nuevas.php) ==
+- "Oliver Building typical floor plan" (planta tipo de oficinas, Pittsburgh, principios del siglo XX) — Wikimedia Commons, dominio público.
+  https://commons.wikimedia.org/wiki/File:Oliver_Building_typical_floor_plan.png  (recortada y con cajetín propio; revisiones A/B para el Comparador)
+- "Steel frame building under construction in Taiwan.jpg" — Wikimedia Commons, CC0.
+  https://commons.wikimedia.org/wiki/File:Steel_frame_building_under_construction_in_Taiwan.jpg
+- "Steel frame structure.jpg" — Wikimedia Commons, CC0.
+  https://commons.wikimedia.org/wiki/File:Steel_frame_structure.jpg
+- campo.jpg, grua.jpg y planos.jpg: Unsplash (Unsplash License), ya incluidas en esta carpeta.
+- Logos «Aurora» y «Horizonte»: marcas ficticias dibujadas con GD; no representan a ninguna empresa real.
+- Documentos de Normativa, Redactor y SheetFlow del demo: texto propio de ejemplo.

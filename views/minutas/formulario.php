@@ -21,6 +21,11 @@ $bloques = ['temas' => ['Temas vistos', $minuta->getTemas(), 'Tema'], 'compromis
                     <?php foreach (\Model\Bitacora::IMPORTANCIAS as $k => $v): ?><option value="<?php echo s($k); ?>" <?php echo $minuta->importancia === $k ? 'selected' : ''; ?>><?php echo s($v); ?></option><?php endforeach; ?>
                 </select>
             </div>
+            <div class="campo">
+                <label for="departamento">Carpeta (departamento)</label>
+                <input type="text" id="departamento" name="departamento" maxlength="100" list="min-deptos" value="<?php echo s($minuta->departamento); ?>" placeholder="Sin departamento">
+                <datalist id="min-deptos"><?php foreach ($departamentos as $dn): ?><option value="<?php echo s($dn); ?>"><?php endforeach; ?></datalist>
+            </div>
             <div class="campo campo-full"><label for="nombre">Nombre de la minuta *</label><input type="text" id="nombre" name="nombre" maxlength="200" value="<?php echo s($minuta->nombre); ?>" required></div>
         </div>
 

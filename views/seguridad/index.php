@@ -10,7 +10,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
         <h2><i class="fa-solid fa-helmet-safety"></i> <?php echo s(t('Seguridad y permisos de trabajo')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · permisos de trabajo (altura, caliente, espacios confinados, excavación, eléctrico, izaje) con su lista de medidas y vigencia, y registro de incidentes. El sistema avisa qué actividades próximas exigen permiso y cuáles no lo tienen. <strong>Es un registro de apoyo: no sustituye la firma ni el cumplimiento de la normativa aplicable.</strong></p>
     </div>
-    <div class="inc-acciones"><a href="/informes-ia?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-file-lines"></i> Informes de IA</a></div>
+    <?php if (is_admin()): ?><div class="inc-acciones"><a href="/informes-ia?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-file-lines"></i> Informes de IA</a></div><?php endif; ?>
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 

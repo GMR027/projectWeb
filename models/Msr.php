@@ -6,12 +6,14 @@ namespace Model;
 class Msr extends ActiveRecord
 {
     protected static $tabla = 'msrs';
-    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'descripcion'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'descripcion', 'columnas_json', 'encabezado_id'];
 
     public $id;
     public $proyecto_id;
     public $nombre;
     public $descripcion;
+    public $columnas_json;
+    public $encabezado_id;
     // Conteos (solo lectura)
     public $n_submittals, $n_renglones;
 
@@ -21,6 +23,137 @@ class Msr extends ActiveRecord
         $this->proyecto_id = $args['proyecto_id'] ?? null;
         $this->nombre = $args['nombre'] ?? '';
         $this->descripcion = $args['descripcion'] ?? '';
+        $this->columnas_json = $args['columnas_json'] ?? null;
+        $this->encabezado_id = !empty($args['encabezado_id']) ? (int)$args['encabezado_id'] : null;
+        if (!self::tieneEncabezado()) self::$columnasDB = array_values(array_diff(self::$columnasDB, ['encabezado_id']));   // migración pendiente
+    }
+
+    /** ¿Existe la columna encabezado_id en esta BD? (database/migracion_msr_encabezado.sql) */
+    public static function tieneEncabezado(): bool
+    {
+        static $r = null;
+        try {
+            return $r ??= (bool)self::$db->query("SHOW COLUMNS FROM msrs LIKE 'encabezado_id'")->num_rows;
+        } catch (\Throwable $e) {
+            return $r = false;
+        }
+    }
+
+    /** Estampa de lienzo que sirve de encabezado de este MSR (null = el encabezado de siempre) */
+    public function encabezado(): ?Estampa
+    {
+        if (!$this->encabezado_id || !Estampa::disponible()) return null;
+        $e = Estampa::find((int)$this->encabezado_id);
+        return $e && (int)$e->proyecto_id === (int)$this->proyecto_id && ($e->config()['modo'] ?? '') === 'lienzo' ? $e : null;
+    }
+
+    /**
+     * Columnas que puede mostrar el MSR: clave => [nombre genérico, nombre del diseño clásico, color, grupo, ocultar en móvil].
+     * Las de texto libre que agrega el usuario son «txt_N» y se guardan en msr_items.extras_json.
+     */
+    public const COLUMNAS = [
+        'imagen' => ['Imagen', 'ITEM PROLOG', '#1e3a5f', 'sub', false],
+        'sub_numero' => ['Número de paquete', 'Subcontractor submittal number', '#1e3a5f', 'sub', true],
+        'referencia' => ['Referencia', 'Spec Number', '#1e3a5f', 'sub', true],
+        'descripcion' => ['Descripción', 'DESCRIPCIÓN', '#1e3a5f', 'sub', false],
+        'fecha_envio_requerida' => ['Fecha requerida de envío', 'FECHA REQUERIDA DE ENVIO DE SUBMITTAL (PROG)', '#111111', 'sub', false],
+        'no_submittal_contratista' => ['Texto', 'No. SUBMITTAL {contratista}', '#6b7280', 'sub', true],
+        'fecha_envio_real' => ['Fecha real de envío', 'Real Submittal Date', '#6b7280', 'sub', false],
+        'fecha_respuesta' => ['Fecha de respuesta', 'AnswerDate', '#6b7280', 'sub', false],
+        'status' => ['Status', 'Status', '#6b7280', 'sub', false],
+        'dias' => ['Días de entrega', 'Delivery Time Schedule (Days)', '#2563eb', 'ent', true],
+        'fecha_compra_prog' => ['Compra (prog.)', 'FECHA COMPRA DE MATERIAL (PROG)', '#2563eb', 'ent', false],
+        'fecha_instalacion_prog' => ['Instalación (prog.)', 'FECHA DE INSTALACION (PROG)', '#2563eb', 'ent', false],
+        'fecha_compra_real' => ['Compra (real)', 'FECHA DE COMPRA (REAL)', '#1d4ed8', 'ent', false],
+        'fecha_entrega_prog' => ['Entrega (prog.)', 'FECHA DE ENTREGA (PROG)', '#1d4ed8', 'ent', false],
+        'fecha_entrega_real' => ['Entrega (real)', 'FECHA DE ENTREGA (REAL)', '#1d4ed8', 'ent', false],
+        'proveedor' => ['Proveedor', 'DATOS DEL PROVEEDOR', '#2563eb', 'ent', true],
+        'observaciones' => ['Observaciones', 'OBSERVACIONES', '#1e3a5f', 'ent', false],
+    ];
+    /** De dónde sale el dato de cada columna: 'dato' = vinculado a otra herramienta, 'calculo' = se calcula, 'texto' = lo escribe el usuario */
+    public const ORIGEN = [
+        'imagen' => ['dato', 'Materiales'], 'referencia' => ['dato', 'Materiales'], 'descripcion' => ['dato', 'Materiales'],
+        'sub_numero' => ['dato', 'Submittals'], 'fecha_envio_requerida' => ['dato', 'Submittals'], 'fecha_envio_real' => ['dato', 'Submittals'],
+        'fecha_respuesta' => ['dato', 'Submittals'], 'status' => ['dato', 'Submittals'],
+        'dias' => ['calculo', 'Cálculo: compra → entrega'],
+        'fecha_compra_prog' => ['dato', 'Materiales'], 'fecha_compra_real' => ['dato', 'Materiales'],
+        'fecha_entrega_prog' => ['dato', 'Materiales'], 'fecha_entrega_real' => ['dato', 'Materiales'],
+        'fecha_instalacion_prog' => ['dato', 'Fecha del renglón'],
+        'no_submittal_contratista' => ['texto', 'Texto'], 'proveedor' => ['texto', 'Texto'], 'observaciones' => ['texto', 'Texto'],
+    ];
+    public const GRUPOS = ['sub' => 'STATUS DEL SUBMITTAL', 'ent' => 'STATUS DE ENTREGA DEL MATERIAL O EQUIPO'];
+    public const CLASICO = ['imagen', 'sub_numero', 'referencia', 'descripcion', 'fecha_envio_requerida', 'no_submittal_contratista', 'fecha_envio_real', 'fecha_respuesta', 'status', 'dias', 'fecha_compra_prog', 'fecha_instalacion_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real', 'proveedor', 'observaciones'];
+
+    public function esClasico(): bool
+    {
+        return !is_array(json_decode((string)$this->columnas_json, true));
+    }
+
+    /** Diseño guardado: [['k','n','c']] (clave, nombre propio, color) o null si usa el clásico */
+    public function diseno(): ?array
+    {
+        $d = json_decode((string)$this->columnas_json, true);
+        return is_array($d) ? $d : null;
+    }
+
+    /** Columnas a mostrar, en orden, con nombre y color resueltos: [['k','n','c','grupo','hide','texto']] */
+    public function columnas(string $contratista = ''): array
+    {
+        $lista = $this->diseno();
+        $clasico = $lista === null;
+        if ($clasico) $lista = array_map(fn($k) => ['k' => $k, 'n' => '', 'c' => ''], self::CLASICO);
+        $out = [];
+        foreach ($lista as $c) {
+            $k = (string)($c['k'] ?? '');
+            $texto = (bool)preg_match('/^txt_\d{1,6}$/', $k);
+            if (!$texto && !isset(self::COLUMNAS[$k])) continue;
+            $def = self::COLUMNAS[$k] ?? ['Texto', 'Texto', '#6b7280', 'sub', false];
+            $nombre = trim((string)($c['n'] ?? ''));
+            if ($nombre === '') $nombre = $clasico ? str_replace('{contratista}', mb_strtoupper($contratista ?: 'CONTRATISTA'), $def[1]) : $def[0];
+            $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($c['c'] ?? '')) ? $c['c'] : $def[2];
+            $g = array_key_exists('g', $c) ? trim((string)$c['g']) : ($texto ? '' : self::GRUPOS[$def[3]]);
+            $out[] = ['k' => $k, 'n' => $nombre, 'c' => $color, 'g' => $g, 'grupo' => $texto ? 'sub' : $def[3], 'hide' => $clasico && $def[4], 'texto' => $texto || $k === 'no_submittal_contratista' || $k === 'proveedor' || $k === 'observaciones'];
+        }
+        return $out;
+    }
+
+    /** Diseño actual siempre explícito [['k','n','c']] (si era el clásico, con los nombres clásicos) */
+    public function disenoExplicito(string $contratista = ''): array
+    {
+        if (!$this->esClasico()) return $this->diseno();
+        return array_map(fn($c) => ['k' => $c['k'], 'n' => $c['n'], 'c' => '', 'g' => $c['g']], $this->columnas($contratista));
+    }
+
+    /** Barra de grupos: columnas contiguas con el mismo grupo se unen. [['n','span','c']]; [] si ninguna columna tiene grupo */
+    public static function grupos(array $columnas): array
+    {
+        if (!array_filter($columnas, fn($c) => $c['g'] !== '')) return [];
+        $out = [];
+        foreach ($columnas as $c) {
+            $ult = count($out) - 1;
+            if ($ult >= 0 && $out[$ult]['n'] === $c['g']) $out[$ult]['span']++;
+            else $out[] = ['n' => $c['g'], 'span' => 1, 'c' => $c['c']];
+        }
+        return $out;
+    }
+
+    /** Valida y normaliza las columnas del formulario; devuelve el JSON (null = clásico) */
+    public static function normalizarColumnas(string $modo, array $post): ?string
+    {
+        if ($modo !== 'personalizado') return null;
+        $out = [];
+        $vistos = [];
+        foreach ($post as $c) {
+            if (!is_array($c)) continue;
+            $k = (string)($c['k'] ?? '');
+            if ((!isset(self::COLUMNAS[$k]) && !preg_match('/^txt_\d{1,6}$/', $k)) || isset($vistos[$k])) continue;
+            $vistos[$k] = true;
+            $color = (string)($c['c'] ?? '');
+            $fila = ['k' => $k, 'n' => mb_substr(trim((string)($c['n'] ?? '')), 0, 60), 'c' => preg_match('/^#[0-9a-fA-F]{6}$/', $color) ? $color : ''];
+            if (array_key_exists('g', $c)) $fila['g'] = mb_substr(trim((string)$c['g']), 0, 60);
+            $out[] = $fila;
+        }
+        return $out ? json_encode($out, JSON_UNESCAPED_UNICODE) : null;
     }
 
     public function validar(): array
@@ -66,13 +199,13 @@ class Msr extends ActiveRecord
         $db = self::$db;
         $mid = (int)$this->id;
         $out = [];
-        $res = $db->query("SELECT id, titulo FROM msr_partidas WHERE msr_id = $mid ORDER BY orden ASC, id ASC");
+        $res = $db->query("SELECT id, titulo, color FROM msr_partidas WHERE msr_id = $mid ORDER BY orden ASC, id ASC");
         while ($r = $res->fetch_assoc()) {
             $t = $db->escape_string($r['titulo']);
             $ids = [];
             $q = $db->query("SELECT material_id FROM msr_items WHERE msr_id = $mid AND submittal_id IS NULL AND seccion = '$t' ORDER BY orden ASC");
             while ($m = $q->fetch_row()) $ids[] = (int)$m[0];
-            $out[] = ['id' => (int)$r['id'], 'titulo' => $r['titulo'], 'materiales' => $ids];
+            $out[] = ['id' => (int)$r['id'], 'titulo' => $r['titulo'], 'color' => $r['color'], 'materiales' => $ids];
         }
         return $out;
     }
@@ -116,15 +249,16 @@ class Msr extends ActiveRecord
             $titulo = trim($p['titulo'] ?? '');
             if ($titulo === '') continue;
             $t = $esc($titulo);
+            $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($p['color'] ?? '')) ? $p['color'] : '';
             $id = (int)($p['id'] ?? 0);
             if ($id && isset($existentes[$id])) {
                 if ($existentes[$id] !== $titulo) {
                     $viejo = $esc($existentes[$id]);
                     $db->query("UPDATE msr_items SET seccion = '$t' WHERE msr_id = $mid AND seccion = '$viejo'");
                 }
-                $db->query("UPDATE msr_partidas SET titulo = '$t', orden = $nPart WHERE id = $id");
+                $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color', orden = $nPart WHERE id = $id");
             } else {
-                $db->query("INSERT INTO msr_partidas (msr_id, titulo, orden) VALUES ($mid, '$t', $nPart)");
+                $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $nPart)");
                 $id = (int)$db->insert_id;
             }
             $conservar[] = $id;

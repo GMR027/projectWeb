@@ -261,6 +261,7 @@ class Revisiones
     /** Chip clicable (o fijo si no se puede editar). $e = estado() + ref */
     public static function chip(string $tipo, string $ref, array $e, bool $editable, string $titulo = ''): string
     {
+        if (!is_admin()) return '';   // Revisiones es solo del administrador
         $v = $e['veredicto'];
         [$etq, $icono] = self::VEREDICTOS[$v];
         $revisado = !empty($e['revisado']);

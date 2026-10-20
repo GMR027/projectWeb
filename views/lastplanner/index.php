@@ -7,6 +7,18 @@
 <?php if (!$partida && empty($todas)): ?>
     <div class="card"><p class="text-muted">Este proyecto aún no tiene partidas en el programa de obra.</p></div>
 <?php else: ?>
+<?php if (puede_gestionar_proyecto($proyecto)): ?>
+<form method="POST" action="/lastplanner/plantilla" class="card lp-filtros">
+    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+    <div class="campo"><label for="lp-plantilla">Plantilla del post-it</label>
+        <select id="lp-plantilla" name="estampa" onchange="this.form.submit()">
+            <option value="0" <?php echo !$plantilla ? 'selected' : ''; ?>>Clásica (7 × 7 cm)</option>
+            <?php foreach ($estampasLienzo as $e): ?><option value="<?php echo (int)$e->id; ?>" <?php echo ($plantilla && (int)$plantilla->id === (int)$e->id) ? 'selected' : ''; ?>>Estampa · <?php echo s($e->nombre); ?></option><?php endforeach; ?>
+        </select></div>
+    <div class="campo"><a class="btn btn-ghost btn-sm" href="/simbolos?proyecto=<?php echo s($proyecto->id); ?><?php echo $plantilla ? '&editar=' . (int)$plantilla->id : ''; ?>#estampas"><i class="fa-solid fa-pen-ruler"></i> <?php echo $plantilla ? 'Editar la plantilla en el editor de estampas' : 'Crear o cargar una plantilla en el editor de estampas'; ?></a></div>
+    <p class="text-muted text-sm">La plantilla elegida reemplaza al post-it clásico en pantalla y en el PDF. No se modifica aquí: todos los cambios se hacen en el editor de estampas.</p>
+</form>
+<?php endif; ?>
 <form method="GET" class="card lp-filtros">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
     <div class="campo"><label for="partida">Partida</label>
@@ -28,7 +40,12 @@
     <div class="card"><p class="text-muted">No hay actividades en este proyecto.</p></div>
 <?php else: ?>
     <div class="lp-grid">
-        <?php $logo = $proyecto->logo ?: $proyecto->logoEmpresa(); foreach ($tarjetas as $t) include __DIR__ . '/tarjeta.php'; ?>
+        <?php if ($plantilla): $pc = $plantilla->config(); [$Wu, $Hu] = \Classes\Estampas::dimensiones($pc); $K = 2.2;
+            foreach ($tarjetas as $t): ?>
+            <div class="lp-tarjeta-est" style="width:<?php echo round($Wu * $K); ?>px;height:<?php echo round($Hu * $K); ?>px">
+                <?php echo \Classes\Estampas::renderGuardada($plantilla, $proyecto, null, ['corte' => $t['fecha'], 'partida' => $t['partida'] ? (int)$t['partida']->id : 0, 'max' => \Classes\LastPlanner::POR_TARJETA, 'offset' => ($t['parte'] - 1) * \Classes\LastPlanner::POR_TARJETA, 'lamina_n' => 1, 'lamina_total' => 1], 'px', $K); ?>
+            </div>
+        <?php endforeach; else: $logo = $proyecto->logo ?: $proyecto->logoEmpresa(); foreach ($tarjetas as $t) include __DIR__ . '/tarjeta.php'; endif; ?>
     </div>
 <?php endif; ?>
 <script>

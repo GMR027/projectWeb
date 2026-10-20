@@ -26,7 +26,7 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 - **Gotchas:** (1) en PHP `array_merge(...$arregloConClavesTexto)` falla («unknown named parameters»): usa `array_values()`. (2) `«$var»` en comillas dobles lee `»` como parte del nombre: usa `{$var}`. (3) las pruebas con copia de BD usan un nombre único (`project_claude_<n>`) y borran solo esa.
 
 
-## ✅ Revisiones (cumplimiento y estado de uso)
+## ✅ Revisiones (cumplimiento y estado de uso) — solo administrador (2026-10-19: ni cliente ni demo la ven; `puede_revisar()` = admin, `chip()` y `_mini` no pintan nada para otros roles)
 
 - `classes/Revisiones.php`, `controllers/RevisionController.php`, `views/revisiones/`, tablas `revisiones` + `revisiones_historial` (`database/migracion_revisiones.sql`, también en `schema.sql`). Pantalla `/revisiones?proyecto=` (pestañas Resumen, Materiales, Actividades, Herramientas de IA, Historial); resumen corto en el panel de inicio y en `/proyectos/ver` (`views/revisiones/_mini.php`).
 - **Materiales y actividades:** veredicto ✅ correcto · ⚠ requiere revisión · ❌ no cumple · ⚪ sin evaluar, más «revisado» (quién y cuándo) y nota. Chip con menú (`Revisiones::chip()` + `src/js/revisiones.js`) en el catálogo de materiales, en la tabla del programa y en la sección Normativa de los formularios. Elegir un veredicto cuenta como revisado. Si el material/actividad cambia después (huella distinta) el chip pasa a «cambió después de revisarse» (⟳). Es independiente de la verificación automática de Materiales inteligentes (`material_verificaciones`): la IA propone, la persona decide.

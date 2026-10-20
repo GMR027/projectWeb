@@ -62,6 +62,9 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/web-extras.md` | Landing/Demo, Bandeja/soporte/visitantes/importación y Buscador de listas |
 | `docs/cambios-lineas-base.md` | Órdenes de cambio (instalación/retiro, reubicación…), líneas base y comparación, cruce de materiales, resumen ejecutivo diario y modo sin conexión |
 | `docs/vplan.md` | **vPlan** libre: láminas de bloques posicionables, navegador de láminas, modo diseño (capas, guías, insertar tablas), recovery dinámico, tamaño de hoja, tareas multipartida y PDF por lámina |
+| `docs/estampas.md` | **Estampas inteligentes** (bloques con etiquetas que se llenan solas, post-its de las actividades del día, plantilla de Last Planner) y **cajetines dinámicos** |
+| `docs/ensamblador-documentos.md` | **Ensamblador de documentos** (PDF que une Redactor + PDF del Archivo y se actualiza solo; no es el Ensamblador de IA) |
+| `docs/traductor.md` | **Traductor** es↔en de texto y documentos (motor local CTranslate2, `bin/instalar_traductor.sh`) |
 | `docs/ensamblador.md` | **Ensamblador** de documentos (PDF/PPTX/DOCX → partidas, materiales, submittals con IA) y **Ordenar y renumerar** el programa (sin IA) |
 
 ## ⚠️ Common Gotchas
@@ -75,6 +78,8 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 7. **PHP:** `«$var»` en comillas dobles lee `»` como parte del nombre: usa `{$var}`. `array_merge(...$arregloConClavesTexto)` falla: usa `array_values()`.
 8. **Pruebas con copia de BD:** `DB_NAME` del entorno NO se respeta; crea `project_claude_<n>` (`mysqldump --no-data`), fija `$_ENV['DB_NAME']` en un `auto_prepend_file` y borra solo esa BD. No uses `project_test`.
 9. **Herramientas de IA nuevas:** llamar a `Auditoria::registrar()` al aplicar/revertir/rechazar y agregarlas al catálogo `desktop/src/herramientas.js` (detalle en `docs/ia-centro-herramientas.md`). Nada cambia datos sin que el admin acepte.
+
+10. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 200 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
 
 ## 🔍 Need to Verify?
 

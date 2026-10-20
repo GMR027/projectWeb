@@ -108,6 +108,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     <?php endif; ?>
     <div class="ve-grupo" data-nombre="Texto y marcadores">
         <?php foreach ([['text', 'Texto'], ['table', 'Tabla: arrastra para dibujarla; doble clic en una celda para escribir (Tab pasa a la siguiente)'], ['restr', 'Rombo de restricción numerado'], ['pin', 'Círculo numerado'], ['image', 'Insertar imagen'], ['link', 'Hipervínculo: dibuja un área sobre el plano y asígnale un enlace externo o una sección del proyecto'], ['v360', 'Vista 360: carga una foto 360 (equirectangular, 2:1), dibuja el área en el plano y se abrirá como vista interactiva en View360']] as [$t, $ti]) echo $tool($t, $ti); ?>
+        <button type="button" id="ve-simbolos-btn" title="Símbolos: abre la biblioteca (cámaras, extintores, simbologías, cajetines…) para insertarlos de un clic" aria-label="Insertar símbolo"><?php echo $svg('<path d="M12 3l2.6 5.600 6.100.700-4.500 4.200 1.200 6L12 16.500 6.600 19.500l1.200-6L3.300 9.300l6.100-.7z"/>'); ?></button>
         <input type="file" id="ve-archivo" accept="image/*" hidden>
         <input type="file" id="ve-archivo-360" accept="image/jpeg,image/png,image/webp" hidden>
     </div>
@@ -314,6 +315,11 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar">
         <div id="sim-lista"></div>
         <h4 style="margin-top:1.2rem">Gráficos y simbologías del proyecto</h4>
+        <div class="ve-btns" style="margin-bottom:.8rem">
+            <button type="button" class="btn btn-sm btn-primary" id="sim-gr-subir" title="Agrega una o varias imágenes de simbología desde tu equipo"><i class="fa-solid fa-plus"></i> Agregar simbologías</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="sim-gr-todas" title="Inserta todas las simbologías del proyecto"><i class="fa-solid fa-layer-group"></i> Insertar todas</button>
+            <input type="file" id="sim-gr-archivo" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+        </div>
         <div id="sim-graficos" class="ve-sims"></div>
         <p class="text-muted text-sm">Un clic lo inserta en el centro de la vista, en la capa activa. Luego arrastra las esquinas para cambiar su tamaño.</p>
     </aside>

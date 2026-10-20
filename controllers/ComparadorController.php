@@ -15,7 +15,7 @@ class ComparadorController
     {
         $proyecto = proyecto_de_peticion();
         $archivos = [];
-        if (puede_descargar()) {   // leer un archivo del proyecto equivale a descargarlo
+        if (puede_descargar() || es_demo()) {   // leer un archivo del proyecto equivale a descargarlo (el demo puede: sus planos son de ejemplo)
             foreach (Archivo::deProyecto((int)$proyecto->id) as $a) {
                 if (isset(self::TIPOS[$a->extension()]) && $a->ruta()) $archivos[] = $a;
             }
@@ -31,7 +31,7 @@ class ComparadorController
         $proyecto = $a ? \Model\Proyecto::find($a->proyecto_id) : null;
         if (!$proyecto) { http_response_code(404); exit; }
         exigir_ver_proyecto($proyecto);
-        if (!puede_descargar()) { http_response_code(403); exit('No autorizado'); }
+        if (!puede_descargar() && !es_demo()) { http_response_code(403); exit('No autorizado'); }
         $ext = $a->extension();
         $ruta = $a->ruta();
         if (!isset(self::TIPOS[$ext]) || !$ruta) { http_response_code(404); exit('Archivo no disponible'); }

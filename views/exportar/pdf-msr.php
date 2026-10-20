@@ -25,6 +25,9 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
     .prov { color: #1F497D; text-align: center; }
     thead { display: table-header-group; } tr { page-break-inside: avoid; }
 </style></head><body>
+<?php $encEst = isset($msr) && $msr ? $msr->encabezado() : null; if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 802.0 / $Wu; ?>
+<div style="position:relative;width:802pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1], 'pt', $Kenc); ?></div>
+<?php else: ?>
 <table class="cab">
     <tr>
         <td style="width:22%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:38pt;max-width:130pt"><?php endif; ?></td>
@@ -62,41 +65,42 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
         </td>
     </tr>
 </table>
+<?php endif; ?>
 <div style="height:5pt"></div>
 
+<?php
+$tinta = function ($hex) { $h = ltrim($hex, '#'); $l = (0.299 * hexdec(substr($h, 0, 2)) + 0.587 * hexdec(substr($h, 2, 2)) + 0.114 * hexdec(substr($h, 4, 2))) / 255; return $l > 0.62 ? '#000' : '#fff'; };
+$anchos = ['imagen' => 'width:30pt', 'descripcion' => 'width:120pt', 'observaciones' => 'width:60pt'];
+$nCols = max(1, count($columnas));
+?>
 <table class="tabla">
     <thead>
-        <tr class="barra"><th colspan="9" style="background:#17365D">STATUS DEL SUBMITTAL</th><th colspan="8" style="background:#0070C0">STATUS DE ENTREGA DEL MATERIAL O EQUIPO</th></tr>
+        <?php if ($grupos): ?>
+        <tr class="barra"><?php foreach ($grupos as $g): ?><th colspan="<?php echo (int)$g['span']; ?>" style="<?php echo $g['n'] === '' ? 'background:#fff' : 'background:' . s($g['c']) . ';color:' . $tinta($g['c']); ?>"><?php echo s($g['n']); ?></th><?php endforeach; ?></tr>
+        <?php endif; ?>
         <tr>
-            <th style="background:#17365D;width:30pt">ITEM PROLOG</th><th style="background:#17365D">Subcontractor submittal number</th><th style="background:#17365D">Spec Number</th><th style="background:#17365D;width:120pt">DESCRIPCIÓN</th>
-            <th style="background:#0C0C0C">FECHA REQUERIDA DE ENVIO DE SUBMITTAL (PROG)</th><th style="background:#7F7F7F">No. SUBMITTAL <?php echo s($nomC); ?></th><th style="background:#7F7F7F">Real Submittal Date</th><th style="background:#7F7F7F">AnswerDate</th><th style="background:#7F7F7F">Status</th>
-            <th style="background:#0070C0">Delivery Time Schedule (Days)</th><th style="background:#0070C0">FECHA COMPRA DE MATERIAL (PROG)</th><th style="background:#0070C0">FECHA DE INSTALACION (PROG)</th>
-            <th style="background:#1F497D">FECHA DE COMPRA (REAL)</th><th style="background:#1F497D">FECHA DE ENTREGA (PROG)</th><th style="background:#1F497D">FECHA DE ENTREGA (REAL)</th>
-            <th style="background:#0070C0">DATOS DEL PROVEEDOR</th><th style="background:#17365D;width:60pt">OBSERVACIONES</th>
+            <?php foreach ($columnas as $col): ?><th style="background:<?php echo s($col['c']); ?>;color:<?php echo $tinta($col['c']); ?>;<?php echo $anchos[$col['k']] ?? ''; ?>"><?php echo s($col['n']); ?></th><?php endforeach; ?>
         </tr>
     </thead>
     <tbody>
     <?php foreach ($secciones as $nombreSec => $lista): ?>
-        <?php if ($nombreSec !== ''): ?><tr class="sec"><td></td><td></td><td></td><td><?php echo s($nombreSec); ?></td><td colspan="13"></td></tr><?php endif; ?>
-        <?php foreach ($lista as $it): $dias = $it->diasEntrega(); $im = $img($it->mat_imagen, 'uploads/materiales'); ?>
+        <?php if ($nombreSec !== ''): $cs = $coloresSec[$nombreSec] ?? ''; ?><tr class="sec"><td colspan="<?php echo $nCols; ?>"<?php echo $cs ? ' style="background:' . s($cs) . ';color:' . $tinta($cs) . '"' : ''; ?>><?php echo s($nombreSec); ?></td></tr><?php endif; ?>
+        <?php foreach ($lista as $it): $dias = $it->diasEntrega(); ?>
         <tr>
-            <td class="c"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:26pt;max-width:26pt"><?php endif; ?></td>
-            <td class="c"><?php echo s($it->sub_numero); ?></td>
-            <td class="c"><?php echo s($it->mat_referencia); ?></td>
-            <td><?php echo s($it->mat_nombre); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_envio_requerida)); ?></td>
-            <td class="c"><?php echo s($it->no_submittal_contratista); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_envio_real)); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_respuesta)); ?></td>
-            <td class="c st" style="background:<?php echo $colSt[$it->status] ?? '#fff'; ?>"><?php echo $etq[$it->status] ?? s($it->status); ?></td>
-            <td class="c <?php echo $it->esCritico($umbral) ? 'crit' : ''; ?>"><?php echo $dias !== null ? number_format($dias, 2) : ''; ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_compra_prog)); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_instalacion_prog)); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_compra_real)); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_entrega_prog)); ?></td>
-            <td class="c"><?php echo s(fecha_corta_es($it->fecha_entrega_real)); ?></td>
-            <td class="prov"><?php echo s($it->proveedor); ?></td>
-            <td><?php echo s($it->observaciones); ?></td>
+            <?php foreach ($columnas as $col): $k = $col['k']; ?>
+                <?php if ($k === 'imagen'): $im = $img($it->mat_imagen, 'uploads/materiales'); ?>
+                    <td class="c"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:26pt;max-width:26pt"><?php endif; ?></td>
+                <?php elseif ($k === 'sub_numero'): ?><td class="c"><?php echo s($it->sub_numero); ?></td>
+                <?php elseif ($k === 'referencia'): ?><td class="c"><?php echo s($it->mat_referencia); ?></td>
+                <?php elseif ($k === 'descripcion'): ?><td><?php echo s($it->mat_nombre); ?></td>
+                <?php elseif ($k === 'status'): ?><td class="c st" style="background:<?php echo $colSt[$it->status] ?? '#fff'; ?>"><?php echo $etq[$it->status] ?? s($it->status); ?></td>
+                <?php elseif ($k === 'dias'): ?><td class="c <?php echo $it->esCritico($umbral) ? 'crit' : ''; ?>"><?php echo $dias !== null ? number_format($dias, 2) : ''; ?></td>
+                <?php elseif (str_starts_with($k, 'fecha')): ?><td class="c"><?php echo s(fecha_corta_es($it->$k)); ?></td>
+                <?php elseif (str_starts_with($k, 'txt_')): ?><td><?php echo s($it->extra($k)); ?></td>
+                <?php elseif ($k === 'proveedor'): ?><td class="prov"><?php echo s($it->proveedor); ?></td>
+                <?php else: ?><td class="<?php echo $k === 'no_submittal_contratista' ? 'c' : ''; ?>"><?php echo s($it->$k); ?></td>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </tr>
         <?php endforeach; ?>
     <?php endforeach; ?>

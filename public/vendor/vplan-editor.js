@@ -1456,6 +1456,8 @@
   }
   function enlazarSimbolos() {
     if (!$('#sim-lista')) return;
+    const bs = $('#ve-simbolos-btn');
+    if (bs) bs.addEventListener('click', () => { const t = document.querySelector('.ve-tabs [data-tab=simbolos]'); if (t) t.click(); const q = $('#sim-buscar'); if (q) q.focus(); });
     pintarSimbolos();
     $('#sim-importar').addEventListener('click', () => $('#sim-importar-archivo').click());
     $('#sim-importar-archivo').addEventListener('change', e => { importarSimbolos(e.target.files); e.target.value = ''; });
@@ -1463,6 +1465,16 @@
     if (sfLista) sfLista.addEventListener('click', e => { const b = e.target.closest('[data-sf]'); if (b) insertarSheetflow((C.sheetflow || [])[+b.dataset.sf]); });
     $('#sim-cajetines').addEventListener('click', e => { const b = e.target.closest('[data-caj]'); if (b) insertarCajetin((C.cajetines || [])[+b.dataset.caj]); });
     $('#sim-buscar').addEventListener('input', pintarSimbolos);
+    $('#sim-gr-subir').addEventListener('click', () => $('#sim-gr-archivo').click());
+    $('#sim-gr-archivo').addEventListener('change', async e => {
+      const fs = [...e.target.files]; e.target.value = '';
+      for (const f of fs) await subirImagen(f, 0.5);
+    });
+    $('#sim-gr-todas').addEventListener('click', async () => {
+      const gs = C.graficos || [];
+      if (!gs.length) { status('No hay simbologías guardadas en este proyecto.'); return; }
+      for (const g of gs) await insertarDesdeUrl(g.src, 0.5);
+    });
     $('#ve-tab-simbolos').addEventListener('click', e => {
       const b = e.target.closest('.ve-sim'); if (!b) return;
       insertarDesdeUrl(b.dataset.src, b.classList.contains('ve-sim-gr') ? 0.5 : 0.1);

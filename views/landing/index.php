@@ -25,15 +25,23 @@ $tour = [
     ['dependencias', 'Dependencias y ruta crítica', 'fa-diagram-project', 'Relaciones FS, SS, FF y SF con retraso: la ruta crítica en rojo, las holguras y los conflictos, sin mover tus fechas hasta que tú lo decidas.'],
     ['lastplanner', 'Last Planner', 'fa-note-sticky', 'Post-its por partida calculados desde el programa, con su estado y listos para imprimir.'],
     ['curva-s', 'Curva S', 'fa-chart-area', 'Avance acumulado programado contra real, con desvío e índice SPI, para saber si la obra va en tiempo.'],
+    ['cambios', 'Órdenes de cambio', 'fa-file-signature', 'Cada cambio con su estado, su impacto en costo y días, y los retiros pendientes de lo que se instaló de forma temporal.'],
+    ['lineas-base', 'Líneas base', 'fa-code-compare', 'Compara el programa actual contra una foto anterior: qué se movió, qué es nuevo y si el atraso tiene causa documentada.'],
+    ['redactor', 'Redactor', 'fa-file-lines', 'Actas, memorias y procedimientos con tablas del programa, comentarios, control de cambios y exportación a Word, ODT o PDF.'],
+    ['sheetflow', 'SheetFlow', 'fa-table-cells', 'Tablas con fórmulas para presupuestos y controles, que se importan y exportan a Excel, CSV o PDF.'],
+    ['comparador', 'Comparador de documentos', 'fa-clone', 'Dos revisiones de un plano una sobre otra con un deslizador, para ver al instante qué cambió.'],
+    ['normativa', 'Normativa y especificaciones', 'fa-scale-balanced', 'Normas y especificaciones en PDF o Word, leídas por cláusulas y ligadas a los materiales y actividades a las que aplican.'],
 ];
+// Solo se muestran las pestañas cuya captura ya existe
+$tour = array_values(array_filter($tour, fn($t) => is_file(__DIR__ . '/../../public/build/img/landing/tour-' . $t[0] . '.jpg')));
 $funciones = [
     ['fa-chart-gantt', 'Programa y Gantt', 'Partidas, actividades e hitos con fechas calculadas sobre el calendario real de la obra. Cambia una fecha y todo se recalcula.'],
     ['fa-calendar-check', 'Calendario operativo', 'Jornada semanal por proyecto, festivos, paros técnicos y días de clima. Los días hábiles se respetan en cada actividad.'],
     ['fa-binoculars', 'Lookahead 4WLA', 'Semana actual + 4 semanas con PTA y limitaciones. Detecta qué actividades pueden arrancar y cuáles no.'],
     ['fa-note-sticky', 'Last Planner', 'Tarjetas por día y por partida listas para imprimir, con marcas de corte, calculadas desde tu programa.'],
-    ['fa-map-location-dot', 'vPlan visual', 'Láminas con plano, tabla del programa, recovery y restricciones. El estado de la obra de un solo vistazo.'],
+    ['fa-map-location-dot', 'vPlan visual', 'Láminas libres con bloques posicionables: planos, tablas del programa, recovery, restricciones y punch list. Modo diseño con capas y guías, y PDF por lámina.'],
     ['fa-chart-line', 'Curvas y Curva S', 'Planeado contra real por semana para cada material o frente de trabajo, y una Curva S que junta todas en el avance acumulado del programa.'],
-    ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, varios MSR por proyecto, control de submittals y estatus de compra y entrega de materiales. Las fechas se comparten entre catálogo, submittals y MSR.'],
+    ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, varios MSR por proyecto con las columnas que tú elijas (nombre, orden y color), control de submittals y estatus de compra y entrega.'],
     ['fa-clipboard-list', 'Reporte diario y bitácora', 'Personal, actividades y fotos del día en minutos. Bitácora por departamento con niveles de importancia.'],
     ['fa-handshake', 'Minutas de junta', 'Temas, responsables, compromisos y asistentes. Genera el PDF listo para enviar al cliente.'],
     ['fa-bolt', 'Restricciones y acciones rápidas', 'Registra lo que frena a cada actividad y consulta en un solo lugar lo del día y la semana: restricciones, bitácora crítica, minutas, submittals y materiales pendientes.'],
@@ -43,8 +51,16 @@ $funciones = [
     ['fa-diagram-next', 'Planificador por material', 'Cruza las actividades pendientes con los materiales comprados y te dice qué puedes adelantar y qué está bloqueado por compra o restricción.'],
     ['fa-camera-retro', 'Evidencias fotográficas', 'Línea de tiempo con las fotos del avance por actividad. Junta las de los reportes diarios y las que subas directo, agrupadas por día.'],
     ['fa-folder-open', 'Archivo del proyecto', 'Planos, especificaciones y contratos con categoría, fecha y número de revisión, hasta 100 MB por archivo y cuota por proyecto.'],
-    ['fa-pen-ruler', 'Editor de gráficos', 'Lienzo para croquis, diagramas y láminas con varias hojas, categorías y descarga en PNG, PDF o presentación .odp.'],
+    ['fa-pen-ruler', 'Editor de gráficos', 'Lienzo para croquis, diagramas y láminas con varias hojas, y descarga en PNG, PDF o presentación .odp. Se complementa con el Redactor y SheetFlow.'],
     ['fa-shapes', 'Biblioteca de símbolos', 'Cámaras, racks, extintores, luminarias, tableros y más para marcar tus planos. Puedes sumar los tuyos.'],
+    ['fa-file-signature', 'Órdenes de cambio', 'Estado, impacto en costo y tiempo, y renglones de instalación temporal con su retiro pendiente. Un cambio aprobado justifica la desviación en el programa.'],
+    ['fa-code-compare', 'Líneas base y comparación', 'Guarda una foto del programa y compárala con el actual: actividades movidas, nuevas o eliminadas, ruta crítica y causa del atraso (cambio, material o sin justificar).'],
+    ['fa-boxes-packing', 'Materiales contra cronograma', 'Cruza lo que necesita cada actividad con compra, entrega y submittal, y avisa qué material llega tarde o qué compra ya venció.'],
+    ['fa-file-lines', 'Redactor de documentos', 'Actas, memorias y procedimientos con portada, tablas del programa, comentarios, versiones y exportación a DOCX, ODT o PDF.'],
+    ['fa-table-cells', 'SheetFlow · tablas con fórmulas', 'Presupuestos, explosión de insumos y controles de obra con fórmulas; importa y exporta a XLSX, CSV o PDF.'],
+    ['fa-clone', 'Comparador de documentos', 'Empareja dos revisiones de un plano o PDF y compáralas con un deslizador para ver qué cambió entre una versión y otra.'],
+    ['fa-scale-balanced', 'Normativa y especificaciones', 'Carga normas y especificaciones, consúltalas por cláusula y vincúlalas a los materiales y actividades que les aplican. Tú confirmas cada vínculo.'],
+    ['fa-folder-tree', 'Carpetas por departamento', 'Ordena minutas, documentos y tablas en carpetas por departamento: renómbralas y mueve cada documento en un clic.'],
     ['fa-street-view', 'View360', 'Un plano con zonas que abren fotos 360° de la obra: recorridos virtuales con notas para el cliente, sin viajar al sitio.'],
 ];
 if (!function_exists('cmp_celda')) {
@@ -62,6 +78,9 @@ $comparativa = [
     ['Reporte diario, bitácora, minutas', ['si', 'Con fotos y PDF'], ['no', 'Word y WhatsApp'], ['parcial', 'Comentarios sueltos']],
     ['Evidencias, View360 y planos', ['si', 'Incluidos'], ['no', 'Carpetas aparte'], ['parcial', 'Adjuntos']],
     ['Una sola captura para todo', ['si', 'Todo se actualiza junto'], ['no', 'Se captura varias veces'], ['parcial', 'Depende de integraciones']],
+    ['Control de cambios y líneas base', ['si', 'Con impacto y comparación'], ['no', 'Excel y correos'], ['parcial', 'Solo seguimiento de tareas']],
+    ['Documentos y tablas de obra', ['si', 'Redactor y SheetFlow integrados'], ['no', 'Word y Excel aparte'], ['parcial', 'Notas o adjuntos']],
+    ['Comparar revisiones de planos', ['si', 'Comparador con deslizador'], ['no', 'Programa de dibujo aparte'], ['no', 'No incluido']],
     ['Acceso del cliente solo lectura', ['si', 'Por herramienta'], ['no', 'Se envían PDF'], ['parcial', 'Con licencia por usuario']],
     ['Instalación y licencias', ['si', 'Solo navegador'], ['no', 'Licencias por equipo'], ['si', 'Navegador']],
     ['Exporta a MS Project y Excel', ['si', 'PDF, Excel, ODS, XML, POD'], ['si', 'Nativo'], ['parcial', 'Solo CSV o Excel']],
@@ -81,28 +100,13 @@ $ventajas = [
     ['fa-people-roof', 'Hecha para el control de obra', 'Last Planner, lookahead, restricciones, MSR y submittals ya vienen pensados para el contratista, no adaptados desde un gestor genérico de tareas.'],
     ['fa-lock', 'Control de quién ve qué', 'Tres roles y accesos de visitante por herramienta: el cliente consulta avance y evidencias sin tocar el programa ni ver lo que no debe.'],
     ['fa-cloud-arrow-up', 'Tu información respaldada', 'Respaldos programados y cuota de almacenamiento por proyecto: tus planos, fotos y reportes no dependen de la laptop de nadie.'],
+    ['fa-puzzle-piece', 'Todo en uno, de verdad', 'Del programa al acta, de la compra al cambio aprobado: el programa, los materiales, los documentos y los cambios comparten los mismos datos y se hablan entre sí.'],
+    ['fa-code-compare', 'Los cambios dejan huella', 'Órdenes de cambio, líneas base y comparación de planos explican por qué se movió una fecha y quién lo autorizó.'],
     ['fa-bolt', 'Acciones rápidas para no andar perdido', 'Las actividades del día y de la semana, las restricciones activas y tus pendientes de bitácora, minutas, submittals y materiales, juntos en un solo lugar.'],
 ];
 ?>
 
-<header class="lp-nav" id="top">
-    <div class="lp-wrap lp-nav-in">
-        <a href="/" class="lp-logo"><span class="lp-logo-i"><i class="fa-solid fa-helmet-safety"></i></span> ProjectWeb</a>
-        <input type="checkbox" id="lp-menu" class="lp-menu-chk" aria-label="Menú">
-        <label for="lp-menu" class="lp-burger" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
-        <nav class="lp-links">
-            <a href="#funciones">Funciones</a>
-            <a href="#ventajas">Ventajas</a>
-            <a href="#comparativa">Comparativa</a>
-            <a href="#ahorro">Ahorro</a>
-            <a href="#recorrido">Recorrido</a>
-            <a href="#planes">Planes</a>
-            <a href="#contacto">Contacto</a>
-            <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-ghost lp-btn-sm"><i class="fa-solid fa-play"></i> Demo</a><?php endif; ?>
-            <a href="/login" class="lp-btn lp-btn-primary lp-btn-sm">Iniciar sesión</a>
-        </nav>
-    </div>
-</header>
+<?php include __DIR__ . '/_nav.php'; ?>
 
 <section class="lp-hero" style="--hero: url('/build/img/landing/hero.jpg')">
     <span class="lp-orb lp-orb1"></span><span class="lp-orb lp-orb2"></span>
@@ -110,7 +114,7 @@ $ventajas = [
         <div class="lp-hero-txt lp-rev">
             <span class="lp-pill"><i class="fa-solid fa-bolt"></i> Control de obra en tiempo real</span>
             <h1>Tu programa de obra,<br><span class="lp-grad">siempre bajo control.</span></h1>
-            <p class="lp-lead">Gantt, ruta crítica, lookahead, Last Planner, vPlan, materiales, evidencias y reportes diarios en una sola plataforma. Menos programas, menos licencias y menos hojas de cálculo; más obra entregada a tiempo.</p>
+            <p class="lp-lead">Gantt, ruta crítica, lookahead, Last Planner, vPlan, materiales, órdenes de cambio, documentos, evidencias y reportes diarios en una sola plataforma. Menos programas, menos licencias y menos hojas de cálculo; más obra entregada a tiempo.</p>
             <div class="lp-cta">
                 <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-play"></i> Ver demo en vivo</a><?php endif; ?>
                 <a href="#planes" class="lp-btn lp-btn-ghost lp-btn-lg">Ver planes</a>
@@ -166,7 +170,7 @@ $ventajas = [
 
 <section class="lp-stats">
     <div class="lp-wrap lp-stats-in">
-        <div class="lp-rev"><b data-n="20">20</b><span>herramientas conectadas entre sí</span></div>
+        <div class="lp-rev"><b data-n="<?php echo count($funciones); ?>"><?php echo count($funciones); ?></b><span>herramientas conectadas entre sí</span></div>
         <div class="lp-rev" style="--d:80ms"><b data-n="5">5</b><span>formatos de exportación</span></div>
         <div class="lp-rev" style="--d:160ms"><b data-n="10">10</b><span>disciplinas en el proyecto demo</span></div>
         <div class="lp-rev" style="--d:240ms"><b data-n="1" data-suf=" fuente">1 fuente</b><span>única de verdad para toda la obra</span></div>
@@ -298,9 +302,34 @@ $ventajas = [
         <ul class="lp-ahorro-extra lp-rev">
             <li><i class="fa-solid fa-clock"></i><span><strong>Menos horas de captura.</strong> Capturas una vez y el programa, el lookahead, los reportes y el vPlan se actualizan juntos.</span></li>
             <li><i class="fa-solid fa-laptop"></i><span><strong>Sin comprar de nuevo.</strong> Si cambias de computadora, no recompras ni reinstalas licencias: entras desde el navegador.</span></li>
+            <li><i class="fa-solid fa-file-word"></i><span><strong>Menos licencias de ofimática y de dibujo.</strong> Actas, tablas con fórmulas y comparación de planos viven dentro de la misma plataforma, sin abrir otros programas.</span></li>
             <li><i class="fa-solid fa-people-arrows"></i><span><strong>Menos retrabajo.</strong> Todos ven la misma información, así no se corrigen datos distintos entre archivos.</span></li>
         </ul>
         <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones ni actualizaciones, que harían mayor el ahorro. El Plan Pro es de $500 MXN al mes (1 año = $<?php echo number_format($planProAnual); ?>).</p>
+    </div>
+</section>
+
+<section class="lp-sec lp-alt" id="todo-en-uno">
+    <div class="lp-wrap">
+        <div class="lp-head lp-rev">
+            <span class="lp-eyebrow">Todo en uno</span>
+            <h2>Cinco áreas de la obra,<br>una sola plataforma</h2>
+            <p>Lo que hoy vive en el Excel del programa, el Word de las actas, la carpeta de planos y el chat de la cuadrilla, aquí comparte la misma información.</p>
+        </div>
+        <div class="lp-hub lp-rev">
+            <?php foreach ([
+                ['Planear', 'fa-chart-gantt', ['Programa y Gantt', 'Calendario operativo', 'Dependencias y ruta crítica', 'Lookahead', 'Last Planner']],
+                ['Ejecutar', 'fa-helmet-safety', ['Reporte diario', 'Bitácora', 'Evidencias fotográficas', 'Restricciones', 'Acciones rápidas']],
+                ['Abastecer', 'fa-truck-ramp-box', ['Catálogo de materiales', 'Submittals', 'MSR configurable', 'Planificador por material', 'Materiales vs. cronograma']],
+                ['Documentar', 'fa-file-lines', ['Redactor', 'SheetFlow', 'Minutas', 'Archivo de planos', 'Comparador de documentos']],
+                ['Controlar', 'fa-scale-balanced', ['Órdenes de cambio', 'Líneas base', 'Curvas y Curva S', 'vPlan y View360', 'Accesos de cliente']],
+            ] as [$tit, $ico, $items]): ?>
+                <div class="lp-hub-col">
+                    <h3><i class="fa-solid <?php echo $ico; ?>"></i> <?php echo s($tit); ?></h3>
+                    <ul><?php foreach ($items as $it): ?><li><i class="fa-solid fa-circle-check"></i> <?php echo s($it); ?></li><?php endforeach; ?></ul>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 </section>
 
@@ -350,16 +379,45 @@ $ventajas = [
                 <img src="/build/img/landing/cctv.jpg" alt="Cámaras de videovigilancia" loading="lazy">
             </figure>
         </div>
+
+        <div class="lp-show lp-rev lp-inv">
+            <div class="lp-show-txt">
+                <span class="lp-eyebrow">Cambios y líneas base</span>
+                <h2>Cada desviación tiene una explicación</h2>
+                <p>Registra las órdenes de cambio con su impacto en costo y días, captura una línea base del programa y compárala con el avance actual. Sabrás qué se movió, qué entró a la ruta crítica y si el atraso viene de un cambio, de un material o de nadie.</p>
+                <ul class="lp-list">
+                    <li><i class="fa-solid fa-check"></i> Instalaciones temporales con su retiro pendiente</li>
+                    <li><i class="fa-solid fa-check"></i> Comparación con barra «fantasma» de la línea base</li>
+                    <li><i class="fa-solid fa-check"></i> Materiales cruzados contra el cronograma</li>
+                </ul>
+            </div>
+            <figure class="lp-fig"><img src="/build/img/landing/<?php echo is_file(__DIR__ . '/../../public/build/img/landing/tour-lineas-base.jpg') ? 'tour-lineas-base' : 'planos'; ?>.jpg" alt="Comparación de línea base del programa" loading="lazy"></figure>
+        </div>
+
+        <div class="lp-show lp-rev">
+            <div class="lp-show-txt">
+                <span class="lp-eyebrow">Documentación</span>
+                <h2>Actas, tablas y planos sin salir de la obra</h2>
+                <p>Escribe actas y memorias en el Redactor, lleva presupuestos y controles en tablas con fórmulas y compara dos revisiones de un plano con un deslizador. Todo ordenado en carpetas por departamento y exportable a Word, Excel o PDF.</p>
+                <ul class="lp-list">
+                    <li><i class="fa-solid fa-check"></i> Tablas del programa dentro de tus documentos</li>
+                    <li><i class="fa-solid fa-check"></i> Fórmulas y exportación a XLSX, CSV y PDF</li>
+                    <li><i class="fa-solid fa-check"></i> Comparador de planos y vPlan para las juntas</li>
+                </ul>
+            </div>
+            <figure class="lp-fig"><img src="/build/img/landing/<?php echo is_file(__DIR__ . '/../../public/build/img/landing/tour-redactor.jpg') ? 'tour-redactor' : 'planos'; ?>.jpg" alt="Documento en el Redactor" loading="lazy"></figure>
+        </div>
     </div>
 </section>
 
 <section class="lp-steps">
     <div class="lp-wrap">
-        <div class="lp-head lp-rev"><span class="lp-eyebrow">Cómo funciona</span><h2>Listo para usarse en tres pasos</h2></div>
-        <ol class="lp-ol">
+        <div class="lp-head lp-rev"><span class="lp-eyebrow">Cómo funciona</span><h2>Listo para usarse en cuatro pasos</h2></div>
+        <ol class="lp-ol lp-ol-4">
             <li class="lp-rev"><b>1</b><h3>Crea tu proyecto</h3><p>Define fechas, jornada semanal y festivos. El sistema prepara el calendario operativo.</p></li>
             <li class="lp-rev" style="--d:90ms"><b>2</b><h3>Arma el programa</h3><p>Captura partidas, actividades y restricciones. Se calculan fechas, Gantt, 4WLA y Last Planner.</p></li>
-            <li class="lp-rev" style="--d:180ms"><b>3</b><h3>Da seguimiento y exporta</h3><p>Registra avance y reportes diarios, comparte con el cliente y descarga en el formato que pida.</p></li>
+            <li class="lp-rev" style="--d:180ms"><b>3</b><h3>Da seguimiento</h3><p>Registra avance, reportes diarios, materiales y evidencias. Todo se refleja en el programa, el vPlan y las curvas.</p></li>
+            <li class="lp-rev" style="--d:270ms"><b>4</b><h3>Controla, documenta y comparte</h3><p>Lleva los cambios contra una línea base, redacta actas, da acceso de solo lectura al cliente y descarga en el formato que pida.</p></li>
         </ol>
     </div>
 </section>
@@ -368,11 +426,29 @@ $ventajas = [
 <section class="lp-band" style="--bg: url('/build/img/landing/grua.jpg')">
     <div class="lp-wrap lp-rev">
         <h2>Míralo funcionando con un proyecto de ejemplo</h2>
-        <p>Entra al demo sin registrarte: recorre el programa, el vPlan, los reportes diarios, el MSR y más. Es de solo lectura, no puedes romper nada.</p>
+        <p>Entra al demo sin registrarte: recorre el programa, el vPlan, los reportes diarios, el MSR, las órdenes de cambio, los documentos y más. Es de solo lectura, no puedes romper nada.</p>
         <a href="/demo" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-play"></i> Entrar al demo</a>
     </div>
 </section>
 <?php endif; ?>
+
+<section class="lp-sec" id="servicios">
+    <div class="lp-wrap">
+        <div class="lp-srv-teaser lp-rev">
+            <div>
+                <span class="lp-eyebrow">Servicios</span>
+                <h2>¿Prefieres que nos encarguemos del seguimiento?</h2>
+                <p>Llevamos el seguimiento administrativo de tu obra para que tu equipo se dedique a construir.</p>
+                <div class="lp-cta"><a href="/servicios" class="lp-btn lp-btn-primary lp-btn-lg">Conocer los servicios <i class="fa-solid fa-arrow-right"></i></a></div>
+            </div>
+            <ul>
+                <li><i class="fa-solid fa-circle-check"></i> Programa, materiales y reportes al día</li>
+                <li><i class="fa-solid fa-circle-check"></i> Control de cambios y documentación</li>
+                <li><i class="fa-solid fa-circle-check"></i> Un grupo especializado que detecta detalles para decidir mejor</li>
+            </ul>
+        </div>
+    </div>
+</section>
 
 <section class="lp-sec" id="planes">
     <div class="lp-wrap">
@@ -407,6 +483,8 @@ $ventajas = [
             <details><summary>¿Puedo trabajar desde el celular o si cambio de equipo?</summary><p>Sí. Entras con tu usuario desde el celular, la tableta o cualquier computadora y ves y editas la misma información, sin reinstalar ni volver a comprar nada.</p></details>
             <details><summary>¿Qué pasa si llego al límite de almacenamiento?</summary><p>Cada proyecto tiene su cuota según el plan. Al llegar al límite no se pueden subir más archivos hasta liberar espacio; lo ya guardado no se pierde.</p></details>
             <details><summary>¿En qué se diferencian los planes?</summary><p>En la cantidad de proyectos que puedes crear y el almacenamiento por proyecto. Todas las funciones están incluidas en cada plan.</p></details>
+            <details><summary>¿Pueden encargarse del seguimiento de mi obra?</summary><p>Sí. Además de la plataforma ofrecemos servicios administrativos de seguimiento de obra para que tu equipo se concentre en construir. Conoce el detalle en <a href="/servicios" class="lp-foot-link">Servicios</a>.</p></details>
+            <details><summary>¿Puedo redactar actas o llevar tablas dentro de la plataforma?</summary><p>Sí. El Redactor exporta a Word, ODT y PDF, y SheetFlow maneja tablas con fórmulas que se importan y exportan a Excel, CSV y PDF.</p></details>
             <details><summary>¿El demo guarda mis cambios?</summary><p>No. El demo es de solo lectura y usa datos de ejemplo: no necesitas registrarte ni se guarda nada de lo que hagas.</p></details>
         </div>
     </div>
@@ -474,7 +552,7 @@ $ventajas = [
     <div class="lp-wrap">
         <span class="lp-logo"><span class="lp-logo-i"><i class="fa-solid fa-helmet-safety"></i></span> ProjectWeb</span>
         <span>© <?php echo date('Y'); ?> ProjectWeb · Sistema de programas de obra · <a href="/terminos" class="lp-foot-link">Términos y condiciones de uso</a></span>
-        <span class="lp-credit">Fotografías: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></span>
+        <span class="lp-credit">Imágenes: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a>, <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a> y <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a></span>
     </div>
 </footer>
 

@@ -125,7 +125,7 @@ document.querySelectorAll('.cb-flujo .cb-paso').forEach(b => b.addEventListener(
     try {
         const r = await fetch('/api/cambios/estado', { method: 'POST', body: new URLSearchParams({ proyecto: new URLSearchParams(location.search).get('proyecto') || '', id: b.parentElement.dataset.id, estado: b.dataset.estado }) });
         if ((await r.json()).success) location.reload();
-    } catch (_) { alert('Sin conexión: el cambio de estado de la orden requiere conexión.'); }
+    } catch (_) { window.avisoModal('Sin conexión', 'El cambio de estado de la orden requiere conexión.'); }
 }));
 </script>
 <?php include __DIR__ . '/_estado-js.php'; ?>

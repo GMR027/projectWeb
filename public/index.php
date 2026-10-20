@@ -4,9 +4,13 @@ require_once __DIR__ . '/../includes/app.php';
 
 use MVC\Router;
 use Controllers\AuthController;
+use Controllers\CarpetaController;
+use Controllers\EstampaController;
 use Controllers\ComparadorController;
+use Controllers\TraductorController;
 use Controllers\EscritorioApiController;
 use Controllers\EnsambladorController;
+use Controllers\EnsambleController;
 use Controllers\AnalisisMaterialesController;
 use Controllers\CentroIAController;
 use Controllers\AppIAController;
@@ -80,6 +84,7 @@ $router->get('/inicio', [LandingController::class, 'inicio']);
 $router->get('/demo', [LandingController::class, 'demo']);
 $router->post('/contacto', [ContactoController::class, 'enviar']);
 $router->get('/terminos', [LandingController::class, 'terminos']);
+$router->get('/servicios', [LandingController::class, 'servicios']);
 
 // ========== SOPORTE (cliente) y BANDEJA DE ENTRADA (admin) ==========
 $router->get('/soporte', [SoporteController::class, 'index']);
@@ -151,6 +156,8 @@ $router->post('/programa/restricciones/resolver', [ProgramaController::class, 'r
 // ========== LOOKAHEAD 4WLA ==========
 $router->get('/lookahead', [LookaheadController::class, 'index']);
 $router->post('/api/actividad/pta', [LookaheadController::class, 'togglePta']);
+$router->post('/api/lookahead/config', [LookaheadController::class, 'guardarConfig']);
+$router->post('/api/lookahead/limitacion', [LookaheadController::class, 'guardarLimitacion']);
 
 // ========== MATERIALES / SUBMITTALS / MSR ==========
 $router->get('/materiales', [MaterialController::class, 'index']);
@@ -206,6 +213,10 @@ $router->post('/msr/importar/confirmar', [MsrController::class, 'confirmarImport
 $router->post('/msr/importar/cancelar', [MsrController::class, 'cancelarImportacion']);
 $router->post('/api/msr/status', [MsrController::class, 'status']);
 $router->post('/api/msr/campo', [MsrController::class, 'campo']);
+$router->post('/api/msr/orden', [MsrController::class, 'orden']);
+$router->post('/api/msr/columna', [MsrController::class, 'columna']);
+$router->post('/api/msr/mover', [MsrController::class, 'mover']);
+$router->post('/api/msr/partida', [MsrController::class, 'partida']);
 
 // ========== VPLAN ==========
 $router->get('/vplan', [VplanController::class, 'index']);
@@ -244,6 +255,7 @@ $router->post('/vplan/tablas/eliminar', [VplanTablaController::class, 'eliminar'
 
 // ========== LAST PLANNER ==========
 $router->get('/lastplanner', [LastPlannerController::class, 'index']);
+$router->post('/lastplanner/plantilla', [LastPlannerController::class, 'plantilla']);
 
 // ========== REPORTE DIARIO Y PERSONAL ==========
 $router->get('/reportes', [ReporteController::class, 'index']);
@@ -276,6 +288,8 @@ $router->post('/bitacora/departamentos/eliminar', [BitacoraController::class, 'd
 
 // ========== MINUTAS ==========
 $router->get('/datos-obra', [DatosObraController::class, 'index']);
+$router->post('/carpetas/renombrar', [CarpetaController::class, 'renombrar']);
+$router->post('/carpetas/mover', [CarpetaController::class, 'mover']);
 $router->get('/minutas', [MinutaController::class, 'index']);
 $router->get('/minutas/ver', [MinutaController::class, 'ver']);
 $router->get('/minutas/pdf', [MinutaController::class, 'pdf']);
@@ -302,6 +316,7 @@ $router->post('/archivos/mover', [ArchivoController::class, 'mover']);
 $router->post('/archivos/carpetas/guardar', [ArchivoController::class, 'carpetaGuardar']);
 $router->post('/archivos/carpetas/eliminar', [ArchivoController::class, 'carpetaEliminar']);
 $router->get('/archivos/descargar', [ArchivoController::class, 'descargar']);
+$router->get('/archivos/ver', [ArchivoController::class, 'ver']);
 $router->get('/archivos/categorias', [ArchivoController::class, 'categorias']);
 $router->get('/archivos/categorias/crear', [ArchivoController::class, 'categoriaCrear']);
 $router->post('/archivos/categorias/crear', [ArchivoController::class, 'categoriaCrear']);
@@ -394,6 +409,12 @@ $router->post('/simbolos/guardar', [SimboloController::class, 'guardar']);
 $router->post('/simbolos/eliminar', [SimboloController::class, 'eliminar']);
 $router->post('/simbolos/cajetin', [SimboloController::class, 'guardarCajetin']);
 $router->post('/simbolos/cajetin/eliminar', [SimboloController::class, 'eliminarCajetin']);
+$router->post('/simbolos/estampa', [EstampaController::class, 'guardar']);
+$router->post('/simbolos/estampa/eliminar', [EstampaController::class, 'eliminar']);
+$router->post('/simbolos/estampa/duplicar', [EstampaController::class, 'duplicar']);
+$router->post('/simbolos/estampa/plantilla', [EstampaController::class, 'plantilla']);
+$router->post('/api/estampas/vista', [EstampaController::class, 'vista']);
+$router->post('/api/estampas/textos', [EstampaController::class, 'textos']);
 $router->get('/simbolos/exportar', [SimboloController::class, 'exportar']);
 
 // View360
@@ -517,8 +538,20 @@ $router->post('/programador/deshacer', [ProgramadorController::class, 'deshacer'
 $router->post('/programador/seguimiento', [ProgramadorController::class, 'seguimiento']);
 $router->get('/programador/exportar', [ProgramadorController::class, 'exportar']);
 $router->post('/programador/eliminar', [ProgramadorController::class, 'eliminar']);
+// Ensamblador de documentos (PDF que une Redactor y Archivo y se mantiene al día)
+$router->get('/ensamblador-documentos', [EnsambleController::class, 'index']);
+$router->get('/ensamblador-documentos/crear', [EnsambleController::class, 'formulario']);
+$router->post('/ensamblador-documentos/crear', [EnsambleController::class, 'formulario']);
+$router->get('/ensamblador-documentos/editar', [EnsambleController::class, 'formulario']);
+$router->post('/ensamblador-documentos/editar', [EnsambleController::class, 'formulario']);
+$router->post('/ensamblador-documentos/eliminar', [EnsambleController::class, 'eliminar']);
+$router->post('/ensamblador-documentos/archivo', [EnsambleController::class, 'guardarEnArchivo']);
+$router->get('/ensamblador-documentos/descargar', [EnsambleController::class, 'descargar']);
 $router->get('/comparador', [ComparadorController::class, 'index']);
 $router->get('/comparador/archivo', [ComparadorController::class, 'archivo']);
+$router->get('/traductor', [TraductorController::class, 'index']);
+$router->post('/api/traductor/texto', [TraductorController::class, 'texto']);
+$router->post('/api/traductor/documento', [TraductorController::class, 'documento']);
 $router->get('/view360', [View360Controller::class, 'index']);
 $router->get('/view360/ver', [View360Controller::class, 'ver']);
 $router->get('/view360/crear', [View360Controller::class, 'crear']);

@@ -14,3 +14,6 @@
 .gr-descargar-menu .fa-file-pdf { color: #e11d48; } .gr-descargar-menu .fa-file-word { color: #2563eb; } .gr-descargar-menu .fa-file-excel { color: #16a34a; }
 .gr-descargar-menu .fa-file-powerpoint { color: #ea580c; } .gr-descargar-menu .fa-file-image, .gr-descargar-menu .fa-image { color: #0d9488; } .gr-descargar-menu .fa-file-lines { color: #2563eb; }
 .nombre-archivo { display: inline-flex; align-items: center; gap: .4rem; }
+
+// Archivo del proyecto: iconos de tipo al doble de tamaño
+.arch-nombre { overflow: hidden; .text-sm { overflow: hidden; } .ico-archivo { float: left; width: 1.2em; margin: 0 1.2rem 0 0; font-size: 3.6rem !important; line-height: 1; } }

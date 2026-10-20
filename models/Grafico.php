@@ -187,7 +187,7 @@ class Grafico extends ActiveRecord
                 if ($excluir !== null && (int)$g->id === $excluir) continue;
                 $laminas = $g->laminas();
                 foreach ($laminas as $i => $l) {
-                    if ($l->marcas_png) $out[] = ['id' => (int)$g->id, 'nombre' => ($g->tipo === 'simbologia' ? 'Simbología · ' : '') . $g->nombre . (count($laminas) > 1 ? ' · ' . $l->titulo($i + 1) : ''), 'src' => '/uploads/vplan/' . $l->marcas_png];
+                    if ($l->marcas_png) $out[] = ['id' => (int)$g->id, 'tipo' => $g->tipo, 'nombre' => ($g->tipo === 'simbologia' ? 'Simbología · ' : '') . $g->nombre . (count($laminas) > 1 ? ' · ' . $l->titulo($i + 1) : ''), 'src' => '/uploads/vplan/' . $l->marcas_png];
                 }
             }
         } catch (\Throwable $e) {   // migración pendiente

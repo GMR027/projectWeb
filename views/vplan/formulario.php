@@ -66,14 +66,6 @@
                 <?php endif; ?>
             </div>
             <div class="campo">
-                <label for="simbologia">Imagen de simbología</label>
-                <input type="file" id="simbologia" name="simbologia" accept="image/*">
-                <?php if ($lamina->simbologia): ?>
-                    <img class="vp-mini" src="/uploads/vplan/<?php echo s($lamina->simbologia); ?>" alt="" style="margin-top:.5rem">
-                    <label class="text-sm"><input type="checkbox" name="quitar_simbologia" value="1"> Quitar simbología</label>
-                <?php endif; ?>
-            </div>
-            <div class="campo">
                 <label for="simbologia_grafico_id">Simbología del schedule</label>
                 <select id="simbologia_grafico_id" name="simbologia_grafico_id">
                     <option value="">Tabla estándar (SYMBOLOGY FOR SCHEDULE)</option>

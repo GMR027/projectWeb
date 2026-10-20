@@ -15,7 +15,7 @@ if (!$puedeN && !$vinculosN) return;
     <?php if (!empty($entidadId)):
         $refN = (string)(int)$entidadId; $dataN = \Classes\Revisiones::elementos($pidN, $tipoEntidad);
         $estN = null; foreach ($dataN as $x) if ($x['ref'] === $refN) { $estN = $x; break; } ?>
-        <?php if ($estN): ?>
+        <?php if ($estN && is_admin()): ?>
         <div class="rev-fila" data-proyecto="<?php echo $pidN; ?>">
             <strong>Cumplimiento:</strong> <?php echo \Classes\Revisiones::chip($tipoEntidad, $refN, $estN, puede_revisar($proyecto), 'Cumplimiento'); ?>
             <span class="rev-pie"><?php echo puede_revisar($proyecto) ? 'Haz clic para marcar: correcto, requiere revisión o no cumple.' : 'Solo lectura.'; ?></span>

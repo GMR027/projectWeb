@@ -608,7 +608,7 @@
     });
     $('rd-x-ver-lista').addEventListener('click', function (e) {
         var b = e.target.closest('[data-ver]'); if (!b) return;
-        post(C.api.version, { version_id: b.dataset.id }).then(function (d) {
+        post(C.api.version, { version_id: b.dataset.id }).then(async function (d) {
             if (!d.success) { estado(d.error || 'No se pudo leer la versión', true); return; }
             if (b.dataset.ver === 'comparar') {
                 var r = compararHtml(d.version.contenido, hoja.innerHTML);
@@ -617,7 +617,7 @@
                 $('rd-dlg-comparar').showModal();
                 return;
             }
-            if (!confirm('¿Volver a la versión «' + (d.version.etiqueta || 'sin nombre') + '»? Antes se guarda una copia del texto actual para no perderlo.')) return;
+            if (!await window.confirmarModal({ titulo: '¿Volver a esta versión?', mensaje: '«' + (d.version.etiqueta || 'sin nombre') + '»: antes se guarda una copia del texto actual para no perderlo.', aceptar: 'Restaurar', tono: 'info', icono: 'fa-clock-rotate-left' })) return;
             R.ponerEtiquetaVersion('Antes de restaurar');
             R.guardar(false, function () {
                 hoja.innerHTML = d.version.contenido || '<p><br></p>';
@@ -807,7 +807,7 @@
         $('rd-dib-fondo').addEventListener('change', function () { redibujar(); });
         $('rd-dib-tam').addEventListener('change', function () { var m = this.value.split('x'); cv.width = +m[0]; cv.height = +m[1]; redibujar(); });
         $('rd-dib-deshacer').addEventListener('click', function () { formas.pop(); redibujar(); });
-        $('rd-dib-limpiar').addEventListener('click', function () { if (!formas.length || confirm('¿Borrar todo el dibujo?')) { formas = []; redibujar(); } });
+        $('rd-dib-limpiar').addEventListener('click', async function () { if (!formas.length || await window.confirmarModal({ titulo: '¿Borrar todo el dibujo?', mensaje: 'Se quitarán todos los trazos.', aceptar: 'Borrar' })) { formas = []; redibujar(); } });
         $('rd-dib-cancelar').addEventListener('click', function () { dlg.close(); });
         $('rd-dib-insertar').addEventListener('click', function () {
             if (!formas.length) { estado('Dibuja algo primero', true); return; }

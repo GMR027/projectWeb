@@ -555,8 +555,9 @@
         fetch(C.api.guardar, { method: 'POST', body: datosDocumento(forzar), credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { return [r.status, d]; }); }).then(function (res) {
             guardando = false; var d = res[1];
             if (res[0] === 409 && d.conflicto) {
-                if (confirm(d.error + '\n\n¿Guardar de todos modos y reemplazar esa versión?')) guardar(true, despues);
-                else estado('No guardado: hay una versión más reciente', true);
+                window.confirmarModal({ titulo: 'Conflicto de versión', mensaje: d.error + ' ¿Guardar de todos modos y reemplazar esa versión?', aceptar: 'Reemplazar' }).then(function (ok) {
+                    if (ok) guardar(true, despues); else estado('No guardado: hay una versión más reciente', true);
+                });
                 return;
             }
             if (!d.success) { estado(d.error || 'No se pudo guardar', true); return; }
@@ -1068,14 +1069,14 @@
         var l = $('rd-firmas-lista');
         l.innerHTML = firmas.length ? firmas.map(function (f) { return '<span class="rd-firma-item"><button type="button" data-firma="' + f.id + '" title="Insertar esta firma"><img src="' + esc(f.src) + '" alt="' + esc(f.nombre) + '"><small>' + esc(f.nombre) + '</small></button><button type="button" class="btn-icono" data-firma-borrar="' + f.id + '" title="Eliminar firma" aria-label="Eliminar firma"><i class="fa-solid fa-trash-can"></i></button></span>'; }).join('') : '<span class="text-sm text-muted">Aún no tienes firmas guardadas.</span>';
     }
-    $('rd-firmas-lista').addEventListener('click', function (e) {
+    $('rd-firmas-lista').addEventListener('click', async function (e) {
         var b = e.target.closest('[data-firma]'), d = e.target.closest('[data-firma-borrar]');
         if (b) {
             var f = firmas.filter(function (x) { return String(x.id) === b.dataset.firma; })[0]; if (!f) return;
             var nom = $('rd-firma-nombre').value.trim(), cargo = $('rd-firma-cargo').value.trim(), hoy = new Date().toLocaleDateString('es-MX');
             insertarEnRaiz('<table style="width:45%;border-collapse:collapse"><tbody><tr><td style="border:0;text-align:center"><p style="text-align:center"><img src="' + esc(f.src) + '" alt="Firma" style="width:180px"></p><p style="text-align:center">______________________________</p><p style="text-align:center"><strong>' + esc(nom) + '</strong>' + (cargo ? '<br>' + esc(cargo) : '') + '<br>' + esc(hoy) + '</p></td></tr></tbody></table><p><br></p>');
         } else if (d) {
-            if (!confirm('¿Eliminar esta firma guardada?')) return;
+            if (!await window.confirmarModal({ titulo: '¿Eliminar la firma?', mensaje: 'Se borrará esta firma guardada.', aceptar: 'Eliminar' })) return;
             var fd = new FormData(); fd.append('id', C.id); fd.append('firma', d.dataset.firmaBorrar);
             fetch(C.api.firmaBorrar, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function () { firmas = firmas.filter(function (x) { return String(x.id) !== d.dataset.firmaBorrar; }); pintarFirmas(); });
         }
@@ -1319,7 +1320,7 @@
         ult.scrollIntoView({ block: 'center', behavior: 'smooth' });
         estado('Página agregada al final');
     });
-    $('rd-pg-lista').addEventListener('click', function (e) {
+    $('rd-pg-lista').addEventListener('click', async function (e) {
         var caja = e.target.closest('.rd-pg'); if (!caja) return;
         var i = +caja.dataset.i, g = gruposPaginas(), b = e.target.closest('[data-pg-acc]');
         if (!b) {
@@ -1333,7 +1334,7 @@
         if (acc === 'sube') { var ref = g[i - 1][0]; g[i].forEach(function (el) { hoja.insertBefore(el, ref); }); }
         else if (acc === 'baja') { var ref2 = g[i + 1][g[i + 1].length - 1].nextSibling; g[i].forEach(function (el) { hoja.insertBefore(el, ref2); }); }
         else if (acc === 'borra') {
-            if (!confirm('¿Eliminar la página ' + (i + 1) + ' con su contenido?')) return;
+            if (!await window.confirmarModal({ titulo: '¿Eliminar la página ' + (i + 1) + '?', mensaje: 'Se borrará la página con su contenido.', aceptar: 'Eliminar' })) return;
             g[i].forEach(function (el) { el.remove(); });
             if (!hoja.children.length) hoja.innerHTML = '<p><br></p>';
         }

@@ -143,11 +143,11 @@ if ($corrida): ?>
         <?php endforeach; ?>
     </ul>
     <script>
-        document.querySelector('.inc-lista').addEventListener('click', function (e) {
+        document.querySelector('.inc-lista').addEventListener('click', async function (e) {
             var b = e.target.closest('button[data-accion]');
             if (!b) return;
             var li = b.closest('.inc-item'), msg = li.querySelector('.inc-msg'), accion = b.dataset.accion;
-            if (accion === 'aceptar' && !li.querySelector('.inc-tag').textContent.startsWith('Sin cambio') && !confirm('Se modificarán datos del proyecto con esta solución. ¿Aceptar?')) return;
+            if (accion === 'aceptar' && !li.querySelector('.inc-tag').textContent.startsWith('Sin cambio') && !await window.confirmarModal({ titulo: '¿Aceptar la solución?', mensaje: 'Se modificarán datos del proyecto con esta solución.', aceptar: 'Aceptar', tono: 'info' })) return;
             var d = new FormData();
             d.append('proyecto', '<?php echo $pid; ?>'); d.append('id', li.dataset.id); d.append('corrida', '<?php echo (int)$filtros['corrida']; ?>');
             li.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
@@ -167,7 +167,7 @@ if ($corrida): ?>
         var todas = document.getElementById('inc-todas');
         if (todas) todas.addEventListener('click', async function () {
             var items = Array.prototype.filter.call(document.querySelectorAll('.inc-item.est-pendiente'), function (li) { return !li.querySelector('.inc-tag').textContent.startsWith('Sin cambio'); });
-            if (!confirm('Se aplicarán ' + items.length + ' cambios a los datos del proyecto, uno por uno (cada uno se puede revertir). ¿Continuar?')) return;
+            if (!await window.confirmarModal({ titulo: '¿Aplicar ' + items.length + ' cambios?', mensaje: 'Se aplicarán a los datos del proyecto, uno por uno (cada uno se puede revertir).', aceptar: 'Aplicar', tono: 'info' })) return;
             todas.disabled = true; var msg = document.getElementById('inc-todas-msg'), ok = 0, mal = 0;
             for (var i = 0; i < items.length; i++) {
                 var d = new FormData(); d.append('proyecto', '<?php echo $pid; ?>'); d.append('id', items[i].dataset.id); d.append('corrida', '<?php echo (int)$filtros['corrida']; ?>');

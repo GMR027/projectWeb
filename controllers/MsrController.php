@@ -69,8 +69,11 @@ class MsrController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msr->nombre = trim($_POST['nombre'] ?? '');
             $msr->descripcion = trim($_POST['descripcion'] ?? '');
+            $enc = (int)($_POST['encabezado_id'] ?? 0);
+            $msr->encabezado_id = $enc > 0 && ($e = \Model\Estampa::find($enc)) && (int)$e->proyecto_id === (int)$proyecto->id && (($e->config()['modo'] ?? '') === 'lienzo') ? $enc : null;
             $msr->proyecto_id = $proyecto->id;
             $partidasPost = array_values(array_filter($_POST['partidas'] ?? [], 'is_array'));
+            $msr->columnas_json = Msr::normalizarColumnas((string)($_POST['modo'] ?? ''), array_values(array_filter($_POST['columnas'] ?? [], 'is_array')));
             $alertas = $msr->validar();
             foreach (Msr::validarPartidas($partidasPost) as $e) $alertas['error'][] = $e;
             if (!$alertas) {
@@ -84,10 +87,34 @@ class MsrController
         $router->render('msr/formulario', [
             'titulo' => $msr->id ? 'Editar MSR' : 'Nuevo MSR', 'proyecto' => $proyecto, 'msr' => $msr, 'alertas' => $alertas,
             'partidas' => isset($partidasPost)
-                ? array_map(fn($p) => ['id' => (int)($p['id'] ?? 0), 'titulo' => trim($p['titulo'] ?? ''), 'materiales' => array_map('intval', $p['materiales'] ?? [])], $partidasPost)
+                ? array_map(fn($p) => ['id' => (int)($p['id'] ?? 0), 'titulo' => trim($p['titulo'] ?? ''), 'color' => (string)($p['color'] ?? ''), 'materiales' => array_map('intval', $p['materiales'] ?? [])], $partidasPost)
                 : ($msr->id ? $msr->partidas() : []),
+            'columnasForm' => self::columnasParaFormulario($msr, $proyecto),
+            'encabezados' => Msr::tieneEncabezado() ? array_values(array_filter(\Model\Estampa::deProyecto((int)$proyecto->id), fn($e) => ($e->config()['modo'] ?? '') === 'lienzo')) : [],
             'catalogo' => array_map(fn($x) => ['id' => (int)$x->id, 'nombre' => $x->nombre, 'ref' => $x->referencia, 'esp' => $x->especialidad, 'img' => $x->imagen], \Model\Material::deProyecto((int)$proyecto->id)),
         ]);
+    }
+
+    /** Todas las columnas disponibles para el editor: las del MSR primero (en su orden) y el resto sin marcar */
+    private static function columnasParaFormulario(Msr $msr, Proyecto $proyecto): array
+    {
+        $ctr = (string)$proyecto->contratista;
+        $activas = $msr->columnas($ctr);
+        // Un MSR sin diseño propio parte de las columnas de siempre, con sus nombres ya escritos para que el usuario los edite
+        $propias = $msr->disenoExplicito($ctr);
+        $out = [];
+        $usadas = [];
+        foreach ($propias as $i => $c) {
+            $r = $activas[$i] ?? null;
+            if (!$r) continue;
+            $out[] = ['k' => $c['k'], 'n' => $c['n'], 'c' => $c['c'] ?? '', 'g' => $r['g'], 'generico' => Msr::COLUMNAS[$c['k']][0] ?? 'Texto', 'color' => $r['c'], 'activa' => true, 'texto' => str_starts_with($c['k'], 'txt_'), 'origen' => Msr::ORIGEN[$c['k']] ?? ['texto', 'Texto']];
+            $usadas[$c['k']] = true;
+        }
+        foreach (Msr::COLUMNAS as $k => $d) {
+            if (isset($usadas[$k])) continue;
+            $out[] = ['k' => $k, 'n' => '', 'c' => '', 'g' => Msr::GRUPOS[$d[3]], 'generico' => $d[0], 'color' => $d[2], 'activa' => false, 'texto' => false, 'origen' => Msr::ORIGEN[$k] ?? ['texto', 'Texto']];
+        }
+        return $out;
     }
 
     /** Elimina el MSR y sus renglones; sus paquetes de submittal quedan «Sin MSR» */
@@ -108,8 +135,10 @@ class MsrController
             $secciones[$it->seccion][] = $it;
         }
         // Partidas propias aún vacías también se muestran
+        $coloresSec = [];
         if ($msr) foreach ($msr->partidas() as $p) {
             if (!isset($secciones[$p['titulo']])) $secciones[$p['titulo']] = [];
+            if ($p['color'] !== '') $coloresSec[$p['titulo']] = $p['color'];
         }
         $dueno = Usuario::find($proyecto->usuario_id);
         return [
@@ -117,6 +146,9 @@ class MsrController
             'msr' => $msr,
             'items' => $items,
             'secciones' => $secciones,
+            'coloresSec' => $coloresSec,
+            'grupos' => Msr::grupos($msr ? $msr->columnas((string)$proyecto->contratista) : (new Msr())->columnas((string)$proyecto->contratista)),
+            'columnas' => $msr ? $msr->columnas((string)$proyecto->contratista) : (new Msr())->columnas((string)$proyecto->contratista),
             'umbral' => max(1, (int)$proyecto->msr_umbral_critico),
             'logoEmpresa' => $dueno && $dueno->logo ? $dueno->logo : $proyecto->logo,
             'proveedores' => array_values(array_unique(array_filter(array_map(fn($i) => $i->proveedor, $items)))),
@@ -148,6 +180,11 @@ class MsrController
     {
         $item = self::itemEditable();
         $campo = $_POST['campo'] ?? '';
+        if (preg_match('/^txt_\d{1,6}$/', $campo)) {   // columna de texto libre del usuario
+            $item->fijarExtra($campo, mb_substr(trim((string)($_POST['valor'] ?? '')), 0, 2000));
+            $item->guardar();
+            self::json(['success' => true, 'dias' => $item->diasEntrega(), 'critico' => false, 'atrasoCompra' => false, 'atrasoEntrega' => false, 'compartido' => null]);
+        }
         $tipo = MsrItem::EDITABLES[$campo] ?? null;
         if (!$tipo) self::json(['success' => false, 'error' => 'Campo no editable'], 422);
         $valor = trim((string)($_POST['valor'] ?? ''));
@@ -188,6 +225,116 @@ class MsrController
         ]);
     }
 
+    /** Guarda el nuevo orden de las columnas (arrastradas en el encabezado); si el MSR era clásico pasa a diseño propio */
+    public static function orden()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $msr = self::msrDe($proyecto);
+        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        $claves = array_values(array_filter(explode(',', (string)($_POST['orden'] ?? ''))));
+        $porClave = [];
+        foreach ($msr->disenoExplicito((string)$proyecto->contratista) as $c) $porClave[$c['k']] = $c;
+        $nuevo = [];
+        foreach ($claves as $k) if (isset($porClave[$k])) { $nuevo[] = $porClave[$k]; unset($porClave[$k]); }
+        foreach ($porClave as $c) $nuevo[] = $c;
+        $msr->columnas_json = Msr::normalizarColumnas('personalizado', $nuevo);
+        $msr->guardar();
+        self::json(['success' => true]);
+    }
+
+    /** Cambia el título y el color de una columna (doble clic en su encabezado) */
+    public static function columna()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $msr = self::msrDe($proyecto);
+        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        $k = (string)($_POST['k'] ?? '');
+        $diseno = $msr->disenoExplicito((string)$proyecto->contratista);
+        $hallada = false;
+        foreach ($diseno as &$c) {
+            if ($c['k'] !== $k) continue;
+            $hallada = true;
+            $c['n'] = mb_substr(trim((string)($_POST['n'] ?? '')), 0, 60);
+            $c['c'] = (string)($_POST['c'] ?? '');
+            if (isset($_POST['g'])) $c['g'] = (string)$_POST['g'];
+        }
+        unset($c);
+        if (!$hallada) self::json(['success' => false, 'error' => 'Columna no encontrada'], 404);
+        // Al asignarla a un grupo, la columna se coloca junto a las demás de ese grupo
+        $grupo = trim((string)($_POST['g'] ?? ''));
+        if ($grupo !== '' && isset($_POST['g'])) {
+            $actual = $msr->columnas((string)$proyecto->contratista);
+            $gDe = array_column($actual, 'g', 'k');
+            $gDe[$k] = $grupo;
+            $propia = null;
+            $resto = [];
+            foreach ($diseno as $c) { if ($c['k'] === $k) $propia = $c; else $resto[] = $c; }
+            $ultimo = -1;
+            foreach ($resto as $i => $c) if (($c['g'] ?? $gDe[$c['k']] ?? '') === $grupo) $ultimo = $i;
+            if ($propia && $ultimo >= 0) {
+                array_splice($resto, $ultimo + 1, 0, [$propia]);
+                $diseno = $resto;
+            }
+        }
+        $msr->columnas_json = Msr::normalizarColumnas('personalizado', $diseno);
+        $msr->guardar();
+        $col = array_values(array_filter($msr->columnas((string)$proyecto->contratista), fn($x) => $x['k'] === $k))[0] ?? null;
+        self::json(['success' => true, 'n' => $col['n'] ?? '', 'c' => $col['c'] ?? '', 'g' => $col['g'] ?? '']);
+    }
+
+    /** Sube o baja un material dentro de su partida: intercambia su posición con la del renglón vecino */
+    public static function mover()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $msr = self::msrDe($proyecto);
+        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        $a = MsrItem::find((int)($_POST['item'] ?? 0));
+        $b = MsrItem::find((int)($_POST['con'] ?? 0));
+        if (!$a || !$b || (int)$a->msr_id !== (int)$msr->id || (int)$b->msr_id !== (int)$msr->id || $a->seccion !== $b->seccion) {
+            self::json(['success' => false, 'error' => 'Los renglones deben ser de la misma partida'], 422);
+        }
+        $db = MsrItem::getDB();
+        $ids = [];
+        $res = $db->query('SELECT id FROM msr_items WHERE msr_id = ' . (int)$msr->id . ' ORDER BY orden ASC, id ASC');
+        while ($r = $res->fetch_row()) $ids[] = (int)$r[0];
+        $i = array_search((int)$a->id, $ids, true);
+        $j = array_search((int)$b->id, $ids, true);
+        if ($i === false || $j === false) self::json(['success' => false, 'error' => 'Renglón no encontrado'], 404);
+        [$ids[$i], $ids[$j]] = [$ids[$j], $ids[$i]];
+        foreach ($ids as $n => $id) $db->query('UPDATE msr_items SET orden = ' . ($n + 1) . ' WHERE id = ' . $id);
+        self::json(['success' => true]);
+    }
+
+    /** Cambia el título y el color de una partida (doble clic en su barra) */
+    public static function partida()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $msr = self::msrDe($proyecto);
+        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        $db = MsrItem::getDB();
+        $mid = (int)$msr->id;
+        $viejo = (string)($_POST['viejo'] ?? '');
+        $titulo = mb_substr(trim((string)($_POST['titulo'] ?? '')), 0, 200);
+        $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '';
+        if ($titulo === '') self::json(['success' => false, 'error' => 'El título no puede quedar vacío'], 422);
+        $v = $db->escape_string($viejo);
+        $t = $db->escape_string($titulo);
+        if ($titulo !== $viejo) {
+            $dup = $db->query("SELECT 1 FROM msr_items WHERE msr_id = $mid AND seccion = '$t' LIMIT 1");
+            $dupP = $db->query("SELECT 1 FROM msr_partidas WHERE msr_id = $mid AND titulo = '$t' LIMIT 1");
+            if (($dup && $dup->num_rows) || ($dupP && $dupP->num_rows)) self::json(['success' => false, 'error' => 'Ya existe una partida con ese título'], 422);
+            $db->query("UPDATE msr_items SET seccion = '$t' WHERE msr_id = $mid AND seccion = '$v'");
+        }
+        $existe = $db->query("SELECT id FROM msr_partidas WHERE msr_id = $mid AND titulo = '$v' LIMIT 1");
+        if ($existe && ($f = $existe->fetch_row())) {
+            $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color' WHERE id = " . (int)$f[0]);
+        } else {
+            $orden = (int)$db->query("SELECT COALESCE(MAX(orden),-1)+1 FROM msr_partidas WHERE msr_id = $mid")->fetch_row()[0];
+            $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $orden)");
+        }
+        self::json(['success' => true, 'titulo' => $titulo, 'color' => $color]);
+    }
+
     /** Umbral (días) a partir del cual la entrega se marca como crítica */
     public static function umbral()
     {
@@ -218,6 +365,8 @@ class MsrController
                 try {
                     @set_time_limit(180);
                     $vista['previa'] = MsrImportador::analizar($f['tmp_name'], (int)$proyecto->id);
+                    $vista['existentes'] = MsrImportador::partidasDe((int)$msr->id);
+                    $vista['nuevas'] = $vista['existentes'] ? MsrImportador::partidasNuevas($vista['previa']['filas'], (int)$msr->id) : [];
                 } catch (\Throwable $e) {
                     Proyecto::setAlerta('error', 'No se pudo leer el archivo: ' . $e->getMessage());
                 }
@@ -233,13 +382,23 @@ class MsrController
         try {
             @set_time_limit(180);
             $msr = self::msrDe($proyecto) ?? Msr::asegurar((int)$proyecto->id);
-            $r = MsrImportador::aplicar($_POST['token'] ?? '', $proyecto, (int)$msr->id);
+            $r = MsrImportador::aplicar($_POST['token'] ?? '', $proyecto, (int)$msr->id, self::unionDePost());
             $q = http_build_query(['proyecto' => $proyecto->id, 'id' => $msr->id, 'importado' => $r['renglones'], 'mat' => $r['materiales'], 'sub' => $r['submittals'], 'omitidos' => $r['omitidos']]);
             header("Location: /msr/ver?$q");
         } catch (\Throwable $e) {
             header('Location: /msr/importar?proyecto=' . $proyecto->id . '&msr=' . (int)($_POST['msr'] ?? 0) . '&error=' . urlencode($e->getMessage()));
         }
         exit;
+    }
+
+    /** ['Partida del Excel' => 'Partida existente'] elegido en la vista previa; vacío = crear partida nueva */
+    private static function unionDePost(): array
+    {
+        $u = [];
+        foreach ((array)($_POST['union'] ?? []) as $x) {
+            if (is_array($x) && !empty($x['de']) && !empty($x['a'])) $u[(string)$x['de']] = (string)$x['a'];
+        }
+        return $u;
     }
 
     public static function cancelarImportacion()

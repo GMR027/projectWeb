@@ -9,15 +9,15 @@ document.addEventListener('click', async e => {
         const r = await fetch('/api/cambios/partida-estado', { method: 'POST', body: datos });
         const d = await r.json();
         if (d.success) return location.reload();
-        if (d.conflicto) { alert('Este renglón cambió mientras tanto (ahora está «' + d.actual.estado + '»). Recarga la página para verlo.'); }
-        else alert(d.error || 'No se pudo cambiar el estado');
+        if (d.conflicto) { window.avisoModal('Renglón modificado', 'Este renglón cambió mientras tanto (ahora está «' + d.actual.estado + '»). Recarga la página para verlo.'); }
+        else window.avisoModal('No se pudo cambiar el estado', d.error || 'No se pudo cambiar el estado');
     } catch (_) {
         if (window.POOffline && POOffline.activo()) {
             await POOffline.encolar({ url: '/api/cambios/partida-estado', cuerpo: Object.fromEntries(datos), etiqueta: b.dataset.etiqueta || 'Cambio de estado' });
             b.textContent = 'En cola (sin conexión)';
             return;
         }
-        alert('Sin conexión. Activa el modo sin conexión en Ajustes para guardar los cambios y subirlos después.');
+        window.avisoModal('Sin conexión', 'Activa el modo sin conexión en Ajustes para guardar los cambios y subirlos después.');
     }
     b.disabled = false;
 });

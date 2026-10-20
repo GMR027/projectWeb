@@ -12,7 +12,7 @@ Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm
 
 ## Modelo
 - `vplan_laminas`: título interno, supervisor, `plano`/`simbologia` (archivos), `marcas_*` (editor Konva), `recovery_cols`, `ancho_mm`/`alto_mm`/`preset`. `partida_id` queda como "partida principal" **opcional** (la usan `Renumeracion` y el orden de la lista); no manda sobre el contenido.
-- `vplan_bloques` (`lamina_id, tipo, x, y, w, h` en **% de la hoja**, `z`, `config_json`). Tipos (`Model\VplanBloque::TIPOS`): `titulo`, `logo`, `plano`, `tareas`, `tabla`, `simbologia`, `schedule`, `supervisor`, `fecha`, `texto`.
+- `vplan_bloques` (`lamina_id, tipo, x, y, w, h` en **% de la hoja**, `z`, `config_json`). Tipos (`Model\VplanBloque::TIPOS`): `titulo`, `logo`, `plano`, `tareas`, `tabla`, `simbologia`, `schedule`, `supervisor`, `fecha`, `texto`, **`imagen`** (símbolo o simbología: copia propia en `uploads/vplan`, `config.archivo`) y **`cajetin`** (`config.cajetin_id`, 0 = estándar; filas con variables resueltas por `Vplan::cajetinDeBloque`).
 - `config` por tipo (se sanea en `VplanController::configDeBloque`): textos → `texto, tamano, negrita, color, alinear`; `logo` → `cual, alinear`; `tabla` → `tabla_id`; **`tareas` → `fuentes:[{partida, actividades:null|[ids]}], seq:'continuo'|'partida', titulo, color`** (`actividades:null` = toda la partida, dinámica).
 - **Recovery dinámico:** `vplan_laminas.recovery_n` = cuántas columnas (máx. `VplanLamina::MAX_RECOVERY` = 6; encabezados `Vplan::etiquetaRecovery`: RECOVERY, RECOVERY 02, 03…). Fechas por (lámina, actividad, n) en `vplan_recovery_n` (`inicio`, `fin`); `VplanLamina::recovery()`/`guardarRecovery($act, $n, $campo, $v)`. `Vplan::datos` entrega `nRec` y por tarea `rec[]` (índice 0 = recovery 1). `POST /vplan/lamina/recovery` (`accion` agregar/quitar la última; `ajax=1` → JSON), `POST /api/vplan/recovery` (`n`, `campo` inicio|fin). Quitar la columna conserva las fechas. `recovery_cols` (máscara) y la tabla `vplan_recovery` quedan en desuso (la migración copia los datos).
 - `vplan_lamina_tablas` sigue siendo la pertenencia de tablas; cada tabla de la lámina tiene un bloque `tabla` (`VplanLamina::bloques()` lo crea/retira solo).
@@ -45,3 +45,8 @@ Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm
 - Varios planos (con marcas propias) en una lámina; hoy hay un plano por lámina.
 - Recovery por bloque (hoy por lámina).
 - Deshacer/rehacer en el modo diseño.
+
+## Símbolos, simbologías y cajetines en el modo diseño (2026-10-19)
+- Pestaña **Insertar** → «Símbolos y simbologías»: biblioteca (`Simbolo::paraEditor`), gráficos/simbologías del proyecto (`Grafico::paraInsertar`) y **Cajetines**. Un símbolo se rasteriza (SVG→PNG) en el navegador, se sube con `/api/vplan/imagen` y crea un bloque `imagen`; un cajetín crea un bloque `cajetin`. Datos en `VP_DISENO.biblioteca`.
+- Las copias de `imagen` no se borran al quitar el bloque (quedan en `uploads/vplan`).
+- **Estampas inteligentes (2026-10-19):** tipo de bloque `estampa` (`config.estampa_id`, `fecha_modo`, `fecha`, `actividad_id`); se inserta desde Insertar › Estampas inteligentes y se llena solo con datos del proyecto (hoja y PDF). Detalle en `docs/estampas.md`.

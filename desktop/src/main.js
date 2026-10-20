@@ -88,6 +88,10 @@ function crearVista() {
   win.contentView.addChildView(vista);
   vista.setVisible(false);
   const wc = vista.webContents;
+  const ses = wc.session, ua = ses.getUserAgent() + ' ProjectWebDesktop';
+  ses.setUserAgent(ua);   // el servidor lo usa para conservar la sesión
+  const fetchOriginal = ses.fetch.bind(ses);   // session.fetch no hereda el User-Agent de la sesión: se pone a mano
+  ses.fetch = (u, o = {}) => { const h = new Headers(o.headers || {}); if (!h.has('user-agent')) h.set('user-agent', ua); return fetchOriginal(u, { ...o, headers: h }); };
   atajosZoom(wc); atajosZoom(win.webContents);
   const mismoOrigen = u => { try { return new URL(u).origin === new URL(cfg.leer().servidor).origin; } catch { return false; } };
   const externo = u => { if (/^https?:/.test(u)) shell.openExternal(u); };

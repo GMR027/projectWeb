@@ -105,7 +105,7 @@ function aplicarTema(t) { document.documentElement.dataset.tema = t === 'claro' 
 aplicarTema(guardado('tema'));
 $('#aj-tema').addEventListener('change', e => { guardado('tema', e.target.value); aplicarTema(e.target.value); });
 // Al iniciar solo se ve el login; al entrar aparece la ventana general, y al cerrar sesión se vuelve al login
-pw.alSesion(v => { errorWeb = false; conSesion = v; pintarChip(); if (!v) seccionActual = seccionActual || '/dashboard'; mostrar('web'); });
+pw.alSesion(v => { errorWeb = false; conSesion = v; if (v) { proyectosProg = null; proyectosMenuListos = false; if (modo === 'ia') pintarMenuIA(); } pintarChip(); if (!v) seccionActual = seccionActual || '/dashboard'; mostrar('web'); });
 pw.alErrorWeb(d => { errorWeb = true; $('#err-detalle').textContent = 'No se pudo conectar con Project Web (' + d + ').'; $('#err-url').value = cfg?.servidor || ''; mostrar('web'); });
 $('#err-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -211,8 +211,12 @@ const NOMBRE_ESTADO = { ok: 'Funciona bien', limitado: 'Funciona con límites', 
 let proyectosMenuListos = false;
 async function cargarProyectosMenu() {
   if (proyectosMenuListos) return;
-  try { proyectosProg = proyectosProg || await pw.proyectosPrograma(); } catch { return; }
-  const sel = $('#ia-menu-proyecto'), previo = sel.value || proyectoActual;
+  const sel = $('#ia-menu-proyecto');
+  try { proyectosProg = proyectosProg || await pw.proyectosPrograma(); }
+  catch (x) {   // sin sesión de administrador la lista llega vacía: se avisa en vez de dejar el selector en blanco
+    const o = el('option', '⚠ ' + msgErr(x)); o.value = ''; sel.replaceChildren(o); proyectosProg = null; return;
+  }
+  const previo = sel.value || proyectoActual;
   sel.replaceChildren(...(proyectosProg || []).map(p => { const o = el('option', p.codigo + ' · ' + p.nombre); o.value = p.id; return o; }));
   if (previo && (proyectosProg || []).some(p => String(p.id) === String(previo))) sel.value = previo;
   proyectosMenuListos = !!(proyectosProg || []).length;

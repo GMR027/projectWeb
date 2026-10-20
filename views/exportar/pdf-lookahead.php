@@ -38,6 +38,10 @@ $nDias = count($semanas) * 7;
 </style>
 </head>
 <body>
+<?php $encEst = $config->encabezado(); $pta = $config->pta();
+if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 1184.0 / $Wu; ?>
+<div style="position:relative;width:1184pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt;margin-bottom:4pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1], 'pt', $Kenc); ?></div>
+<?php endif; ?>
 <table>
     <thead>
         <tr class="esp">
@@ -47,13 +51,15 @@ $nDias = count($semanas) * 7;
         </tr>
         <tr>
             <th colspan="2" class="info">
+                <?php if (!$encEst): ?>
                 <?php if ($logoContratista): ?><img src="<?php echo $logoContratista; ?>" style="height:22pt; float:right; margin-left:6pt;"><?php endif; ?>
                 <?php if ($logoBase64): ?><img src="<?php echo $logoBase64; ?>" style="height:22pt; float:right;"><?php endif; ?>
                 <?php echo s($proyecto->nombre); ?><br>
                 <small><strong>Inicio:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_inicio)); ?> &nbsp; <strong>Fin:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_fin)); ?></small><br>
                 <small><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?></small>
+                <?php endif; ?>
             </th>
-            <th colspan="<?php echo $nDias + 2; ?>" class="banner">4 Weeks Look Ahead · <?php echo s($proyecto->nombre); ?></th>
+            <th colspan="<?php echo $nDias + 2; ?>" class="banner"><?php echo s($config->tituloBanner($proyecto)); ?></th>
             <th colspan="<?php echo count($tipos); ?>" class="banner" style="font-size:8pt;">Limitaciones</th>
         </tr>
         <tr>
@@ -61,7 +67,7 @@ $nDias = count($semanas) * 7;
             <th class="cab" style="font-size:8pt;">ACTIVIDAD</th>
             <?php foreach ($semanas as $i => $sem): ?>
                 <th colspan="7" class="sem <?php echo $i === 0 ? 'sem-act' : ''; ?>"><?php echo s($sem['etiqueta']); ?> · S<?php echo s($sem['iso']); ?><br><span style="font-size:5pt"><?php echo s($sem['mes']); ?></span></th>
-                <?php if ($i === 0): ?><th class="cab" rowspan="2">%<br>Comp</th><th class="cab" rowspan="2">PTA</th><?php endif; ?>
+                <?php if ($i === 0): ?><th class="cab" rowspan="2">%<br>Comp</th><th class="cab" rowspan="2"><?php echo s($pta); ?></th><?php endif; ?>
             <?php endforeach; ?>
             <?php foreach ($tipos as $t): ?>
                 <th class="tipo" rowspan="2"><img src="<?php echo $tiposImg[$t->id]['src']; ?>" style="width:<?php echo round($tiposImg[$t->id]['ancho'], 1); ?>pt; height:<?php echo round($tiposImg[$t->id]['alto'], 1); ?>pt;"></th>
@@ -102,6 +108,6 @@ $nDias = count($semanas) * 7;
         <?php endforeach; ?>
     </tbody>
 </table>
-<div class="foot">X = día programado · PTA: OK = lista para ejecutarse, ! = pendiente · Semana actual desde el <?php echo $lunes->format('d/m/Y'); ?></div>
+<div class="foot">X = día programado · <?php echo s($pta); ?>: OK = lista para ejecutarse, ! = pendiente · Semana actual desde el <?php echo $lunes->format('d/m/Y'); ?></div>
 </body>
 </html>

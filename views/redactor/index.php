@@ -13,9 +13,11 @@
     <div class="card"><p class="text-muted">Aún no hay documentos. <?php echo $puedeEditar ? 'Crea el primero con «Nuevo documento».' : ''; ?></p></div>
 <?php endif; ?>
 
+<?php $carpetas = array_values(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN])); ?>
 <?php foreach ($porDepto as $depto => $docs): ?>
     <div class="card rd-grupo">
-        <h3><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($docs); ?>)</small></h3>
+        <h3><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($docs); ?>)</small>
+            <?php if ($puedeEditar && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
         <div class="tabla-wrapper">
         <table class="tabla" data-sin-buscador>
             <thead><tr><th>Fecha</th><th>Nombre</th><th class="hide-m">Hoja</th><th>Acciones</th></tr></thead>
@@ -38,6 +40,7 @@
                                 </div>
                             </details>
                         <?php endif; ?>
+                        <?php if ($puedeEditar): ?><?php echo \Classes\Carpetas::selector('redactor', (int)$d->id, (string)$d->departamento, $carpetas); ?><?php endif; ?>
                         <?php if ($puedeEditar): ?>
                             <form method="POST" action="/redactor/duplicar" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$d->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
                             <form method="POST" action="/redactor/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($d->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$d->id; ?>"><button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar</button></form>
@@ -50,3 +53,5 @@
         </div>
     </div>
 <?php endforeach; ?>
+
+<?php if ($puedeEditar && $porDepto) { $herramienta = 'redactor'; include __DIR__ . '/../templates/carpetas-ui.php'; } ?>

@@ -206,3 +206,13 @@
   .vp-chip-meta { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem 1rem; border-radius: 2rem; font-size: 1.15rem; font-weight: 600; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted); i { color: #38a1f3; } }
   .vp-acc { margin-top: auto; padding-top: .4rem; flex-wrap: nowrap; .btn { flex: 1; justify-content: center; } .vp-ib { flex: none; } }
   .vp-renombrar { margin-top: auto; } }
+
+// Símbolos y cajetines en el modo diseño (pestaña Insertar)
+.vp-sim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.2rem, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+.vp-sim { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .6rem .4rem; border: 1px solid var(--border); border-radius: .6rem; background: #fff; color: #334155; font-size: 1rem; cursor: pointer;
+  img { width: 4.4rem; height: 4.4rem; object-fit: contain; }
+  span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &:hover { border-color: var(--primary); } }
+.vp-cajetin { margin: 0; th { text-align: left; background: #dbe5f1; color: #000; } }
+.vp-b-cajetin .vp-tab { height: auto; }
+.vp-sim-lam { i { font-size: 2.4rem; height: 4.4rem; display: flex; align-items: center; color: #64748b; } }

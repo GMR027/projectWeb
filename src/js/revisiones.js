@@ -32,10 +32,10 @@
     try {
       const r = await fetch('/api/revisiones/marcar', { method: 'POST', body: d, credentials: 'same-origin' });
       const j = await r.json();
-      if (!j.success) { alert(j.error || 'No se pudo guardar'); return; }
+      if (!j.success) { window.avisoModal('No se pudo guardar', j.error || 'No se pudo guardar'); return; }
       pintar(chip, j.estado);
       document.dispatchEvent(new CustomEvent('revision:guardada', { detail: { chip, estado: j.estado, resumen: j.resumen } }));
-    } catch (_) { alert('No se pudo guardar: revisa la conexión.'); }
+    } catch (_) { window.avisoModal('No se pudo guardar', 'Revisa la conexión.'); }
   }
 
   function abrir(chip) {

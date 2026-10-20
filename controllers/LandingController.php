@@ -30,6 +30,16 @@ class LandingController
         $router->render('landing/terminos', ['titulo' => 'Términos y condiciones', 'landingLayout' => true, 'actualizado' => '14 de octubre de 2026']);
     }
 
+    /** Servicios administrativos de seguimiento de obra (página pública) */
+    public static function servicios(Router $router)
+    {
+        $router->render('landing/servicios', [
+            'titulo' => 'Servicios de seguimiento de obra',
+            'landingLayout' => true,
+            'demoDisponible' => (bool)self::proyectoDemo(),
+        ]);
+    }
+
     private static function render(Router $router): void
     {
         $router->render('landing/index', [

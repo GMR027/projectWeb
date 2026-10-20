@@ -30,11 +30,13 @@
 @use 'paginas/reportes';
 @use 'paginas/planificador';
 @use 'paginas/comparador';
+@use 'paginas/traductor';
 @use 'paginas/programador';
 @use 'paginas/inconsistencias';
 @use 'paginas/archivero';
 @use 'paginas/redactor';
 @use 'paginas/sheetflow';
 @use 'paginas/vplan';
+@use 'paginas/simbolos';
 @use 'paginas/cambios';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

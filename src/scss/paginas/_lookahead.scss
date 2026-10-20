@@ -144,7 +144,8 @@
 .msr-tabla { border-collapse: collapse; font-size: 1.15rem; min-width: 150rem; width: 100%;
   th, td { border: 2px solid var(--text); padding: .4rem .6rem; vertical-align: middle; }
   thead th { position: sticky; top: 0; z-index: 2; text-align: center; color: #fff; font-size: 1rem; }
-  .msr-grupo th { font-size: 1.3rem; letter-spacing: .05em; }
+  .msr-grupo th { font-size: 1.3rem; letter-spacing: .05em; top: 0; }
+  thead tr:not(.msr-grupo) th { top: var(--msr-grupo-h, 0px); }   // la fila de títulos queda justo debajo de la de grupos
   .h-navy { background: #17365D; } .h-negro { background: #0C0C0C; } .h-gris { background: #7F7F7F; }
   .h-azul { background: #0070C0; } .h-azulosc { background: #1F497D; }
   .msr-seccion td { background: #3F3F3F; color: #fff; font-weight: 700; font-size: 1rem; text-align: center; }
@@ -191,6 +192,7 @@ td.msr-atraso, b.msr-atraso { background: rgba(220, 38, 38, .35); color: #fff; p
 .lp-rojo { color: #dc2626; }
 // En pantalla los post-it se ven ampliados ($e veces) para leerlos mejor; el PDF mantiene 7 x 7 cm
 $e: 1.7;
+.lp-tarjeta-est { background: #fff; color: #000; flex: none; overflow: hidden; font-family: Arial, sans-serif; }
 .lp-grid { display: flex; flex-wrap: wrap; gap: 2.4rem; }
 .lp-tarjeta { width: 7cm * $e; height: 7cm * $e; background: #fff; color: #000; border: 2px solid #000; display: flex; flex-direction: column; font-family: Arial, sans-serif; overflow: hidden;
   .lp-fila { display: flex; border-bottom: 2px solid #000; min-height: 1.15cm * $e;
@@ -725,3 +727,51 @@ body.vp-sin-scroll { overflow: hidden; }
 .vp-ayuda { margin-bottom: 1rem; }
 // Bloques ocultos: en modo diseño se ven atenuados para poder volver a mostrarlos
 .vp-lamina .vp-b-oculto { opacity: .28; }
+
+// Editor de columnas del MSR
+.msr-modo { display: flex; flex-direction: column; gap: .6rem; margin: 1rem 0; }
+.msr-cols { list-style: none; padding: 0; margin: 1rem 0;
+  li { display: flex; align-items: center; gap: .8rem; padding: .5rem .8rem; border: 1px solid var(--border, #334155); border-radius: .6rem; margin-bottom: .5rem; background: var(--card-bg, transparent);
+    input[type="text"] { flex: 1; min-width: 12rem; }
+    input[type="color"] { width: 3.6rem; height: 3rem; padding: 0; border: 0; background: none; cursor: pointer; }
+    &.arrastrando { opacity: .4; } }
+  .col-asa { cursor: grab; opacity: .7; user-select: none; } }
+.msr-tabla thead th[draggable="true"] { cursor: grab; }
+.msr-origen { font-size: 1.1rem; padding: .2rem .8rem; border-radius: 2rem; white-space: nowrap; border: 1px solid currentColor;
+  &-dato { color: #3b82f6; } &-calculo { color: #a855f7; } &-texto { color: #64748b; } }
+// Encabezados del MSR: flechas para mover (parpadean suave, no salen al imprimir)
+.msr-tabla thead th[data-col] { position: sticky; padding-left: 2.2rem; padding-right: 2.2rem; user-select: none; }
+.msr-mv { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.25); color: inherit; border: 0; border-radius: .3rem; width: 1.8rem; height: 2.4rem; line-height: 1; cursor: pointer; font-size: 1.6rem; padding: 0; opacity: .35; animation: msr-parpadeo 2.4s ease-in-out infinite;
+  &:hover { opacity: 1; animation: none; background: rgba(255,255,255,.5); }
+  &-l { left: .2rem; } &-r { right: .2rem; } }
+@keyframes msr-parpadeo { 0%, 100% { opacity: .15; } 50% { opacity: .6; } }
+#msr-col-dlg, #msr-sec-dlg, #carpeta-dlg { position: fixed; inset: 0; margin: auto; height: fit-content; width: min(42rem, 92vw); box-shadow: 0 2rem 6rem rgba(0,0,0,.45); border: 1px solid var(--border, #475569); border-radius: 1rem; padding: 2.4rem; background: var(--card-bg, #1e293b); color: inherit;
+  &::backdrop { background: rgba(0,0,0,.5); }
+  label { display: block; margin: 1rem 0 .4rem; } input[type="text"] { width: 100%; }
+  input[type="color"] { width: 6rem; height: 3.6rem; padding: 0; border: 0; background: none; }
+  .acciones { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.6rem; } }
+#msr-sec-dlg {
+  h3 { margin: 0 0 .4rem; } .msr-sec-sub { margin: 0 0 1.2rem; font-size: 1.2rem; opacity: .7; }
+  .msr-sec-prev { padding: .9rem 1.2rem; border-radius: .5rem; font-weight: 700; font-size: 1.2rem; text-align: center; margin-bottom: .6rem; overflow-wrap: anywhere; }
+  .msr-sec-colores { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+  .msr-sw { width: 2.8rem; height: 2.8rem; border-radius: 50%; border: 2px solid transparent; outline: 1px solid var(--border, #475569); cursor: pointer; padding: 0; &:hover, &.on { border-color: var(--text, #fff); } }
+  .msr-sec-err { color: #f87171; font-size: 1.2rem; min-height: 1.6rem; margin: .8rem 0 0; } }
+@media print { .msr-mv, #msr-col-dlg, #msr-sec-dlg { display: none !important; } .msr-tabla thead th[data-col] { padding-left: .6rem; padding-right: .6rem; } }
+
+.msr-seccion { cursor: pointer; }
+.msr-mover { white-space: nowrap; text-align: center; width: 6rem; }
+.msr-ord { background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: .3rem; width: 2.4rem; height: 2.4rem; cursor: pointer; font-size: 1rem; padding: 0; margin: 0 .1rem; &:hover { background: var(--primary); color: #fff; } &:disabled { opacity: .4; } }
+.carpeta-mover { max-width: 14rem; font-size: 1.2rem; padding: .3rem .5rem; }
+
+// Ajustes del Lookahead (no se imprimen ni van al PDF)
+.la-semanas-ctl { display: inline-flex; align-items: center; gap: .4rem; margin-left: .8rem; }
+.la-semanas-n { font-size: 1.3rem; min-width: 4.4rem; text-align: center; }
+.la-ajustes { margin: 0 0 1.2rem; padding: 1rem 1.4rem; border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: .8rem;
+  summary { cursor: pointer; font-weight: 600; }
+  .la-ajustes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr)); gap: 1.2rem; margin: 1rem 0; }
+  label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; }
+  .la-lim-fila { display: flex; gap: .6rem; align-items: center; margin-bottom: .5rem;
+    input[type=text] { flex: 1; max-width: 28rem; }
+    input[type=color] { width: 3.6rem; height: 3rem; padding: 0; border: 0; background: none; } }
+}
+.la-encabezado-est { margin-bottom: 1rem; }

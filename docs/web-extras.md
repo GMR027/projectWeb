@@ -20,3 +20,22 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 
 `src/js/app.js` agrega una caja de búsqueda (sin acentos/mayúsculas, varias palabras = todas) a toda `table.tabla` con ≥5 filas. `data-sin-buscador` la excluye, `data-buscable` la fuerza con ≥2 filas, y un input con `data-filtra="selector"` filtra esa tabla en vivo (ej. materiales). En el programa, la partida se queda si coincide ella o alguna actividad.
 
+
+## 🗂 Carpetas por herramienta (Redactor, SheetFlow, Minutas)
+
+- `classes/Carpetas.php` + `CarpetaController` (`POST /carpetas/renombrar`, `/carpetas/mover`) + `views/templates/carpetas-ui.php`. La carpeta es el campo `departamento` (`''` = «Sin departamento»). Minutas lo gana con `database/migracion_minutas_departamento.sql` (también en `schema.sql`; **aplicar en el clúster**). Redactor y SheetFlow ya lo tenían.
+
+## 🧾 MSR configurable
+
+- Cada MSR puede tener columnas propias: `msrs.columnas_json` (NULL = diseño clásico; `Msr::normalizarColumnas`), columnas de texto libre `txt_N` guardadas en `msr_items.extras_json` y color de título por partida propia en `msr_partidas.color`. En la tabla se arrastra el encabezado para reordenar (`POST` orden) y con doble clic se cambia título, color y grupo (`MsrController::orden|columna`). Migración: `database/migracion_msr_columnas.sql` (también en `schema.sql`; **aplicar en el clúster**). El PDF/Excel (`MsrSheetExporter`, `pdf-msr.php`) y el importador (`MsrImportador`) respetan esas columnas.
+
+## 🖥 Sesión persistente en la app de escritorio
+
+- Si el User-Agent trae `ProjectWebDesktop` (lo pone `desktop/src/main.js`, también en `session.fetch`), `includes/app.php` usa cookie de 1 año y guarda las sesiones en `storage/sesiones-app/` (ignorada por git) para que el GC de 24 min no las borre.
+
+## 🌐 Servicios y demo ampliado (2026-10-19)
+
+- `/servicios` (`LandingController::servicios`, `views/landing/servicios.php`): servicios administrativos de seguimiento de obra, **sin nombrar herramientas ni IA** (texto indicativo sobre un «grupo especializado»). La barra superior es `views/landing/_nav.php` (compartida; `$base = '/'` fuera de la landing). La landing suma «Todo en uno» (`#todo-en-uno`), bloques de Cambios/Documentación, un teaser de Servicios y pasos de 4. **Nunca mostrar herramientas exclusivas del admin** (IA, Centro de IA, Revisiones, Ensamblador, Ajustes, Sistema).
+- Las pestañas del recorrido solo aparecen si existe `public/build/img/landing/tour-<id>.jpg` (se filtran en `views/landing/index.php`).
+- `database/seed_demo_nuevas.php` (lo ejecuta `seed_demo.php` al final; `--limpiar` borra solo lo suyo) puebla el DEMO con órdenes de cambio, líneas base, materiales vs cronograma, Datos de obra (crea 4 tablas del Ensamblador si faltan: **aplicar su migración en el clúster**), Redactor, SheetFlow, minutas en carpetas, MSR configurable, vPlan libre, símbolos/cajetines, planos Rev. A/B para el Comparador y Normativa. Créditos de imágenes: `public/build/img/landing/CREDITOS.txt`.
+- Las capturas `tour-*.jpg` se tomaron del demo con Electron oculto (viewport 1440×900, sin barra lateral/migas) y se recortaron 30 px arriba; hay que regenerarlas si cambia mucho la UI.

@@ -5,13 +5,14 @@ namespace Model;
 class Minuta extends ActiveRecord
 {
     protected static $tabla = 'minutas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'fecha', 'nombre', 'importancia', 'contratista_json', 'personal_json', 'temas_json', 'compromisos_json'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'fecha', 'nombre', 'importancia', 'departamento', 'contratista_json', 'personal_json', 'temas_json', 'compromisos_json'];
 
     public $id;
     public $proyecto_id;
     public $fecha;
     public $nombre;
     public $importancia;
+    public $departamento;
     public $contratista_json;
     public $personal_json;
     public $temas_json;
@@ -24,6 +25,7 @@ class Minuta extends ActiveRecord
         $this->fecha = $args['fecha'] ?? date('Y-m-d');
         $this->nombre = $args['nombre'] ?? '';
         $this->importancia = $args['importancia'] ?? 'media';
+        $this->departamento = $args['departamento'] ?? '';
         $this->contratista_json = $args['contratista_json'] ?? '[]';
         $this->personal_json = $args['personal_json'] ?? '[]';
         $this->temas_json = $args['temas_json'] ?? '[]';

@@ -6,6 +6,7 @@ use MVC\Router;
 use Model\Proyecto;
 use Model\Restriccion;
 use Model\TipoRestriccion;
+use Model\LookaheadConfig;
 use Classes\Calendario;
 
 /** 4WLA: semana actual + 4 semanas de lookahead, mismos datos que el programa en formato de planeación */
@@ -27,9 +28,12 @@ class LookaheadController
 
         $lunes = self::lunesDe($_GET['fecha'] ?? '');
         $datos = self::datos($proyecto, $lunes);
+        $config = LookaheadConfig::deProyecto((int)$proyecto->id);
 
         $router->render('lookahead/index', $datos + [
-            'titulo' => '4WLA - ' . $proyecto->nombre,
+            'titulo' => $config->nombreHerramienta() . ' - ' . $proyecto->nombre,
+            'config' => $config,
+            'encabezados' => LookaheadConfig::disponible() ? LookaheadConfig::encabezadosDisponibles((int)$proyecto->id) : [],
             'proyecto' => $proyecto,
             'lunes' => $lunes,
             'anterior' => (clone $lunes)->modify('-7 days')->format('Y-m-d'),
@@ -49,7 +53,8 @@ class LookaheadController
     public static function datos(Proyecto $proyecto, \DateTime $lunes): array
     {
         $calendario = new Calendario((int)$proyecto->id);
-        $semanas = self::armarSemanas($lunes, $calendario);
+        $config = LookaheadConfig::deProyecto((int)$proyecto->id);
+        $semanas = self::armarSemanas($lunes, $calendario, (int)$config->semanas);
         $tipos = TipoRestriccion::all('id ASC');
         $restricciones = self::restriccionesActivas((int)$proyecto->id);
 
@@ -79,7 +84,7 @@ class LookaheadController
             }
         }
 
-        return ['semanas' => $semanas, 'tipos' => $tipos, 'filas' => $filas];
+        return ['semanas' => $semanas, 'tipos' => $tipos, 'filas' => $filas, 'config' => $config];
     }
 
     /** Alterna PTA (OK / !) de una actividad. Solo quien gestiona el proyecto. */
@@ -101,13 +106,83 @@ class LookaheadController
         exit;
     }
 
-    /** 5 bloques de 7 días: actual + 4 semanas */
-    private static function armarSemanas(\DateTime $lunes, Calendario $calendario): array
+    /** Responde JSON y termina; solo quien gestiona el proyecto puede cambiar ajustes */
+    private static function gestorOFalla(): Proyecto
     {
-        $etiquetas = ['ACTUAL', '1ª SEMANA', '2ª SEMANA', '3ª SEMANA', '4ª SEMANA'];
+        header('Content-Type: application/json');
+        $proyecto = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? Proyecto::find(filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT)) : null;
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        return $proyecto;
+    }
+
+    /** Guarda los ajustes enviados (solo los campos presentes): semanas, nombre, pta_nombre, titulo, encabezado_id */
+    public static function guardarConfig()
+    {
+        $proyecto = self::gestorOFalla();
+        if (!LookaheadConfig::disponible()) {
+            echo json_encode(['success' => false, 'error' => 'Falta aplicar la migración database/migracion_lookahead_config.sql']);
+            exit;
+        }
+        $c = LookaheadConfig::deProyecto((int)$proyecto->id);
+        $c->proyecto_id = $proyecto->id;
+        foreach (['nombre', 'pta_nombre', 'titulo'] as $campo) {
+            if (isset($_POST[$campo])) $c->$campo = trim((string)$_POST[$campo]);
+        }
+        if (isset($_POST['semanas'])) $c->semanas = max(LookaheadConfig::MIN_SEMANAS, min(LookaheadConfig::MAX_SEMANAS, (int)$_POST['semanas']));
+        if (isset($_POST['encabezado_id'])) {
+            $c->encabezado_id = (int)$_POST['encabezado_id'] ?: null;
+            if ($c->encabezado_id && !$c->encabezado()) $c->encabezado_id = null;
+        }
+        $c->guardar();
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    /** Crea (sin id), renombra/recolorea (con id) o elimina (accion=eliminar) una limitación. Son comunes a todos los proyectos. */
+    public static function guardarLimitacion()
+    {
+        self::gestorOFalla();
+        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 50);
+        $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '#FF5A1F';
+        $t = $id ? TipoRestriccion::find($id) : null;
+
+        if (($_POST['accion'] ?? '') === 'eliminar') {
+            if (!$t) { echo json_encode(['success' => false, 'error' => 'No existe']); exit; }
+            $n = \Model\Restriccion::consultarSQL('SELECT * FROM restricciones WHERE tipo_id = ' . (int)$t->id);
+            if ($n) {
+                echo json_encode(['success' => false, 'error' => 'La limitación «' . $t->nombre . '» tiene ' . count($n) . ' restricción(es) registrada(s). Resuélvelas o cámbialas de tipo antes de quitarla.']);
+                exit;
+            }
+            $t->eliminar();
+            echo json_encode(['success' => true]);
+            exit;
+        }
+        if ($nombre === '') { echo json_encode(['success' => false, 'error' => 'Escribe un nombre']); exit; }
+        foreach (TipoRestriccion::all('id ASC') as $o) {
+            if (mb_strtolower($o->nombre) === mb_strtolower($nombre) && (!$t || (int)$o->id !== (int)$t->id)) {
+                echo json_encode(['success' => false, 'error' => 'Ya existe una limitación con ese nombre']);
+                exit;
+            }
+        }
+        $t ??= new TipoRestriccion();
+        $t->nombre = $nombre;
+        $t->color = $color;
+        $t->guardar();
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    /** Bloques de 7 días: la semana actual + las $siguientes que pida la configuración (1-8) */
+    private static function armarSemanas(\DateTime $lunes, Calendario $calendario, int $siguientes = 4): array
+    {
         $semanas = [];
         $cursor = clone $lunes;
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i <= $siguientes; $i++) {
             $dias = [];
             $meses = [];
             for ($d = 0; $d < 7; $d++) {
@@ -124,7 +199,7 @@ class LookaheadController
                 $cursor->modify('+1 day');
             }
             $semanas[] = [
-                'etiqueta' => $etiquetas[$i],
+                'etiqueta' => $i === 0 ? 'ACTUAL' : $i . 'ª SEMANA',
                 'iso' => (int)(new \DateTime($dias[0]['fecha']))->format('W'),
                 'mes' => implode(' / ', $meses),
                 'dias' => $dias,

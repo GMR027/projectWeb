@@ -330,6 +330,7 @@ class VplanController
             'catalogo' => array_values(array_filter(VplanTabla::deProyecto((int)$proyecto->id), fn($t) => !in_array((int)$t->id, $enLamina, true))),
             'catalogoTablas' => puede_gestionar_proyecto($proyecto) ? self::catalogoTablas($proyecto, $enLamina) : [],
             'navLaminas' => self::navLaminas($hermanas),
+            'biblioteca' => puede_gestionar_proyecto($proyecto) ? ['simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id), 'graficos' => \Model\Grafico::paraInsertar((int)$proyecto->id), 'cajetines' => \Model\Cajetin::paraEditor((int)$proyecto->id), 'estampas' => \Model\Estampa::paraInsertar((int)$proyecto->id)] : [],
             'partidasDiseno' => puede_gestionar_proyecto($proyecto) ? self::partidasParaDiseno($proyecto) : [],
             'desactualizada' => $l->marcas_json && $l->marcas_estados_hash !== $datos['hash'],
         ]);
@@ -586,6 +587,20 @@ class VplanController
                 return ['fuentes' => $fuentes, 'seq' => ($c['seq'] ?? '') === 'partida' ? 'partida' : 'continuo', 'titulo' => $texto('titulo', 200), 'color' => self::hex($c['color'] ?? '')];
             case 'tabla':
                 return ['tabla_id' => (int)($c['tabla_id'] ?? 0)];
+            case 'imagen':   // copia propia de un símbolo o simbología, subida con /api/vplan/imagen
+                $arch = basename((string)($c['archivo'] ?? ''));
+                return ['archivo' => preg_match('/^[A-Za-z0-9._-]+$/', $arch) && is_file(Imagenes::CARPETA_VPLAN . '/' . $arch) ? $arch : ''] + ($alinear ? ['alinear' => $alinear] : []);
+            case 'cajetin':
+                $cid = (int)($c['cajetin_id'] ?? 0);
+                $ok = $cid === 0 || (($cj = \Model\Cajetin::find($cid)) && (int)$cj->proyecto_id === (int)$proyecto->id);
+                return ['cajetin_id' => $ok ? $cid : 0, 'tamano' => (float)($c['tamano'] ?? 0) > 0 ? $num('tamano', 3, 60, 0) : 0];
+            case 'estampa':   // estampa inteligente: cuál, fecha fija (o la de hoy) y actividad de las etiquetas «de la actividad del bloque»
+                $eid = (int)($c['estampa_id'] ?? 0);
+                $ok = $eid > 0 && \Model\Estampa::disponible() && ($es = \Model\Estampa::find($eid)) && (int)$es->proyecto_id === (int)$proyecto->id;
+                $f = (string)($c['fecha'] ?? '');
+                $act = (int)($c['actividad_id'] ?? 0);
+                return ['estampa_id' => $ok ? $eid : 0, 'fecha_modo' => ($c['fecha_modo'] ?? '') === 'fija' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $f) ? 'fija' : 'hoy',
+                    'fecha' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $f) ? $f : '', 'actividad_id' => $act > 0 && Partida::consultarSQL("SELECT p.* FROM partidas p JOIN actividades a ON a.partida_id = p.id WHERE a.id = $act AND p.proyecto_id = " . (int)$proyecto->id) ? $act : 0];
             default:   // plano, simbologia, schedule
                 return $alinear ? ['alinear' => $alinear] : [];
         }

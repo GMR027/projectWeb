@@ -41,7 +41,8 @@ class LookaheadSheetExporter extends BaseExporter
 
         $libro = new Spreadsheet();
         $hoja = $libro->getActiveSheet();
-        $hoja->setTitle('4WLA');
+        $cfg = $d['config'];
+        $hoja->setTitle(mb_substr(preg_replace('/[\\\\\/?*:\[\]]/', ' ', $cfg->nombreHerramienta()), 0, 31));
 
         // Mapa de columnas: A=ID, B=Actividad, semana actual, %Comp, PTA, 4 semanas, limitaciones
         $col = 3;
@@ -89,7 +90,7 @@ class LookaheadSheetExporter extends BaseExporter
         $relleno('A1:B5', $gris);
 
         $hoja->mergeCells($L(3) . '1:' . $L($colTipoIni - 1) . '1');
-        $hoja->setCellValue($L(3) . '1', '4 Weeks Look Ahead · ' . $p->nombre);
+        $hoja->setCellValue($L(3) . '1', $cfg->tituloBanner($p));
         $hoja->mergeCells($L($colTipoIni) . '1:' . $L($ultima) . '1');
         $hoja->setCellValue($L($colTipoIni) . '1', 'Limitaciones');
         $relleno('C1:' . $L($ultima) . '1', $azulOscuro);
@@ -115,7 +116,7 @@ class LookaheadSheetExporter extends BaseExporter
         $hoja->getStyle('C2:' . $L($colPta) . '2')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
         $hoja->getStyle('C2:' . $L($ultima) . '5')->getAlignment()->setHorizontal('center')->setVertical('center');
 
-        foreach ([[$colComp, '% Comp'], [$colPta, 'PTA']] as [$c, $txt]) {
+        foreach ([[$colComp, '% Comp'], [$colPta, $cfg->pta()]] as [$c, $txt]) {
             $hoja->mergeCells($L($c) . '2:' . $L($c) . '5');
             $hoja->setCellValue($L($c) . '2', $txt);
             $relleno($L($c) . '2:' . $L($c) . '5', $gris);

@@ -156,6 +156,24 @@ class Vplan
         return $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
     }
 
+    /** Filas [etiqueta, valor] de un cajetín (0 = el estándar) con sus variables resueltas para esta lámina, y su forma */
+    public static function cajetinDeBloque(VplanBloque $b, VplanLamina $lamina, Proyecto $proyecto): array
+    {
+        $id = (int)($b->config()['cajetin_id'] ?? 0);
+        $c = null;
+        foreach (\Model\Cajetin::paraEditor((int)$proyecto->id) as $x) if ((int)$x['id'] === $id) { $c = $x; break; }
+        $c ??= \Model\Cajetin::paraEditor((int)$proyecto->id)[0];
+        $ctx = new EstampaContexto($proyecto, $lamina);   // todas las variables del catálogo ({proyecto}, {titulo}, {fecha}, {avance_real}…)
+        $val = fn($t) => Estampas::texto((string)$t, $ctx);
+        return ['banda' => $c['orientacion'] === 'banda', 'filas' => array_map(fn($f) => [$val($f[0]), $val($f[1])], $c['filas'])];
+    }
+
+    /** Opciones de contexto de un bloque de estampa: fecha de corte fija (o la de hoy) y actividad de las etiquetas «de la actividad del bloque» */
+    public static function opcionesEstampa(array $cfg): array
+    {
+        return ['corte' => ($cfg['fecha_modo'] ?? '') === 'fija' ? (string)($cfg['fecha'] ?? '') : '', 'actividad' => (int)($cfg['actividad_id'] ?? 0)];
+    }
+
     /** Textos que se calculan solos si el bloque no trae uno propio */
     public static function textoDeBloque(VplanBloque $b, VplanLamina $lamina, Proyecto $proyecto): string
     {

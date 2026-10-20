@@ -1,0 +1,13 @@
+@use '../base/variables' as *;
+
+// Traductor
+.trd-aviso { border-left: .4rem solid var(--primary); margin-bottom: 1.6rem; code { font-family: 'Fira Code', monospace; } }
+.trd { display: flex; flex-direction: column; gap: 1.4rem; }
+.trd-direccion { display: flex; gap: 1rem; align-items: center; select { min-width: 14rem; } }
+.trd-pestanas { display: flex; gap: .6rem; }
+.trd-cajas { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; @media (max-width: 80rem) { grid-template-columns: 1fr; }
+  label { display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; font-weight: 600; min-width: 0; }
+  textarea { width: 100%; resize: vertical; font-weight: 400; font-size: 1.5rem; line-height: 1.5; }
+  small { font-weight: 400; } }
+.trd-acciones { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 1rem; }
+.trd-archivo { display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; font-weight: 600; max-width: 50rem; }

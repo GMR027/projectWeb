@@ -2,9 +2,10 @@
 // Variables: $paginas (arrays de tarjetas), $cols (2|3), $logo (data URI), $proyecto
 $dias = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 $meses = ['', 'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-$gap = $cols === 3 ? 0.12 : 0.6;              // cm entre tarjetas
-$anchoGrid = $cols * 7 + ($cols - 1) * $gap;
-$altoGrid = 3 * 7 + 2 * $gap;
+$wcm = $wcm ?? 7.0; $hcm = $hcm ?? 7.0; $filas = $filas ?? 3; $plantilla = $plantilla ?? null;
+$gap = $plantilla ? 0.3 : ($cols === 3 ? 0.12 : 0.6);              // cm entre tarjetas
+$anchoGrid = $cols * $wcm + ($cols - 1) * $gap;
+$altoGrid = $filas * $hcm + ($filas - 1) * $gap;
 $x0 = (21.59 - $anchoGrid) / 2;
 $y0 = (27.94 - $altoGrid) / 2;
 ?>
@@ -19,7 +20,7 @@ $y0 = (27.94 - $altoGrid) / 2;
     .grid td { padding: 0; vertical-align: top; }
     .corte-v { position: absolute; top: 0; width: 0.02cm; height: 27.9cm; border-left: 0.6pt dashed #777; }
     .corte-h { position: absolute; left: 0; width: 21.59cm; border-top: 0.6pt dashed #777; }
-    .tarjeta { width: 7cm; height: 7cm; overflow: hidden; border: 1.4pt solid #000; }
+    .tarjeta { width: <?php echo $wcm; ?>cm; height: <?php echo $hcm; ?>cm; overflow: hidden; border: 1.4pt solid #000; }
     .tarjeta table { border-collapse: collapse; width: 100%; }
     .tarjeta td { padding: 0.1cm 0.15cm; vertical-align: top; }
     .rot { font-size: 4.5pt; display: block; }
@@ -37,14 +38,16 @@ $y0 = (27.94 - $altoGrid) / 2;
 <?php foreach ($paginas as $pi => $grupo): ?>
     <div class="hoja <?php echo $pi === count($paginas) - 1 ? 'ultima' : ''; ?>">
         <div class="leyenda"><?php echo s($proyecto->nombre); ?> · <span class="verde">◆</span> finalizada · <span class="amarillo">◆</span> en proceso · <span class="rojo">◆</span> con restricción</div>
-        <?php for ($c = 1; $c < $cols; $c++): ?><div class="corte-v" style="left:<?php echo number_format($x0 + $c * 7 + ($c - 0.5) * $gap, 2, '.', ''); ?>cm"></div><?php endfor; ?>
-        <?php for ($r = 1; $r < 3; $r++): ?><div class="corte-h" style="top:<?php echo number_format($y0 + $r * 7 + ($r - 0.5) * $gap, 2, '.', ''); ?>cm"></div><?php endfor; ?>
+        <?php for ($c = 1; $c < $cols; $c++): ?><div class="corte-v" style="left:<?php echo number_format($x0 + $c * $wcm + ($c - 0.5) * $gap, 2, '.', ''); ?>cm"></div><?php endfor; ?>
+        <?php for ($r = 1; $r < $filas; $r++): ?><div class="corte-h" style="top:<?php echo number_format($y0 + $r * $hcm + ($r - 0.5) * $gap, 2, '.', ''); ?>cm"></div><?php endfor; ?>
         <table class="grid">
-        <?php for ($r = 0; $r < 3; $r++): ?>
+        <?php for ($r = 0; $r < $filas; $r++): ?>
             <tr>
             <?php for ($c = 0; $c < $cols; $c++): $t = $grupo[$r * $cols + $c] ?? null; ?>
-                <td style="width:7cm;height:7cm;<?php echo $c < $cols - 1 ? 'padding-right:' . $gap . 'cm;' : ''; ?><?php echo $r < 2 ? 'padding-bottom:' . $gap . 'cm;' : ''; ?>">
-                <?php if ($t): $ts = strtotime($t['fecha']); ?>
+                <td style="width:<?php echo $wcm; ?>cm;height:<?php echo $hcm; ?>cm;<?php echo $c < $cols - 1 ? 'padding-right:' . $gap . 'cm;' : ''; ?><?php echo $r < $filas - 1 ? 'padding-bottom:' . $gap . 'cm;' : ''; ?>">
+                <?php if ($t && $plantilla): ?>
+                    <div style="position:relative;width:<?php echo $wcm; ?>cm;height:<?php echo $hcm; ?>cm"><?php echo \Classes\Estampas::renderGuardada($plantilla, $proyecto, null, ['corte' => $t['fecha'], 'partida' => $t['partida'] ? (int)$t['partida']->id : 0, 'max' => \Classes\LastPlanner::POR_TARJETA, 'offset' => ($t['parte'] - 1) * \Classes\LastPlanner::POR_TARJETA, 'lamina_n' => 1, 'lamina_total' => 1], 'pt', 1.0); ?></div>
+                <?php elseif ($t): $ts = strtotime($t['fecha']); ?>
                     <div class="tarjeta">
                         <table style="height:7cm">
                             <tr class="sup">

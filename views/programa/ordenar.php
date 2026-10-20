@@ -107,8 +107,8 @@
             .catch(function () { caja.textContent = 'Error de red'; });
     }
     var bd = document.getElementById('ord-deshacer-btn');
-    if (bd) bd.addEventListener('click', function () {
-        if (!confirm('¿Volver al orden y la numeración que había antes de ese guardado?')) return;
+    if (bd) bd.addEventListener('click', async function () {
+        if (!await window.confirmarModal({ titulo: '¿Deshacer ese guardado?', mensaje: 'Se volverá al orden y la numeración que había antes de ese guardado.', aceptar: 'Deshacer', tono: 'info' })) return;
         msg.textContent = 'Deshaciendo…';
         fetch('/programa/ordenar/deshacer', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ proyecto: '<?php echo (int)$proyecto->id; ?>', id: bd.dataset.id }).toString() })
             .then(function (r) { return r.json(); })

@@ -36,3 +36,5 @@ _Se lee solo al trabajar en este módulo._
 
 ## Pendiente
 - Varias pestañas por documento, anchos de columna ajustables, formato por celda, relleno arrastrando refrescar todas las láminas del Editor (no solo la activa) y escribir de vuelta desde Editor/Redactor.
+
+- **Carpetas (2026-10-19):** igual que en el Redactor, la carpeta es el `departamento`; renombrar y «Mover a…» desde la lista (`classes/Carpetas.php`, `POST /carpetas/renombrar|mover`).

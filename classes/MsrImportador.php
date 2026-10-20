@@ -104,6 +104,27 @@ class MsrImportador
         ];
     }
 
+    /** Títulos de las partidas que ya tiene el MSR (las propias y las que vienen de sus renglones) */
+    public static function partidasDe(int $msrId): array
+    {
+        $db = MsrItem::getDB();
+        $out = [];
+        foreach (["SELECT titulo FROM msr_partidas WHERE msr_id = $msrId ORDER BY orden", "SELECT DISTINCT seccion FROM msr_items WHERE msr_id = $msrId AND seccion <> ''"] as $q) {
+            $r = $db->query($q);
+            while ($r && ($f = $r->fetch_row())) $out[$f[0]] = $f[0];
+        }
+        return array_values($out);
+    }
+
+    /** Partidas del Excel que no existen en el MSR (candidatas a unirse a una existente) */
+    public static function partidasNuevas(array $filas, int $msrId): array
+    {
+        $ya = array_flip(self::partidasDe($msrId));
+        $nuevas = [];
+        foreach ($filas as $f) if ($f['seccion'] !== '' && !isset($ya[$f['seccion']])) $nuevas[$f['seccion']] = true;
+        return array_keys($nuevas);
+    }
+
     /** Carga lo analizado (vista previa) */
     public static function cargar(string $token, int $proyectoId): ?array
     {
@@ -114,7 +135,7 @@ class MsrImportador
     }
 
     /** Crea materiales, paquetes y renglones del MSR a partir de lo analizado */
-    public static function aplicar(string $token, Proyecto $proyecto, int $msrId): array
+    public static function aplicar(string $token, Proyecto $proyecto, int $msrId, array $union = []): array
     {
         $d = self::cargar($token, (int)$proyecto->id);
         if (!$d) throw new \Exception('La importación expiró o no es válida. Sube el archivo de nuevo.');
@@ -124,7 +145,12 @@ class MsrImportador
         $paquetes = [];
         $orden = 0;
 
+        // Partidas del Excel que el usuario eligió unir a una ya existente del MSR (['Nombre en Excel' => 'Partida existente'])
+        $permitidas = array_flip(self::partidasDe($msrId));
+        $union = array_filter($union, fn($a, $de) => $a !== '' && $a !== $de && isset($permitidas[$a]), ARRAY_FILTER_USE_BOTH);
+
         foreach ($d['filas'] as $f) {
+            if (isset($union[$f['seccion']])) $f['seccion'] = $union[$f['seccion']];
             $material = Material::buscar($pid, $f['nombre'], $f['referencia']);
             if (!$material) {
                 $material = new Material(['proyecto_id' => $pid, 'nombre' => $f['nombre'], 'referencia' => $f['referencia'],

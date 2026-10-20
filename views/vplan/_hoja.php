@@ -135,6 +135,28 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                 <?php include __DIR__ . '/_tabla-adicional.php'; ?>
             </div>
             <?php break;
+        case 'imagen':
+            $arch = (string)($cfg['archivo'] ?? '');
+            $al = $cfg['alinear'] ?? 'centro'; ?>
+            <div class="vp-img" style="justify-content:<?php echo $alinear[$al] ?? 'center'; ?>"><?php if ($arch !== ''): ?><img src="/uploads/vplan/<?php echo s($arch); ?>" alt="<?php echo s($cfg['nombre'] ?? 'Símbolo'); ?>"><?php else: ?><p class="vp-vacio-blk">Sin imagen</p><?php endif; ?></div>
+            <?php break;
+        case 'cajetin':
+            $cj = Vplan::cajetinDeBloque($b, $lamina, $proyecto); ?>
+            <div class="vp-tab" style="font-size:<?php echo $cq(!empty($cfg['tamano']) ? (float)$cfg['tamano'] : 7); ?>">
+            <table class="vp-tabla vp-cajetin">
+                <?php if ($cj['banda']): ?>
+                <thead><tr><?php foreach ($cj['filas'] as $f): ?><th><?php echo s($f[0]); ?></th><?php endforeach; ?></tr></thead>
+                <tbody><tr><?php foreach ($cj['filas'] as $f): ?><td class="c"><?php echo s($f[1]); ?></td><?php endforeach; ?></tr></tbody>
+                <?php else: ?>
+                <tbody><?php foreach ($cj['filas'] as $f): ?><tr><th style="width:38%"><?php echo s($f[0]); ?></th><td><?php echo s($f[1]); ?></td></tr><?php endforeach; ?></tbody>
+                <?php endif; ?>
+            </table></div>
+            <?php break;
+        case 'estampa':
+            $est = \Model\Estampa::disponible() ? \Model\Estampa::find((int)($cfg['estampa_id'] ?? 0)) : null;
+            if ($est && (int)$est->proyecto_id === (int)$proyecto->id) echo \Classes\Estampas::renderGuardada($est, $proyecto, $lamina, Vplan::opcionesEstampa($cfg), 'cq');
+            else echo '<p class="vp-vacio-blk">Estampa no disponible</p>';
+            break;
     endswitch; ?>
     </div>
 <?php endforeach; ?>

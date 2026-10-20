@@ -6,7 +6,7 @@ use MVC\Router;
 use Model\Proyecto;
 use Classes\Revisiones;
 
-/** Revisiones por proyecto: pantalla de entrada (qué está revisado y qué no), marcado ✅ ⚠ ❌ y estado de las herramientas de IA. Marcar: admin y cliente; ver: quien tiene acceso al proyecto */
+/** Revisiones por proyecto: pantalla de entrada (qué está revisado y qué no), marcado ✅ ⚠ ❌ y estado de las herramientas de IA. Solo administrador (ni cliente ni demo) */
 class RevisionController
 {
     private static function json(array $d, int $codigo = 200): void
@@ -20,13 +20,14 @@ class RevisionController
     private static function proyectoApi(): Proyecto
     {
         $fuente = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-        $p = is_auth() ? Proyecto::find(filter_var($fuente['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $p = is_admin() ? Proyecto::find(filter_var($fuente['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
         if (!$p || !puede_ver_proyecto($p)) self::json(['success' => false, 'error' => 'No autorizado'], 403);
         return $p;
     }
 
     public static function index(Router $router)
     {
+        if (!is_admin()) { http_response_code(403); exit('Solo el administrador puede ver las revisiones'); }
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
         $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'materiales', 'actividades', 'herramientas', 'historial'], true) ? $_GET['pestana'] : 'resumen';

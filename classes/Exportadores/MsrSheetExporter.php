@@ -123,103 +123,114 @@ class MsrSheetExporter extends BaseExporter
         self::relleno($h, 'O9', self::ROSA);
         $h->getStyle('O8:Q9')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-        // ---- Barras de grupo y encabezados de columna ----
-        $h->mergeCells('A13:I13');
-        $texto('A13', 'STATUS DEL SUBMITTAL');
-        $h->mergeCells('J13:Q13');
-        $texto('J13', 'STATUS DE ENTREGA DEL MATERIAL O EQUIPO');
-        self::relleno($h, 'A13:I13', self::NAVY);
-        self::relleno($h, 'J13:Q13', self::AZUL);
-        $h->getStyle('A13:Q13')->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
-        $h->getStyle('A13:Q13')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-
-        $heads = [
-            ['ITEM PROLOG', self::NAVY], ['Subcontractor submittal number', self::NAVY], ['Spec Number', self::NAVY], ['DESCRIPCIÓN', self::NAVY],
-            ["FECHA REQUERIDA DE ENVIO DE SUBMITTAL (PROG)", self::NEGRO], ['No. SUBMITTAL ' . mb_strtoupper($p->contratista ?: 'CONTRATISTA'), self::GRIS],
-            ['Real Submittal Date', self::GRIS], ['AnswerDate', self::GRIS], ['Status', self::GRIS],
-            ['Delivery Time Schedule (Days)', self::AZUL], ['FECHA COMPRA DE MATERIAL (PROG)', self::AZUL], ['FECHA DE INSTALACION (PROG)', self::AZUL],
-            ['FECHA DE COMPRA (REAL)', self::AZUL_OSC], ['FECHA DE ENTREGA (PROG)', self::AZUL_OSC], ['FECHA DE ENTREGA (REAL)', self::AZUL_OSC],
-            ['DATOS DEL PROVEEDOR', self::AZUL], ['OBSERVACIONES', self::NAVY],
-        ];
-        foreach ($heads as $i => [$t, $color]) {
-            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-            $h->mergeCells("{$col}15:{$col}16");
-            $texto("{$col}15", $t);
-            self::relleno($h, "{$col}15:{$col}16", $color);
+        // ---- Barra de grupos y encabezados: las columnas, nombres, colores y orden que eligió el usuario ----
+        $cols = $d['columnas'];
+        $n = max(1, count($cols));
+        $L = fn(int $i) => \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+        $ultC = $L($n);
+        $rgb = fn(string $hex) => strtoupper(ltrim($hex, '#'));
+        $tinta = function (string $hex) {
+            $x = ltrim($hex, '#');
+            return (0.299 * hexdec(substr($x, 0, 2)) + 0.587 * hexdec(substr($x, 2, 2)) + 0.114 * hexdec(substr($x, 4, 2))) / 255 > 0.62 ? 'FF111111' : 'FFFFFFFF';
+        };
+        $blanco = new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF');
+        $pos = 1;
+        foreach ($d['grupos'] as $g) {
+            $ini = $L($pos); $fin = $L($pos + $g['span'] - 1);
+            if ($g['span'] > 1) $h->mergeCells("{$ini}13:{$fin}13");
+            if ($g['n'] !== '') {
+                $texto("{$ini}13", $g['n']);
+                self::relleno($h, "{$ini}13:{$fin}13", $rgb($g['c']));
+                $h->getStyle("{$ini}13")->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color($tinta($g['c'])));
+            }
+            $h->getStyle("{$ini}13:{$fin}13")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $pos += $g['span'];
         }
-        $est = $h->getStyle('A15:Q16');
-        $est->getFont()->setBold(true)->setSize(7)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+        foreach ($cols as $i => $col) {
+            $letra = $L($i + 1);
+            $h->mergeCells("{$letra}15:{$letra}16");
+            $texto("{$letra}15", $col['n']);
+            self::relleno($h, "{$letra}15:{$letra}16", $rgb($col['c']));
+            $h->getStyle("{$letra}15")->getFont()->setBold(true)->setSize(7)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color($tinta($col['c'])));
+        }
+        $est = $h->getStyle("A15:{$ultC}16");
         $est->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER)->setWrapText(true);
         $est->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_HAIR);
 
         // ---- Renglones ----
+        $idx = [];
+        foreach ($cols as $i => $col) $idx[$col['k']] = $i + 1;
         $r = 16;
         foreach ($d['secciones'] as $nombreSec => $lista) {
             if ($nombreSec !== '') {
                 $r++;
                 $h->getRowDimension($r)->setRowHeight(15);
-                $texto("D$r", $nombreSec);
-                self::relleno($h, "A$r:Q$r", self::SECCION);
-                $h->getStyle("A$r:Q$r")->getFont()->setBold(true)->setSize(6)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
-                $h->getStyle("D$r")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $cs = $d['coloresSec'][$nombreSec] ?? '#3F3F3F';
+                $texto("A$r", $nombreSec);
+                $h->mergeCells("A$r:{$ultC}$r");
+                self::relleno($h, "A$r:{$ultC}$r", $rgb($cs));
+                $h->getStyle("A$r")->getFont()->setBold(true)->setSize(6)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color($tinta($cs)));
+                $h->getStyle("A$r")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             }
             foreach ($lista as $it) {
                 $r++;
-                $vals = [
-                    2 => $it->sub_numero, 3 => $it->mat_referencia, 4 => $it->mat_nombre,
-                    5 => self::fecha($it->fecha_envio_requerida), 6 => $it->no_submittal_contratista, 7 => self::fecha($it->fecha_envio_real),
-                    8 => self::fecha($it->fecha_respuesta), 9 => $it->status, 10 => $it->diasEntrega(),
-                    11 => self::fecha($it->fecha_compra_prog), 12 => self::fecha($it->fecha_instalacion_prog), 13 => self::fecha($it->fecha_compra_real),
-                    14 => self::fecha($it->fecha_entrega_prog), 15 => self::fecha($it->fecha_entrega_real), 16 => $it->proveedor, 17 => $it->observaciones,
-                ];
-                foreach ($vals as $c => $v) {
-                    if ($v === null || $v === '') continue;
-                    in_array($c, [2, 3, 4, 6, 9, 16, 17], true) ? $h->setCellValueExplicit([$c, $r], (string)$v, 's') : $h->setCellValue([$c, $r], $v);
+                foreach ($cols as $i => $col) {
+                    $k = $col['k']; $c = $i + 1; $letra = $L($c);
+                    if ($k === 'imagen') continue;
+                    if ($k === 'dias') {
+                        if (($v = $it->diasEntrega()) !== null) $h->setCellValue([$c, $r], $v);
+                        $h->getStyle([$c, $r])->getNumberFormat()->setFormatCode('0.00');
+                        if ($it->esCritico($d['umbral'])) self::relleno($h, "$letra$r", self::ROSA);
+                    } elseif (str_starts_with($k, 'fecha')) {
+                        if (($v = self::fecha($it->$k)) !== null) $h->setCellValue([$c, $r], $v);
+                        $h->getStyle([$c, $r])->getNumberFormat()->setFormatCode('dd-mmm-yy');
+                    } else {
+                        $v = match (true) {
+                            $k === 'sub_numero' => $it->sub_numero, $k === 'referencia' => $it->mat_referencia, $k === 'descripcion' => $it->mat_nombre,
+                            str_starts_with($k, 'txt_') => $it->extra($k), default => (string)$it->$k,
+                        };
+                        if ($v !== null && $v !== '') $h->setCellValueExplicit([$c, $r], (string)$v, 's');
+                        if ($k === 'status') self::relleno($h, "$letra$r", self::COLOR_STATUS[$it->status] ?? 'FFFFFF');
+                        if ($k === 'proveedor') $h->getStyle("$letra$r")->getFont()->getColor()->setRGB(self::AZUL_OSC);
+                    }
                 }
-                $h->getStyle("J$r")->getNumberFormat()->setFormatCode('0.00');
-                foreach ([5, 7, 8, 11, 12, 13, 14, 15] as $c) {
-                    $h->getStyle([$c, $r])->getNumberFormat()->setFormatCode('dd-mmm-yy');
-                }
-                self::relleno($h, "I$r", self::COLOR_STATUS[$it->status] ?? 'FFFFFF');
-                if ($it->esCritico($d['umbral'])) self::relleno($h, "J$r", self::ROSA);
-                $h->getStyle("P$r")->getFont()->getColor()->setRGB(self::AZUL_OSC);
                 $h->getRowDimension($r)->setRowHeight(50);
-
-                if ($ruta = \Classes\Imagenes::ruta($it->mat_imagen)) {
+                if (isset($idx['imagen']) && ($ruta = \Classes\Imagenes::ruta($it->mat_imagen))) {
                     $dr = new Drawing();
-                    $dr->setPath($ruta)->setCoordinates("A$r")->setResizeProportional(true)->setHeight(46)->setOffsetX(8)->setOffsetY(2)->setWorksheet($h);
+                    $dr->setPath($ruta)->setCoordinates($L($idx['imagen']) . $r)->setResizeProportional(true)->setHeight(46)->setOffsetX(8)->setOffsetY(2)->setWorksheet($h);
                 }
             }
         }
         if ($r > 16) {
-            $h->getStyle("A17:Q$r")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_MEDIUM);
-            $h->getStyle("B17:Q$r")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER)->setWrapText(true);
-            foreach (['B', 'C', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'] as $col) {
-                $h->getStyle("{$col}17:$col$r")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $h->getStyle("A17:{$ultC}$r")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_MEDIUM);
+            $h->getStyle("A17:{$ultC}$r")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER)->setWrapText(true);
+            foreach ($cols as $i => $col) {
+                $k = $col['k'];
+                if (!in_array($k, ['descripcion', 'observaciones', 'proveedor'], true) && !str_starts_with($k, 'txt_')) {
+                    $h->getStyle($L($i + 1) . "17:" . $L($i + 1) . $r)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                }
             }
-            $h->getStyle("I17:I$r")->getFont()->setBold(true);
-
-            // Color automático de Status al editar el valor en la hoja (como en el archivo de referencia)
-            $reglas = [];
-            $reglas['A'] = self::COLOR_STATUS['A'];
-            $reglas['AN'] = self::COLOR_STATUS['AN'];
-            $reglas['P'] = self::COLOR_STATUS['P'];
-            $reglas['RA'] = self::COLOR_STATUS['RA'];
-            $condiciones = [];
-            foreach ($reglas as $v => $color) {
-                $c = new Conditional();
-                $c->setConditionType(Conditional::CONDITION_CELLIS)->setOperatorType(Conditional::OPERATOR_EQUAL)->addCondition('"' . $v . '"');
-                $c->getStyle()->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($color);
-                $c->getStyle()->getFill()->getEndColor()->setRGB($color);
-                $condiciones[] = $c;
+            if (isset($idx['status'])) {
+                $ls = $L($idx['status']);
+                $h->getStyle("{$ls}17:{$ls}$r")->getFont()->setBold(true);
+                // Color automático de Status al editar el valor en la hoja
+                $condiciones = [];
+                foreach (self::COLOR_STATUS as $v => $color) {
+                    $cnd = new Conditional();
+                    $cnd->setConditionType(Conditional::CONDITION_CELLIS)->setOperatorType(Conditional::OPERATOR_EQUAL)->addCondition('"' . $v . '"');
+                    $cnd->getStyle()->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($color);
+                    $cnd->getStyle()->getFill()->getEndColor()->setRGB($color);
+                    $condiciones[] = $cnd;
+                }
+                $h->getStyle("{$ls}17:{$ls}$r")->setConditionalStyles($condiciones);
             }
-            $h->getStyle("I17:I$r")->setConditionalStyles($condiciones);
         }
 
-        foreach (['A' => 12.6, 'B' => 15.75, 'C' => 11, 'D' => 48, 'E' => 16, 'F' => 14, 'G' => 13, 'H' => 13, 'I' => 14.75, 'J' => 14.4, 'K' => 14.4, 'L' => 12.75, 'M' => 13.9, 'N' => 12.75, 'O' => 15, 'P' => 19, 'Q' => 32.75] as $col => $w) {
-            $h->getColumnDimension($col)->setWidth($w);
+        $anchos = ['imagen' => 12.6, 'sub_numero' => 15.75, 'referencia' => 11, 'descripcion' => 48, 'proveedor' => 19, 'observaciones' => 32.75];
+        foreach ($cols as $i => $col) {
+            $h->getColumnDimension($L($i + 1))->setWidth($anchos[$col['k']] ?? (str_starts_with($col['k'], 'txt_') ? 24 : 14.4));
         }
-        $h->freezePane('E17');
+        $h->freezePane('A17');
         $h->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)->setPaperSize(PageSetup::PAPERSIZE_A4)->setFitToWidth(1)->setFitToHeight(0);
         $h->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(13, 16);
         $h->getPageSetup()->setFitToPage(true);

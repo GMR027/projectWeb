@@ -1,5 +1,6 @@
 <?php
 /** Resumen corto de revisiones de un proyecto (panel de inicio). Variable: $proyecto */
+if (!is_admin()) return;
 $rv = \Classes\Revisiones::resumen((int)$proyecto->id);
 $mat = $rv['materiales']; $act = $rv['actividades']; $her = $rv['herramientas'];
 if (!$mat['total'] && !$act['total']) return;

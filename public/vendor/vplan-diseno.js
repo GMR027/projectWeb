@@ -15,8 +15,8 @@
     const guardado = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } };
     const guarda = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* sin almacenamiento */ } };
     const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
-    const ICONOS = { titulo: 'fa-heading', logo: 'fa-copyright', plano: 'fa-map', tareas: 'fa-list-check', tabla: 'fa-table', simbologia: 'fa-icons', schedule: 'fa-chart-gantt', supervisor: 'fa-user-tie', fecha: 'fa-calendar-day', texto: 'fa-font' };
-    const UNICOS = ['plano', 'simbologia', 'schedule'];   // solo uno por lámina
+    const ICONOS = { titulo: 'fa-heading', logo: 'fa-copyright', plano: 'fa-map', tareas: 'fa-list-check', tabla: 'fa-table', simbologia: 'fa-icons', imagen: 'fa-shapes', cajetin: 'fa-table-list', estampa: 'fa-wand-magic-sparkles', schedule: 'fa-chart-gantt', supervisor: 'fa-user-tie', fecha: 'fa-calendar-day', texto: 'fa-font' };
+    const UNICOS = ['plano', 'schedule'];   // solo uno por lámina
     const shell = $('vp-shell');
 
     let bloques = D.bloques.map(b => ({ ...b, config: { ...(b.config || {}) }, clave: String(b.id) }));
@@ -575,6 +575,23 @@
             const t = (D.tablas || {})[(c.tabla_id || 0)] || {};
             h += '<p class="text-sm">Tabla: <strong>' + esc(t.titulo || '') + '</strong></p><p class="text-sm"><a href="/vplan/tablas/editar?proyecto=' + D.proyecto + '&id=' + (c.tabla_id || 0) + '">Editar sus datos</a></p>' +
                 '<p class="text-sm text-muted">El tamaño de la letra se ajusta solo al espacio del bloque.</p>';
+        } else if (b.tipo === 'imagen') {
+            h += '<p class="text-sm text-muted">Copia de un símbolo o simbología. Se ajusta al bloque sin deformarse; cambia el tamaño arrastrando las esquinas.</p>' +
+                campo('vp-c-alinear', 'Alineación', '<select id="vp-c-alinear">' + opciones(ALIN, c.alinear || 'centro') + '</select>');
+        } else if (b.tipo === 'cajetin') {
+            const cjs = (D.biblioteca && D.biblioteca.cajetines) || [];
+            h += campo('vp-c-cajetin', 'Cajetín', '<select id="vp-c-cajetin">' + opciones(cjs.map(x => [String(x.id), x.nombre]), String(c.cajetin_id || 0)) + '</select>');
+            h += campo('vp-c-tamano', 'Letra (pt)', '<input type="number" id="vp-c-tamano" min="3" max="60" step="0.5" value="' + esc(c.tamano || '') + '" placeholder="auto">');
+            h += '<p class="text-sm text-muted">Los datos ({proyecto}, {titulo}, {fecha}…) se llenan solos. Edita las filas en <a href="/simbolos?proyecto=' + D.proyecto + '#cajetines" target="_blank" rel="noopener">Símbolos › Cajetines</a>.</p>';
+        } else if (b.tipo === 'estampa') {
+            const ests = (D.biblioteca && D.biblioteca.estampas) || [];
+            const acts = [['0', '— Ninguna —']];
+            D.partidas.forEach(p => p.actividades.forEach(a => acts.push([String(a.id), p.codigo + '.' + a.seq + ' · ' + a.nombre])));
+            h += campo('vp-c-estampa', 'Estampa', '<select id="vp-c-estampa"><option value="0">— Elegir —</option>' + opciones(ests.map(x => [String(x.id), x.nombre]), String(c.estampa_id || 0)) + '</select>');
+            h += campo('vp-c-efm', 'Fecha de las etiquetas de fecha', '<select id="vp-c-efm">' + opciones([['hoy', 'La de hoy (se actualiza sola)'], ['fija', 'Una fecha fija']], c.fecha_modo || 'hoy') + '</select>');
+            if (c.fecha_modo === 'fija') h += campo('vp-c-efecha', 'Fecha', '<input type="date" id="vp-c-efecha" value="' + esc(c.fecha || '') + '">');
+            h += campo('vp-c-eact', 'Actividad (para las etiquetas «de la actividad»)', '<select id="vp-c-eact">' + opciones(acts, String(c.actividad_id || 0)) + '</select>');
+            h += '<p class="text-sm text-muted">El contenido se llena solo con los datos del proyecto y se actualiza cada vez que abres la lámina. Cambia las etiquetas en <a href="/simbolos?proyecto=' + D.proyecto + '&editar=' + (c.estampa_id || 0) + '#estampas" target="_blank" rel="noopener">Símbolos › Estampas inteligentes</a>.</p>';
         } else if (b.tipo === 'plano') {
             h += '<p class="text-sm text-muted">La imagen se ajusta al bloque sin deformarse. La imagen se cambia en «Editar lámina»; las marcas, en «Editar marcas».</p>';
         } else {
@@ -612,6 +629,11 @@
         ligar('vp-c-alinear', 'change', i => { if (i.value) c.alinear = i.value; else delete c.alinear; });
         ligar('vp-c-negrita', 'change', i => c.negrita = i.checked);
         ligar('vp-c-cual', 'change', i => { c.cual = i.value; });
+        ligar('vp-c-cajetin', 'change', i => { c.cajetin_id = +i.value || 0; });
+        ligar('vp-c-estampa', 'change', i => { c.estampa_id = +i.value || 0; cargarEstampa(b); });
+        ligar('vp-c-efm', 'change', i => { c.fecha_modo = i.value; if (i.value !== 'fija') c.fecha = ''; cargarEstampa(b); pintarCampos(b); });
+        ligar('vp-c-efecha', 'change', i => { c.fecha = i.value; cargarEstampa(b); });
+        ligar('vp-c-eact', 'change', i => { c.actividad_id = +i.value || 0; cargarEstampa(b); });
         ligar('vp-c-titulo', 'input', i => c.titulo = i.value);
         ligar('vp-c-seq', 'change', i => c.seq = i.value);
         ligar('vp-c-color', 'input', i => c.color = i.value);
@@ -647,8 +669,20 @@
         });
     }
 
+    /** Pide al servidor el dibujo de la estampa con datos reales y lo pone dentro del bloque (sin tocar la capa de edición) */
+    async function cargarEstampa(b) {
+        const el = elDe(b); if (!el) return;
+        const c = b.config;
+        if (!c.estampa_id) { el.querySelectorAll(':scope > :not(.vp-ov)').forEach(x => x.remove()); el.insertAdjacentHTML('afterbegin', '<p class="vp-vacio-blk">Elige una estampa</p>'); return; }
+        try {
+            const d = await post('/api/estampas/vista', { proyecto: D.proyecto, id: c.estampa_id, lamina: D.lamina, modo: 'cq', actividad: c.actividad_id || 0, corte: c.fecha_modo === 'fija' ? (c.fecha || '') : '' });
+            el.querySelectorAll(':scope > :not(.vp-ov)').forEach(x => x.remove());
+            el.insertAdjacentHTML('afterbegin', d.success ? d.html : '<p class="vp-vacio-blk">' + esc(d.error || 'Estampa no disponible') + '</p>');
+        } catch (e) { /* sin conexión: se verá al guardar */ }
+    }
+
     // ================== Insertar ==================
-    const DIMS = { titulo: [30, 8], logo: [14, 8], plano: [46, 60], tareas: [47, 40], simbologia: [27, 16], schedule: [16, 16], supervisor: [30, 3], fecha: [30, 3], texto: [30, 6] };
+    const DIMS = { titulo: [30, 8], logo: [14, 8], plano: [46, 60], tareas: [47, 40], simbologia: [27, 16], schedule: [16, 16], supervisor: [30, 3], fecha: [30, 3], texto: [30, 6], imagen: [10, 10], cajetin: [26, 16], estampa: [26, 16] };
 
     /** Crea un bloque nuevo (aún sin guardar) y su capa en la hoja */
     function crearBloque(tipo, config, x, y, w, h) {
@@ -666,18 +700,91 @@
         return b;
     }
     function agregarBloque(tipo) {
-        if (UNICOS.includes(tipo) && bloques.some(b => b.tipo === tipo)) { window.alert('Esta lámina ya tiene un bloque de ese tipo.'); return; }
+        if (UNICOS.includes(tipo) && bloques.some(b => b.tipo === tipo)) { window.avisoModal('Bloque repetido', 'Esta lámina ya tiene un bloque de ese tipo.'); return; }
         const b = crearBloque(tipo);
         seleccionar(b, true);
     }
     function actualizarInsertar() {
         const caja = $('vp-ins-bloques');
-        caja.innerHTML = Object.keys(D.tipos).filter(t => t !== 'tabla').map(t => {
+        caja.innerHTML = Object.keys(D.tipos).filter(t => t !== 'tabla' && t !== 'imagen' && t !== 'cajetin' && t !== 'estampa' && t !== 'simbologia').map(t => {
             const usado = UNICOS.includes(t) && bloques.some(b => b.tipo === t);
             return '<button type="button" class="vp-ins-bloque" data-tipo="' + t + '"' + (usado ? ' disabled title="Ya está en la lámina"' : '') + '><i class="fa-solid ' + (ICONOS[t] || 'fa-square') + '"></i><span>' + esc(D.tipos[t]) + '</span></button>';
         }).join('');
     }
     $('vp-ins-bloques').addEventListener('click', e => { const b = e.target.closest('.vp-ins-bloque'); if (b && !b.disabled) agregarBloque(b.dataset.tipo); });
+
+    // Símbolos, simbologías del proyecto y cajetines: se insertan como copia propia (imagen) o como tabla con variables
+    const BIB = D.biblioteca || { simbolos: [], graficos: [], cajetines: [], estampas: [] };
+    function pintarBiblioteca() {
+        const lista = $('vp-sim-lista'); if (!lista) return;
+        const q = $('vp-sim-buscar').value.trim().toLowerCase();
+        const grupos = {};
+        (BIB.simbolos || []).filter(x => !q || (x.nombre + ' ' + x.cat).toLowerCase().includes(q)).forEach(x => { (grupos[x.cat] = grupos[x.cat] || []).push(x); });
+        const gr = (BIB.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q));
+        const sims = gr.filter(x => x.tipo === 'simbologia'), otros = gr.filter(x => x.tipo !== 'simbologia');
+        const g0 = {};
+        if (sims.length) g0['Simbologías del proyecto'] = sims;
+        if (otros.length) g0['Gráficos del proyecto'] = otros;
+        Object.keys(grupos).forEach(k => { g0[k] = grupos[k]; });
+        Object.keys(grupos).forEach(k => { delete grupos[k]; });
+        Object.assign(grupos, g0);
+        const btnTodas = $('vp-sim-todas'); if (btnTodas) btnTodas.hidden = !(BIB.graficos || []).some(x => x.tipo === 'simbologia');
+        lista.innerHTML = Object.keys(grupos).map(cat => '<h5 class="vp-ins-grupo">' + esc(cat) + '</h5><div class="vp-sim-grid">' + grupos[cat].map(x =>
+            '<button type="button" class="vp-sim" data-src="' + esc(x.src) + '" data-nombre="' + esc(x.nombre) + '" title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('')
+            || '<p class="text-sm text-muted">Sin resultados.</p>';
+        const est = $('vp-sim-estampas');
+        if (est) est.innerHTML = (BIB.estampas || []).map(x => '<button type="button" class="vp-ins-bloque" data-estampa="' + (+x.id) + '" title="Estampa inteligente: se actualiza sola con los datos del proyecto"><i class="fa-solid fa-wand-magic-sparkles"></i><span>' + esc(x.nombre) + '</span></button>').join('')
+            || '<p class="text-sm text-muted">Aún no hay estampas. Créalas en <a href="/simbolos?proyecto=' + D.proyecto + '#estampas" target="_blank" rel="noopener">Símbolos › Estampas inteligentes</a>.</p>';
+        $('vp-sim-cajetines').innerHTML = (BIB.cajetines || []).map(c =>
+            '<button type="button" class="vp-ins-bloque" data-cajetin="' + (+c.id || 0) + '" title="' + esc(c.orientacion === 'banda' ? 'Banda' : 'Tabla de dos columnas') + '"><i class="fa-solid fa-table-list"></i><span>' + esc(c.nombre) + '</span></button>').join('');
+    }
+    async function rasterizar(url) {   // SVG → PNG para que el PDF y la hoja lo dibujen igual; el resto se copia tal cual
+        if (!/\.svg(\?|$)/i.test(url)) { const r = await fetch(url); if (!r.ok) throw new Error('No se pudo leer la imagen'); return r.blob(); }
+        const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error('No se pudo leer el SVG')); i.src = url; });
+        const w = img.naturalWidth || 128, h = img.naturalHeight || 128, k = 1024 / Math.max(w, h);
+        const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        return new Promise(ok => cv.toBlob(ok, 'image/png'));
+    }
+    async function insertarImagen(src, nombre) {
+        const est = $('vp-sim-estado'); est.textContent = 'Insertando…';
+        try {
+            const blob = await rasterizar(src);
+            const fd = new FormData(); fd.append('lamina', D.lamina); fd.append('imagen', new File([blob], 'simbolo.png', { type: blob.type || 'image/png' }));
+            const d = await (await fetch('/api/vplan/imagen', { method: 'POST', body: fd })).json();
+            if (!d.success) throw new Error(d.error || 'no se pudo subir');
+            const dim = await new Promise(ok => { const i = new Image(); i.onload = () => ok([i.naturalWidth || 1, i.naturalHeight || 1]); i.onerror = () => ok([1, 1]); i.src = d.src; });
+            const ancho = Math.min(20, 12), hojaR = (tamano.ancho_mm || 1) / (tamano.alto_mm || 1);
+            let w = ancho, h = redond(w * hojaR * dim[1] / dim[0]);
+            if (h > 40) { h = 40; w = redond(h / hojaR * dim[0] / dim[1]); }
+            const b = crearBloque('imagen', { archivo: d.src.split('/').pop(), nombre }, null, null, w, h);
+            const el = elDe(b); if (el) el.innerHTML = '<div class="vp-img" style="justify-content:center"><img src="' + esc(d.src) + '" alt=""></div>';
+            seleccionar(b, true);
+            est.textContent = '';
+        } catch (e) { est.textContent = 'No se pudo insertar: ' + (e.message || 'error'); }
+    }
+    if ($('vp-sim-lista')) {
+        pintarBiblioteca();
+        $('vp-sim-buscar').addEventListener('input', pintarBiblioteca);
+        $('vp-sim-todas').addEventListener('click', async () => {
+            for (const x of (BIB.graficos || []).filter(x => x.tipo === 'simbologia')) await insertarImagen(x.src, x.nombre);
+        });
+        $('vp-sim-lista').addEventListener('click', e => { const b = e.target.closest('.vp-sim'); if (b) insertarImagen(b.dataset.src, b.dataset.nombre); });
+        if ($('vp-sim-estampas')) $('vp-sim-estampas').addEventListener('click', e => {
+            const b = e.target.closest('[data-estampa]'); if (!b) return;
+            const x = (BIB.estampas || []).find(y => +y.id === +b.dataset.estampa); if (!x) return;
+            const blk = crearBloque('estampa', { estampa_id: +x.id, fecha_modo: 'hoy' }, null, null, Math.min(100, x.w || 26), Math.min(100, x.h || 16));
+            seleccionar(blk, true); cargarEstampa(blk);
+        });
+        $('vp-sim-cajetines').addEventListener('click', e => {
+            const b = e.target.closest('[data-cajetin]'); if (!b) return;
+            const id = +b.dataset.cajetin || 0, c = (BIB.cajetines || []).find(x => (+x.id || 0) === id) || {};
+            const banda = c.orientacion === 'banda', n = (c.filas || []).length || 4;
+            const w = banda ? Math.min(90, Math.max(30, n * 12)) : Math.min(60, Math.max(15, +c.ancho || 26));
+            const h = banda ? 6 : Math.min(40, Math.max(6, n * 3.2));
+            seleccionar(crearBloque('cajetin', { cajetin_id: id }, null, null, w, h), true);
+        });
+    }
 
     // Tablas: todas las del catálogo (de todos los tipos) y las hojas de SheetFlow
     const catalogo = D.catalogo || [];
@@ -783,8 +890,36 @@
         } catch (_) { msg.textContent = 'Error de conexión'; btn.disabled = false; return false; }
     }
     $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&diseno=1'; });
+    // ---- Deshacer / rehacer (Ctrl+Z, Ctrl+Y o Ctrl+Mayús+Z): foto de bloques y guías tras cada cambio ----
+    const hFoto = () => ({ b: JSON.stringify(bloques), g: JSON.stringify(guias), els: Object.fromEntries(bloques.map(x => [x.clave, elDe(x)])) });
+    let hPas = [], hFut = [], hUlt = hFoto(), hTimer = null;
+    const hRevisa = () => {
+        clearTimeout(hTimer);
+        const a = hFoto(); if (a.b === hUlt.b && a.g === hUlt.g) return;
+        hPas.push(hUlt); if (hPas.length > 100) hPas.shift(); hFut = []; hUlt = a;
+    };
+    const hAplica = f => {
+        hUlt = f;
+        bloques = JSON.parse(f.b); guias = JSON.parse(f.g);
+        const claves = new Set(bloques.map(x => x.clave));
+        sheet.querySelectorAll('.vp-blk').forEach(el => { if (!claves.has(el.dataset.clave)) el.remove(); });
+        bloques.forEach(x => {
+            let el = elDe(x);
+            if (!el && f.els[x.clave]) { el = f.els[x.clave]; sheet.appendChild(el); }
+            if (el) { asegurarCapa(x, el); el.classList.toggle('vp-b-oculto', !!x.config.oculto); }
+        });
+        aplicarTodos(); pintarGuias(); pintarGuiasLista(); seleccionar(null); pintarCapas(); marcarSucio();
+    };
+    const deshacer = () => { hRevisa(); if (!hPas.length) return; hFut.push(hUlt); hAplica(hPas.pop()); };
+    const rehacer = () => { hRevisa(); if (!hFut.length) return; hPas.push(hUlt); hAplica(hFut.pop()); };
+    ['input', 'change', 'click', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, () => { clearTimeout(hTimer); hTimer = setTimeout(hRevisa, 350); }));
     document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); $('vp-dis-guardar').click(); }
+        if (!(e.ctrlKey || e.metaKey)) return;
+        const k = e.key.toLowerCase();
+        if (k === 's') { e.preventDefault(); $('vp-dis-guardar').click(); return; }
+        if (k !== 'z' && k !== 'y') return;
+        const t = e.target; if (/^(INPUT|TEXTAREA)$/.test(t.tagName) && !['range', 'color', 'checkbox'].includes(t.type)) return;   // en los cuadros de texto vale el deshacer del navegador
+        e.preventDefault(); (k === 'y' || e.shiftKey) ? rehacer() : deshacer();
     });
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña o recargar)
     document.addEventListener('click', async e => {

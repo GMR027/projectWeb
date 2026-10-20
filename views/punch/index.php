@@ -12,7 +12,7 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
     <div class="inc-acciones">
         <?php if ($puede): ?><a class="btn btn-primary" href="/punch/inspeccion?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-list-check"></i> Nueva inspección</a><?php endif; ?>
         <a class="btn btn-ghost" href="/punch/pdf?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-file-pdf"></i> PDF</a>
-        <a class="btn btn-ghost" href="/informes-ia?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-file-lines"></i> Informes de IA</a>
+        <?php if (is_admin()): ?><a class="btn btn-ghost" href="/informes-ia?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-file-lines"></i> Informes de IA</a><?php endif; ?>
     </div>
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>

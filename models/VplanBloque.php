@@ -21,6 +21,9 @@ class VplanBloque extends ActiveRecord
         'supervisor' => 'Supervisor',
         'fecha' => 'Fecha de actualización',
         'texto' => 'Texto libre',
+        'imagen' => 'Símbolo o simbología',
+        'cajetin' => 'Cajetín',
+        'estampa' => 'Estampa inteligente',
     ];
 
     public function __construct($args = [])

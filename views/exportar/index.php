@@ -17,7 +17,7 @@
         <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
         <div>
             <h4><i class="fa-solid fa-box-archive"></i> Exportar todo</h4>
-            <p class="text-sm text-muted">Un solo ZIP con el programa (PDF, XML y POD), 4WLA, MSR, curvas de productividad y vPlan. <strong>No incluye Last Planner.</strong> Lo que no tenga datos se omite y queda anotado en LEEME.txt.</p>
+            <p class="text-sm text-muted">Un solo ZIP con el programa (PDF, XML y POD), Lookahead, MSR, curvas de productividad y vPlan. <strong>No incluye Last Planner.</strong> Lo que no tenga datos se omite y queda anotado en LEEME.txt.</p>
         </div>
         <input type="text" name="nombre_base" value="Exportacion" placeholder="Nombre base" required>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-zipper"></i> Exportar todo</button>
@@ -43,8 +43,8 @@
 
         <div class="exportador-card">
             <div class="exportador-icono pdf">🔭</div>
-            <h4>4WLA · Lookahead 4 semanas</h4>
-            <p class="text-sm text-muted">Semana actual + 4 semanas con X por día, PTA y limitaciones. Tabloide (11×17") horizontal. En .xlsx / .ods queda editable.</p>
+            <h4>Lookahead</h4>
+            <p class="text-sm text-muted">Semana actual + las semanas que tengas visibles, con X por día, PTA y limitaciones. Tabloide (11×17") horizontal. En .xlsx / .ods queda editable.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="lookahead">
@@ -57,7 +57,7 @@
                 <label class="text-sm text-muted" for="fecha_ref">Semana de referencia</label>
                 <input type="date" id="fecha_ref" name="fecha_ref" value="<?php echo s($lunes->format('Y-m-d')); ?>" required>
                 <input type="text" name="nombre_base" value="4WLA" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar 4WLA</button>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar Lookahead</button>
             </form>
         </div>
 

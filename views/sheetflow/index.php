@@ -13,9 +13,11 @@
     <div class="card"><p class="text-muted">Aún no hay tablas. <?php echo $puedeEditar ? 'Crea la primera con «Nueva tabla»: en blanco, desde una plantilla o importando un Excel/CSV.' : ''; ?></p></div>
 <?php endif; ?>
 
+<?php $carpetas = array_values(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN])); ?>
 <?php foreach ($porDepto as $depto => $hojas): ?>
     <div class="card rd-grupo">
-        <h3><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($hojas); ?>)</small></h3>
+        <h3><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($hojas); ?>)</small>
+            <?php if ($puedeEditar && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
         <div class="tabla-wrapper">
         <table class="tabla" data-sin-buscador>
             <thead><tr><th>Fecha</th><th>Nombre</th><th class="hide-m">Tamaño</th><th>Acciones</th></tr></thead>
@@ -39,6 +41,7 @@
                                 </div>
                             </details>
                         <?php endif; ?>
+                        <?php if ($puedeEditar): ?><?php echo \Classes\Carpetas::selector('sheetflow', (int)$h->id, (string)$h->departamento, $carpetas); ?><?php endif; ?>
                         <?php if ($puedeEditar): ?>
                             <form method="POST" action="/sheetflow/a-vplan" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-ghost" title="Crea una tabla en el catálogo de vPlan con estos datos"><i class="fa-solid fa-table-list"></i> A vPlan</button></form>
                             <form method="POST" action="/sheetflow/duplicar" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
@@ -52,3 +55,5 @@
         </div>
     </div>
 <?php endforeach; ?>
+
+<?php if ($puedeEditar && $porDepto) { $herramienta = 'sheetflow'; include __DIR__ . '/../templates/carpetas-ui.php'; } ?>

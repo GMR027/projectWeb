@@ -26,7 +26,7 @@ class Usuario extends ActiveRecord
         'programa' => ['Programa', ['/programa']],
         'dependencias' => ['Dependencias de obra', ['/dependencias', '/api/dependencias']],
         'planificador' => ['Planificador', ['/planificador']],
-        'lookahead' => ['Lookahead 4S', ['/lookahead']],
+        'lookahead' => ['Lookahead', ['/lookahead']],
         'vplan' => ['vPlan', ['/vplan', '/api/vplan']],
         'lastplanner' => ['Last Planner', ['/lastplanner']],
         'reportes' => ['Reporte diario', ['/reportes']],
@@ -43,6 +43,8 @@ class Usuario extends ActiveRecord
         'sheetflow' => ['SheetFlow (tablas)', ['/sheetflow', '/api/sheetflow']],
         'view360' => ['View360', ['/view360', '/api/view360']],
         'comparador' => ['Comparador de documentos', ['/comparador']],
+        'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos']],
+        'traductor' => ['Traductor', ['/traductor', '/api/traductor']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
     ];
 

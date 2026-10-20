@@ -13,3 +13,10 @@
 !/storage/grabaciones/.gitkeep
 /storage/normativa/*
 !/storage/normativa/.gitkeep
+
+# Sesiones de la app de escritorio
+/storage/sesiones-app/
+.liveproject/
+
+# Motor y modelos del Traductor (≈ 400 MB; se instalan con bin/instalar_traductor.sh)
+/storage/traductor/

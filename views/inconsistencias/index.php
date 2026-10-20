@@ -139,11 +139,11 @@ if ($corrida): ?>
         <?php endforeach; ?>
     </ul>
     <script>
-        document.querySelector('.inc-lista').addEventListener('click', function (e) {
+        document.querySelector('.inc-lista').addEventListener('click', async function (e) {
             var b = e.target.closest('button[data-accion]');
             if (!b) return;
             var li = b.closest('.inc-item'), msg = li.querySelector('.inc-msg'), accion = b.dataset.accion;
-            if (accion === 'aceptar' && !li.querySelector('.inc-tag').textContent.startsWith('Sin cambio') && !confirm('Se modificarán datos del proyecto con esta solución. ¿Aceptar?')) return;
+            if (accion === 'aceptar' && !li.querySelector('.inc-tag').textContent.startsWith('Sin cambio') && !await window.confirmarModal({ titulo: '¿Aceptar la solución?', mensaje: 'Se modificarán datos del proyecto con esta solución.', aceptar: 'Aceptar', tono: 'info' })) return;
             var d = new FormData();
             d.append('proyecto', '<?php echo $pid; ?>'); d.append('id', li.dataset.id); d.append('corrida', '<?php echo (int)$filtros['corrida']; ?>');
             li.querySelectorAll('button').forEach(function (x) { x.disabled = true; });

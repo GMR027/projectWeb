@@ -230,15 +230,17 @@ HTML],
 <p class="manual-nota">Para que funcione, vincula materiales a las actividades (en la actividad, sección <em>Materiales</em>) y registra las fechas de compra y entrega en el <a href="#materiales">Catálogo de materiales</a>.</p>
 HTML],
 
-['id' => 'lookahead', 'titulo' => 'Lookahead 4S', 'icono' => 'fa-binoculars', 'roles' => $todos, 'herr' => 'lookahead', 'cuerpo' => <<<'HTML'
-<p>El <strong>4 Weeks Look Ahead (4WLA)</strong> es la mirada a las próximas cuatro semanas: qué actividades tocan, en qué días y qué limitaciones tienen.</p>
+['id' => 'lookahead', 'titulo' => 'Lookahead', 'icono' => 'fa-binoculars', 'roles' => $todos, 'herr' => 'lookahead', 'cuerpo' => <<<'HTML'
+<p>El <strong>Lookahead</strong> es la mirada a las próximas semanas (por defecto la actual y las cuatro siguientes): qué actividades tocan, en qué días y qué limitaciones tienen.</p>
 <ul>
 <li>Con las flechas <strong>◀ ▶</strong> cambias de semana y con <strong>Hoy</strong> regresas a la actual.</li>
 <li>La tabla lista cada actividad con su <strong>ID (EDT)</strong>, nombre, semana y <strong>% completo</strong>, y marca con <strong>X</strong> los días en que se trabaja.</li>
-<li>La columna <strong>PTA</strong> es un botón: haz clic para alternar entre <strong>OK</strong> y <strong>!</strong> y así marcar el estado de esa actividad.</li>
+<li>Con <strong>−</strong> y <strong>+</strong> (junto al selector de mes) quitas o agregas semanas visibles, de 1 a 8 después de la actual. Esos botones no salen en el PDF.</li>
+<li>En <strong>Ajustes</strong> cambias el nombre de la herramienta, el de la columna PTA, el título del banner (con {semanas}, {proyecto}, {codigo}) y eliges una <strong>plantilla de encabezado</strong> (cajetín con logos hecho en Estampas inteligentes). También ahí agregas, renombras o quitas <strong>limitaciones</strong>; son las mismas del programa de obra y Last Planner, así que el cambio vale en todos los proyectos. Una limitación con restricciones registradas no se puede quitar hasta resolverlas.</li>
+<li>La columna <strong>PTA</strong> (o el nombre que le pongas) es un botón: haz clic para alternar entre <strong>OK</strong> y <strong>!</strong> y así marcar el estado de esa actividad.</li>
 <li>El bloque <strong>Limitaciones</strong> muestra las restricciones activas de cada actividad, una columna por tipo de restricción.</li>
 </ul>
-<p>Los datos salen del programa de obra: si cambias fechas o avances, el Lookahead se ajusta solo. Para imprimirlo o editarlo usa <em>Exportar</em> → <strong>4WLA</strong> (PDF tabloide, o .xlsx / .ods editable).</p>
+<p>Los datos salen del programa de obra: si cambias fechas o avances, el Lookahead se ajusta solo. Para imprimirlo o editarlo usa <em>Exportar</em> → <strong>Lookahead</strong> (PDF tabloide, o .xlsx / .ods editable).</p>
 HTML],
 
 ['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-map-location-dot', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
@@ -325,7 +327,7 @@ HTML],
 HTML],
 
 ['id' => 'minutas', 'titulo' => 'Minutas', 'icono' => 'fa-handshake', 'roles' => $todos, 'herr' => 'minutas', 'cuerpo' => <<<'HTML'
-<p>Las minutas de reunión: quiénes asistieron, qué temas se vieron y qué compromisos quedaron.</p>
+<p>Las minutas de reunión: quiénes asistieron, qué temas se vieron y qué compromisos quedaron. Se ordenan en <strong>carpetas</strong> (por departamento): renómbralas con el lápiz y mueve cada minuta con «Mover a…». Lo mismo aplica al Redactor y a SheetFlow.</p>
 <ol>
 <li>Pulsa <strong>+ Nueva minuta</strong>.</li>
 <li>Escribe la <strong>fecha*</strong>, la <strong>importancia*</strong> y el <strong>nombre de la minuta*</strong>.</li>
@@ -402,6 +404,8 @@ HTML],
 <li>Revisa la <em>vista previa</em> (sección, submittal, spec, descripción, compra, entrega, proveedor y foto) y los avisos.</li>
 <li><strong>Confirmar importación</strong>.</li>
 </ol>
+<h4>Columnas a tu medida</h4>
+<p>Al crear o editar un MSR eliges <strong>qué columnas</strong> lleva, su <strong>nombre</strong> y su <strong>orden</strong>, y puedes agregar columnas de texto propias. En la tabla arrastra un encabezado para moverlo; con doble clic cambias su título, color y grupo. Cada partida del MSR puede tener su propio color de título.</p>
 <p class="manual-nota">Para imprimirlo usa <em>Exportar → MSR</em>: PDF en A4 horizontal con fotos, o .xlsx / .ods editables.</p>
 HTML],
 
@@ -541,6 +545,15 @@ HTML],
 <p>Se guarda solo cada 30 segundos y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Word (.docx), LibreOffice (.odt) o PDF con el nombre <code>Año_mes_día_Nombre</code>, y <strong>Imprimir</strong> abre el PDF listo para imprimir con la hoja, márgenes y numeración elegidos. La línea de corte de página en pantalla es aproximada; el PDF muestra la paginación exacta.</p>
 HTML],
 
+['id' => 'ensamblador-documentos', 'titulo' => 'Ensamblador de documentos', 'icono' => 'fa-object-group', 'roles' => $todos, 'herr' => 'ensamble', 'cuerpo' => <<<'HTML'
+<p>Une en <strong>un solo PDF no editable</strong> documentos del <strong>Redactor</strong> y PDF que subiste al <strong>Archivo</strong>: por ejemplo una memoria de cálculo más sus planos en PDF.</p>
+<h4>Crear un ensamble</h4>
+<p><em>Documentos y diseño › Ensamblador de documentos › Nuevo ensamble</em>. Escribe el nombre, pulsa <strong>Agregar</strong> en cada documento y ordénalos con ▲ ▼. El PDF sale en ese orden.</p>
+<h4>Que se actualice solo</h4>
+<p>Con <strong>Guardar en Archivo</strong> el PDF queda en el Archivo del proyecto (puedes elegir carpeta). Si después cambias un documento original del Redactor o reemplazas un PDF fuente, ese archivo se <strong>regenera solo</strong> la próxima vez que se abra o descargue. Por ejemplo, si el título era verde y lo cambias a azul en el Redactor, el PDF del Archivo lo mostrará azul.</p>
+<p class="manual-nota">Lo que descargas es un PDF común: ya no se actualiza ni conserva el vínculo. Si eliminas el ensamble, el PDF del Archivo se queda como está pero deja de actualizarse.</p>
+HTML],
+
 ['id' => 'sheetflow', 'titulo' => 'SheetFlow (tablas)', 'icono' => 'fa-table-cells', 'roles' => $todos, 'herr' => 'sheetflow', 'cuerpo' => <<<'HTML'
 <p>Crea <strong>tablas</strong> como en una hoja de cálculo (materiales, presupuestos, asistencias, registros) y úsalas en el <strong>vPlan</strong>, el <strong>Editor</strong> y el <strong>Redactor</strong> sin volver a capturarlas.</p>
 <h4>Crear una tabla</h4>
@@ -577,7 +590,16 @@ HTML],
 <li>Puedes <strong>cambiar la imagen</strong> o eliminar un símbolo propio. Los <em>incluidos con la aplicación</em> sirven para todos los proyectos y no se editan.</li>
 </ul>
 <h4>Cajetines</h4>
-<p>Un <strong>cajetín</strong> es un cuadro de datos (como el de un plano) que insertas de un clic. Defines su forma, su ancho (% del dibujo) y sus filas con el formato <code>Etiqueta | valor</code>, y puedes usar datos del proyecto como <code>{proyecto}</code>.</p>
+<p>Un <strong>cajetín</strong> es el cuadro de datos de un plano (proyecto, título, fecha, revisión…) que insertas de un clic. Cada <strong>renglón</strong> tiene un <em>título</em> (a la izquierda) y un <em>dato</em> (a la derecha). El dato puede ser un texto fijo o un <strong>campo</strong> que se llena solo: elígelo con el botón <em>＋ Campo…</em> (nombre del proyecto, fecha, avance, SPI, restricciones activas…). Puedes añadir, quitar y mover renglones, empezar con una <em>plantilla</em> y ver abajo la <strong>vista previa con datos reales</strong>.</p>
+<h4>Estampas inteligentes</h4>
+<p>Una <strong>estampa</strong> es un bloque que colocas en una lámina del vPlan y que <strong>se actualiza solo</strong>. Está hecha de <em>etiquetas</em>, y cada etiqueta junta un texto antes (<em>prefijo</em>), un <em>dato</em> del proyecto (la fecha, el avance, una actividad, las restricciones…) y un texto después (<em>sufijo</em>). Por ejemplo: «Avance: » + <em>avance de la actividad</em> + « %».</p>
+<ul>
+<li><strong>Nueva estampa</strong> o <strong>empieza con un ejemplo</strong>: cajetín de plano, sello de estatus de actividad, etiqueta de restricción, pie de reporte con corte y SPI, semáforo de avance y <strong>Last Planner · Post-its del día</strong>.</li>
+<li><strong>Tipos de etiqueta:</strong> <em>Campo inteligente</em>, <em>Texto libre</em> (admite campos como <code>{proyecto}</code> o <code>{corte:largo}</code>), <em>Semáforo</em> (verde, amarillo o rojo según dos umbrales que tú eliges) y <em>Actividades del día</em>.</li>
+<li><strong>Actividades del día (post-its):</strong> una tarjeta por cada actividad que cae en la fecha de hoy (o en una fecha fija). Eliges las partidas o el responsable, cuántas tarjetas, cuántas columnas, el color y qué datos muestra cada una. Cambia sola cada día; en fin de semana o festivo muestra el siguiente día hábil.</li>
+<li>La <strong>vista previa</strong> a la derecha usa los datos reales del proyecto y te deja probar con otra actividad o fecha de corte.</li>
+<li><strong>En el vPlan:</strong> abre una lámina → <em>Modo diseño</em> → pestaña <em>Insertar</em> → <em>Estampas inteligentes</em>. En <em>Propiedades</em> eliges la estampa, la fecha y la actividad de las etiquetas «de la actividad». También sale en el PDF de la lámina.</li>
+</ul>
 HTML],
 
 ['id' => 'view360', 'titulo' => 'View360', 'icono' => 'fa-street-view', 'roles' => $todos, 'herr' => 'view360', 'cuerpo' => <<<'HTML'
@@ -601,6 +623,46 @@ HTML],
 <h4>Acciones → Crear nota</h4>
 <p>Debajo del gráfico, la sección <strong>Acciones</strong> permite <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editarla o borrarla (con confirmación); la más reciente queda arriba. Los visitantes pueden leer las notas, no escribirlas.</p>
 <p class="manual-nota">El visor 360 necesita un navegador con WebGL (cualquier navegador moderno). Para convertir un PDF a imagen, el servidor debe tener instalado <code>pdftoppm</code> o Ghostscript.</p>
+HTML],
+
+['id' => 'comparador', 'titulo' => 'Comparador de documentos', 'icono' => 'fa-code-compare', 'roles' => $todos, 'herr' => 'comparador', 'cuerpo' => <<<'HTML'
+<p>Pone <strong>dos imágenes o PDF</strong> uno sobre otro para ver qué cambió entre dos revisiones de un plano o documento.</p>
+<h4>Elegir los documentos</h4>
+<ul>
+<li><strong>Documento A</strong> es la base (el fondo) y <strong>Documento B</strong> es el que se superpone y se mueve.</li>
+<li>Cada uno puede ser un archivo <strong>del proyecto</strong> (sección <a href="#archivos">Archivo</a>) o uno <strong>externo</strong> de tu equipo; los externos se quedan en tu navegador y no se suben.</li>
+<li>En un PDF elige la <strong>página</strong> que quieres comparar.</li>
+</ul>
+<h4>Modos de comparación</h4>
+<ul>
+<li><strong>Deslizador:</strong> A a un lado y B al otro de una línea que arrastras (vertical u horizontal).</li>
+<li><strong>Fundido:</strong> mezcla A y B con una barra de porcentaje.</li>
+<li><strong>Diferencias:</strong> lo igual se ve negro y lo distinto se ilumina.</li>
+</ul>
+<h4>Emparejar B con A</h4>
+<p>Con <strong>Mover B</strong> arrastras el documento B (flechas del teclado para afinar), <strong>Ajustar B a A</strong> lo escala al tamaño de A, <strong>Restablecer B</strong> quita traslado, escala y giro, y el botón de flechas intercambia A y B. Rueda del ratón = zoom; arrastrar = desplazar.</p>
+<h4>Descargar PDF</h4>
+<p>Al final puedes exportar la comparación a PDF eligiendo tamaño de hoja, orientación, qué incluir (A y B como se ven, solo A o solo B) y el área (vista actual o documento A completo).</p>
+HTML],
+
+['id' => 'traductor', 'titulo' => 'Traductor', 'icono' => 'fa-language', 'roles' => $todos, 'herr' => 'traductor', 'cuerpo' => <<<'HTML'
+<p>Traduce de <strong>español a inglés</strong> o de <strong>inglés a español</strong> un texto que escribas o un documento completo.</p>
+<h4>Texto</h4>
+<ol>
+<li>Elige el idioma de origen y el de destino (el botón de flechas los intercambia; si ya hay traducción, la pasa al cuadro de origen).</li>
+<li>Escribe o pega el texto (hasta 20,000 caracteres) y pulsa <strong>Traducir</strong>.</li>
+<li>Con <strong>Copiar</strong> llevas el resultado al portapapeles. Se conservan los saltos de línea y las listas.</li>
+</ol>
+<h4>Documento</h4>
+<p>En la pestaña <strong>Documento</strong> sube un archivo de hasta 20 MB y pulsa <strong>Traducir y descargar</strong>. El resultado se descarga con el mismo nombre más <code>_EN</code> o <code>_ES</code>; no se guarda en el servidor.</p>
+<ul>
+<li><strong>Word</strong> (.docx, .doc), <strong>Writer</strong> (.odt) y RTF: se traduce cada párrafo, también en tablas, encabezados y pies. Se conserva el estilo del párrafo; el formato interno (una palabra en negritas) puede perderse.</li>
+<li><strong>Excel</strong> (.xlsx, .xls), <strong>Calc</strong> (.ods) y CSV: se traducen las celdas de texto; fórmulas, números y fechas no cambian.</li>
+<li><strong>PowerPoint</strong> (.pptx, .ppt) e <strong>Impress</strong> (.odp): se traduce el texto de cada diapositiva y sus notas.</li>
+<li><strong>PDF</strong>: se entrega un PDF nuevo con el texto traducido (sin el diseño original). Un PDF escaneado, sin texto seleccionable, no se puede traducir.</li>
+<li><strong>TXT</strong> y Markdown: se traducen línea por línea.</li>
+</ul>
+<p class="manual-nota">La traducción es automática: revísala antes de usarla en contratos, especificaciones o documentos oficiales. Los formatos .doc, .xls, .ppt y .rtf se entregan convertidos a .docx, .xlsx y .pptx. Traducir documentos requiere permiso de descarga.</p>
 HTML],
 
 ['id' => 'ajustes', 'titulo' => 'Ajustes del proyecto', 'icono' => 'fa-gear', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
