@@ -14,8 +14,9 @@
   <span id="zoom-barra" class="zoom" role="group" aria-label="Tamaño de la vista" title="Ctrl + y Ctrl − cambian el tamaño; Ctrl 0 lo restablece">
     <button id="zoom-menos" class="sec" aria-label="Reducir">−</button><button id="zoom-pct" class="sec" aria-label="Restablecer al 100 %">100 %</button><button id="zoom-mas" class="sec" aria-label="Ampliar">+</button>
   </span>
-  <button id="btn-ajustes" class="sec">Ajustes</button>
   <button id="btn-ia" class="sec">Herramientas IA</button>
+  <button id="campana" class="sec" title="Notificaciones: la app está al día" aria-label="Notificaciones"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><i class="campana-punto"></i></button>
+  <button id="btn-ajustes" class="sec" title="Ajustes: servidor al que se conecta la app" aria-label="Ajustes"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg> Ajustes</button>
 </header>
 
 <div id="cuerpo">
@@ -282,10 +283,9 @@
 <section id="act" data-aj="servidor">
   <h2>Servidor y actualizaciones</h2>
   <div class="sync" data-sync><span class="sync-punto"></span><span class="sync-ico">⟳</span><span class="sync-txt">Conectando…</span><small class="sync-det"></small></div>
-  <p class="nota">El servidor es la dirección de tu Project Web: ahí inicias sesión. El token (solo para actualizar la app) se genera en Project Web → Ajustes → App de escritorio.</p>
+  <p class="nota">El servidor es la dirección de tu Project Web: ahí inicias sesión. Las actualizaciones se buscan con tu sesión de administrador (sin token).</p>
   <form id="srv-form">
     <label>Servidor de Project Web <input id="srv-url" placeholder="https://tu-dominio"></label>
-    <label>Token de actualización <input id="srv-token" type="password" autocomplete="off" placeholder="(guardado)"></label>
     <button type="submit">Guardar</button>
   </form>
   <p id="upd-ver" class="nota"></p>

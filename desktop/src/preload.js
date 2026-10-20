@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('pw', {
   config: inv('config:get'),
   tipos: inv('config:tipos'),
   guardarServidor: inv('config:servidor'),
-  guardarToken: inv('config:token'),
   guardarProveedor: inv('prov:guardar'),
   eliminarProveedor: inv('prov:eliminar'),
   modelos: inv('prov:modelos'),

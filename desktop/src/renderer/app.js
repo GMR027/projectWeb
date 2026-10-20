@@ -49,9 +49,10 @@ function ajustarMarco() {
 }
 // Herramientas IA es un espacio aparte: sin el menú de Project Web
 function mostrar(m) {
-  modo = conSesion ? m : 'web';
+  modo = conSesion || m === 'ajustes' ? m : 'web';   // sin sesión solo se puede ver el login o los Ajustes (para corregir el servidor)
   m = modo;
-  document.body.classList.toggle('login', !conSesion);
+  document.body.classList.toggle('login', !conSesion && m === 'web');
+  document.body.classList.toggle('sin-sesion', !conSesion);
   $('#hueco').hidden = m !== 'web'; $('#panel-ia').hidden = m !== 'ia'; $('#panel-ajustes').hidden = m !== 'ajustes';
   $('#hueco-error').hidden = !errorWeb; $('#hueco-msg').hidden = errorWeb;
   $('#hamb').hidden = !conSesion || m === 'ajustes'; $('#hamb').title = m === 'ia' ? 'Mostrar u ocultar el menú de Herramientas IA' : 'Menú de Project Web'; $('#hamb').setAttribute('aria-label', $('#hamb').title); $('#zoom-barra').hidden = !conSesion;
@@ -92,7 +93,7 @@ function abrirAjustes(tab) {
   elegirAjuste(tab || guardado('aj-tab') || 'vista');
 }
 document.querySelectorAll('#aj-tabs button').forEach(b => b.addEventListener('click', () => elegirAjuste(b.dataset.aj)));
-$('#btn-ajustes').addEventListener('click', () => { if (modo === 'ajustes') mostrar('web'); else abrirAjustes(); });
+$('#btn-ajustes').addEventListener('click', () => { if (modo === 'ajustes') mostrar('web'); else abrirAjustes('servidor'); });   // el engranaje lleva directo a «Servidor y actualizaciones» (a dónde apunta la conexión)
 // Menú lateral de Herramientas IA: se oculta con la hamburguesa y recuerda su estado
 const guardado = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } };
 function menuIAOculto(oculto) {
@@ -105,7 +106,7 @@ function aplicarTema(t) { document.documentElement.dataset.tema = t === 'claro' 
 aplicarTema(guardado('tema'));
 $('#aj-tema').addEventListener('change', e => { guardado('tema', e.target.value); aplicarTema(e.target.value); });
 // Al iniciar solo se ve el login; al entrar aparece la ventana general, y al cerrar sesión se vuelve al login
-pw.alSesion(v => { errorWeb = false; conSesion = v; if (v) { proyectosProg = null; proyectosMenuListos = false; if (modo === 'ia') pintarMenuIA(); } pintarChip(); if (!v) seccionActual = seccionActual || '/dashboard'; mostrar('web'); });
+pw.alSesion(v => { errorWeb = false; conSesion = v; if (v) { proyectosProg = null; proyectosMenuListos = false; if (modo === 'ia') pintarMenuIA(); } pintarChip(); setTimeout(sondearServidor, 300); if (!v) seccionActual = seccionActual || '/dashboard'; mostrar('web'); });
 pw.alErrorWeb(d => { errorWeb = true; $('#err-detalle').textContent = 'No se pudo conectar con Project Web (' + d + ').'; $('#err-url').value = cfg?.servidor || ''; mostrar('web'); });
 $('#err-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -117,7 +118,6 @@ async function recargar() {
   cfg = await pw.config();
   pintarMenuIA();
   $('#srv-url').value = cfg.servidor;
-  $('#srv-token').placeholder = cfg.tokenGuardado ? '(guardado; escribe uno nuevo para cambiarlo)' : 'Pega aquí el token';
   const lista = $('#lista-prov');
   lista.replaceChildren(...cfg.proveedores.map(p => {
     const d = el('div', null, 'prov'), t = el('div'), principal = p.id === cfg.activa;
@@ -908,27 +908,44 @@ $('#prov-modelos').addEventListener('click', async () => {
 
 $('#srv-form').addEventListener('submit', async e => {
   e.preventDefault();
-  try { await pw.guardarServidor($('#srv-url').value); if ($('#srv-token').value) await pw.guardarToken($('#srv-token').value); $('#srv-token').value = ''; $('#upd-res').textContent = 'Guardado.'; recargar(); }
+  try { await pw.guardarServidor($('#srv-url').value); $('#upd-res').textContent = 'Guardado.'; recargar(); }
   catch (x) { $('#upd-res').textContent = msgErr(x); }
 });
 pw.alProgreso(p => { $('#upd-prog').hidden = false; $('#upd-prog').value = p; });
-$('#upd-buscar').addEventListener('click', async () => {
-  const res = $('#upd-res'); res.replaceChildren(el('p', 'Consultando…'));
-  try {
-    const r = await pw.buscarActualizacion();
-    if (!r.hayNueva) { res.replaceChildren(el('p', 'Estás al día (versión ' + r.actual + ').')); return; }
-    const caja = el('div'); caja.append(el('p', 'Nueva versión ' + r.ultima + ' disponible (tienes la ' + r.actual + ').'));
-    r.archivos.filter(a => /\.(deb|AppImage)$/.test(a.nombre)).forEach(a => {
-      const b = el('button', 'Descargar e instalar ' + a.nombre); b.style.marginRight = '.6rem';
-      b.addEventListener('click', async () => {
-        b.disabled = true;
-        try { res.append(el('p', await pw.actualizar(a))); } catch (x) { res.append(el('p', msgErr(x), 'msg')); b.disabled = false; }
-      });
-      caja.append(b);
+function pintarActualizacion(r) {
+  const res = $('#upd-res');
+  if (!r.hayNueva) { res.replaceChildren(el('p', 'Estás al día (versión ' + r.actual + ').')); return; }
+  const caja = el('div'); caja.append(el('p', 'Nueva versión ' + r.ultima + ' disponible (tienes la ' + r.actual + ').'));
+  r.archivos.filter(a => /\.(deb|AppImage)$/.test(a.nombre)).forEach(a => {
+    const b = el('button', 'Descargar e instalar ' + a.nombre); b.style.marginRight = '.6rem';
+    b.addEventListener('click', async () => {
+      b.disabled = true;
+      try { res.append(el('p', await pw.actualizar(a))); } catch (x) { res.append(el('p', msgErr(x), 'msg')); b.disabled = false; }
     });
-    res.replaceChildren(caja);
-  } catch (x) { res.replaceChildren(el('p', msgErr(x))); }
+    caja.append(b);
+  });
+  res.replaceChildren(caja);
+}
+$('#upd-buscar').addEventListener('click', async () => {
+  $('#upd-res').replaceChildren(el('p', 'Consultando…'));
+  try { const r = await pw.buscarActualizacion(); pintarActualizacion(r); pintarCampana(r); }
+  catch (x) { $('#upd-res').replaceChildren(el('p', msgErr(x))); }
 });
+// Campana de notificaciones: busca sola al abrir la app y cada 6 h (en silencio; sin sesión de administrador no hace nada) y avisa con un punto si hay versión nueva
+function pintarCampana(r) {
+  const c = $('#campana'); c.classList.toggle('hay', !!r?.hayNueva);
+  c.title = r?.hayNueva ? 'Nueva versión ' + r.ultima + ' disponible: clic para descargarla' : 'Notificaciones: la app está al día';
+  c.dataset.r = r?.hayNueva ? '1' : '';
+}
+let ultimaActualizacion = null;
+async function vigilarActualizaciones() {
+  try { ultimaActualizacion = await pw.buscarActualizacion(); pintarCampana(ultimaActualizacion); } catch { /* sin servidor, sin sesión de administrador o sin red */ }
+}
+$('#campana').addEventListener('click', () => {
+  abrirAjustes('servidor');
+  if (ultimaActualizacion?.hayNueva) pintarActualizacion(ultimaActualizacion); else $('#upd-buscar').click();
+});
+setTimeout(vigilarActualizaciones, 5000); setInterval(vigilarActualizaciones, 6 * 3600000);
 
 // ---- Ajustes: almacenamiento, versión instalada y desinstalación ----
 const FORMATOS = { appimage: 'AppImage', deb: 'paquete .deb', desarrollo: 'modo desarrollo (código fuente)' };

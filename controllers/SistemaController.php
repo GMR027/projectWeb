@@ -28,7 +28,6 @@ class SistemaController
             'respaldos' => Respaldo::listar(),
             'programado' => Respaldo::programado(), 'ultimoAuto' => Respaldo::ultimoAutomatico(), 'proximoAuto' => Respaldo::proximo(),
             'herramientas' => \Model\HerramientaIA::all('nombre ASC'),
-            'hayToken' => \Classes\Instaladores::hayToken(), 'tokenNuevo' => (function () { $t = $_SESSION['token_escritorio'] ?? ''; unset($_SESSION['token_escritorio']); return $t; })(),
             'instaladores' => \Classes\Instaladores::listar(),
             'ok' => $_GET['ok'] ?? '',
             'error' => $_GET['error'] ?? '',
@@ -91,15 +90,6 @@ class SistemaController
         } catch (\Throwable $e) {
             header('Location: /sistema?error=' . urlencode($e->getMessage()) . '#escritorio');
         }
-        exit;
-    }
-
-    /** Token para que la app de escritorio consulte actualizaciones (se muestra una sola vez) */
-    public static function tokenEscritorio()
-    {
-        redirigir_si_no_admin();
-        $_SESSION['token_escritorio'] = \Classes\Instaladores::generarToken();
-        header('Location: /sistema#escritorio');
         exit;
     }
 

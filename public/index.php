@@ -574,7 +574,6 @@ $router->post('/sistema/herramienta', [SistemaController::class, 'herramientaGua
 $router->post('/sistema/herramienta/eliminar', [SistemaController::class, 'herramientaEliminar']);
 $router->post('/sistema/instalador/subir', [SistemaController::class, 'instaladorSubir']);
 $router->post('/sistema/instalador/eliminar', [SistemaController::class, 'instaladorEliminar']);
-$router->post('/sistema/instalador/token', [SistemaController::class, 'tokenEscritorio']);
 $router->get('/api/escritorio/version', [EscritorioApiController::class, 'version']);
 $router->get('/api/escritorio/descargar', [EscritorioApiController::class, 'descargar']);
 $router->get('/sistema/instalador', [SistemaController::class, 'instalador']);

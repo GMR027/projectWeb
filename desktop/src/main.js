@@ -90,6 +90,7 @@ function crearVista() {
   const wc = vista.webContents;
   const ses = wc.session, ua = ses.getUserAgent() + ' ProjectWebDesktop';
   ses.setUserAgent(ua);   // el servidor lo usa para conservar la sesión
+  wc.setUserAgent(ua);    // en Electron recientes la página conserva el UA original si solo se cambia el de la sesión: login y API deben llevar el mismo UA (guardan la sesión en la misma carpeta)
   const fetchOriginal = ses.fetch.bind(ses);   // session.fetch no hereda el User-Agent de la sesión: se pone a mano
   ses.fetch = (u, o = {}) => { const h = new Headers(o.headers || {}); if (!h.has('user-agent')) h.set('user-agent', ua); return fetchOriginal(u, { ...o, headers: h }); };
   atajosZoom(wc); atajosZoom(win.webContents);
@@ -261,6 +262,8 @@ app.whenReady().then(() => {
     try {
       const r = await sesionWeb(cfg.leer().servidor + '/api/ia/herramientas', { credentials: 'include', signal: AbortSignal.timeout(8000) });
       const j = await r.json().catch(() => null);
+      // La sesión caducó en el servidor (p. ej. tras un despliegue) pero la vista sigue en una página interna: llevarla al login
+      if (!j?.success) { try { const u = new URL(vista.webContents.getURL()); if (u.pathname !== '/login' && u.origin === new URL(cfg.leer().servidor).origin) vista.webContents.loadURL(cfg.leer().servidor + '/login'); } catch { /* sin URL todavía */ } }
       return { conectado: true, sesion: !!j?.success, ms: Date.now() - t0 };
     } catch (x) { return { conectado: false, sesion: false, ms: Date.now() - t0, error: String(x.message || x) }; }
   });
@@ -414,7 +417,6 @@ app.whenReady().then(() => {
   ipcMain.handle('config:get', () => cfg.publica());
   ipcMain.handle('config:tipos', () => Object.fromEntries(Object.entries(prov.TIPOS).map(([k, t]) => [k, { etiqueta: t.etiqueta, url: t.url || '', clave: !!t.clave, cli: !!t.bin }])));
   ipcMain.handle('config:servidor', (_e, url) => { if (url) new URL(url); cfg.guardarServidor(String(url || '').trim().replace(/\/+$/, '')); });
-  ipcMain.handle('config:token', (_e, t) => cfg.guardarSecreto('__token', String(t || '').trim()));
   ipcMain.handle('prov:guardar', (_e, p, clave) => {
     if (!prov.TIPOS[p.tipo]) throw new Error('Tipo no válido');
     const reg = { id: p.id || crypto.randomUUID(), nombre: String(p.nombre || '').trim().slice(0, 100), tipo: p.tipo, url: String(p.url || '').trim(), modelo: String(p.modelo || '').trim().slice(0, 100) };
@@ -432,10 +434,10 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('hw:detectar', async () => { const h = await hw.detectar(); return { ...h, sugerencias: hw.recomendar(h) }; });
   ipcMain.handle('prov:cli', () => prov.detectarCli());
-  ipcMain.handle('upd:buscar', () => upd.consultar(cfg.leer().servidor, cfg.secreto('__token'), app.getVersion()));
+  ipcMain.handle('upd:buscar', () => upd.consultar(cfg.leer().servidor, (u, o) => vista.webContents.session.fetch(u, o), app.getVersion()));
   ipcMain.handle('upd:instalar', async (_e, archivo) => {
     const c = cfg.leer();
-    const ruta = await upd.descargar(c.servidor, cfg.secreto('__token'), archivo, path.join(app.getPath('userData'), 'updates'), p => win?.webContents.send('upd:progreso', p));
+    const ruta = await upd.descargar(c.servidor, (u, o) => vista.webContents.session.fetch(u, o), archivo, path.join(app.getPath('userData'), 'updates'), p => win?.webContents.send('upd:progreso', p));
     return upd.instalar(ruta);
   });
   // Ajustes: datos de la instalación, tamaño de los datos locales y desinstalación

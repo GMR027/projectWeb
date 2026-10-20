@@ -70,6 +70,7 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
             - { name: files, mountPath: /var/www/html/storage/respaldos, subPath: respaldos }
             - { name: files, mountPath: /var/www/html/storage/instaladores, subPath: instaladores }
+            - { name: files, mountPath: /var/www/html/storage/sesiones-app, subPath: sesiones-app }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}
       volumes:
         - name: files

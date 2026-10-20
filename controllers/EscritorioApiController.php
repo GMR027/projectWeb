@@ -4,17 +4,15 @@ namespace Controllers;
 
 use Classes\Instaladores;
 
-/** API para la app de escritorio: se autentica con el token de dispositivo que genera el admin (no con la sesión web) */
+/** API para la app de escritorio: solo el administrador con sesión iniciada (la vista de la app comparte sus cookies) */
 class EscritorioApiController
 {
     private static function autorizar(): void
     {
-        $cab = (string)($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
-        if (!preg_match('/^Bearer (\S+)$/', $cab, $m) || !Instaladores::tokenValido($m[1])) {
-            usleep(300000);   // frena los intentos a ciegas
+        if (!is_admin()) {
             http_response_code(401);
             header('Content-Type: application/json');
-            exit(json_encode(['error' => 'Token no válido']));
+            exit(json_encode(['error' => 'Inicia sesión como administrador']));
         }
     }
 

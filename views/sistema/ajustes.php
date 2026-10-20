@@ -104,10 +104,8 @@ $vols = [
         <p class="text-muted">Aún no hay instaladores.</p>
     <?php endif; ?>
     <div style="border:1px solid var(--border);border-radius:1rem;padding:1.4rem;margin-top:1.4rem">
-        <h4 style="margin-bottom:.6rem"><i class="fa-solid fa-key"></i> Actualizaciones desde la app</h4>
-        <p class="text-muted text-sm">La app consulta aquí la versión publicada (<strong><?php echo s(\Classes\Instaladores::version() ?: 'sin latest-linux.yml'); ?></strong>) con un token. Súbelo junto al instalador para que detecte cambios. Al generar un token nuevo, el anterior deja de servir.</p>
-        <?php if ($tokenNuevo): ?><div class="alerta alerta-exito">Token (cópialo ahora, no se vuelve a mostrar): <code><?php echo s($tokenNuevo); ?></code></div><?php endif; ?>
-        <form method="POST" action="/sistema/instalador/token"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-rotate"></i> <?php echo $hayToken ? 'Generar token nuevo' : 'Generar token'; ?></button></form>
+        <h4 style="margin-bottom:.6rem"><i class="fa-solid fa-bell"></i> Actualizaciones desde la app</h4>
+        <p class="text-muted text-sm">La app avisa con la campana cuando la versión publicada (<strong><?php echo s(\Classes\Instaladores::version() ?: 'sin latest-linux.yml'); ?></strong>) es mayor que la suya. Se identifica con tu sesión de administrador (sin token). Sube <code>latest-linux.yml</code> junto al instalador para que detecte el cambio.</p>
     </div>
     <form method="POST" action="/sistema/instalador/subir" enctype="multipart/form-data" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.4rem">
         <label>Subir instalador nuevo (.deb, .rpm, .pacman, .AppImage, .tar.gz, SHA256SUMS.txt, latest-linux.yml) <input type="file" name="instalador" required></label>

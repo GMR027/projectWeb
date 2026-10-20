@@ -1,5 +1,5 @@
 'use strict';
-// Actualizaciones: consulta a Project Web (token de dispositivo del admin), descarga el instalador y verifica su SHA-256
+// Actualizaciones: consulta a Project Web (con la sesión del admin), descarga el instalador y verifica su SHA-256
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -20,21 +20,22 @@ function base(servidor) {
   return u.origin;
 }
 
-async function consultar(servidor, token, versionActual) {
-  if (!servidor || !token) throw new Error('Configura el servidor y el token en la pestaña Actualizaciones');
-  const r = await fetch(base(servidor) + '/api/escritorio/version', { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(15000) });
-  if (r.status === 401) throw new Error('Token rechazado: genera uno nuevo en Project Web → Ajustes');
+/** `sesion` es el fetch de la vista de Project Web: comparte las cookies de la sesión de administrador (sin token) */
+async function consultar(servidor, sesion, versionActual) {
+  if (!servidor) throw new Error('Configura primero el servidor de Project Web');
+  const r = await sesion(base(servidor) + '/api/escritorio/version', { credentials: 'include', signal: AbortSignal.timeout(15000) });
+  if (r.status === 401) throw new Error('Inicia sesión como administrador en Project Web para buscar actualizaciones');
   if (!r.ok) throw new Error('El servidor respondió ' + r.status);
   const j = await r.json();
   return { actual: versionActual, ultima: j.version || '', hayNueva: !!j.version && comparar(j.version, versionActual) > 0, archivos: j.archivos || [] };
 }
 
 /** Descarga a `dir` verificando el SHA-256 que publica el servidor; devuelve la ruta */
-async function descargar(servidor, token, archivo, dir, alProgreso) {
+async function descargar(servidor, sesion, archivo, dir, alProgreso) {
   if (!NOMBRE_OK.test(archivo.nombre)) throw new Error('Nombre de archivo no válido');
   fs.mkdirSync(dir, { recursive: true });
   const destino = path.join(dir, archivo.nombre), tmp = destino + '.part';
-  const r = await fetch(base(servidor) + '/api/escritorio/descargar?archivo=' + encodeURIComponent(archivo.nombre), { headers: { Authorization: 'Bearer ' + token } });
+  const r = await sesion(base(servidor) + '/api/escritorio/descargar?archivo=' + encodeURIComponent(archivo.nombre), { credentials: 'include' });
   if (!r.ok) throw new Error('El servidor respondió ' + r.status);
   const hash = crypto.createHash('sha256'), salida = fs.createWriteStream(tmp), total = +r.headers.get('content-length') || archivo.tam || 0;
   let recibido = 0;

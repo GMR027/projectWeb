@@ -55,24 +55,6 @@ class Instaladores
         return '';
     }
 
-    private static function hashToken(): string { return self::dir() . '/.token_hash'; }
-
-    /** Crea un token de dispositivo para la app de escritorio (solo se guarda su hash; reemplaza al anterior) */
-    public static function generarToken(): string
-    {
-        $t = bin2hex(random_bytes(24));
-        file_put_contents(self::hashToken(), hash('sha256', $t));
-        return $t;
-    }
-
-    public static function tokenValido(string $t): bool
-    {
-        $f = self::hashToken();
-        return $t !== '' && is_file($f) && hash_equals(trim((string)file_get_contents($f)), hash('sha256', $t));
-    }
-
-    public static function hayToken(): bool { return is_file(self::hashToken()); }
-
     /** SHA-256 con caché junto al archivo (se recalcula si el archivo es más nuevo) */
     public static function sha(string $f): string
     {

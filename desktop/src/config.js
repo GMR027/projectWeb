@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Mientras no se configure otro, se usa el servidor local de desarrollo: ahí aparece el inicio de sesión
-const SERVIDOR_DEFECTO = 'http://localhost:8000';
+const SERVIDOR_DEFECTO = 'http://localhost:8010';   // el 8000 suele estar ocupado por otra app
 const VACIA = { servidor: SERVIDOR_DEFECTO, proveedores: [], secretos: {}, zoom: 100, activa: '', voz: { motor: 'auto', modelo: '', idioma: 'auto', conexion: '', binario: '' }, vigilancia: { activa: false, minutos: 30 }, porTarea: { rapida: '', avanzada: '' } };
 const ZOOM_MIN = 50, ZOOM_MAX = 200;
 
@@ -24,7 +24,7 @@ function crear(dir, safeStorage) {
     /** Lo que ve la interfaz: nunca los secretos, solo si existen */
     publica() {
       const c = leer();
-      return { servidor: c.servidor, zoom: c.zoom, activa: c.proveedores.some(p => p.id === c.activa) ? c.activa : (c.proveedores[0]?.id || ''), voz: { ...VACIA.voz, ...(c.voz || {}) }, vigilancia: { ...VACIA.vigilancia, ...(c.vigilancia || {}) }, porTarea: { ...VACIA.porTarea, ...(c.porTarea || {}) }, tokenGuardado: !!c.secretos.__token, proveedores: c.proveedores.map(p => ({ ...p, claveGuardada: !!c.secretos[p.id] })) };
+      return { servidor: c.servidor, zoom: c.zoom, activa: c.proveedores.some(p => p.id === c.activa) ? c.activa : (c.proveedores[0]?.id || ''), voz: { ...VACIA.voz, ...(c.voz || {}) }, vigilancia: { ...VACIA.vigilancia, ...(c.vigilancia || {}) }, porTarea: { ...VACIA.porTarea, ...(c.porTarea || {}) }, proveedores: c.proveedores.map(p => ({ ...p, claveGuardada: !!c.secretos[p.id] })) };
     },
     /** Zoom de la vista de Project Web, en % (50–200, de 10 en 10) */
     guardarZoom(z) { const c = leer(); c.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round((Number(z) || 100) / 10) * 10)); escribir(c); return c.zoom; },
