@@ -14,6 +14,9 @@ Antes de agregar código nuevo, revisa si ya existe aquí. Cada pieza reemplazó
 | `Archivo::guardarArchivoSubido/carpetaCreada/nombreGuardado/reemplazarContenido` | Guardar un archivo en la carpeta del proyecto | 3 flujos de guardado en el Archivo |
 | `Classes\MarcasLienzo` | Validar marcas y PNG que llegan del editor y subir imágenes (vPlan «Editar marcas» y Editor) | `guardarMarcas`/`subirImagen` duplicados |
 | `Classes\NotasApi` | Crear, editar y borrar notas de una lámina (vPlan) o de un gráfico (View360) | `VplanNotaController` y `View360Controller::nota*` |
+| `enviar_descarga($datos, $mime, $nombre, $inline)` (`includes/funciones.php`) | Cabeceras de descarga de un archivo que ya está en memoria | bloques repetidos en Redactor, SheetFlow, Seguridad, Informes IA, Punch, Centro de IA y Programador |
+| `Classes\HallazgosIA` + `Controllers\HallazgosIAController` | Corridas, listado, conteos y aceptar → aplicar / rechazar / reabrir → revertir (con Auditoria) de las herramientas con hallazgos. Cada hija pone tablas y textos en constantes (`TABLA_*`, `HERRAMIENTA`, `TXT_*`) y sus hooks (`esperadoDe`, `paramsValidos`, `ejecutarAccion`, `restaurarAccion`, `enriquecer`) | `Inconsistencias` y `AnalisisMateriales` (clases y controladores) |
+| `TablaDeDocumento::deHoja()` | Lector de hojas de cálculo (csv, xls, xlsx, ods) | `Sheetflow::importar` tenía su copia |
 | `pestanas_herramienta($grupo, $activa, $proyecto)` (`views/templates/herramientas-proyecto.php`) | Pestañas de las herramientas que comparten una entrada del menú | — |
 
 Notas:
@@ -25,6 +28,8 @@ Notas:
 | Archivo | Para qué |
 |---|---|
 | `kit-edicion.js` → `window.KitEdicion` | `historial({foto, aplica})` (deshacer/rehacer por fotos: `foto()` devuelve `{k, ...}`), `atajos({deshacer, rehacer, activo, antes})` (Ctrl+Z/Y/Mayús+Z), `avisoSalir({sucio, guardar, limpiar})`, `rasterizar(url, maxLado)`, y utilidades `esc`, `post`, `debounce`, `guardado/guarda` (localStorage). Cárgalo **antes** del motor (`vplan-diseno.js`, `vplan-editor.js`, `estampas-editor.js`). |
+| `desktop/src/api.js` | `json()`, `pagina()`, `leer()` y `enviar()` (POST de formulario con CSRF) para hablar con Project Web con la sesión del admin | 9 copias de `json()` |
+| `desktop/src/lotes.js` → `porLotes({rutaApi, textos, registrar, resultadoSiVacio, ...})` | Recorrido común de las herramientas de IA por lotes (`/contexto` → modelo → `/resultado`). Lo usan `inconsistencias.js`, `analisis-materiales.js` y `materiales-inteligentes.js` | 3 runners clonados |
 | `notas.js` → `window.Notas.iniciar({campo, id, puedeEditar, notas, urlGuardar, urlEliminar})` | Lista de notas y modal; el modal sale de `views/templates/_notas-modal.php`. |
 
 El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (`state.past/future`) porque cada lámina del Editor guarda el suyo.
@@ -32,7 +37,8 @@ El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (
 ## Pendiente de la reestructuración
 - Guías, reglas, imantado, capas y zoom siguen escritos por separado en los tres motores (cambian el formato de guardado: px en Konva, % en el modo diseño).
 - Fusionar el editor de estampas dentro del Konva (hoy son pestañas hermanas bajo «Editor»).
-- Base común para `RedactorController` y `SheetflowController`; `Sheetflow::importar` sobre `TablaDeDocumento`.
-- `Restricciones::activas()` único (hoy en Lookahead, Planificador y Programador).
-- Clase base para Inconsistencias y Análisis de materiales y runner de lotes único en la app de escritorio.
+- Base común para las acciones de `RedactorController` y `SheetflowController` (crear, abrir, duplicar, eliminar); hoy solo comparten `enviar_descarga()`.
 - Un solo validador de SVG: `SvgSeguro::limpiar` *limpia* (símbolos) y `EscanerArchivos::svgSeguro` *rechaza* (Archivo). Unificarlos cambiaría qué SVG se aceptan.
+- Los demás flujos de IA (Programador, Ensamblador, Ordenar) siguen con su propio aceptar/revertir; `CentroIA::aceptar/rechazar` solo despacha Inconsistencias y Análisis de materiales.
+- Subidas de imágenes sueltas (`guardar_imagen_subida`, `Imagenes::*`, View360 `panorama`, materiales…) y las 5 formas de miniatura/base64 para PDF.
+- Revisado y descartado: las tres consultas de «restricciones activas» (Lookahead, Planificador, Programador) devuelven datos distintos, no son un duplicado; Comparador y Líneas base, Plantillas y RedactorPlantillas, Ensamblador (IA) y Unir documentos (PDF) son herramientas distintas con nombres parecidos.
