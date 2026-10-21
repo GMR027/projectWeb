@@ -8,14 +8,11 @@ namespace Classes;
  */
 class Respaldo
 {
+    use AccesoDb;
+
     private const RAIZ = __DIR__ . '/..';
     private const DIR = __DIR__ . '/../storage/respaldos';
     private const FILAS_POR_INSERT = 200;
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
 
     public static function dir(): string
     {

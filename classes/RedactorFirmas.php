@@ -8,14 +8,11 @@ use Model\Usuario;
 /** Firmas del Redactor: firmas manuscritas guardadas por usuario y sellos de firma electrónica interna con huella del contenido */
 class RedactorFirmas
 {
+    use AccesoDb;
+
     public const CARPETA = __DIR__ . '/../public/uploads/firmas';
     public const MAX_POR_USUARIO = 5;
     public const SRC = '#^/uploads/firmas/[a-f0-9]{32}\.png$#';
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
 
     /** Firmas guardadas del usuario: [['id', 'nombre', 'src'], ...] */
     public static function deUsuario(int $usuarioId): array

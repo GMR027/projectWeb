@@ -14,6 +14,8 @@ use Model\Proyecto;
  */
 class Plantillas
 {
+    use AccesoDb;
+
     public const CATALOGO = [
         'videovigilancia' => [
             'nombre' => 'Videovigilancia (CCTV)', 'punch' => 'cctv', 'permisos' => ['altura', 'electrico'],
@@ -50,21 +52,6 @@ class Plantillas
             'partidas' => [['1.0', 'Preliminares y cimentación', [['Trazo y nivelación', 3], ['Excavación', 8], ['Cimentación', 15]]], ['2.0', 'Estructura', [['Cimbra y armado', 20], ['Colado', 10], ['Descimbra y curado', 7]]], ['3.0', 'Albañilería', [['Muros', 20], ['Castillos y dalas', 8]]], ['4.0', 'Instalaciones', [['Instalación eléctrica', 20], ['Instalación hidrosanitaria', 15], ['HVAC', 15]]], ['5.0', 'Acabados', [['Aplanados', 15], ['Pisos y plafones', 15], ['Pintura y carpintería', 12]]], ['6.0', 'Pruebas y entrega', [['Pruebas de instalaciones', 5], ['Limpieza y punch list', 8], ['Entrega', 2]]]],
         ],
     ];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     public static function actual(int $pid): ?array
     {

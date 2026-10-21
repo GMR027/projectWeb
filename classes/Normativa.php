@@ -11,37 +11,13 @@ use Model\Proyecto;
  */
 class Normativa
 {
+    use AccesoDb;
+
     public const MAX_PDF = 60 * 1024 * 1024;
     public const MAX_FRAGMENTOS = 4000;
     private const FRAGMENTO_MAX = 1800;
     public const TIPOS = ['norma' => 'Norma', 'especificacion' => 'Especificación', 'otro' => 'Otro'];
     public const IDIOMAS = ['es' => 'Español', 'en' => 'Inglés', 'mixto' => 'Mixto'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
 
     // ---------- documentos ----------
 

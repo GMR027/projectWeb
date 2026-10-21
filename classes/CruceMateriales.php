@@ -10,6 +10,8 @@ use Model\Proyecto;
  */
 class CruceMateriales
 {
+    use AccesoDb;
+
     public const ESTADOS = [
         'compra_vencida' => ['Compra vencida', 'critica'],
         'sin_fecha' => ['Sin fecha de entrega', 'alta'],
@@ -18,16 +20,6 @@ class CruceMateriales
         'a_tiempo' => ['A tiempo', 'ok'],
         'en_sitio' => ['En sitio', 'ok'],
     ];
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = $GLOBALS['db']->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     /** Estado de un material frente a la fecha en que se necesita */
     public static function evaluar(?string $necesidad, array $m, string $hoy): array

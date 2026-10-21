@@ -11,24 +11,10 @@ use Model\Proyecto;
  */
 class CentroIA
 {
+    use AccesoDb;
+
     public const SEVERIDADES = ['baja' => 1, 'media' => 2, 'alta' => 3, 'critica' => 4];
     public const HERRAMIENTAS = ['inconsistencias' => 'Inconsistencias de proyecto', 'materiales' => 'Análisis de materiales', 'programador' => 'Programador de actividades', 'normativa' => 'Normativa y especificaciones'];
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = $GLOBALS['db']->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     // ---------- bandeja ----------
 

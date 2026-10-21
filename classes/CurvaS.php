@@ -13,12 +13,9 @@ use Model\Proyecto;
  */
 class CurvaS
 {
-    public const MAX_SEMANAS = 150;
+    use AccesoDb;
 
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
+    public const MAX_SEMANAS = 150;
 
     /** Actividades del proyecto con su peso */
     private static function actividades(int $proyectoId): array

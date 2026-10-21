@@ -11,23 +11,10 @@ use Model\Proyecto;
  */
 class MapaAvance
 {
+    use AccesoDb;
+
     private const LINEAS = ['line', 'arrow', 'darrow', 'measure'];
     private const IGNORAR = ['text', 'image', 'table', 'link', 'restr', 'pin', 'note', 'legend', 'label', 'group'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     /** 'rojo' | 'amarillo' | 'verde' | null según el matiz de un color #rgb / #rrggbb (grises, negros, azules, morados y cualquier otro color no cuentan) */
     public static function estadoColor(?string $hex): ?string

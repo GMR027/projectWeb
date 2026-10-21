@@ -8,20 +8,7 @@ use Model\Proyecto;
 /** Líneas base del programa: foto inmutable (actividades, fechas, ruta crítica y fechas de materiales) y comparación contra el programa actual */
 class LineasBase
 {
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
+    use AccesoDb;
 
     /** Guarda la foto del programa de hoy. Devuelve el id de la línea base */
     public static function capturar(Proyecto $p, string $nombre, string $notas = ''): int

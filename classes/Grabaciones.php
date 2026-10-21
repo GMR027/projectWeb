@@ -7,13 +7,10 @@ use Model\Proyecto;
 /** Grabaciones de reuniones guardadas en el proyecto (audio fuera de public, con cuota y acceso solo del admin) */
 class Grabaciones
 {
+    use AccesoDb;
+
     public const MAX_BYTES = 200 * 1024 * 1024;
     private const TIPOS = ['audio/webm' => 'webm', 'video/webm' => 'webm', 'audio/ogg' => 'ogg', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav', 'audio/mpeg' => 'mp3', 'audio/mp4' => 'm4a'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
 
     public static function carpeta(int $pid): string
     {

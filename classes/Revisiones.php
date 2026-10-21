@@ -11,6 +11,8 @@ namespace Classes;
  */
 class Revisiones
 {
+    use AccesoDb;
+
     public const VEREDICTOS = [
         'correcto' => ['Correcto', 'fa-circle-check'],
         'revisar' => ['Requiere revisión', 'fa-triangle-exclamation'],
@@ -28,26 +30,6 @@ class Revisiones
         'normativa' => ['Normativa y especificaciones', 'SELECT MAX(creado) f FROM normativa_aplicaciones WHERE proyecto_id = %d'],
         'ensamblador' => ['Ensamblador de documentos', 'SELECT MAX(creado) f FROM ensamblador_propuestas WHERE proyecto_id = %d'],
     ];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
 
     // ---------- huellas ----------
 

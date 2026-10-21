@@ -12,22 +12,9 @@ use Model\Proyecto;
  */
 class Informes
 {
+    use AccesoDb;
+
     public const ESTADOS = ['borrador' => 'Borrador', 'aprobado' => 'Aprobado', 'descartado' => 'Descartado'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     // ---------- contenido ----------
 

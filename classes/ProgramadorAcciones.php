@@ -12,12 +12,9 @@ use Model\Proyecto;
  */
 class ProgramadorAcciones
 {
-    public const ESTADOS = ['pendiente' => 'Pendiente', 'en_proceso' => 'En proceso', 'atendido' => 'Atendido', 'descartado' => 'Descartado'];
+    use AccesoDb;
 
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
+    public const ESTADOS = ['pendiente' => 'Pendiente', 'en_proceso' => 'En proceso', 'atendido' => 'Atendido', 'descartado' => 'Descartado'];
 
     private static function dias(string $a, string $b): int
     {

@@ -11,6 +11,8 @@ use Model\Proyecto;
  */
 class Punch
 {
+    use AccesoDb;
+
     public const ESTADOS = ['abierto' => 'Abierto', 'en_proceso' => 'En proceso', 'corregido' => 'Corregido (por verificar)', 'cerrado' => 'Cerrado', 'rechazado' => 'Rechazado (no procede)'];
     public const SEVERIDADES = ['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'critica' => 'Crítica'];
     public const CARPETA = 'punch';
@@ -22,26 +24,6 @@ class Punch
         'acabados' => ['nombre' => 'Obra civil y acabados', 'items' => [['Muros sin grietas ni desplomes', 'Muros'], ['Pintura uniforme sin escurrimientos', 'Pintura'], ['Pisos nivelados y sin piezas rotas', 'Pisos'], ['Plafón nivelado y sin manchas', 'Plafón'], ['Puertas y cancelería alineadas, cierran bien', 'Carpintería'], ['Limpieza final de la zona', 'Limpieza']]],
         'general' => ['nombre' => 'Inspección general', 'items' => [['Trabajo terminado según planos y especificación', 'Cumplimiento'], ['Calidad de los materiales instalados', 'Materiales'], ['Limpieza y orden del área', 'Limpieza'], ['Seguridad: sin riesgos visibles', 'Seguridad'], ['Documentación y pruebas entregadas', 'Documentos']]],
     ];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
 
     public static function bytes(int $pid): int
     {

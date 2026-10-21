@@ -9,13 +9,10 @@ use Model\Proyecto;
 /** Dependencias de obra de un proyecto: relaciones guardadas, cálculo de ruta crítica y reprogramación (modo automático) */
 class Dependencias
 {
+    use AccesoDb;
+
     public const MODOS = ['apagado' => 'Apagado', 'informativo' => 'Informativo', 'automatico' => 'Automático'];
     public const TIPOS = ['FS' => 'Fin → inicio', 'SS' => 'Inicio → inicio', 'FF' => 'Fin → fin', 'SF' => 'Inicio → fin'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
 
     /** Actividades del proyecto con los datos de su partida */
     public static function actividades(int $proyectoId): array

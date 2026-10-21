@@ -7,15 +7,7 @@ use Model\OrdenCambio;
 /** Seguimiento de órdenes de cambio: resumen, retiros pendientes, qué actividades justifica cada orden y movimiento de un día */
 class Cambios
 {
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = $GLOBALS['db']->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {   // migración pendiente
-            return [];
-        }
-    }
+    use AccesoDb;
 
     /** ¿Ya existen las tablas? (la migración puede estar pendiente) */
     public static function disponible(): bool

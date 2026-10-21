@@ -5,6 +5,8 @@ namespace Classes;
 /** Espacio ocupado en los volúmenes del servidor (archivos subidos y base de datos), con historial y pronóstico */
 class Volumen
 {
+    use AccesoDb;
+
     private const RAIZ = __DIR__ . '/..';
     /** Carpetas que viven en el volumen de archivos */
     public const CARPETAS = [
@@ -16,11 +18,6 @@ class Volumen
         'Normativa y especificaciones' => 'storage/normativa',
         'Grabaciones (audio)' => 'storage/grabaciones',
     ];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
 
     private static function tamCarpeta(string $ruta): int
     {

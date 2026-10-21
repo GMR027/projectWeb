@@ -10,10 +10,7 @@ use Model\Partida;
  */
 class Renumeracion
 {
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
+    use AccesoDb;
 
     /** Estructura actual: [{id, codigo, nombre, actividades:[{id, codigo, nombre}]}] en orden */
     public static function estructura(int $pid): array

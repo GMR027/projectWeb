@@ -12,6 +12,8 @@ use Model\Proyecto;
  */
 class Inconsistencias
 {
+    use AccesoDb;
+
     public const CATEGORIAS = ['fechas' => 'Fechas', 'avance' => 'Avance', 'calendario' => 'Calendario', 'dependencias' => 'Dependencias', 'materiales' => 'Materiales',
         'restricciones' => 'Restricciones', 'submittals' => 'Submittals', 'reportes' => 'Reportes y bitácora', 'duplicados' => 'Duplicados', 'estructura' => 'Estructura', 'nomenclatura' => 'Nomenclatura', 'duraciones' => 'Duraciones',
         'clima' => 'Clima', 'voz' => 'Comandos de voz', 'avance_plano' => 'Avance en planos', 'otro' => 'Otro'];
@@ -23,27 +25,6 @@ class Inconsistencias
         'ajustar_duracion' => ['actividad_id', 'dur'], 'renombrar_actividad' => ['actividad_id', 'nombre'], 'editar_descripcion' => ['actividad_id', 'descripcion'], 'agregar_dia_no_habil' => ['fecha', 'motivo'], 'agregar_dependencia' => ['pred', 'suc', 'tipo', 'retraso'],
     ];
     public const PAQUETE_MAX = 22;
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     private static function fecha($v): ?string
     {

@@ -8,24 +8,11 @@ namespace Classes;
  */
 class Auditoria
 {
+    use AccesoDb;
+
     public const HERRAMIENTAS = ['programador' => 'Programador de actividades', 'inconsistencias' => 'Inconsistencias de proyecto', 'materiales' => 'Análisis de materiales', 'informes' => 'Informes de IA', 'normativa' => 'Normativa y especificaciones', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list', 'plantillas' => 'Plantillas por tipo de obra', 'ensamblador' => 'Ensamblador de documentos', 'ordenar' => 'Ordenar y renumerar', 'tabla-documento' => 'Tabla desde documento'];
     public const EVENTOS = ['aplicado' => 'Aplicado', 'revertido' => 'Revertido', 'rechazado' => 'Rechazado', 'reabierto' => 'Reabierto'];
     public const POR_PAGINA = 50;
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     /** Qué entidad toca una acción: [tipo, id, nombre] */
     public static function entidad(int $pid, string $accion, array $p): array

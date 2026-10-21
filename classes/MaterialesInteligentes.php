@@ -11,34 +11,10 @@ use Model\Proyecto;
  */
 class MaterialesInteligentes
 {
+    use AccesoDb;
+
     public const ESTADOS = ['aprobado' => 'Aprobado', 'no_aprobado' => 'No aprobado', 'revisar' => 'Por revisar', 'sin_normativa' => 'Sin normativa aplicable'];
     private const POR_LOTE = 3;
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
 
     // ---------- opción por proyecto ----------
 

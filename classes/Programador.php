@@ -12,6 +12,8 @@ use Model\Proyecto;
  */
 class Programador
 {
+    use AccesoDb;
+
     public const PAQUETE_MIN = 10;        // las partidas pequeñas se juntan hasta tener al menos esto
     public const PAQUETE_MAX = 22;        // las partidas grandes se parten en paquetes de a lo más esto
     public const PAQUETE_CARACTERES = 11000;
@@ -20,27 +22,6 @@ class Programador
     private const FUENTES = ['material', 'submittal', 'bitacora', 'reporte', 'restriccion', 'otro'];
     private const ACCIONES = ['mantener', 'adelantar'];
     public const CATEGORIAS_MEJORA = ['inconsistencia', 'relacion_faltante', 'duracion', 'riesgo', 'dato_faltante', 'oportunidad'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {   // tabla opcional ausente
-            return [];
-        }
-    }
 
     // ---------- contexto ----------
 

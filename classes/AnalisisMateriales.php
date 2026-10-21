@@ -13,6 +13,8 @@ use Model\Proyecto;
  */
 class AnalisisMateriales
 {
+    use AccesoDb;
+
     public const CATEGORIAS = ['nombre' => 'Nombre del material', 'msr' => 'Material vs. MSR', 'submittals' => 'Submittals', 'incompleto' => 'Información incompleta', 'fechas' => 'Fechas',
         'duplicados' => 'Duplicados', 'vinculos' => 'Vínculos', 'otro' => 'Otro'];
     public const SEVERIDADES = ['baja' => 1, 'media' => 2, 'alta' => 3, 'critica' => 4];
@@ -21,27 +23,6 @@ class AnalisisMateriales
     public const CORRIDAS_SIN_GUARDAR = 5;
     private const DIAS_SUBMITTAL = 14;   // un submittal enviado sin respuesta pasado este tiempo se señala
     private const FECHAS_MSR = ['fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function corto(?string $t, int $n): string
-    {
-        $t = trim((string)preg_replace('/\s+/u', ' ', (string)$t));
-        return mb_strlen($t) > $n ? mb_substr($t, 0, $n - 1) . '…' : $t;
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     private static function hallazgo(string $regla, string $cat, string $sev, string $titulo, string $desc, array $mats, array $subs, string $texto, string $accion = 'nota', array $params = []): array
     {

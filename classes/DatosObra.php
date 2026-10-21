@@ -5,18 +5,10 @@ namespace Classes;
 /** Lo que el Ensamblador deja guardado (fechas contractuales, responsables, cantidades y contactos), en lectura, y las alertas de contrato */
 class DatosObra
 {
+    use AccesoDb;
+
     /** Días de aviso antes de una fecha contractual */
     public const AVISO_DIAS = 30;
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = $GLOBALS['db']->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {   // migración pendiente
-            return [];
-        }
-    }
 
     public static function fechasContrato(int $pid): array
     {

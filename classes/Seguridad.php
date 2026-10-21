@@ -11,6 +11,8 @@ use Model\Proyecto;
  */
 class Seguridad
 {
+    use AccesoDb;
+
     public const TIPOS = [
         'altura' => ['nombre' => 'Trabajo en altura', 'palabras' => ['azotea', 'fachada', 'andamio', 'escalera', 'plataforma de elevacion', 'torre', 'montaje en altura', 'estructura metalica', 'plafon', 'alturas', 'canalizacion en techo', 'colocacion de camaras en poste', 'poste', 'mastil'],
             'medidas' => ['Personal capacitado y con DC-3 vigente en trabajo en altura', 'Arnés de cuerpo completo con doble línea de vida inspeccionado', 'Puntos de anclaje certificados', 'Barandales o líneas de vida instalados', 'Área inferior delimitada y señalizada', 'Clima favorable (sin lluvia ni viento fuerte)', 'Escaleras o plataformas inspeccionadas y estables']],
@@ -28,26 +30,6 @@ class Seguridad
     ];
     public const ESTADOS = ['borrador' => 'Borrador', 'solicitado' => 'Solicitado', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado', 'cerrado' => 'Cerrado'];
     public const INCIDENTES = ['incidente' => 'Incidente', 'casi_accidente' => 'Casi accidente', 'acto_inseguro' => 'Acto inseguro', 'condicion_insegura' => 'Condición insegura'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
 
     /** Tipos de permiso que exige el nombre de una actividad (según palabras clave) */
     public static function tiposRequeridos(string $nombre, string $descripcion = ''): array

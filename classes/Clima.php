@@ -10,6 +10,8 @@ use Model\Proyecto;
  */
 class Clima
 {
+    use AccesoDb;
+
     public const LLUVIA_MM = 10.0;       // lluvia que detiene trabajos de exterior
     public const LLUVIA_FUERTE_MM = 20.0;
     public const VIENTO_KMH = 50.0;
@@ -18,21 +20,6 @@ class Clima
 
     /** Para pruebas: función que reemplaza la consulta HTTP (url → arreglo decodificado o null) */
     public static $http = null;
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function filas(string $sql): array
-    {
-        try {
-            $r = self::db()->query($sql);
-            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
 
     private static function pedir(string $url): ?array
     {

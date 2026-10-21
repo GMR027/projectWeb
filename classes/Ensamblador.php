@@ -16,6 +16,8 @@ use Model\Submittal;
  */
 class Ensamblador
 {
+    use AccesoDb;
+
     public const EXTENSIONES = ['pdf', 'docx', 'doc', 'pptx', 'odt', 'txt', 'md'];
     public const MAX_BYTES = 50 * 1024 * 1024;
     public const MODOS = [
@@ -35,16 +37,6 @@ class Ensamblador
     private const MAX_LOTES = 40;
     private const MAX_CARACTERES = 3000000;
     private const PALABRAS_VACIAS = ['de', 'del', 'la', 'el', 'los', 'las', 'y', 'e', 'en', 'para', 'con', 'a', 'al', 'un', 'una', 'tipo', 'por'];
-
-    private static function db(): \mysqli
-    {
-        return $GLOBALS['db'];
-    }
-
-    private static function esc($v): string
-    {
-        return self::db()->real_escape_string((string)$v);
-    }
 
     private static function filas(string $sql): array
     {
