@@ -10,9 +10,18 @@ use Model\Proyecto;
  * Inconsistencias de proyecto: reglas del sistema (sin IA) + revisión semántica de la IA. Cada hallazgo trae una solución propuesta
  * de una lista cerrada de acciones; solo se aplica cuando el admin la acepta, y casi todas se pueden revertir.
  */
-class Inconsistencias
+class Inconsistencias extends HallazgosIA
 {
     use AccesoDb;
+
+    protected const TABLA_CORRIDAS = 'inconsistencias_corridas';
+    protected const TABLA_HALLAZGOS = 'inconsistencias';
+    protected const TABLA_LOTES = 'inconsistencias_lotes';
+    protected const HERRAMIENTA = 'inconsistencias';
+    protected const ENTIDAD_LOTES = 'actividades';
+    protected const TXT_ESTE = 'La inconsistencia';
+    protected const TXT_RECHAZADO = 'Rechazada';
+    protected const TXT_CAMBIO = 'La actividad cambió desde que se hizo este análisis, así que la solución ya no aplica. Vuelve a analizar el proyecto o resuélvelo a mano.';
 
     public const CATEGORIAS = ['fechas' => 'Fechas', 'avance' => 'Avance', 'calendario' => 'Calendario', 'dependencias' => 'Dependencias', 'materiales' => 'Materiales',
         'restricciones' => 'Restricciones', 'submittals' => 'Submittals', 'reportes' => 'Reportes y bitácora', 'duplicados' => 'Duplicados', 'estructura' => 'Estructura', 'nomenclatura' => 'Nomenclatura', 'duraciones' => 'Duraciones',
@@ -472,7 +481,7 @@ TXT;
     }
 
     /** Parámetros de una acción ya saneados, o null si no son válidos / no pertenecen al proyecto */
-    private static function paramsValidos(int $pid, string $accion, array $p): ?array
+    protected static function paramsValidos(int $pid, string $accion, array $p): ?array
     {
         $db = self::db();
         $en = fn(string $sql) => (bool)($db->query($sql)?->num_rows);
@@ -597,19 +606,6 @@ TXT;
         return $n;
     }
 
-    /** Registro por lote de un análisis (sin la respuesta cruda) */
-    public static function lotesDeCorrida(int $pid, int $corrida): array
-    {
-        $out = [];
-        foreach (self::filas("SELECT id, orden, titulo, estado, error, actividades_json, hallazgos_json FROM inconsistencias_lotes WHERE proyecto_id = $pid AND corrida_id = $corrida ORDER BY orden") as $f) {
-            $f['actividades'] = json_decode((string)$f['actividades_json'], true) ?: [];
-            $f['hallazgos'] = json_decode((string)$f['hallazgos_json'], true) ?: [];
-            unset($f['actividades_json'], $f['hallazgos_json']);
-            $out[] = $f;
-        }
-        return $out;
-    }
-
     /** Estado de los datos que la solución va a tocar al momento de detectar: si cambian antes de aceptar, la solución ya no se aplica */
     private static function esperado(string $accion, array $params): ?array
     {
@@ -626,36 +622,26 @@ TXT;
         return null;
     }
 
-    public static function corridas(int $pid): array
+    // ---------- hooks de HallazgosIA ----------
+
+    protected static function esperadoDe(int $pid, string $accion, array $params): ?array
     {
-        return self::filas("SELECT c.id, c.nombre, c.guardada, c.modelo, c.del_sistema, c.de_la_ia, c.creado,
-                   SUM(i.estado = 'pendiente') AS pendientes, SUM(i.estado = 'aceptada') AS aceptadas, SUM(i.estado = 'rechazada') AS rechazadas, COUNT(i.id) AS total
-            FROM inconsistencias_corridas c LEFT JOIN inconsistencias i ON i.corrida_id = c.id WHERE c.proyecto_id = $pid GROUP BY c.id ORDER BY c.id DESC");
+        return self::esperado($accion, $params);
     }
 
-    /** Guarda con nombre un análisis (queda siempre disponible) o lo quita de guardados */
-    public static function marcarCorrida(int $pid, int $id, bool $guardar, string $nombre = ''): void
+    protected static function ejecutarAccion(Proyecto $p, string $accion, array $x): array
     {
-        $db = self::db();
-        $n = $db->real_escape_string(self::corto($nombre, 150));
-        $db->query('UPDATE inconsistencias_corridas SET guardada = ' . ($guardar ? 1 : 0) . ", nombre = '" . ($guardar ? $n : '') . "' WHERE id = $id AND proyecto_id = $pid");
+        return self::ejecutar($p, $accion, $x);
     }
 
-    public static function eliminarCorrida(int $pid, int $id): void
+    protected static function restaurarAccion(Proyecto $p, array $antes): array
     {
-        self::db()->query("DELETE FROM inconsistencias_corridas WHERE id = $id AND proyecto_id = $pid");
+        return self::restaurar($p, $antes);
     }
 
-    /** Lista para la pantalla, con actividades implicadas ya resueltas a código y nombre */
-    public static function listar(int $pid, array $f = []): array
+    /** Actividades implicadas ya resueltas a código y nombre, y la solución decodificada */
+    protected static function enriquecer(int $pid, array $filas): array
     {
-        $w = ["proyecto_id = $pid"];
-        if (!empty($f['corrida'])) $w[] = 'corrida_id = ' . (int)$f['corrida'];
-        if (in_array($f['estado'] ?? '', ['pendiente', 'aceptada', 'rechazada'], true)) $w[] = "estado = '{$f['estado']}'";
-        if (isset(self::SEVERIDADES[$f['severidad'] ?? ''])) $w[] = "severidad = '{$f['severidad']}'";
-        if (isset(self::CATEGORIAS[$f['categoria'] ?? ''])) $w[] = "categoria = '{$f['categoria']}'";
-        if (in_array($f['origen'] ?? '', ['sistema', 'ia'], true)) $w[] = "origen = '{$f['origen']}'";
-        $filas = self::filas('SELECT * FROM inconsistencias WHERE ' . implode(' AND ', $w) . " ORDER BY FIELD(estado,'pendiente','aceptada','rechazada'), FIELD(severidad,'critica','alta','media','baja'), id");
         $acts = Dependencias::actividades($pid);
         foreach ($filas as &$x) {
             $x['id'] = (int)$x['id'];
@@ -666,83 +652,7 @@ TXT;
         return $filas;
     }
 
-    public static function conteos(int $pid, int $corrida = 0): array
-    {
-        $c = ['pendiente' => 0, 'aceptada' => 0, 'rechazada' => 0, 'criticas' => 0];
-        foreach (self::filas("SELECT estado, severidad, COUNT(*) n FROM inconsistencias WHERE proyecto_id = $pid" . ($corrida ? " AND corrida_id = $corrida" : '') . ' GROUP BY estado, severidad') as $f) {
-            $c[$f['estado']] += (int)$f['n'];
-            if ($f['estado'] === 'pendiente' && in_array($f['severidad'], ['alta', 'critica'], true)) $c['criticas'] += (int)$f['n'];
-        }
-        return $c;
-    }
-
-    private static function obtener(int $pid, int $id): ?array
-    {
-        return self::filas("SELECT * FROM inconsistencias WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
-    }
-
-    private static function cerrar(int $pid, int $id, string $estado, ?array $antes): void
-    {
-        $db = self::db();
-        $a = $antes === null ? 'NULL' : "'" . $db->real_escape_string(json_encode($antes)) . "'";
-        $quien = $db->real_escape_string(usuario_actual()['nombre'] ?? '');
-        $db->query("UPDATE inconsistencias SET estado = '$estado', antes_json = $a, resuelto_por = '$quien', resuelto_en = NOW() WHERE id = $id AND proyecto_id = $pid");
-    }
-
-    public static function rechazar(int $pid, int $id): array
-    {
-        $h = self::obtener($pid, $id);
-        if (!$h || $h['estado'] !== 'pendiente') return [false, 'La inconsistencia ya no está pendiente'];
-        self::cerrar($pid, $id, 'rechazada', null);
-        $sol = json_decode($h['solucion_json'], true) ?: [];
-        Auditoria::registrar($pid, 'inconsistencias', 'rechazado', (string)($sol['accion'] ?? 'nota'), 'Rechazado: ' . $h['titulo'], null, (array)($sol['params'] ?? []), $id);
-        return [true, 'Rechazada: no se volverá a mostrar'];
-    }
-
-    /** Vuelve a dejar pendiente algo rechazado, o revierte lo aplicado si la acción lo permite */
-    public static function reabrir(Proyecto $p, int $id): array
-    {
-        $pid = (int)$p->id;
-        $h = self::obtener($pid, $id);
-        if (!$h || $h['estado'] === 'pendiente') return [false, 'No hay nada que reabrir'];
-        if ($h['estado'] === 'aceptada' && $h['antes_json'] !== null) {
-            [$ok, $msg] = self::restaurar($p, json_decode($h['antes_json'], true) ?: []);
-            if (!$ok) return [false, $msg];
-        }
-        self::db()->query("UPDATE inconsistencias SET estado = 'pendiente', antes_json = NULL, resuelto_por = '', resuelto_en = NULL WHERE id = $id AND proyecto_id = $pid");
-        $sol = json_decode($h['solucion_json'], true) ?: [];
-        $revirtio = $h['estado'] === 'aceptada' && $h['antes_json'] !== null;
-        Auditoria::registrar($pid, 'inconsistencias', $revirtio ? 'revertido' : 'reabierto', (string)($sol['accion'] ?? 'nota'), ($revirtio ? 'Cambio revertido: ' : 'Vuelve a pendiente: ') . $h['titulo'], $revirtio ? json_decode($h['antes_json'], true) : null, null, $id, '', Auditoria::entidad($pid, (string)($sol['accion'] ?? 'nota'), (array)($sol['params'] ?? [])));
-        return [true, $h['estado'] === 'aceptada' && $h['antes_json'] !== null ? 'Cambio revertido; vuelve a estar pendiente' : 'Vuelve a estar pendiente'];
-    }
-
     // ---------- aplicar / revertir ----------
-
-    public static function aceptar(Proyecto $p, int $id): array
-    {
-        $pid = (int)$p->id;
-        $h = self::obtener($pid, $id);
-        if (!$h || $h['estado'] !== 'pendiente') return [false, 'La inconsistencia ya no está pendiente'];
-        $s = json_decode($h['solucion_json'], true) ?: [];
-        $accion = $s['accion'] ?? 'nota';
-        $params = self::paramsValidos($pid, $accion, (array)($s['params'] ?? []));
-        if ($params === null || !isset(self::ACCIONES[$accion])) return [false, 'La solución ya no es aplicable (los datos cambiaron). Rechaza o resuelve a mano.'];
-        if (!empty($s['esperado']) && self::esperado($accion, $params) !== $s['esperado']) return [false, 'La actividad cambió desde que se hizo este análisis, así que la solución ya no aplica. Vuelve a analizar el proyecto o resuélvelo a mano.'];
-        $db = self::db();
-        $db->begin_transaction();
-        try {
-            [$ok, $msg, $antes] = self::ejecutar($p, $accion, $params);
-            if (!$ok) { $db->rollback(); return [false, $msg]; }
-            self::cerrar($pid, $id, 'aceptada', $antes);
-            Auditoria::registrar($pid, 'inconsistencias', 'aplicado', $accion, $msg, $antes, $params, $id, $h['origen'] === 'ia' ? (string)$h['modelo'] : '');
-            $db->query('UPDATE inconsistencias_corridas SET guardada = 1, nombre = IF(nombre = \'\', CONCAT(\'Análisis \', DATE_FORMAT(creado, \'%d/%m/%Y\')), nombre) WHERE id = ' . (int)$h['corrida_id']);   // un análisis con cambios aplicados no debe rotar
-            $db->commit();
-        } catch (\Throwable $e) {
-            $db->rollback();
-            return [false, 'No se pudo aplicar: ' . $e->getMessage()];
-        }
-        return [true, $msg];
-    }
 
     private static function refrescar(int $pid, array $partidas): void
     {
