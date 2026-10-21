@@ -23,7 +23,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
 <?php if (!$laminas): ?>
     <div class="card"><p class="text-muted">Este vPlan aún no tiene láminas. <?php echo $puedeEditar ? 'Crea una por área: cada una lleva su plano, sus tablas, su título y su simbología.' : ''; ?></p></div>
 <?php else: ?>
-<?php if ($puedeEditar): ?><p class="text-sm text-muted vp-ayuda">Usa el ojo para mostrar u ocultar una lámina (lo oculto no se ve ni se exporta, pero se conserva). «Grupo» las reúne por disciplina, nivel o lo que prefieras.</p><?php endif; ?>
+<?php if ($puedeEditar): ?><p class="text-sm text-muted vp-ayuda vp-ayuda-lista">Usa el ojo para mostrar u ocultar una lámina (lo oculto no se ve ni se exporta, pero se conserva). «Grupo» las reúne por disciplina, nivel o lo que prefieras.</p><?php endif; ?>
 <datalist id="vp-grupos"><?php foreach ($grupos as $g): ?><option value="<?php echo s($g); ?>"><?php endforeach; ?></datalist>
 <?php foreach ($porGrupo as $g => $lista): ?>
 <div class="card vp-grupo">
@@ -46,13 +46,13 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
                 <?php if ($puedeEditar): ?>
                 <td class="vp-ojo-celda"><button type="button" class="vp-ojo btn btn-sm btn-ghost" data-lamina="<?php echo s($l->id); ?>" aria-pressed="<?php echo $oculta ? 'false' : 'true'; ?>" title="<?php echo $oculta ? 'Oculta: pulsa para mostrar' : 'Visible: pulsa para ocultar'; ?>"><i class="fa-solid <?php echo $oculta ? 'fa-eye-slash' : 'fa-eye'; ?>"></i></button></td>
                 <?php endif; ?>
-                <td class="hide-m"><?php if ($img): ?><img class="vp-mini" src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endif; ?></td>
+                <td class="vp-mini-celda"><?php if ($img): ?><img class="vp-mini" src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endif; ?></td>
                 <td>
                     <a class="nombre-archivo" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>"><?php echo archivo_icono_html('png', 'Lámina del vPlan'); ?> <?php echo s($l->titulo); ?></a>
                     <div class="text-sm text-muted"><?php echo (int)$l->ancho_mm; ?> × <?php echo (int)$l->alto_mm; ?> mm<?php echo $l->supervisor ? ' · ' . s($l->supervisor) : ''; ?><?php echo $oculta ? ' · <strong>oculta</strong>' : ''; ?></div>
                 </td>
                 <?php if ($puedeEditar): ?>
-                <td class="hide-m"><input type="text" class="vp-grupo-in" list="vp-grupos" value="<?php echo s($l->grupo); ?>" placeholder="Grupo" maxlength="100" aria-label="Grupo de <?php echo s($l->titulo); ?>" data-lamina="<?php echo s($l->id); ?>"></td>
+                <td class="hide-m vp-grupo-celda"><input type="text" class="vp-grupo-in" list="vp-grupos" value="<?php echo s($l->grupo); ?>" placeholder="Grupo" maxlength="100" aria-label="Grupo de <?php echo s($l->titulo); ?>" data-lamina="<?php echo s($l->id); ?>"></td>
                 <?php endif; ?>
                 <td class="acciones">
                     <div class="vp-acc">
@@ -63,7 +63,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
                             <form method="POST" action="/vplan/lamina/mover"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><input type="hidden" name="dir" value="<?php echo $dir; ?>"><button type="submit" class="vp-ib" title="<?php echo $tt; ?>" aria-label="<?php echo $tt; ?>"><i class="fa-solid <?php echo $ico; ?>"></i></button></form>
                         <?php endforeach; ?>
                         </span>
-                        <a href="/vplan/editar?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" class="vp-ib" title="Editar lámina (título, imágenes, supervisor)" aria-label="Editar"><i class="fa-solid fa-pen"></i></a>
+                        <a href="/vplan/editar?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" class="vp-ib" title="Editar lámina (título, imágenes, supervisor)" aria-label="Editar"><i class="fa-solid fa-pen"></i><span class="solo-movil">Editar</span></a>
                         <form method="POST" action="/vplan/lamina/duplicar" title="Copia el diseño, las tablas y la simbología; el plano se sube aparte"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><button type="submit" class="vp-ib" aria-label="Duplicar"><i class="fa-regular fa-copy"></i></button></form>
                         <form method="POST" action="/vplan/eliminar" data-confirm="¿Eliminar lámina?|Se borrarán sus imágenes y las marcas dibujadas.|Sí, eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>">
