@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // Ejecutor genérico de las herramientas de IA que producen un informe: pide al servidor los datos y los prompts, manda cada prompt al
 // modelo elegido y devuelve lo redactado para que el servidor arme el informe. Sin modelo (sinIA) el informe se arma solo con plantilla.
 const { analizarLote } = require('./programador');
@@ -9,11 +10,6 @@ const { analizarLote } = require('./programador');
  * @param cancelado fn() → true si el usuario canceló
  */
 async function ejecutar({ servidor, sesion, proyectoId, herramienta, parametros, conexion, clave, sinIA, alAvanzar, cancelado }) {
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   const post = async (ruta, campos, csrf) => json(await sesion(servidor + ruta, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrf }, body: new URLSearchParams({ ...campos, _csrf: csrf }).toString() }), 'El servidor rechazó la petición');
   alAvanzar({ texto: 'Reuniendo los datos del proyecto…', hecho: 0, total: 1 });
   const cat = await json(await sesion(servidor + '/api/ia/herramientas', { credentials: 'include' }), 'No se pudo conectar con Project Web');

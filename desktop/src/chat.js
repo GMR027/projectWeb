@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // «Pregunta a tu proyecto»: la IA no escribe consultas libres. Elige entre consultas predefinidas de solo lectura del servidor, el servidor las
 // ejecuta y la IA redacta la respuesta con esos datos. Sin conexión de IA se muestran los datos de las consultas que sugiere el servidor.
 const { analizarLote } = require('./programador');
@@ -33,11 +34,6 @@ function promptRespuesta(pregunta, historial, datos) {
 }
 
 async function responder({ servidor, sesion, proyectoId, pregunta, historial, conexion, clave, alAvanzar }) {
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   const q = String(pregunta || '').trim().slice(0, 600);
   if (!q) throw new Error('Escribe una pregunta.');
   if (!(proyectoId > 0)) throw new Error('Abre un proyecto en Project Web para preguntar sobre él.');

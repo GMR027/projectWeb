@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // Programador de actividades: manda al modelo los lotes que arma Project Web y devuelve sus respuestas ya como JSON
 const prov = require('./providers');
 
@@ -33,11 +34,6 @@ async function analizarLote(p, clave, prompt, alToken, imagenes) {
  * @param cancelado fn() → true si el usuario canceló
  */
 async function ejecutar({ servidor, sesion, proyectoId, conexion, clave, alAvanzar, cancelado }) {
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   alAvanzar({ texto: 'Leyendo el programa, materiales, submittals y bitácora…', hecho: 0, total: 1 });
   const ctx = await json(await sesion(servidor + '/api/programador/contexto?proyecto=' + encodeURIComponent(proyectoId), { credentials: 'include' }), 'No se pudo leer el proyecto');
   if (!ctx.lotes.length) throw new Error('No hay actividades por analizar: todas están iniciadas, terminadas o son hitos.');

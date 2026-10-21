@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // Tabla en base a documento: el servidor lee Excel/CSV/Word/PDF con su motor (sin IA); la IA (solo admin) lee imágenes, escaneos y formatos difíciles,
 // o corrige la lectura del motor. Siempre devuelve una tabla para revisar: nada se crea hasta que el admin la acepta en la vista previa.
 const { multipart } = require('./ensamblador');
@@ -25,11 +26,6 @@ Responde SOLO con JSON: {"titulo":"<nombre corto de la tabla>","filas":[["<encab
 
 function crear({ cfg, sesion, avisar, ocr }) {
   const srv = () => cfg.leer().servidor;
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   /** El token CSRF de la sesión web lo da cualquier API de administrador (la misma que usa el Ensamblador) */
   const csrf = async pid => (await json(await sesion(srv() + '/api/ensamblador/estado?proyecto=' + encodeURIComponent(pid), { credentials: 'include' }), 'No se pudo conectar con el servidor')).csrf;
 

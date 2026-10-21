@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // Ordenar y renumerar por fechas (IA): el servidor calcula el orden por fechas; la IA solo explica cada cambio y avisa de lo raro.
 // Nada se aplica sin que el admin elija qué ordenar y qué renumerar; todo se puede deshacer.
 const { analizarLote } = require('./programador');
@@ -18,11 +19,6 @@ Responde SOLO con JSON: {"notas":[{"id":"<id del grupo>","texto":"<explicación>
 }
 
 function crear({ cfg, sesion, avisar }) {
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   const srv = () => cfg.leer().servidor;
   const get = async (ruta, que) => json(await sesion(srv() + ruta, { credentials: 'include' }), que);
   const post = async (ruta, campos, csrf, que) => json(await sesion(srv() + ruta, {

@@ -1,4 +1,5 @@
 'use strict';
+const { json } = require('./api');
 // Ensamblador: sube documentos a Project Web (que extrae el texto), manda al modelo los lotes que arma el servidor y
 // devuelve la propuesta ya validada. La IA nunca escribe datos: aplicar/deshacer son llamadas del admin al servidor.
 const crypto = require('crypto');
@@ -18,11 +19,6 @@ function multipart(campos, nombre, datos) {
 function crear({ cfg, sesion, avisar }) {
   let cancelar = false, ocupado = false;
 
-  const json = async (r, que) => {
-    const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* no JSON */ }
-    if (!r.ok || !j || j.success === false) throw new Error(que + ': ' + (j?.error || (r.status === 403 || r.status === 401 ? 'inicia sesión como administrador en Project Web' : 'respuesta ' + r.status)));
-    return j;
-  };
   const srv = () => cfg.leer().servidor;
   const get = async (ruta, que) => json(await sesion(srv() + ruta, { credentials: 'include' }), que);
   const post = async (ruta, campos, csrf, que) => json(await sesion(srv() + ruta, {
