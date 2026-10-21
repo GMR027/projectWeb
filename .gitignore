@@ -1,3 +1,10 @@
+# Subidas de los usuarios (evidencias, fotos de materiales, símbolos, láminas de vPlan, firmas):
+# son datos, no código. Viven en el volumen del clúster y se copian con ./deploy.sh --files
+/public/uploads/**
+!/public/uploads/
+!/public/uploads/*/
+!/public/uploads/*/.gitkeep
+
 # Respaldos del sistema: cada .zip trae toda la base de datos (con usuarios y contraseñas) y todos los archivos
 /storage/respaldos/*
 !/storage/respaldos/.gitkeep
