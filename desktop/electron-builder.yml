@@ -3,6 +3,11 @@ productName: Project Web Desktop
 executableName: projectweb-desktop
 directories:
   output: release
+# Con esto electron-builder genera `latest-linux.yml` (el archivo con la versión publicada que lee
+# Project Web para avisar de la actualización). Los archivos se suben al clúster a mano.
+publish:
+  provider: generic
+  url: https://projectweb.iguzman.com.mx/storage/instaladores
 files:
   - src/**
   - package.json
