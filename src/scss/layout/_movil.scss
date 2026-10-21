@@ -168,9 +168,11 @@
   .tabla-programa td.acciones { display: table-cell; flex-direction: row; min-width: 0; text-align: center; vertical-align: middle; white-space: nowrap; }
   .tabla-programa .acciones .btn-action { margin: 0; }
   .tabla-programa .acciones form { display: inline-flex !important; }
-  // En móvil solo se dejan visibles editar y (en actividades) cambiar fechas
+  // En móvil solo se deja visible el botón de editar
   .tabla-programa .acciones .btn-action:not(.btn-action-edit),
   .tabla-programa .acciones form { display: none !important; }
+  // El cambio de fechas se hace en el formulario de edición: aquí sobra el calendario
+  .tabla-programa .acciones .btn-fechas { display: none !important; }
   .tabla-programa td.acciones > * + * { margin-top: 0 !important; }
   .tabla-programa .acciones .btn-action { margin: 0 .1rem; }
   .tabla-programa .fila-actividad td.indent { padding-left: 1.2rem; }
@@ -182,14 +184,31 @@
   .tabla-programa { table-layout: fixed; width: 100%; }
   // Solo actividad y acciones: las fechas se cambian desde el icono del calendario
   .tabla-programa .col-fecha, .tabla-programa td.fecha-editable { display: none; }
-  .tabla-programa .th-sel, .tabla-programa .td-sel { width: 3.4rem; }
+  // Solo nombre de la actividad y botón de editar: ni selección, ni código, ni fechas
+  .tabla-programa .th-sel, .tabla-programa .td-sel { display: none; }
+  .tabla-programa .solo-movil.mono { display: none; }
   .tabla-programa td:not(.td-sel):not(.acciones) { min-width: 0; }
   .tabla-programa th.th-acciones { width: 7.4rem; }
   .tabla-programa td.fecha-editable, .tabla-programa td.mono { white-space: nowrap; }
   .tabla-programa td { overflow-wrap: anywhere; }
   .card:has(.tabla-programa) { padding: 1rem .8rem; }
   .card-titulo { font-size: 1.5rem; }
-  button.solo-movil.btn-action { display: inline-flex; }
+
+  // ---------- Dependencias de obra ----------
+  // Los modos pasan a una tira horizontal (con su descripción) y la barra de filtros se apila
+  .dep-modos { display: flex; gap: .8rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .6rem; -webkit-overflow-scrolling: touch; }
+  .dep-modo { flex: 0 0 78%; scroll-snap-align: start; padding: 1rem 1.2rem; i { font-size: 1.8rem; } strong { font-size: 1.5rem; } span { font-size: 1.15rem; line-height: 1.35; } }
+  .dep-resumen { flex-wrap: nowrap; overflow-x: auto; gap: .8rem; padding-bottom: .4rem; -webkit-overflow-scrolling: touch; }
+  .dep-chip { flex: 0 0 auto; padding: .6rem 1rem; span { font-size: 1rem; } strong { font-size: 1.5rem; } }
+  .dep-barra { gap: .8rem; padding: .9rem 1rem; label { width: 100%; margin: 0; } select, input[type=search] { min-width: 0; width: 100%; } .btn { flex: 1 1 auto; } }
+  .dep-zoom { width: 100%; justify-content: space-between; .btn { flex: 0 0 auto; } }
+  .dep-ayuda { font-size: 1.2rem; }
+  .dep-leyenda { flex-wrap: nowrap; overflow-x: auto; gap: 1rem; font-size: 1.1rem; -webkit-overflow-scrolling: touch; }
+  .dep-scroll { max-height: 62vh; touch-action: pan-x pan-y; }
+  .dep-labels { .dep-lab-cab, .dep-lab-grp, .dep-lab { padding: 0 .6rem; font-size: 1.1rem; } }
+  .dep-panel { h3 { font-size: 1.5rem; } h4 { margin-top: 1.2rem; } .dep-rel-ctl { flex-wrap: wrap; select { flex: 1 1 100%; } label { flex: 1 1 auto; } } }
+  .dep-agregar { flex-wrap: wrap; select, .btn { flex: 1 1 100%; } }
+  .dep-modal-card { width: calc(100vw - 2rem); max-width: none; }
 
   // ---------- Portafolio / inicio: tarjetas de proyecto ----------
   .proyecto-caratula { width: calc(100% + 2.8rem); margin: -1.4rem -1.4rem 1.2rem; height: 18rem; }

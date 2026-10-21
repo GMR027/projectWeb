@@ -9,7 +9,15 @@
   const dn = s => Math.round(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5);
   const fmt = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '—';
   const TIPOS = { FS: 'Fin → inicio', SS: 'Inicio → inicio', FF: 'Fin → fin', SF: 'Inicio → fin' };
-  const ROW = 30, GRP = 24, HEAD = 46, LBL = 300;
+  const ROW = 30, GRP = 24, HEAD = 46;
+  const esMovil = () => window.matchMedia('(max-width: 64rem)').matches;
+  // La columna de nombres se adapta al ancho: en un teléfono 300 px se comían casi todo el diagrama
+  const medidaLbl = () => {
+    const w = window.innerWidth || 1200;
+    return w <= 480 ? Math.max(104, Math.round(w * 0.32)) : w <= 1024 ? 180 : 300;
+  };
+  let LBL = medidaLbl();
+  let autoVista = true;   // mientras el usuario no toque el zoom, la vista se reajusta al girar el teléfono
   const act = id => datos.actividades.find(a => a.id === id);
 
   // ---------- comunicación con el servidor ----------
@@ -66,6 +74,7 @@
   // ---------- diagrama ----------
   function pintar() {
     pintarEncabezado();
+    LBL = medidaLbl();
     $('dep-zoom-pct').textContent = Math.round(S.ppd / PPD_BASE * 100) + '%';
     const lista = filtradas();
     const filas = []; let ult = null;
@@ -135,15 +144,31 @@
   // ---------- zoom ----------
   const PPD_MIN = 0.4, PPD_MAX = 40, PPD_BASE = 5;
   function zoom(nuevo, ancla) {   // ancla: px dentro del visor que deben quedar fijos (por defecto, el centro)
+    autoVista = false; LBL = medidaLbl();
     const sc = $('dep-scroll'), vis = sc.clientWidth - LBL, ref = ancla == null ? LBL + vis / 2 : ancla;
     const dia = (sc.scrollLeft + ref - LBL) / S.ppd;       // día (relativo al origen) bajo el ancla
     S.ppd = Math.min(PPD_MAX, Math.max(PPD_MIN, nuevo)); pintar();
     sc.scrollLeft = Math.max(0, dia * S.ppd - (ref - LBL));
   }
   function ajustar() {
+    autoVista = false; LBL = medidaLbl();
     const lista = filtradas(), fechas = lista.flatMap(a => [a.inicio, a.fin, a.es, a.ef].filter(Boolean)); if (!fechas.length) return;
     const dias = Math.max(...fechas.map(dn)) - Math.min(...fechas.map(dn)) + 18, vis = $('dep-scroll').clientWidth - LBL - 30;
     S.ppd = Math.min(PPD_MAX, Math.max(PPD_MIN, vis / dias)); pintar(); $('dep-scroll').scrollLeft = 0;
+  }
+  // En el teléfono el diagrama se abre legible (nunca por debajo de ~3 px/día, ~80 días visibles)
+  // y centrado en hoy, en vez de mostrar el primer día con las etiquetas ocupando media pantalla.
+  function vistaInicial() {
+    if (!esMovil()) { pintar(); return; }
+    const lista = filtradas(), fechas = lista.flatMap(a => [a.inicio, a.fin, a.es, a.ef].filter(Boolean));
+    if (!fechas.length) { pintar(); return; }
+    const sc = $('dep-scroll'); LBL = medidaLbl();
+    const dias = fechas.map(dn), d0 = Math.min(...dias) - 7;
+    const vis = Math.max(80, sc.clientWidth - LBL - 20), rango = Math.max(...dias) - Math.min(...dias) + 18;
+    S.ppd = Math.max(3, Math.min(PPD_BASE, vis / rango));
+    pintar();
+    const hoy = dn(new Date().toISOString().slice(0, 10)), centro = hoy >= Math.min(...dias) && hoy <= Math.max(...dias) ? hoy : Math.min(...dias);
+    sc.scrollLeft = Math.max(0, (centro - d0) * S.ppd - vis * 0.25);
   }
 
   // ---------- selección y enlace ----------
@@ -155,6 +180,8 @@
     }
     S.sel = id; S.selDep = null; pintar();
     const fila = document.querySelector('.dep-lab[data-id="' + id + '"]'); if (fila) fila.scrollIntoView({ block: 'nearest' });
+    // En el teléfono el panel queda debajo del diagrama: sin esto el toque parece no hacer nada
+    if (esMovil()) setTimeout(() => $('dep-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
   }
   async function crear(pred, suc, tipo = 'FS', retraso = 0) {
     const d = await api('guardar', { pred, suc, tipo, retraso }); if (!d) { pintar(); return; }
@@ -225,6 +252,31 @@
     window.addEventListener('mouseup', e => { if (pan && e.button === 1) { pan = null; sc.classList.remove('paneando'); } });
     sc.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
+    // Dos dedos: zoom del diagrama (el desplazamiento de un dedo ya lo hace el navegador)
+    let pinza = null, pinzaRaf = null;
+    sc.addEventListener('touchstart', e => {
+      if (e.touches.length !== 2) return;
+      const [a, b] = e.touches;
+      pinza = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), ppd: S.ppd, x: (a.clientX + b.clientX) / 2 };
+    }, { passive: true });
+    sc.addEventListener('touchmove', e => {
+      if (!pinza || !pinza.d || e.touches.length !== 2) return;
+      e.preventDefault();
+      const [a, b] = e.touches, r = sc.getBoundingClientRect();
+      const nuevo = pinza.ppd * (Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinza.d), ancla = pinza.x - r.left;
+      if (pinzaRaf) return;   // un repintado por cuadro: el diagrama se rehace entero
+      pinzaRaf = requestAnimationFrame(() => { pinzaRaf = null; zoom(nuevo, ancla); });
+    }, { passive: false });
+    sc.addEventListener('touchend', () => { pinza = null; }, { passive: true });
+    sc.addEventListener('touchcancel', () => { pinza = null; }, { passive: true });
+
+    // Girar el teléfono: se recalcula la columna de nombres y, si no se tocó el zoom, la vista
+    let tResize = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(tResize);
+      tResize = setTimeout(() => { if (autoVista) vistaInicial(); else pintar(); }, 150);
+    });
+
     if ($('dep-enlazar')) $('dep-enlazar').addEventListener('click', () => alternarEnlazar());
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && (S.enlazar || S.origen != null)) alternarEnlazar(false); });
 
@@ -293,6 +345,6 @@
     const m = $('dep-modal'); m.classList.add('abierto'); m.setAttribute('aria-hidden', 'false');
   }
 
-  pintarPartidas(); enlazar(); pintar();
+  pintarPartidas(); enlazar(); vistaInicial();
   window.__dep = { S, get datos() { return datos; }, pintar, crear, abrirPrevia };
 })();
