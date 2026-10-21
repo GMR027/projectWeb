@@ -189,18 +189,25 @@
   .tabla-programa td, .tabla-programa th { padding: .8rem .4rem; }
   .tabla-programa td.fecha-editable, .tabla-programa .mono { font-size: 1.1rem; letter-spacing: -.02em; }
   .tabla-programa th { font-size: 1rem; letter-spacing: 0; }
-  .tabla-programa .acciones { width: 7.4rem; padding: .4rem .2rem; }
+  .tabla-programa .acciones { width: 5.6rem; min-width: 5.6rem; padding: .4rem .2rem; }
   .tabla-programa .btn-action { width: 3rem; height: 3rem; font-size: 1.2rem; }
+  .tabla-programa .btn-action-edit { width: 3.6rem; height: 3.6rem; font-size: 1.3rem; }
   .tabla-programa { table-layout: fixed; width: 100%; }
   // Solo actividad y acciones: las fechas se cambian desde el icono del calendario
   .tabla-programa .col-fecha, .tabla-programa td.fecha-editable { display: none; }
   // Solo nombre de la actividad y botón de editar: ni selección, ni código, ni fechas
   .tabla-programa .th-sel, .tabla-programa .td-sel { display: none; }
   .tabla-programa .solo-movil.mono { display: none; }
+  // Ni chips de revisión ni el alta rápida de cada partida (se usan los botones de arriba)
+  .tabla-programa .rev-chip { display: none !important; }
+  .tabla-programa .fila-rapida { display: none; }
   .tabla-programa td:not(.td-sel):not(.acciones) { min-width: 0; }
-  .tabla-programa th.th-acciones { width: 7.4rem; }
+  .tabla-programa th.th-acciones { width: 5.6rem; }
+  .tabla-programa th.th-acciones::after { font-size: 1.2rem; }
   .tabla-programa td.fecha-editable, .tabla-programa td.mono { white-space: nowrap; }
   .tabla-programa td { overflow-wrap: anywhere; }
+  .tabla-programa .fila-partida td { padding-top: 1rem; padding-bottom: 1rem; }
+  .tabla-programa .fila-actividad td { padding-top: .9rem; padding-bottom: .9rem; }
   .card:has(.tabla-programa) { padding: 1rem .8rem; }
   .card-titulo { font-size: 1.5rem; }
 
