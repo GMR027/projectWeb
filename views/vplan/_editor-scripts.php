@@ -2,6 +2,7 @@
 <script>window.VPLAN_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>;</script>
 <script src="/vendor/konva.min.js"></script>
 <script src="/vendor/editor-fondos.js"></script>
+<script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
 <script src="/vendor/vplan-editor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/vplan-editor.js'); ?>"></script>
 <script>
 (function () {

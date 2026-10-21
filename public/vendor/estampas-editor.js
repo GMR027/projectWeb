@@ -26,24 +26,13 @@
         let cfg = null, id = 0, nombre = '', sucio = false;
 
         // Deshacer / rehacer (Ctrl+Z, Ctrl+Y o Ctrl+Mayús+Z): foto de la configuración tras cada cambio
-        let hPas = [], hFut = [], hUlt = null, hTimer = null;
-        const hReinicia = () => { clearTimeout(hTimer); hPas = []; hFut = []; hUlt = cfg ? JSON.stringify(cfg) : null; };
-        const hRevisa = () => {
-            clearTimeout(hTimer); if (!cfg || hUlt === null) return;
-            const a = JSON.stringify(cfg); if (a === hUlt) return;
-            hPas.push(hUlt); if (hPas.length > 100) hPas.shift(); hFut = []; hUlt = a;
-        };
-        const hProgramar = () => { clearTimeout(hTimer); hTimer = setTimeout(hRevisa, 350); };
-        const hAplica = snap => { cfg = JSON.parse(snap); hUlt = snap; sel = -1; (cfg.modo === 'lienzo' ? pintarLienzo : pintar)(); };
-        function deshacer() { hRevisa(); if (!hPas.length) return; hFut.push(hUlt); hAplica(hPas.pop()); }
-        function rehacer() { hRevisa(); if (!hFut.length) return; hPas.push(hUlt); hAplica(hFut.pop()); }
-        ['input', 'change', 'click', 'pointerup'].forEach(t => caja.addEventListener(t, hProgramar));
-        document.addEventListener('keydown', ev => {
-            if (caja.hidden || !cfg || !(ev.ctrlKey || ev.metaKey)) return;
-            const k = ev.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;
-            if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) && !['range', 'color', 'checkbox'].includes(ev.target.type) && ev.target.tagName !== 'SELECT') return;   // en los cuadros de texto vale el deshacer del navegador
-            ev.preventDefault(); (k === 'y' || ev.shiftKey) ? rehacer() : deshacer();
+        const hist = window.KitEdicion.historial({
+            foto: () => cfg ? { k: JSON.stringify(cfg) } : null,
+            aplica: f => { cfg = JSON.parse(f.k); sel = -1; (cfg.modo === 'lienzo' ? pintarLienzo : pintar)(); },
         });
+        const deshacer = hist.deshacer, rehacer = hist.rehacer;
+        ['input', 'change', 'click', 'pointerup'].forEach(t => caja.addEventListener(t, hist.programar));
+        window.KitEdicion.atajos({ deshacer, rehacer, activo: () => !caja.hidden && !!cfg });
         const actividadesOpc = () => [['0', '— La actividad del bloque —']].concat(D.actividades.map(a => [String(a.id), (a.codigo ? a.codigo + ' · ' : '') + a.nombre]));
         const valoresNuevos = {
             campo: () => ({ t: 'campo', campo: 'proyecto', prefijo: '', sufijo: '', formato: '', actividad_id: 0, tamano: 0, negrita: false, color: '', alinear: '' }),
@@ -433,7 +422,7 @@
             if (!e) cfg.etiquetas = [valoresNuevos.campo()];
             if (modo === 'lienzo') { zoomMan = null; cfg.modo = 'lienzo'; cfg.elementos = cfg.elementos || []; if (!e) { cfg.w = 16.43; cfg.h = 25.45; cfg.etiquetas = []; } sel = -1; herr = 'sel'; }
             else cfg.modo = 'etiquetas';
-            caja.hidden = false; (cfg.modo === 'lienzo' ? pintarLienzo : pintar)(); hReinicia(); caja.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            caja.hidden = false; (cfg.modo === 'lienzo' ? pintarLienzo : pintar)(); hist.reinicia(); caja.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         window.EstampasEditor = { abrir };
 

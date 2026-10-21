@@ -1535,14 +1535,7 @@
   }
 
   // ---------- símbolos y gráficos del proyecto: se insertan como imagen (una copia propia del archivo) ----------
-  async function aBlob(url, maxLado) {
-    if (!/\.svg(\?|$)/i.test(url)) { const r = await fetch(url); if (!r.ok) throw new Error('No se pudo leer la imagen'); return r.blob(); }
-    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
-    const w = img.naturalWidth || 128, h = img.naturalHeight || 128, k = maxLado / Math.max(w, h);
-    const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
-    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    return new Promise(ok => cv.toBlob(ok, 'image/png'));
-  }
+  const aBlob = (url, maxLado) => window.KitEdicion.rasterizar(url, maxLado);
   async function insertarDesdeUrl(url, fraccion, vinculo = null) {
     if (!capaOk()) return;
     status('Insertando…');
@@ -2132,15 +2125,10 @@
     $('#ve-undo').addEventListener('click', undo); $('#ve-redo').addEventListener('click', redo);
     $('#ve-fit').addEventListener('click', encuadrar);
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña)
-    document.addEventListener('click', async e => {
-      const a = e.target.closest('a[href]');
-      if (!a || !sucio || a.target === '_blank') return;
-      e.preventDefault();
-      const r = await window.confirmarModal({ titulo: '¿Salir sin guardar?', mensaje: 'Tienes cambios sin guardar en las marcas del plano. Si sales ahora se perderán.', tono: 'aviso', icono: 'fa-floppy-disk', aceptar: 'Salir sin guardar', iconoBoton: 'fa-right-from-bracket', extra: 'Guardar y salir', cancelar: 'Seguir editando' });
-      if (r === 'extra') { const g = await guardar(); if (g !== false) { sucio = false; location.href = a.href; } return; }
-      if (r) { sucio = false; location.href = a.href; }
+    window.KitEdicion.avisoSalir({
+      sucio: () => sucio, guardar, limpiar: () => { sucio = false; },
+      titulo: '¿Salir sin guardar?', mensaje: 'Tienes cambios sin guardar en las marcas del plano. Si sales ahora se perderán.',
     });
-    window.addEventListener('beforeunload', e => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
     iniciar();
   });
 })();

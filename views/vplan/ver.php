@@ -319,5 +319,6 @@ window.VP_DISENO = <?php echo json_encode([
     'etiquetasRecovery' => array_map(fn($n) => \Classes\Vplan::etiquetaRecovery($n), range(1, \Model\VplanLamina::MAX_RECOVERY)),
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
+<script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
 <script src="/vendor/vplan-diseno.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-diseno.js"); ?>"></script>
 <?php endif; ?>

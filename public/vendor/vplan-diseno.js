@@ -9,12 +9,9 @@
     if (!D || !sheet || !panel) return;
 
     const $ = id => document.getElementById(id);
-    const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const { esc, post, guardado, guarda } = window.KitEdicion;
     const num = (v, d) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : d; };
     const redond = (v, d = 3) => Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
-    const guardado = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } };
-    const guarda = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* sin almacenamiento */ } };
-    const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
     const ICONOS = { titulo: 'fa-heading', logo: 'fa-copyright', plano: 'fa-map', tareas: 'fa-list-check', tabla: 'fa-table', simbologia: 'fa-icons', imagen: 'fa-shapes', cajetin: 'fa-table-list', estampa: 'fa-wand-magic-sparkles', schedule: 'fa-chart-gantt', supervisor: 'fa-user-tie', fecha: 'fa-calendar-day', texto: 'fa-font' };
     const UNICOS = ['plano', 'schedule'];   // solo uno por lámina
     const shell = $('vp-shell');
@@ -789,14 +786,7 @@
         $('vp-sim-cajetines').innerHTML = (BIB.cajetines || []).map(c =>
             '<button type="button" class="vp-ins-bloque" data-cajetin="' + (+c.id || 0) + '" title="' + esc(c.orientacion === 'banda' ? 'Banda' : 'Tabla de dos columnas') + '"><i class="fa-solid fa-table-list"></i><span>' + esc(c.nombre) + '</span></button>').join('');
     }
-    async function rasterizar(url) {   // SVG → PNG para que el PDF y la hoja lo dibujen igual; el resto se copia tal cual
-        if (!/\.svg(\?|$)/i.test(url)) { const r = await fetch(url); if (!r.ok) throw new Error('No se pudo leer la imagen'); return r.blob(); }
-        const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error('No se pudo leer el SVG')); i.src = url; });
-        const w = img.naturalWidth || 128, h = img.naturalHeight || 128, k = 1024 / Math.max(w, h);
-        const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
-        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-        return new Promise(ok => cv.toBlob(ok, 'image/png'));
-    }
+    const rasterizar = url => window.KitEdicion.rasterizar(url, 1024);
     async function insertarImagen(src, nombre, ref, refv) {
         const est = $('vp-sim-estado'); est.textContent = 'Insertando…';
         try {
@@ -942,50 +932,30 @@
     }
     $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&diseno=1'; });
     // ---- Deshacer / rehacer (Ctrl+Z, Ctrl+Y o Ctrl+Mayús+Z): foto de bloques y guías tras cada cambio ----
-    const hFoto = () => ({ b: JSON.stringify(bloques), g: JSON.stringify(guias), els: Object.fromEntries(bloques.map(x => [x.clave, elDe(x)])) });
-    let hPas = [], hFut = [], hUlt = hFoto(), hTimer = null;
-    const hRevisa = () => {
-        clearTimeout(hTimer);
-        const a = hFoto(); if (a.b === hUlt.b && a.g === hUlt.g) return;
-        hPas.push(hUlt); if (hPas.length > 100) hPas.shift(); hFut = []; hUlt = a;
-    };
-    const hAplica = f => {
-        hUlt = f;
-        bloques = JSON.parse(f.b); guias = JSON.parse(f.g);
-        const claves = new Set(bloques.map(x => x.clave));
-        sheet.querySelectorAll('.vp-blk').forEach(el => { if (!claves.has(el.dataset.clave)) el.remove(); });
-        bloques.forEach(x => {
-            let el = elDe(x);
-            if (!el && f.els[x.clave]) { el = f.els[x.clave]; sheet.appendChild(el); }
-            if (el) { asegurarCapa(x, el); el.classList.toggle('vp-b-oculto', !!x.config.oculto); }
-        });
-        aplicarTodos(); pintarGuias(); pintarGuiasLista(); seleccionar(null); pintarCapas(); marcarSucio();
-    };
-    const deshacer = () => { hRevisa(); if (!hPas.length) return; hFut.push(hUlt); hAplica(hPas.pop()); };
-    const rehacer = () => { hRevisa(); if (!hFut.length) return; hPas.push(hUlt); hAplica(hFut.pop()); };
-    ['input', 'change', 'click', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, () => { clearTimeout(hTimer); hTimer = setTimeout(hRevisa, 350); }));
-    document.addEventListener('keydown', e => {
-        if (!(e.ctrlKey || e.metaKey)) return;
-        const k = e.key.toLowerCase();
-        if (k === 's') { e.preventDefault(); $('vp-dis-guardar').click(); return; }
-        if (k !== 'z' && k !== 'y') return;
-        const t = e.target; if (/^(INPUT|TEXTAREA)$/.test(t.tagName) && !['range', 'color', 'checkbox'].includes(t.type)) return;   // en los cuadros de texto vale el deshacer del navegador
-        e.preventDefault(); (k === 'y' || e.shiftKey) ? rehacer() : deshacer();
+    const hist = window.KitEdicion.historial({
+        foto: () => { const b = JSON.stringify(bloques), g = JSON.stringify(guias); return { k: b + '|' + g, b, g, els: Object.fromEntries(bloques.map(x => [x.clave, elDe(x)])) }; },
+        aplica: f => {
+            bloques = JSON.parse(f.b); guias = JSON.parse(f.g);
+            const claves = new Set(bloques.map(x => x.clave));
+            sheet.querySelectorAll('.vp-blk').forEach(el => { if (!claves.has(el.dataset.clave)) el.remove(); });
+            bloques.forEach(x => {
+                let el = elDe(x);
+                if (!el && f.els[x.clave]) { el = f.els[x.clave]; sheet.appendChild(el); }
+                if (el) { asegurarCapa(x, el); el.classList.toggle('vp-b-oculto', !!x.config.oculto); }
+            });
+            aplicarTodos(); pintarGuias(); pintarGuiasLista(); seleccionar(null); pintarCapas(); marcarSucio();
+        },
+    });
+    ['input', 'change', 'click', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, hist.programar));
+    window.KitEdicion.atajos({
+        deshacer: hist.deshacer, rehacer: hist.rehacer,
+        antes: (e, k) => { if (k !== 's') return false; e.preventDefault(); $('vp-dis-guardar').click(); return true; },
     });
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña o recargar)
-    document.addEventListener('click', async e => {
-        const a = e.target.closest('a[href]');
-        if (!a || !sucio || a.target === '_blank' || e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
-        if (a.getAttribute('href').startsWith('#') || a.hasAttribute('download')) return;
-        e.preventDefault();
-        const r = await window.confirmarModal({
-            titulo: '¿Salir sin guardar el diseño?', mensaje: 'Hiciste cambios en el diseño de la lámina que aún no se guardan.',
-            tono: 'aviso', icono: 'fa-floppy-disk', aceptar: 'Salir sin guardar', iconoBoton: 'fa-right-from-bracket', extra: 'Guardar y salir', cancelar: 'Seguir editando',
-        });
-        if (r === 'extra') { if (await guardarDiseno()) location.href = a.href; return; }
-        if (r) { sucio = false; location.href = a.href; }
+    window.KitEdicion.avisoSalir({
+        sucio: () => sucio, guardar: guardarDiseno, limpiar: () => { sucio = false; },
+        titulo: '¿Salir sin guardar el diseño?', mensaje: 'Hiciste cambios en el diseño de la lámina que aún no se guardan.',
     });
-    window.addEventListener('beforeunload', e => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
 
     pintarGuias(); pintarCapas(); pintarGuiasLista(); actualizarInsertar(); pintarTablas(); pintarRecovery();
     seleccionar(null);
