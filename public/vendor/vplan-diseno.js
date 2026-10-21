@@ -9,7 +9,7 @@
     if (!D || !sheet || !panel) return;
 
     const $ = id => document.getElementById(id);
-    const { esc, post, guardado, guarda } = window.KitEdicion;
+    const { esc, post, guardado, guarda, masCercano, renombrarEnLinea, listaOrdenable } = window.KitEdicion;
     const num = (v, d) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : d; };
     const redond = (v, d = 3) => Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
     const ICONOS = { titulo: 'fa-heading', logo: 'fa-copyright', plano: 'fa-map', tareas: 'fa-list-check', tabla: 'fa-table', simbologia: 'fa-icons', imagen: 'fa-shapes', cajetin: 'fa-table-list', estampa: 'fa-wand-magic-sparkles', schedule: 'fa-chart-gantt', supervisor: 'fa-user-tie', fecha: 'fa-calendar-day', texto: 'fa-font' };
@@ -68,10 +68,10 @@
     const imantar = (valores, eje, umbral) => {
         let mejor = null;
         const cand = candidatos(eje);
-        valores.forEach(v => cand.forEach(c => {
-            const d = c.pos - v;
-            if (Math.abs(d) <= umbral && (!mejor || Math.abs(d) < Math.abs(mejor.d))) mejor = { d, guia: c.guia };
-        }));
+        valores.forEach(v => {
+            const m = masCercano(v, cand, umbral);
+            if (m && (!mejor || Math.abs(m.d) < Math.abs(mejor.d))) mejor = { d: m.d, guia: m.ref.guia };
+        });
         return mejor;
     };
     const resaltarGuias = lista => sheet.querySelectorAll('.vp-guia').forEach(el => el.classList.toggle('vp-guia-iman', lista.some(g => g && g.id === el.dataset.id)));
@@ -356,14 +356,7 @@
     };
     // Renombrar con doble clic
     function renombrar(boton, actual, aplicarNombre) {
-        const inp = document.createElement('input');
-        inp.type = 'text'; inp.maxLength = 60; inp.value = actual; inp.className = 'vp-capa-renombrar';
-        boton.replaceWith(inp);
-        inp.focus(); inp.select();
-        let hecho = false;
-        const fin = ok => { if (hecho) return; hecho = true; if (ok) aplicarNombre(inp.value.trim()); pintarCapas(); pintarGuiasLista(); };
-        inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); });
-        inp.addEventListener('blur', () => fin(true));
+        renombrarEnLinea(boton, { valor: actual, max: 60, clase: 'vp-capa-renombrar', alTerminar: (ok, v) => { if (ok) aplicarNombre(v); pintarCapas(); pintarGuiasLista(); } });
     }
     $('vp-dis-capas').addEventListener('dblclick', e => {
         const n = e.target.closest('.vp-capa-nombre'), li = e.target.closest('.vp-capa');
@@ -390,33 +383,18 @@
         }
     });
     // Arrastrar capas para reordenar
-    (function () {
-        const ul = $('vp-dis-capas');
-        let arrastrada = null;
-        const limpiar = () => ul.querySelectorAll('.vp-drop-arriba, .vp-drop-abajo').forEach(x => x.classList.remove('vp-drop-arriba', 'vp-drop-abajo'));
-        ul.addEventListener('dragstart', e => { const li = e.target.closest('.vp-capa'); if (!li) return; arrastrada = porClave(li.dataset.clave); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', li.dataset.clave); li.classList.add('vp-arrastrando'); });
-        ul.addEventListener('dragend', () => { arrastrada = null; limpiar(); ul.querySelectorAll('.vp-arrastrando').forEach(x => x.classList.remove('vp-arrastrando')); });
-        ul.addEventListener('dragover', e => {
-            const li = e.target.closest('.vp-capa');
-            if (!arrastrada || !li) return;
-            e.preventDefault();
-            limpiar();
-            const r = li.getBoundingClientRect();
-            li.classList.add(e.clientY < r.top + r.height / 2 ? 'vp-drop-arriba' : 'vp-drop-abajo');
-        });
-        ul.addEventListener('drop', e => {
-            const li = e.target.closest('.vp-capa');
-            if (!arrastrada || !li) return;
-            e.preventDefault();
-            const destino = porClave(li.dataset.clave), r = li.getBoundingClientRect(), arriba = e.clientY < r.top + r.height / 2;
-            limpiar();
-            if (!destino || destino === arrastrada) return;
-            const lista = bloques.slice().sort((a, c) => c.z - a.z).filter(x => x !== arrastrada);   // de frente a fondo
-            lista.splice(lista.indexOf(destino) + (arriba ? 0 : 1), 0, arrastrada);
+    listaOrdenable($('vp-dis-capas'), {
+        item: '.vp-capa', clave: li => li.dataset.clave,
+        claseArrastrando: 'vp-arrastrando', claseArriba: 'vp-drop-arriba', claseAbajo: 'vp-drop-abajo',
+        alSoltar: (claveOrigen, claveDestino, arriba) => {
+            const origen = porClave(claveOrigen), destino = porClave(claveDestino);
+            if (!origen || !destino || destino === origen) return;
+            const lista = bloques.slice().sort((a, c) => c.z - a.z).filter(x => x !== origen);   // de frente a fondo
+            lista.splice(lista.indexOf(destino) + (arriba ? 0 : 1), 0, origen);
             lista.forEach((x, k) => { x.z = lista.length - 1 - k; });
             bloques = lista.slice().reverse(); aplicarTodos(); pintarCapas(); marcarSucio();
-        });
-    })();
+        },
+    });
     // Lista de guías
     $('vp-dis-guias').addEventListener('dblclick', e => {
         const n = e.target.closest('.vp-capa-nombre'), li = e.target.closest('.vp-capa');

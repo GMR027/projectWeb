@@ -1101,12 +1101,11 @@
     if (imanOn()) { const g = pasoGrilla(); q = { x: Math.round(p.x / g) * g, y: Math.round(p.y / g) * g }; }
     if (!guiasOn()) return q;
     const tol = 6 / (stage ? stage.scaleX() : 1);   // 6 px de pantalla
-    let mx = tol, my = tol;
-    (state.guides || []).forEach(g => {
-      if (g.visible === false) return;
-      if (g.eje === 'v' && Math.abs(p.x - g.pos) <= mx) { mx = Math.abs(p.x - g.pos); q = { ...q, x: g.pos }; }
-      if (g.eje === 'h' && Math.abs(p.y - g.pos) <= my) { my = Math.abs(p.y - g.pos); q = { ...q, y: g.pos }; }
-    });
+    const visibles = (state.guides || []).filter(g => g.visible !== false);
+    const mx = window.KitEdicion.masCercano(p.x, visibles.filter(g => g.eje === 'v'), tol, true);
+    const my = window.KitEdicion.masCercano(p.y, visibles.filter(g => g.eje === 'h'), tol, true);
+    if (mx) q = { ...q, x: mx.ref.pos };
+    if (my) q = { ...q, y: my.ref.pos };
     return q;
   }
   const fmtNum = v => { const a = Math.abs(v); return String(+v.toFixed(a >= 100 ? 1 : a >= 1 ? 2 : 3)); };
@@ -1887,17 +1886,13 @@
   }
   function renombrarCapa(id) {
     const li = $('#ve-capas-lista').querySelector('[data-id="' + id + '"]'), l = capaPor(id); if (!li || !l) return;
-    const sp = li.querySelector('.ve-capa-nombre'), inp = document.createElement('input');
-    inp.type = 'text'; inp.className = 've-capa-input'; inp.maxLength = 40; inp.value = l.name || ''; inp.placeholder = 'Capa ' + l.num;
-    sp.replaceWith(inp); inp.focus(); inp.select();
-    let hecho = false;
-    const fin = ok => {
-      if (hecho) return; hecho = true;
-      const v = inp.value.trim().slice(0, 40);
-      if (ok && v !== (l.name || '')) { const capas = clone(state.layers); capas.find(x => x.id === id).name = v; commit(undefined, capas); } else pintarCapas();
-    };
-    inp.addEventListener('blur', () => fin(true));
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); if (e.key === 'Escape') fin(false); e.stopPropagation(); });
+    window.KitEdicion.renombrarEnLinea(li.querySelector('.ve-capa-nombre'), {
+      valor: l.name || '', max: 40, clase: 've-capa-input', placeholder: 'Capa ' + l.num, detener: true,
+      alTerminar: (ok, texto) => {
+        const v = texto.slice(0, 40);
+        if (ok && v !== (l.name || '')) { const capas = clone(state.layers); capas.find(x => x.id === id).name = v; commit(undefined, capas); } else pintarCapas();
+      },
+    });
   }
   function enlazarCapas() {
     $('#ve-capa-nueva').addEventListener('click', () => {

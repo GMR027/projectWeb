@@ -71,5 +71,66 @@
         return new Promise(ok => cv.toBlob(ok, 'image/png'));
     }
 
-    window.KitEdicion = { esc, post, debounce, guardado, guarda, historial, atajos, avisoSalir, rasterizar };
+    /**
+     * De una lista de candidatos {pos, ...} el más cercano a `valor` dentro del umbral: {d, ref} (d = pos - valor) o null.
+     * Con empate gana el primero; `ultimoGana` hace que gane el último (como hacía el editor Konva).
+     */
+    function masCercano(valor, candidatos, umbral, ultimoGana = false) {
+        let mejor = null;
+        candidatos.forEach(c => {
+            const d = c.pos - valor, a = Math.abs(d);
+            if (a <= umbral && (!mejor || (ultimoGana ? a <= Math.abs(mejor.d) : a < Math.abs(mejor.d)))) mejor = { d, ref: c };
+        });
+        return mejor;
+    }
+
+    /**
+     * Cambia el texto de una fila por un cuadro para renombrarla (Enter o salir del cuadro = aceptar, Escape = cancelar).
+     * alTerminar(ok, valorSinEspacios) se llama una sola vez. `detener`: que las teclas no sigan hacia los atajos de la página.
+     */
+    function renombrarEnLinea(elemento, { valor = '', max = 60, clase = '', placeholder = '', detener = false, alTerminar }) {
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.maxLength = max; inp.value = valor; inp.className = clase;
+        if (placeholder) inp.placeholder = placeholder;
+        elemento.replaceWith(inp);
+        inp.focus(); inp.select();
+        let hecho = false;
+        const fin = ok => { if (hecho) return; hecho = true; alTerminar(ok, inp.value.trim()); };
+        inp.addEventListener('blur', () => fin(true));
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); if (detener) e.stopPropagation(); });
+        return inp;
+    }
+
+    /**
+     * Reordenar filas arrastrándolas. `raiz` recibe los eventos; `item` es el selector de la fila; clave(li) identifica la fila.
+     * alSoltar(claveOrigen, claveDestino, arriba) — arriba = se soltó en la mitad superior de la fila destino.
+     */
+    function listaOrdenable(raiz, { item, clave, claseArrastrando, claseArriba, claseAbajo, alSoltar }) {
+        let origen = null;
+        const fila = e => e.target.closest && e.target.closest(item);
+        const arriba = (e, li) => { const r = li.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; };
+        const sobre = () => raiz.querySelectorAll(item).forEach(x => x.classList.remove(claseArriba, claseAbajo));
+        raiz.addEventListener('dragstart', e => {
+            const li = fila(e); if (!li) return;
+            origen = clave(li);
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', String(origen)); } catch (_) { /* sin datos */ }
+            li.classList.add(claseArrastrando);
+        });
+        raiz.addEventListener('dragend', () => { origen = null; raiz.querySelectorAll(item).forEach(x => x.classList.remove(claseArrastrando, claseArriba, claseAbajo)); });
+        raiz.addEventListener('dragover', e => {
+            const li = fila(e); if (!li || origen === null) return;
+            e.preventDefault(); sobre();
+            li.classList.add(arriba(e, li) ? claseArriba : claseAbajo);
+        });
+        raiz.addEventListener('drop', e => {
+            const li = fila(e); if (!li || origen === null) return;
+            e.preventDefault();
+            const alto = arriba(e, li), o = origen;
+            sobre();
+            alSoltar(o, clave(li), alto);
+        });
+    }
+
+    window.KitEdicion = { esc, post, debounce, guardado, guarda, historial, atajos, avisoSalir, rasterizar, masCercano, renombrarEnLinea, listaOrdenable };
 })();

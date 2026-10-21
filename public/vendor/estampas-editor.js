@@ -376,24 +376,19 @@
             }
         }, true);
         window.addEventListener('resize', () => { if (cfg && cfg.modo === 'lienzo') ajustarLienzo(); });
-        // Reordenar capas arrastrándolas en la lista
-        let capaArr = -1;
-        caja.addEventListener('dragstart', ev => { const li = ev.target.closest && ev.target.closest('.est-cap'); if (!li) return; capaArr = +li.dataset.i; ev.dataTransfer.effectAllowed = 'move'; try { ev.dataTransfer.setData('text/plain', String(capaArr)); } catch (_) { /* sin datos */ } li.classList.add('arrastrada'); });
-        caja.addEventListener('dragend', () => { capaArr = -1; caja.querySelectorAll('.est-cap').forEach(x => x.classList.remove('arrastrada', 'sobre-arriba', 'sobre-abajo')); });
-        caja.addEventListener('dragover', ev => {
-            const li = ev.target.closest && ev.target.closest('.est-cap'); if (!li || capaArr < 0) return;
-            ev.preventDefault(); const r = li.getBoundingClientRect(), arriba = ev.clientY < r.top + r.height / 2;
-            caja.querySelectorAll('.est-cap').forEach(x => x.classList.remove('sobre-arriba', 'sobre-abajo')); li.classList.add(arriba ? 'sobre-arriba' : 'sobre-abajo');
-        });
-        caja.addEventListener('drop', ev => {
-            const li = ev.target.closest && ev.target.closest('.est-cap'); if (!li || capaArr < 0 || !cfg) return;
-            ev.preventDefault();
-            const l = cfg.elementos, r = li.getBoundingClientRect(), arriba = ev.clientY < r.top + r.height / 2;   // arriba en la lista = más al frente
-            let dest = +li.dataset.i + (arriba ? 1 : 0);
-            const mov = l[capaArr], cur = l[sel];
-            l.splice(capaArr, 1); if (capaArr < dest) dest--;
-            l.splice(dest, 0, mov); sel = cur ? l.indexOf(cur) : -1; capaArr = -1;
-            capaLienzo(); propsLienzo(); previsualizarL();
+        // Reordenar capas arrastrándolas en la lista (arriba en la lista = más al frente)
+        window.KitEdicion.listaOrdenable(caja, {
+            item: '.est-cap', clave: li => +li.dataset.i,
+            claseArrastrando: 'arrastrada', claseArriba: 'sobre-arriba', claseAbajo: 'sobre-abajo',
+            alSoltar: (capaArr, destino, arriba) => {
+                if (!cfg) return;
+                const l = cfg.elementos;
+                let dest = destino + (arriba ? 1 : 0);
+                const mov = l[capaArr], cur = l[sel];
+                l.splice(capaArr, 1); if (capaArr < dest) dest--;
+                l.splice(dest, 0, mov); sel = cur ? l.indexOf(cur) : -1;
+                capaLienzo(); propsLienzo(); previsualizarL();
+            },
         });
         caja.addEventListener('wheel', ev => {
             const m = ev.target.closest('#est-lz-marco'); if (!m || !ev.ctrlKey) return;

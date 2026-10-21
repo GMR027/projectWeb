@@ -27,15 +27,17 @@ Notas:
 
 | Archivo | Para qué |
 |---|---|
-| `kit-edicion.js` → `window.KitEdicion` | `historial({foto, aplica})` (deshacer/rehacer por fotos: `foto()` devuelve `{k, ...}`), `atajos({deshacer, rehacer, activo, antes})` (Ctrl+Z/Y/Mayús+Z), `avisoSalir({sucio, guardar, limpiar})`, `rasterizar(url, maxLado)`, y utilidades `esc`, `post`, `debounce`, `guardado/guarda` (localStorage). Cárgalo **antes** del motor (`vplan-diseno.js`, `vplan-editor.js`, `estampas-editor.js`). |
+| `kit-edicion.js` → `window.KitEdicion` | `historial({foto, aplica})` (deshacer/rehacer por fotos: `foto()` devuelve `{k, ...}`), `atajos({deshacer, rehacer, activo, antes})` (Ctrl+Z/Y/Mayús+Z), `avisoSalir({sucio, guardar, limpiar})`, `rasterizar(url, maxLado)`, `masCercano(valor, candidatos, umbral, ultimoGana)` (imán a guías), `renombrarEnLinea(elemento, {valor, max, clase, alTerminar})` (renombrar una fila con doble clic), `listaOrdenable(raiz, {item, clave, claseArrastrando, claseArriba, claseAbajo, alSoltar})` (reordenar filas arrastrando), y utilidades `esc`, `post`, `debounce`, `guardado/guarda` (localStorage). Cárgalo **antes** del motor (`vplan-diseno.js`, `vplan-editor.js`, `estampas-editor.js`). |
 | `desktop/src/api.js` | `json()`, `pagina()`, `leer()` y `enviar()` (POST de formulario con CSRF) para hablar con Project Web con la sesión del admin | 9 copias de `json()` |
 | `desktop/src/lotes.js` → `porLotes({rutaApi, textos, registrar, resultadoSiVacio, ...})` | Recorrido común de las herramientas de IA por lotes (`/contexto` → modelo → `/resultado`). Lo usan `inconsistencias.js`, `analisis-materiales.js` y `materiales-inteligentes.js` | 3 runners clonados |
 | `notas.js` → `window.Notas.iniciar({campo, id, puedeEditar, notas, urlGuardar, urlEliminar})` | Lista de notas y modal; el modal sale de `views/templates/_notas-modal.php`. |
 
 El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (`state.past/future`) porque cada lámina del Editor guarda el suyo.
 
+**Lo que NO se comparte entre los motores, a propósito:** guías, reglas, zoom y panel de capas. El Konva trabaja en píxeles del dibujo con escala y desplazamiento propios (guías `{pos px, locked}`), el modo diseño en porcentaje de la hoja con zoom de CSS (guías `{pos %, bloqueada, nombre}`) y las estampas con zoom de CSS y scroll. Compartirlos exigiría adaptadores del tamaño del código que se quitaría, y los datos guardados tienen formatos distintos. Solo desaparecerían copias si los motores se funden (estampas dentro del Konva).
+
 ## Pendiente de la reestructuración
-- Guías, reglas, imantado, capas y zoom siguen escritos por separado en los tres motores (cambian el formato de guardado: px en Konva, % en el modo diseño).
+- Guías, reglas, zoom y panel de capas siguen separados en los motores (ver arriba el porqué). El imán, el renombrado en línea y el reordenado ya son compartidos.
 - Fusionar el editor de estampas dentro del Konva (hoy son pestañas hermanas bajo «Editor»).
 - Base común para las acciones de `RedactorController` y `SheetflowController` (crear, abrir, duplicar, eliminar); hoy solo comparten `enviar_descarga()`.
 - Un solo validador de SVG: `SvgSeguro::limpiar` *limpia* (símbolos) y `EscanerArchivos::svgSeguro` *rechaza* (Archivo). Unificarlos cambiaría qué SVG se aceptan.
