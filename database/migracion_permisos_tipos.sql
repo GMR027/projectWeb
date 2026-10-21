@@ -10,4 +10,5 @@ CREATE TABLE IF NOT EXISTS permisos_tipos (
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-ALTER TABLE permisos_trabajo ADD COLUMN nombre_permiso VARCHAR(150) NOT NULL DEFAULT '' AFTER tipo;
+-- Solo si falta (ver aplicar_migraciones_cluster.sh):
+-- ALTER TABLE permisos_trabajo ADD COLUMN nombre_permiso VARCHAR(150) NOT NULL DEFAULT '' AFTER tipo;
