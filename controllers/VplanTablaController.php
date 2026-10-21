@@ -46,6 +46,11 @@ class VplanTablaController
             if ($tabla->tipo === 'otro' && !$tabla->columnasOtro()) $alertas['error'][] = 'Define al menos una columna para la tabla "Otro"';
             if (!$alertas) {
                 $r = $tabla->guardar();
+                if (empty($tabla->id)) $tabla->id = $r['id'];
+                if ($h = Sheetflow::deTablaVplan($tabla, $_SESSION['id'] ?? null)) {   // las tablas libres nacen como hoja de SheetFlow: se llenan allá
+                    header('Location: /sheetflow/abrir?proyecto=' . $proyecto->id . '&id=' . $h->id);
+                    exit;
+                }
                 header('Location: /vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $r['id']);
                 exit;
             }
@@ -81,6 +86,22 @@ class VplanTablaController
         $router->render('vplan/tabla-formulario', [
             'titulo' => 'Editar tabla', 'proyecto' => $proyecto, 'tabla' => $tabla, 'alertas' => $alertas, 'filas' => $tabla->filas(),
         ]);
+    }
+
+    /** Pasa a SheetFlow una tabla «otro» con datos propios (con `todas=1`, todas las del proyecto que falten) */
+    public static function aSheetflow()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $lista = !empty($_POST['todas']) ? VplanTabla::deProyecto((int)$proyecto->id) : array_filter([self::tablaDe($proyecto)]);
+        $n = 0;
+        $ultima = null;
+        foreach ($lista as $t) if ($h = Sheetflow::deTablaVplan($t, $_SESSION['id'] ?? null)) { $n++; $ultima = $h; }
+        if (empty($_POST['todas']) && $ultima) {
+            header('Location: /sheetflow/abrir?proyecto=' . $proyecto->id . '&id=' . $ultima->id);
+            exit;
+        }
+        header('Location: /vplan/tablas?proyecto=' . $proyecto->id . '&convertidas=' . $n);
+        exit;
     }
 
     public static function duplicar()

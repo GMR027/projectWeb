@@ -93,7 +93,7 @@ class RedactorController
                 'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id),
                 'fuentes' => Redactor::FUENTES,
                 'papeles' => array_map(fn($p) => [$p[1], $p[2]], RedactorDocumento::PAPELES),
-                'api' => ['guardar' => '/api/redactor/guardar', 'imagen' => '/api/redactor/imagen', 'palabra' => '/api/redactor/palabra', 'firma' => '/api/redactor/firma', 'firmaBorrar' => '/api/redactor/firma/borrar', 'sellar' => '/api/redactor/sellar', 'plantilla' => '/api/redactor/plantilla', 'versiones' => '/api/redactor/versiones', 'version' => '/api/redactor/version', 'programa' => '/api/redactor/programa', 'exportarSeleccion' => '/api/redactor/exportar-seleccion'],
+                'api' => ['guardar' => '/api/redactor/guardar', 'imagen' => '/api/redactor/imagen', 'palabra' => '/api/redactor/palabra', 'firma' => '/api/redactor/firma', 'firmaBorrar' => '/api/redactor/firma/borrar', 'sellar' => '/api/redactor/sellar', 'plantilla' => '/api/redactor/plantilla', 'versiones' => '/api/redactor/versiones', 'version' => '/api/redactor/version', 'programa' => '/api/redactor/programa', 'hoja' => '/api/redactor/hoja', 'exportarSeleccion' => '/api/redactor/exportar-seleccion'],
                 'descargar' => '/redactor/descargar?proyecto=' . $proyecto->id . '&id=' . $d->id,
                 'dic' => '/vendor/redactor/',
             ],
@@ -319,6 +319,30 @@ class RedactorController
             json_respuesta(['success' => true] + $t);
         }
         json_respuesta(['success' => true, 'filas' => RedactorDocumento::programa((int)$p->id)]);
+    }
+
+    /**
+     * Crea una hoja de SheetFlow para el documento y devuelve la tabla `data-sf` lista para insertar.
+     * `accion=nueva` (en blanco) o `accion=convertir` con `filas` (JSON; el encabezado va primero).
+     */
+    public static function hoja()
+    {
+        [$d, $p] = self::documentoApi();
+        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 150) ?: mb_substr('Tabla · ' . $d->nombre, 0, 150);
+        $filas = null;
+        if (($_POST['accion'] ?? '') === 'convertir') {
+            $x = json_decode((string)($_POST['filas'] ?? ''), true);
+            if (!is_array($x) || count($x) < 1) json_respuesta(['success' => false, 'error' => 'La tabla no tiene datos'], 422);
+            $filas = array_map(fn($f) => is_array($f) ? array_map(fn($v) => is_scalar($v) ? (string)$v : '', $f) : [], array_slice($x, 0, \Classes\Sheetflow::MAX_FILAS + 1));
+        } elseif (($_POST['accion'] ?? '') !== 'nueva') {
+            json_respuesta(['success' => false, 'error' => 'Acción no válida'], 422);
+        }
+        try {
+            $h = \Classes\Sheetflow::crearHoja((int)$p->id, $nombre, $filas, $_SESSION['id'] ?? null);
+        } catch (\RuntimeException $e) {
+            json_respuesta(['success' => false, 'error' => $e->getMessage()], 422);
+        }
+        json_respuesta(['success' => true, 'id' => (int)$h->id, 'html' => \Classes\Sheetflow::htmlRedactor($h), 'url' => '/sheetflow/abrir?proyecto=' . (int)$p->id . '&id=' . (int)$h->id]);
     }
 
     /** Descarga solo el fragmento enviado (la selección) con los ajustes de página del documento */

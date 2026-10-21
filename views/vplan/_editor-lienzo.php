@@ -81,15 +81,20 @@ $ic = [
 ];
 $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $t . '" title="' . htmlspecialchars($titulo) . '" aria-label="' . htmlspecialchars($titulo) . '">' . $svg($ic[$t]) . '</button>';
 ?>
-<div class="ve-barra card">
-    <div class="ve-grupo" data-nombre="Selección">
+<div class="ve-pestanas" id="ve-pestanas" role="tablist" aria-label="Pestañas de herramientas">
+    <button type="button" role="tab" class="activo" data-pest="dibujo"><i class="fa-solid fa-pen-ruler"></i> Dibujo</button>
+    <button type="button" role="tab" data-pest="insertar"><i class="fa-solid fa-plus"></i> Insertar</button>
+    <button type="button" role="tab" data-pest="medir"><i class="fa-solid fa-ruler-combined"></i> Medir y cuadrícula</button>
+</div>
+<div class="ve-barra ve-barra-pest card">
+    <div class="ve-grupo" data-pan="dibujo" data-nombre="Selección">
         <?php foreach ([['select', 'Seleccionar / mover (Esc). Mayús o Ctrl + clic suma marcas; Mayús + arrastrar dibuja un recuadro'], ['multi', 'Selección múltiple: arrastra un recuadro para elegir varias formas, textos y líneas y moverlas juntas']] as [$t, $ti]) echo $tool($t, $ti); ?>
     </div>
-    <div class="ve-grupo" data-nombre="Líneas">
+    <div class="ve-grupo" data-pan="dibujo" data-nombre="Líneas">
         <?php foreach ([['line', 'Línea continua'], ['dash', 'Línea discontinua'], ['dashdot', 'Línea trazo y punto'], ['dot', 'Línea punteada'],
             ['poly', 'Polilínea: clic en cada punto, doble clic o Enter para terminar'], ['pencil', 'Lápiz (trazo libre)'], ['arrow', 'Flecha'], ['darrow', 'Flecha doble']] as [$t, $ti]) echo $tool($t, $ti); ?>
     </div>
-    <div class="ve-grupo" data-nombre="Formas">
+    <div class="ve-grupo" data-pan="dibujo" data-nombre="Formas">
         <?php foreach ([['rect', 'Rectángulo'], ['rrect', 'Rectángulo redondeado'], ['ellipse', 'Elipse / círculo'], ['triangle', 'Triángulo'], ['diamond', 'Rombo'], ['zone', 'Zona translúcida']] as [$t, $ti]) echo $tool($t, $ti); ?>
         <div class="ve-mas">
             <button type="button" id="ve-mas-formas" class="ve-mas-btn" title="Más formas" aria-label="Más formas" aria-haspopup="true" aria-expanded="false"><?php echo $svg($ic['star']); ?><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -102,30 +107,30 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     // Cambiar el fondo (Editor) o el plano (vPlan): guarda lo hecho y abre la pantalla correspondiente
     $hrefFondo = isset($grafico) && isset($q) ? '/graficos/fondo?' . $q : (isset($lamina, $proyecto) ? '/vplan/editar?proyecto=' . $proyecto->id . '&id=' . $lamina->id : '');
     if ($hrefFondo): ?>
-    <div class="ve-grupo" data-nombre="Fondo">
+    <div class="ve-grupo" data-pan="insertar" data-nombre="Fondo">
         <button type="button" id="ve-fondo" class="ve-txt" data-href="<?php echo s($hrefFondo); ?>" title="Guarda los cambios y abre la pantalla para cambiar el fondo<?php echo isset($grafico) ? ', su color o el tamaño de la lámina' : ' (reemplazar la imagen del plano)'; ?>"><?php echo $svg($ic['image']); ?> <?php echo isset($grafico) ? 'Cambiar fondo' : 'Cambiar plano'; ?></button>
     </div>
     <?php endif; ?>
-    <div class="ve-grupo" data-nombre="Texto y marcadores">
+    <div class="ve-grupo" data-pan="insertar" data-nombre="Texto y marcadores">
         <?php foreach ([['text', 'Texto'], ['table', 'Tabla: arrastra para dibujarla; doble clic en una celda para escribir (Tab pasa a la siguiente)'], ['restr', 'Rombo de restricción numerado'], ['pin', 'Círculo numerado'], ['image', 'Insertar imagen'], ['link', 'Hipervínculo: dibuja un área sobre el plano y asígnale un enlace externo o una sección del proyecto'], ['v360', 'Vista 360: carga una foto 360 (equirectangular, 2:1), dibuja el área en el plano y se abrirá como vista interactiva en View360']] as [$t, $ti]) echo $tool($t, $ti); ?>
         <button type="button" id="ve-simbolos-btn" title="Símbolos: abre la biblioteca (cámaras, extintores, simbologías, cajetines…) para insertarlos de un clic" aria-label="Insertar símbolo"><?php echo $svg('<path d="M12 3l2.6 5.600 6.100.700-4.500 4.200 1.200 6L12 16.500 6.600 19.500l1.200-6L3.300 9.300l6.100-.7z"/>'); ?></button>
         <input type="file" id="ve-archivo" accept="image/*" hidden>
         <input type="file" id="ve-archivo-360" accept="image/jpeg,image/png,image/webp" hidden>
     </div>
-    <div class="ve-grupo ve-grupo-ajustes" data-nombre="Medir">
+    <div class="ve-grupo ve-grupo-ajustes" data-pan="medir" data-nombre="Medir">
         <?php echo $tool('measure', 'Medir: traza dos puntos. La primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas'); ?>
         <span class="ve-mini text-muted" id="ve-escala-txt"></span>
         <label class="ve-mini">Unidad <select id="t-unidad" aria-label="Unidad de medida"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option><option value="in">pulgadas</option></select></label>
         <button type="button" class="btn btn-sm btn-ghost" id="ve-escala-x" title="Quita la escala; las medidas dejan de calcularse">Quitar escala</button>
     </div>
-    <div class="ve-grupo ve-grupo-ajustes" data-nombre="Cuadrícula">
+    <div class="ve-grupo ve-grupo-ajustes" data-pan="medir" data-nombre="Cuadrícula">
         <label class="ve-mini"><input type="checkbox" id="t-grid"> Cuadrícula</label>
         <label class="ve-mini" title="Los puntos que dibujas y lo que mueves saltan a la cuadrícula"><input type="checkbox" id="t-snap"> Imán</label>
         <label class="ve-mini">Cada <input type="number" id="t-grid-n" min="2" max="5000" value="50" aria-label="Separación de la cuadrícula en píxeles"> px <span id="t-grid-eq" class="text-muted"></span></label>
         <label class="ve-mini"><input type="checkbox" id="t-reglas" checked> Reglas</label>
         <label class="ve-mini" title="Muestra las guías y atrae hacia ellas lo que dibujas y mueves. Arrástralas desde las reglas"><input type="checkbox" id="t-guias" checked> Guías</label>
     </div>
-    <div class="ve-grupo ve-grupo-ajustes" data-nombre="Trazo">
+    <div class="ve-grupo ve-grupo-ajustes" data-pan="dibujo" data-nombre="Trazo">
         <div class="ve-mini">Color <input type="color" id="t-stroke" value="#111111"></div>
         <label class="ve-mini">Grosor
             <input type="range" id="t-sw-r" min="1" max="60" value="4" aria-label="Grosor de línea">
@@ -149,6 +154,20 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     </div>
 </div>
 
+<script>
+(function () {
+    var ls = 've-pestana', bar = document.querySelector('.ve-barra-pest');
+    function mostrar(p) {
+        document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
+        bar.querySelectorAll('[data-pan]').forEach(function (g) { g.hidden = g.dataset.pan !== p; });
+        try { localStorage.setItem(ls, p); } catch (e) { /* sin almacenamiento */ }
+    }
+    document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.pest); }); });
+    var g = 'dibujo'; try { g = localStorage.getItem(ls) || 'dibujo'; } catch (e) { /* idem */ }
+    if (!document.querySelector('#ve-pestanas [data-pest="' + g + '"]')) g = 'dibujo';
+    mostrar(g);
+})();
+</script>
 <div class="ve-area">
     <div id="ve-lienzo" class="ve-lienzo"><div id="ek-stage"></div><canvas id="ve-regla-h" class="ve-regla ve-regla-h"></canvas><canvas id="ve-regla-v" class="ve-regla ve-regla-v"></canvas><span id="ve-regla-esq" class="ve-regla-esq"></span><div id="ve-guias" class="ve-guias"></div></div>
     <div class="ve-lateral">

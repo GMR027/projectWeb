@@ -88,6 +88,18 @@ class SheetflowHoja extends ActiveRecord
         return $out;
     }
 
+    /** Documentos del Redactor que insertan esta hoja (`data-sf`): [id, nombre] */
+    public function usosRedactor(): array
+    {
+        $out = [];
+        try {
+            $r = self::$db->query("SELECT id, nombre FROM redactor_documentos WHERE proyecto_id = " . (int)$this->proyecto_id . " AND contenido LIKE '%data-sf=\\\"" . (int)$this->id . "\\\"%' ORDER BY nombre");
+            while ($r && ($f = $r->fetch_assoc())) $out[] = $f;
+        } catch (\Throwable $e) {   // migración pendiente
+        }
+        return $out;
+    }
+
     /** Peso del contenido de todas las tablas del proyecto (cuenta en el almacenamiento) */
     public static function bytesDe(int $proyectoId): int
     {

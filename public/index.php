@@ -260,6 +260,7 @@ $router->post('/api/vplan/documento/leer', [VplanTablaController::class, 'apiDoc
 $router->post('/api/vplan/documento/texto', [VplanTablaController::class, 'apiDocumentoTexto']);
 $router->post('/api/vplan/documento/crear', [VplanTablaController::class, 'apiDocumentoCrear']);
 $router->post('/vplan/tablas/convertir-punch', [VplanTablaController::class, 'convertirPunch']);
+$router->post('/vplan/tablas/a-sheetflow', [VplanTablaController::class, 'aSheetflow']);
 $router->post('/vplan/tablas/duplicar', [VplanTablaController::class, 'duplicar']);
 $router->post('/vplan/tablas/eliminar', [VplanTablaController::class, 'eliminar']);
 
@@ -401,6 +402,7 @@ $router->post('/api/redactor/plantilla', [RedactorController::class, 'plantilla'
 $router->post('/api/redactor/versiones', [RedactorController::class, 'versiones']);
 $router->post('/api/redactor/version', [RedactorController::class, 'version']);
 $router->post('/api/redactor/programa', [RedactorController::class, 'programa']);
+$router->post('/api/redactor/hoja', [RedactorController::class, 'hoja']);
 $router->post('/api/redactor/exportar-seleccion', [RedactorController::class, 'exportarSeleccion']);
 $router->post('/redactor/plantilla/eliminar', [RedactorController::class, 'eliminarPlantilla']);
 

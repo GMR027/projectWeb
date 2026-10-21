@@ -95,3 +95,10 @@ El editor de marcas (vPlan y Editor de gráficos, `vplan-editor.js`) ya tenía c
 ## Líneas: separación del trazo y nodos (2026-10-20)
 - `vplan-editor.js` (Editor y editor de marcas del vPlan comparten este archivo; Mapa de avance no lo carga): `dashLen`/`dashGap` por marca, en múltiplos del grosor (`DASH_BASE`, `dashMedidas`, `dashDe`); campos «Largo del trazo» y «Separación» en Propiedades cuando el estilo no es continuo. Cambiar el estilo restablece los valores por defecto.
 - **Nodos** (`pintarNodos`): con una sola línea/flecha/medida elegida salen asas en cada nodo (arrastrar = mover; doble clic = quitar, mínimo 2) y asas pequeñas en el punto medio de cada tramo (arrastrar = crear un nodo). La medida solo mueve sus extremos. Con una línea elegida el transformador ya no estira (se editan los nodos); con varias sigue igual. Probado con Electron sin ventana contra una copia de la BD.
+
+## Herramientas por pestañas (2026-10-21)
+- **Editor de marcas / Editor de gráficos** (`_editor-lienzo.php`): la barra se divide en pestañas **Dibujo** (selección, líneas, formas y estilo de trazo), **Insertar** (fondo, texto y marcadores), **Medir y cuadrícula**; deshacer/rehacer/encuadrar/autoguardar quedan siempre visibles. Cada grupo lleva `data-pan`; la pestaña activa se recuerda en `localStorage` (`ve-pestana`). Estilos `.ve-pestanas`/`.ve-barra-pest` en `_lookahead.scss`.
+- **Lámina (`/vplan/ver`)**: el encabezado solo conserva el botón de volver; debajo hay pestañas **Lámina** (modo diseño, editar marcas, datos), **Vista** (Láminas, Ampliar, zoom) y **Notas** (crear nota). Recuerda `vp-pestana`. Los ids (`vp-ampliar`, `vp-zoom-*`, `vp-nota-nueva`) no cambiaron.
+
+## Tabla inicial y SheetFlow como fuente (2026-10-21)
+- «Nueva lámina» pide opcionalmente una **tabla inicial** de SheetFlow (la partida sigue siendo opcional). Las tablas «Otro» nuevas se crean como hoja vinculada; las viejas se pasan con «Pasar a SheetFlow» (catálogo de tablas). Ver `docs/sheetflow.md`.

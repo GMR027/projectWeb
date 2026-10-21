@@ -626,6 +626,42 @@ class Sheetflow
         return $t;
     }
 
+    /** Tabla de vPlan que ya muestra esta hoja, o una nueva vinculada (nunca duplica) */
+    public static function tablaVplanDe(SheetflowHoja $h): VplanTabla
+    {
+        foreach (VplanTabla::deProyecto((int)$h->proyecto_id) as $x) if ((int)$x->sheetflow_id === (int)$h->id) return $x;
+        return self::aVplan($h);
+    }
+
+    /** Hoja nueva (vacía, o con la matriz dada: encabezados primero) para que otra herramienta la use como fuente */
+    public static function crearHoja(int $proyectoId, string $nombre, ?array $filas = null, ?int $usuarioId = null): SheetflowHoja
+    {
+        $datos = $filas ? self::deMatriz($filas) : self::vacia();
+        $h = new SheetflowHoja(['proyecto_id' => $proyectoId, 'nombre' => mb_substr(trim($nombre) ?: 'Tabla', 0, 150), 'fecha' => date('Y-m-d'), 'creado_por' => $usuarioId]);
+        $h->datos = json_encode(self::normalizar($datos), JSON_UNESCAPED_UNICODE);
+        $h->id = $h->guardar()['id'];
+        return $h;
+    }
+
+    /** Pasa una tabla «otro» de vPlan con datos propios a una hoja de SheetFlow y la vincula. Los renglones propios se conservan como respaldo */
+    public static function deTablaVplan(VplanTabla $t, ?int $usuarioId = null): ?SheetflowHoja
+    {
+        if ($t->tipo !== 'otro' || $t->sheetflow_id || $t->esPunchVista()) return null;
+        $cols = $t->columnasOtro();
+        if (!$cols) return null;
+        $filas = [$cols];
+        foreach ($t->filas() as $f) {
+            $r = [];
+            foreach (array_keys($cols) as $i) $r[] = (string)($f['c' . $i] ?? '');
+            $filas[] = $r;
+        }
+        $nombre = trim((string)$t->etiqueta()) ?: 'Tabla';
+        $h = self::crearHoja((int)$t->proyecto_id, $nombre, $filas, $usuarioId);   // los encabezados siempre traen datos
+        $t->sheetflow_id = (int)$h->id;
+        $t->guardar();
+        return $h;
+    }
+
     // ---------- Vínculos vivos ----------
 
     /** Renglones de la hoja como los lee una tabla de vPlan: claves c0..cN, máx. 200 (con la fila de totales al final) */

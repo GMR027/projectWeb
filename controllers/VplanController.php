@@ -261,7 +261,10 @@ class VplanController
                 }
                 $r = $l->guardar();
                 if (is_array($r)) $l->id = $r['id'];
-                if ($esNueva) $l->guardarSeleccion($seleccion);   // el diseño inicial (bloques) se arma con esto al abrir la lámina
+                if ($esNueva) {
+                    $l->guardarSeleccion($seleccion);   // el diseño inicial (bloques) se arma con esto al abrir la lámina
+                    if ($t = self::tablaInicial($proyecto, (string)($_POST['tabla_inicial'] ?? ''), $l->titulo)) $l->agregarTabla((int)$t->id);
+                }
                 Vplan::asegurarRestricciones($l, $proyecto);
                 header('Location: /vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id);
                 exit;
@@ -270,8 +273,24 @@ class VplanController
         $router->render('vplan/formulario', [
             'titulo' => $l->id ? 'Editar lámina' : 'Nueva lámina', 'proyecto' => $proyecto, 'lamina' => $l,
             'partidas' => $partidas, 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id), 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $partidas, $l),
+            'hojasSheetflow' => $l->id ? [] : \Model\SheetflowHoja::resumen((int)$proyecto->id),
+            'tablaInicial' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (string)($_POST['tabla_inicial'] ?? '') : (!empty($_GET['sheetflow']) ? 'sf:' . (int)$_GET['sheetflow'] : ''),
             'seleccion' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', (array)($_POST['actividades'] ?? [])) : $l->seleccion(),
         ]);
+    }
+
+    /** Tabla con la que nace una lámina: una hoja de SheetFlow ya hecha («sf:id») o una nueva en blanco («nueva»); '' = ninguna */
+    private static function tablaInicial($proyecto, string $valor, string $titulo): ?VplanTabla
+    {
+        if ($valor === 'nueva') {
+            $h = \Classes\Sheetflow::crearHoja((int)$proyecto->id, $titulo !== '' ? $titulo : 'Tabla de lámina', null, $_SESSION['id'] ?? null);
+        } elseif (preg_match('/^sf:(\d+)$/', $valor, $m)) {
+            $h = \Model\SheetflowHoja::find((int)$m[1]);
+            if (!$h || (int)$h->proyecto_id !== (int)$proyecto->id) return null;
+        } else {
+            return null;
+        }
+        return \Classes\Sheetflow::tablaVplanDe($h);
     }
 
     /**
@@ -496,8 +515,7 @@ class VplanController
         if (!$t && $l && !empty($_POST['sheetflow_id'])) {   // hoja de SheetFlow: se crea (o reutiliza) su tabla de vPlan
             $h = \Model\SheetflowHoja::find(filter_var($_POST['sheetflow_id'], FILTER_VALIDATE_INT));
             if ($h && (int)$h->proyecto_id === (int)$proyecto->id) {
-                foreach (VplanTabla::deProyecto((int)$proyecto->id) as $x) if ((int)$x->sheetflow_id === (int)$h->id) { $t = $x; break; }
-                $t ??= \Classes\Sheetflow::aVplan($h);
+                $t = \Classes\Sheetflow::tablaVplanDe($h);
             }
         }
         $ok = false;

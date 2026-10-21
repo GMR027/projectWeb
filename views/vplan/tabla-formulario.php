@@ -16,6 +16,15 @@ $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
     Columnas y renglones se leen en vivo de esa tabla; lo que edites en la lámina se escribe allá. Aquí solo cambias el título y el nombre en el catálogo.
 </div>
 <?php endif; ?>
+<?php if (!$esNueva && $tabla->tipo === 'otro' && !$tabla->sheetflow_id): ?>
+<div class="card">
+    <strong>Esta tabla guarda sus datos aquí.</strong> Pásala a SheetFlow para editarla con fórmulas, formato y exportarla a Excel; la lámina seguirá mostrándola igual.
+    <form method="POST" action="/vplan/tablas/a-sheetflow" data-confirm="¿Pasar a SheetFlow?|Se crea una hoja con estos datos y la tabla queda vinculada a ella.">
+        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($tabla->id); ?>">
+        <button type="submit" class="btn btn-sm btn-primary" style="margin-top:.8rem">Pasar a SheetFlow</button>
+    </form>
+</div>
+<?php endif; ?>
 <?php if (!$esNueva && $tabla->tipo === 'punch'): ?>
 <div class="card">
     <strong>Esta tabla es manual y no está conectada al módulo Punch.</strong> Puedes convertirla: cada renglón pasa a ser un pendiente del Punch list (la fecha «fin» es la fecha límite y el % se traduce a estado; el inicio se pierde) y la tabla muestra esos pendientes con fotos, responsable, etc.

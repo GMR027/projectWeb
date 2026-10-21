@@ -12,10 +12,25 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
         <p class="text-muted"><?php echo s($proyecto->nombre); ?><?php echo $paquete ? ' · ' . s($paquete->nombre) : ''; ?> · Hoja <?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?> mm</p>
     </div>
     <div class="vp-herr">
+        <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>
+    </div>
+</div>
+
+<div class="vp-pestanas no-print" id="vp-pestanas" role="tablist" aria-label="Pestañas de herramientas">
+    <?php if ($puedeEditar): ?><button type="button" role="tab" class="activo" data-pest="lamina"><i class="fa-solid fa-sheet-plastic"></i> Lámina</button><?php endif; ?>
+    <button type="button" role="tab" data-pest="vista"><i class="fa-regular fa-eye"></i> Vista</button>
+    <?php if ($puedeEditar): ?><button type="button" role="tab" data-pest="notas"><i class="fa-solid fa-note-sticky"></i> Notas</button><?php endif; ?>
+</div>
+<div class="vp-barra-pest no-print" id="vp-barra-pest">
+    <?php if ($puedeEditar): ?>
+    <div class="vp-herr" data-panel="lamina">
+        <?php if (!$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary"><i class="fa-solid fa-vector-square"></i> Modo diseño</a><?php endif; ?>
+        <?php if ($lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
+        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> Datos de la lámina</a>
+    </div>
+    <?php endif; ?>
+    <div class="vp-herr" data-panel="vista"<?php echo $puedeEditar ? ' hidden' : ''; ?>>
         <?php if ($conNav && !$modoDiseno): ?><button type="button" class="btn btn-ghost" data-vp-nav-toggle aria-pressed="true" title="Mostrar u ocultar las láminas para tener más espacio"><i class="fa-solid fa-table-columns"></i> Láminas</button><?php endif; ?>
-        <?php if ($puedeEditar && !$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary"><i class="fa-solid fa-vector-square"></i> Modo diseño</a><?php endif; ?>
-        <?php if ($puedeEditar && $lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
-        <?php if ($puedeEditar): ?><a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> Datos de la lámina</a><?php endif; ?>
         <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
         <div class="vp-zoom no-print" role="group" aria-label="Zoom de la lámina">
             <button type="button" class="vp-zb" id="vp-zoom-menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
@@ -24,10 +39,27 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
             <button type="button" class="btn btn-ghost" id="vp-zoom-fit" title="Ajustar la lámina al ancho disponible">Ajustar</button>
             <button type="button" class="btn btn-ghost" id="vp-zoom-real" title="Ver la lámina a su tamaño real (igual que el PDF)">Real</button>
         </div>
-        <?php if ($puedeEditar): ?><button type="button" class="btn btn-ghost" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>
-        <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>
     </div>
+    <?php if ($puedeEditar): ?>
+    <div class="vp-herr" data-panel="notas" hidden>
+        <button type="button" class="btn btn-ghost" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button>
+    </div>
+    <?php endif; ?>
 </div>
+<script>
+(function () {
+    var ls = 'vp-pestana', primera = <?php echo $puedeEditar ? "'lamina'" : "'vista'"; ?>;
+    function mostrar(p) {
+        document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
+        document.querySelectorAll('#vp-barra-pest [data-panel]').forEach(function (x) { x.hidden = x.dataset.panel !== p; });
+        try { localStorage.setItem(ls, p); } catch (e) { /* sin almacenamiento */ }
+    }
+    document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.pest); }); });
+    var g = primera; try { g = localStorage.getItem(ls) || primera; } catch (e) { /* idem */ }
+    if (!document.querySelector('#vp-pestanas [data-pest="' + g + '"]')) g = primera;
+    mostrar(g);
+})();
+</script>
 
 <?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del vPlan.</div><?php endif; ?>
 <?php if ($puedeEditar && $desactualizada): ?>

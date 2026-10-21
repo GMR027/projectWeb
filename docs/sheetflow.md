@@ -32,6 +32,12 @@ _Se lee solo al trabajar en este módulo._
 - `EnlacesLamina::destinos()` incluye las tablas (`/sheetflow/ver`).
 - Importar: `Sheetflow::importar()` (PhpSpreadsheet; csv/xlsx/ods, primera hoja, 1.ª fila = encabezados; detecta columnas numéricas; CSV en UTF-8 o Windows-1252).
 
+## SheetFlow como fuente única (2026-10-21)
+- `Sheetflow::crearHoja($proyecto, $nombre, $matriz|null, $usuario)` crea una hoja (vacía o desde una matriz con encabezado primero); `tablaVplanDe($hoja)` devuelve la tabla de vPlan que ya la muestra o crea una vinculada (nunca duplica); `deTablaVplan($tabla)` pasa una tabla «otro» con datos propios a hoja y la vincula (sus renglones viejos quedan como respaldo).
+- **vPlan:** `/vplan/crear` tiene «Tabla inicial» (ninguna, nueva en blanco o una hoja existente; `VplanController::tablaInicial`); `/vplan/crear?sheetflow=ID` la preselecciona (botón «Crear lámina vPlan con esta tabla» en SheetFlow). Las tablas «Otro» nuevas nacen ya como hoja y abren SheetFlow. `POST /vplan/tablas/a-sheetflow` (`id` o `todas=1`) convierte las existentes. `restricciones`, `secundarias`, `punch` y `punchlist` siguen siendo vistas de datos del programa.
+- **Redactor:** `POST /api/redactor/hoja` (`accion=nueva|convertir`, `filas` JSON con encabezado primero) crea la hoja y devuelve la tabla `data-sf`. En «Insertar tabla»: origen «Nueva tabla de SheetFlow (en blanco)» y casilla «Como tabla de SheetFlow» para programa/materiales/etc. (`hojaDeMatriz` en `redactor-extras.js`). Con el cursor en una tabla: «Editar en SheetFlow» (si es `data-sf`) o «Pasar a SheetFlow» (si es propia).
+- La hoja muestra dónde se usa: tablas de vPlan (`usosVplan`) y documentos del Redactor (`usosRedactor`, busca `data-sf` en el contenido).
+
 ## Tabla inteligente y tipos de captura (2026-10-20)
 - «Nueva tabla › Tabla inteligente»: constructor guiado (nombre, tipo y color de encabezado por columna, mover, renglones iniciales) → `Sheetflow::inteligente()`; el color va en `fmt["-1,col"].bg`.
 - Tipos nuevos: `lista` (`cols[].op`, máx. 20 opciones; se editan en Datos › Columna), `casilla` (guarda `1`/vacío; se muestra ✔) y `semaforo` (`verde|amarillo|rojo`; se muestra Verde/Amarillo/Rojo). `Sheetflow::normalizarValor` y `valorEspecial()` (JS) deben coincidir; `formatear` en PHP y JS también.

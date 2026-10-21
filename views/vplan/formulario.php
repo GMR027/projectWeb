@@ -30,6 +30,17 @@
                 <p class="text-sm" id="vp-acts-resumen" aria-live="polite"></p>
                 <div id="vp-acts-lista" class="vp-acts-lista"></div>
             </div>
+            <div class="campo" style="grid-column:1/-1">
+                <label for="tabla_inicial">Tabla inicial (SheetFlow)</label>
+                <select id="tabla_inicial" name="tabla_inicial">
+                    <option value="">— Ninguna —</option>
+                    <option value="nueva"<?php echo $tablaInicial === 'nueva' ? ' selected' : ''; ?>>Nueva tabla en blanco</option>
+                    <?php if ($hojasSheetflow): ?><optgroup label="Hojas de SheetFlow existentes">
+                        <?php foreach ($hojasSheetflow as $h): ?><option value="sf:<?php echo (int)$h['id']; ?>"<?php echo $tablaInicial === 'sf:' . $h['id'] ? ' selected' : ''; ?>><?php echo s($h['nombre'] . ' (' . $h['filas'] . ' renglones, ' . $h['cols'] . ' col.)'); ?></option><?php endforeach; ?>
+                    </optgroup><?php endif; ?>
+                </select>
+                <small class="text-muted">La tabla se edita en SheetFlow y se ve igual aquí. ¿Tienes un documento (Excel, Word, PDF)? Después usa «Tabla en base a documento» en el vPlan.</small>
+            </div>
             <?php endif; ?>
             <div class="campo" style="grid-column:1/-1">
                 <label for="preset">Tamaño de la hoja</label>

@@ -201,43 +201,86 @@
         R.insertarEnRaiz('<table style="' + TABLA_ANCHO + ';border-collapse:collapse"><tbody><tr>' + cabeza.map(function (c) { return th(esc(c)); }).join('') + '</tr>' + filas + '</tbody></table><p><br></p>');
     }
     /** Programa: todas las partidas, o solo la de id `pid`; `soloPartidas` omite las actividades */
-    function tablaPrograma(pid, soloPartidas) {
+    function tablaPrograma(pid, soloPartidas, comoHoja) {
         estado('Cargando el programa…');
         return post(C.api.programa).then(function (d) {
             var datos = d.success ? d.filas.filter(function (f) { return !pid || String(f.pid) === String(pid); }) : [];
             if (!d.success || !datos.length) { estado(d.success ? 'No hay partidas que insertar' : (d.error || 'No se pudo leer el programa'), true); return false; }
-            var vistas = {}, filas = '';
+            var vistas = {}, filas = '', mat = [['Código', 'Nombre', 'Inicio', 'Fin', 'Días', 'Avance']];
             datos.forEach(function (f) {
                 if (!vistas[f.pid]) {
                     vistas[f.pid] = true;
                     var ps = datos.filter(function (x) { return x.pid === f.pid && x.nombre; });
                     var ini = ps.length ? ps.map(function (x) { return x.fecha_inicio; }).sort()[0] : '', fin = ps.length ? ps.map(function (x) { return x.fecha_fin; }).sort().pop() : '';
                     var prom = ps.length ? Math.round(ps.reduce(function (a, x) { return a + (+x.progreso || 0); }, 0) / ps.length) + '%' : '';
+                    mat.push([f.pcodigo, f.pnombre, fechaDmy(ini), fechaDmy(fin), '', prom]);
                     filas += '<tr>' + ['<strong>' + esc(f.pcodigo) + '</strong>', '<strong>' + esc(f.pnombre) + '</strong>', fechaDmy(ini), fechaDmy(fin), '', prom].map(function (c) { return td(c, ';background-color:#e2e8f0'); }).join('') + '</tr>';
                 }
+                if (!soloPartidas && f.nombre) mat.push([f.codigo, f.nombre, fechaDmy(f.fecha_inicio), fechaDmy(f.fecha_fin), String(f.duracion_dias == null ? '' : f.duracion_dias), (+f.progreso || 0) + '%']);
                 if (!soloPartidas && f.nombre) filas += '<tr>' + [esc(f.codigo), esc(f.nombre), fechaDmy(f.fecha_inicio), fechaDmy(f.fecha_fin), esc(f.duracion_dias), (+f.progreso || 0) + '%'].map(function (c) { return td(c); }).join('') + '</tr>';
             });
-            insertarTabla(['Código', 'Nombre', 'Inicio', 'Fin', 'Días', 'Avance'], filas);
+            if (comoHoja) return hojaDeMatriz(mat, soloPartidas ? 'Partidas' : 'Programa');
+            insertarTabla(mat[0], filas);
             return true;
         });
     }
-    function tablaAdicional(tipo) {
+    /** Crea una hoja de SheetFlow con la matriz (encabezado primero) e inserta su tabla vinculada */
+    function hojaDeMatriz(mat, nombre) {
+        estado('Creando la tabla en SheetFlow…');
+        return post(C.api.hoja, { accion: 'convertir', filas: JSON.stringify(mat), nombre: nombre }).then(function (d) {
+            if (!d.success) { estado(d.error || 'No se pudo crear la tabla en SheetFlow', true); return false; }
+            R.restaurarSeleccion(); R.insertarEnRaiz(d.html + '<p><br></p>');
+            return true;
+        });
+    }
+    function tablaAdicional(tipo, comoHoja) {
         estado('Cargando la tabla…');
         return post(C.api.programa, { tabla: tipo }).then(function (d) {
             if (!d.success || !d.filas.length) { estado(d.success ? 'No hay datos para esa tabla' : (d.error || 'No se pudo leer la tabla'), true); return false; }
             if (d.html) { R.restaurarSeleccion(); R.insertarEnRaiz(d.html + '<p><br></p>'); return true; }
+            if (comoHoja) return hojaDeMatriz([d.columnas].concat(d.filas), tipo.charAt(0).toUpperCase() + tipo.slice(1));
             insertarTabla(d.columnas, d.filas.map(function (f) { return '<tr>' + f.map(function (c) { return td(esc(c)); }).join('') + '</tr>'; }).join(''));
             return true;
         });
     }
     /** Desde «Insertar tabla»: origen = id de partida, @programa, @partidas, @materiales, @restricciones o @festivos */
-    R.tablaOrigen = function (origen, ancho) {
+    R.tablaOrigen = function (origen, ancho, enc, comoHoja) {
         if (origen === '@punchvista') { abrirPunch(null); return; }
         TABLA_ANCHO = 'width:' + ancho;
-        var ok = origen === '@programa' ? tablaPrograma(0, false) : origen === '@partidas' ? tablaPrograma(0, true)
-            : origen.charAt(0) === '@' ? tablaAdicional(origen.slice(1)) : tablaPrograma(origen, false);
+        var ok;
+        if (origen === '@sfnueva') {
+            estado('Creando la tabla en SheetFlow…');
+            ok = post(C.api.hoja, { accion: 'nueva' }).then(function (d) {
+                if (!d.success) { estado(d.error || 'No se pudo crear la tabla', true); return false; }
+                R.restaurarSeleccion(); R.insertarEnRaiz(d.html + '<p><br></p>');
+                window.open(d.url, '_blank', 'noopener');
+                return true;
+            });
+        } else {
+            ok = origen === '@programa' ? tablaPrograma(0, false, comoHoja) : origen === '@partidas' ? tablaPrograma(0, true, comoHoja)
+                : origen.charAt(0) === '@' ? tablaAdicional(origen.slice(1), comoHoja) : tablaPrograma(origen, false, comoHoja);
+        }
         ok.then(function (hecho) { if (hecho) estado('Tabla insertada'); }).catch(function () { estado('Sin conexión: no se pudo leer la tabla', true); });
     };
+    // ---- Tablas de SheetFlow dentro del documento ----
+    boton('rd-x-sf-abrir', function () {
+        R.restaurarSeleccion();
+        var c = R.celdaActual(), t = c && c.closest('table');
+        if (!t || !t.hasAttribute('data-sf')) { estado('Coloca el cursor en una tabla de SheetFlow', true); return; }
+        window.open('/sheetflow/abrir?proyecto=' + C.proyecto + '&id=' + encodeURIComponent(t.getAttribute('data-sf')), '_blank', 'noopener');
+        estado('Se abrió en otra pestaña; al terminar, vuelve a abrir o exporta el documento para ver los cambios');
+    });
+    boton('rd-x-sf-conv', function () {
+        R.restaurarSeleccion();
+        var c = R.celdaActual(), t = c && c.closest('table');
+        if (!t || t.hasAttribute('data-sf') || t.hasAttribute('data-punch')) { estado('Coloca el cursor en una tabla propia del documento', true); return; }
+        var mat = Array.prototype.map.call(t.rows, function (f) { return Array.prototype.map.call(f.cells, function (x) { return x.textContent.replace(/\s+/g, ' ').trim(); }); });
+        estado('Creando la tabla en SheetFlow…');
+        post(C.api.hoja, { accion: 'convertir', filas: JSON.stringify(mat), nombre: 'Tabla del documento' }).then(function (d) {
+            if (!d.success) { estado(d.error || 'No se pudo pasar a SheetFlow', true); return; }
+            t.outerHTML = d.html; R.marcarSucio(); estado('Tabla pasada a SheetFlow: ahora se edita allá');
+        }).catch(function () { estado('Sin conexión: no se pudo crear la tabla', true); });
+    });
     // ---- Punch list con elección de columnas (tabla data-punch: se refresca sola) ----
     var punchTabla = null;
     function cfgPunchDeAtributo(v) { try { return JSON.parse(decodeURIComponent(escape(atob(v.replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return null; } }
@@ -289,7 +332,7 @@
     $('rd-x-programa').addEventListener('click', function () { if (!$('rd-p-programa').hidden) cargarPartidas(); });
     $('rd-t-origen').addEventListener('change', function () { $('rd-t-medidas').hidden = !!this.value; });
     boton('rd-x-prog-ok', function () {
-        R.tablaOrigen($('rd-x-prog-origen').value, '100%');
+        R.tablaOrigen($('rd-x-prog-origen').value, '100%', true, !!$('rd-x-prog-sf').checked);
         $('rd-p-programa').hidden = true;
     });
     TABLA_ANCHO = 'width:100%';

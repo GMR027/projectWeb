@@ -10,6 +10,17 @@
     </div>
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>
+<?php $sueltas = array_filter($tablas, fn($t) => $t->tipo === 'otro' && !$t->sheetflow_id); ?>
+<?php if (isset($_GET['convertidas'])): ?><div class="card"><i class="fa-solid fa-circle-check"></i> Se pasaron <?php echo (int)$_GET['convertidas']; ?> tabla(s) a SheetFlow.</div><?php endif; ?>
+<?php if ($sueltas): ?>
+<div class="card">
+    <form method="POST" action="/vplan/tablas/a-sheetflow" class="vp-dis-fila" data-confirm="¿Pasar a SheetFlow?|Cada tabla «Otro» con datos propios se convierte en una hoja vinculada. Los datos viejos se conservan como respaldo.">
+        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="todas" value="1">
+        <span><i class="fa-solid fa-table-cells"></i> <strong><?php echo count($sueltas); ?> tabla(s) «Otro» guardan sus datos aquí.</strong></span>
+        <button type="submit" class="btn btn-sm btn-primary">Pasarlas todas a SheetFlow</button>
+    </form>
+</div>
+<?php endif; ?>
 <?php if (!empty($hojasSheetflow)): ?>
 <div class="card">
     <form method="POST" action="/sheetflow/a-vplan" class="vp-dis-fila">

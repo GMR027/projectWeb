@@ -183,6 +183,8 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <label class="rd-opc" title="Alto mínimo de cada fila">Fila <input type="number" id="rd-ta-h" min="0" step="any" style="width:6rem"></label>
         <select id="rd-ta-un" aria-label="Unidad de la tabla"><option value="cm">cm</option><option value="mm">mm</option><option value="px">px</option><option value="%">%</option></select>
         <button type="button" class="rd-b" id="rd-x-punch-cfg" data-x-tabla="punch" title="Cambiar qué columnas y qué pendientes muestra esta tabla del Punch list" hidden><i class="fa-solid fa-eye"></i> Qué ver</button>
+        <button type="button" class="rd-b" id="rd-x-sf-abrir" title="Abrir esta tabla en SheetFlow para editarla (aquí se actualiza al abrir, ver y exportar)" hidden><i class="fa-solid fa-table-cells"></i> Editar en SheetFlow</button>
+        <button type="button" class="rd-b" id="rd-x-sf-conv" title="Crear una tabla de SheetFlow con estos datos y reemplazar esta tabla por ella" hidden><i class="fa-solid fa-right-to-bracket"></i> Pasar a SheetFlow</button>
         <button type="button" class="rd-b" data-tabla="borrar" title="Eliminar tabla"><i class="fa-solid fa-trash-can"></i></button>
     </div>
 </div>
@@ -204,12 +206,14 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
             <option value="@ordenes">Órdenes de cambio</option>
             <option value="@bitacora">Bitácora</option>
         </optgroup>
+        <optgroup label="SheetFlow"><option value="@sfnueva">Nueva tabla de SheetFlow (en blanco)</option></optgroup>
         <?php if (!empty($hojasSheetflow)): ?><optgroup label="Tablas de SheetFlow"><?php foreach ($hojasSheetflow as $h): ?><option value="@sf:<?php echo (int)$h['id']; ?>"><?php echo s($h['nombre']); ?></option><?php endforeach; ?></optgroup><?php endif; ?>
     </select></label>
     <span id="rd-t-medidas" class="rd-t-medidas">
     <label>Filas <input type="number" id="rd-t-filas" min="1" max="50" value="3"></label>
     <label>Columnas <input type="number" id="rd-t-cols" min="1" max="12" value="3"></label>
     <label><input type="checkbox" id="rd-t-enc" checked> Primera fila de encabezado</label>
+    <label title="Crea la tabla en SheetFlow: se edita allá y aquí se actualiza sola"><input type="checkbox" id="rd-t-sfcomo"> Como tabla de SheetFlow</label>
     </span>
     <label>Ancho <input type="number" id="rd-t-ancho" min="1" step="any" placeholder="100%"></label>
     <select id="rd-t-un" aria-label="Unidad"><option value="%">%</option><option value="cm">cm</option><option value="mm">mm</option><option value="px">px</option></select>
@@ -378,6 +382,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         </optgroup>
         <?php if (!empty($hojasSheetflow)): ?><optgroup label="Tablas de SheetFlow"><?php foreach ($hojasSheetflow as $h): ?><option value="@sf:<?php echo (int)$h['id']; ?>"><?php echo s($h['nombre']); ?></option><?php endforeach; ?></optgroup><?php endif; ?>
     </select></label>
+    <label title="Crea la tabla en SheetFlow: se edita allá y aquí se actualiza sola"><input type="checkbox" id="rd-x-prog-sf"> Como tabla de SheetFlow</label>
     <button type="button" class="btn btn-sm btn-primary" id="rd-x-prog-ok">Insertar</button>
     <span class="text-sm text-muted">Toma los datos tal como están ahora; no se actualizan solos.</span>
 </div>

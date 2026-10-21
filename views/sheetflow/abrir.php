@@ -175,11 +175,12 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <ul class="sf-lista-usos">
         <li><strong>vPlan:</strong>
             <form method="POST" action="/sheetflow/a-vplan" style="display:inline" data-sf-guardar><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en vPlan</button></form>
+            <a class="btn btn-sm btn-ghost" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hoja->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Crear lámina vPlan con esta tabla</a>
             <?php foreach ($usos as $u): ?>
                 <form method="POST" action="/sheetflow/a-vplan" style="display:inline" data-sf-guardar><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><input type="hidden" name="tabla" value="<?php echo (int)$u['id']; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-rotate"></i> Vinculada: «<?php echo s($u['titulo']); ?>» (<?php echo (int)$u['laminas']; ?> lámina<?php echo (int)$u['laminas'] === 1 ? '' : 's'; ?>)</button></form>
             <?php endforeach; ?></li>
         <li><strong>Editor:</strong> panel <em>Símbolos</em> de un gráfico → «Tablas de SheetFlow».</li>
-        <li><strong>Redactor:</strong> <em>Insertar › Tabla › Origen › Tablas de SheetFlow</em>.</li>
+        <li><strong>Redactor:</strong> <em>Insertar › Tabla › Origen › SheetFlow</em>.<?php foreach ($redactor as $d): ?> <a class="btn btn-sm btn-ghost" href="/redactor/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&amp;id=<?php echo (int)$d['id']; ?>"><i class="fa-solid fa-file-lines"></i> Usada en «<?php echo s($d['nombre']); ?>»</a><?php endforeach; ?></li>
     </ul>
 </div>
 <script>window.SF_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>

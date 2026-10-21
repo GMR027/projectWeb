@@ -57,6 +57,10 @@
         var celda = celdaActual();
         $('rd-tabla-op').hidden = !celda;
         if (celda && $('rd-x-punch-cfg')) $('rd-x-punch-cfg').hidden = !celda.closest('table').hasAttribute('data-punch');
+        if ($('rd-x-sf-abrir')) {
+            var tb = celda && celda.closest('table'), vinc = !!tb && tb.hasAttribute('data-sf'), propia = !!tb && !vinc && !tb.hasAttribute('data-punch');
+            $('rd-x-sf-abrir').hidden = !vinc; $('rd-x-sf-conv').hidden = !propia;
+        }
         if (celda) mostrarTamanoTabla(celda.closest('table'));
         var bloque = bloqueActual();
         if (bloque) { var t = bloque.tagName.toLowerCase(); $('rd-estilo').value = ['h1', 'h2', 'h3', 'h4', 'blockquote', 'pre'].indexOf(t) >= 0 ? t : 'p'; }
@@ -141,7 +145,7 @@
         var origen = $('rd-t-origen').value;
         if (origen) {
             if (!window.RD || !RD.tablaOrigen) { estado('La tabla del programa no está disponible', true); return; }
-            RD.tablaOrigen(origen, anchoTablaCss(), $('rd-t-enc').checked); $('rd-p-tabla').hidden = true; return;
+            RD.tablaOrigen(origen, anchoTablaCss(), $('rd-t-enc').checked, !!($('rd-t-sfcomo') && $('rd-t-sfcomo').checked)); $('rd-p-tabla').hidden = true; return;
         }
         var f = Math.max(1, Math.min(50, +$('rd-t-filas').value || 3)), c = Math.max(1, Math.min(12, +$('rd-t-cols').value || 3)), enc = $('rd-t-enc').checked;
         var celda = function (t) { return '<' + t + ' style="border:1px solid #888888"><br></' + t + '>'; };

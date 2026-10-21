@@ -31,3 +31,5 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 
 ## Editor
 - Forma `table` con `punch: cfg` (`tablaDePunch`, `refrescarPunch` en `vplan-editor.js`): panel «Punch list» en la pestaña Símbolos y botón «Qué ver» en las propiedades de la tabla. `POST /api/graficos/punch` (`EditorController::datosPunch`) devuelve columnas y renglones; las fotos (máx. 20 por tabla) vienen como `fotos: [renglón, columna, src, ancho, alto]` con miniaturas `/uploads/punch/min/…` (el resto de las celdas con foto dicen «Sí»). El cliente las coloca como imágenes `punchFoto` agrupadas (`grp`) con la tabla, que sube el alto de esos renglones; `reemplazarPunch` renueva tabla y fotos al reconfigurar o al abrir (la rotación de la tabla se reinicia). `EditorController::guardarMarcas` acepta esas rutas. Se actualiza al abrir el gráfico y queda sin guardar hasta que se guarde.
+
+- **Tablas de SheetFlow (2026-10-21):** «Insertar tabla» ofrece «Nueva tabla de SheetFlow», la casilla «Como tabla de SheetFlow» para las tablas de datos y, con el cursor en una tabla, «Editar en SheetFlow» / «Pasar a SheetFlow» (`POST /api/redactor/hoja`). Detalle en `docs/sheetflow.md`.

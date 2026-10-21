@@ -341,6 +341,10 @@ $vp-rojo: #dc2626;
 // ============================================================
 // Editor de marcas (Konva)
 // ============================================================
+.ve-pestanas { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
+  button { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; i { margin-right: .5rem; }
+    &:hover { color: var(--text); background: var(--surface-hover); } &.activo { background: var(--surface); border-color: var(--border); color: var(--primary); font-weight: 600; } } }
+.ve-barra-pest { margin-top: 0 !important; border-top-left-radius: 0 !important; [data-pan][hidden] { display: none; } }
 .ve-barra { display: flex; flex-wrap: wrap; gap: 1rem 1.4rem; align-items: stretch; padding: 1rem 1.2rem; position: relative; overflow: visible;
   // Cada grupo es una «píldora» con su nombre pequeño debajo
   .ve-grupo { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; padding: .4rem .5rem 1.6rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 1rem; position: relative;

@@ -92,7 +92,7 @@ class SheetflowController
         $router->render('sheetflow/abrir', [
             'titulo' => 'SheetFlow - ' . $h->nombre, 'proyecto' => $proyecto, 'hoja' => $h,
             'departamentos' => SheetflowHoja::departamentos((int)$proyecto->id),
-            'usos' => $h->usosVplan(),
+            'usos' => $h->usosVplan(), 'redactor' => $h->usosRedactor(),
             'config' => [
                 'id' => (int)$h->id, 'proyecto' => (int)$proyecto->id, 'version' => (string)$h->actualizado, 'datos' => $h->contenido(),
                 'max' => ['cols' => Sheetflow::MAX_COLS, 'filas' => Sheetflow::MAX_FILAS],
@@ -114,6 +114,7 @@ class SheetflowController
             'titulo' => 'SheetFlow - ' . $h->nombre, 'proyecto' => $proyecto, 'hoja' => $h, 'tabla' => Sheetflow::html($h),
             'puedeEditar' => puede_gestionar_proyecto($proyecto), 'puedeDescargar' => puede_descargar(),
             'vplan' => puede_gestionar_proyecto($proyecto) ? $h->usosVplan() : [],
+            'redactor' => puede_gestionar_proyecto($proyecto) ? $h->usosRedactor() : [],
         ]);
     }
 

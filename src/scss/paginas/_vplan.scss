@@ -26,6 +26,11 @@
 .vp-paginas .btn-sm { height: 3.4rem; }
 
 // ---------- Cabecera de la lámina ----------
+.vp-pestanas { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
+  button { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; i { margin-right: .5rem; }
+    &:hover { color: var(--text); background: var(--surface-hover); } &.activo { background: var(--surface); border-color: var(--border); color: var(--primary); font-weight: 600; } } }
+.vp-barra-pest { margin: 0 0 1.2rem; padding: .8rem 1rem; background: var(--surface); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 .8rem .8rem; box-shadow: var(--shadow); }
+.vp-herr[hidden] { display: none; }
 .vp-herr { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; .btn { height: 3.8rem; } }
 
 // ---------- Zoom de la lámina (100 % = tamaño real, como el PDF) ----------
