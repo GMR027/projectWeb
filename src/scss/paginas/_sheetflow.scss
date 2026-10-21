@@ -40,7 +40,9 @@
   .sf-input { width: 100%; min-width: 8rem; margin: -.3rem 0; padding: .3rem .4rem; border: 2px solid var(--primary); border-radius: .3rem; background: var(--surface); color: var(--text); font: inherit; user-select: text; }
   &.sf-sin-bordes td { border-right-color: transparent; } }
 .sf-ayuda code { font-family: 'Fira Code', monospace; }
-.sf-ver .sf-tabla { font-size: 1.3rem; }
+.sf-ver .tabla-wrapper { container-type: inline-size; overflow-x: auto; }
+// La letra de la tabla sigue el ancho disponible (no se ve diminuta en pantallas grandes ni desborda en las chicas)
+.sf-ver .sf-tabla { font-size: clamp(1.1rem, 1.5cqw, 4rem); overflow-wrap: anywhere; th, td { padding: .35em .6em !important; } }
 .sf-usos { margin-top: 1.6rem; .sf-lista-usos { margin: .6rem 0 0 1.4rem; display: grid; gap: .8rem; line-height: 1.6; } }
 
 .sf-estadistica { min-height: 2.2rem; margin: .6rem .4rem 0; font-size: 1.2rem; color: var(--text-muted); font-family: 'Fira Code', monospace; }

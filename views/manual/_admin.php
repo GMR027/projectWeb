@@ -5,6 +5,51 @@ $admin = ['admin'];
 
 return [
 
+['id' => 'novedades', 'despues' => 'primeros-pasos', 'titulo' => 'Novedades de la plataforma', 'icono' => 'fa-wand-magic-sparkles', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Un repaso de lo más reciente que ha ganado ProjectWeb, con el enlace a la sección del manual donde se explica cada cosa. Lo verás siempre al día: cuando se agrega una herramienta, se documenta aquí.</p>
+<h4>Octubre 2026</h4>
+<table class="tabla manual-tabla">
+<thead><tr><th>Novedad</th><th>Qué cambia para ti</th></tr></thead>
+<tbody>
+<tr><td><strong>Tablas que se adaptan</strong><br><small><a href="#sheetflow">SheetFlow</a> · <a href="#vplan">vPlan</a> · <a href="#editor">Editor</a></small></td><td>El texto de las tablas se ajusta al tamaño: <strong>crece o se reduce</strong> con el bloque del vPlan, con las asas del Editor y con el ancho de la pantalla. Se acabaron las letras diminutas en una tabla grande.</td></tr>
+<tr><td><strong>Todo en tiempo real</strong><br><small><a href="#sheetflow">SheetFlow</a></small></td><td>Si cambias una tabla en SheetFlow o desde una lámina, el vPlan, la vista de la tabla y el Editor <strong>se actualizan solos</strong>, sin recargar a mano.</td></tr>
+<tr><td><strong>Tabla inteligente</strong><br><small><a href="#sheetflow">SheetFlow</a></small></td><td>Constructor guiado con columnas de tipo <em>lista</em>, <em>casilla</em> y <em>semáforo</em>, y color de encabezado por columna. Funcionan también al editar desde el vPlan.</td></tr>
+<tr><td><strong>Punch list conectado</strong><br><small><a href="#punch">Punch list</a></small></td><td>Inserta tus pendientes como tabla en el <strong>vPlan, el Redactor y el Editor</strong>, eligiendo columnas, fotos antes/después y filtros. Se actualiza con el módulo.</td></tr>
+<tr><td><strong>Estampas inteligentes y cajetines</strong><br><small><a href="#simbolos">Símbolos</a> · <a href="#lastplanner">Last Planner</a></small></td><td>Bloques cuyas etiquetas se llenan solas con datos del proyecto (avance, fechas, semáforos, actividades del día), con editor visual. Hay plantilla de <strong>post-it de Last Planner</strong> y <strong>encabezados dinámicos</strong> para el MSR y el Lookahead.</td></tr>
+<tr><td><strong>vPlan de láminas libres</strong><br><small><a href="#vplan">vPlan</a></small></td><td>Cada lámina es una hoja de cualquier tamaño donde colocas bloques (plano, tablas, recovery, simbología, texto) con <strong>capas, guías y rejilla</strong>. Varios vPlan por proyecto, navegador de láminas y PDF por lámina.</td></tr>
+<tr><td><strong>Lookahead configurable</strong><br><small><a href="#lookahead">Lookahead</a></small></td><td>Nombre de la herramienta, columna PTA, título del banner y encabezado con logos a tu medida, de 1 a 8 semanas visibles.</td></tr>
+<tr><td><strong>Editor más preciso</strong><br><small><a href="#editor">Editor</a></small></td><td>Líneas con largo y separación del trazo, <strong>nodos editables</strong> y símbolos o simbologías que se actualizan solos al cambiar su origen.</td></tr>
+<tr><td><strong>Programa más ágil</strong><br><small><a href="#programa">Programa de obra</a></small></td><td>Seleccionar varias partidas o actividades para eliminarlas en lote, avance editable en línea y avance inicial al crear actividades. Las restricciones se pueden editar.</td></tr>
+</tbody>
+</table>
+<h4>Meses anteriores</h4>
+<ul>
+<li><strong><a href="#ensamblador-documentos">Ensamblador de documentos</a></strong>: un PDF que une documentos del Redactor y PDF del Archivo y se actualiza solo cuando cambian.</li>
+<li><strong><a href="#traductor">Traductor</a></strong> español ↔ inglés de textos y documentos.</li>
+<li><strong><a href="#sheetflow">SheetFlow</a></strong>: fórmulas, formato por celda, bordes, imágenes, importación de Excel/CSV y archivo propio <code>.sheetflow</code>.</li>
+<li><strong><a href="#cambios">Órdenes de cambio</a> y <a href="#lineas-base">líneas base</a></strong>: cada desviación con su impacto y su causa; comparación con barra «fantasma».</li>
+<li><strong><a href="#datos-obra">Datos de obra</a></strong>, <strong><a href="#normativa">Normativa y especificaciones</a></strong> y <strong><a href="#tipo-obra">Tipo de obra y Mapa de avance</a></strong>.</li>
+<li><strong><a href="#dependencias">Dependencias y ruta crítica</a></strong>, <strong>Curva S</strong>, <strong><a href="#msr">MSR configurable</a></strong> (columnas, nombre y color a tu gusto), <strong><a href="#view360">View360</a></strong> y <strong>carpetas por departamento</strong>.</li>
+</ul>
+<p class="manual-nota">¿Te falta algo? Escríbenos desde <em>Soporte</em> (si eres cliente) o desde el formulario de contacto de la página principal.</p>
+HTML],
+
+['id' => 'novedades-admin', 'despues' => 'novedades', 'titulo' => 'Novedades para el administrador', 'icono' => 'fa-user-shield', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Además de lo que ve cualquier usuario (sección anterior), estas son las novedades que solo ve el administrador.</p>
+<table class="tabla manual-tabla">
+<thead><tr><th>Novedad</th><th>Qué cambia para ti</th></tr></thead>
+<tbody>
+<tr><td><strong>App de escritorio 0.3.4</strong><br><small><a href="#escritorio">App de escritorio</a></small></td><td>Engranaje de Ajustes en la propia app, campana de actualizaciones (sin pedir token), reconocimiento de texto (OCR) en documentos escaneados y arreglo del inicio de sesión. Las llaves de la IA siguen cifradas en tu equipo.</td></tr>
+<tr><td><strong>Centro de IA</strong><br><small><a href="#centro-ia">Centro de IA</a></small></td><td>Un lugar para revisar, aplicar o rechazar las propuestas de todas las herramientas de IA, con auditoría de cada decisión. <strong>Nada cambia en tus datos sin que lo aceptes.</strong></td></tr>
+<tr><td><strong>Programador, Inconsistencias y Materiales</strong><br><small><a href="#programador-ia">Programador</a> · <a href="#inconsistencias">Inconsistencias</a> · <a href="#analisis-materiales">Materiales</a></small></td><td>La IA arma actividades, detecta fechas que no cuadran, datos duplicados o incompletos, y cruza materiales contra el cronograma. Tú decides qué se aplica.</td></tr>
+<tr><td><strong>Ensamblador con IA</strong><br><small><a href="#ensamblador">Ensamblador</a></small></td><td>Convierte PDF, PPTX o DOCX en partidas, materiales y submittals. Distinto del Ensamblador de documentos (que une PDF).</td></tr>
+<tr><td><strong>Ordenar y renumerar</strong><br><small><a href="#ordenar">Ordenar y renumerar</a></small></td><td>Reordena el programa por fechas y renumera la EDT sin IA, con vista previa.</td></tr>
+<tr><td><strong>Revisiones</strong><br><small><a href="#revisiones">Revisiones</a></small></td><td>Semáforo ✅ ⚠ ❌ por proyecto y estado de uso de cada herramienta para saber qué falta por capturar.</td></tr>
+<tr><td><strong>Seguridad y operación</strong><br><small><a href="#sistema">Ajustes del sistema</a> · <a href="#seguridad">Seguridad</a></small></td><td>Subidas de imagen validadas por su tipo real, IP del visitante detrás del proxy, copia opcional de cada respaldo automático fuera del volumen de datos y PHP desactivado en las carpetas de archivos subidos.</td></tr>
+</tbody>
+</table>
+HTML],
+
 ['id' => 'admin-guia', 'despues' => 'primeros-pasos', 'titulo' => 'Guía del administrador', 'icono' => 'fa-user-shield', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Esta guía resume lo que hace el administrador y en qué orden. Cada tema tiene su propia sección más abajo, con ilustraciones; los números de los globos naranja de cada imagen se explican en el texto.</p>
 [[fig:pantalla]]

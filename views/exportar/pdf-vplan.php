@@ -129,10 +129,12 @@ foreach ($paginas as $pi => $d):
             } else {
                 $bt = $d['tablasPorId'][(int)($cfg['tabla_id'] ?? 0)] ?? null;
                 if (!$bt) break;
-                $idx = \Classes\VplanDiseno::escalaTabla($l, $b, $bt);
+                [$fz, $pz] = \Classes\VplanDiseno::medidasTabla($l, $b, $bt, (int)($d['extra'] ?? 0));
             }
-            $idx = min(count(\Classes\VplanDiseno::ESCALAS) - 1, $idx + (int)($d['extra'] ?? 0));
-            [, $fz, $pz] = \Classes\VplanDiseno::ESCALAS[$idx];
+            if ($b->tipo === 'tareas') {
+                $idx = min(count(\Classes\VplanDiseno::ESCALAS) - 1, $idx + (int)($d['extra'] ?? 0));
+                [, $fz, $pz] = \Classes\VplanDiseno::ESCALAS[$idx];
+            }
             $fs = round($fz * $K, 2); $pv = round($pz * $K, 2); $ph = round($pz * $K * 1.8 + 0.5, 2);
             ?>
             <style>.bk<?php echo $pi . '_' . $bi; ?> .t th, .bk<?php echo $pi . '_' . $bi; ?> .t td { padding: <?php echo $pv; ?>pt <?php echo $ph; ?>pt; }<?php if ($b->tipo === 'tareas'): ?> .bk<?php echo $pi . '_' . $bi; ?> th { background: <?php echo s($td['color'][0]); ?>; color: <?php echo s($td['color'][1]); ?>; }<?php endif; ?></style>

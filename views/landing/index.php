@@ -34,6 +34,16 @@ $tour = [
 ];
 // Solo se muestran las pestañas cuya captura ya existe
 $tour = array_values(array_filter($tour, fn($t) => is_file(__DIR__ . '/../../public/build/img/landing/tour-' . $t[0] . '.jpg')));
+$novedades = [
+    ['fa-up-right-and-down-left-from-center', 'Tablas que se adaptan a cualquier tamaño', 'El texto de las tablas crece o se reduce con el bloque de la lámina, el gráfico o la pantalla: nunca más letras diminutas.', 'Oct 2026'],
+    ['fa-arrows-rotate', 'Datos en tiempo real', 'Cambias una tabla en un lugar y las láminas, los gráficos y las vistas se actualizan solos.', 'Oct 2026'],
+    ['fa-wand-magic-sparkles', 'Tablas inteligentes', 'Columnas de lista, casilla y semáforo, editables también desde el vPlan.', 'Oct 2026'],
+    ['fa-clipboard-check', 'Punch list conectado', 'Insértalo como tabla en vPlan, Redactor y Editor, con fotos antes y después.', 'Oct 2026'],
+    ['fa-stamp', 'Estampas inteligentes', 'Post-its de Last Planner y cajetines que se llenan solos con los datos del proyecto.', 'Oct 2026'],
+    ['fa-layer-group', 'vPlan de láminas libres', 'Bloques con capas, guías y rejilla, varios tamaños de hoja y PDF por lámina.', 'Oct 2026'],
+    ['fa-binoculars', 'Lookahead configurable', 'Encabezado con logos, nombres de columnas y de 1 a 8 semanas visibles.', 'Oct 2026'],
+    ['fa-pen-ruler', 'Editor más preciso', 'Nodos editables en líneas, trazos a medida y símbolos que se actualizan solos.', 'Oct 2026'],
+];
 $funciones = [
     ['fa-chart-gantt', 'Programa y Gantt', 'Partidas, actividades e hitos con fechas calculadas sobre el calendario real de la obra. Cambia una fecha y todo se recalcula.'],
     ['fa-calendar-check', 'Calendario operativo', 'Jornada semanal por proyecto, festivos, paros técnicos y días de clima. Los días hábiles se respetan en cada actividad.'],
@@ -61,6 +71,10 @@ $funciones = [
     ['fa-clone', 'Comparador de documentos', 'Empareja dos revisiones de un plano o PDF y compáralas con un deslizador para ver qué cambió entre una versión y otra.'],
     ['fa-scale-balanced', 'Normativa y especificaciones', 'Carga normas y especificaciones, consúltalas por cláusula y vincúlalas a los materiales y actividades que les aplican. Tú confirmas cada vínculo.'],
     ['fa-folder-tree', 'Carpetas por departamento', 'Ordena minutas, documentos y tablas en carpetas por departamento: renómbralas y mueve cada documento en un clic.'],
+    ['fa-stamp', 'Estampas inteligentes y cajetines', 'Bloques cuyas etiquetas se llenan solas con avance, fechas, semáforos y actividades del día: post-its de Last Planner, encabezados de MSR y cajetines con tu logo.'],
+    ['fa-clipboard-check', 'Punch list de cierre', 'Pendientes de calidad con foto antes y después, inspección por ubicación y PDF por contratista. Se inserta como tabla en láminas, actas y gráficos.'],
+    ['fa-puzzle-piece', 'Ensamblador de documentos', 'Un PDF que une actas del Redactor y documentos del Archivo y se actualiza solo cuando cambia alguno de ellos.'],
+    ['fa-language', 'Traductor español ↔ inglés', 'Traduce textos y documentos de obra sin salir de la plataforma, para contratos y clientes internacionales.'],
     ['fa-street-view', 'View360', 'Un plano con zonas que abren fotos 360° de la obra: recorridos virtuales con notas para el cliente, sin viajar al sitio.'],
 ];
 if (!function_exists('cmp_celda')) {
@@ -219,6 +233,26 @@ $ventajas = [
         <div class="lp-grid">
             <?php foreach ($funciones as $i => [$ico, $t, $d]): ?>
                 <article class="lp-card lp-rev" style="--d:<?php echo ($i % 4) * 70; ?>ms">
+                    <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
+                    <h3><?php echo s($t); ?></h3>
+                    <p><?php echo s($d); ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="lp-sec" id="novedades">
+    <div class="lp-wrap">
+        <div class="lp-head lp-rev">
+            <span class="lp-eyebrow">Lo nuevo</span>
+            <h2>Una plataforma que mejora<br>cada mes</h2>
+            <p>Las últimas mejoras de ProjectWeb, pensadas para que la obra se vea clara en cualquier pantalla y la información nunca esté desactualizada.</p>
+        </div>
+        <div class="lp-grid">
+            <?php foreach ($novedades as $i => [$ico, $t, $d, $f]): ?>
+                <article class="lp-card lp-nuevo lp-rev" style="--d:<?php echo ($i % 4) * 70; ?>ms">
+                    <span class="lp-badge"><?php echo s($f); ?></span>
                     <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
                     <h3><?php echo s($t); ?></h3>
                     <p><?php echo s($d); ?></p>
@@ -485,6 +519,7 @@ $ventajas = [
             <details><summary>¿En qué se diferencian los planes?</summary><p>En la cantidad de proyectos que puedes crear y el almacenamiento por proyecto. Todas las funciones están incluidas en cada plan.</p></details>
             <details><summary>¿Pueden encargarse del seguimiento de mi obra?</summary><p>Sí. Además de la plataforma ofrecemos servicios administrativos de seguimiento de obra para que tu equipo se concentre en construir. Conoce el detalle en <a href="/servicios" class="lp-foot-link">Servicios</a>.</p></details>
             <details><summary>¿Puedo redactar actas o llevar tablas dentro de la plataforma?</summary><p>Sí. El Redactor exporta a Word, ODT y PDF, y SheetFlow maneja tablas con fórmulas que se importan y exportan a Excel, CSV y PDF.</p></details>
+            <details><summary>¿Las tablas se ven bien en cualquier tamaño de pantalla o de hoja?</summary><p>Sí. El texto de las tablas se adapta solo: crece o se reduce con el bloque del vPlan, con las asas del Editor y con el ancho de la pantalla. Y si cambias los datos en un lugar, el resto de las vistas se actualiza en tiempo real.</p></details>
             <details><summary>¿El demo guarda mis cambios?</summary><p>No. El demo es de solo lectura y usa datos de ejemplo: no necesitas registrarte ni se guarda nada de lo que hagas.</p></details>
         </div>
     </div>

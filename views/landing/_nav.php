@@ -10,10 +10,7 @@ $activa = $activa ?? '';
         <label for="lp-menu" class="lp-burger" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
         <nav class="lp-links">
             <a href="<?php echo $base; ?>#funciones">Funciones</a>
-            <a href="<?php echo $base; ?>#ventajas">Ventajas</a>
-            <a href="<?php echo $base; ?>#comparativa">Comparativa</a>
-            <a href="<?php echo $base; ?>#ahorro">Ahorro</a>
-            <a href="<?php echo $base; ?>#recorrido">Recorrido</a>
+            <a href="<?php echo $base; ?>#novedades">Novedades</a>
             <a href="/servicios"<?php echo $activa === 'servicios' ? ' class="on" aria-current="page"' : ''; ?>>Servicios</a>
             <a href="<?php echo $base; ?>#planes">Planes</a>
             <a href="<?php echo $base; ?>#contacto">Contacto</a>

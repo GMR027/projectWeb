@@ -399,6 +399,23 @@ class VplanController
         ]);
     }
 
+    /** Huella de las tablas de la lámina (datos de SheetFlow incluidos): la página la consulta para refrescarse sola */
+    public static function versionTablas()
+    {
+        header('Content-Type: application/json');
+        $l = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? VplanLamina::find(filter_var($_POST['lamina'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $proyecto = $l ? \Model\Proyecto::find($l->proyecto_id) : null;
+        if (!$proyecto || !puede_ver_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $huella = [];
+        foreach ($l->tablas() as $t) $huella[] = [$t->id, $t->titulo, $t->campos(), $t->filas()];
+        echo json_encode(['success' => true, 'version' => md5(json_encode($huella))]);
+        exit;
+    }
+
     /** Guarda las marcas (JSON) y la imagen compuesta (plano + marcas) */
     public static function guardarMarcas()
     {

@@ -498,7 +498,12 @@
       const t = nuevas.find(x => x.id === n.getAttr('vid')); if (!t) return;
       const sx = n.scaleX(), sy = n.scaleY();
       t.x = n.x(); t.y = n.y(); t.rotation = n.rotation();
-      if (t.type === 'table') { const g = geomTabla(t); t.colW = g.cw.map(v => Math.max(10, v * sx)); t.rowH = g.rh.map(v => Math.max(10, v * sy)); t.w = suma(t.colW); t.h = suma(t.rowH); }
+      if (t.type === 'table') {
+        const g = geomTabla(t); t.colW = g.cw.map(v => Math.max(10, v * sx)); t.rowH = g.rh.map(v => Math.max(10, v * sy));
+        // la letra escala con la tabla (media geométrica: un lado solo la cambia a medias); las filas se reajustan para que el texto quepa
+        const k = Math.sqrt(sx * sy); if (Math.abs(k - 1) > 0.005) t.fontSize = Math.max(4, Math.min(400, +(t.fontSize * k).toFixed(2)));
+        t.w = suma(t.colW); ajustarFilas(t);
+      }
       else if (POLI.includes(t.type) || RECT.includes(t.type)) { t.w = Math.max(4, t.w * sx); t.h = Math.max(4, t.h * sy); }
       else if (ELIPSE.includes(t.type)) { t.rx = Math.max(2, t.rx * sx); t.ry = Math.max(2, t.ry * sy); }
       else if (LINEAS.includes(t.type)) { t.points = t.points.map((v, i) => v * (i % 2 ? sy : sx)); }
@@ -1628,11 +1633,26 @@
           if (x.type !== 'table' || x.sheetflow !== id) return x;
           if (JSON.stringify(x.cells) === JSON.stringify(n.cells) && x.headerFill === n.headerFill) return x;
           cambiadas++;
-          return Object.assign({}, n, { id: x.id, x: x.x, y: x.y, rotation: x.rotation, opacity: x.opacity, layer: x.layer, comment: x.comment });
+          const r = Object.assign({}, n, { id: x.id, x: x.x, y: x.y, rotation: x.rotation, opacity: x.opacity, layer: x.layer, comment: x.comment });
+          // conserva el tamaño que le dio el usuario: misma letra y el mismo ancho total repartido según las columnas nuevas
+          if (x.fontSize && x.w) {
+            const base = suma(n.colW), esc = x.w / (base || 1);
+            r.fontSize = x.fontSize; r.colW = n.colW.map(v => v * esc); r.w = suma(r.colW);
+            if (x.colW && x.colW.length === n.colW.length) { r.colW = x.colW.slice(); r.w = suma(r.colW); }
+            r.rowH = n.cells.map(() => x.fontSize * 2.2); ajustarFilas(r);
+          }
+          return r;
         });
       } catch (err) { /* sin conexión: se queda la copia guardada */ }
     }
     if (cambiadas) { render(); dirty(true); status(cambiadas + ' tabla(s) actualizada(s) desde SheetFlow · guarda para conservar el cambio'); }
+  }
+  // Tiempo real: se vuelve a leer al regresar a la ventana y cada 15 s mientras esté visible (si nadie está escribiendo en una celda)
+  let sfTimer = null;
+  function vigilarSheetflow() {
+    const ya = () => !document.hidden && !document.querySelector('textarea:focus, input:focus') && refrescarSheetflow();
+    document.addEventListener('visibilitychange', ya); window.addEventListener('focus', ya);
+    if (!sfTimer) sfTimer = setInterval(ya, 15000);
   }
   // Tabla del Punch list: forma `table` con `punch: cfg`; al abrir se vuelve a leer del módulo Punch
   async function leerPunch(cfg) {
@@ -2066,7 +2086,7 @@
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
     $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
     asegurarCapas();
-    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); refrescarPunch(); refrescarVinculadas();
+    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }

@@ -235,6 +235,23 @@ class VplanDiseno
         return self::elegirEscala(fn($f, $p) => self::estimarTabla($tb['tabla']->tipo, $textos, $ancho, $f, $p, $n), self::capacidadPt($l, $b));
     }
 
+    /** [letra, relleno] en pt de una tabla: la escala de ESCALAS y, si cabe con la más grande, crece (hasta 48 pt) para llenar el bloque */
+    public static function medidasTabla(VplanLamina $l, VplanBloque $b, array $tb, int $extra = 0): array
+    {
+        $i = min(count(self::ESCALAS) - 1, self::escalaTabla($l, $b, $tb) + $extra);
+        [, $f, $p] = self::ESCALAS[$i];
+        if ($i > 0 || $extra < 0) return [$f, $p];
+        $textos = self::textosDeFilas($tb['filas']);
+        $ancho = self::anchoRefCm($b);
+        $n = count($tb['campos']);
+        $cap = self::capacidadPt($l, $b);
+        $cabe = fn(float $fz) => self::estimarTabla($tb['tabla']->tipo, $textos, $ancho, $fz, $fz / 3, $n) * 1.06 <= $cap;
+        $lo = 9.0; $hi = 48.0;
+        if ($cabe($hi)) return [$hi, $hi / 3];
+        for ($k = 0; $k < 14; $k++) { $m = ($lo + $hi) / 2; if ($cabe($m)) $lo = $m; else $hi = $m; }
+        return [round($lo, 2), round($lo / 3, 2)];
+    }
+
     // ---------- diseño por defecto ----------
 
     private const HOJA_W_CM = 43.18, HOJA_H_CM = 27.94;

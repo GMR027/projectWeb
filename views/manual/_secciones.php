@@ -262,7 +262,7 @@ HTML],
 <li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
 <li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
 <li><strong>Tareas (partidas):</strong> un bloque puede mostrar <strong>varias partidas</strong>, completas o solo algunas actividades, con su propio título y color. La numeración (SEQ) es <strong>continua 1..n</strong> o <strong>la de cada partida</strong>, con un subtítulo por partida. Puedes tener varios bloques de tareas en la misma lámina.</li>
-<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos (también las hojas de SheetFlow), con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque.</li>
+<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos (también las hojas de SheetFlow), con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos.</li>
 <li><strong>Capas:</strong> lista de todos los objetos; arrástralos para cambiar el orden (arriba = al frente), ocúltalos con el ojo, bloquéalos con el candado para no moverlos por error y renómbralos con doble clic.</li>
 <li><strong>Guías (como en Inkscape):</strong> arrastra desde las <strong>reglas</strong> (la de arriba da guías horizontales; la de la izquierda, verticales) y suelta dentro de la hoja. Los bloques se <strong>imantan</strong> a las guías, a los bordes y al centro de la hoja. Las guías también están en «Capas»: puedes ocultarlas, bloquearlas, escribir su posición en cm o quitarlas (o arrastrarlas fuera de la hoja). No se imprimen ni se exportan.</li>
 <li><strong>Recovery:</strong> en «Insertar» agregas tantas columnas de recovery como necesites (Recovery, Recovery 02, 03…) y quitas la última; las fechas capturadas se conservan.</li>
@@ -473,7 +473,7 @@ HTML],
 <tr><td><strong>Selección</strong></td><td>Seleccionar y mover (Esc), y selección múltiple con recuadro. Con Mayús o Ctrl + clic sumas marcas.</td></tr>
 <tr><td><strong>Líneas</strong></td><td>Continua, discontinua, trazo y punto, punteada, polilínea (clic por punto, doble clic o Enter para terminar), lápiz libre, flecha y flecha doble.</td></tr>
 <tr><td><strong>Formas</strong></td><td>Rectángulo, redondeado, elipse, triángulo, rombo, pentágono, hexágono, estrella, cruz, equis, palomita, flecha de bloque, chevron, trapecio y zona translúcida, más 22 formas extra (octágono, corazón, rayo, gota, globo de texto, bandera, flechas de bloque en cuatro direcciones, estrellas, etc.). Las líneas recuerdan el último color, grosor y opacidad usados.</td></tr>
-<tr><td><strong>Texto y marcadores</strong></td><td>Texto, tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
+<tr><td><strong>Texto y marcadores</strong></td><td>Texto, tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente; al escalarla con las asas la letra crece o se reduce junto con ella y las filas se reajustan), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
 <tr><td><strong>Medir</strong></td><td>Traza dos puntos; la primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas. Eliges la unidad (mm, cm, m, pulgadas).</td></tr>
 </tbody>
 </table>
@@ -485,6 +485,12 @@ HTML],
 <li><strong>Símbolos:</strong> inserta imágenes de la biblioteca de símbolos y cajetines (cuadros de datos).</li>
 <li><strong>Alinear y distribuir:</strong> con varias marcas elegidas aparecen los botones para alinearlas y distribuirlas; también puedes <strong>agrupar</strong> (Ctrl + G).</li>
 <li><strong>Comentarios:</strong> el campo Comentario de una marca crea una insignia amarilla en el editor; no sale en las imágenes exportadas.</li>
+</ul>
+<h4>Tablas vinculadas y símbolos que se actualizan solos</h4>
+<ul>
+<li>Las <strong>tablas de SheetFlow</strong> y del <strong>Punch list</strong> que insertes siguen conectadas a su origen: el gráfico las vuelve a leer al abrirse, al regresar a la ventana y cada 15 segundos, conservando posición, giro, opacidad y el tamaño que les diste.</li>
+<li>Los <strong>símbolos y simbologías</strong> colocados se actualizan solos cuando editas su origen en la biblioteca.</li>
+<li><strong>Líneas:</strong> además de grosor y color, puedes ajustar el <strong>largo y la separación del trazo</strong> (discontinuas y punteadas) y <strong>editar los nodos</strong> de una línea o polilínea: moverlos, agregar uno nuevo sobre el segmento o quitarlo.</li>
 </ul>
 <h4>Hipervínculos</h4>
 <ol>
@@ -573,6 +579,24 @@ HTML],
 <li><strong>Funciones condicionales:</strong> <code>SI, Y, O, NO, SI.ERROR, SUMAR.SI, CONTAR.SI, PROMEDIO.SI</code>; en <em>Datos › Insertar función</em> hay un ejemplo de cada una. Por ejemplo <code>=SI(E2&gt;=D2;"Completo";"Pendiente")</code> o <code>=SUMAR.SI(B2:B9;"Estructura";E2:E9)</code>.</li>
 <li><strong>Estilo de la tabla</strong> (pestaña <em>Vista</em>): color del encabezado y de su texto, renglones alternos, líneas de cuadrícula y zoom.</li>
 <li>Se guarda solo unos segundos después de cada cambio y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Excel (.xlsx), CSV o PDF, o abre el PDF para imprimir. También puedes descargar el archivo propio <strong>.sheetflow</strong> (con su icono rosa en la sección Archivo) y volver a importarlo con <em>Nueva tabla</em>.</li>
+</ul>
+<h4>Tabla inteligente y tipos de captura</h4>
+<ul>
+<li>En <em>Nueva tabla › Tabla inteligente</em> un constructor guiado te deja nombrar la tabla, elegir el <strong>tipo y el color de encabezado de cada columna</strong>, reordenarlas y definir cuántos renglones vacíos trae.</li>
+<li>Además de texto, número, moneda, porcentaje y fecha, una columna puede ser <strong>lista</strong> (menú desplegable con hasta 20 opciones que defines en <em>Datos › Columna</em>), <strong>casilla</strong> (✔ o vacío) o <strong>semáforo</strong> (Verde, Amarillo, Rojo con su color).</li>
+<li>Esos controles funcionan también cuando la tabla se edita desde una lámina del vPlan: la lista solo acepta sus opciones, la casilla se marca con un clic y el semáforo se pinta del color elegido.</li>
+</ul>
+<h4>Que se adapte a cualquier tamaño</h4>
+<ul>
+<li><strong>vPlan:</strong> la letra de la tabla se calcula para llenar el bloque. Si el bloque es pequeño, la letra se reduce hasta que todo quepa; si lo agrandas, <strong>crece</strong> (hasta 48 pt) en lugar de dejar un texto diminuto en un cuadro enorme. Lo mismo ocurre en el PDF de la lámina.</li>
+<li><strong>Editor:</strong> al escalar una tabla con las asas de la esquina, la <strong>letra se escala con ella</strong> y los renglones se reajustan para que el texto siempre quepa. Si solo estiras un lado, la letra cambia a la mitad del camino.</li>
+<li><strong>Vista de la tabla:</strong> el tamaño de la letra sigue el ancho disponible de la pantalla, así que se lee bien en un monitor grande y no se desborda en el celular.</li>
+</ul>
+<h4>Siempre al día: cambios en tiempo real</h4>
+<ul>
+<li>Cuando alguien modifica una tabla vinculada (en SheetFlow o desde una lámina del vPlan), las demás vistas <strong>se actualizan solas</strong> sin que tengas que recargar: la lámina del vPlan y la vista de la tabla consultan los cambios cada pocos segundos y se refrescan (conservan tu posición en la página). Si estás escribiendo en un campo o tienes un diálogo abierto, esperan a que termines para no interrumpirte.</li>
+<li>El <strong>Editor</strong> vuelve a leer las tablas vinculadas al regresar a su ventana y cada 15 segundos; respeta el tamaño y la letra que les diste, y deja el gráfico marcado como «sin guardar» para que conserves el cambio con <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li>
+<li>El <strong>Redactor</strong> las actualiza al abrir, ver y exportar el documento (no se recarga solo para no hacerte perder lo que estás escribiendo).</li>
 </ul>
 <h4>Usar la tabla en otras herramientas (vínculos vivos)</h4>
 <ul>

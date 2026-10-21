@@ -36,3 +36,6 @@
     </ul>
 </div>
 <?php endif; ?>
+
+<script>window.TABLAS_VIVO = { url: '/api/sheetflow/version', datos: { id: <?php echo (int)$hoja->id; ?> } };</script>
+<script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>

@@ -289,6 +289,10 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 </script>
 <?php endif; ?>
 
+<?php if (!$modoDiseno): ?>
+<script>window.TABLAS_VIVO = { url: '/api/vplan/tablas-version', datos: { lamina: <?php echo (int)$lamina->id; ?> } };</script>
+<script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>
+<?php endif; ?>
 <script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
 <?php if ($modoDiseno): ?>
 <script>

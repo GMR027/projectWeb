@@ -242,6 +242,7 @@ $router->post('/api/vplan/columna-texto', [VplanController::class, 'textoColumna
 $router->post('/vplan/lamina/recovery', [VplanController::class, 'recoveryCols']);
 $router->post('/api/vplan/imagen', [VplanController::class, 'subirImagen']);
 $router->get('/vplan/editor', [VplanController::class, 'editor']);
+$router->post('/api/vplan/tablas-version', [VplanController::class, 'versionTablas']);
 $router->post('/api/vplan/marcas', [VplanController::class, 'guardarMarcas']);
 $router->post('/api/vplan/diseno', [VplanController::class, 'guardarDiseno']);
 $router->post('/vplan/diseno/restablecer', [VplanController::class, 'restablecerDiseno']);
@@ -410,6 +411,7 @@ $router->post('/sheetflow/duplicar', [SheetflowController::class, 'duplicar']);
 $router->post('/sheetflow/eliminar', [SheetflowController::class, 'eliminar']);
 $router->post('/sheetflow/a-vplan', [SheetflowController::class, 'aVplan']);
 $router->post('/api/sheetflow/guardar', [SheetflowController::class, 'guardar']);
+$router->post('/api/sheetflow/version', [SheetflowController::class, 'version']);
 $router->post('/api/sheetflow/datos', [SheetflowController::class, 'datos']);
 $router->post('/api/sheetflow/imagen', [SheetflowController::class, 'imagen']);
 

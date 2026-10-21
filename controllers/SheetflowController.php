@@ -229,6 +229,13 @@ class SheetflowController
         self::json(['success' => true, 'nombre' => $h->nombre] + Sheetflow::matriz($h));
     }
 
+    /** Huella de la hoja (su última modificación) para que las vistas se actualicen solas */
+    public static function version()
+    {
+        $h = self::hojaApi(false);
+        self::json(['success' => true, 'version' => md5($h->actualizado . '|' . $h->nombre . '|' . strlen((string)$h->datos))]);
+    }
+
     /** Crea una tabla de vPlan con esta hoja, o (con «tabla») la actualiza con los datos actuales */
     public static function aVplan()
     {

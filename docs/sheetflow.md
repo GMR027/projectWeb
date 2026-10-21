@@ -36,6 +36,12 @@ _Se lee solo al trabajar en este módulo._
 - Tipos nuevos: `lista` (`cols[].op`, máx. 20 opciones; se editan en Datos › Columna), `casilla` (guarda `1`/vacío; se muestra ✔) y `semaforo` (`verde|amarillo|rojo`; se muestra Verde/Amarillo/Rojo). `Sheetflow::normalizarValor` y `valorEspecial()` (JS) deben coincidir; `formatear` en PHP y JS también.
 - **vPlan:** en una tabla vinculada, `VplanTabla::metaColumnas()` da tipo/opciones por columna y `filasVplan` entrega además el valor crudo `v0..vN`; `_fila-adicional.php` dibuja el control (fecha, número, casilla, lista, semáforo con color) y `cambiarCelda` guarda en la hoja (rechaza valores fuera de la lista). Editor y Redactor muestran el valor formateado (solo lectura).
 
+## Escalado y tiempo real (2026-10-20)
+- **vPlan:** `VplanDiseno::medidasTabla()` usa la escala normal y, si la tabla cabe con la letra más grande (9 pt), la hace crecer (hasta 48 pt) hasta llenar el bloque; lo usan la lámina (`_hoja.php`) y el PDF.
+- **Editor:** al escalar una tabla con las asas, la letra se multiplica por √(sx·sy) y las filas se reajustan (`aplicarTransformacion`). `refrescarSheetflow()` conserva letra y anchos del usuario, se repite al volver a la ventana y cada 15 s (si no se está escribiendo).
+- **Vista de SheetFlow y lámina de vPlan:** `public/vendor/tablas-vivo.js` consulta `/api/sheetflow/version` o `/api/vplan/tablas-version` y recarga la página si cambió algo (no si hay un campo enfocado o un diálogo abierto). La letra de `.sf-ver` sigue el ancho del contenedor (`cqw`).
+- **Redactor:** sigue refrescando al abrir/ver/exportar (no se recarga solo para no perder texto sin guardar).
+
 ## Exportación
 - XLSX con PhpSpreadsheet (encabezado con color, formatos de número, fechas reales, totales en negrita, filas alternas, panel congelado). Las fórmulas se escriben como **valores** (no como fórmulas de Excel). CSV con BOM. PDF con Dompdf (carta; horizontal si hay más de 6 columnas).
 

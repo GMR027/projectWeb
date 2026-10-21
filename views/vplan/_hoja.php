@@ -140,7 +140,7 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
             <?php break;
         case 'tabla':
             $bloque = $tablasPorId[(int)$cfg['tabla_id']];
-            [, $f, $p] = VplanDiseno::ESCALAS[VplanDiseno::escalaTabla($lamina, $b, $bloque)]; ?>
+            [$f, $p] = VplanDiseno::medidasTabla($lamina, $b, $bloque); ?>
             <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>">
                 <?php include __DIR__ . '/_tabla-adicional.php'; ?>
             </div>
