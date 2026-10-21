@@ -229,19 +229,11 @@ class VplanTablaController
 
     // ---------- Tabla en base a un documento ----------
 
-    private static function jsonDoc(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-        exit;
-    }
-
     /** Proyecto de una petición de la API (solo quien puede gestionarlo) */
     private static function proyectoApi(): \Model\Proyecto
     {
         $p = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? \Model\Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$p || !puede_gestionar_proyecto($p)) self::jsonDoc(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p || !puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $p;
     }
 
@@ -259,18 +251,18 @@ class VplanTablaController
     {
         self::proyectoApi();
         $f = $_FILES['archivo'] ?? null;
-        if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) self::jsonDoc(['success' => false, 'error' => 'No se pudo subir el archivo'], 422);
-        if ($f['size'] > TablaDeDocumento::MAX_BYTES) self::jsonDoc(['success' => false, 'error' => 'El archivo es demasiado grande (máx. 25 MB)'], 422);
+        if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) json_respuesta(['success' => false, 'error' => 'No se pudo subir el archivo'], 422);
+        if ($f['size'] > TablaDeDocumento::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'El archivo es demasiado grande (máx. 25 MB)'], 422);
         try {
             $r = TablaDeDocumento::leer($f['tmp_name'], (string)$f['name']);
         } catch (\RuntimeException $e) {
-            self::jsonDoc(['success' => false, 'error' => $e->getMessage()], 422);
+            json_respuesta(['success' => false, 'error' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
             error_log('Tabla en base a documento: ' . $e->getMessage());
-            self::jsonDoc(['success' => false, 'error' => 'No se pudo leer el documento'], 422);
+            json_respuesta(['success' => false, 'error' => 'No se pudo leer el documento'], 422);
         }
         $d = $r['filas'] ? Sheetflow::deMatriz($r['filas']) : null;
-        self::jsonDoc([
+        json_respuesta([
             'success' => true, 'metodo' => $r['metodo'], 'avisos' => $r['avisos'], 'imagen' => $r['imagen'],
             'filas' => $r['filas'] ? array_merge([array_map(fn($c) => $c['n'], $d['cols'])], $d['rows']) : [],
             'texto' => is_admin() ? $r['texto'] : '',   // el texto sirve a la IA del administrador (app de escritorio)
@@ -282,11 +274,11 @@ class VplanTablaController
     {
         self::proyectoApi();
         $texto = (string)($_POST['texto'] ?? '');
-        if (trim($texto) === '' || strlen($texto) > 400_000) self::jsonDoc(['success' => false, 'error' => 'No hay texto que interpretar'], 422);
+        if (trim($texto) === '' || strlen($texto) > 400_000) json_respuesta(['success' => false, 'error' => 'No hay texto que interpretar'], 422);
         $avisos = [];
         $filas = TablaDeDocumento::dePlano($texto, $avisos);
         $d = $filas ? Sheetflow::deMatriz($filas) : null;
-        self::jsonDoc([
+        json_respuesta([
             'success' => true, 'metodo' => 'OCR', 'avisos' => array_merge($avisos, ['Texto leído con OCR: revisa las celdas antes de crear la tabla.']), 'imagen' => false,
             'filas' => $d ? array_merge([array_map(fn($c) => $c['n'], $d['cols'])], $d['rows']) : [], 'texto' => '',
         ]);
@@ -297,24 +289,24 @@ class VplanTablaController
     {
         $proyecto = self::proyectoApi();
         $metodo = ($_POST['metodo'] ?? '') === 'ia' ? 'ia' : 'motor';
-        if ($metodo === 'ia' && !is_admin()) self::jsonDoc(['success' => false, 'error' => 'La IA es solo para el administrador'], 403);
+        if ($metodo === 'ia' && !is_admin()) json_respuesta(['success' => false, 'error' => 'La IA es solo para el administrador'], 403);
         $filas = json_decode((string)($_POST['filas'] ?? ''), true);
-        if (!is_array($filas) || strlen((string)$_POST['filas']) > Sheetflow::MAX_BYTES) self::jsonDoc(['success' => false, 'error' => 'La tabla no es válida'], 422);
+        if (!is_array($filas) || strlen((string)$_POST['filas']) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla no es válida'], 422);
         $filas = array_values(array_filter(array_map(fn($f) => is_array($f) ? array_map(fn($v) => is_scalar($v) ? (string)$v : '', array_values($f)) : [], $filas)));
         try {
             $datos = Sheetflow::deMatriz($filas);
         } catch (\RuntimeException $e) {
-            self::jsonDoc(['success' => false, 'error' => 'La tabla está vacía'], 422);
+            json_respuesta(['success' => false, 'error' => 'La tabla está vacía'], 422);
         }
         $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 140) ?: 'Tabla de documento';
         $h = new SheetflowHoja(['proyecto_id' => $proyecto->id, 'nombre' => $nombre, 'fecha' => date('Y-m-d'), 'departamento' => '', 'descripcion' => mb_substr('Creada desde ' . trim((string)($_POST['origen'] ?? 'un documento')), 0, 500), 'creado_por' => $_SESSION['id'] ?? null]);
-        if ($alertas = $h->validar()) self::jsonDoc(['success' => false, 'error' => $alertas['error'][0]], 422);
+        if ($alertas = $h->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $h->datos = json_encode(Sheetflow::normalizar($datos), JSON_UNESCAPED_UNICODE);
         $h->id = $h->guardar()['id'];
         $t = Sheetflow::aVplan($h);
         if ($metodo === 'ia') {
             Auditoria::registrar((int)$proyecto->id, 'tabla-documento', 'aplicado', 'tabla_de_documento', 'Tabla «' . $nombre . '» creada con IA a partir de ' . mb_substr((string)($_POST['origen'] ?? 'un documento'), 0, 120), null, ['tabla' => (int)$t->id, 'hoja' => (int)$h->id, 'renglones' => count($datos['rows'])], (int)$t->id, mb_substr((string)($_POST['modelo'] ?? ''), 0, 150), ['vplan_tabla', (int)$t->id, $nombre]);
         }
-        self::jsonDoc(['success' => true, 'url' => '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1', 'tabla' => (int)$t->id]);
+        json_respuesta(['success' => true, 'url' => '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1', 'tabla' => (int)$t->id]);
     }
 }

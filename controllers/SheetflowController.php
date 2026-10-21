@@ -19,14 +19,6 @@ class SheetflowController
         return $h && (int)$h->proyecto_id === (int)$proyecto->id ? $h : null;
     }
 
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d);
-        exit;
-    }
-
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -184,7 +176,7 @@ class SheetflowController
     {
         $h = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? SheetflowHoja::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) : null;
         $p = $h ? Proyecto::find($h->proyecto_id) : null;
-        if (!$p || !($gestionar ? puede_gestionar_proyecto($p) : puede_ver_proyecto($p))) self::json(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p || !($gestionar ? puede_gestionar_proyecto($p) : puede_ver_proyecto($p))) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $h;
     }
 
@@ -193,21 +185,21 @@ class SheetflowController
         $h = self::hojaApi(true);
         $ver = (string)($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$h->actualizado) {
-            self::json(['success' => false, 'conflicto' => true, 'error' => 'Esta tabla se guardó desde otra sesión después de que la abrieras.'], 409);
+            json_respuesta(['success' => false, 'conflicto' => true, 'error' => 'Esta tabla se guardó desde otra sesión después de que la abrieras.'], 409);
         }
         $crudo = (string)($_POST['datos'] ?? '');
-        if (strlen($crudo) > Sheetflow::MAX_BYTES) self::json(['success' => false, 'error' => 'La tabla es demasiado grande'], 422);
+        if (strlen($crudo) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla es demasiado grande'], 422);
         $limpio = Sheetflow::normalizar(json_decode($crudo, true));
         $nuevo = new SheetflowHoja([
             'id' => $h->id, 'proyecto_id' => $h->proyecto_id, 'creado_por' => $h->creado_por, 'descripcion' => $_POST['descripcion'] ?? $h->descripcion,
             'nombre' => $_POST['nombre'] ?? $h->nombre, 'fecha' => $_POST['fecha'] ?? $h->fecha, 'departamento' => $_POST['departamento'] ?? $h->departamento,
             'datos' => json_encode($limpio, JSON_UNESCAPED_UNICODE),
         ]);
-        if ($alertas = $nuevo->validar()) self::json(['success' => false, 'error' => $alertas['error'][0]], 422);
+        if ($alertas = $nuevo->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $nuevo->guardar();
         Sheetflow::limpiarImagenes($h->imagenes(), $nuevo->imagenes(), (int)$h->proyecto_id, (int)$h->id);
         $act = SheetflowHoja::find($h->id);
-        self::json(['success' => true, 'version' => (string)$act->actualizado]);
+        json_respuesta(['success' => true, 'version' => (string)$act->actualizado]);
     }
 
     /** Sube una imagen para una celda; devuelve su ruta (se guarda al guardar la tabla) */
@@ -215,25 +207,25 @@ class SheetflowController
     {
         $h = self::hojaApi(true);
         $f = $_FILES['imagen'] ?? null;
-        if (!$f || empty($f['tmp_name']) || !is_uploaded_file($f['tmp_name']) || $f['size'] > 20 * 1024 * 1024) self::json(['success' => false, 'error' => 'Elige una imagen de hasta 20 MB'], 422);
-        if (!Almacenamiento::cabe((int)$h->proyecto_id, (int)$f['size'])) self::json(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$h->proyecto_id)], 422);
+        if (!$f || empty($f['tmp_name']) || !is_uploaded_file($f['tmp_name']) || $f['size'] > 20 * 1024 * 1024) json_respuesta(['success' => false, 'error' => 'Elige una imagen de hasta 20 MB'], 422);
+        if (!Almacenamiento::cabe((int)$h->proyecto_id, (int)$f['size'])) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$h->proyecto_id)], 422);
         $n = Imagenes::guardarGrande($f['tmp_name'], 1600);
-        if (!$n) self::json(['success' => false, 'error' => 'La imagen no es válida (jpg, png, webp o gif)'], 422);
-        self::json(['success' => true, 'src' => '/uploads/vplan/' . $n]);
+        if (!$n) json_respuesta(['success' => false, 'error' => 'La imagen no es válida (jpg, png, webp o gif)'], 422);
+        json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $n]);
     }
 
     /** Tabla ya formateada (columnas, tipos, renglones, totales) para usarla en el Editor y el Redactor */
     public static function datos()
     {
         $h = self::hojaApi(false);
-        self::json(['success' => true, 'nombre' => $h->nombre] + Sheetflow::matriz($h));
+        json_respuesta(['success' => true, 'nombre' => $h->nombre] + Sheetflow::matriz($h));
     }
 
     /** Huella de la hoja (su última modificación) para que las vistas se actualicen solas */
     public static function version()
     {
         $h = self::hojaApi(false);
-        self::json(['success' => true, 'version' => md5($h->actualizado . '|' . $h->nombre . '|' . strlen((string)$h->datos))]);
+        json_respuesta(['success' => true, 'version' => md5($h->actualizado . '|' . $h->nombre . '|' . strlen((string)$h->datos))]);
     }
 
     /** Crea una tabla de vPlan con esta hoja, o (con «tabla») la actualiza con los datos actuales */

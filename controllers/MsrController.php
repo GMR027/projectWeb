@@ -172,7 +172,7 @@ class MsrController
             $item->status = $nuevo;
             $item->guardar();
         }
-        self::json(['success' => true, 'status' => $nuevo, 'compartido' => (bool)$sub, 'fecha_respuesta' => $respuesta]);
+        json_respuesta(['success' => true, 'status' => $nuevo, 'compartido' => (bool)$sub, 'fecha_respuesta' => $respuesta]);
     }
 
     /** Guarda un campo editable en línea */
@@ -183,19 +183,19 @@ class MsrController
         if (preg_match('/^txt_\d{1,6}$/', $campo)) {   // columna de texto libre del usuario
             $item->fijarExtra($campo, mb_substr(trim((string)($_POST['valor'] ?? '')), 0, 2000));
             $item->guardar();
-            self::json(['success' => true, 'dias' => $item->diasEntrega(), 'critico' => false, 'atrasoCompra' => false, 'atrasoEntrega' => false, 'compartido' => null]);
+            json_respuesta(['success' => true, 'dias' => $item->diasEntrega(), 'critico' => false, 'atrasoCompra' => false, 'atrasoEntrega' => false, 'compartido' => null]);
         }
         $tipo = MsrItem::EDITABLES[$campo] ?? null;
-        if (!$tipo) self::json(['success' => false, 'error' => 'Campo no editable'], 422);
+        if (!$tipo) json_respuesta(['success' => false, 'error' => 'Campo no editable'], 422);
         $valor = trim((string)($_POST['valor'] ?? ''));
         if ($tipo === 'fecha') {
             $d = $valor === '' ? null : \DateTime::createFromFormat('Y-m-d', $valor);
-            if ($valor !== '' && (!$d || $d->format('Y-m-d') !== $valor)) self::json(['success' => false, 'error' => 'Fecha inválida'], 422);
+            if ($valor !== '' && (!$d || $d->format('Y-m-d') !== $valor)) json_respuesta(['success' => false, 'error' => 'Fecha inválida'], 422);
             $item->$campo = $valor === '' ? null : $valor;
         } else {
             $item->$campo = mb_substr($valor, 0, $campo === 'observaciones' ? 2000 : 200);
         }
-        if ($campo === 'fecha_envio_real' && $valor === '') self::json(['success' => false, 'error' => 'La fecha del submittal no puede quedar vacía'], 422);
+        if ($campo === 'fecha_envio_real' && $valor === '') json_respuesta(['success' => false, 'error' => 'La fecha del submittal no puede quedar vacía'], 422);
         $item->guardar();
 
         // Fechas compartidas: el material (compra/entrega) o el submittal (envío/respuesta) las comparten con todos sus renglones
@@ -219,7 +219,7 @@ class MsrController
         }
         $item = MsrItem::find($item->id);
         $umbral = max(1, (int)(Proyecto::find($item->proyecto_id)->msr_umbral_critico ?? 60));
-        self::json([
+        json_respuesta([
             'success' => true, 'dias' => $item->diasEntrega(), 'critico' => $item->esCritico($umbral),
             'atrasoCompra' => (bool)$item->compraAtrasada(), 'atrasoEntrega' => (bool)$item->entregaAtrasada(), 'compartido' => $compartido,
         ]);
@@ -230,7 +230,7 @@ class MsrController
     {
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
-        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
         $claves = array_values(array_filter(explode(',', (string)($_POST['orden'] ?? ''))));
         $porClave = [];
         foreach ($msr->disenoExplicito((string)$proyecto->contratista) as $c) $porClave[$c['k']] = $c;
@@ -239,7 +239,7 @@ class MsrController
         foreach ($porClave as $c) $nuevo[] = $c;
         $msr->columnas_json = Msr::normalizarColumnas('personalizado', $nuevo);
         $msr->guardar();
-        self::json(['success' => true]);
+        json_respuesta(['success' => true]);
     }
 
     /** Cambia el título y el color de una columna (doble clic en su encabezado) */
@@ -247,7 +247,7 @@ class MsrController
     {
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
-        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
         $k = (string)($_POST['k'] ?? '');
         $diseno = $msr->disenoExplicito((string)$proyecto->contratista);
         $hallada = false;
@@ -259,7 +259,7 @@ class MsrController
             if (isset($_POST['g'])) $c['g'] = (string)$_POST['g'];
         }
         unset($c);
-        if (!$hallada) self::json(['success' => false, 'error' => 'Columna no encontrada'], 404);
+        if (!$hallada) json_respuesta(['success' => false, 'error' => 'Columna no encontrada'], 404);
         // Al asignarla a un grupo, la columna se coloca junto a las demás de ese grupo
         $grupo = trim((string)($_POST['g'] ?? ''));
         if ($grupo !== '' && isset($_POST['g'])) {
@@ -279,7 +279,7 @@ class MsrController
         $msr->columnas_json = Msr::normalizarColumnas('personalizado', $diseno);
         $msr->guardar();
         $col = array_values(array_filter($msr->columnas((string)$proyecto->contratista), fn($x) => $x['k'] === $k))[0] ?? null;
-        self::json(['success' => true, 'n' => $col['n'] ?? '', 'c' => $col['c'] ?? '', 'g' => $col['g'] ?? '']);
+        json_respuesta(['success' => true, 'n' => $col['n'] ?? '', 'c' => $col['c'] ?? '', 'g' => $col['g'] ?? '']);
     }
 
     /** Sube o baja un material dentro de su partida: intercambia su posición con la del renglón vecino */
@@ -287,11 +287,11 @@ class MsrController
     {
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
-        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
         $a = MsrItem::find((int)($_POST['item'] ?? 0));
         $b = MsrItem::find((int)($_POST['con'] ?? 0));
         if (!$a || !$b || (int)$a->msr_id !== (int)$msr->id || (int)$b->msr_id !== (int)$msr->id || $a->seccion !== $b->seccion) {
-            self::json(['success' => false, 'error' => 'Los renglones deben ser de la misma partida'], 422);
+            json_respuesta(['success' => false, 'error' => 'Los renglones deben ser de la misma partida'], 422);
         }
         $db = MsrItem::getDB();
         $ids = [];
@@ -299,10 +299,10 @@ class MsrController
         while ($r = $res->fetch_row()) $ids[] = (int)$r[0];
         $i = array_search((int)$a->id, $ids, true);
         $j = array_search((int)$b->id, $ids, true);
-        if ($i === false || $j === false) self::json(['success' => false, 'error' => 'Renglón no encontrado'], 404);
+        if ($i === false || $j === false) json_respuesta(['success' => false, 'error' => 'Renglón no encontrado'], 404);
         [$ids[$i], $ids[$j]] = [$ids[$j], $ids[$i]];
         foreach ($ids as $n => $id) $db->query('UPDATE msr_items SET orden = ' . ($n + 1) . ' WHERE id = ' . $id);
-        self::json(['success' => true]);
+        json_respuesta(['success' => true]);
     }
 
     /** Cambia el título y el color de una partida (doble clic en su barra) */
@@ -310,19 +310,19 @@ class MsrController
     {
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
-        if (!$msr) self::json(['success' => false, 'error' => 'MSR no encontrado'], 404);
+        if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
         $db = MsrItem::getDB();
         $mid = (int)$msr->id;
         $viejo = (string)($_POST['viejo'] ?? '');
         $titulo = mb_substr(trim((string)($_POST['titulo'] ?? '')), 0, 200);
         $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '';
-        if ($titulo === '') self::json(['success' => false, 'error' => 'El título no puede quedar vacío'], 422);
+        if ($titulo === '') json_respuesta(['success' => false, 'error' => 'El título no puede quedar vacío'], 422);
         $v = $db->escape_string($viejo);
         $t = $db->escape_string($titulo);
         if ($titulo !== $viejo) {
             $dup = $db->query("SELECT 1 FROM msr_items WHERE msr_id = $mid AND seccion = '$t' LIMIT 1");
             $dupP = $db->query("SELECT 1 FROM msr_partidas WHERE msr_id = $mid AND titulo = '$t' LIMIT 1");
-            if (($dup && $dup->num_rows) || ($dupP && $dupP->num_rows)) self::json(['success' => false, 'error' => 'Ya existe una partida con ese título'], 422);
+            if (($dup && $dup->num_rows) || ($dupP && $dupP->num_rows)) json_respuesta(['success' => false, 'error' => 'Ya existe una partida con ese título'], 422);
             $db->query("UPDATE msr_items SET seccion = '$t' WHERE msr_id = $mid AND seccion = '$v'");
         }
         $existe = $db->query("SELECT id FROM msr_partidas WHERE msr_id = $mid AND titulo = '$v' LIMIT 1");
@@ -332,7 +332,7 @@ class MsrController
             $orden = (int)$db->query("SELECT COALESCE(MAX(orden),-1)+1 FROM msr_partidas WHERE msr_id = $mid")->fetch_row()[0];
             $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $orden)");
         }
-        self::json(['success' => true, 'titulo' => $titulo, 'color' => $color]);
+        json_respuesta(['success' => true, 'titulo' => $titulo, 'color' => $color]);
     }
 
     /** Umbral (días) a partir del cual la entrega se marca como crítica */
@@ -416,16 +416,9 @@ class MsrController
             ? MsrItem::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)) : null;
         $proyecto = $item ? Proyecto::find($item->proyecto_id) : null;
         if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
-            self::json(['success' => false, 'error' => 'No autorizado'], 403);
+            json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         }
         return $item;
     }
 
-    private static function json(array $data, int $code = 200): void
-    {
-        http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        exit;
-    }
 }

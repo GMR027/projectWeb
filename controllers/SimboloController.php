@@ -123,20 +123,12 @@ class SimboloController
         exit;
     }
 
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d);
-        exit;
-    }
-
     /** Importa un .zip de biblioteca y/o imágenes sueltas (el nombre del archivo es el del símbolo) */
     public static function importar()
     {
         header('Content-Type: application/json');
         $proyecto = ($_SERVER['REQUEST_METHOD'] === 'POST' && is_auth()) ? \Model\Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) self::json(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         @set_time_limit(120);
         $pid = (int)$proyecto->id;
         $existentes = [];
@@ -155,7 +147,7 @@ class SimboloController
         };
         $f = $_FILES['archivos'] ?? null;
         $n = $f && is_array($f['name']) ? count($f['name']) : 0;
-        if (!$n || $n > 300) self::json(['success' => false, 'error' => 'Elige entre 1 y 300 archivos'], 422);
+        if (!$n || $n > 300) json_respuesta(['success' => false, 'error' => 'Elige entre 1 y 300 archivos'], 422);
         for ($i = 0; $i < $n; $i++) {
             $tmp = $f['tmp_name'][$i];
             if (!$tmp || !is_uploaded_file($tmp) || $f['size'][$i] > 60 * 1024 * 1024) { $omit++; continue; }
@@ -188,7 +180,7 @@ class SimboloController
                 $total++;
             }
         }
-        self::json(['success' => true, 'importados' => $imp, 'omitidos' => $omit, 'cajetines_nuevos' => $cajNuevos,
+        json_respuesta(['success' => true, 'importados' => $imp, 'omitidos' => $omit, 'cajetines_nuevos' => $cajNuevos,
             'simbolos' => Simbolo::paraEditor($pid), 'cajetines' => Cajetin::paraEditor($pid)]);
     }
 }

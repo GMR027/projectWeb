@@ -291,6 +291,32 @@ function proyecto_de_peticion(bool $gestionar = false): \Model\Proyecto
     return $proyecto;
 }
 
+/** Responde JSON y termina. Único punto de salida de las APIs (antes cada controlador tenía su copia) */
+function json_respuesta(array $datos, int $codigo = 200): void
+{
+    http_response_code($codigo);
+    header('Content-Type: application/json');
+    echo json_encode($datos, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+/**
+ * Proyecto de una petición de API (lee `proyecto` de POST o GET) o 403 en JSON.
+ * $nivel: 'admin' (por defecto, herramientas de IA), 'gestionar' (admin o cliente dueño) o 'ver'.
+ */
+function proyecto_api(string $nivel = 'admin'): \Model\Proyecto
+{
+    $fuente = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
+    $p = \Model\Proyecto::find(filter_var($fuente['proyecto'] ?? null, FILTER_VALIDATE_INT));
+    $ok = $p && match ($nivel) {
+        'gestionar' => puede_gestionar_proyecto($p),
+        'ver' => puede_ver_proyecto($p),
+        default => is_admin(),
+    };
+    if (!$ok) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
+    return $p;
+}
+
 /** Fecha corta del MSR: "05-may-26" */
 function fecha_corta_es($fecha): string
 {

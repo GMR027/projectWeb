@@ -12,22 +12,6 @@ use Classes\Normativa;
 /** API JSON del Centro de IA para la app de escritorio: resultados guardados, espacio ocupado, pendientes y auditoría sin salir de Herramientas IA. Solo admin */
 class AppIAController
 {
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    private static function proyectoApi(): Proyecto
-    {
-        $fuente = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-        $p = is_admin() ? Proyecto::find(filter_var($fuente['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$p) self::json(['success' => false, 'error' => 'No autorizado'], 403);
-        return $p;
-    }
-
     private static function suma(string $sql): int
     {
         try {
@@ -62,7 +46,7 @@ class AppIAController
     /** Resultados guardados + pendientes + espacio de un proyecto */
     public static function centro()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $pid = (int)$p->id;
         $esp = self::espacio($pid);
         $pend = CentroIA::pendientes($p);
@@ -70,28 +54,28 @@ class AppIAController
         foreach ($lista as &$x) $x['herramienta_titulo'] = CentroIA::HERRAMIENTAS[$x['herramienta']] ?? $x['herramienta'];
         $r = ['success' => true, 'biblioteca' => $lista, 'pendientes' => $pend['conteo'], 'espacio' => $esp, 'espacio_ia' => array_sum(array_column($esp, 'bytes'))];
         if (!empty($_GET['completo'])) $r += ['proyecto_usado' => Almacenamiento::usado($pid), 'proyecto_limite' => Almacenamiento::limite($pid)];   // recorre los archivos del proyecto: solo cuando se pide
-        self::json($r);
+        json_respuesta($r);
     }
 
     public static function pendientes()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $r = CentroIA::pendientes($p, ['herramienta' => $_GET['herramienta'] ?? '', 'severidad' => $_GET['severidad'] ?? '']);
-        self::json(['success' => true, 'items' => $r['items'], 'conteo' => $r['conteo']]);
+        json_respuesta(['success' => true, 'items' => $r['items'], 'conteo' => $r['conteo']]);
     }
 
     /** Una sección del Análisis inteligente (conteo, segmentos y elementos) para la app de escritorio */
     public static function analisis()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $s = \Classes\AnalisisInteligente::seccion($p, (string)($_GET['clave'] ?? ''));
-        if (!$s) self::json(['success' => false, 'error' => 'Tema desconocido'], 404);
-        self::json(['success' => true, 'seccion' => $s]);
+        if (!$s) json_respuesta(['success' => false, 'error' => 'Tema desconocido'], 404);
+        json_respuesta(['success' => true, 'seccion' => $s]);
     }
 
     public static function auditoria()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $f = [];
         foreach (['herramienta', 'evento', 'usuario', 'entidad_tipo', 'entidad_id', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim((string)($_GET[$k] ?? ''));
         $pid = (int)$p->id;
@@ -102,21 +86,21 @@ class AppIAController
             'id' => (int)$x['id'], 'creado' => $x['creado'], 'usuario' => $x['usuario'], 'herramienta' => Auditoria::HERRAMIENTAS[$x['herramienta']] ?? $x['herramienta'], 'evento' => $x['evento'], 'evento_texto' => Auditoria::EVENTOS[$x['evento']] ?? $x['evento'],
             'entidad' => trim($x['entidad_tipo'] . ' ' . $x['entidad_nombre']), 'resumen' => $x['resumen'], 'modelo' => $x['modelo'],
         ], Auditoria::listar($pid, $f, $pagina));
-        self::json(['success' => true, 'filas' => $filas, 'total' => $total, 'pagina' => $pagina, 'paginas' => $paginas, 'usuarios' => Auditoria::usuarios($pid),
+        json_respuesta(['success' => true, 'filas' => $filas, 'total' => $total, 'pagina' => $pagina, 'paginas' => $paginas, 'usuarios' => Auditoria::usuarios($pid),
             'herramientas' => Auditoria::HERRAMIENTAS, 'eventos' => Auditoria::EVENTOS]);
     }
 
     /** accion = guardar | quitar | eliminar sobre un análisis de la biblioteca */
     public static function biblioteca()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $h = (string)($_POST['herramienta'] ?? '');
         $id = (int)($_POST['id'] ?? 0);
-        if (!isset(CentroIA::HERRAMIENTAS[$h]) || $id <= 0) self::json(['success' => false, 'error' => 'Análisis no válido'], 422);
+        if (!isset(CentroIA::HERRAMIENTAS[$h]) || $id <= 0) json_respuesta(['success' => false, 'error' => 'Análisis no válido'], 422);
         $accion = (string)($_POST['accion'] ?? '');
         if ($accion === 'eliminar') CentroIA::eliminar($p, $h, $id);
         elseif ($accion === 'guardar' || $accion === 'quitar') CentroIA::marcar($p, $h, $id, $accion === 'guardar', trim((string)($_POST['nombre'] ?? '')));
-        else self::json(['success' => false, 'error' => 'Acción no válida'], 422);
-        self::json(['success' => true]);
+        else json_respuesta(['success' => false, 'error' => 'Acción no válida'], 422);
+        json_respuesta(['success' => true]);
     }
 }

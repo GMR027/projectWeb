@@ -417,13 +417,6 @@ class EditorController
 
     // ---------- JSON ----------
 
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        echo json_encode($d);
-        exit;
-    }
-
     /** Gráfico de la petición (campo «lamina», igual que el editor del vPlan) si el usuario puede gestionarlo (o verlo/descargarlo) */
     private static function graficoApi(bool $soloVer = false): array
     {
@@ -431,7 +424,7 @@ class EditorController
         $g = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? Grafico::find(filter_var($_POST['lamina'] ?? null, FILTER_VALIDATE_INT)) : null;
         $p = $g ? Proyecto::find($g->proyecto_id) : null;
         $ok = $p && ($soloVer ? (puede_ver_proyecto($p) && puede_descargar()) : puede_gestionar_proyecto($p));
-        if (!$ok) self::json(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$ok) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return [$g, $p];
     }
 
@@ -439,9 +432,9 @@ class EditorController
     {
         [$g] = self::graficoApi();
         $g->nombre = trim((string)($_POST['nombre'] ?? ''));
-        if ($alertas = $g->validar()) self::json(['success' => false, 'error' => $alertas['error'][0]], 422);
+        if ($alertas = $g->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $g->guardar();
-        self::json(['success' => true, 'nombre' => $g->nombre]);
+        json_respuesta(['success' => true, 'nombre' => $g->nombre]);
     }
 
     /** Lámina del gráfico indicada por «hoja» (o la primera si no se indica) */
@@ -474,14 +467,14 @@ class EditorController
             }
             $filas[] = $fila;
         }
-        self::json(['success' => true, 'cfg' => $cfg, 'columnas' => \Classes\PunchVista::etiquetas($cfg), 'filas' => $filas, 'fotos' => $fotos]);
+        json_respuesta(['success' => true, 'cfg' => $cfg, 'columnas' => \Classes\PunchVista::etiquetas($cfg), 'filas' => $filas, 'fotos' => $fotos]);
     }
 
     public static function guardarMarcas()
     {
         [$g, $p] = self::graficoApi();
         $l = self::laminaDe($g, $_POST['hoja'] ?? null);
-        if (!$l) self::json(['success' => false, 'error' => 'Lámina no encontrada'], 404);
+        if (!$l) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
         $json = (string)($_POST['json'] ?? '');
         $datos = json_decode($json, true);
         foreach (($datos['shapes'] ?? []) as $sh) {
@@ -490,19 +483,19 @@ class EditorController
         $png = (string)($_POST['png'] ?? '');
         $bin = preg_match('#^data:image/png;base64,#', $png) ? base64_decode(substr($png, strpos($png, ',') + 1), true) : false;
         if (!is_array($datos) || strlen($json) > 3_000_000 || !isset($datos['shapes']) || count($datos['shapes']) > 2000 || !$bin || strlen($bin) > 60_000_000) {
-            self::json(['success' => false, 'error' => 'Datos no válidos'], 422);
+            json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
         $ver = (string)($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$l->actualizado) {
-            self::json(['success' => false, 'conflicto' => true, 'error' => 'Esta lámina se guardó desde otra sesión después de que la abrieras.'], 409);
+            json_respuesta(['success' => false, 'conflicto' => true, 'error' => 'Esta lámina se guardó desde otra sesión después de que la abrieras.'], 409);
         }
         $anterior = $l->marcas_png ? (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . basename($l->marcas_png)) : 0;
-        if (!Almacenamiento::cabe((int)$p->id, max(0, strlen($bin) - $anterior))) self::json(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
+        if (!Almacenamiento::cabe((int)$p->id, max(0, strlen($bin) - $anterior))) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
         $tmp = tempnam(sys_get_temp_dir(), 'edg');
         file_put_contents($tmp, $bin);
         $nuevo = Imagenes::guardarGrande($tmp, Grafico::LADO_MAX);
         @unlink($tmp);
-        if (!$nuevo) self::json(['success' => false, 'error' => 'Imagen no válida'], 422);
+        if (!$nuevo) json_respuesta(['success' => false, 'error' => 'Imagen no válida'], 422);
         Imagenes::eliminarVplan($l->marcas_png);
         $enUso = array_merge(Grafico::imagenesDe($json), $l->imagenesDeHermanas());
         foreach (array_diff(Grafico::imagenesDe($l->marcas_json), $enUso) as $viejo) Imagenes::eliminarVplan($viejo);
@@ -510,7 +503,7 @@ class EditorController
         $l->marcas_json = $json;
         $l->guardar();
         $fresca = GraficoLamina::find($l->id);
-        self::json(['success' => true, 'src' => '/uploads/vplan/' . $nuevo, 'version' => $fresca ? (string)$fresca->actualizado : '']);
+        json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nuevo, 'version' => $fresca ? (string)$fresca->actualizado : '']);
     }
 
     /** Altas, bajas, copias, nombres y orden de las láminas de un gráfico */
@@ -530,45 +523,45 @@ class EditorController
             return $orden;
         };
         if ($accion === 'crear' || $accion === 'duplicar') {
-            if (count($todas) >= 60) self::json(['success' => false, 'error' => 'Máximo 60 láminas por gráfico'], 422);
+            if (count($todas) >= 60) json_respuesta(['success' => false, 'error' => 'Máximo 60 láminas por gráfico'], 422);
         }
         switch ($accion) {
             case 'crear':
                 $nueva = new GraficoLamina(['grafico_id' => $g->id, 'orden' => $hueco($buscar($_POST['despues'] ?? 0))]);
                 $nueva->id = $nueva->guardar()['id'];
                 $f = GraficoLamina::find($nueva->id);
-                self::json(['success' => true, 'id' => (int)$nueva->id, 'nombre' => '', 'version' => $f ? (string)$f->actualizado : '']);
+                json_respuesta(['success' => true, 'id' => (int)$nueva->id, 'nombre' => '', 'version' => $f ? (string)$f->actualizado : '']);
             case 'duplicar':
                 $o = $buscar($_POST['hoja'] ?? 0);
-                if (!$o) self::json(['success' => false, 'error' => 'Lámina no encontrada'], 404);
-                if (!Almacenamiento::cabe((int)$p->id, $o->bytes())) self::json(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
+                if (!$o) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
+                if (!Almacenamiento::cabe((int)$p->id, $o->bytes())) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
                 $c = $o->copiarArchivos();
                 $nueva = new GraficoLamina(['grafico_id' => $g->id, 'orden' => $hueco($o), 'nombre' => $o->nombre !== '' ? mb_substr($o->nombre, 0, 52) . ' (copia)' : '', 'marcas_json' => $c['json'], 'marcas_png' => $c['png']]);
                 $nueva->id = $nueva->guardar()['id'];
                 $f = GraficoLamina::find($nueva->id);
-                self::json(['success' => true, 'version' => $f ? (string)$f->actualizado : '', 'id' => (int)$nueva->id, 'nombre' => $nueva->nombre, 'marcas' => $nueva->marcas_json ? json_decode($nueva->marcas_json, true) : null, 'png' => $nueva->marcas_png ? '/uploads/vplan/' . $nueva->marcas_png : '']);
+                json_respuesta(['success' => true, 'version' => $f ? (string)$f->actualizado : '', 'id' => (int)$nueva->id, 'nombre' => $nueva->nombre, 'marcas' => $nueva->marcas_json ? json_decode($nueva->marcas_json, true) : null, 'png' => $nueva->marcas_png ? '/uploads/vplan/' . $nueva->marcas_png : '']);
             case 'eliminar':
                 $o = $buscar($_POST['hoja'] ?? 0);
-                if (!$o) self::json(['success' => false, 'error' => 'Lámina no encontrada'], 404);
-                if (count($todas) < 2) self::json(['success' => false, 'error' => 'El gráfico debe conservar al menos una lámina'], 422);
+                if (!$o) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
+                if (count($todas) < 2) json_respuesta(['success' => false, 'error' => 'El gráfico debe conservar al menos una lámina'], 422);
                 $o->eliminarArchivos();
                 $o->eliminar();
-                self::json(['success' => true]);
+                json_respuesta(['success' => true]);
             case 'renombrar':
                 $o = $buscar($_POST['hoja'] ?? 0);
-                if (!$o) self::json(['success' => false, 'error' => 'Lámina no encontrada'], 404);
+                if (!$o) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
                 $o->nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 60);
                 $o->guardar();
-                self::json(['success' => true, 'nombre' => $o->nombre]);
+                json_respuesta(['success' => true, 'nombre' => $o->nombre]);
             case 'ordenar':
                 $ids = array_map('intval', array_filter(explode(',', (string)($_POST['orden'] ?? '')), 'strlen'));
                 $actuales = array_map(fn($l) => (int)$l->id, $todas);
                 $a = $ids; $b = $actuales; sort($a); sort($b);
-                if ($a !== $b) self::json(['success' => false, 'error' => 'Orden no válido'], 422);
+                if ($a !== $b) json_respuesta(['success' => false, 'error' => 'Orden no válido'], 422);
                 foreach ($ids as $i => $id) Grafico::ejecutar("UPDATE editor_laminas SET orden = " . ($i + 1) . " WHERE id = $id AND grafico_id = " . (int)$g->id);
-                self::json(['success' => true]);
+                json_respuesta(['success' => true]);
         }
-        self::json(['success' => false, 'error' => 'Acción no válida'], 422);
+        json_respuesta(['success' => false, 'error' => 'Acción no válida'], 422);
     }
 
     /** Imagen insertada dentro del gráfico (misma regla que en el vPlan) */
@@ -578,10 +571,10 @@ class EditorController
         $f = $_FILES['imagen'] ?? null;
         $ok = $f && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
             && in_array(mime_content_type($f['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
-        if ($ok && !Almacenamiento::cabe((int)$p->id, (int)$f['size'])) self::json(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
+        if ($ok && !Almacenamiento::cabe((int)$p->id, (int)$f['size'])) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
         $nombre = $ok ? Imagenes::guardarGrande($f['tmp_name'], 1600) : null;
-        if (!$nombre) self::json(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)'], 422);
-        self::json(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
+        if (!$nombre) json_respuesta(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)'], 422);
+        json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
     }
 
     /** PDF con una página por imagen, del tamaño exacto de la imagen (px a 96 dpi → puntos). $pngs: binarios PNG */
@@ -617,7 +610,7 @@ class EditorController
         $h = (int)($_POST['alto'] ?? 0);
         $png = (string)($_POST['png'] ?? '');
         if ($w < 16 || $h < 16 || $w > 10000 || $h > 10000 || $w * $h > 64_000_000 || !preg_match('#^data:image/png;base64,[A-Za-z0-9+/=]+$#', $png) || strlen($png) > 90_000_000) {
-            self::json(['success' => false, 'error' => 'Datos no válidos'], 422);
+            json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
         @ini_set('memory_limit', '1024M');
         @set_time_limit(120);

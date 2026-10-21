@@ -13,14 +13,6 @@ use Model\OrdenCambio;
 /** Órdenes de cambio con seguimiento de lo que se instala, retira, reubica, demuele o agrega */
 class CambioController
 {
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
     private static function fuente(): array
     {
         return $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
@@ -157,10 +149,10 @@ class CambioController
         $proyecto = proyecto_de_peticion(true);
         $o = self::ordenDe($proyecto);
         $nuevo = $_POST['estado'] ?? '';
-        if (!$o || !isset(OrdenCambio::ESTADOS[$nuevo])) self::json(['success' => false, 'error' => 'Datos no válidos'], 422);
+        if (!$o || !isset(OrdenCambio::ESTADOS[$nuevo])) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $o->estado = $nuevo;
         $o->guardar();
-        self::json(['success' => true, 'estado' => $nuevo]);
+        json_respuesta(['success' => true, 'estado' => $nuevo]);
     }
 
     /** Crea o edita un renglón de la orden */
@@ -222,14 +214,14 @@ class CambioController
         $proyecto = proyecto_de_peticion(true);
         $c = self::partidaDe($proyecto);
         $nuevo = $_POST['estado'] ?? '';
-        if (!$c || !isset(CambioPartida::ESTADOS[$nuevo])) self::json(['success' => false, 'error' => 'Datos no válidos'], 422);
+        if (!$c || !isset(CambioPartida::ESTADOS[$nuevo])) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $base = trim((string)($_POST['base'] ?? ''));
         if ($base !== '' && empty($_POST['forzar']) && $c->actualizado !== $base && $c->estado !== $nuevo) {
-            self::json(['success' => false, 'conflicto' => true, 'actual' => ['estado' => $c->estado, 'actualizado' => $c->actualizado], 'error' => 'El renglón cambió mientras trabajabas sin conexión'], 409);
+            json_respuesta(['success' => false, 'conflicto' => true, 'actual' => ['estado' => $c->estado, 'actualizado' => $c->actualizado], 'error' => 'El renglón cambió mientras trabajabas sin conexión'], 409);
         }
-        if ($c->estado !== $nuevo && !$c->cambiarEstado($nuevo)) self::json(['success' => false, 'error' => 'Ese estado no corresponde a este renglón'], 422);
+        if ($c->estado !== $nuevo && !$c->cambiarEstado($nuevo)) json_respuesta(['success' => false, 'error' => 'Ese estado no corresponde a este renglón'], 422);
         $c = CambioPartida::find($c->id);
-        self::json(['success' => true, 'estado' => $c->estado, 'actualizado' => $c->actualizado, 'fecha_ejecucion' => $c->fecha_ejecucion, 'fecha_retiro_real' => $c->fecha_retiro_real]);
+        json_respuesta(['success' => true, 'estado' => $c->estado, 'actualizado' => $c->actualizado, 'fecha_ejecucion' => $c->fecha_ejecucion, 'fecha_retiro_real' => $c->fecha_retiro_real]);
     }
 
     public static function cruce(Router $router)

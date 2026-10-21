@@ -9,14 +9,6 @@ use Classes\Normativa;
 /** Normativa y especificaciones: documentos PDF indexados, vínculos con materiales y actividades. Ver: quien tiene acceso al proyecto; gestionar: admin / dueño */
 class NormativaController
 {
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
     private static function gestion(): Proyecto
     {
         $p = proyecto_de_peticion(true);
@@ -26,7 +18,7 @@ class NormativaController
     private static function gestionApi(): Proyecto
     {
         $p = Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT));
-        if (!$p || !is_auth() || !puede_gestionar_proyecto($p)) self::json(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p || !is_auth() || !puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $p;
     }
 
@@ -108,14 +100,14 @@ class NormativaController
     {
         $p = self::gestionApi();
         [$ok, $msg] = Normativa::resolver($p, (int)($_POST['id'] ?? 0), (string)($_POST['estado'] ?? ''));
-        self::json(['success' => $ok, 'mensaje' => $msg, 'pendientes' => Normativa::conteoPendientes((int)$p->id)], $ok ? 200 : 422);
+        json_respuesta(['success' => $ok, 'mensaje' => $msg, 'pendientes' => Normativa::conteoPendientes((int)$p->id)], $ok ? 200 : 422);
     }
 
     public static function quitar()
     {
         $p = self::gestionApi();
         $ok = Normativa::quitar($p, (int)($_POST['id'] ?? 0));
-        self::json(['success' => $ok], $ok ? 200 : 404);
+        json_respuesta(['success' => $ok], $ok ? 200 : 404);
     }
 
     /** Vincula a mano desde el formulario de una actividad o un material ya guardados */
@@ -124,7 +116,7 @@ class NormativaController
         $p = self::gestionApi();
         $tipo = in_array($_POST['tipo'] ?? '', ['actividad', 'material'], true) ? $_POST['tipo'] : '';
         $ok = $tipo && Normativa::agregarManual((int)$p->id, $tipo, (int)($_POST['entidad'] ?? 0), ((int)($_POST['documento'] ?? 0)) ?: null, (string)($_POST['referencia'] ?? ''), (string)($_POST['nota'] ?? ''));
-        self::json(['success' => $ok, 'error' => $ok ? '' : 'Indica la referencia o el documento'], $ok ? 200 : 422);
+        json_respuesta(['success' => $ok, 'error' => $ok ? '' : 'Indica la referencia o el documento'], $ok ? 200 : 422);
     }
 
     /** Sugiere (sin IA) vínculos para una sola actividad o material */
@@ -135,6 +127,6 @@ class NormativaController
         $id = (int)($_POST['entidad'] ?? 0);
         $n = 0;
         if ($tipo && Normativa::entidad((int)$p->id, $tipo, $id)) foreach (Normativa::candidatos((int)$p->id, $tipo, $id, 3) as $c) if ($c['origen'] === 'csi' || $c['puntaje'] >= 40) if (Normativa::proponerRegla((int)$p->id, $tipo, $id, $c)) $n++;
-        self::json(['success' => true, 'propuestas' => $n]);
+        json_respuesta(['success' => true, 'propuestas' => $n]);
     }
 }

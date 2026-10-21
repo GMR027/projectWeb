@@ -10,14 +10,6 @@ use Classes\CentroIA;
 /** Centro de IA: bandeja de propuestas pendientes, historial de cambios (auditoría) y biblioteca de análisis guardados. Solo admin */
 class CentroIAController
 {
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
     private static function admin(): Proyecto
     {
         $proyecto = proyecto_de_peticion();
@@ -28,7 +20,7 @@ class CentroIAController
     private static function proyectoApi(): Proyecto
     {
         $p = is_admin() ? Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$p) self::json(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $p;
     }
 
@@ -46,14 +38,14 @@ class CentroIAController
     {
         $p = self::proyectoApi();
         [$ok, $msg] = CentroIA::aceptar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
-        self::json(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
+        json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
 
     public static function rechazar()
     {
         $p = self::proyectoApi();
         [$ok, $msg] = CentroIA::rechazar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
-        self::json(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
+        json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
 
     // ---------- historial ----------

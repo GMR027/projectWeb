@@ -9,22 +9,6 @@ use Classes\Revisiones;
 /** Revisiones por proyecto: pantalla de entrada (qué está revisado y qué no), marcado ✅ ⚠ ❌ y estado de las herramientas de IA. Solo administrador (ni cliente ni demo) */
 class RevisionController
 {
-    private static function json(array $d, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json');
-        echo json_encode($d, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    private static function proyectoApi(): Proyecto
-    {
-        $fuente = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-        $p = is_admin() ? Proyecto::find(filter_var($fuente['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$p || !puede_ver_proyecto($p)) self::json(['success' => false, 'error' => 'No autorizado'], 403);
-        return $p;
-    }
-
     public static function index(Router $router)
     {
         if (!is_admin()) { http_response_code(403); exit('Solo el administrador puede ver las revisiones'); }
@@ -46,22 +30,22 @@ class RevisionController
 
     public static function marcar()
     {
-        $p = self::proyectoApi();
-        if (!puede_revisar($p)) self::json(['success' => false, 'error' => 'No tienes permiso para marcar revisiones'], 403);
+        $p = proyecto_api();
+        if (!puede_revisar($p)) json_respuesta(['success' => false, 'error' => 'No tienes permiso para marcar revisiones'], 403);
         $revisado = isset($_POST['revisado']) && $_POST['revisado'] !== '' ? $_POST['revisado'] === '1' : null;
         $veredicto = isset($_POST['veredicto']) && $_POST['veredicto'] !== '' ? (string)$_POST['veredicto'] : null;
         $nota = isset($_POST['nota']) ? (string)$_POST['nota'] : null;
         $e = Revisiones::marcar((int)$p->id, (string)($_POST['tipo'] ?? ''), (string)($_POST['ref'] ?? ''), $veredicto, $revisado, $nota, usuario_actual());
-        if (!$e) self::json(['success' => false, 'error' => 'No se pudo guardar (elemento no encontrado)'], 422);
-        self::json(['success' => true, 'estado' => $e, 'resumen' => Revisiones::resumen((int)$p->id)]);
+        if (!$e) json_respuesta(['success' => false, 'error' => 'No se pudo guardar (elemento no encontrado)'], 422);
+        json_respuesta(['success' => true, 'estado' => $e, 'resumen' => Revisiones::resumen((int)$p->id)]);
     }
 
     /** Resumen y estado de las herramientas de IA (la app de escritorio lo pinta junto a cada herramienta) */
     public static function resumen()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api();
         $r = Revisiones::resumen((int)$p->id);
         $r['lista_herramientas'] = Revisiones::herramientas((int)$p->id);
-        self::json(['success' => true] + $r);
+        json_respuesta(['success' => true] + $r);
     }
 }
