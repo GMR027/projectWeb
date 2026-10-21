@@ -6,7 +6,8 @@ use Model\VplanLamina;
 use Classes\Imagenes;
 use Classes\Vplan;
 use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
+use Classes\ShellTools;
 
 /** Láminas de vPlan en PDF, cada una al tamaño de hoja que tenga (una lámina por página) */
 class VplanPdfExporter extends BaseExporter
@@ -82,13 +83,8 @@ class VplanPdfExporter extends BaseExporter
 
     private function nuevoDompdf(string $html, float $anchoMm, float $altoMm): Dompdf
     {
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'Helvetica');   // mismas medidas que Arial (la vista): el PDF y la lámina se ven igual
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper([0, 0, $anchoMm * 72 / 25.4, $altoMm * 72 / 25.4]);
-        return $dompdf;
+        // Helvetica: mismas medidas que Arial (la vista), así el PDF y la lámina se ven igual
+        return Pdf::preparar($html, [0, 0, $anchoMm * 72 / 25.4, $altoMm * 72 / 25.4], 'portrait', ['isHtml5ParserEnabled' => true, 'defaultFont' => 'Helvetica']);
     }
 
     private function contarPaginas(string $html, VplanLamina $l): int
@@ -151,8 +147,7 @@ class VplanPdfExporter extends BaseExporter
         }
 
         // Láminas de tamaños distintos: un PDF por lámina y se unen en orden (un PDF no puede mezclar tamaños con Dompdf)
-        $unir = trim((string)@shell_exec('command -v pdfunite'));
-        if ($unir === '') throw new \Exception('Las láminas tienen tamaños de hoja distintos y el servidor no puede unirlas en un solo PDF. Exporta las láminas de una en una.');
+        if (!ShellTools::disponible('pdfunite') && !ShellTools::disponible('gs')) throw new \Exception('Las láminas tienen tamaños de hoja distintos y el servidor no puede unirlas en un solo PDF. Exporta las láminas de una en una.');
         $partes = [];
         try {
             foreach ($paginas as $i => $d) {
@@ -162,8 +157,7 @@ class VplanPdfExporter extends BaseExporter
                 file_put_contents($parte, $dompdf->output());
                 $partes[] = $parte;
             }
-            exec(escapeshellarg($unir) . ' ' . implode(' ', array_map('escapeshellarg', $partes)) . ' ' . escapeshellarg($ruta) . ' 2>&1', $salida, $codigo);
-            if ($codigo !== 0 || !is_file($ruta)) throw new \Exception('No se pudieron unir las láminas en un solo PDF');
+            if (!ShellTools::unirPdf($partes, $ruta) || !is_file($ruta)) throw new \Exception('No se pudieron unir las láminas en un solo PDF');
         } finally {
             foreach ($partes as $parte) @unlink($parte);
         }

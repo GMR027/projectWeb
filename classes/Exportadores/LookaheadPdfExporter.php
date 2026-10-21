@@ -3,8 +3,7 @@
 namespace Classes\Exportadores;
 
 use Controllers\LookaheadController;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 
 /** 4WLA en PDF tabloide (11x17") horizontal */
 class LookaheadPdfExporter extends BaseExporter
@@ -38,17 +37,10 @@ class LookaheadPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-lookahead.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('tabloid', 'landscape');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 

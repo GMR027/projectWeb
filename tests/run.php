@@ -147,5 +147,37 @@ $lista = fn($p) => ($p['config']['modo'] ?? '') === 'lienzo' ? ($p['config']['el
 $ok('plantillas: todas con contenido y campos del catálogo', !array_filter(Estampas::plantillas(), fn($p) => !$lista($p) || array_filter($lista($p), fn($e) => isset($e['campo']) && !isset(Estampas::CAMPOS[$e['campo']]))));
 $ok('semáforos por defecto apuntan a campos numéricos', !array_filter(array_keys(Estampas::SEMAFORO), fn($k) => !in_array(Estampas::CAMPOS[$k][2] ?? '', ['num', 'pct'], true)));
 
+echo "Pdf y ShellTools\n";
+$pdfA = \Classes\Pdf::generar('<html><body><p>Hola mundo</p></body></html>', 'letter', 'portrait');
+$pdfB = \Classes\Pdf::generar('<html><body><p>Segunda</p></body></html>', 'a4', 'landscape', ['isHtml5ParserEnabled' => true]);
+$ok('Pdf::generar devuelve un PDF', str_starts_with($pdfA, '%PDF') && str_starts_with($pdfB, '%PDF'));
+$ok('Pdf::generar acepta papel en puntos', str_starts_with(\Classes\Pdf::generar('<p>x</p>', [0, 0, 300, 200]), '%PDF'));
+$ok('ShellTools::disponible distingue lo que existe', \Classes\ShellTools::disponible('ls') && !\Classes\ShellTools::disponible('programa-que-no-existe-xyz'));
+$r = \Classes\ShellTools::ejecutar(['echo', 'hola'], 5);
+$ok('ShellTools::ejecutar devuelve salida y código', $r && trim($r['salida']) === 'hola' && $r['codigo'] === 0 && !$r['agotado']);
+$r = \Classes\ShellTools::ejecutar(['sleep', '5'], 1);
+$ok('ShellTools::ejecutar corta lo que tarda de más', $r && $r['agotado']);
+$ok('ShellTools::correr: falso si el código no es 0', \Classes\ShellTools::correr(['true']) && !\Classes\ShellTools::correr(['false']));
+if (\Classes\ShellTools::disponible('pdfunite') || \Classes\ShellTools::disponible('gs')) {
+    $d = sys_get_temp_dir() . '/pdftest_' . bin2hex(random_bytes(4));
+    mkdir($d);
+    file_put_contents("$d/a.pdf", $pdfA);
+    file_put_contents("$d/b.pdf", $pdfB);
+    $unido = \Classes\ShellTools::unirPdf(["$d/a.pdf", "$d/b.pdf"], "$d/ab.pdf");
+    $ok('ShellTools::unirPdf junta dos PDF', $unido && is_file("$d/ab.pdf") && substr_count((string)file_get_contents("$d/ab.pdf"), '/Type /Page') >= 2);
+    if (\Classes\ShellTools::disponible('pdftotext')) {
+        $t = \Classes\ShellTools::pdfATexto("$d/ab.pdf");
+        $ok('ShellTools::pdfATexto lee el PDF unido', $t && str_contains($t['salida'], 'Hola mundo') && str_contains($t['salida'], 'Segunda'));
+    }
+    if (\Classes\ShellTools::disponible('soffice')) {
+        file_put_contents("$d/n.txt", "Texto de prueba\n");
+        $conv = \Classes\ShellTools::libreOffice("$d/n.txt", 'txt', 'pdf');
+        $ok('ShellTools::libreOffice convierte a PDF y limpia sus temporales', $conv && str_starts_with((string)file_get_contents($conv), '%PDF') && !glob(sys_get_temp_dir() . '/lo_*'));
+        if ($conv) @unlink($conv);
+    }
+    array_map('unlink', glob("$d/*"));
+    rmdir($d);
+}
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

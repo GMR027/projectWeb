@@ -3,8 +3,7 @@
 namespace Classes\Exportadores;
 
 use Classes\Calendario;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 
 class PdfExporter extends BaseExporter
 {
@@ -68,21 +67,11 @@ class PdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-gantt.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        // Permitir cargar imágenes locales
-        $options->set('chroot', realpath(__DIR__ . '/../../public'));
-
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('tabloid', 'landscape');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true, 'chroot' => realpath(__DIR__ . '/../../public')]);
 
         $nombreArchivo = $this->nombreFinal($nombreBase, 'pdf');
         $ruta = $this->carpetaSalida . '/' . $nombreArchivo;
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 

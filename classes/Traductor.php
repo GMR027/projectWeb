@@ -255,49 +255,19 @@ class Traductor
     /** Convierte un formato viejo (doc, xls, ppt, rtf) con LibreOffice. Los temporales se anotan para borrarlos */
     private static function convertir(string $ruta, string $extOrigen, string $formato, array &$temporales): string
     {
-        $dir = sys_get_temp_dir() . '/trad_' . bin2hex(random_bytes(6));
-        mkdir($dir, 0700);
-        $entrada = "$dir/origen.$extOrigen";   // LibreOffice decide el filtro por la extensión
-        copy($ruta, $entrada);
-        $perfil = "$dir/perfil";
-        $cmd = ['soffice', "-env:UserInstallation=file://$perfil", '--headless', '--convert-to', $formato, '--outdir', $dir, $entrada];
-        $proc = @proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (!is_resource($proc)) { self::borrarDir($dir); throw new \RuntimeException('Este formato necesita LibreOffice en el servidor; guárdalo como DOCX, XLSX o PPTX.'); }
-        stream_set_blocking($pipes[1], false);
-        stream_set_blocking($pipes[2], false);
-        $limite = time() + 120;
-        while (proc_get_status($proc)['running'] && time() < $limite) { stream_get_contents($pipes[1]); stream_get_contents($pipes[2]); usleep(100000); }
-        if (proc_get_status($proc)['running']) proc_terminate($proc, 9);
-        proc_close($proc);
-        $res = "$dir/origen.$formato";
-        if (!is_file($res)) { self::borrarDir($dir); throw new \RuntimeException('No se pudo convertir el documento; guárdalo como DOCX, XLSX o PPTX.'); }
-        $copia = tempnam(sys_get_temp_dir(), 'trad');
-        copy($res, $copia);
-        self::borrarDir($dir);
+        if (!ShellTools::disponible('soffice')) throw new \RuntimeException('Este formato necesita LibreOffice en el servidor; guárdalo como DOCX, XLSX o PPTX.');
+        $copia = ShellTools::libreOffice($ruta, $extOrigen, $formato);
+        if ($copia === null) throw new \RuntimeException('No se pudo convertir el documento; guárdalo como DOCX, XLSX o PPTX.');
         $temporales[] = $copia;
         return $copia;
-    }
-
-    private static function borrarDir(string $dir): void
-    {
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $f) {
-            $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
-        }
-        @rmdir($dir);
     }
 
     /** PDF → PDF nuevo solo con el texto traducido (el diseño original no se conserva) */
     private static function pdf(string $ruta, string $salida, string $de, string $a): void
     {
-        $proc = @proc_open(['pdftotext', '-enc', 'UTF-8', $ruta, '-'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (!is_resource($proc)) throw new \RuntimeException('El servidor no puede leer PDF (falta poppler-utils).');
-        stream_set_blocking($pipes[1], false);
-        $texto = '';
-        $limite = time() + 120;
-        while (proc_get_status($proc)['running'] && time() < $limite && strlen($texto) < 30 * 1024 * 1024) { $texto .= (string)stream_get_contents($pipes[1]); usleep(40000); }
-        $texto .= (string)stream_get_contents($pipes[1]);
-        if (proc_get_status($proc)['running']) proc_terminate($proc, 9);
-        proc_close($proc);
+        $r = ShellTools::pdfATexto($ruta, false, 120, 30 * 1024 * 1024);
+        if ($r === null) throw new \RuntimeException('El servidor no puede leer PDF (falta poppler-utils).');
+        $texto = $r['salida'];
         if (!preg_match('/\p{L}{3}/u', $texto)) throw new \RuntimeException('El PDF no tiene texto seleccionable (parece escaneado); no se puede traducir sin OCR.');
 
         $paginas = array_values(array_filter(explode("\f", $texto), fn($p) => trim($p) !== ''));
@@ -318,14 +288,7 @@ class Traductor
             }
             $html .= '<p>' . htmlspecialchars($trad[$i], ENT_QUOTES, 'UTF-8') . '</p>';
         }
-        $opts = new \Dompdf\Options();
-        $opts->set('isRemoteEnabled', false);
-        $opts->set('isPhpEnabled', false);
-        $dompdf = new \Dompdf\Dompdf($opts);
-        $dompdf->setPaper('letter');
-        $dompdf->loadHtml($html . '</body></html>');
-        $dompdf->render();
-        file_put_contents($salida, $dompdf->output());
+        Pdf::guardar($salida, $html . '</body></html>', 'letter', 'portrait', ['isRemoteEnabled' => false, 'isPhpEnabled' => false, 'defaultFont' => 'serif']);
     }
 
     /** XLSX / ODS / CSV: traduce las celdas de texto (no fórmulas, números ni fechas) */

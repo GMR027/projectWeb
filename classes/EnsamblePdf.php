@@ -95,24 +95,7 @@ class EnsamblePdf
 
     private static function unir(array $rutas, string $salida): bool
     {
-        if (count($rutas) === 1) return copy($rutas[0], $salida);
-        $cmds = [];
-        if (self::existe('pdfunite')) $cmds[] = array_merge(['pdfunite'], $rutas, [$salida]);
-        if (self::existe('gs')) $cmds[] = array_merge(['gs', '-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=pdfwrite', '-sOutputFile=' . $salida], $rutas);
-        foreach ($cmds as $cmd) {
-            $p = @proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-            if (!is_resource($p)) continue;
-            stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
-            if (proc_close($p) === 0 && is_file($salida) && filesize($salida) > 0) return true;
-        }
-        return false;
-    }
-
-    private static function existe(string $bin): bool
-    {
-        foreach (explode(PATH_SEPARATOR, (string)getenv('PATH')) as $d) if ($d !== '' && is_executable($d . '/' . $bin)) return true;
-        return false;
+        return ShellTools::unirPdf($rutas, $salida);
     }
 
     public static function nombreArchivo(Ensamble $e): string

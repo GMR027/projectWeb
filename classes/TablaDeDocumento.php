@@ -16,13 +16,7 @@ class TablaDeDocumento
 
     public static function ocrDisponible(): bool
     {
-        return self::existe('tesseract');
-    }
-
-    private static function existe(string $bin): bool
-    {
-        $r = @shell_exec('command -v ' . escapeshellarg($bin) . ' 2>/dev/null');
-        return is_string($r) && trim($r) !== '';
+        return ShellTools::disponible('tesseract');
     }
 
     /**
@@ -137,23 +131,10 @@ class TablaDeDocumento
 
     private static function correr(array $cmd, int $segundos): string
     {
-        $proc = @proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (!is_resource($proc)) throw new \RuntimeException('No se pudo ejecutar ' . $cmd[0] . ' en el servidor.');
-        stream_set_blocking($pipes[1], false);
-        $salida = '';
-        $fin = time() + $segundos;
-        while (true) {
-            $salida .= (string)stream_get_contents($pipes[1]);
-            $st = proc_get_status($proc);
-            if (!$st['running']) break;
-            if (time() > $fin || strlen($salida) > 8_000_000) { proc_terminate($proc, 9); throw new \RuntimeException('El documento tardó demasiado en leerse.'); }
-            usleep(50000);
-        }
-        $salida .= (string)stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        proc_close($proc);
-        return $salida;
+        $r = ShellTools::ejecutar($cmd, $segundos);
+        if ($r === null) throw new \RuntimeException('No se pudo ejecutar ' . $cmd[0] . ' en el servidor.');
+        if ($r['agotado']) throw new \RuntimeException('El documento tardó demasiado en leerse.');
+        return $r['salida'];
     }
 
     /**

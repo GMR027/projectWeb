@@ -627,12 +627,7 @@ class Redactor
     public static function pdf(RedactorDocumento $d, array $opc = []): string
     {
         @ini_set('memory_limit', '512M');
-        $op = new \Dompdf\Options();
-        $op->set('isRemoteEnabled', false);
-        $op->set('chroot', realpath(__DIR__ . '/../public/uploads') ?: Imagenes::CARPETA_VPLAN);
-        $dompdf = new \Dompdf\Dompdf($op);
         [$w, $h] = $d->medidas();
-        $dompdf->setPaper([0, 0, $w / 2.54 * 72, $h / 2.54 * 72]);
         $html = self::contenidoExportable($d, $opc);
         $html = preg_replace_callback('#src="(/uploads/(?:vplan|firmas|punch/min)/[a-f0-9]{32}\.(?:png|jpg))"#', fn($m) => 'src="' . (self::rutaImagen($m[1]) ?? '') . '"', $html);
         // Índice: sin números de página (Dompdf no los conoce); las entradas son enlaces internos
@@ -643,7 +638,9 @@ class Redactor
             . 'h1{font-size:20pt}h2{font-size:16pt}h3{font-size:13pt}table{border-collapse:collapse}td,th{border:1px solid #888;padding:3pt 5pt;vertical-align:top}'
             . 'blockquote{margin:6pt 0 6pt 18pt;padding-left:8pt;border-left:3pt solid #bbb;color:#444}pre{font-family:DejaVu Sans Mono,monospace;font-size:10pt}img{max-width:100%}img.rd-img-izq{float:left;margin:0 8pt 4pt 0}img.rd-img-der{float:right;margin:0 0 4pt 8pt}img.rd-img-bloque{display:block;margin:6pt auto}a{color:#0563c1}.rd-indice p{margin:2pt 0}';
         $marca = $d->marca_agua !== '' ? '<div style="position:fixed;left:0;right:0;top:40%;text-align:center;font-size:96pt;font-weight:bold;color:#cccccc;opacity:0.35;transform:rotate(-45deg);z-index:-1">' . htmlspecialchars($d->marca_agua) . '</div>' : '';
-        $dompdf->loadHtml('<html><head><meta charset="utf-8"><title>' . htmlspecialchars($d->nombre) . '</title><style>' . $css . '</style></head><body>' . $marca . $html . '</body></html>');
+        $dompdf = Pdf::preparar('<html><head><meta charset="utf-8"><title>' . htmlspecialchars($d->nombre) . '</title><style>' . $css . '</style></head><body>' . $marca . $html . '</body></html>',
+            [0, 0, $w / 2.54 * 72, $h / 2.54 * 72], 'portrait',
+            ['isRemoteEnabled' => false, 'chroot' => realpath(__DIR__ . '/../public/uploads') ?: Imagenes::CARPETA_VPLAN, 'defaultFont' => 'serif']);
         $dompdf->render();
         $canvas = $dompdf->getCanvas();
         $fuente = $dompdf->getFontMetrics()->getFont('helvetica');

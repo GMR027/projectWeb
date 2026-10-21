@@ -162,12 +162,6 @@ class Auditoria
         $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:8px;color:#111}h1{font-size:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:2px 4px;text-align:left;vertical-align:top}th{background:#e8ecf1}</style></head><body><h1>Historial de cambios · ' . $e($p->nombre) . '</h1><p>Generado el ' . date('d/m/Y H:i') . '</p><table>';
         foreach (self::tabla((int)$p->id, $f) as $i => $fila) $html .= '<tr>' . implode('', array_map(fn($c) => ($i === 0 ? '<th>' : '<td>') . $e($c) . ($i === 0 ? '</th>' : '</td>'), $fila)) . '</tr>';
-        $o = new \Dompdf\Options();
-        $o->set('defaultFont', 'DejaVu Sans');
-        $d = new \Dompdf\Dompdf($o);
-        $d->loadHtml($html . '</table></body></html>');
-        $d->setPaper('letter', 'landscape');
-        $d->render();
-        return $d->output();
+        return Pdf::generar($html . '</table></body></html>', 'letter', 'landscape');
     }
 }

@@ -5,8 +5,7 @@ namespace Classes\Exportadores;
 use Controllers\CurvaController;
 use Model\Curva;
 use Classes\CurvaProductividad;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 
 /** Curva de productividad (o gráfica maestra) en PDF carta horizontal */
 class CurvaPdfExporter extends BaseExporter
@@ -68,16 +67,10 @@ class CurvaPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-curva.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('letter', 'landscape');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'letter', 'landscape', ['isHtml5ParserEnabled' => true]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 }

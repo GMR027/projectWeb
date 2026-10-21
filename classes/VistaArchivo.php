@@ -21,10 +21,7 @@ class VistaArchivo
 
     public static function hayLibreOffice(): bool
     {
-        static $r = null;
-        if ($r !== null) return $r;
-        foreach (explode(PATH_SEPARATOR, (string)getenv('PATH')) as $d) if ($d !== '' && is_executable($d . '/soffice')) return $r = true;
-        return $r = false;
+        return ShellTools::disponible('soffice');
     }
 
     public static function mime(string $ext): string
@@ -39,24 +36,10 @@ class VistaArchivo
         $cache = sys_get_temp_dir() . '/vista_' . sha1($ruta . filesize($ruta) . filemtime($ruta)) . '.pdf';
         if (is_file($cache)) return $cache;
         @set_time_limit(150);
-        $dir = sys_get_temp_dir() . '/vista_' . bin2hex(random_bytes(6));
-        if (!@mkdir($dir, 0700)) return null;
-        $entrada = "$dir/origen." . preg_replace('/[^a-z0-9]/', '', strtolower($ext));   // LibreOffice elige el filtro por la extensión
-        copy($ruta, $entrada);
-        $p = @proc_open(['soffice', "-env:UserInstallation=file://$dir/perfil", '--headless', '--convert-to', 'pdf', '--outdir', $dir, $entrada], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (is_resource($p)) {
-            stream_set_blocking($pipes[1], false);
-            stream_set_blocking($pipes[2], false);
-            $limite = time() + 120;
-            while (proc_get_status($p)['running'] && time() < $limite) { stream_get_contents($pipes[1]); stream_get_contents($pipes[2]); usleep(100000); }
-            if (proc_get_status($p)['running']) proc_terminate($p, 9);
-            proc_close($p);
-        }
-        $ok = is_file("$dir/origen.pdf") && @copy("$dir/origen.pdf", $cache);
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $f) {
-            $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
-        }
-        @rmdir($dir);
+        $pdf = ShellTools::libreOffice($ruta, $ext, 'pdf');
+        if (!$pdf) return null;
+        $ok = @copy($pdf, $cache);
+        @unlink($pdf);
         return $ok ? $cache : null;
     }
 }

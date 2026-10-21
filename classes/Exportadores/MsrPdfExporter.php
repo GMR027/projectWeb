@@ -3,8 +3,7 @@
 namespace Classes\Exportadores;
 
 use Controllers\MsrController;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 
 /** MSR en PDF A4 horizontal */
 class MsrPdfExporter extends BaseExporter
@@ -28,16 +27,10 @@ class MsrPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-msr.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('a4', 'landscape');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'a4', 'landscape', ['isHtml5ParserEnabled' => true]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 

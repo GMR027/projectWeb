@@ -168,12 +168,6 @@ class Informes
             . '.inf-kpis{width:100%}.inf-kpi{display:inline-block;width:23%;margin:0 1% 6px 0;border:1px solid #ccc;padding:4px 6px}.inf-kpi small{display:block;color:#555}.inf-kpi strong{font-size:14px}.inf-kpi span{display:block;color:#555;font-size:8px}.inf-vacio{color:#777}';
         $html = '<html><head><meta charset="utf-8"><style>' . $css . '</style></head><body><h1>' . $e($inf['titulo']) . '</h1><h2>' . $e($p->nombre) . ' · generado el ' . date('d/m/Y H:i', strtotime($inf['creado'])) . ($inf['origen'] === 'ia' ? ' · redactado con IA (' . $e($inf['modelo']) . ')' : '') . '</h2>'
             . self::html($inf['contenido']) . '</body></html>';
-        $o = new \Dompdf\Options();
-        $o->set('defaultFont', 'DejaVu Sans');
-        $d = new \Dompdf\Dompdf($o);
-        $d->loadHtml($html);
-        $d->setPaper('letter', 'portrait');
-        $d->render();
-        return $d->output();
+        return Pdf::generar($html, 'letter', 'portrait');
     }
 }

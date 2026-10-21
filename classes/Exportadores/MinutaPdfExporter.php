@@ -3,8 +3,7 @@
 namespace Classes\Exportadores;
 
 use Controllers\MinutaController;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 use Model\Minuta;
 
 /** Minuta en PDF A4 vertical (los compromisos solo se imprimen si existen) */
@@ -32,16 +31,10 @@ class MinutaPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-minuta.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('a4', 'portrait');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'a4', 'portrait', ['isHtml5ParserEnabled' => true]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 }

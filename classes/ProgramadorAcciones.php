@@ -349,12 +349,6 @@ class ProgramadorAcciones
             foreach ($filas as $i => $f) $html .= '<tr>' . implode('', array_map(fn($c) => ($i === 0 ? '<th>' : '<td>') . $h($c) . ($i === 0 ? '</th>' : '</td>'), $f)) . '</tr>';
             $html .= '</table>';
         }
-        $o = new \Dompdf\Options();
-        $o->set('defaultFont', 'DejaVu Sans');
-        $d = new \Dompdf\Dompdf($o);
-        $d->loadHtml($html . '</body></html>');
-        $d->setPaper('letter', 'landscape');
-        $d->render();
-        return $d->output();
+        return Pdf::generar($html . '</body></html>', 'letter', 'landscape');
     }
 }

@@ -605,16 +605,12 @@ class Sheetflow
     public static function pdf(SheetflowHoja $h): string
     {
         @ini_set('memory_limit', '512M');
-        $op = new \Dompdf\Options();
-        $op->set('isRemoteEnabled', false);
-        $op->set('chroot', realpath(Imagenes::CARPETA_VPLAN) ?: Imagenes::CARPETA_VPLAN);
-        $dompdf = new \Dompdf\Dompdf($op);
         $ancha = count($h->contenido()['cols']) > 6;
-        $dompdf->setPaper('letter', $ancha ? 'landscape' : 'portrait');
         $esc = fn($t) => htmlspecialchars((string)$t, ENT_QUOTES, 'UTF-8');
         $css = '@page{margin:1.6cm}body{font-family:DejaVu Sans,Helvetica,sans-serif;font-size:' . ($ancha ? 8 : 10) . 'pt;color:#000}h1{font-size:15pt;margin:0 0 2pt}p.sub{margin:0 0 10pt;color:#555;font-size:9pt}tr{page-break-inside:avoid}thead{display:table-header-group}';
         $sub = formatear_fecha($h->fecha, 'd/m/Y') . ($h->departamento !== '' ? ' · ' . $h->departamento : '');
-        $dompdf->loadHtml('<html><head><meta charset="utf-8"><title>' . $esc($h->nombre) . '</title><style>' . $css . '</style></head><body><h1>' . $esc($h->nombre) . '</h1><p class="sub">' . $esc($sub) . '</p>' . self::html($h, 'sf-tabla', true) . '</body></html>');
+        $html = '<html><head><meta charset="utf-8"><title>' . $esc($h->nombre) . '</title><style>' . $css . '</style></head><body><h1>' . $esc($h->nombre) . '</h1><p class="sub">' . $esc($sub) . '</p>' . self::html($h, 'sf-tabla', true) . '</body></html>';
+        $dompdf = Pdf::preparar($html, 'letter', $ancha ? 'landscape' : 'portrait', ['isRemoteEnabled' => false, 'chroot' => realpath(Imagenes::CARPETA_VPLAN) ?: Imagenes::CARPETA_VPLAN, 'defaultFont' => 'serif']);
         $dompdf->render();
         $canvas = $dompdf->getCanvas();
         $canvas->page_text($canvas->get_width() / 2 - 30, $canvas->get_height() - 22, 'Página {PAGE_NUM} de {PAGE_COUNT}', $dompdf->getFontMetrics()->getFont('helvetica'), 8, [0.4, 0.4, 0.4]);

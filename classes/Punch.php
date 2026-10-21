@@ -150,12 +150,6 @@ class Punch
         $filas = implode('', array_map(fn($x, $i) => '<tr><td>' . ($i + 1) . '</td><td><b>' . $e($x['titulo']) . '</b><br>' . $e(mb_substr((string)$x['descripcion'], 0, 220)) . '</td><td>' . $e($x['ubicacion']) . '</td><td>' . $e($x['categoria']) . '</td><td>' . $e(self::SEVERIDADES[$x['severidad']]) . '</td><td>' . $e($x['responsable'] ?: $x['contratista']) . '</td><td>' . $fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '') . '</td><td>' . $e(self::ESTADOS[$x['estado']]) . '</td></tr>', $items, array_keys($items)));
         $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:9px}h1{font-size:15px;margin:0}h2{font-size:10px;color:#555;margin:2px 0 10px;font-weight:normal}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:3px 5px;vertical-align:top;text-align:left}th{background:#e8ecf1}</style></head><body><h1>Punch list' . ($contratista !== '' ? ' · ' . $e($contratista) : '') . '</h1><h2>' . $e($p->nombre) . ' · ' . count($items) . ' pendiente(s) · generado el ' . date('d/m/Y H:i') . '</h2>'
             . '<table><thead><tr><th>#</th><th>Pendiente</th><th>Ubicación</th><th>Categoría</th><th>Severidad</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th></tr></thead><tbody>' . $filas . '</tbody></table></body></html>';
-        $o = new \Dompdf\Options();
-        $o->set('defaultFont', 'DejaVu Sans');
-        $d = new \Dompdf\Dompdf($o);
-        $d->loadHtml($html);
-        $d->setPaper('letter', 'landscape');
-        $d->render();
-        return $d->output();
+        return Pdf::generar($html, 'letter', 'landscape');
     }
 }

@@ -106,23 +106,7 @@ class Normativa
     /** Convierte con LibreOffice (si existe) a un PDF temporal; null si no se pudo */
     private static function convertirAPdf(string $ruta): ?string
     {
-        $dir = sys_get_temp_dir() . '/norm_' . bin2hex(random_bytes(6));
-        if (!@mkdir($dir, 0700)) return null;
-        $proc = @proc_open(['soffice', '--headless', '--convert-to', 'pdf', '--outdir', $dir, $ruta], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, ['HOME' => $dir]);
-        $pdf = null;
-        if (is_resource($proc)) {
-            $limite = time() + 120;
-            while (proc_get_status($proc)['running'] && time() < $limite) usleep(100000);
-            if (proc_get_status($proc)['running']) proc_terminate($proc, 9);
-            foreach ($pipes as $pp) fclose($pp);
-            proc_close($proc);
-            $g = glob("$dir/*.pdf");
-            $pdf = $g ? $g[0] : null;
-            if ($pdf) { $dest = sys_get_temp_dir() . '/' . basename($dir) . '.pdf'; $pdf = @rename($pdf, $dest) ? $dest : null; }
-        }
-        foreach (glob("$dir/*") ?: [] as $f) @unlink($f);
-        @rmdir($dir);
-        return $pdf;
+        return ShellTools::libreOffice($ruta, pathinfo($ruta, PATHINFO_EXTENSION), 'pdf');
     }
 
     /** Texto de un .docx leyendo word/document.xml (sin LibreOffice). Las páginas salen de los saltos de página; si no hay, se agrupan por tamaño */
@@ -169,23 +153,10 @@ class Normativa
     /** Texto de un PDF por páginas (pdftotext), con tope de tiempo y de tamaño. @return array{0: ?array, 1: string} */
     private static function extraerPdf(string $ruta): array
     {
-        $proc = @proc_open(['pdftotext', '-layout', '-enc', 'UTF-8', $ruta, '-'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (!is_resource($proc)) return [null, 'No se pudo ejecutar pdftotext (instala poppler-utils).'];
-        stream_set_blocking($pipes[1], false);
-        $out = '';
-        $limite = time() + 180;
-        while (true) {
-            $s = proc_get_status($proc);
-            $out .= (string)stream_get_contents($pipes[1]);
-            if (!$s['running'] || strlen($out) > 40 * 1024 * 1024 || time() > $limite) break;
-            usleep(40000);
-        }
-        $out .= (string)stream_get_contents($pipes[1]);
-        $err = (string)stream_get_contents($pipes[2]);
-        $s = proc_get_status($proc);
-        if ($s['running']) proc_terminate($proc, 9);
-        foreach ($pipes as $p) fclose($p);
-        proc_close($proc);
+        $r = ShellTools::pdfATexto($ruta, true, 180, 40 * 1024 * 1024);
+        if ($r === null) return [null, 'No se pudo ejecutar pdftotext (instala poppler-utils).'];
+        $out = $r['salida'];
+        $err = $r['error'];
         if (trim($out) === '') return [null, trim($err) !== '' ? mb_substr(trim($err), 0, 200) : 'El PDF no tiene texto.'];
         $pag = explode("\f", $out);
         if (end($pag) === '' || trim((string)end($pag)) === '') array_pop($pag);

@@ -583,10 +583,6 @@ class EditorController
     {
         $wpt = round($w * 0.75, 2);
         $hpt = round($h * 0.75, 2);
-        $opciones = new \Dompdf\Options();
-        $opciones->set('isRemoteEnabled', false);
-        $dompdf = new \Dompdf\Dompdf($opciones);
-        $dompdf->setPaper([0, 0, $wpt, $hpt]);
         $html = '<html><head><meta charset="utf-8"><style>@page{margin:0}html,body{margin:0;padding:0}.pag{position:relative;width:' . $wpt . 'pt;height:' . $hpt . 'pt}img{display:block;width:' . $wpt . 'pt;height:' . $hpt . 'pt}.pg{page-break-before:always}a.lk{position:absolute;display:block;text-decoration:none}</style></head><body>';
         foreach ($pngs as $i => $bin) {
             $html .= '<div class="pag' . ($i ? ' pg' : '') . '"><img src="data:image/png;base64,' . base64_encode($bin) . '">';
@@ -598,9 +594,7 @@ class EditorController
             }
             $html .= '</div>';
         }
-        $dompdf->loadHtml($html . '</body></html>');
-        $dompdf->render();
-        return $dompdf->output();
+        return \Classes\Pdf::generar($html . '</body></html>', [0, 0, $wpt, $hpt], 'portrait', ['isRemoteEnabled' => false, 'defaultFont' => 'serif']);
     }
 
     /** Medidas y PNG (data URI) enviados por el navegador para PDF/ODP de la lámina actual */

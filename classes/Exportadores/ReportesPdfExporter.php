@@ -3,8 +3,7 @@
 namespace Classes\Exportadores;
 
 use Controllers\MinutaController;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Classes\Pdf;
 use Model\Bitacora;
 use Model\Evidencia;
 use Model\Material;
@@ -119,16 +118,10 @@ class ReportesPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-reportes.php';
         $html = ob_get_clean();
 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('letter', 'portrait');
-        $dompdf->render();
+        $pdf = Pdf::generar($html, 'letter', 'portrait', ['isHtml5ParserEnabled' => true]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
-        file_put_contents($ruta, $dompdf->output());
+        file_put_contents($ruta, $pdf);
         return $ruta;
     }
 
