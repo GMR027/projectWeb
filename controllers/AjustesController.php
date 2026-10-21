@@ -85,6 +85,78 @@ class AjustesController
         return $dias;
     }
 
+    // ---------- Respaldo de proyecto ----------
+
+    /** Proyecto del POST/GET validado: solo admin o el cliente dueño */
+    private static function proyectoRespaldo(): Proyecto
+    {
+        redirigir_si_no_auth();
+        $p = Proyecto::find(filter_var($_POST['proyecto_id'] ?? $_GET['proyecto'] ?? null, FILTER_VALIDATE_INT));
+        if (!$p || !puede_gestionar_proyecto($p)) {
+            header('Location: /proyectos');
+            exit;
+        }
+        return $p;
+    }
+
+    private static function volverRespaldo(Proyecto $p, string $tipo, string $msg): void
+    {
+        header('Location: /ajustes?proyecto=' . (int)$p->id . '&resp=' . $tipo . '&resp_msg=' . urlencode($msg) . '#respaldo-proyecto');
+        exit;
+    }
+
+    public static function respaldoCrear()
+    {
+        $p = self::proyectoRespaldo();
+        try {
+            $f = \Classes\RespaldoProyecto::crear((int)$p->id, 'manual');
+            self::volverRespaldo($p, 'ok', "Respaldo creado: $f");
+        } catch (\Throwable $e) {
+            self::volverRespaldo($p, 'error', $e->getMessage());
+        }
+    }
+
+    /** Restaura el indicado, o el más reciente («desde el respaldo anterior») si no se indica */
+    public static function respaldoRestaurar()
+    {
+        $p = self::proyectoRespaldo();
+        $archivo = (string)($_POST['archivo'] ?? '');
+        if ($archivo === '') $archivo = \Classes\RespaldoProyecto::anterior((int)$p->id)['archivo'] ?? '';
+        try {
+            \Classes\RespaldoProyecto::restaurar((int)$p->id, $archivo);
+            \Classes\Auditoria::registrar((int)$p->id, 'respaldo', 'aplicado', 'restaurar_respaldo', "Proyecto restaurado desde el respaldo $archivo", null, ['archivo' => $archivo], null, '', ['proyecto', (int)$p->id, $p->nombre]);
+            self::volverRespaldo($p, 'ok', "Proyecto restaurado desde $archivo. Antes se guardó un respaldo del estado anterior por si quieres deshacerlo.");
+        } catch (\Throwable $e) {
+            self::volverRespaldo($p, 'error', $e->getMessage());
+        }
+    }
+
+    public static function respaldoEliminar()
+    {
+        $p = self::proyectoRespaldo();
+        \Classes\RespaldoProyecto::eliminar((int)$p->id, (string)($_POST['archivo'] ?? ''));
+        self::volverRespaldo($p, 'ok', 'Respaldo eliminado.');
+    }
+
+    public static function respaldoAutomatico()
+    {
+        $p = self::proyectoRespaldo();
+        \Classes\RespaldoProyecto::guardarAutomatico((int)$p->id, !empty($_POST['auto']));
+        self::volverRespaldo($p, 'ok', 'Respaldo automático actualizado.');
+    }
+
+    public static function respaldoDescargar()
+    {
+        $p = self::proyectoRespaldo();
+        $ruta = \Classes\RespaldoProyecto::ruta((int)$p->id, (string)($_GET['archivo'] ?? ''));
+        if (!$ruta) { http_response_code(404); exit; }
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="proyecto' . (int)$p->id . '_' . basename($ruta) . '"');
+        header('Content-Length: ' . filesize($ruta));
+        readfile($ruta);
+        exit;
+    }
+
     /** Guardar configuración de jornada semanal */
     public static function guardarJornada()
     {

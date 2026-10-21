@@ -30,6 +30,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <a href="/redactor?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Documentos</a>
     </div>
 </div>
+<?php $avisoTexto = 'Los documentos solo se pueden editar en una tablet o en un equipo de escritorio.'; $avisoLectura = true; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <div class="card rd-datos">
     <label>Nombre <input type="text" id="rd-nombre" maxlength="150" value="<?php echo s($documento->nombre); ?>"></label>

@@ -17,13 +17,6 @@ class CentroIAController
         return $proyecto;
     }
 
-    private static function proyectoApi(): Proyecto
-    {
-        $p = is_admin() ? Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
-        if (!$p) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
-        return $p;
-    }
-
     // ---------- bandeja ----------
 
     public static function bandeja(Router $router)
@@ -36,14 +29,14 @@ class CentroIAController
 
     public static function aceptar()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api('admin');
         [$ok, $msg] = CentroIA::aceptar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
 
     public static function rechazar()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api('admin');
         [$ok, $msg] = CentroIA::rechazar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
@@ -95,7 +88,7 @@ class CentroIAController
 
     public static function guardarAnalisis()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api('admin');
         CentroIA::marcar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0), empty($_POST['quitar']), (string)($_POST['nombre'] ?? ''));
         $_SESSION['biblioteca_msg'] = ['ok' => true, 'texto' => empty($_POST['quitar']) ? 'Análisis guardado en la biblioteca.' : 'El análisis ya no está guardado (puede rotar con los más recientes).'];
         header('Location: /biblioteca-ia?proyecto=' . (int)$p->id);
@@ -104,7 +97,7 @@ class CentroIAController
 
     public static function eliminarAnalisis()
     {
-        $p = self::proyectoApi();
+        $p = proyecto_api('admin');
         CentroIA::eliminar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         $_SESSION['biblioteca_msg'] = ['ok' => true, 'texto' => 'Análisis eliminado. Los cambios ya aplicados al proyecto se conservan en el historial.'];
         header('Location: /biblioteca-ia?proyecto=' . (int)$p->id);

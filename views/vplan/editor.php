@@ -10,6 +10,7 @@
         <a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost">← Lámina</a>
     </div>
 </div>
+<?php $avisoTexto = 'El editor de marcas del plano necesita una pantalla grande y puntero preciso: úsalo en una tablet o en un equipo de escritorio.'; $avisoLectura = false; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <?php include __DIR__ . '/_editor-lienzo.php'; ?>
 

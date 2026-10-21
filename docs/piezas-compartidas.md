@@ -7,7 +7,7 @@ Antes de agregar código nuevo, revisa si ya existe aquí. Cada pieza reemplazó
 | Pieza | Para qué | Reemplazó |
 |---|---|---|
 | `json_respuesta($datos, $codigo)` (`includes/funciones.php`) | Responde JSON y termina | 29 `json()` privados en controladores |
-| `proyecto_api('admin'\|'gestionar'\|'ver')` | Proyecto de una API o 403 en JSON | `proyectoApi()` de 8 controladores de IA |
+| `proyecto_api('admin'\|'gestionar'\|'ver')` | Proyecto de una API o 403 en JSON | `proyectoApi()` de 10 controladores (ya no queda ninguno privado) |
 | `Classes\Pdf::generar/preparar/guardar` | Único lugar donde se arma Dompdf (fuente por defecto DejaVu Sans; el resto de opciones las pasa quien llama) | 18 `new Dompdf` |
 | `Classes\ShellTools` | `disponible()`, `ejecutar()` (con tiempo y tamaño máximos), `correr()`, `unirPdf()`, `libreOffice()`, `pdfATexto()` | 5 revisiones de «¿está instalado?» y 6 `proc_open` |
 | `Classes\AccesoDb` (trait) | `db()`, `filas()`, `esc()`, `corto()` para clases estáticas | copias privadas en 28 clases |
@@ -17,6 +17,7 @@ Antes de agregar código nuevo, revisa si ya existe aquí. Cada pieza reemplazó
 | `enviar_descarga($datos, $mime, $nombre, $inline)` (`includes/funciones.php`) | Cabeceras de descarga de un archivo que ya está en memoria | bloques repetidos en Redactor, SheetFlow, Seguridad, Informes IA, Punch, Centro de IA y Programador |
 | `Classes\HallazgosIA` + `Controllers\HallazgosIAController` | Corridas, listado, conteos y aceptar → aplicar / rechazar / reabrir → revertir (con Auditoria) de las herramientas con hallazgos. Cada hija pone tablas y textos en constantes (`TABLA_*`, `HERRAMIENTA`, `TXT_*`) y sus hooks (`esperadoDe`, `paramsValidos`, `ejecutarAccion`, `restaurarAccion`, `enriquecer`) | `Inconsistencias` y `AnalisisMateriales` (clases y controladores) |
 | `TablaDeDocumento::deHoja()` | Lector de hojas de cálculo (csv, xls, xlsx, ods) | `Sheetflow::importar` tenía su copia |
+| `Classes\Catalogo` + `/directorio` | Departamentos, categorías (Archivo, Punch, Evidencias) y su renombrado en todas las herramientas; ver `docs/directorio.md` | listas de departamento copiadas en Redactor, SheetFlow, Bitácora, Minutas y Personal |
 | `pestanas_herramienta($grupo, $activa, $proyecto)` (`views/templates/herramientas-proyecto.php`) | Pestañas de las herramientas que comparten una entrada del menú | — |
 
 Notas:

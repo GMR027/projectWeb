@@ -17,7 +17,7 @@ $foto = fn($n) => $n ? '/uploads/' . Punch::CARPETA . '/' . basename($n) : null;
     <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>">
         <label style="flex:2">Pendiente <input type="text" name="titulo" value="<?php echo s($x['titulo']); ?>" required maxlength="200"></label>
         <label>Ubicación <input type="text" name="ubicacion" value="<?php echo s($x['ubicacion']); ?>" maxlength="200"></label>
-        <label>Categoría <input type="text" name="categoria" value="<?php echo s($x['categoria']); ?>" maxlength="60"></label>
+        <label>Categoría <input type="text" name="categoria" value="<?php echo s($x['categoria']); ?>" maxlength="60" list="cats"><datalist id="cats"><?php foreach (Punch::categoriasDeProyecto((int)$x['proyecto_id']) as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
         <label>Severidad <select name="severidad"><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $x['severidad'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
         <label>Responsable <input type="text" name="responsable" value="<?php echo s($x['responsable']); ?>" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" value="<?php echo s($x['contratista']); ?>" maxlength="150"></label>

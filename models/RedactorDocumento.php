@@ -80,16 +80,7 @@ class RedactorDocumento extends ActiveRecord
     /** Departamentos sugeridos: los de la bitácora del proyecto y los ya usados por documentos */
     public static function departamentos(int $proyectoId): array
     {
-        $lista = [];
-        try {
-            foreach (BitacoraDepartamento::deProyecto($proyectoId) as $d) $lista[$d->nombre] = true;
-        } catch (\Throwable $e) {   // migración de la bitácora pendiente
-        }
-        $r = self::$db->query("SELECT DISTINCT departamento FROM redactor_documentos WHERE proyecto_id = $proyectoId AND departamento <> ''");
-        while ($r && ($f = $r->fetch_assoc())) $lista[$f['departamento']] = true;
-        $nombres = array_keys($lista);
-        sort($nombres, SORT_NATURAL | SORT_FLAG_CASE);
-        return $nombres;
+        return \Classes\Catalogo::departamentos($proyectoId);
     }
 
     /** Palabras agregadas por el usuario al diccionario del proyecto */

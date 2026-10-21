@@ -727,6 +727,8 @@ CREATE TABLE evidencias (
     fecha DATE NOT NULL,
     descripcion VARCHAR(300) NOT NULL DEFAULT '',
     foto VARCHAR(100) NOT NULL,
+    departamento VARCHAR(100) NOT NULL DEFAULT '',
+    categoria VARCHAR(100) NOT NULL DEFAULT '',
     usuario_id INT DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
@@ -1550,6 +1552,10 @@ CREATE TABLE IF NOT EXISTS personal_contacto (
     empresa VARCHAR(150) NOT NULL DEFAULT '',
     telefono VARCHAR(40) NOT NULL DEFAULT '',
     correo VARCHAR(150) NOT NULL DEFAULT '',
+    direccion VARCHAR(250) NOT NULL DEFAULT '',
+    rfc VARCHAR(13) NOT NULL DEFAULT '',
+    tipo VARCHAR(20) NOT NULL DEFAULT '',   -- directivo | administrativo | operativo
+    notas TEXT NULL,
     FOREIGN KEY (personal_id) REFERENCES personal(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -1590,5 +1596,16 @@ CREATE TABLE IF NOT EXISTS lookahead_config (
     titulo VARCHAR(150) NOT NULL DEFAULT '',     -- banner; admite {semanas} {proyecto} {codigo}
     encabezado_id INT DEFAULT NULL,
     UNIQUE KEY uq_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Directorio (Administración): categorías de Punch y Evidencias (ver database/migracion_directorio.sql)
+CREATE TABLE IF NOT EXISTS catalogo_categorias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    ambito VARCHAR(20) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_cat_ambito (proyecto_id, ambito, nombre),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

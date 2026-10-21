@@ -1019,7 +1019,7 @@ TXT;
                 $previa = self::filas("SELECT cargo, empresa, telefono, correo FROM personal_contacto WHERE personal_id = $perId")[0] ?? null;
                 $nuevo = ($previa ?? ['cargo' => '', 'empresa' => '', 'telefono' => '', 'correo' => '']);
                 foreach (['cargo', 'empresa', 'telefono', 'correo'] as $c) if (trim((string)$nuevo[$c]) === '' && ($d[$c] ?? '') !== '') $nuevo[$c] = $d[$c];
-                self::db()->query(sprintf("REPLACE INTO personal_contacto (personal_id, cargo, empresa, telefono, correo) VALUES (%d, '%s', '%s', '%s', '%s')", $perId, self::esc($nuevo['cargo']), self::esc($nuevo['empresa']), self::esc($nuevo['telefono']), self::esc($nuevo['correo'])));
+                \Model\Personal::guardarContacto($perId, $nuevo);
                 $deptoAntes = null;
                 if (!$creado && trim((string)$per->departamento) === '' && ($d['departamento'] ?? '') !== '') { $deptoAntes = (string)$per->departamento; $per->departamento = $d['departamento']; $per->guardar(); }
                 return ['personal_id' => $perId, 'creado' => $creado, 'previa' => $previa, 'departamento_antes' => $deptoAntes, 'departamento_despues' => $deptoAntes !== null ? $d['departamento'] : null];
@@ -1233,8 +1233,8 @@ TXT;
                     $db->query("DELETE FROM personal WHERE id = $perId AND proyecto_id = $pid");
                     return 'Persona eliminada del personal';
                 }
-                if (!empty($a['previa'])) $db->query(sprintf("REPLACE INTO personal_contacto (personal_id, cargo, empresa, telefono, correo) VALUES (%d, '%s', '%s', '%s', '%s')", $perId, self::esc($a['previa']['cargo']), self::esc($a['previa']['empresa']), self::esc($a['previa']['telefono']), self::esc($a['previa']['correo'])));
-                else $db->query("DELETE FROM personal_contacto WHERE personal_id = $perId");
+                if (!empty($a['previa'])) \Model\Personal::guardarContacto($perId, $a['previa']);
+                else $db->query("UPDATE personal_contacto SET cargo = '', empresa = '', telefono = '', correo = '' WHERE personal_id = $perId");   // conserva dirección, RFC y notas capturados a mano
                 if (($a['departamento_antes'] ?? null) !== null) $db->query("UPDATE personal SET departamento = '" . self::esc($a['departamento_antes']) . "' WHERE id = $perId AND proyecto_id = $pid AND departamento = '" . self::esc($a['departamento_despues'] ?? '') . "'");
                 return 'Datos de contacto restaurados';
             }

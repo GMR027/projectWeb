@@ -7,7 +7,7 @@ NS=projectweb
 sql() { kubectl -n $NS exec -i deploy/mysql -c mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --default-character-set=utf8mb4 -N project' 2>&1 | grep -v 'Using a password' || true; }
 
 # Tablas nuevas (CREATE TABLE IF NOT EXISTS)
-for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas; do echo ">> $f"; sql < $f.sql; done
+for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio; do echo ">> $f"; sql < $f.sql; done
 
 # Columnas nuevas: se agregan solo si no existen
 col() {   # tabla columna "ALTER completo"
@@ -19,6 +19,11 @@ col msrs columnas_json "ALTER TABLE msrs ADD COLUMN columnas_json TEXT NULL AFTE
 col msr_items extras_json "ALTER TABLE msr_items ADD COLUMN extras_json TEXT NULL;"
 col msr_partidas color "ALTER TABLE msr_partidas ADD COLUMN color VARCHAR(7) NOT NULL DEFAULT '' AFTER titulo;"
 col msrs encabezado_id "ALTER TABLE msrs ADD COLUMN encabezado_id INT NULL AFTER columnas_json;"
+col evidencias departamento "ALTER TABLE evidencias ADD COLUMN departamento VARCHAR(100) NOT NULL DEFAULT '';"
+col evidencias categoria "ALTER TABLE evidencias ADD COLUMN categoria VARCHAR(100) NOT NULL DEFAULT '';"
+for c in "direccion VARCHAR(250) NOT NULL DEFAULT ''" "rfc VARCHAR(13) NOT NULL DEFAULT ''" "tipo VARCHAR(20) NOT NULL DEFAULT ''" "notas TEXT NULL"; do
+  col personal_contacto "${c%% *}" "ALTER TABLE personal_contacto ADD COLUMN $c;"
+done
 col vplan_tablas punch_config "ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;"
 echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
 

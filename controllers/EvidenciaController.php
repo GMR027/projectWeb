@@ -40,6 +40,8 @@ class EvidenciaController
         $fPartida = (int)($_GET['partida'] ?? 0);
         $fDesde = self::fecha($_GET['desde'] ?? '');
         $fHasta = self::fecha($_GET['hasta'] ?? '');
+        $fDepto = trim((string)($_GET['departamento'] ?? ''));
+        $fCat = trim((string)($_GET['categoria'] ?? ''));
         $fOrigen = in_array($_GET['origen'] ?? '', ['reportes', 'subidas'], true) ? $_GET['origen'] : '';
 
         // La actividad o partida elegida define qué actividades cuentan
@@ -50,7 +52,7 @@ class EvidenciaController
 
         $dias = [];   // fecha => ['reportes' => [...], 'subidas' => [...]]
         $totalFotos = 0;
-        if ($fOrigen !== 'subidas') {
+        if ($fOrigen !== 'subidas' && $fDepto === '' && $fCat === '') {   // las fotos de los reportes no llevan departamento ni categoría
             foreach (ReporteDiario::deProyecto((int)$proyecto->id) as $r) {
                 $fotos = $r->getFotos();
                 if (!$fotos || !$coincide($r->getActividades())) continue;
@@ -63,6 +65,7 @@ class EvidenciaController
             try {
                 foreach (Evidencia::deProyecto((int)$proyecto->id) as $e) {
                     if (!$coincide($e->actividad_id ? [(int)$e->actividad_id] : [])) continue;
+                    if (($fDepto !== '' && $e->departamento !== $fDepto) || ($fCat !== '' && $e->categoria !== $fCat)) continue;
                     if (($fDesde && $e->fecha < $fDesde) || ($fHasta && $e->fecha > $fHasta)) continue;
                     $dias[$e->fecha]['subidas'][] = $e;
                     $totalFotos++;
@@ -78,7 +81,8 @@ class EvidenciaController
         $router->render('evidencias/index', [
             'titulo' => 'Evidencias - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'acts' => $acts, 'dias' => $dias,
             'totalDias' => $totalDias, 'totalFotos' => $totalFotos, 'pagina' => $pagina, 'porPagina' => self::POR_PAGINA,
-            'filtros' => ['actividad' => $fActividad, 'partida' => $fPartida, 'desde' => $fDesde, 'hasta' => $fHasta, 'origen' => $fOrigen],
+            'filtros' => ['actividad' => $fActividad, 'partida' => $fPartida, 'desde' => $fDesde, 'hasta' => $fHasta, 'origen' => $fOrigen, 'departamento' => $fDepto, 'categoria' => $fCat],
+            'departamentos' => \Classes\Catalogo::departamentos((int)$proyecto->id), 'categorias' => \Classes\Catalogo::categorias((int)$proyecto->id, 'evidencias'),
             'partidas' => $proyecto->getPartidas(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
         ]);
     }
@@ -97,6 +101,8 @@ class EvidenciaController
         $actId = (int)($_POST['actividad_id'] ?? 0);
         if (!isset($acts[$actId])) self::volver($pid, 'error', 'Elige la actividad a la que pertenece la evidencia');
         $fecha = self::fecha($_POST['fecha'] ?? '') ?: date('Y-m-d');
+        $depto = \Classes\Catalogo::limpiar((string)($_POST['departamento'] ?? ''));
+        $cat = \Classes\Catalogo::limpiar((string)($_POST['categoria'] ?? ''));
         $f = $_FILES['fotos'] ?? null;
         $n = $f && is_array($f['name']) ? count($f['name']) : 0;
         if (!$n || $n > self::MAX_FOTOS) self::volver($pid, 'error', 'Elige entre 1 y ' . self::MAX_FOTOS . ' fotos');
@@ -107,7 +113,7 @@ class EvidenciaController
             if (!Almacenamiento::cabe($pid, (int)$f['size'][$i])) self::volver($pid, $guardadas ? 'ok' : 'error', Almacenamiento::mensajeLleno($pid));
             $nombre = Imagenes::guardarEn(Evidencia::CARPETA, $tmp, 1920, 85);
             if (!$nombre) continue;
-            (new Evidencia(['proyecto_id' => $pid, 'actividad_id' => $actId, 'fecha' => $fecha, 'descripcion' => $_POST['descripcion'] ?? '', 'foto' => $nombre, 'usuario_id' => $_SESSION['id'] ?? null]))->guardar();
+            (new Evidencia(['proyecto_id' => $pid, 'actividad_id' => $actId, 'fecha' => $fecha, 'descripcion' => $_POST['descripcion'] ?? '', 'departamento' => $depto, 'categoria' => $cat, 'foto' => $nombre, 'usuario_id' => $_SESSION['id'] ?? null]))->guardar();
             $guardadas++;
         }
         self::volver($pid, $guardadas ? 'ok' : 'error', $guardadas ? "$guardadas foto(s) agregada(s)" : 'No se pudo guardar ninguna foto (jpg, png, webp o gif de hasta 15 MB)');

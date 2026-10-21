@@ -17,6 +17,7 @@ $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
         <?php else: ?><a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Gráficos</a><?php endif; ?>
     </div>
 </div>
+<?php $avisoTexto = 'El editor de gráficos solo se puede usar en una tablet o en un equipo de escritorio.'; $avisoLectura = false; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <?php include __DIR__ . '/../vplan/_editor-lienzo.php'; ?>
 

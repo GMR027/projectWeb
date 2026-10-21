@@ -8,6 +8,12 @@ use Model\Especialidad;
 /** Catálogo de especialidades por proyecto (usado por materiales y submittals) */
 class EspecialidadController
 {
+    /** Vuelve a la lista: al Directorio si el cambio se hizo desde ahí */
+    private static function lista(int $proyectoId, string $extra = ''): string
+    {
+        return (($_POST['volver'] ?? '') === 'directorio' ? '/directorio?tab=especialidades&' : '/especialidades?') . 'proyecto=' . $proyectoId . $extra;
+    }
+
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
@@ -31,11 +37,11 @@ class EspecialidadController
                 $esp->guardar();
                 if ($anterior !== '') $esp->renombrar($anterior);
             } else {
-                header('Location: /especialidades?proyecto=' . $proyecto->id . '&error=' . urlencode($errores['error'][0]));
+                header('Location: ' . self::lista((int)$proyecto->id, '&error=' . urlencode($errores['error'][0])));
                 exit;
             }
         }
-        header('Location: /especialidades?proyecto=' . $proyecto->id);
+        header('Location: ' . self::lista((int)$proyecto->id));
         exit;
     }
 
@@ -47,13 +53,13 @@ class EspecialidadController
             foreach ($uso as $u) {
                 if ((int)$u->id === (int)$esp->id && ($u->n_materiales || $u->n_submittals)) {
                     $msg = "«{$esp->nombre}» está en uso ({$u->n_materiales} material(es), {$u->n_submittals} submittal(s)). Cámbialos antes de eliminarla.";
-                    header('Location: /especialidades?proyecto=' . $proyecto->id . '&error=' . urlencode($msg));
+                    header('Location: ' . self::lista((int)$proyecto->id, '&error=' . urlencode($msg)));
                     exit;
                 }
             }
             $esp->eliminar();
         }
-        header('Location: /especialidades?proyecto=' . $proyecto->id);
+        header('Location: ' . self::lista((int)$proyecto->id));
         exit;
     }
 }

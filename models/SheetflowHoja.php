@@ -50,16 +50,7 @@ class SheetflowHoja extends ActiveRecord
     /** Departamentos sugeridos: los de la bitácora y los ya usados por otras tablas */
     public static function departamentos(int $proyectoId): array
     {
-        $lista = [];
-        try {
-            foreach (BitacoraDepartamento::deProyecto($proyectoId) as $d) $lista[$d->nombre] = true;
-        } catch (\Throwable $e) {
-        }
-        $r = self::$db->query("SELECT DISTINCT departamento FROM sheetflow_hojas WHERE proyecto_id = $proyectoId AND departamento <> ''");
-        while ($r && ($f = $r->fetch_assoc())) $lista[$f['departamento']] = true;
-        $nombres = array_keys($lista);
-        sort($nombres, SORT_NATURAL | SORT_FLAG_CASE);
-        return $nombres;
+        return \Classes\Catalogo::departamentos($proyectoId);
     }
 
     /** Lista corta (id, nombre, tamaño) para ofrecerlas en vPlan, Editor y Redactor */

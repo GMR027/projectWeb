@@ -97,6 +97,7 @@ require_once __DIR__ . '/templates/breadcrumb.php';
     <button type="button" id="btn-menu" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     <div id="sidebar-fondo" class="sidebar-fondo"></div>
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
+    <?php include __DIR__ . '/templates/pde-modal.php'; ?>
     <script src="/vendor/paletas.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/paletas.js'); ?>"></script>
     <script src="/vendor/divisor.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/divisor.js'); ?>"></script>
     <script src="/vendor/selector-color.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/selector-color.js'); ?>"></script>

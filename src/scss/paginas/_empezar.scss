@@ -1,0 +1,21 @@
+// «Por dónde empezar» (modal al crear el proyecto y sección en Ajustes)
+.pde-modal-card { text-align: left; max-width: 72rem; max-height: 92vh; overflow-y: auto; }
+.pde-modal-titulo { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.pde-cabecera { margin: 1.2rem 0; }
+.pde-progreso { height: 1rem; border-radius: 1rem; background: var(--bg-tertiary); overflow: hidden; margin-bottom: .6rem;
+  span { display: block; height: 100%; background: var(--primary); border-radius: 1rem; transition: width .3s; } }
+.pde-modos { display: flex; gap: .6rem; margin-top: .8rem; .btn.activo { border-color: var(--primary); color: var(--primary); } }
+.pde-mensaje { padding: .8rem 1.2rem; border-radius: .6rem; margin-bottom: 1rem; font-size: 1.4rem;
+  &.ok { background: rgba(16, 185, 129, .15); color: var(--success); }
+  &.error { background: rgba(239, 68, 68, .15); color: var(--danger); } }
+.pde-pasos { display: grid; gap: 1.2rem; }
+.pde-paso { border: 1px solid var(--border); border-radius: .8rem; padding: 1.4rem; background: var(--surface-raised);
+  &[hidden] { display: none; }
+  &.hecho { border-color: var(--success); }
+  header { display: flex; align-items: center; gap: 1rem; margin-bottom: .6rem; > i { color: var(--primary); font-size: 1.8rem; } h4 { flex: 1; margin: 0; } }
+  .pde-estado { font-size: 1.3rem; color: var(--text-muted); }
+  &.hecho .pde-estado { color: var(--success); } }
+.pde-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
+.pde-campo { display: flex; flex-direction: column; gap: .3rem; font-size: 1.3rem; flex: 1 1 16rem; }
+.pde-enlace { font-size: 1.3rem; }
+.pde-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.2rem; &[hidden] { display: none; } }

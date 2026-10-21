@@ -145,6 +145,12 @@ class ReporteController
 
     // ============================== PERSONAL ==============================
 
+    /** A dónde volver tras editar personal: el Directorio si se llegó desde ahí */
+    private static function listaPersonal(int $proyectoId, string $extra = ''): string
+    {
+        return (($_REQUEST['volver'] ?? '') === 'directorio' ? '/directorio?tab=personal&' : '/reportes/personal?') . 'proyecto=' . $proyectoId . $extra;
+    }
+
     public static function personal(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -161,7 +167,7 @@ class ReporteController
         $proyecto = proyecto_de_peticion(true);
         $p = Personal::find(filter_var((self::esPost() ? $_POST : $_GET)['id'] ?? null, FILTER_VALIDATE_INT));
         if (!$p || (int)$p->proyecto_id !== (int)$proyecto->id) {
-            header('Location: /reportes/personal?proyecto=' . $proyecto->id);
+            header('Location: ' . self::listaPersonal((int)$proyecto->id));
             exit;
         }
         self::personalFormulario($router, $p);
@@ -176,6 +182,10 @@ class ReporteController
             $p->nombre = trim($_POST['nombre'] ?? '');
             $p->departamento = mb_substr(trim($_POST['departamento'] ?? ''), 0, 100);
             $alertas = $p->validar();
+            $contacto = [];
+            foreach (array_keys(Personal::CONTACTO) as $c) $contacto[$c] = $c === 'notas' ? trim((string)($_POST[$c] ?? '')) : trim(preg_replace('/\s+/u', ' ', (string)($_POST[$c] ?? '')));
+            $contacto['rfc'] = mb_strtoupper(str_replace(' ', '', $contacto['rfc']));
+            foreach (Personal::validarContacto($contacto) as $m) $alertas['error'][] = $m;
             $hayImg = !empty($_FILES['imagen']['tmp_name']) && is_uploaded_file($_FILES['imagen']['tmp_name']);
             $nueva = null;
             if (!$alertas && $hayImg && !\Classes\Almacenamiento::cabe((int)$proyecto->id, (int)$_FILES['imagen']['size'])) {
@@ -188,14 +198,15 @@ class ReporteController
             if (!$alertas) {
                 if ($nueva) { Imagenes::eliminarEn('personal', $p->imagen); $p->imagen = $nueva; }
                 elseif (!empty($_POST['quitar_imagen'])) { Imagenes::eliminarEn('personal', $p->imagen); $p->imagen = null; }
-                $p->guardar();
-                header('Location: /reportes/personal?proyecto=' . $proyecto->id . '&ok=1');
+                $r = $p->guardar();
+                Personal::guardarContacto((int)($p->id ?: ($r['id'] ?? 0)), $contacto);
+                header('Location: ' . self::listaPersonal((int)$proyecto->id, '&ok=1'));
                 exit;
             }
         }
         $router->render('reportes/personal-formulario', [
-            'titulo' => $p->id ? 'Editar personal' : 'Nuevo personal', 'proyecto' => $proyecto, 'persona' => $p, 'alertas' => $alertas,
-            'departamentos' => array_values(array_unique(array_filter(array_map(fn($x) => $x->departamento, Personal::deProyecto((int)$proyecto->id))))),
+            'titulo' => $p->id ? 'Editar personal' : 'Nuevo personal', 'proyecto' => $proyecto, 'persona' => $p, 'alertas' => $alertas, 'contacto' => $contacto ?? $p->contacto(),
+            'departamentos' => \Classes\Catalogo::departamentos((int)$proyecto->id),
         ]);
     }
 
@@ -207,7 +218,7 @@ class ReporteController
             Imagenes::eliminarEn('personal', $p->imagen);
             $p->eliminar();   // los reportes ya guardados ignoran el id que ya no existe
         }
-        header('Location: /reportes/personal?proyecto=' . $proyecto->id);
+        header('Location: ' . self::listaPersonal((int)$proyecto->id));
         exit;
     }
 }

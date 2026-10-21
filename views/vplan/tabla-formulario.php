@@ -10,6 +10,7 @@ $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
     <h2><?php echo $esNueva ? 'Nueva tabla adicional' : 'Editar tabla: ' . s($tabla->titulo); ?></h2>
     <a href="/vplan/tablas?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Tablas</a>
 </div>
+<?php $avisoTexto = 'Las tablas adicionales solo se pueden configurar en una tablet o en un equipo de escritorio.'; $avisoLectura = false; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 <?php if (!$esNueva && $tabla->hoja()): ?>
 <div class="card">
     <i class="fa-solid fa-link"></i> <strong>Vinculada a <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$tabla->sheetflow_id; ?>"><?php echo s($tabla->hoja()->nombre); ?></a> (SheetFlow).</strong>

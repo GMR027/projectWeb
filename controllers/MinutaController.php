@@ -40,7 +40,7 @@ class MinutaController
 
     private static function departamentos(int $proyectoId): array
     {
-        return array_map(fn($d) => $d->nombre, BitacoraDepartamento::deProyecto($proyectoId));
+        return \Classes\Catalogo::departamentos($proyectoId);
     }
 
     // ============================== MINUTAS ==============================
@@ -158,6 +158,12 @@ class MinutaController
 
     // ===================== PERSONAL DEL CONTRATISTA =====================
 
+    /** A dónde volver tras editar el personal del contratista: el Directorio si se llegó desde ahí */
+    private static function listaContratista(int $proyectoId, string $extra = ''): string
+    {
+        return (($_REQUEST['volver'] ?? '') === 'directorio' ? '/directorio?tab=contratista&' : '/minutas/contratista?') . 'proyecto=' . $proyectoId . $extra;
+    }
+
     public static function contratista(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -174,7 +180,7 @@ class MinutaController
         $proyecto = proyecto_de_peticion(true);
         $p = PersonalContratista::find(self::idPeticion());
         if (!$p || (int)$p->proyecto_id !== (int)$proyecto->id) {
-            header('Location: /minutas/contratista?proyecto=' . $proyecto->id);
+            header('Location: ' . self::listaContratista((int)$proyecto->id));
             exit;
         }
         self::contratistaFormulario($router, $p);
@@ -192,7 +198,7 @@ class MinutaController
             $alertas = $p->validar();
             if (!$alertas) {
                 $p->guardar();
-                header('Location: /minutas/contratista?proyecto=' . $proyecto->id . '&ok=1');
+                header('Location: ' . self::listaContratista((int)$proyecto->id, '&ok=1'));
                 exit;
             }
         }
@@ -204,7 +210,7 @@ class MinutaController
         $proyecto = proyecto_de_peticion(true);
         $p = PersonalContratista::find(self::idPeticion());
         if ($p && (int)$p->proyecto_id === (int)$proyecto->id) $p->eliminar();   // las minutas ya guardadas ignoran el id que no existe
-        header('Location: /minutas/contratista?proyecto=' . $proyecto->id);
+        header('Location: ' . self::listaContratista((int)$proyecto->id));
         exit;
     }
 }

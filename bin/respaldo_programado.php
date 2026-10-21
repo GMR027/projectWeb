@@ -7,8 +7,20 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/app.php';
 
 use Classes\Respaldo;
+use Classes\RespaldoProyecto;
 
 $forzar = in_array('--forzar', $argv ?? [], true);
+// Respaldo de cada proyecto: 30 23 * * * php .../bin/respaldo_programado.php --proyectos
+if (in_array('--proyectos', $argv ?? [], true)) {
+    try {
+        $n = RespaldoProyecto::ejecutarSiToca($forzar);
+        echo "[" . date('c') . "] " . ($n === null ? 'Nada que hacer' : "Proyectos respaldados: $n") . "\n";
+    } catch (Throwable $e) {
+        fwrite(STDERR, "[" . date('c') . "] Error: " . $e->getMessage() . "\n");
+        exit(1);
+    }
+    exit;
+}
 try {
     $f = Respaldo::ejecutarSiToca($forzar);
     echo $f ? "[" . date('c') . "] Respaldo creado: $f\n" : "[" . date('c') . "] Nada que hacer (no toca o ya está hecho)\n";

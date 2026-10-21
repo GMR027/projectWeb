@@ -29,6 +29,8 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
                 </select></div>
             <div class="campo"><label for="ev-fecha"><?php echo s(t('Fecha')); ?></label><input type="date" id="ev-fecha" name="fecha" value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>"></div>
             <div class="campo"><label for="ev-fotos">Fotos * (hasta 10, 15 MB c/u)</label><input type="file" id="ev-fotos" name="fotos[]" accept="image/*" multiple required></div>
+            <div class="campo"><label for="ev-depto">Departamento</label><input type="text" id="ev-depto" name="departamento" maxlength="100" list="ev-l-deptos" autocomplete="off"><datalist id="ev-l-deptos"><?php foreach ($departamentos as $d): ?><option value="<?php echo s($d); ?>"><?php endforeach; ?></datalist></div>
+            <div class="campo"><label for="ev-cat">Categoría</label><input type="text" id="ev-cat" name="categoria" maxlength="100" list="ev-l-cats" autocomplete="off"><datalist id="ev-l-cats"><?php foreach ($categorias as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></div>
             <div class="campo campo-full"><label for="ev-desc">Descripción (se aplica a todas las fotos)</label><input type="text" id="ev-desc" name="descripcion" maxlength="300" placeholder="Ej: Colado de losa, nivel 2"></div>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Subir</button>
@@ -45,6 +47,10 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
             <select name="actividad"><option value=""><?php echo s(t('Todas')); ?></option>
                 <?php foreach ($partidas as $p): ?><optgroup label="<?php echo s($p->codigo); ?>"><?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
             </select></div>
+        <?php foreach (['departamento' => ['Departamento', $departamentos], 'categoria' => ['Categoría', $categorias]] as $k => [$et, $op]): if (!$op) continue; ?>
+        <div><label class="text-sm text-muted"><?php echo s(t($et)); ?></label><br>
+            <select name="<?php echo $k; ?>"><option value=""><?php echo s(t('Todos')); ?></option><?php foreach ($op as $o): ?><option value="<?php echo s($o); ?>"<?php echo $filtros[$k] === $o ? ' selected' : ''; ?>><?php echo s($o); ?></option><?php endforeach; ?></select></div>
+        <?php endforeach; ?>
         <div><label class="text-sm text-muted"><?php echo s(t('Desde')); ?></label><br><input type="date" name="desde" value="<?php echo s($filtros['desde']); ?>"></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Hasta')); ?></label><br><input type="date" name="hasta" value="<?php echo s($filtros['hasta']); ?>"></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Origen')); ?></label><br>
@@ -83,6 +89,7 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
                                 <img src="<?php echo s($e->url()); ?>" data-visor="<?php echo s($e->url()); ?>" alt="<?php echo s($e->descripcion ?: 'Evidencia'); ?>" loading="lazy">
                                 <figcaption>
                                     <?php if ($e->descripcion !== ''): ?><span><?php echo s($e->descripcion); ?></span><?php endif; ?>
+                                    <?php foreach (['departamento' => $e->departamento, 'categoria' => $e->categoria] as $k => $v): if ($v !== ''): ?><a class="ev-chip" href="<?php echo s($q([$k => $v, 'pagina' => ''])); ?>"><?php echo s($v); ?></a><?php endif; endforeach; ?>
                                     <?php if ($e->actividad_id && ($nm = $nombreAct((int)$e->actividad_id))): ?><a class="ev-chip" href="<?php echo s($q(['actividad' => (int)$e->actividad_id, 'partida' => '', 'pagina' => ''])); ?>"><?php echo s(mb_strimwidth($nm, 0, 50, '…')); ?></a><?php endif; ?>
                                     <?php if ($puedeEditar): ?>
                                         <form method="POST" action="/evidencias/eliminar" data-confirm="¿Eliminar esta foto?|Se borra el archivo. Esta acción no se puede deshacer.|Sí, eliminar">

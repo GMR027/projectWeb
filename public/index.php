@@ -38,6 +38,7 @@ use Controllers\LookaheadController;
 use Controllers\MaterialController;
 use Controllers\MaterialesInteligentesController;
 use Controllers\EspecialidadController;
+use Controllers\DirectorioController;
 use Controllers\AccionesController;
 use Controllers\PlanificadorController;
 use Controllers\SubmittalController;
@@ -172,6 +173,11 @@ $router->post('/materiales/eliminar', [MaterialController::class, 'eliminar']);
 $router->get('/materiales/ficha', [MaterialController::class, 'ficha']);
 $router->get('/planificador', [PlanificadorController::class, 'index']);
 $router->get('/acciones', [AccionesController::class, 'index']);
+$router->get('/directorio', [DirectorioController::class, 'index']);
+$router->post('/directorio/departamento', [DirectorioController::class, 'departamentoGuardar']);
+$router->post('/directorio/departamento/eliminar', [DirectorioController::class, 'departamentoEliminar']);
+$router->post('/directorio/categoria', [DirectorioController::class, 'categoriaGuardar']);
+$router->post('/directorio/categoria/eliminar', [DirectorioController::class, 'categoriaEliminar']);
 $router->get('/especialidades', [EspecialidadController::class, 'index']);
 $router->post('/especialidades/guardar', [EspecialidadController::class, 'guardar']);
 $router->post('/especialidades/eliminar', [EspecialidadController::class, 'eliminar']);
@@ -600,6 +606,18 @@ $router->get('/ajustes', [AjustesController::class, 'index']);
 $router->post('/ajustes/jornada', [AjustesController::class, 'guardarJornada']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);
 $router->post('/ajustes/festivo/eliminar', [AjustesController::class, 'eliminarFestivo']);
+$router->post('/ajustes/respaldo/crear', [AjustesController::class, 'respaldoCrear']);
+$router->post('/ajustes/respaldo/restaurar', [AjustesController::class, 'respaldoRestaurar']);
+$router->post('/ajustes/respaldo/eliminar', [AjustesController::class, 'respaldoEliminar']);
+$router->post('/ajustes/respaldo/automatico', [AjustesController::class, 'respaldoAutomatico']);
+$router->get('/ajustes/respaldo/descargar', [AjustesController::class, 'respaldoDescargar']);
+$router->get('/api/empezar/estado', [Controllers\EmpezarController::class, 'estado']);
+$router->post('/api/empezar/festivo', [Controllers\EmpezarController::class, 'festivo']);
+$router->post('/api/empezar/partida', [Controllers\EmpezarController::class, 'partida']);
+$router->post('/api/empezar/persona', [Controllers\EmpezarController::class, 'persona']);
+$router->post('/api/empezar/material', [Controllers\EmpezarController::class, 'material']);
+$router->post('/api/empezar/contrato', [Controllers\EmpezarController::class, 'contrato']);
+$router->post('/api/empezar/documento', [Controllers\EmpezarController::class, 'documento']);
 $router->get('/exportar', [AjustesController::class, 'exportarIndex']);
 $router->post('/exportar/generar', [AjustesController::class, 'exportar']);
 $router->post('/exportar/todo', [AjustesController::class, 'exportarTodo']);
@@ -622,6 +640,14 @@ if (is_auth() && is_admin() && \Classes\Respaldo::pendiente()) {
         ignore_user_abort(true);
         if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
         try { \Classes\Respaldo::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Respaldo programado: ' . $e->getMessage()); }
+    });
+}
+// Respaldo nocturno de cada proyecto (23:30): lo dispara la primera petición de cualquier usuario después de esa hora si no hay cron
+if (is_auth() && \Classes\RespaldoProyecto::pendiente()) {
+    register_shutdown_function(function () {
+        ignore_user_abort(true);
+        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+        try { \Classes\RespaldoProyecto::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Respaldo de proyectos: ' . $e->getMessage()); }
     });
 }
 $router->comprobarRutas();

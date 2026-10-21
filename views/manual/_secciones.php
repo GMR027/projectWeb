@@ -55,6 +55,8 @@ HTML],
 </ol>
 <p>Desde el listado también puedes <strong>Editar</strong> o <strong>Eliminar</strong> un proyecto (al eliminarlo se borra todo lo que contiene).</p>
 <p class="manual-nota"><strong>Espacio de almacenamiento.</strong> Cada proyecto tiene un límite de espacio para sus archivos, fotos, planos, fichas y logos. Si se llena, el sistema avisa y no deja subir más hasta que borres algo. Lo ves en <em>Ajustes del proyecto</em>.</p>
+<p class="manual-nota"><strong>Por dónde empezar.</strong> Al crear un proyecto eliges cómo arrancar: <em>paso a paso</em> (una ventana con un paso a la vez), <em>lista de pasos</em> (todos a la vista) o solo crear el proyecto. Los pasos son: calendario y festivos, primera partida o importación del programa, equipo, materiales, documentos y fechas del contrato; cada uno tiene su captura rápida y un enlace a la herramienta completa. Lo que captures se guarda en esa herramienta. Puedes volver cuando quieras en <em>Ajustes del proyecto → Por dónde empezar</em>. Nada es obligatorio.</p>
+<p class="manual-nota"><strong>Respaldo de proyecto.</strong> En <em>Ajustes del proyecto</em>, debajo de Almacenamiento, puedes pulsar <em>Respaldar ahora</em> o dejar activo el respaldo automático de las 23:30 (se conserva uno diario, uno semanal y uno mensual, para que elijas a qué momento volver; más los últimos 5 manuales). <em>Restaurar desde el respaldo anterior</em> devuelve el proyecto a como estaba en el último respaldo (por ejemplo, para recuperar los cambios de ayer); antes se guarda una copia del estado actual por si quieres deshacer. Solo lo usan el administrador y el cliente dueño del proyecto.</p>
 HTML],
 
 ['id' => 'usuarios', 'titulo' => 'Usuarios y accesos', 'icono' => 'fa-users-gear', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -454,6 +456,17 @@ HTML],
 </ul>
 <h4>Especialidades</h4>
 <p>Con el botón <strong>Especialidades</strong> administras las categorías técnicas del proyecto (eléctrica, hidráulica, etc.). Son propias de cada proyecto y no las ven otros. Muestra cuántos materiales y submittals usa cada una.</p>
+HTML],
+
+['id' => 'directorio', 'titulo' => 'Directorio', 'icono' => 'fa-address-book', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Un solo lugar (en <strong>Administración</strong>) para capturar lo que varias herramientas comparten. Lo que captures aquí aparece en las listas de las demás.</p>
+<ul>
+<li><strong>Personal del proyecto</strong> y <strong>Personal del contratista</strong> (cliente o contratista): se eligen en Reporte diario y Minutas. Cada persona del proyecto tiene tipo (directivo, administrativo u operativo), cargo, empresa, teléfono, correo, dirección, RFC y notas generales; el RFC se valida (ej. XAXX010101000). Se editan con los mismos formularios de siempre y vuelves al Directorio al guardar.</li>
+<li><strong>Departamentos</strong>: carpeta en Minutas, Redactor y SheetFlow; filtro en Bitácora, Submittals, Evidencias y Personal. Muestra dónde se usa cada uno. <em>Renombrar</em> un departamento lo cambia en todas las herramientas; si escribes el nombre de otro que ya existe, se unen. No se puede eliminar uno en uso.</li>
+<li><strong>Categorías</strong>: las de <em>Archivo</em>, las del <em>Punch list</em> (incluye las de las plantillas de inspección) y las de <em>Evidencias</em>. Funcionan igual que los departamentos.</li>
+<li><strong>Especialidades</strong>: las de Materiales y Submittals.</li>
+</ul>
+<p>En <strong>Evidencias</strong> puedes asignar departamento y categoría a cada foto subida y filtrar por ellos (las fotos de los reportes diarios no los llevan).</p>
 HTML],
 
 ['id' => 'calendario', 'titulo' => 'Calendario', 'icono' => 'fa-calendar-days', 'roles' => $todos, 'herr' => 'calendario', 'cuerpo' => <<<'HTML'

@@ -25,114 +25,39 @@ $limite = \Classes\Almacenamiento::limite((int)$proyecto->id);
 $pct = min(100, $usado / $limite * 100);
 $fmt = fn($b) => \Classes\Almacenamiento::formato((int)$b);
 ?>
-<div class="card" id="idioma" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
-    <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
-        <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>#idioma">
-        <select name="idioma" aria-label="<?php echo s(t('Idioma')); ?>"><?php foreach (IDIOMAS as $cod => $nom): ?><option value="<?php echo $cod; ?>"<?php echo idioma_actual() === $cod ? ' selected' : ''; ?>><?php echo s($nom); ?></option><?php endforeach; ?></select>
-        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
-    </form>
-    <p class="text-muted text-sm" style="margin-top:.8rem">Español / English · <?php echo idioma_actual() === 'en' ? 'Menus and the main screens are translated; the rest of the app keeps showing Spanish for now.' : 'Menús y pantallas principales traducidos; el resto de la aplicación sigue en español por ahora.'; ?></p>
-</div>
+<?php
+$pidResp = (int)$proyecto->id;
+$respaldos = \Classes\RespaldoProyecto::listar($pidResp);
+$respAnterior = \Classes\RespaldoProyecto::anterior($pidResp);
+$etiquetaResp = ['auto' => 'Diario (automático)', 'semanal' => 'Semanal (automático)', 'mensual' => 'Mensual (automático)', 'manual' => 'Manual', 'previo' => 'Previo a restaurar'];
+?>
+<?php
+$dias = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
+$jornadaMap = [];
+foreach ($jornada as $j) { $jornadaMap[(int)$j->dia_semana] = $j->factor; }
+$esCliente = ($_SESSION['rol'] ?? '') === 'cliente';
+$esElectron = str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/');
+$secNav = [
+    ['general', 'fa-sliders', 'General', 'Jornada, festivos e idioma'],
+    ['empezar', 'fa-flag-checkered', 'Por dónde empezar', 'Ruta de arranque'],
+    ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
+];
+if (is_admin() || $esElectron) $secNav[] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
+if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte y contraseña'];
+?>
+<div class="ajustes-layout">
+<nav class="ajustes-nav" role="tablist" aria-label="Secciones de ajustes">
+<?php foreach ($secNav as [$sid, $ico, $tit, $sub]): ?>
+    <a href="#<?php echo $sid; ?>" role="tab" data-sec="<?php echo $sid; ?>"><i class="fa-solid <?php echo $ico; ?>"></i><span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span></a>
+<?php endforeach; ?>
+</nav>
+<div class="ajustes-contenido">
 
-<div class="card" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-database"></i> <?php echo s(t('Almacenamiento')); ?></h3>
-    <p class="text-muted text-sm">Cada proyecto dispone de <?php echo $fmt($limite); ?> para sus archivos, fotos, planos, fichas y logos. No cuenta lo generado al exportar.</p>
-    <div class="alm-barra" title="<?php echo number_format($pct, 1); ?> %"><span class="<?php echo $pct >= 90 ? 'alm-rojo' : ($pct >= 70 ? 'alm-amarillo' : ''); ?>" style="width: <?php echo number_format($pct, 2, '.', ''); ?>%"></span></div>
-    <p><strong><?php echo $fmt($usado); ?></strong> usados de <?php echo $fmt($limite); ?> · <?php echo number_format($pct, 1); ?> % · libres <?php echo $fmt(max(0, $limite - $usado)); ?></p>
-    <table class="tabla">
-        <thead><tr><th><?php echo s(t('Concepto')); ?></th><th style="text-align:right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
-        <tbody>
-        <?php foreach ($alm as $nombre => $bytes): ?>
-            <tr><td><?php echo s($nombre); ?></td><td class="mono" style="text-align:right"><?php echo $fmt($bytes); ?></td></tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-
-<?php if (is_admin()): $instaladores = \Classes\Instaladores::listar(); $verInst = \Classes\Instaladores::version(); ?>
-<div class="card" id="app-escritorio" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-desktop"></i> Aplicación de escritorio<?php echo $verInst ? ' · v' . s($verInst) : ''; ?></h3>
-    <p class="text-muted text-sm">Instala la aplicación en tu equipo para usar las herramientas de IA y el modo sin conexión. Solo la ve el administrador.</p>
-    <?php if ($instaladores): ?>
-        <div style="display:flex;gap:1rem;flex-wrap:wrap">
-        <?php foreach ($instaladores as $a): if (!preg_match('/\.(deb|AppImage|exe|dmg|rpm|zip)$/i', $a['nombre'])) continue; ?>
-            <a class="btn btn-primary" href="/sistema/instalador?archivo=<?php echo urlencode($a['nombre']); ?>"><i class="fa-solid fa-download"></i> <?php echo s($a['nombre']); ?> <span class="text-sm">(<?php echo number_format($a['tam'] / 1048576, 1); ?> MB)</span></a>
-        <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <p class="text-muted">Aún no hay instaladores publicados. Súbelos desde <a href="/sistema#escritorio">Sistema</a>.</p>
-    <?php endif; ?>
-</div>
-<?php endif; ?>
-
-<?php if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/')): // el modo sin conexión es solo de la app de escritorio ?>
-<div class="card" id="sin-conexion" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-plane"></i> Modo sin conexión (este equipo)</h3>
-    <p class="text-muted text-sm">Guarda en este equipo las pantallas que abres y los cambios de estado de las órdenes de cambio. Sin red puedes seguir consultando y marcando avances; al volver la conexión se suben solos. Si algo cambió en el servidor mientras tanto, se te pregunta cuál versión queda. También funciona dentro de la aplicación de escritorio. Las fotos y los archivos grandes requieren conexión.</p>
-    <label class="campo-check"><input type="checkbox" id="po-offline-activar"> Activar el modo sin conexión en este equipo</label>
-    <div id="po-offline-acciones" hidden style="margin-top:1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-        <button type="button" class="btn btn-primary" id="po-offline-bajar"><i class="fa-solid fa-download"></i> Descargar este proyecto para usarlo sin conexión</button>
-        <span id="po-offline-estado" class="text-muted text-sm"></span>
-    </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline) se carga al final de la página
-    const chk = document.getElementById('po-offline-activar'), acc = document.getElementById('po-offline-acciones'), est = document.getElementById('po-offline-estado');
-    if (!window.POOffline) { chk.disabled = true; est.textContent = 'Este navegador no admite el modo sin conexión.'; return; }
-    const pintar = async () => {
-        chk.checked = POOffline.activo(); acc.hidden = !chk.checked;
-        if (chk.checked) { const n = (await POOffline.listar().catch(() => [])).length; est.textContent = n ? n + ' cambio(s) en la cola' : ''; }
-    };
-    chk.addEventListener('change', async () => {
-        if (chk.checked) { const ok = await POOffline.activar(); if (!ok) est.textContent = 'No se pudo registrar el servicio sin conexión (requiere https o localhost).'; }
-        else await POOffline.desactivar();
-        pintar();
-    });
-    document.getElementById('po-offline-bajar').addEventListener('click', async e => {
-        e.target.disabled = true;
-        const n = await POOffline.precargar(new URLSearchParams(location.search).get('proyecto'), (h, t) => { est.textContent = 'Descargando ' + h + ' de ' + t + '…'; });
-        est.textContent = 'Listo: ' + n + ' pantalla(s) guardadas en este equipo.';
-        e.target.disabled = false;
-    });
-    pintar();
-});
-</script>
-<?php endif; ?>
-
-<?php if (($_SESSION['rol'] ?? '') === 'cliente'): ?>
-<div class="card" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-headset"></i> <?php echo s(t('Soporte')); ?></h3>
-    <p class="text-muted text-sm"><?php echo s(t('¿Tienes una duda o necesitas ayuda? Escríbenos desde aquí y el administrador recibirá tu mensaje.')); ?></p>
-    <a href="/soporte" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> <?php echo s(t('Abrir soporte')); ?></a>
-</div>
-
-<div class="card" id="cuenta" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-key"></i> <?php echo s(t('Cambiar contraseña')); ?></h3>
-    <?php if (isset($_GET['pw'])): ?><div class="alerta alerta-exito"><?php echo s(t('Tu contraseña se actualizó correctamente.')); ?></div><?php endif; ?>
-    <?php if (!empty($_GET['pw_error'])): ?><div class="alerta alerta-error"><?php echo s($_GET['pw_error']); ?></div><?php endif; ?>
-    <form method="POST" action="/cuenta/password" class="formulario" autocomplete="off">
-        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-        <div class="campo">
-            <label for="password_actual"><?php echo s(t('Contraseña actual')); ?></label>
-            <input type="password" id="password_actual" name="password_actual" autocomplete="current-password" required>
-        </div>
-        <div class="campo">
-            <label for="password_nueva"><?php echo s(t('Nueva contraseña')); ?></label>
-            <input type="password" id="password_nueva" name="password_nueva" minlength="6" autocomplete="new-password" required>
-        </div>
-        <div class="campo">
-            <label for="password_nueva2"><?php echo s(t('Repetir nueva contraseña')); ?></label>
-            <input type="password" id="password_nueva2" name="password_nueva2" minlength="6" autocomplete="new-password" required>
-        </div>
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> <?php echo s(t('Actualizar contraseña')); ?></button>
-    </form>
-</div>
-<?php endif; ?>
-
-<div class="ajustes-grid">
+<section class="ajustes-seccion" id="general">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-sliders"></i> General</h3>
+    <div class="ajustes-grid">
     <!-- Configuración de jornada semanal -->
-    <div class="card">
+    <div class="card" id="jornada">
         <h3 class="card-titulo"><i class="fa-solid fa-clock"></i> <?php echo s(t('Jornada Semanal')); ?></h3>
         <p class="text-muted text-sm"><?php echo s(t('Factor de jornada por día. 0 = inhábil, 0.5 = medio turno, 1 = jornada completa.')); ?></p>
         <?php if (puede_gestionar_proyecto($proyecto)): ?>
@@ -140,11 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <div class="jornada-grid">
                     <?php
-                    $dias = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
-                    $jornadaMap = [];
-                    foreach ($jornada as $j) {
-                        $jornadaMap[(int)$j->dia_semana] = $j->factor;
-                    }
                     foreach ($dias as $num => $nombre):
                         $factor = $jornadaMap[$num] ?? ($num <= 5 ? 1 : ($num === 6 ? 0.5 : 0));
                     ?>
@@ -247,4 +167,204 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
             </tbody>
         </table>
     </div>
+    </div>
+<div class="card" id="idioma">
+    <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
+    <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>#idioma">
+        <select name="idioma" aria-label="<?php echo s(t('Idioma')); ?>"><?php foreach (IDIOMAS as $cod => $nom): ?><option value="<?php echo $cod; ?>"<?php echo idioma_actual() === $cod ? ' selected' : ''; ?>><?php echo s($nom); ?></option><?php endforeach; ?></select>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
+    </form>
+    <p class="text-muted text-sm" style="margin-top:.8rem">Español / English · <?php echo idioma_actual() === 'en' ? 'Menus and the main screens are translated; the rest of the app keeps showing Spanish for now.' : 'Menús y pantallas principales traducidos; el resto de la aplicación sigue en español por ahora.'; ?></p>
 </div>
+
+</section>
+
+<section class="ajustes-seccion" id="empezar">
+<div class="card" id="por-donde-empezar">
+    <h3 class="card-titulo"><i class="fa-solid fa-flag-checkered"></i> Por dónde empezar</h3>
+    <p class="text-muted text-sm">Ruta recomendada para arrancar el proyecto. Lo que captures aquí se guarda en la herramienta correspondiente.</p>
+    <?php $pdeProyecto = $proyecto; $pdeModo = 'lista'; $pdeEnModal = false; include __DIR__ . '/../templates/por-donde-empezar.php'; ?>
+</div>
+
+</section>
+
+<section class="ajustes-seccion" id="datos">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-database"></i> Datos</h3>
+<div class="card">
+    <h3 class="card-titulo"><i class="fa-solid fa-database"></i> <?php echo s(t('Almacenamiento')); ?></h3>
+    <p class="text-muted text-sm">Cada proyecto dispone de <?php echo $fmt($limite); ?> para sus archivos, fotos, planos, fichas y logos. No cuenta lo generado al exportar.</p>
+    <div class="alm-barra" title="<?php echo number_format($pct, 1); ?> %"><span class="<?php echo $pct >= 90 ? 'alm-rojo' : ($pct >= 70 ? 'alm-amarillo' : ''); ?>" style="width: <?php echo number_format($pct, 2, '.', ''); ?>%"></span></div>
+    <p><strong><?php echo $fmt($usado); ?></strong> usados de <?php echo $fmt($limite); ?> · <?php echo number_format($pct, 1); ?> % · libres <?php echo $fmt(max(0, $limite - $usado)); ?></p>
+    <table class="tabla">
+        <thead><tr><th><?php echo s(t('Concepto')); ?></th><th style="text-align:right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
+        <tbody>
+        <?php foreach ($alm as $nombre => $bytes): ?>
+            <tr><td><?php echo s($nombre); ?></td><td class="mono" style="text-align:right"><?php echo $fmt($bytes); ?></td></tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<div class="card" id="respaldo-proyecto">
+    <h3 class="card-titulo"><i class="fa-solid fa-clock-rotate-left"></i> Respaldo de proyecto</h3>
+    <p class="text-muted text-sm">Guarda una copia de los datos y archivos de este proyecto para poder recuperar los cambios del día anterior. Se hace a mano con el botón o automáticamente cada noche a las <?php echo \Classes\RespaldoProyecto::HORA_AUTO; ?>. Se conserva un respaldo diario, uno semanal y uno mensual, además de los manuales. Restaurar no borra archivos del servidor; solo devuelve los que falten.</p>
+    <?php if (!empty($_GET['resp_msg'])): ?><div class="alerta <?php echo ($_GET['resp'] ?? '') === 'error' ? 'alerta-error' : 'alerta-exito'; ?>"><?php echo s($_GET['resp_msg']); ?></div><?php endif; ?>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+        <form method="POST" action="/ajustes/respaldo/crear">
+            <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Respaldar ahora</button>
+        </form>
+        <form method="POST" action="/ajustes/respaldo/restaurar" onsubmit="return confirm('Se reemplazarán los datos actuales del proyecto por los del último respaldo. Antes se guardará una copia del estado actual. ¿Continuar?')">
+            <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>">
+            <button type="submit" class="btn btn-secondary"<?php echo $respAnterior ? '' : ' disabled'; ?>><i class="fa-solid fa-rotate-left"></i> Restaurar desde el respaldo anterior<?php echo $respAnterior ? ' (' . date('d/m/Y H:i', $respAnterior['fecha']) . ')' : ''; ?></button>
+        </form>
+        <form method="POST" action="/ajustes/respaldo/automatico">
+            <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>">
+            <label class="campo-check"><input type="checkbox" name="auto" value="1" onchange="this.form.submit()"<?php echo \Classes\RespaldoProyecto::automatico($pidResp) ? ' checked' : ''; ?>> Respaldo automático diario (<?php echo \Classes\RespaldoProyecto::HORA_AUTO; ?>)</label>
+        </form>
+    </div>
+    <?php if ($respaldos): ?>
+    <table class="tabla">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Tamaño</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($respaldos as $r): ?>
+            <tr>
+                <td class="mono"><?php echo date('d/m/Y H:i', $r['fecha']); ?></td>
+                <td><?php echo s($etiquetaResp[$r['tipo']] ?? $r['tipo']); ?></td>
+                <td class="mono" style="text-align:right"><?php echo $fmt($r['bytes']); ?></td>
+                <td style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap">
+                    <a class="btn btn-ghost" href="/ajustes/respaldo/descargar?proyecto=<?php echo $pidResp; ?>&archivo=<?php echo urlencode($r['archivo']); ?>"><i class="fa-solid fa-download"></i></a>
+                    <form method="POST" action="/ajustes/respaldo/restaurar" onsubmit="return confirm('Restaurar el proyecto a este respaldo? Antes se guardará una copia del estado actual.')">
+                        <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>"><input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
+                        <button type="submit" class="btn btn-ghost" title="Restaurar"><i class="fa-solid fa-rotate-left"></i></button>
+                    </form>
+                    <form method="POST" action="/ajustes/respaldo/eliminar" onsubmit="return confirm('Eliminar este respaldo?')">
+                        <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>"><input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
+                        <button type="submit" class="btn btn-ghost" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php else: ?>
+        <p class="text-muted">Aún no hay respaldos de este proyecto.</p>
+    <?php endif; ?>
+</div>
+
+</section>
+
+<?php if (is_admin() || $esElectron): ?>
+<section class="ajustes-seccion" id="equipo">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-desktop"></i> Equipo</h3>
+<?php if (is_admin()): $instaladores = \Classes\Instaladores::listar(); $verInst = \Classes\Instaladores::version(); ?>
+<div class="card" id="app-escritorio">
+    <h3 class="card-titulo"><i class="fa-solid fa-desktop"></i> Aplicación de escritorio<?php echo $verInst ? ' · v' . s($verInst) : ''; ?></h3>
+    <p class="text-muted text-sm">Instala la aplicación en tu equipo para usar las herramientas de IA y el modo sin conexión. Solo la ve el administrador.</p>
+    <?php if ($instaladores): ?>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <?php foreach ($instaladores as $a): if (!preg_match('/\.(deb|AppImage|exe|dmg|rpm|zip)$/i', $a['nombre'])) continue; ?>
+            <a class="btn btn-primary" href="/sistema/instalador?archivo=<?php echo urlencode($a['nombre']); ?>"><i class="fa-solid fa-download"></i> <?php echo s($a['nombre']); ?> <span class="text-sm">(<?php echo number_format($a['tam'] / 1048576, 1); ?> MB)</span></a>
+        <?php endforeach; ?>
+        </div>
+    <?php else: ?>
+        <p class="text-muted">Aún no hay instaladores publicados. Súbelos desde <a href="/sistema#escritorio">Sistema</a>.</p>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/')): // el modo sin conexión es solo de la app de escritorio ?>
+<div class="card" id="sin-conexion">
+    <h3 class="card-titulo"><i class="fa-solid fa-plane"></i> Modo sin conexión (este equipo)</h3>
+    <p class="text-muted text-sm">Guarda en este equipo las pantallas que abres y los cambios de estado de las órdenes de cambio. Sin red puedes seguir consultando y marcando avances; al volver la conexión se suben solos. Si algo cambió en el servidor mientras tanto, se te pregunta cuál versión queda. También funciona dentro de la aplicación de escritorio. Las fotos y los archivos grandes requieren conexión.</p>
+    <label class="campo-check"><input type="checkbox" id="po-offline-activar"> Activar el modo sin conexión en este equipo</label>
+    <div id="po-offline-acciones" hidden style="margin-top:1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="po-offline-bajar"><i class="fa-solid fa-download"></i> Descargar este proyecto para usarlo sin conexión</button>
+        <span id="po-offline-estado" class="text-muted text-sm"></span>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline) se carga al final de la página
+    const chk = document.getElementById('po-offline-activar'), acc = document.getElementById('po-offline-acciones'), est = document.getElementById('po-offline-estado');
+    if (!window.POOffline) { chk.disabled = true; est.textContent = 'Este navegador no admite el modo sin conexión.'; return; }
+    const pintar = async () => {
+        chk.checked = POOffline.activo(); acc.hidden = !chk.checked;
+        if (chk.checked) { const n = (await POOffline.listar().catch(() => [])).length; est.textContent = n ? n + ' cambio(s) en la cola' : ''; }
+    };
+    chk.addEventListener('change', async () => {
+        if (chk.checked) { const ok = await POOffline.activar(); if (!ok) est.textContent = 'No se pudo registrar el servicio sin conexión (requiere https o localhost).'; }
+        else await POOffline.desactivar();
+        pintar();
+    });
+    document.getElementById('po-offline-bajar').addEventListener('click', async e => {
+        e.target.disabled = true;
+        const n = await POOffline.precargar(new URLSearchParams(location.search).get('proyecto'), (h, t) => { est.textContent = 'Descargando ' + h + ' de ' + t + '…'; });
+        est.textContent = 'Listo: ' + n + ' pantalla(s) guardadas en este equipo.';
+        e.target.disabled = false;
+    });
+    pintar();
+});
+</script>
+<?php endif; ?>
+
+</section>
+<?php endif; ?>
+
+<?php if ($esCliente): ?>
+<section class="ajustes-seccion" id="cuenta-sec">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-user-shield"></i> Cuenta</h3>
+<div class="card">
+    <h3 class="card-titulo"><i class="fa-solid fa-headset"></i> <?php echo s(t('Soporte')); ?></h3>
+    <p class="text-muted text-sm"><?php echo s(t('¿Tienes una duda o necesitas ayuda? Escríbenos desde aquí y el administrador recibirá tu mensaje.')); ?></p>
+    <a href="/soporte" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> <?php echo s(t('Abrir soporte')); ?></a>
+</div>
+
+<div class="card" id="cuenta">
+    <h3 class="card-titulo"><i class="fa-solid fa-key"></i> <?php echo s(t('Cambiar contraseña')); ?></h3>
+    <?php if (isset($_GET['pw'])): ?><div class="alerta alerta-exito"><?php echo s(t('Tu contraseña se actualizó correctamente.')); ?></div><?php endif; ?>
+    <?php if (!empty($_GET['pw_error'])): ?><div class="alerta alerta-error"><?php echo s($_GET['pw_error']); ?></div><?php endif; ?>
+    <form method="POST" action="/cuenta/password" class="formulario" autocomplete="off">
+        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+        <div class="campo">
+            <label for="password_actual"><?php echo s(t('Contraseña actual')); ?></label>
+            <input type="password" id="password_actual" name="password_actual" autocomplete="current-password" required>
+        </div>
+        <div class="campo">
+            <label for="password_nueva"><?php echo s(t('Nueva contraseña')); ?></label>
+            <input type="password" id="password_nueva" name="password_nueva" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div class="campo">
+            <label for="password_nueva2"><?php echo s(t('Repetir nueva contraseña')); ?></label>
+            <input type="password" id="password_nueva2" name="password_nueva2" minlength="6" autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> <?php echo s(t('Actualizar contraseña')); ?></button>
+    </form>
+</div>
+</section>
+<?php endif; ?>
+
+</div>
+</div>
+<script>
+(() => {
+    const links = [...document.querySelectorAll('.ajustes-nav a')];
+    const secs = [...document.querySelectorAll('.ajustes-seccion[id]')];
+    const ids = links.map(a => a.dataset.sec);
+    const mostrar = id => {
+        if (!ids.includes(id)) id = ids[0];
+        secs.forEach(x => { x.hidden = x.id !== id; });
+        links.forEach(a => { const on = a.dataset.sec === id; a.classList.toggle('activo', on); a.setAttribute('aria-selected', on); });
+        try { sessionStorage.setItem('ajustes-tab', id); } catch (e) {}
+    };
+    const desdeHash = () => {
+        const el = location.hash.length > 1 ? document.getElementById(location.hash.slice(1)) : null;
+        const sec = el && el.closest('.ajustes-seccion[id]');
+        if (sec) { mostrar(sec.id); if (el !== sec) el.scrollIntoView(); return true; }
+        return false;
+    };
+    links.forEach(a => a.addEventListener('click', e => { e.preventDefault(); mostrar(a.dataset.sec); history.replaceState(null, '', '#' + a.dataset.sec); }));
+    window.addEventListener('hashchange', desdeHash);
+    if (!desdeHash()) { let g = null; try { g = sessionStorage.getItem('ajustes-tab'); } catch (e) {} mostrar(g); }
+})();
+</script>

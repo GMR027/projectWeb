@@ -56,7 +56,11 @@ class ProyectoController
                     if (is_admin()) {
                         ProyectoAcceso::sincronizarProyecto((int)$proyecto->id, $_POST['usuarios_acceso'] ?? []);
                     }
-                    header('Location: /proyectos?creado=1');
+                    $modo = $_POST['modo_inicio'] ?? 'guiado';
+                    $destino = $modo === 'ninguno' || !isset(\Classes\PorDondeEmpezar::MODOS[$modo])
+                        ? '/proyectos?creado=1'
+                        : url_inicio_proyecto((int)$proyecto->id) . '&inicio=' . $modo;
+                    header('Location: ' . $destino);
                     exit;
                 }
             }

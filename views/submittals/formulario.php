@@ -20,7 +20,7 @@
             <div class="campo"><label for="numero_submittal">Número de submittal *</label><input type="text" id="numero_submittal" name="numero_submittal" value="<?php echo s($submittal->numero_submittal); ?>" required></div>
             <div class="campo"><label for="numero_trabajo">Número de trabajo</label><input type="text" id="numero_trabajo" name="numero_trabajo" value="<?php echo s($submittal->numero_trabajo); ?>"></div>
             <div class="campo"><label>Proyecto</label><input type="text" value="<?php echo s($proyecto->nombre); ?>" disabled></div>
-            <div class="campo"><label for="departamento">Departamento</label><input type="text" id="departamento" name="departamento" value="<?php echo s($submittal->departamento); ?>"></div>
+            <div class="campo"><label for="departamento">Departamento</label><input type="text" id="departamento" name="departamento" value="<?php echo s($submittal->departamento); ?>" list="lista-deptos" maxlength="100"><datalist id="lista-deptos"><?php foreach (\Classes\Catalogo::departamentos((int)$proyecto->id) as $d): ?><option value="<?php echo s($d); ?>"><?php endforeach; ?></datalist></div>
             <div class="campo"><label for="para">Para</label><input type="text" id="para" name="para" value="<?php echo s($submittal->para); ?>"></div>
             <div class="campo"><label for="especialidad">Especialidad</label><input type="text" id="especialidad" name="especialidad" value="<?php echo s($submittal->especialidad); ?>" list="lista-esp"><datalist id="lista-esp"><?php foreach (\Model\Especialidad::nombres((int)$proyecto->id) as $e): ?><option value="<?php echo s($e); ?>"><?php endforeach; ?></datalist></div>
             <div class="campo campo-full">

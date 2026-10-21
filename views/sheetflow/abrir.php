@@ -27,6 +27,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
         <a href="/sheetflow?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Tablas</a>
     </div>
 </div>
+<?php $avisoTexto = 'Las tablas solo se pueden editar en una tablet o en un equipo de escritorio.'; $avisoLectura = true; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <div class="card rd-datos">
     <label>Nombre <input type="text" id="sf-nombre" maxlength="150" value="<?php echo s($hoja->nombre); ?>"></label>

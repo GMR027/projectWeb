@@ -41,7 +41,7 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
     <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label style="flex:2">Pendiente <input type="text" name="titulo" required maxlength="200"></label>
         <label>Ubicación <input type="text" name="ubicacion" maxlength="200"></label>
-        <label>Categoría <input type="text" name="categoria" maxlength="60" list="cats"><datalist id="cats"><?php foreach (array_keys(array_merge(...array_values(array_map(fn($p) => array_flip(array_column($p['items'], 1)), Punch::PLANTILLAS)))) as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
+        <label>Categoría <input type="text" name="categoria" maxlength="60" list="cats"><datalist id="cats"><?php foreach (Punch::categoriasDeProyecto((int)$pid) as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
         <label>Severidad <select name="severidad"><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $k === 'media' ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150" list="ctr"><datalist id="ctr"><?php foreach ($contratistas as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>

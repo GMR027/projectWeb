@@ -8,9 +8,9 @@ use Classes\Imagenes;
 class Evidencia extends ActiveRecord
 {
     protected static $tabla = 'evidencias';
-    protected static $columnasDB = ['id', 'proyecto_id', 'actividad_id', 'fecha', 'descripcion', 'foto', 'usuario_id'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'actividad_id', 'fecha', 'descripcion', 'foto', 'departamento', 'categoria', 'usuario_id'];
 
-    public $id, $proyecto_id, $actividad_id, $fecha, $descripcion, $foto, $usuario_id;
+    public $id, $proyecto_id, $actividad_id, $fecha, $descripcion, $foto, $departamento, $categoria, $usuario_id;
     public $creado;
 
     public const CARPETA = 'evidencias';
@@ -23,6 +23,8 @@ class Evidencia extends ActiveRecord
         $this->fecha = $args['fecha'] ?? date('Y-m-d');
         $this->descripcion = mb_substr(trim((string)($args['descripcion'] ?? '')), 0, 300);
         $this->foto = $args['foto'] ?? '';
+        $this->departamento = mb_substr(trim((string)($args['departamento'] ?? '')), 0, 100);
+        $this->categoria = mb_substr(trim((string)($args['categoria'] ?? '')), 0, 100);
         $this->usuario_id = $args['usuario_id'] ?? null;
     }
 

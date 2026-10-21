@@ -15,9 +15,7 @@ class BitacoraController
         $depto = trim($_GET['departamento'] ?? '');
         $imp = isset(Bitacora::IMPORTANCIAS[$_GET['importancia'] ?? '']) ? $_GET['importancia'] : '';
         $registros = Bitacora::deProyecto((int)$proyecto->id);
-        $deptos = array_map(fn($d) => $d->nombre, BitacoraDepartamento::deProyecto((int)$proyecto->id));
-        foreach ($registros as $r) if ($r->departamento !== '' && !in_array($r->departamento, $deptos, true)) $deptos[] = $r->departamento;
-        sort($deptos, SORT_NATURAL | SORT_FLAG_CASE);
+        $deptos = \Classes\Catalogo::departamentos((int)$proyecto->id);
         $registros = array_values(array_filter($registros, fn($r) =>
             ($depto === '' || ($depto === '__sin' ? $r->departamento === '' : $r->departamento === $depto)) && ($imp === '' || $r->importancia === $imp)));
         $router->render('bitacora/index', [
@@ -54,7 +52,7 @@ class BitacoraController
             $b->descripcion = trim($_POST['descripcion'] ?? '');
             $b->importancia = $_POST['importancia'] ?? '';
             $alertas = $b->validar();
-            $catalogo = array_map(fn($x) => $x->nombre, BitacoraDepartamento::deProyecto((int)$proyecto->id));
+            $catalogo = \Classes\Catalogo::departamentos((int)$proyecto->id);
             if ($b->departamento !== '' && !in_array($b->departamento, $catalogo, true) && $b->departamento !== $departamentoAnterior) {
                 $alertas['error'][] = 'Elige un departamento del catálogo';
             }
@@ -64,8 +62,7 @@ class BitacoraController
                 exit;
             }
         }
-        $deptos = array_map(fn($x) => $x->nombre, BitacoraDepartamento::deProyecto((int)$proyecto->id));
-        if ($b->departamento !== '' && !in_array($b->departamento, $deptos, true)) $deptos[] = $b->departamento;   // valor antiguo fuera del catálogo
+        $deptos = \Classes\Catalogo::departamentos((int)$proyecto->id);
         $router->render('bitacora/formulario', [
             'titulo' => $b->id ? 'Editar registro de bitácora' : 'Nuevo registro de bitácora',
             'proyecto' => $proyecto, 'registro' => $b, 'alertas' => $alertas,
