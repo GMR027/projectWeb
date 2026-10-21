@@ -179,5 +179,20 @@ if (\Classes\ShellTools::disponible('pdfunite') || \Classes\ShellTools::disponib
     rmdir($d);
 }
 
+echo "Sheetflow::importar\n";
+$dImp = sys_get_temp_dir() . '/imp_' . bin2hex(random_bytes(3));
+mkdir($dImp);
+file_put_contents("$dImp/a.csv", "Nombre,Cantidad,Nota\nCañería,12,ñandú\nTubo,3.5,\n,,\nCable,7,ok\n");
+file_put_contents("$dImp/b.csv", mb_convert_encoding("Nombre;Cantidad\nÁrbol;4\nPeña;5\n", 'Windows-1252', 'UTF-8'));
+$ia = \Classes\Sheetflow::importar("$dImp/a.csv", 'a.csv');
+$ib = \Classes\Sheetflow::importar("$dImp/b.csv", 'b.csv');
+$ok('CSV UTF-8: encabezados, tipos y sin renglones vacíos', array_column($ia['cols'], 'n') === ['Nombre', 'Cantidad', 'Nota'] && $ia['cols'][1]['t'] === 'numero' && count($ia['rows']) === 3 && $ia['rows'][0][0] === 'Cañería');
+$ok('CSV en Windows-1252 se lee con sus acentos', $ib['rows'] === [['Árbol', '4'], ['Peña', '5']]);
+$rechazado = false;
+try { \Classes\Sheetflow::importar("$dImp/a.csv", 'x.docx'); } catch (\RuntimeException $e) { $rechazado = true; }
+$ok('rechaza formatos que no son hoja de cálculo', $rechazado);
+array_map('unlink', glob("$dImp/*"));
+rmdir($dImp);
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

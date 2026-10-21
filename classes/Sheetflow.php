@@ -321,20 +321,7 @@ class Sheetflow
         $ext = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
         if ($ext === 'sheetflow') return self::deArchivo($ruta)[0];
         if (!in_array($ext, ['csv', 'xlsx', 'ods'], true)) throw new \RuntimeException('Usa un archivo .sheetflow, .csv, .xlsx u .ods');
-        @ini_set('memory_limit', '512M');
-        $lector = \PhpOffice\PhpSpreadsheet\IOFactory::createReader(ucfirst($ext));
-        if ($ext === 'csv') {
-            $lector->setInputEncoding(self::esUtf8(file_get_contents($ruta, false, null, 0, 20000)) ? 'UTF-8' : 'Windows-1252');
-        }
-        $lector->setReadDataOnly(false);
-        $hoja = $lector->load($ruta)->getSheet(0);
-        $filas = [];
-        foreach ($hoja->toArray(null, true, true, false) as $f) {
-            $f = array_map(fn($v) => trim((string)$v), $f);
-            if (array_filter($f, fn($v) => $v !== '')) $filas[] = $f;
-            if (count($filas) > self::MAX_FILAS + 1) break;
-        }
-        return self::deMatriz($filas);
+        return self::deMatriz(TablaDeDocumento::deHoja($ruta, $ext));
     }
 
     /** Datos de SheetFlow a partir de una matriz de textos: la primera fila son los encabezados; el tipo (número/texto) se deduce de cada columna */
@@ -354,11 +341,6 @@ class Sheetflow
         }
         $rows = array_map(fn($f) => array_map(fn($i) => ($cols[$i]['t'] === 'numero' && ($n = self::numero($f[$i] ?? '')) !== null) ? (string)$n : (string)($f[$i] ?? ''), array_keys($cols)), $filas);
         return self::limpiar(['cols' => $cols, 'rows' => $rows ?: [array_fill(0, $nc, '')]]);
-    }
-
-    private static function esUtf8(string $s): bool
-    {
-        return mb_check_encoding($s, 'UTF-8');
     }
 
     // ---------- Exportar ----------

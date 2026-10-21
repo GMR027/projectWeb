@@ -63,7 +63,8 @@ class TablaDeDocumento
 
     // ---------- Excel / CSV / ODS ----------
 
-    private static function deHoja(string $ruta, string $ext, array &$avisos): array
+    /** Filas (texto) de la primera hoja de un .csv/.xls/.xlsx/.ods, sin renglones vacíos y con tope de renglones. Lo usan también SheetFlow al importar */
+    public static function deHoja(string $ruta, string $ext, array &$avisos = []): array
     {
         @ini_set('memory_limit', '512M');
         $tipo = $ext === 'xls' ? 'Xls' : ucfirst($ext);
