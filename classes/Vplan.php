@@ -200,9 +200,11 @@ class Vplan
     public static function datos(VplanLamina $lamina, Proyecto $proyecto, ?array $bloques = null): array
     {
         $bloques ??= $lamina->bloques();
+        try { $lamina->sincronizarImagenes($bloques); } catch (\Throwable $e) { error_log('vPlan imágenes vinculadas: ' . $e->getMessage()); }
         $partida = $lamina->partida_id ? Partida::find($lamina->partida_id) : null;
         if ($partida && (int)$partida->proyecto_id !== (int)$proyecto->id) $partida = null;
         $rec = $lamina->recovery();
+        $textos = $lamina->textosColumnas();
 
         // Qué muestra cada bloque de tareas y, con todo junto, las restricciones numeradas de la lámina
         $bt = self::tareasEnOrden($bloques);
@@ -226,6 +228,7 @@ class Vplan
                     $r = $rec[(int)$a->id] ?? [];
                     $t += [
                         'rec' => array_map(fn($n) => ['inicio' => $r[$n]['inicio'] ?? null, 'fin' => $r[$n]['fin'] ?? null], $nRec ? range(1, $nRec) : []),
+                        'textos' => $textos[(int)$a->id] ?? [],
                         'restricciones' => $numPorAct[(int)$a->id] ?? [],
                     ];
                     if (!isset($tareas[(int)$a->id])) {

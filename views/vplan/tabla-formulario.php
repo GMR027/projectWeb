@@ -3,6 +3,8 @@ use Model\VplanTabla;
 $esNueva = !$tabla->id;
 $campos = $tabla->campos();
 $cols = $tabla->columnasOtro();
+$cfgPunch = $tabla->configPunch();
+$contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
 ?>
 <div class="page-header">
     <h2><?php echo $esNueva ? 'Nueva tabla adicional' : 'Editar tabla: ' . s($tabla->titulo); ?></h2>
@@ -12,6 +14,15 @@ $cols = $tabla->columnasOtro();
 <div class="card">
     <i class="fa-solid fa-link"></i> <strong>Vinculada a <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$tabla->sheetflow_id; ?>"><?php echo s($tabla->hoja()->nombre); ?></a> (SheetFlow).</strong>
     Columnas y renglones se leen en vivo de esa tabla; lo que edites en la lámina se escribe allá. Aquí solo cambias el título y el nombre en el catálogo.
+</div>
+<?php endif; ?>
+<?php if (!$esNueva && $tabla->tipo === 'punch'): ?>
+<div class="card">
+    <strong>Esta tabla es manual y no está conectada al módulo Punch.</strong> Puedes convertirla: cada renglón pasa a ser un pendiente del Punch list (la fecha «fin» es la fecha límite y el % se traduce a estado; el inicio se pierde) y la tabla muestra esos pendientes con fotos, responsable, etc.
+    <form method="POST" action="/vplan/tablas/convertir-punch" data-confirm="¿Convertir al Punch list?|Se crearán los pendientes y la tabla quedará conectada al módulo Punch. No se puede deshacer.">
+        <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($tabla->id); ?>">
+        <button type="submit" class="btn btn-sm btn-primary" style="margin-top:.8rem">Convertir a Punch list conectado</button>
+    </form>
 </div>
 <?php endif; ?>
 <div class="card">
@@ -28,6 +39,35 @@ $cols = $tabla->columnasOtro();
                 </select>
                 <?php if (!$esNueva): ?><small class="text-muted">El tipo no se puede cambiar una vez creada la tabla.</small><?php endif; ?>
             </div>
+            <div class="campo campo-full" id="bloque-punch" style="<?php echo $tabla->tipo === 'punchlist' ? '' : 'display:none'; ?>">
+                <p class="text-muted text-sm">Esta tabla es una <strong>vista</strong> del módulo <a href="/punch?proyecto=<?php echo s($proyecto->id); ?>">Punch list</a>: los pendientes no se copian, se leen en vivo y lo que cambies en la lámina (estado, severidad, fecha, responsable…) se guarda en el pendiente. Elige qué ver y qué no.</p>
+                <label>Columnas visibles (hasta <?php echo \Classes\PunchVista::MAX_COLUMNAS; ?>)</label>
+                <div class="vp-cols vp-cols-punch">
+                    <?php foreach (\Classes\PunchVista::COLUMNAS as $k => [$etq, $tp]): ?>
+                        <label class="check"><input type="checkbox" name="punch[columnas][]" value="<?php echo s($k); ?>" <?php echo in_array($k, $cfgPunch['columnas'], true) ? 'checked' : ''; ?>> <?php echo $tp === 'foto' ? '<i class="fa-solid fa-image"></i> ' : ''; echo s($etq); ?></label>
+                    <?php endforeach; ?>
+                </div>
+                <div class="form-grid" style="margin-top:1rem">
+                    <div class="campo"><label for="p-estado">Estado</label>
+                        <select id="p-estado" name="punch[estado]">
+                            <option value="pendientes" <?php echo $cfgPunch['estado'] === 'pendientes' ? 'selected' : ''; ?>>Solo pendientes (abiertos, en proceso, por verificar)</option>
+                            <option value="todos" <?php echo $cfgPunch['estado'] === 'todos' ? 'selected' : ''; ?>>Todos</option>
+                            <?php foreach (\Classes\Punch::ESTADOS as $k => $e): ?><option value="<?php echo $k; ?>" <?php echo $cfgPunch['estado'] === $k ? 'selected' : ''; ?>><?php echo s($e); ?></option><?php endforeach; ?>
+                        </select></div>
+                    <div class="campo"><label for="p-sev">Severidad</label>
+                        <select id="p-sev" name="punch[severidad]"><option value="">Todas</option>
+                            <?php foreach (\Classes\Punch::SEVERIDADES as $k => $e): ?><option value="<?php echo $k; ?>" <?php echo $cfgPunch['severidad'] === $k ? 'selected' : ''; ?>><?php echo s($e); ?></option><?php endforeach; ?>
+                        </select></div>
+                    <div class="campo"><label for="p-con">Contratista</label>
+                        <select id="p-con" name="punch[contratista]"><option value="">Todos</option>
+                            <?php foreach ($contratistasPunch as $c): ?><option value="<?php echo s($c); ?>" <?php echo $cfgPunch['contratista'] === $c ? 'selected' : ''; ?>><?php echo s($c); ?></option><?php endforeach; ?>
+                        </select></div>
+                    <div class="campo"><label for="p-cat">Categoría</label><input type="text" id="p-cat" name="punch[categoria]" value="<?php echo s($cfgPunch['categoria']); ?>" maxlength="60" placeholder="Todas"></div>
+                    <div class="campo"><label for="p-lim">Máximo de renglones</label><input type="number" id="p-lim" name="punch[limite]" min="1" max="200" value="<?php echo (int)$cfgPunch['limite']; ?>"></div>
+                </div>
+                <input type="hidden" name="punch[ids]" value="<?php echo s(json_encode($cfgPunch['ids'])); ?>">
+                <?php if ($cfgPunch['ids']): ?><small class="text-muted">Esta vista está limitada a <?php echo count($cfgPunch['ids']); ?> pendientes concretos (los de una tabla manual convertida).</small><?php endif; ?>
+            </div>
             <div class="campo campo-full" id="bloque-columnas" style="<?php echo $tabla->tipo === 'otro' ? '' : 'display:none'; ?>">
                 <label>Columnas (hasta 8)</label>
                 <div class="vp-cols">
@@ -36,7 +76,7 @@ $cols = $tabla->columnasOtro();
             </div>
         </div>
 
-        <?php if (!$esNueva && $campos && !$tabla->hoja()): ?>
+        <?php if (!$esNueva && $campos && !$tabla->hoja() && !$tabla->esPunchVista()): ?>
             <div class="vp-renglones-cab">
                 <h4>Renglones <span class="text-muted text-sm">(<span id="vp-total"><?php echo count($filas); ?></span>)</span></h4>
                 <button type="button" class="btn btn-ghost btn-sm" id="vp-agregar">+ Agregar renglón</button>
@@ -56,7 +96,7 @@ $cols = $tabla->columnasOtro();
                     foreach (\Model\VplanTabla::ESTADOS as $ek => $el) $h .= '<option value="' . $ek . '"' . (($f[$k] ?? 'proceso') === $ek ? ' selected' : '') . '>' . s($el) . '</option>';
                     $h .= '</select>';
                 } elseif ($k === 'descripcion') {
-                    $h .= '<textarea name="' . $nombre . '" rows="2">' . $v . '</textarea>';
+                    $h .= '<textarea name="' . $nombre . '" rows="1">' . $v . '</textarea>';
                 } else {
                     $h .= '<input type="' . ($tipo === 'number' ? 'number' : $tipo) . '"' . ($tipo === 'number' ? ' min="0" max="100" placeholder="0 a 100"' : '') . ' name="' . $nombre . '" value="' . $v . '">';
                 }
@@ -86,8 +126,8 @@ $cols = $tabla->columnasOtro();
 </div>
 <script>
 (function () {
-    const tipo = document.getElementById('tipo'), bloque = document.getElementById('bloque-columnas');
-    tipo.addEventListener('change', () => { bloque.style.display = tipo.value === 'otro' ? '' : 'none'; });
+    const tipo = document.getElementById('tipo'), bloque = document.getElementById('bloque-columnas'), bloquePunch = document.getElementById('bloque-punch');
+    tipo.addEventListener('change', () => { bloque.style.display = tipo.value === 'otro' ? '' : 'none'; bloquePunch.style.display = tipo.value === 'punchlist' ? '' : 'none'; });
     const cont = document.getElementById('vp-filas'), plantilla = document.getElementById('vp-plantilla');
     if (!cont || !plantilla) return;
     const vacio = document.getElementById('vp-vacio'), total = document.getElementById('vp-total');

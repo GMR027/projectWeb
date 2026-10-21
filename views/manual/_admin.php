@@ -261,6 +261,7 @@ HTML],
 <li><strong>Registra ①</strong> cada pendiente con ubicación, categoría, severidad, responsable, contratista, fecha límite, actividad relacionada, descripción y una <strong>foto «antes»</strong>.</li>
 <li>Para recorrer un área, usa <strong>Inspección</strong>: una lista de verificación por ubicación que registra todos los hallazgos de una vez.</li>
 <li>Filtra por estado, ubicación o contratista y descarga el <strong>PDF</strong> (general o por contratista) para repartirlo.</li>
+<li><strong>Úsalo en otros documentos:</strong> el Punch list se puede insertar como tabla en <strong>vPlan</strong> (<em>Tablas adicionales › Nueva tabla › Punch list</em>), en el <strong>Redactor</strong> (<em>Insertar tabla › Punch list</em>) y en el <strong>Editor</strong> (pestaña Símbolos › <em>Punch list</em>). En los tres eliges <strong>qué ver</strong> (columnas, fotos antes/después, estado, severidad, contratista) con el botón «Qué ver», y la tabla se actualiza sola con los pendientes. En vPlan además puedes cambiar estado, severidad, fecha y responsable desde la lámina. En el Editor las fotos (hasta 20 por tabla) se colocan en sus celdas.</li>
 <li><strong>Cierra ③:</strong> abre el pendiente, sube la <strong>foto «después»</strong> y cambia su estado.</li>
 </ol>
 HTML],

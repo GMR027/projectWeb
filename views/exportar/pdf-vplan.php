@@ -138,21 +138,37 @@ foreach ($paginas as $pi => $d):
             <style>.bk<?php echo $pi . '_' . $bi; ?> .t th, .bk<?php echo $pi . '_' . $bi; ?> .t td { padding: <?php echo $pv; ?>pt <?php echo $ph; ?>pt; }<?php if ($b->tipo === 'tareas'): ?> .bk<?php echo $pi . '_' . $bi; ?> th { background: <?php echo s($td['color'][0]); ?>; color: <?php echo s($td['color'][1]); ?>; }<?php endif; ?></style>
             <div class="blk bk<?php echo $pi . '_' . $bi; ?>" style="<?php echo $caja; ?>font-size:<?php echo $fs; ?>pt">
             <?php if ($b->tipo === 'tareas'): ?>
+                <?php
+                $orden = \Classes\VplanDiseno::ordenTareas($b->config());
+                $ctx = array_column(\Classes\VplanDiseno::columnasTexto($b->config()), 'titulo', 'id');
+                $cols = 0; foreach ($orden as $o) $cols += $o === 'rec' ? 2 * $nRec : 1;
+                $rs = $nRec ? 2 : 1;
+                $cw = \Classes\VplanDiseno::columnasTareas(\Classes\VplanDiseno::anchoRefCm($b), $nRec, $fz, $pz, $orden); $ci = 0;
+                $fijas = ['seq' => '# SEQ', 'tarea' => 'TASK', 'inicio' => 'START', 'fin' => 'FINISH', 'pct' => '%', 'restr' => 'CONSTRAINS'];
+                ?>
                 <table class="t">
-                    <tr><th colspan="<?php echo 6 + 2 * $nRec; ?>" class="tit"><?php echo s($td['titulo']); ?></th></tr>
-                    <?php $rs = $nRec ? 2 : 1; $cw = \Classes\VplanDiseno::columnasTareas(\Classes\VplanDiseno::anchoRefCm($b), $nRec, $fz, $pz); $ci = 4; ?>
-                    <tr><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[0]; ?>%"># SEQ</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[1]; ?>%">TASK</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[2]; ?>%">START</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[3]; ?>%">FINISH</th><?php for ($r = 1; $r <= $nRec; $r++): ?><th colspan="2"><?php echo \Classes\Vplan::etiquetaRecovery($r); ?></th><?php endfor; ?><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[4 + 2 * $nRec]; ?>%">%</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[5 + 2 * $nRec]; ?>%">CONSTRAINS</th></tr>
-                    <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th style="width:<?php echo $cw[2 + 2 * $r]; ?>%">START</th><th style="width:<?php echo $cw[3 + 2 * $r]; ?>%">FINISH</th><?php endfor; ?></tr><?php endif; ?>
+                    <tr><th colspan="<?php echo $cols; ?>" class="tit"><?php echo s($td['titulo']); ?></th></tr>
+                    <tr><?php foreach ($orden as $o):
+                        if ($o === 'rec') { for ($r = 1; $r <= $nRec; $r++): $ci += 2; ?><th colspan="2"><?php echo \Classes\Vplan::etiquetaRecovery($r); ?></th><?php endfor; continue; } ?>
+                        <th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[$ci++]; ?>%"><?php echo s($fijas[$o] ?? ($ctx[substr($o, 2)] ?? '')); ?></th>
+                    <?php endforeach; ?></tr>
+                    <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th>START</th><th>FINISH</th><?php endfor; ?></tr><?php endif; ?>
                     <?php foreach ($td['grupos'] as $g): ?>
-                        <?php if ($td['subtitulos']): ?><tr class="subt"><td colspan="<?php echo 6 + 2 * $nRec; ?>"><?php echo s(mb_strtoupper($g['partida']->nombre)); ?></td></tr><?php endif; ?>
+                        <?php if ($td['subtitulos']): ?><tr class="subt"><td colspan="<?php echo $cols; ?>"><?php echo s(mb_strtoupper($g['partida']->nombre)); ?></td></tr><?php endif; ?>
                         <?php foreach ($g['tareas'] as $t): $a = $t['actividad']; $pg = (int)$a->progreso; ?>
                         <tr>
-                            <td class="c"><?php echo (int)$t['seq']; ?></td>
-                            <td><?php echo s($a->nombre); ?></td>
-                            <td class="c"><?php echo s($fd($a->fecha_inicio)); ?></td><td class="c"><?php echo s($fd($a->fecha_fin)); ?></td>
-                            <?php foreach ($t['rec'] as $r => $rc): ?><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['inicio'])); ?></td><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['fin'])); ?></td><?php endforeach; ?>
-                            <td class="c <?php echo $pg >= 100 ? 'verde' : ($pg > 0 ? 'amarillo' : ''); ?>"><?php echo $pg; ?>%</td>
-                            <td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:<?php echo round($fz * 1.45 * $K, 1); ?>pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td>
+                            <?php foreach ($orden as $o):
+                                switch ($o):
+                                    case 'seq': ?><td class="c"><?php echo (int)$t['seq']; ?></td><?php break;
+                                    case 'tarea': ?><td><?php echo s($a->nombre); ?></td><?php break;
+                                    case 'inicio': ?><td class="c"><?php echo s($fd($a->fecha_inicio)); ?></td><?php break;
+                                    case 'fin': ?><td class="c"><?php echo s($fd($a->fecha_fin)); ?></td><?php break;
+                                    case 'rec': foreach ($t['rec'] as $r => $rc): ?><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['inicio'])); ?></td><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['fin'])); ?></td><?php endforeach; break;
+                                    case 'pct': ?><td class="c <?php echo $pg >= 100 ? 'verde' : ($pg > 0 ? 'amarillo' : ''); ?>"><?php echo $pg; ?>%</td><?php break;
+                                    case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:<?php echo round($fz * 1.45 * $K, 1); ?>pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
+                                    default: ?><td><?php echo s($t['textos'][substr($o, 2)] ?? ''); ?></td><?php
+                                endswitch;
+                            endforeach; ?>
                         </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
@@ -183,11 +199,14 @@ foreach ($paginas as $pi => $d):
                         <?php endforeach; ?>
                     </table>
                 <?php else: ?>
+                    <?php $metaPdf = $tb->metaColumnas(); ?>
                     <table class="t otro">
                         <tr><th colspan="<?php echo count($campos) + 1; ?>" class="tit"><?php echo s($tb->titulo); ?></th></tr>
                         <tr><th style="width:8%">N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
                         <?php foreach ($b2['filas'] as $f): ?>
-                            <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td><?php echo s($f[$k] ?? ''); ?></td><?php endforeach; ?></tr>
+                            <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td<?php echo ($metaPdf[$k]['t'] ?? '') === 'foto' ? ' class="c"' : ''; ?>><?php
+                                if (($metaPdf[$k]['t'] ?? '') === 'foto') { $mini = ($f['v' . substr($k, 1)] ?? '') !== '' ? \Classes\PunchVista::miniatura($f['v' . substr($k, 1)]) : null; echo $mini ? '<img src="' . $mini . '" style="height:' . round($fz * 3.4 * $K, 1) . 'pt">' : ''; }
+                                else echo s($f[$k] ?? ''); ?></td><?php endforeach; ?></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php endif; ?>

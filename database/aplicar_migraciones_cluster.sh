@@ -19,6 +19,8 @@ col msrs columnas_json "ALTER TABLE msrs ADD COLUMN columnas_json TEXT NULL AFTE
 col msr_items extras_json "ALTER TABLE msr_items ADD COLUMN extras_json TEXT NULL;"
 col msr_partidas color "ALTER TABLE msr_partidas ADD COLUMN color VARCHAR(7) NOT NULL DEFAULT '' AFTER titulo;"
 col msrs encabezado_id "ALTER TABLE msrs ADD COLUMN encabezado_id INT NULL AFTER columnas_json;"
+col vplan_tablas punch_config "ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;"
+echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
 
 # Instaladores de la app de escritorio (Ajustes → App de escritorio)
 R=../desktop/release

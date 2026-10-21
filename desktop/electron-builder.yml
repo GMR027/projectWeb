@@ -7,6 +7,9 @@ files:
   - src/**
   - package.json
 asar: true
+asarUnpack:
+  - node_modules/tesseract.js/**
+  - node_modules/tesseract.js-core/**
 linux:
   target:
     - { target: AppImage, arch: x64 }

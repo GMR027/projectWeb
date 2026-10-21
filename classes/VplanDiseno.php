@@ -83,27 +83,77 @@ class VplanDiseno
         return ($caracteres * 0.62 * $f + 3.6 * $p + 3) / self::PT_CM;
     }
 
+    /** Columnas fijas de la tabla de tareas (`rec` agrupa todas las de recovery) */
+    public const COLS_BASE = ['seq', 'tarea', 'inicio', 'fin', 'rec', 'pct', 'restr'];
+    public const MAX_COLS_TEXTO = 6;
+
     /**
-     * Anchos (cm) de las columnas de la tabla de tareas, que el estimador, el PDF y la vista usan por igual:
-     * [seq, tarea, inicio, fin, (recovery inicio, fin)…, %, restricciones]. La tarea toma el espacio que sobra.
+     * Orden de las columnas de un bloque de tareas: las fijas y las de texto propias (`x:<id>`), según `config.orden`.
+     * Lo que falte en el orden se agrega al final (las de texto) o en su sitio de siempre (las fijas).
      */
-    public static function columnasTareas(float $anchoCm, int $nRec, float $f, float $p): array
+    public static function ordenTareas(array $cfg): array
     {
-        $seq = self::colCm(4, $f, $p);
-        $fecha = self::colCm(10, $f, $p);
-        $pct = self::colCm(4, $f, $p);
-        $restr = self::colCm(10, $f, $p) * 1.05;
-        $fijo = $seq + $fecha * (2 + 2 * $nRec) + $pct + $restr;
+        $ids = array_map(fn($c) => 'x:' . $c['id'], self::columnasTexto($cfg));
+        $validos = array_merge(self::COLS_BASE, $ids);
+        $orden = array_values(array_unique(array_filter((array)($cfg['orden'] ?? []), fn($t) => in_array($t, $validos, true))));
+        foreach (self::COLS_BASE as $i => $t) if (!in_array($t, $orden, true)) array_splice($orden, min($i, count($orden)), 0, [$t]);
+        foreach ($ids as $t) if (!in_array($t, $orden, true)) $orden[] = $t;
+        return $orden;
+    }
+
+    /** Columnas de texto de un bloque: [{id, titulo}] */
+    public static function columnasTexto(array $cfg): array
+    {
+        $out = [];
+        foreach (array_slice((array)($cfg['columnas'] ?? []), 0, self::MAX_COLS_TEXTO) as $c) {
+            $id = preg_replace('/[^a-z0-9]/i', '', (string)($c['id'] ?? ''));
+            if ($id === '' || isset($out[$id])) continue;
+            $out[$id] = ['id' => substr($id, 0, 12), 'titulo' => mb_substr(trim((string)($c['titulo'] ?? '')), 0, 40)];
+        }
+        return array_values($out);
+    }
+
+    /**
+     * Anchos (%) de las columnas físicas de la tabla de tareas, en el orden de `$orden`, que el estimador, el PDF y la vista usan por igual.
+     * Por defecto: [seq, tarea, inicio, fin, (recovery inicio, fin)…, %, restricciones]. La tarea toma el espacio que sobra.
+     */
+    public static function columnasTareas(float $anchoCm, int $nRec, float $f, float $p, ?array $orden = null): array
+    {
+        $orden ??= self::COLS_BASE;
+        $ancho = [
+            'seq' => self::colCm(4, $f, $p), 'inicio' => self::colCm(10, $f, $p), 'fin' => self::colCm(10, $f, $p),
+            'pct' => self::colCm(4, $f, $p), 'restr' => self::colCm(10, $f, $p) * 1.05,
+        ];
+        $texto = self::colCm(14, $f, $p);
+        $fijo = 0.0;
+        foreach ($orden as $t) {
+            if ($t === 'tarea') continue;
+            $fijo += $t === 'rec' ? self::colCm(10, $f, $p) * 2 * $nRec : ($ancho[$t] ?? $texto);
+        }
         $tarea = max(2.0, $anchoCm - $fijo);
-        $cols = array_merge([$seq, $tarea], array_fill(0, 2 + 2 * $nRec, $fecha), [$pct, $restr]);
+        $cols = [];
+        foreach ($orden as $t) {
+            if ($t === 'tarea') $cols[] = $tarea;
+            elseif ($t === 'rec') { for ($i = 0; $i < 2 * $nRec; $i++) $cols[] = self::colCm(10, $f, $p); }
+            else $cols[] = $ancho[$t] ?? $texto;
+        }
         $suma = array_sum($cols);
         return array_map(fn($c) => round($c / $suma * 100, 3), $cols);   // en % del ancho de la tabla
     }
 
-    /** Alto de la tabla de tareas. $nombres = textos de cada renglón; $subtitulos = renglones de partida */
-    public static function estimarTareas(array $nombres, int $nRec, int $subtitulos, float $anchoCm, float $f, float $p): float
+    /** Índice de la columna TASK entre las columnas físicas */
+    public static function posTarea(array $orden, int $nRec = 0): int
     {
-        $anchoTarea = self::columnasTareas($anchoCm, $nRec, $f, $p)[1] / 100 * $anchoCm;
+        $i = 0;
+        foreach ($orden as $t) { if ($t === 'tarea') return $i; $i += $t === 'rec' ? 2 * $nRec : 1; }
+        return 0;
+    }
+
+    /** Alto de la tabla de tareas. $nombres = textos de cada renglón; $subtitulos = renglones de partida */
+    public static function estimarTareas(array $nombres, int $nRec, int $subtitulos, float $anchoCm, float $f, float $p, ?array $orden = null): float
+    {
+        $orden ??= self::COLS_BASE;
+        $anchoTarea = self::columnasTareas($anchoCm, $nRec, $f, $p, $orden)[self::posTarea($orden, $nRec)] / 100 * $anchoCm;
         $h = self::fila(1, $f, $p) * (3 + $subtitulos) + 0.25 * $f * 1.25;   // el título es 25 % más grande
         foreach ($nombres as $n) $h += self::fila(self::lineas((string)$n, $anchoTarea, $f, $p), $f, $p);
         return $h;
@@ -173,7 +223,8 @@ class VplanDiseno
         $nombres = self::textosDeTareas($td);
         $sub = $td['subtitulos'] ? count($td['grupos']) : 0;
         $ancho = self::anchoRefCm($b);
-        return self::elegirEscala(fn($f, $p) => self::estimarTareas($nombres, $nRec, $sub, $ancho, $f, $p), self::capacidadPt($l, $b));
+        $orden = self::ordenTareas($b->config());
+        return self::elegirEscala(fn($f, $p) => self::estimarTareas($nombres, $nRec, $sub, $ancho, $f, $p, $orden), self::capacidadPt($l, $b));
     }
 
     public static function escalaTabla(VplanLamina $l, VplanBloque $b, array $tb): int

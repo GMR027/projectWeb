@@ -102,7 +102,9 @@ class EditorController
             'modo' => 'grafico', 'guardado' => 'png',
             'volver' => $g->tipo === 'simbologia' ? '/simbolos?proyecto=' . $proyecto->id . '#simbologias' : (\Model\View360Grafico::dePorGrafico((int)$g->id) ? '/view360?proyecto=' . $proyecto->id : '/graficos/ver?' . $q),
             'tipoGrafico' => $g->tipo,
-            'api' => ['sheetflow' => '/api/sheetflow/datos', 'marcas' => '/api/graficos/marcas', 'imagen' => '/api/graficos/imagen', 'pdf' => '/api/graficos/pdf', 'odp' => '/api/graficos/odp', 'lamina' => '/api/graficos/lamina'],
+            'punchCols' => array_map(fn($k, $v) => ['k' => $k, 'etq' => $v[0]], array_keys(\Classes\PunchVista::COLUMNAS), \Classes\PunchVista::COLUMNAS), 'punchBase' => \Classes\PunchVista::POR_DEFECTO,
+            'punchEstados' => \Classes\Punch::ESTADOS, 'punchSev' => \Classes\Punch::SEVERIDADES,
+            'api' => ['punch' => '/api/graficos/punch', 'sheetflow' => '/api/sheetflow/datos', 'marcas' => '/api/graficos/marcas', 'imagen' => '/api/graficos/imagen', 'pdf' => '/api/graficos/pdf', 'odp' => '/api/graficos/odp', 'lamina' => '/api/graficos/lamina'],
         ];
     }
 
@@ -453,6 +455,28 @@ class EditorController
         return null;
     }
 
+    /** Pendientes del Punch list según una vista (columnas y filtros); las fotos salen como «Sí» porque las celdas del Editor son de texto */
+    public static function datosPunch()
+    {
+        [, $p] = self::graficoApi();
+        $cfg = json_decode((string)($_POST['cfg'] ?? ''), true);
+        $cfg = \Classes\PunchVista::normalizar(is_array($cfg) ? $cfg : []);
+        $filas = [];
+        $fotos = [];   // [renglón, columna, src, ancho, alto]: miniaturas que el Editor coloca sobre la tabla (máx. 20)
+        foreach (\Classes\PunchVista::filas((int)$p->id, $cfg) as $r => $f) {
+            $fila = [];
+            foreach ($cfg['columnas'] as $i => $k) {
+                if ($f['c' . $i] === 'foto') {
+                    $src = count($fotos) < 20 ? \Classes\PunchVista::rutaMiniatura($f['v' . $i]) : null;
+                    $tam = $src ? @getimagesize(__DIR__ . '/../public' . $src) : false;
+                    if ($tam) { $fotos[] = [$r, $i, $src, $tam[0], $tam[1]]; $fila[] = ''; } else $fila[] = 'Sí';
+                } else $fila[] = $f['c' . $i];
+            }
+            $filas[] = $fila;
+        }
+        self::json(['success' => true, 'cfg' => $cfg, 'columnas' => \Classes\PunchVista::etiquetas($cfg), 'filas' => $filas, 'fotos' => $fotos]);
+    }
+
     public static function guardarMarcas()
     {
         [$g, $p] = self::graficoApi();
@@ -461,7 +485,7 @@ class EditorController
         $json = (string)($_POST['json'] ?? '');
         $datos = json_decode($json, true);
         foreach (($datos['shapes'] ?? []) as $sh) {
-            if (($sh['type'] ?? '') === 'image' && !preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', (string)($sh['src'] ?? ''))) $datos = null;
+            if (($sh['type'] ?? '') === 'image' && !preg_match('#^/uploads/(?:vplan/[a-f0-9]{32}\.(?:png|jpg)|punch/min/[a-f0-9]{32}\.jpg)$#', (string)($sh['src'] ?? ''))) $datos = null;
         }
         $png = (string)($_POST['png'] ?? '');
         $bin = preg_match('#^data:image/png;base64,#', $png) ? base64_decode(substr($png, strpos($png, ',') + 1), true) : false;

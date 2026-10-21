@@ -72,6 +72,8 @@ class SheetflowController
                     }
                 } elseif ($subida && ($subida['error'] ?? 0) !== UPLOAD_ERR_NO_FILE) {
                     $alertas['error'][] = 'No se pudo subir el archivo';
+                } elseif (($_POST['plantilla'] ?? '') === 'inteligente') {   // constructor guiado de tabla inteligente
+                    $datos = Sheetflow::inteligente(json_decode((string)($_POST['int_cols'] ?? ''), true), (int)($_POST['int_filas'] ?? 10));
                 } else {
                     $datos = Sheetflow::plantilla((string)($_POST['plantilla'] ?? ''), (int)$proyecto->id) ?? Sheetflow::vacia();
                 }

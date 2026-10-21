@@ -62,6 +62,27 @@
   <p id="ord-msg" class="msg" aria-live="polite"></p>
   <div id="ord-res"></div>
 </section>
+<section id="ia-tdoc" hidden>
+  <h2>Tabla desde documento</h2>
+  <p class="nota">Sube un Excel, CSV, Word, PDF o una <strong>imagen</strong> y obtén una tabla para el vPlan. «Leer sin IA» usa el motor del servidor (Excel, CSV, Word y PDF con texto) y el OCR local para imágenes (Ajustes → OCR); «Leer con IA» sirve para fotos, escaneos y formatos difíciles. Siempre ves la tabla antes de crearla.</p>
+  <div class="ens-barra">
+    <label>Proyecto <select id="tdoc-proyecto"></select></label>
+    <label>Conexión de IA <select id="tdoc-conexion"></select></label>
+  </div>
+  <div class="ens-barra">
+    <label>Documento <input type="file" id="tdoc-archivo" accept=".xlsx,.xls,.ods,.csv,.docx,.pdf,.png,.jpg,.jpeg,.webp"></label>
+    <button type="button" id="tdoc-motor" class="sec">Leer sin IA</button>
+    <button type="button" id="tdoc-ia">Leer con IA</button>
+  </div>
+  <progress id="tdoc-barra" max="1" hidden></progress>
+  <p id="tdoc-msg" class="msg" aria-live="polite"></p>
+  <div id="tdoc-previa" hidden>
+    <div class="ens-barra"><label>Nombre de la tabla <input type="text" id="tdoc-nombre" maxlength="140"></label><span id="tdoc-resumen" class="tenue"></span></div>
+    <div id="tdoc-tabla" class="tdoc-scroll"></div>
+    <div class="fila"><button type="button" id="tdoc-mas" class="sec">+ Renglón</button><button type="button" id="tdoc-crear">Crear tabla</button></div>
+  </div>
+  <div id="tdoc-fin" class="fila"></div>
+</section>
 <section id="ia-ens" hidden>
   <h2>Ensamblador de documentos</h2>
   <p class="nota">Sube un PDF, una presentación (.pptx), un documento de Word/OpenDocument o un texto. La IA lo lee y un asistente te pregunta qué hacer: agregar partidas nuevas, modificar las existentes si coincide el nombre, agregar materiales o armar un submittal (nuevo o existente). Lo propuesto aparece como lista de cambios: nada se aplica hasta que lo aceptes y se puede deshacer. El archivo original queda en el Archivero del proyecto.</p>
@@ -197,7 +218,7 @@
 <main id="panel-ajustes" class="panel ajustes" hidden>
 <h2>Ajustes</h2>
 <nav id="aj-tabs" class="aj-indice" aria-label="Secciones de Ajustes">
-  <button data-aj="ia" class="sec">🤖 Configuración de IA</button><button data-aj="voz" class="sec">🎤 Voz</button><button data-aj="vista" class="sec on">🎨 Apariencia</button><button data-aj="almacenamiento" class="sec">💾 Almacenamiento</button><button data-aj="servidor" class="sec">⬆️ Servidor y actualización</button><button data-aj="desinstalar" class="sec">🗑 Desinstalar</button>
+  <button data-aj="ia" class="sec">🤖 Configuración de IA</button><button data-aj="voz" class="sec">🎤 Voz</button><button data-aj="ocr" class="sec">🔍 OCR</button><button data-aj="vista" class="sec on">🎨 Apariencia</button><button data-aj="almacenamiento" class="sec">💾 Almacenamiento</button><button data-aj="servidor" class="sec">⬆️ Servidor y actualización</button><button data-aj="desinstalar" class="sec">🗑 Desinstalar</button>
 </nav>
 <div id="aj-ia" data-aj="ia" hidden>
 <section class="aj-intro"><h2>Configuración de IA</h2><p class="nota">Elige cómo trabaja la IA: un modelo <strong>local</strong> en tu equipo, una <strong>suscripción</strong> que ya pagas (CLI) o una <strong>API</strong> con tu clave. Las herramientas usan la conexión que elijas en cada una.</p><p id="aj-ia-conn" class="nota"></p></section>
@@ -280,6 +301,13 @@
   </form>
   <details><summary>¿Cómo instalo un motor?</summary><p class="nota" id="voz-ayuda"></p></details>
 </section>
+<section id="ocr-sec" data-aj="ocr" hidden>
+  <h2>OCR (leer texto de imágenes)</h2>
+  <p class="nota">Convierte el texto de una foto, captura o escaneo en texto. Lo usa «Tabla desde documento» para leer imágenes <strong>sin IA</strong>. Funciona en este equipo, sin internet; solo la instalación descarga los idiomas (español e inglés, unos 25 MB).</p>
+  <p id="ocr-estado" class="msg" aria-live="polite"></p>
+  <progress id="ocr-barra" max="1" hidden></progress>
+  <div class="fila"><button type="button" id="ocr-instalar">Instalar OCR</button><button type="button" id="ocr-quitar" class="sec" hidden>Quitar</button></div>
+</section>
 <section id="act" data-aj="servidor">
   <h2>Servidor y actualizaciones</h2>
   <div class="sync" data-sync><span class="sync-punto"></span><span class="sync-ico">⟳</span><span class="sync-txt">Conectando…</span><small class="sync-det"></small></div>
@@ -306,6 +334,7 @@
 <script src="centro.js"></script>
 <script src="ensamblador.js"></script>
 <script src="ordenar-ia.js"></script>
+<script src="tabla-documento.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

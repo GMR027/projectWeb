@@ -140,6 +140,7 @@
                                 <input type="text" name="nombre" maxlength="200" placeholder="Agregar actividad a <?php echo s($p['codigo']); ?> · <?php echo s($p['nombre']); ?> (nombre y Enter)" aria-label="Nombre de la nueva actividad" required>
                                 <input type="date" name="fecha_inicio" title="Inicio (vacío = día hábil siguiente a la última actividad)" aria-label="Inicio">
                                 <input type="number" name="duracion_dias" min="1" value="1" title="Duración en días hábiles" aria-label="Duración en días">
+                                <input type="number" name="progreso" min="0" max="100" value="0" title="Avance inicial (%) — vacío = 0%" aria-label="Avance inicial en %" class="input-avance">
                                 <button type="submit" class="btn btn-sm">Agregar</button>
                             </form>
                         </td>
@@ -239,7 +240,13 @@
                                     <div class="barra-progreso barra-sm barra-status-<?php echo s($fila['status']); ?>">
                                         <div class="barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
                                     </div>
-                                    <span class="mono text-sm"><?php echo s($fila['progreso']); ?>%</span>
+                                    <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                                        <input type="number" class="input-avance input-progreso" min="0" max="100" step="1"
+                                               value="<?php echo (int)$fila['progreso']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>"
+                                               aria-label="Avance (%)" title="Avance (%)">%
+                                    <?php else: ?>
+                                        <span class="mono text-sm"><?php echo s($fila['progreso']); ?>%</span>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="hide-m">

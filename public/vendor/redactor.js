@@ -56,6 +56,7 @@
         });
         var celda = celdaActual();
         $('rd-tabla-op').hidden = !celda;
+        if (celda && $('rd-x-punch-cfg')) $('rd-x-punch-cfg').hidden = !celda.closest('table').hasAttribute('data-punch');
         if (celda) mostrarTamanoTabla(celda.closest('table'));
         var bloque = bloqueActual();
         if (bloque) { var t = bloque.tagName.toLowerCase(); $('rd-estilo').value = ['h1', 'h2', 'h3', 'h4', 'blockquote', 'pre'].indexOf(t) >= 0 ? t : 'p'; }

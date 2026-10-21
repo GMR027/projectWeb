@@ -71,7 +71,7 @@ class SistemaController
         exit;
     }
 
-    /** Descarga de un instalador de DictaFlow (solo admin) */
+    /** Descarga de un instalador de la app de escritorio (solo admin) */
     public static function instalador()
     {
         redirigir_si_no_admin();

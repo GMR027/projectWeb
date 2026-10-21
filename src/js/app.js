@@ -169,6 +169,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
   });
 
+  // Al elegir una fecha de inicio, la de fin se propone como inicio + 1 día
+  // (si está vacía o quedó igual/anterior al inicio) para ajustarla a mano con facilidad.
+  const sumarDia = (iso) => {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  };
+  [['fecha_inicio', 'fecha_fin'], ['p-desde', 'p-hasta'], ['mf-inicio', 'mf-fin'], ['fecha_compra_prog', 'fecha_entrega_prog']].forEach(([a, b]) => {
+    const ini = document.getElementById(a), fin = document.getElementById(b);
+    if (!ini || !fin) return;
+    const proponer = () => {
+      if (ini.value && (!fin.value || fin.value <= ini.value)) {
+        fin.value = sumarDia(ini.value);
+        fin.dispatchEvent(new Event('change'));
+      }
+    };
+    ini.addEventListener('change', proponer);
+    if (!fin.value) proponer();
+  });
+
   // Validación de fechas en formularios de proyecto
   const fechaInicio = document.getElementById('fecha_inicio');
   const fechaFin = document.getElementById('fecha_fin');
@@ -258,6 +278,33 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally {
         e.target.style.opacity = '1';
         e.target.disabled = false;
+      }
+    });
+  });
+
+  // ============ EDICIÓN INLINE DEL AVANCE (%) ============
+  document.querySelectorAll('.input-progreso').forEach(input => {
+    const original = input.value;
+    input.addEventListener('change', async () => {
+      if (input.value === '' || input.value === original) { input.value = original; return; }
+      input.disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append('actividad_id', input.dataset.actividadId);
+        fd.append('progreso', input.value);
+        const resp = await fetch('/api/actividad/actualizar-progreso', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          window.avisoModal('No se pudo actualizar', data.error || 'No se pudo actualizar el avance.');
+          input.value = original;
+        }
+      } catch (error) {
+        window.avisoModal('Error de conexión', 'Intenta de nuevo en unos segundos.');
+        input.value = original;
+      } finally {
+        input.disabled = false;
       }
     });
   });

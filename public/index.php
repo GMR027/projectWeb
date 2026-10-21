@@ -150,6 +150,8 @@ $router->post('/programa/actividades/mover', [ProgramaController::class, 'moverA
 // Restricciones
 $router->get('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
 $router->post('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
+$router->get('/programa/restricciones/editar', [ProgramaController::class, 'editarRestriccion']);
+$router->post('/programa/restricciones/editar', [ProgramaController::class, 'editarRestriccion']);
 $router->post('/programa/restricciones/eliminar', [ProgramaController::class, 'eliminarRestriccion']);
 $router->post('/programa/restricciones/resolver', [ProgramaController::class, 'resolverRestriccion']);
 
@@ -236,6 +238,7 @@ $router->post('/vplan/eliminar', [VplanController::class, 'eliminar']);
 $router->get('/vplan/ver', [VplanController::class, 'ver']);
 $router->post('/vplan/lamina/tabla', [VplanController::class, 'tablaLamina']);
 $router->post('/api/vplan/recovery', [VplanController::class, 'recovery']);
+$router->post('/api/vplan/columna-texto', [VplanController::class, 'textoColumna']);
 $router->post('/vplan/lamina/recovery', [VplanController::class, 'recoveryCols']);
 $router->post('/api/vplan/imagen', [VplanController::class, 'subirImagen']);
 $router->get('/vplan/editor', [VplanController::class, 'editor']);
@@ -250,6 +253,11 @@ $router->get('/vplan/tablas/crear', [VplanTablaController::class, 'crear']);
 $router->post('/vplan/tablas/crear', [VplanTablaController::class, 'crear']);
 $router->get('/vplan/tablas/editar', [VplanTablaController::class, 'editar']);
 $router->post('/vplan/tablas/editar', [VplanTablaController::class, 'editar']);
+$router->get('/vplan/tablas/documento', [VplanTablaController::class, 'documento']);
+$router->post('/api/vplan/documento/leer', [VplanTablaController::class, 'apiDocumentoLeer']);
+$router->post('/api/vplan/documento/texto', [VplanTablaController::class, 'apiDocumentoTexto']);
+$router->post('/api/vplan/documento/crear', [VplanTablaController::class, 'apiDocumentoCrear']);
+$router->post('/vplan/tablas/convertir-punch', [VplanTablaController::class, 'convertirPunch']);
 $router->post('/vplan/tablas/duplicar', [VplanTablaController::class, 'duplicar']);
 $router->post('/vplan/tablas/eliminar', [VplanTablaController::class, 'eliminar']);
 
@@ -357,6 +365,7 @@ $router->post('/graficos/eliminar', [EditorController::class, 'eliminar']);
 $router->post('/graficos/tipo', [EditorController::class, 'cambiarTipo']);
 $router->post('/graficos/simbologia-estandar', [EditorController::class, 'simbologiaEstandar']);
 $router->post('/api/graficos/renombrar', [EditorController::class, 'renombrar']);
+$router->post('/api/graficos/punch', [EditorController::class, 'datosPunch']);
 $router->post('/api/graficos/marcas', [EditorController::class, 'guardarMarcas']);
 $router->post('/api/graficos/imagen', [EditorController::class, 'subirImagen']);
 $router->post('/api/graficos/pdf', [EditorController::class, 'pdf']);

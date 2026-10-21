@@ -584,12 +584,21 @@ class VplanController
                     $sel = isset($f['actividades']) && is_array($f['actividades']) ? array_values(array_intersect(array_map('intval', $f['actividades']), $ids)) : null;
                     $fuentes[] = ['partida' => (int)$p->id, 'actividades' => $sel && count($sel) < count($ids) ? $sel : null];
                 }
-                return ['fuentes' => $fuentes, 'seq' => ($c['seq'] ?? '') === 'partida' ? 'partida' : 'continuo', 'titulo' => $texto('titulo', 200), 'color' => self::hex($c['color'] ?? '')];
+                $out = ['fuentes' => $fuentes, 'seq' => ($c['seq'] ?? '') === 'partida' ? 'partida' : 'continuo', 'titulo' => $texto('titulo', 200), 'color' => self::hex($c['color'] ?? '')];
+                $cols = \Classes\VplanDiseno::columnasTexto($c);
+                if ($cols) {   // columnas de texto propias y el orden horizontal de todas las columnas
+                    $out['columnas'] = $cols;
+                    $out['orden'] = \Classes\VplanDiseno::ordenTareas(['columnas' => $cols, 'orden' => $c['orden'] ?? []]);
+                } elseif (!empty($c['orden'])) {
+                    $out['orden'] = \Classes\VplanDiseno::ordenTareas(['orden' => $c['orden']]);
+                }
+                return $out;
             case 'tabla':
                 return ['tabla_id' => (int)($c['tabla_id'] ?? 0)];
             case 'imagen':   // copia propia de un símbolo o simbología, subida con /api/vplan/imagen
                 $arch = basename((string)($c['archivo'] ?? ''));
-                return ['archivo' => preg_match('/^[A-Za-z0-9._-]+$/', $arch) && is_file(Imagenes::CARPETA_VPLAN . '/' . $arch) ? $arch : ''] + ($alinear ? ['alinear' => $alinear] : []);
+                $vinc = \Classes\ImagenVinculada::valida($c['ref'] ?? null) ? ['ref' => $c['ref'], 'refv' => preg_replace('/[^A-Za-z0-9._-]/', '', (string)($c['refv'] ?? ''))] : [];
+                return ['archivo' => preg_match('/^[A-Za-z0-9._-]+$/', $arch) && is_file(Imagenes::CARPETA_VPLAN . '/' . $arch) ? $arch : ''] + $vinc + ($alinear ? ['alinear' => $alinear] : []);
             case 'cajetin':
                 $cid = (int)($c['cajetin_id'] ?? 0);
                 $ok = $cid === 0 || (($cj = \Model\Cajetin::find($cid)) && (int)$cj->proyecto_id === (int)$proyecto->id);
@@ -736,6 +745,31 @@ class VplanController
             exit;
         }
         $l->guardarRecovery((int)$act->id, (int)$n, $_POST['campo'], $v === '' ? null : $v);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    /** Guarda el texto de una columna propia de un bloque de tareas para una actividad */
+    public static function textoColumna()
+    {
+        header('Content-Type: application/json');
+        $l = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? VplanLamina::find(filter_var($_POST['lamina'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $proyecto = $l ? \Model\Proyecto::find($l->proyecto_id) : null;
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $act = \Model\Actividad::find(filter_var($_POST['actividad'] ?? null, FILTER_VALIDATE_INT));
+        $col = (string)($_POST['col'] ?? '');
+        $ids = [];
+        foreach ($l->bloques() as $b) if ($b->tipo === 'tareas') foreach (\Classes\VplanDiseno::columnasTexto($b->config()) as $c) $ids[$c['id']] = true;
+        if (!$act || !isset($ids[$col]) || !in_array((int)$act->id, array_map(fn($t) => (int)$t['actividad']->id, Vplan::datos($l, $proyecto)['tareas']), true)) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => 'Dato no válido']);
+            exit;
+        }
+        $l->guardarTextoColumna((int)$act->id, $col, str_replace(["\r", "\n"], ' ', trim((string)($_POST['valor'] ?? ''))));
         echo json_encode(['success' => true]);
         exit;
     }

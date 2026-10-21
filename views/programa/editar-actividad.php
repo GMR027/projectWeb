@@ -8,6 +8,34 @@
 </div>
 <?php endif; ?>
 
+<?php if (!empty($duplicado)): ?>
+<div class="modal-overlay abierto" id="modal-codigo-duplicado" data-tono="aviso" aria-hidden="false">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mcd-titulo">
+        <h4 id="mcd-titulo">No se puede renumerar</h4>
+        <p>El código <strong class="mono"><?php echo s($duplicado['codigo']); ?></strong> ya existe en este programa, así que no se puede asignar a esta actividad.</p>
+        <p>¿Quieres usar el siguiente número disponible de su partida, <strong class="mono"><?php echo s($duplicado['propuesto']); ?></strong>?</p>
+        <div class="mf-botones">
+            <button type="button" class="btn btn-ghost" id="mcd-cancelar">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="mcd-aceptar" data-codigo="<?php echo s($duplicado['propuesto']); ?>">Usar <?php echo s($duplicado['propuesto']); ?></button>
+        </div>
+    </div>
+</div>
+<script>
+(() => {
+    const modal = document.getElementById('modal-codigo-duplicado');
+    const campo = document.getElementById('codigo');
+    const cerrar = () => { modal.classList.remove('abierto'); modal.setAttribute('aria-hidden', 'true'); campo.focus(); campo.select(); };
+    document.getElementById('mcd-cancelar').addEventListener('click', cerrar);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+    document.getElementById('mcd-aceptar').addEventListener('click', e => {
+        campo.value = e.currentTarget.dataset.codigo;
+        campo.form.requestSubmit();
+    });
+})();
+</script>
+<?php endif; ?>
+
 <div class="card">
     <form method="POST" class="formulario">
         <div class="form-grid">
@@ -119,6 +147,7 @@
                                     <button type="submit" class="btn btn-xs btn-primary">Resolver</button>
                                 </form>
                             <?php endif; ?>
+                            <a href="/programa/restricciones/editar?id=<?php echo s($r->id); ?>" class="btn btn-xs btn-secondary">Editar</a>
                             <form method="POST" action="/programa/restricciones/eliminar" style="display:inline" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
                                 <input type="hidden" name="id" value="<?php echo s($r->id); ?>">
                                 <button type="submit" class="btn btn-xs btn-danger">✕</button>

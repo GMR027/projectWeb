@@ -108,6 +108,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
             <select id="sf-tipo" title="Tipo de dato de la columna">
                 <?php foreach (Sheetflow::TIPOS as $k => $n): ?><option value="<?php echo s($k); ?>"><?php echo s($n); ?></option><?php endforeach; ?>
             </select>
+            <input type="text" id="sf-opciones" class="sf-b" hidden placeholder="Opciones: una, dos, tres" title="Opciones de la lista desplegable, separadas por comas (máx. 20)">
             <select id="sf-total" title="Total al pie de la columna (solo columnas numéricas; «Cuenta» en cualquiera)">
                 <?php foreach (Sheetflow::TOTALES as $k => $n): ?><option value="<?php echo s($k); ?>"><?php echo s($k === '' ? 'Sin total' : 'Total: ' . mb_strtolower($n)); ?></option><?php endforeach; ?>
             </select>

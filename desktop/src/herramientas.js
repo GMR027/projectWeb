@@ -17,6 +17,7 @@ const GRUPOS = [
 const HERRAMIENTAS = [
   { id: 'programador', grupo: 'planeacion', titulo: 'Programador de actividades', sec: 'programador', tarea: 'avanzada', requiere: { minimo: 'basico', recomendado: 'medio' } },
   { id: 'ensamblador', grupo: 'ensamblador', titulo: 'Ensamblador de documentos', sec: 'ensamblador', tarea: 'avanzada', requiere: { minimo: 'basico', recomendado: 'medio' } },
+  { id: 'tabla-doc', grupo: 'ensamblador', titulo: 'Tabla desde documento', sec: 'tabla-doc', tarea: 'avanzada', requiere: { minimo: 'basico', recomendado: 'medio' } },
   { id: 'ordenar-ia', grupo: 'ensamblador', titulo: 'Ordenar y renumerar por fechas', sec: 'ordenar-ia', tarea: 'avanzada', requiere: { minimo: 'basico', recomendado: 'basico' } },
   // «Calidad de datos» reúne Inconsistencias, Análisis de materiales y Materiales inteligentes en una sola entrada del menú; las tres siguen aquí (`oculto`) para calcular su capacidad y su marca de uso
   { id: 'calidad', grupo: 'datos', titulo: 'Calidad de datos', sec: 'calidad', hijas: ['inconsistencias', 'materiales', 'inteligentes'], requiere: { minimo: 'basico', recomendado: 'basico' } },

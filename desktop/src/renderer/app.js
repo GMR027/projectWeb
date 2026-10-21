@@ -27,6 +27,7 @@ Ensamblador.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mos
 Ensamblador.alCambiar(() => pintarMenuIA());
 OrdenarIA.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mostrar('web'); pw.irWeb(ruta).catch(x => { $('#hueco-msg').textContent = msgErr(x); }); });
 OrdenarIA.alCambiar(() => pintarMenuIA());
+TablaDoc.alAbrirWeb((ruta, seccion) => { seccionActual = seccion || ruta; mostrar('web'); pw.irWeb(ruta).catch(x => { $('#hueco-msg').textContent = msgErr(x); }); });
 
 // Zoom de la vista (Ctrl +/−/0 también funcionan: los atiende el proceso principal y avisa aquí)
 function pintarZoom(z) {
@@ -195,11 +196,12 @@ function elegirSeccionIA(sec) {
   if (webEnIA) { webEnIA = false; $('#ia-web').hidden = true; $('#ia-cuerpo').hidden = false; ajustarMarco(); }
   document.querySelectorAll('#ia-menu button').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
   $('#ia-prog').hidden = sec !== 'programador'; $('#ia-gen').hidden = sec !== 'gen'; $('#ia-propuestas').hidden = sec !== 'propuestas';
-  $('#ia-ens').hidden = sec !== 'ensamblador'; $('#ia-ord').hidden = sec !== 'ordenar-ia';
+  $('#ia-ens').hidden = sec !== 'ensamblador'; $('#ia-ord').hidden = sec !== 'ordenar-ia'; $('#ia-tdoc').hidden = sec !== 'tabla-doc';
   $('#cd-tabs').hidden = sec !== 'calidad'; if (sec !== 'calidad') for (const x of ['#ia-inc', '#ia-mat', '#ia-int']) $(x).hidden = true;
   if (sec === 'programador') { pintarProgramador(); pintarHist('programador'); }
   else if (sec === 'ensamblador') Ensamblador.pintar();
   else if (sec === 'ordenar-ia') OrdenarIA.pintar();
+  else if (sec === 'tabla-doc') TablaDoc.pintar();
   else if (sec === 'calidad') pintarCalidad();
   else if (sec === 'propuestas') pintarAnalisis();
   else pintarGenerica();
@@ -236,7 +238,7 @@ function repintarSeccion() {
 $('#ia-menu-proyecto').addEventListener('change', () => { fijarProyectoMenu($('#ia-menu-proyecto').value); pintarMenuIA(); repintarSeccion(); });
 for (const s of ['#prog-proyecto', '#inc-proyecto', '#mat-proyecto', '#int-proyecto', '#gen-proyecto']) $(s).addEventListener('change', e => { fijarProyectoMenu(e.target.value); pintarMenuIA(); });
 /** Icono y color de cada herramienta del menú (por id; las generadas por el servidor, por palabras del título; si no, por grupo) */
-const ICONOS = { ensamblador: ['🧩', '#0891b2'], 'ordenar-ia': ['🔢', '#0891b2'], config: ['⚙️', '#64748b'], calidad: ['🔎', '#ea580c'], programador: ['🗓️', '#7c3aed'], inconsistencias: ['🔎', '#ea580c'], materiales: ['🧱', '#0284c7'], inteligentes: ['🧠', '#c026d3'], propuestas: ['✨', '#f59e0b'], auditoria: ['📜', '#64748b'],
+const ICONOS = { ensamblador: ['🧩', '#0891b2'], 'ordenar-ia': ['🔢', '#0891b2'], 'tabla-doc': ['📄', '#0891b2'], config: ['⚙️', '#64748b'], calidad: ['🔎', '#ea580c'], programador: ['🗓️', '#7c3aed'], inconsistencias: ['🔎', '#ea580c'], materiales: ['🧱', '#0284c7'], inteligentes: ['🧠', '#c026d3'], propuestas: ['✨', '#f59e0b'], auditoria: ['📜', '#64748b'],
   informes: ['📄', '#0ea5e9'], normativa: ['⚖️', '#059669'], mapa: ['🗺️', '#14b8a6'], seguridad: ['🦺', '#eab308'], punch: ['✅', '#22c55e'], cambios: ['🔁', '#f97316'], tipoobra: ['🏗️', '#78716c'], grabaciones: ['🎙️', '#ef4444'] };
 const ICONOS_TITULO = [[/ejecutivo/i, ['📊', '#2563eb']], [/semanal/i, ['📈', '#0891b2']], [/reporte diario/i, ['📝', '#16a34a']], [/lookahead/i, ['🔭', '#6366f1']], [/simulador/i, ['🎲', '#a855f7']], [/clima/i, ['⛅', '#38bdf8']], [/riesgo/i, ['⚠️', '#dc2626']],
   [/causas/i, ['🧩', '#d97706']], [/voz|dictado/i, ['🎤', '#ec4899']], [/foto|visi/i, ['📷', '#8b5cf6']], [/minuta|reuni/i, ['🤝', '#0d9488']], [/seguridad|charla/i, ['🦺', '#eab308']], [/punch/i, ['✅', '#22c55e']], [/cierre|entrega/i, ['📦', '#84cc16']], [/normativa/i, ['⚖️', '#059669']]];
@@ -507,6 +509,19 @@ $('#vig-activa').addEventListener('change', () => $('#vig-form').requestSubmit()
 $('#vig-minutos').addEventListener('change', () => { if ($('#vig-activa').checked) $('#vig-form').requestSubmit(); });
 $('#vig-ahora').addEventListener('click', async () => { $('#vig-msg').textContent = 'Comprobando…'; try { await pw.vigilanciaAhora(); $('#vig-msg').textContent = 'Comprobación hecha. Si hay algo nuevo recibirás una notificación (también lo ves en Inconsistencias → Vigilancia continua).'; } catch (x) { $('#vig-msg').textContent = '✘ ' + msgErr(x); } });
 pw.alAbrirVigilancia(() => { seccionActual = '/inconsistencias'; mostrar('web'); });
+async function pintarOcr() {
+  const e = await pw.ocr.estado();
+  $('#ocr-estado').textContent = e.instalado ? '✔ OCR instalado (español e inglés).' : 'El OCR no está instalado.';
+  $('#ocr-instalar').textContent = e.instalado ? 'Reinstalar' : 'Instalar OCR'; $('#ocr-quitar').hidden = !e.instalado;
+}
+pw.ocr.alAvance(p => { $('#ocr-barra').hidden = false; $('#ocr-barra').max = p.total || 1; $('#ocr-barra').value = p.hecho || 0; if (p.texto) $('#ocr-estado').textContent = p.texto; });
+$('#ocr-instalar').addEventListener('click', async () => {
+  $('#ocr-instalar').disabled = true; $('#ocr-barra').hidden = false;
+  try { await pw.ocr.instalar(); await pintarOcr(); } catch (x) { $('#ocr-estado').textContent = '✘ ' + msgErr(x); }
+  $('#ocr-instalar').disabled = false; $('#ocr-barra').hidden = true;
+});
+$('#ocr-quitar').addEventListener('click', async () => { await pw.ocr.quitar(); pintarOcr(); });
+pintarOcr().catch(() => {});
 $('#voz-form').addEventListener('submit', async e => {
   e.preventDefault();
   try { const r = await pw.vozGuardar({ motor: $('#voz-motor').value, modelo: $('#voz-modelo').value, idioma: $('#voz-idioma').value, conexion: $('#voz-conexion').value }); cfg = await pw.config(); $('#voz-estado').textContent = r.disponible ? '✔ Guardado. Transcripción disponible: ' + r.detalle : '⚠ Guardado, pero no hay motor disponible. ' + r.detalle; $('#voz-ayuda').textContent = r.instrucciones || 'Ya tienes un motor configurado.'; } catch (x) { $('#voz-estado').textContent = '✘ ' + msgErr(x); }

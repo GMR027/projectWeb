@@ -106,11 +106,13 @@ class Redactor
                     if (!str_starts_with($url, '/')) { $e->setAttribute('target', '_blank'); $e->setAttribute('rel', 'noopener noreferrer'); }
                 }
             } elseif ($n === 'src' && $t === 'img') {
-                if (preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $v) || preg_match(RedactorFirmas::SRC, $v)) $e->setAttribute('src', $v);
+                if (preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $v) || preg_match('#^/uploads/punch/min/[a-f0-9]{32}\.jpg$#', $v) || preg_match(RedactorFirmas::SRC, $v)) $e->setAttribute('src', $v);
             } elseif ($n === 'id' && preg_match('/^h[1-6]$/', $t)) {
                 if (preg_match('/^rd-h\d{1,4}$/', $v)) $e->setAttribute('id', $v);
             } elseif ($n === 'data-sf' && $t === 'table') {
                 if (preg_match('/^\d{1,9}$/', $v)) $e->setAttribute($n, $v);
+            } elseif ($n === 'data-punch' && $t === 'table') {
+                if (preg_match('/^[A-Za-z0-9_-]{1,6000}$/', $v)) $e->setAttribute($n, $v);
             } elseif ($n === 'data-cid') {
                 if (preg_match('/^c\d{1,6}$/', $v)) $e->setAttribute($n, $v);
             } elseif (in_array($n, ['data-tid', 'data-autor', 'data-fecha'], true) && ($t === 'ins' || $t === 'del')) {
@@ -385,7 +387,7 @@ class Redactor
     private static function rutaImagen(string $src): ?string
     {
         $n = basename($src);
-        foreach ([[Imagenes::CARPETA_VPLAN, '#^/uploads/vplan/#'], [RedactorFirmas::CARPETA, '#^/uploads/firmas/#']] as [$dir, $re]) {
+        foreach ([[Imagenes::CARPETA_VPLAN, '#^/uploads/vplan/#'], [RedactorFirmas::CARPETA, '#^/uploads/firmas/#'], [__DIR__ . '/../public/uploads/punch/min', '#^/uploads/punch/min/#']] as [$dir, $re]) {
             if (preg_match($re, $src) && is_file($dir . '/' . $n)) return $dir . '/' . $n;
         }
         return null;
@@ -632,7 +634,7 @@ class Redactor
         [$w, $h] = $d->medidas();
         $dompdf->setPaper([0, 0, $w / 2.54 * 72, $h / 2.54 * 72]);
         $html = self::contenidoExportable($d, $opc);
-        $html = preg_replace_callback('#src="(/uploads/(?:vplan|firmas)/[a-f0-9]{32}\.(?:png|jpg))"#', fn($m) => 'src="' . (self::rutaImagen($m[1]) ?? '') . '"', $html);
+        $html = preg_replace_callback('#src="(/uploads/(?:vplan|firmas|punch/min)/[a-f0-9]{32}\.(?:png|jpg))"#', fn($m) => 'src="' . (self::rutaImagen($m[1]) ?? '') . '"', $html);
         // Índice: sin números de página (Dompdf no los conoce); las entradas son enlaces internos
         $html = preg_replace('#<div[^>]*class="[^"]*salto-pagina[^"]*"[^>]*>(\s*</div>)?#i', '<div style="page-break-after:always"></div>', $html);
         $m = ['sup' => (float)$d->margen_sup, 'inf' => (float)$d->margen_inf, 'izq' => (float)$d->margen_izq, 'der' => (float)$d->margen_der];

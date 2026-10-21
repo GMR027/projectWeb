@@ -321,6 +321,11 @@ class RedactorController
     {
         [, $p] = self::documentoApi();
         $tipo = (string)($_POST['tabla'] ?? '');
+        if ($tipo === 'punchvista') {   // vista configurable del Punch list (columnas, fotos y filtros)
+            $cfg = json_decode((string)($_POST['cfg'] ?? ''), true);
+            $cfg = \Classes\PunchVista::normalizar(is_array($cfg) ? $cfg : []);
+            self::json(['success' => true, 'html' => \Classes\PunchVista::htmlRedactor((int)$p->id, $cfg), 'cfg' => $cfg, 'total' => count(\Classes\PunchVista::items((int)$p->id, $cfg))]);
+        }
         if ($tipo !== '') {
             $t = RedactorDocumento::tablaExtra((int)$p->id, $tipo);
             if (!$t) self::json(['success' => false, 'error' => 'Tabla no válida'], 422);

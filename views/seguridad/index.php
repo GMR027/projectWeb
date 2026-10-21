@@ -45,7 +45,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150"></label>
         <label>Desde <input type="date" name="vigente_desde" id="p-desde" value="<?php echo date('Y-m-d'); ?>" required></label>
-        <label>Hasta <input type="date" name="vigente_hasta" id="p-hasta" value="<?php echo date('Y-m-d'); ?>" required></label>
+        <label>Hasta <input type="date" name="vigente_hasta" id="p-hasta" value="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" required></label>
         <label style="flex-basis:100%">Descripción del trabajo <textarea name="descripcion" rows="2" maxlength="3000"></textarea></label>
         <label style="flex-basis:100%">Riesgos identificados <textarea name="riesgos" rows="2" maxlength="3000"></textarea></label>
         <label style="flex-basis:100%">Medidas del tipo elegido <small class="text-muted" id="p-medidas"></small></label>

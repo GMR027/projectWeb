@@ -405,6 +405,16 @@ CREATE TABLE vplan_recovery_n (
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE vplan_col_texto (
+    lamina_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    col_id VARCHAR(12) NOT NULL,
+    texto VARCHAR(500) NOT NULL DEFAULT '',
+    PRIMARY KEY (lamina_id, actividad_id, col_id),
+    FOREIGN KEY (lamina_id) REFERENCES vplan_laminas(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE vplan_tablas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -761,7 +771,7 @@ CREATE TABLE dependencias_cambios (
     cambios_json LONGTEXT NOT NULL,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
--- Conexiones de IA que el admin usa desde la app de escritorio (DictaFlow). No se guardan API keys.
+-- Conexiones de IA que el admin usa desde la app de escritorio (Project Web Desktop). No se guardan API keys.
 CREATE TABLE IF NOT EXISTS herramientas_ia (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -1131,6 +1141,8 @@ CREATE TABLE IF NOT EXISTS sheetflow_hojas (
 ) ENGINE=InnoDB;
 
 -- Tabla de vPlan creada desde SheetFlow (permite «Actualizar desde SheetFlow»); si se borra la hoja solo se pierde el vínculo
+ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';
+ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;
 ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
 ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;
 

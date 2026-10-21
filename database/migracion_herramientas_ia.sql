@@ -1,4 +1,4 @@
--- Conexiones de IA que el admin usa desde la app de escritorio (DictaFlow). No se guardan API keys.
+-- Conexiones de IA que el admin usa desde la app de escritorio (Project Web Desktop). No se guardan API keys.
 CREATE TABLE IF NOT EXISTS herramientas_ia (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,

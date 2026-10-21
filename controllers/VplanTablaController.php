@@ -4,6 +4,10 @@ namespace Controllers;
 
 use MVC\Router;
 use Model\VplanTabla;
+use Model\SheetflowHoja;
+use Classes\Sheetflow;
+use Classes\TablaDeDocumento;
+use Classes\Auditoria;
 
 /** Catálogo de tablas adicionales de vPlan (punch list, restricciones, actividades secundarias, otro) */
 class VplanTablaController
@@ -35,7 +39,8 @@ class VplanTablaController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tabla->titulo = trim($_POST['titulo'] ?? '');
             $tabla->nombre_interno = mb_substr(trim($_POST['nombre_interno'] ?? ''), 0, 150) ?: null;
-            $tabla->tipo = $_POST['tipo'] ?? 'punch';
+            $tabla->tipo = $_POST['tipo'] ?? 'punchlist';
+            if ($tabla->esPunchVista()) $tabla->punch_config = json_encode(\Classes\PunchVista::desdePost((array)($_POST['punch'] ?? [])), JSON_UNESCAPED_UNICODE);
             $tabla->columnas_json = self::columnas();
             $alertas = $tabla->validar();
             if ($tabla->tipo === 'otro' && !$tabla->columnasOtro()) $alertas['error'][] = 'Define al menos una columna para la tabla "Otro"';
@@ -63,11 +68,12 @@ class VplanTablaController
             $tabla->titulo = trim($_POST['titulo'] ?? '');
             $tabla->nombre_interno = mb_substr(trim($_POST['nombre_interno'] ?? ''), 0, 150) ?: null;
             if ($tabla->tipo === 'otro') $tabla->columnas_json = self::columnas();
+            if ($tabla->esPunchVista()) $tabla->punch_config = json_encode(\Classes\PunchVista::desdePost((array)($_POST['punch'] ?? [])), JSON_UNESCAPED_UNICODE);
             $alertas = $tabla->validar();
             if ($tabla->tipo === 'otro' && !$tabla->columnasOtro()) $alertas['error'][] = 'Define al menos una columna';
             if (!$alertas) {
                 $tabla->guardar();
-                if (!$tabla->hoja()) $tabla->guardarFilas(self::limpiarFilas($tabla, $_POST['filas'] ?? []));   // vinculada: los renglones son los de SheetFlow
+                if (!$tabla->hoja() && !$tabla->esPunchVista()) $tabla->guardarFilas(self::limpiarFilas($tabla, $_POST['filas'] ?? []));   // vinculada: los renglones son los de SheetFlow
                 header('Location: /vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $tabla->id . '&ok=1');
                 exit;
             }
@@ -82,6 +88,34 @@ class VplanTablaController
         $proyecto = proyecto_de_peticion(true);
         $copia = ($t = self::tablaDe($proyecto)) ? $t->duplicar() : null;
         header('Location: ' . ($copia ? '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $copia->id : '/vplan/tablas?proyecto=' . $proyecto->id));
+        exit;
+    }
+
+    /** Convierte una tabla manual de punch en una vista del módulo Punch: cada renglón pasa a ser un pendiente (inicio/% se pierden: el % pasa al estado) */
+    public static function convertirPunch()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $t = self::tablaDe($proyecto);
+        if (!$t || $t->tipo !== 'punch') {
+            header('Location: /vplan/tablas?proyecto=' . $proyecto->id);
+            exit;
+        }
+        $ids = [];
+        foreach ($t->filas() as $f) {
+            $titulo = trim((string)($f['descripcion'] ?? ''));
+            if ($titulo === '') continue;
+            $pct = (int)($f['pct'] ?? 0);
+            [$ok, , $id] = \Classes\Punch::guardar((int)$proyecto->id, ['titulo' => $titulo, 'fecha_limite' => $f['fin'] ?? ''], null, 'manual');
+            if (!$ok) continue;
+            if ($pct >= 100) \Classes\Punch::estado($proyecto, $id, 'cerrado');
+            elseif ($pct > 0) \Classes\Punch::estado($proyecto, $id, 'en_proceso');
+            $ids[] = $id;
+        }
+        $t->tipo = 'punchlist';
+        $t->punch_config = json_encode(\Classes\PunchVista::normalizar(['columnas' => ['titulo', 'fecha_limite', 'estado'], 'estado' => 'todos', 'limite' => 200, 'ids' => $ids]), JSON_UNESCAPED_UNICODE);
+        $t->guardar();
+        \Classes\Auditoria::registrar((int)$proyecto->id, 'punch', 'aplicado', 'punch_tabla_vplan', 'Tabla manual «' . mb_substr($t->titulo, 0, 80) . '» convertida a vista del Punch list (' . count($ids) . ' pendientes)', [], ['tabla' => (int)$t->id], (int)$t->id);
+        header('Location: /vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1');
         exit;
     }
 
@@ -129,6 +163,7 @@ class VplanTablaController
         $fallo = function (string $m) { http_response_code(422); echo json_encode(['success' => false, 'error' => $m]); exit; };
 
         $hoja = $t->hoja();
+        if ($t->esPunchVista() && in_array($accion, ['add', 'del'], true)) $fallo('Los pendientes se agregan y se quitan en el módulo Punch list');
         if ($hoja && $accion === 'add' && \Classes\Sheetflow::matriz($hoja)['totales']) $fallo('La tabla de SheetFlow tiene fila de totales: agrega renglones en SheetFlow');
         if ($accion === 'add') {
             if (count($filas) >= 200) $fallo('Máximo 200 renglones');
@@ -157,6 +192,12 @@ class VplanTablaController
         $campo = $_POST['campo'] ?? '';
         if ($accion !== 'set' || !isset($campos[$campo])) $fallo('Campo no válido');
         $valor = self::limpiarCampo($campos[$campo][1], (string)($_POST['valor'] ?? ''));
+        if ($t->esPunchVista()) {   // se escribe en el pendiente del Punch list
+            $clave = $t->configPunch()['columnas'][(int)substr($campo, 1)] ?? '';
+            if ($m = \Classes\PunchVista::cambiar($proyecto, (int)($filas[$i]['_pid'] ?? 0), $clave, $valor)) $fallo($m);
+            echo json_encode(['success' => true, 'valor' => $valor]);
+            exit;
+        }
         if ($hoja) {   // vinculada: se escribe en SheetFlow y se devuelve lo que ahí se muestra
             if ($m = \Classes\Sheetflow::cambiarCelda($hoja, $i, (int)substr($campo, 1), $valor)) $fallo($m);
             $valor = \Classes\Sheetflow::filasVplan(\Model\SheetflowHoja::find($hoja->id), count($campos))[$i][$campo] ?? $valor;
@@ -184,5 +225,96 @@ class VplanTablaController
             if ($contenido) $out[] = $fila;
         }
         return $out;
+    }
+
+    // ---------- Tabla en base a un documento ----------
+
+    private static function jsonDoc(array $d, int $codigo = 200): void
+    {
+        http_response_code($codigo);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        exit;
+    }
+
+    /** Proyecto de una petición de la API (solo quien puede gestionarlo) */
+    private static function proyectoApi(): \Model\Proyecto
+    {
+        $p = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? \Model\Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
+        if (!$p || !puede_gestionar_proyecto($p)) self::jsonDoc(['success' => false, 'error' => 'No autorizado'], 403);
+        return $p;
+    }
+
+    public static function documento(Router $router)
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $router->render('vplan/tabla-documento', [
+            'titulo' => 'Tabla en base a documento', 'proyecto' => $proyecto,
+            'ocr' => TablaDeDocumento::ocrDisponible(), 'esAdmin' => is_admin(),
+        ]);
+    }
+
+    /** Lee el documento con el motor (sin IA) y devuelve la tabla propuesta; no guarda nada */
+    public static function apiDocumentoLeer()
+    {
+        self::proyectoApi();
+        $f = $_FILES['archivo'] ?? null;
+        if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) self::jsonDoc(['success' => false, 'error' => 'No se pudo subir el archivo'], 422);
+        if ($f['size'] > TablaDeDocumento::MAX_BYTES) self::jsonDoc(['success' => false, 'error' => 'El archivo es demasiado grande (máx. 25 MB)'], 422);
+        try {
+            $r = TablaDeDocumento::leer($f['tmp_name'], (string)$f['name']);
+        } catch (\RuntimeException $e) {
+            self::jsonDoc(['success' => false, 'error' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            error_log('Tabla en base a documento: ' . $e->getMessage());
+            self::jsonDoc(['success' => false, 'error' => 'No se pudo leer el documento'], 422);
+        }
+        $d = $r['filas'] ? Sheetflow::deMatriz($r['filas']) : null;
+        self::jsonDoc([
+            'success' => true, 'metodo' => $r['metodo'], 'avisos' => $r['avisos'], 'imagen' => $r['imagen'],
+            'filas' => $r['filas'] ? array_merge([array_map(fn($c) => $c['n'], $d['cols'])], $d['rows']) : [],
+            'texto' => is_admin() ? $r['texto'] : '',   // el texto sirve a la IA del administrador (app de escritorio)
+        ]);
+    }
+
+    /** Texto con columnas alineadas (el OCR de la app de escritorio) → tabla propuesta; no guarda nada */
+    public static function apiDocumentoTexto()
+    {
+        self::proyectoApi();
+        $texto = (string)($_POST['texto'] ?? '');
+        if (trim($texto) === '' || strlen($texto) > 400_000) self::jsonDoc(['success' => false, 'error' => 'No hay texto que interpretar'], 422);
+        $avisos = [];
+        $filas = TablaDeDocumento::dePlano($texto, $avisos);
+        $d = $filas ? Sheetflow::deMatriz($filas) : null;
+        self::jsonDoc([
+            'success' => true, 'metodo' => 'OCR', 'avisos' => array_merge($avisos, ['Texto leído con OCR: revisa las celdas antes de crear la tabla.']), 'imagen' => false,
+            'filas' => $d ? array_merge([array_map(fn($c) => $c['n'], $d['cols'])], $d['rows']) : [], 'texto' => '',
+        ]);
+    }
+
+    /** Crea la tabla de SheetFlow con la matriz ya revisada y la deja en el catálogo de vPlan */
+    public static function apiDocumentoCrear()
+    {
+        $proyecto = self::proyectoApi();
+        $metodo = ($_POST['metodo'] ?? '') === 'ia' ? 'ia' : 'motor';
+        if ($metodo === 'ia' && !is_admin()) self::jsonDoc(['success' => false, 'error' => 'La IA es solo para el administrador'], 403);
+        $filas = json_decode((string)($_POST['filas'] ?? ''), true);
+        if (!is_array($filas) || strlen((string)$_POST['filas']) > Sheetflow::MAX_BYTES) self::jsonDoc(['success' => false, 'error' => 'La tabla no es válida'], 422);
+        $filas = array_values(array_filter(array_map(fn($f) => is_array($f) ? array_map(fn($v) => is_scalar($v) ? (string)$v : '', array_values($f)) : [], $filas)));
+        try {
+            $datos = Sheetflow::deMatriz($filas);
+        } catch (\RuntimeException $e) {
+            self::jsonDoc(['success' => false, 'error' => 'La tabla está vacía'], 422);
+        }
+        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 140) ?: 'Tabla de documento';
+        $h = new SheetflowHoja(['proyecto_id' => $proyecto->id, 'nombre' => $nombre, 'fecha' => date('Y-m-d'), 'departamento' => '', 'descripcion' => mb_substr('Creada desde ' . trim((string)($_POST['origen'] ?? 'un documento')), 0, 500), 'creado_por' => $_SESSION['id'] ?? null]);
+        if ($alertas = $h->validar()) self::jsonDoc(['success' => false, 'error' => $alertas['error'][0]], 422);
+        $h->datos = json_encode(Sheetflow::normalizar($datos), JSON_UNESCAPED_UNICODE);
+        $h->id = $h->guardar()['id'];
+        $t = Sheetflow::aVplan($h);
+        if ($metodo === 'ia') {
+            Auditoria::registrar((int)$proyecto->id, 'tabla-documento', 'aplicado', 'tabla_de_documento', 'Tabla «' . $nombre . '» creada con IA a partir de ' . mb_substr((string)($_POST['origen'] ?? 'un documento'), 0, 120), null, ['tabla' => (int)$t->id, 'hoja' => (int)$h->id, 'renglones' => count($datos['rows'])], (int)$t->id, mb_substr((string)($_POST['modelo'] ?? ''), 0, 150), ['vplan_tabla', (int)$t->id, $nombre]);
+        }
+        self::jsonDoc(['success' => true, 'url' => '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1', 'tabla' => (int)$t->id]);
     }
 }

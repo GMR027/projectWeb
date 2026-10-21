@@ -53,6 +53,7 @@
                                     <input type="hidden" name="volver" value="/acciones">
                                     <button type="submit" class="btn btn-sm btn-primary">Resolver</button>
                                 </form>
+                                <a href="/programa/restricciones/editar?id=<?php echo (int)$it['rid']; ?>&volver=/acciones" class="btn btn-sm btn-secondary">Editar</a>
                                 <form method="POST" action="/programa/restricciones/eliminar" style="display:inline" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
                                     <input type="hidden" name="id" value="<?php echo (int)$it['rid']; ?>">
                                     <input type="hidden" name="volver" value="/acciones">

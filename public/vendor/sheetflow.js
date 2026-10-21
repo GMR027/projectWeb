@@ -64,7 +64,17 @@
         if (tipo === 'moneda') return n === null ? v : (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         if (tipo === 'porcentaje') return n === null ? v : miles(n, 2) + '%';
         if (tipo === 'fecha') { var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(v); return m ? m[3] + '/' + m[2] + '/' + m[1] : v; }
+        if (tipo === 'casilla') return valorEspecial(v, tipo) === '1' ? '\u2714' : '';
+        if (tipo === 'semaforo') return SEMAFORO[valorEspecial(v, tipo)] || v;
         return v;
+    }
+    var SEMAFORO = { verde: 'Verde', amarillo: 'Amarillo', rojo: 'Rojo' };
+    /** Valor guardado de una casilla ('1' o '') o un semáforo (verde|amarillo|rojo o ''); igual que Sheetflow::normalizarValor */
+    function valorEspecial(v, tipo) {
+        v = String(v == null ? '' : v).trim().toLowerCase();
+        if (tipo === 'casilla') return ['1', 'si', 's\u00ed', 'x', 'true', 'yes', '\u2714', '\u2713'].indexOf(v) >= 0 ? '1' : '';
+        v = { green: 'verde', yellow: 'amarillo', red: 'rojo' }[v] || v;
+        return SEMAFORO[v] ? v : '';
     }
     function esFormula(t) { return /^\s*=/.test(t || ''); }
     /** Texto que se guarda al terminar de editar: fechas d/m/a → ISO y números sin formato */
@@ -77,6 +87,7 @@
             return txt.trim();
         }
         if (NUM.indexOf(tipo) >= 0) { var n = numero(txt); return n === null ? txt.trim() : String(n); }
+        if (tipo === 'casilla' || tipo === 'semaforo') return valorEspecial(txt, tipo);
         return txt;
     }
 
@@ -395,6 +406,7 @@
     function sincronizarBarra() {
         var cc = Math.min(sel.c0, S.cols.length - 1), col = S.cols[cc] || S.cols[0], f = getSt(sel.r0, cc) || {};
         $('sf-tipo').value = col.t;
+        $('sf-opciones').hidden = col.t !== 'lista'; $('sf-opciones').value = (col.op || []).join(', ');
         $('sf-total').value = col.tot || '';
         $('sf-c-enc').value = S.estilo.enc; $('sf-c-txt').value = S.estilo.encTxt;
         $('sf-zebra').checked = !!S.estilo.zebra; $('sf-bordes').checked = !!S.estilo.bordes;
@@ -486,7 +498,13 @@
         var inp = document.createElement('input');
         inp.className = 'sf-input'; inp.type = 'text'; inp.spellcheck = false; inp.autocomplete = 'off';
         var crudo = r < 0 ? S.cols[c].n : S.rows[r][c];
-        inp.value = inicial != null ? inicial : crudo;
+        inp.value = inicial != null ? inicial : (r >= 0 && S.cols[c].t === 'semaforo' && SEMAFORO[crudo] ? SEMAFORO[crudo] : (r >= 0 && S.cols[c].t === 'casilla' && crudo === '1' ? 'si' : crudo));
+        var tc = r >= 0 ? S.cols[c].t : '';
+        if (tc === 'lista' || tc === 'semaforo' || tc === 'casilla') {   // sugerencias de la columna
+            var dl = $('sf-dl') || document.body.appendChild(Object.assign(document.createElement('datalist'), { id: 'sf-dl' }));
+            dl.innerHTML = (tc === 'lista' ? (S.cols[c].op || []) : tc === 'casilla' ? ['si', 'no'] : ['Verde', 'Amarillo', 'Rojo']).map(function (o) { return '<option value="' + String(o).replace(/"/g, '&quot;') + '">'; }).join('');
+            inp.setAttribute('list', 'sf-dl');
+        }
         var im = el.querySelector('.sf-img');
         el.textContent = ''; if (im) el.appendChild(im); el.appendChild(inp);
         editor = { r: r, c: c, input: inp, previo: crudo };
@@ -706,11 +724,18 @@
     $('sf-tipo').addEventListener('change', function () {
         antes(); var t = this.value;
         columnasElegidas().forEach(function (c) {
-            var col = S.cols[c]; col.t = t; col.a = NUM.indexOf(t) >= 0 ? 'derecha' : (t === 'fecha' ? 'centro' : 'izquierda');
+            var col = S.cols[c]; col.t = t; col.a = NUM.indexOf(t) >= 0 ? 'derecha' : (t === 'fecha' || t === 'casilla' || t === 'semaforo' ? 'centro' : 'izquierda');
+            if (t === 'lista') col.op = col.op || []; else delete col.op;
             if (col.tot && col.tot !== 'cuenta' && NUM.indexOf(t) < 0) col.tot = '';
             S.rows.forEach(function (f, r) { if (!esFormula(f[c])) f[c] = normalizar(f[c], t); });
         });
-        dibujar(); cambio();
+        sincronizarBarra(); dibujar(); cambio();
+    });
+    $('sf-opciones').addEventListener('change', function () {
+        antes();
+        var op = this.value.split(',').map(function (x) { return x.trim().slice(0, 40); }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).slice(0, 20);
+        columnasElegidas().forEach(function (c) { if (S.cols[c].t === 'lista') S.cols[c].op = op; });
+        cambio();
     });
     $('sf-total').addEventListener('change', function () {
         var v = this.value;

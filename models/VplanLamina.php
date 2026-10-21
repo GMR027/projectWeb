@@ -147,6 +147,33 @@ class VplanLamina extends ActiveRecord
      * diseño idéntico al que tenía. Además cada tabla adicional de la lámina tiene su bloque (se crea o se retira).
      * @return \Model\VplanBloque[]
      */
+    /**
+     * Renueva las imágenes vinculadas (bloques «imagen» con `ref`) cuyo origen cambió: copia propia nueva del archivo actual.
+     * Un símbolo SVG no se puede copiar en el servidor (se queda como está hasta que se vuelva a insertar).
+     */
+    public function sincronizarImagenes(array $bloques): void
+    {
+        foreach ($bloques as $b) {
+            if ($b->tipo !== 'imagen') continue;
+            $c = $b->config();
+            if (empty($c['ref'])) continue;
+            $o = \Classes\ImagenVinculada::actual((string)$c['ref'], (int)$this->proyecto_id);
+            if (!$o || $o['token'] === ($c['refv'] ?? '')) continue;
+            if (!\Classes\Almacenamiento::cabe((int)$this->proyecto_id, (int)@filesize($o['ruta']))) continue;
+            $nuevo = preg_match('/\.svg$/i', $o['ruta']) ? null : \Classes\Imagenes::guardarGrande($o['ruta'], 1600);
+            if (!$nuevo) continue;
+            $viejo = $c['archivo'] ?? '';
+            $c['archivo'] = $nuevo;
+            $c['refv'] = $o['token'];
+            $b->setConfig($c);
+            $b->guardar();
+            if ($viejo !== '') {   // se borra solo si ningún otro bloque lo usa
+                $enUso = self::$db->query("SELECT COUNT(*) FROM vplan_bloques WHERE config_json LIKE '%" . self::$db->escape_string($viejo) . "%'")->fetch_row()[0] ?? 0;
+                if (!(int)$enUso) \Classes\Imagenes::eliminarVplan($viejo);
+            }
+        }
+    }
+
     public function bloques(): array
     {
         if (!$this->id) return [];
@@ -240,6 +267,26 @@ class VplanLamina extends ActiveRecord
         $aid = (int)$actividadId;
         $v = $valor === null ? 'NULL' : "'" . self::$db->escape_string($valor) . "'";
         self::$db->query("INSERT INTO vplan_recovery_n (lamina_id, actividad_id, n, $campo) VALUES ($id, $aid, $n, $v) ON DUPLICATE KEY UPDATE $campo = $v");
+    }
+
+    /** [actividad_id => [col_id => texto]] de las columnas de texto de los bloques de tareas */
+    public function textosColumnas(): array
+    {
+        $out = [];
+        try {
+            $res = self::$db->query("SELECT actividad_id, col_id, texto FROM vplan_col_texto WHERE lamina_id = " . (int)$this->id);
+            while ($res && $r = $res->fetch_assoc()) $out[(int)$r['actividad_id']][$r['col_id']] = $r['texto'];
+        } catch (\Throwable $e) { /* migración pendiente */ }
+        return $out;
+    }
+
+    public function guardarTextoColumna(int $actividadId, string $colId, string $texto): void
+    {
+        $id = (int)$this->id;
+        $aid = (int)$actividadId;
+        $c = self::$db->escape_string(substr($colId, 0, 12));
+        $t = self::$db->escape_string(mb_substr($texto, 0, 500));
+        self::$db->query("INSERT INTO vplan_col_texto (lamina_id, actividad_id, col_id, texto) VALUES ($id, $aid, '$c', '$t') ON DUPLICATE KEY UPDATE texto = '$t'");
     }
 
     /** Guías del modo diseño: [{id, eje: 'v'|'h', pos: % de la hoja, visible, bloqueada, nombre}] */

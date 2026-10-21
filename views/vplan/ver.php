@@ -177,10 +177,19 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
     const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
 
     // Recovery de las tareas del programa
-    document.querySelectorAll('.vp-rec:not(.vp-fecha-act):not(.vp-progreso-act)').forEach(inp => inp.addEventListener('change', async () => {
+    document.querySelectorAll('.vp-rec:not(.vp-fecha-act):not(.vp-progreso-act):not(.vp-col-texto)').forEach(inp => inp.addEventListener('change', async () => {
         inp.classList.remove('msr-error');
         try {
             const d = await post('/api/vplan/recovery', { lamina, actividad: inp.dataset.actividad, n: inp.dataset.n, campo: inp.dataset.campo, valor: inp.value });
+            if (!d.success) inp.classList.add('msr-error');
+        } catch (_) { inp.classList.add('msr-error'); }
+    }));
+
+    // Columnas de texto propias de las tablas de tareas
+    document.querySelectorAll('.vp-col-texto').forEach(inp => inp.addEventListener('change', async () => {
+        inp.classList.remove('msr-error');
+        try {
+            const d = await post('/api/vplan/columna-texto', { lamina, actividad: inp.dataset.actividad, col: inp.dataset.col, valor: inp.value });
             if (!d.success) inp.classList.add('msr-error');
         } catch (_) { inp.classList.add('msr-error'); }
     }));
@@ -233,7 +242,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
         const tr = inp.closest('tr'), tabla = inp.closest('table');
         inp.classList.remove('msr-error');
         try {
-            const d = await post('/api/vplan/fila', { tabla: tabla.dataset.tabla, accion: 'set', indice: tr.dataset.indice, campo: inp.dataset.campo, valor: inp.value });
+            const d = await post('/api/vplan/fila', { tabla: tabla.dataset.tabla, accion: 'set', indice: tr.dataset.indice, campo: inp.dataset.campo, valor: inp.type === 'checkbox' ? (inp.checked ? '1' : '') : inp.value });
             if (!d.success) { inp.classList.add('msr-error'); return; }
             if (inp.dataset.campo === 'pct') { inp.value = d.valor; colorPct(inp.closest('td')); }
             if (inp.dataset.campo === 'estado') tr.className = tr.className.replace(/vp-est-\w+/, 'vp-est-' + inp.value);
@@ -280,6 +289,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 </script>
 <?php endif; ?>
 
+<script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
 <?php if ($modoDiseno): ?>
 <script>
 window.VP_DISENO = <?php echo json_encode([

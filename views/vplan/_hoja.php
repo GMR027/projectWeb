@@ -93,9 +93,12 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
         case 'tareas':
             $td = $porBloque[$porId] ?? ['grupos' => [], 'subtitulos' => false, 'titulo' => '', 'color' => Vplan::colorTabla(null), 'seq' => 'continuo'];
             [, $f, $p] = VplanDiseno::ESCALAS[VplanDiseno::escalaTareas($lamina, $b, $td, $nRec)];
-            $cols = 6 + 2 * $nRec;
+            $orden = VplanDiseno::ordenTareas($b->config());
+            $ctx = array_column(VplanDiseno::columnasTexto($b->config()), 'titulo', 'id');
+            $cols = 0; foreach ($orden as $o) $cols += $o === 'rec' ? 2 * $nRec : 1;
             $rs = $nRec ? 2 : 1;
-            $cw = VplanDiseno::columnasTareas(VplanDiseno::anchoRefCm($b), $nRec, $f, $p);
+            $cw = VplanDiseno::columnasTareas(VplanDiseno::anchoRefCm($b), $nRec, $f, $p, $orden);
+            $fijas = ['seq' => '# SEQ', 'tarea' => 'TASK', 'inicio' => 'START', 'fin' => 'FINISH', 'pct' => '%', 'restr' => 'CONSTRAINS'];
             ?>
             <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>">
             <table class="vp-tabla vp-programa" style="--vp-c:<?php echo s($td['color'][0]); ?>;--vp-t:<?php echo s($td['color'][1]); ?>">
@@ -103,24 +106,31 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                 <thead>
                     <tr><th colspan="<?php echo $cols; ?>" class="vp-adic-titulo"><?php echo s($td['titulo'] ?: 'SIN ACTIVIDADES'); ?></th></tr>
                     <tr>
-                        <th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[0]; ?>%"># SEQ</th><th rowspan="<?php echo $rs; ?>" class="vp-task" style="width:<?php echo $cw[1]; ?>%">TASK</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[2]; ?>%">START</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[3]; ?>%">FINISH</th>
-                        <?php for ($r = 1; $r <= $nRec; $r++): ?><th colspan="2"><?php echo Vplan::etiquetaRecovery($r); ?></th><?php endfor; ?>
-                        <th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[4 + 2 * $nRec]; ?>%">%</th><th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[5 + 2 * $nRec]; ?>%">CONSTRAINS</th>
+                        <?php foreach ($orden as $o):
+                            if ($o === 'rec') { for ($r = 1; $r <= $nRec; $r++): ?><th colspan="2"><?php echo Vplan::etiquetaRecovery($r); ?></th><?php endfor; continue; }
+                            $ttl = $fijas[$o] ?? ($ctx[substr($o, 2)] ?? ''); ?>
+                            <th rowspan="<?php echo $rs; ?>"<?php echo $o === 'tarea' ? ' class="vp-task"' : ''; ?>><?php echo s($ttl); ?></th>
+                        <?php endforeach; ?>
                     </tr>
-                    <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th style="width:<?php echo $cw[2 + 2 * $r]; ?>%">START</th><th style="width:<?php echo $cw[3 + 2 * $r]; ?>%">FINISH</th><?php endfor; ?></tr><?php endif; ?>
+                    <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th>START</th><th>FINISH</th><?php endfor; ?></tr><?php endif; ?>
                 </thead>
                 <tbody>
                 <?php foreach ($td['grupos'] as $g): ?>
                     <?php if ($td['subtitulos']): ?><tr class="vp-subtitulo"><td colspan="<?php echo $cols; ?>"><?php echo s(mb_strtoupper($g['partida']->nombre)); ?></td></tr><?php endif; ?>
                     <?php foreach ($g['tareas'] as $t): $a = $t['actividad']; $pg = (int)$a->progreso; ?>
                     <tr>
-                        <td class="c"><?php echo (int)$t['seq']; ?></td>
-                        <td><?php echo s($a->nombre); ?></td>
-                        <td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="inicio" value="' . s($a->fecha_inicio) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_inicio)); ?></td>
-                        <td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="fin" value="' . s($a->fecha_fin) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_fin)); ?></td>
-                        <?php for ($r = 1; $r <= $nRec; $r++): ?><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'inicio'); ?></td><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'fin'); ?></td><?php endfor; ?>
-                        <td class="c vp-pct-act <?php echo $pg >= 100 ? 'vp-verde' : ($pg > 0 ? 'vp-amarillo' : ''); ?>"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" value="' . $pg . '" title="Mismo avance que el programa de obra">' : $pg . '%'; ?></td>
-                        <td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><span class="vp-rombo"><b><?php echo (int)$n; ?></b></span><?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td>
+                        <?php foreach ($orden as $o):
+                            switch ($o):
+                                case 'seq': ?><td class="c"><?php echo (int)$t['seq']; ?></td><?php break;
+                                case 'tarea': ?><td><?php echo s($a->nombre); ?></td><?php break;
+                                case 'inicio': ?><td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="inicio" value="' . s($a->fecha_inicio) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_inicio)); ?></td><?php break;
+                                case 'fin': ?><td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="fin" value="' . s($a->fecha_fin) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_fin)); ?></td><?php break;
+                                case 'rec': for ($r = 1; $r <= $nRec; $r++): ?><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'inicio'); ?></td><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'fin'); ?></td><?php endfor; break;
+                                case 'pct': ?><td class="c vp-pct-act <?php echo $pg >= 100 ? 'vp-verde' : ($pg > 0 ? 'vp-amarillo' : ''); ?>"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" value="' . $pg . '" title="Mismo avance que el programa de obra">' : $pg . '%'; ?></td><?php break;
+                                case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><span class="vp-rombo"><b><?php echo (int)$n; ?></b></span><?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
+                                default: $cid = substr($o, 2); $tx = $t['textos'][$cid] ?? ''; ?><td><?php echo $puedeEditar ? '<input type="text" maxlength="500" class="vp-rec vp-col-texto" data-actividad="' . (int)$a->id . '" data-col="' . s($cid) . '" value="' . s($tx) . '">' : s($tx); ?></td><?php
+                            endswitch;
+                        endforeach; ?>
                     </tr>
                     <?php endforeach; ?>
                 <?php endforeach; ?>

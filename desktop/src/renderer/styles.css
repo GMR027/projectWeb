@@ -225,3 +225,6 @@ button.peligro { background:#dc2626; color:#fff; } #alm-sec, #des-sec { height:a
 #ia-menu-lista { gap:.7rem; }
 #ia-menu .grupo { display:flex; flex-direction:column; gap:.15rem; padding:.4rem .3rem .5rem; border:1px solid var(--borde); border-radius:.8rem; }
 #ia-menu .grupo h4 { margin:0 0 .25rem; padding:.2rem .5rem .4rem; font-size:.74rem; color:var(--txt); border-bottom:1px solid var(--borde); }
+.tdoc-scroll { overflow:auto; max-height:50vh; border:1px solid var(--borde); border-radius:.6rem; margin:.6rem 0; }
+.tdoc-tabla { border-collapse:collapse; font-size:.8rem; } .tdoc-tabla td, .tdoc-tabla th { border:1px solid var(--borde); padding:0; white-space:nowrap; } .tdoc-tabla input { width:100%; min-width:8rem; border:0; padding:.2rem .35rem; background:transparent; color:inherit; font:inherit; } .tdoc-tabla th input { font-weight:700; }
+.tdoc-x { border:0; background:transparent; color:#ef4444; cursor:pointer; padding:0 .3rem; }

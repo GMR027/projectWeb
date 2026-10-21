@@ -115,7 +115,7 @@ $vols = [
 
 <div class="card" id="herramientas" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-plug"></i> Conectar herramientas de IA</h3>
-    <p class="text-muted text-sm">Registro de las IA que usas con DictaFlow (local, CLI o API). <strong>Aquí no se guardan API keys</strong>: escríbelas solo en DictaFlow (Ajustes → proveedores) para que no queden en el servidor ni en los respaldos.</p>
+    <p class="text-muted text-sm">Registro de las IA que usas desde la app de escritorio (local, CLI o API). <strong>Aquí no se guardan API keys</strong>: escríbelas solo en la app de escritorio (Ajustes → proveedores) para que no queden en el servidor ni en los respaldos.</p>
     <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
     <?php if ($herramientas): ?>

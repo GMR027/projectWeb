@@ -91,7 +91,7 @@ class Simbolo extends ActiveRecord
     {
         $out = self::predeterminados();
         try {
-            foreach (self::deProyecto($proyectoId) as $s) $out[] = ['nombre' => $s->nombre, 'cat' => $s->categoria !== '' ? $s->categoria : 'Del proyecto', 'src' => $s->url()];
+            foreach (self::deProyecto($proyectoId) as $s) $out[] = ['nombre' => $s->nombre, 'cat' => $s->categoria !== '' ? $s->categoria : 'Del proyecto', 'src' => $s->url(), 'ref' => 's:' . (int)$s->id, 'v' => basename((string)$s->archivo)];
         } catch (\Throwable $e) {   // migración pendiente
         }
         return $out;

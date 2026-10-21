@@ -4,7 +4,7 @@
     var R = window.RD;
     if (!R) return;
     var $ = R.$, hoja = R.hoja, esc = R.esc, estado = R.estado, C = R.C;
-    ['rd-p-refcruz', 'rd-p-ecuacion', 'rd-p-caja', 'rd-p-portada', 'rd-p-programa', 'rd-p-estilos', 'rd-p-encpie', 'rd-p-ira', 'rd-p-versiones'].forEach(function (id) { R.paneles.push(id); });
+    ['rd-p-refcruz', 'rd-p-ecuacion', 'rd-p-caja', 'rd-p-portada', 'rd-p-programa', 'rd-p-punch', 'rd-p-estilos', 'rd-p-encpie', 'rd-p-ira', 'rd-p-versiones'].forEach(function (id) { R.paneles.push(id); });
 
     function boton(id, fn) { var b = $(id); if (!b) return; b.addEventListener('mousedown', function (e) { e.preventDefault(); }); b.addEventListener('click', fn); }
     function panel(btn, id, alAbrir) { boton(btn, function () { R.alternar(id); if (!$(id).hidden && alAbrir) alAbrir(); }); }
@@ -232,11 +232,43 @@
     }
     /** Desde «Insertar tabla»: origen = id de partida, @programa, @partidas, @materiales, @restricciones o @festivos */
     R.tablaOrigen = function (origen, ancho) {
+        if (origen === '@punchvista') { abrirPunch(null); return; }
         TABLA_ANCHO = 'width:' + ancho;
         var ok = origen === '@programa' ? tablaPrograma(0, false) : origen === '@partidas' ? tablaPrograma(0, true)
             : origen.charAt(0) === '@' ? tablaAdicional(origen.slice(1)) : tablaPrograma(origen, false);
         ok.then(function (hecho) { if (hecho) estado('Tabla insertada'); }).catch(function () { estado('Sin conexión: no se pudo leer la tabla', true); });
     };
+    // ---- Punch list con elección de columnas (tabla data-punch: se refresca sola) ----
+    var punchTabla = null;
+    function cfgPunchDeAtributo(v) { try { return JSON.parse(decodeURIComponent(escape(atob(v.replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return null; } }
+    function abrirPunch(tabla) {
+        punchTabla = tabla;
+        var cfg = tabla ? cfgPunchDeAtributo(tabla.getAttribute('data-punch')) : null;
+        var marcadas = cfg ? cfg.columnas : null;
+        Array.prototype.forEach.call($('rd-pu-cols').querySelectorAll('input'), function (i) { if (marcadas) i.checked = marcadas.indexOf(i.value) >= 0; });
+        $('rd-pu-estado').value = cfg ? cfg.estado : 'pendientes'; $('rd-pu-sev').value = cfg ? cfg.severidad : '';
+        $('rd-pu-con').value = cfg ? cfg.contratista : ''; $('rd-pu-lim').value = cfg ? cfg.limite : 50;
+        $('rd-pu-ok').textContent = tabla ? 'Aplicar' : 'Insertar';
+        R.paneles.forEach(function (id) { if ($(id)) $(id).hidden = id !== 'rd-p-punch'; });
+    }
+    boton('rd-x-punch-cfg', function () {
+        R.restaurarSeleccion();
+        var c = R.celdaActual(), t = c && c.closest('table');
+        if (!t || !t.hasAttribute('data-punch')) { estado('Coloca el cursor en una tabla del Punch list', true); return; }
+        abrirPunch(t);
+    });
+    boton('rd-pu-ok', function () {
+        var cols = Array.prototype.filter.call($('rd-pu-cols').querySelectorAll('input'), function (i) { return i.checked; }).map(function (i) { return i.value; });
+        if (!cols.length) { estado('Marca al menos una columna', true); return; }
+        estado('Cargando el Punch list…');
+        post(C.api.programa, { tabla: 'punchvista', cfg: JSON.stringify({ columnas: cols, estado: $('rd-pu-estado').value, severidad: $('rd-pu-sev').value, contratista: $('rd-pu-con').value, limite: +$('rd-pu-lim').value || 50 }) }).then(function (d) {
+            if (!d.success) { estado(d.error || 'No se pudo leer el Punch list', true); return; }
+            if (punchTabla && punchTabla.parentNode) { punchTabla.outerHTML = d.html; R.marcarSucio(); }
+            else { R.restaurarSeleccion(); R.insertarEnRaiz(d.html + '<p><br></p>'); }
+            $('rd-p-punch').hidden = true; punchTabla = null;
+            estado(d.total ? 'Tabla del Punch list lista (' + d.total + ' pendientes)' : 'No hay pendientes con ese filtro');
+        }).catch(function () { estado('Sin conexión: no se pudo leer el Punch list', true); });
+    });
     // Al abrir «Insertar tabla» o «Tabla del programa» se llenan los grupos de partidas
     var partidasCargadas = false;
     function cargarPartidas() {
@@ -524,6 +556,7 @@
     }
     document.querySelectorAll('[data-x-tabla]').forEach(function (b) {
         b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        if (b.dataset.xTabla === 'punch') return;
         b.addEventListener('click', function () { ({ combinar: combinar, dividir: dividir, ordenar: ordenarPorColumna, zebra: filasAlternas })[b.dataset.xTabla](); });
     });
     seleccionar('rd-x-formula', function (v) {

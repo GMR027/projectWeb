@@ -74,7 +74,7 @@
   }
 
   // ---------- historial ----------
-  const snap = () => ({ s: clone(state.shapes), l: clone(state.layers), e: clone(state.escala) });
+  const snap = () => ({ s: clone(state.shapes), l: clone(state.layers), e: clone(state.escala), g: clone(state.guides || []) });
   function commit(nuevas, capas, escala) {
     state.past.push(snap());
     if (state.past.length > 100) state.past.shift();
@@ -86,7 +86,7 @@
     asegurarCapas();
     render(); dirty(true);
   }
-  function restaurar(e) { state.shapes = e.s; state.layers = e.l; state.escala = e.e === undefined ? state.escala : e.e; asegurarCapas(); render(); dirty(true); }
+  function restaurar(e) { state.shapes = e.s; state.layers = e.l; state.escala = e.e === undefined ? state.escala : e.e; if (e.g) state.guides = e.g; asegurarCapas(); render(); pintarGuias(); dirty(true); }
   function undo() { if (!state.past.length) return; state.future.push(snap()); restaurar(state.past.pop()); }
   function redo() { if (!state.future.length) return; state.past.push(snap()); restaurar(state.future.pop()); }
 
@@ -221,9 +221,14 @@
   // ---------- nodos ----------
   const act = id => C.actividades.find(a => a.id === id);
   const colorLigado = d => { const a = act(d.actividad_id); return a ? COLORES_ESTADO[a.estado] : null; };
+  // Largo del trazo y separación, en múltiplos del grosor (se pueden cambiar en Propiedades)
+  const DASH_BASE = { dash: [4, 3], dashdot: [5, 2], dot: [1, 2] };
+  const dashMedidas = d => { const b = DASH_BASE[d.dash] || [4, 3]; return [Math.max(0.2, +d.dashLen || b[0]), Math.max(0.2, +d.dashGap || b[1])]; };
   function dashDe(d) {
     const g = d.strokeWidth || sw;
-    return d.dash === 'dash' ? [g * 4, g * 3] : d.dash === 'dashdot' ? [g * 5, g * 2, g, g * 2] : d.dash === 'dot' ? [g, g * 2] : undefined;
+    if (!DASH_BASE[d.dash]) return undefined;
+    const [l, s] = dashMedidas(d), min = 0.5;
+    return d.dash === 'dashdot' ? [g * l, g * s, g * Math.max(min, l / 5), g * s] : [g * l, g * s];
   }
   function getImg(src) {
     const e = imgCache[src];
@@ -375,13 +380,66 @@
     const esLinea = d && LINEAS.includes(d.type);
     tr.rotateEnabled(!ids.some(i => (forma(i) || {}).type === 'link'));
     tr.keepRatio(!!d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr'));
-    tr.enabledAnchors(esLinea ? ['middle-left', 'middle-right']
+    tr.enabledAnchors(esLinea ? (ids.length === 1 ? [] : ['middle-left', 'middle-right'])
       : d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr' || d.type === 'text') ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
       : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']);
+    pintarNodos();
     trLayer.batchDraw();
     panel(d || null); pintarAlinear();
   }
   const select = id => selectIds(id ? [id] : [], !!id);
+
+  // ---------- nodos de las líneas: arrastra un nodo para moverlo, arrastra el punto medio de un tramo para crear un nodo nuevo, doble clic en un nodo lo quita ----------
+  let nodosGrupo = null, nodosNodo = null;
+  function limpiarNodos() {
+    if (nodosGrupo) { nodosGrupo.destroy(); nodosGrupo = null; }
+    if (nodosNodo) { nodosNodo.off('.nodos'); nodosNodo = null; }
+  }
+  function pintarNodos() {
+    limpiarNodos();
+    const d = state.sel.length === 1 ? forma(state.sel[0]) : null, n = d && nodes[d.id];
+    const capa = d && capaPor(d.layer);
+    if (!d || !n || !modoSel() || !LINEAS.includes(d.type) || (capa && capa.locked) || !trLayer) return;
+    const k = 1 / stage.scaleX(), editable = d.type !== 'measure';
+    let pts = d.points.slice();
+    nodosGrupo = new Konva.Group({ name: 'nodos' }); trLayer.add(nodosGrupo);
+    nodosNodo = n;
+    const aCapa = (x, y) => n.getTransform().point({ x, y });
+    const aLocal = p => n.getTransform().copy().invert().point(p);
+    let vertices = [], medios = [];
+    const colocar = () => {
+      const m = n.getTransform();
+      vertices.forEach((c, i) => c.position(m.point({ x: pts[2 * i], y: pts[2 * i + 1] })));
+      medios.forEach((c, i) => c.position(m.point({ x: (pts[2 * i] + pts[2 * i + 2]) / 2, y: (pts[2 * i + 1] + pts[2 * i + 3]) / 2 })));
+      trLayer.batchDraw();
+    };
+    const vistaPrevia = () => { n.points(pts); layer.batchDraw(); };
+    const terminar = () => { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === d.id); if (t) { t.points = pts.map(v => Math.round(v * 100) / 100); commit(nuevas); } };
+    const mkVertice = i => {
+      const c = new Konva.Circle({ radius: 6 * k, fill: '#ffffff', stroke: '#0070c0', strokeWidth: 2 * k, draggable: true, name: 'nodo' });
+      c.on('mouseenter', () => { stage.container().style.cursor = 'move'; }); c.on('mouseleave', () => { stage.container().style.cursor = 'default'; });
+      c.on('dragmove', () => { const p = aLocal(c.position()); pts[2 * i] = p.x; pts[2 * i + 1] = p.y; vistaPrevia(); colocar(); });
+      c.on('dragend', terminar);
+      if (editable) c.on('dblclick dbltap', () => { if (pts.length <= 4) { status('Una línea necesita al menos dos nodos'); return; } pts.splice(2 * i, 2); terminar(); });
+      return c;
+    };
+    for (let i = 0; i < pts.length / 2; i++) { const c = mkVertice(i); vertices.push(c); nodosGrupo.add(c); }
+    if (editable) {
+      for (let i = 0; i < pts.length / 2 - 1; i++) {
+        const m = new Konva.Circle({ radius: 4.5 * k, fill: 'rgba(0,112,192,.35)', stroke: '#0070c0', strokeWidth: 1 * k, draggable: true, name: 'nodo-medio' });
+        m.on('mouseenter', () => { stage.container().style.cursor = 'copy'; }); m.on('mouseleave', () => { stage.container().style.cursor = 'default'; });
+        m.on('dragstart', () => {   // el punto medio se vuelve un nodo nuevo
+          pts.splice(2 * (i + 1), 0, ...(() => { const p = aLocal(m.position()); return [p.x, p.y]; })());
+          m.on('dragmove.nuevo', () => { const p = aLocal(m.position()); pts[2 * (i + 1)] = p.x; pts[2 * (i + 1) + 1] = p.y; vistaPrevia(); });
+        });
+        m.on('dragend', terminar);
+        medios.push(m); nodosGrupo.add(m);
+      }
+    }
+    colocar();
+    n.on('dragmove.nodos transform.nodos', colocar);
+  }
+
   function attach(n, d) {
     n.on('mousedown touchstart', e => {
       if (!modoSel()) return;
@@ -405,7 +463,7 @@
         ? { id: d.id, x: n.x(), y: n.y(), otros: state.sel.filter(i => i !== d.id && nodes[i]).map(i => ({ id: i, x: nodes[i].x(), y: nodes[i].y() })) } : null;
     });
     n.on('dragmove', () => {
-      if (imanOn()) n.position(ajustar({ x: n.x(), y: n.y() }));
+      if (imanOn() || guiasOn()) n.position(ajustar({ x: n.x(), y: n.y() }));
       if (arrastre && arrastre.id === d.id) { const dx = n.x() - arrastre.x, dy = n.y() - arrastre.y; arrastre.otros.forEach(o => nodes[o.id].position({ x: o.x + dx, y: o.y + dy })); }
     });
     n.on('dragend', () => {
@@ -530,6 +588,7 @@
     if (!d) return;
     const mostrar = (sel, ok) => { const el = p.querySelector(sel); if (el) el.closest('.ve-f').style.display = ok ? '' : 'none'; };
     const esTabla = d.type === 'table';
+    const pf = $('#p-punch-f'); if (pf) pf.style.display = esTabla && d.punch ? '' : 'none';
     const esLink = d.type === 'link';
     const conTrazo = !['text', 'restr', 'image', 'link'].includes(d.type);
     const cerrada = CERRADAS.includes(d.type);
@@ -543,6 +602,9 @@
     $('#p-bg-on').checked = !!d.bg; $('#p-bg').value = d.bg || '#ffeb00'; mostrar('#p-bg-on', esTexto); mostrar('#p-bg', esTexto && !!d.bg);
     sincroniza('#p-sw-r', '#p-sw', d.strokeWidth || sw); mostrar('#p-sw', conTrazo);
     $('#p-dash').value = d.dash || 'solid'; mostrar('#p-dash', conTrazo && d.type !== 'pin' && !esTabla);
+    const conDash = conTrazo && d.type !== 'pin' && !esTabla && !!DASH_BASE[d.dash];
+    const [dl, dg] = dashMedidas(d); $('#p-dash-l').value = +dl.toFixed(1); $('#p-dash-g').value = +dg.toFixed(1);
+    mostrar('#p-dash-l', conDash); mostrar('#p-dash-g', conDash);
     sincroniza('#p-op', '#p-op-n', d.opacity ?? 100);
     const conLetra = esTexto || esTabla || d.type === 'measure';
     $('#p-fs').value = d.fontSize || 40; mostrar('#p-fs', conLetra);
@@ -646,7 +708,9 @@
     // Tamaño de una imagen (o gráfico) insertado: conserva la proporción
     const tamImg = (campo) => () => { const d = cur(); if (!d || d.type !== 'image') return; const v = num($(campo === 'w' ? '#p-iw' : '#p-ih').value, 8, 20000, d[campo]), k = v / d[campo]; actualizar(d.id, { w: campo === 'w' ? v : d.w * k, h: campo === 'h' ? v : d.h * k }); };
     on('#p-iw', 'change', tamImg('w')); on('#p-ih', 'change', tamImg('h'));
-    on('#p-dash', 'change', e => cur() && actualizar(state.selId, { dash: e.target.value }));
+    on('#p-dash', 'change', e => cur() && actualizar(state.selId, { dash: e.target.value, dashLen: undefined, dashGap: undefined }));
+    on('#p-dash-l', 'change', e => cur() && actualizar(state.selId, { dashLen: Math.min(60, Math.max(0.2, +e.target.value || 1)) }));
+    on('#p-dash-g', 'change', e => cur() && actualizar(state.selId, { dashGap: Math.min(60, Math.max(0.2, +e.target.value || 1)) }));
     on('#p-fs', 'change', e => {
       const d = cur(); if (!d) return;
       const fs = num(e.target.value, 6, 400, 40);
@@ -968,7 +1032,7 @@
     document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('activo', b.dataset.tool === t));
     Object.values(nodes).forEach(n => n.draggable(modoSel() && n.listening()));
     stage.container().style.cursor = modoSel() ? 'default' : 'crosshair';
-    if (!modoSel()) { tr.nodes([]); trLayer.batchDraw(); }
+    if (!modoSel()) { tr.nodes([]); limpiarNodos(); trLayer.batchDraw(); }
   }
 
   // ---------- foto 360 de un hipervínculo «Vista 360» ----------
@@ -990,7 +1054,7 @@
   }
 
   // ---------- imágenes dentro del editor ----------
-  async function subirImagen(file, fraccion = 0.3) {
+  async function subirImagen(file, fraccion = 0.3, vinculo = null) {
     if (!file) return;
     status('Subiendo imagen…');
     const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('imagen', file);
@@ -1004,7 +1068,7 @@
         const max = Math.min(state.W, state.H) * fraccion, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
         const w = img.naturalWidth * k, h = img.naturalHeight * k;
         const c = layer.getAbsoluteTransform().copy().invert().point({ x: stage.width() / 2, y: stage.height() / 2 });
-        const sh = { id: uid(), type: 'image', src: d.src, x: c.x - w / 2, y: c.y - h / 2, w, h, rotation: 0, opacity: 100 };
+        const sh = { id: uid(), type: 'image', src: d.src, x: c.x - w / 2, y: c.y - h / 2, w, h, rotation: 0, opacity: 100, ...(vinculo ? { ref: vinculo.ref, refv: vinculo.v } : {}) };
         state.selId = sh.id; commit([...clone(state.shapes), sh]); setTool('select'); status('');
       };
       img.src = d.src;
@@ -1027,7 +1091,19 @@
   const reglasOn = () => !!$('#t-reglas') && $('#t-reglas').checked;
   const imanOn = () => !!$('#t-snap') && $('#t-snap').checked;
   const pasoGrilla = () => Math.max(2, +($('#t-grid-n') || {}).value || 50);
-  function ajustar(p) { if (!imanOn()) return p; const g = pasoGrilla(); return { x: Math.round(p.x / g) * g, y: Math.round(p.y / g) * g }; }
+  function ajustar(p) {
+    let q = p;
+    if (imanOn()) { const g = pasoGrilla(); q = { x: Math.round(p.x / g) * g, y: Math.round(p.y / g) * g }; }
+    if (!guiasOn()) return q;
+    const tol = 6 / (stage ? stage.scaleX() : 1);   // 6 px de pantalla
+    let mx = tol, my = tol;
+    (state.guides || []).forEach(g => {
+      if (g.visible === false) return;
+      if (g.eje === 'v' && Math.abs(p.x - g.pos) <= mx) { mx = Math.abs(p.x - g.pos); q = { ...q, x: g.pos }; }
+      if (g.eje === 'h' && Math.abs(p.y - g.pos) <= my) { my = Math.abs(p.y - g.pos); q = { ...q, y: g.pos }; }
+    });
+    return q;
+  }
   const fmtNum = v => { const a = Math.abs(v); return String(+v.toFixed(a >= 100 ? 1 : a >= 1 ? 2 : 3)); };
   function dibujarGrilla(ctx) {
     if (!$('#t-grid').checked) return;
@@ -1082,7 +1158,7 @@
     $('#ve-regla-esq').textContent = un;
   }
   function enlazarVista() {
-    ['#t-grid', '#t-reglas'].forEach(q => $(q).addEventListener('change', () => { if (q === '#t-reglas') encuadrar(); else refrescarVista(); }));
+    ['#t-grid', '#t-reglas', '#t-guias'].forEach(q => $(q) && $(q).addEventListener('change', () => { if (q === '#t-reglas') encuadrar(); else refrescarVista(); }));
     $('#t-grid-n').addEventListener('input', refrescarVista);
     $('#t-unidad').addEventListener('change', e => { if (state.escala) commit(undefined, undefined, { ...state.escala, unit: e.target.value }); });
     $('#ve-escala-x').addEventListener('click', () => { if (state.escala) commit(undefined, undefined, null); });
@@ -1117,8 +1193,123 @@
       const ok = await guardar(); if (ok !== false) location.href = url;
     });
   }
-  function refrescarVista() { if (glayer) glayer.batchDraw(); dibujarReglas(); }
+  function refrescarVista() { if (glayer) glayer.batchDraw(); dibujarReglas(); pintarGuias(); if (nodosGrupo) pintarNodos(); }
   function marcarPuntero() { ptr = stage.getPointerPosition(); dibujarReglas(); }
+
+
+  // ---------- guías (estilo Inkscape) ----------
+  // state.guides = [{id, eje:'v'|'h', pos (px del dibujo), visible, locked}]. Se arrastran desde las reglas, se mueven
+  // arrastrándolas (soltarlas sobre la regla las quita) y los puntos y las marcas se imantan a ellas. No salen en el PNG.
+  const guiasOn = () => !$('#t-guias') || $('#t-guias').checked;
+  const nuevaGuia = (eje, pos) => ({ id: 'g' + Date.now().toString(36) + (seq++), eje, pos, visible: true, locked: false });
+  const unidadesPorPx = () => { const e = state.escala; return e ? e.mmPorPx / UNIDADES[e.unit] : 1; };
+  const unidadGuia = () => state.escala ? state.escala.unit : 'px';
+  function cambiarGuias(nuevas) {
+    state.past.push(snap()); if (state.past.length > 100) state.past.shift();
+    state.future = []; state.guides = nuevas; dirty(true); pintarGuias();
+  }
+  function pintarGuias() {
+    const ov = $('#ve-guias'); if (!ov || !stage) return;
+    const R = reglasOn() ? REGLA : 0, k = stage.scaleX(), on = guiasOn();
+    ov.style.top = R + 'px'; ov.style.left = R + 'px'; ov.hidden = !on;
+    if (on) {
+      const ids = new Set();
+      (state.guides || []).forEach(g => {
+        if (g.visible === false) return;
+        ids.add(g.id);
+        let el = ov.querySelector('[data-id="' + g.id + '"]');
+        if (!el) { el = document.createElement('div'); el.dataset.id = g.id; ov.appendChild(el); }
+        el.className = 've-guia ve-guia-' + g.eje + (g.locked ? ' bloqueada' : '');
+        el.title = (g.locked ? 'Guía bloqueada' : 'Arrastra para mover; suéltala sobre la regla para quitarla') + ' · ' + fmtNum(g.pos * unidadesPorPx()) + ' ' + unidadGuia();
+        if (g.eje === 'v') el.style.left = (stage.x() - R + g.pos * k - 4) + 'px'; else el.style.top = (stage.y() - R + g.pos * k - 4) + 'px';
+      });
+      [...ov.children].forEach(el => { if (!ids.has(el.dataset.id) && !el.classList.contains('ve-guia-nueva')) el.remove(); });
+    }
+    pintarListaGuias();
+  }
+  function pintarListaGuias() {
+    const ul = $('#ve-guias-lista'); if (!ul) return;
+    if (ul.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;   // no pisar lo que se está escribiendo
+    const f = unidadesPorPx(), un = unidadGuia();
+    ul.innerHTML = (state.guides || []).map((g, i) =>
+      '<li class="ve-capa ve-guia-item' + (g.visible === false ? ' oculta' : '') + (g.locked ? ' bloqueada' : '') + '" data-id="' + g.id + '">' +
+      '<button type="button" class="ve-cb" data-op="ver" title="' + (g.visible === false ? 'Mostrar' : 'Ocultar') + ' guía">' + ico(g.visible === false ? IC.ojoNo : IC.ojo) + '</button>' +
+      '<button type="button" class="ve-cb" data-op="bloq" title="' + (g.locked ? 'Desbloquear' : 'Bloquear') + ' guía">' + ico(g.locked ? IC.candado : IC.abierto) + '</button>' +
+      '<span class="ve-capa-nombre">' + (g.eje === 'v' ? 'Vertical' : 'Horizontal') + ' ' + (i + 1) + '</span>' +
+      '<input type="number" step="any" class="ve-guia-pos" value="' + +(g.pos * f).toFixed(3) + '" aria-label="Posición de la guía" ' + (g.locked ? 'disabled' : '') + '><small class="text-muted">' + un + '</small>' +
+      '<button type="button" class="ve-cb ve-cb-del" data-op="borrar" title="Eliminar guía">' + ico(IC.basura) + '</button></li>').join('') ||
+      '<li class="text-muted text-sm">Sin guías. Arrástralas desde las reglas o usa los botones.</li>';
+  }
+  function enlazarGuias() {
+    const cont = $('#ve-lienzo'), ov = $('#ve-guias'); if (!cont || !ov) return;
+    const aDibujo = (e, eje) => {
+      const r = cont.getBoundingClientRect(), k = stage.scaleX();
+      return eje === 'v' ? (e.clientX - r.left - stage.x()) / k : (e.clientY - r.top - stage.y()) / k;
+    };
+    const sobreRegla = (e) => { const r = cont.getBoundingClientRect(), R = reglasOn() ? REGLA : 0; return e.clientX - r.left < R || e.clientY - r.top < R || e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom; };
+    // arrastre genérico: guia = objeto existente (se mueve) o {eje} nuevo
+    function arrastrar(ev, eje, existente) {
+      ev.preventDefault();
+      const antes = clone(state.guides || []);
+      let g = existente, vivo = null;
+      if (!g) { g = nuevaGuia(eje, aDibujo(ev, eje)); }
+      const el = document.createElement('div'); el.className = 've-guia ve-guia-nueva ve-guia-' + eje; ov.appendChild(el);
+      const mover = e => {
+        g.pos = aDibujo(e, eje); vivo = e;
+        const R = reglasOn() ? REGLA : 0, k = stage.scaleX();
+        if (eje === 'v') el.style.left = (stage.x() - R + g.pos * k - 4) + 'px'; else el.style.top = (stage.y() - R + g.pos * k - 4) + 'px';
+        el.classList.toggle('descartar', sobreRegla(e));
+        status('Guía ' + (eje === 'v' ? 'vertical' : 'horizontal') + ': ' + fmtNum(g.pos * unidadesPorPx()) + ' ' + unidadGuia() + (sobreRegla(e) ? ' (suelta para quitar)' : ''));
+      };
+      const fin = e => {
+        document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', fin);
+        el.remove();
+        const quitar = sobreRegla(e);
+        let lista;
+        if (existente) lista = quitar ? antes.filter(x => x.id !== g.id) : antes.map(x => x.id === g.id ? { ...x, pos: g.pos } : x);
+        else lista = quitar ? antes : [...antes, g];
+        // Si la guía existente no se movió, no se registra cambio
+        if (existente) existente.pos = antes.find(x => x.id === g.id).pos;
+        if (JSON.stringify(lista) !== JSON.stringify(antes)) { state.guides = antes; cambiarGuias(lista); } else pintarGuias();
+        status('');
+      };
+      document.addEventListener('mousemove', mover); document.addEventListener('mouseup', fin);
+      mover(ev);
+    }
+    $('#ve-regla-h').addEventListener('mousedown', e => { if (e.button === 0) arrastrar(e, 'h', null); });   // la regla de arriba da guías horizontales
+    $('#ve-regla-v').addEventListener('mousedown', e => { if (e.button === 0) arrastrar(e, 'v', null); });
+    ov.addEventListener('mousedown', e => {
+      const el = e.target.closest('.ve-guia'); if (!el || e.button !== 0) return;
+      const g = (state.guides || []).find(x => x.id === el.dataset.id); if (!g || g.locked) return;
+      // Se trabaja sobre una copia: la guía real se actualiza al soltar
+      arrastrar(e, g.eje, { ...g });
+    });
+    // Lista y botones del panel
+    const posCentro = eje => (eje === 'v' ? state.W : state.H) / 2;
+    $('#ve-guia-v').addEventListener('click', () => cambiarGuias([...(state.guides || []), nuevaGuia('v', posCentro('v'))]));
+    $('#ve-guia-h').addEventListener('click', () => cambiarGuias([...(state.guides || []), nuevaGuia('h', posCentro('h'))]));
+    $('#ve-guias-x').addEventListener('click', async () => {
+      if (!(state.guides || []).length) return;
+      const ok = await window.confirmarModal({ titulo: '¿Quitar todas las guías?', mensaje: 'Se eliminan las ' + state.guides.length + ' guías de esta lámina. Puedes deshacerlo con Ctrl+Z.', aceptar: 'Sí, quitar', iconoBoton: 'fa-trash-can' });
+      if (ok) cambiarGuias([]);
+    });
+    const ul = $('#ve-guias-lista');
+    ul.addEventListener('click', e => {
+      const b = e.target.closest('[data-op]'), li = e.target.closest('.ve-guia-item'); if (!b || !li) return;
+      const op = b.dataset.op, id = li.dataset.id;
+      const lista = clone(state.guides || []), g = lista.find(x => x.id === id); if (!g) return;
+      if (op === 'ver') g.visible = g.visible === false; else if (op === 'bloq') g.locked = !g.locked;
+      else if (op === 'borrar') lista.splice(lista.indexOf(g), 1);
+      cambiarGuias(lista);
+    });
+    ul.addEventListener('change', e => {
+      const inp = e.target.closest('.ve-guia-pos'); if (!inp) return;
+      const id = inp.closest('.ve-guia-item').dataset.id, lista = clone(state.guides || []), g = lista.find(x => x.id === id), v = parseFloat(inp.value);
+      if (!g || !isFinite(v)) { pintarListaGuias(); return; }
+      g.pos = v / unidadesPorPx(); inp.blur(); cambiarGuias(lista);
+    });
+    // Flechas sobre una guía no se usan: las flechas del teclado mueven las marcas
+  }
 
   // ---------- escala y medidas ----------
   let escalaRender;   // al dibujar otra lámina, su propia escala
@@ -1219,9 +1410,9 @@
       volcarActiva();
       const lista = state.slides ? state.slides.filter(x => x.dirty) : [null];
       for (const sl of lista) {
-        const datos = sl ? sl.data : { shapes: state.shapes, layers: state.layers, escala: state.escala };
+        const datos = sl ? sl.data : { shapes: state.shapes, layers: state.layers, escala: state.escala, guides: state.guides };
         const png = await renderizar({ ancho: state.W, alto: state.H, mime: C.guardado === 'png' ? 'image/png' : 'image/jpeg', calidad: 0.92, datos });
-        const cuerpo = { lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: datos.shapes, layers: datos.layers, escala: datos.escala || null }), png };
+        const cuerpo = { lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: datos.shapes, layers: datos.layers, escala: datos.escala || null, guides: datos.guides || [] }), png };
         if (sl) { cuerpo.hoja = sl.id; cuerpo.version = sl.version || ''; }
         const enviar = async () => (await fetch((C.api && C.api.marcas) || '/api/vplan/marcas', { method: 'POST', body: new URLSearchParams(cuerpo) })).json();
         let d = await enviar();
@@ -1242,13 +1433,13 @@
 
   // ---------- láminas del gráfico (solo en el Editor): cada una con sus marcas, capas e historial ----------
   const laminaAct = () => state.slides && state.slides[state.idx];
-  function volcarActiva() { const sl = laminaAct(); if (!sl) return; sl.data = { shapes: state.shapes, layers: state.layers, escala: state.escala }; sl.past = state.past; sl.future = state.future; }
+  function volcarActiva() { const sl = laminaAct(); if (!sl) return; sl.data = { shapes: state.shapes, layers: state.layers, escala: state.escala, guides: state.guides }; sl.past = state.past; sl.future = state.future; }
   function cargarLamina(i) {
     const sl = state.slides[i]; state.idx = i;
-    state.shapes = clone(sl.data.shapes || []); state.layers = clone(sl.data.layers || []); state.escala = sl.data.escala || null;
+    state.shapes = clone(sl.data.shapes || []); state.layers = clone(sl.data.layers || []); state.escala = sl.data.escala || null; state.guides = clone(sl.data.guides || []);
     state.past = sl.past; state.future = sl.future; state.selId = null; state.sel = []; capaActiva = null; celdasSel = { id: null, set: new Set() };
     if (poli) { poli.nodo.destroy(); poli = null; }
-    asegurarCapas(); render(); pintarLaminas();
+    asegurarCapas(); render(); pintarLaminas(); pintarGuias();
   }
   let tMini = null;
   function programarMiniatura() { if (state.slides) { clearTimeout(tMini); tMini = setTimeout(actualizarMiniatura, 700); } }
@@ -1282,7 +1473,7 @@
   async function nuevaLamina() {
     volcarActiva(); const d = await apiLamina({ accion: 'crear', despues: laminaAct().id });
     if (!d.success) { status('Error: ' + (d.error || 'no se pudo crear')); return; }
-    state.slides.splice(state.idx + 1, 0, { id: d.id, nombre: d.nombre, data: { shapes: [], layers: [], escala: null }, past: [], future: [], thumb: '', dirty: true, version: d.version });   // en blanco pero «con cambios»: así se guarda y no se pierde al exportar
+    state.slides.splice(state.idx + 1, 0, { id: d.id, nombre: d.nombre, data: { shapes: [], layers: [], escala: null, guides: [] }, past: [], future: [], thumb: '', dirty: true, version: d.version });   // en blanco pero «con cambios»: así se guarda y no se pierde al exportar
     cargarLamina(state.idx + 1); refrescarPend(); status('Lámina creada');
   }
   async function duplicarLamina() {
@@ -1347,10 +1538,10 @@
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
     return new Promise(ok => cv.toBlob(ok, 'image/png'));
   }
-  async function insertarDesdeUrl(url, fraccion) {
+  async function insertarDesdeUrl(url, fraccion, vinculo = null) {
     if (!capaOk()) return;
     status('Insertando…');
-    try { const b = await aBlob(url, 512 * 2); await subirImagen(new File([b], 'imagen.png', { type: b.type || 'image/png' }), fraccion); }
+    try { const b = await aBlob(url, 512 * 2); await subirImagen(new File([b], 'imagen.png', { type: b.type || 'image/png' }), fraccion, vinculo); }
     catch (e) { status('No se pudo insertar: ' + (e.message || 'error')); }
   }
   function pintarSimbolos() {
@@ -1359,7 +1550,7 @@
     const grupos = {};
     (C.simbolos || []).filter(x => !q || (x.nombre + ' ' + x.cat).toLowerCase().includes(q)).forEach(x => { (grupos[x.cat] = grupos[x.cat] || []).push(x); });
     cont.innerHTML = Object.keys(grupos).map(cat => '<h5>' + esc(cat) + '</h5><div class="ve-sims">' + grupos[cat].map(x =>
-      '<button type="button" class="ve-sim" data-src="' + esc(x.src) + '" title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('') || '<p class="text-muted text-sm">Sin resultados.</p>';
+      '<button type="button" class="ve-sim" data-src="' + esc(x.src) + '"' + (x.ref ? ' data-ref="' + esc(x.ref) + '" data-v="' + esc(x.v || '') + '"' : '') + ' title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('') || '<p class="text-muted text-sm">Sin resultados.</p>';
     $('#sim-cajetines').innerHTML = (C.cajetines || []).map((c, i) => '<button type="button" class="btn btn-sm btn-ghost" data-caj="' + i + '" title="' + (c.orientacion === 'banda' ? 'Banda inferior' : 'Tabla en la esquina inferior derecha') + '"><i class="fa-solid fa-table-cells"></i> ' + esc(c.nombre) + '</button>').join('');
     const sfCaja = $('#sim-sheetflow-caja');
     if (sfCaja) {
@@ -1368,7 +1559,7 @@
     }
     const gr = $('#sim-graficos');
     gr.innerHTML = (C.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q)).map(x =>
-      '<button type="button" class="ve-sim ve-sim-gr" data-src="' + esc(x.src) + '" title="Insertar «' + esc(x.nombre) + '»"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') || '<p class="text-muted text-sm">No hay otros gráficos guardados en este proyecto.</p>';
+      '<button type="button" class="ve-sim ve-sim-gr" data-src="' + esc(x.src) + '"' + (x.ref ? ' data-ref="' + esc(x.ref) + '" data-v="' + esc(x.v || '') + '"' : '') + ' title="Insertar «' + esc(x.nombre) + '» (vinculada: se actualiza si la editas)"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') || '<p class="text-muted text-sm">No hay otros gráficos guardados en este proyecto.</p>';
   }
   // Cajetín: tabla con los datos del dibujo (proyecto, título, fecha…). Si la lámina ya tiene uno de la misma plantilla, se actualiza
   function insertarCajetin(c) {
@@ -1443,6 +1634,119 @@
     }
     if (cambiadas) { render(); dirty(true); status(cambiadas + ' tabla(s) actualizada(s) desde SheetFlow · guarda para conservar el cambio'); }
   }
+  // Tabla del Punch list: forma `table` con `punch: cfg`; al abrir se vuelve a leer del módulo Punch
+  async function leerPunch(cfg) {
+    const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('cfg', JSON.stringify(cfg));
+    return (await fetch((C.api || {}).punch || '/api/graficos/punch', { method: 'POST', body: fd })).json();
+  }
+  // La tabla y sus fotos (imágenes agrupadas con ella, marcadas con punchFoto) se arman juntas; x,y = esquina de la tabla
+  function tablaDePunch(r, x, y, grp) {
+    const cells = [r.columnas.map(c => c || ' ')].concat(r.filas.length ? r.filas : [r.columnas.map((_, i) => i === 0 ? 'Sin pendientes' : '')]), nc = r.columnas.length;
+    const fotos = r.fotos || [], conFoto = new Set(fotos.map(f => f[0] + 1)), colFoto = new Set(fotos.map(f => f[1]));
+    const fs = Math.max(10, Math.round(state.W / 90)), pd = Math.max(2, fs * 0.25), altoFoto = fs * 6;
+    let colW = Array.from({ length: nc }, (_, c) => colFoto.has(c) ? fs * 9 : Math.min(fs * 28, Math.max(fs * 5, Math.max(...cells.map(f => String(f[c] || '').length)) * fs * 0.6 + 2 * pd)));
+    const total = suma(colW), tope = state.W * 0.92;
+    if (total > tope) colW = colW.map(w => w * tope / total);
+    const d = { id: uid(), type: 'table', x, y, w: 1, h: 1, rows: cells.length, cols: nc, header: true, fontSize: fs, fill: '#ffffff', headerFill: '#1f3a5f', textColor: '#111111', stroke: '#444444', strokeWidth: 1, rotation: 0, opacity: 100,
+      punch: r.cfg, cells, colW, rowH: cells.map((_, i) => conFoto.has(i) ? altoFoto : fs * 2.2), cellText: {}, cellFill: {} };
+    for (let c = 0; c < nc; c++) d.cellText['0,' + c] = '#ffffff';
+    d.w = suma(colW); ajustarFilas(d);
+    const out = [d];
+    if (fotos.length) {
+      d.grp = grp || ('g' + uid());
+      fotos.forEach(([fila, col, src, iw, ih]) => {
+        const cw = d.colW[col] - 2 * pd, ch = d.rowH[fila + 1] - 2 * pd, k = Math.min(cw / iw, ch / ih), w = iw * k, h = ih * k;
+        out.push({ id: uid(), type: 'image', src, punchFoto: true, grp: d.grp, x: x + suma(d.colW, col) + (d.colW[col] - w) / 2, y: y + suma(d.rowH, fila + 1) + (d.rowH[fila + 1] - h) / 2, w, h, rotation: 0, opacity: 100 });
+      });
+    }
+    return out;
+  }
+  let punchEditando = null;   // id de la tabla que se reconfigura (null = insertar nueva)
+  function abrirPunchCfg(forma) {
+    punchEditando = forma ? forma.id : null;
+    const cfg = forma ? forma.punch : { columnas: C.punchBase, estado: 'pendientes', severidad: '', contratista: '', limite: 40 };
+    $('#sim-punch-cols').innerHTML = (C.punchCols || []).map(x => '<label class="ve-chk"><input type="checkbox" value="' + esc(x.k) + '"' + (cfg.columnas.includes(x.k) ? ' checked' : '') + '> ' + esc(x.etq) + '</label>').join(' ');
+    $('#sim-punch-estado').value = cfg.estado; $('#sim-punch-sev').value = cfg.severidad || ''; $('#sim-punch-con').value = cfg.contratista || ''; $('#sim-punch-lim').value = Math.min(120, cfg.limite || 40);
+    $('#sim-punch-ok').textContent = forma ? 'Aplicar' : 'Insertar';
+    $('#sim-punch-cfg').hidden = false;
+    const t = document.querySelector('.ve-tabs [data-tab=simbolos]'); if (t) t.click();
+  }
+  async function aplicarPunchCfg() {
+    if (!capaOk()) return;
+    const columnas = [...$('#sim-punch-cols').querySelectorAll('input:checked')].map(i => i.value);
+    if (!columnas.length) { status('Marca al menos una columna'); return; }
+    status('Cargando el Punch list…');
+    try {
+      const r = await leerPunch({ columnas, estado: $('#sim-punch-estado').value, severidad: $('#sim-punch-sev').value, contratista: $('#sim-punch-con').value, limite: Math.min(120, +$('#sim-punch-lim').value || 40) });
+      if (!r.success) { status('No se pudo leer el Punch list: ' + (r.error || 'error')); return; }
+      if (punchEditando) {
+        const vieja = state.shapes.find(x => x.id === punchEditando);
+        if (!vieja) { status('La tabla ya no existe'); return; }
+        commit(reemplazarPunch(clone(state.shapes), vieja, r));
+        status('Tabla del Punch list actualizada');
+      } else {
+        const t = tablaDePunch(r, 0, 0), n = t[0];
+        const dx = Math.max(0, (state.W - n.w) / 2), dy = Math.max(state.H * 0.02, Math.min((state.H - n.h) / 2, state.H - n.h));
+        const nuevas = tablaDePunch(r, dx, dy);
+        state.selId = nuevas[0].id; commit([...clone(state.shapes), ...nuevas]);
+        status('Tabla del Punch list insertada (se actualiza al abrir el gráfico)');
+      }
+      $('#sim-punch-cfg').hidden = true; punchEditando = null;
+    } catch (err) { status('No se pudo leer el Punch list'); }
+  }
+  // Cambia una tabla del Punch list por otra leída (conserva posición, opacidad, capa y comentario) y renueva sus fotos
+  function reemplazarPunch(shapes, vieja, r) {
+    const n = tablaDePunch(r, vieja.x, vieja.y, vieja.grp);
+    Object.assign(n[0], { id: vieja.id, opacity: vieja.opacity, layer: vieja.layer, comment: vieja.comment });
+    const fuera = x => x.id === vieja.id || (x.punchFoto && vieja.grp && x.grp === vieja.grp);
+    const i = shapes.findIndex(x => x.id === vieja.id);
+    const resto = shapes.filter(x => !fuera(x));
+    resto.splice(Math.max(0, Math.min(i, resto.length)), 0, ...n);
+    return resto;
+  }
+  const firmaPunch = (cells, fotos) => JSON.stringify([cells, (fotos || []).map(f => f[2])]);
+  async function refrescarPunch() {
+    const lista = state.shapes.filter(x => x.type === 'table' && x.punch);
+    if (!lista.length) return;
+    let cambiadas = 0, shapes = clone(state.shapes);
+    for (const cfg of [...new Set(lista.map(x => JSON.stringify(x.punch)))]) {
+      try {
+        const r = await leerPunch(JSON.parse(cfg)); if (!r.success) continue;
+        const nueva = tablaDePunch(r, 0, 0);
+        const fotosViejas = t => shapes.filter(x => x.punchFoto && t.grp && x.grp === t.grp).map(x => [0, 0, x.src]);
+        for (const t of shapes.filter(x => x.type === 'table' && x.punch && JSON.stringify(x.punch) === cfg)) {
+          if (firmaPunch(t.cells, fotosViejas(t)) === firmaPunch(nueva[0].cells, r.fotos)) continue;
+          cambiadas++;
+          shapes = reemplazarPunch(shapes, t, r);
+        }
+      } catch (err) { /* sin conexión: se queda la copia guardada */ }
+    }
+    if (cambiadas) { state.shapes = shapes; render(); dirty(true); status(cambiadas + ' tabla(s) del Punch list actualizada(s) · guarda para conservar el cambio'); }
+  }
+  // Imágenes vinculadas a una simbología/símbolo (shape.ref): si el origen cambió desde que se colocaron, se renuevan
+  // conservando posición, giro, opacidad y ancho (solo la lámina activa, como las tablas de SheetFlow)
+  async function refrescarVinculadas() {
+    const actuales = {};
+    [...(C.graficos || []), ...(C.simbolos || [])].forEach(x => { if (x.ref) actuales[x.ref] = x; });
+    const pend = state.shapes.filter(x => x.type === 'image' && x.ref && actuales[x.ref] && actuales[x.ref].v !== x.refv);
+    if (!pend.length) return;
+    let cambiadas = 0;
+    for (const s of pend) {
+      const o = actuales[s.ref];
+      try {
+        const b = await aBlob(o.src + (o.src.includes('?') ? '&' : '?') + 'r=' + encodeURIComponent(o.v), 1024);
+        const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('imagen', new File([b], 'imagen.png', { type: b.type || 'image/png' }));
+        const d = await (await fetch((C.api && C.api.imagen) || '/api/vplan/imagen', { method: 'POST', body: fd })).json();
+        if (!d.success) continue;
+        const dim = await new Promise(ok => { const i = new Image(); i.onload = () => { imgCache[d.src] = { img: i, ok: true }; ok([i.naturalWidth || 1, i.naturalHeight || 1]); }; i.onerror = () => ok(null); i.src = d.src; });
+        if (!dim) continue;
+        const h = s.w * dim[1] / dim[0];
+        state.shapes = state.shapes.map(x => x.id !== s.id ? x : Object.assign({}, x, { src: d.src, refv: o.v, h, y: x.y + (x.h - h) / 2 }));
+        cambiadas++;
+      } catch (err) { /* sin conexión: se queda la imagen guardada */ }
+    }
+    if (cambiadas) { render(); dirty(true); status(cambiadas + ' imagen(es) actualizada(s) desde su simbología · guarda para conservar el cambio'); }
+  }
   async function importarSimbolos(archivos) {
     if (!archivos || !archivos.length) return;
     const fd = new FormData(); fd.append('proyecto', C.proyecto); [...archivos].forEach(f => fd.append('archivos[]', f));
@@ -1461,6 +1765,13 @@
     pintarSimbolos();
     $('#sim-importar').addEventListener('click', () => $('#sim-importar-archivo').click());
     $('#sim-importar-archivo').addEventListener('change', e => { importarSimbolos(e.target.files); e.target.value = ''; });
+    if ($('#sim-punch-caja') && C.modo !== 'grafico') $('#sim-punch-caja').hidden = true;
+    if ($('#sim-punch')) {
+      $('#sim-punch').addEventListener('click', () => abrirPunchCfg(null));
+      $('#sim-punch-ok').addEventListener('click', aplicarPunchCfg);
+      $('#sim-punch-x').addEventListener('click', () => { $('#sim-punch-cfg').hidden = true; punchEditando = null; });
+      $('#b-punch-cfg').addEventListener('click', () => { const d = state.shapes.find(x => x.id === state.selId); if (d && d.punch) abrirPunchCfg(d); });
+    }
     const sfLista = $('#sim-sheetflow');
     if (sfLista) sfLista.addEventListener('click', e => { const b = e.target.closest('[data-sf]'); if (b) insertarSheetflow((C.sheetflow || [])[+b.dataset.sf]); });
     $('#sim-cajetines').addEventListener('click', e => { const b = e.target.closest('[data-caj]'); if (b) insertarCajetin((C.cajetines || [])[+b.dataset.caj]); });
@@ -1473,11 +1784,11 @@
     $('#sim-gr-todas').addEventListener('click', async () => {
       const gs = C.graficos || [];
       if (!gs.length) { status('No hay simbologías guardadas en este proyecto.'); return; }
-      for (const g of gs) await insertarDesdeUrl(g.src, 0.5);
+      for (const g of gs) await insertarDesdeUrl(g.src, 0.5, g.ref ? { ref: g.ref, v: g.v } : null);
     });
     $('#ve-tab-simbolos').addEventListener('click', e => {
       const b = e.target.closest('.ve-sim'); if (!b) return;
-      insertarDesdeUrl(b.dataset.src, b.classList.contains('ve-sim-gr') ? 0.5 : 0.1);
+      insertarDesdeUrl(b.dataset.src, b.classList.contains('ve-sim-gr') ? 0.5 : 0.1, b.dataset.ref ? { ref: b.dataset.ref, v: b.dataset.v || '' } : null);
     });
   }
 
@@ -1745,16 +2056,17 @@
       const i = state.slides.findIndex(l => l.id === C.laminaActiva);
       state.idx = i >= 0 ? i : 0;
       const d0 = state.slides[state.idx].data;
-      state.shapes = clone(d0.shapes || []); state.layers = clone(d0.layers || []); state.escala = d0.escala || null;
+      state.shapes = clone(d0.shapes || []); state.layers = clone(d0.layers || []); state.escala = d0.escala || null; state.guides = clone(d0.guides || []);
     } else {
       state.shapes = (C.marcas && C.marcas.shapes) ? C.marcas.shapes : [];
       state.layers = (C.marcas && C.marcas.layers) ? C.marcas.layers : [];
       state.escala = (C.marcas && C.marcas.escala) || null;
+      state.guides = clone((C.marcas && C.marcas.guides) || []);
     }
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
     $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
     asegurarCapas();
-    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow();
+    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); refrescarPunch(); refrescarVinculadas();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }

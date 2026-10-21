@@ -37,6 +37,11 @@ contextBridge.exposeInMainWorld('pw', {
     propuesta: inv('ord:propuesta'), aplicar: inv('ord:aplicar'), rechazar: inv('ord:rechazar'), deshacer: inv('ord:deshacer'),
     alAvance: fn => ipcRenderer.on('ord:progreso', (_e, p) => fn(p)),
   },
+  ocr: { estado: inv('ocr:estado'), instalar: inv('ocr:instalar'), quitar: inv('ocr:quitar'), alAvance: fn => ipcRenderer.on('ocr:progreso', (_e, p) => fn(p)) },
+  tdoc: {
+    leer: inv('tdoc:leer'), crear: inv('tdoc:crear'),
+    alAvance: fn => ipcRenderer.on('tdoc:progreso', (_e, p) => fn(p)),
+  },
   ens: {
     estado: inv('ens:estado'), subir: inv('ens:subir'), quitar: inv('ens:quitar'), mensaje: inv('ens:mensaje'), cancelar: inv('ens:cancelar'),
     aplicar: inv('ens:aplicar'), revertir: inv('ens:revertir'), rechazar: inv('ens:rechazar'), propuesta: inv('ens:propuesta'),

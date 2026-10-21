@@ -56,6 +56,7 @@
         const el = elDe(b);
         if (!el) return;
         el.style.left = b.x + '%'; el.style.top = b.y + '%'; el.style.width = b.w + '%'; el.style.height = b.h + '%'; el.style.zIndex = b.z;
+        if (window.vplanAjustar) window.vplanAjustar(el);
     };
     const aplicarTodos = () => bloques.forEach(aplicar);
 
@@ -571,12 +572,14 @@
             h += '<div class="vp-dis-fila">' + campo('vp-c-seq', 'Numeración (SEQ)', '<select id="vp-c-seq">' + opciones([['continuo', 'Continua 1..n'], ['partida', 'La de cada partida, con subtítulos']], c.seq || 'continuo') + '</select>') +
                 '<div class="campo"><label for="vp-c-color">Color</label><input type="color" id="vp-c-color" value="' + esc(c.color || '#5b82b4') + '"> <button type="button" class="btn btn-sm btn-ghost" id="vp-c-color-auto">Auto</button></div></div>';
             h += '<div class="campo"><label>Partidas y actividades</label><p class="text-sm text-muted">Marca las partidas completas o solo algunas actividades. Se ve al guardar el diseño.</p><div id="vp-fuentes" class="vp-fuentes"></div></div>';
+            h += '<div class="campo"><label>Columnas</label><p class="text-sm text-muted">Mueve las columnas de izquierda a derecha o agrega columnas de texto propias (se capturan en la lámina). Se ve al guardar el diseño.</p><ul id="vp-cols" class="vp-capas-lista"></ul>' +
+                '<button type="button" class="btn btn-sm btn-primary" id="vp-col-mas"><i class="fa-solid fa-plus"></i> Agregar columna de texto</button></div>';
         } else if (b.tipo === 'tabla') {
             const t = (D.tablas || {})[(c.tabla_id || 0)] || {};
             h += '<p class="text-sm">Tabla: <strong>' + esc(t.titulo || '') + '</strong></p><p class="text-sm"><a href="/vplan/tablas/editar?proyecto=' + D.proyecto + '&id=' + (c.tabla_id || 0) + '">Editar sus datos</a></p>' +
                 '<p class="text-sm text-muted">El tamaño de la letra se ajusta solo al espacio del bloque.</p>';
         } else if (b.tipo === 'imagen') {
-            h += '<p class="text-sm text-muted">Copia de un símbolo o simbología. Se ajusta al bloque sin deformarse; cambia el tamaño arrastrando las esquinas.</p>' +
+            h += '<p class="text-sm text-muted">' + (c.ref ? '<i class="fa-solid fa-link"></i> Vinculada a su simbología o símbolo: si lo editas, esta imagen se actualiza sola al abrir la lámina. ' : 'Copia de un símbolo o simbología. ') + 'Se ajusta al bloque sin deformarse; cambia el tamaño arrastrando las esquinas.</p>' +
                 campo('vp-c-alinear', 'Alineación', '<select id="vp-c-alinear">' + opciones(ALIN, c.alinear || 'centro') + '</select>');
         } else if (b.tipo === 'cajetin') {
             const cjs = (D.biblioteca && D.biblioteca.cajetines) || [];
@@ -606,7 +609,7 @@
             $('vp-dis-tipo').textContent = nombreDe(b);
             marcarSucio(); pintarCapas();
         });
-        if (b.tipo === 'tareas') pintarFuentes(b);
+        if (b.tipo === 'tareas') { pintarFuentes(b); pintarColumnas(b); }
     }
 
     function enlazarCampos(b) {
@@ -640,6 +643,54 @@
         const auto = g('vp-c-color-auto');
         if (auto) auto.addEventListener('click', () => { c.color = ''; marcarSucio(); if (b.tipo !== 'tareas') { const t = elDe(b).querySelector('.vp-txt'); if (t) t.style.color = ''; } });
     }
+
+    // Columnas de un bloque de tareas: orden horizontal y columnas de texto propias
+    const COLS_BASE = [['seq', '# SEQ'], ['tarea', 'TASK'], ['inicio', 'START'], ['fin', 'FINISH'], ['rec', 'RECOVERY (según la lámina)'], ['pct', '%'], ['restr', 'CONSTRAINS']];
+    function ordenColumnas(c) {
+        const ids = (c.columnas || []).map(x => 'x:' + x.id), validos = COLS_BASE.map(x => x[0]).concat(ids);
+        const o = (c.orden || []).filter((t, i, a) => validos.includes(t) && a.indexOf(t) === i);
+        COLS_BASE.forEach((x, i) => { if (!o.includes(x[0])) o.splice(Math.min(i, o.length), 0, x[0]); });
+        ids.forEach(t => { if (!o.includes(t)) o.push(t); });
+        return o;
+    }
+    function pintarColumnas(b) {
+        const c = b.config, ul = document.getElementById('vp-cols');
+        if (!ul) return;
+        const orden = c.orden = ordenColumnas(c);
+        ul.innerHTML = orden.map((t, i) => {
+            const base = COLS_BASE.find(x => x[0] === t), col = base ? null : (c.columnas || []).find(x => 'x:' + x.id === t);
+            return '<li class="vp-capa" data-t="' + esc(t) + '"><span class="vp-capa-nombre">' + (base ? esc(base[1]) : '<input type="text" class="vp-col-tit" maxlength="40" placeholder="Título de la columna" value="' + esc(col.titulo) + '">') + '</span>' +
+                '<button type="button" class="vp-ib" data-m="-1" title="Mover a la izquierda"' + (i === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i></button>' +
+                '<button type="button" class="vp-ib" data-m="1" title="Mover a la derecha"' + (i === orden.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-right"></i></button>' +
+                (base ? '' : '<button type="button" class="vp-ib" data-q="1" title="Quitar la columna"><i class="fa-solid fa-trash-can"></i></button>') + '</li>';
+        }).join('');
+        ul.querySelectorAll('li').forEach(li => {
+            const t = li.dataset.t;
+            li.querySelectorAll('[data-m]').forEach(bt => bt.addEventListener('click', () => {
+                const i = c.orden.indexOf(t), j = i + (+bt.dataset.m);
+                if (j < 0 || j >= c.orden.length) return;
+                [c.orden[i], c.orden[j]] = [c.orden[j], c.orden[i]]; marcarSucio(); pintarColumnas(b);
+            }));
+            const tit = li.querySelector('.vp-col-tit');
+            if (tit) tit.addEventListener('input', () => { c.columnas.find(x => 'x:' + x.id === t).titulo = tit.value; marcarSucio(); });
+            const q = li.querySelector('[data-q]');
+            if (q) q.addEventListener('click', () => {
+                c.columnas = c.columnas.filter(x => 'x:' + x.id !== t); c.orden = c.orden.filter(x => x !== t);
+                if (!c.columnas.length) delete c.columnas;
+                marcarSucio(); pintarColumnas(b);
+            });
+        });
+        document.getElementById('vp-col-mas').disabled = (c.columnas || []).length >= 6;
+    }
+    document.addEventListener('click', e => {
+        const bt = e.target.closest && e.target.closest('#vp-col-mas');
+        if (!bt || !seleccion) return;
+        const c = seleccion.config;
+        if ((c.columnas || []).length >= 6) return;
+        const id = Math.random().toString(36).slice(2, 8);
+        (c.columnas = c.columnas || []).push({ id, titulo: 'COLUMNA' });
+        (c.orden = ordenColumnas(c)); marcarSucio(); pintarColumnas(seleccion);
+    });
 
     // Partidas y actividades de un bloque de tareas
     function pintarFuentes(b) {
@@ -730,7 +781,7 @@
         Object.assign(grupos, g0);
         const btnTodas = $('vp-sim-todas'); if (btnTodas) btnTodas.hidden = !(BIB.graficos || []).some(x => x.tipo === 'simbologia');
         lista.innerHTML = Object.keys(grupos).map(cat => '<h5 class="vp-ins-grupo">' + esc(cat) + '</h5><div class="vp-sim-grid">' + grupos[cat].map(x =>
-            '<button type="button" class="vp-sim" data-src="' + esc(x.src) + '" data-nombre="' + esc(x.nombre) + '" title="' + esc(x.nombre) + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('')
+            '<button type="button" class="vp-sim" data-src="' + esc(x.src) + '" data-nombre="' + esc(x.nombre) + '"' + (x.ref ? ' data-ref="' + esc(x.ref) + '" data-v="' + esc(x.v || '') + '"' : '') + ' title="' + esc(x.nombre) + (x.ref ? ' (vinculada: se actualiza sola)' : '') + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('')
             || '<p class="text-sm text-muted">Sin resultados.</p>';
         const est = $('vp-sim-estampas');
         if (est) est.innerHTML = (BIB.estampas || []).map(x => '<button type="button" class="vp-ins-bloque" data-estampa="' + (+x.id) + '" title="Estampa inteligente: se actualiza sola con los datos del proyecto"><i class="fa-solid fa-wand-magic-sparkles"></i><span>' + esc(x.nombre) + '</span></button>').join('')
@@ -746,7 +797,7 @@
         cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
         return new Promise(ok => cv.toBlob(ok, 'image/png'));
     }
-    async function insertarImagen(src, nombre) {
+    async function insertarImagen(src, nombre, ref, refv) {
         const est = $('vp-sim-estado'); est.textContent = 'Insertando…';
         try {
             const blob = await rasterizar(src);
@@ -757,7 +808,7 @@
             const ancho = Math.min(20, 12), hojaR = (tamano.ancho_mm || 1) / (tamano.alto_mm || 1);
             let w = ancho, h = redond(w * hojaR * dim[1] / dim[0]);
             if (h > 40) { h = 40; w = redond(h / hojaR * dim[0] / dim[1]); }
-            const b = crearBloque('imagen', { archivo: d.src.split('/').pop(), nombre }, null, null, w, h);
+            const b = crearBloque('imagen', Object.assign({ archivo: d.src.split('/').pop(), nombre }, ref ? { ref, refv: refv || '' } : {}), null, null, w, h);
             const el = elDe(b); if (el) el.innerHTML = '<div class="vp-img" style="justify-content:center"><img src="' + esc(d.src) + '" alt=""></div>';
             seleccionar(b, true);
             est.textContent = '';
@@ -767,9 +818,9 @@
         pintarBiblioteca();
         $('vp-sim-buscar').addEventListener('input', pintarBiblioteca);
         $('vp-sim-todas').addEventListener('click', async () => {
-            for (const x of (BIB.graficos || []).filter(x => x.tipo === 'simbologia')) await insertarImagen(x.src, x.nombre);
+            for (const x of (BIB.graficos || []).filter(x => x.tipo === 'simbologia')) await insertarImagen(x.src, x.nombre, x.ref, x.v);
         });
-        $('vp-sim-lista').addEventListener('click', e => { const b = e.target.closest('.vp-sim'); if (b) insertarImagen(b.dataset.src, b.dataset.nombre); });
+        $('vp-sim-lista').addEventListener('click', e => { const b = e.target.closest('.vp-sim'); if (b) insertarImagen(b.dataset.src, b.dataset.nombre, b.dataset.ref, b.dataset.v); });
         if ($('vp-sim-estampas')) $('vp-sim-estampas').addEventListener('click', e => {
             const b = e.target.closest('[data-estampa]'); if (!b) return;
             const x = (BIB.estampas || []).find(y => +y.id === +b.dataset.estampa); if (!x) return;

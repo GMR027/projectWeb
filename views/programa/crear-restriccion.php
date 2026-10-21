@@ -1,5 +1,5 @@
 <div class="page-header">
-    <h2>Nueva Restricción — <?php echo s($actividad->codigo); ?></h2>
+    <h2><?php echo !empty($editando) ? 'Editar' : 'Nueva'; ?> Restricción — <?php echo s($actividad->codigo); ?></h2>
     <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 
@@ -8,6 +8,7 @@
         <strong>Actividad:</strong> <?php echo s($actividad->nombre); ?>
     </div>
     <form method="POST" class="formulario">
+        <?php if (!empty($volver)): ?><input type="hidden" name="volver" value="<?php echo s($volver); ?>"><?php endif; ?>
         <div class="form-grid">
             <div class="campo">
                 <label for="tipo_id">Tipo de Restricción *</label>
@@ -32,6 +33,15 @@
                 <label for="descripcion">Descripción *</label>
                 <textarea id="descripcion" name="descripcion" rows="3" required><?php echo s($restriccion->descripcion); ?></textarea>
             </div>
+            <?php if (!empty($editando)): ?>
+            <div class="campo">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="activa" <?php echo $restriccion->estado === 'activa' ? 'selected' : ''; ?>>Activa</option>
+                    <option value="resuelta" <?php echo $restriccion->estado === 'resuelta' ? 'selected' : ''; ?>>Resuelta</option>
+                </select>
+            </div>
+            <?php endif; ?>
         </div>
         <button type="submit" class="btn btn-primary">Guardar Restricción</button>
     </form>

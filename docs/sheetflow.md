@@ -31,6 +31,11 @@ _Se lee solo al trabajar en este módulo._
 - `EnlacesLamina::destinos()` incluye las tablas (`/sheetflow/ver`).
 - Importar: `Sheetflow::importar()` (PhpSpreadsheet; csv/xlsx/ods, primera hoja, 1.ª fila = encabezados; detecta columnas numéricas; CSV en UTF-8 o Windows-1252).
 
+## Tabla inteligente y tipos de captura (2026-10-20)
+- «Nueva tabla › Tabla inteligente»: constructor guiado (nombre, tipo y color de encabezado por columna, mover, renglones iniciales) → `Sheetflow::inteligente()`; el color va en `fmt["-1,col"].bg`.
+- Tipos nuevos: `lista` (`cols[].op`, máx. 20 opciones; se editan en Datos › Columna), `casilla` (guarda `1`/vacío; se muestra ✔) y `semaforo` (`verde|amarillo|rojo`; se muestra Verde/Amarillo/Rojo). `Sheetflow::normalizarValor` y `valorEspecial()` (JS) deben coincidir; `formatear` en PHP y JS también.
+- **vPlan:** en una tabla vinculada, `VplanTabla::metaColumnas()` da tipo/opciones por columna y `filasVplan` entrega además el valor crudo `v0..vN`; `_fila-adicional.php` dibuja el control (fecha, número, casilla, lista, semáforo con color) y `cambiarCelda` guarda en la hoja (rechaza valores fuera de la lista). Editor y Redactor muestran el valor formateado (solo lectura).
+
 ## Exportación
 - XLSX con PhpSpreadsheet (encabezado con color, formatos de número, fechas reales, totales en negrita, filas alternas, panel congelado). Las fórmulas se escriben como **valores** (no como fórmulas de Excel). CSV con BOM. PDF con Dompdf (carta; horizontal si hay más de 6 columnas).
 

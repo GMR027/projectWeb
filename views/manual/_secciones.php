@@ -274,6 +274,7 @@ HTML],
 <li>El <strong>plano con sus marcas</strong> y las tablas del programa: SEQ, tarea, inicio, fin, recovery, % y restricciones, según el diseño de la lámina.</li>
 <li>Las fechas de <strong>recovery</strong> se editan directamente en la tabla (con permiso de edición).</li>
 <li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>vPlan → Tablas</em>.</li>
+<li><strong>Tabla en base a documento:</strong> en <em>vPlan › Tablas adicionales</em>, el botón «Tabla en base a documento» (a la izquierda de «+ Nueva tabla») lee un Excel, CSV, Word o PDF con texto y arma la tabla sola, detectando las columnas. Antes de crearla ves una vista previa que puedes corregir (quitar renglones o columnas, editar celdas). Las imágenes y los PDF escaneados no se pueden leer en la web sin OCR: el administrador los procesa con IA desde la app de escritorio (<em>Herramientas IA › Tabla desde documento</em>), que además puede corregir la lectura de cualquier archivo.</li>
 <li><strong>Ampliar</strong> muestra la lámina a pantalla completa; Esc o el botón de cerrar la regresan.</li>
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>

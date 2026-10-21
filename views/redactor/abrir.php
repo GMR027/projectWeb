@@ -182,6 +182,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <label class="rd-opc" title="Ancho de la tabla">Ancho <input type="number" id="rd-ta-w" min="1" step="any" style="width:7rem"></label>
         <label class="rd-opc" title="Alto mínimo de cada fila">Fila <input type="number" id="rd-ta-h" min="0" step="any" style="width:6rem"></label>
         <select id="rd-ta-un" aria-label="Unidad de la tabla"><option value="cm">cm</option><option value="mm">mm</option><option value="px">px</option><option value="%">%</option></select>
+        <button type="button" class="rd-b" id="rd-x-punch-cfg" data-x-tabla="punch" title="Cambiar qué columnas y qué pendientes muestra esta tabla del Punch list" hidden><i class="fa-solid fa-eye"></i> Qué ver</button>
         <button type="button" class="rd-b" data-tabla="borrar" title="Eliminar tabla"><i class="fa-solid fa-trash-can"></i></button>
     </div>
 </div>
@@ -197,7 +198,8 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
             <option value="@materiales">Materiales</option>
             <option value="@restricciones">Restricciones</option>
             <option value="@festivos">Festivos y paros</option>
-            <option value="@punchlist">Punchlist</option>
+            <option value="@punchvista">Punch list (elegir qué ver, con fotos)</option>
+            <option value="@punchlist">Punchlist (tabla simple)</option>
             <option value="@submittals">Submittals</option>
             <option value="@ordenes">Órdenes de cambio</option>
             <option value="@bitacora">Bitácora</option>
@@ -212,6 +214,20 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <label>Ancho <input type="number" id="rd-t-ancho" min="1" step="any" placeholder="100%"></label>
     <select id="rd-t-un" aria-label="Unidad"><option value="%">%</option><option value="cm">cm</option><option value="mm">mm</option><option value="px">px</option></select>
     <button type="button" class="btn btn-sm btn-primary" id="rd-t-ok">Insertar</button>
+</div>
+<div class="rd-panel" id="rd-p-punch" hidden>
+    <strong>Punch list: qué ver</strong>
+    <span class="text-sm text-muted">La tabla se lee del módulo Punch list y se actualiza sola al abrir y exportar; lo que escribas dentro de ella se pierde.</span>
+    <span id="rd-pu-cols">
+        <?php foreach (\Classes\PunchVista::COLUMNAS as $k => [$etq, $tp]): ?>
+            <label class="rd-opc"><input type="checkbox" value="<?php echo s($k); ?>" <?php echo in_array($k, \Classes\PunchVista::POR_DEFECTO, true) ? 'checked' : ''; ?>> <?php echo s($etq); ?></label>
+        <?php endforeach; ?>
+    </span>
+    <label>Estado <select id="rd-pu-estado"><option value="pendientes">Solo pendientes</option><option value="todos">Todos</option><?php foreach (\Classes\Punch::ESTADOS as $k => $e): ?><option value="<?php echo s($k); ?>"><?php echo s($e); ?></option><?php endforeach; ?></select></label>
+    <label>Severidad <select id="rd-pu-sev"><option value="">Todas</option><?php foreach (\Classes\Punch::SEVERIDADES as $k => $e): ?><option value="<?php echo s($k); ?>"><?php echo s($e); ?></option><?php endforeach; ?></select></label>
+    <label>Contratista <input type="text" id="rd-pu-con" maxlength="150" placeholder="Todos"></label>
+    <label>Máx. <input type="number" id="rd-pu-lim" min="1" max="200" value="50" style="width:7rem"></label>
+    <button type="button" class="btn btn-sm btn-primary" id="rd-pu-ok">Insertar</button>
 </div>
 <div class="rd-panel" id="rd-p-imagen" hidden>
     <strong>Insertar imagen</strong>
@@ -353,7 +369,8 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <optgroup label="Otras tablas">
             <option value="@materiales">Materiales</option>
             <option value="@restricciones">Restricciones</option>
-            <option value="@punchlist">Punchlist</option>
+            <option value="@punchvista">Punch list (elegir qué ver, con fotos)</option>
+            <option value="@punchlist">Punchlist (tabla simple)</option>
             <option value="@submittals">Submittals</option>
             <option value="@ordenes">Órdenes de cambio</option>
             <option value="@bitacora">Bitácora</option>

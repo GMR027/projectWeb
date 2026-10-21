@@ -261,6 +261,11 @@ $vp-rojo: #dc2626;
     .vp-rec:hover, .vp-in:hover, .vp-rec:focus, .vp-in:focus { border-color: #888; background: rgba(255, 255, 255, .85); color: #000; }
     .vp-rec::-webkit-inner-spin-button, .vp-rec::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .vp-rec::-webkit-calendar-picker-indicator { margin: 0; padding: 0; width: .8em; opacity: .55; }
+    .vp-col-texto { width: 100%; text-align: left; }
+    .vp-in-sf[type=checkbox] { width: auto; }
+    .vp-foto { display: block; max-height: 3.4em; max-width: 100%; margin: 0 auto; object-fit: contain; }
+    .vp-semaforo { display: block; padding: .1em .4em; border-radius: .2em; text-align: center; }
+    .vp-sem-verde { background: #2e9b4f; color: #fff; } .vp-sem-amarillo { background: #f2c230; color: #000; } .vp-sem-rojo { background: #d83a34; color: #fff; }
     .vp-rec::-webkit-datetime-edit, .vp-rec::-webkit-datetime-edit-fields-wrapper { padding: 0; }
     textarea.vp-in { text-align: left; }
     .vp-rec.msr-error, .vp-in.msr-error { border-color: #dc2626; }
@@ -395,12 +400,12 @@ $vp-rojo: #dc2626;
 
 // Editor de tablas adicionales: cada renglón es una tarjeta con campos de tamaño normal
 .vp-renglones-cab { display: flex; justify-content: space-between; align-items: center; margin: 2.4rem 0 1rem; padding-top: 1.6rem; border-top: 1px solid var(--border); }
-.vp-filas { display: flex; flex-direction: column; gap: 1.2rem; margin-bottom: 1.6rem; }
-.vp-fila { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: .8rem; padding: 1.2rem 1.6rem 0.4rem;
-  .vp-fila-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-  .vp-fila-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 0 1.6rem; }
+.vp-filas { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.2rem; }
+.vp-fila { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: .6rem; padding: .5rem 1rem .1rem;
+  .vp-fila-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: .3rem; font-size: 1.2rem; .btn { padding: .2rem .8rem; font-size: 1.2rem; } }
+  .vp-fila-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0 1rem; }
   .vp-ancho { grid-column: 1 / -1; }
-  .campo { margin-bottom: 1.2rem; }
+  .campo { margin-bottom: .5rem; label { font-size: 1.1rem; margin-bottom: .1rem; } input, select, textarea { padding: .35rem .6rem; font-size: 1.3rem; } textarea { min-height: 0; resize: vertical; } }
 }
 .vp-vacio { padding: 1.6rem; border: 1px dashed var(--border); border-radius: .6rem; text-align: center; }
 
@@ -510,7 +515,17 @@ body.vp-sin-scroll { overflow: hidden; }
 .ve-tab-panel { display: flex; flex-direction: column; gap: 1.2rem; &[hidden] { display: none; } }
 
 // Reglas del lienzo
-.ve-regla { position: absolute; z-index: 3; pointer-events: none; &[hidden] { display: none; } }
+.ve-regla { position: absolute; z-index: 3; pointer-events: auto; &[hidden] { display: none; } }
+.ve-regla-h { cursor: ns-resize; }
+.ve-regla-v { cursor: ew-resize; }
+.ve-guias { position: absolute; z-index: 2; right: 0; bottom: 0; overflow: hidden; pointer-events: none; &[hidden] { display: none; } }
+.ve-guia { position: absolute; pointer-events: auto; &::after { content: ''; position: absolute; background: #00b8d4; } }
+.ve-guia-v { top: 0; bottom: 0; width: 9px; cursor: ew-resize; &::after { left: 4px; top: 0; bottom: 0; width: 1px; } }
+.ve-guia-h { left: 0; right: 0; height: 9px; cursor: ns-resize; &::after { top: 4px; left: 0; right: 0; height: 1px; } }
+.ve-guia.bloqueada { cursor: not-allowed; &::after { background: #7c8aa0; } }
+.ve-guia-nueva { pointer-events: none; &.descartar::after { background: #e5484d; } }
+.ve-guias-btns { display: flex; gap: .4rem; align-items: center; }
+.ve-guia-item .ve-guia-pos { width: 7rem; margin-left: auto; }
 .ve-regla-h { top: 0; left: 22px; height: 22px; }
 .ve-regla-v { top: 22px; left: 0; width: 22px; }
 .ve-regla-esq { position: absolute; z-index: 4; top: 0; left: 0; width: 22px; height: 22px; background: #11151f; color: #9aa5b8; font-size: 9px; display: flex; align-items: center; justify-content: center; pointer-events: none; &[hidden] { display: none; } }
@@ -775,3 +790,13 @@ body.vp-sin-scroll { overflow: hidden; }
     input[type=color] { width: 3.6rem; height: 3rem; padding: 0; border: 0; background: none; } }
 }
 .la-encabezado-est { margin-bottom: 1rem; }
+
+// Tabla en base a documento: vista previa editable y compacta
+.td-scroll { overflow: auto; max-height: 60vh; margin-bottom: 1.2rem; }
+.td-tabla { width: auto; min-width: 100%;
+  th, td { padding: .2rem .3rem; white-space: nowrap; }
+  input { width: 100%; min-width: 9rem; padding: .25rem .4rem; font-size: 1.25rem; background: transparent; border: 1px solid transparent; color: inherit; border-radius: .3rem; &:hover, &:focus { border-color: var(--border); background: var(--bg-tertiary); outline: none; } }
+  thead input { font-weight: 700; }
+  .td-x { border: 0; background: transparent; color: #dc2626; cursor: pointer; font-size: 1.2rem; &:hover { background: #fde2e4; } }
+}
+.vp-tab-acc-fija { display: flex; gap: 1rem; justify-content: space-between; }

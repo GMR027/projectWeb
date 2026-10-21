@@ -18,6 +18,8 @@ const voz = require('./voz');
 const chat = require('./chat');
 const ensamblador = require('./ensamblador');
 const ordenarIA = require('./ordenarIA');
+const tablaDocumento = require('./tablaDocumento');
+const ocrLocal = require('./ocr');
 
 // AppImage no puede instalar chrome-sandbox con setuid: si el sistema restringe los user namespaces, Chromium abortaría
 if (process.env.APPIMAGE) {
@@ -162,6 +164,18 @@ app.whenReady().then(() => {
     return ens.mensaje({ pid: idEns(o.pid), ses: parseInt(o.ses, 10), texto: String(o.texto || '').slice(0, 1000), modos: Array.isArray(o.modos) ? o.modos.map(String) : [], submittalId: parseInt(o.submittalId, 10) || 0, conexion, clave: cfg.secreto(conexion.id), revisar: !!o.revisar });
   });
   ipcMain.handle('ens:cancelar', () => ens.cancelar());
+  // Tabla desde documento: el motor del servidor o la IA leen el archivo; el admin revisa y crea la tabla en el catálogo de vPlan
+  const ocr = ocrLocal.crear({ dir: path.join(app.getPath('userData'), 'ocr') });
+  app.once('will-quit', () => { ocr.cerrar(); });
+  ipcMain.handle('ocr:estado', () => ({ instalado: ocr.instalados() }));
+  ipcMain.handle('ocr:instalar', async () => { await ocr.instalar(p => win?.webContents.send('ocr:progreso', p)); return { instalado: ocr.instalados() }; });
+  ipcMain.handle('ocr:quitar', async () => { await ocr.quitar(); return { instalado: false }; });
+  const tdoc = tablaDocumento.crear({ cfg, ocr, sesion: (u, o) => vista.webContents.session.fetch(u, o), avisar: p => win?.webContents.send('tdoc:progreso', p) });
+  ipcMain.handle('tdoc:leer', (_e, pid, archivo, provId, usarIA) => {
+    const conexion = provId ? cfg.leer().proveedores.find(x => x.id === provId) : null;
+    return tdoc.leer(idEns(pid), { nombre: String(archivo?.nombre || 'documento'), datos: Buffer.from(archivo?.datos || []) }, conexion, conexion ? cfg.secreto(conexion.id) : '', !!usarIA);
+  });
+  ipcMain.handle('tdoc:crear', (_e, pid, o) => tdoc.crearTabla(idEns(pid), { nombre: String(o?.nombre || '').slice(0, 140), origen: String(o?.origen || '').slice(0, 200), metodo: o?.metodo === 'ia' ? 'ia' : 'motor', modelo: String(o?.modelo || '').slice(0, 150), filas: Array.isArray(o?.filas) ? o.filas : [] }));
   // Ordenar y renumerar por fechas: el servidor calcula, la IA explica, el admin elige qué ordenar y qué renumerar
   const ord = ordenarIA.crear({ cfg, sesion: (u, o) => vista.webContents.session.fetch(u, o), avisar: p => win?.webContents.send('ord:progreso', p) });
   ipcMain.handle('ord:propuesta', (_e, pid, provId) => {

@@ -4,7 +4,10 @@
         <h2><i class="fa-solid fa-table"></i> Tablas adicionales</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · catálogo reutilizable en las láminas</p>
     </div>
+    <div class="vp-recovery-btns">
+        <a href="/vplan/tablas/documento?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-import"></i> Tabla en base a documento</a>
     <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nueva tabla</a>
+    </div>
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>
 <?php if (!empty($hojasSheetflow)): ?>

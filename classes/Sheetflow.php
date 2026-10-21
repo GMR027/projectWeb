@@ -17,7 +17,9 @@ use Model\RedactorDocumento;
  */
 class Sheetflow
 {
-    public const TIPOS = ['texto' => 'Texto', 'numero' => 'Número', 'moneda' => 'Moneda', 'porcentaje' => 'Porcentaje', 'fecha' => 'Fecha'];
+    public const TIPOS = ['texto' => 'Texto', 'numero' => 'Número', 'moneda' => 'Moneda', 'porcentaje' => 'Porcentaje', 'fecha' => 'Fecha', 'lista' => 'Lista desplegable', 'casilla' => 'Casilla (sí/no)', 'semaforo' => 'Semáforo'];
+    public const SEMAFORO = ['verde' => 'Verde', 'amarillo' => 'Amarillo', 'rojo' => 'Rojo'];
+    public const MAX_OPCIONES = 20;
     public const ALINEAR = ['izquierda', 'centro', 'derecha'];
     public const TOTALES = ['' => 'Sin total', 'suma' => 'Suma', 'promedio' => 'Promedio', 'min' => 'Mínimo', 'max' => 'Máximo', 'cuenta' => 'Cuenta'];
     public const MAX_COLS = 30;
@@ -48,7 +50,7 @@ class Sheetflow
             $c = is_array($c) ? $c : [];
             $t = isset(self::TIPOS[$c['t'] ?? '']) ? $c['t'] : 'texto';
             $numerico = in_array($t, ['numero', 'moneda', 'porcentaje'], true);
-            $a = in_array($c['a'] ?? '', self::ALINEAR, true) ? $c['a'] : ($numerico ? 'derecha' : 'izquierda');
+            $a = in_array($c['a'] ?? '', self::ALINEAR, true) ? $c['a'] : ($numerico ? 'derecha' : (in_array($t, ['casilla', 'semaforo'], true) ? 'centro' : 'izquierda'));
             $tot = (string)($c['tot'] ?? '');
             $cols[] = [
                 'n' => mb_substr(trim(preg_replace('/[\x00-\x1f]/u', ' ', (string)($c['n'] ?? ''))), 0, 60),
@@ -56,6 +58,7 @@ class Sheetflow
                 'tot' => isset(self::TOTALES[$tot]) && ($numerico || $tot === 'cuenta') ? $tot : '',
                 'w' => isset($c['w']) && is_numeric($c['w']) && $c['w'] >= 40 ? (int)min(800, $c['w']) : 0,
             ];
+            if ($t === 'lista') $cols[count($cols) - 1]['op'] = self::opciones($c['op'] ?? []);
         }
         if (!$cols) $cols[] = ['n' => 'Columna 1', 't' => 'texto', 'a' => 'izquierda', 'tot' => ''];
         $nc = count($cols);
@@ -138,6 +141,48 @@ class Sheetflow
 
     // ---------- Valores y formato (mismo criterio que public/vendor/sheetflow.js) ----------
 
+    /** Opciones de una columna de lista: sin repetidos, máx. 20 de 40 caracteres */
+    public static function opciones($op): array
+    {
+        $out = [];
+        foreach ((array)$op as $x) {
+            $x = mb_substr(trim(preg_replace('/[\x00-\x1f]/u', ' ', (string)$x)), 0, 40);
+            if ($x !== '' && !in_array($x, $out, true)) $out[] = $x;
+            if (count($out) >= self::MAX_OPCIONES) break;
+        }
+        return $out;
+    }
+
+    /** Valor que se guarda en una celda de casilla o semáforo («si», «x», «Verde»…); los demás tipos lo dejan igual */
+    public static function normalizarValor(string $v, string $tipo): string
+    {
+        $v = trim($v);
+        if ($tipo === 'casilla') return in_array(mb_strtolower($v), ['1', 'si', 'sí', 'x', 'true', 'yes', '✔', '✓'], true) ? '1' : '';
+        if ($tipo === 'semaforo') {
+            $k = mb_strtolower($v);
+            $alias = ['green' => 'verde', 'yellow' => 'amarillo', 'red' => 'rojo'];
+            $k = $alias[$k] ?? $k;
+            return isset(self::SEMAFORO[$k]) ? $k : '';
+        }
+        return $v;
+    }
+
+    /** Hoja nueva a partir del constructor de «tabla inteligente»: columnas {n, t, op, bg} y número de renglones */
+    public static function inteligente($cols, int $filas): array
+    {
+        $out = [];
+        $fmt = [];
+        foreach (array_slice(array_values((array)$cols), 0, self::MAX_COLS) as $i => $c) {
+            $c = is_array($c) ? $c : [];
+            $out[] = ['n' => $c['n'] ?? 'Columna ' . ($i + 1), 't' => $c['t'] ?? 'texto', 'op' => $c['op'] ?? []];
+            $bg = (string)($c['bg'] ?? '');
+            if (preg_match('/^#[0-9a-f]{6}$/i', $bg)) $fmt["-1,$i"] = ['bg' => strtolower($bg)];
+        }
+        $n = max(1, count($out));
+        $filas = max(1, min(200, $filas));
+        return self::limpiar(['cols' => $out, 'rows' => array_fill(0, $filas, array_fill(0, $n, '')), 'fmt' => $fmt]);
+    }
+
     /** Número de un texto («1,234.5», «$ 12», «45%») o null */
     public static function numero($v): ?float
     {
@@ -162,6 +207,8 @@ class Sheetflow
             case 'porcentaje': return $n === null ? $v : self::decimales($n, 2) . '%';
             case 'fecha':
                 return preg_match('/^(\d{4})-(\d\d)-(\d\d)$/', $v, $m) ? "$m[3]/$m[2]/$m[1]" : $v;
+            case 'casilla': return self::normalizarValor($v, 'casilla') === '1' ? '✔' : '';
+            case 'semaforo': return self::SEMAFORO[self::normalizarValor($v, 'semaforo')] ?? $v;
         }
         return $v;
     }
@@ -196,7 +243,7 @@ class Sheetflow
             foreach ($cols as $c => $col) $totales[] = $col['tot'] !== '' && isset($tot[$c]) ? ($col['tot'] === 'cuenta' ? (string)$tot[$c] : self::formatear($tot[$c], $col['t'])) : '';
             $totales[0] = $totales[0] !== '' ? $totales[0] : 'Total';
         }
-        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w')];
+        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w'), 'opciones' => array_map(fn($c) => $c['op'] ?? [], $cols)];
     }
 
     // ---------- Plantillas ----------
@@ -287,6 +334,13 @@ class Sheetflow
             if (array_filter($f, fn($v) => $v !== '')) $filas[] = $f;
             if (count($filas) > self::MAX_FILAS + 1) break;
         }
+        return self::deMatriz($filas);
+    }
+
+    /** Datos de SheetFlow a partir de una matriz de textos: la primera fila son los encabezados; el tipo (número/texto) se deduce de cada columna */
+    public static function deMatriz(array $filas): array
+    {
+        $filas = array_values(array_filter(array_map(fn($f) => array_map(fn($v) => trim((string)$v), array_values($f)), $filas), fn($f) => array_filter($f, fn($v) => $v !== '')));
         if (!$filas) throw new \RuntimeException('El archivo no tiene datos');
         $nc = min(self::MAX_COLS, max(array_map('count', $filas)));
         while ($nc > 1 && !array_filter(array_column($filas, $nc - 1), fn($v) => $v !== '')) $nc--;
@@ -607,12 +661,22 @@ class Sheetflow
             foreach (array_slice($fila, 0, $nc) as $c => $v) $f['c' . $c] = mb_substr((string)$v, 0, 300);
             $out[] = $f;
         }
+        $d = $h->contenido();   // valor crudo (fecha ISO, 1, verde…) para los controles de captura; los totales no lo llevan
+        foreach ($out as $r => &$f) {
+            if (!isset($d['rows'][$r]) || $r >= count($m['filas'])) continue;
+            for ($c = 0; $c < $nc; $c++) {
+                $x = (string)($d['rows'][$r][$c] ?? '');
+                $f['v' . $c] = mb_substr(SheetflowFormulas::esFormula($x) ? (string)($d['calc']["$r,$c"] ?? '') : $x, 0, 300);
+            }
+        }
+        unset($f);
         return $out;
     }
 
     /** Reemplaza las tablas `data-sf` de un HTML del Redactor por su versión actual (solo de este proyecto; si la hoja ya no existe, se deja como está) */
     public static function refrescarHtml(string $html, int $proyectoId): string
     {
+        $html = PunchVista::refrescarHtml($html, $proyectoId);   // tablas `data-punch` del Punch list
         if (!str_contains($html, 'data-sf=')) return $html;
         return preg_replace_callback('#<table\b[^>]*\bdata-sf="(\d{1,9})"[^>]*>.*?</table>#s', function ($m) use ($proyectoId) {
             $h = SheetflowHoja::find((int)$m[1]);
@@ -640,6 +704,8 @@ class Sheetflow
         $valor = trim($valor);
         if ($tipo === 'fecha' && preg_match('/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/', $valor, $x)) $valor = (strlen($x[3]) === 2 ? '20' . $x[3] : $x[3]) . '-' . sprintf('%02d-%02d', $x[2], $x[1]);
         elseif (in_array($tipo, ['numero', 'moneda', 'porcentaje'], true) && ($n = self::numero($valor)) !== null) $valor = (string)$n;
+        elseif (in_array($tipo, ['casilla', 'semaforo'], true)) $valor = self::normalizarValor($valor, $tipo);
+        elseif ($tipo === 'lista' && $valor !== '' && ($op = $d['cols'][$col]['op'] ?? []) && !in_array($valor, $op, true)) return 'Elige una de las opciones de la lista';
         $d['rows'][$fila][$col] = mb_substr($valor, 0, self::MAX_CELDA);
         self::guardarDatos($h, $d);
         return null;

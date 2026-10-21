@@ -123,6 +123,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <label class="ve-mini" title="Los puntos que dibujas y lo que mueves saltan a la cuadrícula"><input type="checkbox" id="t-snap"> Imán</label>
         <label class="ve-mini">Cada <input type="number" id="t-grid-n" min="2" max="5000" value="50" aria-label="Separación de la cuadrícula en píxeles"> px <span id="t-grid-eq" class="text-muted"></span></label>
         <label class="ve-mini"><input type="checkbox" id="t-reglas" checked> Reglas</label>
+        <label class="ve-mini" title="Muestra las guías y atrae hacia ellas lo que dibujas y mueves. Arrástralas desde las reglas"><input type="checkbox" id="t-guias" checked> Guías</label>
     </div>
     <div class="ve-grupo ve-grupo-ajustes" data-nombre="Trazo">
         <div class="ve-mini">Color <input type="color" id="t-stroke" value="#111111"></div>
@@ -149,7 +150,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
 </div>
 
 <div class="ve-area">
-    <div id="ve-lienzo" class="ve-lienzo"><div id="ek-stage"></div><canvas id="ve-regla-h" class="ve-regla ve-regla-h"></canvas><canvas id="ve-regla-v" class="ve-regla ve-regla-v"></canvas><span id="ve-regla-esq" class="ve-regla-esq"></span></div>
+    <div id="ve-lienzo" class="ve-lienzo"><div id="ek-stage"></div><canvas id="ve-regla-h" class="ve-regla ve-regla-h"></canvas><canvas id="ve-regla-v" class="ve-regla ve-regla-v"></canvas><span id="ve-regla-esq" class="ve-regla-esq"></span><div id="ve-guias" class="ve-guias"></div></div>
     <div class="ve-lateral">
     <div class="ve-tabs card" role="tablist" aria-label="Paneles del editor">
         <button type="button" role="tab" data-tab="props" class="activa">Propiedades</button>
@@ -190,6 +191,8 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
                 <div class="ve-rango"><input type="range" id="p-sw-r" min="1" max="80" step="1"><span><input type="number" id="p-sw" min="1" max="80"> px</span></div></div>
             <div class="ve-f"><label>Estilo de línea</label>
                 <select id="p-dash"><option value="solid">Continua</option><option value="dash">Discontinua</option><option value="dashdot">Trazo y punto</option><option value="dot">Punteada</option></select></div>
+            <div class="ve-f"><label>Largo del trazo <small class="text-muted">(× grosor)</small></label><input type="number" id="p-dash-l" min="0.2" max="60" step="0.5"></div>
+            <div class="ve-f"><label>Separación <small class="text-muted">(× grosor)</small></label><input type="number" id="p-dash-g" min="0.2" max="60" step="0.5"></div>
             <div class="ve-f"><label>Opacidad del relleno</label>
                 <div class="ve-rango"><input type="range" id="p-fa" min="0" max="100" step="5"><span><input type="number" id="p-fa-n" min="0" max="100" step="5">%</span></div></div>
             <div class="ve-f"><label>Opacidad total de la marca</label>
@@ -222,6 +225,8 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <div class="ve-f"><label>Alto de filas / ancho de columnas</label>
                 <div class="ve-par"><input type="number" id="p-rh" min="8" aria-label="Alto de fila"> <span>×</span> <input type="number" id="p-cw" min="10" aria-label="Ancho de columna"></div>
                 <small class="text-muted">Doble clic en una celda para escribir; Tab pasa a la siguiente.</small></div>
+<div class="ve-f" id="p-punch-f" style="display:none"><label>Punch list</label>
+                <button type="button" class="btn btn-sm btn-ghost" id="b-punch-cfg"><i class="fa-solid fa-eye"></i> Qué ver</button></div>
 <div class="ve-f ve-celdas" id="p-celdas">
                 <label>Celdas seleccionadas: <b id="p-celdas-n">0</b></label>
                 <p class="text-muted text-sm" id="p-celdas-vacio">Haz clic en una celda de la tabla; con Mayús o Ctrl suma más celdas.</p>
@@ -282,6 +287,10 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <div class="ve-capas-cab"><h4>Capas</h4><button type="button" id="ve-capa-nueva" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Nueva capa</button></div>
         <ul id="ve-capas-lista" class="ve-capas-lista"></ul>
         <p class="text-muted text-sm">Lo que dibujes cae en la capa activa (resaltada). El ojo la oculta, también del PNG guardado; el candado impide tocar sus marcas. Doble clic en el nombre para renombrarla; si no le pones nombre se llama «Capa N».</p>
+        <div class="ve-capas-cab" style="margin-top:1.6rem"><h4>Guías</h4>
+            <span class="ve-guias-btns"><button type="button" id="ve-guia-v" class="btn btn-sm btn-ghost" title="Guía vertical al centro de la hoja">+ Vertical</button> <button type="button" id="ve-guia-h" class="btn btn-sm btn-ghost" title="Guía horizontal al centro de la hoja">+ Horizontal</button> <button type="button" id="ve-guias-x" class="btn btn-sm btn-ghost" title="Quitar todas las guías"><i class="fa-solid fa-trash-can"></i></button></span></div>
+        <ul id="ve-guias-lista" class="ve-capas-lista"></ul>
+        <p class="text-muted text-sm">Arrastra desde la regla de arriba (guías horizontales) o la de la izquierda (verticales). Muévelas arrastrándolas; suéltalas sobre la regla para quitarlas. Lo que dibujas y mueves se imanta a ellas. No salen en el PNG ni en el PDF.</p>
     </aside>
     </div>
     <?php if (!empty($config['laminas'])): ?>
@@ -311,6 +320,19 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <div id="sim-sheetflow-caja" hidden>
             <h5>Tablas de SheetFlow</h5>
             <div id="sim-sheetflow" class="ve-btns" style="margin-bottom:1rem"></div>
+        </div>
+        <div id="sim-punch-caja">
+            <h5>Punch list</h5>
+            <div class="ve-btns" style="margin-bottom:1rem"><button type="button" class="btn btn-sm btn-ghost" id="sim-punch" title="Inserta los pendientes del módulo Punch list como tabla; eliges qué columnas y qué pendientes ver"><i class="fa-solid fa-clipboard-check"></i> Insertar tabla de Punch list…</button></div>
+            <div id="sim-punch-cfg" class="ve-f" hidden>
+                <label>Qué ver</label>
+                <div id="sim-punch-cols"></div>
+                <div class="ve-par"><select id="sim-punch-estado" aria-label="Estado"><option value="pendientes">Solo pendientes</option><option value="todos">Todos</option><?php foreach (\Classes\Punch::ESTADOS as $k => $e): ?><option value="<?php echo s($k); ?>"><?php echo s($e); ?></option><?php endforeach; ?></select>
+                    <select id="sim-punch-sev" aria-label="Severidad"><option value="">Toda severidad</option><?php foreach (\Classes\Punch::SEVERIDADES as $k => $e): ?><option value="<?php echo s($k); ?>"><?php echo s($e); ?></option><?php endforeach; ?></select></div>
+                <div class="ve-par"><input type="text" id="sim-punch-con" maxlength="150" placeholder="Contratista (todos)" aria-label="Contratista"> <input type="number" id="sim-punch-lim" min="1" max="120" value="40" style="width:7rem" aria-label="Máximo de renglones"></div>
+                <small class="text-muted">Las fotos (antes/después, máx. 20 por tabla; el resto sale como «Sí») se colocan agrupadas con la tabla. Se actualiza al abrir el gráfico.</small>
+                <div class="ve-btns"><button type="button" class="btn btn-sm btn-primary" id="sim-punch-ok">Insertar</button> <button type="button" class="btn btn-sm btn-ghost" id="sim-punch-x">Cancelar</button></div>
+            </div>
         </div>
         <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar">
         <div id="sim-lista"></div>

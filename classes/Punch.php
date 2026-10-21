@@ -92,7 +92,7 @@ class Punch
         if (!in_array($campo, ['foto_antes', 'foto_despues'], true)) return;
         $x = self::obtener($pid, $id);
         if (!$x) return;
-        if ($x[$campo]) Imagenes::eliminarEn(self::CARPETA, $x[$campo]);
+        if ($x[$campo]) { Imagenes::eliminarEn(self::CARPETA, $x[$campo]); PunchVista::borrarMiniatura($x[$campo]); }
         self::db()->query("UPDATE punch_items SET $campo = '" . self::esc($nombre) . "' WHERE id = $id AND proyecto_id = $pid");
     }
 
@@ -110,7 +110,7 @@ class Punch
     {
         $x = self::obtener($pid, $id);
         if (!$x) return;
-        foreach (['foto_antes', 'foto_despues'] as $c) if ($x[$c]) Imagenes::eliminarEn(self::CARPETA, $x[$c]);
+        foreach (['foto_antes', 'foto_despues'] as $c) if ($x[$c]) { Imagenes::eliminarEn(self::CARPETA, $x[$c]); PunchVista::borrarMiniatura($x[$c]); }
         self::db()->query("DELETE FROM punch_items WHERE id = $id AND proyecto_id = $pid");
     }
 

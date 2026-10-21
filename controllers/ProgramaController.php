@@ -649,6 +649,8 @@ class ProgramaController
             'fecha_inicio' => $inicio, 'duracion_dias' => $duracion, 'orden' => $orden,
         ]);
         $actividad->fecha_fin = $calendario->calcularFechaFin($inicio, $duracion);
+        $avance = $_POST['progreso'] ?? '';
+        $actividad->progreso = is_numeric($avance) ? max(0, min(100, (int)round((float)$avance))) : 0;
         $actividad->sincronizarStatus();
         $r = $actividad->guardar();
         if (!$r || empty($r['resultado'])) {
@@ -703,6 +705,33 @@ class ProgramaController
         exit;
     }
 
+    /**
+     * Si el código elegido ya lo usa otra actividad del proyecto, devuelve
+     * ['codigo' => el repetido, 'propuesto' => el siguiente libre de la partida]; si no, null.
+     */
+    private static function codigoActividadDuplicado(Actividad $actividad, Proyecto $proyecto): ?array
+    {
+        $usados = [];
+        foreach ($proyecto->getPartidas() as $p) {
+            foreach ($p->getActividades() as $a) {
+                if ((int)$a->id !== (int)$actividad->id) $usados[mb_strtolower(trim((string)$a->codigo))] = true;
+            }
+        }
+        if (!isset($usados[mb_strtolower(trim((string)$actividad->codigo))])) return null;
+
+        $partida = Partida::find($actividad->partida_id);
+        $prefijo = self::prefijoPartida($partida);
+        $max = 0;
+        foreach ($partida->getActividades() as $a) {
+            if ((int)$a->id !== (int)$actividad->id && preg_match('/^' . preg_quote($prefijo, '/') . '\.(\d+)$/', trim((string)$a->codigo), $m)) {
+                $max = max($max, (int)$m[1]);
+            }
+        }
+        $n = $max + 1;
+        while (isset($usados[mb_strtolower($prefijo . '.' . $n)])) $n++;
+        return ['codigo' => trim((string)$actividad->codigo), 'propuesto' => $prefijo . '.' . $n];
+    }
+
     public static function editarActividad(Router $router)
     {
         redirigir_si_no_auth();
@@ -718,6 +747,7 @@ class ProgramaController
         $partidas = $proyecto->getPartidas();
         $calendario = new Calendario($proyecto->id);
         $alertas = [];
+        $duplicado = null;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $actividad->sincronizar($_POST);
@@ -732,6 +762,9 @@ class ProgramaController
             $alertas = $actividad->validar();
 
             if (empty($alertas)) {
+                $duplicado = self::codigoActividadDuplicado($actividad, $proyecto);
+            }
+            if (empty($alertas) && !$duplicado) {
                 $actividad->fecha_fin = $actividad->esHito() ? $actividad->fecha_inicio : $calendario->calcularFechaFin(
                     $actividad->fecha_inicio,
                     (int)$actividad->duracion_dias
@@ -754,6 +787,7 @@ class ProgramaController
             'partida' => $partida,
             'actividad' => $actividad,
             'alertas' => $alertas,
+            'duplicado' => $duplicado,
             'catalogo' => self::catalogoMateriales((int)$proyecto->id),
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
             'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
@@ -823,6 +857,54 @@ class ProgramaController
             'tipos' => $tipos,
             'restriccion' => $restriccion,
             'alertas' => $alertas
+        ]);
+    }
+
+    public static function editarRestriccion(Router $router)
+    {
+        redirigir_si_no_auth();
+        $restriccion = Restriccion::find(filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT));
+        $actividad = $restriccion ? Actividad::find($restriccion->actividad_id) : null;
+        if (!$actividad) {
+            header('Location: /proyectos');
+            exit;
+        }
+        $partida = Partida::find($actividad->partida_id);
+        $proyecto = Proyecto::find($partida->proyecto_id);
+        exigir_gestionar_proyecto($proyecto);
+        $tipos = TipoRestriccion::all('id ASC');
+        $volver = ($_GET['volver'] ?? $_POST['volver'] ?? '') === '/acciones' ? '/acciones' : '';
+
+        $alertas = [];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $restriccion->tipo_id = filter_var($_POST['tipo_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+            $restriccion->codigo = trim((string)($_POST['codigo'] ?? ''));
+            $restriccion->descripcion = trim((string)($_POST['descripcion'] ?? ''));
+            $restriccion->fecha = $_POST['fecha'] ?? null;
+            if (!in_array($_POST['estado'] ?? '', ['activa', 'resuelta'], true)) {
+                $_POST['estado'] = $restriccion->estado;
+            }
+            $restriccion->estado = $_POST['estado'];
+            if (!$restriccion->tipo_id) {
+                Restriccion::setAlerta('error', 'Debes seleccionar un tipo de restricción');
+            }
+            $alertas = Restriccion::getAlertas();
+            if (empty($alertas)) {
+                $restriccion->guardar();
+                header('Location: ' . ($volver ? '/acciones?proyecto=' . $proyecto->id . '#acc-restr' : '/programa/actividades/editar?id=' . $actividad->id));
+                exit;
+            }
+        }
+
+        $router->render('programa/crear-restriccion', [
+            'titulo' => 'Editar Restricción',
+            'proyecto' => $proyecto,
+            'actividad' => $actividad,
+            'tipos' => $tipos,
+            'restriccion' => $restriccion,
+            'alertas' => $alertas,
+            'editando' => true,
+            'volver' => $volver,
         ]);
     }
 

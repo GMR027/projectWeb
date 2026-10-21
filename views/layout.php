@@ -20,6 +20,7 @@ require_once __DIR__ . '/templates/breadcrumb.php';
         (function() {
             const tema = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', tema);
+            if (window.top !== window.self) document.documentElement.classList.add('embebido');   // panel del divisor de ventana
         })();
     </script>
 </head>
@@ -97,6 +98,7 @@ require_once __DIR__ . '/templates/breadcrumb.php';
     <div id="sidebar-fondo" class="sidebar-fondo"></div>
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
     <script src="/vendor/paletas.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/paletas.js'); ?>"></script>
+    <script src="/vendor/divisor.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/divisor.js'); ?>"></script>
     <script src="/vendor/selector-color.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/selector-color.js'); ?>"></script>
     <script src="/build/js/bundle.min.js?v=<?php echo filemtime(__DIR__ . '/../public/build/js/bundle.min.js'); ?>"></script>
 </body>

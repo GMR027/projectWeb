@@ -39,8 +39,8 @@ body.menu-abierto { overflow: hidden; }
 .btn-menu-movil {
   display: flex; align-items: center; justify-content: center;
   position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
-  width: 5.4rem; height: 5.4rem; border-radius: 50%; border: 0; cursor: pointer;
-  background: $primary; color: #fff; font-size: 2.2rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
+  width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 0; cursor: pointer;
+  background: $primary; color: #fff; font-size: 2.4rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
 }
 @media print { .btn-menu-movil, .sidebar-fondo { display: none !important; } }
 

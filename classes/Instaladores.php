@@ -2,7 +2,7 @@
 
 namespace Classes;
 
-/** Instaladores de DictaFlow (Linux) guardados en el volumen del clúster; solo los gestiona y descarga el admin */
+/** Instaladores de la app de escritorio (Linux) guardados en el volumen del clúster; solo los gestiona y descarga el admin */
 class Instaladores
 {
     /** Terminaciones permitidas (nada ejecutable por el servidor web) */

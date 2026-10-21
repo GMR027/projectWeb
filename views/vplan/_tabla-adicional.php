@@ -34,7 +34,12 @@ $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
 </table>
 <?php if ($puedeEditar): ?>
     <div class="vp-tab-acc no-print">
+        <?php if ($t->tipo === 'punchlist'): ?>
+            <a href="/punch?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-clipboard-check"></i> Agregar en Punch list</a>
+            <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-eye"></i> Qué mostrar</a>
+        <?php else: ?>
         <button type="button" class="btn btn-sm btn-primary vp-agregar-dato" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
         <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>
+        <?php endif; ?>
     </div>
 <?php endif; ?>

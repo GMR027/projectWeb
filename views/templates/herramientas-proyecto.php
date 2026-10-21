@@ -19,7 +19,7 @@ function ayudas_herramientas(): array
         '/evidencias' => ['Fotos de avance ligadas a cada actividad.', 'evidencias'],
         '/curvas' => ['Curvas de productividad: rendimiento real contra lo planeado por actividad.', 'curvas'],
         '/seguridad' => ['Permisos de trabajo, pláticas e inspecciones de seguridad.', 'seguridad'],
-        '/punch' => ['Lista de pendientes y detalles por corregir antes de entregar la obra.', 'punch'],
+        '/punch' => ['Lista de pendientes y detalles por corregir antes de entregar la obra. Se puede insertar como tabla en vPlan, Redactor y Editor, eligiendo qué ver.', 'punch'],
         '/mapa-avance' => ['Plano o gráfico coloreado según el avance de cada zona.', 'tipo-obra'],
         '/msr' => ['Reporte de materiales (MSR): pedidos, fechas de requerimiento y estado de entrega.', 'msr'],
         '/cambios' => ['Órdenes de cambio: instalar, retirar o reubicar, con su efecto en el programa.', 'cambios'],

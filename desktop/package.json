@@ -1,12 +1,15 @@
 {
   "name": "projectweb-desktop",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Project Web Desktop: herramientas de IA (modelos locales y de suscripción) para el administrador de Project Web",
   "main": "src/main.js",
   "private": true,
   "license": "UNLICENSED",
   "homepage": "https://projectweb.iguzman.com.mx",
-  "author": { "name": "Project Web", "email": "admin@po.local" },
+  "author": {
+    "name": "Project Web",
+    "email": "admin@po.local"
+  },
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
@@ -16,5 +19,8 @@
   "devDependencies": {
     "electron": "^44.9.0",
     "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "tesseract.js": "^7.0.0"
   }
 }
