@@ -61,7 +61,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
     <?php if (empty($archivos)): ?>
         <p class="text-muted">No hay archivos<?php echo $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; ?><?php echo $filtro ? ' en esta categoría' : ''; ?>.<?php echo $puede ? ' Sube el primero con «Subir archivo».' : ''; ?></p>
     <?php else: ?>
-        <table class="tabla">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><?php if ($puede): ?><th class="col-sel"><input type="checkbox" id="arch-todos" aria-label="Seleccionar todos"></th><?php endif; ?><th class="hide-m">Fecha</th><th class="hide-m">Categoría</th><th>Nombre del archivo</th><th class="hide-m">Rev.</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($archivos as $a): ?>
@@ -78,7 +78,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
                     </td>
                     <td class="mono hide-m"><?php echo s($a->numero_revision ?: '—'); ?></td>
                     <td class="acciones">
-                        <?php if ($desc && \Classes\VistaArchivo::tipo($a->extension())): ?><a href="/archivos/ver?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a><?php endif; ?>
+                        <?php if ($desc && \Classes\VistaArchivo::tipo($a->extension())): ?><a href="/visor?proyecto=<?php echo $id; ?>&archivo=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a><?php endif; ?>
                         <?php if ($desc): ?><a href="/archivos/descargar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-download"></i> Descargar</a><?php endif; ?>
                         <?php if ($puede): ?>
                             <a href="/archivos/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost">Editar</a>

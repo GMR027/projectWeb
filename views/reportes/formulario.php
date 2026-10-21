@@ -1,7 +1,7 @@
 <?php
 $esNuevo = !$reporte->id; $id = s($proyecto->id);
 $itemsActs = [];
-foreach ($actividades as $aid => [$a, $p]) $itemsActs[] = ['id' => $aid, 'titulo' => $a->nombre, 'detalle' => $a->codigo];
+foreach ($actividades as $aid => [$a, $p]) $itemsActs[] = ['id' => $aid, 'titulo' => $a->nombre, 'detalle' => $a->codigo, 'grupo' => $p->codigo . ' ' . $p->nombre, 'color' => $p->color_bg];
 $itemsPers = [];
 foreach ($personal as $pid => $p) $itemsPers[] = ['id' => $pid, 'titulo' => $p->nombre, 'detalle' => $p->departamento ?: '—'];
 ?>

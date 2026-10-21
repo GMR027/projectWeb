@@ -1,7 +1,8 @@
 <?php
 /**
  * Lista de casillas con buscador y selección masiva.
- * Variables: $items [['id','titulo','detalle']], $nombreCampo, $marcados (ids)
+ * Variables: $items [['id','titulo','detalle', 'grupo'?, 'color'?]], $nombreCampo, $marcados (ids)
+ * Con 'grupo' (partida) y 'color' cada elemento muestra la franja y la etiqueta de su partida.
  */
 $marcados = array_map('intval', $marcados ?? []);
 usort($items, fn($a, $b) => in_array($b['id'], $marcados, true) <=> in_array($a['id'], $marcados, true));
@@ -16,9 +17,11 @@ $uid = 'ac' . substr(md5($nombreCampo), 0, 6);
     </div>
     <div class="accesos-lista">
         <?php foreach ($items as $it): ?>
-            <label class="acceso-item" data-texto="<?php echo s(mb_strtolower($it['titulo'] . ' ' . $it['detalle'])); ?>">
+            <?php $col = preg_match('/^#[0-9a-f]{6}$/i', (string)($it['color'] ?? '')) ? $it['color'] : ''; ?>
+            <label class="acceso-item<?php echo $col ? ' con-color' : ''; ?>" data-texto="<?php echo s(mb_strtolower($it['titulo'] . ' ' . $it['detalle'] . ' ' . ($it['grupo'] ?? ''))); ?>"<?php echo $col ? ' style="--c:' . $col . '"' : ''; ?>>
                 <input type="checkbox" name="<?php echo s($nombreCampo); ?>[]" value="<?php echo s($it['id']); ?>" <?php echo in_array((int)$it['id'], $marcados, true) ? 'checked' : ''; ?>>
                 <span class="mono"><?php echo s($it['detalle']); ?></span> <?php echo s($it['titulo']); ?>
+                <?php if (!empty($it['grupo'])): ?><span class="acceso-grupo"><?php echo s($it['grupo']); ?></span><?php endif; ?>
             </label>
         <?php endforeach; ?>
         <?php if (empty($items)): ?><p class="text-muted text-sm">No hay elementos para asignar.</p><?php endif; ?>

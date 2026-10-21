@@ -26,7 +26,7 @@
     <?php if (empty($registros)): ?>
         <p class="text-muted"><?php echo ($filtroDepto !== '' || $filtroImp !== '') ? 'Ningún registro coincide con el filtro.' : 'Aún no hay registros en la bitácora.'; ?></p>
     <?php else: ?>
-        <table class="tabla">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th class="hide-m">Fecha</th><th class="hide-m">Departamento</th><th>Descripción</th><th class="hide-m">Importancia</th><?php if ($puede): ?><th>Acciones</th><?php endif; ?></tr></thead>
             <tbody>
             <?php foreach ($registros as $b): ?>

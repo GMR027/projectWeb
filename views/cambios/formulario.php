@@ -21,7 +21,7 @@
             <div class="campo campo-full"><label for="actividad_id">Actividad principal afectada</label>
                 <select id="actividad_id" name="actividad_id">
                     <option value="">— Ninguna —</option>
-                    <?php foreach ($actividades as $a): ?><option value="<?php echo s($a['id']); ?>"<?php echo (int)$orden->actividad_id === (int)$a['id'] ? ' selected' : ''; ?>><?php echo s($a['codigo'] . ' · ' . $a['nombre']); ?></option><?php endforeach; ?>
+                    <?php echo opciones_actividades($actividades, $orden->actividad_id); ?>
                 </select>
                 <small class="text-muted">Una orden vinculada a una actividad justifica sus desviaciones frente a la línea base.</small>
             </div>

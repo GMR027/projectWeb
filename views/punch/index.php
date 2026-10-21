@@ -37,6 +37,24 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
 <?php endif; ?>
 
 <?php if ($puede): ?>
+<details class="card prg-seccion" id="categorias-punch"><summary><strong>Categorías</strong> <small class="text-muted">· crea, renombra o elimina las categorías de los pendientes</small></summary>
+    <?php $catsUso = \Classes\Catalogo::categoriasConUso((int)$pid, 'punch'); ?>
+    <ul class="hist-lista" style="margin-top:1rem">
+        <?php foreach ($catsUso as $nom => $inf): ?>
+            <li style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+                <form method="post" action="/punch/categoria" style="display:flex;gap:.4rem;margin:0"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="anterior" value="<?php echo s($nom); ?>">
+                    <input type="text" name="nombre" value="<?php echo s($nom); ?>" maxlength="60" required><button class="btn btn-sm btn-ghost" type="submit">Renombrar</button></form>
+                <small class="text-muted"><?php echo (int)$inf['usos']; ?> pendiente(s)</small>
+                <form method="post" action="/punch/categoria/eliminar" data-confirmar="<?php echo s($inf['usos'] ? '¿Eliminar «' . $nom . '»? Los ' . $inf['usos'] . ' pendiente(s) que la usan quedarán sin categoría.' : '¿Eliminar la categoría «' . $nom . '»?'); ?>" style="margin:0"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="nombre" value="<?php echo s($nom); ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
+            </li>
+        <?php endforeach; ?>
+        <?php if (!$catsUso): ?><li class="text-muted">Aún no hay categorías. Crea la primera o carga las de las plantillas de inspección.</li><?php endif; ?>
+    </ul>
+    <form method="post" action="/punch/categoria" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+        <label>Nueva categoría <input type="text" name="nombre" maxlength="60" required></label>
+        <button class="btn btn-primary" type="submit">Crear categoría</button></form>
+    <form method="post" action="/punch/categorias/sugeridas" style="margin-top:.8rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit">Cargar las categorías de las plantillas de inspección</button></form>
+</details>
 <details class="card prg-seccion"><summary><strong>Registrar un pendiente</strong></summary>
     <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label style="flex:2">Pendiente <input type="text" name="titulo" required maxlength="200"></label>
@@ -46,7 +64,7 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150" list="ctr"><datalist id="ctr"><?php foreach ($contratistas as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
         <label>Fecha límite <input type="date" name="fecha_limite"></label>
-        <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php foreach ($actividades as $id => $a): ?><option value="<?php echo (int)$id; ?>"><?php echo s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, 45)); ?></option><?php endforeach; ?></select></label>
+        <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades, null, 45); ?></select></label>
         <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="2" maxlength="3000"></textarea></label>
         <label>Foto «antes» <input type="file" name="foto_antes" accept="image/*"></label>
         <button class="btn btn-primary" type="submit">Registrar</button></form></details>
@@ -60,7 +78,7 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
     <?php if ($filtros['contratista'] !== ''): ?><a class="btn btn-sm btn-ghost" href="/punch/pdf?proyecto=<?php echo $pid; ?>&contratista=<?php echo urlencode($filtros['contratista']); ?>">PDF de <?php echo s($filtros['contratista']); ?></a><?php endif; ?></form>
 
 <?php if (!$lista): ?><div class="card prg-vacio"><h3>Sin pendientes con estos filtros</h3><p class="text-muted">Registra uno arriba o haz una inspección.</p></div>
-<?php else: ?><ul class="inc-lista"><?php foreach ($lista as $x): ?>
+<?php else: ?><ul class="inc-lista" <?php echo pag_attr($proyecto); ?>><?php foreach ($lista as $x): ?>
     <li class="card inc-item sev-<?php echo $sevCls[$x['severidad']]; ?><?php echo in_array($x['estado'], ['cerrado', 'rechazado'], true) ? ' est-aceptada' : ''; ?>">
         <div class="inc-cab"><span class="prg-sev"><?php echo s(Punch::SEVERIDADES[$x['severidad']]); ?></span><a href="/punch/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$x['id']; ?>"><strong><?php echo s($x['titulo']); ?></strong></a>
             <small class="text-muted"><?php echo s(Punch::ESTADOS[$x['estado']]); ?><?php echo $x['categoria'] ? ' · ' . s($x['categoria']) : ''; ?><?php echo $x['ubicacion'] ? ' · ' . s($x['ubicacion']) : ''; ?><?php echo $x['responsable'] || $x['contratista'] ? ' · ' . s($x['responsable'] ?: $x['contratista']) : ''; ?> · límite <?php echo s($fmt($x['fecha_limite'])); ?><?php echo $x['vencido'] ? ' <b class="prg-peor">VENCIDO</b>' : ''; ?></small></div>

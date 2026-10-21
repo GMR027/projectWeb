@@ -509,3 +509,45 @@ function atributos_ayuda(array $item, bool $conTitulo = false): string
     return ' data-ayuda="' . s(t($item['ayuda'])) . '"' . ($manual ? ' data-manual="' . s($manual) . '"' : '')
         . ($conTitulo ? ' data-ayuda-titulo="' . s(t($item['label'])) . '"' : '');
 }
+
+/**
+ * `<option>` de actividades agrupadas por partida; cada partida lleva su color (franja ● y fondo) para no confundirlas.
+ * $actividades: salida de `Dependencias::actividades()`. $sel: id seleccionado. $largo: recorte del nombre.
+ */
+function opciones_actividades(array $actividades, $sel = null, int $largo = 60): string
+{
+    $grupos = [];
+    foreach ($actividades as $id => $a) $grupos[$a['partida_id'] ?? 0][] = [(int)($a['id'] ?? $id), $a];
+    $h = '';
+    foreach ($grupos as $acts) {
+        $p = $acts[0][1];
+        $col = preg_match('/^#[0-9a-f]{6}$/i', (string)($p['color'] ?? '')) ? $p['color'] : '#64748b';
+        $h .= '<optgroup label="● ' . s(trim(($p['partida_codigo'] ?? '') . ' ' . ($p['partida'] ?? ''))) . '" style="background:' . $col . ';color:#fff">';
+        foreach ($acts as [$id, $a]) $h .= '<option value="' . $id . '"' . ((int)$sel === $id ? ' selected' : '') . ' style="background:' . $col . '33;color:inherit">● ' . s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, $largo)) . '</option>';
+        $h .= '</optgroup>';
+    }
+    return $h;
+}
+
+/** Registros por página de las listas del proyecto (Ajustes del proyecto; 10 por defecto). Si falta la migración, 10. */
+function registros_por_pagina($proyecto): int
+{
+    static $cache = [];
+    $id = (int)(is_object($proyecto) ? $proyecto->id : $proyecto);
+    if (!isset($cache[$id])) {
+        $n = 10;
+        try {
+            $r = $GLOBALS['db']->query("SELECT registros_por_pagina FROM proyectos WHERE id = $id");
+            if ($r && ($f = $r->fetch_row())) $n = (int)$f[0];
+        } catch (\Throwable $e) {
+        }
+        $cache[$id] = max(1, min(500, $n ?: 10));
+    }
+    return $cache[$id];
+}
+
+/** Atributo que activa el paginador (src/js/paginador.js) en una tabla o lista: `<table class="tabla" <?php echo pag_attr($proyecto); ?>>` */
+function pag_attr($proyecto): string
+{
+    return 'data-paginar="' . registros_por_pagina($proyecto) . '"';
+}

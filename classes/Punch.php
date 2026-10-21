@@ -25,10 +25,18 @@ class Punch
         'general' => ['nombre' => 'Inspección general', 'items' => [['Trabajo terminado según planos y especificación', 'Cumplimiento'], ['Calidad de los materiales instalados', 'Materiales'], ['Limpieza y orden del área', 'Limpieza'], ['Seguridad: sin riesgos visibles', 'Seguridad'], ['Documentación y pruebas entregadas', 'Documentos']]],
     ];
 
-    /** Categorías para las listas del Punch: las del Directorio, las ya usadas y las de las plantillas de inspección */
+    /** Categorías para las listas del Punch: las del catálogo (se administran en el Punch o en el Directorio) y las ya usadas */
     public static function categoriasDeProyecto(int $pid): array
     {
-        return Catalogo::categorias($pid, 'punch', self::categoriasSugeridas());
+        return Catalogo::categorias($pid, 'punch');
+    }
+
+    /** Agrega al catálogo las categorías de las plantillas de inspección (sembrado opcional; después se pueden eliminar) */
+    public static function cargarSugeridas(int $pid): int
+    {
+        $antes = count(Catalogo::categorias($pid, 'punch'));
+        foreach (self::categoriasSugeridas() as $c) Catalogo::agregarCategoria($pid, 'punch', $c);
+        return count(Catalogo::categorias($pid, 'punch')) - $antes;
     }
 
     /** Categorías de las plantillas de inspección */

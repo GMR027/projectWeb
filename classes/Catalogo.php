@@ -186,11 +186,16 @@ class Catalogo
         return $cambios;
     }
 
-    public static function eliminarCategoria(int $pid, string $ambito, string $nombre): bool
+    /** Elimina la categoría; si está en uso solo se borra con `$liberar` (los registros que la usan quedan sin categoría; en `archivo` no aplica) */
+    public static function eliminarCategoria(int $pid, string $ambito, string $nombre, bool $liberar = false): bool
     {
         $def = self::AMBITOS[$ambito] ?? null;
-        if (!$def || (self::categoriasConUso($pid, $ambito)[$nombre]['usos'] ?? 0) > 0) return false;
+        if (!$def) return false;
         $e = self::esc($nombre);
+        if ((self::categoriasConUso($pid, $ambito)[$nombre]['usos'] ?? 0) > 0) {
+            if (!$liberar || isset($def['tabla'])) return false;
+            foreach ($def['usos'] as $t => $c) self::db()->query("UPDATE $t SET $c = '' WHERE proyecto_id = $pid AND $c = '$e'");
+        }
         if (isset($def['tabla'])) self::db()->query("DELETE FROM {$def['tabla']} WHERE proyecto_id = $pid AND nombre = '$e'");
         else self::db()->query("DELETE FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '" . self::esc($ambito) . "' AND nombre = '$e'");
         return true;

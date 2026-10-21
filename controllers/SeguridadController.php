@@ -38,8 +38,22 @@ class SeguridadController
     {
         $p = self::gestion();
         $d = $_POST;
-        $d['medidas'] = Seguridad::medidas((string)($d['tipo'] ?? 'general'), preg_split('/\R/', (string)($d['medidas_extra'] ?? '')) ?: []);
+        $d['medidas'] = Seguridad::medidas((string)($d['tipo'] ?? 'general'), preg_split('/\R/', (string)($d['medidas_extra'] ?? '')) ?: [], (int)$p->id);
         [$ok, $msg] = Seguridad::crearPermiso((int)$p->id, $d, 'manual', is_admin() && ($d['accion'] ?? '') === 'aprobar_ya' ? 'solicitado' : 'solicitado');
+        self::volver($p, $ok, $msg);
+    }
+
+    public static function crearTipo()
+    {
+        $p = self::gestion();
+        [$ok, $msg] = Seguridad::guardarTipo((int)$p->id, (string)($_POST['nombre'] ?? ''), (string)($_POST['palabras'] ?? ''), (string)($_POST['medidas'] ?? ''));
+        self::volver($p, $ok, $msg);
+    }
+
+    public static function eliminarTipo()
+    {
+        $p = self::gestion();
+        [$ok, $msg] = Seguridad::eliminarTipo((int)$p->id, (int)($_POST['id'] ?? 0));
         self::volver($p, $ok, $msg);
     }
 

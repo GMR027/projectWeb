@@ -22,7 +22,7 @@ $foto = fn($n) => $n ? '/uploads/' . Punch::CARPETA . '/' . basename($n) : null;
         <label>Responsable <input type="text" name="responsable" value="<?php echo s($x['responsable']); ?>" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" value="<?php echo s($x['contratista']); ?>" maxlength="150"></label>
         <label>Fecha límite <input type="date" name="fecha_limite" value="<?php echo s($x['fecha_limite']); ?>"></label>
-        <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php foreach ($actividades as $id => $a): ?><option value="<?php echo (int)$id; ?>"<?php echo (int)$x['actividad_id'] === (int)$id ? ' selected' : ''; ?>><?php echo s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, 45)); ?></option><?php endforeach; ?></select></label>
+        <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades, $x['actividad_id'], 45); ?></select></label>
         <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="3" maxlength="3000"><?php echo s($x['descripcion']); ?></textarea></label>
         <label>Foto «antes» <input type="file" name="foto_antes" accept="image/*"></label><label>Foto «después» <input type="file" name="foto_despues" accept="image/*"></label>
         <button class="btn btn-primary" type="submit">Guardar</button></form>

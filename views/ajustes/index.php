@@ -168,6 +168,16 @@ if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte 
         </table>
     </div>
     </div>
+<div class="card" id="registros">
+    <h3 class="card-titulo"><i class="fa-solid fa-list-ol"></i> Registros por página</h3>
+    <?php if (($_GET['registros'] ?? '') === 'ok'): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
+    <p class="text-muted text-sm">Cuántos registros se ven a la vez en las listas de Archivo, Reporte diario, Bitácora, Minutas, Evidencias, Punch list, Submittals, Catálogo de materiales, Editor, Redactor y SheetFlow; el resto se recorre con el paginador. Por defecto, 10.</p>
+    <form method="POST" action="/ajustes/registros" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">
+        <label>Registros <input type="number" name="registros_por_pagina" min="1" max="500" value="<?php echo registros_por_pagina($proyecto); ?>" style="width:10rem"></label>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
+    </form>
+</div>
 <div class="card" id="idioma">
     <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
     <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">

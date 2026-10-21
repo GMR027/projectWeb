@@ -41,7 +41,7 @@ class DirectorioController
         elseif ($tab === 'contratista') $datos['contratista'] = PersonalContratista::deProyecto($pid);
         elseif ($tab === 'departamentos') $datos['departamentos'] = Catalogo::departamentosConUso($pid);
         elseif ($tab === 'categorias') {
-            foreach (Catalogo::AMBITOS as $a => $def) $datos['categorias'][$a] = ['titulo' => $def['titulo'], 'lista' => Catalogo::categoriasConUso($pid, $a, $a === 'punch' ? \Classes\Punch::categoriasSugeridas() : [])];
+            foreach (Catalogo::AMBITOS as $a => $def) $datos['categorias'][$a] = ['titulo' => $def['titulo'], 'lista' => Catalogo::categoriasConUso($pid, $a, [])];
         } else $datos['especialidades'] = Especialidad::deProyecto($pid);
         $conteos = [
             'personal' => count($datos['personal'] ?? Personal::deProyecto($pid)),

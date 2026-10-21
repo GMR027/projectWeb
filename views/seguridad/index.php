@@ -2,8 +2,9 @@
 use Classes\Seguridad;
 $pid = (int)$proyecto->id;
 $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
-$nTipos = array_map(fn($t) => $t['nombre'], Seguridad::TIPOS);
-$catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
+$tipos = Seguridad::tipos($pid);
+$nTipos = array_map(fn($t) => $t['nombre'], $tipos);
+$catalogo = array_map(fn($t) => $t['medidas'], $tipos);
 ?>
 <div class="page-header">
     <div>
@@ -39,8 +40,9 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
     <form method="post" action="/seguridad/permiso" class="inc-filtros" style="margin-top:1rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Tipo <select name="tipo" id="p-tipo"><?php foreach ($nTipos as $k => $n): ?><option value="<?php echo s($k); ?>"><?php echo s($n); ?></option><?php endforeach; ?></select></label>
+        <label>Nombre de permiso <input type="text" name="nombre_permiso" id="p-nombre" maxlength="150" placeholder="Ej. PT-014 Montaje de andamio torre B"></label>
         <label style="flex:2">Trabajo a realizar <input type="text" name="titulo" id="p-titulo" maxlength="200" required></label>
-        <label>Actividad <select name="actividad_id" id="p-act"><option value="0">(ninguna)</option><?php foreach ($actividades as $id => $a): ?><option value="<?php echo (int)$id; ?>"><?php echo s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, 50)); ?></option><?php endforeach; ?></select></label>
+        <label>Actividad <select name="actividad_id" id="p-act"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades); ?></select></label>
         <label>Área <input type="text" name="area" maxlength="150"></label>
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150"></label>
@@ -64,6 +66,19 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
         }); });
     })();
 </script>
+
+<details class="card prg-seccion" id="tipos-permiso">
+    <summary><strong>Tipos de permiso</strong> <small class="text-muted">· <?php echo count($tipos); ?> disponibles (los fijos no se editan; crea los tuyos)</small></summary>
+    <ul class="hist-lista" style="margin-top:1rem">
+        <?php foreach ($tipos as $k => $t): ?><li><strong><?php echo s($t['nombre']); ?></strong> <small class="text-muted">· <?php echo empty($t['propio']) ? 'fijo' : 'propio'; ?> · <?php echo count($t['medidas']); ?> medidas<?php echo $t['palabras'] ? ' · detecta: ' . s(implode(', ', array_slice($t['palabras'], 0, 6))) . (count($t['palabras']) > 6 ? '…' : '') : ''; ?></small>
+            <?php if (!empty($t['propio'])): ?><form method="post" action="/seguridad/tipo/eliminar" data-confirmar="¿Eliminar este tipo de permiso?" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></li><?php endforeach; ?>
+    </ul>
+    <form method="post" action="/seguridad/tipo" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+        <label>Nombre del tipo <input type="text" name="nombre" maxlength="120" required placeholder="Ej. Trabajo sobre cuerpo de agua"></label>
+        <label style="flex-basis:100%">Palabras que lo detectan en las actividades (una por línea, opcional) <textarea name="palabras" rows="2"></textarea></label>
+        <label style="flex-basis:100%">Medidas de seguridad del tipo (una por línea; si queda vacío se usan las generales) <textarea name="medidas" rows="3"></textarea></label>
+        <button class="btn btn-primary" type="submit">Crear tipo</button></form>
+</details>
 <?php endif; ?>
 
 <div class="card prg-seccion">
@@ -73,7 +88,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
     <ul class="inc-lista">
         <?php foreach ($permisos as $x): ?>
             <li class="card inc-item sev-<?php echo $x['vencido'] ? 'critica' : ($x['por_vencer'] ? 'media' : ($x['estado'] === 'aprobado' ? 'baja' : 'media')); ?>">
-                <div class="inc-cab"><span class="prg-sev"><?php echo s(Seguridad::ESTADOS[$x['estado']]); ?></span><strong><?php echo s($x['titulo']); ?></strong>
+                <div class="inc-cab"><span class="prg-sev"><?php echo s(Seguridad::ESTADOS[$x['estado']]); ?></span><strong><?php echo s($x['nombre_permiso'] !== '' ? $x['nombre_permiso'] . ' · ' : ''); ?><?php echo s($x['titulo']); ?></strong>
                     <small class="text-muted"><?php echo s($nTipos[$x['tipo']] ?? $x['tipo']); ?> · <?php echo s($fmt($x['vigente_desde'])); ?> al <?php echo s($fmt($x['vigente_hasta'])); ?><?php echo $x['vencido'] ? ' · VENCIDO' : ($x['por_vencer'] ? ' · vence pronto' : ''); ?><?php echo $x['origen'] === 'ia' ? ' · borrador de IA' : ''; ?></small></div>
                 <p class="text-sm"><?php echo $x['act_codigo'] ? 'Actividad ' . s($x['act_codigo']) . ' · ' : ''; ?><?php echo s(trim($x['area'] . ' · ' . $x['responsable'] . ' · ' . $x['contratista'], ' ·')); ?></p>
                 <form method="post" action="/seguridad/medidas"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>">
@@ -102,7 +117,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], Seguridad::TIPOS);
             <label>Tipo <select name="tipo"><?php foreach (Seguridad::INCIDENTES as $k => $n): ?><option value="<?php echo $k; ?>"><?php echo s($n); ?></option><?php endforeach; ?></select></label>
             <label>Severidad <select name="severidad"><option value="baja">Baja</option><option value="media" selected>Media</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></label>
             <label>Área <input type="text" name="area" maxlength="150"></label>
-            <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php foreach ($actividades as $id => $a): ?><option value="<?php echo (int)$id; ?>"><?php echo s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, 40)); ?></option><?php endforeach; ?></select></label>
+            <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades); ?></select></label>
             <label style="flex-basis:100%">Qué pasó <textarea name="descripcion" rows="2" required maxlength="3000"></textarea></label>
             <label style="flex-basis:100%">Acciones tomadas <textarea name="acciones" rows="2" maxlength="3000"></textarea></label>
             <button class="btn btn-primary" type="submit">Registrar</button></form></details><?php endif; ?>

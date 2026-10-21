@@ -18,7 +18,7 @@
         <?php foreach ($porDepto as $depto => $lista): ?>
         <h3 style="margin:1.6rem 0 .6rem"><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($lista); ?>)</small>
             <?php if ($puede && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
-        <table class="tabla" data-sin-buscador>
+        <table class="tabla" <?php echo pag_attr($proyecto); ?> data-sin-buscador>
             <thead><tr><th class="hide-m">Fecha</th><th>Minuta</th><th class="hide-m">Importancia</th><th class="hide-m">Temas</th><th class="hide-m">Compromisos</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($lista as $m): ?>

@@ -14,7 +14,7 @@
     <?php if (empty($filas)): ?>
         <p class="text-muted">Aún no hay reportes diarios.<?php echo $puede ? ' Crea el primero con «Nuevo reporte».' : ''; ?></p>
     <?php else: ?>
-        <table class="tabla">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th class="hide-m">Fecha</th><th>Actividad del programa</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($filas as $f): $r = $f['reporte']; ?>

@@ -9,7 +9,7 @@
     <?php if (empty($paquetes)): ?>
         <p class="text-muted">Aún no hay paquetes. Crea uno y elige los materiales del catálogo.</p>
     <?php else: ?>
-        <table class="tabla">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th>No. submittal</th><th class="hide-m">MSR</th><th class="hide-m">Fecha</th><th class="hide-m">Especialidad</th><th class="hide-m">Departamento</th><th class="hide-m">Para</th><th class="hide-m">Materiales</th><th>Estatus</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($paquetes as $p): ?>

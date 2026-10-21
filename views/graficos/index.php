@@ -15,7 +15,7 @@
         <p class="text-muted"><?php echo s(t('Aún no hay gráficos.')); ?> <?php echo $puedeEditar ? 'Crea el primero con «Nuevo gráfico».' : ''; ?></p>
     <?php else: ?>
         <div class="tabla-wrapper">
-        <table class="tabla">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Nombre')); ?></th><th class="hide-m"><?php echo s(t('Categoría')); ?></th><th class="hide-m"><?php echo s(t('Tamaño')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
             <tbody>
             <?php foreach ($graficos as $g): $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$g->id; ?>

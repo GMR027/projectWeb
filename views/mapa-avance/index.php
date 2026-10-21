@@ -52,7 +52,7 @@ $nomAct = fn($id) => isset($actividades[$id]) ? $actividades[$id]['codigo'] . ' 
                     <tr><td><?php echo s($c['nombre']); ?></td><td class="num"><?php echo (int)$c['rojo']; ?></td><td class="num"><?php echo (int)$c['amarillo']; ?></td><td class="num"><?php echo (int)$c['verde']; ?></td><td class="num"><?php echo $c['pct'] !== null ? number_format($c['pct'], 1) . ' %' : '—'; ?></td>
                         <td><?php if ($puede): ?>
                             <form method="post" action="/mapa-avance/mapear" style="display:flex;gap:.4rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="lamina" value="<?php echo (int)$l['id']; ?>"><input type="hidden" name="capa" value="<?php echo s($c['id']); ?>">
-                                <select name="actividad" onchange="this.form.submit()"><option value="0">(la(s) de la lámina)</option><?php foreach ($actividades as $id => $a): ?><option value="<?php echo (int)$id; ?>"<?php echo $sel === (int)$id ? ' selected' : ''; ?>><?php echo s($a['codigo'] . ' ' . mb_substr($a['nombre'], 0, 50)); ?></option><?php endforeach; ?></select></form>
+                                <select name="actividad" onchange="this.form.submit()"><option value="0">(la(s) de la lámina)</option><?php echo opciones_actividades($actividades, $sel, 50); ?></select></form>
                             <?php else: echo $sel ? s($nomAct($sel)) : '(la(s) de la lámina)'; endif; ?></td></tr>
                 <?php endforeach; ?></tbody></table></div>
             <?php endif; ?>

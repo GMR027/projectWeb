@@ -229,6 +229,24 @@ label:has(> input[type="radio"]) { cursor: pointer; }
         font-weight: 400;
 
         input { width: auto; }
+
+        // Elemento de una partida con color: franja y etiqueta del color de su partida
+        &.con-color {
+            border-left: 0.5rem solid var(--c);
+            background: color-mix(in srgb, var(--c) 12%, transparent);
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.4rem;
+        }
+        .acceso-grupo {
+            margin-left: auto;
+            padding: 0.1rem 0.8rem;
+            border-radius: 99rem;
+            font-size: 1.1rem;
+            white-space: nowrap;
+            color: #fff;
+            background: var(--c, #475569);
+            text-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.6);
+        }
     }
 }
 

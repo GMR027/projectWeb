@@ -47,6 +47,7 @@ CREATE TABLE proyectos (
     color VARCHAR(7) DEFAULT '#FF5A1F',
     usuario_id INT NOT NULL,
     modo_dependencias ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
+    registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -1213,10 +1214,22 @@ CREATE TABLE IF NOT EXISTS mapa_avance_instantaneas (
 ) ENGINE=InnoDB;
 
 -- Seguridad e higiene (permisos de trabajo, incidentes) y punch list (pendientes de calidad con fotos antes/después).
+CREATE TABLE IF NOT EXISTS permisos_tipos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(120) NOT NULL,
+    palabras TEXT NULL,
+    medidas_json TEXT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proy (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS permisos_trabajo (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    tipo VARCHAR(30) NOT NULL,                       -- altura | caliente | espacio_confinado | excavacion | electrico | izaje | general
+    tipo VARCHAR(30) NOT NULL,                       -- altura | caliente | espacio_confinado | excavacion | electrico | izaje | general | t<id> (permisos_tipos)
+    nombre_permiso VARCHAR(150) NOT NULL DEFAULT '',
     titulo VARCHAR(200) NOT NULL,
     actividad_id INT NULL,
     area VARCHAR(150) NOT NULL DEFAULT '',

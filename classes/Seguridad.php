@@ -31,19 +31,49 @@ class Seguridad
     public const ESTADOS = ['borrador' => 'Borrador', 'solicitado' => 'Solicitado', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado', 'cerrado' => 'Cerrado'];
     public const INCIDENTES = ['incidente' => 'Incidente', 'casi_accidente' => 'Casi accidente', 'acto_inseguro' => 'Acto inseguro', 'condicion_insegura' => 'Condición insegura'];
 
+    /** Tipos fijos + los creados en el proyecto (clave `t<id>`). Sin proyecto, solo los fijos. */
+    public static function tipos(int $pid = 0): array
+    {
+        $t = self::TIPOS;
+        if ($pid > 0) foreach (self::filas("SELECT * FROM permisos_tipos WHERE proyecto_id = $pid ORDER BY nombre") as $r) {
+            $med = json_decode((string)$r['medidas_json'], true) ?: [];
+            $t['t' . $r['id']] = ['nombre' => $r['nombre'], 'propio' => true, 'id' => (int)$r['id'], 'medidas' => $med ?: self::TIPOS['general']['medidas'],
+                'palabras' => array_values(array_filter(array_map(fn($w) => Voz::sinAcentos(trim($w)), preg_split('/\R/', (string)$r['palabras']) ?: [])))];
+        }
+        return $t;
+    }
+
+    /** @return array{0: bool, 1: string} */
+    public static function guardarTipo(int $pid, string $nombre, string $palabras, string $medidas): array
+    {
+        $nombre = trim(mb_substr($nombre, 0, 120));
+        if ($nombre === '') return [false, 'El nombre del tipo es obligatorio.'];
+        foreach (self::tipos($pid) as $t) if (mb_strtolower($t['nombre']) === mb_strtolower($nombre)) return [false, 'Ya existe un tipo con ese nombre.'];
+        $med = array_values(array_filter(array_map(fn($m) => mb_substr(trim($m), 0, 250), preg_split('/\R/', $medidas) ?: [])));
+        self::db()->query("INSERT INTO permisos_tipos (proyecto_id, nombre, palabras, medidas_json) VALUES ($pid, '" . self::esc($nombre) . "', '" . self::esc(mb_substr($palabras, 0, 2000)) . "', '" . self::esc(json_encode($med, JSON_UNESCAPED_UNICODE)) . "')");
+        return [true, 'Tipo de permiso creado.'];
+    }
+
+    public static function eliminarTipo(int $pid, int $id): array
+    {
+        if (self::filas("SELECT 1 FROM permisos_trabajo WHERE proyecto_id = $pid AND tipo = 't$id' LIMIT 1")) return [false, 'Hay permisos que usan este tipo; elimínalos primero.'];
+        self::db()->query("DELETE FROM permisos_tipos WHERE id = $id AND proyecto_id = $pid");
+        return [true, 'Tipo eliminado.'];
+    }
+
     /** Tipos de permiso que exige el nombre de una actividad (según palabras clave) */
-    public static function tiposRequeridos(string $nombre, string $descripcion = ''): array
+    public static function tiposRequeridos(string $nombre, string $descripcion = '', int $pid = 0): array
     {
         $t = Voz::sinAcentos($nombre . ' ' . $descripcion);
         $out = [];
-        foreach (self::TIPOS as $k => $d) foreach ($d['palabras'] as $w) if ($w !== '' && str_contains($t, $w)) { $out[] = $k; break; }
+        foreach (self::tipos($pid) as $k => $d) foreach ($d['palabras'] as $w) if ($w !== '' && str_contains($t, $w)) { $out[] = $k; break; }
         return $out;
     }
 
     /** Medidas del tipo como lista [{texto, ok}] lista para guardar */
-    public static function medidas(string $tipo, array $extra = []): array
+    public static function medidas(string $tipo, array $extra = [], int $pid = 0): array
     {
-        $base = self::TIPOS[$tipo]['medidas'] ?? self::TIPOS['general']['medidas'];
+        $base = self::tipos($pid)[$tipo]['medidas'] ?? self::TIPOS['general']['medidas'];
         return array_map(fn($t) => ['texto' => $t, 'ok' => false], array_values(array_unique(array_merge($base, array_filter(array_map('trim', $extra))))));
     }
 
@@ -72,7 +102,7 @@ class Seguridad
     /** @return array{0: bool, 1: string, 2: int} */
     public static function crearPermiso(int $pid, array $d, string $origen = 'manual', string $estado = 'solicitado'): array
     {
-        $tipo = isset(self::TIPOS[$d['tipo'] ?? '']) ? $d['tipo'] : 'general';
+        $tipo = isset(self::tipos($pid)[$d['tipo'] ?? '']) ? $d['tipo'] : 'general';
         $titulo = trim(mb_substr((string)($d['titulo'] ?? ''), 0, 200));
         $desde = \DateTime::createFromFormat('Y-m-d', (string)($d['vigente_desde'] ?? ''));
         $hasta = \DateTime::createFromFormat('Y-m-d', (string)($d['vigente_hasta'] ?? ''));
@@ -80,10 +110,10 @@ class Seguridad
         if (!$desde || !$hasta || $hasta < $desde) return [false, 'Las fechas de vigencia no son válidas (la final debe ser igual o posterior a la inicial).', 0];
         $aid = (int)($d['actividad_id'] ?? 0);
         if ($aid && !self::filas("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $aid AND pa.proyecto_id = $pid")) $aid = 0;
-        $medidas = $d['medidas'] ?? self::medidas($tipo);
+        $medidas = $d['medidas'] ?? self::medidas($tipo, [], $pid);
         $medidas = array_values(array_map(fn($m) => ['texto' => mb_substr(trim((string)($m['texto'] ?? $m)), 0, 250), 'ok' => !empty($m['ok'])], array_filter((array)$medidas, fn($m) => trim((string)($m['texto'] ?? $m)) !== '')));
         $db = self::db();
-        $db->query("INSERT INTO permisos_trabajo (proyecto_id, tipo, titulo, actividad_id, area, responsable, contratista, descripcion, riesgos, medidas_json, vigente_desde, vigente_hasta, estado, origen, solicitado_por) VALUES ($pid, '$tipo', '" . self::esc($titulo) . "', " . ($aid ?: 'NULL') . ", '" . self::esc(mb_substr((string)($d['area'] ?? ''), 0, 150)) . "', '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', '"
+        $db->query("INSERT INTO permisos_trabajo (proyecto_id, tipo, nombre_permiso, titulo, actividad_id, area, responsable, contratista, descripcion, riesgos, medidas_json, vigente_desde, vigente_hasta, estado, origen, solicitado_por) VALUES ($pid, '$tipo', '" . self::esc(mb_substr(trim((string)($d['nombre_permiso'] ?? '')), 0, 150)) . "', '" . self::esc($titulo) . "', " . ($aid ?: 'NULL') . ", '" . self::esc(mb_substr((string)($d['area'] ?? ''), 0, 150)) . "', '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', '"
             . self::esc(mb_substr((string)($d['descripcion'] ?? ''), 0, 3000)) . "', '" . self::esc(mb_substr((string)($d['riesgos'] ?? ''), 0, 3000)) . "', '" . self::esc(json_encode($medidas, JSON_UNESCAPED_UNICODE)) . "', '{$desde->format('Y-m-d')}', '{$hasta->format('Y-m-d')}', '" . (isset(self::ESTADOS[$estado]) ? $estado : 'solicitado') . "', '" . ($origen === 'ia' ? 'ia' : 'manual') . "', '" . self::esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "')");
         return [true, 'Permiso registrado.', (int)$db->insert_id];
     }
@@ -132,7 +162,7 @@ class Seguridad
         $out = [];
         foreach (Dependencias::actividades($pid) as $id => $a) {
             if ((int)$a['hito'] || (int)$a['progreso'] >= 100 || $a['fecha_fin'] < $hoy || $a['fecha_inicio'] > $hasta) continue;
-            foreach (self::tiposRequeridos($a['nombre']) as $tipo) {
+            foreach (self::tiposRequeridos($a['nombre'], '', $pid) as $tipo) {
                 $cubre = array_values(array_filter($permisos, fn($p) => (int)$p['actividad_id'] === $id && $p['tipo'] === $tipo && $p['vigente_hasta'] >= max($a['fecha_inicio'], $hoy)));
                 $apr = array_values(array_filter($cubre, fn($p) => $p['estado'] === 'aprobado'));
                 $out[] = ['actividad' => $a, 'tipo' => $tipo, 'permiso' => $apr[0] ?? ($cubre[0] ?? null), 'estado' => $apr ? 'ok' : ($cubre ? 'tramite' : 'falta')];
@@ -182,8 +212,8 @@ class Seguridad
         $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
         $med = implode('', array_map(fn($m) => '<tr><td style="width:18px;text-align:center">' . (!empty($m['ok']) ? '☑' : '☐') . '</td><td>' . $e($m['texto']) . '</td></tr>', $x['medidas']));
         $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:10px;color:#111}h1{font-size:16px;margin:0}h2{font-size:11px;color:#555;margin:2px 0 12px;font-weight:normal}table{width:100%;border-collapse:collapse;margin:4px 0 10px}td,th{border:1px solid #999;padding:4px 6px;vertical-align:top;text-align:left}th{background:#eee;width:28%}.firmas td{height:55px;text-align:center;vertical-align:bottom;width:33%}</style></head><body>'
-            . '<h1>Permiso de trabajo · ' . $e(self::TIPOS[$x['tipo']]['nombre']) . '</h1><h2>' . $e($p->nombre) . ' · folio #' . (int)$x['id'] . ' · estado: ' . $e(self::ESTADOS[$x['estado']]) . '</h2>'
-            . '<table><tr><th>Trabajo</th><td>' . $e($x['titulo']) . '</td></tr><tr><th>Actividad</th><td>' . $e(($x['act_codigo'] ?? '') . ' ' . ($x['act_nombre'] ?? '')) . '</td></tr><tr><th>Área</th><td>' . $e($x['area']) . '</td></tr><tr><th>Responsable / contratista</th><td>' . $e($x['responsable'] . ' · ' . $x['contratista']) . '</td></tr>'
+            . '<h1>Permiso de trabajo · ' . $e(self::tipos((int)$p->id)[$x['tipo']]['nombre'] ?? $x['tipo']) . '</h1><h2>' . $e($p->nombre) . ' · folio #' . (int)$x['id'] . ' · estado: ' . $e(self::ESTADOS[$x['estado']]) . '</h2>'
+            . '<table>' . ($x['nombre_permiso'] !== '' ? '<tr><th>Nombre de permiso</th><td>' . $e($x['nombre_permiso']) . '</td></tr>' : '') . '<tr><th>Trabajo</th><td>' . $e($x['titulo']) . '</td></tr><tr><th>Actividad</th><td>' . $e(($x['act_codigo'] ?? '') . ' ' . ($x['act_nombre'] ?? '')) . '</td></tr><tr><th>Área</th><td>' . $e($x['area']) . '</td></tr><tr><th>Responsable / contratista</th><td>' . $e($x['responsable'] . ' · ' . $x['contratista']) . '</td></tr>'
             . '<tr><th>Vigencia</th><td>' . $fmt($x['vigente_desde']) . ' al ' . $fmt($x['vigente_hasta']) . '</td></tr><tr><th>Descripción</th><td>' . nl2br($e($x['descripcion'])) . '</td></tr><tr><th>Riesgos</th><td>' . nl2br($e($x['riesgos'])) . '</td></tr></table>'
             . '<b>Medidas de seguridad verificadas</b><table>' . $med . '</table>'
             . '<table class="firmas"><tr><td>Solicitó: ' . $e($x['solicitado_por']) . '<br>______________________<br>Nombre y firma</td><td>Responsable del área<br>______________________<br>Nombre y firma</td><td>Autorizó: ' . $e($x['resuelto_por']) . '<br>______________________<br>Nombre y firma</td></tr></table>'

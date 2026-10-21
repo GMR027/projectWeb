@@ -19,7 +19,7 @@
         <h3><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($hojas); ?>)</small>
             <?php if ($puedeEditar && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
         <div class="tabla-wrapper">
-        <table class="tabla" data-sin-buscador>
+        <table class="tabla" <?php echo pag_attr($proyecto); ?> data-sin-buscador>
             <thead><tr><th>Fecha</th><th>Nombre</th><th class="hide-m">Tamaño</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($hojas as $h): $q = 'proyecto=' . $id . '&id=' . (int)$h->id; [$nf, $nc] = $tamanos[$h->id]; ?>

@@ -44,7 +44,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
     <?php if (empty($materiales)): ?>
         <p class="text-muted">Aún no hay materiales<?php echo ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== '') ? ' que coincidan con los filtros' : ''; ?>. Agrega uno o impórtalos desde el MSR.</p>
     <?php else: ?>
-        <table class="tabla" data-proyecto="<?php echo s($proyecto->id); ?>">
+        <table class="tabla" <?php echo pag_attr($proyecto); ?> data-proyecto="<?php echo s($proyecto->id); ?>">
             <thead>
                 <tr><?php if (is_admin()): ?><th>Revisión</th><?php endif; ?><th class="hide-m">Imagen</th><th class="hide-m">Referencia</th><th class="col-mat">Material</th><th class="hide-m">Especialidad</th><?php if ($inteligentes || $verif): ?><th>Normativa</th><?php endif; ?><th>Compra</th><th>Entrega</th><th class="hide-m">Web</th><th class="hide-m">Ficha</th><th class="hide-m">Certificado calidad</th><th>Acciones</th></tr>
             </thead>

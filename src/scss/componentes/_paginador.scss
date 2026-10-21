@@ -1,0 +1,29 @@
+// Paginador de listas (src/js/paginador.js)
+.pag-oculta { display: none !important; }
+
+.paginador {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0;
+
+    .pag-info { margin-right: auto; font-size: 1.2rem; color: var(--text-muted); }
+    .pag-sep { color: var(--text-muted); padding: 0 0.2rem; }
+
+    button {
+        min-width: 3.2rem;
+        padding: 0.4rem 0.8rem;
+        border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+        border-radius: 0.6rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+
+        &:hover:not(:disabled) { border-color: var(--primary); }
+        &.activa { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+        &:disabled { opacity: 0.4; cursor: default; }
+    }
+}

@@ -22,8 +22,8 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
                 <select id="ev-act" name="actividad_id" required>
                     <option value="">— Selecciona —</option>
                     <?php foreach ($partidas as $p): ?>
-                        <optgroup label="<?php echo s($p->codigo . ' · ' . $p->nombre); ?>">
-                            <?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . $a->nombre); ?></option><?php endforeach; ?>
+                        <optgroup label="● <?php echo s($p->codigo . ' · ' . $p->nombre); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff">
+                            <?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . $a->nombre); ?></option><?php endforeach; ?>
                         </optgroup>
                     <?php endforeach; ?>
                 </select></div>
@@ -45,7 +45,7 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
             <select name="partida"><option value=""><?php echo s(t('Todas')); ?></option><?php foreach ($partidas as $p): ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$filtros['partida'] === (int)$p->id ? ' selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?></select></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Actividad')); ?></label><br>
             <select name="actividad"><option value=""><?php echo s(t('Todas')); ?></option>
-                <?php foreach ($partidas as $p): ?><optgroup label="<?php echo s($p->codigo); ?>"><?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
+                <?php foreach ($partidas as $p): ?><optgroup label="● <?php echo s($p->codigo); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff"><?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
             </select></div>
         <?php foreach (['departamento' => ['Departamento', $departamentos], 'categoria' => ['Categoría', $categorias]] as $k => [$et, $op]): if (!$op) continue; ?>
         <div><label class="text-sm text-muted"><?php echo s(t($et)); ?></label><br>
@@ -64,7 +64,7 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
 <?php if (!$dias): ?>
     <div class="card"><p class="text-muted">No hay evidencias con estos filtros. Las fotos de los <a href="/reportes?proyecto=<?php echo (int)$proyecto->id; ?>">reportes diarios</a> aparecen aquí solas<?php echo $puedeEditar ? ', y puedes subir más con «Agregar evidencia»' : ''; ?>.</p></div>
 <?php else: ?>
-<div class="ev-linea">
+<div class="ev-linea" <?php echo pag_attr($proyecto); ?>>
     <?php foreach ($dias as $fecha => $g): $n = array_sum(array_map(fn($r) => count($r['fotos']), $g['reportes'] ?? [])) + count($g['subidas'] ?? []); ?>
         <section class="ev-dia">
             <div class="ev-dia-cab"><span class="ev-punto"></span><h3><?php echo s($fechaLarga($fecha)); ?></h3><span class="text-muted text-sm"><?php echo $n; ?> foto(s)</span></div>

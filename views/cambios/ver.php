@@ -92,7 +92,7 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
             <div class="campo"><label for="p-retiro">Retiro previsto</label><input type="date" id="p-retiro" name="fecha_retiro_prevista"><small class="text-muted">Solo si requiere retiro</small></div>
             <div class="campo campo-check"><label><input type="checkbox" name="requiere_retiro" value="1" id="p-req"> Requiere retiro posterior (siempre activo en instalación temporal)</label></div>
             <div class="campo"><label for="p-act">Actividad afectada</label>
-                <select id="p-act" name="actividad_id"><option value="">— Ninguna —</option><?php foreach ($actividades as $a): ?><option value="<?php echo s($a['id']); ?>"><?php echo s($a['codigo'] . ' · ' . $a['nombre']); ?></option><?php endforeach; ?></select></div>
+                <select id="p-act" name="actividad_id"><option value="">— Ninguna —</option><?php echo opciones_actividades($actividades); ?></select></div>
             <div class="campo"><label for="p-mat">Material</label>
                 <select id="p-mat" name="material_id"><option value="">— Ninguno —</option><?php foreach ($materiales as $m): ?><option value="<?php echo s($m->id); ?>"><?php echo s($m->nombre); ?></option><?php endforeach; ?></select></div>
             <div class="campo campo-full"><label for="p-notas">Notas</label><input type="text" id="p-notas" name="notas"></div>

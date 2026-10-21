@@ -7,6 +7,7 @@ use Model\Proyecto;
 use Classes\Almacenamiento;
 use Classes\Dependencias;
 use Classes\Imagenes;
+use Classes\Catalogo;
 use Classes\Punch;
 
 /** Punch list: pendientes de calidad con fotos antes/después, inspecciones con listas de verificación y análisis de causas repetidas */
@@ -40,6 +41,36 @@ class PunchController
             if ($nombre) Punch::ponerFoto((int)$p->id, $id, $campo, $nombre); else return 'Una foto no es válida (jpg, png, webp o gif).';
         }
         return null;
+    }
+
+    public static function categoriaGuardar()
+    {
+        $p = self::gestion();
+        $pid = (int)$p->id;
+        $nuevo = trim((string)($_POST['nombre'] ?? ''));
+        $anterior = (string)($_POST['anterior'] ?? '');
+        if ($nuevo === '') self::volver($p, false, 'Escribe el nombre de la categoría.');
+        if ($anterior === '') {
+            Catalogo::agregarCategoria($pid, 'punch', $nuevo);
+            self::volver($p, true, "Categoría «{$nuevo}» agregada.");
+        }
+        $n = Catalogo::renombrarCategoria($pid, 'punch', $anterior, $nuevo);
+        self::volver($p, true, "«{$anterior}» ahora es «" . Catalogo::limpiar($nuevo) . "»" . ($n ? " ($n pendiente(s) actualizados)." : '.'));
+    }
+
+    public static function categoriaEliminar()
+    {
+        $p = self::gestion();
+        $nombre = (string)($_POST['nombre'] ?? '');
+        $ok = Catalogo::eliminarCategoria((int)$p->id, 'punch', $nombre, true);
+        self::volver($p, $ok, $ok ? "Categoría «{$nombre}» eliminada (los pendientes que la usaban quedan sin categoría)." : 'No se pudo eliminar la categoría.');
+    }
+
+    public static function categoriasSugeridas()
+    {
+        $p = self::gestion();
+        $n = Punch::cargarSugeridas((int)$p->id);
+        self::volver($p, true, $n ? "Se agregaron $n categoría(s) de las plantillas de inspección." : 'Ya estaban todas las categorías sugeridas.');
     }
 
     public static function index(Router $router)

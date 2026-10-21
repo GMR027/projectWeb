@@ -202,6 +202,23 @@ class AjustesController
         exit;
     }
 
+    /** Cuántos registros se muestran por página en las listas del proyecto */
+    public static function guardarRegistros()
+    {
+        redirigir_si_no_auth();
+        $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $proyectoId ? Proyecto::find($proyectoId) : null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+        $n = max(1, min(500, (int)($_POST['registros_por_pagina'] ?? 10)));
+        $GLOBALS['db']->query("UPDATE proyectos SET registros_por_pagina = $n WHERE id = " . (int)$proyecto->id);
+        header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&registros=ok#registros');
+        exit;
+    }
+
     /** Agregar día festivo / paro */
     public static function agregarFestivo()
     {
