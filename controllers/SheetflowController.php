@@ -137,12 +137,7 @@ class SheetflowController
             exit;
         }
         $tipos = ['xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'csv' => 'text/csv; charset=utf-8', 'pdf' => 'application/pdf', 'sheetflow' => 'application/octet-stream'];
-        header_remove('Content-Type');
-        header('Content-Type: ' . $tipos[$formato]);
-        header('Content-Disposition: ' . ($formato === 'pdf' && !empty($_GET['inline']) ? 'inline' : 'attachment') . '; filename="' . $base . '.' . $formato . '"');
-        header('Content-Length: ' . strlen($datos));
-        echo $datos;
-        exit;
+        enviar_descarga($datos, $tipos[$formato], $base . '.' . $formato, $formato === 'pdf' && !empty($_GET['inline']));
     }
 
     public static function duplicar()

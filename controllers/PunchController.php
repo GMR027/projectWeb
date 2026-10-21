@@ -104,9 +104,6 @@ class PunchController
     public static function pdf()
     {
         $p = proyecto_de_peticion();
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . date('Y_m_d') . '_punch_list.pdf"');
-        echo Punch::pdf($p, trim((string)($_GET['contratista'] ?? '')));
-        exit;
+        enviar_descarga(Punch::pdf($p, trim((string)($_GET['contratista'] ?? ''))), 'application/pdf', date('Y_m_d') . '_punch_list.pdf');
     }
 }

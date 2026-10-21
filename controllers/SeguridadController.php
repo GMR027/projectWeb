@@ -69,10 +69,7 @@ class SeguridadController
         $p = proyecto_de_peticion();
         $x = Seguridad::obtenerPermiso((int)$p->id, (int)($_GET['id'] ?? 0));
         if (!$x) { http_response_code(404); exit('Permiso no encontrado'); }
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . date('Y_m_d') . '_permiso_' . (int)$x['id'] . '_' . slug_archivo($x['titulo']) . '.pdf"');
-        echo Seguridad::pdfPermiso($p, $x);
-        exit;
+        enviar_descarga(Seguridad::pdfPermiso($p, $x), 'application/pdf', date('Y_m_d') . '_permiso_' . (int)$x['id'] . '_' . slug_archivo($x['titulo']) . '.pdf');
     }
 
     public static function incidente()

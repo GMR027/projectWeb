@@ -240,10 +240,7 @@ class InformesIAController
         $p = self::admin();
         $inf = Informes::obtener((int)$p->id, (int)($_GET['id'] ?? 0));
         if (!$inf) { http_response_code(404); exit('Informe no encontrado'); }
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . date('Y_m_d') . '_' . slug_archivo($inf['titulo']) . '.pdf"');
-        echo Informes::pdf($p, $inf);
-        exit;
+        enviar_descarga(Informes::pdf($p, $inf), 'application/pdf', date('Y_m_d') . '_' . slug_archivo($inf['titulo']) . '.pdf');
     }
 
     public static function estado()

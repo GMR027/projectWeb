@@ -291,6 +291,17 @@ function proyecto_de_peticion(bool $gestionar = false): \Model\Proyecto
     return $proyecto;
 }
 
+/** Entrega un archivo que ya está en memoria (cabeceras de descarga, o de vista en el navegador si $inline) y termina */
+function enviar_descarga(string $datos, string $mime, string $nombre, bool $inline = false): void
+{
+    header_remove('Content-Type');
+    header('Content-Type: ' . $mime);
+    header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $nombre . '"');
+    header('Content-Length: ' . strlen($datos));
+    echo $datos;
+    exit;
+}
+
 /** Responde JSON y termina. Único punto de salida de las APIs (antes cada controlador tenía su copia) */
 function json_respuesta(array $datos, int $codigo = 200): void
 {

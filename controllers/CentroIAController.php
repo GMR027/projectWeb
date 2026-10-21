@@ -73,16 +73,8 @@ class CentroIAController
         $p = self::admin();
         $f = self::filtrosHistorial();
         $base = date('Y_m_d') . '_' . slug_archivo(usuario_actual()['nombre'] ?? 'historial');
-        if (($_GET['formato'] ?? '') === 'pdf') {
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $base . '.pdf"');
-            echo Auditoria::pdf($p, $f);
-        } else {
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . $base . '.xlsx"');
-            echo Auditoria::xlsx($p, $f);
-        }
-        exit;
+        if (($_GET['formato'] ?? '') === 'pdf') enviar_descarga(Auditoria::pdf($p, $f), 'application/pdf', $base . '.pdf');
+        enviar_descarga(Auditoria::xlsx($p, $f), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $base . '.xlsx');
     }
 
     // ---------- biblioteca ----------

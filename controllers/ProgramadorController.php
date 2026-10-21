@@ -121,16 +121,8 @@ class ProgramadorController
         $prop = Programador::obtener((int)$p->id, (int)($_GET['propuesta'] ?? 0));
         if (!$prop) { http_response_code(404); exit('Propuesta no encontrada'); }
         $base = date('Y_m_d') . '_' . slug_archivo(usuario_actual()['nombre'] ?? 'programador');
-        if (($_GET['formato'] ?? '') === 'pdf') {
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $base . '.pdf"');
-            echo ProgramadorAcciones::pdf($p, $prop);
-        } else {
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . $base . '.xlsx"');
-            echo ProgramadorAcciones::xlsx($p, $prop);
-        }
-        exit;
+        if (($_GET['formato'] ?? '') === 'pdf') enviar_descarga(ProgramadorAcciones::pdf($p, $prop), 'application/pdf', $base . '.pdf');
+        enviar_descarga(ProgramadorAcciones::xlsx($p, $prop), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $base . '.xlsx');
     }
 
     public static function eliminar()
