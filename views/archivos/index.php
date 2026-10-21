@@ -4,6 +4,7 @@ $carpetaActual = null;
 foreach ($carpetas as $k) if ($carpeta && (int)$k->id === (int)$carpeta) $carpetaActual = $k;
 $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta=' . $c : '') . ($filtro ? '&categoria=' . (int)$filtro : '');
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('archivo', '/archivos', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-folder-open"></i> Archivo</h2>

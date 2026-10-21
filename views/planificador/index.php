@@ -6,6 +6,7 @@ $carriles = [
 $q = fn(array $extra = []) => '?' . http_build_query(array_merge(['proyecto' => $proyecto->id], $extra));
 $urlAct = fn($id) => "/programa/actividades/editar?proyecto={$proyecto->id}&id=" . (int)$id;
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('lookahead', '/planificador', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-diagram-next"></i> Planificador</h2>

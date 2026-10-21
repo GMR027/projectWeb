@@ -6,6 +6,7 @@ $accionNombre = ['nota' => 'Sin cambio de datos', 'renombrar_material' => 'Renom
 $url = fn(array $cambia) => '/analisis-materiales?' . http_build_query(array_filter(['proyecto' => $pid] + $cambia + $filtros, fn($v) => $v !== '' && $v !== 0));
 $nombreCorrida = fn($c) => ($c['nombre'] !== '' ? $c['nombre'] : 'Análisis') . ' · ' . date('d/m/Y H:i', strtotime($c['creado'])) . ($c['modelo'] ? ' · ' . $c['modelo'] : '');
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('revision', '/analisis-materiales', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-boxes-stacked"></i> <?php echo s(t('Análisis de materiales')); ?></h2>

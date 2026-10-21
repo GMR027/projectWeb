@@ -6,6 +6,7 @@ $nSig = (int)$config->semanas;
 $encEst = $config->encabezado();
 $puedeEditar = puede_gestionar_proyecto($proyecto);
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('lookahead', '/lookahead', $proyecto); ?>
 <div class="page-header no-print">
     <div>
         <h2><i class="fa-solid fa-binoculars"></i> <?php echo s($config->nombreHerramienta()); ?> · semana actual + <?php echo $nSig; ?></h2>

@@ -24,7 +24,7 @@ return [
 </table>
 <h4>Meses anteriores</h4>
 <ul>
-<li><strong><a href="#ensamblador-documentos">Ensamblador de documentos</a></strong>: un PDF que une documentos del Redactor y PDF del Archivo y se actualiza solo cuando cambian.</li>
+<li><strong><a href="#ensamblador-documentos">Unir documentos (PDF)</a></strong> (antes «Ensamblador de documentos»): un PDF que une documentos del Redactor y PDF del Archivo y se actualiza solo cuando cambian.</li>
 <li><strong><a href="#traductor">Traductor</a></strong> español ↔ inglés de textos y documentos.</li>
 <li><strong><a href="#sheetflow">SheetFlow</a></strong>: fórmulas, formato por celda, bordes, imágenes, importación de Excel/CSV y archivo propio <code>.sheetflow</code>.</li>
 <li><strong><a href="#cambios">Órdenes de cambio</a> y <a href="#lineas-base">líneas base</a></strong>: cada desviación con su impacto y su causa; comparación con barra «fantasma».</li>
@@ -42,7 +42,7 @@ HTML],
 <tr><td><strong>App de escritorio 0.3.4</strong><br><small><a href="#escritorio">App de escritorio</a></small></td><td>Engranaje de Ajustes en la propia app, campana de actualizaciones (sin pedir token), reconocimiento de texto (OCR) en documentos escaneados y arreglo del inicio de sesión. Las llaves de la IA siguen cifradas en tu equipo.</td></tr>
 <tr><td><strong>Centro de IA</strong><br><small><a href="#centro-ia">Centro de IA</a></small></td><td>Un lugar para revisar, aplicar o rechazar las propuestas de todas las herramientas de IA, con auditoría de cada decisión. <strong>Nada cambia en tus datos sin que lo aceptes.</strong></td></tr>
 <tr><td><strong>Programador, Inconsistencias y Materiales</strong><br><small><a href="#programador-ia">Programador</a> · <a href="#inconsistencias">Inconsistencias</a> · <a href="#analisis-materiales">Materiales</a></small></td><td>La IA arma actividades, detecta fechas que no cuadran, datos duplicados o incompletos, y cruza materiales contra el cronograma. Tú decides qué se aplica.</td></tr>
-<tr><td><strong>Ensamblador con IA</strong><br><small><a href="#ensamblador">Ensamblador</a></small></td><td>Convierte PDF, PPTX o DOCX en partidas, materiales y submittals. Distinto del Ensamblador de documentos (que une PDF).</td></tr>
+<tr><td><strong>Ensamblador con IA</strong><br><small><a href="#ensamblador">Ensamblador</a></small></td><td>Convierte PDF, PPTX o DOCX en partidas, materiales y submittals. Distinto de «Unir documentos (PDF)», que solo junta PDF.</td></tr>
 <tr><td><strong>Ordenar y renumerar</strong><br><small><a href="#ordenar">Ordenar y renumerar</a></small></td><td>Reordena el programa por fechas y renumera la EDT sin IA, con vista previa.</td></tr>
 <tr><td><strong>Revisiones</strong><br><small><a href="#revisiones">Revisiones</a></small></td><td>Semáforo ✅ ⚠ ❌ por proyecto y estado de uso de cada herramienta para saber qué falta por capturar.</td></tr>
 <tr><td><strong>Seguridad y operación</strong><br><small><a href="#sistema">Ajustes del sistema</a> · <a href="#seguridad">Seguridad</a></small></td><td>Subidas de imagen validadas por su tipo real, IP del visitante detrás del proxy, copia opcional de cada respaldo automático fuera del volumen de datos y PHP desactivado en las carpetas de archivos subidos.</td></tr>
@@ -173,7 +173,7 @@ HTML],
 HTML],
 
 ['id' => 'inconsistencias', 'despues' => 'programador-ia', 'titulo' => 'Inconsistencias de proyecto (IA)', 'icono' => 'fa-magnifying-glass-chart', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Busca errores y contradicciones en los datos del proyecto, por ejemplo una actividad que termina antes de empezar, un avance que no coincide con el estatus o una dependencia incumplida. Está en el menú del proyecto como <strong>Inconsistencias de proyecto</strong> y en la app de escritorio dentro de <em>Calidad de datos</em>.</p>
+<p>Forma, junto con <strong>Análisis de materiales</strong>, la herramienta <strong>Revisión de datos</strong> del menú (dos pestañas). Busca errores y contradicciones en los datos del proyecto, por ejemplo una actividad que termina antes de empezar, un avance que no coincide con el estatus o una dependencia incumplida. Está en el menú del proyecto como <strong>Inconsistencias de proyecto</strong> y en la app de escritorio dentro de <em>Calidad de datos</em>.</p>
 [[fig:inconsistencias]]
 <h4>Dos fuentes de hallazgos</h4>
 <ol>
@@ -190,7 +190,7 @@ HTML],
 HTML],
 
 ['id' => 'analisis-materiales', 'despues' => 'inconsistencias', 'titulo' => 'Análisis de materiales y materiales inteligentes', 'icono' => 'fa-boxes-stacked', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Cruza el programa con el catálogo de materiales para avisarte antes de que la falta de material detenga una actividad. Está en el menú del proyecto como <strong>Análisis de materiales</strong>.</p>
+<p>Cruza el programa con el catálogo de materiales para avisarte antes de que la falta de material detenga una actividad. Es la segunda pestaña de <strong>Revisión de datos</strong> en el menú del proyecto.</p>
 [[fig:materiales-ia]]
 <h4>Cómo leerlo ①②③</h4>
 <ul>

@@ -223,7 +223,7 @@ HTML],
 HTML],
 
 ['id' => 'planificador', 'titulo' => 'Planificador', 'icono' => 'fa-diagram-next', 'roles' => $todos, 'herr' => 'planificador', 'cuerpo' => <<<'HTML'
-<p>Te ayuda a decidir <strong>qué hacer según el material disponible</strong>. Cruza las actividades pendientes del programa con los materiales que les asignaste en el catálogo.</p>
+<p>Está en la segunda pestaña de <strong>Lookahead</strong> (<em>Planeación › Lookahead › Planificador</em>). Te ayuda a decidir <strong>qué hacer según el material disponible</strong>. Cruza las actividades pendientes del programa con los materiales que les asignaste en el catálogo.</p>
 <ul>
 <li><strong>Ventana:</strong> elige el periodo que quieres revisar.</li>
 <li><strong>Filtros:</strong> por partida y <em>Solo actividades con materiales vinculados</em>.</li>
@@ -360,7 +360,7 @@ HTML],
 HTML],
 
 ['id' => 'archivos', 'titulo' => 'Archivo', 'icono' => 'fa-folder-open', 'roles' => $todos, 'herr' => 'archivos', 'cuerpo' => <<<'HTML'
-<p>El repositorio de documentos del proyecto: planos, especificaciones, contratos, hojas de cálculo, etc.</p>
+<p>El repositorio de documentos del proyecto: planos, especificaciones, contratos, hojas de cálculo, etc. Arriba tiene dos pestañas: <strong>Archivo</strong> (la lista) y <strong>Visor</strong> (abre los archivos sin salir de la ventana).</p>
 <h4>Subir un archivo</h4>
 <ol>
 <li>Pulsa <strong>+ Subir archivo</strong>.</li>
@@ -376,7 +376,7 @@ HTML],
 HTML],
 
 ['id' => 'visor', 'titulo' => 'Visor', 'icono' => 'fa-eye', 'roles' => $todos, 'herr' => 'visor', 'cuerpo' => <<<'HTML'
-<p>El <strong>Visor</strong> muestra los archivos del <strong>Archivo</strong> del proyecto <strong>en la misma ventana</strong>: eliges un archivo de la lista de la izquierda y se abre en el panel derecho, sin abrir pestañas nuevas ni descargarlo.</p>
+<p>El <strong>Visor</strong> es la segunda pestaña de <strong>Archivo</strong> (<em>Documentos y diseño › Archivo › Visor</em>). Muestra los archivos del <strong>Archivo</strong> del proyecto <strong>en la misma ventana</strong>: eliges un archivo de la lista de la izquierda y se abre en el panel derecho, sin abrir pestañas nuevas ni descargarlo.</p>
 <ul>
 <li><strong>Buscar y filtrar:</strong> por nombre, por categoría o por carpeta (como el Archivero).</li>
 <li><strong>Navegar:</strong> usa los botones <i class="fa-solid fa-chevron-left"></i> / <i class="fa-solid fa-chevron-right"></i> o las flechas del teclado para pasar al archivo anterior o siguiente.</li>
@@ -567,10 +567,10 @@ HTML],
 <p>Se guarda solo cada 30 segundos y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Word (.docx), LibreOffice (.odt) o PDF con el nombre <code>Año_mes_día_Nombre</code>, y <strong>Imprimir</strong> abre el PDF listo para imprimir con la hoja, márgenes y numeración elegidos. La línea de corte de página en pantalla es aproximada; el PDF muestra la paginación exacta.</p>
 HTML],
 
-['id' => 'ensamblador-documentos', 'titulo' => 'Ensamblador de documentos', 'icono' => 'fa-object-group', 'roles' => $todos, 'herr' => 'ensamble', 'cuerpo' => <<<'HTML'
+['id' => 'ensamblador-documentos', 'titulo' => 'Unir documentos (PDF)', 'icono' => 'fa-object-group', 'roles' => $todos, 'herr' => 'ensamble', 'cuerpo' => <<<'HTML'
 <p>Une en <strong>un solo PDF no editable</strong> documentos del <strong>Redactor</strong> y PDF que subiste al <strong>Archivo</strong>: por ejemplo una memoria de cálculo más sus planos en PDF.</p>
 <h4>Crear un ensamble</h4>
-<p><em>Documentos y diseño › Ensamblador de documentos › Nuevo ensamble</em>. Escribe el nombre, pulsa <strong>Agregar</strong> en cada documento y ordénalos con ▲ ▼. El PDF sale en ese orden.</p>
+<p><em>Documentos y diseño › Unir documentos (PDF) › Nuevo ensamble</em>. Escribe el nombre, pulsa <strong>Agregar</strong> en cada documento y ordénalos con ▲ ▼. El PDF sale en ese orden.</p>
 <h4>Que se actualice solo</h4>
 <p>Con <strong>Guardar en Archivo</strong> el PDF queda en el Archivo del proyecto (puedes elegir carpeta). Si después cambias un documento original del Redactor o reemplazas un PDF fuente, ese archivo se <strong>regenera solo</strong> la próxima vez que se abra o descargue. Por ejemplo, si el título era verde y lo cambias a azul en el Redactor, el PDF del Archivo lo mostrará azul.</p>
 <p class="manual-nota">Lo que descargas es un PDF común: ya no se actualiza ni conserva el vínculo. Si eliminas el ensamble, el PDF del Archivo se queda como está pero deja de actualizarse.</p>
@@ -623,7 +623,7 @@ HTML],
 HTML],
 
 ['id' => 'simbolos', 'titulo' => 'Símbolos', 'icono' => 'fa-shapes', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'
-<p>La <strong>biblioteca de símbolos</strong> del proyecto: imágenes reutilizables que insertas en el vPlan y en el Editor (cámaras, extintores, tableros, señales…).</p>
+<p>Está en la segunda pestaña del <strong>Editor</strong> (<em>Documentos y diseño › Editor › Símbolos, estampas y cajetines</em>). La <strong>biblioteca de símbolos</strong> del proyecto: imágenes reutilizables que insertas en el vPlan y en el Editor (cámaras, extintores, tableros, señales…).</p>
 <ul>
 <li><strong>Nuevo símbolo:</strong> escribe el <em>nombre*</em>, una categoría y sube la imagen (PNG con fondo transparente o SVG funcionan mejor). Pulsa <strong>Agregar símbolo</strong>.</li>
 <li><strong>Importar símbolos:</strong> sube un <strong>.zip</strong> de biblioteca o varias imágenes de una vez. <strong>Exportar biblioteca</strong> descarga la tuya para reusarla en otro proyecto.</li>

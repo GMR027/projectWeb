@@ -52,7 +52,9 @@ Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm
 ## Pendiente
 - Varios planos (con marcas propias) en una lámina; hoy hay un plano por lámina.
 - Recovery por bloque (hoy por lámina).
-- Deshacer/rehacer en el modo diseño.
+
+## Deshacer/rehacer del modo diseño
+Ya existe (Ctrl+Z, Ctrl+Y, Ctrl+Mayús+Z): `vplan-diseno.js` usa `KitEdicion.historial` y `KitEdicion.atajos` (ver `docs/piezas-compartidas.md`).
 
 ## Símbolos, simbologías y cajetines en el modo diseño (2026-10-19)
 - Pestaña **Insertar** → «Símbolos y simbologías»: biblioteca (`Simbolo::paraEditor`), gráficos/simbologías del proyecto (`Grafico::paraInsertar`) y **Cajetines**. Un símbolo se rasteriza (SVG→PNG) en el navegador, se sube con `/api/vplan/imagen` y crea un bloque `imagen`; un cajetín crea un bloque `cajetin`. Datos en `VP_DISENO.biblioteca`.
@@ -91,5 +93,5 @@ El editor de marcas (vPlan y Editor de gráficos, `vplan-editor.js`) ya tenía c
 - Lo colocado antes de este cambio no tiene vínculo: hay que volver a insertarlo una vez.
 
 ## Líneas: separación del trazo y nodos (2026-10-20)
-- `vplan-editor.js` (Editor, editor de marcas del vPlan y Mapa de avance comparten este archivo): `dashLen`/`dashGap` por marca, en múltiplos del grosor (`DASH_BASE`, `dashMedidas`, `dashDe`); campos «Largo del trazo» y «Separación» en Propiedades cuando el estilo no es continuo. Cambiar el estilo restablece los valores por defecto.
+- `vplan-editor.js` (Editor y editor de marcas del vPlan comparten este archivo; Mapa de avance no lo carga): `dashLen`/`dashGap` por marca, en múltiplos del grosor (`DASH_BASE`, `dashMedidas`, `dashDe`); campos «Largo del trazo» y «Separación» en Propiedades cuando el estilo no es continuo. Cambiar el estilo restablece los valores por defecto.
 - **Nodos** (`pintarNodos`): con una sola línea/flecha/medida elegida salen asas en cada nodo (arrastrar = mover; doble clic = quitar, mínimo 2) y asas pequeñas en el punto medio de cada tramo (arrastrar = crear un nodo). La medida solo mueve sus extremos. Con una línea elegida el transformador ya no estira (se editan los nodos); con varias sigue igual. Probado con Electron sin ventana contra una copia de la BD.

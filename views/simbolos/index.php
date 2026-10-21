@@ -1,4 +1,5 @@
 <?php // Variables: $proyecto, $simbolos, $predeterminados, $puedeEditar, $categorias ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('editor', '/simbolos', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-shapes"></i> <?php echo s(t('Símbolos')); ?></h2>

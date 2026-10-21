@@ -7,6 +7,7 @@ $accionNombre = ['nota' => 'Sin cambio de datos', 'ajustar_fechas' => 'Cambia fe
 $url = fn(array $cambia) => '/inconsistencias?' . http_build_query(array_filter(['proyecto' => $pid] + $cambia + $filtros, fn($v) => $v !== '' && $v !== 0));
 $nombreCorrida = fn($c) => ($c['nombre'] !== '' ? $c['nombre'] : 'Análisis') . ' · ' . date('d/m/Y H:i', strtotime($c['creado'])) . ($c['modelo'] ? ' · ' . $c['modelo'] : '');
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('revision', '/inconsistencias', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-magnifying-glass-chart"></i> <?php echo s(t('Inconsistencias de proyecto')); ?></h2>

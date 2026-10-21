@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('editor', '/graficos', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Editor')); ?></h2>

@@ -66,6 +66,9 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/ensamblador-documentos.md` | **Ensamblador de documentos** (PDF que une Redactor + PDF del Archivo y se actualiza solo; no es el Ensamblador de IA) |
 | `docs/traductor.md` | **Traductor** es↔en de texto y documentos (motor local CTranslate2, `bin/instalar_traductor.sh`) |
 | `docs/ensamblador.md` | **Ensamblador** de documentos (PDF/PPTX/DOCX → partidas, materiales, submittals con IA) y **Ordenar y renumerar** el programa (sin IA) |
+| `docs/piezas-compartidas.md` | **Piezas compartidas** (PHP y JS) que reemplazaron copias: `json_respuesta`, `proyecto_api`, `Pdf`, `ShellTools`, `AccesoDb`, `MarcasLienzo`, `NotasApi`, `kit-edicion.js`, `notas.js`. Revisar **antes** de escribir código parecido |
+
+> Menú: las herramientas hermanas comparten entrada y se navegan con pestañas (`pestanas_herramienta()`): Lookahead+Planificador, Archivo+Visor, Revisión de datos (Inconsistencias+Análisis de materiales), Editor+Símbolos. Las rutas antiguas siguen funcionando. «Ensamblador de documentos» se llama **Unir documentos (PDF)**.
 
 ## ⚠️ Common Gotchas
 

@@ -18,6 +18,7 @@ $q = fn(array $extra = []) => '/visor?' . http_build_query(array_filter(array_me
 $urlVer = fn($a) => $a ? '/archivos/ver?proyecto=' . $id . '&id=' . (int)$a->id : '';
 $tipoVer = $ver ? \Classes\VistaArchivo::tipo($ver->extension()) : null;
 ?>
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('archivo', '/visor', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-eye"></i> <?php echo s(t('Visor')); ?></h2>
