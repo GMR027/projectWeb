@@ -104,92 +104,13 @@ document.addEventListener('fullscreenchange', () => { if (!document.fullscreenEl
     </div>
 </section>
 
-<?php if ($puedeEditar): ?>
-<div class="modal-overlay" id="vp-nota-modal" aria-hidden="true">
-    <form class="modal-card vp-nota-card" id="vp-nota-form" role="dialog" aria-modal="true" aria-labelledby="vp-nota-titulo">
-        <h3 class="modal-titulo" id="vp-nota-titulo">Crear nota</h3>
-        <p class="text-muted text-sm vp-nota-fecha">Fecha: <strong id="vp-nota-fecha"></strong> <span id="vp-nota-auto">(se pone automáticamente)</span></p>
-        <div class="campo">
-            <label for="vp-nota-descripcion">Descripción *</label>
-            <textarea id="vp-nota-descripcion" rows="5" maxlength="<?php echo (int)\Model\View360Nota::MAX_LARGO; ?>" required></textarea>
-        </div>
-        <p class="msr-error-txt text-sm" id="vp-nota-error" hidden></p>
-        <div class="modal-acciones">
-            <button type="button" class="btn btn-ghost" id="vp-nota-cancelar"><i class="fa-solid fa-xmark"></i> Cancelar</button>
-            <button type="submit" class="btn btn-primary" id="vp-nota-guardar"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-        </div>
-    </form>
-</div>
-<?php endif; ?>
+<?php if ($puedeEditar): $maxLargo = \Model\View360Nota::MAX_LARGO; include __DIR__ . '/../templates/_notas-modal.php'; endif; ?>
 
+<script src="/vendor/notas.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/notas.js'); ?>"></script>
 <script>
-(function () {
-    const grafico = <?php echo (int)$grafico->id; ?>;
-    const puedeEditar = <?php echo $puedeEditar ? 'true' : 'false'; ?>;
-    const notas = <?php echo json_encode($notas, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
-    const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-    const lista = document.getElementById('vp-notas-lista'), vacio = document.getElementById('vp-notas-vacio');
-    const pintar = () => {
-        vacio.hidden = notas.length > 0;
-        lista.innerHTML = notas.map(n =>
-            '<li class="vp-nota" data-id="' + n.id + '">' +
-            '<div class="vp-nota-cab"><span class="vp-nota-fecha-txt"><i class="fa-regular fa-calendar"></i> ' + esc(n.fecha) + '</span>' +
-            (puedeEditar ? '<span class="vp-nota-acc"><button type="button" class="btn btn-sm btn-ghost" data-nota="editar"><i class="fa-solid fa-pen"></i> Editar</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" data-nota="borrar"><i class="fa-solid fa-trash-can"></i> Borrar</button></span>' : '') +
-            '</div><p class="vp-nota-texto">' + esc(n.descripcion) + '</p></li>'
-        ).join('');
-    };
-    pintar();
-    if (!puedeEditar) return;
-
-    const modal = document.getElementById('vp-nota-modal'), form = document.getElementById('vp-nota-form');
-    const area = document.getElementById('vp-nota-descripcion'), err = document.getElementById('vp-nota-error');
-    const btnGuardar = document.getElementById('vp-nota-guardar');
-    let editando = null;
-    const abrirModal = nota => {
-        editando = nota || null;
-        document.getElementById('vp-nota-titulo').textContent = nota ? 'Editar nota' : 'Crear nota';
-        const hoy = new Date(), p = n => String(n).padStart(2, '0');
-        document.getElementById('vp-nota-fecha').textContent = nota ? nota.fecha : p(hoy.getDate()) + '/' + p(hoy.getMonth() + 1) + '/' + hoy.getFullYear();
-        document.getElementById('vp-nota-auto').hidden = !!nota;
-        area.value = nota ? nota.descripcion : '';
-        err.hidden = true;
-        modal.classList.add('abierto'); modal.setAttribute('aria-hidden', 'false');
-        area.focus();
-    };
-    const cerrarModal = () => { modal.classList.remove('abierto'); modal.setAttribute('aria-hidden', 'true'); editando = null; };
-    document.getElementById('vp-nota-nueva').addEventListener('click', () => abrirModal());
-    document.getElementById('vp-nota-cancelar').addEventListener('click', cerrarModal);
-    modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('abierto')) cerrarModal(); });
-
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        if (!area.value.trim()) { err.textContent = 'La descripción es obligatoria'; err.hidden = false; return; }
-        btnGuardar.disabled = true;
-        try {
-            const datos = { grafico, descripcion: area.value };
-            if (editando) datos.id = editando.id;
-            const d = await post('/api/view360/nota/guardar', datos);
-            if (!d.success) { err.textContent = d.error || 'No se pudo guardar'; err.hidden = false; return; }
-            if (editando) notas[notas.findIndex(n => n.id === editando.id)] = d.nota; else notas.unshift(d.nota);
-            pintar(); cerrarModal();
-        } catch (_) { err.textContent = 'Error de conexión'; err.hidden = false; }
-        finally { btnGuardar.disabled = false; }
-    });
-
-    lista.addEventListener('click', async e => {
-        const b = e.target.closest('[data-nota]');
-        if (!b) return;
-        const nota = notas.find(n => n.id === +b.closest('.vp-nota').dataset.id);
-        if (!nota) return;
-        if (b.dataset.nota === 'editar') return abrirModal(nota);
-        const ok = await window.confirmarModal({ titulo: '¿Borrar esta nota?', mensaje: 'Esta acción no se puede deshacer.', aceptar: 'Sí, borrar', iconoBoton: 'fa-trash-can' });
-        if (!ok) return;
-        const d = await post('/api/view360/nota/eliminar', { grafico, id: nota.id });
-        if (d.success) { notas.splice(notas.indexOf(nota), 1); pintar(); }
-    });
-})();
+window.Notas.iniciar({
+    campo: 'grafico', id: <?php echo (int)$grafico->id; ?>, puedeEditar: <?php echo $puedeEditar ? 'true' : 'false'; ?>,
+    notas: <?php echo json_encode($notas, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
+    urlGuardar: '/api/view360/nota/guardar', urlEliminar: '/api/view360/nota/eliminar',
+});
 </script>

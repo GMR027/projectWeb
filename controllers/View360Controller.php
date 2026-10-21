@@ -2,6 +2,7 @@
 
 namespace Controllers;
 
+use Classes\NotasApi;
 use MVC\Router;
 use Model\View360Grafico;
 use Model\View360Nota;
@@ -181,20 +182,12 @@ class View360Controller
 
     // ---------- notas (JSON; la fecha la pone el servidor al crear) ----------
 
-    private static function notaResponder(array $datos, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        echo json_encode($datos);
-        exit;
-    }
-
     /** Gráfico de la petición, solo si el usuario puede gestionar su proyecto */
     private static function graficoAutorizado(): View360Grafico
     {
-        header('Content-Type: application/json');
         $g = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? View360Grafico::find(filter_var($_POST['grafico'] ?? null, FILTER_VALIDATE_INT)) : null;
         $p = $g ? \Model\Proyecto::find($g->proyecto_id) : null;
-        if (!$p || !puede_gestionar_proyecto($p)) self::notaResponder(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p || !puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $g;
     }
 
@@ -202,29 +195,12 @@ class View360Controller
     public static function notaGuardar()
     {
         $g = self::graficoAutorizado();
-        $texto = trim((string)($_POST['descripcion'] ?? ''));
-        if ($texto === '') self::notaResponder(['success' => false, 'error' => 'La descripción es obligatoria'], 422);
-        if (mb_strlen($texto) > View360Nota::MAX_LARGO) self::notaResponder(['success' => false, 'error' => 'Máximo ' . View360Nota::MAX_LARGO . ' caracteres'], 422);
-        if (!empty($_POST['id'])) {
-            $n = View360Nota::find(filter_var($_POST['id'], FILTER_VALIDATE_INT));
-            if (!$n || (int)$n->view360_id !== (int)$g->id) self::notaResponder(['success' => false, 'error' => 'Nota no encontrada'], 404);
-            $n->descripcion = $texto;   // la fecha original se conserva
-            $n->guardar();
-        } else {
-            if (View360Nota::totalDeGrafico((int)$g->id) >= View360Nota::MAX_POR_GRAFICO) self::notaResponder(['success' => false, 'error' => 'Máximo ' . View360Nota::MAX_POR_GRAFICO . ' notas por gráfico'], 422);
-            $n = new View360Nota(['view360_id' => $g->id, 'descripcion' => $texto]);
-            $n->id = $n->guardar()['id'];
-        }
-        self::notaResponder(['success' => true, 'nota' => $n->aArray()]);
+        NotasApi::guardar($g, View360Nota::class, 'view360_id', fn() => View360Nota::totalDeGrafico((int)$g->id), View360Nota::MAX_POR_GRAFICO, 'gráfico');
     }
 
     public static function notaEliminar()
     {
-        $g = self::graficoAutorizado();
-        $n = View360Nota::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
-        if (!$n || (int)$n->view360_id !== (int)$g->id) self::notaResponder(['success' => false, 'error' => 'Nota no encontrada'], 404);
-        $n->eliminar();
-        self::notaResponder(['success' => true]);
+        NotasApi::eliminar(self::graficoAutorizado(), View360Nota::class, 'view360_id');
     }
 
     public static function eliminar()
