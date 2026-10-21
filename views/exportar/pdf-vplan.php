@@ -9,13 +9,13 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
 <html><head><meta charset="UTF-8">
 <style>
     @page { margin: 0; }
-    body { font-family: DejaVu Sans, sans-serif; color: #000; margin: 0; }
+    body { font-family: Helvetica, Arial, sans-serif; color: #000; margin: 0; }
     .hoja { position: relative; overflow: hidden; page-break-after: always; }
     .hoja.ultima { page-break-after: auto; }
     .blk { position: absolute; }
     table { border-collapse: collapse; }
-    .t { width: 100%; margin-bottom: 7pt; }
-    .t th, .t td { border: 0.7pt solid #000; vertical-align: middle; }
+    .t { width: 100%; margin-bottom: 7pt; table-layout: fixed; }
+    .t th, .t td { border: 0.7pt solid #000; vertical-align: middle; overflow-wrap: anywhere; }
     .t th { background: #5b82b4; color: #fff; text-align: center; font-weight: bold; }
     .c { text-align: center; }
     .tit { font-size: 1.25em; letter-spacing: 0.04em; }
@@ -175,27 +175,34 @@ foreach ($paginas as $pi => $d):
                         <?php endforeach; ?>
                     <?php endforeach; ?>
                 </table>
-            <?php else: $b2 = $bt; $tb = $b2['tabla']; $campos = $b2['campos']; ?>
+            <?php else: $b2 = $bt; $tb = $b2['tabla']; $campos = $b2['campos'];
+                // El mismo reparto de columnas que la vista (y que el estimador): la lámina y el PDF se ven igual
+                [$pctCol] = \Classes\VplanDiseno::repartoColumnas($tb->tipo, $b2['filas'], $campos, \Classes\VplanDiseno::anchoRefCm($b), $fz, $pz, 0, $tb->metaColumnas());
+                $colgroup = '<colgroup>' . implode('', array_map(fn($w) => '<col style="width:' . $w . '%">', $pctCol)) . '</colgroup>';
+            ?>
                 <?php if ($tb->tipo === 'punch'): ?>
                     <table class="t punch">
-                        <tr><th rowspan="2" colspan="2" class="tit"><?php echo s($tb->titulo); ?></th><th colspan="2">DATE</th><th rowspan="2" style="width:10%">%</th></tr>
-                        <tr><th style="width:20%">START</th><th style="width:20%">FINISH</th></tr>
+                        <?php echo $colgroup; ?>
+                        <tr><th rowspan="2" colspan="2" class="tit"><?php echo s($tb->titulo); ?></th><th colspan="2">DATE</th><th rowspan="2">%</th></tr>
+                        <tr><th>START</th><th>FINISH</th></tr>
                         <?php foreach ($b2['filas'] as $f): $p = $f['pct'] ?? ''; ?>
-                            <tr><td class="c" style="width:6%"><?php echo (int)$f['n']; ?></td><td><?php echo s($f['descripcion'] ?? ''); ?></td><td class="c"><?php echo s($fd($f['inicio'] ?? '')); ?></td><td class="c"><?php echo s($fd($f['fin'] ?? '')); ?></td>
+                            <tr><td class="c"><?php echo (int)$f['n']; ?></td><td><?php echo s($f['descripcion'] ?? ''); ?></td><td class="c"><?php echo s($fd($f['inicio'] ?? '')); ?></td><td class="c"><?php echo s($fd($f['fin'] ?? '')); ?></td>
                                 <td class="c <?php echo $p !== '' && (int)$p >= 100 ? 'verde' : ($p !== '' && (int)$p > 0 ? 'amarillo' : ''); ?>"><?php echo $p === '' ? '' : (int)$p . '%'; ?></td></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php elseif ($tb->tipo === 'restricciones'): ?>
                     <table class="t">
+                        <?php echo $colgroup; ?>
                         <tr><th colspan="2" class="tit"><?php echo s($tb->titulo); ?></th></tr>
                         <?php foreach ($b2['filas'] as $f): ?>
-                            <tr><td class="c" style="width:9%"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$f['n']); ?>" style="width:<?php echo round($fz * 1.55 * $K, 1); ?>pt"></td><td><?php echo s($f['descripcion'] ?? ''); ?></td></tr>
+                            <tr><td class="c"><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$f['n']); ?>" style="width:<?php echo round($fz * 1.55 * $K, 1); ?>pt"></td><td><?php echo s($f['descripcion'] ?? ''); ?></td></tr>
                         <?php endforeach; ?>
                     </table>
                 <?php elseif ($tb->tipo === 'secundarias'): ?>
                     <table class="t sec">
+                        <?php echo $colgroup; ?>
                         <tr><th colspan="3" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <tr><th style="width:50%">ELEMENTO</th><th style="width:25%">FECHA</th><th style="width:25%">FECHA (RECOVERY)</th></tr>
+                        <tr><th>ELEMENTO</th><th>FECHA</th><th>FECHA (RECOVERY)</th></tr>
                         <?php foreach ($b2['filas'] as $f): $est = $f['estado'] ?? 'proceso'; $cl = ['completo' => 'verde', 'proceso' => 'amarillo', 'espera' => 'rojo'][$est] ?? ''; ?>
                             <tr class="<?php echo $cl; ?>"><td class="<?php echo $cl; ?>"><?php echo s($f['elemento'] ?? ''); ?></td><td class="c <?php echo $cl; ?>"><?php echo s($f['fecha'] ?? ''); ?></td><td class="c <?php echo $cl; ?>"><?php echo s($f['recovery'] ?? ''); ?></td></tr>
                         <?php endforeach; ?>
@@ -203,8 +210,9 @@ foreach ($paginas as $pi => $d):
                 <?php else: ?>
                     <?php $metaPdf = $tb->metaColumnas(); ?>
                     <table class="t otro">
+                        <?php echo $colgroup; ?>
                         <tr><th colspan="<?php echo count($campos) + 1; ?>" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <tr><th style="width:8%">N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
+                        <tr><th>N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
                         <?php foreach ($b2['filas'] as $f): ?>
                             <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td<?php echo ($metaPdf[$k]['t'] ?? '') === 'foto' ? ' class="c"' : ''; ?>><?php
                                 if (($metaPdf[$k]['t'] ?? '') === 'foto') { $mini = ($f['v' . substr($k, 1)] ?? '') !== '' ? \Classes\PunchVista::miniatura($f['v' . substr($k, 1)]) : null; echo $mini ? '<img src="' . $mini . '" style="height:' . round($fz * 3.4 * $K, 1) . 'pt">' : ''; }

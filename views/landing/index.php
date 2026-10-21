@@ -19,7 +19,7 @@ $planes = [
 $tour = [
     ['programa', 'Programa y Gantt', 'fa-chart-gantt', 'Partidas por disciplina, actividades e hitos con avance, prioridad y restricciones. Las fechas respetan el calendario real de la obra.'],
     ['4wla', 'Lookahead 4 semanas', 'fa-binoculars', 'La semana actual y las 4 siguientes con PTA y limitaciones: qué puede arrancar y qué no.'],
-    ['vplan', 'vPlan', 'fa-map-location-dot', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
+    ['vplan', 'vPlan', 'fa-sheet-plastic', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
     ['reportes', 'Reporte diario', 'fa-clipboard-list', 'Personal, actividades del programa y fotografías de cada día, listos para compartir con el cliente.'],
     ['msr', 'MSR · materiales', 'fa-truck-ramp-box', 'Estatus de submittals, compra y entrega de materiales con fotos y proveedores.'],
     ['dependencias', 'Dependencias y ruta crítica', 'fa-diagram-project', 'Relaciones FS, SS, FF y SF con retraso: la ruta crítica en rojo, las holguras y los conflictos, sin mover tus fechas hasta que tú lo decidas.'],
@@ -49,7 +49,7 @@ $funciones = [
     ['fa-calendar-check', 'Calendario operativo', 'Jornada semanal por proyecto, festivos, paros técnicos y días de clima. Los días hábiles se respetan en cada actividad.'],
     ['fa-binoculars', 'Lookahead 4WLA', 'Semana actual + 4 semanas con PTA y limitaciones. Detecta qué actividades pueden arrancar y cuáles no.'],
     ['fa-note-sticky', 'Last Planner', 'Tarjetas por día y por partida listas para imprimir, con marcas de corte, calculadas desde tu programa.'],
-    ['fa-map-location-dot', 'vPlan visual', 'Láminas libres con bloques posicionables: planos, tablas del programa, recovery, restricciones y punch list. Modo diseño con capas y guías, y PDF por lámina.'],
+    ['fa-sheet-plastic', 'vPlan visual', 'Láminas libres con bloques posicionables: planos, tablas del programa, recovery, restricciones y punch list. Modo diseño con capas y guías, y PDF por lámina.'],
     ['fa-chart-line', 'Curvas y Curva S', 'Planeado contra real por semana para cada material o frente de trabajo, y una Curva S que junta todas en el avance acumulado del programa.'],
     ['fa-truck-ramp-box', 'MSR · submittals · materiales', 'Catálogo con fotos y fichas, varios MSR por proyecto con las columnas que tú elijas (nombre, orden y color), control de submittals y estatus de compra y entrega.'],
     ['fa-clipboard-list', 'Reporte diario y bitácora', 'Personal, actividades y fotos del día en minutos. Bitácora por departamento con niveles de importancia.'],

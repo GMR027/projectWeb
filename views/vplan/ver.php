@@ -8,7 +8,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 ?>
 <div class="page-header no-print">
     <div>
-        <h2><i class="fa-solid fa-map-location-dot"></i> <?php echo s($lamina->titulo); ?></h2>
+        <h2><i class="fa-solid fa-sheet-plastic"></i> <?php echo s($lamina->titulo); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?><?php echo $paquete ? ' · ' . s($paquete->nombre) : ''; ?> · Hoja <?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?> mm</p>
     </div>
     <div class="vp-herr">
@@ -17,6 +17,13 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
         <?php if ($puedeEditar && $lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
         <?php if ($puedeEditar): ?><a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> Datos de la lámina</a><?php endif; ?>
         <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
+        <div class="vp-zoom no-print" role="group" aria-label="Zoom de la lámina">
+            <button type="button" class="vp-zb" id="vp-zoom-menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
+            <span class="vp-zoom-val" id="vp-zoom-val" title="Tamaño de la lámina en pantalla (100 % = tamaño real, como en el PDF)">100 %</span>
+            <button type="button" class="vp-zb" id="vp-zoom-mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
+            <button type="button" class="btn btn-ghost" id="vp-zoom-fit" title="Ajustar la lámina al ancho disponible">Ajustar</button>
+            <button type="button" class="btn btn-ghost" id="vp-zoom-real" title="Ver la lámina a su tamaño real (igual que el PDF)">Real</button>
+        </div>
         <?php if ($puedeEditar): ?><button type="button" class="btn btn-ghost" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>
         <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>
     </div>
@@ -294,6 +301,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 <script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>
 <?php endif; ?>
 <script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
+<script src="/vendor/vplan-zoom.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-zoom.js"); ?>"></script>
 <?php if ($modoDiseno): ?>
 <script>
 window.VP_DISENO = <?php echo json_encode([

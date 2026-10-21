@@ -17,7 +17,7 @@
     <h3>Acciones</h3>
     <div class="vp-acciones-menu">
         <button type="button" class="btn btn-ghost" id="ve-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
-        <a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-map-location-dot"></i> Ver lámina</a>
+        <a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-sheet-plastic"></i> Ver lámina</a>
     </div>
     <p class="text-muted text-sm" style="margin-top:1rem">«Ampliar» muestra el plano con todas sus herramientas a pantalla completa para trabajarlo con más espacio.</p>
 </section>

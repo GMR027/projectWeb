@@ -23,7 +23,7 @@ ENV TRADUCTOR_DIR=/opt/traductor
 RUN bash bin/instalar_traductor.sh && chmod -R a+rX /opt/traductor
 RUN composer dump-autoload --optimize --no-dev \
     && rm -f /usr/bin/composer \
-    && mkdir -p public/uploads public/exportaciones storage/archivos storage/fichas storage/import storage/respaldos storage/instaladores storage/sesiones-app \
+    && mkdir -p public/uploads public/exportaciones storage/archivos storage/fichas storage/import storage/respaldos storage/instaladores storage/sesiones-app storage/normativa storage/grabaciones \
     && chown -R www-data:www-data public/uploads public/exportaciones storage
 
 EXPOSE 80

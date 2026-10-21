@@ -31,8 +31,38 @@
         <thead><tr><th>Nombre en el catálogo</th><th class="hide-m">Título impreso</th><th class="hide-m">Tipo</th><th class="hide-m">Renglones</th><th>Acciones</th></tr></thead>
         <tbody>
         <?php foreach ($tablas as $t): ?>
+            <?php
+            $camposP = $t->campos();
+            $clavesP = array_slice(array_keys($camposP), 0, 4);
+            $filasP = array_slice($t->filas(), 0, 3);
+            ?>
             <tr>
-                <td><a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>"><?php echo s($t->etiqueta()); ?></a><?php echo $t->sheetflow_id ? ' <span class="badge" title="Creada desde SheetFlow">SheetFlow</span>' : ''; ?></td>
+                <td>
+                    <div class="vp-tabla-nombre">
+                        <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>"><?php echo s($t->etiqueta()); ?></a>
+                        <?php if ($t->sheetflow_id): ?>
+                            <span class="vp-tabla-ico" title="Creada desde SheetFlow"><i class="fa-solid fa-table-cells"></i></span>
+                        <?php elseif ($t->esPunchVista() || $t->tipo === 'punch'): ?>
+                            <span class="vp-tabla-ico" title="Punch list"><i class="fa-solid fa-clipboard-check"></i></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($clavesP): ?>
+                    <div class="vp-tabla-prev" style="--vp-cols:<?php echo count($clavesP); ?>">
+                        <div class="vp-prev-fila vp-prev-cab">
+                            <?php foreach ($clavesP as $k): ?><span><?php echo s(mb_strimwidth($camposP[$k][0], 0, 14, '…')); ?></span><?php endforeach; ?>
+                        </div>
+                        <?php if (!$filasP): ?>
+                            <div class="vp-prev-fila vp-prev-vacia"><span>Sin renglones</span></div>
+                        <?php else: ?>
+                            <?php foreach ($filasP as $f): ?>
+                                <div class="vp-prev-fila">
+                                    <?php foreach ($clavesP as $k): ?><span><?php echo s(mb_strimwidth((string)($f[$k] ?? ''), 0, 14, '…')); ?></span><?php endforeach; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                </td>
                 <td class="text-muted hide-m"><?php echo s($t->titulo); ?></td>
                 <td class="hide-m"><?php echo s(VplanTabla::TIPOS[$t->tipo] ?? $t->tipo); ?></td>
                 <td class="mono hide-m"><?php echo (int)$conteos[$t->id]; ?></td>

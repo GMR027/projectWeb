@@ -34,6 +34,7 @@ class Usuario extends ActiveRecord
         'minutas' => ['Minutas', ['/minutas']],
         'evidencias' => ['Evidencias', ['/evidencias']],
         'archivos' => ['Archivo', ['/archivos']],
+        'visor' => ['Visor', ['/visor']],
         'curvas' => ['Curvas de productividad', ['/curvas', '/api/curvas']],
         'msr' => ['MSR · Materiales', ['/msr', '/api/msr']],
         'cambios' => ['Órdenes de cambio y líneas base', ['/cambios', '/api/cambios', '/lineas-base']],

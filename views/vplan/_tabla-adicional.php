@@ -1,14 +1,18 @@
 <?php
-// Variables: $bloque (['tabla','campos','filas','base']), $puedeEditar
+// Variables: $bloque (['tabla','campos','filas','base']), $puedeEditar, $anchoTablaCm, $f, $p
 use Model\VplanTabla;
+use Classes\VplanDiseno;
 $t = $bloque['tabla'];
 $campos = $bloque['campos'];
 $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
+$nAcc = $t->tipo === 'secundarias' ? $extra * 2 : $extra;
+// El reparto de columnas es el mismo que usan el PDF y el estimador: así la lámina y el PDF se ven igual
+[$pct, $pctAcc] = VplanDiseno::repartoColumnas($t->tipo, $bloque['filas'], $campos, $anchoTablaCm, $f, $p, $nAcc, $t->metaColumnas());
 ?>
 <table class="vp-tabla vp-adic vp-adic-<?php echo s($t->tipo); ?>" data-tabla="<?php echo (int)$t->id; ?>" data-base="<?php echo (int)($bloque['base'] ?? 0); ?>" data-tipo="<?php echo s($t->tipo); ?>">
     <colgroup>
-        <?php foreach (\Classes\VplanDiseno::columnasTabla($t->tipo, count($campos)) as $w): ?><col style="width:<?php echo $w; ?>%"><?php endforeach; ?>
-        <?php for ($i = 0; $i < ($t->tipo === 'secundarias' ? $extra * 2 : $extra); $i++): ?><col style="width:3.2em"><?php endfor; ?>
+        <?php foreach ($pct as $w): ?><col style="width:<?php echo $w; ?>%"><?php endforeach; ?>
+        <?php for ($i = 0; $i < $nAcc; $i++): ?><col style="width:<?php echo round($pctAcc / max(1, $nAcc), 3); ?>%"><?php endfor; ?>
     </colgroup>
     <?php if ($t->tipo === 'punch'): ?>
         <thead>

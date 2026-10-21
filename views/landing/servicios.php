@@ -10,7 +10,7 @@ $servicios = [
     ['fa-triangle-exclamation', 'Restricciones y pendientes', 'Lo que frena a cada frente, con responsable y fecha compromiso, hasta que se libera. Incluye el punch list de cierre con fotos antes y después.', ['Responsable', 'Fecha límite', 'Punch list']],
     ['fa-folder-open', 'Control documental', 'Planos, especificaciones y contratos por revisión; detectamos qué cambió entre versiones para que nadie trabaje con un plano vencido.', ['Revisiones', 'Comparador', 'Normativa']],
     ['fa-file-lines', 'Documentos y tablas de obra', 'Actas, procedimientos, memorias y tablas de control con fórmulas, con el formato de tu empresa o del cliente, en Word, Excel o PDF.', ['Actas', 'Tablas vivas', 'Traducción ES/EN']],
-    ['fa-map-location-dot', 'Láminas visuales para juntas', 'Planos con el avance marcado, tablas del programa, recovery y restricciones, en láminas del tamaño que pidas, listas para proyectar o imprimir.', ['vPlan', 'Tabloide a A0', 'PDF por lámina']],
+    ['fa-sheet-plastic', 'Láminas visuales para juntas', 'Planos con el avance marcado, tablas del programa, recovery y restricciones, en láminas del tamaño que pidas, listas para proyectar o imprimir.', ['vPlan', 'Tabloide a A0', 'PDF por lámina']],
     ['fa-street-view', 'Recorridos y registro visual', 'Fotos 360° ligadas al plano y evidencias por actividad en una línea de tiempo, para que el cliente recorra la obra sin viajar.', ['View360', 'Línea de tiempo', 'Antes / después']],
     ['fa-gauge-high', 'Informes para dirección y cliente', 'Resumen ejecutivo periódico con avance, semáforo de la obra, desviaciones y los puntos que requieren una decisión.', ['Semáforo', 'SPI', 'Decisiones']],
     ['fa-file-export', 'Exportaciones y respaldo', 'Entregamos el programa en PDF tabloide, Excel, LibreOffice, MS Project o ProjectLibre, y un ZIP completo del proyecto cuando lo necesites.', ['MS Project', 'Excel', 'ZIP']],
@@ -48,7 +48,7 @@ $mejoras = [
 $entregables = [
     ['fa-file-pdf', 'Informe ejecutivo', 'Avance, semáforo, desviaciones y decisiones pendientes.', 'Semanal o quincenal'],
     ['fa-binoculars', 'Lookahead y Last Planner', 'Las próximas semanas con sus limitaciones y los post-its del día.', 'Semanal'],
-    ['fa-map-location-dot', 'Láminas vPlan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta'],
+    ['fa-sheet-plastic', 'Láminas vPlan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta'],
     ['fa-handshake', 'Minutas con compromisos', 'Temas, responsables y fechas, en PDF.', 'Después de cada junta'],
     ['fa-truck-ramp-box', 'Tablero de materiales', 'Qué falta aprobar, comprar o entregar, y qué lo frena.', 'Semanal'],
     ['fa-file-signature', 'Registro de cambios', 'Órdenes de cambio, líneas base y desviaciones justificadas.', 'Al ocurrir cada cambio'],

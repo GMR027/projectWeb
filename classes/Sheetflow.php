@@ -662,11 +662,12 @@ class Sheetflow
             $out[] = $f;
         }
         $d = $h->contenido();   // valor crudo (fecha ISO, 1, verde…) para los controles de captura; los totales no lo llevan
+        $calc = (array)($d['calc'] ?? []);   // `limpiar()` lo deja como objeto: se lee como arreglo
         foreach ($out as $r => &$f) {
             if (!isset($d['rows'][$r]) || $r >= count($m['filas'])) continue;
             for ($c = 0; $c < $nc; $c++) {
                 $x = (string)($d['rows'][$r][$c] ?? '');
-                $f['v' . $c] = mb_substr(SheetflowFormulas::esFormula($x) ? (string)($d['calc']["$r,$c"] ?? '') : $x, 0, 300);
+                $f['v' . $c] = mb_substr(SheetflowFormulas::esFormula($x) ? (string)($calc["$r,$c"] ?? '') : $x, 0, 300);
             }
         }
         unset($f);

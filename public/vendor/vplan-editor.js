@@ -1588,11 +1588,21 @@
     const resto = clone(state.shapes).filter(x => !(x.type === 'table' && x.cajetin === d.cajetin));
     state.selId = d.id; commit([...resto, d]); status('Cajetín «' + (c.nombre || '') + '» colocado');
   }
+  // Letra de una tabla: la que le toca según el ancho del dibujo, pero nunca tan chica que no se pueda
+  // leer en pantalla con el zoom actual (si el dibujo se ve muy lejos, la letra se agranda; hasta el doble).
+  const MIN_LEIBLE_PX = 11;
+  function letraTabla() {
+    const k = stage && stage.scaleX ? stage.scaleX() : 1;
+    const porDibujo = Math.round(state.W / 90);
+    const porPantalla = k > 0.02 ? Math.round(MIN_LEIBLE_PX / k) : porDibujo;
+    return Math.max(10, porDibujo, Math.min(porPantalla, porDibujo * 2));
+  }
+
   // Tabla de SheetFlow: forma `table` del Editor con `sheetflow: id`; al abrir el gráfico se vuelve a leer (vínculo vivo)
   function tablaDeSheetflow(r, id) {
     const filas = r.filas.slice(0, 120), conTot = !!r.totales, nc = r.columnas.length;
     const cells = [r.columnas.map(c => c || ' ')].concat(filas, conTot ? [r.totales] : []);
-    const fs = Math.max(10, Math.round(state.W / 90)), pd = Math.max(2, fs * 0.25);
+    const fs = letraTabla(), pd = Math.max(2, fs * 0.25);
     let colW = Array.from({ length: nc }, (_, c) => Math.min(fs * 28, Math.max(fs * 4, Math.max(...cells.map(f => String(f[c] || '').length)) * fs * 0.6 + 2 * pd)));
     const total = suma(colW), tope = state.W * 0.92;
     if (total > tope) colW = colW.map(w => w * tope / total);
@@ -1663,7 +1673,7 @@
   function tablaDePunch(r, x, y, grp) {
     const cells = [r.columnas.map(c => c || ' ')].concat(r.filas.length ? r.filas : [r.columnas.map((_, i) => i === 0 ? 'Sin pendientes' : '')]), nc = r.columnas.length;
     const fotos = r.fotos || [], conFoto = new Set(fotos.map(f => f[0] + 1)), colFoto = new Set(fotos.map(f => f[1]));
-    const fs = Math.max(10, Math.round(state.W / 90)), pd = Math.max(2, fs * 0.25), altoFoto = fs * 6;
+    const fs = letraTabla(), pd = Math.max(2, fs * 0.25), altoFoto = fs * 6;
     let colW = Array.from({ length: nc }, (_, c) => colFoto.has(c) ? fs * 9 : Math.min(fs * 28, Math.max(fs * 5, Math.max(...cells.map(f => String(f[c] || '').length)) * fs * 0.6 + 2 * pd)));
     const total = suma(colW), tope = state.W * 0.92;
     if (total > tope) colW = colW.map(w => w * tope / total);

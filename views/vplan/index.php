@@ -1,7 +1,7 @@
 <?php $tab = 'laminas'; ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-map-location-dot"></i> vPlan · Plan visual</h2>
+        <h2><i class="fa-solid fa-sheet-plastic"></i> vPlan · Plan visual</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($paquetes); ?> vPlan</p>
     </div>
     <div class="la-controles">
@@ -28,7 +28,7 @@
     <div class="card vp-paquete">
         <a class="vp-paquete-portada" href="/vplan/paquete?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>" aria-label="Abrir <?php echo s($p->nombre); ?>">
             <?php foreach ($portadas[(int)$p->id] ?? [] as $img): ?><img src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endforeach; ?>
-            <?php if (empty($portadas[(int)$p->id])): ?><i class="fa-solid fa-map-location-dot"></i><?php endif; ?>
+            <?php if (empty($portadas[(int)$p->id])): ?><i class="fa-solid fa-sheet-plastic"></i><?php endif; ?>
         </a>
         <div class="vp-paquete-cuerpo">
         <h3><a href="/vplan/paquete?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>"><?php echo s($p->nombre); ?></a></h3>

@@ -9,7 +9,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
 ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-map-location-dot"></i> <?php echo s($paquete->nombre); ?></h2>
+        <h2><i class="fa-solid fa-sheet-plastic"></i> <?php echo s($paquete->nombre); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($laminas); ?> lámina(s)</p>
     </div>
     <div class="la-controles">

@@ -84,7 +84,7 @@ class VplanPdfExporter extends BaseExporter
     {
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('defaultFont', 'Helvetica');   // mismas medidas que Arial (la vista): el PDF y la lámina se ven igual
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper([0, 0, $anchoMm * 72 / 25.4, $altoMm * 72 / 25.4]);

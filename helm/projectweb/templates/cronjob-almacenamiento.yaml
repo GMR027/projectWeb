@@ -34,6 +34,8 @@ spec:
                 - { name: files, mountPath: /var/www/html/storage/archivos, subPath: archivos }
                 - { name: files, mountPath: /var/www/html/storage/fichas, subPath: fichas }
                 - { name: files, mountPath: /var/www/html/storage/import, subPath: import }
+                - { name: files, mountPath: /var/www/html/storage/normativa, subPath: normativa }
+                - { name: files, mountPath: /var/www/html/storage/grabaciones, subPath: grabaciones }
           volumes:
             - name: files
               persistentVolumeClaim: { claimName: projectweb-files }

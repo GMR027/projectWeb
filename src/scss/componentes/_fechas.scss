@@ -1,0 +1,33 @@
+// ============================================================
+// Fechas copiables (Ctrl+C / Ctrl+V) — src/js/fechas.js
+// ============================================================
+
+// Las fechas visibles (tablas, Gantt, vPlan…) se pueden copiar con un clic + Ctrl+C.
+[data-fecha] {
+  cursor: copy;
+  border-radius: 0.3rem;
+
+  &:hover {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.25em;
+  }
+}
+
+// Confirmación breve al copiar o pegar.
+[data-fecha].fecha-copiada,
+.fecha-copiada {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+  background-color: var(--secondary-glow);
+}
+
+.fecha-pegada {
+  outline: 2px solid var(--success);
+  outline-offset: 2px;
+  animation: fecha-pegada 0.9s ease;
+}
+
+@keyframes fecha-pegada {
+  0% { background-color: var(--success); }
+  100% { background-color: transparent; }
+}

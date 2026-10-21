@@ -100,7 +100,7 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
             $cw = VplanDiseno::columnasTareas(VplanDiseno::anchoRefCm($b), $nRec, $f, $p, $orden);
             $fijas = ['seq' => '# SEQ', 'tarea' => 'TASK', 'inicio' => 'START', 'fin' => 'FINISH', 'pct' => '%', 'restr' => 'CONSTRAINS'];
             ?>
-            <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>">
+            <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>;--vp-max:<?php echo $cq($f); ?>">
             <table class="vp-tabla vp-programa" style="--vp-c:<?php echo s($td['color'][0]); ?>;--vp-t:<?php echo s($td['color'][1]); ?>">
                 <colgroup><?php foreach ($cw as $w): ?><col style="width:<?php echo $w; ?>%"><?php endforeach; ?></colgroup>
                 <thead>
@@ -140,8 +140,10 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
             <?php break;
         case 'tabla':
             $bloque = $tablasPorId[(int)$cfg['tabla_id']];
-            [$f, $p] = VplanDiseno::medidasTabla($lamina, $b, $bloque); ?>
-            <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>">
+            [$f, $p] = VplanDiseno::medidasTabla($lamina, $b, $bloque);
+            $anchoTablaCm = VplanDiseno::anchoRefCm($b);   // el reparto de columnas lo comparten la vista, el PDF y el estimador
+            ?>
+            <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>;--vp-max:<?php echo $cq($f); ?>">
                 <?php include __DIR__ . '/_tabla-adicional.php'; ?>
             </div>
             <?php break;

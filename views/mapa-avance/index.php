@@ -10,7 +10,7 @@ $nomAct = fn($id) => isset($actividades[$id]) ? $actividades[$id]['codigo'] . ' 
         <h2><i class="fa-solid fa-map-location-dot"></i> <?php echo s(t('Mapa de avance')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · el <strong>color</strong> de las marcas que dibujas en las láminas (líneas, círculos, muros, columnas…) se traduce a avance: <span class="mapa-sw rojo"></span> rojo = no avanzado, <span class="mapa-sw amarillo"></span> amarillo = a medias, <span class="mapa-sw verde"></span> verde = terminado. Las líneas pesan por su longitud y las figuras cerradas por cantidad.</p>
     </div>
-    <div class="inc-acciones"><a href="/vplan?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Láminas</a></div>
+    <div class="inc-acciones"><a href="/vplan?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-sheet-plastic"></i> Láminas</a></div>
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 

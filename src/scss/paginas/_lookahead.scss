@@ -107,7 +107,8 @@
     thead th { position: static; }
     .la-dias th { width: auto; min-width: 0; } }
   .vp-hoja { overflow: visible; max-width: none; }
-  .vp-hoja .vp-lamina { min-width: 0; border: 0; border-radius: 0; }
+  // Al imprimir no cuenta el zoom de la pantalla: la hoja ocupa el ancho de la página
+  .vp-hoja .vp-lamina { width: 100%; min-width: 0; border: 0; border-radius: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
@@ -233,8 +234,9 @@ $vp-rojo: #dc2626;
 
 // Lámina: colores y proporciones de la plantilla de referencia (siempre sobre fondo blanco)
 .vp-hoja { max-width: 190rem; margin: 0 auto 2rem; overflow-x: auto; }
-// La hoja es un lienzo con la proporción del tamaño elegido; sus bloques van en % y la letra escala con el ancho de la hoja (cqw)
-.vp-lamina { position: relative; container-type: inline-size; width: 100%; min-width: 64rem; background: #fff; color: #000; font-family: Arial, sans-serif; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden;
+// La hoja es un lienzo con la proporción del tamaño elegido; sus bloques van en % y la letra escala con el ancho de la hoja (cqw).
+// `--vp-ancho-px` lo fija el control de zoom: 100 % = el tamaño real de la hoja (1 mm = 1 mm), igual que el PDF.
+.vp-lamina { position: relative; container-type: inline-size; width: var(--vp-ancho-px, 100%); min-width: min(64rem, var(--vp-ancho-px, 100%)); margin: 0 auto; background: #fff; color: #000; font-family: Helvetica, Arial, sans-serif; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden;
   .text-muted { color: #666; }
   .btn-ghost { color: #222; border-color: #999; }
   .btn-danger { color: #dc2626; }
@@ -254,15 +256,20 @@ $vp-rojo: #dc2626;
   .vp-schedule { border-collapse: collapse; th { text-decoration: underline; text-align: left; } td { padding: 0 .5em 0 .2em; } td:first-child { width: 3.4em; border: 1px solid #000; } }
   // Tablas: toman la letra del bloque (em) y se ajustan solas al espacio que tienen
   .vp-tab { width: 100%; height: 100%; overflow: hidden; }
-  .vp-tab .vp-tabla { font-size: 1em; margin-bottom: .6em; table-layout: fixed; overflow-wrap: anywhere;
+  // El interlineado es 1.25 (como `VplanDiseno::fila()`): con el 1.6 de la página la vista crece más que el PDF
+  // y el ajuste en vivo termina achicando la letra; con 1.25 la vista y el PDF se ven igual.
+  .vp-tab .vp-tabla { font-size: 1em; line-height: 1.25; margin-bottom: .6em; table-layout: fixed; overflow-wrap: anywhere;
     th, td { padding: var(--vp-pad, .2em) calc(var(--vp-pad, .2em) * 1.8); }
-    // Los campos editables no deben cambiar la altura de los renglones: se ven como texto y muestran su borde al pasar el cursor
-    .vp-rec, .vp-in { font: inherit; line-height: 1.2; height: auto; padding: 0; margin: 0; border: 1px solid transparent; background: transparent; text-align: center; color: inherit; box-shadow: none; border-radius: .15em; -moz-appearance: textfield; appearance: textfield; }
+    // Los campos editables no deben cambiar la altura de los renglones: se ven como texto y muestran su borde al pasar el cursor.
+    // Ojo: el ancho y el alto por defecto de un control de formulario (~170 px y ~16 px) no escalan con la letra:
+    // la tabla se sale del bloque y el ajuste en vivo termina achicando la letra hasta hacerla ilegible.
+    // Por eso el campo ocupa la celda (100 %) y su alto sigue a la letra.
+    .vp-rec, .vp-in { font: inherit; line-height: 1.2; display: block; width: 100%; min-width: 0; height: 1.3em; box-sizing: border-box; padding: 0; margin: 0; border: 1px solid transparent; background: transparent; text-align: center; color: inherit; box-shadow: none; border-radius: .15em; -moz-appearance: textfield; appearance: textfield; }
     .vp-rec:hover, .vp-in:hover, .vp-rec:focus, .vp-in:focus { border-color: #888; background: rgba(255, 255, 255, .85); color: #000; }
     .vp-rec::-webkit-inner-spin-button, .vp-rec::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .vp-rec::-webkit-calendar-picker-indicator { margin: 0; padding: 0; width: .8em; opacity: .55; }
     .vp-col-texto { width: 100%; text-align: left; }
-    .vp-in-sf[type=checkbox] { width: auto; }
+    .vp-in-sf[type=checkbox] { width: 1.1em; height: 1.1em; }
     .vp-foto { display: block; max-height: 3.4em; max-width: 100%; margin: 0 auto; object-fit: contain; }
     .vp-semaforo { display: block; padding: .1em .4em; border-radius: .2em; text-align: center; }
     .vp-sem-verde { background: #2e9b4f; color: #fff; } .vp-sem-amarillo { background: #f2c230; color: #000; } .vp-sem-rojo { background: #d83a34; color: #fff; }
@@ -415,10 +422,14 @@ $vp-rojo: #dc2626;
   &[type="number"] { text-align: center; width: 7rem; }
   &[type="date"] { min-width: 12rem; }
 }
-.vp-ta { resize: none; overflow: hidden; line-height: 1.25; min-height: 2.4rem; display: block; }
-.vp-in-estado { background: #fff; border-color: #bbb; font-size: 1rem; }
-td.vp-acc { width: 3.4rem; }
-.vp-del { border: 0; background: transparent; color: #dc2626; cursor: pointer; font-size: 1.4rem; line-height: 1; &:hover { background: #fde2e4; } }
+.vp-ta { resize: none; overflow: hidden; line-height: 1.25; min-height: 2.4rem; display: block; width: 100%; max-width: 100%; }
+.vp-in-estado { background: #fff; border-color: #bbb; }
+// El ancho y el alto de la columna de acciones y del botón se miden en em (no en rem):
+// si no, la fila no baja de un tamaño fijo y la tabla no cabe en su bloque (la letra se achica).
+// Ojo: la columna no puede llamarse `vp-acc` (esa clase es una barra de botones con `display:flex`):
+// con flex la celda deja de ser celda y el renglón crece de más.
+td.vp-celda-acc { width: 2.4em; }
+.vp-del { border: 0; background: transparent; color: #dc2626; cursor: pointer; font-size: 1.15em; line-height: 1; padding: 0 .1em; &:hover { background: #fde2e4; } }
 .vp-agregar-dato { margin: 0; }
 .vp-tabla td { color: #000; }
 
@@ -437,7 +448,7 @@ td.vp-acc { width: 3.4rem; }
 // Ampliar: lámina a pantalla completa
 .vp-cerrar-ampliado { display: none; }
 .vp-hoja.vp-ampliado { position: fixed; inset: 0; z-index: 1500; max-width: none; margin: 0; background: #fff; overflow: auto;
-  .vp-lamina { width: min(100vw, calc(100vh * var(--vp-ratio, 1.5455))); min-width: 0; margin: 0 auto; border: 0; border-radius: 0; }
+  .vp-lamina { width: var(--vp-ancho-px, min(100vw, calc(100vh * var(--vp-ratio, 1.5455)))); min-width: 0; margin: 0 auto; border: 0; border-radius: 0; }
   .vp-cerrar-ampliado { display: inline-flex; align-items: center; justify-content: center; position: fixed; left: 1.6rem; bottom: 1.6rem; width: 4.4rem; height: 4.4rem; border-radius: 50%; border: 0; background: #1c2541; color: #fff; font-size: 2rem; cursor: pointer; box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .35); z-index: 1; &:hover { background: $vp-rojo; } } }
 body.vp-sin-scroll { overflow: hidden; }
 

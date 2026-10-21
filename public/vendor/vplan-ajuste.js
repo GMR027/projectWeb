@@ -20,7 +20,10 @@
             tas.forEach(crecer);
             return tabla.offsetHeight <= tab.clientHeight && tab.scrollWidth <= tab.clientWidth + 1;
         };
-        let lo = 0.25, hi = 0.74;   // 0.74 cqw = 9 pt de referencia, la letra más grande de las escalas del servidor
+        // El tope es la letra que eligió el servidor (`--vp-max`): si la tabla crece para llenar su
+        // bloque (hasta 48 pt) la vista usa la misma, y así la lámina se ve igual que el PDF.
+        const max = num(getComputedStyle(tab).getPropertyValue('--vp-max')) || 0.74;
+        let lo = 0.25, hi = max;
         if (cabe(hi)) return;
         for (let i = 0; i < 12; i++) {
             const mid = (lo + hi) / 2;

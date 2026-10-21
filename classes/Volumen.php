@@ -13,6 +13,8 @@ class Volumen
         'Archivos del proyecto' => 'storage/archivos',
         'Fichas técnicas' => 'storage/fichas',
         'Importaciones' => 'storage/import',
+        'Normativa y especificaciones' => 'storage/normativa',
+        'Grabaciones (audio)' => 'storage/grabaciones',
     ];
 
     private static function db(): \mysqli

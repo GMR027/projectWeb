@@ -150,6 +150,8 @@ HTML],
 </ul>
 <h4>Cambiar las fechas rápidamente</h4>
 <p>En la tabla, el icono de <em>Cambiar fechas</em> de una actividad abre una ventana con las fechas de inicio y fin. Si mueves el inicio, el fin se corre con la misma duración; después puedes ajustar el fin.</p>
+<h4>Copiar y pegar fechas</h4>
+<p>Haz clic sobre cualquier fecha visible (en el programa, en tablas, en el vPlan o en el Gantt) y pulsa <strong>Ctrl + C</strong>; se copia el día completo como <span class="mono">AAAA-MM-DD</span>, aunque solo hayas seleccionado una parte del texto. Después entra al campo de fecha de destino y pulsa <strong>Ctrl + V</strong>. Acepta fechas escritas como <span class="mono">AAAA-MM-DD</span>, <span class="mono">DD/MM/AAAA</span>, <span class="mono">20 oct 2026</span> o <span class="mono">20 de octubre de 2026</span>. Al pegar en una fecha editable se guarda igual que si la escribieras; el campo se marca en verde un instante para confirmar.</p>
 <h4>Restricciones</h4>
 <p>Una <strong>restricción</strong> es algo que impide o pone en riesgo una actividad (un RFI, un material pendiente, un permiso…).</p>
 <ol>
@@ -243,7 +245,7 @@ HTML],
 <p>Los datos salen del programa de obra: si cambias fechas o avances, el Lookahead se ajusta solo. Para imprimirlo o editarlo usa <em>Exportar</em> → <strong>Lookahead</strong> (PDF tabloide, o .xlsx / .ods editable).</p>
 HTML],
 
-['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-map-location-dot', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
+['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-sheet-plastic', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
 <p>El vPlan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
 <h4>vPlans y áreas</h4>
 <p>Puedes tener <strong>varios vPlan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada vPlan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del vPlan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
@@ -276,12 +278,14 @@ HTML],
 <li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>vPlan → Tablas</em>.</li>
 <li><strong>Tabla en base a documento:</strong> en <em>vPlan › Tablas adicionales</em>, el botón «Tabla en base a documento» (a la izquierda de «+ Nueva tabla») lee un Excel, CSV, Word o PDF con texto y arma la tabla sola, detectando las columnas. Antes de crearla ves una vista previa que puedes corregir (quitar renglones o columnas, editar celdas). Las imágenes y los PDF escaneados no se pueden leer en la web sin OCR: el administrador los procesa con IA desde la app de escritorio (<em>Herramientas IA › Tabla desde documento</em>), que además puede corregir la lectura de cualquier archivo.</li>
 <li><strong>Ampliar</strong> muestra la lámina a pantalla completa; Esc o el botón de cerrar la regresan.</li>
+<li><strong>Zoom de la lámina:</strong> el control junto a «Ampliar» cambia el tamaño en pantalla. <strong>100 %</strong> es el tamaño real de la hoja (1 mm = 1 mm), que es exactamente como se ve en el PDF; <strong>Ajustar</strong> la mete en el ancho disponible y los botones <strong>−</strong> y <strong>+</strong> la acercan o la alejan (también con Ctrl + rueda del mouse sobre la lámina). La letra de las tablas nunca baja de lo que se puede leer: si la tabla tiene mucha información, la lámina se muestra más grande para que el texto se lea igual que en el PDF.</li>
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>
 <h4>Editar las marcas</h4>
 <p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
+<p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
 <p class="manual-nota">Para imprimir una lámina o llevarla a PDF usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
 HTML],
 
@@ -369,6 +373,17 @@ HTML],
 <li><strong>Categorías:</strong> el botón <em>Categorías</em> permite crear, renombrar y eliminar categorías. Una categoría en uso no se puede eliminar.</li>
 </ul>
 <p class="manual-nota">Si al subir un archivo grande el servidor lo rechaza, el administrador debe aumentar los límites de subida de PHP (<code>upload_max_filesize</code> y <code>post_max_size</code>).</p>
+HTML],
+
+['id' => 'visor', 'titulo' => 'Visor', 'icono' => 'fa-eye', 'roles' => $todos, 'herr' => 'visor', 'cuerpo' => <<<'HTML'
+<p>El <strong>Visor</strong> muestra los archivos del <strong>Archivo</strong> del proyecto <strong>en la misma ventana</strong>: eliges un archivo de la lista de la izquierda y se abre en el panel derecho, sin abrir pestañas nuevas ni descargarlo.</p>
+<ul>
+<li><strong>Buscar y filtrar:</strong> por nombre, por categoría o por carpeta (como el Archivero).</li>
+<li><strong>Navegar:</strong> usa los botones <i class="fa-solid fa-chevron-left"></i> / <i class="fa-solid fa-chevron-right"></i> o las flechas del teclado para pasar al archivo anterior o siguiente.</li>
+<li>Se pueden ver <strong>PDF</strong>, <strong>imágenes</strong>, <strong>texto y CSV</strong> y, si el servidor tiene LibreOffice, <strong>Word, Excel y PowerPoint</strong> (se convierten a PDF).</li>
+<li>Los archivos que no se pueden mostrar (por ejemplo un .zip o un plano .dwg) solo se pueden descargar.</li>
+<li>Ver archivos requiere permiso de descarga: <strong>administrador</strong> o <strong>cliente</strong>. Los visitantes solo ven el listado.</li>
+</ul>
 HTML],
 
 ['id' => 'curvas', 'titulo' => 'Curvas de productividad', 'icono' => 'fa-chart-line', 'roles' => $todos, 'herr' => 'curvas', 'cuerpo' => <<<'HTML'

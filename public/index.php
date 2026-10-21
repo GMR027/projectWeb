@@ -61,6 +61,7 @@ use Controllers\BitacoraController;
 use Controllers\View360Controller;
 use Controllers\ManualController;
 use Controllers\ArchivoController;
+use Controllers\VisorController;
 use Controllers\MinutaController;
 use Controllers\DatosObraController;
 
@@ -332,6 +333,9 @@ $router->post('/archivos/categorias/crear', [ArchivoController::class, 'categori
 $router->get('/archivos/categorias/editar', [ArchivoController::class, 'categoriaEditar']);
 $router->post('/archivos/categorias/editar', [ArchivoController::class, 'categoriaEditar']);
 $router->post('/archivos/categorias/eliminar', [ArchivoController::class, 'categoriaEliminar']);
+
+// ========== VISOR DE ARCHIVOS ==========
+$router->get('/visor', [VisorController::class, 'index']);
 
 // ========== CURVAS DE PRODUCTIVIDAD ==========
 $router->get('/curvas', [CurvaController::class, 'index']);
