@@ -10,6 +10,8 @@ use Model\VplanPaquete;
 use Model\VplanTabla;
 use Classes\Imagenes;
 use Classes\Vplan;
+use Classes\MarcasLienzo;
+use Model\Grafico;
 
 /** vPlan: láminas de plan visual por partida */
 class VplanController
@@ -155,7 +157,7 @@ class VplanController
     private static function borrarLamina(VplanLamina $l): void
     {
         foreach (['plano', 'simbologia', 'marcas_png'] as $c) Imagenes::eliminarVplan($l->$c);
-        foreach (self::imagenesDeMarcas($l->marcas_json) as $img) Imagenes::eliminarVplan($img);
+        foreach (Grafico::imagenesDe($l->marcas_json) as $img) Imagenes::eliminarVplan($img);
         $l->eliminar();
     }
 
@@ -428,22 +430,14 @@ class VplanController
             exit;
         }
         $json = (string)($_POST['json'] ?? '');
-        $datos = json_decode($json, true);
         // Las imágenes dentro de las marcas deben ser archivos subidos por el editor
-        foreach (($datos['shapes'] ?? []) as $sh) {
-            if (($sh['type'] ?? '') === 'image' && !preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', (string)($sh['src'] ?? ''))) $datos = null;
-        }
-        $png = (string)($_POST['png'] ?? '');
-        $bin = preg_match('#^data:image/(png|jpeg);base64,#', $png) ? base64_decode(substr($png, strpos($png, ',') + 1), true) : false;
-        if (!is_array($datos) || strlen($json) > 3_000_000 || !isset($datos['shapes']) || count($datos['shapes']) > 2000 || !$bin || strlen($bin) > 30_000_000) {
+        $bin = MarcasLienzo::binarioDeDataUrl((string)($_POST['png'] ?? ''), 'png|jpeg');
+        if (!MarcasLienzo::leer($json, '#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $bin, 30_000_000)) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
             exit;
         }
-        $tmp = tempnam(sys_get_temp_dir(), 'vpm');
-        file_put_contents($tmp, $bin);
-        $nuevo = Imagenes::guardarGrande($tmp, 3840);
-        @unlink($tmp);
+        $nuevo = MarcasLienzo::guardarBinario($bin, 3840);
         if (!$nuevo) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Imagen no válida']);
@@ -451,7 +445,7 @@ class VplanController
         }
         Imagenes::eliminarVplan($l->marcas_png);
         // Borra del disco las imágenes que ya no usa ninguna marca
-        foreach (array_diff(self::imagenesDeMarcas($l->marcas_json), self::imagenesDeMarcas($json)) as $viejo) Imagenes::eliminarVplan($viejo);
+        foreach (array_diff(Grafico::imagenesDe($l->marcas_json), Grafico::imagenesDe($json)) as $viejo) Imagenes::eliminarVplan($viejo);
         $l->marcas_png = $nuevo;
         $l->marcas_json = $json;
         $l->marcas_estados_hash = Vplan::datos($l, $proyecto)['hash'];
@@ -490,34 +484,7 @@ class VplanController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $f = $_FILES['imagen'] ?? null;
-        $ok = $f && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
-            && in_array(mime_content_type($f['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
-        if ($ok && !\Classes\Almacenamiento::cabe((int)$proyecto->id, (int)$f['size'])) {
-            http_response_code(422);
-            echo json_encode(['success' => false, 'error' => \Classes\Almacenamiento::mensajeLleno((int)$proyecto->id)]);
-            exit;
-        }
-        $nombre = $ok ? Imagenes::guardarGrande($f['tmp_name'], 1600) : null;
-        if (!$nombre) {
-            http_response_code(422);
-            echo json_encode(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)']);
-            exit;
-        }
-        echo json_encode(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
-        exit;
-    }
-
-    /** Archivos de imagen de vPlan que usan las marcas (type 'image') */
-    public static function imagenesDeMarcas(?string $json): array
-    {
-        $d = $json ? json_decode($json, true) : null;
-        $out = [];
-        foreach (($d['shapes'] ?? []) as $s) {
-            if (($s['type'] ?? '') === 'image' && preg_match('#^/uploads/vplan/([a-f0-9]{32}\.(?:png|jpg))$#', (string)($s['src'] ?? ''), $m)) $out[] = $m[1];
-            if (($s['type'] ?? '') === 'link' && ($s['kind'] ?? '') === '360' && preg_match('#^/uploads/vplan/([a-f0-9]{32}\.(?:png|jpg))$#', (string)($s['url'] ?? ''), $m)) $out[] = $m[1];
-        }
-        return array_values(array_unique($out));
+        MarcasLienzo::subirImagen($proyecto);
     }
 
     /** Agrega, quita o mueve una tabla adicional de la lámina */

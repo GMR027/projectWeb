@@ -36,7 +36,7 @@ class Almacenamiento
         }
         foreach (VplanLamina::deProyecto($proyectoId) as $l) {
             $nombres = array_filter([$l->plano, $l->simbologia, $l->marcas_png]);
-            $nombres = array_merge($nombres, \Controllers\VplanController::imagenesDeMarcas($l->marcas_json));
+            $nombres = array_merge($nombres, \Model\Grafico::imagenesDe($l->marcas_json));
             foreach (array_unique($nombres) as $n) $r['vPlan (planos e imágenes)'] += self::tam(self::RAIZ . '/public/uploads/vplan/' . basename($n));
         }
         try {   // si la tabla del Editor aún no existe (migración pendiente), no debe bloquear las demás subidas

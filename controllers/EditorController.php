@@ -476,13 +476,8 @@ class EditorController
         $l = self::laminaDe($g, $_POST['hoja'] ?? null);
         if (!$l) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
         $json = (string)($_POST['json'] ?? '');
-        $datos = json_decode($json, true);
-        foreach (($datos['shapes'] ?? []) as $sh) {
-            if (($sh['type'] ?? '') === 'image' && !preg_match('#^/uploads/(?:vplan/[a-f0-9]{32}\.(?:png|jpg)|punch/min/[a-f0-9]{32}\.jpg)$#', (string)($sh['src'] ?? ''))) $datos = null;
-        }
-        $png = (string)($_POST['png'] ?? '');
-        $bin = preg_match('#^data:image/png;base64,#', $png) ? base64_decode(substr($png, strpos($png, ',') + 1), true) : false;
-        if (!is_array($datos) || strlen($json) > 3_000_000 || !isset($datos['shapes']) || count($datos['shapes']) > 2000 || !$bin || strlen($bin) > 60_000_000) {
+        $bin = \Classes\MarcasLienzo::binarioDeDataUrl((string)($_POST['png'] ?? ''));
+        if (!\Classes\MarcasLienzo::leer($json, '#^/uploads/(?:vplan/[a-f0-9]{32}\.(?:png|jpg)|punch/min/[a-f0-9]{32}\.jpg)$#', $bin, 60_000_000)) {
             json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
         $ver = (string)($_POST['version'] ?? '');
@@ -491,10 +486,7 @@ class EditorController
         }
         $anterior = $l->marcas_png ? (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . basename($l->marcas_png)) : 0;
         if (!Almacenamiento::cabe((int)$p->id, max(0, strlen($bin) - $anterior))) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
-        $tmp = tempnam(sys_get_temp_dir(), 'edg');
-        file_put_contents($tmp, $bin);
-        $nuevo = Imagenes::guardarGrande($tmp, Grafico::LADO_MAX);
-        @unlink($tmp);
+        $nuevo = \Classes\MarcasLienzo::guardarBinario($bin, Grafico::LADO_MAX);
         if (!$nuevo) json_respuesta(['success' => false, 'error' => 'Imagen no válida'], 422);
         Imagenes::eliminarVplan($l->marcas_png);
         $enUso = array_merge(Grafico::imagenesDe($json), $l->imagenesDeHermanas());
@@ -567,14 +559,8 @@ class EditorController
     /** Imagen insertada dentro del gráfico (misma regla que en el vPlan) */
     public static function subirImagen()
     {
-        [$g, $p] = self::graficoApi();
-        $f = $_FILES['imagen'] ?? null;
-        $ok = $f && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
-            && in_array(mime_content_type($f['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
-        if ($ok && !Almacenamiento::cabe((int)$p->id, (int)$f['size'])) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$p->id)], 422);
-        $nombre = $ok ? Imagenes::guardarGrande($f['tmp_name'], 1600) : null;
-        if (!$nombre) json_respuesta(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)'], 422);
-        json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
+        [, $p] = self::graficoApi();
+        \Classes\MarcasLienzo::subirImagen($p);
     }
 
     /** PDF con una página por imagen, del tamaño exacto de la imagen (px a 96 dpi → puntos). $pngs: binarios PNG */
