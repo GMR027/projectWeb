@@ -234,12 +234,14 @@
   }
 
   // ---------- Editor de gráficos: lista ----------
-  // En móvil no se crea (el lienzo es de escritorio/tablet): miniatura, nombre y solo Ver y Editar
+  // En móvil no se crea (el lienzo es de escritorio/tablet): miniatura, nombre, Ver, Editar y Descargar
   .btn-nuevo-grafico { display: none !important; }
   .tabla-editor {
     th:first-child, td:first-child { display: none; }        // fecha de creación
     .gr-mini { width: 6.4rem; height: 4.4rem; }
-    td.acciones form, td.acciones .gr-descargar { display: none !important; }
+    td.acciones form { display: none !important; }           // duplicar, simbología, eliminar
+    .acciones { min-width: 9.6rem; width: 9.6rem; }
+    .acciones .btn, .acciones summary { min-height: 3.6rem; padding: .5rem .7rem; font-size: 1.2rem; }
   }
 
   // ---------- Portafolio / inicio: tarjetas de proyecto ----------
