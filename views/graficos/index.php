@@ -6,16 +6,16 @@
     </div>
     <div class="la-controles">
         <a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Categorías</a>
-        <?php if ($puedeEditar): ?><a href="/graficos/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo gráfico')); ?></a><?php endif; ?>
+        <?php if ($puedeEditar): ?><a href="/graficos/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary btn-nuevo-grafico"><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo gráfico')); ?></a><?php endif; ?>
     </div>
 </div>
 
 <div class="card">
     <?php if (!$graficos): ?>
-        <p class="text-muted"><?php echo s(t('Aún no hay gráficos.')); ?> <?php echo $puedeEditar ? 'Crea el primero con «Nuevo gráfico».' : ''; ?></p>
+        <p class="text-muted"><?php echo s(t('Aún no hay gráficos.')); ?> <?php echo $puedeEditar ? '<span class="hide-m">Crea el primero con «Nuevo gráfico».</span>' : ''; ?></p>
     <?php else: ?>
         <div class="tabla-wrapper">
-        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
+        <table class="tabla tabla-editor" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Nombre')); ?></th><th class="hide-m"><?php echo s(t('Categoría')); ?></th><th class="hide-m"><?php echo s(t('Tamaño')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
             <tbody>
             <?php foreach ($graficos as $g): $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$g->id; ?>

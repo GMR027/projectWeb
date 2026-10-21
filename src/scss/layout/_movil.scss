@@ -233,6 +233,15 @@
     .vp-acc .vp-ib { width: 100%; height: auto; min-height: 3.4rem; gap: .4rem; font-size: 1.2rem; }
   }
 
+  // ---------- Editor de gráficos: lista ----------
+  // En móvil no se crea (el lienzo es de escritorio/tablet): miniatura, nombre y solo Ver y Editar
+  .btn-nuevo-grafico { display: none !important; }
+  .tabla-editor {
+    th:first-child, td:first-child { display: none; }        // fecha de creación
+    .gr-mini { width: 6.4rem; height: 4.4rem; }
+    td.acciones form, td.acciones .gr-descargar { display: none !important; }
+  }
+
   // ---------- Portafolio / inicio: tarjetas de proyecto ----------
   .proyecto-caratula { width: calc(100% + 2.8rem); margin: -1.4rem -1.4rem 1.2rem; height: 18rem; }
   .proyecto-caratula-overlay { padding: 1.4rem; }
