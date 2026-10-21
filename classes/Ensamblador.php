@@ -212,9 +212,8 @@ class Ensamblador
         if (!$duplicado) {
             if (!Almacenamiento::cabe($pid, (int)$f['size'])) return ['ok' => false, 'error' => Almacenamiento::mensajeLleno($pid)];
             $dir = Archivo::carpeta($pid);
-            if (!is_dir($dir)) mkdir($dir, 0775, true);
-            $guardado = bin2hex(random_bytes(12)) . '.' . $ext;
-            if (!move_uploaded_file($f['tmp_name'], "$dir/$guardado")) return ['ok' => false, 'error' => 'No se pudo guardar el archivo en el servidor'];
+            $guardado = Archivo::guardarArchivoSubido($pid, $f['tmp_name'], $ext);
+            if (!$guardado) return ['ok' => false, 'error' => 'No se pudo guardar el archivo en el servidor'];
             // Copia en el Archivero (solo los formatos que acepta esa sección; el resto queda solo como texto)
             if (in_array($ext, Archivo::EXTENSIONES, true)) {
                 $a = new Archivo(['proyecto_id' => $pid, 'nombre' => mb_substr(pathinfo($nombre, PATHINFO_FILENAME), 0, 200), 'archivo_original' => $nombre, 'archivo_guardado' => $guardado, 'tamano' => (int)$f['size']]);

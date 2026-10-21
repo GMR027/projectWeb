@@ -67,6 +67,34 @@ class Archivo extends ActiveRecord
         return __DIR__ . '/../storage/archivos/' . $proyectoId;
     }
 
+    /** Carpeta del proyecto, creada si no existe */
+    public static function carpetaCreada(int $proyectoId): string
+    {
+        $dir = self::carpeta($proyectoId);
+        if (!is_dir($dir)) mkdir($dir, 0775, true);
+        return $dir;
+    }
+
+    public static function nombreGuardado(string $ext): string
+    {
+        return bin2hex(random_bytes(12)) . '.' . $ext;
+    }
+
+    /** Mueve un archivo subido (o uno ya en el servidor con $subido = false) a la carpeta del proyecto. Devuelve el nombre guardado o null */
+    public static function guardarArchivoSubido(int $proyectoId, string $tmp, string $ext, bool $subido = true): ?string
+    {
+        $dir = self::carpetaCreada($proyectoId);
+        $guardado = self::nombreGuardado($ext);
+        $ok = $subido ? move_uploaded_file($tmp, "$dir/$guardado") : (@rename($tmp, "$dir/$guardado") || (@copy($tmp, "$dir/$guardado") && @unlink($tmp)));
+        return $ok ? $guardado : null;
+    }
+
+    /** Pone $origen en la ruta de un archivo ya registrado (rename, o copia y borra si están en otro disco) */
+    public static function reemplazarContenido(string $origen, string $destino): bool
+    {
+        return @rename($origen, $destino) || (@copy($origen, $destino) && @unlink($origen));
+    }
+
     public function ruta(): ?string
     {
         if ($this->id && $this->extension() === 'pdf') \Classes\EnsamblePdf::refrescar($this);   // ensamble vivo: se regenera si cambió una fuente

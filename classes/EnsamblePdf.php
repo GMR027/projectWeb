@@ -121,13 +121,12 @@ class EnsamblePdf
         $tam = (int)filesize($tmp);
         $anterior = $a ? (int)$a->tamano : 0;
         if ($tam > $anterior && !Almacenamiento::cabe($pid, $tam - $anterior)) { @unlink($tmp); return Almacenamiento::mensajeLleno($pid); }
-        $dir = Archivo::carpeta($pid);
-        if (!is_dir($dir)) mkdir($dir, 0775, true);
+        $dir = Archivo::carpetaCreada($pid);
         if ($nuevo) {
             $a = new Archivo(['proyecto_id' => $pid, 'fecha' => date('Y-m-d'), 'nombre' => $e->nombre, 'carpeta_id' => $carpetaId ?: null]);
-            $a->archivo_guardado = bin2hex(random_bytes(12)) . '.pdf';
+            $a->archivo_guardado = Archivo::nombreGuardado('pdf');
         }
-        if (!@rename($tmp, $dir . '/' . $a->archivo_guardado) && !(@copy($tmp, $dir . '/' . $a->archivo_guardado) && @unlink($tmp))) { @unlink($tmp); return 'No se pudo guardar el archivo'; }
+        if (!Archivo::reemplazarContenido($tmp, $dir . '/' . $a->archivo_guardado)) { @unlink($tmp); return 'No se pudo guardar el archivo'; }
         $a->archivo_original = self::nombreArchivo($e);
         $a->tamano = $tam;
         $a->fecha = date('Y-m-d');
@@ -152,7 +151,7 @@ class EnsamblePdf
         try {
             [$tmp, ] = self::generar($e);
             $dest = Archivo::carpeta((int)$a->proyecto_id) . '/' . basename((string)$a->archivo_guardado);
-            if (@rename($tmp, $dest) || (@copy($tmp, $dest) && @unlink($tmp))) {
+            if (Archivo::reemplazarContenido($tmp, $dest)) {
                 $a->tamano = (int)filesize($dest);
                 $a->archivo_original = self::nombreArchivo($e);
                 $a->guardar();

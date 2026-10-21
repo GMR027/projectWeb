@@ -93,9 +93,8 @@ class ArchivoController
             if (!$alertas) {
                 if ($hay) {
                     $dir = Archivo::carpeta((int)$proyecto->id);
-                    if (!is_dir($dir)) mkdir($dir, 0775, true);
-                    $guardado = bin2hex(random_bytes(12)) . '.' . $ext;
-                    if (move_uploaded_file($f['tmp_name'], $dir . '/' . $guardado)) {
+                    $guardado = Archivo::guardarArchivoSubido((int)$proyecto->id, $f['tmp_name'], $ext);
+                    if ($guardado) {
                         if ($a->archivo_guardado) @unlink($dir . '/' . basename($a->archivo_guardado));   // reemplazo
                         $a->archivo_guardado = $guardado;
                         $a->archivo_original = mb_substr(basename($f['name']), 0, 255);
