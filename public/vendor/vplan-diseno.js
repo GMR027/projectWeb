@@ -545,10 +545,12 @@
         } else if (b.tipo === 'tareas') {
             h += campo('vp-c-titulo', 'Título de la tabla', '<input type="text" id="vp-c-titulo" maxlength="200" value="' + esc(c.titulo || '') + '" placeholder="Automático: nombre de las partidas">');
             h += '<div class="vp-dis-fila">' + campo('vp-c-seq', 'Numeración (SEQ)', '<select id="vp-c-seq">' + opciones([['continuo', 'Continua 1..n'], ['partida', 'La de cada partida, con subtítulos']], c.seq || 'continuo') + '</select>') +
-                '<div class="campo"><label for="vp-c-color">Color</label><input type="color" id="vp-c-color" value="' + esc(c.color || '#5b82b4') + '"> <button type="button" class="btn btn-sm btn-ghost" id="vp-c-color-auto">Auto</button></div></div>';
+                '<div class="campo"><label for="vp-c-color">Color de la tabla</label><input type="color" id="vp-c-color" value="' + esc(c.color || colorAutoTareas(c)) + '"> ' +
+                '<button type="button" class="btn btn-sm btn-ghost" id="vp-c-color-auto" title="Vuelve a usar el color que tiene la partida en el programa de obra"' + (c.color ? '' : ' disabled') + '><i class="fa-solid fa-link"></i> Reconectar con el programa</button>' +
+                '<small id="vp-c-color-estado" class="text-muted" style="display:block">' + estadoColorTareas(c) + '</small></div></div>';
             h += '<div class="campo"><label>Partidas y actividades</label><p class="text-sm text-muted">Marca las partidas completas o solo algunas actividades. Se ve al guardar el diseño.</p><div id="vp-fuentes" class="vp-fuentes"></div></div>';
             h += '<div class="campo"><label>Columnas</label><p class="text-sm text-muted">Mueve las columnas de izquierda a derecha o agrega columnas de texto propias (se capturan en la lámina). Se ve al guardar el diseño.</p><ul id="vp-cols" class="vp-capas-lista"></ul>' +
-                '<button type="button" class="btn btn-sm btn-primary" id="vp-col-mas"><i class="fa-solid fa-plus"></i> Agregar columna de texto</button></div>';
+                '<button type="button" class="btn btn-sm btn-primary" id="vp-col-mas"><i class="fa-solid fa-plus"></i> Agregar columna de texto</button> <select id="vp-col-prog" class="vp-sel-prog" aria-label="Agregar campo del programa"></select></div>';
         } else if (b.tipo === 'tabla') {
             const t = (D.tablas || {})[(c.tabla_id || 0)] || {};
             h += '<p class="text-sm">Tabla: <strong>' + esc(t.titulo || '') + '</strong></p><p class="text-sm"><a href="/vplan/tablas/editar?proyecto=' + D.proyecto + '&id=' + (c.tabla_id || 0) + '">Editar sus datos</a></p>' +
@@ -591,6 +593,7 @@
         const c = b.config;
         const g = id => document.getElementById(id);
         const vivo = () => {   // vista previa de textos y letra sin recargar
+            if (b.tipo === 'tareas') colorTareasUI(b);
             const el = elDe(b), t = el && el.querySelector('.vp-txt');
             if (!t) return;
             if ((c.texto || '').trim()) t.innerHTML = '<div>' + (c.texto).split('\n').map(l => '<div>' + esc(l) + '</div>').join('') + '</div>';
@@ -616,13 +619,34 @@
         ligar('vp-c-seq', 'change', i => c.seq = i.value);
         ligar('vp-c-color', 'input', i => c.color = i.value);
         const auto = g('vp-c-color-auto');
-        if (auto) auto.addEventListener('click', () => { c.color = ''; marcarSucio(); if (b.tipo !== 'tareas') { const t = elDe(b).querySelector('.vp-txt'); if (t) t.style.color = ''; } });
+        if (auto) auto.addEventListener('click', () => { c.color = ''; marcarSucio(); if (b.tipo === 'tareas') colorTareasUI(b); if (b.tipo !== 'tareas') { const t = elDe(b).querySelector('.vp-txt'); if (t) t.style.color = ''; } });
+    }
+
+    // Color de una tabla de tareas: propio (independiente) o conectado al color de la partida en el programa de obra
+    function colorAutoTareas(c) {
+        const f = (c.fuentes || [])[0], p = f && (D.partidas || []).find(x => x.id === f.partida);
+        return p && /^#[0-9a-f]{6}$/i.test(p.color || '') ? p.color : '#5b82b4';
+    }
+    function estadoColorTareas(c) { return c.color ? 'Color propio: ya no cambia con el programa de obra.' : 'Conectado al color de la partida en el programa de obra.'; }
+    function colorTareasUI(b) {
+        const c = b.config, col = c.color || colorAutoTareas(c);
+        const inp = document.getElementById('vp-c-color'), btn = document.getElementById('vp-c-color-auto'), est = document.getElementById('vp-c-color-estado');
+        if (inp && !c.color) inp.value = col;
+        if (btn) btn.disabled = !c.color;
+        if (est) est.textContent = estadoColorTareas(c);
+        const tab = elDe(b) && elDe(b).querySelector('.vp-programa');
+        if (tab) {   // vista previa sin recargar
+            const n = parseInt(col.slice(1), 16), lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+            tab.style.setProperty('--vp-c', col); tab.style.setProperty('--vp-t', lum > 0.6 ? '#000000' : '#ffffff');
+        }
     }
 
     // Columnas de un bloque de tareas: orden horizontal y columnas de texto propias
     const COLS_BASE = [['seq', '# SEQ'], ['tarea', 'TASK'], ['inicio', 'START'], ['fin', 'FINISH'], ['rec', 'RECOVERY (según la lámina)'], ['pct', '%'], ['restr', 'CONSTRAINS']];
+    // Campos del programa de obra (Diseñar programa): se agregan a voluntad; el título es el que el usuario les puso
+    const COLS_PROG = () => Object.entries(D.programaCols || {});
     function ordenColumnas(c) {
-        const ids = (c.columnas || []).map(x => 'x:' + x.id), validos = COLS_BASE.map(x => x[0]).concat(ids);
+        const ids = (c.columnas || []).map(x => 'x:' + x.id), validos = COLS_BASE.map(x => x[0]).concat(COLS_PROG().map(x => x[0]), ids);
         const o = (c.orden || []).filter((t, i, a) => validos.includes(t) && a.indexOf(t) === i);
         COLS_BASE.forEach((x, i) => { if (!o.includes(x[0])) o.splice(Math.min(i, o.length), 0, x[0]); });
         ids.forEach(t => { if (!o.includes(t)) o.push(t); });
@@ -633,11 +657,12 @@
         if (!ul) return;
         const orden = c.orden = ordenColumnas(c);
         ul.innerHTML = orden.map((t, i) => {
-            const base = COLS_BASE.find(x => x[0] === t), col = base ? null : (c.columnas || []).find(x => 'x:' + x.id === t);
+            const prog = COLS_PROG().find(x => x[0] === t);
+            const base = COLS_BASE.find(x => x[0] === t) || (prog ? [t, prog[1] + ' (programa)'] : null), col = base ? null : (c.columnas || []).find(x => 'x:' + x.id === t);
             return '<li class="vp-capa" data-t="' + esc(t) + '"><span class="vp-capa-nombre">' + (base ? esc(base[1]) : '<input type="text" class="vp-col-tit" maxlength="40" placeholder="Título de la columna" value="' + esc(col.titulo) + '">') + '</span>' +
                 '<button type="button" class="vp-ib" data-m="-1" title="Mover a la izquierda"' + (i === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i></button>' +
                 '<button type="button" class="vp-ib" data-m="1" title="Mover a la derecha"' + (i === orden.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-right"></i></button>' +
-                (base ? '' : '<button type="button" class="vp-ib" data-q="1" title="Quitar la columna"><i class="fa-solid fa-trash-can"></i></button>') + '</li>';
+                (!base || prog ? '<button type="button" class="vp-ib" data-q="1" title="Quitar la columna"><i class="fa-solid fa-trash-can"></i></button>' : '') + '</li>';
         }).join('');
         ul.querySelectorAll('li').forEach(li => {
             const t = li.dataset.t;
@@ -650,13 +675,27 @@
             if (tit) tit.addEventListener('input', () => { c.columnas.find(x => 'x:' + x.id === t).titulo = tit.value; marcarSucio(); });
             const q = li.querySelector('[data-q]');
             if (q) q.addEventListener('click', () => {
-                c.columnas = c.columnas.filter(x => 'x:' + x.id !== t); c.orden = c.orden.filter(x => x !== t);
+                c.columnas = (c.columnas || []).filter(x => 'x:' + x.id !== t); c.orden = c.orden.filter(x => x !== t);
                 if (!c.columnas.length) delete c.columnas;
                 marcarSucio(); pintarColumnas(b);
             });
         });
         document.getElementById('vp-col-mas').disabled = (c.columnas || []).length >= 6;
+        const sel = document.getElementById('vp-col-prog');
+        if (sel) {
+            const faltan = COLS_PROG().filter(x => !orden.includes(x[0]));
+            sel.innerHTML = '<option value="">+ Agregar campo del programa…</option>' + faltan.map(x => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('');
+            sel.disabled = !faltan.length;
+        }
     }
+    document.addEventListener('change', e => {
+        const sel = e.target.closest && e.target.closest('#vp-col-prog');
+        if (!sel || !sel.value || !seleccion) return;
+        const c = seleccion.config;
+        c.orden = ordenColumnas(c);
+        if (!c.orden.includes(sel.value)) c.orden.push(sel.value);
+        marcarSucio(); pintarColumnas(seleccion);
+    });
     document.addEventListener('click', e => {
         const bt = e.target.closest && e.target.closest('#vp-col-mas');
         if (!bt || !seleccion) return;
@@ -687,7 +726,7 @@
                 const pc = caja.querySelector('.vp-fp[data-partida="' + p.id + '"]');
                 pc.checked = marc.length === todas.length && marc.length > 0; pc.indeterminate = marc.length > 0 && marc.length < todas.length;
             });
-            b.config.fuentes = out; marcarSucio();
+            b.config.fuentes = out; marcarSucio(); colorTareasUI(b);   // si el color sigue conectado al programa, cambia con la primera partida
         };
         caja.addEventListener('change', e => {
             if (e.target.classList.contains('vp-fp')) caja.querySelectorAll('.vp-fa[data-partida="' + e.target.dataset.partida + '"]').forEach(x => x.checked = e.target.checked);

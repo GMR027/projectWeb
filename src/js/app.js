@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let visor = null;
   const cerrarVisor = () => { if (visor) { visor.remove(); visor = null; } };
   document.addEventListener('click', (e) => {
-    const enlace = e.target.closest('.bj-fotos a, img[data-visor]');
+    const enlace = e.target.closest('.bj-fotos a, .rd-fotos a, img[data-visor], a[data-visor]');
     if (!enlace || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
     cerrarVisor();

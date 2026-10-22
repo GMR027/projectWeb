@@ -47,6 +47,9 @@ class Usuario extends ActiveRecord
         'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos']],
         'traductor' => ['Traductor', ['/traductor', '/api/traductor']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
+        'costos' => ['Costos y presupuesto', ['/costos']],
+        'recursos' => ['Recursos y cuadrillas', ['/recursos']],
+        'rfi' => ['RFI', ['/rfi']],
     ];
 
     /** Claves permitidas al visitante (null = todas) */

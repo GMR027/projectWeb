@@ -7,7 +7,7 @@
   gap: $space-md;
   align-items: start;
 
-  @media (max-width: 48rem) { grid-template-columns: 1fr; }
+  @media (max-width: $bp-movil) { grid-template-columns: 1fr; }
 }
 
 .archivero-titulo {
@@ -72,3 +72,30 @@
 .col-sel { width: 3.2rem; }
 
 .badge-carpeta { font-size: 1.2rem; opacity: .75; }
+
+// Móvil: carpetas como tira horizontal y lista de archivos con nombre, Ver y Descargar
+@media (max-width: $bp-movil) {
+  .archivero-lateral { padding: 1rem; }
+  .archivero-titulo { margin-bottom: .6rem; }
+  .archivero-carpetas { flex-direction: row; overflow-x: auto; gap: .6rem; padding-bottom: .4rem; -webkit-overflow-scrolling: touch;
+    li { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 2rem; }
+    a { flex: 0 0 auto; padding: .6rem 1.1rem; font-size: 1.3rem; span { max-width: 14rem; } }
+    .btn-icono { display: none; }
+  }
+  .archivero-lateral > p { display: none; }
+  // Cada archivo es una tarjeta: nombre, datos y botones en una fila
+  .archivero-lista { padding: 1rem; }
+  .tabla-archivos { display: block; width: 100%;
+    thead { display: none; }
+    tbody { display: flex; flex-direction: column; gap: 1rem; }
+    tr { display: flex; flex-direction: column; gap: .8rem; padding: 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-secondary, transparent); }
+    td { display: block; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; }
+    td.arch-nombre { font-size: 1.5rem; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere;
+      .text-sm { font-weight: 400; font-size: 1.2rem; margin-top: .3rem; } }
+    td.acciones { display: flex !important; flex-direction: row !important; gap: .8rem; width: 100% !important;
+      .btn { flex: 1 1 0; width: auto; margin: 0 !important; justify-content: center; } }
+  }
+  .archivero-principal { min-width: 0; }
+  .page-header:has(+ .archivero) .la-controles { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; width: 100%;
+    .buscador-inline { grid-column: 1 / -1; select { width: 100%; } } .btn { width: 100%; justify-content: center; } }
+}

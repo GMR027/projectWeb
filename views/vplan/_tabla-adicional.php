@@ -4,6 +4,7 @@ use Model\VplanTabla;
 use Classes\VplanDiseno;
 $t = $bloque['tabla'];
 $campos = $bloque['campos'];
+$estEnc = $t->estiloEncabezados();
 $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
 $nAcc = $t->tipo === 'secundarias' ? $extra * 2 : $extra;
 // El reparto de columnas es el mismo que usan el PDF y el estimador: así la lámina y el PDF se ven igual
@@ -29,7 +30,7 @@ $nAcc = $t->tipo === 'secundarias' ? $extra * 2 : $extra;
     <?php else: ?>
         <thead>
             <tr><th colspan="<?php echo count($campos) + 1 + $extra; ?>" class="vp-adic-titulo"><?php echo s($t->titulo); ?></th></tr>
-            <tr><th>N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?><?php if ($extra): ?><th class="no-print"></th><?php endif; ?></tr>
+            <tr><th>N.</th><?php foreach ($campos as $k => [$etq]): ?><th<?php echo !empty($estEnc[$k]) ? ' style="' . s($estEnc[$k]) . '"' : ''; ?>><?php echo s($etq); ?></th><?php endforeach; ?><?php if ($extra): ?><th class="no-print"></th><?php endif; ?></tr>
         </thead>
     <?php endif; ?>
     <tbody>

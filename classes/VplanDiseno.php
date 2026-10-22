@@ -90,6 +90,8 @@ class VplanDiseno
 
     /** Columnas fijas de la tabla de tareas (`rec` agrupa todas las de recovery) */
     public const COLS_BASE = ['seq', 'tarea', 'inicio', 'fin', 'rec', 'pct', 'restr'];
+    /** Campos del programa (Diseñar programa) que se pueden agregar a una tabla de tareas; no salen salvo que el bloque los pida en su orden */
+    public const COLS_PROGRAMA = \Classes\ProgramaColumnas::EN_VPLAN;
     public const MAX_COLS_TEXTO = 6;
     /** Caracteres de ancho extra que necesita un campo de fecha (el calendario del navegador) */
     public const EXTRA_FECHA = 3;
@@ -101,7 +103,7 @@ class VplanDiseno
     public static function ordenTareas(array $cfg): array
     {
         $ids = array_map(fn($c) => 'x:' . $c['id'], self::columnasTexto($cfg));
-        $validos = array_merge(self::COLS_BASE, $ids);
+        $validos = array_merge(self::COLS_BASE, self::COLS_PROGRAMA, $ids);
         $orden = array_values(array_unique(array_filter((array)($cfg['orden'] ?? []), fn($t) => in_array($t, $validos, true))));
         foreach (self::COLS_BASE as $i => $t) if (!in_array($t, $orden, true)) array_splice($orden, min($i, count($orden)), 0, [$t]);
         foreach ($ids as $t) if (!in_array($t, $orden, true)) $orden[] = $t;
@@ -131,6 +133,8 @@ class VplanDiseno
             'seq' => self::colCm(4, $f, $p), 'inicio' => self::colCm(10 + self::EXTRA_FECHA, $f, $p),
             'fin' => self::colCm(10 + self::EXTRA_FECHA, $f, $p),
             'pct' => self::colCm(4, $f, $p), 'restr' => self::colCm(10, $f, $p) * 1.05,
+            'rec_inicio' => self::colCm(10 + self::EXTRA_FECHA, $f, $p), 'rec_fin' => self::colCm(10 + self::EXTRA_FECHA, $f, $p), 'libre_fecha' => self::colCm(10 + self::EXTRA_FECHA, $f, $p),
+            'libre_numero' => self::colCm(9, $f, $p), 'indicador' => self::colCm(6, $f, $p), 'predecesora' => self::colCm(8, $f, $p), 'sucesora' => self::colCm(8, $f, $p),
         ];
         $texto = self::colCm(14, $f, $p);
         $fijo = 0.0;

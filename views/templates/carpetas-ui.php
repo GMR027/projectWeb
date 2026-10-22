@@ -1,10 +1,10 @@
 <?php // Diálogo y script comunes para renombrar carpetas y mover documentos. Variables: $herramienta, $proyecto ?>
-<dialog id="carpeta-dlg" class="no-print">
+<dialog id="carpeta-dlg" class="rd-dialogo no-print">
     <form method="dialog" id="carpeta-form">
         <h3 id="carpeta-titulo">Carpeta</h3>
         <input type="text" id="carpeta-nombre" maxlength="100" autocomplete="off" required>
         <p class="text-sm" id="carpeta-err" role="alert" style="color:#f87171;min-height:1.6rem"></p>
-        <div class="acciones"><button type="button" class="btn btn-ghost btn-sm" id="carpeta-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
+        <div class="acciones rd-dlg-acciones"><button type="button" class="btn btn-ghost btn-sm" id="carpeta-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
     </form>
 </dialog>
 <script>

@@ -29,7 +29,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | **Roles** | 3 roles: `admin` (full), `cliente` (ver+descargar), `visitante` (solo ver). Helpers: `is_admin()`, `puede_editar()`, `puede_descargar()` |
 | **Calendario** | Cada proyecto tiene jornada semanal (factor 0-1 por día) + festivos. `Calendario::calcularFechaFin($inicio, $diasHabiles)` respeta esta config. |
 | **Gantt** | Renderizado con CSS Grid. `GanttRenderer::getFilas()` retorna array con posiciones de columna para cada partida/actividad. |
-| **Exportación** | Nomenclatura auto `Y_m_d_NombreUsuario.ext`. PDF tabloide 11x17" landscape; columnas semanales (≤16 sem), quincenales (≤40) o mensuales, máx. 14 columnas por página. XML es MSPDI. POD renombra el XML. |
+| **Exportación** | Nombre `prefijo-nombre-CÓDIGO-EMPRESA-sufijo.ext`: prefijo/sufijo (fecha Y-m-d, d-m-Y, numerador, texto) se eligen una vez en el Centro de Exportación (`/exportar`, guardado en localStorage) y viajan como `nom_*` en cada POST; el servidor los lee con `nomenclatura_desde_post()` y los usa `generar_nombre_archivo()`. Sin `nom_*` queda fecha al inicio. «Exportar todo» filtra con `incluir[]`; curvas, MSR y láminas de vPlan aceptan varios (`curva_ids[]`, `msr_ids[]`, `lamina_ids[]`) y entregan ZIP. PDF tabloide 11x17" landscape; columnas semanales (≤16 sem), quincenales (≤40) o mensuales, máx. 14 columnas por página. XML es MSPDI. POD renombra el XML. |
 | **BD** | Nombre: `project`. ActiveRecord usa string interpolation (sanitiza con `$db->escape_string`). |
 | **Assets** | Compilar con Gulp. SCSS en `src/scss/`, JS en `src/js/`, salida a `public/build/`. |
 
@@ -46,7 +46,8 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `classes/Calendario.php` | Motor de días hábiles (lee jornada + festivos) |
 | `classes/GanttRenderer.php` | Prepara estructura para el Gantt (semanas + posiciones) |
 | `classes/Exportadores/*` | PdfExporter (Dompdf), MspdiXmlExporter, PodExporter |
-| `views/programa/index.php` | Vista principal: tabla WBS + Gantt por semanas |
+| `views/programa/index.php` | Vista principal: tabla WBS (columnas según el diseño del programa) + Gantt por semanas |
+| `classes/ProgramaColumnas.php`, `views/programa/diseno.php` | **Programa configurable** (como el MSR): `/programa/diseno` elige nombre del programa, columnas (renombrar/ordenar) e indicador condicional; diseño en `proyectos.programa_columnas_json` (NULL = clásico). Campos nuevos de la actividad (`responsable`, `rec_inicio/fin`, `libre_*`) se escriben con `ProgramaColumnas::guardarCampo()` (SQL propio, no `Actividad::guardar`); predecesora/sucesora usan `actividad_dependencias`. Migración `database/migracion_programa_columnas.sql`. El **PDF del programa** (`views/exportar/pdf-gantt.php`) sigue el diseño (columnas, nombres, orden, sin Acciones); el XML/POD y el Gantt no. **vPlan**: las tablas de tareas pueden agregar los campos nuevos (`VplanDiseno::COLS_PROGRAMA`, selector «Agregar campo del programa» del modo diseño; vista `_hoja.php` y PDF `pdf-vplan.php` con `ProgramaColumnas::contextoVplan/valorVplan`; solo salen si el bloque los pide). En móvil `/programa` siempre muestra Nombre y la acción de editar |
 | `views/ajustes/index.php` | Jornada semanal, festivos, centro de exportación |
 | `views/manual/*`, `controllers/ManualController.php` | Manual de usuario (`/manual`): `_secciones.php` (base), `_admin.php` (guía del administrador) e `_ilustraciones.php` (SVG; se insertan con `[[fig:nombre]]`). Al añadir una herramienta, documentarla ahí |
 
@@ -69,7 +70,11 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `classes/PorDondeEmpezar.php`, `controllers/EmpezarController.php`, `views/templates/por-donde-empezar.php` (+ `pde-modal.php`, `src/js/empezar.js`) | Guía «Por dónde empezar»: modal tras crear el proyecto (`?inicio=guiado\|lista`, elegido en `proyectos/crear`) y sección en Ajustes. Estado de cada paso calculado con datos reales; capturas rápidas en `/api/empezar/*`. Para añadir un paso: `PorDondeEmpezar::pasos()` + formulario en el `switch` de la vista + ruta/método en el controlador |
 | `classes/RespaldoProyecto.php` | Respaldo/restauración de UN proyecto (Ajustes del proyecto): tablas por FK desde `proyectos`, archivos referenciados, auto 23:30 (`bin/respaldo_programado.php --proyectos` o primera petición tras la hora), restaurar solo recupera archivos faltantes |
 | `docs/directorio.md` | **Directorio** (Administración): personal, departamentos, categorías y especialidades compartidos por las herramientas (`Classes\Catalogo`) |
+| `docs/salud-busqueda.md` | **Salud del proyecto** (semáforo en Inicio y ficha), **actividades en riesgo** (material sin submittal aprobado, punch grave, permiso faltante; marca en Programa/Lookahead/Last Planner), clima↔permisos, avance desde el reporte diario y **buscador global** `/buscar` (`classes/Salud.php`, `classes/Busqueda.php`) |
 | `docs/notificaciones.md` | **Campana de notificaciones** (novedades de la plataforma + actividades de hoy + acciones rápidas, con el filtro de rol del cliente) y **Novedades de la plataforma** (Ajustes + `/novedades`). Cómo publicar una novedad: `classes/Novedades.php` |
+| `docs/fase3.md` | **Fase 3**: Costos y presupuesto (valor ganado, CPI/SPI, curva ligada a la Curva S y a las órdenes de cambio), Recursos y cuadrillas (carga semanal), RFI (chip de revisión, actividad bloqueada) y enlaces de solo lectura (cliente temporal + calendario `.ics`) |
+| `docs/fase5.md` | **Fase 5**: API REST `/api/v1` con tokens y webhooks firmados (`ApiRest`, `ApiTokens`, `Webhooks`, `/integraciones`), interfaz ES/EN (`t()`, `bin/idioma_cobertura.php`), pruebas de calidad de la IA con casos fijos (`PruebasIA`, `/calidad-ia`) e IA nueva (predicción de atrasos, redactar RFI, contradicciones) |
+| `docs/personalizacion.md` | **Fase 4**: diseño de columnas de las listas (`ListaDiseno`), campos personalizados con filtro/agrupación (`CamposPersonalizados`), plantillas de proyecto completas (`PlantillaProyecto`), marca del cliente en los PDF (`Marca`, opción `'marca'` de `Pdf`) e inicio personalizable (`InicioUsuario`) |
 | `docs/piezas-compartidas.md` | **Piezas compartidas** (PHP y JS) que reemplazaron copias: `json_respuesta`, `proyecto_api`, `Pdf`, `ShellTools`, `AccesoDb`, `MarcasLienzo`, `NotasApi`, `kit-edicion.js`, `notas.js`. Revisar **antes** de escribir código parecido |
 
 > Menú: las herramientas hermanas comparten entrada y se navegan con pestañas (`pestanas_herramienta()`): Lookahead+Planificador, Archivo+Visor, Revisión de datos (Inconsistencias+Análisis de materiales), Editor+Símbolos. Las rutas antiguas siguen funcionando. «Ensamblador de documentos» se llama **Unir documentos (PDF)**.
@@ -86,7 +91,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 8. **Pruebas con copia de BD:** `DB_NAME` del entorno NO se respeta; crea `project_claude_<n>` (`mysqldump --no-data`), fija `$_ENV['DB_NAME']` en un `auto_prepend_file` y borra solo esa BD. No uses `project_test`.
 9. **Herramientas de IA nuevas:** llamar a `Auditoria::registrar()` al aplicar/revertir/rechazar y agregarlas al catálogo `desktop/src/herramientas.js` (detalle en `docs/ia-centro-herramientas.md`). Nada cambia datos sin que el admin acepte.
 
-10. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 200 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
+10. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 700 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
 
 ## 🔍 Need to Verify?
 
@@ -125,9 +130,9 @@ Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`
 - [x] Dependencias entre actividades y ruta crítica (CPM) — `classes/RutaCritica.php`, `classes/Dependencias.php`
 - [x] Curva S de avance programado vs real — `classes/CurvaS.php`
 - [ ] Integración con 4WLA (vista semanal lookahead)
-- [ ] API REST para sincronización con herramientas externas
+- [x] API REST para sincronización con herramientas externas — `classes/ApiRest.php`, `classes/Webhooks.php` (`docs/fase5.md`)
 - [x] Adjuntar evidencias fotográficas a actividades — `EvidenciaController`
-- [ ] Multi-idioma (ES/EN)
+- [x] Multi-idioma (ES/EN) — `t()` + `includes/lang/en.php`; `php bin/idioma_cobertura.php` (`docs/fase5.md`)
 
 ## 🔐 Seguridad y operación (añadido 2026-10-16)
 

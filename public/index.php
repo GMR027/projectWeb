@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/app.php';
 
 use MVC\Router;
 use Controllers\AuthController;
+use Controllers\BuscarController;
 use Controllers\CarpetaController;
 use Controllers\EstampaController;
 use Controllers\ComparadorController;
@@ -65,6 +66,12 @@ use Controllers\NovedadesController;
 use Controllers\ArchivoController;
 use Controllers\VisorController;
 use Controllers\MinutaController;
+use Controllers\CostosController;
+use Controllers\RecursosController;
+use Controllers\RfiController;
+use Controllers\CompartirController;
+use Controllers\EnlaceClienteController;
+use Controllers\PersonalizacionController;
 use Controllers\DatosObraController;
 
 $router = new Router();
@@ -106,6 +113,7 @@ $router->get('/manual', [ManualController::class, 'index']);
 $router->get('/novedades', [NovedadesController::class, 'index']);
 $router->post('/novedades/vistas', [NovedadesController::class, 'vistas']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
+$router->post('/inicio/guardar', [DashboardController::class, 'guardarInicio']);
 
 // ========== PROYECTOS ==========
 $router->get('/proyectos', [ProyectoController::class, 'listar']);
@@ -117,6 +125,7 @@ $router->get('/proyectos/ver', [ProyectoController::class, 'ver']);
 $router->post('/proyectos/eliminar', [ProyectoController::class, 'eliminar']);
 
 // ========== PROGRAMA DE OBRA ==========
+$router->get('/buscar', [BuscarController::class, 'index']);
 $router->get('/programa', [ProgramaController::class, 'index']);
 $router->get('/dependencias', [DependenciasController::class, 'index']);
 $router->get('/api/dependencias/datos', [DependenciasController::class, 'datos']);
@@ -133,6 +142,12 @@ $router->post('/programa/importar/confirmar', [ProgramaController::class, 'confi
 $router->post('/programa/importar/cancelar', [ProgramaController::class, 'cancelarImportacion']);
 $router->post('/api/actividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaAjax']);
 $router->post('/api/actividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoAjax']);
+$router->get('/programa/diseno', [ProgramaController::class, 'diseno']);
+$router->post('/programa/diseno', [ProgramaController::class, 'diseno']);
+$router->post('/api/programa/campo', [ProgramaController::class, 'campoAjax']);
+$router->post('/api/programa/dependencia', [ProgramaController::class, 'dependenciaAjax']);
+$router->post('/api/programa/columna', [ProgramaController::class, 'columnaAjax']);
+$router->post('/api/programa/orden', [ProgramaController::class, 'ordenAjax']);
 // Partidas
 $router->get('/programa/ordenar', [ProgramaController::class, 'ordenar']);
 $router->post('/programa/ordenar', [ProgramaController::class, 'guardarOrden']);
@@ -285,6 +300,7 @@ $router->post('/reportes/crear', [ReporteController::class, 'crear']);
 $router->get('/reportes/editar', [ReporteController::class, 'editar']);
 $router->post('/reportes/editar', [ReporteController::class, 'editar']);
 $router->post('/reportes/eliminar', [ReporteController::class, 'eliminar']);
+$router->post('/reportes/avance', [ReporteController::class, 'avance']);
 $router->get('/reportes/personal', [ReporteController::class, 'personal']);
 $router->get('/reportes/personal/crear', [ReporteController::class, 'personalCrear']);
 $router->post('/reportes/personal/crear', [ReporteController::class, 'personalCrear']);
@@ -310,6 +326,47 @@ $router->post('/bitacora/departamentos/eliminar', [BitacoraController::class, 'd
 $router->get('/datos-obra', [DatosObraController::class, 'index']);
 $router->post('/carpetas/renombrar', [CarpetaController::class, 'renombrar']);
 $router->post('/carpetas/mover', [CarpetaController::class, 'mover']);
+// Fase 3: costos, recursos, RFI y enlaces de solo lectura
+$router->get('/costos', [CostosController::class, 'index']);
+$router->post('/costos/presupuesto', [CostosController::class, 'presupuesto']);
+$router->post('/costos/movimiento', [CostosController::class, 'movimiento']);
+$router->post('/costos/eliminar', [CostosController::class, 'eliminar']);
+$router->get('/recursos', [RecursosController::class, 'index']);
+$router->post('/recursos/guardar', [RecursosController::class, 'guardar']);
+$router->post('/recursos/eliminar', [RecursosController::class, 'eliminar']);
+$router->post('/recursos/asignar', [RecursosController::class, 'asignar']);
+$router->post('/recursos/quitar', [RecursosController::class, 'quitar']);
+$router->get('/rfi', [RfiController::class, 'index']);
+$router->post('/rfi/guardar', [RfiController::class, 'guardar']);
+$router->post('/rfi/estado', [RfiController::class, 'estado']);
+$router->post('/rfi/eliminar', [RfiController::class, 'eliminar']);
+$router->get('/compartir', [CompartirController::class, 'index']);
+$router->post('/compartir/crear', [CompartirController::class, 'crear']);
+$router->post('/compartir/revocar', [CompartirController::class, 'revocar']);
+// Fase 4: personalización
+$router->get('/lista/diseno', [PersonalizacionController::class, 'diseno']);
+$router->post('/lista/diseno', [PersonalizacionController::class, 'diseno']);
+$router->get('/plantillas-proyecto', [Controllers\PlantillasProyectoController::class, 'index']);
+$router->post('/plantillas-proyecto/guardar', [Controllers\PlantillasProyectoController::class, 'guardar']);
+$router->post('/plantillas-proyecto/aplicar', [Controllers\PlantillasProyectoController::class, 'aplicar']);
+$router->post('/plantillas-proyecto/eliminar', [Controllers\PlantillasProyectoController::class, 'eliminar']);
+$router->get('/marca', [Controllers\MarcaController::class, 'index']);
+$router->post('/marca/guardar', [Controllers\MarcaController::class, 'guardar']);
+$router->get('/integraciones', [Controllers\IntegracionesController::class, 'index']);
+$router->post('/integraciones/token/crear', [Controllers\IntegracionesController::class, 'crearToken']);
+$router->post('/integraciones/token/revocar', [Controllers\IntegracionesController::class, 'revocarToken']);
+$router->post('/integraciones/webhook/crear', [Controllers\IntegracionesController::class, 'crearWebhook']);
+$router->post('/integraciones/webhook/activo', [Controllers\IntegracionesController::class, 'toggleWebhook']);
+$router->post('/integraciones/webhook/eliminar', [Controllers\IntegracionesController::class, 'eliminarWebhook']);
+$router->post('/integraciones/webhook/probar', [Controllers\IntegracionesController::class, 'probarWebhook']);
+$router->post('/integraciones/webhook/reintentar', [Controllers\IntegracionesController::class, 'reintentarEntrega']);
+$router->get('/campos', [PersonalizacionController::class, 'campos']);
+$router->post('/campos/guardar', [PersonalizacionController::class, 'guardarCampo']);
+$router->post('/campos/eliminar', [PersonalizacionController::class, 'eliminarCampo']);
+$router->post('/api/campos/valor', [PersonalizacionController::class, 'guardarValor']);
+$router->get('/cliente', [EnlaceClienteController::class, 'ver']);
+$router->get('/calendario/ics', [EnlaceClienteController::class, 'ics']);
+
 $router->get('/minutas', [MinutaController::class, 'index']);
 $router->get('/minutas/ver', [MinutaController::class, 'ver']);
 $router->get('/minutas/pdf', [MinutaController::class, 'pdf']);
@@ -526,6 +583,14 @@ $router->post('/plantillas/aplicar', [PlantillasController::class, 'aplicar']);
 $router->get('/propuestas-ia', [CentroIAController::class, 'bandeja']);
 $router->post('/propuestas-ia/aceptar', [CentroIAController::class, 'aceptar']);
 $router->post('/propuestas-ia/rechazar', [CentroIAController::class, 'rechazar']);
+$router->post('/propuestas-ia/aceptar-lote', [CentroIAController::class, 'aceptarLote']);
+$router->post('/propuestas-ia/riesgo', [CentroIAController::class, 'guardarRiesgo']);
+$router->get('/resumen-ia', [CentroIAController::class, 'resumen']);
+$router->post('/resumen-ia/vigilancia', [CentroIAController::class, 'vigilancia']);
+$router->get('/uso-ia', [CentroIAController::class, 'uso']);
+$router->get('/calidad-ia', [CentroIAController::class, 'calidad']);
+$router->post('/api/ia/uso', [CentroIAController::class, 'registrarUso']);
+$router->post('/historial-cambios/revertir', [CentroIAController::class, 'revertirTanda']);
 $router->get('/historial-cambios', [CentroIAController::class, 'historial']);
 $router->get('/historial-cambios/exportar', [CentroIAController::class, 'exportarHistorial']);
 $router->get('/biblioteca-ia', [CentroIAController::class, 'biblioteca']);
@@ -575,6 +640,7 @@ $router->get('/ensamblador-documentos/crear', [EnsambleController::class, 'formu
 $router->post('/ensamblador-documentos/crear', [EnsambleController::class, 'formulario']);
 $router->get('/ensamblador-documentos/editar', [EnsambleController::class, 'formulario']);
 $router->post('/ensamblador-documentos/editar', [EnsambleController::class, 'formulario']);
+$router->post('/ensamblador-documentos/subir-pdf', [EnsambleController::class, 'subirPdf']);
 $router->post('/ensamblador-documentos/eliminar', [EnsambleController::class, 'eliminar']);
 $router->post('/ensamblador-documentos/archivo', [EnsambleController::class, 'guardarEnArchivo']);
 $router->get('/ensamblador-documentos/descargar', [EnsambleController::class, 'descargar']);
@@ -583,6 +649,7 @@ $router->get('/comparador/archivo', [ComparadorController::class, 'archivo']);
 $router->get('/traductor', [TraductorController::class, 'index']);
 $router->post('/api/traductor/texto', [TraductorController::class, 'texto']);
 $router->post('/api/traductor/documento', [TraductorController::class, 'documento']);
+$router->post('/api/traductor/exportar', [TraductorController::class, 'exportar']);
 $router->get('/view360', [View360Controller::class, 'index']);
 $router->get('/view360/ver', [View360Controller::class, 'ver']);
 $router->get('/view360/crear', [View360Controller::class, 'crear']);
@@ -631,6 +698,9 @@ $router->post('/api/empezar/documento', [Controllers\EmpezarController::class, '
 $router->get('/exportar', [AjustesController::class, 'exportarIndex']);
 $router->post('/exportar/generar', [AjustesController::class, 'exportar']);
 $router->post('/exportar/todo', [AjustesController::class, 'exportarTodo']);
+
+// API REST (Fase 5.1): con token, sin sesión ni CSRF; atiende la petición completa
+if (\Classes\ApiRest::esDeLaApi()) \Classes\ApiRest::despachar();
 
 csrf_verificar();   // todo POST necesita el código de la sesión
 // Un visitante solo entra a las herramientas que se le permitieron (también por enlace directo o API)

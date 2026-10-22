@@ -130,7 +130,11 @@ async function recargar() {
     const act = el('button', principal ? 'En uso' : 'Usar', principal ? 'sec on' : ''); act.disabled = principal; act.title = 'Usar esta conexión como la principal de las herramientas de IA';
     act.addEventListener('click', async () => { await pw.activarConexion(p.id); await recargar(); });
     const b = el('button', 'Eliminar', 'sec');
-    b.addEventListener('click', async () => { if (confirm('¿Eliminar «' + p.nombre + '»?')) { await pw.eliminarProveedor(p.id); recargar(); } });
+    b.addEventListener('click', async () => {
+      if (!await window.confirmarDesktop({ titulo: 'Eliminar conexión', mensaje: '¿Eliminar «' + p.nombre + '»?', aceptar: 'Eliminar', peligro: true })) return;
+      await pw.eliminarProveedor(p.id);
+      recargar();
+    });
     const rev = el('button', 'Comprobar', 'sec');
     rev.addEventListener('click', () => refrescarEstado(p.id));
     const acc = el('div', null, 'fila'); acc.append(act, rev, b); d.append(t, acc); return d;
@@ -864,7 +868,7 @@ async function cargarModelosOllama() {
     });
     usar.addEventListener('click', () => usarModelo(m.nombre));
     del.addEventListener('click', async () => {
-      if (!confirm('¿Eliminar «' + m.nombre + '» de este equipo? Tendrías que descargarlo de nuevo.')) return;
+      if (!await window.confirmarDesktop({ titulo: 'Eliminar modelo', mensaje: '¿Eliminar «' + m.nombre + '» de este equipo? Tendrías que descargarlo de nuevo.', aceptar: 'Eliminar', peligro: true })) return;
       try { await pw.ollamaEliminar(urlOllama(), m.nombre); $('#oll-msg').textContent = 'Modelo eliminado.'; } catch (x) { $('#oll-msg').textContent = '✘ ' + msgErr(x); }
       cargarModelosOllama();
     });
@@ -876,7 +880,7 @@ async function cargarModelosOllama() {
 
 async function descargarModelo(modelo, tamGB) {
   if (descargando) return;
-  if (!confirm('Se descargará «' + modelo + '» (~' + tamGB + ' GB) y se guardará en este equipo. ¿Continuar?')) return;
+  if (!await window.confirmarDesktop({ titulo: 'Descargar modelo', mensaje: 'Se descargará «' + modelo + '» (~' + tamGB + ' GB) y se guardará en este equipo. ¿Continuar?', aceptar: 'Descargar' })) return;
   descargando = modelo; pintarSugerencias();
   const barra = $('#oll-barra'), msg = $('#oll-msg');
   barra.hidden = false; barra.value = 0; msg.textContent = 'Iniciando la descarga de ' + modelo + '…';

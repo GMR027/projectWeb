@@ -156,6 +156,15 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
         } catch (_) { inp.classList.add('msr-error'); }
     }));
 
+    // Campos del programa (responsable, recuperación de la actividad, libres): se guardan en el programa de obra
+    document.querySelectorAll('.vp-prg-campo').forEach(inp => inp.addEventListener('change', async () => {
+        inp.classList.remove('msr-error');
+        try {
+            const d = await post('/api/programa/campo', { actividad_id: inp.dataset.actividad, campo: inp.dataset.campo, valor: inp.value });
+            if (!d.success) { inp.classList.add('msr-error'); inp.title = d.error || ''; }
+        } catch (_) { inp.classList.add('msr-error'); }
+    }));
+
     // Inicio y fin de la tarea: son los mismos datos del programa de obra (se guardan ahí y se reflejan en todos los formatos)
     document.querySelectorAll('.vp-fecha-act').forEach(inp => inp.addEventListener('change', async () => {
         inp.classList.remove('msr-error');
@@ -262,6 +271,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 window.VP_DISENO = <?php echo json_encode([
     'lamina' => (int)$lamina->id, 'proyecto' => (int)$proyecto->id, 'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $lamina->id,
     'bloques' => array_map(fn($b) => $b->aArray(), $bloques),
+    'programaCols' => \Classes\ProgramaColumnas::titulosVplan($proyecto),   // campos del programa que se pueden agregar a una tabla de tareas
     'partidas' => $partidasDiseno,
     'presets' => \Classes\VplanDiseno::PRESETS,
     'tamano' => ['preset' => $lamina->preset, 'ancho_mm' => (int)$lamina->ancho_mm, 'alto_mm' => (int)$lamina->alto_mm],

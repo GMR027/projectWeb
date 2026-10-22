@@ -18,6 +18,8 @@ class Traductor
     public const MAX_ARCHIVO = 20 * 1024 * 1024;
     public const MAX_CARACTERES_DOC = 600000;
     public const EXTENSIONES = ['pdf', 'docx', 'doc', 'odt', 'rtf', 'xlsx', 'xls', 'ods', 'csv', 'pptx', 'ppt', 'odp', 'txt', 'md'];
+    /** Formatos para exportar el texto traducido: extensión => nombre visible */
+    public const EXPORTAR = ['docx' => 'Word (.docx)', 'pdf' => 'PDF', 'txt' => 'Texto (.txt)'];
     /** Formatos viejos que se convierten con LibreOffice antes de traducir: extensión => formato de salida */
     private const CONVERTIR = ['doc' => 'docx', 'rtf' => 'docx', 'xls' => 'xlsx', 'ppt' => 'pptx'];
     /** Motor local: cada llamada carga el modelo (~2 s), así que se mandan lotes grandes. HTTP: lotes chicos */
@@ -114,6 +116,42 @@ class Traductor
         // Se traduce por líneas para conservar saltos y listas
         $lineas = preg_split('/\R/u', $texto);
         return implode("\n", self::traducir($lineas, $de, $a));
+    }
+
+    /**
+     * Arma un documento (Word, PDF o TXT) con un texto ya traducido; no vuelve a llamar al motor.
+     * @return array{0: string, 1: string, 2: string} [ruta temporal, nombre de descarga, tipo MIME]
+     */
+    public static function exportarTexto(string $texto, string $formato, string $idioma): array
+    {
+        $formato = isset(self::EXPORTAR[$formato]) ? $formato : 'docx';
+        if (!self::idiomaValido($idioma)) $idioma = 'en';
+        $nombre = 'traduccion-' . strtoupper($idioma) . '-' . date('Y-m-d') . '.' . $formato;
+        $ruta = tempnam(sys_get_temp_dir(), 'trd');
+        $lineas = preg_split('/\R/u', $texto) ?: [];
+
+        if ($formato === 'txt') {
+            file_put_contents($ruta, $texto);
+            return [$ruta, $nombre, 'text/plain; charset=utf-8'];
+        }
+
+        if ($formato === 'pdf') {
+            $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:10.5pt;line-height:1.45}p{margin:0 0 6pt}</style></head><body>';
+            foreach ($lineas as $l) {
+                $html .= $l === '' ? '<p>&nbsp;</p>' : '<p>' . htmlspecialchars($l, ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+            Pdf::guardar($ruta, $html . '</body></html>', 'letter', 'portrait', ['isRemoteEnabled' => false, 'isPhpEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+            return [$ruta, $nombre, 'application/pdf'];
+        }
+
+        $pw = new \PhpOffice\PhpWord\PhpWord();
+        $pw->setDefaultFontName('Calibri');
+        $pw->setDefaultFontSize(11);
+        $pw->getSettings()->setThemeFontLang(new \PhpOffice\PhpWord\Style\Language($idioma === 'en' ? 'en-US' : 'es-MX'));
+        $sec = $pw->addSection();
+        foreach ($lineas as $l) $sec->addText($l, [], ['spaceAfter' => 80]);
+        (new \PhpOffice\PhpWord\Writer\Word2007($pw))->save($ruta);
+        return [$ruta, $nombre, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     }
 
     /** Un texto largo se parte en frases (≤ 1500 caracteres por trozo) */

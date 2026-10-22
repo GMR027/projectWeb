@@ -18,6 +18,16 @@
     <div class="campo"><a class="btn btn-ghost btn-sm" href="/simbolos?proyecto=<?php echo s($proyecto->id); ?><?php echo $plantilla ? '&editar=' . (int)$plantilla->id : ''; ?>#estampas"><i class="fa-solid fa-pen-ruler"></i> <?php echo $plantilla ? 'Editar la plantilla en el editor de estampas' : 'Crear o cargar una plantilla en el editor de estampas'; ?></a></div>
     <p class="text-muted text-sm">La plantilla elegida reemplaza al post-it clásico en pantalla y en el PDF. No se modifica aquí: todos los cambios se hacen en el editor de estampas.</p>
 </form>
+<form method="POST" action="/lastplanner/plantilla" class="card lp-filtros">
+    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+    <input type="hidden" name="cargar" value="1">
+    <div class="campo"><label for="lp-cargar">Plantillas de obra</label>
+        <select id="lp-cargar" name="clave">
+            <?php foreach ($plantillasPostit as $clave => $p): ?><option value="<?php echo s($clave); ?>"><?php echo s($p['nombre']); ?></option><?php endforeach; ?>
+        </select></div>
+    <div class="campo"><button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-clone"></i> Cargar y usar</button></div>
+    <p class="text-muted text-sm">Copia la plantilla de obra al proyecto y la marca como post-it del Last Planner. Después puedes ajustarla en el editor de estampas.</p>
+</form>
 <?php endif; ?>
 <form method="GET" class="card lp-filtros">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -34,7 +44,7 @@
     <div class="campo"><label for="lp-zoom">Tamaño <span id="lp-zoom-val">100%</span></label>
         <input type="range" id="lp-zoom" min="30" max="150" step="5" value="100"></div>
 </form>
-<p class="text-muted text-sm lp-leyenda"><i class="lp-rombo lp-verde">◆</i> Actividad finalizada &nbsp; <i class="lp-rombo lp-amarillo">◆</i> Actividad en proceso &nbsp; <i class="lp-rombo lp-rojo">◆</i> Actividad con restricción activa &nbsp; · Los post-it se calculan con el programa de obra: si cambian las fechas, se ajustan solos. Para imprimirlos usa <a href="/exportar?proyecto=<?php echo s($proyecto->id); ?>">Exportar</a>.</p>
+<p class="text-muted text-sm lp-leyenda"><i class="lp-rombo lp-verde">◆</i> Actividad finalizada &nbsp; <i class="lp-rombo lp-amarillo">◆</i> Actividad en proceso &nbsp; <i class="lp-rombo lp-rojo">◆</i> Actividad con restricción activa &nbsp; <i class="lp-rombo lp-naranja">▲</i> En riesgo (material sin submittal aprobado, pendiente grave o permiso que falta) &nbsp; · Los post-it se calculan con el programa de obra: si cambian las fechas, se ajustan solos. Para imprimirlos usa <a href="/exportar?proyecto=<?php echo s($proyecto->id); ?>">Exportar</a>.</p>
 
 <?php if (!$tarjetas): ?>
     <div class="card"><p class="text-muted">No hay actividades en este proyecto.</p></div>

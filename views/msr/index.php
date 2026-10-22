@@ -27,7 +27,7 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
         <h2><i class="fa-solid fa-truck-ramp-box"></i> <?php echo s($msr->nombre); ?></h2>
         <p class="text-muted"><?php echo count($items); ?> renglón(es) · <?php echo s($proyecto->nombre); ?><?php echo $msr->descripcion ? ' · ' . s($msr->descripcion) : ''; ?></p>
     </div>
-    <div class="la-controles">
+    <div class="la-controles msr-acciones">
         <a href="/msr?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">← Mis MSR</a>
         <select id="f-status" class="btn btn-ghost btn-sm" aria-label="Filtrar por status">
             <option value="">Todos los status</option><option value="A">A</option><option value="AN">AN</option><option value="P">P</option><option value="RA">RA</option>
@@ -185,7 +185,7 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
 </div>
 
 <?php if ($puedeEditar): ?>
-<dialog id="msr-col-dlg" class="no-print">
+<dialog id="msr-col-dlg" class="rd-dialogo no-print">
     <form method="dialog" id="msr-col-form">
         <h3>Columna</h3>
         <label for="msr-col-n">Título</label>
@@ -195,10 +195,10 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
         <datalist id="msr-grupos-lista"><?php foreach (array_unique(array_filter(array_column($columnas, 'g'))) as $gn): ?><option value="<?php echo s($gn); ?>"><?php endforeach; ?></datalist>
         <label for="msr-col-c">Color del encabezado</label>
         <input type="color" id="msr-col-c">
-        <div class="acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-col-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
+        <div class="acciones rd-dlg-acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-col-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
     </form>
 </dialog>
-<dialog id="msr-sec-dlg" class="no-print">
+<dialog id="msr-sec-dlg" class="rd-dialogo no-print">
     <form method="dialog" id="msr-sec-form">
         <h3>Editar partida</h3>
         <p class="msr-sec-sub" id="msr-sec-sub"></p>
@@ -212,7 +212,7 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
             <button type="button" class="btn btn-ghost btn-sm" id="msr-sec-quitar">Sin color</button>
         </div>
         <p class="msr-sec-err" id="msr-sec-err" role="alert"></p>
-        <div class="acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-sec-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
+        <div class="acciones rd-dlg-acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-sec-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
     </form>
 </dialog>
 <?php endif; ?>

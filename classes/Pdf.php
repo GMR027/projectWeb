@@ -10,10 +10,14 @@ class Pdf
 {
     /**
      * Dompdf listo para renderizar (con el HTML ya cargado y el papel puesto).
-     * $papel: nombre ('letter', 'tabloid', 'a4') o [0, 0, ancho_pt, alto_pt]. $opciones: se suman a la fuente por defecto.
+     * $papel: nombre ('letter', 'tabloid', 'a4') o [0, 0, ancho_pt, alto_pt]. $opciones: se suman a la fuente por defecto ('marca' => Proyecto aplica la marca del cliente).
      */
     public static function preparar(string $html, string|array $papel = 'letter', string $orientacion = 'portrait', array $opciones = []): Dompdf
     {
+        if (isset($opciones['marca'])) {   // 'marca' => Proyecto: banda y colores del cliente (Classes\Marca)
+            if ($opciones['marca'] instanceof \Model\Proyecto) $html = Marca::aplicar($html, $opciones['marca']);
+            unset($opciones['marca']);
+        }
         $o = new Options();
         foreach (['defaultFont' => 'DejaVu Sans'] + $opciones as $clave => $valor) $o->set($clave, $valor);
         $dompdf = new Dompdf($o);

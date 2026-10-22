@@ -23,6 +23,13 @@ class Actividad extends ActiveRecord
     public $sin_material;
     public $fecha_fija;
     public $orden;
+    // Campos del programa configurable: se leen con la fila (property_exists) y se escriben con Classes\ProgramaColumnas::guardarCampo(), no con guardar()
+    public $responsable;
+    public $rec_inicio;
+    public $rec_fin;
+    public $libre_texto;
+    public $libre_numero;
+    public $libre_fecha;
 
     public function __construct($args = [])
     {

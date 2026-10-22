@@ -99,6 +99,8 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
             $rs = $nRec ? 2 : 1;
             $cw = VplanDiseno::columnasTareas(VplanDiseno::anchoRefCm($b), $nRec, $f, $p, $orden);
             $fijas = ['seq' => '# SEQ', 'tarea' => 'TASK', 'inicio' => 'START', 'fin' => 'FINISH', 'pct' => '%', 'restr' => 'CONSTRAINS'];
+            $prg = \Classes\ProgramaColumnas::contextoVplan($proyecto);   // campos del programa (responsable, recuperación, libres…)
+            $ttlPrg = $prg['titulos'];
             ?>
             <div class="vp-tab" style="font-size:<?php echo $cq($f); ?>;--vp-pad:<?php echo $cq($p); ?>;--vp-max:<?php echo $cq($f); ?>">
             <table class="vp-tabla vp-programa" style="--vp-c:<?php echo s($td['color'][0]); ?>;--vp-t:<?php echo s($td['color'][1]); ?>">
@@ -108,7 +110,7 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                     <tr>
                         <?php foreach ($orden as $o):
                             if ($o === 'rec') { for ($r = 1; $r <= $nRec; $r++): ?><th colspan="2"><?php echo Vplan::etiquetaRecovery($r); ?></th><?php endfor; continue; }
-                            $ttl = $fijas[$o] ?? ($ctx[substr($o, 2)] ?? ''); ?>
+                            $ttl = $fijas[$o] ?? ($ttlPrg[$o] ?? ($ctx[substr($o, 2)] ?? '')); ?>
                             <th rowspan="<?php echo $rs; ?>"<?php echo $o === 'tarea' ? ' class="vp-task"' : ''; ?>><?php echo s($ttl); ?></th>
                         <?php endforeach; ?>
                     </tr>
@@ -128,6 +130,13 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                                 case 'rec': for ($r = 1; $r <= $nRec; $r++): ?><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'inicio'); ?></td><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'fin'); ?></td><?php endfor; break;
                                 case 'pct': ?><td class="c vp-pct-act <?php echo $pg >= 100 ? 'vp-verde' : ($pg > 0 ? 'vp-amarillo' : ''); ?>"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" value="' . $pg . '" title="Mismo avance que el programa de obra">' : $pg . '%'; ?></td><?php break;
                                 case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><span class="vp-rombo"><b><?php echo (int)$n; ?></b></span><?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
+                                case 'responsable': case 'libre_texto': case 'libre_numero': case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'predecesora': case 'sucesora': case 'indicador':
+                                    $vp = \Classes\ProgramaColumnas::valorVplan($o, $a, $prg);
+                                    $tipoIn = ['responsable' => 'text', 'libre_texto' => 'text', 'libre_numero' => 'number', 'rec_inicio' => 'date', 'rec_fin' => 'date', 'libre_fecha' => 'date'][$o] ?? '';
+                                    if ($o === 'indicador'): ?><td class="c"><?php if ($vp['color']): ?><span class="vp-ind" style="background:<?php echo s($vp['color']); ?>" title="<?php echo s($vp['texto']); ?>"></span><?php endif; ?></td><?php
+                                    elseif ($puedeEditar && $tipoIn): ?><td<?php echo $tipoIn === 'text' ? '' : ' class="c"'; ?>><input type="<?php echo $tipoIn; ?>" class="vp-rec vp-prg-campo" data-actividad="<?php echo (int)$a->id; ?>" data-campo="<?php echo s($o); ?>" value="<?php echo s($vp['raw']); ?>"<?php echo $tipoIn === 'number' ? ' step="any"' : ($tipoIn === 'text' ? ' maxlength="255"' : ''); ?>></td><?php
+                                    else: ?><td<?php echo $tipoIn === 'text' || $tipoIn === '' && $o !== 'indicador' ? '' : ' class="c"'; ?>><?php echo s($vp['texto']); ?></td><?php endif;
+                                    break;
                                 default: $cid = substr($o, 2); $tx = $t['textos'][$cid] ?? ''; ?><td><?php echo $puedeEditar ? '<input type="text" maxlength="500" class="vp-rec vp-col-texto" data-actividad="' . (int)$a->id . '" data-col="' . s($cid) . '" value="' . s($tx) . '">' : s($tx); ?></td><?php
                             endswitch;
                         endforeach; ?>

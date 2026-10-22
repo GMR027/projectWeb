@@ -32,6 +32,20 @@ class Novedades
 
     private const ENTRADAS = [
         [
+            'fecha'  => '2026-10-21 20:00',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Costos, recursos, RFI y enlaces de solo lectura',
+            'roles'  => ['admin', 'cliente'],
+            'texto'  => 'Cinco herramientas nuevas: Costos y presupuesto (valor ganado, CPI/SPI y curva de costos ligada a la Curva S y a las órdenes de cambio), Recursos y cuadrillas (carga semanal con alerta de sobrecarga), RFI (con la actividad que bloquean y su chip de revisión), enlace temporal de solo lectura para el cliente y calendario .ics para el celular.',
+        ],
+        [
+            'fecha'  => '2026-10-21 18:30',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Centro de IA: resumen, lotes, riesgos y medidor',
+            'texto'  => 'Nuevo Resumen diario del administrador, aprobación por lotes de las propuestas de bajo riesgo, niveles de riesgo por tipo de cambio, revertir lo que hizo la IA desde una hora, medidor de uso del modelo y vigilancia en el servidor.',
+            'roles'  => ['admin'],
+        ],
+        [
             'fecha'  => '2026-10-21 17:30',
             'tipo'   => 'nuevo',
             'titulo' => 'Campana de notificaciones',
@@ -44,7 +58,21 @@ class Novedades
             'texto'  => 'En Ajustes → General → «Apariencia del proyecto» eliges si el proyecto se abre siempre claro, siempre oscuro o como cada usuario, y su color de acento entre 24 tonos. Se guarda en el proyecto, así que se mantiene al cambiar de navegador o de equipo, y también pinta la carátula del portafolio.',
         ],
         [
-            'fecha'  => '2026-10-21 12:00',
+            'fecha'  => '2026-10-21 23:00',
+            'tipo'   => 'nuevo',
+            'titulo' => 'API REST, webhooks, inglés e IA nueva',
+            'texto'  => 'Integraciones: tokens para una API REST y webhooks firmados que avisan cuando algo cambia. La interfaz se puede cambiar a inglés. Nuevas herramientas de IA para el administrador: predicción de atrasos, redactar un RFI, contradicciones entre planos y especificaciones, y pruebas de calidad para comparar modelos.',
+            'roles'  => ['admin', 'cliente'],
+        ],
+        [
+            'fecha'  => '2026-10-21 21:00',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Personalización del proyecto',
+            'texto'  => 'Diseña las columnas de Submittals, Bitácora, Reporte diario, Punch y Lookahead; crea campos propios (Nivel, Frente, Torre) con filtro y agrupación; guarda un proyecto terminado como plantilla; pon el logo y los colores del cliente en los PDF; y arma tu propio inicio.',
+            'roles'  => ['admin', 'cliente'],
+        ],
+        [
+            'fecha'  => '2026-10-21 18:30',
             'tipo'   => 'mejora',
             'titulo' => 'El programa en el móvil',
             'texto'  => 'En pantallas pequeñas la tabla del programa queda con el nombre de la actividad y el botón de editar: el resto de columnas se consulta desde la ficha, sin apretujar la lectura.',

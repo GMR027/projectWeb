@@ -20,7 +20,8 @@ $datos = [
     </div>
 </div>
 
-<div class="card">
+<div class="curva-pagina">
+<div class="card curva-datos">
     <div class="la-wrap">
     <table class="curva-tabla" id="curva-tabla">
         <thead><tr><th><?php echo s($curva->nombre); ?></th><?php foreach ($serie['fechas'] as $f): ?><th class="mono"><?php echo s($fmtF($f)); ?></th><?php endforeach; ?></tr></thead>
@@ -37,7 +38,8 @@ $datos = [
     </div>
 </div>
 
-<div class="card curva-grafica"><canvas id="grafica" height="120"></canvas></div>
+<div class="card curva-grafica"><div class="curva-lienzo" style="--semanas:<?php echo (int)$n; ?>"><canvas id="grafica" height="120"></canvas></div></div>
+</div>
 
 <script src="/vendor/chart.umd.js"></script>
 <script>
@@ -48,6 +50,7 @@ $datos = [
     const texto = estilo.getPropertyValue('--text').trim() || '#888';
     Chart.defaults.color = texto;
     Chart.defaults.borderColor = 'rgba(128,128,128,.3)';
+    const movil = window.matchMedia('(max-width: 64rem)').matches;
     const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
     // Línea vertical de la fecha actual
@@ -78,9 +81,10 @@ $datos = [
             ],
         },
         options: {
-            responsive: true,
-            plugins: { title: { display: true, text: D.nombre.toUpperCase(), font: { size: 20, weight: 'bold' } }, legend: { position: 'bottom' } },
+            responsive: true, maintainAspectRatio: !movil,
+            plugins: { title: { display: true, text: D.nombre.toUpperCase(), font: { size: movil ? 14 : 20, weight: 'bold' } }, legend: { position: 'bottom', labels: { boxWidth: movil ? 12 : 40, font: { size: movil ? 11 : 12 } } } },
             scales: {
+                x: { ticks: { maxRotation: 90, minRotation: movil ? 60 : 0, font: { size: movil ? 10 : 12 } } },
                 y: { beginAtZero: true, position: 'left', title: { display: true, text: D.unidad, font: { weight: 'bold' } } },
                 y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Cumulative', font: { weight: 'bold' } } },
             },

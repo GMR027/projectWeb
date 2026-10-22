@@ -13,11 +13,11 @@
 <?php foreach ($secciones as $sec): ?>
     <div class="card acc-pag-sec" id="acc-<?php echo s($sec['clave']); ?>">
         <h3><i class="fa-solid <?php echo s($sec['icono']); ?>"></i> <?php echo s($sec['titulo']); ?> <span class="text-muted">(<?php echo (int)$sec['total']; ?>)</span>
-            <a href="<?php echo s($sec['ver']); ?>" class="btn btn-sm btn-ghost" style="float:right">Ir al módulo</a></h3>
+            <a href="<?php echo s($sec['ver']); ?>" class="btn btn-sm btn-ghost acc-ir">Ir al módulo</a></h3>
         <?php if (!$sec['items']): ?>
             <p class="text-muted">Nada pendiente.</p>
         <?php else: ?>
-            <table class="tabla">
+            <table class="tabla tabla-acciones">
                 <thead><tr><?php if ($sec['clave'] === 'restr'): ?><th>WBS</th><?php endif; ?><th>Elemento</th><th>Detalle</th><?php if ($gestiona && in_array($sec['clave'], ['submittals', 'materiales'], true)): ?><th><?php echo $sec['clave'] === 'submittals' ? 'Estatus' : 'Compra y entrega'; ?></th><?php endif; ?><th><?php echo $gestiona && $sec['clave'] === 'restr' ? 'Acciones' : ''; ?></th></tr></thead>
                 <tbody>
                 <?php foreach ($sec['items'] as $it): ?>

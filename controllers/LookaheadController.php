@@ -29,10 +29,20 @@ class LookaheadController
         $lunes = self::lunesDe($_GET['fecha'] ?? '');
         $datos = self::datos($proyecto, $lunes);
         $config = LookaheadConfig::deProyecto((int)$proyecto->id);
+        // Campos personalizados de las actividades: aquí solo filtran (la agrupación ya es por partida)
+        $pid = (int)$proyecto->id;
+        $cp = \Classes\CamposPersonalizados::aplicar($pid, 'actividad', [], fn($x) => 0);
+        if ($cp['filtros']) {
+            $vals = \Classes\CamposPersonalizados::valores($pid, 'actividad');
+            foreach ($datos['filas'] as $i => $bloque) {
+                $datos['filas'][$i]['actividades'] = array_values(array_filter($bloque['actividades'], fn($f) => \Classes\CamposPersonalizados::coincide($vals[(int)$f['actividad']->id] ?? [], $cp['filtros'], $cp['campos'])));
+            }
+            $datos['filas'] = array_values(array_filter($datos['filas'], fn($b) => $b['actividades']));
+        }
 
         $router->render('lookahead/index', $datos + [
             'titulo' => $config->nombreHerramienta() . ' - ' . $proyecto->nombre,
-            'config' => $config,
+            'config' => $config, 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'lookahead'),
             'encabezados' => LookaheadConfig::disponible() ? LookaheadConfig::encabezadosDisponibles((int)$proyecto->id) : [],
             'proyecto' => $proyecto,
             'lunes' => $lunes,

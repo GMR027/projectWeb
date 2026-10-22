@@ -77,11 +77,33 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
     <label style="flex:1">Buscar <input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Título o ubicación"></label><button class="btn btn-ghost" type="submit">Filtrar</button>
     <?php if ($filtros['contratista'] !== ''): ?><a class="btn btn-sm btn-ghost" href="/punch/pdf?proyecto=<?php echo $pid; ?>&contratista=<?php echo urlencode($filtros['contratista']); ?>">PDF de <?php echo s($filtros['contratista']); ?></a><?php endif; ?></form>
 
+<?php $herramienta = 'punch'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
 <?php if (!$lista): ?><div class="card prg-vacio"><h3>Sin pendientes con estos filtros</h3><p class="text-muted">Registra uno arriba o haz una inspección.</p></div>
-<?php else: ?><ul class="inc-lista" <?php echo pag_attr($proyecto); ?>><?php foreach ($lista as $x): ?>
+<?php else: $grupoActual = null; $dis = $diseno['por']; ?><ul class="inc-lista" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>><?php foreach ($lista as $x): ?>
+    <?php if ($cp['agrupar'] && $grupoActual !== $cp['grupo'][(int)$x['id']]): $grupoActual = $cp['grupo'][(int)$x['id']]; ?><li class="cp-grupo-li"><strong><?php echo s($grupoActual); ?></strong></li><?php endif; ?>
     <li class="card inc-item sev-<?php echo $sevCls[$x['severidad']]; ?><?php echo in_array($x['estado'], ['cerrado', 'rechazado'], true) ? ' est-aceptada' : ''; ?>">
-        <div class="inc-cab"><span class="prg-sev"><?php echo s(Punch::SEVERIDADES[$x['severidad']]); ?></span><a href="/punch/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$x['id']; ?>"><strong><?php echo s($x['titulo']); ?></strong></a>
-            <small class="text-muted"><?php echo s(Punch::ESTADOS[$x['estado']]); ?><?php echo $x['categoria'] ? ' · ' . s($x['categoria']) : ''; ?><?php echo $x['ubicacion'] ? ' · ' . s($x['ubicacion']) : ''; ?><?php echo $x['responsable'] || $x['contratista'] ? ' · ' . s($x['responsable'] ?: $x['contratista']) : ''; ?> · límite <?php echo s($fmt($x['fecha_limite'])); ?><?php echo $x['vencido'] ? ' <b class="prg-peor">VENCIDO</b>' : ''; ?></small></div>
+        <div class="inc-cab">
+            <?php foreach ($diseno['cols'] as $c): switch ($c['k']): case 'severidad': ?><span class="prg-sev" title="<?php echo s($c['n']); ?>"><?php echo s(Punch::SEVERIDADES[$x['severidad']]); ?></span>
+            <?php break; case 'titulo': ?><a href="/punch/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$x['id']; ?>"><strong><?php echo s($x['titulo']); ?></strong></a>
+            <?php endswitch; endforeach; ?>
+            <small class="text-muted"><?php
+                $partes = [];
+                $etq = fn($c, $v) => $c['propio'] ? s($c['n']) . ': ' . $v : $v;
+                foreach ($diseno['cols'] as $c) {
+                    switch ($c['k']) {
+                        case 'estado': $partes[] = $etq($c, s(Punch::ESTADOS[$x['estado']])); break;
+                        case 'categoria': if ($x['categoria']) $partes[] = $etq($c, s($x['categoria'])); break;
+                        case 'ubicacion': if ($x['ubicacion']) $partes[] = $etq($c, s($x['ubicacion'])); break;
+                        case 'responsable': if ($x['responsable'] || $x['contratista']) $partes[] = $etq($c, s($x['responsable'] ?: $x['contratista'])); break;
+                        case 'limite': $partes[] = ($c['propio'] ? s($c['n']) : 'límite') . ' ' . s($fmt($x['fecha_limite'])) . ($x['vencido'] ? ' <b class="prg-peor">VENCIDO</b>' : ''); break;
+                    }
+                }
+                echo implode(' · ', $partes);
+            ?></small>
+            <?php foreach ($diseno['cols'] as $c): if (!$c['campo']) continue; ?>
+                <label class="cp-chip text-sm"><span class="text-muted"><?php echo s($c['n']); ?></span> <?php echo \Classes\CamposPersonalizados::control($c['campo'], (int)$x['id'], $cp['valores'][(int)$x['id']][$c['campo']['id']] ?? '', $puede); ?></label>
+            <?php endforeach; ?>
+        </div>
         <?php if ($puede && in_array($x['estado'], ['abierto', 'en_proceso', 'corregido'], true)): ?><div class="inc-botones">
             <?php foreach (['abierto' => [['en_proceso', 'Empezar']], 'en_proceso' => [['corregido', 'Marcar corregido']], 'corregido' => [['cerrado', 'Verificado: cerrar'], ['abierto', 'Reabrir']]][$x['estado']] as [$e, $n]): ?>
                 <form method="post" action="/punch/estado" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $e; ?>"><button class="btn btn-sm <?php echo $e === 'cerrado' ? 'btn-primary' : 'btn-ghost'; ?>" type="submit"><?php echo $n; ?></button></form>

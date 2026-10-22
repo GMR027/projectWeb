@@ -78,7 +78,8 @@ class PunchController
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
         $f = ['estado' => $_GET['estado'] ?? 'pendientes', 'severidad' => $_GET['severidad'] ?? '', 'contratista' => $_GET['contratista'] ?? '', 'categoria' => $_GET['categoria'] ?? '', 'q' => trim((string)($_GET['q'] ?? ''))];
-        $router->render('punch/index', ['titulo' => 'Punch list - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'lista' => Punch::listar($pid, $f), 'analisis' => Punch::analisis($pid), 'contratistas' => Punch::contratistas($pid),
+        $cp = \Classes\CamposPersonalizados::aplicar($pid, 'punch', Punch::listar($pid, $f), fn($x) => (int)$x['id']);
+        $router->render('punch/index', ['titulo' => 'Punch list - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'lista' => $cp['items'], 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'punch'), 'analisis' => Punch::analisis($pid), 'contratistas' => Punch::contratistas($pid),
             'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'mensaje' => $_SESSION['punch_msg'] ?? null]);
         unset($_SESSION['punch_msg']);
     }

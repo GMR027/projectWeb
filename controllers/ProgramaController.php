@@ -11,6 +11,7 @@ use Model\TipoRestriccion;
 use Classes\Calendario;
 use Classes\GanttRenderer;
 use Classes\Dependencias;
+use Classes\ProgramaColumnas;
 
 class ProgramaController
 {
@@ -42,12 +43,18 @@ class ProgramaController
             'status' => in_array($_GET['status'] ?? '', ['no_iniciada', 'en_proceso', 'completada'], true) ? $_GET['status'] : '',
             'prioridad' => in_array($_GET['prioridad'] ?? '', ['baja', 'media', 'alta', 'critica'], true) ? $_GET['prioridad'] : '',
             'restriccion' => in_array($_GET['restriccion'] ?? '', ['con', 'sin'], true) ? $_GET['restriccion'] : '',
+            'riesgo' => ($_GET['riesgo'] ?? '') === '1' ? '1' : '',
         ];
+        $riesgos = \Classes\Salud::riesgosActividades($proyectoId);
+        // Campos personalizados de las actividades (Nivel, Frente…): filtran igual que los demás
+        $camposCp = \Classes\CamposPersonalizados::deProyecto($proyectoId, 'actividad');
+        $filtrosCp = \Classes\CamposPersonalizados::filtrosDePeticion($proyectoId, 'actividad');
+        $valoresCp = $camposCp ? \Classes\CamposPersonalizados::valores($proyectoId, 'actividad') : [];
         $filas = $todas;
-        if (array_filter($filtros)) {
+        if (array_filter($filtros) || $filtrosCp) {
             $filas = [];
             $cabecera = null;
-            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'];
+            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp;
             foreach ($todas as $f) {
                 if ($f['tipo'] === 'partida') {
                     $cabecera = (!$filtros['partida'] || (int)$f['id'] === $filtros['partida']) ? $f : null;
@@ -61,6 +68,8 @@ class ProgramaController
                 if ($filtros['prioridad'] && $f['prioridad'] !== $filtros['prioridad']) continue;
                 if ($filtros['restriccion'] === 'con' && !$f['tiene_restriccion']) continue;
                 if ($filtros['restriccion'] === 'sin' && $f['tiene_restriccion']) continue;
+                if ($filtros['riesgo'] && empty($riesgos[(int)$f['id']])) continue;
+                if ($filtrosCp && !\Classes\CamposPersonalizados::coincide($valoresCp[(int)$f['id']] ?? [], $filtrosCp, $camposCp)) continue;
                 if ($cabecera) { $filas[] = $cabecera; $cabecera = null; }
                 $filas[] = $f;
             }
@@ -77,18 +86,100 @@ class ProgramaController
             }
         }
 
+        $pid = (int)$proyecto->id;
         $router->render('programa/index', [
+            'columnas' => ProgramaColumnas::columnas($proyecto),
+            'indicador' => ProgramaColumnas::indicador($proyecto),
+            'vecinas' => ProgramaColumnas::vecinas($pid),
+            'actividadesLista' => array_map(fn($a) => $a['codigo'] . ' · ' . $a['nombre'], Dependencias::actividades($pid)),
             'propuestasGuardadas' => is_admin() ? \Classes\Programador::guardadas((int)$proyecto->id) : [],
             'depFlechas' => $depFlechas,
             'partidasFiltro' => array_values(array_filter($todas, fn($f) => $f['tipo'] === 'partida')),
             'filtros' => $filtros,
-            'hayFiltros' => (bool)array_filter($filtros),
-            'titulo' => 'Programa de Obra - ' . $proyecto->nombre,
+            'riesgos' => $riesgos,
+            'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp,
+            'camposCp' => $camposCp, 'filtrosCp' => $filtrosCp, 'valoresCp' => $valoresCp,
+            'titulo' => 'Programa de Obra - ' . ProgramaColumnas::nombrePrograma($proyecto),
             'proyecto' => $proyecto,
             'semanas' => $semanas,
             'filas' => $filas,
             'calendario' => $calendario
         ]);
+    }
+
+    // ==================== DISEÑO DEL PROGRAMA (columnas y campos, al estilo MSR) ====================
+    /** Nombre del programa, columnas visibles (con nombre propio y orden) e indicador condicional */
+    public static function diseno(Router $router)
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $error = '';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $cols = [];
+            foreach ((array)($_POST['columnas'] ?? []) as $c) {
+                if (is_array($c) && !empty($c['k'])) $cols[] = ['k' => (string)$c['k'], 'n' => (string)($c['n'] ?? '')];
+            }
+            $ind = ['campo' => (string)($_POST['indicador_campo'] ?? 'progreso'), 'reglas' => array_values(array_filter((array)($_POST['reglas'] ?? []), 'is_array'))];
+            if (ProgramaColumnas::guardarDiseno((int)$proyecto->id, (string)($_POST['programa_nombre'] ?? ''), $cols, $ind)) {
+                header('Location: /programa?proyecto=' . $proyecto->id . '&diseno=1');
+                exit;
+            }
+            $error = 'No se pudo guardar el diseño (¿falta aplicar la migración del programa?)';
+        }
+        $router->render('programa/diseno', [
+            'titulo' => 'Diseñar programa - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'error' => $error,
+            'columnas' => ProgramaColumnas::paraFormulario($proyecto), 'indicador' => ProgramaColumnas::indicador($proyecto),
+        ]);
+    }
+
+    /** Actividad de la petición si el usuario puede gestionar su proyecto (403 en JSON si no) */
+    private static function actividadGestionable(): array
+    {
+        $actividad = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth()
+            ? Actividad::find(filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $partida = $actividad ? Partida::find($actividad->partida_id) : null;
+        $proyecto = $partida ? Proyecto::find($partida->proyecto_id) : null;
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
+        return [$actividad, $proyecto];
+    }
+
+    /** Edición en línea de los campos nuevos (responsable, recuperación, libres) */
+    public static function campoAjax()
+    {
+        [$actividad, ] = self::actividadGestionable();
+        [$ok, $v] = ProgramaColumnas::guardarCampo((int)$actividad->id, (string)($_POST['campo'] ?? ''), (string)($_POST['valor'] ?? ''));
+        json_respuesta($ok ? ['success' => true, 'valor' => $v] : ['success' => false, 'error' => $v], $ok ? 200 : 422);
+    }
+
+    /** Predecesora o sucesora de una actividad (usa la tabla de dependencias: ruta crítica y modo automático la respetan) */
+    public static function dependenciaAjax()
+    {
+        [$actividad, $proyecto] = self::actividadGestionable();
+        $lado = ($_POST['lado'] ?? '') === 'suc' ? 'suc' : 'pred';
+        [$ok, $msg] = ProgramaColumnas::fijarVecina($proyecto, (int)$actividad->id, $lado, (int)($_POST['valor'] ?? 0));
+        if (!$ok) json_respuesta(['success' => false, 'error' => $msg], 422);
+        $v = ProgramaColumnas::vecinas((int)$proyecto->id);
+        $lista = $v[$lado][(int)$actividad->id] ?? [];
+        json_respuesta(['success' => true, 'valor' => $lista[0] ?? 0, 'otras' => max(0, count($lista) - 1)]);
+    }
+
+    /** Renombrar una columna desde su encabezado (doble clic) */
+    public static function columnaAjax()
+    {
+        $proyecto = proyecto_api('gestionar');
+        $k = (string)($_POST['k'] ?? '');
+        $cp = ProgramaColumnas::esCp($k) ? (\Classes\CamposPersonalizados::deProyecto((int)$proyecto->id, 'actividad')[(int)substr($k, 3)] ?? null) : null;
+        if (!isset(ProgramaColumnas::COLUMNAS[$k]) && !$cp) json_respuesta(['success' => false, 'error' => 'Columna no válida'], 422);
+        $n = mb_substr(trim(strip_tags((string)($_POST['n'] ?? ''))), 0, 60);
+        $ok = ProgramaColumnas::renombrar($proyecto, $k, $n);
+        json_respuesta(['success' => $ok, 'nombre' => $n !== '' ? $n : ($cp['nombre'] ?? ProgramaColumnas::COLUMNAS[$k][0])], $ok ? 200 : 500);
+    }
+
+    /** Reordenar columnas (arrastrar encabezados) */
+    public static function ordenAjax()
+    {
+        $proyecto = proyecto_api('gestionar');
+        $claves = array_filter(explode(',', (string)($_POST['orden'] ?? '')));
+        json_respuesta(['success' => ProgramaColumnas::ordenar($proyecto, $claves)]);
     }
 
     /** Endpoint AJAX para actualizar fechas de actividad */

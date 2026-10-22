@@ -166,9 +166,11 @@ class ActiveRecord
         }
         $query = "INSERT INTO " . static::$tabla . " (" . join(', ', $columnas) . ") VALUES (" . join(', ', $valores) . ")";
         $resultado = self::$db->query($query);
+        $nuevoId = self::$db->insert_id;   // antes de avisar(): los webhooks hacen consultas y borrarían este valor
+        if ($resultado) $this->avisar('creada', $nuevoId);
         return [
             'resultado' => $resultado,
-            'id' => self::$db->insert_id
+            'id' => $nuevoId
         ];
     }
 
@@ -181,12 +183,33 @@ class ActiveRecord
         }
         $query = "UPDATE " . static::$tabla . " SET " . join(', ', $valores);
         $query .= " WHERE id = '" . self::$db->escape_string($this->id) . "' LIMIT 1";
-        return self::$db->query($query);
+        $resultado = self::$db->query($query);
+        if ($resultado) $this->avisar('actualizada', (int)$this->id);
+        return $resultado;
     }
 
     public function eliminar()
     {
+        $aviso = isset(\Classes\Webhooks::EVENTO_DE[static::$tabla]['eliminada']) ? $this->datosParaAviso() : null;   // el proyecto se resuelve antes de borrar
         $query = "DELETE FROM " . static::$tabla . " WHERE id = " . self::$db->escape_string($this->id) . " LIMIT 1";
-        return self::$db->query($query);
+        $resultado = self::$db->query($query);
+        if ($resultado && $aviso) $this->avisar('eliminada', (int)$this->id);
+        return $resultado;
+    }
+
+    private function datosParaAviso(): array
+    {
+        return ['id' => $this->id] + $this->atributos();
+    }
+
+    /** Webhooks (Fase 5.1): los modelos de Webhooks::EVENTO_DE avisan al crear, actualizar o eliminar. Nunca rompe el guardado */
+    private function avisar(string $accion, $id): void
+    {
+        if (!isset(\Classes\Webhooks::EVENTO_DE[static::$tabla][$accion])) return;
+        try {
+            \Classes\Webhooks::desdeTabla(static::$tabla, $accion, (int)$id, $this->atributos());
+        } catch (\Throwable $e) {
+            error_log('Webhook: ' . $e->getMessage());
+        }
     }
 }

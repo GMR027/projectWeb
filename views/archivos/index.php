@@ -47,7 +47,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
     </aside>
     <div class="archivero-principal">
         <?php if ($puede && $archivos): ?>
-        <form method="POST" action="/archivos/mover" class="archivero-mover" id="arch-mover">
+        <form method="POST" action="/archivos/mover" class="archivero-mover hide-m" id="arch-mover">
             <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
             <span class="text-sm text-muted"><strong id="arch-n">0</strong> seleccionado(s)</span>
             <select name="carpeta_id" aria-label="Mover a">
@@ -61,17 +61,17 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
     <?php if (empty($archivos)): ?>
         <p class="text-muted">No hay archivos<?php echo $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; ?><?php echo $filtro ? ' en esta categoría' : ''; ?>.<?php echo $puede ? ' Sube el primero con «Subir archivo».' : ''; ?></p>
     <?php else: ?>
-        <table class="tabla" <?php echo pag_attr($proyecto); ?>>
-            <thead><tr><?php if ($puede): ?><th class="col-sel"><input type="checkbox" id="arch-todos" aria-label="Seleccionar todos"></th><?php endif; ?><th class="hide-m">Fecha</th><th class="hide-m">Categoría</th><th>Nombre del archivo</th><th class="hide-m">Rev.</th><th>Acciones</th></tr></thead>
+        <div class="tabla-wrapper"><table class="tabla tabla-archivos" <?php echo pag_attr($proyecto); ?>>
+            <thead><tr><?php if ($puede): ?><th class="col-sel hide-m"><input type="checkbox" id="arch-todos" aria-label="Seleccionar todos"></th><?php endif; ?><th class="hide-m">Fecha</th><th class="hide-m">Categoría</th><th>Nombre del archivo</th><th class="hide-m">Rev.</th><th>Acciones</th></tr></thead>
             <tbody>
             <?php foreach ($archivos as $a): ?>
                 <tr>
-                    <?php if ($puede): ?><td class="col-sel"><input type="checkbox" class="arch-sel" value="<?php echo s($a->id); ?>" aria-label="Seleccionar <?php echo s($a->nombre); ?>"></td><?php endif; ?>
+                    <?php if ($puede): ?><td class="col-sel hide-m"><input type="checkbox" class="arch-sel" value="<?php echo s($a->id); ?>" aria-label="Seleccionar <?php echo s($a->nombre); ?>"></td><?php endif; ?>
                     <td class="mono hide-m" style="white-space:nowrap"><?php echo s(fecha_corta_es($a->fecha)); ?></td>
                     <td class="hide-m"><?php echo s($a->categoria_nombre ?: '—'); ?></td>
                     <td class="arch-nombre">
                         <?php echo archivo_icono_html($a->extension()); ?> <?php echo s($a->nombre); ?>
-                        <div class="text-sm text-muted mono"><?php echo s($a->archivo_original); ?> · <?php echo s($a->tamanoLegible()); ?></div>
+                        <div class="text-sm text-muted mono"><span class="hide-m"><?php echo s($a->archivo_original); ?> · </span><?php echo s($a->tamanoLegible()); ?></div>
                         <?php if (isset($ensamblados[(int)$a->id])): ?><div class="text-sm"><span class="badge-carpeta" title="Se regenera sola cuando cambia alguno de sus documentos"><i class="fa-solid fa-object-group"></i> Ensamblado · se actualiza solo</span></div><?php endif; ?>
                         <?php if ($carpeta === null && $a->carpeta_id && isset($nombresCarpeta[(int)$a->carpeta_id])): ?><div class="text-sm"><span class="badge-carpeta"><i class="fa-solid fa-folder"></i> <?php echo s($nombresCarpeta[(int)$a->carpeta_id]); ?></span></div><?php endif; ?>
                         <div class="solo-movil text-sm text-muted"><?php echo s(fecha_corta_es($a->fecha)); ?><?php echo $a->categoria_nombre ? ' · ' . s($a->categoria_nombre) : ''; ?><?php echo $a->numero_revision ? ' · Rev. ' . s($a->numero_revision) : ''; ?></div>
@@ -81,18 +81,18 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
                         <?php if ($desc && \Classes\VistaArchivo::tipo($a->extension())): ?><a href="/visor?proyecto=<?php echo $id; ?>&archivo=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a><?php endif; ?>
                         <?php if ($desc): ?><a href="/archivos/descargar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-download"></i> Descargar</a><?php endif; ?>
                         <?php if ($puede): ?>
-                            <a href="/archivos/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                            <form method="POST" action="/archivos/eliminar" style="display:inline" data-confirm="¿Eliminar archivo?|Se borrará «<?php echo s($a->nombre); ?>» del servidor. Esta acción no se puede deshacer.|Eliminar">
+                            <a href="/archivos/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
+                            <span class="hide-m"><form method="POST" action="/archivos/eliminar" style="display:inline" data-confirm="¿Eliminar archivo?|Se borrará «<?php echo s($a->nombre); ?>» del servidor. Esta acción no se puede deshacer.|Eliminar">
                                 <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
                                 <input type="hidden" name="id" value="<?php echo s($a->id); ?>">
                                 <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                            </form>
+                            </form></span>
                         <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+        </table></div>
     <?php endif; ?>
 </div>
     </div>

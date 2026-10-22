@@ -1,4 +1,4 @@
-<?php // Variables: $proyecto, $resumen, $requeridos, $permisos, $estado, $incidentes, $actividades, $puede, $admin, $mensaje
+<?php // Variables: $proyecto, $resumen, $requeridos, $climaPermisos, $permisos, $estado, $incidentes, $actividades, $puede, $admin, $mensaje
 use Classes\Seguridad;
 $pid = (int)$proyecto->id;
 $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
@@ -22,6 +22,18 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     <div class="card"><small>Actividades (7 días) sin permiso</small><strong class="<?php echo $resumen['faltan'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['faltan']; ?></strong></div>
     <div class="card"><small>Incidentes abiertos</small><strong><?php echo (int)$resumen['incidentes_abiertos']; ?></strong></div>
 </div>
+
+<?php if (!empty($climaPermisos)): ?>
+<div class="card prg-seccion">
+    <h3><i class="fa-solid fa-cloud-showers-heavy"></i> Permisos en días de lluvia o viento (próximos 7 días)</h3>
+    <p class="text-muted text-sm">Según el pronóstico del proyecto, estos días no son buenos para trabajos en altura, izaje, excavación, eléctricos o en caliente. Revisa si conviene reprogramar o suspender el permiso.</p>
+    <div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Fecha</th><th>Pronóstico</th><th>Permisos vigentes ese día</th></tr></thead><tbody>
+        <?php foreach ($climaPermisos as $c): ?>
+            <tr><td class="fecha"><?php echo s($fmt($c['fecha'])); ?></td><td><?php echo s(ucfirst($c['condicion'])); ?> (<?php echo s($c['precip']); ?> mm · <?php echo s($c['viento']); ?> km/h)</td>
+                <td><?php echo s(implode('; ', array_map(fn($p) => ($nTipos[$p['tipo']] ?? $p['tipo']) . ' — ' . mb_substr($p['titulo'], 0, 60) . ($p['estado'] === 'solicitado' ? ' (por aprobar)' : ''), $c['permisos']))); ?></td></tr>
+        <?php endforeach; ?></tbody></table></div>
+</div>
+<?php endif; ?>
 
 <div class="card prg-seccion">
     <h3>Permisos que exigen las actividades de los próximos 14 días</h3>

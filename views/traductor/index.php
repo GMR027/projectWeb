@@ -35,11 +35,19 @@
             </label>
             <label>Traducción
                 <textarea id="trd-salida" rows="12" readonly placeholder="Aquí aparece la traducción"></textarea>
-                <small><button type="button" class="btn btn-sm btn-ghost" id="trd-copiar"><i class="fa-regular fa-copy"></i> Copiar</button></small>
             </label>
         </div>
         <div class="trd-acciones">
             <button type="button" class="btn btn-primary" id="trd-traducir"<?php echo $configurado ? '' : ' disabled'; ?>><i class="fa-solid fa-language"></i> Traducir</button>
+            <button type="button" class="btn btn-ghost" id="trd-copiar" data-ayuda="Lleva al portapapeles el texto traducido tal como está." data-manual="/manual#traductor"><i class="fa-regular fa-copy"></i> Copiar</button>
+            <div class="trd-exportar">
+                <select id="trd-formato" aria-label="Formato del archivo a exportar">
+                    <?php foreach (\Classes\Traductor::EXPORTAR as $ext => $etiqueta): ?>
+                        <option value="<?php echo s($ext); ?>"><?php echo s($etiqueta); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn btn-ghost" id="trd-exportar" data-ayuda="Descarga el texto traducido como documento Word, PDF o TXT." data-manual="/manual#traductor"><i class="fa-solid fa-file-export"></i> Exportar</button>
+            </div>
             <button type="button" class="btn btn-ghost" id="trd-limpiar">Limpiar</button>
             <span class="text-sm text-muted" id="trd-estado" role="status"></span>
         </div>
@@ -82,10 +90,17 @@
     $('trd-entrada').addEventListener('input', cuenta);
     $('trd-limpiar').addEventListener('click', () => { $('trd-entrada').value = ''; $('trd-salida').value = ''; $('trd-estado').textContent = ''; cuenta(); });
     $('trd-copiar').addEventListener('click', async () => {
-        const t = $('trd-salida').value; if (!t) return;
+        const t = $('trd-salida').value; if (!t) { $('trd-estado').textContent = 'Traduce un texto antes de copiarlo.'; return; }
         try { await navigator.clipboard.writeText(t); } catch (e) { $('trd-salida').select(); document.execCommand('copy'); }
-        $('trd-estado').textContent = 'Copiado';
+        $('trd-estado').textContent = 'Copiado al portapapeles';
     });
+    const descargarRespuesta = async (r, porDefecto) => {
+        const nombre = decodeURIComponent(r.headers.get('X-Nombre-Archivo') || porDefecto);
+        const url = URL.createObjectURL(await r.blob());
+        const l = document.createElement('a'); l.href = url; l.download = nombre; document.body.appendChild(l); l.click(); l.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        return nombre;
+    };
     const datos = extra => { const f = new FormData(); f.append('proyecto', proyecto); f.append('de', de.value); f.append('a', a.value); for (const k in extra) f.append(k, extra[k]); return f; };
 
     $('trd-traducir').addEventListener('click', async () => {
@@ -100,6 +115,18 @@
         btn.disabled = false;
     });
 
+    $('trd-exportar').addEventListener('click', async () => {
+        const t = $('trd-salida').value, btn = $('trd-exportar');
+        if (!t.trim()) { $('trd-estado').textContent = 'Traduce un texto antes de exportarlo.'; return; }
+        btn.disabled = true; $('trd-estado').textContent = 'Preparando el archivo…';
+        try {
+            const r = await fetch('/api/traductor/exportar', { method: 'POST', body: datos({ texto: t, formato: $('trd-formato').value }) });
+            if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'No se pudo exportar el texto.'); }
+            $('trd-estado').textContent = 'Listo: ' + await descargarRespuesta(r, 'traduccion');
+        } catch (e) { $('trd-estado').textContent = e.message; }
+        btn.disabled = false;
+    });
+
     const docBtn = $('trd-doc-btn');
     if (docBtn) docBtn.addEventListener('click', async () => {
         const f = $('trd-archivo').files[0], est = $('trd-doc-estado');
@@ -108,11 +135,7 @@
         try {
             const r = await fetch('/api/traductor/documento', { method: 'POST', body: datos({ archivo: f }) });
             if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'No se pudo traducir el documento.'); }
-            const nombre = decodeURIComponent(r.headers.get('X-Nombre-Archivo') || 'traduccion');
-            const url = URL.createObjectURL(await r.blob());
-            const l = document.createElement('a'); l.href = url; l.download = nombre; document.body.appendChild(l); l.click(); l.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-            est.textContent = 'Listo: ' + nombre;
+            est.textContent = 'Listo: ' + await descargarRespuesta(r, 'traduccion');
         } catch (e) { est.textContent = e.message; }
         docBtn.disabled = false;
     });

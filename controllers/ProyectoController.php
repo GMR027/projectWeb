@@ -53,6 +53,10 @@ class ProyectoController
                 if ($resultado['resultado']) {
                     $proyecto->id = $resultado['id'];
                     $proyecto->inicializarJornadaDefault();
+                    if ($plantillaId = (int)($_POST['plantilla_id'] ?? 0)) {   // Fase 4.3: arrancar desde una plantilla de proyecto
+                        [$okPl, $msgPl] = \Classes\PlantillaProyecto::aplicar($plantillaId, $proyecto, usuario_actual());
+                        if (!$okPl) $_SESSION['pp_msg'] = ['ok' => false, 'texto' => 'El proyecto se creó, pero la plantilla no se aplicó: ' . $msgPl];
+                    }
                     if (is_admin()) {
                         ProyectoAcceso::sincronizarProyecto((int)$proyecto->id, $_POST['usuarios_acceso'] ?? []);
                     }
@@ -69,6 +73,7 @@ class ProyectoController
         $router->render('proyectos/crear', [
             'usuariosAcceso' => array_map('intval', $_POST['usuarios_acceso'] ?? []),
             'titulo' => 'Nuevo Proyecto',
+            'plantillas' => \Classes\PlantillaProyecto::disponible() ? \Classes\PlantillaProyecto::visibles(usuario_actual()) : [],
             'alertas' => $alertas,
             'proyecto' => $proyecto
         ]);
@@ -132,7 +137,7 @@ class ProyectoController
     public static function ver(Router $router)
     {
         redirigir_si_no_auth();
-        $id = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
+        $id = filter_var($_GET['id'] ?? $_GET['proyecto'] ?? null, FILTER_VALIDATE_INT);   // «proyecto» para los enlaces del menú
         if (!$id) {
             header('Location: /proyectos');
             exit;

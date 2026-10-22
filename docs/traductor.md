@@ -2,7 +2,7 @@
 
 _Se lee solo al tocar `classes/Traductor.php`, `controllers/TraductorController.php`, `bin/traductor.py` o `views/traductor/`._
 
-- Herramienta `traductor` (menú «Documentos y diseño», clave en `Usuario::HERRAMIENTAS`, sección `#traductor` del manual). Página `/traductor`; API `POST /api/traductor/texto` y `POST /api/traductor/documento` (descarga directa; nada se guarda en el servidor).
+- Herramienta `traductor` (menú «Documentos y diseño», clave en `Usuario::HERRAMIENTAS`, sección `#traductor` del manual). Página `/traductor`; API `POST /api/traductor/texto`, `POST /api/traductor/documento` (descarga directa; nada se guarda en el servidor) y `POST /api/traductor/exportar` (texto ya traducido → DOCX/PDF/TXT con PhpWord, Dompdf o texto plano; no usa el motor).
 - **Motor local, sin configuración:** `bin/traductor.py` (CTranslate2 + SentencePiece) con los modelos Opus-MT de Helsinki-NLP (CC-BY 4.0) convertidos a CTranslate2. Se instala con `bin/instalar_traductor.sh` en `storage/traductor/` (≈ 400 MB: `venv/`, `es_en/model`, `en_es/model`); en Docker se instala en `/opt/traductor` (`TRADUCTOR_DIR`) porque `storage/` es un volumen. `TRADUCTOR_PYTHON` cambia el Python usado.
 - **Motor alterno:** si se define `TRADUCTOR_URL` (servidor compatible con LibreTranslate, más `TRADUCTOR_API_KEY` opcional) se usa ese en lugar del local.
 - Si no hay motor, la página muestra un aviso (el admin ve cómo instalarlo) y los botones quedan deshabilitados.

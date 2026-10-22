@@ -31,7 +31,7 @@ class MinutaPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-minuta.php';
         $html = ob_get_clean();
 
-        $pdf = Pdf::generar($html, 'a4', 'portrait', ['isHtml5ParserEnabled' => true]);
+        $pdf = Pdf::generar($html, 'a4', 'portrait', ['isHtml5ParserEnabled' => true, 'marca' => $this->proyecto]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
         file_put_contents($ruta, $pdf);

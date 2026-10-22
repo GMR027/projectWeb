@@ -68,6 +68,17 @@ class Glosario
         return array_values(array_unique($out));
     }
 
+    /** Forma canónica de una palabra para comparar entre idiomas: una palabra en inglés del glosario se lleva a su equivalente en español (steel → acero); lo demás queda igual */
+    public static function canonica(string $w): string
+    {
+        self::expandir([]);   // asegura el índice inverso
+        foreach (self::variantes($w) as $k) {
+            if (isset(self::PARES[$k])) return $k;
+            if (!empty(self::$inverso[$k])) { $es = self::$inverso[$k]; sort($es); return $es[0]; }
+        }
+        return $w;
+    }
+
     /** Idioma dominante de un texto: 'es', 'en' o null si no alcanza para decidir */
     public static function idioma(string $texto): ?string
     {

@@ -51,6 +51,8 @@ class Router
         $layout = __DIR__ . '/views/layout.php';
         if (es_modal()) {
             $layout = __DIR__ . '/views/layout-modal.php';   // formulario dentro de un modal (iframe)
+        } elseif (isset($publicoLayout) && $publicoLayout) {
+            $layout = __DIR__ . '/views/layout-publico.php';   // páginas de solo lectura con enlace (sin sesión)
         } elseif (isset($landingLayout) && $landingLayout) {
             $layout = __DIR__ . '/views/layout-landing.php';
         } elseif (isset($authLayout) && $authLayout) {

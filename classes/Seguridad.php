@@ -218,6 +218,6 @@ class Seguridad
             . '<b>Medidas de seguridad verificadas</b><table>' . $med . '</table>'
             . '<table class="firmas"><tr><td>Solicitó: ' . $e($x['solicitado_por']) . '<br>______________________<br>Nombre y firma</td><td>Responsable del área<br>______________________<br>Nombre y firma</td><td>Autorizó: ' . $e($x['resuelto_por']) . '<br>______________________<br>Nombre y firma</td></tr></table>'
             . '<p style="color:#666">Documento generado por el sistema; no sustituye la firma autógrafa ni el cumplimiento de la normativa de seguridad aplicable (NOM-009-STPS, NOM-017-STPS, etc.).</p></body></html>';
-        return Pdf::generar($html, 'letter', 'portrait');
+        return Pdf::generar($html, 'letter', 'portrait', ['marca' => $p]);
     }
 }

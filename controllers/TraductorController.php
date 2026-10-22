@@ -63,6 +63,29 @@ class TraductorController
             error_log('Traductor documento: ' . $e->getMessage());
             json_respuesta(['error' => 'No se pudo traducir el documento. Revisa que no esté dañado ni protegido con contraseña.'], 500);
         }
+        self::descargar($ruta, $nombre, $mime);
+    }
+
+    /** Exporta el texto ya traducido como Word, PDF o TXT (no usa el motor) */
+    public static function exportar()
+    {
+        proyecto_de_peticion();
+        [, $a] = self::idiomas();
+        $texto = (string)($_POST['texto'] ?? '');
+        if (trim($texto) === '') json_respuesta(['error' => 'Traduce un texto antes de exportarlo.'], 422);
+        if (mb_strlen($texto) > Traductor::MAX_TEXTO) json_respuesta(['error' => 'El texto es demasiado largo (máx. ' . number_format(Traductor::MAX_TEXTO) . ' caracteres).'], 422);
+        try {
+            [$ruta, $nombre, $mime] = Traductor::exportarTexto($texto, (string)($_POST['formato'] ?? 'docx'), $a);
+        } catch (\Throwable $e) {
+            error_log('Traductor exportar: ' . $e->getMessage());
+            json_respuesta(['error' => 'No se pudo crear el archivo.'], 500);
+        }
+        self::descargar($ruta, $nombre, $mime);
+    }
+
+    /** Envía el archivo temporal como descarga y lo borra */
+    private static function descargar(string $ruta, string $nombre, string $mime): void
+    {
         header('Content-Type: ' . $mime);
         header('X-Content-Type-Options: nosniff');
         header('Content-Length: ' . filesize($ruta));

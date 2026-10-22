@@ -191,6 +191,7 @@ td.msr-atraso, b.msr-atraso { background: rgba(220, 38, 38, .35); color: #fff; p
 .lp-verde { color: #059669; }
 .lp-amarillo { color: #d97706; }
 .lp-rojo { color: #dc2626; }
+.lp-naranja { color: #ea580c; }
 // En pantalla los post-it se ven ampliados ($e veces) para leerlos mejor; el PDF mantiene 7 x 7 cm
 $e: 1.7;
 .lp-tarjeta-est { background: #fff; color: #000; flex: none; overflow: hidden; font-family: Arial, sans-serif; }
@@ -269,6 +270,7 @@ $vp-rojo: #dc2626;
     .vp-rec::-webkit-inner-spin-button, .vp-rec::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .vp-rec::-webkit-calendar-picker-indicator { margin: 0; padding: 0; width: .8em; opacity: .55; }
     .vp-col-texto { width: 100%; text-align: left; }
+    .vp-conestilo .vp-in, .vp-conestilo textarea.vp-in { text-align: inherit; color: inherit; }
     .vp-in-sf[type=checkbox] { width: 1.1em; height: 1.1em; }
     .vp-foto { display: block; max-height: 3.4em; max-width: 100%; margin: 0 auto; object-fit: contain; }
     .vp-semaforo { display: block; padding: .1em .4em; border-radius: .2em; text-align: center; }
@@ -815,3 +817,93 @@ body.vp-sin-scroll { overflow: hidden; }
   .td-x { border: 0; background: transparent; color: #dc2626; cursor: pointer; font-size: 1.2rem; &:hover { background: #fde2e4; } }
 }
 .vp-tab-acc-fija { display: flex; gap: 1rem; justify-content: space-between; }
+
+// Evidencias en móvil: línea de tiempo sin sangría; solo actividad, fotos y «Ver»
+@media (max-width: 64rem) {
+  .ev-linea { margin-left: 0; padding-left: 0; border-left: 0; }
+  .ev-dia-cab .ev-punto { display: none; }
+  .ev-bloque { padding: 1rem; }
+  .ev-bloque header { margin-bottom: .4rem; }
+  .ev-ver { display: block; width: 100%; text-align: center; padding: .7rem 1rem; border-radius: .6rem; background: #ff5a1f; color: #fff; text-decoration: none; font-size: 1.3rem; order: 2; }
+  .ev-chip { font-size: 1.2rem; white-space: normal; }
+  .ev-fotos { grid-template-columns: repeat(2, 1fr); }
+}
+
+// Curva de productividad en móvil: la gráfica va primero, a buen tamaño y con desplazamiento si hay muchas semanas
+@media (max-width: 64rem) {
+  .curva-pagina { display: flex; flex-direction: column; gap: 1.2rem;
+    .curva-grafica { order: 1; padding: 1rem .6rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .curva-datos { order: 2; }
+  }
+  .curva-lienzo { position: relative; height: 46vh; min-height: 32rem; min-width: max(100%, calc(var(--semanas, 10) * 3.4rem)); }
+}
+
+// Submittals en móvil: número de submittal y estatus a todo el ancho
+@media (max-width: 64rem) {
+  .tabla-submittals { width: 100%; table-layout: auto;
+    td.mono a { font-size: 1.4rem; font-weight: 600; overflow-wrap: anywhere; }
+    .toggle-estatus { display: grid; grid-template-columns: 1fr 1fr; width: 100%; min-width: 17rem; .te-op { padding: .8rem .4rem; font-size: 1.2rem; } }
+  }
+}
+
+// Catálogo de materiales en móvil: nombre y compra
+@media (max-width: 64rem) {
+  .tabla-materiales { width: 100%;
+    td.col-mat { font-size: 1.4rem; font-weight: 600; overflow-wrap: anywhere; }
+    .toggle-estatus { display: grid; grid-template-columns: 1fr 1fr; min-width: 15rem; .te-op { padding: .8rem .4rem; font-size: 1.2rem; } }
+  }
+}
+
+// Directorio en móvil: pestañas en tira, altas y renombrados en una sola línea, contacto a un toque
+@media (max-width: 64rem) {
+  .dir-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: .6rem; padding-bottom: .8rem; margin-bottom: 1.4rem;
+    a { flex: 0 0 auto; white-space: nowrap; } }
+  .card > .la-controles, .card > form.la-controles { display: flex; flex-wrap: wrap; gap: .8rem; width: 100%;
+    input[type=text] { flex: 1 1 18rem; min-width: 0; } .btn { flex: 0 0 auto; } }
+  .tabla-directorio { width: 100%;
+    td form.la-controles { display: flex; flex-wrap: nowrap; gap: .6rem; width: 100%; align-items: center; input[type=text] { flex: 1 1 auto; min-width: 12rem; } .btn { flex: 0 0 auto; width: auto; } }
+    td strong { font-size: 1.4rem; overflow-wrap: anywhere; }
+    td a[href^="tel:"] { display: inline-block; margin-top: .3rem; } }
+}
+
+// Acciones rápidas en móvil: cada pendiente es una tarjeta (elemento, detalle, control y botones)
+@media (max-width: 64rem) {
+  .acc-pag-nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .6rem; position: sticky; top: 0; z-index: 5; background: var(--bg-primary, inherit);
+    a { flex: 0 0 auto; white-space: nowrap; } }
+  .acc-pag-sec { padding: 1.2rem;
+    h3 { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; font-size: 1.5rem; .acc-ir { float: none; margin-left: auto; } } }
+  .tabla-acciones { display: block; width: 100%;
+    thead { display: none; }
+    tbody { display: flex; flex-direction: column; gap: 1rem; }
+    tr { display: flex; flex-direction: column; gap: .5rem; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-secondary, transparent); }
+    td { display: block; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; overflow-wrap: anywhere; }
+    td.mono { font-size: 1.15rem; color: var(--text-muted); }
+    td:nth-child(2):not(.acciones), td:first-child:not(.mono):not(.acciones) { font-size: 1.4rem; font-weight: 600; }
+    td.text-muted { font-size: 1.25rem; font-weight: 400; }
+    .toggle-estatus { display: grid; grid-template-columns: 1fr 1fr; width: 100%; min-width: 0; .te-op { padding: .8rem .4rem; } }
+    td .btn-entregado { width: 100%; margin-top: .6rem; justify-content: center; }
+    td.acciones { display: flex !important; flex-direction: row !important; flex-wrap: wrap; align-items: stretch; gap: .6rem; width: 100% !important; min-width: 0 !important; margin-top: .4rem;
+      .btn { flex: 1 1 auto; width: auto; margin: 0 !important; } form { display: contents !important; } }
+  }
+}
+
+// Programa de obra configurable: campos nuevos en la tabla, indicador condicional y editor de reglas
+.tabla-programa {
+  .prg-celda { min-width: 12rem; }
+  .prg-campo, .prg-dep { width: 100%; min-width: 11rem; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--bg-secondary); color: var(--text); font-size: 1.2rem;
+    &.msr-error { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, .25); } }
+  .prg-dep { max-width: 22rem; text-overflow: ellipsis; }
+  .prg-otras { display: block; margin-top: .2rem; font-size: 1.05rem; &[hidden] { display: none; } }
+  thead th[draggable] { cursor: grab; user-select: none; &.prg-arrastrando { opacity: .5; } &.prg-destino { box-shadow: inset 3px 0 0 var(--primary); } }
+}
+.prg-ind { display: inline-block; width: 1.4rem; height: 1.4rem; border-radius: 50%; vertical-align: middle; background: var(--ind, #94a3b8); box-shadow: 0 0 0 2px rgba(255, 255, 255, .18); }
+.prg-reglas { display: flex; flex-direction: column; gap: .6rem; margin: 1rem 0; }
+.prg-regla { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: .6rem 1rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--bg-secondary);
+  label { display: flex; align-items: center; gap: .5rem; } input[type=number] { width: 9rem; } input[type=color] { width: 4.4rem; height: 3.2rem; padding: 0; border: 1px solid var(--border); background: none; } }
+.prg-ind-previa { display: flex; flex-wrap: wrap; gap: 1.2rem; margin: 1rem 0; }
+.prg-chip { display: inline-flex; align-items: center; gap: .4rem; }
+@media (max-width: 64rem) { .prg-regla { input[type=number] { width: 7rem; } } }
+
+// vPlan: indicador condicional del programa en las tablas de tareas
+.vp-ind { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 50%; vertical-align: middle; border: 1px solid rgba(0, 0, 0, .25); }
+.vp-sel-prog { max-width: 100%; margin-top: .6rem; }

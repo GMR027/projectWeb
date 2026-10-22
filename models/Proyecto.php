@@ -25,6 +25,10 @@ class Proyecto extends ActiveRecord
     public $usuario_id;
     public $modo_dependencias;
     public $tema_modo;
+    // Programa configurable (Classes\ProgramaColumnas): se escriben con SQL propio, no con guardar()
+    public $programa_nombre;
+    public $programa_columnas_json;
+    public $programa_indicador_json;
     public $tema_paleta;
 
     public function __construct($args = [])

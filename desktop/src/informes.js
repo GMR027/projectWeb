@@ -32,7 +32,7 @@ async function ejecutar({ servidor, sesion, proyectoId, herramienta, parametros,
         const min = Math.floor((Date.now() - inicio) / 60000);
         alAvanzar({ texto: base + (a.fase === 'leyendo' ? ' · leyendo' : ' · escribiendo: ' + a.tokens + ' fragmentos') + (min ? ' · ' + min + ' min' : '') + '…', hecho: i, total });
       }, imagenes);
-      respuestas.push(lote.clave ? { ...j, _clave: lote.clave } : j);   // la clave permite al servidor saber a qué elemento corresponde cada respuesta aunque otro lote falle
+      respuestas.push(lote.clave ? { ...j, _clave: lote.clave, _ms: Date.now() - inicio } : j);   // la clave permite al servidor saber a qué elemento corresponde cada respuesta aunque otro lote falle
     } catch (x) {
       if (/cancelado/i.test(x.message)) throw x;
       fallidos.push(base + ': ' + x.message);   // si la IA falla el informe se arma igual, con texto de plantilla

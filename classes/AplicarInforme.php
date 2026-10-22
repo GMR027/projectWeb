@@ -19,6 +19,8 @@ class AplicarInforme
             'minuta' => self::minuta($p, $a),
             'bitacora' => self::bitacora($p, $a),
             'punch' => self::punch($p, $a),
+            'rfi' => self::rfi($p, $a),
+            'contradicciones' => self::contradicciones($p, $a),
             default => [false, 'Este tipo de informe no se aplica a ningún módulo.', ''],
         };
     }
@@ -53,6 +55,27 @@ class AplicarInforme
             if ($ok) $n++;
         }
         return $n ? [true, "$n pendiente(s) creados en el punch list.", 'punch:' . $n] : [false, 'No había pendientes que crear.', ''];
+    }
+
+    /** RFI redactado con IA: se crea abierto, con la actividad y la fecha límite sugeridas */
+    private static function rfi(Proyecto $p, array $a): array
+    {
+        $d = (array)($a['rfi'] ?? []);
+        if (!$d) return [false, 'No hay RFI que crear.', ''];
+        $error = Rfi::guardar((int)$p->id, $d, 'IA · ' . (usuario_actual()['nombre'] ?? ''));
+        if ($error) return [false, $error, ''];
+        $f = $GLOBALS['db']->query('SELECT id, numero FROM rfis WHERE proyecto_id = ' . (int)$p->id . ' ORDER BY id DESC LIMIT 1')->fetch_assoc();
+        return [true, 'RFI ' . ($f['numero'] ?? '') . ' creado (abierto). Revísalo y envíalo en RFI.', 'rfi:' . ($f['id'] ?? 0)];
+    }
+
+    /** Contradicciones confirmadas: un RFI abierto por cada una (máx. 10), con ambas fuentes citadas */
+    private static function contradicciones(Proyecto $p, array $a): array
+    {
+        $n = 0; $primero = '';
+        foreach (array_slice((array)($a['rfis'] ?? []), 0, 10) as $d) {
+            if (Rfi::guardar((int)$p->id, (array)$d, 'IA · ' . (usuario_actual()['nombre'] ?? '')) === null) $n++;
+        }
+        return $n ? [true, "$n RFI creado(s) a partir de las contradicciones (abiertos; revísalos en RFI).", 'rfi:' . $n] : [false, 'No había contradicciones que convertir en RFI.', ''];
     }
 
     private static function bitacora(Proyecto $p, array $a): array

@@ -660,6 +660,25 @@ class Estampas
         ]];
     }
 
+    /** Post-it de Last Planner 7 x 7 cm con una variante de obra: banda de título, indicador y leyenda */
+    public static function postItObra(string $titulo, string $color, string $campo, string $prefijo, string $leyenda, string $titActividad, string $titDias): array
+    {
+        $ln = fn($x, $y, $w, $h) => ['tipo' => 'linea', 'x' => $x, 'y' => $y, 'w' => $w, 'h' => $h, 'color' => '#000000', 'grosor' => 1.4];
+        $m = ['pad' => 4.25, 'padv' => 4.2];
+        return ['modo' => 'lienzo', 'tamano' => 6.2, 'fondo' => '#ffffff', 'borde' => '#000000', 'borde_grosor' => 1.4, 'w' => 16.43, 'h' => 25.45, 'lp' => false, 'etiquetas' => [], 'elementos' => [
+            ['tipo' => 'rect', 'x' => 0, 'y' => 0, 'w' => 100, 'h' => 11, 'relleno' => $color, 'borde' => $color, 'grosor' => 0.4],
+            $m + ['tipo' => 'texto', 'x' => 0, 'y' => 0, 'w' => 72, 'h' => 11, 'prefijo' => '', 'valor' => $titulo, 'tamano' => 7, 'negrita' => true, 'color' => '#ffffff', 'valign' => 'medio', 'alinear' => 'izquierda', 'pad' => 4.25, 'padv' => 0],
+            $m + ['tipo' => 'campo', 'campo' => $campo, 'prefijo' => $prefijo, 'sufijo' => '', 'x' => 72, 'y' => 0, 'w' => 28, 'h' => 11, 'tamano' => 5.6, 'negrita' => true, 'color' => '#ffffff', 'valign' => 'medio', 'alinear' => 'derecha', 'pad' => 4.25, 'padv' => 0],
+            $ln(0, 11, 100, 0), $ln(0, 24, 100, 0), $ln(58, 11, 0, 13), $ln(0, 82, 100, 0), $ln(58, 82, 0, 18),
+            $m + ['tipo' => 'partida_dia', 'x' => 0, 'y' => 11, 'w' => 58, 'h' => 13, 'prefijo' => 'PARTIDA:', 'tamano' => 6.2, 'tamano_pre' => 4.2, 'negrita' => true, 'varias' => 'todas', 'alinear' => 'izquierda', 'valign' => 'arriba'],
+            $m + ['tipo' => 'texto', 'x' => 58, 'y' => 11, 'w' => 42, 'h' => 13, 'prefijo' => 'FECHA:', 'valor' => '{fecha_dia}', 'salto' => true, 'tamano' => 9, 'tamano_pre' => 4.2, 'negrita' => true, 'valign' => 'arriba'],
+            $m + ['tipo' => 'actividades_dia', 'x' => 0, 'y' => 24, 'w' => 100, 'h' => 58, 'max' => 4, 'tamano' => 6.2, 'tamano_enc' => 4.2, 'encabezado' => true, 'codigo_partida' => 'auto', 'rombos' => true, 'tit_actividad' => $titActividad, 'tit_dias' => $titDias],
+            $m + ['tipo' => 'texto', 'x' => 0, 'y' => 82, 'w' => 58, 'h' => 6, 'prefijo' => 'COMPAÑÍA:', 'valor' => '', 'tamano' => 4.2, 'tamano_pre' => 4.2, 'valign' => 'arriba'],
+            ['tipo' => 'logo', 'x' => 3.0, 'y' => 87.5, 'w' => 43, 'h' => 10.5, 'fuente' => 'compania', 'alinear' => 'izquierda'],
+            $m + ['tipo' => 'texto', 'x' => 58, 'y' => 82, 'w' => 42, 'h' => 18, 'prefijo' => '', 'valor' => $leyenda, 'tamano' => 4.2, 'valign' => 'arriba', 'pad' => 4.25, 'padv' => 4.2],
+        ]];
+    }
+
     /** Estampas de ejemplo que se pueden copiar a un proyecto: clave => config (se sanean al guardar) */
     public static function plantillas(): array
     {
@@ -682,6 +701,10 @@ class Estampas
                 'etiquetas' => [['t' => 'actividades', 'fecha_modo' => 'corte', 'max' => 8, 'columnas' => 2, 'tamano' => 15, 'campos' => ['responsable', 'avance', 'dias', 'restriccion'], 'color_por' => 'partida', 'solo_pendientes' => false],
                     ['t' => 'texto', 'texto' => '◆ rojo = con restricción · ◆ verde = terminada', 'tamano' => 7]]]],
             'lastplanner_post' => ['nombre' => 'Last Planner · Post-it 7 x 7 cm', 'config' => self::postItLastPlanner()],
+            'postit_cuadrilla' => ['nombre' => 'Last Planner · Cuadrilla', 'config' => self::postItObra('CUADRILLA', '#0f766e', 'personal_ultimo', 'PERSONAL: ', 'Actividades y días para terminar. Personal del último reporte.', 'ACTIVIDAD / CUADRILLA:', 'DÍAS:')],
+            'postit_restricciones' => ['nombre' => 'Last Planner · Restricciones', 'config' => self::postItObra('RESTRICCIONES', '#b91c1c', 'restr_activas', 'ACTIVAS: ', 'Rojo = actividad con restricción activa. Libera antes de ejecutar.', 'ACTIVIDAD CON RESTRICCIÓN:', 'DÍAS:')],
+            'postit_calidad' => ['nombre' => 'Last Planner · Calidad', 'config' => self::postItObra('CALIDAD / INSPECCIÓN', '#1d4ed8', 'actividades_atrasadas', 'ATRASADAS: ', 'Verifica el trabajo antes de cerrar la actividad y registra la evidencia.', 'ACTIVIDAD A INSPECCIONAR:', 'DÍAS:')],
+            'postit_seguridad' => ['nombre' => 'Last Planner · Seguridad', 'config' => self::postItObra('SEGURIDAD', '#c2410c', 'restr_activas', 'RIESGOS: ', 'Confirma permiso de trabajo, EPP y análisis de riesgo antes de iniciar.', 'ACTIVIDAD / RIESGO:', 'DÍAS:')],
             'msr_encabezado' => ['nombre' => 'Encabezado de MSR', 'config' => self::encabezadoMsr()],
         ];
     }

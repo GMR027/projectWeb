@@ -42,6 +42,7 @@ class LastPlanner
 
         $cal = new Calendario((int)$proyecto->id);
         $restricciones = \Controllers\LookaheadController::restriccionesActivas((int)$proyecto->id);
+        $riesgos = Salud::riesgosActividades((int)$proyecto->id);
 
         $ini = min(array_map(fn($a) => $a->fecha_inicio, $acts));
         $fin = max(array_map(fn($a) => $a->fecha_fin, $acts));
@@ -64,6 +65,7 @@ class LastPlanner
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
                         'restriccion' => !empty($restricciones[$a->id]),
+                        'riesgo' => implode(' · ', array_column($riesgos[$a->id] ?? [], 'texto')),
                     ];
                 }
             }
@@ -93,6 +95,7 @@ class LastPlanner
 
         $cal = new Calendario((int)$proyecto->id);
         $restricciones = \Controllers\LookaheadController::restriccionesActivas((int)$proyecto->id);
+        $riesgos = Salud::riesgosActividades((int)$proyecto->id);
         // Del inicio del proyecto a su fin (ampliado si alguna actividad queda fuera)
         $ini = min($proyecto->fecha_inicio, min(array_map(fn($x) => $x[1]->fecha_inicio, $acts)));
         $fin = max($proyecto->fecha_fin, max(array_map(fn($x) => $x[1]->fecha_fin, $acts)));
@@ -114,6 +117,7 @@ class LastPlanner
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
                         'restriccion' => !empty($restricciones[$a->id]),
+                        'riesgo' => implode(' · ', array_column($riesgos[$a->id] ?? [], 'texto')),
                     ];
                 }
             }

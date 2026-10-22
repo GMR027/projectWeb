@@ -1,11 +1,11 @@
 // ============================================================
-// Burbujas de ayuda: cualquier elemento con data-ayuda="qué hace" muestra, a los 200 ms de pasar el cursor
+// Burbujas de ayuda: cualquier elemento con data-ayuda="qué hace" muestra, a los 700 ms de pasar el cursor
 // (o de enfocarlo con el teclado), una burbuja con la descripción y, si trae data-manual="/manual#seccion",
 // un botón que abre el manual en esa sección. data-ayuda-titulo agrega un encabezado a la burbuja.
 // La burbuja se queda abierta mientras el cursor esté sobre ella, para poder pulsar el botón.
 // ============================================================
 (() => {
-  const RETARDO = 200;       // ms antes de mostrar
+  const RETARDO = 700;       // ms antes de mostrar
   const CIERRE = 150;        // ms de gracia para pasar del elemento a la burbuja
   let burbuja = null, objetivo = null, tMostrar = 0, tOcultar = 0;
 

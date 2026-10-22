@@ -133,16 +133,24 @@ HTML],
 HTML],
 
 ['id' => 'centro-ia', 'despues' => 'exportar', 'titulo' => 'Centro de IA', 'icono' => 'fa-robot', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Es el lugar donde se reúne todo lo que hacen las herramientas de IA en un proyecto. Está en el menú del proyecto como <strong>Centro de IA</strong> y tiene cinco pestañas.</p>
+<p>Es el lugar donde se reúne todo lo que hacen las herramientas de IA en un proyecto. Está en el menú del proyecto como <strong>Centro de IA</strong> y tiene ocho pestañas (la última, «Calidad de la IA», compara modelos).</p>
 [[fig:ciclo-ia]]
 [[fig:centro-ia]]
 <h4>Pestañas ①</h4>
 <ul>
+<li><strong>Resumen.</strong> La pantalla del día (no es un correo): qué cambió la IA, qué espera tu aprobación, qué herramienta está sin ejecutar o desactualizada y qué detectó la vigilancia. Aquí también activas la <em>vigilancia en el servidor</em> (con tarea programada, <code>bin/vigilancia_programada.php</code>) para que revise el proyecto aunque la app de escritorio esté cerrada.</li>
 <li><strong>Propuestas.</strong> Bandeja de lo que la IA encontró y sigue pendiente de tu decisión, con herramienta, severidad (alta, media, baja) y quién lo detectó. Aquí aceptas o rechazas.</li>
 <li><strong>Informes.</strong> Informes generados (semanal, resumen ejecutivo, etc.). Puedes <em>Generar un informe</em> con IA o <em>sin IA</em> (con texto de plantilla), revisarlo, aprobarlo y descargarlo en PDF.</li>
 <li><strong>Grabaciones.</strong> Graba una reunión o sube un audio; se transcribe y de ahí salen minutas, compromisos y tareas.</li>
 <li><strong>Historial de cambios.</strong> Registro de auditoría de todo lo que la IA aplicó, revirtió o rechazó, con valores antes/después. Filtra por herramienta, evento, usuario y fechas, y exporta a Excel o PDF.</li>
 <li><strong>Biblioteca.</strong> Análisis guardados (★) para consultarlos o compararlos con uno nuevo.</li>
+<li><strong>Uso de la IA.</strong> Medidor: cuántas llamadas hizo cada herramienta al modelo, con cuál modelo y cuánto tardó (por herramienta, modelo y día). Lo informa la app de escritorio.</li>
+</ul>
+<h4>Aprobar por lotes, niveles de riesgo y revertir por tanda</h4>
+<ul>
+<li><strong>Niveles de riesgo.</strong> Al pie de <em>Propuestas</em>, elige para cada tipo de cambio si <em>pide permiso</em> (mover fechas, relaciones, avance… se acepta una por una y con confirmación) o es <em>simple</em> (renombrar, vincular normativa… se acepta con un clic).</li>
+<li><strong>Aprobación por lotes.</strong> En <em>Propuestas</em>, el botón <em>Aceptar todas las de bajo riesgo</em> aplica solo las simples que ves con los filtros; filtra por <em>Partida</em> para aceptar solo las de una. Las que piden permiso nunca entran.</li>
+<li><strong>Revertir por tanda.</strong> En <em>Historial de cambios</em>, <em>Revertir lo que hizo la IA</em>: elige desde qué hora (hoy, última hora, 24 h o una fecha), revisa la lista y revierte lo marcado. Cada reversión queda en el historial.</li>
 </ul>
 <h4>Decidir una propuesta ②③</h4>
 <ol>
@@ -152,6 +160,16 @@ HTML],
 <li>Si te arrepientes, en <em>Historial de cambios</em> usa <strong>Revertir</strong> sobre esa entrada.</li>
 </ol>
 <p class="manual-nota">En la app de escritorio, <em>Análisis inteligente</em> muestra un resumen gráfico de propuestas pendientes por herramienta y severidad, junto con el historial.</p>
+HTML],
+
+['id' => 'ia-nuevas', 'despues' => 'centro-ia', 'titulo' => 'IA: predicción, RFI, contradicciones y calidad', 'icono' => 'fa-brain', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Cuatro herramientas más en el menú de la app de escritorio (se ejecutan como los demás informes de IA). Todas calculan las cifras en el servidor; la IA solo redacta o juzga, y todas funcionan sin IA con una versión más simple.</p>
+<ul>
+<li><strong>Predicción de atrasos</strong> (Planeación): da un puntaje de 0 a 100 a cada actividad pendiente según avance contra lo esperado, inicio vencido, predecesoras atrasadas, restricciones, material sin submittal aprobado, RFI abiertos, punch grave y permisos; estima los días de atraso probables y la fecha de fin de la obra con el SPI. Cada puntaje muestra sus razones. Es una estimación para saber dónde mirar primero.</li>
+<li><strong>Redactar un RFI</strong> (Campo): describes el problema (también dictado) y eliges la actividad; redacta asunto, antecedentes y pregunta, y el sistema agrega fechas, sucesoras, materiales, normativa relacionada y una fecha límite sugerida. Al <em>aprobar</em> el informe se crea el RFI abierto.</li>
+<li><strong>Contradicciones entre documentos</strong> (Documentos): compara las oraciones con medidas de los documentos de <em>Normativa y especificaciones</em> (especificaciones, normas y planos en PDF o Word) y del catálogo de materiales; el sistema encuentra los datos que se dicen distinto (con conversión pulgadas↔mm, español↔inglés) y la IA decide cuáles son contradicciones reales. Las confirmadas pueden volverse RFI.</li>
+<li><strong>Pruebas de calidad de la IA</strong> (Resultados y control): corre casos fijos con el modelo elegido y da una nota por caso; en <em>Centro de IA → Calidad de la IA</em> se comparan los modelos y se ve si alguno empeora. Corre la prueba con cada modelo que quieras comparar.</li>
+</ul>
 HTML],
 
 ['id' => 'programador-ia', 'despues' => 'centro-ia', 'titulo' => 'Programador de actividades (IA)', 'icono' => 'fa-wand-magic-sparkles', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -280,7 +298,7 @@ HTML],
 HTML],
 
 ['id' => 'revisiones', 'despues' => 'datos-obra', 'titulo' => 'Revisiones', 'icono' => 'fa-clipboard-check', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Lleva el control de qué materiales y actividades ya revisaste y qué herramientas de IA están al día. Está en el menú del proyecto como <strong>Revisiones</strong>; un resumen corto aparece también en Inicio.</p>
+<p>Lleva el control de qué materiales, actividades y <strong>RFI</strong> ya revisaste y qué herramientas de IA están al día. Está en el menú del proyecto como <strong>Revisiones</strong>; un resumen corto aparece también en Inicio.</p>
 [[fig:revisiones]]
 <h4>Veredictos ①</h4>
 <table class="tabla manual-tabla">
@@ -319,6 +337,8 @@ HTML],
 <li><strong>Solicitar un permiso ②.</strong> Elige el tipo, la actividad, área, responsable, contratista, desde y hasta, descripción del trabajo y riesgos; el sistema propone las <em>medidas del tipo elegido</em> y puedes añadir otras, una por línea. Se descarga en <strong>PDF</strong>. Quien gestiona el proyecto puede verificarlo o rechazarlo.</li>
 <li><strong>Incidentes ③.</strong> Registra fecha, severidad, qué pasó y acciones tomadas; ciérralo cuando se resuelva.</li>
 </ul>
+<h4>Permisos y clima</h4>
+<p>Si el pronóstico del proyecto marca lluvia o viento fuerte en los próximos 7 días y hay permisos de trabajo vigentes (aprobados o por aprobar) de altura, izaje, excavación, eléctrico o en caliente, aparece la tabla <em>Permisos en días de lluvia o viento</em> para que decidas si reprogramas o suspendes. La propuesta de «día no hábil por clima» también menciona cuántos permisos caen ese día.</p>
 HTML],
 
 ['id' => 'normativa', 'despues' => 'seguridad', 'titulo' => 'Normativa y especificaciones', 'icono' => 'fa-scale-balanced', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -334,7 +354,7 @@ HTML],
 
 ['id' => 'tipo-obra', 'despues' => 'normativa', 'titulo' => 'Tipo de obra y Mapa de avance', 'icono' => 'fa-layer-group', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <h4>Tipo de obra</h4>
-<p>Identifica qué clase de obra es tu proyecto (por ejemplo edificación, nave industrial o urbanización) y muestra qué aporta: <em>secuencia típica</em>, <em>submittals habituales</em>, <em>materiales críticos y plazo típico</em> y el <em>contexto</em> que se entrega a la IA para que sus propuestas sean más acertadas. Elige el tipo y pulsa <strong>Guardar</strong>, o usa <em>Identificar</em> para que el sistema lo deduzca del programa. En <em>Registro de tipos de obra</em> están todos los disponibles.</p>
+<p>Identifica qué clase de obra es tu proyecto y muestra qué aporta: <em>secuencia típica</em>, <em>submittals habituales</em>, <em>materiales críticos y plazo típico</em> y el <em>contexto</em> que se entrega a la IA para que sus propuestas sean más acertadas. Elige el tipo y pulsa <strong>Guardar</strong>, o usa <em>Identificar</em> para que el sistema lo deduzca del programa. En <em>Registro de tipos de obra</em> están todos los disponibles: videovigilancia, control de acceso, cableado, edificación, vivienda unifamiliar, edificio multifamiliar o comercial, nave industrial, remodelación y urbanización. En un proyecto sin partidas puedes crear una <strong>base de partidas y actividades</strong> con duraciones típicas.</p>
 <h4>Mapa de avance</h4>
 <p>Traduce el <strong>color de las láminas</strong> del vPlan (lo que pintas sobre los planos) a <strong>porcentaje de avance por actividad</strong>. En la tabla <em>Cómo se traduce el color</em> defines el porcentaje de cada color; la sección <em>Avance por actividad según los planos</em> compara el avance real contra el pintado y <strong>propone cambios</strong> cuando la diferencia supera el umbral que fijes. Tú aceptas o no cada uno.</p>
 HTML],

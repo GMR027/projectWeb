@@ -333,9 +333,10 @@ class Inconsistencias extends HallazgosIA
     /**
      * Comprueba el proyecto con las reglas del sistema (sin IA) y lo compara con la comprobación anterior: devuelve los hallazgos nuevos
      * (que no estén ya aceptados o rechazados) y los cambios bruscos. No escribe hallazgos: solo avisa; el usuario decide si hace «Revisar ahora».
+     * Con $avanzar en false la comparación sigue siendo contra la última foto que alguien vio (la del servidor no la mueve).
      * @return array{revisado: string, pendientes: int, nuevos: array, cambios: array, primera: bool}
      */
-    public static function vigilar(Proyecto $p): array
+    public static function vigilar(Proyecto $p, bool $avanzar = true): array
     {
         $pid = (int)$p->id;
         $db = self::db();
@@ -357,7 +358,13 @@ class Inconsistencias extends HallazgosIA
         }
         $resumenNuevos = array_map(fn($x) => ['severidad' => $x['severidad'], 'titulo' => $x['titulo'], 'categoria' => $x['categoria']], array_slice($nuevos, 0, 60));
         $esc = fn($v) => $db->real_escape_string(json_encode($v, JSON_UNESCAPED_UNICODE));
-        $db->query("REPLACE INTO vigilancia_estado (proyecto_id, huellas_json, metricas_json, nuevos_json, revisado) VALUES ($pid, '" . $esc(array_column($h, 'huella')) . "', '" . $esc($m) . "', '" . $esc(['hallazgos' => $resumenNuevos, 'cambios' => $cambios, 'total_nuevos' => count($nuevos)]) . "', NOW())");
+        $nuevosJson = $esc(['hallazgos' => $resumenNuevos, 'cambios' => $cambios, 'total_nuevos' => count($nuevos)]);
+        if (!$avanzar && $previo) {
+            // Comprobación del servidor: deja la foto anterior para que la app de escritorio y el administrador sigan viendo lo nuevo hasta que lo vean
+            $db->query("UPDATE vigilancia_estado SET nuevos_json = '$nuevosJson', revisado = NOW() WHERE proyecto_id = $pid");
+        } else {
+            $db->query("REPLACE INTO vigilancia_estado (proyecto_id, huellas_json, metricas_json, nuevos_json, revisado) VALUES ($pid, '" . $esc(array_column($h, 'huella')) . "', '" . $esc($m) . "', '$nuevosJson', NOW())");
+        }
         return ['revisado' => date('Y-m-d H:i:s'), 'pendientes' => count($h), 'nuevos' => $resumenNuevos, 'total_nuevos' => count($nuevos), 'cambios' => $cambios, 'primera' => !$previo];
     }
 

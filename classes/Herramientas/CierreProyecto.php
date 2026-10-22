@@ -89,7 +89,7 @@ class CierreProyecto extends Base
         $ia = (bool)$lecciones;
         if (!$lecciones) {
             $causas = array_filter($datos['causas']); arsort($causas);
-            if ($causas) { $k = array_key_first($causas); $lecciones[] = ['Retrasos', "La causa que más actividades atrasadas afectó fue «$k» ({$causas[$k]}).", 'Atender esa causa desde la planeación: revisarla en el lookahead desde las primeras semanas.']; }
+            if ($causas) { $k = array_key_first($causas); $lecciones[] = ['Retrasos', "La causa que más actividades atrasadas afectó fue «{$k}» ({$causas[$k]}).", 'Atender esa causa desde la planeación: revisarla en el lookahead desde las primeras semanas.']; }
             if ($pu['categorias']) $lecciones[] = ['Calidad', "La categoría con más pendientes en el punch list fue «{$pu['categorias'][0]['clave']}».", 'Agregar una inspección intermedia de esa categoría antes de la entrega final.'];
             if ($m['sin_ficha']) $lecciones[] = ['Documentación', "{$m['sin_ficha']} materiales llegaron al cierre sin ficha técnica.", 'Exigir la ficha técnica al aprobar el submittal, no al cierre.'];
         }

@@ -352,6 +352,14 @@ class AjustesController
             exit;
         }
         exigir_ver_proyecto($proyecto);
+        nomenclatura_desde_post($_POST);
+        // qué entregables lleva el ZIP (sin la lista se incluyen todos)
+        $incluir = isset($_POST['incluir']) ? array_map('strval', (array)$_POST['incluir']) : (isset($_POST['elegir']) ? [] : null);
+        $quiere = fn(string $k) => $incluir === null || in_array($k, $incluir, true);
+        if ($incluir === []) {
+            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('Marca al menos un formato para exportar'));
+            exit;
+        }
         if (!class_exists('ZipArchive')) {
             header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('El servidor no tiene habilitada la extensión ZIP de PHP'));
             exit;
@@ -382,26 +390,30 @@ class AjustesController
             }
         };
 
-        $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->generar("Programa"));
-        $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->generar("Programa"));
-        $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->generar("Programa"));
-        $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setFechaReferencia($lunes)->generar("4WLA"));
-        $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
+        if ($quiere('prog_pdf')) $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->generar("Programa"));
+        if ($quiere('prog_xml')) $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->generar("Programa"));
+        if ($quiere('prog_pod')) $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->generar("Programa"));
+        if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setFechaReferencia($lunes)->generar("4WLA"));
+        if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
 
-        $hayMsr = false;
-        foreach (\Model\Msr::deProyecto((int)$proyecto->id) as $msr) {
-            if (!$msr->n_renglones) continue;
-            $hayMsr = true;
-            $base = 'MSR_' . slug_archivo($msr->nombre);
-            $agregar('03_MSR', "MSR PDF ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->generar($base));
-            $agregar('03_MSR', "MSR Excel ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato('xlsx')->generar($base));
-        }
-        if (!$hayMsr) {
-            $omitidos[] = 'MSR: el proyecto no tiene renglones';
+        if ($quiere('msr_pdf') || $quiere('msr_xlsx')) {
+            $hayMsr = false;
+            foreach (\Model\Msr::deProyecto((int)$proyecto->id) as $msr) {
+                if (!$msr->n_renglones) continue;
+                $hayMsr = true;
+                $base = 'MSR_' . slug_archivo($msr->nombre);
+                if ($quiere('msr_pdf')) $agregar('03_MSR', "MSR PDF ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->generar($base));
+                if ($quiere('msr_xlsx')) $agregar('03_MSR', "MSR Excel ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato('xlsx')->generar($base));
+            }
+            if (!$hayMsr) {
+                $omitidos[] = 'MSR: el proyecto no tiene renglones';
+            }
         }
 
-        $curvas = \Model\Curva::deProyecto((int)$proyecto->id);
-        if ($curvas) {
+        $curvas = $quiere('curvas') ? \Model\Curva::deProyecto((int)$proyecto->id) : [];
+        if (!$quiere('curvas')) {
+            // no se pidieron
+        } elseif ($curvas) {
             $agregar('04_Curvas', 'Gráfica maestra PDF', fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva(null)->generar("Curva"));
             foreach ($curvas as $c) {
                 $agregar('04_Curvas', 'Curva ' . $c->nombre, fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($c)->generar('Curva'));
@@ -410,7 +422,9 @@ class AjustesController
             $omitidos[] = 'Curvas de productividad: el proyecto no tiene curvas';
         }
 
-        if (\Model\VplanLamina::visiblesDeProyecto((int)$proyecto->id)) {
+        if (!$quiere('vplan')) {
+            // no se pidió
+        } elseif (\Model\VplanLamina::visiblesDeProyecto((int)$proyecto->id)) {
             $agregar('05_vPlan', 'vPlan PDF (todas las láminas)', fn() => (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina('todas')->generar("vPlan"));
         } else {
             $omitidos[] = 'vPlan: el proyecto no tiene láminas visibles';
@@ -436,6 +450,35 @@ class AjustesController
         exit;
     }
 
+    /** Genera varios archivos y los entrega en un ZIP con el nombre de la nomenclatura elegida (devuelve su ruta) */
+    private static function empaquetar(array $lista, Proyecto $proyecto, string $nombreBase): string
+    {
+        if (!class_exists('ZipArchive')) throw new \Exception('El servidor no tiene habilitada la extensión ZIP de PHP');
+        @set_time_limit(600);
+        $zipRuta = __DIR__ . '/../public/exportaciones/' . generar_nombre_archivo($nombreBase, 'zip', $proyecto);
+        if (!is_dir(dirname($zipRuta))) mkdir(dirname($zipRuta), 0775, true);
+        $zip = new \ZipArchive();
+        $zip->open($zipRuta, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $temporales = []; $usados = [];
+        try {
+            foreach ($lista as [$exp, $base]) {
+                $ruta = $exp->generar($base);
+                $temporales[] = $ruta;
+                $nombre = basename($ruta);
+                for ($i = 2; isset($usados[$nombre]); $i++) $nombre = preg_replace('/(\.[^.]+)$/', "-$i$1", basename($ruta));
+                $usados[$nombre] = true;
+                $zip->addFile($ruta, $nombre);
+            }
+            $zip->close();
+        } catch (\Throwable $e) {
+            @unlink($zipRuta);
+            throw $e;
+        } finally {
+            foreach ($temporales as $t) @unlink($t);
+        }
+        return $zipRuta;
+    }
+
     /** Exportar programa */
     public static function exportar()
     {
@@ -449,6 +492,7 @@ class AjustesController
             exit;
         }
 
+        nomenclatura_desde_post($_POST);
         $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
         $formato = $_POST['formato'] ?? '';
         $nombreBase = trim($_POST['nombre_base'] ?? 'Programa_Obra');
@@ -460,6 +504,7 @@ class AjustesController
         }
         exigir_ver_proyecto($proyecto);
 
+        $varios = [];   // si se eligen varios elementos se entregan en un ZIP: [[exportador, nombre base], …]
         try {
             switch ($formato) {
                 case 'pdf':
@@ -478,6 +523,10 @@ class AjustesController
                     break;
                 case 'vplan':
                     $exporter = (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina($_POST['lamina_id'] ?? 'todas')->setPaquete((int)($_POST['paquete_id'] ?? 0));
+                    if (!empty($_POST['lamina_ids'])) {
+                        $propias = array_map(fn($l) => (int)$l->id, \Model\VplanLamina::deProyecto((int)$proyecto->id));
+                        $exporter->setLaminas(array_intersect(array_map('intval', (array)$_POST['lamina_ids']), $propias));
+                    }
                     break;
                 case 'lastplanner':
                     $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setOpciones(
@@ -485,24 +534,33 @@ class AjustesController
                     );
                     break;
                 case 'curva':
-                    $cid = $_POST['curva_id'] ?? 'maestra';
-                    $curva = null;
-                    if ($cid !== 'maestra') {
-                        $curva = \Model\Curva::find(filter_var($cid, FILTER_VALIDATE_INT));
-                        if (!$curva || (int)$curva->proyecto_id !== (int)$proyecto->id) throw new \Exception('Curva no encontrada');
-                    }
+                    $ids = array_values(array_unique(array_map('strval', (array)($_POST['curva_ids'] ?? [$_POST['curva_id'] ?? 'maestra']))));
+                    if (!$ids) $ids = ['maestra'];
                     $salida = $_POST['salida'] ?? 'pdf';
-                    $exporter = in_array($salida, ['xlsx', 'ods'], true)
-                        ? (new \Classes\Exportadores\CurvaSheetExporter($proyecto))->setCurva($curva)->setFormato($salida)
-                        : (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($curva);
+                    $lista = [];
+                    foreach ($ids as $cid) {
+                        $curva = null;
+                        if ($cid !== 'maestra') {
+                            $curva = \Model\Curva::find(filter_var($cid, FILTER_VALIDATE_INT));
+                            if (!$curva || (int)$curva->proyecto_id !== (int)$proyecto->id) throw new \Exception('Curva no encontrada');
+                        }
+                        $lista[] = [in_array($salida, ['xlsx', 'ods'], true)
+                            ? (new \Classes\Exportadores\CurvaSheetExporter($proyecto))->setCurva($curva)->setFormato($salida)
+                            : (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($curva), $nombreBase];
+                    }
+                    if (count($lista) > 1) $varios = $lista; else $exporter = $lista[0][0];
                     break;
                 case 'msr':
                     $salida = $_POST['salida'] ?? 'pdf';
-                    $msr = \Model\Msr::deProyectoPorId((int)$proyecto->id, $_POST['msr_id'] ?? null);
-                    if (!$msr) throw new \Exception('MSR no encontrado');
-                    $exporter = in_array($salida, ['xlsx', 'ods'], true)
-                        ? (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato($salida)
-                        : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr);
+                    $lista = [];
+                    foreach (array_values(array_unique((array)($_POST['msr_ids'] ?? [$_POST['msr_id'] ?? null]))) as $mid) {
+                        $msr = \Model\Msr::deProyectoPorId((int)$proyecto->id, $mid);
+                        if (!$msr) throw new \Exception('MSR no encontrado');
+                        $lista[] = [in_array($salida, ['xlsx', 'ods'], true)
+                            ? (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato($salida)
+                            : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr), $nombreBase . '-' . $msr->nombre];
+                    }
+                    if (count($lista) > 1) $varios = $lista; else $exporter = $lista[0][0];
                     break;
                 case 'submittal':
                     if (!puede_gestionar_proyecto($proyecto)) throw new \Exception('No autorizado');
@@ -525,7 +583,11 @@ class AjustesController
                     throw new \Exception('Formato no soportado');
             }
 
-            $ruta = $exporter->generar($nombreBase);
+            if ($varios) {
+                $ruta = self::empaquetar($varios, $proyecto, $nombreBase);
+            } else {
+                $ruta = $exporter->generar($nombreBase);
+            }
             $nombreArchivo = basename($ruta);
 
             header('Content-Type: application/octet-stream');

@@ -44,19 +44,19 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
     <?php if (empty($materiales)): ?>
         <p class="text-muted">Aún no hay materiales<?php echo ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== '') ? ' que coincidan con los filtros' : ''; ?>. Agrega uno o impórtalos desde el MSR.</p>
     <?php else: ?>
-        <table class="tabla" <?php echo pag_attr($proyecto); ?> data-proyecto="<?php echo s($proyecto->id); ?>">
+        <div class="tabla-wrapper"><table class="tabla tabla-materiales" <?php echo pag_attr($proyecto); ?> data-proyecto="<?php echo s($proyecto->id); ?>">
             <thead>
-                <tr><?php if (is_admin()): ?><th>Revisión</th><?php endif; ?><th class="hide-m">Imagen</th><th class="hide-m">Referencia</th><th class="col-mat">Material</th><th class="hide-m">Especialidad</th><?php if ($inteligentes || $verif): ?><th>Normativa</th><?php endif; ?><th>Compra</th><th>Entrega</th><th class="hide-m">Web</th><th class="hide-m">Ficha</th><th class="hide-m">Certificado calidad</th><th>Acciones</th></tr>
+                <tr><?php if (is_admin()): ?><th class="hide-m">Revisión</th><?php endif; ?><th class="hide-m">Imagen</th><th class="hide-m">Referencia</th><th class="col-mat">Material</th><th class="hide-m">Especialidad</th><?php if ($inteligentes || $verif): ?><th class="hide-m">Normativa</th><?php endif; ?><th>Compra</th><th class="hide-m">Entrega</th><th class="hide-m">Web</th><th class="hide-m">Ficha</th><th class="hide-m">Certificado calidad</th><th class="hide-m">Acciones</th></tr>
             </thead>
             <tbody>
             <?php $revs = $revisiones ?? []; $puedeRev = puede_revisar($proyecto); foreach ($materiales as $m): ?>
                 <tr>
-                    <?php if (is_admin()): ?><td><?php echo \Classes\Revisiones::chip('material', (string)$m->id, \Classes\Revisiones::estado($revs[(string)$m->id] ?? null, \Classes\Revisiones::huellaMaterial((array)$m)), $puedeRev, $m->nombre); ?></td><?php endif; ?>
+                    <?php if (is_admin()): ?><td class="hide-m"><?php echo \Classes\Revisiones::chip('material', (string)$m->id, \Classes\Revisiones::estado($revs[(string)$m->id] ?? null, \Classes\Revisiones::huellaMaterial((array)$m)), $puedeRev, $m->nombre); ?></td><?php endif; ?>
                     <td class="hide-m"><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt=""><?php else: ?><span class="mat-thumb mat-thumb-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?></td>
                     <td class="mono hide-m"><?php echo s($m->referencia); ?></td>
                     <td class="col-mat"><?php echo s($m->nombre); ?></td>
                     <td class="hide-m"><?php echo s($m->especialidad); ?></td>
-                    <?php if ($inteligentes || $verif): ?><td><?php $v = $verif[(int)$m->id] ?? null; echo \Classes\MaterialesInteligentes::badge($v, \Classes\MaterialesInteligentes::vigente($v, $m), $inteligentes); ?></td><?php endif; ?>
+                    <?php if ($inteligentes || $verif): ?><td class="hide-m"><?php $v = $verif[(int)$m->id] ?? null; echo \Classes\MaterialesInteligentes::badge($v, \Classes\MaterialesInteligentes::vigente($v, $m), $inteligentes); ?></td><?php endif; ?>
                     <td>
                         <div class="toggle-estatus" role="group" aria-label="Compra" data-id="<?php echo s($m->id); ?>">
                             <?php foreach (\Model\Material::COMPRA as $k => $etq): ?>
@@ -64,7 +64,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
                             <?php endforeach; ?>
                         </div>
                     </td>
-                    <td>
+                    <td class="hide-m">
                         <button type="button" class="btn btn-sm btn-ghost btn-entregado<?php echo $m->entregado() ? ' activo' : ''; ?>" data-id="<?php echo s($m->id); ?>" title="<?php echo $m->entregado() ? 'Entregado el ' . s(formatear_fecha($m->fecha_entrega_real)) . ' · clic para desmarcar' : 'Clic para marcar como entregado (hoy)'; ?>">
                             <i class="fa-solid fa-truck-ramp-box"></i> Entregado<?php echo $m->entregado() ? ' · ' . s(formatear_fecha($m->fecha_entrega_real)) : ''; ?>
                         </button>
@@ -72,7 +72,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
                     <td class="hide-m"><?php if ($m->link_web): ?><a href="<?php echo s($m->link_web); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo s($m->link_web); ?>"><i class="fa-solid fa-arrow-up-right-from-square"></i></a><?php endif; ?></td>
                     <td class="hide-m"><?php if ($m->ficha_tecnica): ?><a href="/materiales/ficha?id=<?php echo s($m->id); ?>" target="_blank" title="<?php echo s($m->ficha_tecnica); ?>"><i class="fa-solid fa-file-pdf"></i></a><?php endif; ?></td>
                     <td class="hide-m"><?php echo s($m->certificado_calidad); ?></td>
-                    <td class="acciones">
+                    <td class="acciones hide-m">
                         <a href="/materiales/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($m->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <form method="POST" action="/materiales/eliminar" style="display:inline" data-confirm="¿Eliminar material?|Se quitará también de los submittals y del MSR.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -83,7 +83,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+        </table></div>
     <?php endif; ?>
 </div>
 <script>

@@ -169,3 +169,14 @@ body.rd-brocha .rd-hoja { cursor: copy; }
     .rd-dib-herr { display: flex; gap: .3rem; button { width: 3.4rem; height: 3.4rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--bg-secondary); color: var(--text); cursor: pointer; &.activo { background: var(--primary); color: #fff; border-color: var(--primary); } } }
     label { flex-direction: row; align-items: center; gap: .5rem; margin: 0; } input[type=color] { padding: 0; width: 3.2rem; height: 3.2rem; } }
   canvas { max-width: 100%; border: 1px solid var(--border); background: #fff; touch-action: none; cursor: crosshair; display: block; margin: 0 auto; } }
+
+// Móvil: el documento se lee a todo el ancho (sin hoja fija de papel que obligue a hacer zoom)
+@media (max-width: 64rem) {
+  .rd-fondo { padding: .8rem .4rem; margin-top: .6rem; border-radius: .6rem; }
+  .rd-hoja.rd-lectura { width: 100% !important; max-width: 100%; padding: 1.6rem 1.4rem !important; font-size: 13pt; overflow-x: auto; box-shadow: none; border-radius: .4rem;
+    h1 { font-size: 18pt; } h2 { font-size: 15pt; } h3 { font-size: 13.5pt; }
+    table { display: block; overflow-x: auto; max-width: 100%; }
+    img { max-width: 100% !important; height: auto !important; } }
+  .rd-grupo h3 { font-size: 1.6rem; }
+  .rd-sellos-ver, .rd-comentarios-ver { padding: 1.2rem; }
+}

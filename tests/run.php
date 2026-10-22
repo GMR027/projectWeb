@@ -194,5 +194,65 @@ $ok('rechaza formatos que no son hoja de cálculo', $rechazado);
 array_map('unlink', glob("$dImp/*"));
 rmdir($dImp);
 
+echo "Personalización (Fase 4)\n";
+use Classes\CamposPersonalizados as CPz;
+$ok('opciones de lista: una por línea, sin vacías ni repetidas', CPz::listaOpciones("N1\n\n N2 \nN1\n<b>N3</b>") === ['N1', 'N2', 'N3']);
+$campos = [7 => ['tipo' => 'texto'], 8 => ['tipo' => 'lista']];
+$ok('filtro de texto busca por fragmento sin importar mayúsculas', CPz::coincide([7 => 'Torre Norte'], [7 => 'norte'], $campos) && !CPz::coincide([7 => 'Torre Sur'], [7 => 'norte'], $campos));
+$ok('filtro de lista es exacto y «(vacío)» busca los que no tienen valor', CPz::coincide([8 => 'N1'], [8 => 'N1'], $campos) && !CPz::coincide([8 => 'N10'], [8 => 'N1'], $campos) && CPz::coincide([], [8 => '__vacio'], $campos));
+$ok('sin filtros todo coincide', CPz::coincide([], [], $campos));
+$ok('claves cp_ del programa', Classes\ProgramaColumnas::esCp('cp_12') && !Classes\ProgramaColumnas::esCp('cp_x') && !Classes\ProgramaColumnas::esCp('nombre'));
+$ok('colores de la marca: solo #rrggbb', Classes\Marca::colorValido('#0B6FC0') === '#0b6fc0' && Classes\Marca::colorValido('rojo') === null && Classes\Marca::colorValido('#fff') === null);
+$ok('el texto de la marca contrasta con el fondo', Classes\Marca::contraste('#ffffff') === '#111111' && Classes\Marca::contraste('#0b132b') === '#ffffff');
+$ok('inicio: solo bloques conocidos y sin repetir', array_keys(Classes\InicioUsuario::BLOQUES) === ['resumen', 'hoy', 'atrasadas', 'proyectos', 'novedades', 'atajos'] && array_diff(Classes\InicioUsuario::DEFECTO, array_keys(Classes\InicioUsuario::BLOQUES)) === []);
+
+echo "Pruebas de calidad de la IA (Fase 5.3)\n";
+use Classes\PruebasIA as PIA;
+$perfecto = [
+    'ext-fecha' => ['fecha' => '2026-03-12'], 'ext-cantidades' => ['materiales' => [['nombre' => 'cámaras IP', 'cantidad' => 48, 'unidad' => 'pza'], ['nombre' => 'gabinetes', 'cantidad' => 6, 'unidad' => 'pza'], ['nombre' => 'cable UTP', 'cantidad' => 350, 'unidad' => 'm']]],
+    'ext-responsable' => ['responsable' => 'Ing. Laura Pérez', 'fecha_limite' => '2026-11-05'], 'cla-severidad' => ['severidad' => 'critica', 'motivo' => 'Compromete la estructura'], 'cla-restriccion' => ['categoria' => 'permiso'],
+    'cla-contradice' => ['contradice' => true, 'dato_plano' => '4 pulgadas', 'dato_especificacion' => '6 pulgadas'], 'cla-no-contradice' => ['contradice' => 'false', 'explicacion' => 'Ambos dicen 12 cm'],
+    'red-resumen' => ['resumen' => 'El avance real es de 45 % contra 52 % programado, con 3 actividades atrasadas por la falta de cable UTP.'],
+    'red-rfi' => ['asunto' => 'Choque entre muro eje 3 y bajada de aire', 'pregunta' => 'En el plano A-05 el muro del eje 3 interfiere con la bajada del plano M-02 a 2.40 m. Solicitamos confirmar cuál plano prevalece para continuar con la obra.'],
+    'red-acciones' => ['acciones' => ['Comprar el cable con otro proveedor', 'Pedir entrega parcial', 'Reprogramar el montaje de cámaras']],
+    'raz-orden' => ['orden' => ['Canalización', 'Tendido de cableado', 'Montaje de cámaras', 'Configuración', 'Pruebas y entrega']], 'raz-ruta' => ['duracion_total' => 13, 'criticas' => ['A', 'C', 'D']], 'raz-proyeccion' => ['avance_semana_20' => '80 %', 'razon' => '4 % por semana'],
+];
+$todoOk = true; $detalle = [];
+foreach (PIA::casos() as $c) { $r = PIA::puntuar($c, $perfecto[$c['id']] ?? null); if (!$r['aprobado']) { $todoOk = false; $detalle[] = $c['id'] . ': ' . implode('; ', $r['fallas']); } }
+$ok('la respuesta ideal aprueba los ' . count(PIA::casos()) . ' casos' . ($detalle ? ' (' . implode(' | ', $detalle) . ')' : ''), $todoOk);
+$ok('todos los casos tienen respuesta ideal de prueba y prompt que pide JSON', count(array_diff(array_column(PIA::casos(), 'id'), array_keys($perfecto))) === 0 && !array_filter(PIA::casos(), fn($c) => !str_contains($c['prompt'], 'JSON')));
+$ok('sin respuesta vale 0', PIA::puntuar(PIA::caso('ext-fecha'), null)['nota'] === 0.0);
+$ok('una regla de dos: nota parcial 0.5', PIA::puntuar(PIA::caso('ext-responsable'), ['responsable' => 'Laura', 'fecha_limite' => '2026-11-06'])['nota'] === 0.5);
+$ok('inventar una cifra se castiga', !PIA::puntuar(PIA::caso('red-resumen'), ['resumen' => 'El avance es 45 % y hay 7 actividades atrasadas por falta de cable.'])['aprobado']);
+$ok('responder en inglés no cuenta como español', !PIA::puntuar(PIA::caso('red-resumen'), ['resumen' => 'The progress is 45 percent and the cable is missing.'])['aprobado']);
+$ok('orden equivocado de etapas falla', !PIA::puntuar(PIA::caso('raz-orden'), ['orden' => ['Montaje', 'Canalización', 'Cableado', 'Configuración', 'Pruebas']])['aprobado']);
+$ok('ids de casos únicos', count(array_unique(array_column(PIA::casos(), 'id'))) === count(PIA::casos()));
+
+echo "Cobertura de la traducción\n";
+exec('php ' . escapeshellarg(__DIR__ . '/../bin/idioma_cobertura.php') . ' 2>&1', $salida, $codigo);
+$ok('todos los t() tienen su traducción al inglés' . ($codigo ? ' — ' . implode(' / ', array_slice($salida, 1, 3)) : ''), $codigo === 0);
+
+echo "Webhooks y API (Fase 5.1)\n";
+$ok('eventos de webhook: solo los conocidos, vacío = todos', Classes\Webhooks::normalizarEventos(['punch.creado', 'x.y']) === 'punch.creado' && Classes\Webhooks::normalizarEventos([]) === '*' && Classes\Webhooks::normalizarEventos('rfi.creado, rfi.estado') === 'rfi.creado,rfi.estado');
+$ok('webhook: rechaza direcciones locales, privadas y esquemas raros', Classes\Webhooks::validarUrl('http://127.0.0.1/x') !== null && Classes\Webhooks::validarUrl('http://192.168.1.5/') !== null && Classes\Webhooks::validarUrl('http://169.254.169.254/') !== null && Classes\Webhooks::validarUrl('file:///etc/passwd') !== null && Classes\Webhooks::validarUrl('https://u:p@8.8.8.8/') !== null);
+$ok('webhook: acepta una IP pública', Classes\Webhooks::validarUrl('https://8.8.8.8/hook') === null);
+
+echo "Predicción de atrasos y contradicciones (Fase 5.4)\n";
+use Classes\Herramientas\PrediccionAtrasos as PA;
+use Classes\Herramientas\Contradicciones as CTR;
+$act = fn($ini, $fin, $prog, $dur = 10) => ['hito' => 0, 'progreso' => $prog, 'fecha_inicio' => $ini, 'fecha_fin' => $fin, 'duracion_dias' => $dur];
+$ok('avance esperado: 0 antes, 100 después, a la mitad 50', PA::esperado('2026-10-10', '2026-10-19', '2026-10-01') == 0 && PA::esperado('2026-10-10', '2026-10-19', '2026-10-30') == 100 && PA::esperado('2026-10-10', '2026-10-19', '2026-10-14') == 50);
+$ok('una actividad al día no tiene riesgo', PA::puntuar($act('2026-10-10', '2026-10-19', 50), '2026-10-14', [], 0, []) === null);
+$r = PA::puntuar($act('2026-10-10', '2026-10-19', 0), '2026-10-14', ['4.2'], 1, []);
+$ok('sin iniciar, vencida de inicio, con predecesora atrasada y restricción: riesgo medio o alto con razones', $r && $r['puntos'] >= 55 && count($r['razones']) === 3 && $r['atraso_dias'] === 4);
+$ok('un hito o una actividad terminada no se puntúan', PA::puntuar(['hito' => 1] + $act('2026-10-10', '2026-10-19', 0), '2026-10-14', [], 0, []) === null && PA::puntuar($act('2026-10-10', '2026-10-19', 100), '2026-10-14', [], 0, []) === null);
+$ok('el puntaje nunca pasa de 100', PA::puntuar($act('2026-01-01', '2026-01-10', 0), '2026-10-14', ['a', 'b'], 5, array_fill(0, 6, ['texto' => 'x']))['puntos'] === 100);
+$d = PA::desempeno([$act('2026-10-10', '2026-10-19', 0), $act('2026-10-10', '2026-10-19', 0)], '2026-10-19');
+$ok('SPI = avance real entre programado', $d['plan'] == 100 && $d['real'] == 0 && $d['spi'] == 0.0);
+$ok('magnitudes: convierte pulgadas a mm y no confunde la preposición «a»', CTR::magnitudes('de 12 a 15 m con 4 pulgadas')[1]['valor'] === 101.6 && count(CTR::magnitudes('de 12 a 15 sin unidad')) === 0);
+$ok('mm² (área) no se toma como longitud', CTR::magnitudes('cable de 2.5 mm² y 20 AWG') === [['dim' => 'awg', 'valor' => 20.0, 'texto' => '20 AWG']]);
+$ok('contradicción: 4 vs 6 pulgadas difieren; 4 pulgadas y 101.6 mm son lo mismo', CTR::difieren(CTR::magnitudes('tubo de 4 pulgadas'), CTR::magnitudes('tubo de 6 pulgadas')) !== null && CTR::difieren(CTR::magnitudes('tubo de 4 pulgadas'), CTR::magnitudes('tubo de 101.6 mm')) === null);
+$ok('palabras técnicas iguales entre español e inglés', count(array_intersect(CTR::claves('tubería de acero'), CTR::claves('steel pipe'))) >= 1);
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

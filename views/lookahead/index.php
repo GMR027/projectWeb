@@ -5,6 +5,13 @@ $pta = $config->pta();
 $nSig = (int)$config->semanas;
 $encEst = $config->encabezado();
 $puedeEditar = puede_gestionar_proyecto($proyecto);
+// Diseño de columnas (Diseñar): qué columnas fijas se ven y cómo se llaman
+$dis = $diseno['por'];
+$verId = isset($dis['id']); $verComp = isset($dis['comp']); $verPta = isset($dis['pta']); $verLim = isset($dis['limitaciones']);
+if (isset($dis['pta']) && $dis['pta']['propio']) $pta = $dis['pta']['n'];
+$nLim = $verLim ? count($tipos) : 0;
+$colsFijas = ($verId ? 1 : 0) + 1;                      // ID + actividad
+$colsExtra = ($verComp ? 1 : 0) + ($verPta ? 1 : 0);    // % Comp y PTA (van tras la primera semana)
 ?>
 <?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('lookahead', '/lookahead', $proyecto); ?>
 <div class="page-header no-print">
@@ -43,6 +50,7 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
     </div>
 </div>
 
+<?php $herramienta = 'lookahead'; $sinAgrupar = true; $puedeDisenar = $puedeEditar; echo '<div class="no-print">'; include __DIR__ . '/../listas/_barra.php'; echo '</div>'; ?>
 <?php if ($puedeEditar): ?>
 <details class="la-ajustes no-print">
     <summary><i class="fa-solid fa-sliders"></i> Ajustes del <?php echo s($config->nombreHerramienta()); ?></summary>
@@ -92,7 +100,7 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
     <table class="la-tabla">
         <thead>
             <tr class="la-titulo">
-                <th rowspan="4" class="la-id">ID<br>(EDT)</th>
+                <?php if ($verId): ?><th rowspan="4" class="la-id"><?php echo $dis['id']['propio'] ? s($dis['id']['n']) : 'ID<br>(EDT)'; ?></th><?php endif; ?>
                 <th rowspan="2" colspan="1" class="la-act-cab">
                     <?php if (!$encEst): ?>
                     <span class="la-logos">
@@ -103,23 +111,23 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
                     <span>Fecha de actualización: <?php echo date('d/m/Y'); ?></span>
                     <?php endif; ?>
                 </th>
-                <th colspan="<?php echo $totalCols + 2; ?>" class="la-banner hide-m"><?php echo s($config->tituloBanner($proyecto)); ?></th>
-                <th colspan="<?php echo count($tipos); ?>" rowspan="2" class="la-banner la-banner-lim hide-m">Limitaciones</th>
+                <th colspan="<?php echo $totalCols + $colsExtra; ?>" class="la-banner hide-m"><?php echo s($config->tituloBanner($proyecto)); ?></th>
+                <?php if ($verLim): ?><th colspan="<?php echo $nLim; ?>" rowspan="2" class="la-banner la-banner-lim hide-m"><?php echo s($dis['limitaciones']['n']); ?></th><?php endif; ?>
             </tr>
             <tr class="la-semanas">
                 <?php foreach ($semanas as $i => $sem): ?>
                     <th colspan="7" class="hide-m <?php echo $i === 0 ? 'la-actual' : ''; ?>"><?php echo s($sem['etiqueta']); ?> · S<?php echo s($sem['iso']); ?></th>
-                    <?php if ($i === 0): ?><th rowspan="3" class="la-comp">% Comp</th><th rowspan="3" class="la-pta hide-m"><span><?php echo s($pta); ?></span></th><?php endif; ?>
+                    <?php if ($i === 0): ?><?php if ($verComp): ?><th rowspan="3" class="la-comp"><?php echo s($dis['comp']['n']); ?></th><?php endif; ?><?php if ($verPta): ?><th rowspan="3" class="la-pta hide-m"><span><?php echo s($pta); ?></span></th><?php endif; ?><?php endif; ?>
                 <?php endforeach; ?>
             </tr>
             <tr class="la-meses">
-                <th rowspan="2" class="la-act-cab la-act-titulo">ACTIVIDAD</th>
+                <th rowspan="2" class="la-act-cab la-act-titulo"><?php echo $dis['actividad']['propio'] ? s($dis['actividad']['n']) : 'ACTIVIDAD'; ?></th>
                 <?php foreach ($semanas as $i => $sem): ?>
                     <th colspan="7" class="hide-m"><?php echo s($sem['mes']); ?></th>
                 <?php endforeach; ?>
-                <?php foreach ($tipos as $t): ?>
+                <?php if ($verLim): foreach ($tipos as $t): ?>
                     <th rowspan="2" class="la-tipo hide-m"><span><?php echo s($t->nombre); ?></span></th>
-                <?php endforeach; ?>
+                <?php endforeach; endif; ?>
             </tr>
             <tr class="la-dias">
                 <?php foreach ($semanas as $i => $sem): foreach ($sem['dias'] as $d): ?>
@@ -132,21 +140,22 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
         </thead>
         <tbody>
             <?php if (empty($filas)): ?>
-                <tr><td colspan="<?php echo 2 + $totalCols + 2 + count($tipos); ?>" class="text-center text-muted la-vacio">
+                <tr><td colspan="<?php echo $colsFijas + $totalCols + $colsExtra + $nLim; ?>" class="text-center text-muted la-vacio">
                     Este proyecto aún no tiene actividades.
                 </td></tr>
             <?php endif; ?>
             <?php foreach ($filas as $bloque): $partida = $bloque['partida']; ?>
                 <tr class="la-partida" <?php if ($partida->color_bg) echo 'style="--la-color:' . s($partida->color_bg) . '"'; ?>>
-                    <td class="la-id"><?php echo s($partida->codigo); ?></td>
-                    <td colspan="<?php echo 1 + $totalCols + 1 + count($tipos) + 1; ?>"><?php echo s($partida->nombre); ?></td>
+                    <?php if ($verId): ?><td class="la-id"><?php echo s($partida->codigo); ?></td><?php endif; ?>
+                    <td colspan="<?php echo 1 + $totalCols + $colsExtra + $nLim; ?>"><?php echo s($partida->nombre); ?></td>
                 </tr>
                 <?php foreach ($bloque['actividades'] as $fila): $act = $fila['actividad']; ?>
                     <tr class="la-actividad">
-                        <td class="la-id"><?php echo s($act->codigo); ?></td>
+                        <?php if ($verId): ?><td class="la-id"><?php echo s($act->codigo); ?></td><?php endif; ?>
                         <td class="la-nombre <?php echo $fila['atrasada'] ? 'la-atrasada' : ''; ?>">
                             <?php echo s($act->nombre); ?>
                             <?php if ($fila['atrasada']): ?><span class="la-tag">Atrasada</span><?php endif; ?>
+                            <?php echo \Classes\Salud::insignia(\Classes\Salud::riesgosActividades((int)$proyecto->id), (int)$act->id); ?>
                         </td>
                         <?php foreach ($semanas as $i => $sem): ?>
                             <?php foreach ($sem['dias'] as $d): ?>
@@ -160,21 +169,21 @@ $puedeEditar = puede_gestionar_proyecto($proyecto);
                                 <td class="<?php echo trim($clase); ?>"><?php echo $on ? 'X' : ''; ?></td>
                             <?php endforeach; ?>
                             <?php if ($i === 0): ?>
-                                <td class="la-comp <?php echo (int)$act->progreso >= 100 ? 'la-comp-ok' : ((int)$act->progreso > 0 ? 'la-comp-parcial' : ''); ?>"><?php echo s((int)$act->progreso); ?>%</td>
-                                <td class="la-pta-celda hide-m">
+                                <?php if ($verComp): ?><td class="la-comp <?php echo (int)$act->progreso >= 100 ? 'la-comp-ok' : ((int)$act->progreso > 0 ? 'la-comp-parcial' : ''); ?>"><?php echo s((int)$act->progreso); ?>%</td><?php endif; ?>
+                                <?php if ($verPta): ?><td class="la-pta-celda hide-m">
                                     <?php if ($puedeEditar): ?>
                                         <button type="button" class="la-pta-btn <?php echo $fila['pta_ok'] ? 'la-pta-ok' : 'la-pta-no'; ?>" data-actividad="<?php echo s($act->id); ?>" title="Clic para alternar OK / !"><?php echo $fila['pta_ok'] ? 'OK' : '!'; ?></button>
                                     <?php else: ?>
                                         <span class="<?php echo $fila['pta_ok'] ? 'la-pta-ok' : 'la-pta-no'; ?>"><?php echo $fila['pta_ok'] ? 'OK' : '!'; ?></span>
                                     <?php endif; ?>
-                                </td>
+                                </td><?php endif; ?>
                             <?php endif; ?>
                         <?php endforeach; ?>
-                        <?php foreach ($tipos as $t): ?>
+                        <?php if ($verLim): foreach ($tipos as $t): ?>
                             <td class="la-lim hide-m <?php echo isset($fila['tipos'][$t->id]) ? 'la-lim-on' : ''; ?>" <?php if (isset($fila['tipos'][$t->id])) echo 'style="--tipo:' . s($t->color) . '" title="' . s($t->nombre) . '"'; ?>>
                                 <?php echo isset($fila['tipos'][$t->id]) ? '●' : ''; ?>
                             </td>
-                        <?php endforeach; ?>
+                        <?php endforeach; endif; ?>
                     </tr>
                 <?php endforeach; ?>
             <?php endforeach; ?>

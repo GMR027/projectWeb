@@ -77,8 +77,9 @@
                 <?php endif; ?>
             </div>
             <div class="header-text">
-                <h1><?php echo htmlspecialchars($proyecto->nombre); ?></h1>
-                <p><?php echo htmlspecialchars($proyecto->codigo); ?> · <?php echo htmlspecialchars($proyecto->ubicacion); ?></p>
+                <?php $nomPrograma = \Classes\ProgramaColumnas::nombrePrograma($proyecto); ?>
+                <h1><?php echo htmlspecialchars($nomPrograma); ?></h1>
+                <p><?php echo $nomPrograma !== $proyecto->nombre ? htmlspecialchars($proyecto->nombre) . ' · ' : ''; ?><?php echo htmlspecialchars($proyecto->codigo); ?> · <?php echo htmlspecialchars($proyecto->ubicacion); ?></p>
             </div>
             <div class="header-meta">
                 <div><strong>Inicio:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_inicio)); ?></div>
@@ -88,18 +89,21 @@
         </div>
 
         <h2>Desglose WBS & Partidas</h2>
+        <?php
+        // Ancho relativo de cada columna (se normaliza a 100 %)
+        $pesos = ['codigo' => 8, 'nombre' => 30, 'fecha_inicio' => 9, 'fecha_fin' => 9, 'duracion' => 7, 'progreso' => 8, 'status' => 11, 'prioridad' => 9, 'restriccion' => 7,
+            'responsable' => 14, 'rec_inicio' => 10, 'rec_fin' => 10, 'predecesora' => 10, 'sucesora' => 10, 'libre_texto' => 13, 'libre_numero' => 9, 'libre_fecha' => 9, 'indicador' => 7];
+        $sumaPesos = array_sum(array_map(fn($c) => $pesos[$c['k']] ?? 8, $columnasTabla)) ?: 1;
+        $fmtF = fn($f) => $f ? date('d/m/y', strtotime($f)) : '—';
+        $fmtN = fn($v) => $v === null || $v === '' ? '—' : rtrim(rtrim(number_format((float)$v, 4, '.', ''), '0'), '.');
+        $campoInd = $indicador['campo'];
+        ?>
         <table>
             <thead>
                 <tr>
-                    <th style="width:8%">WBS</th>
-                    <th style="width:32%">Nombre</th>
-                    <th style="width:9%">Inicio</th>
-                    <th style="width:9%">Fin</th>
-                    <th style="width:7%">Duración</th>
-                    <th style="width:8%">Progreso</th>
-                    <th style="width:11%">Status</th>
-                    <th style="width:9%">Prioridad</th>
-                    <th style="width:7%">Restric.</th>
+                    <?php foreach ($columnasTabla as $c): ?>
+                        <th style="width:<?php echo round(($pesos[$c['k']] ?? 8) * 100 / $sumaPesos, 1); ?>%"><?php echo htmlspecialchars($c['k'] === 'restriccion' && !$c['propio'] ? 'Restric.' : ($c['k'] === 'fecha_inicio' && !$c['propio'] ? 'Inicio' : ($c['k'] === 'fecha_fin' && !$c['propio'] ? 'Fin' : $c['n']))); ?></th>
+                    <?php endforeach; ?>
                 </tr>
             </thead>
             <tbody>
@@ -109,25 +113,32 @@
                     $dur = $esPartida ? '—' : (!empty($fila['hito']) ? 'Hito' : number_format($calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']), 1) . ' d');
                 ?>
                     <tr class="<?php echo $esPartida ? 'partida' : 'actividad'; ?>">
-                        <td class="mono"><?php echo htmlspecialchars($fila['codigo']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['nombre']); ?></td>
-                        <td class="mono"><?php echo $fila['fecha_inicio'] ? date('d/m/y', strtotime($fila['fecha_inicio'])) : '—'; ?></td>
-                        <td class="mono"><?php echo $fila['fecha_fin'] ? date('d/m/y', strtotime($fila['fecha_fin'])) : '—'; ?></td>
-                        <td class="mono"><?php echo $dur; ?></td>
-                        <td class="mono"><?php echo (int)$fila['progreso']; ?>%</td>
-                        <td>
-                            <?php if (!$esPartida): ?>
-                                <span class="badge badge-<?php echo $fila['status']; ?>">
-                                    <?php echo ucfirst(str_replace('_', ' ', $fila['status'])); ?>
-                                </span>
+                        <?php foreach ($columnasTabla as $c): $k = $c['k']; ?>
+                            <?php if ($k === 'codigo'): ?><td class="mono"><?php echo htmlspecialchars($fila['codigo']); ?></td>
+                            <?php elseif ($k === 'nombre'): ?><td><?php echo htmlspecialchars($fila['nombre']); ?></td>
+                            <?php elseif ($k === 'fecha_inicio'): ?><td class="mono"><?php echo $fmtF($fila['fecha_inicio']); ?></td>
+                            <?php elseif ($k === 'fecha_fin'): ?><td class="mono"><?php echo $fmtF($fila['fecha_fin']); ?></td>
+                            <?php elseif ($k === 'duracion'): ?><td class="mono"><?php echo $dur; ?></td>
+                            <?php elseif ($k === 'progreso'): ?><td class="mono"><?php echo (int)$fila['progreso']; ?>%</td>
+                            <?php elseif ($k === 'status'): ?><td>
+                                <?php if (!$esPartida): ?><span class="badge badge-<?php echo $fila['status']; ?>"><?php echo ucfirst(str_replace('_', ' ', $fila['status'])); ?></span><?php endif; ?></td>
+                            <?php elseif ($k === 'prioridad'): ?><td><?php echo $esPartida ? '—' : ucfirst($fila['prioridad']); ?></td>
+                            <?php elseif ($k === 'restriccion'): ?><td style="text-align:center">
+                                <?php if (!$esPartida && $fila['tiene_restriccion']): ?><span class="restriccion-dot">●</span><?php endif; ?></td>
+                            <?php elseif ($k === 'responsable' || $k === 'libre_texto'): ?><td><?php echo $esPartida || ($fila[$k] ?? '') === '' ? '—' : htmlspecialchars((string)$fila[$k]); ?></td>
+                            <?php elseif ($k === 'libre_numero'): ?><td class="mono" style="text-align:right"><?php echo $esPartida ? '—' : $fmtN($fila['libre_numero'] ?? null); ?></td>
+                            <?php elseif ($k === 'rec_inicio' || $k === 'rec_fin' || $k === 'libre_fecha'): ?><td class="mono"><?php echo $esPartida ? '—' : $fmtF($fila[$k] ?? null); ?></td>
+                            <?php elseif ($k === 'predecesora' || $k === 'sucesora'): $lista = $esPartida ? [] : ($vecinas[$k === 'predecesora' ? 'pred' : 'suc'][(int)$fila['id']] ?? []); ?>
+                                <td class="mono"><?php echo $lista ? htmlspecialchars(implode(', ', array_map(fn($i) => $codigosAct[$i] ?? '', $lista))) : '—'; ?></td>
+                            <?php elseif ($k === 'indicador'):
+                                $vi = $campoInd === 'duracion' ? (!$esPartida && empty($fila['hito']) ? $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']) : null)
+                                    : ($campoInd === 'libre_numero' ? ($esPartida ? null : ($fila['libre_numero'] ?? null)) : ($fila['progreso'] ?? null));
+                                $colI = \Classes\ProgramaColumnas::colorIndicador($indicador['reglas'], $vi); ?>
+                                <td style="text-align:center"><?php if ($colI): ?><span style="color:<?php echo htmlspecialchars($colI); ?>;font-size:12pt">●</span><?php else: ?>—<?php endif; ?></td>
+                            <?php elseif (!empty($c['campo'])): $vcp = $esPartida ? '' : \Classes\CamposPersonalizados::texto($c['campo'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? ''); ?>
+                                <td><?php echo $vcp === '' ? '—' : htmlspecialchars($vcp); ?></td>
                             <?php endif; ?>
-                        </td>
-                        <td><?php echo $esPartida ? '—' : ucfirst($fila['prioridad']); ?></td>
-                        <td style="text-align:center">
-                            <?php if (!$esPartida && $fila['tiene_restriccion']): ?>
-                                <span class="restriccion-dot">●</span>
-                            <?php endif; ?>
-                        </td>
+                        <?php endforeach; ?>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

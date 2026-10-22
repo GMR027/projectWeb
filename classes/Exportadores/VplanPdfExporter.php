@@ -14,11 +14,20 @@ class VplanPdfExporter extends BaseExporter
 {
     private string $lamina = 'todas';
     private int $paquete = 0;
+    /** @var int[] láminas elegidas (vacío = usar «lamina») */
+    private array $ids = [];
 
     /** Limita «todas» a las láminas de un vPlan (0 = todos los vPlan del proyecto) */
     public function setPaquete(int $paquete): self
     {
         $this->paquete = $paquete;
+        return $this;
+    }
+
+    /** Varias láminas a la vez (se exportan aunque estén ocultas, en el orden de los vPlan) */
+    public function setLaminas(array $ids): self
+    {
+        $this->ids = array_values(array_filter(array_map('intval', $ids)));
         return $this;
     }
 
@@ -111,7 +120,9 @@ class VplanPdfExporter extends BaseExporter
     {
         $proyecto = $this->proyecto;
         // Una lámina elegida se exporta aunque esté oculta; «todas» lleva solo las visibles, en el orden de los vPlan
-        if ($this->lamina !== 'todas') {
+        if ($this->ids) {
+            $laminas = array_values(array_filter(VplanLamina::deProyecto((int)$proyecto->id), fn($l) => in_array((int)$l->id, $this->ids, true)));
+        } elseif ($this->lamina !== 'todas') {
             $laminas = array_values(array_filter(VplanLamina::deProyecto((int)$proyecto->id), fn($l) => (int)$l->id === (int)$this->lamina));
         } else {
             $laminas = VplanLamina::visiblesDeProyecto((int)$proyecto->id, $this->paquete ?: null);

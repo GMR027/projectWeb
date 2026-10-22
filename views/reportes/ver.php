@@ -24,14 +24,18 @@
         <div class="card">
             <h3>Actividades del programa</h3>
             <?php if (!$actividades): ?><p class="text-muted">Sin actividades.</p><?php endif; ?>
+            <?php if (isset($_GET['avance'])): ?><div class="alerta alerta-exito"><?php echo (int)$_GET['avance'] ? (int)$_GET['avance'] . ' actividad(es) con avance actualizado al ' . s(fecha_corta_es($reporte->fecha)) . '.' : 'No cambió ningún avance.'; ?></div><?php endif; ?>
+            <?php if ($puede && $actividades): ?><form method="post" action="/reportes/avance"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo s($reporte->id); ?>"><?php endif; ?>
             <ul class="rd-acts">
                 <?php foreach ($actividades as [$a, $p]): ?>
                     <li>
                         <span class="mono"><?php echo s($a->codigo); ?></span> <strong><?php echo s($a->nombre); ?></strong>
-                        <div class="text-sm text-muted"><?php echo s($p->nombre); ?> · <?php echo s(fecha_corta_es($a->fecha_inicio)); ?> → <?php echo s(fecha_corta_es($a->fecha_fin)); ?> · <?php echo $a->esHito() ? 'Hito' : (int)$a->progreso . ' %'; ?></div>
+                        <div class="text-sm text-muted"><?php echo s($p->nombre); ?> · <?php echo s(fecha_corta_es($a->fecha_inicio)); ?> → <?php echo s(fecha_corta_es($a->fecha_fin)); ?> · <?php echo $a->esHito() ? 'Hito' : (int)$a->progreso . ' %'; ?>
+                            <?php if ($puede && !$a->esHito()): ?> · <label>Avance real: <input type="number" name="avance[<?php echo (int)$a->id; ?>]" min="0" max="100" step="1" value="<?php echo (int)$a->progreso; ?>" style="width:7rem"> %</label><?php endif; ?></div>
                     </li>
                 <?php endforeach; ?>
             </ul>
+            <?php if ($puede && $actividades): ?><button type="submit" class="btn btn-primary btn-sm">Actualizar avance de las actividades</button> <small class="text-muted">Se anota con la fecha de este reporte (Curva S). Las fotos del reporte ya se ven en Evidencias, ligadas a estas actividades.</small></form><?php endif; ?>
         </div>
 
         <div class="card">
@@ -44,7 +48,7 @@
             <?php if (!$fotos): ?><p class="text-muted">Este reporte no tiene fotos.</p><?php endif; ?>
             <div class="rd-fotos">
                 <?php foreach ($fotos as $f): ?>
-                    <a class="rd-foto" href="/uploads/reportes/<?php echo s($f); ?>" target="_blank" rel="noopener"><img src="/uploads/reportes/<?php echo s($f); ?>" alt="Foto del reporte" loading="lazy"></a>
+                    <a class="rd-foto" href="/uploads/reportes/<?php echo s($f); ?>" target="_blank" rel="noopener" title="Ampliar foto" data-visor="/uploads/reportes/<?php echo s($f); ?>"><img src="/uploads/reportes/<?php echo s($f); ?>" alt="Foto del reporte" loading="lazy"></a>
                 <?php endforeach; ?>
             </div>
         </div>

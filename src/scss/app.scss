@@ -15,6 +15,7 @@
 @use 'componentes/tablas';
 @use 'componentes/badges';
 @use 'componentes/revisiones';
+@use 'componentes/salud';
 @use 'componentes/alertas';
 @use 'componentes/modal';
 @use 'componentes/iconos';
@@ -42,6 +43,8 @@
 @use 'paginas/vplan';
 @use 'paginas/simbolos';
 @use 'paginas/cambios';
+@use 'paginas/fase3';
+@use 'paginas/personalizacion';
 @use 'paginas/empezar';
 @use 'componentes/divisor';
 @use 'layout/notificaciones';

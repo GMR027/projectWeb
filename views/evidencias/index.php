@@ -38,7 +38,7 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
 </div>
 <?php endif; ?>
 
-<div class="card">
+<div class="card hide-m">
     <form method="GET" action="/evidencias" class="ev-filtros">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div><label class="text-sm text-muted"><?php echo s(t('Partida')); ?></label><br>
@@ -71,28 +71,28 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
             <?php foreach (($g['reportes'] ?? []) as $r): ?>
                 <article class="ev-bloque">
                     <header>
-                        <span class="badge"><i class="fa-solid fa-clipboard-list"></i> <?php echo s(t('Reporte diario')); ?></span>
-                        <?php if (trim((string)$r['area']) !== ''): ?><strong><?php echo s($r['area']); ?></strong><?php endif; ?>
-                        <a class="text-sm" href="/reportes/ver?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$r['id']; ?>"><?php echo s(t('Ver reporte')); ?></a>
+                        <span class="badge hide-m"><i class="fa-solid fa-clipboard-list"></i> <?php echo s(t('Reporte diario')); ?></span>
+                        <?php if (trim((string)$r['area']) !== ''): ?><strong class="hide-m"><?php echo s($r['area']); ?></strong><?php endif; ?>
+                        <a class="text-sm ev-ver" href="/reportes/ver?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$r['id']; ?>"><?php echo s(t('Ver reporte')); ?></a>
                     </header>
                     <div class="ev-chips"><?php foreach ($r['acts'] as $aid): if ($nm = $nombreAct($aid)): ?><a class="ev-chip" href="<?php echo s($q(['actividad' => $aid, 'partida' => '', 'pagina' => ''])); ?>"><?php echo s(mb_strimwidth($nm, 0, 60, '…')); ?></a><?php endif; endforeach; ?></div>
-                    <?php if (trim((string)$r['comentarios']) !== ''): ?><p class="text-sm text-muted"><?php echo s(mb_strimwidth($r['comentarios'], 0, 220, '…')); ?></p><?php endif; ?>
+                    <?php if (trim((string)$r['comentarios']) !== ''): ?><p class="text-sm text-muted hide-m"><?php echo s(mb_strimwidth($r['comentarios'], 0, 220, '…')); ?></p><?php endif; ?>
                     <div class="ev-fotos"><?php foreach ($r['fotos'] as $f): ?><img src="/uploads/reportes/<?php echo s($f); ?>" data-visor="/uploads/reportes/<?php echo s($f); ?>" alt="Foto del reporte" loading="lazy"><?php endforeach; ?></div>
                 </article>
             <?php endforeach; ?>
             <?php if (!empty($g['subidas'])): ?>
                 <article class="ev-bloque">
-                    <header><span class="badge"><i class="fa-solid fa-camera"></i> <?php echo s(t('Subidas a actividades')); ?></span></header>
+                    <header><span class="badge hide-m"><i class="fa-solid fa-camera"></i> <?php echo s(t('Subidas a actividades')); ?></span></header>
                     <div class="ev-fotos ev-fotos-sub">
                         <?php foreach ($g['subidas'] as $e): ?>
                             <figure>
                                 <img src="<?php echo s($e->url()); ?>" data-visor="<?php echo s($e->url()); ?>" alt="<?php echo s($e->descripcion ?: 'Evidencia'); ?>" loading="lazy">
                                 <figcaption>
-                                    <?php if ($e->descripcion !== ''): ?><span><?php echo s($e->descripcion); ?></span><?php endif; ?>
-                                    <?php foreach (['departamento' => $e->departamento, 'categoria' => $e->categoria] as $k => $v): if ($v !== ''): ?><a class="ev-chip" href="<?php echo s($q([$k => $v, 'pagina' => ''])); ?>"><?php echo s($v); ?></a><?php endif; endforeach; ?>
+                                    <?php if ($e->descripcion !== ''): ?><span class="hide-m"><?php echo s($e->descripcion); ?></span><?php endif; ?>
+                                    <?php foreach (['departamento' => $e->departamento, 'categoria' => $e->categoria] as $k => $v): if ($v !== ''): ?><a class="ev-chip hide-m" href="<?php echo s($q([$k => $v, 'pagina' => ''])); ?>"><?php echo s($v); ?></a><?php endif; endforeach; ?>
                                     <?php if ($e->actividad_id && ($nm = $nombreAct((int)$e->actividad_id))): ?><a class="ev-chip" href="<?php echo s($q(['actividad' => (int)$e->actividad_id, 'partida' => '', 'pagina' => ''])); ?>"><?php echo s(mb_strimwidth($nm, 0, 50, '…')); ?></a><?php endif; ?>
                                     <?php if ($puedeEditar): ?>
-                                        <form method="POST" action="/evidencias/eliminar" data-confirm="¿Eliminar esta foto?|Se borra el archivo. Esta acción no se puede deshacer.|Sí, eliminar">
+                                        <form class="hide-m" method="POST" action="/evidencias/eliminar" data-confirm="¿Eliminar esta foto?|Se borra el archivo. Esta acción no se puede deshacer.|Sí, eliminar">
                                             <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$e->id; ?>">
                                             <button type="submit" class="btn btn-sm btn-ghost" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                                         </form>

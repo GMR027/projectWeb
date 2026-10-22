@@ -19,7 +19,7 @@ class Revisiones
         'no_cumple' => ['No cumple', 'fa-circle-xmark'],
         'sin_evaluar' => ['Sin evaluar', 'fa-circle'],
     ];
-    public const TIPOS = ['material' => 'Material', 'actividad' => 'Actividad', 'herramienta' => 'Herramienta de IA'];
+    public const TIPOS = ['material' => 'Material', 'actividad' => 'Actividad', 'herramienta' => 'Herramienta de IA', 'rfi' => 'RFI'];
 
     /** Herramientas de IA que se siguen: clave => [título, SQL de la última ejecución ya registrada por la herramienta] */
     public const HERRAMIENTAS = [
@@ -42,6 +42,12 @@ class Revisiones
     {
         $n = fn($k) => mb_strtolower(trim((string)preg_replace('/\s+/u', ' ', (string)($a[$k] ?? ''))));
         return md5(implode('|', array_map($n, ['codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin'])));
+    }
+
+    public static function huellaRfi(array $r): string
+    {
+        $n = fn($k) => mb_strtolower(trim((string)preg_replace('/\s+/u', ' ', (string)($r[$k] ?? ''))));
+        return md5(implode('|', array_map($n, ['asunto', 'pregunta', 'respuesta', 'estado', 'fecha_limite', 'actividad_id'])));
     }
 
     /** Resume los datos del proyecto (actividades, materiales y vínculos con normativa): si cambian después de ejecutar una herramienta, queda desactualizada */
@@ -85,6 +91,11 @@ class Revisiones
                 $e = self::estado($mapa[(string)$m['id']] ?? null, self::huellaMaterial($m));
                 $out[] = ['ref' => (string)$m['id'], 'nombre' => $m['nombre'], 'detalle' => trim($m['referencia'] . ' · ' . $m['especialidad'], ' ·')] + $e;
             }
+        } elseif ($tipo === 'rfi') {
+            foreach (self::filas("SELECT * FROM rfis WHERE proyecto_id = $pid ORDER BY fecha DESC, id DESC") as $r) {
+                $e = self::estado($mapa[(string)$r['id']] ?? null, self::huellaRfi($r));
+                $out[] = ['ref' => (string)$r['id'], 'nombre' => $r['numero'] . ' ' . $r['asunto'], 'detalle' => trim(ucfirst($r['estado']) . ' · ' . $r['responsable'], ' ·')] + $e;
+            }
         } else {
             foreach (self::filas("SELECT a.*, p.nombre partida FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid ORDER BY p.orden, p.codigo, a.orden, a.codigo") as $a) {
                 $e = self::estado($mapa[(string)$a['id']] ?? null, self::huellaActividad($a));
@@ -108,7 +119,7 @@ class Revisiones
 
     public static function resumen(int $pid): array
     {
-        return ['materiales' => self::conteo(self::elementos($pid, 'material')), 'actividades' => self::conteo(self::elementos($pid, 'actividad')), 'herramientas' => self::conteoHerramientas(self::herramientas($pid))];
+        return ['materiales' => self::conteo(self::elementos($pid, 'material')), 'actividades' => self::conteo(self::elementos($pid, 'actividad')), 'rfis' => self::conteo(self::elementos($pid, 'rfi')), 'herramientas' => self::conteoHerramientas(self::herramientas($pid))];
     }
 
     // ---------- escritura ----------
@@ -117,6 +128,10 @@ class Revisiones
     {
         $id = (int)$ref;
         if ($tipo === 'material') return (string)(self::filas("SELECT nombre FROM materiales WHERE id = $id AND proyecto_id = $pid")[0]['nombre'] ?? '');
+        if ($tipo === 'rfi') {
+            $r = self::filas("SELECT numero, asunto FROM rfis WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
+            return $r ? $r['numero'] . ' ' . $r['asunto'] : '';
+        }
         if ($tipo === 'actividad') {
             $a = self::filas("SELECT a.codigo, a.nombre FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE a.id = $id AND p.proyecto_id = $pid")[0] ?? null;
             return $a ? $a['codigo'] . ' ' . $a['nombre'] : '';
@@ -131,6 +146,10 @@ class Revisiones
         if ($tipo === 'material') {
             $m = self::filas("SELECT * FROM materiales WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
             return $m ? self::huellaMaterial($m) : null;
+        }
+        if ($tipo === 'rfi') {
+            $r = self::filas("SELECT * FROM rfis WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
+            return $r ? self::huellaRfi($r) : null;
         }
         if ($tipo === 'actividad') {
             $a = self::filas("SELECT a.* FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE a.id = $id AND p.proyecto_id = $pid")[0] ?? null;

@@ -86,9 +86,11 @@ class Punch
         $campos = "titulo = '" . self::esc($titulo) . "', descripcion = '" . self::esc(mb_substr((string)($d['descripcion'] ?? ''), 0, 3000)) . "', actividad_id = " . ($aid ?: 'NULL') . ", ubicacion = '" . self::esc(mb_substr((string)($d['ubicacion'] ?? ''), 0, 200)) . "', categoria = '" . self::esc(mb_substr((string)($d['categoria'] ?? ''), 0, 60))
             . "', severidad = '$sev', responsable = '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', contratista = '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', fecha_limite = " . ($lim && $lim->format('Y-m-d') === $d['fecha_limite'] ? "'{$d['fecha_limite']}'" : 'NULL');
         $db = self::db();
-        if ($existente) { $db->query("UPDATE punch_items SET $campos WHERE id = " . (int)$existente['id'] . " AND proyecto_id = $pid"); return [true, 'Pendiente actualizado.', (int)$existente['id']]; }
+        if ($existente) { $db->query("UPDATE punch_items SET $campos WHERE id = " . (int)$existente['id'] . " AND proyecto_id = $pid"); Webhooks::emitir($pid, 'punch.actualizado', ['id' => (int)$existente['id'], 'titulo' => $titulo, 'severidad' => $sev]); return [true, 'Pendiente actualizado.', (int)$existente['id']]; }
         $db->query("INSERT INTO punch_items SET proyecto_id = $pid, $campos, origen = '" . (in_array($origen, ['manual', 'inspeccion', 'ia'], true) ? $origen : 'manual') . "', creado_por = '" . self::esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "'");
-        return [true, 'Pendiente registrado.', (int)$db->insert_id];
+        $nuevo = (int)$db->insert_id;   // antes de emitir: el aviso hace consultas
+        Webhooks::emitir($pid, 'punch.creado', ['id' => $nuevo, 'titulo' => $titulo, 'severidad' => $sev, 'ubicacion' => (string)($d['ubicacion'] ?? ''), 'responsable' => (string)($d['responsable'] ?? '')]);
+        return [true, 'Pendiente registrado.', $nuevo];
     }
 
     public static function ponerFoto(int $pid, int $id, string $campo, string $nombre): void
@@ -107,6 +109,7 @@ class Punch
         if (!$x || !isset(self::ESTADOS[$estado])) return [false, 'Pendiente no encontrado'];
         self::db()->query("UPDATE punch_items SET estado = '$estado', cerrado_en = " . ($estado === 'cerrado' ? 'NOW()' : 'NULL') . " WHERE id = $id AND proyecto_id = $pid");
         Auditoria::registrar($pid, 'punch', $estado === 'rechazado' ? 'rechazado' : 'aplicado', 'punch_estado', 'Pendiente «' . mb_substr($x['titulo'], 0, 80) . '»: ' . self::ESTADOS[$x['estado']] . ' → ' . self::ESTADOS[$estado], ['estado' => $x['estado']], ['estado' => $estado], $id, '', ['punch', $id, $x['titulo']]);
+        Webhooks::emitir($pid, 'punch.estado', ['id' => $id, 'titulo' => $x['titulo'], 'antes' => $x['estado'], 'estado' => $estado]);
         return [true, 'Estado actualizado.'];
     }
 
@@ -154,6 +157,6 @@ class Punch
         $filas = implode('', array_map(fn($x, $i) => '<tr><td>' . ($i + 1) . '</td><td><b>' . $e($x['titulo']) . '</b><br>' . $e(mb_substr((string)$x['descripcion'], 0, 220)) . '</td><td>' . $e($x['ubicacion']) . '</td><td>' . $e($x['categoria']) . '</td><td>' . $e(self::SEVERIDADES[$x['severidad']]) . '</td><td>' . $e($x['responsable'] ?: $x['contratista']) . '</td><td>' . $fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '') . '</td><td>' . $e(self::ESTADOS[$x['estado']]) . '</td></tr>', $items, array_keys($items)));
         $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:9px}h1{font-size:15px;margin:0}h2{font-size:10px;color:#555;margin:2px 0 10px;font-weight:normal}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:3px 5px;vertical-align:top;text-align:left}th{background:#e8ecf1}</style></head><body><h1>Punch list' . ($contratista !== '' ? ' · ' . $e($contratista) : '') . '</h1><h2>' . $e($p->nombre) . ' · ' . count($items) . ' pendiente(s) · generado el ' . date('d/m/Y H:i') . '</h2>'
             . '<table><thead><tr><th>#</th><th>Pendiente</th><th>Ubicación</th><th>Categoría</th><th>Severidad</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th></tr></thead><tbody>' . $filas . '</tbody></table></body></html>';
-        return Pdf::generar($html, 'letter', 'landscape');
+        return Pdf::generar($html, 'letter', 'landscape', ['marca' => $p]);
     }
 }

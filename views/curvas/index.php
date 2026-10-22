@@ -14,7 +14,7 @@
     <?php if (empty($curvas)): ?>
         <p class="text-muted">Aún no hay curvas. Crea una para medir, por ejemplo, el cableado o la tubería.</p>
     <?php else: ?>
-    <table class="tabla">
+    <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Curva</th><th class="hide-m">Material</th><th class="hide-m">Cantidad</th><th class="hide-m">Tipo</th><th class="hide-m">Inicio</th><th class="hide-m">Fin</th><th class="hide-m">Semanas</th><th class="hide-m">Avance real</th><th>Acciones</th></tr></thead>
         <tbody>
         <?php foreach ($curvas as $c): $r = $resumen[$c->id]; ?>
@@ -28,19 +28,19 @@
                 <td class="mono hide-m"><?php echo (int)$r['periodos']; ?></td>
                 <td class="mono hide-m"><?php echo $r['avance_real'] === null ? '—' : $r['avance_real'] . '%'; ?></td>
                 <td class="acciones">
-                    <a href="/curvas/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-ghost">Ver</a>
+                    <a href="/curvas/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-primary">Ver</a>
                     <?php if ($puedeEditar): ?>
-                        <a href="/curvas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/curvas/eliminar" style="display:inline" data-confirm="¿Eliminar curva?|Se perderán también los datos reales capturados.">
+                        <a href="/curvas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
+                        <span class="hide-m"><form method="POST" action="/curvas/eliminar" style="display:inline" data-confirm="¿Eliminar curva?|Se perderán también los datos reales capturados.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($c->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger">✕</button>
-                        </form>
+                        </form></span>
                     <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
-    </table>
+    </table></div>
     <?php endif; ?>
 </div>

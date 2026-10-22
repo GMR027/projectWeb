@@ -73,3 +73,18 @@
     &:hover { background: var(--bg-tertiary); color: inherit; }
     &.activa { background: var(--bg-tertiary); border-color: var(--primary); color: var(--primary); font-weight: 600; } } }
 
+
+// Herramientas de IA, fase 2: aprobación por lotes, niveles de riesgo, revertir por tanda, resumen y medidor
+.ia-aviso { margin-bottom: 1.6rem; padding: 1.2rem 1.6rem; border-left: .4rem solid var(--primary); }
+.ia-lote { display: flex; flex-wrap: wrap; gap: 1.2rem 2rem; align-items: center; justify-content: space-between; margin-bottom: 1.6rem; p { margin: .4rem 0 0; } }
+.ia-riesgo { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); white-space: nowrap;
+    &.ia-riesgo-permiso { color: var(--primary); border: 1px solid var(--primary); }
+    &.ia-riesgo-simple { color: var(--text-muted); } }
+.ia-riesgos, .ia-tanda { margin: 1.6rem 0; summary { cursor: pointer; } form, > p, .ia-tanda__form, #tanda-res { margin-top: 1.2rem; } }
+.ia-riesgos__lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr)); gap: .8rem 2rem; margin: 1.2rem 0 1.6rem; }
+.ia-riesgos__fila { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 1.3rem; }
+.ia-tanda__form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
+.ia-tanda__lista { list-style: none; padding: 0; margin: 0 0 1.2rem; max-height: 32rem; overflow: auto; li { padding: .6rem 0; border-bottom: 1px solid var(--border); } label { display: flex; gap: 1rem; align-items: flex-start; } }
+.ia-bloque { margin-bottom: 1.6rem; h3 { display: flex; gap: .8rem; align-items: center; margin-bottom: 1rem; } }
+.ia-lista { list-style: none; padding: 0; margin: 0 0 1rem; li { padding: .6rem 0; border-bottom: 1px solid var(--border); } }
+.ia-vig { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin: 1.2rem 0; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } .ia-vig__activa { flex-direction: row; align-items: center; } }

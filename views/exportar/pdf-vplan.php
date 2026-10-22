@@ -147,12 +147,13 @@ foreach ($paginas as $pi => $d):
                 $rs = $nRec ? 2 : 1;
                 $cw = \Classes\VplanDiseno::columnasTareas(\Classes\VplanDiseno::anchoRefCm($b), $nRec, $fz, $pz, $orden); $ci = 0;
                 $fijas = ['seq' => '# SEQ', 'tarea' => 'TASK', 'inicio' => 'START', 'fin' => 'FINISH', 'pct' => '%', 'restr' => 'CONSTRAINS'];
+                $prg = \Classes\ProgramaColumnas::contextoVplan($proyecto);
                 ?>
                 <table class="t">
                     <tr><th colspan="<?php echo $cols; ?>" class="tit"><?php echo s($td['titulo']); ?></th></tr>
                     <tr><?php foreach ($orden as $o):
                         if ($o === 'rec') { for ($r = 1; $r <= $nRec; $r++): $ci += 2; ?><th colspan="2"><?php echo \Classes\Vplan::etiquetaRecovery($r); ?></th><?php endfor; continue; } ?>
-                        <th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[$ci++]; ?>%"><?php echo s($fijas[$o] ?? ($ctx[substr($o, 2)] ?? '')); ?></th>
+                        <th rowspan="<?php echo $rs; ?>" style="width:<?php echo $cw[$ci++]; ?>%"><?php echo s($fijas[$o] ?? ($prg['titulos'][$o] ?? ($ctx[substr($o, 2)] ?? ''))); ?></th>
                     <?php endforeach; ?></tr>
                     <?php if ($nRec): ?><tr><?php for ($r = 1; $r <= $nRec; $r++): ?><th>START</th><th>FINISH</th><?php endfor; ?></tr><?php endif; ?>
                     <?php foreach ($td['grupos'] as $g): ?>
@@ -168,6 +169,9 @@ foreach ($paginas as $pi => $d):
                                     case 'rec': foreach ($t['rec'] as $r => $rc): ?><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['inicio'])); ?></td><td class="c<?php echo $r > 0 ? ' rojotxt' : ''; ?>"><?php echo s($fd($rc['fin'])); ?></td><?php endforeach; break;
                                     case 'pct': ?><td class="c <?php echo $pg >= 100 ? 'verde' : ($pg > 0 ? 'amarillo' : ''); ?>"><?php echo $pg; ?>%</td><?php break;
                                     case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:<?php echo round($fz * 1.45 * $K, 1); ?>pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
+                                    case 'responsable': case 'libre_texto': case 'libre_numero': case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'predecesora': case 'sucesora': case 'indicador':
+                                        $vp = \Classes\ProgramaColumnas::valorVplan($o, $a, $prg); ?>
+                                        <td<?php echo in_array($o, ['responsable', 'libre_texto'], true) ? '' : ' class="c"'; ?>><?php if ($o === 'indicador'): if ($vp['color']): ?><span style="color:<?php echo s($vp['color']); ?>;font-size:<?php echo round($fz * 1.6, 1); ?>pt">●</span><?php endif; else: echo s($vp['texto']); endif; ?></td><?php break;
                                     default: ?><td><?php echo s($t['textos'][substr($o, 2)] ?? ''); ?></td><?php
                                 endswitch;
                             endforeach; ?>
@@ -212,9 +216,10 @@ foreach ($paginas as $pi => $d):
                     <table class="t otro">
                         <?php echo $colgroup; ?>
                         <tr><th colspan="<?php echo count($campos) + 1; ?>" class="tit"><?php echo s($tb->titulo); ?></th></tr>
-                        <tr><th>N.</th><?php foreach ($campos as [$etq]): ?><th><?php echo s($etq); ?></th><?php endforeach; ?></tr>
+                        <?php $estEncPdf = $tb->estiloEncabezados(); ?>
+                        <tr><th>N.</th><?php foreach ($campos as $k => [$etq]): ?><th<?php echo !empty($estEncPdf[$k]) ? ' style="' . s($estEncPdf[$k]) . '"' : ''; ?>><?php echo s($etq); ?></th><?php endforeach; ?></tr>
                         <?php foreach ($b2['filas'] as $f): ?>
-                            <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td<?php echo ($metaPdf[$k]['t'] ?? '') === 'foto' ? ' class="c"' : ''; ?>><?php
+                            <tr><td class="c"><?php echo (int)$f['n']; ?></td><?php foreach ($campos as $k => $c): ?><td<?php echo ($metaPdf[$k]['t'] ?? '') === 'foto' ? ' class="c"' : ''; ?><?php echo !empty($f['s' . substr($k, 1)]) ? ' style="' . s($f['s' . substr($k, 1)]) . '"' : ''; ?>><?php
                                 if (($metaPdf[$k]['t'] ?? '') === 'foto') { $mini = ($f['v' . substr($k, 1)] ?? '') !== '' ? \Classes\PunchVista::miniatura($f['v' . substr($k, 1)]) : null; echo $mini ? '<img src="' . $mini . '" style="height:' . round($fz * 3.4 * $K, 1) . 'pt">' : ''; }
                                 else echo s($f[$k] ?? ''); ?></td><?php endforeach; ?></tr>
                         <?php endforeach; ?>

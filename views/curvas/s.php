@@ -9,6 +9,7 @@ $fmt = fn($f) => date('d/m/y', strtotime($f));
     </div>
     <div class="la-controles">
         <a href="/curvas/maestra?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><i class="fa-solid fa-chart-area"></i> Gráfica maestra</a>
+        <?php if (puede_gestionar_proyecto($proyecto)): ?><a href="/costos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><i class="fa-solid fa-sack-dollar"></i> Costos</a><?php endif; ?>
         <a href="/curvas?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Curvas</a>
     </div>
 </div>

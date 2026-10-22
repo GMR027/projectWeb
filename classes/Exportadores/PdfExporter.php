@@ -63,11 +63,18 @@ class PdfExporter extends BaseExporter
             $modoCompacto = false;
         }
 
+        // La tabla del PDF sigue el diseño del programa (Diseñar programa): mismas columnas, nombres y orden, sin «Acciones»
+        $columnasTabla = array_values(array_filter(\Classes\ProgramaColumnas::columnas($proyecto), fn($c) => $c['k'] !== 'acciones'));
+        $indicador = \Classes\ProgramaColumnas::indicador($proyecto);
+        $vecinas = \Classes\ProgramaColumnas::vecinas((int)$proyecto->id);
+        $valoresCp = \Classes\CamposPersonalizados::valores((int)$proyecto->id, 'actividad');
+        $codigosAct = array_map(fn($a) => $a['codigo'], \Classes\Dependencias::actividades((int)$proyecto->id));
+
         ob_start();
         include __DIR__ . '/../../views/exportar/pdf-gantt.php';
         $html = ob_get_clean();
 
-        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true, 'chroot' => realpath(__DIR__ . '/../../public')]);
+        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto, 'isRemoteEnabled' => true, 'chroot' => realpath(__DIR__ . '/../../public')]);
 
         $nombreArchivo = $this->nombreFinal($nombreBase, 'pdf');
         $ruta = $this->carpetaSalida . '/' . $nombreArchivo;

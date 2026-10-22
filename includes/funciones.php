@@ -188,16 +188,59 @@ function numero_semana($fecha): int
 }
 
 /**
- * Nombre de archivo de exportación: año-mes-día-[prefijo-]nombre-CODIGO-EMPRESA.ext
- * El prefijo (p. ej. el nombre de la curva) va antes del nombre que escribe el usuario.
+ * Nombre de archivo de exportación: [prefijo]-[curva-]nombre[-CODIGO-EMPRESA][-sufijo].ext
+ * Prefijo y sufijo los elige el usuario (ver nomenclatura_exportacion()); por defecto el prefijo es la fecha año-mes-día.
+ * El prefijo del exportador (p. ej. el nombre de la curva) va antes del nombre que escribe el usuario.
  */
 function generar_nombre_archivo(string $nombre_base, string $extension, ?\Model\Proyecto $proyecto = null, string $prefijo = ''): string
 {
-    $partes = [date('Y-m-d')];
-    foreach ([$prefijo, $nombre_base, $proyecto->codigo ?? '', $proyecto->empresa ?? ''] as $texto) {
-        if (trim($texto) !== '') $partes[] = slug_archivo($texto);
+    $n = nomenclatura_exportacion();
+    $partes = [];
+    if ($t = nomenclatura_pieza($n['pre'])) $partes[] = $t;
+    $medio = [$prefijo, $nombre_base];
+    if ($n['cod']) { $medio[] = $proyecto->codigo ?? ''; $medio[] = $proyecto->empresa ?? ''; }
+    foreach ($medio as $texto) {
+        if (trim((string)$texto) !== '') $partes[] = slug_archivo($texto);
     }
+    if ($t = nomenclatura_pieza($n['suf'])) $partes[] = $t;
     return implode('-', $partes) . ".{$extension}";
+}
+
+/** Tipos de prefijo/sufijo del nombre de exportación */
+const NOMENCLATURA_TIPOS = ['ninguno', 'fecha_ymd', 'fecha_dmy', 'numerador', 'texto'];
+
+/**
+ * Nomenclatura vigente de la exportación (prefijo y sufijo + código/empresa). Sin configurar es la de siempre:
+ * fecha año-mes-día al inicio y CÓDIGO-EMPRESA al final. Se fija con nomenclatura_desde_post().
+ */
+function nomenclatura_exportacion(?array $fijar = null): array
+{
+    static $actual = ['pre' => ['tipo' => 'fecha_ymd', 'valor' => ''], 'suf' => ['tipo' => 'ninguno', 'valor' => ''], 'cod' => true];
+    if ($fijar !== null) $actual = $fijar;
+    return $actual;
+}
+
+/** Lee del formulario (nom_pre_tipo, nom_pre_valor, nom_suf_tipo, nom_suf_valor, nom_cod) la nomenclatura elegida en el Centro de Exportación */
+function nomenclatura_desde_post(array $p): void
+{
+    if (!isset($p['nom_pre_tipo']) && !isset($p['nom_suf_tipo'])) return;
+    $pieza = function (string $k) use ($p) {
+        $t = (string)($p["nom_{$k}_tipo"] ?? 'ninguno');
+        return ['tipo' => in_array($t, NOMENCLATURA_TIPOS, true) ? $t : 'ninguno', 'valor' => mb_substr(trim((string)($p["nom_{$k}_valor"] ?? '')), 0, 60)];
+    };
+    nomenclatura_exportacion(['pre' => $pieza('pre'), 'suf' => $pieza('suf'), 'cod' => !empty($p['nom_cod'])]);
+}
+
+/** Texto de una pieza de la nomenclatura (vacío si no aplica) */
+function nomenclatura_pieza(array $pz): string
+{
+    return match ($pz['tipo']) {
+        'fecha_ymd' => date('Y-m-d'),
+        'fecha_dmy' => date('d-m-Y'),
+        'numerador' => str_pad((string)max(1, (int)$pz['valor']), 3, '0', STR_PAD_LEFT),
+        'texto' => trim((string)$pz['valor']) !== '' ? slug_archivo($pz['valor']) : '',
+        default => '',
+    };
 }
 
 

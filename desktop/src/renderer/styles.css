@@ -228,3 +228,14 @@ button.peligro { background:#dc2626; color:#fff; } #alm-sec, #des-sec { height:a
 .tdoc-scroll { overflow:auto; max-height:50vh; border:1px solid var(--borde); border-radius:.6rem; margin:.6rem 0; }
 .tdoc-tabla { border-collapse:collapse; font-size:.8rem; } .tdoc-tabla td, .tdoc-tabla th { border:1px solid var(--borde); padding:0; white-space:nowrap; } .tdoc-tabla input { width:100%; min-width:8rem; border:0; padding:.2rem .35rem; background:transparent; color:inherit; font:inherit; } .tdoc-tabla th input { font-weight:700; }
 .tdoc-x { border:0; background:transparent; color:#ef4444; cursor:pointer; padding:0 .3rem; }
+
+/* Diálogo de confirmación común (ui.js) */
+.dlg-fondo { position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(0,0,0,.62); backdrop-filter:blur(3px); }
+.dlg-fondo[hidden] { display:none; }
+.dlg-caja { width:min(42rem,100%); background:var(--card); color:var(--txt); border:1px solid var(--borde); border-radius:.9rem; padding:1.4rem; box-shadow:0 1.4rem 4rem rgba(0,0,0,.5); }
+.dlg-icono { display:flex; align-items:center; justify-content:center; width:2.8rem; height:2.8rem; margin-bottom:.8rem; border-radius:50%; background:rgba(249,115,22,.14); border:1px solid rgba(249,115,22,.45); color:var(--acc); font-weight:800; font-size:1.3rem; }
+.dlg-fondo[data-tono="peligro"] .dlg-icono { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.45); color:#ef4444; }
+.dlg-titulo { margin:0 0 .5rem; font-size:1.05rem; }
+.dlg-mensaje { margin:0 0 1.2rem; color:var(--tenue); }
+.dlg-acciones { display:flex; justify-content:flex-end; gap:.6rem; }
+.dlg-fondo[data-tono="peligro"] [data-aceptar] { background:#ef4444; color:#fff; }

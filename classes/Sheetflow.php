@@ -256,6 +256,12 @@ class Sheetflow
             'restricciones' => ['Registro de restricciones', 'Descripción, responsable, fecha compromiso y estado', 'fa-ban'],
             'asistencia' => ['Asistencia semanal', 'Nombre, puesto y los seis días de la semana', 'fa-user-check'],
             'programa' => ['Programa (partidas y actividades)', 'Se llena con el programa de obra del proyecto', 'fa-bars-progress'],
+            'estimacion' => ['Estimación de obra', 'Conceptos, cantidades, precios, amortización y neto a pagar', 'fa-file-invoice-dollar'],
+            'submittals' => ['Control de submittals', 'Documentos, disciplina, estado y fechas de respuesta', 'fa-folder-open'],
+            'bitacora' => ['Bitácora de obra', 'Registro diario de personal, actividades, materiales y equipo', 'fa-clipboard-list'],
+            'almacen' => ['Control de almacén', 'Entradas, salidas, existencia y alerta de compra', 'fa-warehouse'],
+            'calidad' => ['Inspección de calidad', 'Puntos de inspección, cumplimiento y observaciones', 'fa-clipboard-check'],
+            'equipo' => ['Control de equipo', 'Horas, tarifa e importe de maquinaria y equipo rentado', 'fa-truck'],
         ];
     }
 
@@ -307,6 +313,51 @@ class Sheetflow
                 }
                 if (!$filas) $filas = $vacias(5, 6);
                 return self::plano([['n' => 'Código'], ['n' => 'Partida / actividad'], ['n' => 'Inicio', 't' => 'fecha'], ['n' => 'Fin', 't' => 'fecha'], ['n' => 'Días', 't' => 'numero'], ['n' => 'Avance', 't' => 'porcentaje']], $filas);
+            case 'estimacion':
+                $filas = [];
+                for ($i = 2; $i <= 16; $i++) $filas[] = ['', '', '', '', '', "=D$i*E$i", '', "=F$i*G$i/100", "=F$i-H$i"];
+                return self::plano([
+                    ['n' => 'No.', 'w' => 50], ['n' => 'Concepto', 'w' => 240], ['n' => 'Unidad', 'w' => 70],
+                    ['n' => 'Cantidad', 't' => 'numero', 'w' => 80], ['n' => 'P.U.', 't' => 'moneda', 'w' => 100],
+                    ['n' => 'Importe', 't' => 'moneda', 'tot' => 'suma', 'w' => 110],
+                    ['n' => 'Amortización %', 't' => 'porcentaje', 'w' => 100],
+                    ['n' => 'Amortización', 't' => 'moneda', 'tot' => 'suma', 'w' => 110],
+                    ['n' => 'Neto a pagar', 't' => 'moneda', 'tot' => 'suma', 'w' => 110],
+                ], $filas);
+            case 'submittals':
+                return self::plano([
+                    ['n' => 'No.', 'w' => 50], ['n' => 'Documento', 'w' => 240], ['n' => 'Disciplina', 'w' => 110],
+                    ['n' => 'Especificación', 'w' => 140], ['n' => 'Estado', 't' => 'lista', 'op' => ['Pendiente', 'Enviado', 'Aprobado', 'Aprobado con comentarios', 'Rechazado', 'Resubmitir'], 'w' => 130],
+                    ['n' => 'Fecha envío', 't' => 'fecha', 'w' => 100], ['n' => 'Fecha respuesta', 't' => 'fecha', 'w' => 110], ['n' => 'Responsable', 'w' => 120],
+                ], $vacias(12, 8));
+            case 'bitacora':
+                return self::plano([
+                    ['n' => 'Fecha', 't' => 'fecha', 'w' => 100], ['n' => 'Clima', 'w' => 90], ['n' => 'Turno', 'w' => 80],
+                    ['n' => 'Personal', 't' => 'numero', 'w' => 80], ['n' => 'Actividades', 'w' => 260], ['n' => 'Materiales', 'w' => 220],
+                    ['n' => 'Equipo', 'w' => 160], ['n' => 'Incidencias', 'w' => 220],
+                ], $vacias(12, 8));
+            case 'almacen':
+                $filas = [];
+                for ($i = 2; $i <= 16; $i++) $filas[] = ['', '', '', '', "=C$i-D$i", '', "=SI(E$i<F$i,\"Sí\",\"No\")", ''];
+                return self::plano([
+                    ['n' => 'Material', 'w' => 240], ['n' => 'Unidad', 'w' => 80],
+                    ['n' => 'Entrada', 't' => 'numero', 'tot' => 'suma', 'w' => 90], ['n' => 'Salida', 't' => 'numero', 'tot' => 'suma', 'w' => 90],
+                    ['n' => 'Existencia', 't' => 'numero', 'w' => 100], ['n' => 'Mínimo', 't' => 'numero', 'w' => 90],
+                    ['n' => '¿Comprar?', 'w' => 100], ['n' => 'Proveedor', 'w' => 160],
+                ], $filas);
+            case 'calidad':
+                return self::plano([
+                    ['n' => 'Punto de inspección', 'w' => 260], ['n' => 'Cumple', 't' => 'lista', 'op' => ['Sí', 'No', 'N/A'], 'w' => 90],
+                    ['n' => 'Observaciones', 'w' => 260], ['n' => 'Responsable', 'w' => 140], ['n' => 'Fecha', 't' => 'fecha', 'w' => 100],
+                ], $vacias(15, 5));
+            case 'equipo':
+                $filas = [];
+                for ($i = 2; $i <= 16; $i++) $filas[] = ['', '', '', "=B$i*C$i", '', '', ''];
+                return self::plano([
+                    ['n' => 'Equipo', 'w' => 200], ['n' => 'Horas', 't' => 'numero', 'w' => 80],
+                    ['n' => 'Tarifa', 't' => 'moneda', 'w' => 100], ['n' => 'Importe', 't' => 'moneda', 'tot' => 'suma', 'w' => 110],
+                    ['n' => 'Operador', 'w' => 140], ['n' => 'Fecha', 't' => 'fecha', 'w' => 100], ['n' => 'Observaciones', 'w' => 220],
+                ], $filas);
             case '': case 'blanco':
                 return self::vacia();
         }
@@ -685,6 +736,35 @@ class Sheetflow
             }
         }
         unset($f);
+        // formato de SheetFlow (colores, negrita, alineación) para que la lámina y el PDF se vean como la hoja
+        $fmt = $m['fmt'];
+        foreach ($out as $r => &$f) {
+            if ($r >= count($m['filas'])) break;
+            for ($c = 0; $c < $nc; $c++) $f['s' . $c] = self::cssVplan($fmt["$r,$c"] ?? [], $m['alinear'][$c] ?? 'izquierda');
+        }
+        unset($f);
+        return $out;
+    }
+
+    /** CSS de una celda para vPlan: sin tamaño de letra ni bordes (la lámina escala sola); la alineación de la columna si la celda no trae la suya */
+    public static function cssVplan(array $f, string $alinCol): string
+    {
+        unset($f['fs'], $f['im'], $f['bt'], $f['br'], $f['bb'], $f['bl']);
+        $f['al'] = $f['al'] ?? $alinCol;
+        return self::cssFmt($f, true);
+    }
+
+    /** CSS de los encabezados de una hoja para vPlan: ['c0' => css, …] (color del encabezado de la hoja si la celda no trae el suyo) */
+    public static function estiloEncabezados(SheetflowHoja $h, int $nc): array
+    {
+        $m = self::matriz($h);
+        $e = $m['estilo'];
+        $out = [];
+        for ($c = 0; $c < $nc; $c++) {
+            $f = $m['fmt']["-1,$c"] ?? [];
+            if (empty($f['bg']) && !empty($e['enc'])) { $f['bg'] = $e['enc']; if (empty($f['tc']) && !empty($e['encTxt'])) $f['tc'] = $e['encTxt']; }
+            $out['c' . $c] = self::cssVplan($f, 'centro');
+        }
         return $out;
     }
 

@@ -25,6 +25,60 @@ $q = fn(array $c) => http_build_query(array_filter(['proyecto' => $pid] + $c + $
     </div>
 </div>
 
+<details class="card ia-tanda" id="tanda">
+    <summary><strong><i class="fa-solid fa-rotate-left"></i> Revertir lo que hizo la IA</strong> <span class="text-muted text-sm">— de golpe, desde una hora</span></summary>
+    <p class="text-muted text-sm">Deshace los cambios aplicados desde la fecha y hora que elijas (inconsistencias, análisis de materiales, partidas del Programador y normativa vinculada), del más reciente al más antiguo. Primero ves la lista y eliges qué revertir; cada reversión queda en este historial.</p>
+    <div class="ia-tanda__form">
+        <label>Desde <input type="datetime-local" id="tanda-desde" value="<?php echo date('Y-m-d') . 'T00:00'; ?>"></label>
+        <button type="button" class="btn btn-sm btn-ghost" data-tanda-rapido="hoy">Hoy</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-tanda-rapido="1">Última hora</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-tanda-rapido="24">Últimas 24 h</button>
+        <button type="button" class="btn btn-primary btn-sm" id="tanda-ver"><i class="fa-solid fa-list-check"></i> Ver qué se revertiría</button>
+    </div>
+    <div id="tanda-res" aria-live="polite"></div>
+</details>
+<script>
+    (function () {
+        var desde = document.getElementById('tanda-desde'), res = document.getElementById('tanda-res'), pid = '<?php echo $pid; ?>';
+        var local = function (d) { var z = d.getTimezoneOffset() * 60000; return new Date(d - z).toISOString().slice(0, 16); };
+        var esc = function (t) { var e = document.createElement('div'); e.textContent = t == null ? '' : t; return e.innerHTML; };
+        document.querySelectorAll('[data-tanda-rapido]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.dataset.tandaRapido, d = new Date();
+                if (v === 'hoy') d.setHours(0, 0, 0, 0); else d = new Date(d.getTime() - Number(v) * 3600000);
+                desde.value = local(d);
+                document.getElementById('tanda-ver').click();
+            });
+        });
+        function enviar(extra) {
+            var d = new FormData();
+            d.append('proyecto', pid); d.append('desde', desde.value);
+            Object.keys(extra).forEach(function (k) { [].concat(extra[k]).forEach(function (v) { d.append(k + (Array.isArray(extra[k]) ? '[]' : ''), v); }); });
+            return fetch('/historial-cambios/revertir', { method: 'POST', body: d, credentials: 'same-origin' }).then(function (r) { return r.json(); });
+        }
+        document.getElementById('tanda-ver').addEventListener('click', function () {
+            res.textContent = 'Buscando…';
+            enviar({ modo: 'vista' }).then(function (j) {
+                if (!j.success) { res.textContent = j.error || 'No se pudo consultar'; return; }
+                if (!j.items.length) { res.innerHTML = '<p class="text-muted">No hay cambios de la IA por revertir desde esa hora (o ya se revirtieron).</p>'; return; }
+                res.innerHTML = '<ul class="ia-tanda__lista">' + j.items.map(function (x) {
+                    return '<li><label><input type="checkbox" value="' + x.id + '" checked> <span><b>' + esc(x.resumen) + '</b><br><small class="text-muted">' + esc(x.creado) + ' · ' + esc(x.herramienta) + (x.entidad ? ' · ' + esc(x.entidad) : '') + '</small></span></label></li>';
+                }).join('') + '</ul><button type="button" class="btn btn-primary" id="tanda-ok"><i class="fa-solid fa-rotate-left"></i> Revertir lo marcado</button> <span class="inc-msg" id="tanda-msg"></span>';
+                document.getElementById('tanda-ok').addEventListener('click', async function () {
+                    var ids = [].map.call(res.querySelectorAll('input:checked'), function (c) { return c.value; });
+                    if (!ids.length) return;
+                    if (!await window.confirmarModal({ titulo: '¿Revertir ' + ids.length + ' cambio(s)?', mensaje: 'Los datos del proyecto volverán a como estaban antes de que la IA los cambiara. Las propuestas vuelven a quedar pendientes.', aceptar: 'Revertir', tono: 'peligro' })) return;
+                    this.disabled = true;
+                    enviar({ modo: 'aplicar', ids: ids }).then(function (r) {
+                        document.getElementById('tanda-msg').textContent = r.mensaje || r.error || '';
+                        if (r.success) setTimeout(function () { location.reload(); }, 1800);
+                    });
+                });
+            }).catch(function () { res.textContent = 'Error de conexión'; });
+        });
+    })();
+</script>
+
 <form method="get" action="/historial-cambios" class="card inc-filtros">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <?php if ($filtros['entidad_tipo'] !== ''): ?><input type="hidden" name="entidad_tipo" value="<?php echo s($filtros['entidad_tipo']); ?>"><input type="hidden" name="entidad_id" value="<?php echo s($filtros['entidad_id']); ?>"><?php endif; ?>

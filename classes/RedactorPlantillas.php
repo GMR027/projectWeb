@@ -68,6 +68,59 @@ class RedactorPlantillas
                 . '<h2>Descripción de lo ocurrido</h2><p></p><h2>Causas probables</h2><p></p><h2>Acciones inmediatas</h2><p></p><h2>Acciones correctivas y preventivas</h2>' . self::tabla([['', '', '']], ['Acción', 'Responsable', 'Fecha']) . self::firmas([['Reporta', '{{usuario}}'], ['Seguridad', '']])],
             'checklist' => ['Lista de verificación', 'Puntos a revisar con casillas de cumplimiento', 'fa-list-check',
                 self::encabezado('Lista de verificación') . self::tabla([['', '☐ Sí  ☐ No  ☐ N/A', ''], ['', '☐ Sí  ☐ No  ☐ N/A', ''], ['', '☐ Sí  ☐ No  ☐ N/A', ''], ['', '☐ Sí  ☐ No  ☐ N/A', '']], ['Punto a verificar', 'Cumple', 'Observaciones']) . self::firmas([['Revisó', '{{usuario}}']])],
+            'bitacora' => ['Bitácora de obra', 'Registro diario de personal, actividades, materiales, equipo e incidencias', 'fa-clipboard-list',
+                self::encabezado('Bitácora de obra')
+                . '<h2>Datos del día</h2>' . self::tabla([['<strong>Fecha</strong>', '{{fecha}}', '<strong>Turno</strong>', ''], ['<strong>Clima</strong>', '', '<strong>Reporta</strong>', '{{usuario}}'], ['<strong>Ubicación / frente</strong>', '', '<strong>Supervisor</strong>', '']])
+                . '<h2>Personal en obra</h2>' . self::tabla([['', '', '', ''], ['', '', '', ''], ['', '', '', '']], ['Nombre', 'Puesto / cuadrilla', 'Entrada', 'Salida'])
+                . '<h2>Actividades realizadas</h2>' . self::tabla([['', '', '', ''], ['', '', '', ''], ['', '', '', '']], ['Actividad', 'Ubicación', 'Avance', 'Observaciones'])
+                . '<h2>Materiales recibidos</h2>' . self::tabla([['', '', '', ''], ['', '', '', '']], ['Material', 'Cantidad', 'Unidad', 'Proveedor / remisión'])
+                . '<h2>Equipo y maquinaria</h2>' . self::tabla([['', '', ''], ['', '', '']], ['Equipo', 'Horas', 'Operador'])
+                . '<h2>Incidencias, restricciones y notas</h2><p></p>'
+                . self::firmas([['Residente de obra', ''], ['Supervisor', ''], ['Contratista', '']])],
+            'reporte_semanal' => ['Reporte semanal de obra', 'Avance programado vs real, actividades, restricciones y plan de la próxima semana', 'fa-calendar-days',
+                self::encabezado('Reporte semanal de obra')
+                . '<h2>Datos del periodo</h2>' . self::tabla([['<strong>Semana</strong>', '', '<strong>Del</strong>', ''], ['<strong>Al</strong>', '', '<strong>Residente</strong>', '{{usuario}}']])
+                . '<h2>1. Resumen ejecutivo</h2><p>Principales avances, desviaciones y decisiones de la semana.</p>'
+                . '<h2>2. Avance por partida</h2>' . self::tabla([['', '', '', ''], ['', '', '', ''], ['', '', '', '']], ['Partida', '% programado', '% real', 'Desviación'])
+                . '<h2>3. Actividades de la semana</h2>' . self::tabla([['', '', '', ''], ['', '', '', ''], ['', '', '', '']], ['Actividad', 'Inicio', 'Fin', 'Avance / observaciones'])
+                . '<h2>4. Restricciones y riesgos</h2>' . self::tabla([['', '', '', ''], ['', '', '', '']], ['Restricción', 'Impacto', 'Responsable', 'Fecha compromiso'])
+                . '<h2>5. Plan de la próxima semana</h2><ul><li></li><li></li><li></li></ul>'
+                . '<h2>6. Apoyos requeridos</h2><p></p>'
+                . self::firmas([['Residente de obra', '{{usuario}}'], ['Supervisión', ''], ['Cliente', '']])],
+            'estimacion' => ['Estimación de obra', 'Estimación por conceptos con importes, amortización y retenciones', 'fa-file-invoice-dollar',
+                self::encabezado('Estimación de obra')
+                . '<h2>Datos de la estimación</h2>' . self::tabla([['<strong>Estimación No.</strong>', '', '<strong>Periodo</strong>', ''], ['<strong>Contrato / orden</strong>', '', '<strong>Fecha</strong>', '{{fecha}}'], ['<strong>Contratista</strong>', '', '<strong>Revisó</strong>', '{{usuario}}']])
+                . '<h2>Conceptos ejecutados</h2>' . self::tabla([['', '', '', '', '', ''], ['', '', '', '', '', ''], ['', '', '', '', '', ''], ['', '', '', '', '', '']], ['No.', 'Concepto', 'Unidad', 'Cantidad', 'P.U.', 'Importe'])
+                . '<h2>Resumen</h2>' . self::tabla([['Subtotal', '', ''], ['Amortización de anticipo (%)', '', ''], ['Retención (%)', '', ''], ['IVA', '', ''], ['<strong>Total a pagar</strong>', '', '']], ['Concepto', 'Porcentaje', 'Importe'])
+                . '<h2>Notas</h2><p>La estimación ampara los trabajos ejecutados y verificados en campo durante el periodo.</p>'
+                . self::firmas([['Elaboró', '{{usuario}}'], ['Revisó', ''], ['Autorizó', '']])],
+            'submittals' => ['Control de submittals', 'Lista de documentos técnicos con estado, revisión y fechas de respuesta', 'fa-folder-open',
+                self::encabezado('Control de submittals')
+                . '<p>Registro de documentos enviados para revisión y aprobación antes de la ejecución.</p>'
+                . self::tabla([['', '', '', '', '', '', ''], ['', '', '', '', '', '', ''], ['', '', '', '', '', '', '']], ['No.', 'Documento', 'Disciplina', 'Especificación', 'Estado', 'Enviado', 'Respuesta'])
+                . '<p><strong>Estados:</strong> Pendiente · Enviado · Aprobado · Aprobado con comentarios · Rechazado · Resubmitir.</p>'
+                . '<h2>Comentarios y pendientes</h2><p></p>'
+                . self::firmas([['Elaboró', '{{usuario}}'], ['Revisó', '']])],
+            'no_conformidad' => ['Reporte de no conformidad', 'Desviación de calidad con causa raíz, acción correctiva y cierre', 'fa-triangle-exclamation',
+                self::encabezado('Reporte de no conformidad')
+                . self::tabla([['<strong>No. de NC</strong>', '', '<strong>Fecha</strong>', '{{fecha}}'], ['<strong>Ubicación</strong>', '', '<strong>Detectado por</strong>', '{{usuario}}'], ['<strong>Actividad / partida</strong>', '', '<strong>Responsable</strong>', ''], ['<strong>Severidad</strong>', 'Crítica / Mayor / Menor', '<strong>Estado</strong>', 'Abierta / En proceso / Cerrada']])
+                . '<h2>Descripción de la no conformidad</h2><p></p><h2>Requisito incumplido</h2><p>Especificación, plano o norma aplicable.</p>'
+                . '<h2>Análisis de causa raíz</h2><p></p><h2>Acción inmediata</h2><p></p>'
+                . '<h2>Acción correctiva</h2>' . self::tabla([['', '', '', ''], ['', '', '', '']], ['Acción', 'Responsable', 'Fecha compromiso', 'Seguimiento'])
+                . '<h2>Verificación y cierre</h2><p></p>'
+                . self::firmas([['Reporta', '{{usuario}}'], ['Calidad', ''], ['Responsable del cierre', '']])],
+            'procedimiento' => ['Procedimiento constructivo', 'Secuencia de trabajo, recursos, control de calidad y seguridad', 'fa-screwdriver-wrench',
+                self::encabezado('Procedimiento constructivo')
+                . '<h2>1. Objetivo</h2><p>Definir la metodología, los recursos y los controles para ejecutar la actividad de forma segura y conforme a la especificación.</p>'
+                . '<h2>2. Alcance</h2><p>Aplica a las actividades de <strong>{{proyecto}}</strong> relacionadas con el presente procedimiento.</p>'
+                . '<h2>3. Referencias</h2><ul><li>Planos y especificaciones del proyecto</li><li>Normas aplicables</li><li>Procedimientos de calidad y seguridad</li></ul>'
+                . '<h2>4. Responsables</h2>' . self::tabla([['', ''], ['', ''], ['', '']], ['Puesto', 'Responsabilidad'])
+                . '<h2>5. Recursos</h2>' . self::tabla([['', '', ''], ['', '', ''], ['', '', '']], ['Material / equipo', 'Cantidad', 'Observaciones'])
+                . '<h2>6. Secuencia de trabajo</h2><ol><li>Preparación del área y verificación de condiciones.</li><li>Replanteo y trazo.</li><li>Ejecución de la actividad.</li><li>Inspección y liberación.</li><li>Limpieza y cierre.</li></ol>'
+                . '<h2>7. Control de calidad</h2>' . self::tabla([['', '', ''], ['', '', '']], ['Punto de inspección', 'Criterio de aceptación', 'Registro'])
+                . '<h2>8. Seguridad y medio ambiente</h2><p>Identificar peligros, aplicar el análisis de trabajo seguro, usar el equipo de protección personal y controlar los residuos.</p>'
+                . '<h2>9. Registros</h2><ul><li>Checklist de liberación</li><li>Reporte fotográfico</li><li>Certificados de materiales</li></ul>'
+                . self::firmas([['Elaboró', '{{usuario}}'], ['Revisó', ''], ['Autorizó', '']])],
         ];
     }
 

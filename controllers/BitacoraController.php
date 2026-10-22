@@ -18,8 +18,10 @@ class BitacoraController
         $deptos = \Classes\Catalogo::departamentos((int)$proyecto->id);
         $registros = array_values(array_filter($registros, fn($r) =>
             ($depto === '' || ($depto === '__sin' ? $r->departamento === '' : $r->departamento === $depto)) && ($imp === '' || $r->importancia === $imp)));
+        $pid = (int)$proyecto->id;
+        $cp = \Classes\CamposPersonalizados::aplicar($pid, 'bitacora', $registros, fn($r) => (int)$r->id);
         $router->render('bitacora/index', [
-            'titulo' => 'Bitácora - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'registros' => $registros,
+            'titulo' => 'Bitácora - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'registros' => $cp['items'], 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'bitacora'),
             'deptos' => $deptos, 'filtroDepto' => $depto, 'filtroImp' => $imp,
         ]);
     }

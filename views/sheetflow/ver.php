@@ -5,7 +5,7 @@
         <p class="text-muted"><?php echo s(formatear_fecha($hoja->fecha, 'd/m/Y')); ?><?php echo $hoja->departamento !== '' ? ' · ' . s($hoja->departamento) : ''; ?><?php echo $hoja->descripcion !== '' ? ' · ' . s($hoja->descripcion) : ''; ?></p>
     </div>
     <div class="la-controles">
-        <?php if ($puedeEditar): ?><a href="/sheetflow/abrir?<?php echo $q; ?>" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
+        <?php if ($puedeEditar): ?><a href="/sheetflow/abrir?<?php echo $q; ?>" class="btn btn-primary hide-m"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
         <?php if ($puedeDescargar): ?>
             <details class="gr-descargar">
                 <summary class="btn btn-ghost"><i class="fa-solid fa-download"></i> Descargar</summary>
@@ -23,7 +23,7 @@
 </div>
 <div class="card sf-ver"><div class="tabla-wrapper"><?php echo $tabla; ?></div></div>
 <?php if ($puedeEditar): ?>
-<div class="card sf-usos">
+<div class="card sf-usos hide-m">
     <h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla en otras herramientas</h3>
     <ul class="sf-lista-usos">
         <li><strong>vPlan:</strong> crea una tabla vinculada del catálogo de vPlan (en vivo, hasta 8 columnas y 200 renglones).

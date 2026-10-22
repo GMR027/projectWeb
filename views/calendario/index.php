@@ -5,6 +5,7 @@
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s($proyecto->codigo); ?></p>
     </div>
     <div>
+        <?php if ($puedeGestionar && !is_visitante()): ?><a href="/compartir?proyecto=<?php echo s($proyecto->id); ?>#calendario" class="btn btn-ghost" title="Suscribe tu celular al calendario del proyecto (.ics)"><i class="fa-solid fa-calendar-plus"></i> Suscribir (.ics)</a><?php endif; ?>
         <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">
             <i class="fa-solid fa-gear"></i> Ajustes
         </a>

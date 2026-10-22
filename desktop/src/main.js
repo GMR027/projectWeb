@@ -29,6 +29,13 @@ if (process.env.APPIMAGE) {
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 
+// Medidor de uso de la IA: las tareas que llaman al modelo corren dentro de prov.conUso y cada llamada se informa al servidor (por lotes)
+const HERRAMIENTA_USO = { 'prog:ejecutar': 'programador', 'inc:ejecutar': 'inconsistencias', 'mat:ejecutar': 'materiales', 'mi:verificar': 'inteligentes', 'chat:enviar': 'chat', 'ord:propuesta': 'ordenar', 'ens:mensaje': 'ensamblador', 'gen:ejecutar': 'informes' };
+const handleOriginal = ipcMain.handle.bind(ipcMain);
+ipcMain.handle = (canal, fn) => handleOriginal(canal, !HERRAMIENTA_USO[canal] ? fn : (e, ...a) => {
+  const gen = canal === 'gen:ejecutar', id = parseInt(gen ? a[1] : (a[0] && typeof a[0] === 'object' ? a[0].pid : a[0]), 10) || 0;
+  return prov.conUso({ herramienta: gen ? 'informe:' + String(a[0]).slice(0, 40) : HERRAMIENTA_USO[canal], proyectoId: id }, () => fn(e, ...a));
+});
 let cfg, win, vista, cancelarProg = false, ejecutandoProg = false, cancelarInc = false, ejecutandoInc = false, cancelarMat = false, ejecutandoMat = false, cancelarMI = false, cancelarGen = false, ejecutandoGen = false, proyectoVigilado = null, timerVig = null, vistaChat = null, chatAbierto = false, sesionActiva = false, errorWebMain = false, ejecutandoChat = false, nombresProyectos = { t: 0, mapa: {} }, cacheFichas = { t: 0, lista: [] }, descargaOllama = null, alNavegar = null, verificandoMI = false;
 const intentosMI = {};   // proyecto → última verificación automática (evita repetirla en cada clic)
 
@@ -383,6 +390,21 @@ app.whenReady().then(() => {
     if (v?.activa) { timerVig = setInterval(comprobarVigilancia, Math.max(5, v.minutos) * 60000); setTimeout(comprobarVigilancia, 30000); }
   };
   programarVigilancia();
+  // Envía al servidor las llamadas medidas (agrupadas, con un respiro de 5 s); si falla se reintenta con la siguiente
+  let colaUso = [], timerUso = null;
+  const enviarUso = async () => {
+    timerUso = null;
+    if (!colaUso.length || !vista) return;
+    const lote = colaUso; colaUso = [];
+    try {
+      const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o);
+      const cat = await (await sesion(c.servidor + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
+      if (!cat?.success) throw new Error('sin sesión');
+      const r = await (await sesion(c.servidor + '/api/ia/uso', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': cat.csrf }, body: new URLSearchParams({ registros: JSON.stringify(lote), _csrf: cat.csrf }).toString() })).json().catch(() => null);
+      if (!r?.success) throw new Error('rechazado');
+    } catch { colaUso = lote.concat(colaUso).slice(-500); }
+  };
+  prov.medirUso(r => { colaUso.push(r); if (!timerUso) timerUso = setTimeout(enviarUso, 5000); });
   ipcMain.handle('vig:guardar', (_e, v) => { const r = cfg.guardarVigilancia(v); programarVigilancia(); return r; });
   ipcMain.handle('vig:ahora', async () => { await comprobarVigilancia(); return true; });
   // Voz: estado del motor de transcripción, transcribir un WAV del micrófono y guardar la grabación en el proyecto

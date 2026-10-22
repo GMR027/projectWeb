@@ -29,7 +29,7 @@ class SeguridadController
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
         $estado = (string)($_GET['estado'] ?? '');
-        $router->render('seguridad/index', ['titulo' => 'Seguridad y permisos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'resumen' => Seguridad::resumen($pid), 'requeridos' => Seguridad::requeridos($pid, 14), 'permisos' => Seguridad::listarPermisos($pid, $estado), 'estado' => $estado,
+        $router->render('seguridad/index', ['titulo' => 'Seguridad y permisos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'resumen' => Seguridad::resumen($pid), 'requeridos' => Seguridad::requeridos($pid, 14), 'climaPermisos' => \Classes\Salud::climaYPermisos($pid, 7), 'permisos' => Seguridad::listarPermisos($pid, $estado), 'estado' => $estado,
             'incidentes' => Seguridad::incidentes($pid), 'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'admin' => is_admin(), 'mensaje' => $_SESSION['seguridad_msg'] ?? null]);
         unset($_SESSION['seguridad_msg']);
     }

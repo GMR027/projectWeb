@@ -4,48 +4,54 @@
             <img src="/build/img/logos/<?php echo s($proyecto->logo); ?>" alt="logo" class="programa-logo">
         <?php endif; ?>
         <div>
-            <h2><?php echo s($proyecto->nombre); ?></h2>
-            <p class="text-muted mono"><?php echo s($proyecto->codigo); ?> · <?php echo s($proyecto->ubicacion); ?></p>
+            <?php $nomPrograma = \Classes\ProgramaColumnas::nombrePrograma($proyecto); ?>
+            <h2><?php echo s($nomPrograma); ?></h2>
+            <p class="text-muted mono"><?php echo $nomPrograma !== $proyecto->nombre ? s($proyecto->nombre) . ' · ' : ''; ?><?php echo s($proyecto->codigo); ?> · <?php echo s($proyecto->ubicacion); ?></p>
         </div>
     </div>
     <div class="programa-meta">
         <div class="meta-item">
-            <span class="meta-label">Inicio</span>
+            <span class="meta-label"><?php echo s(t('Inicio')); ?></span>
             <span class="mono"><?php echo formatear_fecha($proyecto->fecha_inicio); ?></span>
         </div>
         <div class="meta-item">
-            <span class="meta-label">Fin</span>
+            <span class="meta-label"><?php echo s(t('Fin')); ?></span>
             <span class="mono"><?php echo formatear_fecha($proyecto->fecha_fin); ?></span>
         </div>
         <div class="meta-item">
-            <span class="meta-label">Hoy</span>
+            <span class="meta-label"><?php echo s(t('Hoy')); ?></span>
             <span class="mono text-accent"><?php echo date('d/m/Y'); ?></span>
         </div>
     </div>
 </div>
 
+<?php if (!empty($_GET['diseno'])): ?>
+    <div class="alerta alerta-exito"><?php echo s(t('Diseño del programa guardado.')); ?></div>
+<?php endif; ?>
 <?php if (!empty($_GET['importado'])): ?>
     <div class="alerta alerta-exito">Programa importado: <?php echo (int)($_GET['partidas'] ?? 0); ?> partida(s) y <?php echo (int)$_GET['importado']; ?> actividad(es).</div>
 <?php endif; ?>
 
 <?php foreach (array_slice(\Classes\DatosObra::alertas((int)$proyecto->id), 0, 3) as $al): ?>
-    <div class="alerta <?php echo $al['nivel'] === 'critica' ? 'alerta-error' : 'alerta-aviso'; ?>"><i class="fa-solid fa-file-contract"></i> <?php echo s($al['texto']); ?> <a href="/datos-obra?proyecto=<?php echo s($proyecto->id); ?>">Ver contrato</a></div>
+    <div class="alerta <?php echo $al['nivel'] === 'critica' ? 'alerta-error' : 'alerta-aviso'; ?>"><i class="fa-solid fa-file-contract"></i> <?php echo s($al['texto']); ?> <a href="/datos-obra?proyecto=<?php echo s($proyecto->id); ?>"><?php echo s(t('Ver contrato')); ?></a></div>
 <?php endforeach; ?>
 
 <div class="programa-acciones">
     <div>
         <?php if (puede_gestionar_proyecto($proyecto)): ?>
-            <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nueva Partida</a>
-            <a href="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-secondary">+ Nueva Actividad</a>
-            <a href="/programa/ordenar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-arrow-down-1-9"></i> Ordenar y renumerar</a>
-            <a href="/programa/importar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-file-import"></i> Importar XML / POD</a>
+            <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary"><?php echo s(t('+ Nueva Partida')); ?></a>
+            <a href="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-secondary"><?php echo s(t('+ Nueva Actividad')); ?></a>
+            <a href="/programa/diseno?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-table-columns"></i> <?php echo s(t('Diseñar programa')); ?></a>
+            <a href="/campos?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-tags"></i> <?php echo s(t('Campos')); ?></a>
+            <a href="/programa/ordenar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-arrow-down-1-9"></i> <?php echo s(t('Ordenar y renumerar')); ?></a>
+            <a href="/programa/importar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-file-import"></i> <?php echo s(t('Importar XML / POD')); ?></a>
         <?php endif; ?>
     </div>
     <div class="hide-m">
         <?php if (puede_descargar()): ?>
-            <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">⚙ Ajustes & Exportar</a>
+            <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><?php echo s(t('⚙ Ajustes & Exportar')); ?></a>
         <?php endif; ?>
-        <a href="/proyectos" class="btn btn-ghost">← Portafolio</a>
+        <a href="/proyectos" class="btn btn-ghost"><?php echo s(t('← Portafolio')); ?></a>
     </div>
 </div>
 
@@ -62,9 +68,9 @@
                 <?php endforeach; ?>
             </ul>
         <?php else: ?>
-            <p class="text-muted">Aún no hay propuestas guardadas. Al analizar el proyecto con la IA, guarda la que te interese desde el Programador.</p>
+            <p class="text-muted"><?php echo s(t('Aún no hay propuestas guardadas. Al analizar el proyecto con la IA, guarda la que te interese desde el Programador.')); ?></p>
         <?php endif; ?>
-        <a href="/programador?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-sm btn-ghost">Abrir el Programador</a>
+        <a href="/programador?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Abrir el Programador')); ?></a>
     </details>
 <?php endif; ?>
 
@@ -72,55 +78,74 @@
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
     <div class="form-grid-inline">
         <div class="campo">
-            <label for="f-partida">Partida</label>
+            <label for="f-partida"><?php echo s(t('Partida')); ?></label>
             <select id="f-partida" name="partida">
-                <option value="">Todas</option>
+                <option value=""><?php echo s(t('Todas')); ?></option>
                 <?php foreach ($partidasFiltro as $p): ?>
                     <option value="<?php echo s($p['id']); ?>"<?php echo (int)$filtros['partida'] === (int)$p['id'] ? ' selected' : ''; ?>><?php echo s($p['codigo'] . ' · ' . $p['nombre']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="campo">
-            <label for="f-status">Estatus</label>
+            <label for="f-status"><?php echo s(t('Estatus')); ?></label>
             <select id="f-status" name="status">
-                <option value="">Todos</option>
+                <option value=""><?php echo s(t('Todos')); ?></option>
                 <?php foreach (['no_iniciada' => 'No iniciada', 'en_proceso' => 'En proceso', 'completada' => 'Completada'] as $k => $etq): ?>
                     <option value="<?php echo $k; ?>"<?php echo $filtros['status'] === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="campo">
-            <label for="f-prioridad">Prioridad</label>
+            <label for="f-prioridad"><?php echo s(t('Prioridad')); ?></label>
             <select id="f-prioridad" name="prioridad">
-                <option value="">Todas</option>
+                <option value=""><?php echo s(t('Todas')); ?></option>
                 <?php foreach (['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'critica' => 'Crítica'] as $k => $etq): ?>
                     <option value="<?php echo $k; ?>"<?php echo $filtros['prioridad'] === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="campo">
-            <label for="f-restriccion">Restricción</label>
+            <label for="f-restriccion"><?php echo s(t('Restricción')); ?></label>
             <select id="f-restriccion" name="restriccion">
-                <option value="">Todas</option>
-                <option value="con"<?php echo $filtros['restriccion'] === 'con' ? ' selected' : ''; ?>>Con restricción activa</option>
-                <option value="sin"<?php echo $filtros['restriccion'] === 'sin' ? ' selected' : ''; ?>>Sin restricción</option>
+                <option value=""><?php echo s(t('Todas')); ?></option>
+                <option value="con"<?php echo $filtros['restriccion'] === 'con' ? ' selected' : ''; ?>><?php echo s(t('Con restricción activa')); ?></option>
+                <option value="sin"<?php echo $filtros['restriccion'] === 'sin' ? ' selected' : ''; ?>><?php echo s(t('Sin restricción')); ?></option>
             </select>
         </div>
-        <?php if ($hayFiltros): ?><a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">Limpiar</a><?php endif; ?>
+        <div class="campo">
+            <label for="f-riesgo"><?php echo s(t('Riesgo')); ?></label>
+            <select id="f-riesgo" name="riesgo">
+                <option value=""><?php echo s(t('Todas')); ?></option>
+                <option value="1"<?php echo $filtros['riesgo'] === '1' ? ' selected' : ''; ?>><?php echo s(t('Solo en riesgo (30 días)')); ?></option>
+            </select>
+        </div>
+        <?php foreach ($camposCp as $cf): $vf = $filtrosCp[$cf['id']] ?? ''; ?>
+        <div class="campo">
+            <label for="f-cp<?php echo (int)$cf['id']; ?>"><?php echo s($cf['nombre']); ?></label>
+            <?php if ($cf['tipo'] === 'lista'): ?>
+                <select id="f-cp<?php echo (int)$cf['id']; ?>" name="cp[<?php echo (int)$cf['id']; ?>]"><option value=""><?php echo s(t('Todos')); ?></option>
+                    <?php foreach ($cf['opciones'] as $o): ?><option<?php echo $vf === $o ? ' selected' : ''; ?>><?php echo s($o); ?></option><?php endforeach; ?>
+                    <option value="__vacio"<?php echo $vf === '__vacio' ? ' selected' : ''; ?>><?php echo s(t('(vacío)')); ?></option></select>
+            <?php else: ?>
+                <input type="<?php echo $cf['tipo'] === 'fecha' ? 'date' : 'search'; ?>" id="f-cp<?php echo (int)$cf['id']; ?>" name="cp[<?php echo (int)$cf['id']; ?>]" value="<?php echo s($vf); ?>" placeholder="Filtrar">
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+        <?php if ($hayFiltros): ?><a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><?php echo s(t('Limpiar')); ?></a><?php endif; ?>
     </div>
 </form>
 <script>document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventListener('change', () => s.form.submit()));</script>
 
 <!-- Tabla de actividades -->
 <div class="card">
-    <h3 class="card-titulo"><i class="fa-solid fa-list"></i> Desglose WBS & Partidas</h3>
+    <h3 class="card-titulo"><i class="fa-solid fa-list"></i> <?php echo s(t('Desglose WBS & Partidas')); ?></h3>
     <?php $puedeGestionar = puede_gestionar_proyecto($proyecto); ?>
     <?php if ($puedeGestionar): ?>
     <form method="POST" action="/programa/eliminar-varias" id="form-seleccion" class="barra-seleccion" hidden>
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
-        <span class="barra-seleccion-n"><b id="sel-n">0</b> seleccionadas</span>
-        <button type="button" class="btn btn-sm btn-ghost" id="sel-limpiar">Quitar selección</button>
-        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar seleccionadas</button>
+        <span class="barra-seleccion-n"><b id="sel-n">0</b> <?php echo s(t('seleccionadas')); ?></span>
+        <button type="button" class="btn btn-sm btn-ghost" id="sel-limpiar"><?php echo s(t('Quitar selección')); ?></button>
+        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar seleccionadas')); ?></button>
         <div id="sel-campos"></div>
     </form>
     <?php endif; ?>
@@ -129,7 +154,7 @@
         // Posición de cada actividad dentro de su partida (sobre el programa completo, aunque haya filtros) para los botones subir/bajar
         $posAct = [];
         if ($puedeGestionar) foreach (\Classes\Renumeracion::estructura((int)$proyecto->id) as $pp) foreach ($pp['actividades'] as $k => $aa) $posAct[$aa['id']] = [$k, count($pp['actividades'])];
-        $colsTabla = $puedeGestionar ? 11 : 9;
+        $colsTabla = count(array_filter($columnas, fn($c) => $c['k'] !== 'acciones' || $puedeGestionar)) + ($puedeGestionar ? 1 : 0);
         $partidaPrevia = null;
         $filaRapida = function (array $p) use ($proyecto, $colsTabla) { ?>
                     <tr class="fila-rapida">
@@ -141,26 +166,35 @@
                                 <input type="date" name="fecha_inicio" title="Inicio (vacío = día hábil siguiente a la última actividad)" aria-label="Inicio">
                                 <input type="number" name="duracion_dias" min="1" value="1" title="Duración en días hábiles" aria-label="Duración en días">
                                 <input type="number" name="progreso" min="0" max="100" value="0" title="Avance inicial (%) — vacío = 0%" aria-label="Avance inicial en %" class="input-avance">
-                                <button type="submit" class="btn btn-sm">Agregar</button>
+                                <button type="submit" class="btn btn-sm"><?php echo s(t('Agregar')); ?></button>
                             </form>
                         </td>
                     </tr>
         <?php };
         $revAct = array_column(\Classes\Revisiones::elementos((int)$proyecto->id, 'actividad'), null, 'ref'); $puedeRev = puede_revisar($proyecto); ?>
+        <?php
+        // Columnas del diseño (Diseñar programa): «acciones» solo para quien gestiona el proyecto
+        $cols = array_values(array_filter($columnas, fn($c) => $c['k'] !== 'acciones' || $puedeGestionar));
+        // En móvil solo se ven nombre, fechas y acciones (como siempre); las demás llevan hide-m
+        $claseTh = fn($k) => match ($k) { 'nombre' => '', 'fecha_inicio', 'fecha_fin' => 'col-fecha', 'acciones' => 'th-acciones', default => 'hide-m' };
+        $reglasInd = $indicador['reglas']; $campoInd = $indicador['campo'];
+        $valorInd = function (array $f) use ($campoInd, $calendario) {
+            if ($campoInd === 'duracion') return $f['tipo'] === 'actividad' && empty($f['hito']) ? $calendario->calcularDuracion($f['fecha_inicio'], $f['fecha_fin']) : null;
+            if ($campoInd === 'libre_numero') return $f['tipo'] === 'actividad' ? $f['libre_numero'] : null;
+            return $f['progreso'] ?? null;
+        };
+        ?>
         <table class="tabla tabla-programa" data-proyecto="<?php echo (int)$proyecto->id; ?>">
             <thead>
                 <tr>
                     <?php if ($puedeGestionar): ?><th class="th-sel"><input type="checkbox" id="sel-todo" title="Seleccionar todo" aria-label="Seleccionar todo"></th><?php endif; ?>
-                    <th class="hide-m">WBS / Código</th>
-                    <th><span class="hide-m">Nombre</span><span class="solo-movil">Actividad</span></th>
-                    <th class="col-fecha"><span class="hide-m">Fecha </span>Inicio</th>
-                    <th class="col-fecha"><span class="hide-m">Fecha </span>Fin</th>
-                    <th class="hide-m">Duración</th>
-                    <th class="hide-m">Progreso</th>
-                    <th class="hide-m">Status</th>
-                    <th class="hide-m">Prioridad</th>
-                    <th class="hide-m">Restricción</th>
-                    <?php if (puede_gestionar_proyecto($proyecto)): ?><th class="th-acciones">Acciones</th><?php endif; ?>
+                    <?php foreach ($cols as $c): $k = $c['k']; ?>
+                        <th class="<?php echo $claseTh($k); ?>" data-col="<?php echo s($k); ?>"<?php echo $puedeGestionar && $k !== 'acciones' ? ' draggable="true" title="Doble clic para renombrar · arrastra para reordenar"' : ''; ?>>
+                            <?php if ($k === 'nombre' && !$c['propio']): ?><span class="hide-m"><?php echo s(t('Nombre')); ?></span><span class="solo-movil"><?php echo s(t('Actividad')); ?></span>
+                            <?php elseif (($k === 'fecha_inicio' || $k === 'fecha_fin') && !$c['propio']): ?><span class="hide-m"><?php echo s(t('Fecha')); ?> </span><?php echo $k === 'fecha_inicio' ? 'Inicio' : 'Fin'; ?>
+                            <?php else: echo s($c['n']); endif; ?>
+                        </th>
+                    <?php endforeach; ?>
                 </tr>
             </thead>
             <tbody>
@@ -169,11 +203,15 @@
                     <?php if ($puedeGestionar && $partidaPrevia) $filaRapida($partidaPrevia); $partidaPrevia = $fila; ?>
                         <tr class="fila-partida" id="fila-p<?php echo (int)$fila['id']; ?>" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
                             <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
+                            <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
+                            <?php break; case 'nombre': ?>
                             <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
+                            <?php break; case 'fecha_inicio': ?>
                             <td class="mono col-fecha"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
+                            <?php break; case 'fecha_fin': ?>
                             <td class="mono col-fecha"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span></td>
-                            <td class="hide-m">—</td>
+                            <?php break; case 'progreso': ?>
                             <td class="hide-m">
                                 <div class="progreso-cell">
                                     <div class="barra-progreso barra-sm">
@@ -182,10 +220,9 @@
                                     <span class="mono text-sm"><?php echo s($fila['progreso']); ?>%</span>
                                 </div>
                             </td>
-                            <td class="hide-m">—</td>
-                            <td class="hide-m">—</td>
-                            <td class="hide-m">—</td>
-                            <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                            <?php break; case 'indicador': $col = $campoInd === 'progreso' ? \Classes\ProgramaColumnas::colorIndicador($reglasInd, $valorInd($fila)) : null; ?>
+                            <td class="hide-m"><?php if ($col): ?><span class="prg-ind" style="--ind: <?php echo s($col); ?>" title="<?php echo s($fila['progreso']); ?>%"></span><?php else: ?>—<?php endif; ?></td>
+                            <?php break; case 'acciones': ?>
                                 <td class="acciones">
                                     <a href="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>&partida=<?php echo s($fila['id']); ?>" class="btn-action btn-action-add" title="Agregar actividad">
                                         <i class="fa-solid fa-plus"></i>
@@ -200,15 +237,20 @@
                                         </button>
                                     </form>
                                 </td>
-                            <?php endif; ?>
+                            <?php break; default: ?>
+                            <td class="hide-m">—</td>
+                            <?php endswitch; endforeach; ?>
                         </tr>
                     <?php else: ?>
                         <tr class="fila-actividad" id="fila-a<?php echo (int)$fila['id']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>">
                             <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="a<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar actividad"></td><?php endif; ?>
+                            <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
-                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
+                            <?php break; case 'nombre': ?>
+                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?><?php echo \Classes\Salud::insignia($riesgos, (int)$fila['id']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
+                            <?php break; case 'fecha_inicio': ?>
                             <td class="fecha-editable">
-                                <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                                <?php if ($puedeGestionar): ?>
                                     <input type="date"
                                            class="input-fecha fecha-inicio-input hide-m"
                                            value="<?php echo s($fila['fecha_inicio']); ?>"
@@ -219,8 +261,9 @@
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
                                 <?php endif; ?>
                             </td>
+                            <?php break; case 'fecha_fin': ?>
                             <td class="fecha-editable">
-                                <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                                <?php if ($puedeGestionar): ?>
                                     <input type="date"
                                            class="input-fecha fecha-fin-input hide-m"
                                            value="<?php echo s($fila['fecha_fin']); ?>"
@@ -231,16 +274,15 @@
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
                                 <?php endif; ?>
                             </td>
-                            <?php
-                                $dur = $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']);
-                            ?>
+                            <?php break; case 'duracion': $dur = $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']); ?>
                             <td class="mono duracion-cell hide-m"><?php echo !empty($fila['hito']) ? 'Hito' : s(number_format($dur, 1)) . ' d'; ?></td>
+                            <?php break; case 'progreso': ?>
                             <td class="hide-m">
                                 <div class="progreso-cell">
                                     <div class="barra-progreso barra-sm barra-status-<?php echo s($fila['status']); ?>">
                                         <div class="barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
                                     </div>
-                                    <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                                    <?php if ($puedeGestionar): ?>
                                         <input type="number" class="input-avance input-progreso" min="0" max="100" step="1"
                                                value="<?php echo (int)$fila['progreso']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>"
                                                aria-label="Avance (%)" title="Avance (%)">%
@@ -249,6 +291,7 @@
                                     <?php endif; ?>
                                 </div>
                             </td>
+                            <?php break; case 'status': ?>
                             <td class="hide-m">
                                 <span class="badge-status status-<?php echo s($fila['status']); ?>">
                                     <?php
@@ -260,7 +303,9 @@
                                     ?>
                                 </span>
                             </td>
+                            <?php break; case 'prioridad': ?>
                             <td class="hide-m"><span class="badge-prio prio-<?php echo s($fila['prioridad']); ?>"><?php echo s(ucfirst($fila['prioridad'])); ?></span></td>
+                            <?php break; case 'restriccion': ?>
                             <td class="hide-m">
                                 <?php if ($fila['tiene_restriccion']): ?>
                                     <div class="restricciones-lista">
@@ -277,7 +322,34 @@
                                     <span class="text-dim">—</span>
                                 <?php endif; ?>
                             </td>
-                            <?php if (puede_gestionar_proyecto($proyecto)): ?>
+                            <?php break; case 'responsable': case 'libre_texto': case 'libre_numero': case 'rec_inicio': case 'rec_fin': case 'libre_fecha':
+                                [, $tipoCampo] = \Classes\ProgramaColumnas::COLUMNAS[$c['k']]; $v = $fila[$c['k']] ?? ''; $tipoIn = ['texto' => 'text', 'fecha' => 'date', 'numero' => 'number'][$tipoCampo] ?? 'text'; ?>
+                            <td class="hide-m prg-celda">
+                                <?php if ($puedeGestionar): ?>
+                                    <input type="<?php echo $tipoIn; ?>" class="prg-campo<?php echo $tipoIn === 'date' ? ' input-fecha' : ''; ?>" data-actividad-id="<?php echo (int)$fila['id']; ?>" data-campo="<?php echo s($c['k']); ?>"
+                                           value="<?php echo s($tipoIn === 'number' && $v !== '' && $v !== null ? rtrim(rtrim((string)$v, '0'), '.') : $v); ?>"<?php echo $tipoIn === 'number' ? ' step="any"' : ($tipoIn === 'text' ? ' maxlength="255"' : ''); ?> aria-label="<?php echo s($c['n']); ?>">
+                                <?php else: ?>
+                                    <span class="<?php echo $tipoIn === 'text' ? '' : 'mono'; ?>"><?php echo $v === '' || $v === null ? '—' : s($tipoIn === 'date' ? formatear_fecha($v) : ($tipoIn === 'number' ? rtrim(rtrim((string)$v, '0'), '.') : $v)); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <?php break; case 'predecesora': case 'sucesora':
+                                $lado = $c['k'] === 'predecesora' ? 'pred' : 'suc'; $lista = $vecinas[$lado][(int)$fila['id']] ?? []; $actual = $lista[0] ?? 0; ?>
+                            <td class="hide-m prg-celda">
+                                <?php if ($puedeGestionar): ?>
+                                    <select class="prg-dep" data-actividad-id="<?php echo (int)$fila['id']; ?>" data-lado="<?php echo $lado; ?>" aria-label="<?php echo s($c['n']); ?>">
+                                        <option value="0">—</option>
+                                        <?php foreach ($actividadesLista as $aid => $anom): if ($aid === (int)$fila['id']) continue; ?>
+                                            <option value="<?php echo (int)$aid; ?>"<?php echo $aid === $actual ? ' selected' : ''; ?>><?php echo s($anom); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php else: ?>
+                                    <span class="mono"><?php echo $actual && isset($actividadesLista[$actual]) ? s(strstr($actividadesLista[$actual], ' · ', true)) : '—'; ?></span>
+                                <?php endif; ?>
+                                <small class="prg-otras text-muted"<?php echo count($lista) > 1 ? '' : ' hidden'; ?>>+<?php echo max(0, count($lista) - 1); ?> más (ver Dependencias)</small>
+                            </td>
+                            <?php break; case 'indicador': $vi = $valorInd($fila); $col = \Classes\ProgramaColumnas::colorIndicador($reglasInd, $vi); ?>
+                            <td class="hide-m prg-celda"><?php if ($col): ?><span class="prg-ind" style="--ind: <?php echo s($col); ?>" data-indicador="<?php echo (int)$fila['id']; ?>"></span> <span class="mono text-sm text-muted"><?php echo s(rtrim(rtrim(number_format((float)$vi, 2, '.', ''), '0'), '.')); ?></span><?php else: ?>—<?php endif; ?></td>
+                            <?php break; case 'acciones': ?>
                                 <td class="acciones">
                                     <button type="button" class="btn-action btn-action-edit btn-fechas solo-movil" title="Cambiar fechas"
                                             data-id="<?php echo s($fila['id']); ?>" data-nombre="<?php echo s($fila['nombre']); ?>"
@@ -303,13 +375,13 @@
                                         </button>
                                     </form>
                                 </td>
-                            <?php endif; ?>
+                            <?php break; default: if (!empty($c['campo'])) echo \Classes\CamposPersonalizados::celda($c['campo'], (int)$fila['id'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? '', $puedeGestionar); endswitch; endforeach; ?>
                         </tr>
                     <?php endif; ?>
                 <?php endforeach; ?>
                 <?php if ($puedeGestionar && $partidaPrevia) $filaRapida($partidaPrevia); ?>
                 <?php if (empty($filas)): ?>
-                    <tr><td colspan="11" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
+                    <tr><td colspan="<?php echo (int)$colsTabla; ?>" class="text-center text-muted"><?php echo $hayFiltros ? 'Ninguna actividad coincide con los filtros.' : 'No hay partidas ni actividades.'; ?> <?php if (!$hayFiltros && puede_gestionar_proyecto($proyecto)): ?>Comienza creando una partida.<?php endif; ?></td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -319,14 +391,14 @@
 <!-- Gantt (no se muestra en móvil) -->
 <div class="card hide-m">
     <div class="gantt-header">
-        <h3 class="card-titulo">Diagrama de Gantt por Semanas</h3>
+        <h3 class="card-titulo"><?php echo s(t('Diagrama de Gantt por Semanas')); ?></h3>
         <div class="gantt-leyenda">
-            <span><span class="dot dot-completado"></span> Completado</span>
-            <span><span class="dot dot-proceso"></span> En Proceso</span>
-            <span><span class="dot dot-noiniciado"></span> No Iniciado</span>
-            <span><span class="dot dot-restriccion"></span> Restricción</span>
+            <span><span class="dot dot-completado"></span> <?php echo s(t('Completado')); ?></span>
+            <span><span class="dot dot-proceso"></span> <?php echo s(t('En Proceso')); ?></span>
+            <span><span class="dot dot-noiniciado"></span> <?php echo s(t('No Iniciado')); ?></span>
+            <span><span class="dot dot-restriccion"></span> <?php echo s(t('Restricción')); ?></span>
             <?php if (!empty($depFlechas)): ?>
-                <label class="campo-check gantt-dep-toggle"><input type="checkbox" id="gantt-dep-toggle" checked> <i class="fa-solid fa-diagram-project"></i> Dependencias</label>
+                <label class="campo-check gantt-dep-toggle"><input type="checkbox" id="gantt-dep-toggle" checked> <i class="fa-solid fa-diagram-project"></i> <?php echo s(t('Dependencias')); ?></label>
             <?php endif; ?>
         </div>
     </div>
@@ -334,7 +406,7 @@
     <div class="gantt-wrapper">
         <div class="gantt-grid" style="grid-template-columns: 18rem repeat(<?php echo count($semanas); ?>, minmax(4rem, 1fr));">
             <!-- Header -->
-            <div class="gantt-cell gantt-header-cell">Actividad / ID</div>
+            <div class="gantt-cell gantt-header-cell"><?php echo s(t('Actividad / ID')); ?></div>
             <?php foreach ($semanas as $semana): ?>
                 <div class="gantt-cell gantt-header-cell">
                     <div class="semana-num mono">S<?php echo s($semana['numero']); ?></div>
@@ -422,16 +494,16 @@
 <!-- Cambio de fechas desde el icono (modo móvil) -->
 <div class="modal-overlay" id="modal-fechas" aria-hidden="true">
     <div class="modal-card modal-fechas-caja" role="dialog" aria-modal="true" aria-labelledby="mf-titulo">
-        <h4 id="mf-titulo">Cambiar fechas</h4>
+        <h4 id="mf-titulo"><?php echo s(t('Cambiar fechas')); ?></h4>
         <p class="text-muted text-sm" id="mf-actividad"></p>
         <div class="formulario">
-            <div class="campo"><label for="mf-inicio">Fecha de inicio</label><input type="date" id="mf-inicio"></div>
-            <div class="campo"><label for="mf-fin">Fecha de fin</label><input type="date" id="mf-fin"></div>
+            <div class="campo"><label for="mf-inicio"><?php echo s(t('Fecha de inicio')); ?></label><input type="date" id="mf-inicio"></div>
+            <div class="campo"><label for="mf-fin"><?php echo s(t('Fecha de fin')); ?></label><input type="date" id="mf-fin"></div>
         </div>
         <p class="text-sm mf-error" id="mf-error" hidden></p>
         <div class="mf-botones">
-            <button type="button" class="btn btn-ghost" id="mf-cancelar">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="mf-guardar">Guardar</button>
+            <button type="button" class="btn btn-ghost" id="mf-cancelar"><?php echo s(t('Cancelar')); ?></button>
+            <button type="button" class="btn btn-primary" id="mf-guardar"><?php echo s(t('Guardar')); ?></button>
         </div>
     </div>
 </div>
@@ -518,6 +590,78 @@
         form.submit();
     });
     refrescar();
+})();
+</script>
+<?php endif; ?>
+
+<?php if ($puedeGestionar): ?>
+<dialog id="prg-dlg-columna" class="rd-dialogo">
+    <form method="dialog" id="prg-form-columna">
+        <h3><?php echo s(t('Renombrar columna')); ?></h3>
+        <label><?php echo s(t('Nombre')); ?> <input type="text" id="prg-col-nombre" maxlength="60" autocomplete="off"></label>
+        <p class="text-sm text-muted" id="prg-col-ayuda"><?php echo s(t('Vacío = nombre de siempre.')); ?></p>
+        <div class="rd-dlg-acciones"><button type="button" class="btn btn-ghost" id="prg-col-cancelar"><?php echo s(t('Cancelar')); ?></button><button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button></div>
+    </form>
+</dialog>
+<script>
+(() => {
+    const tabla = document.querySelector('.tabla-programa');
+    if (!tabla) return;
+    const proyecto = tabla.dataset.proyecto;
+    const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(async (r) => ({ ok: r.ok, d: await r.json().catch(() => ({})) }));
+    const marcar = (el, ok, msg) => { el.classList.toggle('msr-error', !ok); el.title = ok ? '' : (msg || 'No se pudo guardar'); };
+
+    // campos nuevos: responsable, recuperación y libres
+    tabla.addEventListener('change', async (e) => {
+        const inp = e.target.closest('.prg-campo');
+        if (inp) {
+            const { ok, d } = await post('/api/programa/campo', { actividad_id: inp.dataset.actividadId, campo: inp.dataset.campo, valor: inp.value });
+            marcar(inp, ok && d.success, d.error);
+            if (ok && d.success && (inp.dataset.campo === 'libre_numero')) location.reload();   // el indicador puede depender de este número
+            return;
+        }
+        const sel = e.target.closest('.prg-dep');
+        if (sel) {
+            const { ok, d } = await post('/api/programa/dependencia', { actividad_id: sel.dataset.actividadId, lado: sel.dataset.lado, valor: sel.value });
+            marcar(sel, ok && d.success, d.error);
+            if (ok && d.success) { location.reload(); return; }   // las fechas pueden haberse movido (modo automático)
+            if (d.error) await window.avisoModal('No se pudo guardar la dependencia', d.error);
+            location.reload();
+        }
+    });
+
+    // renombrar columna (doble clic en el encabezado)
+    const dlg = document.getElementById('prg-dlg-columna'), nom = document.getElementById('prg-col-nombre');
+    let colActual = null;
+    tabla.querySelectorAll('thead th[data-col]').forEach((th) => th.addEventListener('dblclick', () => {
+        colActual = th.dataset.col;
+        nom.value = th.textContent.replace(/\s+/g, ' ').trim();
+        dlg.showModal(); nom.select();
+    }));
+    document.getElementById('prg-col-cancelar').addEventListener('click', () => dlg.close());
+    document.getElementById('prg-form-columna').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const { ok } = await post('/api/programa/columna', { proyecto, k: colActual, n: nom.value });
+        dlg.close();
+        if (ok) location.reload();
+    });
+
+    // reordenar arrastrando encabezados
+    let arrastrada = null;
+    tabla.querySelectorAll('thead th[data-col][draggable]').forEach((th) => {
+        th.addEventListener('dragstart', (e) => { arrastrada = th; e.dataTransfer.effectAllowed = 'move'; th.classList.add('prg-arrastrando'); });
+        th.addEventListener('dragend', () => { th.classList.remove('prg-arrastrando'); tabla.querySelectorAll('th.prg-destino').forEach((x) => x.classList.remove('prg-destino')); });
+        th.addEventListener('dragover', (e) => { if (arrastrada && arrastrada !== th) { e.preventDefault(); th.classList.add('prg-destino'); } });
+        th.addEventListener('dragleave', () => th.classList.remove('prg-destino'));
+        th.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            if (!arrastrada || arrastrada === th) return;
+            const orden = [...tabla.querySelectorAll('thead th[data-col]')].map((x) => x.dataset.col).filter((k) => k !== arrastrada.dataset.col);
+            orden.splice(orden.indexOf(th.dataset.col), 0, arrastrada.dataset.col);
+            const { ok } = await post('/api/programa/orden', { proyecto, orden: orden.join(',') });
+            if (ok) location.reload();
+        });
+    });
 })();
 </script>
 <?php endif; ?>

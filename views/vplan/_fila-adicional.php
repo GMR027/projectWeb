@@ -64,7 +64,7 @@ $est = $fila['estado'] ?? 'proceso';
     <?php if ($puedeEditar): ?><td class="c no-print"><?php echo $editable ? $ed('estado', 'estado') : ''; ?></td><?php endif; ?>
 <?php else: ?>
     <td class="c vp-n"><?php echo (int)$fila['n']; ?></td>
-    <?php foreach ($campos as $k => $c): $ta = ($meta[$k]['t'] ?? '') === 'casilla' || ($meta[$k]['t'] ?? '') === 'semaforo'; ?><td<?php echo $ta ? ' class="c"' : ''; ?>><?php echo $ed($k, 'text'); ?></td><?php endforeach; ?>
+    <?php foreach ($campos as $k => $c): $ta = ($meta[$k]['t'] ?? '') === 'casilla' || ($meta[$k]['t'] ?? '') === 'semaforo'; ?><?php $es = (string)($fila['s' . substr($k, 1)] ?? ''); ?><td<?php echo ($ta || $es !== '') ? ' class="' . trim(($ta ? 'c ' : '') . ($es !== '' ? 'vp-conestilo' : '')) . '"' : ''; ?><?php echo $es !== '' ? ' style="' . s($es) . '"' : ''; ?>><?php echo $ed($k, 'text'); ?></td><?php endforeach; ?>
 <?php endif; ?>
 <?php if ($puedeEditar): ?><td class="c no-print vp-celda-acc"><?php if ($editable && $t->tipo !== 'punchlist'): ?><button type="button" class="vp-del" title="Quitar este dato">✕</button><?php endif; ?></td><?php endif; ?>
 </tr>

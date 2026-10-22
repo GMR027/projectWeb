@@ -10,4 +10,5 @@
   textarea { width: 100%; resize: vertical; font-weight: 400; font-size: 1.5rem; line-height: 1.5; }
   small { font-weight: 400; } }
 .trd-acciones { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 1rem; }
+.trd-exportar { display: flex; gap: .6rem; align-items: center; select { min-width: 15rem; } }
 .trd-archivo { display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; font-weight: 600; max-width: 50rem; }

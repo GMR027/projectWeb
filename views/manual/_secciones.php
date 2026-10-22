@@ -53,6 +53,10 @@ HTML],
 <li>El administrador además elige al <em>propietario</em> y marca los clientes y visitantes que podrán ver el proyecto.</li>
 <li>Pulsa <strong>Crear Proyecto</strong>. Se crea con la jornada de trabajo predeterminada: lunes a viernes completos, sábado medio día y domingo no laborable (la puedes cambiar en los Ajustes del proyecto).</li>
 </ol>
+<h4>Salud del proyecto (semáforo)</h4>
+<p>Cada tarjeta del Inicio, y la ficha del proyecto (<em>Ver proyecto</em>), muestra un <strong>semáforo</strong> que junta datos de varias herramientas: actividades atrasadas, restricciones abiertas, submittals con envío vencido o rechazados, pendientes graves del punch, órdenes de cambio por aprobar y permisos de trabajo. Verde = todo en orden, amarillo = requiere atención, rojo = hay puntos urgentes. En el Inicio solo ves lo que necesita atención; en la ficha del proyecto ves todos los indicadores con su explicación. A la ficha llegas desde el menú del proyecto (<em>Proyecto → Salud del proyecto</em>) o con el botón del mismo nombre en <em>Ajustes del proyecto</em>; al Inicio, con <em>Inicio</em> en la parte de arriba del menú lateral. Pulsa un indicador para ir a la herramienta donde se resuelve. No guarda nada: se calcula cada vez que abres la página.</p>
+<h4>Buscar en el proyecto</h4>
+<p>Dentro de un proyecto, la caja <em>Buscar en el proyecto</em> de la barra superior busca en el programa, materiales, submittals, minutas, bitácora, reportes, archivo, punch, órdenes de cambio, permisos, documentos del Redactor y normativa. Todas las palabras deben aparecer; no importan acentos ni mayúsculas. Los visitantes solo ven resultados de las herramientas que tienen permitidas.</p>
 <p>Desde el listado también puedes <strong>Editar</strong> o <strong>Eliminar</strong> un proyecto (al eliminarlo se borra todo lo que contiene).</p>
 <p class="manual-nota"><strong>Espacio de almacenamiento.</strong> Cada proyecto tiene un límite de espacio para sus archivos, fotos, planos, fichas y logos. Si se llena, el sistema avisa y no deja subir más hasta que borres algo. Lo ves en <em>Ajustes del proyecto</em>.</p>
 <p class="manual-nota"><strong>Por dónde empezar.</strong> Al crear un proyecto eliges cómo arrancar: <em>paso a paso</em> (una ventana con un paso a la vez), <em>lista de pasos</em> (todos a la vista) o solo crear el proyecto. Los pasos son: calendario y festivos, primera partida o importación del programa, equipo, materiales, documentos y fechas del contrato; cada uno tiene su captura rápida y un enlace a la herramienta completa. Lo que captures se guarda en esa herramienta. Puedes volver cuando quieras en <em>Ajustes del proyecto → Por dónde empezar</em>. Nada es obligatorio.</p>
@@ -126,8 +130,12 @@ HTML],
 HTML],
 
 ['id' => 'programa', 'titulo' => 'Programa de obra', 'icono' => 'fa-list-check', 'roles' => $todos, 'herr' => 'programa', 'cuerpo' => <<<'HTML'
+<h4>Actividades en riesgo</h4>
+<p>Junto al nombre de una actividad pendiente que <strong>inicia en los próximos 30 días</strong> (o ya debió iniciar) puede aparecer la marca <strong>⚠ En riesgo</strong>. Significa que alguno de estos puntos está sin resolver: un <em>material vinculado sin submittal aprobado</em> (ni en un submittal aprobado ni con status A/AN en el MSR), un <em>pendiente grave del punch</em> (severidad alta o crítica, abierto) o un <em>permiso de trabajo que falta</em>. Pasa el cursor para ver el motivo y pulsa la marca para ir a donde se resuelve. Las actividades marcadas «sin material» no se evalúan por material. Con el filtro <em>Riesgo → Solo en riesgo</em> ves únicamente esas actividades. También aparece en el Lookahead y en el Last Planner.</p>
 <p>Es el corazón del sistema: el programa de obra organizado en <strong>partidas</strong> (capítulos o frentes, con su código WBS) y <strong>actividades</strong> dentro de cada partida. La página muestra, de arriba abajo, los datos del proyecto, los filtros, la tabla <em>Desglose WBS &amp; Partidas</em> y el <em>Diagrama de Gantt por Semanas</em>.</p>
 [[fig:programa]]
+<h4>Tipo de obra y base de partidas</h4>
+<p>En <em>Materiales y cambios → Tipo de obra</em> puedes elegir el tipo de obra del proyecto. Además de dar contexto a las herramientas de IA, el sistema ofrece una <strong>base de partidas y actividades</strong> para arrancar más rápido. Las plantillas de construcción incluyen: <strong>vivienda unifamiliar</strong>, <strong>edificio multifamiliar o comercial</strong>, <strong>nave industrial</strong>, <strong>remodelación y adecuación</strong>, <strong>urbanización y obra civil</strong> y la <strong>edificación</strong> general. La base solo se crea si el proyecto todavía no tiene partidas; después puedes renombrar, mover o eliminar lo que necesites.</p>
 <h4>Crear una partida</h4>
 <ol>
 <li>Pulsa <strong>+ Nueva Partida</strong>.</li>
@@ -298,7 +306,9 @@ HTML],
 <ul>
 <li>Elige la <strong>partida</strong> (o <em>Mostrar todas</em>).</li>
 <li>El rombo de cada tarjeta indica el estado: <strong>verde</strong> actividad finalizada, <strong>amarillo</strong> en proceso, <strong>rojo</strong> con restricción activa.</li>
+<li>El triángulo <strong>naranja</strong> ▲ marca una actividad <em>en riesgo</em> (ver «Actividades en riesgo» en Programa de obra); pasa el cursor para ver el motivo. Solo se muestra en pantalla, no en el PDF.</li>
 <li>Los post-its se calculan solos: si cambian las fechas del programa, se ajustan.</li>
+<li>En <strong>Plantilla del post-it</strong> puedes elegir el diseño clásico o una estampa propia. En <strong>Plantillas de obra</strong> hay diseños listos de 7×7 cm: <em>Cuadrilla</em>, <em>Restricciones</em>, <em>Calidad</em> y <em>Seguridad</em>. Al pulsar <strong>Cargar y usar</strong> se copia la plantilla al proyecto y queda seleccionada; después puedes ajustarla en el editor de estampas.</li>
 </ul>
 <p>Para imprimirlos usa <em>Exportar → Last Planner</em>: tarjetas de 7×7 cm en hojas carta con marcas de corte; puedes elegir la partida y cuántas tarjetas van por fila.</p>
 HTML],
@@ -315,9 +325,12 @@ HTML],
 <li>Pulsa <strong>Guardar</strong>.</li>
 </ol>
 <p>En el listado puedes <strong>Ver</strong> el reporte (se abre en otra pestaña), <strong>Editar</strong> o <strong>Eliminar</strong>. Al editar, las fotos pueden quitarse con <em>Quitar</em>.</p>
+<p>Haz clic en cualquier foto del reporte para verla en grande en una ventana modal; ciérrala con el botón <strong>X</strong> o la tecla <strong>Esc</strong>.</p>
 <h4>Personal</h4>
 <p>Es el catálogo de personas del proyecto: <strong>nombre*</strong>, departamento y una imagen opcional. Se administra desde el botón <em>Personal</em> y alimenta los reportes diarios y las minutas.</p>
 <p class="manual-nota">Las fotos de cada reporte aparecen solas en <a href="#evidencias">Evidencias</a>.</p>
+<h4>Actualizar el avance desde el reporte</h4>
+<p>Al <strong>Ver</strong> un reporte, junto a cada actividad aparece su <em>Avance real</em>. Corrige los porcentajes y pulsa <strong>Actualizar avance de las actividades</strong>: solo cambian las que modificaste y el valor queda anotado con la <em>fecha del reporte</em> (así la Curva S real refleja el día en que ocurrió, no el día en que lo capturaste).</p>
 HTML],
 
 ['id' => 'bitacora', 'titulo' => 'Bitácora de obra', 'icono' => 'fa-book', 'roles' => $todos, 'herr' => 'bitacora', 'cuerpo' => <<<'HTML'
@@ -471,6 +484,65 @@ HTML],
 <p>En <strong>Evidencias</strong> puedes asignar departamento y categoría a cada foto subida y filtrar por ellos (las fotos de los reportes diarios no los llevan).</p>
 HTML],
 
+['id' => 'recursos', 'titulo' => 'Recursos y cuadrillas', 'icono' => 'fa-people-group', 'roles' => $todos, 'herr' => 'recursos', 'cuerpo' => <<<'HTML'
+<p>Reparte <strong>personas y cuadrillas</strong> en las actividades y ve, semana por semana, cuánto trabajo cae sobre cada una. Si alguien queda por encima de su jornada, la herramienta avisa.</p>
+<h4>Cómo se usa</h4>
+<ol>
+<li>En <strong>Personas y cuadrillas</strong> da de alta cada recurso: una <em>persona</em> (puedes tomarla del Directorio) o una <em>cuadrilla</em> con su número de integrantes y las horas por día.</li>
+<li>En <strong>Asignaciones</strong> elige la actividad, el recurso y su <strong>dedicación (%)</strong>: qué parte de su jornada dedica a esa actividad mientras dure. Si lo asignas de nuevo, se actualiza el porcentaje.</li>
+<li>En <strong>Carga semanal</strong> ves una tabla de calor: verde (hasta 85 %), amarillo (85–100 %) y rojo (más de 100 %, sobrecarga). Pasa el cursor sobre una celda para ver las actividades y las horas. Los botones de arriba mueven la ventana de 4 en 4 semanas.</li>
+</ol>
+<p>La carga de una semana es la suma de las dedicaciones de las actividades que caen en ella, ponderadas por sus <strong>días hábiles</strong> (con el calendario y los festivos del proyecto). Las actividades al 100 % de avance ya no cargan al recurso. Una sobrecarga en las próximas 4 semanas aparece en la <a href="#inicio">Salud del proyecto</a>.</p>
+<p class="manual-nota">Solo el administrador y el cliente dueño del proyecto crean recursos y asignaciones; los visitantes solo consultan.</p>
+HTML],
+
+['id' => 'rfi', 'titulo' => 'RFI (solicitudes de información)', 'icono' => 'fa-circle-question', 'roles' => $todos, 'herr' => 'rfi', 'cuerpo' => <<<'HTML'
+<p>Un <strong>RFI</strong> es una pregunta formal que la obra no puede resolver sola (un detalle de plano, una especificación, una decisión del cliente). Aquí llevas su registro y sabes qué trabajo está detenido por no tener respuesta.</p>
+<ol>
+<li>Pulsa <strong>+ Nuevo RFI</strong>. El número (RFI-001, RFI-002…) se sugiere solo.</li>
+<li>Escribe el <strong>asunto*</strong>, la pregunta, el <strong>responsable</strong> de contestar, la <strong>fecha límite</strong> y la prioridad.</li>
+<li>Elige la <strong>actividad que bloquea</strong>, si hay una. Mientras el RFI esté abierto, esa actividad aparece <em>en riesgo</em> en el Programa, el Lookahead y el Last Planner.</li>
+<li>Cuando llegue la respuesta, cambia el estado a <strong>Respondido</strong> (se anota la fecha) y después a <strong>Cerrado</strong>.</li>
+</ol>
+<p>Los RFI abiertos con la fecha límite pasada salen como <strong>vencidos</strong>, cuentan en la <a href="#inicio">Salud del proyecto</a> y su fecha límite viaja al calendario del celular (<a href="#compartir">Compartir</a>). El administrador marca cada RFI con el chip de Revisiones (✅ correcto, ⚠ por revisar, ❌ no cumple); si el RFI cambia después de revisarse, el chip avisa.</p>
+HTML],
+
+['id' => 'costos', 'titulo' => 'Costos y presupuesto', 'icono' => 'fa-sack-dollar', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Compara <strong>lo presupuestado, lo avanzado y lo gastado</strong>. Solo lo ven el administrador y el cliente dueño del proyecto (los visitantes no).</p>
+<h4>Qué capturas</h4>
+<ul>
+<li><strong>Presupuesto por partida:</strong> en la pestaña <em>Resumen</em>, un monto por partida y <em>Guardar presupuesto</em>.</li>
+<li><strong>Costo real:</strong> cada gasto (factura, nómina, renta…) con fecha, monto y, si quieres, su partida y la orden de cambio que lo originó.</li>
+<li><strong>Estimaciones:</strong> lo que cobras al cliente. Las de estado <em>borrador</em> no cuentan hasta aprobarse.</li>
+</ul>
+<h4>Qué calcula</h4>
+<table class="tabla manual-tabla">
+<thead><tr><th>Sigla</th><th>Significa</th></tr></thead>
+<tbody>
+<tr><td><strong>Presupuesto vigente</strong></td><td>El presupuesto de la partida más el costo de las órdenes de cambio aprobadas, ejecutadas o cerradas de sus actividades.</td></tr>
+<tr><td><strong>PV</strong></td><td>Valor programado: presupuesto × avance que el programa dice que debería llevarse hoy.</td></tr>
+<tr><td><strong>EV</strong></td><td>Valor ganado: presupuesto × avance real de las actividades.</td></tr>
+<tr><td><strong>AC</strong></td><td>Costo real capturado.</td></tr>
+<tr><td><strong>CPI</strong></td><td>EV ÷ AC. Menor a 1 = se gasta más de lo que se avanza.</td></tr>
+<tr><td><strong>SPI</strong></td><td>EV ÷ PV. Menor a 1 = atraso.</td></tr>
+<tr><td><strong>EAC</strong></td><td>Costo final estimado = presupuesto ÷ CPI.</td></tr>
+</tbody>
+</table>
+<p>El avance de cada partida se pesa por la duración de sus actividades, igual que la <a href="#curvas">Curva S</a>, y la <strong>curva de costos</strong> de la pestaña Resumen sale de esa misma Curva S (PV y EV por semana contra el costo real y lo estimado acumulados). Si el CPI baja de 1 se enciende un aviso en la <a href="#inicio">Salud del proyecto</a>.</p>
+HTML],
+
+['id' => 'compartir', 'titulo' => 'Compartir en solo lectura', 'icono' => 'fa-share-nodes', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Dos formas de enseñar el proyecto a alguien <strong>sin crearle usuario</strong>. En ambas cualquiera que tenga el enlace lo ve, así que compártelo solo con quien debe verlo; puedes <strong>revocarlo</strong> cuando quieras.</p>
+<h4>Enlace para el cliente</h4>
+<ol>
+<li>En <em>Proyecto → Compartir en solo lectura</em> escribe para quién es (una nota tuya), elige cuánto dura (7 a 90 días) y qué secciones ve: <strong>avance</strong> (con Curva S, avance por partida y las próximas tres semanas), <strong>fotos</strong> y <strong>reportes diarios</strong>.</li>
+<li>Pulsa <em>Crear enlace</em> y <em>Copiar</em>. Mándalo por correo o mensaje.</li>
+</ol>
+<p>La página no muestra costos, nombres del personal ni documentos. La tabla indica cuántas veces se abrió y cuándo fue la última. Al vencer o revocarse, el enlace deja de funcionar.</p>
+<h4>Calendario en el celular (.ics)</h4>
+<p>Crea una <em>suscripción</em> y úsala en <em>Agregar calendario desde URL</em> (Google Calendar), <em>Añadir calendario con suscripción</em> (iPhone) u Outlook; en el celular también puedes pulsar <em>Suscribir</em>. Trae las actividades pendientes de la semana pasada a las próximas 4 semanas, <strong>todos los hitos</strong> y la fecha límite de los <a href="#rfi">RFI</a> abiertos, y se actualiza solo (cada pocas horas, según tu calendario). No caduca; se corta revocándola. También hay un atajo en el <a href="#calendario">Calendario</a>.</p>
+HTML],
+
 ['id' => 'calendario', 'titulo' => 'Calendario', 'icono' => 'fa-calendar-days', 'roles' => $todos, 'herr' => 'calendario', 'cuerpo' => <<<'HTML'
 <p>Vista mensual de las actividades del programa.</p>
 <ul>
@@ -565,6 +637,7 @@ HTML],
 <ol>
 <li>Pulsa <strong>Nuevo documento</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong> (elige uno de la lista o escribe uno nuevo). La lista se agrupa por departamento.</li>
 <li>Elige el <strong>corrector</strong> (Español, English o ambos), la <strong>hoja</strong> (Carta, A4, Oficio, Tabloide) y su orientación.</li>
+<li>Si quieres, elige una <strong>plantilla</strong>. Además de oficio, minuta, informe de avance, memoria, RFI, orden de cambio, acta, incidente y lista de verificación, hay documentos de obra: <strong>bitácora de obra</strong>, <strong>reporte semanal</strong>, <strong>estimación de obra</strong>, <strong>control de submittals</strong>, <strong>reporte de no conformidad</strong> y <strong>procedimiento constructivo</strong>.</li>
 </ol>
 <h4>Herramientas</h4>
 <ul>
@@ -596,7 +669,7 @@ HTML],
 <h4>Crear una tabla</h4>
 <ol>
 <li>Pulsa <strong>Nueva tabla</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong>; la lista se agrupa por departamento.</li>
-<li>Elige el punto de partida: <strong>en blanco</strong>, una <strong>plantilla</strong> (control de materiales, presupuesto, restricciones, asistencia semanal o el programa de obra) o <strong>importa</strong> un archivo <code>.xlsx</code>, <code>.ods</code> o <code>.csv</code> (primera hoja; la primera fila son los encabezados).</li>
+<li>Elige el punto de partida: <strong>en blanco</strong>, una <strong>plantilla</strong> (control de materiales, presupuesto, restricciones, asistencia semanal, el programa de obra, estimación de obra, control de submittals, bitácora de obra, control de almacén, inspección de calidad o control de equipo) o <strong>importa</strong> un archivo <code>.xlsx</code>, <code>.ods</code> o <code>.csv</code> (primera hoja; la primera fila son los encabezados).</li>
 </ol>
 <h4>El editor</h4>
 <ul>
@@ -707,6 +780,7 @@ HTML],
 <li>Elige el idioma de origen y el de destino (el botón de flechas los intercambia; si ya hay traducción, la pasa al cuadro de origen).</li>
 <li>Escribe o pega el texto (hasta 20,000 caracteres) y pulsa <strong>Traducir</strong>.</li>
 <li>Con <strong>Copiar</strong> llevas el resultado al portapapeles. Se conservan los saltos de línea y las listas.</li>
+<li>Con <strong>Exportar</strong> descargas ese mismo texto como documento: Word (.docx), PDF o texto (.txt), según el formato elegido al lado del botón. El archivo se llama <code>traduccion-EN-fecha</code> o <code>traduccion-ES-fecha</code>.</li>
 </ol>
 <h4>Documento</h4>
 <p>En la pestaña <strong>Documento</strong> sube un archivo de hasta 20 MB y pulsa <strong>Traducir y descargar</strong>. El resultado se descarga con el mismo nombre más <code>_EN</code> o <code>_ES</code>; no se guarda en el servidor.</p>
@@ -760,6 +834,32 @@ HTML],
 <li><strong>Materiales pendientes</strong>, <strong>actividades sin materiales</strong> y <strong>materiales sin asignar</strong> (los tres solo para quien gestiona el proyecto).</li>
 </ul>
 <p>El enlace <strong>Ver todas en otra pestaña</strong> abre la lista completa con todos los pendientes, y en cada sección <em>Ver todas (n) →</em> abre esa sección completa. Una sección sin pendientes indica «Nada pendiente».</p>
+HTML],
+
+['id' => 'integraciones', 'titulo' => 'Integraciones: API y webhooks', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>En <strong>Integraciones</strong> (menú Proyecto) conectas ProjectWeb con otras herramientas (Power BI, Excel, Zapier, Slack, un sistema propio…).</p>
+<h4>API REST</h4>
+<ul>
+<li>Crea un <strong>token</strong> con un nombre que diga para qué es. Se muestra <em>una sola vez</em>: cópialo. Actúa como tú: ve y cambia lo mismo que tú en la web. Hazlo <strong>de solo lectura</strong> si la otra herramienta solo consulta, y ligado a un <strong>proyecto</strong> si no debe ver los demás. Puedes ponerle vigencia y revocarlo cuando quieras.</li>
+<li>Se usa con la cabecera <code>Authorization: Bearer pw_…</code> en <code>/api/v1/…</code>. Puedes leer proyectos, partidas, actividades, restricciones, bitácora, punch, RFI, submittals, reportes y la Curva S; y escribir (con un token de escritura) el avance de una actividad, registros de bitácora, pendientes del punch y RFI.</li>
+<li>La descripción completa (OpenAPI 3) está en <code>/api/v1/openapi</code> y se puede importar en Postman o Swagger. Límite: 120 peticiones por minuto por token.</li>
+</ul>
+<h4>Webhooks</h4>
+<p>Un webhook avisa a otra dirección cuando algo cambia en el proyecto (actividad, restricción, bitácora, reporte, submittal, punch, RFI). Cada aviso es un POST con el evento en JSON y una <strong>firma</strong> (<code>X-ProjectWeb-Signature</code>, HMAC-SHA256 del cuerpo con el secreto del webhook) para comprobar que viene de ProjectWeb. Solo se llama a direcciones públicas. Usa <em>Probar</em> para ver si responde, <em>Envíos</em> para ver el historial y <em>Reintentar</em> los que fallaron. Con 10 fallos seguidos el webhook se pausa solo.</p>
+HTML],
+
+['id' => 'personalizacion', 'titulo' => 'Personalizar el proyecto', 'icono' => 'fa-sliders', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Todo esto se ajusta a tu forma de trabajar. Lo de cada <em>proyecto</em> lo cambia quien lo gestiona; el <em>inicio</em> es de cada persona.</p>
+<h4>Diseñar las listas (columnas, nombres y orden)</h4>
+<p>En <strong>Submittals</strong>, <strong>Bitácora</strong>, <strong>Reporte diario</strong>, <strong>Punch list</strong> y <strong>Lookahead</strong> el botón <strong>Diseñar</strong> abre la lista de columnas: marca las que quieres ver, ponles el nombre que prefieras y, donde se puede, ordénalas con ☰ o las flechas. <em>Restablecer</em> devuelve el diseño de siempre. En el Punch cada pendiente es una tarjeta, así que el diseño elige qué datos lleva; en el Lookahead solo se muestran, ocultan y renombran las columnas fijas (el orden va ligado a las semanas).</p>
+<h4>Campos personalizados</h4>
+<p>En <strong>Campos personalizados</strong> (menú Proyecto) creas tus propios datos —«Nivel», «Frente», «Torre»— para actividades, punch, submittals, bitácora o reportes. Pueden ser texto, número, fecha o una lista de opciones. Salen como una columna más (se editan ahí mismo), se pueden <strong>filtrar</strong> y, en las listas, <strong>agrupar</strong>. En el programa y en el Lookahead filtran; la agrupación del programa ya son las partidas. También salen en el PDF del programa si su columna está en el diseño.</p>
+<h4>Plantillas de proyecto</h4>
+<p>Desde <strong>Plantillas de proyecto</strong> guardas la estructura de un proyecto terminado: partidas, actividades, dependencias, jornada, diseños, campos, catálogos y materiales (sin avance, reportes, fotos ni costos). Al crear un proyecto nuevo eliges la plantilla y las fechas se cuentan desde su inicio. Una plantilla también se puede aplicar a un proyecto vacío. El administrador puede compartirlas con todos.</p>
+<h4>Marca del cliente</h4>
+<p>En <strong>Marca del cliente</strong> subes el logo y eliges el nombre y dos colores. Al activarla, los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos) llevan una cabecera con el logo y los colores en títulos y encabezados de tabla. Las exportaciones XML/POD y las láminas del vPlan no cambian.</p>
+<h4>Mi inicio</h4>
+<p>En el inicio, <strong>Personalizar inicio</strong> te deja elegir qué bloques ves (resumen, actividades de hoy, atrasadas, proyectos recientes, novedades, accesos rápidos) y su orden. Solo afecta tu cuenta.</p>
 HTML],
 
 ['id' => 'ayuda', 'titulo' => 'Consejos y solución de problemas', 'icono' => 'fa-life-ring', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'

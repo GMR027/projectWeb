@@ -37,7 +37,7 @@ class LookaheadPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-lookahead.php';
         $html = ob_get_clean();
 
-        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true]);
+        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
         file_put_contents($ruta, $pdf);

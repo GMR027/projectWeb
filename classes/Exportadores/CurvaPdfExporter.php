@@ -67,7 +67,7 @@ class CurvaPdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-curva.php';
         $html = ob_get_clean();
 
-        $pdf = Pdf::generar($html, 'letter', 'landscape', ['isHtml5ParserEnabled' => true]);
+        $pdf = Pdf::generar($html, 'letter', 'landscape', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto]);
 
         $ruta = $this->carpetaSalida . '/' . $this->nombreFinal($nombreBase, 'pdf');
         file_put_contents($ruta, $pdf);

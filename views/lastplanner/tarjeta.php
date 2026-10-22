@@ -17,6 +17,7 @@ $ts = strtotime($t['fecha']);
                     <?php if ($it['completada']): ?><i class="lp-rombo lp-verde" title="Actividad finalizada">◆</i><?php endif; ?>
                     <?php if ($it['proceso']): ?><i class="lp-rombo lp-amarillo" title="Actividad en proceso">◆</i><?php endif; ?>
                     <?php if ($it['restriccion']): ?><i class="lp-rombo lp-rojo" title="Con restricción">◆</i><?php endif; ?>
+                    <?php if (!empty($it['riesgo'])): ?><i class="lp-rombo lp-naranja" title="En riesgo: <?php echo s($it['riesgo']); ?>">▲</i><?php endif; ?>
                     <?php if (!empty($it['partida'])): ?><span class="lp-cod" title="<?php echo s($it['partida']->nombre); ?>"><?php echo s($it['partida']->codigo); ?></span><?php endif; ?>
                     <?php echo s($it['actividad']->nombre); ?>
                 </span>
@@ -30,6 +31,7 @@ $ts = strtotime($t['fecha']);
             <span class="lp-ind"><i class="lp-rombo lp-verde">◆</i> Finalizada</span>
             <span class="lp-ind"><i class="lp-rombo lp-amarillo">◆</i> En proceso</span>
             <span class="lp-ind"><i class="lp-rombo lp-rojo">◆</i> Con restricción</span>
+            <span class="lp-ind"><i class="lp-rombo lp-naranja">▲</i> En riesgo</span>
             <?php if ($t['partes'] > 1): ?><em class="lp-parte"><?php echo $t['parte'] . '/' . $t['partes']; ?></em><?php endif; ?>
         </div>
     </div>

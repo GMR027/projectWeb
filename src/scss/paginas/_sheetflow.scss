@@ -75,3 +75,11 @@
   .sf-int-cab { display: none; }
   .sf-int-col { grid-template-columns: 3rem 1fr auto; .sf-t { grid-column: 2 / 3; } .sf-c { grid-column: 3; } .sf-int-acc { grid-column: 2 / -1; } .sf-int-num { grid-row: 1; } }
 }
+
+// Móvil: la tabla ocupa el ancho, con letra legible y desplazamiento horizontal
+@media (max-width: 64rem) {
+  .sf-ver { padding: .6rem; .tabla-wrapper { -webkit-overflow-scrolling: touch; }
+    .sf-tabla { font-size: 1.3rem; overflow-wrap: normal; th, td { white-space: nowrap; padding: .6rem .9rem !important; } } }
+  .sf-area .sf-scroll { max-height: 70vh; }
+  .sf-grid { font-size: 1.2rem; th, td { min-width: 8rem; } }
+}

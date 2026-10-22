@@ -62,13 +62,25 @@ class CentroIA
             if ($n) $out[] = ['herramienta' => 'programador', 'id' => (int)$l['id'], 'titulo' => "Propuesta del " . date('d/m/Y H:i', strtotime($l['creado'])) . ": $n partida(s) con cambios por aceptar", 'descripcion' => 'El Programador propone cambios de fechas y predecesoras. Acéptalos por partida en su pantalla.',
                 'severidad' => 'media', 'categoria' => 'Propuesta de programa', 'origen' => 'ia', 'accion' => 'aceptar_partida', 'solucion' => 'Revisar la propuesta y aceptar partida por partida.', 'fecha' => $l['creado'], 'url' => '/programador?proyecto=' . $pid . '&propuesta=' . (int)$l['id'], 'resoluble' => false];
         }
+        foreach ($out as &$x) {
+            $x['riesgo'] = RiesgoIA::nivel($pid, $x['accion']);
+            $x['partidas'] = [];
+            foreach ($x['detalle']['actividades'] ?? [] as $a) $x['partidas'][$a['partida_codigo']] = $a['partida'];
+        }
+        unset($x);
         $conteo = array_fill_keys(array_keys(self::HERRAMIENTAS), 0);
         foreach ($out as $x) $conteo[$x['herramienta']]++;
+        $partidas = [];
+        foreach ($out as $x) foreach ($x['partidas'] as $cod => $nom) $partidas[$cod] = $nom;
+        ksort($partidas);
+        $bajo = count(array_filter($out, fn($x) => $x['resoluble'] && $x['riesgo'] === 'simple' && !in_array($x['accion'], RiesgoIA::SIN_LOTE, true)));
+        if (in_array($f['riesgo'] ?? '', ['simple', 'permiso'], true)) $out = array_filter($out, fn($x) => $x['riesgo'] === $f['riesgo']);
+        if (($f['partida'] ?? '') !== '') $out = array_filter($out, fn($x) => isset($x['partidas'][$f['partida']]));
         if (isset(self::HERRAMIENTAS[$f['herramienta'] ?? ''])) $out = array_filter($out, fn($x) => $x['herramienta'] === $f['herramienta']);
         if (isset(self::SEVERIDADES[$f['severidad'] ?? ''])) $out = array_filter($out, fn($x) => $x['severidad'] === $f['severidad']);
         if (($f['origen'] ?? '') === 'ia' || ($f['origen'] ?? '') === 'sistema') $out = array_filter($out, fn($x) => $x['origen'] === $f['origen']);
         usort($out, fn($a, $b) => [self::SEVERIDADES[$b['severidad']], $a['herramienta'], $a['id']] <=> [self::SEVERIDADES[$a['severidad']], $b['herramienta'], $b['id']]);
-        return ['items' => array_values($out), 'conteo' => $conteo];
+        return ['items' => array_values($out), 'conteo' => $conteo, 'partidas' => $partidas, 'bajo_riesgo' => $bajo];
     }
 
     public static function aceptar(Proyecto $p, string $herramienta, int $id): array
@@ -79,6 +91,24 @@ class CentroIA
             'normativa' => Normativa::resolver($p, $id, 'aceptada'),
             default => [false, 'Esta herramienta se acepta desde su propia pantalla'],
         };
+    }
+
+    /**
+     * Acepta de una vez las propuestas de bajo riesgo («simple» en Niveles de riesgo) que cumplen los filtros (herramienta, severidad, origen, partida).
+     * Las que piden permiso nunca entran: se aceptan una por una. Cada una se aplica con su propia comprobación, así que si una deja de ser aplicable solo falla esa.
+     * @return array{aplicadas: int, fallos: list<array{titulo: string, motivo: string}>, omitidas: int}
+     */
+    public static function aceptarLote(Proyecto $p, array $f, int $max = 200): array
+    {
+        $f['riesgo'] = 'simple';
+        $items = array_filter(self::pendientes($p, $f)['items'], fn($x) => $x['resoluble'] && !in_array($x['accion'], RiesgoIA::SIN_LOTE, true));
+        $res = ['aplicadas' => 0, 'fallos' => [], 'omitidas' => max(0, count($items) - $max)];
+        foreach (array_slice($items, 0, $max) as $x) {
+            [$ok, $msg] = self::aceptar($p, $x['herramienta'], $x['id']);
+            if ($ok) $res['aplicadas']++;
+            else $res['fallos'][] = ['titulo' => $x['titulo'], 'motivo' => $msg];
+        }
+        return $res;
     }
 
     public static function rechazar(Proyecto $p, string $herramienta, int $id): array

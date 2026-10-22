@@ -80,7 +80,11 @@ const Centro = (() => {
       }, false);
       acc.append(nombre, guardar);
     }
-    acc.append(boton('Eliminar', async () => { if (!confirm('¿Eliminar este análisis? Los cambios ya aplicados al proyecto se conservan en la auditoría.')) return; await api('POST', '/api/ia/biblioteca', { proyecto: pid, herramienta: a.herramienta, id: a.id, accion: 'eliminar' }); refrescar(); }));
+    acc.append(boton('Eliminar', async () => {
+      if (!await window.confirmarDesktop({ titulo: 'Eliminar análisis', mensaje: '¿Eliminar este análisis? Los cambios ya aplicados al proyecto se conservan en la auditoría.', aceptar: 'Eliminar', peligro: true })) return;
+      await api('POST', '/api/ia/biblioteca', { proyecto: pid, herramienta: a.herramienta, id: a.id, accion: 'eliminar' });
+      refrescar();
+    }));
     d.append(t, acc); return d;
   }
 

@@ -18,7 +18,7 @@ class RespaldoProyecto
     /** Cuántos se conservan de cada tipo */
     private const CONSERVAR = ['auto' => 1, 'semanal' => 1, 'mensual' => 1, 'manual' => 5, 'previo' => 2];
     /** Tablas con llave al proyecto que no se respaldan: registros generados, permisos o bitácoras que no deben retroceder */
-    private const EXCLUIDAS = ['exportaciones', 'proyecto_accesos', 'auditoria_cambios', 'programador_respaldos'];
+    private const EXCLUIDAS = ['exportaciones', 'proyecto_accesos', 'enlaces_proyecto', 'auditoria_cambios', 'programador_respaldos'];
     private const COMPRIMIDOS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'zip', 'mp3', 'm4a', 'ogg', 'webm', 'docx', 'xlsx', 'pptx'];
     private const EXT_ARCHIVO = 'jpe?g|png|gif|webp|svg|pdf|docx?|xlsx?|pptx?|odt|csv|mp3|wav|m4a|webm|ogg|zip|dwg|dxf|txt';
     private const MAX_ARCHIVO = 100 * 1048576;

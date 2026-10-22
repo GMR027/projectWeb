@@ -7,6 +7,7 @@ const path = require('path');
 const httpNodo = require('http');
 const https = require('https');
 const { Readable } = require('stream');
+const { AsyncLocalStorage } = require('async_hooks');
 
 const TIPOS = {
   ollama: { etiqueta: 'Ollama (local)', url: 'http://localhost:11434', clave: false },
@@ -182,7 +183,7 @@ function conImagenes(tipo, mensajes, imagenes) {
   });
 }
 
-async function chat(p, clave, mensajes, opts = {}) {
+async function chatSinMedir(p, clave, mensajes, opts = {}) {
   const timeout = opts.timeout || TIMEOUT_MS;
   const t = TIPOS[p.tipo];
   if (!t) throw new Error('Tipo de conexión desconocido');
@@ -204,6 +205,24 @@ async function chat(p, clave, mensajes, opts = {}) {
   }
   const j = await http(base + '/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': clave, 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: p.modelo, max_tokens: opts.maxTokens || 4096, messages: mensajes }) }, timeout);
   return (j?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+}
+
+// ---- Medidor de uso: cada llamada al modelo hecha dentro de conUso({herramienta, proyectoId}, fn) se informa a alMedir ----
+const almacenUso = new AsyncLocalStorage();
+let alMedir = null;
+const conUso = (ctx, fn) => almacenUso.run(ctx, fn);
+const medirUso = fn => { alMedir = fn; };
+const largo = m => (Array.isArray(m) ? m : []).reduce((n, x) => n + (typeof x.content === 'string' ? x.content.length : JSON.stringify(x.content || '').length), 0);
+
+async function chat(p, clave, mensajes, opts = {}) {
+  const inicio = Date.now(), ctx = almacenUso.getStore();
+  let ok = false, salida = '';
+  try { salida = await chatSinMedir(p, clave, mensajes, opts); ok = true; return salida; }
+  finally {
+    if (alMedir && ctx) {
+      try { alMedir({ herramienta: ctx.herramienta, proyectoId: ctx.proyectoId || 0, modelo: p.modelo || p.nombre || p.tipo, proveedor: p.tipo, ms: Date.now() - inicio, ok, entrada: largo(mensajes), salida: String(salida || '').length }); } catch { /* medir nunca rompe la llamada */ }
+    }
+  }
 }
 
 async function modelos(p, clave) {
@@ -357,4 +376,4 @@ async function estado(p, clave) {
   }
 }
 
-module.exports = { uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
+module.exports = { conUso, medirUso, uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };

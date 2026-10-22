@@ -20,9 +20,10 @@ class SubmittalController
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
-        $paquetes = Submittal::deProyecto((int)$proyecto->id);
+        $pid = (int)$proyecto->id;
+        $cp = \Classes\CamposPersonalizados::aplicar($pid, 'submittal', Submittal::deProyecto($pid), fn($p) => (int)$p->id);
         $router->render('submittals/index', [
-            'titulo' => 'Submittals - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'paquetes' => $paquetes,
+            'titulo' => 'Submittals - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'paquetes' => $cp['items'], 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'submittals'),
             'msrNombres' => array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombre], Msr::deProyecto((int)$proyecto->id)), 'n', 'id'),
             'conteos' => Submittal::conteos((int)$proyecto->id),
         ]);

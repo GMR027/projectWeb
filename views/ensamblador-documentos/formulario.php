@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$inicial) $inicial = [];
 .ens-lista li{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;border-bottom:1px solid var(--border,#475569)}
 .ens-lista li:last-child{border-bottom:0}
 .ens-lista li span{flex:1;min-width:0;overflow-wrap:anywhere}
+.ens-subir{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;margin-bottom:1rem}
 .ens-vacio{padding:1.2rem;color:var(--text-muted,#94a3b8)}
 </style>
 <div class="page-header">
@@ -29,6 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$inicial) $inicial = [];
             <div>
                 <h3>Documentos disponibles</h3>
                 <p class="text-muted text-sm">Pulsa «Agregar» para sumar un documento del Redactor o un PDF del Archivo. Puedes repetir uno.</p>
+                <div class="ens-subir">
+                    <label for="ens-archivos" class="btn btn-sm btn-primary"><i class="fa-solid fa-upload"></i> Cargar PDF de este equipo</label>
+                    <input type="file" id="ens-archivos" accept="application/pdf,.pdf" multiple hidden>
+                    <span class="text-sm text-muted" id="ens-subir-msg" role="status">Se guardan también en el Archivo del proyecto.</span>
+                </div>
                 <ul class="ens-lista" id="ens-disp">
                     <?php foreach (['redactor' => ['Redactor', 'fa-file-pen'], 'archivo' => ['PDF del Archivo', 'fa-file-pdf']] as $t => [$titulo, $ico]): ?>
                         <li><strong><i class="fa-solid <?php echo $ico; ?>"></i> <?php echo s($titulo); ?></strong></li>
@@ -78,6 +84,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$inicial) $inicial = [];
     document.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => {
         const d = info[b.dataset.add]; sel.push({ t: d.t, id: d.id }); dibujar();
     }));
+    // PDF de fuera: se suben al Archivo del proyecto y se agregan de una vez al orden
+    const subir = document.getElementById('ens-archivos'), msg = document.getElementById('ens-subir-msg');
+    const lista = document.getElementById('ens-disp');
+    subir?.addEventListener('change', async () => {
+        if (!subir.files.length) return;
+        const fd = new FormData();
+        fd.append('proyecto', <?php echo $id; ?>);
+        [...subir.files].forEach((f) => fd.append('pdf[]', f));
+        msg.textContent = 'Subiendo…';
+        try {
+            const r = await fetch('/ensamblador-documentos/subir-pdf', { method: 'POST', body: fd });
+            const d = await r.json();
+            (d.subidos || []).forEach((x) => {
+                info[x.t + x.id] = x; sel.push({ t: x.t, id: x.id });
+                const li = document.createElement('li'), sp = document.createElement('span');
+                sp.textContent = x.nombre; li.appendChild(sp); lista.appendChild(li);
+            });
+            dibujar();
+            msg.textContent = (d.subidos?.length ? d.subidos.length + ' PDF agregado(s) al final. ' : '') + [d.error && !d.subidos?.length ? d.error : '', ...(d.errores || [])].filter(Boolean).join(' · ');
+        } catch (_) { msg.textContent = 'No se pudo subir (¿supera el límite del servidor?)'; }
+        subir.value = '';
+    });
     dibujar();
 })();
 </script>

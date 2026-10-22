@@ -4,6 +4,9 @@
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s($proyecto->codigo); ?></p>
     </div>
     <div>
+        <a href="/proyectos/ver?id=<?php echo s($proyecto->id); ?>" class="btn btn-secondary">
+            <i class="fa-solid fa-heart-pulse"></i> Salud del proyecto
+        </a>
         <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-secondary">
             <i class="fa-solid fa-calendar-days"></i> Ver Calendario
         </a>
@@ -307,7 +310,7 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
             <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>">
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Respaldar ahora</button>
         </form>
-        <form method="POST" action="/ajustes/respaldo/restaurar" onsubmit="return confirm('Se reemplazarán los datos actuales del proyecto por los del último respaldo. Antes se guardará una copia del estado actual. ¿Continuar?')">
+        <form method="POST" action="/ajustes/respaldo/restaurar" data-confirm="Restaurar el último respaldo|Se reemplazarán los datos actuales del proyecto por los del último respaldo. Antes se guardará una copia del estado actual. ¿Continuar?|Restaurar">
             <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>">
             <button type="submit" class="btn btn-secondary"<?php echo $respAnterior ? '' : ' disabled'; ?>><i class="fa-solid fa-rotate-left"></i> Restaurar desde el respaldo anterior<?php echo $respAnterior ? ' (' . date('d/m/Y H:i', $respAnterior['fecha']) . ')' : ''; ?></button>
         </form>
@@ -327,11 +330,11 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
                 <td class="mono" style="text-align:right"><?php echo $fmt($r['bytes']); ?></td>
                 <td style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap">
                     <a class="btn btn-ghost" href="/ajustes/respaldo/descargar?proyecto=<?php echo $pidResp; ?>&archivo=<?php echo urlencode($r['archivo']); ?>"><i class="fa-solid fa-download"></i></a>
-                    <form method="POST" action="/ajustes/respaldo/restaurar" onsubmit="return confirm('Restaurar el proyecto a este respaldo? Antes se guardará una copia del estado actual.')">
+                    <form method="POST" action="/ajustes/respaldo/restaurar" data-confirm="Restaurar este respaldo|Se restaurará el proyecto a este respaldo. Antes se guardará una copia del estado actual.|Restaurar">
                         <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>"><input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-ghost" title="Restaurar"><i class="fa-solid fa-rotate-left"></i></button>
                     </form>
-                    <form method="POST" action="/ajustes/respaldo/eliminar" onsubmit="return confirm('Eliminar este respaldo?')">
+                    <form method="POST" action="/ajustes/respaldo/eliminar" data-confirm="Eliminar respaldo|Se eliminará este respaldo. Esta acción no se puede deshacer.|Eliminar">
                         <input type="hidden" name="proyecto_id" value="<?php echo $pidResp; ?>"><input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-ghost" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                     </form>

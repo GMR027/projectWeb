@@ -222,6 +222,7 @@ class MaterialesInteligentes
             if ($r['estado'] === 'no_aprobado') $res['no_aprobados'][] = ['id' => $mid, 'nombre' => $m->nombre, 'resumen' => $r['resumen']];
             else $res[['aprobado' => 'aprobados', 'revisar' => 'por_revisar', 'sin_normativa' => 'sin_normativa'][$r['estado']]]++;
         }
+        if ($res['verificados']) Revisiones::registrarEjecucion($pid, 'inteligentes');
         return $res;
     }
 

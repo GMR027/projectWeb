@@ -23,6 +23,7 @@ CREATE TABLE usuarios (
     token VARCHAR(100) DEFAULT NULL,
     confirmado TINYINT(1) DEFAULT 0,
     novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
+    inicio_json TEXT NULL,            -- Inicio personalizado (bloques y orden), Fase 4.5
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -51,6 +52,14 @@ CREATE TABLE proyectos (
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
+    programa_nombre VARCHAR(200) NULL,
+    programa_columnas_json TEXT NULL,
+    programa_indicador_json TEXT NULL,
+    marca_activa TINYINT(1) NOT NULL DEFAULT 0,   -- marca del cliente en los PDF (Fase 4.4)
+    marca_nombre VARCHAR(150) NULL,
+    marca_logo VARCHAR(100) NULL,
+    marca_color VARCHAR(7) NULL,
+    marca_color2 VARCHAR(7) NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -91,6 +100,12 @@ CREATE TABLE actividades (
     hito TINYINT(1) NOT NULL DEFAULT 0, -- 1 = hito (duración 0, inicio = fin)
     sin_material TINYINT(1) NOT NULL DEFAULT 0, -- 1 = la actividad no requiere material
     fecha_fija TINYINT(1) NOT NULL DEFAULT 0,   -- 1 = el modo automático de dependencias no la mueve
+    responsable VARCHAR(150) NULL,
+    rec_inicio DATE NULL,                       -- fechas de recuperación de la actividad
+    rec_fin DATE NULL,
+    libre_texto VARCHAR(255) NULL,              -- campos libres (su nombre está en proyectos.programa_columnas_json)
+    libre_numero DECIMAL(14,4) NULL,
+    libre_fecha DATE NULL,
     orden INT DEFAULT 0,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
     UNIQUE KEY uq_actividad_codigo (partida_id, codigo)
@@ -997,6 +1012,34 @@ CREATE TABLE IF NOT EXISTS vigilancia_estado (
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Herramientas de IA, fase 2: niveles de riesgo por acción, vigilancia en el servidor y medidor de uso del modelo.
+CREATE TABLE IF NOT EXISTS ia_ajustes (
+    proyecto_id INT PRIMARY KEY,
+    riesgo_json TEXT NULL,                            -- {accion: 'permiso'|'simple'}; vacío = valores por defecto
+    vigilancia_servidor TINYINT(1) NOT NULL DEFAULT 0,
+    vigilancia_minutos INT NOT NULL DEFAULT 60,
+    vigilancia_ultima DATETIME NULL,
+    vigilancia_origen VARCHAR(12) NOT NULL DEFAULT '',  -- cron | web
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ia_uso (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NULL,
+    herramienta VARCHAR(60) NOT NULL,
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    proveedor VARCHAR(30) NOT NULL DEFAULT '',
+    duracion_ms INT UNSIGNED NOT NULL DEFAULT 0,
+    caracteres_entrada INT UNSIGNED NOT NULL DEFAULT 0,
+    caracteres_salida INT UNSIGNED NOT NULL DEFAULT 0,
+    exito TINYINT(1) NOT NULL DEFAULT 1,
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyecto_fecha (proyecto_id, creado),
+    KEY idx_fecha (creado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Normativa y especificaciones: PDFs (español o inglés) que se leen, se parten por cláusulas y se vinculan a materiales y actividades.
 CREATE TABLE IF NOT EXISTS normativa_documentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1365,7 +1408,7 @@ CREATE TABLE IF NOT EXISTS redactor_plantillas (
 CREATE TABLE IF NOT EXISTS revisiones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    tipo ENUM('material','actividad','herramienta') NOT NULL,
+    tipo ENUM('material','actividad','herramienta','rfi') NOT NULL,
     ref VARCHAR(60) NOT NULL,                          -- id del material/actividad o clave de la herramienta
     veredicto ENUM('sin_evaluar','correcto','revisar','no_cumple') NOT NULL DEFAULT 'sin_evaluar',
     revisado TINYINT(1) NOT NULL DEFAULT 0,
@@ -1384,7 +1427,7 @@ CREATE TABLE IF NOT EXISTS revisiones (
 CREATE TABLE IF NOT EXISTS revisiones_historial (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    tipo ENUM('material','actividad','herramienta') NOT NULL,
+    tipo ENUM('material','actividad','herramienta','rfi') NOT NULL,
     ref VARCHAR(60) NOT NULL,
     nombre VARCHAR(255) NOT NULL DEFAULT '',
     veredicto_antes VARCHAR(20) NOT NULL DEFAULT 'sin_evaluar',
@@ -1624,4 +1667,205 @@ CREATE TABLE IF NOT EXISTS catalogo_categorias (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_cat_ambito (proyecto_id, ambito, nombre),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Fase 3: costos y presupuesto, recursos y cuadrillas, RFI, enlaces de solo lectura (cliente y calendario .ics)
+
+-- 3.1 Costos: presupuesto por partida y movimientos (costo real y estimaciones)
+CREATE TABLE IF NOT EXISTS costos_partidas (
+    partida_id INT NOT NULL PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    presupuesto DECIMAL(16,2) NOT NULL DEFAULT 0,
+    KEY idx_cp_proyecto (proyecto_id),
+    FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS costos_movimientos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    partida_id INT NULL,
+    tipo ENUM('real','estimacion') NOT NULL DEFAULT 'real',
+    fecha DATE NOT NULL,
+    concepto VARCHAR(255) NOT NULL DEFAULT '',
+    referencia VARCHAR(100) NOT NULL DEFAULT '',     -- factura, número de estimación…
+    monto DECIMAL(16,2) NOT NULL DEFAULT 0,
+    estado ENUM('borrador','aprobada','pagada') NOT NULL DEFAULT 'aprobada',   -- solo estimaciones
+    orden_cambio_id INT NULL,
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_cm_proyecto (proyecto_id, tipo, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE SET NULL,
+    FOREIGN KEY (orden_cambio_id) REFERENCES ordenes_cambio(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 3.2 Recursos: personas y cuadrillas, y su asignación a actividades
+CREATE TABLE IF NOT EXISTS recursos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    tipo ENUM('persona','cuadrilla') NOT NULL DEFAULT 'persona',
+    personal_id INT NULL,                            -- persona del Directorio (opcional)
+    integrantes SMALLINT NOT NULL DEFAULT 1,         -- tamaño de la cuadrilla
+    horas_dia DECIMAL(4,1) NOT NULL DEFAULT 8,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_rec_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (personal_id) REFERENCES personal(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS actividad_recursos (
+    actividad_id INT NOT NULL,
+    recurso_id INT NOT NULL,
+    dedicacion SMALLINT NOT NULL DEFAULT 100,        -- % de su jornada mientras dura la actividad
+    PRIMARY KEY (actividad_id, recurso_id),
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (recurso_id) REFERENCES recursos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 3.3 RFI (solicitudes de información)
+CREATE TABLE IF NOT EXISTS rfis (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    numero VARCHAR(30) NOT NULL,
+    asunto VARCHAR(200) NOT NULL,
+    pregunta TEXT,
+    respuesta TEXT,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',    -- quien debe contestar
+    solicitante VARCHAR(150) NOT NULL DEFAULT '',
+    prioridad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
+    estado ENUM('abierto','respondido','cerrado') NOT NULL DEFAULT 'abierto',
+    fecha DATE NOT NULL,
+    fecha_limite DATE NULL,
+    fecha_respuesta DATE NULL,
+    actividad_id INT NULL,                           -- actividad que bloquea
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_rfi_proyecto (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 3.4 y 3.5 Enlaces de solo lectura: para el cliente (temporal) y suscripción de calendario .ics
+CREATE TABLE IF NOT EXISTS enlaces_proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo ENUM('cliente','ics') NOT NULL DEFAULT 'cliente',
+    token CHAR(40) NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    secciones VARCHAR(100) NOT NULL DEFAULT 'avance,fotos,reportes',
+    expira DATETIME NULL,
+    revocado TINYINT(1) NOT NULL DEFAULT 0,
+    accesos INT NOT NULL DEFAULT 0,
+    ultimo_acceso DATETIME NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_enlace_token (token),
+    KEY idx_enlace_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- FASE 4: PERSONALIZACIÓN
+-- ============================================================
+-- 4.1 Diseño de columnas (nombre, orden, visibilidad) de Lookahead, Punch, Submittals, Bitácora y Reporte diario
+CREATE TABLE IF NOT EXISTS disenos_lista (
+    proyecto_id INT NOT NULL,
+    herramienta VARCHAR(30) NOT NULL,
+    columnas_json TEXT NOT NULL,
+    PRIMARY KEY (proyecto_id, herramienta),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 4.2 Campos personalizados por proyecto (Nivel, Frente, Torre…) y sus valores por registro
+CREATE TABLE IF NOT EXISTS campos_personalizados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    entidad ENUM('actividad','punch','submittal','bitacora','reporte') NOT NULL,
+    nombre VARCHAR(60) NOT NULL,
+    tipo ENUM('texto','numero','fecha','lista') NOT NULL DEFAULT 'texto',
+    opciones TEXT NULL,                       -- tipo lista: una opción por línea
+    orden INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_cpers (proyecto_id, entidad),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS campos_valores (
+    campo_id INT NOT NULL,
+    registro_id INT NOT NULL,
+    valor VARCHAR(500) NOT NULL DEFAULT '',
+    PRIMARY KEY (campo_id, registro_id),
+    FOREIGN KEY (campo_id) REFERENCES campos_personalizados(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 4.3 Plantillas de proyecto completas (estructura de un proyecto terminado, lista para crear uno nuevo)
+CREATE TABLE IF NOT EXISTS plantillas_proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(500) NOT NULL DEFAULT '',
+    compartida TINYINT(1) NOT NULL DEFAULT 0,          -- 1 = la ven todos los que pueden crear proyectos
+    origen VARCHAR(200) NOT NULL DEFAULT '',            -- nombre del proyecto del que salió
+    resumen_json TEXT NULL,                             -- conteos para mostrar en la lista
+    datos LONGTEXT NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_pp_usuario (usuario_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- FASE 5: API REST Y WEBHOOKS
+-- ============================================================
+-- 5.1 Tokens de la API: se guarda solo el hash (SHA-256); el token completo se muestra una vez al crearlo
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    prefijo VARCHAR(12) NOT NULL,                  -- primeros caracteres, para reconocerlo en la lista
+    escritura TINYINT(1) NOT NULL DEFAULT 0,       -- 0 = solo lectura
+    proyecto_id INT NULL,                          -- NULL = todos los proyectos del usuario
+    expira DATE NULL,
+    revocado TINYINT(1) NOT NULL DEFAULT 0,
+    usos INT NOT NULL DEFAULT 0,
+    ultimo_uso DATETIME NULL,
+    ventana INT NOT NULL DEFAULT 0,                -- minuto (epoch/60) del límite de uso
+    ventana_n INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_api_hash (token_hash),
+    KEY idx_api_usuario (usuario_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 5.1 Webhooks: avisos HTTP firmados (HMAC-SHA256) cuando algo cambia en un proyecto
+CREATE TABLE IF NOT EXISTS webhooks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL DEFAULT '',
+    url VARCHAR(500) NOT NULL,
+    secreto CHAR(40) NOT NULL,
+    eventos VARCHAR(500) NOT NULL DEFAULT '*',     -- lista separada por comas, o * para todos
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    fallos_seguidos INT NOT NULL DEFAULT 0,        -- al llegar a 10 se desactiva solo
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_wh_proyecto (proyecto_id, activo),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS webhook_entregas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    webhook_id INT NOT NULL,
+    evento VARCHAR(60) NOT NULL,
+    codigo_http SMALLINT NOT NULL DEFAULT 0,
+    ok TINYINT(1) NOT NULL DEFAULT 0,
+    ms INT NOT NULL DEFAULT 0,
+    error VARCHAR(255) NOT NULL DEFAULT '',
+    carga TEXT NULL,                               -- el JSON enviado (para reintentar)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_whe (webhook_id, id),
+    FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

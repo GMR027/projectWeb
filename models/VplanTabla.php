@@ -102,6 +102,13 @@ class VplanTabla extends ActiveRecord
         return $out;
     }
 
+    /** Estilo (CSS) de los encabezados cuando la tabla está vinculada a SheetFlow: ['c0' => css, …] (vacío si no lo está) */
+    public function estiloEncabezados(): array
+    {
+        $h = $this->hoja();
+        return $h ? \Classes\Sheetflow::estiloEncabezados($h, count($this->columnasOtro())) : [];
+    }
+
     /** Claves de campo de cada fila según el tipo */
     public function campos(): array
     {

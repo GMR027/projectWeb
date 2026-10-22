@@ -1,0 +1,45 @@
+// Semáforo de salud del proyecto y marca «En riesgo» de las actividades
+.salud {
+  --salud-color: var(--success);
+  margin: 0 1.6rem 1.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-left: 0.4rem solid var(--salud-color);
+  border-radius: 0.8rem;
+  &.salud-aviso { --salud-color: var(--warning); }
+  &.salud-critico { --salud-color: var(--danger); }
+  &:not(.salud-compacto) { margin: 0; border-left-width: 0.4rem; }
+}
+.salud-cab { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.salud-luz { width: 1.2rem; height: 1.2rem; border-radius: 50%; background: var(--salud-color); box-shadow: 0 0 0.8rem var(--salud-color); }
+.salud-estado { color: var(--salud-color); font-weight: 600; font-size: 1.3rem; }
+.salud-lista { display: grid; gap: 0.6rem; margin-top: 0.8rem; }
+.salud:not(.salud-compacto) .salud-lista { grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr)); }
+.salud-item {
+  --item-color: var(--success);
+  display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.9rem; border-radius: 0.6rem; border: 1px solid var(--border);
+  color: inherit; text-decoration: none; font-size: 1.3rem;
+  &.salud-aviso { --item-color: var(--warning); }
+  &.salud-critico { --item-color: var(--danger); }
+  > i, .salud-valor { color: var(--item-color); }
+  .salud-valor { font-weight: 700; }
+  small { grid-column: 1 / -1; color: var(--text-muted, inherit); opacity: 0.8; font-size: 1.15rem; }
+  &:hover { border-color: var(--item-color); }
+}
+.salud-compacto .salud-item { padding: 0.3rem 0.7rem; font-size: 1.2rem; }
+
+.badge-riesgo {
+  display: inline-flex; align-items: center; gap: 0.4rem; margin-left: 0.6rem; padding: 0.1rem 0.6rem;
+  border-radius: 0.4rem; font-size: 1.05rem; font-weight: 600; white-space: nowrap; text-decoration: none;
+  background: rgba(217, 119, 6, 0.14); color: var(--warning); border: 1px solid rgba(217, 119, 6, 0.45);
+  &:hover { background: rgba(217, 119, 6, 0.25); }
+}
+
+// Buscador global
+.topbar-buscar input { width: 18rem; padding: 0.5rem 1rem; border-radius: 0.8rem; border: 1px solid var(--border); background: transparent; color: inherit; font-size: 1.3rem; }
+.topbar-buscar input:focus { outline: none; border-color: var(--primary); }
+.buscar-form { display: flex; gap: 1rem; margin-bottom: 1.6rem; input { flex: 1; padding: 0.9rem 1.2rem; border-radius: 0.8rem; border: 1px solid var(--border); background: transparent; color: inherit; font-size: 1.5rem; } }
+.buscar-grupo { margin-bottom: 1.2rem; h3 { margin-bottom: 0.8rem; } }
+.buscar-lista { list-style: none; margin: 0; padding: 0; li a { display: flex; flex-direction: column; padding: 0.6rem 0; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; &:hover strong { color: var(--primary); } } li:last-child a { border-bottom: 0; } }
+@media (max-width: 48rem) { .topbar-buscar input { width: 10rem; } }

@@ -14,14 +14,15 @@ class RevisionController
         if (!is_admin()) { http_response_code(403); exit('Solo el administrador puede ver las revisiones'); }
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
-        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'materiales', 'actividades', 'herramientas', 'historial'], true) ? $_GET['pestana'] : 'resumen';
+        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'materiales', 'actividades', 'rfis', 'herramientas', 'historial'], true) ? $_GET['pestana'] : 'resumen';
         $filtro = in_array($_GET['filtro'] ?? '', ['correcto', 'revisar', 'no_cumple', 'sin_evaluar', 'sin_revisar', 'cambio'], true) ? $_GET['filtro'] : '';
         $materiales = Revisiones::elementos($pid, 'material');
         $actividades = Revisiones::elementos($pid, 'actividad');
+        $rfis = Revisiones::elementos($pid, 'rfi');
         $herramientas = Revisiones::herramientas($pid);
         $router->render('revisiones/index', [
             'titulo' => 'Revisiones - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'pestana' => $pestana, 'filtro' => $filtro,
-            'materiales' => $materiales, 'actividades' => $actividades, 'herramientas' => $herramientas,
+            'materiales' => $materiales, 'actividades' => $actividades, 'rfis' => $rfis, 'cRfis' => Revisiones::conteo($rfis), 'herramientas' => $herramientas,
             'cMateriales' => Revisiones::conteo($materiales), 'cActividades' => Revisiones::conteo($actividades), 'cHerramientas' => Revisiones::conteoHerramientas($herramientas),
             'historial' => $pestana === 'historial' ? Revisiones::historial($pid, ['tipo' => $_GET['tipo'] ?? '', 'ref' => $_GET['ref'] ?? ''], 200) : [],
             'puede' => puede_revisar($proyecto),

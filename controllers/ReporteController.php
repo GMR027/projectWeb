@@ -41,7 +41,9 @@ class ReporteController
             foreach ($r->getActividades() as $id) if (isset($acts[$id])) $nombres[] = $acts[$id][0]->nombre;
             $filas[] = ['reporte' => $r, 'actividades' => $nombres];
         }
-        $router->render('reportes/index', ['titulo' => 'Reporte diario - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filas' => $filas]);
+        $pid = (int)$proyecto->id;
+        $cp = \Classes\CamposPersonalizados::aplicar($pid, 'reporte', $filas, fn($f) => (int)$f['reporte']->id);
+        $router->render('reportes/index', ['titulo' => 'Reporte diario - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filas' => $cp['items'], 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'reportes')]);
     }
 
     public static function ver(Router $router)
@@ -140,6 +142,41 @@ class ReporteController
             $r->eliminar();
         }
         header('Location: /reportes?proyecto=' . $proyecto->id);
+        exit;
+    }
+
+    /**
+     * Actualiza desde el reporte el % de avance de las actividades que trabajó ese día. Solo cambia las que el usuario modificó; el valor queda anotado
+     * en la fecha del reporte (Curva S real) y no en la de hoy.
+     */
+    public static function avance()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $r = ReporteDiario::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) { header('Location: /reportes?proyecto=' . $proyecto->id); exit; }
+        $acts = self::actividades($proyecto);
+        $db = $GLOBALS['db'];
+        $fecha = $db->real_escape_string($r->fecha);
+        $cambios = 0;
+        foreach ((array)($_POST['avance'] ?? []) as $actId => $valor) {
+            $actId = (int)$actId;
+            if (!in_array($actId, $r->getActividades(), true) || !isset($acts[$actId]) || !is_numeric($valor)) continue;
+            [$a] = $acts[$actId];
+            if ($a->esHito()) continue;
+            $nuevo = max(0, min(100, (int)round((float)$valor)));
+            if ($nuevo === (int)$a->progreso) continue;
+            $res = $db->query("SELECT progreso FROM actividad_avance WHERE actividad_id = $actId AND fecha = CURDATE()");
+            $previoHoy = $res && ($f = $res->fetch_row()) ? (int)$f[0] : null;
+            $a->progreso = $nuevo;
+            $a->sincronizarStatus();
+            if (!$a->guardar()) continue;
+            $cambios++;
+            if ($r->fecha !== date('Y-m-d')) {   // Actividad::guardar anotó hoy; el avance pertenece a la fecha del reporte
+                $db->query("INSERT INTO actividad_avance (actividad_id, fecha, progreso) VALUES ($actId, '$fecha', $nuevo) ON DUPLICATE KEY UPDATE progreso = VALUES(progreso)");
+                $db->query($previoHoy === null ? "DELETE FROM actividad_avance WHERE actividad_id = $actId AND fecha = CURDATE()" : "UPDATE actividad_avance SET progreso = $previoHoy WHERE actividad_id = $actId AND fecha = CURDATE()");
+            }
+        }
+        header('Location: /reportes/ver?proyecto=' . $proyecto->id . '&id=' . $r->id . '&avance=' . $cambios);
         exit;
     }
 

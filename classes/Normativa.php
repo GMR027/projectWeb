@@ -404,7 +404,12 @@ class Normativa
     {
         $db = self::db();
         $db->query("INSERT IGNORE INTO normativa_aplicaciones (proyecto_id, documento_id, fragmento_id, entidad_tipo, entidad_id, referencia, requisito, nota, origen, estado, puntaje, modelo) VALUES ($pid, " . ($doc ?: 'NULL') . ', ' . ($frag ?: 'NULL') . ", '$tipo', $id, '" . self::esc(mb_substr($ref, 0, 200)) . "', " . ($req === null || $req === '' ? 'NULL' : "'" . self::esc(mb_substr($req, 0, 1500)) . "'") . ", '" . self::esc(mb_substr($nota, 0, 500)) . "', '$origen', '$estado', $puntaje, '" . self::esc(mb_substr($modelo, 0, 150)) . "')");
-        return (int)$db->affected_rows > 0 ? (int)$db->insert_id : 0;
+        $creado = (int)$db->affected_rows > 0 ? (int)$db->insert_id : 0;
+        if ($creado) {
+            static $registrado = [];
+            if (empty($registrado[$pid])) { $registrado[$pid] = true; Revisiones::registrarEjecucion($pid, 'normativa'); }   // estado de uso: una vez por petición
+        }
+        return $creado;
     }
 
     /** Propone vínculos sin IA (sección CSI exacta y palabras con buen puntaje) para entidades sin ninguno. @return array{entidades: int, propuestas: int} */
