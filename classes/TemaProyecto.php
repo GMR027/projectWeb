@@ -59,6 +59,20 @@ class TemaProyecto
         return isset(self::MODOS[$modo]) ? $modo : 'usuario';
     }
 
+    /**
+     * Tema CSS que fija el proyecto: 'light', 'dark' o null si manda el usuario.
+     * Ojo: los valores de MODOS ('claro'/'oscuro') no son los del CSS
+     * (`data-theme="light"` / `data-theme="dark"`); este es el único punto donde se traducen.
+     */
+    public static function temaForzado($modo): ?string
+    {
+        return match (self::normModo($modo)) {
+            'claro'  => 'light',
+            'oscuro' => 'dark',
+            default  => null,
+        };
+    }
+
     /** Paleta válida o la de por defecto */
     public static function normPaleta($paleta): string
     {
@@ -93,7 +107,10 @@ class TemaProyecto
         $rc = self::rgb($claro);
         $ro = self::rgb($oscuro);
 
-        return ':root[data-theme="light"]{--primary:' . $claro
+        return ':root{--primary:' . $oscuro
+            . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
+            . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}'
+            . ':root[data-theme="light"]{--primary:' . $claro
             . ';--primary-hover:' . self::oscurecer($claro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $rc) . ',.15)}'
             . ':root[data-theme="dark"]{--primary:' . $oscuro

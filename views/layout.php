@@ -3,13 +3,12 @@
 require_once __DIR__ . '/templates/breadcrumb.php';
 
 // Tema del proyecto (Ajustes → Apariencia del proyecto). Sin proyecto manda la preferencia del usuario.
-$temaModoProyecto = null;
+$temaModoProyecto = null;   // 'light' | 'dark' | null (el que elige cada usuario)
 $temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
 $temaCssProyecto = '';
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
-    $temaModoProyecto = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
+    $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
-    if ($temaModoProyecto === 'usuario') $temaModoProyecto = null;   // manda el usuario
     $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
 }
 ?>

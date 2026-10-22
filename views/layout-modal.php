@@ -1,13 +1,12 @@
 <?php /* Layout mínimo para formularios que se muestran dentro de un modal (iframe), p. ej. desde el calendario */ ?>
 <?php
 // Mismo tema de proyecto que el layout principal
-$temaModoProyecto = null;
+$temaModoProyecto = null;   // 'light' | 'dark' | null (el que elige cada usuario)
 $temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
 $temaCssProyecto = '';
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
-    $temaModoProyecto = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
+    $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
-    if ($temaModoProyecto === 'usuario') $temaModoProyecto = null;
     $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
 }
 ?>
