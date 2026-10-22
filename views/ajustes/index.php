@@ -224,6 +224,7 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
             </div>
         </div>
 
+        <p id="tema-aviso" class="text-muted text-sm" hidden><i class="fa-solid fa-circle-info"></i> Estás viendo una vista previa: pulsa <strong>Guardar apariencia</strong> para dejarla en el proyecto.</p>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
     </form>
     <script>
@@ -238,6 +239,8 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
             card.addEventListener('change', () => {
                 const modo = card.querySelector('input[name="tema_modo"]:checked')?.value || 'usuario';
                 raiz.setAttribute('data-theme', TEMA[modo] || localStorage.getItem('theme') || 'dark');
+                const aviso = document.getElementById('tema-aviso');
+                if (aviso) aviso.hidden = false;
                 const p = card.querySelector('input[name="tema_paleta"]:checked');
                 if (!p) return;
                 const claro = raiz.getAttribute('data-theme') === 'light';
