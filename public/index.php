@@ -61,6 +61,7 @@ use Controllers\ReporteController;
 use Controllers\BitacoraController;
 use Controllers\View360Controller;
 use Controllers\ManualController;
+use Controllers\NovedadesController;
 use Controllers\ArchivoController;
 use Controllers\VisorController;
 use Controllers\MinutaController;
@@ -102,6 +103,8 @@ $router->post('/api/bandeja/leer', [BandejaController::class, 'leer']);
 $router->post('/api/bandeja/respuesta/guardar', [BandejaController::class, 'respuestaGuardar']);
 $router->post('/api/bandeja/respuesta/eliminar', [BandejaController::class, 'respuestaEliminar']);
 $router->get('/manual', [ManualController::class, 'index']);
+$router->get('/novedades', [NovedadesController::class, 'index']);
+$router->post('/novedades/vistas', [NovedadesController::class, 'vistas']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
 
 // ========== PROYECTOS ==========

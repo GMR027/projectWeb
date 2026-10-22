@@ -1,0 +1,4 @@
+-- Novedades de la plataforma: fecha en que cada usuario las abrió por última vez.
+-- Las novedades en sí viven en classes/Novedades.php (no hay tabla).
+-- La columna se agrega con el comprobador `col` de aplicar_migraciones_cluster.sh:
+-- ALTER TABLE usuarios ADD COLUMN novedades_vistas DATETIME NULL;

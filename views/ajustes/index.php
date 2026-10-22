@@ -37,8 +37,11 @@ $jornadaMap = [];
 foreach ($jornada as $j) { $jornadaMap[(int)$j->dia_semana] = $j->factor; }
 $esCliente = ($_SESSION['rol'] ?? '') === 'cliente';
 $esElectron = str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/');
+$novedadesPlataforma = \Classes\Novedades::para($_SESSION['rol'] ?? 'visitante', (int)($_SESSION['id'] ?? 0));
+$novedadesSinVer = \Classes\Novedades::sinVer($novedadesPlataforma);
 $secNav = [
     ['general', 'fa-sliders', 'General', 'Jornada, festivos e idioma'],
+    ['novedades', 'fa-bullhorn', 'Novedades', 'Lo último de la plataforma'],
     ['empezar', 'fa-flag-checkered', 'Por dónde empezar', 'Ruta de arranque'],
     ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
 ];
@@ -253,6 +256,20 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
     </script>
 </div>
 
+</section>
+
+<section class="ajustes-seccion" id="novedades">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-bullhorn"></i> <?php echo s(t('Novedades de la plataforma')); ?></h3>
+    <div class="card">
+        <p class="text-muted text-sm">Lo que se publica aquí es lo mismo que avisa la campana de la barra superior.<?php if ($novedadesSinVer > 0): ?> Tienes <strong><?php echo (int)$novedadesSinVer; ?></strong> sin ver.<?php endif; ?></p>
+        <?php if ($novedadesSinVer > 0): ?>
+            <form method="POST" action="/novedades/vistas" style="margin:0 0 1.2rem">
+                <input type="hidden" name="volver" value="/ajustes?proyecto=<?php echo (int)$proyecto->id; ?>#novedades">
+                <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-check-double"></i> Marcar como vistas</button>
+            </form>
+        <?php endif; ?>
+        <?php $novedades = $novedadesPlataforma; include __DIR__ . '/../templates/novedades-lista.php'; ?>
+    </div>
 </section>
 
 <section class="ajustes-seccion" id="empezar">

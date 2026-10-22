@@ -44,4 +44,5 @@
 @use 'paginas/cambios';
 @use 'paginas/empezar';
 @use 'componentes/divisor';
+@use 'layout/notificaciones';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

@@ -31,4 +31,10 @@ return [
     'Herramientas del proyecto' => 'Project tools', 'Navegación' => 'Navigation', 'Proyecto' => 'Project', 'Planeación' => 'Planning', 'Campo' => 'Field', 'Materiales y cambios' => 'Materials & changes', 'Documentos y diseño' => 'Documents & design', 'Ensamblador de documentos' => 'Document assembler',
     'Inteligencia artificial' => 'Artificial intelligence',
     'Administración' => 'Administration', 'Especialidades' => 'Specialties', 'Informes de IA' => 'AI reports', 'Grabaciones de reuniones' => 'Meeting recordings', 'Historial de cambios de IA' => 'AI change history', 'Biblioteca de IA' => 'AI library', 'Acciones rápidas' => 'Quick actions',
+    // Notificaciones (campana) y novedades de la plataforma
+    'Notificaciones' => 'Notifications', 'nuevas' => 'new', 'sin ver' => 'unread', 'Novedades de la plataforma' => 'Platform news',
+    'Actividades de hoy' => "Today's activities", 'Nada programado para hoy.' => 'Nothing scheduled for today.', 'Ver el programa' => 'View schedule',
+    'Ver acciones rápidas' => 'View quick actions', 'Ver todas las novedades' => 'View all news', 'Sin notificaciones por ahora.' => 'No notifications right now.',
+    'Lo último que cambió en ProjectWeb: herramientas nuevas, mejoras y correcciones.' => 'The latest changes in ProjectWeb: new tools, improvements and fixes.',
+    'novedades sin ver. Al abrir esta página quedan marcadas como vistas.' => 'unread news. Opening this page marks them as read.',
 ];

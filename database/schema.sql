@@ -22,6 +22,7 @@ CREATE TABLE usuarios (
     herramientas TEXT NULL,        -- visitante: claves de las herramientas que ve (JSON); NULL = todas
     token VARCHAR(100) DEFAULT NULL,
     confirmado TINYINT(1) DEFAULT 0,
+    novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
