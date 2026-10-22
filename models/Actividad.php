@@ -30,6 +30,8 @@ class Actividad extends ActiveRecord
     public $libre_texto;
     public $libre_numero;
     public $libre_fecha;
+    // Icono de la actividad: nombre del archivo en public/build/img/actividades-iconos/ (se sube con subirIcono(), no con guardar())
+    public $icono;
 
     public function __construct($args = [])
     {
@@ -133,5 +135,51 @@ class Actividad extends ActiveRecord
     public function tieneRestriccionActiva(): bool
     {
         return count($this->getRestriccionesActivas()) > 0;
+    }
+
+    /** Ruta pública del icono de la actividad (o null si no tiene) */
+    public function urlIcono(): ?string
+    {
+        return $this->icono ? '/build/img/actividades-iconos/' . basename((string)$this->icono) : null;
+    }
+
+    /**
+     * Guarda la imagen subida en el input «icono» como icono nuevo de la actividad (borra el anterior).
+     * Devuelve el nombre del archivo nuevo, o el anterior si no llegó imagen. No usa guardar() para que
+     * la actividad siga funcionando aunque la migración de la columna aún no esté aplicada.
+     */
+    public static function subirIcono(int $actividadId, ?string $anterior): ?string
+    {
+        $nombre = guardar_imagen_subida('icono', 'actividades-iconos');
+        if (!$nombre) return $anterior;
+        self::borrarIcono($anterior);
+        try {
+            $st = self::$db->prepare('UPDATE actividades SET icono = ? WHERE id = ?');
+            $st->bind_param('si', $nombre, $actividadId);
+            if (!$st->execute()) return $anterior;
+        } catch (\Throwable $e) {   // migración pendiente: se conserva el icono anterior
+            return $anterior;
+        }
+        return $nombre;
+    }
+
+    /** Quita el icono de la actividad (archivo y registro); funciona aunque falte la migración */
+    public static function quitarIcono(int $actividadId, ?string $nombre): void
+    {
+        if (!$nombre) return;
+        self::borrarIcono($nombre);
+        try {
+            $st = self::$db->prepare('UPDATE actividades SET icono = NULL WHERE id = ?');
+            $st->bind_param('i', $actividadId);
+            $st->execute();
+        } catch (\Throwable $e) {
+        }
+    }
+
+    private static function borrarIcono(?string $nombre): void
+    {
+        if (!$nombre) return;
+        $ruta = __DIR__ . '/../public/build/img/actividades-iconos/' . basename((string)$nombre);
+        if (is_file($ruta)) @unlink($ruta);
     }
 }

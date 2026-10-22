@@ -636,6 +636,8 @@ class ProgramaController
 
                 $resultado = $actividad->guardar();
                 if ($resultado['resultado']) {
+                    // Icono subido en el formulario (opcional; el archivo queda en public/build/img/actividades-iconos/)
+                    Actividad::subirIcono((int)$resultado['id'], null);
                     // Recalcular fechas de partida
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
@@ -864,6 +866,13 @@ class ProgramaController
                 $actividad->sincronizarStatus();
                 if ($actividad->guardar()) {
                     $partida->recalcularFechas();
+                    // Icono: imagen nueva (reemplaza la anterior) o casilla «Quitar el icono actual»
+                    $iconoAnterior = (string)($actividad->icono ?? '');
+                    if (!empty($_POST['quitar_icono'])) {
+                        Actividad::quitarIcono((int)$id, $iconoAnterior);
+                    } else {
+                        Actividad::subirIcono((int)$id, $iconoAnterior !== '' ? $iconoAnterior : null);
+                    }
                     \Classes\Dependencias::propagar($proyecto);   // modo automático: las sucesoras siguen a la actividad
                     self::guardarMaterialesActividad((int)$id, (int)$proyecto->id);
                     terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=actividad&foco=a' . (int)$id);
@@ -895,6 +904,7 @@ class ProgramaController
                 $partida = Partida::find($actividad->partida_id);
                 $proyectoId = $partida->proyecto_id;
                 exigir_gestionar_proyecto(Proyecto::find($proyectoId));
+                Actividad::quitarIcono((int)$id, (string)($actividad->icono ?? ''));   // borra también el archivo del icono
                 $actividad->eliminar();
                 $partida->recalcularFechas();
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);

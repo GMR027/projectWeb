@@ -10,7 +10,7 @@
         <div class="alerta alerta-error">Primero debes crear al menos una partida.</div>
         <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary" target="_top">Crear Partida</a>
     <?php else: ?>
-        <form method="POST" class="formulario" id="form-actividad">
+        <form method="POST" enctype="multipart/form-data" class="formulario" id="form-actividad">
             <div class="form-grid">
                 <div class="campo">
                     <label for="partida_id">Partida *</label>
@@ -64,6 +64,11 @@
                 <div class="campo">
                     <label for="orden">Orden</label>
                     <input type="number" id="orden" name="orden" value="<?php echo s($actividad->orden); ?>" min="0">
+                </div>
+                <div class="campo">
+                    <label for="icono">Icono de la actividad</label>
+                    <input type="file" id="icono" name="icono" accept="image/png,image/jpeg,image/webp,image/gif">
+                    <small class="text-muted">Opcional: imagen pequeña que se muestra en forma circular sobre la barra de la actividad en la Línea de tiempo activa (y en el programa si activas la columna «Icono»).</small>
                 </div>
                 <?php include __DIR__ . '/_materiales-actividad.php'; ?>
             <?php $tipoEntidad = 'actividad'; $entidadId = null; include __DIR__ . '/../normativa/_seccion.php'; ?>

@@ -57,6 +57,7 @@ use Controllers\RedactorController;
 use Controllers\SheetflowController;
 use Controllers\IdiomaController;
 use Controllers\DependenciasController;
+use Controllers\LineatiempoController;
 use Controllers\EvidenciaController;
 use Controllers\ReporteController;
 use Controllers\BitacoraController;
@@ -136,6 +137,9 @@ $router->post('/api/dependencias/modo', [DependenciasController::class, 'modo'])
 $router->post('/api/dependencias/previa', [DependenciasController::class, 'previa']);
 $router->post('/api/dependencias/aplicar', [DependenciasController::class, 'aplicar']);
 $router->post('/api/dependencias/deshacer', [DependenciasController::class, 'deshacer']);
+// Línea de tiempo activa (Gantt diario del mes, barras arrastrables)
+$router->get('/lineatiempo', [LineatiempoController::class, 'index']);
+$router->post('/api/lineatiempo/fechas', [LineatiempoController::class, 'fechas']);
 $router->get('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar/confirmar', [ProgramaController::class, 'confirmarImportacion']);

@@ -25,6 +25,7 @@ class Usuario extends ActiveRecord
     public const HERRAMIENTAS = [
         'programa' => ['Programa', ['/programa']],
         'dependencias' => ['Dependencias de obra', ['/dependencias', '/api/dependencias']],
+        'lineatiempo' => ['Línea de tiempo activa', ['/lineatiempo', '/api/lineatiempo']],
         'planificador' => ['Planificador', ['/planificador']],
         'lookahead' => ['Lookahead', ['/lookahead']],
         'vplan' => ['vPlan', ['/vplan', '/api/vplan']],

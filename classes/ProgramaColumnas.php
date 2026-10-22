@@ -33,6 +33,7 @@ class ProgramaColumnas
         'libre_texto' => ['Campo libre (texto)', 'texto', true],
         'libre_numero' => ['Campo libre (número)', 'numero', true],
         'libre_fecha' => ['Campo libre (fecha)', 'fecha', true],
+        'icono' => ['Icono', 'imagen', false],
         'indicador' => ['Indicador', 'calculado', false],
         'acciones' => ['Acciones', 'acciones', false],
     ];

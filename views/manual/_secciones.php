@@ -147,6 +147,7 @@ HTML],
 <li>Completa: <strong>partida*</strong>, <strong>código*</strong>, <strong>nombre*</strong>, descripción, <strong>fecha de inicio*</strong>, <strong>duración en días hábiles*</strong>, <strong>progreso (%)*</strong>, prioridad y orden.</li>
 <li>La <strong>fecha de fin se calcula sola</strong> usando el calendario del proyecto: salta los días no laborables y los festivos.</li>
 <li>Marca <strong>Es un hito</strong> si es un punto de control: dura 0 días y empieza y termina el mismo día.</li>
+<li><strong>Icono de la actividad</strong> (opcional): sube una imagen pequeña. Se muestra en forma circular sobre la barra de la actividad en la <a href="#lineatiempo">Línea de tiempo activa</a> (con la casilla «Icono de actividad») y en el programa si activas la columna <strong>Icono</strong> en <em>Diseñar programa</em>. Al editar puedes reemplazarla o quitarla.</li>
 <li>En <em>Materiales</em> puedes indicar qué materiales del catálogo necesita la actividad, o marcar <strong>Actividad sin material</strong> si no requiere (así deja de aparecer en las Acciones rápidas).</li>
 </ol>
 <h4>Cosas que el sistema hace por ti</h4>
@@ -232,6 +233,35 @@ HTML],
 <li>Verás una tabla con cada actividad, su inicio y fin actuales y los nuevos, y cuántos días se mueve.</li>
 <li><strong>Aplicar</strong> las reprograma; las de fecha fija no se tocan. <strong>Deshacer la última reprogramación</strong> las regresa a como estaban.</li>
 </ol>
+HTML],
+
+['id' => 'lineatiempo', 'titulo' => 'Línea de tiempo activa', 'icono' => 'fa-chart-gantt', 'roles' => $todos, 'herr' => 'lineatiempo', 'cuerpo' => <<<'HTML'
+<p>Es el <strong>Gantt diario de todos los meses del proyecto, hecho para mover fechas con el mouse</strong>. A diferencia del Gantt del Programa (que es de solo lectura y por semanas), aquí ves los días y <em>arrastras las barras</em> para reprogramar; los cambios se guardan al instante, sin recargar.</p>
+<h4>1. Qué muestra</h4>
+<ul>
+<li><strong>Todos los meses con actividades</strong> en una sola barra de tiempo: la banda superior trae el nombre de cada mes. Las actividades que empezaron antes o terminan después de lo que se ve se recortan al borde con una flechita ◀ ▶ que indica que continúan.</li>
+<li>Las actividades se agrupan por <strong>partida, con el color de la partida</strong> en cada barra; en el centro de cada barra está el <strong>número de la actividad y, entre paréntesis, los días que dura</strong> (por ejemplo <code>1.4 (5 d)</code>).</li>
+<li>Por defecto se ven las <strong>no iniciadas y en proceso</strong> (lo que se está ejecutando). En <em>Estado</em> puedes ver todas o solo las completadas.</li>
+<li>Con <em>Solo con restricción</em> te quedas únicamente con las actividades (y partidas) que tienen una restricción activa; ⚠ marca cada una y al pasar el cursor ves de qué se trata.</li>
+<li>Con la casilla <strong>Icono de actividad</strong> cada actividad muestra, en forma <strong>circular y sobre su barra</strong>, la imagen que se le cargó al crearla o editarla (se ve más grande si amplías con la rueda).</li>
+<li>Los <strong>días no hábiles</strong> (según la jornada del proyecto y sus festivos) aparecen sombreados y la línea naranja es <em>hoy</em>.</li>
+</ul>
+<h4>2. Cómo se mueven las fechas</h4>
+<ul>
+<li><strong>Arrastra el cuerpo de la barra</strong> para cambiar inicio y fin juntos (la actividad conserva su largo).</li>
+<li><strong>Arrastra la flecha ◀ del extremo izquierdo</strong> para cambiar solo el inicio, o <strong>la flecha ▶ del extremo derecho</strong> para cambiar solo el fin. Mientras arrastras ves las fechas en una etiqueta junto al cursor.</li>
+<li>Al soltar, la fecha se <strong>ajusta al día hábil más cercano</strong> y se guarda sola. Si el movimiento no se puede guardar, la barra regresa a su lugar y se avisa.</li>
+<li>Un <strong>hito</strong> (◆) no tiene duración: solo se mueve completo.</li>
+</ul>
+<p class="manual-nota">Las fechas se guardan con las mismas reglas del Programa: la duración se recalcula en días hábiles con el calendario del proyecto, se actualizan las fechas de la partida y, si las <a href="#dependencias">Dependencias de obra</a> están en modo automático, las actividades sucesoras se recorren solas (lo avisa un mensaje).</p>
+<h4>3. Cómo moverte en el tiempo</h4>
+<ul>
+<li><strong>La rueda del ratón sobre el diagrama</strong> amplía o reduce los días visibles (se ancla en el día donde está el cursor; en el celular usa dos dedos).</li>
+<li><strong>Con la rueda presionada (botón central) puedes arrastrar el diagrama</strong> a los lados o hacia arriba y abajo, para ver otros meses u otras actividades sin cambiar el zoom.</li>
+<li>Los botones <strong>‹</strong> y <strong>›</strong> saltan al mes anterior o siguiente, y <strong>Hoy</strong> regresa a la fecha de hoy: todo en la misma ventana y sin recargar.</li>
+<li>Los filtros quedan en la dirección de la página: puedes recargar, marcar la página como favorita o compartirla con la misma partida.</li>
+<li>El cliente y los visitantes ven la línea de tiempo <strong>en solo lectura</strong>.</li>
+</ul>
 HTML],
 
 ['id' => 'planificador', 'titulo' => 'Planificador', 'icono' => 'fa-diagram-next', 'roles' => $todos, 'herr' => 'planificador', 'cuerpo' => <<<'HTML'

@@ -37,7 +37,7 @@
 <?php endif; ?>
 
 <div class="card">
-    <form method="POST" class="formulario">
+    <form method="POST" enctype="multipart/form-data" class="formulario">
         <div class="form-grid">
             <div class="campo">
                 <label for="partida_id">Partida *</label>
@@ -89,6 +89,15 @@
             <div class="campo">
                 <label for="orden">Orden</label>
                 <input type="number" id="orden" name="orden" value="<?php echo s($actividad->orden); ?>" min="0">
+            </div>
+            <div class="campo">
+                <label for="icono">Icono de la actividad</label>
+                <?php if (!empty($actividad->icono)): ?>
+                    <span class="prg-icono-vista"><img src="<?php echo s($actividad->urlIcono()); ?>" alt="Icono actual"></span>
+                    <label class="campo-check"><input type="checkbox" name="quitar_icono" value="1"> Quitar el icono actual</label>
+                <?php endif; ?>
+                <input type="file" id="icono" name="icono" accept="image/png,image/jpeg,image/webp,image/gif">
+                <small class="text-muted">Opcional: imagen pequeña circular sobre la barra en la Línea de tiempo. Para cambiarla, elige otra imagen.</small>
             </div>
             <?php include __DIR__ . '/_materiales-actividad.php'; ?>
             <?php $tipoEntidad = 'actividad'; $entidadId = $actividad->id; include __DIR__ . '/../normativa/_seccion.php'; ?>

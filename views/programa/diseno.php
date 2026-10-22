@@ -1,7 +1,7 @@
 <?php // Variables: $proyecto, $error, $columnas (todas las del catálogo; activas primero), $indicador
 use Classes\ProgramaColumnas as PC;
 $nomPrograma = trim((string)($proyecto->programa_nombre ?? ''));
-$tiposTxt = ['texto' => 'Texto', 'fecha' => 'Fecha', 'numero' => 'Número', 'actividad' => 'Actividad', 'calculado' => 'Se calcula', 'acciones' => 'Botones', 'cp' => 'Campo propio'];
+$tiposTxt = ['texto' => 'Texto', 'fecha' => 'Fecha', 'numero' => 'Número', 'actividad' => 'Actividad', 'calculado' => 'Se calcula', 'acciones' => 'Botones', 'imagen' => 'Imagen', 'cp' => 'Campo propio'];
 ?>
 <div class="page-header">
     <div>

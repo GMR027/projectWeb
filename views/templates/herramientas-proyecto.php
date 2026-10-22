@@ -9,6 +9,7 @@ function ayudas_herramientas(): array
         '/programa' => ['Tabla WBS con partidas y actividades, y su Gantt por semanas. Aquí se captura el avance y se calculan las fechas con el calendario del proyecto.', 'programa'],
         '/planificador' => ['Acomoda las actividades en el tiempo y simula escenarios antes de cambiar el programa.', 'planificador'],
         '/dependencias' => ['Relaciones entre actividades (FS, SS, FF, SF) con holguras y ruta crítica.', 'dependencias'],
+        '/lineatiempo' => ['Gantt diario de todos los meses del proyecto, agrupado por partida y con lo que se está ejecutando a la vista: arrastra las barras para reprogramar, la rueda del ratón amplía o reduce y su botón central permite arrastrar el diagrama; se guarda al instante.', 'lineatiempo'],
         '/lookahead' => ['Vista de las próximas semanas para liberar restricciones y comprometer el trabajo. Incluye el Planificador en su segunda pestaña.', 'lookahead'],
         '/vplan' => ['Láminas libres de planeación visual: bloques, tablas, notas y programa en una hoja lista para imprimir.', 'vplan'],
         '/lastplanner' => ['Planeación semanal con post-its por actividad y medición de cumplimiento (PPC).', 'lastplanner'],
@@ -80,6 +81,7 @@ function herramientas_proyecto($proyecto): array
     $defs = [
         ['Planeación', '/programa', 'fa-list-check', 'Programa'],
         ['Planeación', '/dependencias', 'fa-diagram-project', 'Dependencias de obra'],
+        ['Planeación', '/lineatiempo', 'fa-chart-gantt', 'Línea de tiempo activa'],
         ['Planeación', '/lookahead', 'fa-binoculars', 'Lookahead', true, ['/planificador']],
         ['Planeación', '/vplan', 'fa-sheet-plastic', 'vPlan'],
         ['Planeación', '/lastplanner', 'fa-note-sticky', 'Last Planner'],

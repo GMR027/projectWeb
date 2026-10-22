@@ -349,6 +349,8 @@
                             </td>
                             <?php break; case 'indicador': $vi = $valorInd($fila); $col = \Classes\ProgramaColumnas::colorIndicador($reglasInd, $vi); ?>
                             <td class="hide-m prg-celda"><?php if ($col): ?><span class="prg-ind" style="--ind: <?php echo s($col); ?>" data-indicador="<?php echo (int)$fila['id']; ?>"></span> <span class="mono text-sm text-muted"><?php echo s(rtrim(rtrim(number_format((float)$vi, 2, '.', ''), '0'), '.')); ?></span><?php else: ?>—<?php endif; ?></td>
+                            <?php break; case 'icono': ?>
+                            <td class="hide-m prg-celda text-center"><?php if (!empty($fila['icono'])): ?><img class="prg-icono" src="<?php echo s('/build/img/actividades-iconos/' . basename($fila['icono'])); ?>" alt=""><?php else: ?>—<?php endif; ?></td>
                             <?php break; case 'acciones': ?>
                                 <td class="acciones">
                                     <button type="button" class="btn-action btn-action-edit btn-fechas solo-movil" title="Cambiar fechas"

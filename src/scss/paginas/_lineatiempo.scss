@@ -1,0 +1,85 @@
+// Línea de tiempo activa (/lineatiempo): Gantt diario de todos los meses con actividades, con barras arrastrables.
+// La estructura sigue al diagrama de Dependencias: columna de etiquetas fija + lienzo a píxeles por día.
+// La rueda del ratón sobre el lienzo amplía o reduce (zoom del JS); los botones ‹ ›/Hoy navegan entre meses.
+
+.lt-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 1.2rem; margin-bottom: 1.2rem;
+  label { display: flex; align-items: center; gap: .5rem; font-size: 1.25rem; color: var(--text-muted); } }
+.lt-contador { margin-left: auto; font-size: 1.25rem; color: var(--text-muted); }
+.lt-nav { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .4rem; border: 1px solid var(--border); border-radius: .8rem; .btn { min-width: 3.2rem; } }
+
+.lt-aviso { margin: 0 0 1.2rem; padding: .8rem 1.2rem; border-radius: .8rem; font-size: 1.3rem; border: 1px solid var(--border);
+  &-ok { border-color: #22c55e; color: #86efac; } &-error { border-color: #ef4444; color: #fca5a5; } }
+
+.lt-lienzo { padding: 0; overflow: hidden; }
+.lt-leyenda { display: flex; flex-wrap: wrap; gap: 1.4rem; padding: .8rem 1.4rem; font-size: 1.2rem; color: var(--text-muted); border-bottom: 1px solid var(--border);
+  .lt-sw { display: inline-block; width: 1.4rem; height: 1rem; border-radius: .2rem; vertical-align: middle; margin-right: .4rem;
+    &-nohab { background: rgba(128, 128, 128, .35); } &-hoy { background: #ff5a1f; } } }
+.lt-ayuda { margin: .8rem 0 1.2rem; max-width: 110rem; }
+
+.lt-scroll { display: flex; overflow: auto; max-height: 70vh; background: var(--bg-primary, #0b132b); }
+
+// Columna de etiquetas (partida + actividad), fija a la izquierda
+.lt-labels { flex: none; position: sticky; left: 0; z-index: 3; width: 24rem; background: var(--bg-secondary, #1c2541); border-right: 1px solid var(--border);
+  .lt-lab-cab { display: flex; align-items: flex-end; padding: 0 1rem .6rem; font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+  .lt-lab-grp { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; }
+  .lt-lab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid rgba(128, 128, 128, .12);
+    b { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 500; } } }
+@media (max-width: 48rem) { .lt-labels { width: 13rem; } }
+
+.lt-chip { flex: none; display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: .3rem; }
+.lt-warn { color: #fbbf24; font-size: 1.1rem; }
+
+// Lienzo: eje de días + filas
+.lt-canvas { flex: none; position: relative; user-select: none; }
+// Paneo: con el botón central de la rueda presionado se arrastra el área de las barras
+.lt-canvas.lt-paneo, .lt-canvas.lt-paneo * { cursor: grabbing !important; }
+.lt-eje { position: sticky; top: 0; z-index: 2; height: 62px; background: var(--bg-secondary, #1c2541); border-bottom: 1px solid var(--border); }
+.lt-eje-mes { position: absolute; top: 0; bottom: auto; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); background: rgba(128, 128, 128, .10); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
+.lt-eje-dia { position: absolute; top: 22px; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; border-left: 1px solid rgba(128, 128, 128, .18); color: var(--text-muted);
+  b { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 500; color: var(--text); }
+  span { font-size: .95rem; text-transform: uppercase; }
+  &.nohabil { background: rgba(128, 128, 128, .16); b { color: var(--text-muted); } } }
+.lt-ppd-chico .lt-eje-dia span { display: none; }
+
+.lt-nohabil { position: absolute; top: 62px; bottom: 0; background: rgba(128, 128, 128, .10); pointer-events: none; }
+.lt-hoy { position: absolute; top: 62px; bottom: 0; width: 0; border-left: 2px dashed #ff5a1f; pointer-events: none; z-index: 1; }
+
+// «Icono de actividad»: disco circular centrado sobre la barra (la fila crece para que quepa)
+.lt-iconos .lt-barra { top: auto; bottom: 2px; height: 26px; }
+.lt-iconos .lt-hito { bottom: -1px; height: 28px; }
+.lt-icono { position: absolute; top: 1px; z-index: 3; width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--bg-secondary, #1c2541); box-shadow: 0 2px 5px rgba(0, 0, 0, .45); background: var(--bg-secondary, #1c2541); pointer-events: none; }
+
+.lt-grp { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; pointer-events: none; }
+.lt-fila { position: absolute; left: 0; right: 0; border-bottom: 1px solid rgba(128, 128, 128, .12); }
+
+// Barras: el color siempre es el de la partida donde vive la actividad; el número y los días quedan centrados
+.lt-barra { position: absolute; top: 3px; bottom: 3px; display: flex; align-items: center; justify-content: center; gap: .4rem; padding: 0 .4rem; border-radius: .4rem; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35); color: #fff; font-size: 1.15rem; cursor: default;
+  .lt-barra-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255, 255, 255, .85); pointer-events: none; }
+  .lt-barra-texto { position: relative; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+  .lt-restr { position: relative; z-index: 1; margin-left: auto; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+  &.st-no_iniciada { opacity: .62; }
+  &.corta-ini { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  &.corta-fin { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  &.lt-arrastre { z-index: 5; box-shadow: 0 4px 14px rgba(0, 0, 0, .5); cursor: grabbing; }
+  &.lt-cambio { outline: 2px solid #fff; } }
+
+// Manijas con flechas en las esquinas de la barra: ◀ pegada al extremo izquierdo, ▶ al extremo derecho
+.lt-mano { position: absolute; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: center; width: 1.2rem; font-size: .85rem; line-height: 1;
+  color: rgba(255, 255, 255, .85); text-shadow: 0 1px 2px rgba(0, 0, 0, .6); cursor: ew-resize; touch-action: none;
+  &:hover { color: #fff; background: rgba(255, 255, 255, .25); border-radius: .3rem; } }
+.lt-mano-l { left: 0; border-radius: .4rem 0 0 .4rem; }
+.lt-mano-r { right: 0; border-radius: 0 .4rem .4rem 0; }
+.lt-barra.lt-arrastre .lt-mano { visibility: hidden; }
+
+// Hito: rombo que solo se mueve completo (sin flechas). Conserva el color de la partida.
+.lt-hito { overflow: visible; border-radius: .2rem; transform: rotate(45deg) scale(.62); }
+
+// Mover con el dedo también funciona en celular: la barra intercepta el gesto, el resto hace scroll
+.lt-barra { touch-action: none; }
+
+.lt-tooltip { position: fixed; z-index: 4000; transform: translate(-50%, 0); padding: .3rem .8rem; border-radius: .6rem; background: rgba(11, 19, 43, .95); color: #fff;
+  font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; pointer-events: none; box-shadow: 0 2px 8px rgba(0, 0, 0, .45); }
+
+.lt-vacio { position: absolute; top: 2rem; left: 2rem; right: 2rem; font-size: 1.35rem; color: var(--text-muted); }

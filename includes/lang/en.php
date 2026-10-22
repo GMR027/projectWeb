@@ -293,4 +293,18 @@ return [
     ' (en esta herramienta el orden de las columnas es fijo)' => ' (in this tool the column order is fixed)',
     'Siempre están:' => 'Always shown:',
     'Bienvenido, {nombre}' => 'Welcome, {nombre}', '{n} proyecto(s) registrado(s)' => '{n} project(s)',
+    // Línea de tiempo activa
+    'Línea de tiempo activa' => 'Active timeline',
+    'Agrupado por partida: arrastra las barras para reprogramar y usa la rueda del ratón para ampliar o reducir.' => 'Grouped by work package: drag the bars to reschedule and use the mouse wheel to zoom in or out.',
+    'Vista de solo lectura.' => 'Read-only view.',
+    'Solo con restricción' => 'Only with constraints',
+    'No iniciadas y en proceso' => 'Not started and in progress', 'Solo completadas' => 'Only completed',
+    'actividades' => 'activities', 'con restricción' => 'with constraint', 'Con restricción' => 'With constraint',
+    'Navegar por meses' => 'Browse months', 'Mes anterior' => 'Previous month', 'Mes siguiente' => 'Next month',
+    'Icono de actividad' => 'Activity icon',
+    'Color de su partida' => 'Color of its work package',
+    'Día no hábil (jornada o festivo)' => 'Non-working day (workday or holiday)',
+    'Hito (solo se mueve completo)' => 'Milestone (moves as a whole)',
+    'Los cambios de fechas se hacen en el Programa; aquí solo se consulta.' => 'Date changes are made in the Schedule; this view is read-only.',
+    'Arrastra el cuerpo de una barra para cambiar inicio y fin juntos; arrastra las flechas ◀ ▶ de sus extremos para cambiar solo el inicio o solo el fin. Usa la rueda del ratón sobre el diagrama para ampliar o reducir, mantenla presionada (botón central) para arrastrar el diagrama y ‹ › para cambiar de mes. Al soltar, la fecha se ajusta al día hábil más cercano y se guarda sin recargar. Si las dependencias están en modo automático, las actividades sucesoras se recorren solas. La casilla «Icono de actividad» muestra la imagen de cada actividad en forma circular sobre su barra.' => 'Drag the body of a bar to change start and end together; drag the ◀ ▶ arrows on its ends to change only the start or only the end. Use the mouse wheel over the diagram to zoom in or out, keep it pressed (middle button) to pan the diagram, and ‹ › to change month. On release, the date snaps to the nearest working day and is saved without reloading. If dependencies are in automatic mode, successor activities are shifted automatically. The "Activity icon" checkbox shows each activity\'s image in a circle above its bar.',
 ];

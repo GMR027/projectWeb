@@ -118,6 +118,7 @@ CREATE TABLE actividades (
     libre_texto VARCHAR(255) NULL,              -- campos libres (su nombre está en proyectos.programa_columnas_json)
     libre_numero DECIMAL(14,4) NULL,
     libre_fecha DATE NULL,
+    icono VARCHAR(120) NULL,                       -- imagen pequeña de la actividad (public/build/img/actividades-iconos/)
     orden INT DEFAULT 0,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
     UNIQUE KEY uq_actividad_codigo (partida_id, codigo)

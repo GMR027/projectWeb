@@ -88,6 +88,7 @@ class GanttRenderer
                     'status' => $act->status,
                     'hito' => $act->esHito(),
                     'responsable' => $act->responsable,
+                    'icono' => $act->icono,
                     'rec_inicio' => $act->rec_inicio,
                     'rec_fin' => $act->rec_fin,
                     'libre_texto' => $act->libre_texto,
