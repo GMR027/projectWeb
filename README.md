@@ -138,6 +138,18 @@ mysql -u root -e "DROP DATABASE project;"
 mysql -u root < database/schema.sql
 ```
 
+## Despliegue en el clúster
+
+En una máquina con `docker`, `kubectl`, `helm` y acceso al clúster:
+
+```bash
+./deploy.sh                   # solo código: imagen + helm upgrade (no toca la BD)
+./deploy.sh --db              # ⚠️ REEMPLAZA la BD del clúster con tu BD local
+./deploy.sh --files           # copia uploads, exportaciones y storage encima
+```
+
+`./deploy-login-intentos.sh` hace el despliegue de código y además crea la tabla nueva `login_intentos` **solo si no existe**, sin tocar datos existentes. Requiere que el código nuevo ya esté en el repositorio (`git pull` lo hace él mismo).
+
 ## Paleta de diseño (Vanguard CivilTech)
 
 - **Fondo:** `#0B132B` (azul profundo)
