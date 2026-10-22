@@ -48,6 +48,8 @@ CREATE TABLE proyectos (
     usuario_id INT NOT NULL,
     modo_dependencias ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
+    tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
+    tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

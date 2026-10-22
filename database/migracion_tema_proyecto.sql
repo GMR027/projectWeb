@@ -1,0 +1,5 @@
+-- Apariencia por proyecto (Ajustes → Apariencia del proyecto): modo y paleta de acento.
+-- Se guarda en la base de datos, así que el tema se mantiene en cualquier navegador y equipo.
+-- Las columnas se agregan con el comprobador `col` de aplicar_migraciones_cluster.sh:
+-- ALTER TABLE proyectos ADD COLUMN tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario';
+-- ALTER TABLE proyectos ADD COLUMN tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja';

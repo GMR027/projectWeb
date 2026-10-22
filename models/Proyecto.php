@@ -24,6 +24,8 @@ class Proyecto extends ActiveRecord
     public $color;
     public $usuario_id;
     public $modo_dependencias;
+    public $tema_modo;
+    public $tema_paleta;
 
     public function __construct($args = [])
     {

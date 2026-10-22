@@ -112,6 +112,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 
 Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`):
 - Tema claro/oscuro con variables CSS (`src/scss/base/_variables.scss`, atributo `data-theme`; por defecto oscuro)
+- **Tema por proyecto** (Ajustes → General → Apariencia del proyecto): `proyectos.tema_modo` (`usuario`/`claro`/`oscuro`) y `proyectos.tema_paleta` (24 paletas en `classes/TemaProyecto.php`, cada una con su tono claro y oscuro de la paleta ya cargada). `views/layout.php` pinta `data-tema-fijo` + `data-paleta` y un `<style>` con `--primary`, `--primary-hover` y `--primary-glow`; con `tema_modo = usuario` manda `localStorage.theme` como siempre. Se guarda en la BD (no en el navegador) y las exportaciones no cambian
 - Paleta slate con acento naranja (`--primary`) y azul (`--secondary`)
 - Tipografía: Inter (texto) y Fira Code (códigos/fechas)
 - Medidas en `rem` (html font-size: 62.5%)

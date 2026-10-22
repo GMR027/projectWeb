@@ -9,8 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleTheme = document.getElementById('toggle-theme');
   const themeIcon = toggleTheme?.querySelector('i');
 
-  const savedTheme = localStorage.getItem('theme') || 'dark';
+  // Si el proyecto fija el tema (Ajustes → Apariencia del proyecto) manda el proyecto
+  // y el botón de la barra superior se oculta para no tener dos controles.
+  const temaFijo = document.documentElement.getAttribute('data-tema-fijo');
+
+  const savedTheme = temaFijo || localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
+  if (temaFijo && toggleTheme) toggleTheme.style.display = 'none';
 
   // Actualizar icono según tema actual
   const updateThemeIcon = () => {
@@ -23,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle manual
   toggleTheme?.addEventListener('click', () => {
+    if (temaFijo) return;   // el tema lo fija el proyecto
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', newTheme);

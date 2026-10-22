@@ -1,9 +1,20 @@
 <?php
 // Incluir helper de breadcrumb
 require_once __DIR__ . '/templates/breadcrumb.php';
+
+// Tema del proyecto (Ajustes → Apariencia del proyecto). Sin proyecto manda la preferencia del usuario.
+$temaModoProyecto = null;
+$temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
+$temaCssProyecto = '';
+if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
+    $temaModoProyecto = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
+    $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
+    if ($temaModoProyecto === 'usuario') $temaModoProyecto = null;   // manda el usuario
+    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
+}
 ?>
 <!DOCTYPE html>
-<html lang="<?php echo idioma_actual(); ?>">
+<html lang="<?php echo idioma_actual(); ?>" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,11 +25,13 @@ require_once __DIR__ . '/templates/breadcrumb.php';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/build/css/app.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/app.css'); ?>">
+    <?php if ($temaCssProyecto): ?><style><?php echo $temaCssProyecto; ?></style><?php endif; ?>
     <script>
         // Tema elegido por el usuario (guardado en localStorage).
-        // Por defecto: oscuro.
+        // Por defecto: oscuro. Si el proyecto fija el tema (Ajustes), manda el proyecto.
         (function() {
-            const tema = localStorage.getItem('theme') || 'dark';
+            const fijo = document.documentElement.getAttribute('data-tema-fijo');
+            const tema = fijo || localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', tema);
             if (window.top !== window.self) document.documentElement.classList.add('embebido');   // panel del divisor de ventana
         })();

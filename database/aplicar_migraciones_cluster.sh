@@ -27,6 +27,8 @@ done
 col vplan_tablas punch_config "ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;"
 col permisos_trabajo nombre_permiso "ALTER TABLE permisos_trabajo ADD COLUMN nombre_permiso VARCHAR(150) NOT NULL DEFAULT '' AFTER tipo;"
 col proyectos registros_por_pagina "ALTER TABLE proyectos ADD COLUMN registros_por_pagina SMALLINT NOT NULL DEFAULT 10;"
+col proyectos tema_modo "ALTER TABLE proyectos ADD COLUMN tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario';"
+col proyectos tema_paleta "ALTER TABLE proyectos ADD COLUMN tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja';"
 echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
 
 # Instaladores de la app de escritorio (Ajustes → App de escritorio)

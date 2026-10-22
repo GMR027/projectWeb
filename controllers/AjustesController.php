@@ -10,6 +10,7 @@ use Model\CalendarioJornada;
 use Model\CalendarioFestivo;
 use Model\Exportacion;
 use Classes\Calendario;
+use Classes\TemaProyecto;
 
 class AjustesController
 {
@@ -216,6 +217,32 @@ class AjustesController
         $n = max(1, min(500, (int)($_POST['registros_por_pagina'] ?? 10)));
         $GLOBALS['db']->query("UPDATE proyectos SET registros_por_pagina = $n WHERE id = " . (int)$proyecto->id);
         header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&registros=ok#registros');
+        exit;
+    }
+
+    /** Apariencia del proyecto: modo (usuario/claro/oscuro) y paleta de acento */
+    public static function guardarTema()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $proyectoId ? Proyecto::find($proyectoId) : null;
+        if (!$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+
+        // Los dos valores se validan contra la lista blanca de TemaProyecto
+        $modo = TemaProyecto::normModo($_POST['tema_modo'] ?? 'usuario');
+        $paleta = TemaProyecto::normPaleta($_POST['tema_paleta'] ?? 'naranja');
+        $color = TemaProyecto::colorCaratula($paleta);   // la carátula del portafolio usa el mismo acento
+
+        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', color = '$color' WHERE id = " . (int)$proyecto->id);
+        header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&tema=ok#tema');
         exit;
     }
 

@@ -188,6 +188,68 @@ if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte 
     <p class="text-muted text-sm" style="margin-top:.8rem">Español / English · <?php echo idioma_actual() === 'en' ? 'Menus and the main screens are translated; the rest of the app keeps showing Spanish for now.' : 'Menús y pantallas principales traducidos; el resto de la aplicación sigue en español por ahora.'; ?></p>
 </div>
 
+<?php
+$temaModo = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
+$temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
+?>
+<div class="card" id="tema">
+    <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
+    <?php if (($_GET['tema'] ?? '') === 'ok'): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
+    <p class="text-muted text-sm">Se guarda en el proyecto: se mantiene al cambiar de navegador o de equipo y lo ven todos los que abran el proyecto. El color se usa también en la carátula del portafolio. Las exportaciones (PDF, Excel, XML) no cambian.</p>
+    <form method="POST" action="/ajustes/tema" class="tema-form">
+        <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">
+
+        <div class="tema-bloque">
+            <span class="tema-etq">Modo</span>
+            <div class="tema-modos">
+                <?php foreach (\Classes\TemaProyecto::MODOS as $k => $etq): ?>
+                    <label class="tema-modo">
+                        <input type="radio" name="tema_modo" value="<?php echo s($k); ?>"<?php echo $temaModo === $k ? ' checked' : ''; ?>>
+                        <span><?php echo s($etq); ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="tema-bloque">
+            <span class="tema-etq">Color de acento</span>
+            <div class="tema-paletas">
+                <?php foreach (\Classes\TemaProyecto::PALETAS as $k => [$nombre, $claro, $oscuro]): ?>
+                    <label class="tema-paleta" title="<?php echo s($nombre); ?>">
+                        <input type="radio" name="tema_paleta" value="<?php echo s($k); ?>"<?php echo $temaPaleta === $k ? ' checked' : ''; ?> data-claro="<?php echo s($claro); ?>" data-oscuro="<?php echo s($oscuro); ?>">
+                        <span class="tema-chip" style="--chip-claro:<?php echo s($claro); ?>;--chip-oscuro:<?php echo s($oscuro); ?>"></span>
+                        <span class="tema-nom"><?php echo s($nombre); ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
+    </form>
+    <script>
+        // Vista previa: al elegir modo o color se aplica al momento; «Guardar» lo deja en el proyecto.
+        (function () {
+            const card = document.getElementById('tema');
+            if (!card) return;
+            const raiz = document.documentElement;
+            const TEMA = { usuario: null, claro: 'light', oscuro: 'dark' };
+            const rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+            const oscurecer = (h, p) => '#' + rgb(h).map(v => Math.round(v * (1 - p)).toString(16).padStart(2, '0')).join('');
+            card.addEventListener('change', () => {
+                const modo = card.querySelector('input[name="tema_modo"]:checked')?.value || 'usuario';
+                raiz.setAttribute('data-theme', TEMA[modo] || localStorage.getItem('theme') || 'dark');
+                const p = card.querySelector('input[name="tema_paleta"]:checked');
+                if (!p) return;
+                const claro = raiz.getAttribute('data-theme') === 'light';
+                const c = claro ? p.dataset.claro : p.dataset.oscuro;
+                raiz.style.setProperty('--primary', c);
+                raiz.style.setProperty('--primary-hover', oscurecer(c, 0.12));
+                raiz.style.setProperty('--primary-glow', 'rgba(' + rgb(c).join(',') + ',' + (claro ? .15 : .25) + ')');
+            });
+        })();
+    </script>
+</div>
+
 </section>
 
 <section class="ajustes-seccion" id="empezar">

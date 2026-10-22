@@ -610,6 +610,7 @@ $router->post('/sistema/respaldo/restaurar', [SistemaController::class, 'respald
 $router->get('/ajustes', [AjustesController::class, 'index']);
 $router->post('/ajustes/jornada', [AjustesController::class, 'guardarJornada']);
 $router->post('/ajustes/registros', [AjustesController::class, 'guardarRegistros']);
+$router->post('/ajustes/tema', [AjustesController::class, 'guardarTema']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);
 $router->post('/ajustes/festivo/eliminar', [AjustesController::class, 'eliminarFestivo']);
 $router->post('/ajustes/respaldo/crear', [AjustesController::class, 'respaldoCrear']);
