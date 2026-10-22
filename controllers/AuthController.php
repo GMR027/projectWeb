@@ -7,6 +7,7 @@ use Model\Usuario;
 use Model\Proyecto;
 use Model\ProyectoAcceso;
 use Classes\Email;
+use Classes\LoginLimite;
 
 class AuthController
 {
@@ -16,24 +17,37 @@ class AuthController
         $usuario = new Usuario();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $usuario = new Usuario($_POST);
+            // Solo textos: un formulario manipulado (email[]=…) no debe romper la autenticación
+            $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
+            $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+            $usuario = new Usuario(['email' => $email, 'password' => $password]);
             $alertas = $usuario->validarLogin();
 
             if (empty($alertas)) {
-                $usuarioDB = Usuario::where('email', $usuario->email);
-                if (!$usuarioDB || !$usuarioDB->confirmado) {
-                    Usuario::setAlerta('error', 'El usuario no existe o no está confirmado');
+                $ip = ip_cliente();
+                if (random_int(1, 100) === 1) LoginLimite::limpiar();   // ~1 % de los intentos purga registros de +24 h
+                $espera = LoginLimite::espera($ip, $email);
+                if ($espera > 0) {
+                    Usuario::setAlerta('error', 'Demasiados intentos fallidos. Espera ' . (int)ceil($espera / 60) . ' minuto(s) antes de volver a probar.');
                 } else {
-                    if ($usuarioDB->comprobarPassword($usuario->password)) {
-                        session_regenerate_id(true);
-                        $_SESSION['id'] = $usuarioDB->id;
-                        $_SESSION['nombre'] = $usuarioDB->nombre;
-                        $_SESSION['email'] = $usuarioDB->email;
-                        $_SESSION['rol'] = $usuarioDB->rol;
-                        header('Location: /dashboard');
-                        exit;
+                    $usuarioDB = Usuario::where('email', $usuario->email);
+                    if (!$usuarioDB || !$usuarioDB->confirmado) {
+                        LoginLimite::fallo($ip, $email);
+                        Usuario::setAlerta('error', 'El usuario no existe o no está confirmado');
                     } else {
-                        Usuario::setAlerta('error', 'Password incorrecto');
+                        if ($usuarioDB->comprobarPassword($password)) {
+                            LoginLimite::exito($ip, $email);
+                            session_regenerate_id(true);
+                            $_SESSION['id'] = $usuarioDB->id;
+                            $_SESSION['nombre'] = $usuarioDB->nombre;
+                            $_SESSION['email'] = $usuarioDB->email;
+                            $_SESSION['rol'] = $usuarioDB->rol;
+                            header('Location: /dashboard');
+                            exit;
+                        } else {
+                            LoginLimite::fallo($ip, $email);
+                            Usuario::setAlerta('error', 'Password incorrecto');
+                        }
                     }
                 }
             }

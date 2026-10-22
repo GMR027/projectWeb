@@ -19,7 +19,7 @@ composer install
 # 2. Dependencias Node
 npm install
 
-# 3. Configurar entorno
+# 3. Configurar entorno (.env NO se versiona: cada equipo tiene el suyo)
 cp .env.example .env
 # Edita .env con tus credenciales de BD
 
@@ -98,11 +98,11 @@ Desde **Ajustes → Centro de Exportación** (requiere rol admin o cliente):
 
 | Formato | Descripción |
 |---|---|
-| **PDF** | Gantt + tabla en tabloide (11×17") horizontal, paginado cada 12 semanas |
+| **PDF** | Gantt + tabla en tabloide (11×17") horizontal, con columnas semanales, quincenales o mensuales según la duración y un máximo de 14 columnas por página |
 | **XML** | Formato MSPDI compatible con MS Project (ábrelo en MSP y guárdalo como .mpp) |
 | **POD** | Compatible con ProjectLibre |
 
-El nombre del archivo se genera automáticamente con formato `Y_m_d_NombreUsuario.extension` y se registra en historial con hash SHA-256.
+El nombre del archivo usa el prefijo y el sufijo elegidos en el Centro de Exportación (fecha `Y-m-d`, `d-m-Y`, numerador o texto) y el formato `prefijo-nombre-CÓDIGO-EMPRESA-sufijo.ext`. Sin configuración, la fecha va al inicio.
 
 ## Flujo típico
 
@@ -124,8 +124,14 @@ npx gulp dev
 # Compilar para producción
 npx gulp
 
-# Servidor local
-cd public && php -S localhost:8000
+# Servidor local (permite archivos de hasta 250 MB en la sección Archivo)
+cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000
+
+# Pruebas de las piezas que no necesitan base de datos
+php tests/run.php
+
+# Pruebas de integración (requiere MySQL; usa y borra una BD desechable, p. ej. project_ci)
+DB_HOST=127.0.0.1 DB_USER=root DB_PASS= DB_NAME=project_ci php tests/integracion.php
 
 # Resetear BD
 mysql -u root -e "DROP DATABASE project;"
@@ -138,7 +144,7 @@ mysql -u root < database/schema.sql
 - **Panel:** `#1C2541` con glassmorphism
 - **Acción primaria:** `#FF5A1F` (naranja seguridad)
 - **Acento telemetría:** `#00B4D8` (cian láser)
-- **Tipografía:** Space Grotesk (títulos), Manrope (cuerpo), JetBrains Mono (códigos)
+- **Tipografía:** Inter (texto y títulos) y Fira Code (códigos y fechas)
 
 ## Próximas integraciones
 

@@ -11,7 +11,9 @@ function debuguear($variable): void
 
 function s($html): string
 {
-    return htmlspecialchars($html ?? '', ENT_QUOTES, 'UTF-8');
+    // Un arreglo manipulado en la URL (?error[]=…) no debe provocar un TypeError al escapar
+    if (is_array($html) || is_object($html)) return '';
+    return htmlspecialchars((string)($html ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
 function pagina_actual($path): bool

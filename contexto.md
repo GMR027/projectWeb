@@ -1,10 +1,11 @@
 # Contexto del proyecto — ProjectWeb Programa de Obra
 
-Actualizado: 13/10/2026. Para uso de quien continúe el trabajo (humano o agente). Complementa `AGENTS.md`.
+Actualizado: 21/10/2026. Para uso de quien continúe el trabajo (humano o agente). Complementa `AGENTS.md`.
 
 ## 1. Stack y entorno
-- PHP 8 MVC (patrón UpTask_MVC), MySQL `project`, raíz `/home/edgar/Documentos/programacion/PROJECT/PO`.
-- Servidor: `cd public && php -S localhost:8000`. Assets: `npx gulp` (SCSS en `src/scss/`, JS en `src/js/`, salida `public/build/`).
+- PHP 8 MVC (patrón UpTask_MVC), MySQL `project`, raíz `/home/edgar/Documentos/programacion/projectWeb`.
+- Servidor: `cd public && php -d upload_max_filesize=250M -d post_max_size=260M -S localhost:8000`. Assets: `npx gulp` (SCSS en `src/scss/`, JS en `src/js/`, salida `public/build/`).
+- Pruebas sin BD: `php tests/run.php`. Pruebas con BD (crea y borra una BD desechable): `DB_HOST=… DB_NAME=project_ci php tests/integracion.php`. `vendor/`, `node_modules/` y `.env` no se versionan.
 - Librerías: Dompdf 3, PhpSpreadsheet, Intervention Image v3, Konva y Chart.js vendorizados en `public/vendor/`.
 - Zona horaria en `includes/app.php` (`APP_TIMEZONE` o `America/Mazatlan`).
 - Admin: `admin@po.local / admin123`. Otros: id 2 "Cliente Test" (cliente), id 3 "Visitante Test" (contraseñas desconocidas).

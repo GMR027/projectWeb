@@ -78,6 +78,13 @@ class ApiRest
         return (string)($_SERVER[$k] ?? $_SERVER['REDIRECT_' . $k] ?? '');
     }
 
+    /** Parámetro de URL como texto: un arreglo manipulado (?estado[]=…) se ignora en vez de romper la consulta */
+    private static function getTexto(string $clave): string
+    {
+        $v = $_GET[$clave] ?? '';
+        return is_string($v) ? $v : (is_scalar($v) ? (string)$v : '');
+    }
+
     private static function cuerpo(): array
     {
         $crudo = (string)file_get_contents('php://input');
@@ -256,7 +263,8 @@ class ApiRest
     {
         self::proyectoDe($id);
         $w = ["pa.proyecto_id = $id"];
-        if (in_array($_GET['status'] ?? '', ['no_iniciada', 'en_proceso', 'completada'], true)) $w[] = "a.status = '{$_GET['status']}'";
+        $status = self::getTexto('status');
+        if (in_array($status, ['no_iniciada', 'en_proceso', 'completada'], true)) $w[] = "a.status = '" . self::esc($status) . "'";
         if ((int)($_GET['partida'] ?? 0)) $w[] = 'a.partida_id = ' . (int)$_GET['partida'];
         if ($d = self::fecha($_GET['desde'] ?? '')) $w[] = "a.fecha_fin >= '$d'";
         if ($h = self::fecha($_GET['hasta'] ?? '')) $w[] = "a.fecha_inicio <= '$h'";
@@ -296,7 +304,8 @@ class ApiRest
     {
         self::proyectoDe($id);
         $w = ["proyecto_id = $id"];
-        if (isset(Bitacora::IMPORTANCIAS[$_GET['importancia'] ?? ''])) $w[] = "importancia = '{$_GET['importancia']}'";
+        $importancia = self::getTexto('importancia');
+        if (isset(Bitacora::IMPORTANCIAS[$importancia])) $w[] = "importancia = '" . self::esc($importancia) . "'";
         if ($d = self::fecha($_GET['desde'] ?? '')) $w[] = "fecha >= '$d'";
         if ($h = self::fecha($_GET['hasta'] ?? '')) $w[] = "fecha <= '$h'";
         self::lista('bitacora', implode(' AND ', $w), 'fecha DESC, id DESC', 'id, fecha, departamento, descripcion, importancia', [], fn($f) => self::enteros($f, ['id']));
@@ -319,9 +328,11 @@ class ApiRest
     {
         self::proyectoDe($id);
         $w = ["proyecto_id = $id"];
-        if (isset(Punch::ESTADOS[$_GET['estado'] ?? ''])) $w[] = "estado = '{$_GET['estado']}'";
-        elseif (($_GET['estado'] ?? '') === 'pendientes') $w[] = "estado IN ('abierto','en_proceso','corregido')";
-        if (isset(Punch::SEVERIDADES[$_GET['severidad'] ?? ''])) $w[] = "severidad = '{$_GET['severidad']}'";
+        $estadoPunch = self::getTexto('estado');
+        if (isset(Punch::ESTADOS[$estadoPunch])) $w[] = "estado = '" . self::esc($estadoPunch) . "'";
+        elseif ($estadoPunch === 'pendientes') $w[] = "estado IN ('abierto','en_proceso','corregido')";
+        $severidad = self::getTexto('severidad');
+        if (isset(Punch::SEVERIDADES[$severidad])) $w[] = "severidad = '" . self::esc($severidad) . "'";
         self::lista('punch_items', implode(' AND ', $w), "FIELD(estado,'abierto','en_proceso','corregido','cerrado','rechazado'), FIELD(severidad,'critica','alta','media','baja'), id DESC",
             'id, titulo, descripcion, ubicacion, categoria, severidad, estado, responsable, contratista, fecha_limite, actividad_id, origen, creado', [], fn($f) => self::enteros($f, ['id', 'actividad_id']));
     }
@@ -347,7 +358,8 @@ class ApiRest
     {
         self::proyectoDe($id);
         $w = ["proyecto_id = $id"];
-        if (isset(Rfi::ESTADOS[$_GET['estado'] ?? ''])) $w[] = "estado = '{$_GET['estado']}'";
+        $estadoRfi = self::getTexto('estado');
+        if (isset(Rfi::ESTADOS[$estadoRfi])) $w[] = "estado = '" . self::esc($estadoRfi) . "'";
         self::lista('rfis', implode(' AND ', $w), 'id DESC', 'id, numero, asunto, pregunta, respuesta, responsable, solicitante, prioridad, estado, fecha, fecha_limite, fecha_respuesta, actividad_id', [], fn($f) => self::enteros($f, ['id', 'actividad_id']));
     }
 

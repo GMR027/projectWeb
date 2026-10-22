@@ -45,7 +45,7 @@ class Router
         }
 
         ob_start();
-        include_once __DIR__ . "/views/$view.php";
+        include __DIR__ . "/views/$view.php";
         $contenido = ob_get_clean();
 
         $layout = __DIR__ . '/views/layout.php';
@@ -59,7 +59,7 @@ class Router
             $layout = __DIR__ . '/views/layout-auth.php';
         }
         ob_start();
-        include_once $layout;
+        include $layout;
         echo csrf_inyectar(ob_get_clean());
     }
 }

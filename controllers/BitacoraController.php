@@ -13,7 +13,8 @@ class BitacoraController
     {
         $proyecto = proyecto_de_peticion();
         $depto = trim($_GET['departamento'] ?? '');
-        $imp = isset(Bitacora::IMPORTANCIAS[$_GET['importancia'] ?? '']) ? $_GET['importancia'] : '';
+        $impGet = $_GET['importancia'] ?? '';
+        $imp = is_string($impGet) && isset(Bitacora::IMPORTANCIAS[$impGet]) ? $impGet : '';
         $registros = Bitacora::deProyecto((int)$proyecto->id);
         $deptos = \Classes\Catalogo::departamentos((int)$proyecto->id);
         $registros = array_values(array_filter($registros, fn($r) =>

@@ -11,7 +11,9 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `npm install` | Instalar dependencias Node |
 | `npx gulp` | Compilar SCSS + JS |
 | `npx gulp dev` | Watch mode para desarrollo |
-| `cd public && php -d upload_max_filesize=100M -d post_max_size=110M -d max_execution_time=300 -S localhost:8000` | Servidor local (los -d permiten subir archivos de hasta 100 MB en la sección Archivo) |
+| `cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000` | Servidor local (los -d permiten subir archivos de hasta 250 MB en la sección Archivo) |
+| `php tests/run.php` | Pruebas de las piezas que no necesitan base de datos (también las ejecuta CI) |
+| `DB_HOST=… DB_NAME=project_ci php tests/integracion.php` | Pruebas con BD real: esquema, seed, límite de intentos y calendario (CI usa MySQL de servicio; **borra y recrea la BD indicada**, nunca usar con datos reales) |
 | `mysql -u root < database/schema.sql` | Crear/resetear BD |
 
 ## 🏗 Architecture
@@ -138,6 +140,8 @@ Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`
 
 - **Subidas de imágenes:** usa siempre `guardar_imagen_subida($campo, $carpeta)` (comprueba el tipo real y genera el nombre). Nunca uses la extensión de `$_FILES[..]['name']`.
 - **IP del visitante:** `ip_cliente()` (en `includes/funciones.php`); detrás del Ingress hay que definir `TRUSTED_PROXIES` (el chart de Helm ya lo hace con `10.1.0.0/16`).
+- **Fuerza bruta:** `Classes\LoginLimite` bloquea 15 min tras 5 fallos por IP + correo (tabla `login_intentos`, migración `database/migracion_login_intentos.sql`). Si la tabla no existe, el login sigue funcionando sin límite. `limpiar()` borra registros de +24 h y se llama en ~1 % de los inicios de sesión.
+- **Parámetros de URL:** un valor array (`?estado[]=…`) se ignora en los sitios que lo usan como clave; `s()` también acepta arreglos sin romper. No convertir `$_GET`/`$_POST` completos a texto: hay formularios con `campo[]` legítimos.
 - **Respaldos:** `RESPALDO_COPIA_DIR` (opcional) copia cada respaldo automático a otra ubicación fuera del volumen de datos.
 - **Apache:** `docker/apache.conf` desactiva PHP en `uploads`, `exportaciones` y `build/img`.
 - **Estudio del proyecto:** lecciones y extractos en `../clases/` (se regeneran con `clases/herramientas/generar_extractos.py`).

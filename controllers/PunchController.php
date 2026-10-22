@@ -120,13 +120,13 @@ class PunchController
     public static function inspeccion(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
-        $router->render('punch/inspeccion', ['titulo' => 'Inspección - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'plantilla' => isset(Punch::PLANTILLAS[$_GET['plantilla'] ?? '']) ? $_GET['plantilla'] : '']);
+        $router->render('punch/inspeccion', ['titulo' => 'Inspección - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'plantilla' => is_string($_GET['plantilla'] ?? null) && isset(Punch::PLANTILLAS[$_GET['plantilla']]) ? $_GET['plantilla'] : '']);
     }
 
     public static function inspeccionar()
     {
         $p = self::gestion();
-        $pl = isset(Punch::PLANTILLAS[$_POST['plantilla'] ?? '']) ? $_POST['plantilla'] : 'general';
+        $pl = is_string($_POST['plantilla'] ?? null) && isset(Punch::PLANTILLAS[$_POST['plantilla']]) ? $_POST['plantilla'] : 'general';
         $res = [];
         foreach (Punch::PLANTILLAS[$pl]['items'] as $i => [$texto, $cat]) $res[] = ['texto' => $texto, 'categoria' => $cat, 'estado' => ($_POST['r'][$i] ?? 'na'), 'nota' => (string)($_POST['nota'][$i] ?? '')];
         $n = Punch::desdeInspeccion((int)$p->id, $pl, (string)($_POST['ubicacion'] ?? ''), (string)($_POST['contratista'] ?? ''), (string)($_POST['responsable'] ?? ''), $res);

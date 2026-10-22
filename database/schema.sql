@@ -28,6 +28,18 @@ CREATE TABLE usuarios (
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Intentos de acceso fallidos (protección contra fuerza bruta): 5 fallos por IP + correo bloquean 15 minutos
+CREATE TABLE login_intentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(45) NOT NULL,
+    email VARCHAR(100) NOT NULL DEFAULT '',
+    intentos INT NOT NULL DEFAULT 0,
+    ultimo INT NOT NULL DEFAULT 0,             -- unix timestamp del último intento
+    bloqueado_hasta INT NOT NULL DEFAULT 0,    -- unix timestamp hasta el que no se permite intentar
+    UNIQUE KEY uq_login_ip_email (ip, email),
+    KEY idx_login_ultimo (ultimo)
+) ENGINE=InnoDB;
+
 -- ============================================================
 -- PROYECTOS
 -- ============================================================
@@ -200,7 +212,7 @@ CREATE TABLE IF NOT EXISTS proyecto_accesos (
 -- ============================================================
 -- Usuario admin por defecto (password: admin123 - CAMBIAR EN PRODUCCIÓN)
 INSERT INTO usuarios (nombre, email, password, rol, confirmado) VALUES
-('Administrador', 'admin@po.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 1);
+('Administrador', 'admin@po.local', '$2y$12$n6xOV.ytNTY7dysHh66yeuxncU33gwjWbEWX2q6T9XIRYiqzoXX72', 'admin', 1);
 
 -- ============================================================
 -- MSR (materiales, submittals, reporte de estatus)

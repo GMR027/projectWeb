@@ -30,7 +30,7 @@ $ok('máximo 20 filas', count(json_decode(Cajetin::filasDeTexto(str_repeat("a | 
 
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
-$ok('textos sin letras no llaman al motor', Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-'] || !Classes\Traductor::configurado());
+$ok('textos sin letras no llaman al motor', !Classes\Traductor::configurado() || Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-']);
 
 echo "OdpExporter\n";
 $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
@@ -86,6 +86,12 @@ $_COOKIE['idioma'] = 'en';
 $ok('traduce al inglés', t('Ajustes') === 'Settings');
 $ok('texto compuesto «Sección - Proyecto»', t('Editor - Torre') === 'Editor - Torre' && t('Evidencias - Torre') === 'Evidence - Torre');
 $ok('texto sin traducción queda igual', t('Algo inventado') === 'Algo inventado');
+
+echo "Entradas manipuladas (arreglos en la URL)\n";
+$ok('s() con arreglo devuelve vacío en vez de TypeError', s(['x']) === '');
+$c = ['es'];   // cookie idioma manipulada: la misma lógica de idioma_actual() la descarta
+if (!is_string($c)) $c = 'es';
+$ok('cookie de idioma como arreglo se ignora y cae a «es»', $c === 'es');
 
 echo "IP del cliente (detrás de proxy)\n";
 $ok('IP dentro del rango CIDR', ip_en_rangos('10.1.219.129', '10.1.0.0/16') && !ip_en_rangos('10.2.0.1', '10.1.0.0/16'));

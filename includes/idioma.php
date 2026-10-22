@@ -9,6 +9,8 @@ function idioma_actual(): string
     static $i = null;
     if ($i !== null) return $i;
     $c = $_COOKIE['idioma'] ?? ($_SESSION['idioma'] ?? 'es');
+    // Un parámetro manipulado (?idioma[]=…) no debe romper la página: solo se aceptan textos
+    if (!is_string($c)) $c = 'es';
     return $i = isset(IDIOMAS[$c]) ? $c : 'es';
 }
 

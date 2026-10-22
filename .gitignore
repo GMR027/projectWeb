@@ -1,9 +1,33 @@
+# Dependencias: se instalan con composer install / npm install (los lockfiles sí se versionan)
+/vendor/
+/node_modules/
+/desktop/node_modules/
+
+# Configuración local: cada equipo/entorno tiene sus propias credenciales. Se versiona solo .env.example
+/.env
+
 # Subidas de los usuarios (evidencias, fotos de materiales, símbolos, láminas de vPlan, firmas):
 # son datos, no código. Viven en el volumen del clúster y se copian con ./deploy.sh --files
 /public/uploads/**
 !/public/uploads/
 !/public/uploads/*/
 !/public/uploads/*/.gitkeep
+
+# Exportaciones generadas: se crean al descargar y se borran después; nunca se versionan
+/public/exportaciones/*
+!/public/exportaciones/.gitkeep
+
+# Archivos e importaciones de los usuarios (datos de la obra, no código)
+/storage/archivos/*
+!/storage/archivos/.gitkeep
+/storage/import/*
+!/storage/import/.gitkeep
+
+# Logos y carátulas subidos por los usuarios (van dentro de build/img porque los sirve Apache)
+/public/build/img/logos/*
+!/public/build/img/logos/.gitkeep
+/public/build/img/caratulas/*
+!/public/build/img/caratulas/.gitkeep
 
 # Respaldos del sistema: cada .zip trae toda la base de datos (con usuarios y contraseñas) y todos los archivos
 /storage/respaldos/*
@@ -13,8 +37,7 @@
 /storage/instaladores/*
 !/storage/instaladores/.gitkeep
 
-# App de escritorio: dependencias y paquetes generados
-/desktop/node_modules/
+# App de escritorio: paquetes generados
 /desktop/release/
 /storage/grabaciones/*
 !/storage/grabaciones/.gitkeep

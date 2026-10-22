@@ -38,7 +38,8 @@ class MaterialController
         $q = trim($_GET['q'] ?? '');
         $fEsp = trim($_GET['especialidad'] ?? '');
         $fEntrega = in_array($_GET['entrega'] ?? '', ['entregado', 'pendiente'], true) ? $_GET['entrega'] : '';
-        $fCompra = isset(Material::COMPRA[$_GET['compra'] ?? '']) ? $_GET['compra'] : '';
+        $compraGet = $_GET['compra'] ?? '';
+        $fCompra = is_string($compraGet) && isset(Material::COMPRA[$compraGet]) ? $compraGet : '';
         $materiales = array_values(array_filter(
             Material::deProyecto((int)$proyecto->id),
             fn($m) => ($q === '' || stripos($m->nombre . ' ' . $m->referencia . ' ' . $m->especialidad, $q) !== false)
@@ -177,7 +178,7 @@ class MaterialController
         foreach (['fecha_compra_prog', 'fecha_entrega_prog', 'fecha_entrega_real'] as $f) {
             $material->$f = trim($_POST[$f] ?? '') ?: null;
         }
-        $compraNueva = isset(Material::COMPRA[$_POST['compra'] ?? '']) ? $_POST['compra'] : 'pendiente';
+        $compraNueva = is_string($_POST['compra'] ?? null) && isset(Material::COMPRA[$_POST['compra']]) ? $_POST['compra'] : 'pendiente';
         if ($compraNueva !== $compraAnterior) $material->fijarCompra($compraNueva);
         $material->proyecto_id = $proyecto->id;
 
