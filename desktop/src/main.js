@@ -451,7 +451,7 @@ app.whenReady().then(() => {
   ipcMain.handle('ollama:eliminar', (_e, url, modelo) => prov.ollamaEliminar(url, modelo));
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('config:get', () => cfg.publica());
-  ipcMain.handle('config:tipos', () => Object.fromEntries(Object.entries(prov.TIPOS).map(([k, t]) => [k, { etiqueta: t.etiqueta, url: t.url || '', clave: !!t.clave, cli: !!t.bin }])));
+  ipcMain.handle('config:tipos', () => Object.fromEntries(Object.entries(prov.TIPOS).map(([k, t]) => [k, { etiqueta: t.etiqueta, url: t.url || '', clave: !!t.clave, cli: !!t.bin, modelo: !!t.modelo }])));
   ipcMain.handle('config:servidor', (_e, url) => { if (url) new URL(url); cfg.guardarServidor(String(url || '').trim().replace(/\/+$/, '')); });
   ipcMain.handle('prov:guardar', (_e, p, clave) => {
     if (!prov.TIPOS[p.tipo]) throw new Error('Tipo no válido');

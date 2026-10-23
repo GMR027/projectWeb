@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const http = require('http');
-const { chat, modelos, urlBase } = require('../src/providers');
+const { chat, modelos, familiaOpencode, probar, estado, urlBase } = require('../src/providers');
 const { comparar } = require('../src/updater');
 
 function servidor(manejar) {
@@ -72,3 +72,38 @@ test('claude-code: manda historial, sistema e imágenes a un CLI falso y devuelv
     assert.ok(ci.a.includes('Read'));
   } finally { process.env.PATH = anterior; fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('opencode: manda el modelo con --model, sin permisos de escritura, y lista los modelos del equipo', async () => {
+  const fs = require('fs'), os = require('os'), path = require('path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fakeopencode-')), anterior = process.env.PATH;
+  // el «opencode» falso: contesta a --version y a models, y en «run» vuelca sus argumentos y el opencode.json de su cwd.
+  // Si la entrada estándar le llega como tubería sin datos (como hace execFile) se queda mudo y sale con 130, como el CLI real
+  fs.writeFileSync(path.join(dir, 'opencode'), '#!/usr/bin/env node\nconst fs=require("fs");\nif (fs.fstatSync(0).isFIFO()) process.exit(130);\nconst a=process.argv.slice(2);\n'
+    + 'if (a[0]==="--version") { console.log("opencode v9.9.9"); process.exit(0); }\n'
+    + 'if (a[0]==="models") { console.log("opencode/glm-5.3-flash-free\\nopenai/gpt-4o\\nopencode-go/mimo-v2.6-flash\\nopencode/mimo-v2.6-flash-free"); process.exit(0); }\n'
+    + 'console.log(JSON.stringify({a, cfg: fs.existsSync("opencode.json") ? JSON.parse(fs.readFileSync("opencode.json","utf8")) : null}));\n', { mode: 0o755 });
+  process.env.PATH = dir + path.delimiter + anterior;
+  try {
+    const m = [{ role: 'system', content: 'SIS' }, { role: 'user', content: 'hola' }];
+    const r = JSON.parse(await chat({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, '', m, {}));
+    assert.deepStrictEqual(r.a.slice(0, 3), ['run', '--model', 'opencode-go/mimo-v2.6-flash']);   // sin esto, el CLI usa su modelo por defecto
+    assert.ok(r.a[3].includes('SIS') && r.a[3].endsWith('hola'));
+    assert.strictEqual(r.cfg.permission.edit, 'deny');   // no puede escribir archivos ni ejecutar comandos
+    assert.strictEqual(r.cfg.permission.shell, 'deny');
+    await assert.rejects(chat({ tipo: 'opencode' }, '', m, {}), /modelo/);   // sin modelo elegido no se lanza
+    // el listado trae lo de tu suscripción y lo gratuito, con la familia de cada uno para poder etiquetarlo
+    const lista = await modelos({ tipo: 'opencode' }, '');
+    assert.deepStrictEqual(lista, ['opencode-go/mimo-v2.6-flash', 'opencode/glm-5.3-flash-free', 'opencode/mimo-v2.6-flash-free', 'openai/gpt-4o']);
+    assert.deepStrictEqual(lista.map(familiaOpencode), ['go', 'free', 'free', 'otro']);
+    // comprobación de la conexión: pide modelo, lo valida en la lista y (no económica) hace una consulta de verdad
+    await assert.rejects(probar({ tipo: 'opencode' }, ''), /modelo/);
+    await assert.rejects(probar({ tipo: 'opencode', modelo: 'otro/modelo' }, ''), /no está en opencode/);
+    assert.strictEqual(await probar({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, '', true), 'opencode instalado (opencode v9.9.9) · modelo «opencode-go/mimo-v2.6-flash» disponible.');
+    assert.match(await probar({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, ''), /«opencode-go\/mimo-v2.6-flash» responde/);
+    const e = await estado({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, '');
+    assert.strictEqual(e.nivel, 'aviso');
+    assert.match(e.texto, /Comprobar/);
+    assert.strictEqual((await estado({ tipo: 'opencode' }, '')).nivel, 'error');   // la conexión sin modelo no se marca como lista
+  } finally { process.env.PATH = anterior; fs.rmSync(dir, { recursive: true, force: true }); }
+});
+

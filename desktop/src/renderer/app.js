@@ -7,7 +7,7 @@ const msgErr = e => String(e && e.message || e).replace(/^Error invoking remote 
 
 const CATEGORIAS = {
   local: { tipos: ['ollama'], titulo: 'Conectar una IA local', nota: 'Modelos que corren en este equipo (Ollama). Nada sale de tu computadora. Abajo se sugieren los que mejor le van a tu hardware.' },
-  suscripcion: { tipos: ['claude-code', 'opencode'], titulo: 'Conectar una suscripción', nota: 'Usa el agente de línea de comandos con tu propia sesión de suscripción (inicia sesión antes en el terminal).' },
+  suscripcion: { tipos: ['claude-code', 'opencode'], titulo: 'Conectar una suscripción', nota: 'Usa el agente de línea de comandos con tu propia sesión de suscripción (inicia sesión antes en el terminal). Con opencode elige además el modelo: «Listar modelos» trae los de tu suscripción (opencode-go/…) y los gratuitos (…-free).' },
   api: { tipos: ['openai', 'anthropic', 'opencode-api'], titulo: 'Conectar una API', nota: 'Con API key de un proveedor. Se cifra con el llavero del sistema y no sale de este equipo.' },
 };
 let categoria = 'local', hwCargado = false;
@@ -151,14 +151,16 @@ const AYUDA_URL = {
 };
 let urlEstandar = '';
 function ajustarForm() {
-  const t = tipos[$('#prov-tipo').value] || {};
-  $('#l-url').hidden = t.cli; $('#l-modelo').hidden = t.cli; $('#l-clave').hidden = !t.clave;
+  const tipo = $('#prov-tipo').value, t = tipos[tipo] || {};
+  $('#l-url').hidden = t.cli; $('#l-modelo').hidden = t.cli && !t.modelo; $('#l-clave').hidden = !t.clave;
   const campo = $('#l-url input');
   if (!campo.value || campo.value === urlEstandar) campo.value = t.url || '';   // solo se reemplaza si el usuario no la cambió
   urlEstandar = t.url || '';
   campo.placeholder = t.url || '';
-  $('#url-ayuda').textContent = AYUDA_URL[$('#prov-tipo').value] || ''; $('#url-ayuda').hidden = !!t.cli;
-  $('#prov-modelos').hidden = t.cli || t.clave === undefined;
+  $('#l-modelo input').placeholder = t.modelo && tipo === 'opencode' ? 'opencode-go/mimo-v2.6-flash, opencode/glm-5.3-flash-free…' : 'llama3.1, gpt-4o…';
+  $('#url-ayuda').textContent = AYUDA_URL[tipo] || ''; $('#url-ayuda').hidden = !!t.cli;
+  $('#prov-modelos').hidden = !(t.modelo || t.clave !== undefined);
+  if (t.modelo && tipo === 'opencode') listarModelos(false);   // los modelos del opencode instalado (~0,1 s) quedan ya sugeridos en el campo
 }
 $('#prov-tipo').addEventListener('change', ajustarForm);
 
@@ -915,15 +917,29 @@ $('#prov-form').addEventListener('submit', async e => {
     e.target.reset(); urlEstandar = ''; ajustarForm(); m.textContent = 'Conexión guardada.'; recargar();
   } catch (x) { m.textContent = msgErr(x); }
 });
-$('#prov-modelos').addEventListener('click', async () => {
-  const m = $('#prov-msg'), f = new FormData($('#prov-form'));
-  m.textContent = 'Consultando…';
+/** Familia de un modelo de opencode, con la misma regla que `providers.familiaOpencode` */
+const FAMILIA_MODELO = n => n.startsWith('opencode-go/') ? 'go' : n.endsWith('-free') ? 'free' : 'otro';
+/** Descripción que el navegador muestra junto a cada modelo en la lista desplegable */
+const ETIQUETA_MODELO = n => ({ go: 'OpenCode Go · tu suscripción', free: 'Gratuito (capa free)' }[FAMILIA_MODELO(n)] || 'Proveedor conectado (' + n.split('/')[0] + ')');
+/** Rellena el datalist de modelos del tipo elegido (Ollama, opencode o la API); `avisar` escribe el resultado en el mensaje del formulario */
+async function listarModelos(avisar = true) {
+  const f = new FormData($('#prov-form')), m = $('#prov-msg'), esOpencode = f.get('tipo') === 'opencode';
+  if (avisar) m.textContent = 'Consultando…';
   try {
     const lista = await pw.modelos({ tipo: f.get('tipo'), url: f.get('url') }, f.get('clave'));
-    $('#lista-modelos').replaceChildren(...lista.map(n => { const o = el('option'); o.value = n; return o; }));
-    m.textContent = lista.length ? lista.length + ' modelos disponibles (elige en el campo Modelo).' : 'Sin modelos listados para este tipo.';
-  } catch (x) { m.textContent = msgErr(x); }
-});
+    $('#lista-modelos').replaceChildren(...lista.map(n => { const o = el('option'); o.value = n; if (esOpencode) o.label = ETIQUETA_MODELO(n); return o; }));
+    if (avisar) {
+      if (!lista.length) m.textContent = 'Sin modelos listados para este tipo.';
+      else if (esOpencode) {   // en opencode cada modelo indica de dónde sale: suscripción Go, capa gratuita u otro proveedor conectado
+        const cuenta = fam => lista.filter(n => FAMILIA_MODELO(n) === fam).length, go = cuenta('go'), free = cuenta('free');
+        m.textContent = lista.length + ' modelos disponibles: ' + go + ' de tu suscripción OpenCode Go (opencode-go/…), ' + free + ' gratuitos (…-free)'
+          + (lista.length - go - free ? ' y ' + (lista.length - go - free) + ' de otros proveedores conectados' : '') + '. Elige en el campo Modelo.';
+      } else m.textContent = lista.length + ' modelos disponibles (elige en el campo Modelo).';
+    }
+    return lista;
+  } catch (x) { if (avisar) m.textContent = msgErr(x); return []; }
+}
+$('#prov-modelos').addEventListener('click', () => listarModelos());
 
 $('#srv-form').addEventListener('submit', async e => {
   e.preventDefault();

@@ -13,12 +13,16 @@ const TIPOS = {
   ollama: { etiqueta: 'Ollama (local)', url: 'http://localhost:11434', clave: false },
   openai: { etiqueta: 'API compatible con OpenAI', url: 'https://api.openai.com/v1', clave: true },
   anthropic: { etiqueta: 'API de Anthropic', url: 'https://api.anthropic.com', clave: true },
-  'claude-code': { etiqueta: 'Claude Code (CLI, tu suscripción)', bin: 'claude', args: p => ['-p', p], imagenes: true },
+  'claude-code': { etiqueta: 'Claude Code (CLI, tu suscripción)', bin: 'claude', args: (c, texto) => ['-p', texto], imagenes: true },
   'opencode-api': { etiqueta: 'opencode Zen (API key)', url: 'https://opencode.ai/zen/v1', clave: true },
-  opencode: { etiqueta: 'opencode (CLI)', bin: 'opencode', args: p => ['run', p] },
+  // el modelo va SIEMPRE en --model: sin él, opencode usa su modelo por defecto (capa gratuita, con límite de uso)
+  opencode: { etiqueta: 'opencode (CLI)', bin: 'opencode', modelo: true, args: (c, texto) => ['run', ...(c?.modelo ? ['--model', c.modelo] : []), texto] },
 };
 const esOpenAI = t => t === 'openai' || t === 'opencode-api';   // opencode Zen habla el protocolo de OpenAI
 const TIMEOUT_MS = 120000;
+// opencode aprueba por defecto cualquier escritura o comando: en la carpeta temporal de la consulta se le quitan esos permisos
+const CFG_OPENCODE = JSON.stringify({ permission: { edit: 'deny', shell: 'deny', webfetch: 'deny' } }, null, 1);
+const escribirCfgOpencode = carpeta => fs.writeFileSync(path.join(carpeta, 'opencode.json'), CFG_OPENCODE);
 
 // Uso de la suscripción de Claude Code: % de las ventanas de 5 h / 7 días (las informa el propio CLI) y tokens gastados hoy desde esta app
 let usoArchivo = null;
@@ -97,18 +101,42 @@ function entorno() {
   return { ...process.env, PATH: [...actual, ...extra.filter(d => !actual.includes(d))].join(path.delimiter) };
 }
 
-function errorCli(bin, err, errout) {
-  return new Error(err.code === 'ENOENT' ? bin + ' no está instalado o no está en el PATH' : (errout || err.message).trim().slice(0, 400));
+/** Quita los códigos de color y las líneas de estado de los agentes («> build · modelo») que los CLI imprimen en stderr */
+function limpiarCli(t) {
+  return String(t || '').split('\n').map(l => l.replace(/\x1b\[[0-9;]*m/g, '').trim()).filter(l => l && !l.startsWith('> ')).join(' ').slice(0, 400);
 }
 
-function cli(bin, args, timeout = TIMEOUT_MS) {
+function errorCli(bin, err, errout) {
+  if (err.code === 'ENOENT') return new Error(bin + ' no está instalado o no está en el PATH');
+  const texto = limpiarCli(errout || err.message);
+  if (/free usage limit/i.test(texto))   // opencode: se agotó la cuota de los modelos gratuitos
+    return new Error(texto + ' (se agotó la cuota de los modelos gratuitos: elige otro modelo con «Listar modelos», por ejemplo uno de opencode-go/, o conecta un proveedor con «opencode auth» en el terminal).');
+  return new Error(texto || err.message);
+}
+
+const MAX_SALIDA = 8 * 1024 * 1024;
+/**
+ * Ejecuta un CLI y devuelve su stdout. La entrada estándar va «ignore»: opencode trata la entrada abierta como una sesión
+ * interactiva y, sin datos, termina sin responder (código 130) — con execFile le pasa justo eso.
+ */
+function cli(bin, args, timeout = TIMEOUT_MS, preparar = null) {
   return new Promise((resolve, reject) => {
     // cwd temporal: el agente no debe tocar ningún proyecto del usuario
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'pwd-'));
-    execFile(bin, args, { cwd, timeout, maxBuffer: 8 * 1024 * 1024, env: entorno() }, (err, out, errout) => {
-      fs.rm(cwd, { recursive: true, force: true }, () => {});
-      if (err) reject(errorCli(bin, err, errout));
-      else resolve(out.trim());
+    const limpiar = () => fs.rm(cwd, { recursive: true, force: true }, () => {});
+    try { preparar?.(cwd); } catch (e) { limpiar(); return reject(e); }
+    const hijo = spawn(bin, args, { cwd, env: entorno(), stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '', errout = '', agotado = false, lleno = false;
+    const acabar = (f, v) => { clearTimeout(tope); limpiar(); f(v); };
+    const tope = setTimeout(() => { agotado = true; hijo.kill(); setTimeout(() => hijo.kill('SIGKILL'), 5000).unref(); }, timeout);
+    hijo.stdout.on('data', d => { out += d; if (out.length > MAX_SALIDA) { lleno = true; hijo.kill('SIGKILL'); } });
+    hijo.stderr.on('data', d => { errout += d; });
+    hijo.on('error', e => acabar(reject, errorCli(bin, e, '')));
+    hijo.on('close', (codigo, senal) => {
+      if (agotado) return acabar(reject, new Error('Tiempo de espera agotado (' + Math.round(timeout / 60000) + ' min)'));
+      if (lleno) return acabar(reject, new Error('La respuesta de ' + bin + ' supera el tamaño máximo permitido'));
+      if (codigo !== 0 || senal) return acabar(reject, errorCli(bin, { code: codigo, message: 'El proceso terminó con código ' + codigo + (senal ? ' (' + senal + ')' : '') }, errout));
+      acabar(resolve, out.trim());
     });
   });
 }
@@ -189,7 +217,14 @@ async function chatSinMedir(p, clave, mensajes, opts = {}) {
   if (!t) throw new Error('Tipo de conexión desconocido');
   if (opts.imagenes?.length && t.bin && !t.imagenes) throw new Error('Esta conexión (agente de línea de comandos) no admite imágenes: usa Ollama con un modelo de visión o una API con visión.');
   if (p.tipo === 'claude-code') return claudeCode(mensajes, opts, timeout);
-  if (t.bin) return cli(t.bin, t.args([sistemaDe(mensajes), guion(mensajes)].filter(Boolean).join('\n\n')), timeout);
+  if (t.bin) {
+    if (p.tipo === 'opencode' && !p.modelo) throw new Error('Esta conexión no tiene modelo elegido: ábrela, pulsa «Listar modelos» y elige uno (por ejemplo opencode-go/mimo-v2.6-flash, o uno …-free).');
+    const texto = [sistemaDe(mensajes), guion(mensajes)].filter(Boolean).join('\n\n');
+    opts.alAvanzar?.({ tokens: 0, fase: 'leyendo' });   // los CLI no dan streaming: solo se avisa al empezar y al terminar
+    const salida = await cli(t.bin, t.args(p, texto), timeout, p.tipo === 'opencode' ? escribirCfgOpencode : null);
+    opts.alAvanzar?.({ tokens: 0, fase: 'listo' });
+    return salida;
+  }
   mensajes = conImagenes(p.tipo, mensajes, opts.imagenes);
   if (!p.modelo) throw new Error('Indica el modelo en la conexión');
   const base = urlBase(p);
@@ -227,8 +262,18 @@ async function chat(p, clave, mensajes, opts = {}) {
 
 async function modelos(p, clave) {
   if (p.tipo === 'ollama') return ((await http(urlBase(p) + '/api/tags', {}))?.models || []).map(m => m.name);
+  if (p.tipo === 'opencode') return ordenarOpencode(await cli('opencode', ['models']));   // los de este equipo: primero opencode-go/… (suscripción), luego …-free (gratuitos)
   if (esOpenAI(p.tipo)) return ((await http(urlBase(p) + '/models', { headers: { Authorization: 'Bearer ' + clave } }))?.data || []).map(m => m.id);
   return [];
+}
+
+/** Família de un modelo de opencode: 'go' (tu suscripción OpenCode Go), 'free' (capa gratuita) o 'otro' (proveedor conectado) */
+const familiaOpencode = id => id.startsWith('opencode-go/') ? 'go' : id.endsWith('-free') ? 'free' : 'otro';
+/** opencode los lista por proveedor; se ordena para que lo de tu suscripción y lo gratuito salgan primero */
+function ordenarOpencode(salida) {
+  const peso = { go: 0, free: 1, otro: 2 };
+  return String(salida || '').split('\n').map(s => s.trim()).filter(Boolean)
+    .sort((a, b) => peso[familiaOpencode(a)] - peso[familiaOpencode(b)] || a.localeCompare(b));
 }
 
 /** Qué agentes CLI hay instalados */
@@ -241,8 +286,11 @@ async function detectarCli() {
   return r;
 }
 
-/** Comprueba que la conexión funciona; devuelve un texto de éxito o lanza un error explicativo */
-async function probar(p, clave) {
+/**
+ * Comprueba que la conexión funciona; devuelve un texto de éxito o lanza un error explicativo.
+ * `economico` = solo comprobaciones locales y baratas (sin llamar al modelo): es lo que usa la lista de conexiones.
+ */
+async function probar(p, clave, economico = false) {
   const t = TIPOS[p.tipo];
   if (!t) throw new Error('Tipo de conexión desconocido');
   if (t.bin) {
@@ -251,6 +299,14 @@ async function probar(p, clave) {
       const e = JSON.parse(await cli(t.bin, ['auth', 'status']).catch(() => '{}'));
       if (!e.loggedIn) throw new Error('Claude Code está instalado (' + v.split('\n')[0] + ') pero no hay sesión: ejecuta «claude» en el terminal e inicia sesión (/login).');
       return 'Claude Code instalado (' + v.split('\n')[0] + ') con la sesión de ' + (e.authMethod || 'suscripción') + ' iniciada.';
+    }
+    if (p.tipo === 'opencode') {
+      if (!p.modelo) throw new Error('Falta el modelo: con «Listar modelos» elige uno (opencode-go/… usa tu suscripción; los …-free son gratuitos).');
+      const lista = await modelos(p, '').catch(() => null);
+      if (lista && !lista.includes(p.modelo)) throw new Error('El modelo «' + p.modelo + '» no está en opencode: pulsa «Listar modelos» y elige uno disponible.');
+      if (economico) return 'opencode instalado (' + v.split('\n')[0] + ') · modelo «' + p.modelo + '» disponible.';
+      const r = await cli(t.bin, t.args(p, 'Responde únicamente con la palabra listo.'), 90000, escribirCfgOpencode);   // además: que el modelo responda de verdad (saldo, sesión…)
+      return 'opencode instalado (' + v.split('\n')[0] + ') · «' + p.modelo + '» responde' + (r ? ' (' + r.split('\n')[0].slice(0, 60) + ')' : '') + '.';
     }
     return t.bin + ' instalado (' + v.split('\n')[0] + ').';
   }
@@ -369,11 +425,12 @@ async function estado(p, clave) {
         ? { nivel: 'ok', texto: 'Lista · modelo cargado en memoria' }
         : { nivel: 'ok', texto: 'Lista · el modelo se cargará en la primera consulta' };
     }
-    const texto = await probar(p, clave);
-    return { nivel: t.bin ? 'aviso' : 'ok', texto: t.bin ? 'Instalado · la sesión de suscripción se valida al usarlo' : 'Lista · ' + texto.replace(/\.$/, '') };
+    const texto = await probar(p, clave, true);
+    if (t.bin) return { nivel: 'aviso', texto: texto.replace(/\.$/, '') + (p.tipo === 'opencode' ? ' · pulsa «Comprobar» para confirmar que responde' : '') };
+    return { nivel: 'ok', texto: 'Lista · ' + texto.replace(/\.$/, '') };
   } catch (x) {
     return { nivel: 'error', texto: x.message };
   }
 }
 
-module.exports = { conUso, medirUso, uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
+module.exports = { conUso, medirUso, uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, familiaOpencode, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
