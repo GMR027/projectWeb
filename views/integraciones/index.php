@@ -1,5 +1,5 @@
 <?php
-/** Integraciones. Variables: $usuario, $disponible, $tokens, $proyectos, $proyecto, $webhooks, $entregas, $verEntregas, $tokenNuevo, $mensaje, $url */
+/** Integraciones. Variables: $usuario, $tg (Telegram y clima), $disponible, $tokens, $proyectos, $proyecto, $webhooks, $entregas, $verEntregas, $tokenNuevo, $mensaje, $url */
 use Classes\Webhooks;
 
 $pid = $proyecto ? (int)$proyecto->id : 0;
@@ -41,6 +41,87 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
         <label class="campo-check"><input type="checkbox" name="escritura" value="1"> <?php echo s(t('Puede escribir')); ?></label>
         <button class="btn btn-primary btn-sm" type="submit"><?php echo s(t('Crear token')); ?></button>
     </form>
+</section>
+
+<section class="card" id="telegram">
+    <h3><i class="fa-brands fa-telegram"></i> Telegram: avisos, avance y fotos desde el celular</h3>
+    <?php if (!$tg['tablas']): ?>
+        <p class="text-muted">Falta aplicar la migración <code>database/migracion_telegram.sql</code>.</p>
+    <?php elseif (!$tg['configurado']): ?>
+        <p class="text-muted">Telegram todavía no está activado en este servidor. <?php if ($tg['esAdmin']): ?>Solo se hace <strong>una vez</strong>:</p>
+        <ol class="text-sm">
+            <li>En Telegram abre <strong>@BotFather</strong>, escribe <code>/newbot</code>, ponle un nombre y copia el <em>token</em> que te da.</li>
+            <li>Pégalo en el archivo <code>.env</code> del servidor como <code>TELEGRAM_BOT_TOKEN=…</code> y reinicia.</li>
+            <li>Regresa aquí y pulsa <em>Activar el bot</em>. Con servidor local (sin https) usa <code>php bin/telegram.php --sondeo</code>.</li>
+        </ol>
+        <?php else: ?>Pide al administrador que lo active.</p><?php endif; ?>
+    <?php else: ?>
+        <p class="text-sm text-muted">Un solo bot para todos. Conecta tu Telegram y podrás: <strong>recibir avisos</strong> (RFI, pendientes, restricciones, clima), <strong>reportar el avance</strong> de una actividad con botones, <strong>mandar fotos</strong> como evidencia y <strong>anotar en la bitácora</strong>, sin abrir la plataforma.</p>
+
+        <?php if ($tg['enlace']): ?>
+        <div class="integ-token-nuevo card"><strong><?php echo $tg['enlace']['tipo'] === 'grupo' ? 'Agregar el bot a un grupo' : 'Conectar mi Telegram'; ?></strong> <small class="text-muted">· vale 15 minutos y se usa una sola vez</small>
+            <div class="co-enlace"><input type="text" readonly value="<?php echo s($tg['enlace']['url']); ?>" onfocus="this.select()" aria-label="Enlace"><a class="btn btn-sm btn-primary" href="<?php echo s($tg['enlace']['url']); ?>" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Abrir Telegram</a></div></div>
+        <?php endif; ?>
+
+        <h4>Mi cuenta</h4>
+        <?php if ($tg['vinculo']): ?>
+            <p><span class="cb-tag">Conectado</span> como <strong><?php echo s($tg['vinculo']['nombre_tg'] ?: 'tu cuenta'); ?></strong> · bot <code>@<?php echo s($tg['bot']); ?></code>.
+                En el chat escribe <code>/ayuda</code>. Las órdenes de avance y fotos las puede dar el administrador o el dueño del proyecto.</p>
+            <form method="POST" action="/integraciones/telegram/desconectar" data-confirm="¿Desconectar Telegram?|Dejarás de recibir avisos y de poder reportar desde el chat.|Desconectar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit">Desconectar</button></form>
+        <?php else: ?>
+            <form method="POST" action="/integraciones/telegram/conectar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-primary btn-sm" type="submit"><i class="fa-brands fa-telegram"></i> Conectar mi Telegram</button></form>
+        <?php endif; ?>
+
+        <?php if ($proyectos): ?>
+        <h4>Avisos de un proyecto</h4>
+        <form method="GET" class="inc-filtros"><label>Proyecto <select name="proyecto" onchange="this.form.action='#telegram';this.form.submit()"><?php foreach ($proyectos as $p): ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$p->id === $pid ? ' selected' : ''; ?>><?php echo s($p->nombre); ?></option><?php endforeach; ?></select></label></form>
+        <?php $mio = false; foreach ($tg['destinos'] as $d) if ($d['usuario_id'] && (int)$d['usuario_id'] === (int)$usuario['id']) $mio = true; ?>
+        <div class="cp-fila" style="gap:1rem;flex-wrap:wrap">
+            <?php if ($tg['vinculo']): ?>
+            <form method="POST" action="/integraciones/telegram/mi-chat"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><?php if (!$mio): ?><input type="hidden" name="activo" value="1"><?php endif; ?>
+                <button class="btn btn-sm <?php echo $mio ? 'btn-ghost' : 'btn-primary'; ?>" type="submit"><?php echo $mio ? 'Dejar de recibir avisos en mi chat' : 'Recibir avisos de este proyecto en mi chat'; ?></button></form>
+            <?php endif; ?>
+            <form method="POST" action="/integraciones/telegram/grupo"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-users"></i> Agregar a un grupo de la obra</button></form>
+        </div>
+        <?php foreach ($tg['destinos'] as $d): $evs = $d['eventos'] === '' ? [] : explode(',', $d['eventos']); ?>
+            <div class="integ-wh<?php echo (int)$d['activo'] ? '' : ' integ-wh-pausado'; ?>">
+                <div><strong><i class="fa-solid <?php echo $d['usuario_id'] ? 'fa-user' : 'fa-users'; ?>"></i> <?php echo s($d['titulo'] ?: 'Chat'); ?></strong> <?php echo (int)$d['activo'] ? '<span class="cb-tag">Activo</span>' : '<span class="cb-tag cb-tag-critica">Pausado</span>'; ?>
+                    <?php echo (int)$d['fallos_seguidos'] ? ' <small class="prg-peor">' . (int)$d['fallos_seguidos'] . ' fallo(s) seguidos</small>' : ''; ?>
+                    <form method="POST" action="/integraciones/telegram/destino"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$d['id']; ?>"><input type="hidden" name="accion" value="eventos">
+                        <details><summary class="text-sm">Qué avisos recibe (<?php echo count($evs); ?>)</summary>
+                            <div class="integ-eventos"><?php foreach ($tg['eventos'] as $k => $desc): ?><label class="campo-check"><input type="checkbox" name="eventos[]" value="<?php echo s($k); ?>"<?php echo in_array($k, $evs, true) ? ' checked' : ''; ?>> <?php echo s($desc); ?></label><?php endforeach; ?></div>
+                            <button class="btn btn-sm btn-primary" type="submit">Guardar avisos</button></details></form></div>
+                <div class="acciones">
+                    <?php foreach ([['probar', 'Probar'], [(int)$d['activo'] ? 'pausar' : 'activar', (int)$d['activo'] ? 'Pausar' : 'Activar'], ['quitar', 'Quitar']] as [$acc, $txt]): ?>
+                    <form method="POST" action="/integraciones/telegram/destino"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$d['id']; ?>"><input type="hidden" name="accion" value="<?php echo $acc; ?>"><button class="btn btn-sm btn-ghost" type="submit"><?php echo $txt; ?></button></form>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        <?php if (!$tg['destinos']): ?><p class="text-sm text-muted">Este proyecto aún no manda avisos a ningún chat.</p><?php endif; ?>
+        <?php endif; ?>
+
+        <?php if ($tg['esAdmin']): ?>
+        <details><summary class="text-sm">Administración del bot</summary>
+            <p class="text-sm text-muted">Bot <code>@<?php echo s($tg['bot'] ?: '?'); ?></code>. Telegram entrega los mensajes en <code><?php echo s($url); ?>/api/telegram/webhook</code> (necesita https público).
+                <?php if ($tg['webhook']): ?> Estado: <?php echo $tg['webhook']['url'] ? '<span class="cb-tag">Registrado</span> · ' . (int)($tg['webhook']['pending_update_count'] ?? 0) . ' pendiente(s)' . (!empty($tg['webhook']['last_error_message']) ? ' · <span class="prg-peor">último error: ' . s($tg['webhook']['last_error_message']) . '</span>' : '') : '<span class="cb-tag cb-tag-critica">Sin registrar</span>'; ?><?php endif; ?></p>
+            <form method="POST" action="/integraciones/telegram/webhook"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-primary" type="submit">Activar el bot (registrar webhook)</button></form>
+        </details>
+        <?php endif; ?>
+    <?php endif; ?>
+</section>
+
+<section class="card" id="clima">
+    <h3><i class="fa-solid fa-cloud-sun-rain"></i> Clima automático</h3>
+    <?php if (!$proyecto || !$tg['tablas']): ?><p class="text-muted">Necesitas un proyecto que puedas gestionar<?php echo $tg['tablas'] ? '' : ' y aplicar la migración de Telegram'; ?>.</p><?php else: ?>
+    <p class="text-sm text-muted">Cada tarde (después de las <?php echo \Classes\ClimaAuto::hora(); ?>:00) se anota en la <strong>bitácora</strong> el clima del día de <strong><?php echo s($proyecto->nombre); ?></strong> (temperaturas, lluvia y viento, de Open-Meteo, gratis y sin cuenta). Si <strong>mañana</strong> habrá lluvia o viento que frenen el exterior, el bot avisa con las actividades afectadas (si el aviso «Mañana habrá lluvia o viento fuerte» está activo en un destino de arriba).</p>
+    <p class="text-sm">Ubicación del proyecto: <strong><?php echo $tg['ubicacion'] !== '' ? s($tg['ubicacion']) : '—'; ?></strong><?php echo $tg['lugar'] !== '' ? ' → ubicado en <em>' . s($tg['lugar']) . '</em>' : ''; ?>. <?php if ($tg['ubicacion'] === ''): ?><span class="prg-peor">Falta la ubicación en Ajustes del proyecto (ciudad o «lat,lon»).</span><?php endif; ?></p>
+    <div class="cp-fila" style="gap:1rem;flex-wrap:wrap">
+        <form method="POST" action="/integraciones/clima"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="accion" value="<?php echo $tg['clima'] ? 'desactivar' : 'activar'; ?>">
+            <button class="btn btn-sm <?php echo $tg['clima'] ? 'btn-ghost' : 'btn-primary'; ?>" type="submit"><?php echo $tg['clima'] ? 'Desactivar clima automático' : 'Activar clima automático'; ?></button></form>
+        <form method="POST" action="/integraciones/clima"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="accion" value="probar"><button class="btn btn-sm btn-ghost" type="submit" title="Anota el clima de hoy y avisa del de mañana si es adverso">Probar ahora</button></form>
+    </div>
+    <?php endif; ?>
 </section>
 
 <section class="card" id="webhooks">

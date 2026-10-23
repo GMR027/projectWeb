@@ -83,7 +83,7 @@ class NormativaAplicar extends Base
                 if (Normativa::proponerIA($pid, $el[$k]['tipo'], $el[$k]['id'], $cid, $req, '')) {
                     $ia++;
                     $c = array_values(array_filter($el[$k]['cand'], fn($c) => (int)$c['id'] === $cid))[0];
-                    $filas[] = [self::corto($el[$k]['nombre'], 60), $c['doc'] . ' · ' . ($c['clausula'] ?: 'pág. ' . $c['pagina']), 'IA', self::corto($req, 140)];
+                    $filas[] = [self::corto($el[$k]['nombre'], 60), $c['doc'] . ' · ' . ($c['clausula'] ?: 'pág. ' . $c['pagina']), 'Documento', self::corto($req, 140)];
                 }
             }
         }
@@ -99,7 +99,7 @@ class NormativaAplicar extends Base
             }
         }
         return ['secciones' => [
-            Informes::kpis('Resultado', [['Elementos revisados', count($el)], ['Vínculos propuestos por IA', $ia], ['Propuestos por reglas', $reglas], ['Pendientes de decidir', Normativa::conteoPendientes($pid)]]),
+            Informes::kpis('Resultado', [['Elementos revisados', count($el)], ['Vínculos propuestos', $ia], ['Propuestos por reglas', $reglas], ['Pendientes de decidir', Normativa::conteoPendientes($pid)]]),
             Informes::texto('Qué sigue', 'Nada se aplica todavía: acepta o rechaza cada vínculo en Normativa y especificaciones → Vínculos (o en Análisis inteligente). Los aceptados aparecen en el formulario de cada material y actividad.' . (!$el ? ' No hay elementos con cláusulas candidatas: carga documentos en Normativa y especificaciones o revisa que los materiales tengan referencia o nombre descriptivo.' : '')),
             Informes::tabla('Vínculos propuestos en esta corrida', ['Elemento', 'Cláusula', 'Origen', 'Requisito (resumen)'], array_slice($filas, 0, 60)),
         ]];

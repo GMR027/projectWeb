@@ -88,7 +88,7 @@ class ResumenSemanal extends Base
         $secs = [
             Informes::kpis('Indicadores', [['Avance programado', $per ? $per['plan'] . '%' : 's/d'], ['Avance real', $per && $per['real'] !== null ? $per['real'] . '%' : 's/d'], ['SPI', isset($r['spi']) && $r['spi'] !== null ? $r['spi'] : 's/d', 'real ÷ programado'],
                 ['Terminadas', count($datos['terminadas']), 'esta semana'], ['Iniciadas', count($datos['iniciadas']), 'esta semana'], ['Atrasadas', count($datos['atrasadas'])], ['Ruta crítica', $datos['criticas'], 'actividades'], ['Completadas', $datos['completadas'] . ' / ' . $datos['total']]]),
-            Informes::texto('Resumen ejecutivo' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Resumen ejecutivo', $resumen),
         ];
         if ($reco) $secs[] = Informes::lista('Recomendaciones', $reco);
         $secs[] = Informes::lista('Terminadas esta semana', $datos['terminadas']);

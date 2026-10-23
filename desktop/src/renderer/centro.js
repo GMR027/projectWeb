@@ -197,28 +197,32 @@ const Centro = (() => {
   async function propuestas(cont, pid, alCambiar) {
     if (!pid) { cont.replaceChildren(el('p', 'Elige un proyecto.', 'nota')); return; }
     if (estado.pid !== pid) Object.assign(estado, { pid, datos: {}, items: {}, abierto: null, seg: null });
-    const cargando = new Set(), cambiar = () => { alCambiar?.(); }, lote = { estados: {}, corriendo: false, texto: '', cancelar: () => {} };
+    const cargando = new Set(), cambiar = () => { alCambiar?.(); }, lote = { estados: {}, corriendo: false, texto: '', fin: null, cancelar: () => {} };
     /** Analizar por lotes: recorre los temas en orden; los que tienen herramienta de IA propia la ejecutan con la conexión principal y todos se recargan al terminar */
     const EJECUTA = { inconsistencias: (p, c) => pw.analizarInconsistencias(p, c), materiales: (p, c) => pw.analizarMateriales(p, c), programador: (p, c) => pw.analizarPrograma(p, c) };
     const CANCELA = { inconsistencias: () => pw.cancelarInconsistencias(), materiales: () => pw.cancelarMateriales(), programador: () => pw.cancelarAnalisis() };
     const correrLote = async () => {
       const c = await pw.config(), conexion = c.activa || (c.proveedores[0] || {}).id;
-      let paro = false, actual = null; lote.corriendo = true; lote.estados = {}; lote.cancelar = () => { paro = true; lote.texto = 'Cancelando…'; if (actual && CANCELA[actual]) CANCELA[actual](); dibujar(); };
+      let paro = false, actual = null; lote.corriendo = true; lote.fin = null; lote.estados = {}; lote.cancelar = () => { paro = true; lote.texto = 'Cancelando…'; if (actual && CANCELA[actual]) CANCELA[actual](); dibujar(); };
       for (const [i, [k, n]] of TEMAS.entries()) {
         if (paro) break;
         actual = k; lote.estados[k] = 'analizando'; lote.texto = (i + 1) + '/' + TEMAS.length + ' · ' + n; dibujar();
         try { if (EJECUTA[k] && conexion) await EJECUTA[k](pid, conexion); await cargarTema(k, pid); lote.estados[k] = 'listo'; } catch (x) { delete lote.estados[k]; aviso(cont, '✘ ' + n + ': ' + err(x)); }
         dibujar();
       }
-      actual = null; lote.corriendo = false; cambiar(); dibujar();
+      actual = null; lote.corriendo = false;
+      const ok = TEMAS.filter(([k]) => lote.estados[k] === 'listo').length;
+      lote.fin = { ok, total: TEMAS.length, cancelado: paro, hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) };
+      cambiar(); dibujar();
+      try { if (window.Notification && Notification.permission !== 'denied') { const avisa = () => new Notification('Análisis inteligente', { body: paro ? 'Análisis cancelado (' + ok + '/' + TEMAS.length + ' temas).' : 'Terminó de analizar (' + ok + '/' + TEMAS.length + ' temas).' }); Notification.permission === 'granted' ? avisa() : Notification.requestPermission().then(r => r === 'granted' && avisa()); } } catch (_) {}
       if (!conexion) aviso(cont, 'Sin conexión de IA guardada: solo se recargaron los datos de cada tema.', true);
     };
     const dibujar = () => {
       const partes = TEMAS.map(([k, n, c], i) => ({ clave: k, etiqueta: n, valor: estado.datos[k]?.total || 0, color: c, num: i + 1 })), listos = TEMAS.filter(([k]) => estado.datos[k]).length, total = partes.reduce((a, p) => a + p.valor, 0);
       const elegir = k => { estado.abierto = k; estado.seg = null; dibujar(); };
       const caja = el('div', null, 'ai-donut-caja'), centro = el('div', null, 'ai-centro');
-      const hechos = TEMAS.filter(([k]) => lote.estados[k] === 'listo').length, btn = el('button', null, 'ai-lote' + (lote.corriendo ? ' corriendo' : hechos === TEMAS.length ? ' listo' : '')); btn.type = 'button';
-      btn.append(el('strong', lote.corriendo ? 'Analizando…' : hechos === TEMAS.length ? 'Listo ✔' : 'Analizar por lotes'), el('small', lote.corriendo ? lote.texto : listos < TEMAS.length ? listos + '/' + TEMAS.length + ' cargados' : total + ' elementos'));
+      const hechos = TEMAS.filter(([k]) => lote.estados[k] === 'listo').length, fin = !lote.corriendo && lote.fin, completo = fin && !fin.cancelado && hechos === TEMAS.length, btn = el('button', null, 'ai-lote' + (lote.corriendo ? ' corriendo' : completo ? ' listo' : fin ? ' parcial' : '')); btn.type = 'button';
+      btn.append(el('strong', lote.corriendo ? 'Analizando…' : completo ? '✔ Análisis terminado' : fin ? (fin.cancelado ? '■ Cancelado' : '⚠ Terminó con fallos') : 'Analizar por lotes'), el('small', lote.corriendo ? lote.texto : fin ? fin.ok + '/' + fin.total + ' temas · ' + fin.hora : listos < TEMAS.length ? listos + '/' + TEMAS.length + ' cargados' : total + ' elementos'));
       btn.title = lote.corriendo ? 'Pulsa para cancelar' : 'Analiza una por una las herramientas de IA del proyecto y actualiza cada tema';
       btn.addEventListener('click', () => lote.corriendo ? lote.cancelar() : correrLote());
       centro.append(btn);

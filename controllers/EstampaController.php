@@ -37,6 +37,15 @@ class EstampaController
         json_respuesta(['success' => true, 'id' => (int)($nuevo->id ?: ($r['id'] ?? 0))]);
     }
 
+    /** Sube una imagen o logo propio para un elemento «Logo» del lienzo (carpeta public/build/img/estampas) */
+    public static function imagen()
+    {
+        proyecto_de_peticion(true);
+        $nombre = guardar_imagen_subida('imagen', 'estampas');
+        if (!$nombre) json_respuesta(['success' => false, 'error' => 'Sube una imagen JPG, PNG, WEBP o GIF'], 422);
+        json_respuesta(['success' => true, 'archivo' => $nombre, 'url' => '/build/img/estampas/' . $nombre]);
+    }
+
     public static function eliminar()
     {
         $proyecto = proyecto_de_peticion(true);

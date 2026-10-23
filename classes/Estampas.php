@@ -269,7 +269,8 @@ class Estampas
                     'encabezado' => !isset($e['encabezado']) || !empty($e['encabezado']), 'codigo_partida' => ($e['codigo_partida'] ?? '') === 'auto' ? 'auto' : !empty($e['codigo_partida']), 'tamano_enc' => $num($e['tamano_enc'] ?? 0, 0, 40, 0), 'rombos' => !isset($e['rombos']) || !empty($e['rombos']),
                     'tit_actividad' => $txt($e['tit_actividad'] ?? 'ACTIVIDAD:', 60), 'tit_dias' => $txt($e['tit_dias'] ?? 'DÍAS PARA TERMINAR:', 60)];
             } elseif ($tipo === 'logo') {
-                $o += ['fuente' => in_array($e['fuente'] ?? '', ['proyecto', 'contratista'], true) ? $e['fuente'] : 'compania', 'alinear' => in_array($e['alinear'] ?? '', ['izquierda', 'centro', 'derecha'], true) ? $e['alinear'] : 'izquierda'];
+                $arch = preg_match('/^[a-f0-9]{32}\.(jpg|png|webp|gif)$/', (string)($e['archivo'] ?? '')) ? $e['archivo'] : '';
+                $o += ['fuente' => ($e['fuente'] ?? '') === 'subida' && $arch !== '' ? 'subida' : (in_array($e['fuente'] ?? '', ['proyecto', 'contratista'], true) ? $e['fuente'] : 'compania'), 'archivo' => $arch, 'escala' => $num($e['escala'] ?? 100, 10, 300, 100), 'alinear' => in_array($e['alinear'] ?? '', ['izquierda', 'centro', 'derecha'], true) ? $e['alinear'] : 'izquierda'];
             }
             $out[] = $o;
         }
@@ -427,10 +428,15 @@ class Estampas
             } elseif ($tipo === 'actividades_dia') {
                 $in = '<div style="padding:' . $u((float)($e['padv'] ?? 0.8)) . ' ' . $u((float)($e['pad'] ?? 2)) . '">' . self::actividadesDia($e, $ctx, $u, $base) . '</div>';
             } elseif ($tipo === 'logo') {
-                $img = $ctx->logo((string)($e['fuente'] ?? 'compania'), $u('1') !== '' && str_ends_with($u('1'), 'pt'));
+                $pdf = str_ends_with($u('1'), 'pt');
+                $img = $ctx->logo((string)($e['fuente'] ?? 'compania'), $pdf, (string)($e['archivo'] ?? ''));
                 if ($img) {
+                    $E = (float)($e['escala'] ?? 100);
+                    $izq = ['izquierda' => 0, 'centro' => (100 - $E) / 2, 'derecha' => 100 - $E][$e['alinear'] ?? 'izquierda'] ?? 0;
                     $pos = ['izquierda' => 'left', 'centro' => 'center', 'derecha' => 'right'][$e['alinear'] ?? 'izquierda'] ?? 'left';
-                    $in = '<div style="width:100%;height:100%;background-image:url(' . $img . ');background-repeat:no-repeat;background-size:contain;background-position:' . $pos . ' center"></div>';
+                    $in = '<div style="position:absolute;left:' . round($izq, 2) . '%;top:' . round((100 - $E) / 2, 2) . '%;width:' . round($E, 2) . '%;height:' . round($E, 2) . '%;background-image:url(' . $img . ');background-repeat:no-repeat;background-size:contain;background-position:' . $pos . ' center"></div>';
+                } elseif (!$pdf) {
+                    $in = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:' . $u(max(5, $base * 0.7)) . ';color:#94a3b8;border:1px dashed #94a3b8;box-sizing:border-box">Sin logo</div>';
                 }
             }
             if ($in === '') continue;

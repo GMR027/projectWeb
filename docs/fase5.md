@@ -21,6 +21,7 @@ Migración: `database/migracion_fase5.sql` (tablas `api_tokens`, `webhooks`, `we
 - Emiten solos los modelos de `Webhooks::EVENTO_DE` (`ActiveRecord::crear/actualizar/eliminar` → `avisar()`), y explícitamente `Punch` y `Rfi`. `Webhooks::emitir($pid, $evento, $datos)` pone en cola (máx. 50 por petición y webhook) y envía **al terminar la petición** (`register_shutdown_function`). **Ojo:** `ActiveRecord::crear` guarda `insert_id` *antes* de avisar (el aviso hace consultas); haz lo mismo en cualquier código nuevo.
 - Firma: `X-ProjectWeb-Signature: sha256=<HMAC-SHA256(cuerpo, secreto)>`; además `X-ProjectWeb-Event` y `X-ProjectWeb-Delivery`. Tiempo máx. 4 s, sin seguir redirecciones, respuesta ≤ 64 KB.
 - **Seguridad (SSRF):** solo `http(s)` sin usuario/contraseña y a IP **públicas**; se resuelve el host, se rechaza si alguna IP es privada/local/de metadatos y la conexión se fija a la IP comprobada (`CURLOPT_RESOLVE`). `WEBHOOKS_PERMITIR_PRIVADOS=1` en el entorno lo relaja (pruebas en red interna). 10 fallos seguidos desactivan el webhook.
+- El mismo `Webhooks::emitir()` alimenta el bot de Telegram (`docs/telegram.md`).
 - Eventos: `Webhooks::EVENTOS` (actividad, restricción, bitácora, reporte, submittal, punch, RFI).
 
 ## 5.2 Multi-idioma

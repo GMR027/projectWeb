@@ -260,5 +260,87 @@ $ok('mm² (área) no se toma como longitud', CTR::magnitudes('cable de 2.5 mm² 
 $ok('contradicción: 4 vs 6 pulgadas difieren; 4 pulgadas y 101.6 mm son lo mismo', CTR::difieren(CTR::magnitudes('tubo de 4 pulgadas'), CTR::magnitudes('tubo de 6 pulgadas')) !== null && CTR::difieren(CTR::magnitudes('tubo de 4 pulgadas'), CTR::magnitudes('tubo de 101.6 mm')) === null);
 $ok('palabras técnicas iguales entre español e inglés', count(array_intersect(CTR::claves('tubería de acero'), CTR::claves('steel pipe'))) >= 1);
 
+echo "Telegram y clima automático (sin BD)\n";
+use Classes\Telegram;
+use Classes\TelegramBot;
+use Classes\ClimaAuto;
+$ok('el comando se separa de su texto y del @bot', TelegramBot::comando('/Avance@pw_bot muro 3') === ['avance', 'muro 3'] && TelegramBot::comando('/hoy') === ['hoy', ''] && TelegramBot::comando('hola /x') === null);
+$ok('el texto de Telegram se escapa', Telegram::h('a <b> & "c"') === 'a &lt;b&gt; &amp; "c"');
+$m = Telegram::mensajeEvento(1, 'rfi.creado', ['numero' => 'RFI-7', 'asunto' => 'Muro <A>', 'prioridad' => 'critica', 'fecha_limite' => '2026-12-01']);
+$ok('el aviso de RFI lleva número, asunto escapado, prioridad y fecha límite', str_contains($m, 'RFI-7') && str_contains($m, 'Muro &lt;A&gt;') && str_contains($m, '🔴') && str_contains($m, '01/12/2026'));
+$ok('la bitácora media no genera aviso, la crítica sí', Telegram::mensajeEvento(1, 'bitacora.creada', ['importancia' => 'media', 'descripcion' => 'x']) === null && Telegram::mensajeEvento(1, 'bitacora.creada', ['importancia' => 'critica', 'descripcion' => 'x']) !== null);
+$ok('un evento desconocido no genera aviso', Telegram::mensajeEvento(1, 'inventado', []) === null);
+$ok('los avisos iniciales existen en el catálogo', !array_diff(Telegram::INICIALES, array_keys(Telegram::EVENTOS)));
+$d = ['tmax' => 31.4, 'tmin' => 17.6, 'precip_mm' => 12.0, 'prob' => 85, 'viento_kmh' => 35.2];
+$ok('el resumen del clima es legible y marca la lluvia', ClimaAuto::resumen($d) === 'máx 31° / mín 18° · lluvia 12 mm (85%) · viento 35 km/h ⚠ lluvia');
+$ok('la fecha larga va en español', ClimaAuto::fechaLarga('2026-10-22') === 'jueves 22 oct');
+
+
+echo "Informes sin menciones de IA\n";
+$inf = Classes\Informes::sinMencionesIA(['secciones' => [
+    ['titulo' => 'Resumen (redactado con IA, revísalo)', 'tipo' => 'texto', 'texto' => 'Sin IA: reúne a la cuadrilla.'],
+    ['titulo' => 'Prioridades sugeridas por la IA', 'tipo' => 'tabla', 'columnas' => ['Origen'], 'filas' => [['(automático)']]],
+    ['titulo' => 'Lecciones aprendidas (automáticas, a partir de los datos)', 'tipo' => 'texto', 'texto' => 'Texto normal.'],
+    ['titulo' => 'Sin IA', 'tipo' => 'texto', 'texto' => 'Esta minuta se creó sin IA: solo guarda la transcripción.'],
+    ['titulo' => 'Importante', 'tipo' => 'texto', 'texto' => 'La clasificación la hace un modelo de visión y puede equivocarse. Revisa la foto antes de aceptar.'],
+]]);
+$ok('quita del título la nota de IA, el modelo y el «por la IA»', array_column($inf['secciones'], 'titulo') === ['Resumen', 'Prioridades sugeridas', 'Lecciones aprendidas', 'Importante']);
+$ok('quita el prefijo «Sin IA:» del texto', $inf['secciones'][0]['texto'] === 'reúne a la cuadrilla.');
+$ok('limpia también las celdas de las tablas', $inf['secciones'][1]['filas'] === [['']]);
+$ok('no toca el texto que no habla de la IA', $inf['secciones'][2]['texto'] === 'Texto normal.');
+$ok('quita la frase del modelo de visión y deja lo demás', $inf['secciones'][3]['texto'] === 'Revisa la foto antes de aceptar.');
+
+echo "Resumen ejecutivo diario (sin BD)\n";
+use Classes\Herramientas\ResumenEjecutivoDiario as RED;
+$ok('el nivel de detalle fija cuántas filas lleva cada bloque', RED::tope('basico') === 5 && RED::tope('medio') === 10 && RED::tope('alto') === 20 && RED::tope('maximo') === 40);
+$ok('nivel desconocido cae en el medio', RED::tope('cualquiera') === 10);
+$ok('la ficha ofrece tipo de reporte simple/detallado y los cuatro niveles', RED::ficha()['tipo'] === 'resumen_diario' && array_keys(RED::ficha()['parametros'][1]['opciones']) === ['simple', 'detallado'] && array_keys(RED::ficha()['parametros'][2]['opciones']) === ['basico', 'medio', 'alto', 'maximo']);
+$ok('los parámetros nuevos se validan y toman su defecto', \Classes\Herramientas\Registro::parametros(RED::class, ['tipo' => 'x', 'detalle' => 'x']) === ['fecha' => date('Y-m-d'), 'tipo' => 'detallado', 'detalle' => 'medio', 'linea' => 0]);
+$ok('los valores elegidos pasan tal cual', \Classes\Herramientas\Registro::parametros(RED::class, ['tipo' => 'simple', 'detalle' => 'maximo', 'fecha' => '2026-01-05'])['tipo'] === 'simple' && \Classes\Herramientas\Registro::parametros(RED::class, ['tipo' => 'simple', 'detalle' => 'maximo', 'fecha' => '2026-01-05'])['detalle'] === 'maximo');
+
+// datos mínimos como los deja preparar() para componer()
+$mkDatos = fn(string $tipo, string $detalle) => [
+    'fecha' => '2026-10-22', 'tipo' => $tipo, 'detalle' => $detalle, 'tope' => RED::tope($detalle), 'semaforo' => 'ATENCION',
+    'curva' => ['plan' => 42.0, 'real' => 40.0, 'spi' => 0.95],
+    'linea' => ['id' => 1, 'nombre' => 'LB inicial', 'creado' => '2026-01-01'],
+    'comparacion' => ['resumen' => ['linea' => 'x', 'fin_base' => '2026-12-01', 'fin_actual' => '2026-12-08', 'd_fin' => 5, 'movida' => 2, 'nueva' => 0, 'eliminada' => 0, 'oc' => 1, 'material' => 0, 'sin_justificar' => 1, 'criticas_entran' => [], 'criticas_salen' => []]],
+    'cruce' => ['en_riesgo' => 1, 'tarde' => 0, 'total' => 12], 'riesgos_materiales' => [], 'retiros' => [], 'retiros_vencidos' => 0, 'retiros_sin_programar' => 0,
+    'dia' => ['ordenes' => [], 'renglones' => []], 'cambios' => ['costo_autorizado' => 0, 'dias_autorizados' => 0], 'sin_oc' => [], 'ordenes_por_decidir' => [],
+    'riesgo_alto' => [['codigo' => '1.1', 'nombre' => 'Excavación', 'puntos' => 72, 'progreso' => 0, 'atraso_dias' => 6, 'razones' => ['No ha iniciado y debía empezar hace 6 día(s)']]],
+    'riesgo_conteo' => ['alto' => 1, 'medio' => 2, 'bajo' => 0], 'riesgo_horizonte' => 14,
+    'criticas' => [['codigo' => '1.1', 'nombre' => 'Excavación', 'inicio' => '2026-10-01', 'fin' => '2026-11-01', 'progreso' => 0]], 'criticas_total' => 1, 'dependencias_modo' => 'informativo',
+    'restricciones' => [['codigo' => '1.1', 'actividad' => 'Excavación', 'tipo' => 'Permiso', 'descripcion' => 'Falta permiso de altura', 'fecha' => '2026-10-20', 'inicio' => '2026-10-01', 'dias' => 2]], 'restricciones_total' => 1,
+    'contradicciones' => ['titulo' => 'Contradicciones', 'creado' => '2026-10-21 09:00:00', 'columnas' => ['Tema', 'Fuente A', 'Fuente B', 'Dice A / Dice B', 'Severidad', 'Explicación'],
+        'filas' => [['longitud', 'Plano A', 'Espec 27', '4 pulgadas vs 6 pulgadas', '🔴 Alta', 'Piden diámetros distintos']]],
+    'punch' => [['titulo' => 'Falta etiqueta en gabinete IDF', 'ubicacion' => 'Nivel 2', 'severidad' => 'critica', 'estado' => 'abierto', 'responsable' => 'Juan', 'contratista' => 'C1', 'fecha_limite' => '2026-10-20', 'vencido' => true]], 'punch_total' => 1, 'punch_criticos' => 1, 'punch_vencidos' => 1,
+    'causas' => ['total' => 2, 'por_causa' => ['material' => 1, 'submittal' => 1, 'restriccion' => 0, 'predecesora' => 0, 'clima' => 0, 'bitacora' => 0, 'sin_causa' => 0],
+        'filas' => [['codigo' => '1.1', 'nombre' => 'Excavación', 'atraso' => 6, 'progreso' => 0, 'causas' => [['material', '«Bomba» llegará el 30/10']], 'tipos' => ['material']]]],
+];
+$titulos = fn(array $s) => array_map(fn($x) => $x['titulo'], $s);
+$br = RED::componer(new \Model\Proyecto(['id' => 1, 'nombre' => 'Obra']), [], $mkDatos('detallado', 'medio'), []);
+$tDet = $titulos($br['secciones']);
+$ok('el detallado trae los seis bloques nuevos', count(array_filter($tDet, fn($t) => str_contains($t, 'riesgo alto') || str_contains($t, 'ruta crítica') || str_contains($t, 'Restricciones activas') || str_contains($t, 'Contradicciones entre documentos') || str_contains($t, 'Punch list abierto') || str_contains($t, 'Causas de atraso') || str_contains($t, 'atrasadas y sus causas'))) >= 7);
+$ok('el detallado además trae las tablas operativas', in_array('Cambios del día', $tDet, true) && in_array('Retiros pendientes', $tDet, true) && in_array('Desviaciones sin orden de cambio', $tDet, true));
+$kpis = array_map(fn($k) => $k['etq'], $br['secciones'][0]['kpis']);
+$ok('las cifras nuevas aparecen en los KPI', count($kpis) >= 13 && count(array_intersect($kpis, ['Riesgo alto', 'Ruta crítica', 'Restricciones activas', 'Punch abierto', 'Contradicciones', 'Atrasadas por causa'])) === 6);
+$ok('el título del punch separa el total de críticos y vencidos', count(array_filter($tDet, fn($t) => str_starts_with($t, 'Punch list abierto (1) — '))) === 1);
+$simple = RED::componer(new \Model\Proyecto(['id' => 1, 'nombre' => 'Obra']), [], $mkDatos('simple', 'basico'), []);
+$tSim = $titulos($simple['secciones']);
+$ok('el simple conserva los bloques nuevos pero quita las tablas operativas', in_array('Cambios del día', $tSim, true) === false && in_array('Retiros pendientes', $tSim, true) === false);
+$ok('el simple muestra riesgo alto como lista (una línea por actividad)', (array_search('Actividades en riesgo alto', $tSim, true)) !== false && $simple['secciones'][array_search('Actividades en riesgo alto', $tSim, true)]['tipo'] === 'lista');
+$ok('el nivel básico limita cada bloque a 5 filas', count($br['secciones'][array_search('Restricciones activas (1)', $tDet, true)]['filas']) <= 5);
+$pend = $br['secciones'][array_key_last($br['secciones'])]['items'];
+$ok('los pendientes del sistema agregan restricción, punch crítico vencido, contradicción y riesgo alto', count(array_filter($pend, fn($x) => str_contains($x, 'Levantar restricción'))) === 1 && count(array_filter($pend, fn($x) => str_contains($x, 'Resolver punch'))) === 1 && count(array_filter($pend, fn($x) => str_contains($x, 'Escalar contradicción'))) === 1 && count(array_filter($pend, fn($x) => str_contains($x, 'Revisar riesgo alto'))) === 1);
+$vacio = RED::componer(new \Model\Proyecto(['id' => 1, 'nombre' => 'Obra']), [], array_merge($mkDatos('detallado', 'medio'), ['riesgo_alto' => [], 'criticas' => [], 'restricciones' => [], 'punch' => [], 'contradicciones' => null, 'causas' => ['total' => 0, 'por_causa' => [], 'filas' => []]]), []);
+$tv = $titulos($vacio['secciones']);
+$seis = ['Actividades en riesgo alto', 'En ruta crítica', 'Restricciones activas', 'Contradicciones entre documentos', 'Punch list abierto', 'Causas de atraso'];
+$ok('los seis bloques siempre están, aunque no haya nada, para saber que se revisaron', count(array_intersect($seis, $tv)) === 6);
+$vacTxt = implode(' ', array_map(fn($s) => $s['texto'] ?? '', array_filter($vacio['secciones'], fn($s) => in_array($s['titulo'], $seis, true))));
+$ok('los bloques vacíos explican por qué no hay nada en vez de inventar datos', str_contains($vacTxt, 'Ninguna') && str_contains($vacTxt, 'Sin análisis reciente') && str_contains($vacTxt, 'No hay actividades en la ruta crítica') && str_contains($vacTxt, 'Ninguno'));
+foreach ([['detallado', 'medio', $br], ['simple', 'basico', $simple], ['detallado', 'medio', $vacio]] as [$tk, $nk, $r]) {
+    $salida = strip_tags(\Classes\Informes::html(['secciones' => $r['secciones']]));
+    $ok("el informe $tk/$nk exportado no menciona IA ni modelos", !preg_match('/\bIA\b/', $salida) && !preg_match('/inteligencia artificial|redactado con|modelo de visi|app de escritorio/i', $salida));
+}
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

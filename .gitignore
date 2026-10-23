@@ -26,6 +26,8 @@
 # Logos y carátulas subidos por los usuarios (van dentro de build/img porque los sirve Apache)
 /public/build/img/logos/*
 !/public/build/img/logos/.gitkeep
+/public/build/img/estampas/*
+!/public/build/img/estampas/.gitkeep
 /public/build/img/caratulas/*
 !/public/build/img/caratulas/.gitkeep
 
@@ -50,3 +52,5 @@
 
 # Motor y modelos del Traductor (≈ 400 MB; se instalan con bin/instalar_traductor.sh)
 /storage/traductor/
+/storage/telegram_bot.json
+/storage/clima_auto.json*

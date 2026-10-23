@@ -89,5 +89,184 @@ $ok('un festivo se salta', (function () use ($proy) {
     return $cal2->calcularFechaFin('2026-11-02', 2) === '2026-11-04';
 })());
 
+
+// ---------- Telegram: vinculación, avance y fotos por chat, avisos y clima automático ----------
+echo "Telegram y clima automático\n";
+putenv('TELEGRAM_BOT_TOKEN=123456:TOKEN-DE-PRUEBA'); $_ENV['TELEGRAM_BOT_TOKEN'] = '123456:TOKEN-DE-PRUEBA';
+putenv('TELEGRAM_BOT_USERNAME=pw_prueba_bot'); $_ENV['TELEGRAM_BOT_USERNAME'] = 'pw_prueba_bot';
+use Classes\Telegram;
+use Classes\TelegramBot;
+use Classes\ClimaAuto;
+use Classes\Clima;
+$db = $GLOBALS['db'];
+$enviados = [];
+$jpg = (function () { $im = imagecreatetruecolor(40, 30); ob_start(); imagejpeg($im); return ob_get_clean(); })();
+Telegram::$http = function (string $m, array $p) use (&$enviados, $jpg) {
+    if ($m === 'sendMessage') { $enviados[] = $p; return ['ok' => true]; }
+    if ($m === 'getFile') return ['ok' => true, 'result' => ['file_path' => 'photos/' . $p['file_id'] . '.jpg', 'file_size' => strlen($jpg)]];
+    if ($m === '__descargar') return ['bytes' => $jpg];
+    return ['ok' => true, 'result' => []];
+};
+$ultimo = function () use (&$enviados) { $x = end($enviados); return $x ? $x['text'] : ''; };
+$teclas = function () use (&$enviados) { $x = end($enviados); return array_merge(...($x['reply_markup']['inline_keyboard'] ?? [])); };
+$upd = 0;
+$msg = function (int $chat, string $texto, string $tipo = 'private', array $extra = []) use (&$upd) {
+    return ['update_id' => ++$upd, 'message' => ['chat' => ['id' => $chat, 'type' => $tipo, 'title' => 'Grupo obra'], 'from' => ['first_name' => 'Prueba'], 'text' => $texto] + $extra];
+};
+$cb = function (int $chat, string $data) use (&$upd) { return ['update_id' => ++$upd, 'callback_query' => ['id' => 'q' . $upd, 'data' => $data, 'message' => ['chat' => ['id' => $chat, 'type' => 'private']]]]; };
+
+$hoy = date('Y-m-d');
+$db->query("INSERT INTO partidas (proyecto_id, codigo, nombre) VALUES ({$proy->id}, 'P1', 'Estructura')");
+$parId = $db->insert_id;
+$db->query("INSERT INTO actividades (partida_id, codigo, nombre, fecha_inicio, duracion_dias, fecha_fin) VALUES ($parId, '1.1', 'Colado de losa exterior', '" . date('Y-m-d', strtotime('-1 day')) . "', 6, '" . date('Y-m-d', strtotime('+5 days')) . "')");
+$actId = $db->insert_id;
+$db->query("INSERT INTO actividades (partida_id, codigo, nombre, fecha_inicio, duracion_dias, fecha_fin) VALUES ($parId, '1.2', 'Muros interiores', '$hoy', 3, '" . date('Y-m-d', strtotime('+2 days')) . "')");
+$act2 = $db->insert_id;
+
+$ok('el secreto del webhook se deriva del token (48 caracteres)', strlen(Telegram::secretoWebhook()) === 48 && Telegram::secretoWebhook() !== hash('sha256', 'x'));
+$ok('el comando se separa de su texto y del @bot', TelegramBot::comando('/Avance@pw_bot muro 3') === ['avance', 'muro 3'] && TelegramBot::comando('hola') === null);
+
+// persona sin vincular
+TelegramBot::procesar($msg(900, '/avance'));
+$ok('un chat sin vincular recibe instrucciones y no hace nada', str_contains($ultimo(), 'Conectar mi Telegram'));
+
+// vincular con código
+$codigo = Telegram::crearCodigo((int)$u->id, 'usuario');
+$ok('el enlace usa el bot y el código', Telegram::enlace($codigo, 'usuario') === "https://t.me/pw_prueba_bot?start=$codigo" && str_contains(Telegram::enlace($codigo, 'grupo'), '?startgroup='));
+TelegramBot::procesar($msg(1001, "/start $codigo"));
+$v = Telegram::vinculoDeUsuario((int)$u->id);
+$ok('/start con código vincula el chat con la persona', $v && (int)$v['chat_id'] === 1001);
+$ok('el código es de un solo uso', Telegram::codigo($codigo) === null);
+TelegramBot::procesar($msg(1002, "/start $codigo"));
+$ok('un código gastado no vincula otro chat', Telegram::vinculoDeChat(1002) === null && str_contains($ultimo(), 'ya no sirve'));
+
+// avance con botones
+TelegramBot::procesar($msg(1001, '/avance'));
+$ok('/avance lista las actividades de hoy como botones', in_array("a:$actId", array_column($teclas(), 'callback_data'), true) && in_array("a:$act2", array_column($teclas(), 'callback_data'), true));
+TelegramBot::procesar($cb(1001, "a:$actId"));
+$ok('elegir la actividad ofrece los porcentajes', in_array("p:$actId:50", array_column($teclas(), 'callback_data'), true));
+TelegramBot::procesar($msg(1001, '60'));
+$a = Model\Actividad::find($actId);
+$ok('escribir el número aplica el avance y el estatus', (int)$a->progreso === 60 && $a->status === 'en_proceso');
+TelegramBot::procesar($msg(1001, '150'));
+$ok('un porcentaje mayor a 100 se rechaza', (int)Model\Actividad::find($actId)->progreso === 60 && str_contains($ultimo(), '0 a 100'));
+TelegramBot::procesar($cb(1001, "p:$actId:100"));
+$a = Model\Actividad::find($actId);
+$ok('el botón 100 % deja la actividad completada', (int)$a->progreso === 100 && $a->status === 'completada');
+$fila = $db->query("SELECT progreso FROM actividad_avance WHERE actividad_id = $actId AND fecha = CURDATE()")->fetch_assoc();
+$ok('queda el avance del día para la Curva S', $fila && (int)$fila['progreso'] === 100);
+
+// repetición de Telegram (mismo update_id)
+$antes = count($enviados);
+$repetido = $cb(1001, "p:$act2:25");
+TelegramBot::procesar($repetido); TelegramBot::procesar($repetido);
+$ok('un update repetido se atiende una sola vez', count($enviados) === $antes + 1 && (int)Model\Actividad::find($act2)->progreso === 25);
+
+// fotos
+$ev0 = (int)$db->query("SELECT COUNT(*) n FROM evidencias WHERE proyecto_id = {$proy->id}")->fetch_assoc()['n'];
+TelegramBot::procesar($msg(1001, '', 'private', ['photo' => [['file_id' => 'chica', 'file_size' => 10], ['file_id' => 'grande', 'file_size' => strlen($jpg)]], 'caption' => 'Armado listo']) + []);
+$e1 = Model\Evidencia::deProyecto((int)$proy->id);
+$ok('una foto con actividad ya elegida se guarda como evidencia', count($e1) === $ev0 + 1 && (int)$e1[0]->actividad_id === $act2 && $e1[0]->descripcion === 'Armado listo' && (int)$e1[0]->usuario_id === (int)$u->id);
+TelegramBot::procesar($msg(1001, '/cancelar'));
+TelegramBot::procesar($msg(1001, '', 'private', ['photo' => [['file_id' => 'otra', 'file_size' => strlen($jpg)]]]));
+$ok('una foto sin actividad elegida pregunta con botones', in_array("f:$act2", array_column($teclas(), 'callback_data'), true));
+TelegramBot::procesar($cb(1001, "f:$act2"));
+$e2 = Model\Evidencia::deProyecto((int)$proy->id);
+$ok('elegir la actividad guarda la foto pendiente', count($e2) === $ev0 + 2 && str_contains($ultimo(), 'foto(s) guardada'));
+$ok('el archivo de la evidencia existe en disco', is_file(__DIR__ . '/../public/uploads/evidencias/' . $e2[0]->foto));
+foreach ($e2 as $e) if ((int)$e->id > 0) { $e->eliminarArchivo(); $e->eliminar(); }   // solo las de esta prueba (BD recién creada)
+
+// nota
+TelegramBot::procesar($msg(1001, '/nota alta: falta concreto para el colado'));
+$b = $db->query("SELECT importancia, descripcion FROM bitacora WHERE proyecto_id = {$proy->id} ORDER BY id DESC LIMIT 1")->fetch_assoc();
+$ok('/nota crea la entrada de bitácora con su importancia', $b && $b['importancia'] === 'alta' && str_starts_with($b['descripcion'], 'falta concreto para el colado') && str_contains($b['descripcion'], 'Telegram'));
+
+// permisos: un cliente con acceso pero que no es dueño solo ve
+$cli = new Model\Usuario(['nombre' => 'Cliente CI', 'email' => 'cliente@ci.local', 'rol' => 'cliente', 'confirmado' => 1]);
+$cli->password = password_hash('x', PASSWORD_DEFAULT);
+$rc = $cli->guardar(); $cliId = (int)$rc['id'];
+(new Model\ProyectoAcceso(['proyecto_id' => $proy->id, 'usuario_id' => $cliId]))->guardar();
+$cc = Telegram::crearCodigo($cliId, 'usuario');
+TelegramBot::procesar($msg(2001, "/start $cc"));
+TelegramBot::procesar($msg(2001, '/avance'));
+$ok('un cliente que no es dueño no puede reportar avance', str_contains($ultimo(), 'dueño del proyecto') && (int)Model\Actividad::find($act2)->progreso === 25);
+TelegramBot::procesar($cb(2001, "p:$act2:90"));
+$ok('ni forzando el botón', (int)Model\Actividad::find($act2)->progreso === 25);
+TelegramBot::procesar($msg(2001, '/hoy'));
+$ok('pero sí puede consultar /hoy', str_contains($ultimo(), 'Muros interiores'));
+$visId = (int)(new Model\Usuario(['nombre' => 'Vis', 'email' => 'vis@ci.local', 'rol' => 'visitante', 'confirmado' => 1, 'password' => 'x']))->guardar()['id'];
+$cv = Telegram::crearCodigo($visId, 'usuario');
+TelegramBot::procesar($msg(3001, "/start $cv"));
+$ok('un visitante no puede vincular Telegram', Telegram::vinculoDeUsuario($visId) === null);
+
+// grupo y avisos
+$cg = Telegram::crearCodigo((int)$u->id, 'grupo', (int)$proy->id);
+TelegramBot::procesar($msg(1001, "/start $cg"));
+$ok('el código de grupo no sirve en el chat privado', Telegram::destinos((int)$proy->id) === []);
+TelegramBot::procesar($msg(-9001, "/start@pw_prueba_bot $cg", 'supergroup'));
+$d = Telegram::destinos((int)$proy->id);
+$ok('en un grupo, el código lo deja como destino de avisos', count($d) === 1 && (int)$d[0]['chat_id'] === -9001 && $d[0]['eventos'] === implode(',', Telegram::INICIALES));
+TelegramBot::procesar($msg(-9001, '/avance', 'supergroup'));
+$ok('el grupo no recibe órdenes', (int)Model\Actividad::find($act2)->progreso === 25);
+
+$antes = count($enviados);
+$n = Telegram::entregarAviso((int)$proy->id, 'rfi.creado', ['id' => 1, 'numero' => 'RFI-001', 'asunto' => 'Conflicto de columna <C>', 'prioridad' => 'alta', 'fecha_limite' => '2026-12-01']);
+$ok('un RFI nuevo avisa al grupo con el asunto escapado', $n === 1 && count($enviados) === $antes + 1 && str_contains($ultimo(), 'RFI-001') && str_contains($ultimo(), '&lt;C&gt;') && (int)end($enviados)['chat_id'] === -9001);
+$ok('un evento que el destino no pidió no se envía', Telegram::entregarAviso((int)$proy->id, 'punch.estado', ['titulo' => 'x', 'antes' => 'abierto', 'estado' => 'cerrado']) === 0);
+$ok('la bitácora de importancia media no se avisa', Telegram::mensajeEvento((int)$proy->id, 'bitacora.creada', ['importancia' => 'media', 'descripcion' => 'x']) === null);
+Telegram::guardarEventos((int)$proy->id, (int)$d[0]['id'], ['bitacora.creada', 'inventado.x']);
+$ok('guardar avisos ignora los desconocidos', Telegram::destino((int)$proy->id, (int)$d[0]['id'])['eventos'] === 'bitacora.creada');
+Telegram::guardarEventos((int)$proy->id, (int)$d[0]['id'], array_keys(Telegram::EVENTOS));
+foreach (array_keys(Telegram::EVENTOS) as $ev) {
+    $datos = ['id' => 1, 'numero' => 'N', 'asunto' => 'a', 'titulo' => 't', 'severidad' => 'alta', 'estado' => 'cerrado', 'actividad_id' => $actId, 'descripcion' => 'd', 'numero_submittal' => 'S-1', 'estatus' => 'aprobado', 'importancia' => 'alta', 'texto' => 'T'];
+    if (Telegram::mensajeEvento((int)$proy->id, $ev, $datos) === null) { $ok("el evento $ev tiene mensaje", false); }
+}
+$ok('todos los eventos del catálogo tienen mensaje', true);
+
+// el aviso sale solo cuando un modelo emite (Webhooks::emitir → Telegram)
+$antes = count($enviados);
+Classes\Webhooks::emitir((int)$proy->id, 'punch.creado', ['id' => 5, 'titulo' => 'Grieta en muro', 'severidad' => 'alta', 'ubicacion' => 'Eje C', 'responsable' => 'Obra civil']);
+Telegram::vaciar();
+$ok('Webhooks::emitir también avisa por Telegram', count($enviados) === $antes + 1 && str_contains($ultimo(), 'Grieta en muro'));
+
+// bot expulsado del grupo
+TelegramBot::procesar(['update_id' => ++$upd, 'my_chat_member' => ['chat' => ['id' => -9001, 'type' => 'supergroup'], 'new_chat_member' => ['status' => 'kicked']]]);
+$ok('si expulsan al bot, el grupo deja de ser destino', Telegram::destinos((int)$proy->id) === []);
+
+// mi chat como destino
+[$okc] = Telegram::activarMiChat((int)$proy->id, ['id' => (int)$u->id, 'nombre' => 'Admin'], true);
+$ok('puedo recibir avisos en mi chat privado', $okc && Telegram::destinos((int)$proy->id)[0]['usuario_id'] == $u->id);
+
+// ---- clima automático ----
+$proy->ubicacion = 'Silao, Guanajuato';
+$db->query("UPDATE proyectos SET ubicacion = 'Silao, Guanajuato' WHERE id = {$proy->id}");
+Telegram::guardarEventos((int)$proy->id, (int)Telegram::destinos((int)$proy->id)[0]['id'], ['clima.alerta']);
+Clima::$http = function (string $url) {
+    if (str_contains($url, 'geocoding')) return ['results' => [['name' => 'Silao', 'admin1' => 'Guanajuato', 'country' => 'México', 'latitude' => 20.9, 'longitude' => -101.4]]];
+    if (str_contains($url, 'archive')) return null;
+    $t = $l = $v = $tx = $tn = $pr = [];
+    for ($i = 0; $i < 16; $i++) { $t[] = date('Y-m-d', strtotime("+$i days")); $l[] = $i === 1 ? 24.0 : 0.0; $v[] = 12.0; $tx[] = 30.0; $tn[] = 15.0; $pr[] = $i === 1 ? 90 : 5; }
+    return ['daily' => ['time' => $t, 'precipitation_sum' => $l, 'wind_speed_10m_max' => $v, 'temperature_2m_max' => $tx, 'temperature_2m_min' => $tn, 'precipitation_probability_max' => $pr]];
+};
+$ok('el clima automático arranca apagado', !ClimaAuto::activo((int)$proy->id) && ClimaAuto::ejecutar() === []);
+ClimaAuto::cambiarActivo((int)$proy->id, true);
+$db->query("UPDATE actividades SET progreso = 40, status = 'en_proceso' WHERE id = $actId");   // la losa vuelve a estar en curso
+$antes = count($enviados);
+$proy = Model\Proyecto::find((int)$proy->id);
+$r = ClimaAuto::procesar($proy);
+Telegram::vaciar();
+$nb = (int)$db->query("SELECT COUNT(*) n FROM bitacora WHERE proyecto_id = {$proy->id} AND departamento = 'Clima' AND fecha = '$hoy'")->fetch_assoc()['n'];
+$ok('registra el clima de hoy en la bitácora', $r['ok'] && $nb === 1);
+$ok('avisa que mañana llueve y menciona la actividad de exterior', count($enviados) === $antes + 1 && str_contains($ultimo(), 'lluvia') && str_contains($ultimo(), 'Colado de losa exterior') && !str_contains($ultimo(), 'Muros interiores'));
+$antes = count($enviados);
+ClimaAuto::procesar($proy); Telegram::vaciar();
+$nb = (int)$db->query("SELECT COUNT(*) n FROM bitacora WHERE proyecto_id = {$proy->id} AND departamento = 'Clima' AND fecha = '$hoy'")->fetch_assoc()['n'];
+$ok('una segunda corrida el mismo día no repite bitácora ni aviso', $nb === 1 && count($enviados) === $antes);
+$antes = count($enviados);
+ClimaAuto::procesar($proy, true); Telegram::vaciar();
+$ok('«Probar ahora» (forzar) vuelve a avisar sin duplicar la bitácora', count($enviados) === $antes + 1 && (int)$db->query("SELECT COUNT(*) n FROM bitacora WHERE proyecto_id = {$proy->id} AND departamento = 'Clima'")->fetch_assoc()['n'] === 1);
+Clima::$http = null;
+Telegram::$http = null;
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nIntegración OK\n";
 exit($fallos ? 1 : 0);

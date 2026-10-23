@@ -104,11 +104,16 @@ class PrediccionAtrasos extends Base
         return ['plan' => $dur ? round($plan / $dur * 100, 1) : 0, 'real' => $dur ? round($real / $dur * 100, 1) : 0, 'spi' => $spi];
     }
 
-    public static function preparar(Proyecto $p, array $params): array
+    /**
+     * Actividades pendientes puntuadas (0-100) por probabilidad de atrasarse dentro del horizonte, de la más riesgosa a la menos.
+     * Determinista: es el mismo cálculo que hace la herramienta, reutilizable desde otros informes.
+     * @return array{filas: array[], conteo: array{alto: int, medio: int, bajo: int}}
+     */
+    public static function riesgos(Proyecto $p, int $dias): array
     {
         $pid = (int)$p->id;
         $hoy = date('Y-m-d');
-        $tope = date('Y-m-d', strtotime("$hoy +" . (int)$params['dias'] . ' days'));
+        $tope = date('Y-m-d', strtotime("$hoy +" . max(1, $dias) . ' days'));
         $acts = Dependencias::actividades($pid);
         $preds = [];
         foreach (Dependencias::relaciones($pid) as $r) $preds[$r['suc']][] = $r['pred'];
@@ -126,6 +131,19 @@ class PrediccionAtrasos extends Base
             $filas[] = ['id' => $id, 'codigo' => $a['codigo'], 'nombre' => $a['nombre'], 'partida' => $a['partida'], 'progreso' => (int)$a['progreso'], 'fin' => $a['fecha_fin']] + $r;
         }
         usort($filas, fn($x, $y) => [$y['puntos'], $y['atraso_dias']] <=> [$x['puntos'], $x['atraso_dias']]);
+        return ['filas' => $filas, 'conteo' => [
+            'alto' => count(array_filter($filas, fn($f) => $f['nivel'] === 'alto')),
+            'medio' => count(array_filter($filas, fn($f) => $f['nivel'] === 'medio')),
+            'bajo' => count(array_filter($filas, fn($f) => $f['nivel'] === 'bajo')),
+        ]];
+    }
+
+    public static function preparar(Proyecto $p, array $params): array
+    {
+        $hoy = date('Y-m-d');
+        $acts = Dependencias::actividades((int)$p->id);
+        $riesgos = self::riesgos($p, (int)$params['dias']);
+        $filas = $riesgos['filas'];
 
         $d = self::desempeno($acts, $hoy);
         $fin = $p->fecha_fin;
@@ -137,7 +155,7 @@ class PrediccionAtrasos extends Base
             if ($finProb < $fin && $d['spi'] >= 1) $finProb = $fin;   // adelantarse no se promete
         }
         $datos = ['actividades' => $filas, 'desempeno' => $d, 'fin_programado' => $fin, 'fin_probable' => $finProb, 'atraso_obra' => max(0, self::dias($fin, $finProb)), 'horizonte' => (int)$params['dias'],
-            'conteo' => ['alto' => count(array_filter($filas, fn($f) => $f['nivel'] === 'alto')), 'medio' => count(array_filter($filas, fn($f) => $f['nivel'] === 'medio')), 'bajo' => count(array_filter($filas, fn($f) => $f['nivel'] === 'bajo'))]];
+            'conteo' => $riesgos['conteo']];
 
         $top = array_slice($filas, 0, 10);
         $lin = array_map(fn($f) => "{$f['codigo']} {$f['nombre']} (puntaje {$f['puntos']}, {$f['progreso']} %, atraso probable {$f['atraso_dias']} d): " . implode('; ', array_slice($f['razones'], 0, 3)), $top);
@@ -169,7 +187,7 @@ class PrediccionAtrasos extends Base
                 ['Fin probable al ritmo actual', self::fmt($datos['fin_probable']), $datos['atraso_obra'] ? $datos['atraso_obra'] . ' día(s) de diferencia' : 'sin diferencia'],
                 ['Riesgo alto / medio', $c['alto'] . ' / ' . $c['medio']],
             ]),
-            Informes::texto('Lectura' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Lectura', $resumen),
         ];
         if ($acc) $secs[] = Informes::lista('Acciones sugeridas', $acc);
         $secs[] = Informes::tabla('Actividades por riesgo de atraso (las 40 de mayor puntaje)', ['Código', 'Actividad', 'Riesgo', 'Puntaje', 'Avance', 'Atraso probable', 'Razones'],

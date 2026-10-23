@@ -86,7 +86,6 @@ class CierreProyecto extends Base
         $resumen = Informes::limpiarTexto(self::dato($respuestas, 'resumen') ?? '', 2000);
         $lecciones = [];
         foreach ((array)(self::dato($respuestas, 'lecciones') ?? []) as $l) if (is_array($l) && trim((string)($l['aprendizaje'] ?? '')) !== '') $lecciones[] = [Informes::limpiarTexto($l['tema'] ?? '', 80), Informes::limpiarTexto($l['que_paso'] ?? '', 260), Informes::limpiarTexto($l['aprendizaje'], 260)];
-        $ia = (bool)$lecciones;
         if (!$lecciones) {
             $causas = array_filter($datos['causas']); arsort($causas);
             if ($causas) { $k = array_key_first($causas); $lecciones[] = ['Retrasos', "La causa que más actividades atrasadas afectó fue «{$k}» ({$causas[$k]}).", 'Atender esa causa desde la planeación: revisarla en el lookahead desde las primeras semanas.']; }
@@ -96,12 +95,12 @@ class CierreProyecto extends Base
         if ($resumen === '') $resumen = "El proyecto está al " . round($ok / count($chk) * 100) . " % de la lista de entrega ($ok de " . count($chk) . " puntos cumplidos). " . ($ok === count($chk) ? 'Está listo para entregar.' : 'Resuelve los puntos pendientes de la tabla antes de la entrega.');
         $secs = [
             Informes::kpis('Listo para entregar', [['Lista de entrega', round($ok / count($chk) * 100) . ' %', "$ok de " . count($chk) . ' puntos'], ['Actividades terminadas', ($a['total'] - $a['pendientes']) . ' / ' . $a['total']], ['Materiales con ficha', ($m['total'] - $m['sin_ficha']) . ' / ' . $m['total']], ['Pendientes de calidad', $pu['pendientes']], ['Fotos de evidencia', $datos['evidencias']], ['Archivos en el expediente', $ar['total']]]),
-            Informes::texto('Balance' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Balance', $resumen),
             Informes::tabla('Lista de verificación de entrega', ['Punto', 'Estado', 'Detalle'], array_map(fn($x) => [$x[0], $x[1] ? 'Cumple' : 'PENDIENTE', $x[2]], $chk)),
         ];
         if ($a['lista']) $secs[] = Informes::lista('Actividades sin terminar (las 15 con fecha más antigua)', $a['lista']);
         $secs[] = Informes::tabla('Expediente de materiales', ['Material', 'Especialidad', 'Entrega', 'Ficha técnica', 'Certificado', 'Submittal'], $m['filas']);
-        $secs[] = Informes::tabla('Lecciones aprendidas' . ($ia ? ' (redactadas con IA)' : ' (automáticas, a partir de los datos)'), ['Tema', 'Qué pasó', 'Qué hacer distinto'], $lecciones);
+        $secs[] = Informes::tabla('Lecciones aprendidas', ['Tema', 'Qué pasó', 'Qué hacer distinto'], $lecciones);
         return ['secciones' => $secs];
     }
 }

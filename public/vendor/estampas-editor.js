@@ -133,7 +133,7 @@
         const TIPOS_L = {
             linea: ['Línea', 'fa-minus'], rect: ['Rectángulo', 'fa-square'], elipse: ['Elipse', 'fa-circle'], rombo: ['Rombo', 'fa-diamond'],
             texto: ['Texto fijo (prefijo + valor)', 'fa-font'], campo: ['Campo inteligente', 'fa-tag'], semaforo: ['Semáforo', 'fa-traffic-light'],
-            partida_dia: ['Partida del día', 'fa-layer-group'], actividades_dia: ['Actividades del día', 'fa-list-check'], logo: ['Logo', 'fa-image'],
+            partida_dia: ['Partida del día', 'fa-layer-group'], actividades_dia: ['Actividades del día', 'fa-list-check'], logo: ['Logo / imagen', 'fa-image'],
         };
         const GRAF = ['linea', 'rect', 'elipse', 'rombo'];
         const nuevoEl = (tipo, x, y, w, h) => Object.assign({ tipo, x, y, w, h }, {
@@ -146,7 +146,7 @@
             semaforo: { campo: 'spi', prefijo: 'SPI', sufijo: '', formato: '', actividad_id: 0, modo: 'mayor', verde: 0.95, rojo: 0.85, tamano: 8, negrita: false, color: '', alinear: 'izquierda', valign: 'arriba' },
             partida_dia: { prefijo: 'PARTIDA:', modo: 'dia', partida_id: 0, varias: 'todas', fecha_modo: 'corte', fecha: '', tamano: 8, negrita: false, color: '', alinear: 'izquierda', valign: 'medio' },
             actividades_dia: { fecha_modo: 'corte', fecha: '', partidas: [], responsable: 0, max: 4, solo_pendientes: false, encabezado: true, rombos: true, codigo_partida: false, tit_actividad: 'ACTIVIDAD:', tit_dias: 'DÍAS PARA TERMINAR:', tamano: 7, negrita: false, color: '', alinear: '', valign: 'arriba' },
-            logo: { fuente: 'compania', alinear: 'izquierda' },
+            logo: { fuente: 'compania', alinear: 'izquierda', escala: 100 },
         }[tipo]);
         let sel = -1, herr = 'sel', zoomL = 0, zoomMan = null, unidadL = 'mm';
         const LAM_MM = [432, 279], UNI = { mm: 1, cm: 10, 'in': 25.4 };   // lámina tabloide 11 x 17" horizontal
@@ -278,7 +278,8 @@
                     campoP(e, 'encabezado', 'Mostrar encabezado', 'chk') + campoP(e, 'rombos', 'Rombos de semáforo', 'chk') + campoP(e, 'codigo_partida', 'Código de partida', 'chk') + campoP(e, 'solo_pendientes', 'Ocultar terminadas', 'chk') + '</div>' +
                     '<div class="est-fila">' + campoP(e, 'tit_actividad', 'Título columna 1') + campoP(e, 'tit_dias', 'Título columna 2') + '</div>' +
                     '<p class="text-sm text-muted">Cada renglón: rombos (verde finalizada · amarillo en proceso · rojo con restricción), actividad y días hábiles para terminar.</p>';
-            } else if (e.tipo === 'logo') h += '<div class="est-fila">' + campoP(e, 'fuente', 'Logo de', 'sel', [['compania', 'La compañía (empresa)'], ['proyecto', 'El proyecto'], ['contratista', 'El contratista / cliente']]) + campoP(e, 'alinear', 'Alineación', 'sel', ALIN.slice(1)) + '</div>';
+            } else if (e.tipo === 'logo') h += '<div class="est-fila">' + campoP(e, 'fuente', 'Logo de', 'sel', [['compania', 'La compañía (empresa)'], ['proyecto', 'El proyecto'], ['contratista', 'El contratista / cliente'], ['subida', 'Imagen subida']]) + campoP(e, 'alinear', 'Alineación', 'sel', ALIN.slice(1)) + '</div>' +
+                '<div class="est-fila">' + campoP(e, 'escala', 'Escala (%)', 'num', 5).replace('<input ', '<input min="10" max="300" ') + '<label class="est-f"><span>' + (e.fuente === 'subida' ? (e.archivo ? 'Cambiar imagen' : 'Subir imagen (falta)') : 'Subir imagen propia') + '</span><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-subir="1"></label></div>';
             if (['texto', 'campo', 'semaforo', 'partida_dia', 'actividades_dia'].includes(e.tipo)) h += '<div class="est-fila">' + campoP(e, 'tamano', 'Letra (pt, 0 = base)', 'num', 0.5) + campoP(e, 'alinear', 'Alineación', 'sel', ALIN) + campoP(e, 'valign', 'Vertical', 'sel', [['arriba', 'Arriba'], ['medio', 'Centro'], ['abajo', 'Abajo']]) + campoP(e, 'color', 'Color', 'color') + campoP(e, 'negrita', 'Negrita', 'chk') + '</div>';
             h += '<div class="est-fila"><button type="button" class="btn btn-sm btn-ghost" data-el="duplica"><i class="fa-solid fa-clone"></i> Duplicar</button><button type="button" class="btn btn-sm btn-danger" data-el="quita"><i class="fa-solid fa-trash-can"></i> Quitar</button></div>';
             p.innerHTML = h;
@@ -336,7 +337,16 @@
         });
         caja.addEventListener('change', ev => {
             const t = ev.target; if (!cfg || cfg.modo !== 'lienzo') return;
-            if (t.dataset.ek && ['campo', 'modo', 'fecha_modo', 'partida_id'].includes(t.dataset.ek)) {
+            if (t.dataset.subir && t.files && t.files[0]) {
+                const e = cfg.elementos[sel]; if (!e) return;
+                const fd = new FormData(); fd.append('proyecto', D.proyecto); fd.append('imagen', t.files[0]);
+                fetch('/api/estampas/imagen', { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+                    if (!d.success) { alert(d.error || 'No se pudo subir la imagen'); return; }
+                    e.fuente = 'subida'; e.archivo = d.archivo; propsLienzo(); lzCambio();
+                }).catch(() => alert('No se pudo subir la imagen'));
+                return;
+            }
+            if (t.dataset.ek && ['campo', 'modo', 'fecha_modo', 'partida_id', 'fuente'].includes(t.dataset.ek)) {
                 const e = cfg.elementos[sel];
                 if (t.dataset.ek === 'campo') { e.formato = ''; const d = D.semaforo[t.value]; if (e.tipo === 'semaforo' && d) { e.modo = d[0]; e.verde = d[1]; e.rojo = d[2]; } const c = campoDe(t.value); if (c && !e.prefijo) e.prefijo = c[2].replace(/ \(.*/, '') + ': '; }
                 propsLienzo(); lzCambio();

@@ -70,7 +70,7 @@ class MsrController
             $msr->nombre = trim($_POST['nombre'] ?? '');
             $msr->descripcion = trim($_POST['descripcion'] ?? '');
             $enc = (int)($_POST['encabezado_id'] ?? 0);
-            $msr->encabezado_id = $enc > 0 && ($e = \Model\Estampa::find($enc)) && (int)$e->proyecto_id === (int)$proyecto->id && (($e->config()['modo'] ?? '') === 'lienzo') ? $enc : null;
+            $msr->encabezado_id = $enc > 0 && ($e = \Model\Estampa::find($enc)) && (int)$e->proyecto_id === (int)$proyecto->id ? $enc : null;
             $msr->proyecto_id = $proyecto->id;
             $partidasPost = array_values(array_filter($_POST['partidas'] ?? [], 'is_array'));
             $msr->columnas_json = Msr::normalizarColumnas((string)($_POST['modo'] ?? ''), array_values(array_filter($_POST['columnas'] ?? [], 'is_array')));
@@ -90,7 +90,7 @@ class MsrController
                 ? array_map(fn($p) => ['id' => (int)($p['id'] ?? 0), 'titulo' => trim($p['titulo'] ?? ''), 'color' => (string)($p['color'] ?? ''), 'materiales' => array_map('intval', $p['materiales'] ?? [])], $partidasPost)
                 : ($msr->id ? $msr->partidas() : []),
             'columnasForm' => self::columnasParaFormulario($msr, $proyecto),
-            'encabezados' => Msr::tieneEncabezado() ? array_values(array_filter(\Model\Estampa::deProyecto((int)$proyecto->id), fn($e) => ($e->config()['modo'] ?? '') === 'lienzo')) : [],
+            'encabezados' => Msr::tieneEncabezado() ? \Model\Estampa::deProyecto((int)$proyecto->id) : [],
             'catalogo' => array_map(fn($x) => ['id' => (int)$x->id, 'nombre' => $x->nombre, 'ref' => $x->referencia, 'esp' => $x->especialidad, 'img' => $x->imagen], \Model\Material::deProyecto((int)$proyecto->id)),
         ]);
     }

@@ -62,17 +62,17 @@ class LookaheadConfig extends ActiveRecord
         return strtr($t, ['{semanas}' => (string)(int)$this->semanas, '{proyecto}' => (string)$proyecto->nombre, '{codigo}' => (string)$proyecto->codigo]);
     }
 
-    /** Estampa de lienzo elegida como encabezado (null = el encabezado de siempre) */
+    /** Estampa elegida como encabezado (null = el encabezado de siempre) */
     public function encabezado(): ?Estampa
     {
         if (!$this->encabezado_id || !Estampa::disponible()) return null;
         $e = Estampa::find((int)$this->encabezado_id);
-        return $e && (int)$e->proyecto_id === (int)$this->proyecto_id && (($e->config()['modo'] ?? '') === 'lienzo') ? $e : null;
+        return $e && (int)$e->proyecto_id === (int)$this->proyecto_id ? $e : null;
     }
 
-    /** Estampas de lienzo del proyecto que sirven de encabezado */
+    /** Estampas del proyecto que sirven de encabezado */
     public static function encabezadosDisponibles(int $proyectoId): array
     {
-        return array_values(array_filter(Estampa::deProyecto($proyectoId), fn($e) => ($e->config()['modo'] ?? '') === 'lienzo'));
+        return Estampa::deProyecto($proyectoId);
     }
 }

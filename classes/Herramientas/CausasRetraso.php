@@ -13,7 +13,7 @@ use Model\Proyecto;
  */
 class CausasRetraso extends Base
 {
-    private const CAUSAS = ['material' => 'Material', 'submittal' => 'Submittal / aprobación', 'restriccion' => 'Restricción', 'predecesora' => 'Predecesora sin terminar', 'clima' => 'Clima o paro técnico', 'bitacora' => 'Mencionada en la bitácora', 'sin_causa' => 'Sin causa registrada'];
+    public const CAUSAS = ['material' => 'Material', 'submittal' => 'Submittal / aprobación', 'restriccion' => 'Restricción', 'predecesora' => 'Predecesora sin terminar', 'clima' => 'Clima o paro técnico', 'bitacora' => 'Mencionada en la bitácora', 'sin_causa' => 'Sin causa registrada'];
 
     public static function id(): string { return 'causas_retraso'; }
 
@@ -30,7 +30,12 @@ class CausasRetraso extends Base
         return 'Causas de retraso · ' . date('d/m/Y');
     }
 
-    public static function preparar(Proyecto $p, array $params): array
+    /**
+     * Causa de cada actividad atrasada y total por causa. Determinista, reutilizable desde otros informes:
+     * no arma prompts ni pide IA, solo cruza datos.
+     * @return array{actividades: array[], por_causa: array<int, int>, total: int}
+     */
+    public static function analizar(Proyecto $p, int $diasMin): array
     {
         $pid = (int)$p->id;
         $hoy = date('Y-m-d');
@@ -52,7 +57,7 @@ class CausasRetraso extends Base
         foreach ($acts as $id => $a) {
             if ((int)$a['hito'] || (int)$a['progreso'] >= 100) continue;
             $atraso = (int)floor((strtotime($hoy) - strtotime($a['fecha_fin'])) / 86400);
-            if ($atraso < max(1, (int)$params['dias'])) continue;
+            if ($atraso < max(1, $diasMin)) continue;
             $c = [];
             foreach ($mats[$id] ?? [] as $m) {
                 if ((int)$m['sin_material']) continue;
@@ -78,7 +83,16 @@ class CausasRetraso extends Base
             $filas[] = ['codigo' => $a['codigo'], 'nombre' => $a['nombre'], 'atraso' => $atraso, 'progreso' => (int)$a['progreso'], 'causas' => $c, 'tipos' => array_values($tipos)];
         }
         usort($filas, fn($x, $y) => $y['atraso'] <=> $x['atraso']);
-        $datos = ['actividades' => $filas, 'por_causa' => $porCausa, 'total' => count($filas)];
+        return ['actividades' => $filas, 'por_causa' => $porCausa, 'total' => count($filas)];
+    }
+
+    public static function preparar(Proyecto $p, array $params): array
+    {
+        $hoy = date('Y-m-d');
+        $datos = self::analizar($p, (int)$params['dias']);
+        $filas = $datos['actividades'];
+        $porCausa = $datos['por_causa'];
+
         $orden = $porCausa; arsort($orden);
         $lin = array_map(fn($x) => $x['codigo'] . ' ' . self::corto($x['nombre'], 55) . " (atraso {$x['atraso']} d, {$x['progreso']}%): " . implode('; ', array_slice(array_map(fn($c) => self::CAUSAS[$c[0]] . ' – ' . $c[1], $x['causas']), 0, 3)), array_slice($filas, 0, 14));
         $prompt = "Eres analista de proyectos de construcción y explicas por qué se atrasó la obra para la dirección. Usa SOLO los datos; no inventes causas. Distingue causas internas (programación, compras) de externas (clima, cliente) cuando se pueda.\n\n"
@@ -99,7 +113,7 @@ class CausasRetraso extends Base
         $acc = self::textos(self::dato($respuestas, 'acciones'), 6, 240);
         $secs = [
             Informes::kpis('Atrasos', [['Actividades atrasadas', $datos['total']], ...array_map(fn($k, $v) => [self::CAUSAS[$k], $v], array_keys(array_filter($por)), array_filter($por))]),
-            Informes::texto('Causas principales' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Causas principales', $resumen),
         ];
         if ($acc) $secs[] = Informes::lista('Acciones sugeridas', $acc);
         $secs[] = Informes::tabla('Actividades atrasadas y sus causas (las 40 con más atraso)', ['Código', 'Actividad', 'Atraso (días)', 'Avance', 'Causas encontradas'], array_map(fn($x) => [$x['codigo'], self::corto($x['nombre'], 70), $x['atraso'], $x['progreso'] . '%', implode(' · ', array_map(fn($c) => self::CAUSAS[$c[0]] . ': ' . $c[1], $x['causas']))], array_slice($datos['actividades'], 0, 40)));

@@ -71,7 +71,7 @@ class FotosAvance extends Base
         foreach ($datos['fotos'] as $aid => $f) {
             $a = $f['act'];
             $r = $por['A' . $aid] ?? null;
-            if (!$r) { $filas[] = [$a['codigo'] . ' ' . self::corto($a['nombre'], 50), self::fmt($f['fecha']), '—', '—', '—', 'Sin respuesta del modelo (no hay conexión con visión o falló)']; continue; }
+            if (!$r) { $filas[] = [$a['codigo'] . ' ' . self::corto($a['nombre'], 50), self::fmt($f['fecha']), '—', '—', '—', 'Sin estimación (no se pudo revisar la foto)']; continue; }
             $estado = in_array($r['estado'] ?? '', ['rojo', 'amarillo', 'verde', 'incierto'], true) ? $r['estado'] : 'incierto';
             $conf = in_array($r['confianza'] ?? '', ['baja', 'media', 'alta'], true) ? $r['confianza'] : 'baja';
             $desc = Informes::limpiarTexto($r['descripcion'] ?? '', 240);
@@ -91,8 +91,8 @@ class FotosAvance extends Base
             if ($r['nuevos']) { Inconsistencias::marcarCorrida($pid, $r['corrida'], true, 'Avance por fotos ' . date('d/m H:i')); $creadas = $r['nuevos']; }
         }
         return ['secciones' => [
-            Informes::kpis('Resultado', [['Fotos analizadas', count($datos['fotos'])], ['Con respuesta del modelo', count($por)], ['Cambios de avance propuestos', $creadas]]),
-            Informes::texto('Importante', ($datos['fotos'] ? 'La clasificación la hace un modelo de visión y puede equivocarse (ángulo, luz, zona distinta). Solo se proponen cambios cuando la confianza es media o alta y la diferencia con el programa es de al menos 10 puntos; revisa la foto antes de aceptar en Análisis inteligente.' : 'No hay fotos de evidencia recientes con actividad asignada. Súbelas en Evidencias de cada actividad.') . ($creadas ? " Se crearon $creadas propuesta(s)." : '')),
+            Informes::kpis('Resultado', [['Fotos analizadas', count($datos['fotos'])], ['Con estimación', count($por)], ['Cambios de avance propuestos', $creadas]]),
+            Informes::texto('Importante', ($datos['fotos'] ? 'La estimación sale de la foto y puede equivocarse (ángulo, luz, zona distinta). Solo se proponen cambios cuando la confianza es media o alta y la diferencia con el programa es de al menos 10 puntos; revisa la foto antes de aceptar en Análisis inteligente.' : 'No hay fotos de evidencia recientes con actividad asignada. Súbelas en Evidencias de cada actividad.') . ($creadas ? " Se crearon $creadas propuesta(s)." : '')),
             Informes::tabla('Fotos analizadas', ['Actividad', 'Foto del', 'Estado', 'Avance estimado', 'Confianza', 'Lo que se ve'], $filas),
         ]];
     }

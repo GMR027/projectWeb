@@ -139,7 +139,9 @@ $router->post('/api/dependencias/aplicar', [DependenciasController::class, 'apli
 $router->post('/api/dependencias/deshacer', [DependenciasController::class, 'deshacer']);
 // Línea de tiempo activa (Gantt diario del mes, barras arrastrables)
 $router->get('/lineatiempo', [LineatiempoController::class, 'index']);
+$router->get('/lineatiempo/exportar', [LineatiempoController::class, 'exportar']);
 $router->post('/api/lineatiempo/fechas', [LineatiempoController::class, 'fechas']);
+$router->post('/api/lineatiempo/resolver', [LineatiempoController::class, 'resolver']);
 $router->get('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar', [ProgramaController::class, 'importar']);
 $router->post('/programa/importar/confirmar', [ProgramaController::class, 'confirmarImportacion']);
@@ -359,6 +361,13 @@ $router->post('/marca/guardar', [Controllers\MarcaController::class, 'guardar'])
 $router->get('/integraciones', [Controllers\IntegracionesController::class, 'index']);
 $router->post('/integraciones/token/crear', [Controllers\IntegracionesController::class, 'crearToken']);
 $router->post('/integraciones/token/revocar', [Controllers\IntegracionesController::class, 'revocarToken']);
+$router->post('/integraciones/telegram/conectar', [Controllers\IntegracionesController::class, 'telegramConectar']);
+$router->post('/integraciones/telegram/desconectar', [Controllers\IntegracionesController::class, 'telegramDesconectar']);
+$router->post('/integraciones/telegram/grupo', [Controllers\IntegracionesController::class, 'telegramGrupo']);
+$router->post('/integraciones/telegram/mi-chat', [Controllers\IntegracionesController::class, 'telegramMiChat']);
+$router->post('/integraciones/telegram/destino', [Controllers\IntegracionesController::class, 'telegramDestino']);
+$router->post('/integraciones/telegram/webhook', [Controllers\IntegracionesController::class, 'telegramRegistrar']);
+$router->post('/integraciones/clima', [Controllers\IntegracionesController::class, 'climaAuto']);
 $router->post('/integraciones/webhook/crear', [Controllers\IntegracionesController::class, 'crearWebhook']);
 $router->post('/integraciones/webhook/activo', [Controllers\IntegracionesController::class, 'toggleWebhook']);
 $router->post('/integraciones/webhook/eliminar', [Controllers\IntegracionesController::class, 'eliminarWebhook']);
@@ -500,6 +509,7 @@ $router->post('/simbolos/estampa', [EstampaController::class, 'guardar']);
 $router->post('/simbolos/estampa/eliminar', [EstampaController::class, 'eliminar']);
 $router->post('/simbolos/estampa/duplicar', [EstampaController::class, 'duplicar']);
 $router->post('/simbolos/estampa/plantilla', [EstampaController::class, 'plantilla']);
+$router->post('/api/estampas/imagen', [EstampaController::class, 'imagen']);
 $router->post('/api/estampas/vista', [EstampaController::class, 'vista']);
 $router->post('/api/estampas/textos', [EstampaController::class, 'textos']);
 $router->get('/simbolos/exportar', [SimboloController::class, 'exportar']);
@@ -705,6 +715,8 @@ $router->post('/exportar/todo', [AjustesController::class, 'exportarTodo']);
 
 // API REST (Fase 5.1): con token, sin sesión ni CSRF; atiende la petición completa
 if (\Classes\ApiRest::esDeLaApi()) \Classes\ApiRest::despachar();
+// Bot de Telegram: Telegram llama aquí (secreto en cabecera, sin sesión ni CSRF)
+if (\Classes\Telegram::esWebhook()) \Classes\Telegram::atender();
 
 csrf_verificar();   // todo POST necesita el código de la sesión
 // Un visitante solo entra a las herramientas que se le permitieron (también por enlace directo o API)
@@ -717,6 +729,14 @@ if (is_auth() && is_visitante() && !herramienta_permitida(herramienta_de_ruta($_
         header('Location: /proyectos?error=' . urlencode('No tienes acceso a esa herramienta'));
     }
     exit;
+}
+// Clima automático sin cron: pasada la hora, la primera persona con sesión lo dispara al terminar su petición
+if (is_auth() && \Classes\ClimaAuto::pendiente()) {
+    register_shutdown_function(function () {
+        ignore_user_abort(true);
+        if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+        try { \Classes\ClimaAuto::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Clima automático: ' . $e->getMessage()); }
+    });
 }
 // Respaldo diario sin cron: si el admin entra después de la hora programada y falta el de hoy, se hace al terminar la petición
 if (is_auth() && is_admin() && \Classes\Respaldo::pendiente()) {

@@ -227,17 +227,23 @@ class EstampaContexto
         return (string)($f[0]['nombre'] ?? '');
     }
 
-    /** Logo como URL (pantalla) o data URI (PDF): 'compania' = el de la empresa del dueño, 'proyecto' = el del proyecto */
-    public function logo(string $fuente, bool $pdf): ?string
+    /** Logo como URL (pantalla) o data URI (PDF): 'compania' = el de la empresa del dueño, 'proyecto' = el del proyecto, 'subida' = imagen propia de la estampa ($archivo) */
+    public function logo(string $fuente, bool $pdf, string $archivo = ''): ?string
     {
-        $arch = match ($fuente) {
-            'proyecto' => $this->proyecto->logo ?: null,
-            'contratista' => $this->proyecto->contratista_logo ?: null,
-            default => $this->proyecto->logoEmpresa() ?: $this->proyecto->logo,
-        };
+        $carpeta = 'logos';
+        if ($fuente === 'subida') {
+            $arch = preg_match('/^[a-f0-9]{32}\.(jpg|png|webp|gif)$/', $archivo) ? $archivo : null;
+            $carpeta = 'estampas';
+        } else {
+            $arch = match ($fuente) {
+                'proyecto' => $this->proyecto->logo ?: null,
+                'contratista' => $this->proyecto->contratista_logo ?: null,
+                default => $this->proyecto->logoEmpresa() ?: $this->proyecto->logo,
+            };
+        }
         if (!$arch) return null;
-        if ($pdf) return \Classes\Exportadores\MsrPdfExporter::imagenBase64($arch, 'build/img/logos');
-        return is_file(__DIR__ . '/../public/build/img/logos/' . basename($arch)) ? '/build/img/logos/' . rawurlencode(basename($arch)) : null;
+        if ($pdf) return \Classes\Exportadores\MsrPdfExporter::imagenBase64($arch, 'build/img/' . $carpeta);
+        return is_file(__DIR__ . '/../public/build/img/' . $carpeta . '/' . basename($arch)) ? '/build/img/' . $carpeta . '/' . rawurlencode(basename($arch)) : null;
     }
 
     /** Valor sin formato de un campo del catálogo (null si no aplica). $actId: actividad para los campos «act_*» */

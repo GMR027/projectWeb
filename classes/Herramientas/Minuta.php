@@ -88,11 +88,9 @@ class Minuta extends Base
         }
         $temas = array_values($temas);
         $compromisos = array_values($compromisos);
-        $ia = (bool)$respuestas;
         $fila = fn($x) => [self::corto($x['tema'], 200), $x['responsable'] ?: '—', $x['departamento'] ?: '—'];
         $secs = [Informes::kpis('Minuta', [['Fecha', self::fmt($params['fecha'])], ['Temas', count($temas)], ['Compromisos', count($compromisos)], ['Duración de la transcripción', mb_strlen($datos['transcripcion']) . ' caracteres', $datos['trozos'] > 1 ? $datos['trozos'] . ' partes' : '']])];
-        if ($resumenes) $secs[] = Informes::texto('Resumen (redactado con IA, revísalo)', implode("\n\n", $resumenes));
-        elseif (!$ia) $secs[] = Informes::texto('Sin IA', 'Esta minuta se creó sin IA: solo guarda la transcripción. Genera el análisis con IA desde la app de escritorio para extraer temas y compromisos.');
+        if ($resumenes) $secs[] = Informes::texto('Resumen', implode("\n\n", $resumenes));
         $secs[] = Informes::tabla('Temas tratados', ['Tema', 'Responsable', 'Departamento'], array_map($fila, $temas));
         $secs[] = Informes::tabla('Compromisos', ['Compromiso', 'Responsable', 'Departamento'], array_map($fila, $compromisos));
         if ($notas) $secs[] = Informes::lista('Notas', array_values($notas));

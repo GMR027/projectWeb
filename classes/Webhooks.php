@@ -136,6 +136,7 @@ class Webhooks
     /** Pone un evento en cola para los webhooks del proyecto que lo pidan; se envía al terminar la petición */
     public static function emitir(int $pid, string $evento, array $datos): void
     {
+        Telegram::aviso($pid, $evento, $datos);   // el bot de Telegram escucha los mismos eventos
         if (!isset(self::proyectosConWebhook()[$pid]) || !isset(self::EVENTOS[$evento])) return;
         $nombre = self::filas("SELECT nombre FROM proyectos WHERE id = $pid")[0]['nombre'] ?? '';
         foreach (self::filas("SELECT * FROM webhooks WHERE proyecto_id = $pid AND activo = 1") as $w) {
@@ -239,7 +240,7 @@ class Webhooks
     public static function desdeTabla(string $tabla, string $accion, int $id, array $fila): void
     {
         $evento = self::EVENTO_DE[$tabla][$accion] ?? null;
-        if ($evento === null || !self::proyectosConWebhook()) return;
+        if ($evento === null || (!self::proyectosConWebhook() && !Telegram::proyectosConDestino())) return;
         $pid = self::proyectoDe($tabla, $fila);
         if ($pid) self::emitir($pid, $evento, ['id' => $id] + self::limpiar($fila));
     }

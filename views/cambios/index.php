@@ -8,11 +8,15 @@
         <a href="/lineas-base?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-timeline"></i> Líneas base</a>
         <a href="/cambios/cruce?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-truck-ramp-box"></i> Materiales vs cronograma</a>
         <?php if (is_admin()): ?>
-            <form method="POST" action="/informes-ia/generar" style="display:inline">
+            <form method="POST" action="/informes-ia/generar" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
                 <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
                 <input type="hidden" name="herramienta" value="resumen_diario">
                 <input type="hidden" name="p[fecha]" value="<?php echo date('Y-m-d'); ?>">
                 <input type="hidden" name="p[linea]" value="0">
+                <label class="text-sm text-muted" for="re-tipo">Informe</label>
+                <select id="re-tipo" name="p[tipo]"><?php foreach (\Classes\Herramientas\ResumenEjecutivoDiario::TIPOS as $k => $v): ?><option value="<?php echo s($k); ?>"<?php echo $k === 'detallado' ? ' selected' : ''; ?>><?php echo s($v); ?></option><?php endforeach; ?></select>
+                <label class="text-sm text-muted" for="re-detalle">Detalle</label>
+                <select id="re-detalle" name="p[detalle]"><?php foreach (\Classes\Herramientas\ResumenEjecutivoDiario::NIVELES as $k => $v): ?><option value="<?php echo s($k); ?>"<?php echo $k === 'medio' ? ' selected' : ''; ?>><?php echo s($v); ?></option><?php endforeach; ?></select>
                 <button type="submit" class="btn btn-ghost" title="Genera el resumen del día con los datos del sistema; con IA se redacta desde la app de escritorio"><i class="fa-solid fa-newspaper"></i> Resumen ejecutivo de hoy</button>
             </form>
         <?php endif; ?>

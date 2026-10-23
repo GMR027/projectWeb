@@ -212,6 +212,38 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
             </form>
         </div>
 
+        <div class="exportador-card">
+            <div class="exportador-icono pdf">📆</div>
+            <h4>Línea de tiempo activa</h4>
+            <p class="text-sm text-muted">Gantt diario agrupado por partida con los filtros elegidos, igual que la vista de la Línea de tiempo. PDF en una sola hoja del tamaño que haga falta, o .ods editable.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="lineatiempo">
+                <?php echo $casillas('estado[]', 'Actividades', [
+                    ['no_iniciada', 'No iniciadas', true],
+                    ['en_proceso', 'En proceso', true],
+                    ['completada', 'Completadas', true],
+                ], 'Se muestran las de cualquier estado marcado.'); ?>
+                <label class="text-sm"><input type="checkbox" name="restriccion" value="1"> Solo con restricción</label>
+                <label class="text-sm"><input type="checkbox" name="icono" value="1"> Icono de actividad (disco sobre cada barra)</label>
+                <label class="text-sm text-muted" for="lt_partida">Partida</label>
+                <select id="lt_partida" name="partida_id">
+                    <option value="">Todas</option>
+                    <?php foreach ($proyecto->getPartidas() as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
+                </select>
+                <?php if ($mesesLt): ?>
+                    <?php echo $casillas('mes[]', 'Meses', array_map(fn($m, $t) => [$m, $t, false], array_keys($mesesLt), array_values($mesesLt)), 'Sin marcar ninguno se exporta el rango completo del proyecto; con uno o varios marcados, un archivo por mes (varios = ZIP).'); ?>
+                <?php endif; ?>
+                <label class="text-sm text-muted" for="lt_salida">Formato de archivo</label>
+                <select id="lt_salida" name="salida">
+                    <option value="pdf">PDF (.pdf)</option>
+                    <option value="ods">LibreOffice Calc (.ods)</option>
+                </select>
+                <input type="text" name="nombre_base" value="Linea-de-tiempo" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar línea de tiempo</button>
+            </form>
+        </div>
+
         <?php /* Reportes de obra en PDF */ ?>
         <div class="exportador-card">
             <div class="exportador-icono pdf">📋</div>
@@ -366,7 +398,9 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
         if (f.classList.contains('exportar-todo')) return 'zip';
         const marcados = [...f.querySelectorAll('[data-exp-checks] input[type=checkbox][name]:checked')];
         const sel = f.querySelector('select[name=salida]') || f.querySelector('select[name=formato]');
-        if (marcados.length > 1 && /curva_ids|msr_ids/.test(marcados[0].name)) return 'zip';
+        // línea de tiempo: varios meses marcados = un archivo por mes en un ZIP
+        if ([...f.querySelectorAll('input[name="mes[]"]:checked')].length > 1) return 'zip';
+        if (marcados.length > 1 && /curva_ids|msr_ids|lamina_ids/.test(marcados[0].name)) return 'zip';
         return sel ? sel.value : 'pdf';
     };
     const prefijoCurva = (f) => {

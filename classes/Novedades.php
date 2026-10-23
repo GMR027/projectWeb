@@ -32,6 +32,13 @@ class Novedades
 
     private const ENTRADAS = [
         [
+            'fecha'  => '2026-10-22 11:00',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Telegram: avisos, avance y fotos desde el celular, y clima automático',
+            'roles'  => ['admin', 'cliente'],
+            'texto'  => 'En Integraciones conecta tu Telegram con un toque. Recibe avisos de RFI, pendientes y restricciones (en tu chat o en el grupo de la obra), reporta el avance de una actividad con botones, manda fotos para guardarlas como evidencia y anota en la bitácora sin abrir la plataforma. Además, el clima automático anota cada tarde el clima del día en la bitácora y avisa si mañana habrá lluvia o viento que afecten el exterior.',
+        ],
+        [
             'fecha'  => '2026-10-21 20:00',
             'tipo'   => 'nuevo',
             'titulo' => 'Costos, recursos, RFI y enlaces de solo lectura',

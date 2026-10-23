@@ -89,9 +89,9 @@ class Lookahead extends Base
         foreach ((array)(self::dato($respuestas, 'prioridades') ?? []) as $x) if (is_array($x) && trim((string)($x['accion'] ?? '')) !== '') $prios[] = [Informes::limpiarTexto($x['actividad'] ?? '', 40), Informes::limpiarTexto($x['accion'], 220), Informes::limpiarTexto($x['motivo'] ?? '', 200)];
         $secs = [
             Informes::kpis('Ventana ' . self::fmt($datos['hoy']) . ' – ' . self::fmt($datos['fin']), [['Actividades', count($a)], ['Listas', $cnt('lista')], ['En riesgo', $cnt('en_riesgo'), 'bloqueos con tiempo para resolver'], ['Bloqueadas', $cnt('bloqueada'), 'inician en 7 días o ya debieron'], ['En ruta crítica', count(array_filter($a, fn($x) => $x['critica']))]]),
-            Informes::texto('Resumen' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Resumen', $resumen),
         ];
-        if ($prios) $secs[] = Informes::tabla('Prioridades sugeridas por la IA', ['Actividad', 'Acción', 'Motivo'], array_slice($prios, 0, 8));
+        if ($prios) $secs[] = Informes::tabla('Prioridades sugeridas', ['Actividad', 'Acción', 'Motivo'], array_slice($prios, 0, 8));
         $secs[] = Informes::tabla('Por semana', ['Semana', 'Listas', 'En riesgo', 'Bloqueadas'], array_map(fn($k, $v) => ['Semana ' . $k, $v['lista'], $v['en_riesgo'], $v['bloqueada']], array_keys($porSemana), $porSemana));
         $secs[] = Informes::tabla('Qué liberar primero (calculado por el sistema)', ['Código', 'Actividad', 'Inicio', 'Estado', 'Ruta crítica', 'Bloqueos'], array_map(fn($x) => [$x['codigo'], self::corto($x['nombre'], 70), self::fmt($x['inicio']), ['bloqueada' => 'Bloqueada', 'en_riesgo' => 'En riesgo'][$x['estado']], $x['critica'] ? 'Sí' : '', implode(' · ', array_column($x['bloqueos'], 'texto'))], $datos['prioridad']));
         $secs[] = Informes::tabla('Todas las actividades de la ventana', ['Código', 'Actividad', 'Inicio', 'Semana', 'Estado'], array_map(fn($x) => [$x['codigo'], self::corto($x['nombre'], 80), self::fmt($x['inicio']), $x['semana'], ['lista' => 'Lista', 'en_riesgo' => 'En riesgo', 'bloqueada' => 'Bloqueada'][$x['estado']]], array_slice($a, 0, 150)));

@@ -271,6 +271,17 @@ HTML],
 <p>El botón <strong>Cruce de materiales</strong> compara cuándo se necesita cada material (inicio de la actividad o fecha prevista del renglón) con su compra, entrega y submittal, y marca: compra vencida, sin fecha, tarde, submittal, a tiempo o en sitio.</p>
 <h4>Resumen ejecutivo de hoy</h4>
 <p>El botón <strong>Resumen ejecutivo de hoy</strong> (solo administrador) genera un informe con semáforo <em>crítico / atención / en orden</em>. Todas las cifras las calcula el sistema; la IA, si la hay, solo redacta el análisis y las sugerencias. Sin IA se genera igual con texto de plantilla. No modifica datos.</p>
+<p>Antes de generarlo eliges dos cosas: el <strong>tipo de informe</strong> — <em>Simple</em> (una página, solo lo esencial) o <em>Detallado</em> (todo) — y el <strong>nivel de detalle</strong> — <em>Básico, Medio, Alto o Máximo</em>, que decide cuántas actividades muestra cada lista (5, 10, 20 ó 40). Los mismos selectores están en <strong>Centro de IA → Informes → Resumen ejecutivo diario</strong> y en la app de escritorio.</p>
+<p>Además del avance, la línea base y los cambios del día, el informe trae seis bloques que <strong>siempre aparecen</strong>, con su «Ninguno» cuando no hay nada (así sabes que se revisó):</p>
+<ol>
+<li><strong>Actividades en riesgo alto</strong>: las que el sistema puntúa de 0 a 100 y pasan de 60 en los próximos 14 días, con sus razones (no inició, avance por debajo, material sin submittal…).</li>
+<li><strong>En ruta crítica</strong>: las que, si se atrasan, atrasan la obra entera (holgura cero, aún sin terminar). Necesita las dependencias activadas.</li>
+<li><strong>Restricciones activas</strong>: lo que todavía frena cada actividad (permiso, aprobación, información), con tipo y días de antigüedad.</li>
+<li><strong>Contradicciones entre documentos</strong>: lo que dicen distinto plano y especificación. No se analiza todos los días: se toma el último informe <em>Contradicciones</em> de hasta 7 días.</li>
+<li><strong>Punch list abierto</strong>: los pendientes de calidad, marcando los críticos y los vencidos.</li>
+<li><strong>Causas de atraso</strong>: por qué se atrasó cada actividad (material, submittal, restricción, predecesora, clima, bitácora), agrupadas por causa.</li>
+</ol>
+<p>Todo lo que pide acción se suma solo a <strong>Pendientes de hoy</strong>: levantar una restricción, resolver un punch crítico vencido, escalar una contradicción severa o revisar una actividad de riesgo alto.</p>
 HTML],
 
 ['id' => 'lineas-base', 'despues' => 'cambios', 'titulo' => 'Líneas base y comparación', 'icono' => 'fa-timeline', 'roles' => ['admin', 'cliente'], 'herr' => 'cambios', 'cuerpo' => <<<'HTML'

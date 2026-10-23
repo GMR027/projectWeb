@@ -11,6 +11,8 @@
  * - Crea el usuario de solo lectura «demo» (rol visitante) con acceso únicamente a ese proyecto.
  *   No tiene contraseña utilizable: se entra desde el botón «Demo» de la página principal (/demo).
  * - Las fotos se descargan de Unsplash (licencia gratuita) y se guardan en public/uploads.
+ * - Asigna un icono por disciplina a las actividades (SVG en public/build/img/actividades-iconos/demo-*.svg): se ven en la
+ *   columna «Icono» del programa y, en la Línea de tiempo, con la casilla «Icono de actividad».
  * Es seguro ejecutarlo varias veces: borra y vuelve a crear solo el proyecto con código DEMO.
  */
 
@@ -221,6 +223,20 @@ foreach ($programa as $i => [$nombrePartida, $color, $acts]) {
 }
 $act = fn(string $parte) => current(array_filter($todas, fn($a) => str_contains($a['nombre'], $parte)));
 echo count($todas) . " actividades\n";
+
+// ---------------------------------------------------------------- iconos de actividad (un icono por disciplina)
+// SVG que viven en el repo (public/build/img/actividades-iconos/): la Línea de tiempo los muestra con la casilla
+// «Icono de actividad» y el programa con la columna «Icono» del diseño.
+$iconosDemo = [
+    '1.0' => 'demo-casco.svg', '2.0' => 'demo-pala.svg', '3.0' => 'demo-estructura.svg', '4.0' => 'demo-ladrillos.svg',
+    '5.0' => 'demo-electricidad.svg', '6.0' => 'demo-hidro.svg', '7.0' => 'demo-hvac.svg', '8.0' => 'demo-datos.svg',
+    '9.0' => 'demo-acabados.svg', '10.0' => 'demo-urbanizacion.svg',
+];
+foreach ($iconosDemo as $codPartida => $archivo) {
+    if (!is_file(__DIR__ . '/../public/build/img/actividades-iconos/' . $archivo)) echo "  ! falta el icono $archivo\n";
+    $q("UPDATE actividades a JOIN partidas p ON p.id=a.partida_id SET a.icono={$str($archivo)} WHERE p.proyecto_id=$pid AND p.codigo={$str($codPartida)}");
+}
+echo count($iconosDemo) . " iconos de actividad\n";
 
 // Restricciones y PTA en lo que viene en las próximas semanas
 $tipo = fn(string $n) => (int)$db->query("SELECT id FROM tipos_restriccion WHERE nombre='" . $esc($n) . "'")->fetch_row()[0];

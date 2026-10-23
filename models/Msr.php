@@ -44,7 +44,7 @@ class Msr extends ActiveRecord
     {
         if (!$this->encabezado_id || !Estampa::disponible()) return null;
         $e = Estampa::find((int)$this->encabezado_id);
-        return $e && (int)$e->proyecto_id === (int)$this->proyecto_id && ($e->config()['modo'] ?? '') === 'lienzo' ? $e : null;
+        return $e && (int)$e->proyecto_id === (int)$this->proyecto_id ? $e : null;
     }
 
     /**

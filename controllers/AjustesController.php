@@ -331,7 +331,8 @@ class AjustesController
             'departamentosBitacora' => array_map(fn($d) => $d->nombre, \Model\BitacoraDepartamento::deProyecto((int)$proyecto->id)),
             'especialidades' => array_map(fn($e) => $e->nombre, \Model\Especialidad::deProyecto((int)$proyecto->id)),
             'submittals' => \Model\Submittal::deProyecto((int)$proyecto->id),
-            'actividadesEvidencia' => array_merge(...array_values(array_map(fn($p) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $p->getActividades()), $proyecto->getPartidas()))) ?: []
+            'actividadesEvidencia' => array_merge(...array_values(array_map(fn($p) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $p->getActividades()), $proyecto->getPartidas()))) ?: [],
+            'mesesLt' => LineatiempoController::mesesConActividades($proyecto)
         ]);
     }
 
@@ -561,6 +562,40 @@ class AjustesController
                             : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr), $nombreBase . '-' . $msr->nombre];
                     }
                     if (count($lista) > 1) $varios = $lista; else $exporter = $lista[0][0];
+                    break;
+                case 'lineatiempo':
+                    $salida = $_POST['salida'] ?? 'pdf';
+                    $estadosLt = array_values(array_intersect((array)($_POST['estado'] ?? []), ['no_iniciada', 'en_proceso', 'completada']));
+                    if (!$estadosLt) $estadosLt = ['no_iniciada', 'en_proceso', 'completada'];   // sin marcar ninguno: todos
+                    $filtrosLt = [
+                        'partida' => $_POST['partida_id'] ?? null,
+                        'estados' => $estadosLt,
+                        'restriccion' => !empty($_POST['restriccion']),
+                        'icono' => !empty($_POST['icono']),
+                    ];
+                    $nuevoExportador = function (array $d) use ($proyecto, $salida) {
+                        $e = in_array($salida, ['ods', 'xlsx'], true)
+                            ? (new \Classes\Exportadores\LineatiempoSheetExporter($proyecto))->setFormato($salida)
+                            : new \Classes\Exportadores\LineatiempoPdfExporter($proyecto);
+                        return $e->setDatos($d['lt'], $d['filtros'], $d['partidasSel']);
+                    };
+                    // Meses marcados: un archivo por mes (con varios, en un ZIP); sin marcar ninguno,
+                    // el rango completo del proyecto con los filtros elegidos
+                    $meses = array_values(array_intersect(array_map('strval', (array)($_POST['mes'] ?? [])),
+                        array_keys(LineatiempoController::mesesConActividades($proyecto))));
+                    if ($meses) {
+                        $lista = [];
+                        foreach ($meses as $m) {
+                            $d = LineatiempoController::datos($proyecto, $filtrosLt + ['mes' => $m]);
+                            if (!$d['lt']['actividades']) continue;   // mes vacío con estos filtros: se omite
+                            $lista[] = [$nuevoExportador($d), $nombreBase . '-' . $m];
+                        }
+                        if (!$lista) throw new \Exception('No hay actividades con esos filtros en los meses marcados');
+                        if (count($lista) > 1) $varios = $lista;
+                        else { $exporter = $lista[0][0]; $nombreBase = $lista[0][1]; }   // un mes: el nombre lo lleva
+                    } else {
+                        $exporter = $nuevoExportador(LineatiempoController::datos($proyecto, $filtrosLt));
+                    }
                     break;
                 case 'submittal':
                     if (!puede_gestionar_proyecto($proyecto)) throw new \Exception('No autorizado');

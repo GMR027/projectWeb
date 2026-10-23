@@ -120,7 +120,7 @@ class Simulador extends Base
         $reco = self::textos(self::dato($respuestas, 'recomendaciones'), 6, 240);
         $secs = [
             Informes::kpis('Resultado', [['Fin esperado (sin cambios)', self::fmt($datos['fin_base'])], ['Fin esperado (escenario)', self::fmt($datos['fin_esc']), ($datos['dif'] >= 0 ? '+' : '') . $datos['dif'] . ' días hábiles'], ['Probabilidad de cumplir ' . self::fmt($datos['meta']), $e['prob'] . ' %', 'sin cambios: ' . $b['prob'] . ' %'], ['Actividades que se mueven', $datos['total_afectadas']]]),
-            Informes::texto('Interpretación' . ($ia ? ' (redactada con IA, revísala)' : ' (automática)'), $resumen),
+            Informes::texto('Interpretación', $resumen),
         ];
         if ($reco) $secs[] = Informes::lista('Recomendaciones', $reco);
         $secs[] = Informes::tabla('Fecha de fin según la confianza deseada', ['Confianza', 'Sin cambios', 'Escenario'], [['50 % (lo más probable)', self::fmt($b['p50']), self::fmt($e['p50'])], ['80 %', self::fmt($b['p80']), self::fmt($e['p80'])], ['90 %', self::fmt($b['p90']), self::fmt($e['p90'])], ['Probabilidad de terminar el ' . self::fmt($datos['meta']), $b['prob'] . ' %', $e['prob'] . ' %']]);

@@ -5,7 +5,7 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 ## 🌐 Landing y Demo
 
 - `/` muestra la página de presentación (`views/landing/index.php`, estilos `src/scss/landing.scss` → `public/build/css/landing.css`) si no hay sesión; con sesión, el dashboard. `/inicio` la muestra siempre.
-- `/demo` entra como el usuario de solo lectura `demo@projectweb.demo` (rol visitante) al proyecto con código `DEMO`. Se crea/recrea con `php database/seed_demo.php` (descarga fotos de Unsplash; fechas relativas a hoy). Al final ejecuta `database/seed_demo_extras.php` (dependencias/ruta crítica, Archivo, Editor, Símbolos y View360 con fotos 360 de Poly Haven CC0); también puede correrse solo y solo toca el proyecto DEMO.
+- `/demo` entra como el usuario de solo lectura `demo@projectweb.demo` (rol visitante) al proyecto con código `DEMO`. Se crea/recrea con `php database/seed_demo.php` (descarga fotos de Unsplash; fechas relativas a hoy; asigna **un icono por disciplina** a las actividades, SVG en `public/build/img/actividades-iconos/demo-*.svg`, para verlos en la Línea de tiempo con la casilla «Icono de actividad» y en el programa con la columna «Icono»). Al final ejecuta `database/seed_demo_extras.php` (dependencias/ruta crítica, Archivo, Editor, Símbolos y View360 con fotos 360 de Poly Haven CC0); también puede correrse solo y solo toca el proyecto DEMO.
 - Correo de contacto de los botones de planes: variable `CONTACT_EMAIL` en `.env`.
 - Ojo: en `@media` el `rem` vale 16px (no 10px del `html`), así que `48rem` = 768px.
 

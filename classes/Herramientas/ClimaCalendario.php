@@ -90,7 +90,7 @@ class ClimaCalendario extends Base
         $reco = self::textos(self::dato($respuestas, 'recomendaciones'), 6, 240);
         $secs = [
             Informes::kpis('Clima de ' . ($act['lugar'] ?: 'el proyecto'), [['Días adversos pronosticados', count($malos), 'de ' . count($pr)], ['Actividades de exterior pendientes', $datos['exteriores']], ['Días no hábiles propuestos', $creadas, 'por aceptar en Análisis inteligente'], ['Días perdidos probables (60 d)', $datos['perdidos'], 'lluvia o viento con trabajo de exterior']]),
-            Informes::texto('Resumen' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen . ($act['ok'] ? '' : "\n\n" . $act['mensaje'])),
+            Informes::texto('Resumen', $resumen . ($act['ok'] ? '' : "\n\n" . $act['mensaje'])),
         ];
         if ($reco) $secs[] = Informes::lista('Recomendaciones', $reco);
         if ($creadas) $secs[] = Informes::texto('Qué sigue', "Se crearon $creadas propuesta(s) de día no hábil. Nada cambió todavía: acéptalas o recházalas en Análisis inteligente; al aceptar, el calendario del proyecto las considera.");

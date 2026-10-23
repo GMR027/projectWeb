@@ -66,6 +66,38 @@ class Informes
         return $contenido;
     }
 
+    /**
+     * Deja el informe con la información que corresponde al proyecto: fuera las notas de cómo se produjo
+     * («redactado con IA», «automático», «plantilla», el modelo que lo escribió). Sirve también para los
+     * informes ya guardados, que traen esas notas en los títulos de sus secciones.
+     */
+    public static function sinMencionesIA(array $contenido): array
+    {
+        $limpiar = static function ($v) use (&$limpiar) {
+            if (is_array($v)) return array_map($limpiar, $v);
+            return is_string($v) ? self::limpiarMencionesIA($v) : $v;
+        };
+        $contenido = $limpiar($contenido);
+        // secciones que solo explicaban que el informe se hizo sin IA (minutas antiguas)
+        if (!empty($contenido['secciones']) && is_array($contenido['secciones'])) {
+            $contenido['secciones'] = array_values(array_filter($contenido['secciones'], fn($s) => !in_array(mb_strtolower(trim((string)($s['titulo'] ?? ''))), ['sin ia', 'con ia'], true)));
+        }
+        return $contenido;
+    }
+
+    /** Quita de un texto las menciones a la IA y a cómo se generó (modelo, texto automático o de plantilla) */
+    public static function limpiarMencionesIA(string $t): string
+    {
+        // paréntesis que solo explican el origen: «(redactado con IA, revísalo)», «(automático)», «(plantilla)»
+        $t = preg_replace('/\s*\((?:[^()]{0,160}?)(?:\bIA\b|inteligencia artificial|automátic[oa]s?|plantilla)(?:[^()]{0,160}?)\)/iu', '', $t) ?? $t;
+        $t = preg_replace('/\s+por la IA\b/u', '', $t) ?? $t;          // «Prioridades sugeridas por la IA»
+        $t = preg_replace('/\b(?:con|sin)\s+IA\s*:\s*/iu', '', $t) ?? $t;   // «Sin IA: reúne a la cuadrilla…»
+        // frases que solo hablan del modelo de visión (informes de avance por fotos anteriores)
+        $t = preg_replace('/(?:^|(?<=[.!?]\s))[^.!?]*\bmodelo de (?:visión|lenguaje)\b[^.!?]*[.!?]\s*/iu', '', $t) ?? $t;
+        $t = preg_replace('/[ \t]{2,}/u', ' ', $t) ?? $t;
+        return trim($t);
+    }
+
     // ---------- persistencia ----------
 
     public static function crear(Proyecto $p, string $tipo, string $titulo, array $contenido, array $params = [], string $origen = 'sistema', string $modelo = ''): int
@@ -122,7 +154,7 @@ class Informes
     {
         $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         $h = '';
-        foreach (self::sinVacias($contenido)['secciones'] as $s) {
+        foreach (self::sinVacias(self::sinMencionesIA($contenido))['secciones'] as $s) {
             $h .= '<section class="inf-sec"><h3>' . $e($s['titulo'] ?? '') . '</h3>';
             switch ($s['tipo'] ?? 'texto') {
                 case 'kpis':
@@ -153,7 +185,7 @@ class Informes
         $css = 'body{font-family:DejaVu Sans;font-size:10px;color:#111}h1{font-size:17px;margin:0 0 2px}h2{font-size:11px;color:#555;margin:0 0 12px;font-weight:normal}h3{font-size:12px;border-bottom:1px solid #999;padding-bottom:2px;margin:14px 0 6px}'
             . 'p{margin:3px 0}ul{margin:3px 0 3px 16px;padding:0}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:2px 4px;text-align:left;vertical-align:top;font-size:9px}th{background:#e8ecf1}'
             . '.inf-kpis{width:100%}.inf-kpi{display:inline-block;width:23%;margin:0 1% 6px 0;border:1px solid #ccc;padding:4px 6px}.inf-kpi small{display:block;color:#555}.inf-kpi strong{font-size:14px}.inf-kpi span{display:block;color:#555;font-size:8px}.inf-vacio{color:#777}';
-        $html = '<html><head><meta charset="utf-8"><style>' . $css . '</style></head><body><h1>' . $e($inf['titulo']) . '</h1><h2>' . $e($p->nombre) . ' · generado el ' . date('d/m/Y H:i', strtotime($inf['creado'])) . ($inf['origen'] === 'ia' ? ' · redactado con IA (' . $e($inf['modelo']) . ')' : '') . '</h2>'
+        $html = '<html><head><meta charset="utf-8"><style>' . $css . '</style></head><body><h1>' . $e($inf['titulo']) . '</h1><h2>' . $e($p->nombre) . ' · generado el ' . date('d/m/Y H:i', strtotime($inf['creado'])) . '</h2>'
             . self::html($inf['contenido']) . '</body></html>';
         return Pdf::generar($html, 'letter', 'portrait', ['marca' => $p]);
     }

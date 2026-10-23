@@ -130,7 +130,7 @@ class RiesgosPatron extends Base
         $nv = ['alta' => 'Alta', 'media' => 'Media'];
         $secs = [
             Informes::kpis('Riesgos por patrón', [['Riesgo alto', $alta], ['Submittals en riesgo', count($s)], ['Materiales en riesgo', count($m)], ['Partidas que suelen atrasarse', count($pa)]]),
-            Informes::texto('Resumen' . ($ia ? ' (redactado con IA, revísalo)' : ' (automático)'), $resumen),
+            Informes::texto('Resumen', $resumen),
         ];
         if ($acc) $secs[] = Informes::lista('Acciones sugeridas', $acc);
         $secs[] = Informes::tabla('Submittals pendientes en riesgo', ['Nivel', 'Submittal', 'Departamento', 'Días sin respuesta', 'Lo usual (mediana / P80)', 'Casos', 'Días para que inicie la actividad'], array_map(fn($x) => [$nv[$x['nivel']], $x['n'], $x['depto'], $x['trans'], $x['p50'] . ' / ' . $x['p80'] . ' d', $x['casos'], $x['margen'] ?? '—'], $s));

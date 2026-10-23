@@ -44,12 +44,11 @@ class PunchDictado extends Base
             $items[] = ['titulo' => $t, 'descripcion' => Informes::limpiarTexto($x['descripcion'] ?? '', 800), 'ubicacion' => Informes::limpiarTexto($x['ubicacion'] ?? '', 200) ?: $params['ubicacion'], 'categoria' => Informes::limpiarTexto($x['categoria'] ?? '', 60),
                 'severidad' => isset(Punch::SEVERIDADES[$x['severidad'] ?? '']) ? $x['severidad'] : 'media', 'responsable' => Informes::limpiarTexto($x['responsable'] ?? '', 150), 'contratista' => $params['contratista']];
         }
-        $ia = (bool)$items;
         if (!$items) foreach (array_slice(array_filter(array_map('trim', preg_split('/[.;\n]+/u', $datos['texto']))), 0, 15) as $frase) if (mb_strlen($frase) >= 8) $items[] = ['titulo' => mb_substr($frase, 0, 200), 'descripcion' => '', 'ubicacion' => $params['ubicacion'], 'categoria' => '', 'severidad' => 'media', 'responsable' => '', 'contratista' => $params['contratista']];
         $items = array_slice($items, 0, 40);
         return ['secciones' => [
-            Informes::kpis('Recorrido', [['Pendientes identificados', count($items)], ['Estructurados con', $ia ? 'IA' : 'separación por frases']]),
-            Informes::texto('Antes de aprobar', $items ? 'Revisa la lista: al pulsar «Crear los pendientes» se agregan al punch list con estado «abierto». ' . ($ia ? 'La IA pudo equivocarse al separar o clasificar.' : 'Se separaron por frases sin IA; ajusta severidad y ubicación después en el punch list.') : 'No se identificó ningún pendiente en el texto.'),
+            Informes::kpis('Recorrido', [['Pendientes identificados', count($items)]]),
+            Informes::texto('Antes de aprobar', $items ? 'Revisa la lista: al pulsar «Crear los pendientes» se agregan al punch list con estado «abierto». Ajusta la severidad y la ubicación después en el punch list si hace falta.' : 'No se identificó ningún pendiente en el texto.'),
             Informes::tabla('Pendientes', ['Pendiente', 'Ubicación', 'Categoría', 'Severidad', 'Responsable'], array_map(fn($x) => [$x['titulo'], $x['ubicacion'] ?: '—', $x['categoria'] ?: '—', Punch::SEVERIDADES[$x['severidad']], $x['responsable'] ?: ($x['contratista'] ?: '—')], $items)),
             Informes::texto('Texto dictado', $datos['texto']),
         ], 'aplicar' => ['tipo' => 'punch', 'items' => $items]];

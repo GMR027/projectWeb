@@ -105,7 +105,7 @@ class ReporteDiario extends Base
         $pendientes = self::textos(self::dato($respuestas, 'pendientes'));
         $secs = [
             Informes::kpis('Resumen del día', [['Actividades en ejecución', count($a)], ['Con avance registrado', count($conAvance)], ['Entradas de bitácora', count($datos['bitacora'])], ['Materiales entregados', count($datos['entregas'])], ['Fotos de evidencia', $datos['fotos']], ['Restricciones activas', count($datos['restricciones'])]]),
-            Informes::texto('Comentarios del reporte' . ($ia ? ' (redactado con IA, revísalo)' : ' (borrador automático)'), $comentarios),
+            Informes::texto('Comentarios del reporte', $comentarios),
             Informes::tabla('Actividades del día', ['Código', 'Actividad', 'Avance previo', 'Avance hoy', 'Cambio'], array_map(fn($x) => [$x['codigo'], self::corto($x['nombre'], 90), $x['previo'] . '%', $x['hoy'] . '%', $x['registro'] ? ($x['cambio'] >= 0 ? '+' : '') . $x['cambio'] . ' pts' : 'sin registro'], $a)),
         ];
         if ($pendientes) $secs[] = Informes::lista('Pendientes para el siguiente día', $pendientes);

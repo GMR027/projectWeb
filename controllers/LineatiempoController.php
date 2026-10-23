@@ -6,6 +6,7 @@ use MVC\Router;
 use Model\Actividad;
 use Model\Partida;
 use Model\Proyecto;
+use Model\Restriccion;
 use Classes\AccesoDb;
 use Classes\Calendario;
 use Classes\Dependencias;
@@ -24,17 +25,95 @@ class LineatiempoController
     {
         $proyecto = proyecto_de_peticion();
 
-        // Filtros (quedan en la URL: se puede recargar, compartir o marcar como favorita).
-        // Ya no hay filtro de mes: el diagrama abarca todos los meses con actividades y se
-        // navega dentro de la misma página (botones ‹ › y Hoy). ?mes= solo ancla la vista inicial.
+        // ?mes= solo ancla la vista inicial: el diagrama abarca todos los meses con actividades
+        // y se navega dentro de la misma página (botones ‹ › y Hoy), sin filtro de mes.
         $mesAncla = null;
         $f = \DateTime::createFromFormat('!Y-m', (string)($_GET['mes'] ?? ''));
         if ($f) $mesAncla = $f->format('Y-m');
-        $partidaFiltro = filter_var($_GET['partida'] ?? null, FILTER_VALIDATE_INT);
-        $estado = in_array($_GET['estado'] ?? '', ['pendientes', 'todas', 'completadas'], true) ? $_GET['estado'] : 'pendientes';
-        $soloRestriccion = !empty($_GET['restriccion']);
-        $iconoActivo = !empty($_GET['icono']);   // casilla «Icono de actividad»: disco circular sobre cada barra
+        $d = self::datos($proyecto);
+        $d['lt']['mesAncla'] = $mesAncla;   // ancla inicial de la vista (no afecta a la exportación)
+
+        $router->render('lineatiempo/index', [
+            'titulo' => 'Línea de tiempo activa - ' . $proyecto->nombre,
+            'proyecto' => $proyecto,
+            'puedeEditar' => puede_gestionar_proyecto($proyecto),
+            'lt' => $d['lt'],
+            'partidasSel' => $d['partidasSel'],
+            'filtros' => $d['filtros'],
+        ]);
+    }
+
+    /**
+     * Exporta la vista actual (con los filtros elegidos) a PDF o a hoja de cálculo (.ods).
+     * El PDF sale en UNA sola hoja del tamaño que haga falta (ver LineatiempoPdfExporter).
+     */
+    public static function exportar()
+    {
+        $proyecto = proyecto_de_peticion();
+        if (!puede_descargar()) {
+            header('Location: /lineatiempo?proyecto=' . (int)$proyecto->id . '&error=' . urlencode('No tienes permiso para descargar archivos.'));
+            exit;
+        }
+        $d = self::datos($proyecto);
+        $formato = ($_GET['formato'] ?? '') === 'ods' ? 'ods' : 'pdf';
+        try {
+            $exporter = $formato === 'ods'
+                ? (new \Classes\Exportadores\LineatiempoSheetExporter($proyecto))->setFormato('ods')
+                : new \Classes\Exportadores\LineatiempoPdfExporter($proyecto);
+            $ruta = $exporter->setDatos($d['lt'], $d['filtros'], $d['partidasSel'])->generar('Linea-de-tiempo');
+            $mime = $formato === 'ods' ? 'application/vnd.oasis.opendocument.spreadsheet' : 'application/pdf';
+            $datos = (string)file_get_contents($ruta);
+            $nombre = basename($ruta);
+            // Sin historial: el archivo no se conserva en el servidor (public/ es accesible por URL)
+            @unlink($ruta);
+            enviar_descarga($datos, $mime, $nombre);
+        } catch (\Throwable $e) {
+            header('Location: /lineatiempo?proyecto=' . (int)$proyecto->id . '&error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    /**
+     * Datos de la vista: los mismos para la pantalla, el enlace directo (/lineatiempo/exportar) y
+     * el Centro de Exportación (/exportar). $f puede venir de la URL (vista) o del POST:
+     * - partida: id o vacío (todas)
+     * - estados: lista de ['no_iniciada','en_proceso','completada'] (o «estado» único de la vista)
+     * - restriccion / icono: booleanos
+     * - mes: 'Y-m' para aislar ese mes completo (un archivo por mes en el Centro de Exportación)
+     */
+    public static function datos(\Model\Proyecto $proyecto, array $f = []): array
+    {
+        if (!$f) {   // desde la URL (la vista): el estado es único en su formulario
+            $f = [
+                'partida' => $_GET['partida'] ?? null,
+                'estado' => $_GET['estado'] ?? '',
+                'restriccion' => !empty($_GET['restriccion']),
+                'icono' => !empty($_GET['icono']),
+            ];
+        }
+        $partidaFiltro = filter_var($f['partida'] ?? null, FILTER_VALIDATE_INT);
+
+        // Estados: lista explícita (Centro de Exportación, en modo casillas) o el valor único de la vista
+        $estadosSel = array_values(array_intersect((array)($f['estados'] ?? []), ['no_iniciada', 'en_proceso', 'completada']));
+        $estado = in_array($f['estado'] ?? '', ['pendientes', 'todas', 'completadas'], true) ? $f['estado'] : 'pendientes';
+        if (!$estadosSel) {
+            $estadosSel = $estado === 'completadas' ? ['completada']
+                : ($estado === 'todas' ? ['no_iniciada', 'en_proceso', 'completada'] : ['no_iniciada', 'en_proceso']);
+        } else {
+            $estado = $estadosSel === ['completada'] ? 'completadas' : (count($estadosSel) === 3 ? 'todas' : 'pendientes');
+        }
+        $soloRestriccion = !empty($f['restriccion']);
+        $iconoActivo = !empty($f['icono']);   // casilla «Icono de actividad»: disco circular sobre cada barra
         $hoy = date('Y-m-d');
+
+        // Mes aislado (Centro de Exportación): el diagrama cubre ese mes completo
+        $mes = $mesInicio = $mesFin = null;
+        $md = \DateTime::createFromFormat('!Y-m', (string)($f['mes'] ?? ''));
+        if ($md) {
+            $mes = $md->format('Y-m');
+            $mesInicio = $md->format('Y-m-01');
+            $mesFin = $md->format('Y-m-t');
+        }
 
         $todas = Dependencias::actividades((int)$proyecto->id);   // [id => fila con partida, color, etc.]
         $restricciones = self::restriccionesActivas((int)$proyecto->id);   // [actividad_id => ['tipos' => [], 'texto' => '']]
@@ -56,10 +135,10 @@ class LineatiempoController
             $a['progreso'] = (int)$a['progreso'];
             $a['restriccion'] = $restricciones[$a['id']] ?? null;
             if ($partidaFiltro && $a['partida_id'] !== $partidaFiltro) continue;
-            if ($estado === 'pendientes' && $a['status'] === 'completada') continue;
-            if ($estado === 'completadas' && $a['status'] !== 'completada') continue;
+            if (!in_array($a['status'], $estadosSel, true)) continue;
             if ($soloRestriccion && !$a['restriccion']) continue;
             if (!$a['fecha_inicio'] || !$a['fecha_fin']) continue;
+            if ($mes !== null && ($a['fecha_fin'] < $mesInicio || $a['fecha_inicio'] > $mesFin)) continue;   // solo lo de ese mes
             $a['icono'] = $iconos[(int)$a['id']] ?? null;   // imagen subida a la actividad (si la tiene)
             $visibles[] = $a;
             if ($a['restriccion']) $conRestriccion++;
@@ -77,22 +156,27 @@ class LineatiempoController
             if ($a['restriccion']) $partidas[$id]['restricciones']++;
         }
 
-        // Rango del diagrama: del primer al último mes con actividades visibles (meses completos).
-        // Tope de 3 años para no generar miles de columnas en proyectos muy largos.
-        $inicioR = $finR = null;
-        foreach ($visibles as $a) {
-            if ($inicioR === null || $a['fecha_inicio'] < $inicioR) $inicioR = $a['fecha_inicio'];
-            if ($finR === null || $a['fecha_fin'] > $finR) $finR = $a['fecha_fin'];
-        }
-        if ($inicioR === null) { $inicioR = date('Y-m-01'); $finR = date('Y-m-t'); }
-        $inicioR = date('Y-m-01', strtotime($inicioR));
-        $finR = date('Y-m-t', strtotime($finR));
-        $maxDias = 1096;
-        if ((int)((strtotime($finR) - strtotime($inicioR)) / 86400) + 1 > $maxDias) {
-            $ancla = ($hoy >= $inicioR && $hoy <= $finR) ? $hoy : $inicioR;
-            $ini = max(strtotime($inicioR), strtotime($ancla) - (int)($maxDias / 2) * 86400);
-            $inicioR = date('Y-m-01', $ini);
-            $finR = date('Y-m-t', $ini + ($maxDias - 1) * 86400);
+        // Rango del diagrama: el mes elegido, o del primer al último mes con actividades visibles
+        // (meses completos). Tope de 3 años para no generar miles de columnas en proyectos muy largos.
+        if ($mes !== null) {
+            $inicioR = $mesInicio;
+            $finR = $mesFin;
+        } else {
+            $inicioR = $finR = null;
+            foreach ($visibles as $a) {
+                if ($inicioR === null || $a['fecha_inicio'] < $inicioR) $inicioR = $a['fecha_inicio'];
+                if ($finR === null || $a['fecha_fin'] > $finR) $finR = $a['fecha_fin'];
+            }
+            if ($inicioR === null) { $inicioR = date('Y-m-01'); $finR = date('Y-m-t'); }
+            $inicioR = date('Y-m-01', strtotime($inicioR));
+            $finR = date('Y-m-t', strtotime($finR));
+            $maxDias = 1096;
+            if ((int)((strtotime($finR) - strtotime($inicioR)) / 86400) + 1 > $maxDias) {
+                $ancla = ($hoy >= $inicioR && $hoy <= $finR) ? $hoy : $inicioR;
+                $ini = max(strtotime($inicioR), strtotime($ancla) - (int)($maxDias / 2) * 86400);
+                $inicioR = date('Y-m-01', $ini);
+                $finR = date('Y-m-t', $ini + ($maxDias - 1) * 86400);
+            }
         }
 
         $calendario = new Calendario((int)$proyecto->id);
@@ -105,19 +189,39 @@ class LineatiempoController
             ];
         }
 
-        $router->render('lineatiempo/index', [
-            'titulo' => 'Línea de tiempo activa - ' . $proyecto->nombre,
-            'proyecto' => $proyecto,
-            'puedeEditar' => puede_gestionar_proyecto($proyecto),
+        return [
             'lt' => [
-                'proyecto' => (int)$proyecto->id, 'inicio' => $inicioR, 'fin' => $finR, 'mesAncla' => $mesAncla,
+                'proyecto' => (int)$proyecto->id, 'inicio' => $inicioR, 'fin' => $finR,
                 'hoy' => $hoy, 'dias' => $dias, 'partidas' => array_values($partidas),
                 'actividades' => $visibles, 'total' => count($visibles), 'conRestriccion' => $conRestriccion,
                 'iconos' => $iconoActivo,
             ],
             'partidasSel' => $partidasSel,
-            'filtros' => ['partida' => $partidaFiltro ?: 0, 'estado' => $estado, 'restriccion' => $soloRestriccion, 'icono' => $iconoActivo],
-        ]);
+            'filtros' => ['partida' => $partidaFiltro ?: 0, 'estado' => $estado, 'restriccion' => $soloRestriccion,
+                'icono' => $iconoActivo, 'estados' => $estadosSel, 'mes' => $mes],
+        ];
+    }
+
+    /** Meses con actividades del proyecto: [Y-m => 'Marzo 2026'] (para elegir el mes en /exportar) */
+    public static function mesesConActividades(\Model\Proyecto $proyecto): array
+    {
+        $MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        $marcados = [];
+        foreach (Dependencias::actividades((int)$proyecto->id) as $a) {
+            if (!$a['fecha_inicio'] || !$a['fecha_fin']) continue;
+            $ini = date('Y-m-01', strtotime($a['fecha_inicio']));
+            $fin = date('Y-m-t', strtotime($a['fecha_fin']));
+            for ($d = new \DateTime($ini); $d->format('Y-m') <= $fin; $d->modify('+1 month')) {
+                $marcados[$d->format('Y-m')] = true;
+            }
+        }
+        ksort($marcados);
+        $res = [];
+        foreach (array_keys($marcados) as $m) {
+            $dt = \DateTime::createFromFormat('!Y-m', $m);
+            $res[$m] = $MESES[(int)$dt->format('n')] . ' ' . $dt->format('Y');
+        }
+        return $res;
     }
 
     /**
@@ -169,6 +273,28 @@ class LineatiempoController
     }
 
     /** Restricciones activas del proyecto agrupadas por actividad: [actividad_id => ['tipos' => [], 'texto' => '']] */
+    /**
+     * Marca una restricción como resuelta desde la burbuja de la ⚠ de la línea de tiempo.
+     * Mismas reglas que el formulario del Programa: solo quien gestiona el proyecto (el token
+     * CSRF llega en la cabecera X-CSRF-Token que agrega el JS global en cada fetch).
+     */
+    public static function resolver()
+    {
+        $p = proyecto_api('gestionar');
+        $restriccion = Restriccion::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        $actividad = $restriccion ? Actividad::find($restriccion->actividad_id) : null;
+        $partida = $actividad ? Partida::find($actividad->partida_id) : null;
+        if (!$restriccion || !$partida || (int)$partida->proyecto_id !== (int)$p->id) {
+            json_respuesta(['success' => false, 'error' => 'Restricción no encontrada'], 404);
+        }
+        if ($restriccion->estado !== 'activa') {
+            json_respuesta(['success' => false, 'error' => 'La restricción ya estaba resuelta'], 409);
+        }
+        $restriccion->estado = 'resuelta';
+        $restriccion->guardar();
+        json_respuesta(['success' => true]);
+    }
+
     /** Iconos subidos a las actividades del proyecto: [actividad_id => ruta pública]. Vacío si la migración no está aplicada */
     private static function iconosActividades(int $proyectoId): array
     {
@@ -188,7 +314,7 @@ class LineatiempoController
         $out = [];
         $pid = (int)$proyectoId;
         foreach (self::filas(
-            "SELECT r.actividad_id, r.codigo, r.descripcion, tr.nombre AS tipo
+            "SELECT r.id, r.actividad_id, r.codigo, r.descripcion, tr.nombre AS tipo
              FROM restricciones r
              JOIN actividades a ON a.id = r.actividad_id
              JOIN partidas p ON p.id = a.partida_id
@@ -200,6 +326,8 @@ class LineatiempoController
             $tipo = (string)($f['tipo'] ?? '');
             if ($tipo !== '' && !in_array($tipo, $out[$id]['tipos'] ?? [], true)) $out[$id]['tipos'][] = $tipo;
             $out[$id]['texto'][] = trim(implode(' · ', array_filter([$tipo, $f['codigo'] ?? '', self::corto($f['descripcion'] ?? '', 60)])));
+            // Detalle completo (con id) para la burbuja flotante de la ⚠, con su botón «Resolver»
+            $out[$id]['items'][] = ['id' => (int)$f['id'], 'codigo' => (string)($f['codigo'] ?? ''), 'tipo' => $tipo, 'descripcion' => (string)($f['descripcion'] ?? '')];
             $out[$id]['total'] = ($out[$id]['total'] ?? 0) + 1;
         }
         return $out;

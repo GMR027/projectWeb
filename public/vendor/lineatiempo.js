@@ -71,20 +71,38 @@
     const [i0, i1] = barraI(a);
     const cls = 'lt-barra st-' + esc(a.status) + (a.hito ? ' lt-hito' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
     const titulo = a.codigo + ' — ' + a.nombre + ' | ' + fmt(a.fecha_inicio) + ' → ' + fmt(a.fecha_fin) + ' | ' + a.progreso + '%';
-    const restr = a.restriccion ? '<span class="lt-restr" title="' + esc((a.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '';
+    const x0 = i0 * ppd, ancho = (i1 - i0 + 1) * ppd, x1 = x0 + ancho;
+    const centro = alto - 15;   // centro vertical de la barra (fila normal y fila con iconos)
     const manos = (LT.puedeEditar && !a.hito) ? '<span class="lt-mano lt-mano-l" title="Cambiar el inicio">◀</span><span class="lt-mano lt-mano-r" title="Cambiar el fin">▶</span>' : '';
     // El número de la actividad con sus días de duración, centrado en la barra (los hitos solo muestran el rombo)
     const texto = a.hito ? '' : '<span class="lt-barra-texto mono">' + esc(a.codigo) + ' (' + (Number(a.duracion_dias) || 0) + ' d)</span>';
+    // Chips a la derecha de la barra, fuera de ella y legibles: estado (✕ roja = no iniciada, reloj amarillo =
+    // en proceso, paloma verde = completada) y, a continuación, la restricción en rojo (si no cabe al borde, se meten)
+    const estTam = 24, restTam = 26, holg = 5;
+    const bloq = estTam + (a.restriccion ? holg + restTam : 0);
+    let xDer = x1 + holg;
+    if (xDer + bloq > LT.dias.length * ppd) xDer = Math.max(x0 + 2, LT.dias.length * ppd - bloq - holg);
+    const estTit = a.status === 'completada' ? 'Completada' : a.status === 'en_proceso' ? 'En proceso' : 'No iniciada';
+    const estSvg = a.status === 'completada'
+      ? '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : a.status === 'en_proceso'
+        ? '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 4.4V8l2.6 1.7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>'
+        : '<svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7m0-7l-7 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>';
+    const chipEst = '<span class="lt-chip-est st-' + esc(a.status) + '" title="' + estTit + '" style="left:' + xDer + 'px;top:' + (centro - estTam / 2) + 'px">' + estSvg + '</span>';
+    const chipRest = a.restriccion
+      ? '<span class="lt-chip-restr" data-id="' + a.id + '" style="left:' + (xDer + estTam + holg) + 'px;top:' + (centro - restTam / 2) + 'px"><svg viewBox="0 0 16 16"><path d="M8 2.4 14.6 13.6H1.4z" fill="#fff"/><rect x="7.2" y="6" width="1.6" height="4.4" rx=".8" fill="#ef4444"/><circle cx="8" cy="12.2" r="1" fill="#ef4444"/></svg></span>'
+      : '';
     // Icono (casilla «Icono de actividad»): disco circular centrado sobre la barra
     const icono = (LT.iconos && a.icono)
-      ? '<img class="lt-icono" src="' + esc(a.icono) + '" alt="" draggable="false" style="left:' + (i0 * ppd + ((i1 - i0 + 1) * ppd) / 2 - 11) + 'px" onerror="this.remove()">'
+      ? '<img class="lt-icono" src="' + esc(a.icono) + '" alt="" draggable="false" style="left:' + (x0 + ancho / 2 - 24) + 'px" onerror="this.remove()">'
       : '';
     return '<div class="lt-fila" style="top:' + top + 'px;height:' + alto + 'px">' +
-      '<div class="' + cls + '" data-id="' + a.id + '" style="left:' + (i0 * ppd) + 'px;width:' + ((i1 - i0 + 1) * ppd) + 'px;background:' + esc(p.color || '#3b82f6') + '" title="' + esc(titulo) + '">' +
-      '<span class="lt-barra-fill" style="width:' + (a.progreso || 0) + '%"></span>' + restr + manos + texto + '</div>' + icono + '</div>';
+      '<div class="' + cls + '" data-id="' + a.id + '" style="left:' + x0 + 'px;width:' + ancho + 'px;background:' + esc(p.color || '#3b82f6') + '" title="' + esc(titulo) + '">' +
+      '<span class="lt-barra-fill" style="width:' + (a.progreso || 0) + '%"></span>' + manos + texto + '</div>' + chipEst + chipRest + icono + '</div>';
   }
 
   function pintar() {
+    if (pop && !pop.hidden) popOcultar();   // la burbuja de restricción no sobrevive a un repintado
     const sc = $('lt-scroll'), sl = sc.scrollLeft, st = sc.scrollTop;
     $('lt-canvas').style.width = (len * ppd + 20) + 'px';
     $('lt-canvas').classList.toggle('lt-ppd-chico', ppd < 22);
@@ -113,7 +131,7 @@
     if (hoyIdx >= 0 && hoyIdx < len) fondo += '<div class="lt-hoy" style="left:' + (hoyIdx * ppd + Math.round(ppd / 2)) + 'px"></div>';
 
     // Etiquetas + filas (agrupadas por partida); con icono la fila de actividad crece para que el disco quepa sobre la barra
-    const filaAlto = LT.iconos ? 48 : ROW;
+    const filaAlto = LT.iconos ? 82 : ROW;   // el icono mide 48 px: la fila crece para que quepa sobre la barra
     let labels = '<div class="lt-lab-cab" style="height:' + HEAD + 'px">Actividad / partida</div>', filas = '', y = HEAD;
     LT.partidas.forEach(p => {
       const acts = LT.actividades.filter(a => a.partida_id === p.id);
@@ -283,6 +301,114 @@
     setTimeout(actualizarNav, 420);
   });
   $('lt-scroll').addEventListener('scroll', actualizarNav, { passive: true });
+
+  // ---------- burbuja de la restricción (flotante y con retardo, igual que las burbujas de ayuda) ----------
+  let pop = null, popT = 0, popOc = 0, popChip = null, popAct = null;
+  function popOcultar() {
+    clearTimeout(popT); clearTimeout(popOc);
+    if (pop) pop.hidden = true;
+    if (popChip) { popChip.removeAttribute('aria-describedby'); popChip = null; }
+    popAct = null;
+  }
+  function popOcultarPronto() { clearTimeout(popOc); popOc = setTimeout(popOcultar, 150); }   // gracia para llegar a la burbuja
+  function popMostrar(chip) {
+    const a = act(+chip.dataset.id);
+    if (!a || !a.restriccion || !document.body.contains(chip)) return;
+    if (!pop) {
+      pop = document.createElement('div');
+      pop.className = 'burbuja-ayuda lt-restr-pop';
+      pop.id = 'lt-restr-pop';
+      pop.setAttribute('role', 'tooltip');
+      pop.hidden = true;
+      pop.addEventListener('mouseenter', () => clearTimeout(popOc));
+      pop.addEventListener('mouseleave', popOcultarPronto);
+      document.body.appendChild(pop);
+    }
+    const items = (a.restriccion.items || []);
+    pop.innerHTML = items.length
+      ? items.map(it => {
+          const cab = esc([it.tipo, it.codigo].filter(Boolean).join(' · '));
+          const btn = (LT.puedeEditar && it.id)
+            ? '<button type="button" class="lt-pop-btn" data-res="' + (it.id | 0) + '"><i class="fa-solid fa-check"></i> Resolver</button>'
+            : '';
+          return '<div class="lt-pop-item">' + (cab ? '<span class="lt-pop-cab">' + cab + '</span>' : '') + '<p>' + esc(it.descripcion) + '</p>' + btn + '</div>';
+        }).join('')
+      : '<p>' + esc((a.restriccion.texto || []).join(' · ')) + '</p>';
+    popAct = a; popChip = chip;
+    pop.hidden = false;
+    chip.setAttribute('aria-describedby', pop.id);
+    // Cerca del chip: debajo si cabe; si no, arriba; siempre dentro de la ventana
+    const r = chip.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, m = 8;
+    let x = clamp(r.left, m, Math.max(m, innerWidth - w - m));
+    let y = r.bottom + m;
+    if (y + h > innerHeight - m) y = r.top - h - m;
+    pop.style.left = x + 'px';
+    pop.style.top = Math.max(m, y) + 'px';
+  }
+  function popProgramar(chip) {
+    clearTimeout(popT); clearTimeout(popOc);
+    if (popChip === chip && pop && !pop.hidden) return;
+    popT = setTimeout(() => popMostrar(chip), 650);
+  }
+  function resolverRest(id) {
+    const a = popAct;
+    if (!a) return;
+    if (!confirm('¿Marcar la restricción como resuelta?')) return;
+    const fd = new FormData();
+    fd.append('proyecto', LT.proyecto); fd.append('id', id);
+    fetch('/api/lineatiempo/resolver', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) { aviso(d.error || 'No se pudo resolver la restricción', 'error'); return; }
+        const quedan = ((a.restriccion && a.restriccion.items) || []).filter(x => x.id !== +id);
+        if (quedan.length) {
+          a.restriccion.items = quedan;
+        } else {
+          a.restriccion = null;
+          const p = partidas.get(a.partida_id);
+          if (p && +p.restricciones > 0) p.restricciones = +p.restricciones - 1;
+          LT.conRestriccion = Math.max(0, (+LT.conRestriccion || 1) - 1);
+          const cN = $('lt-cont-restr-n');
+          if (cN) {
+            cN.textContent = LT.conRestriccion;
+            if (!LT.conRestriccion && $('lt-cont-restr')) $('lt-cont-restr').hidden = true;
+          }
+          if (LT.soloRestriccion) {   // con el filtro «Solo con restricción» activo, la actividad ya no corresponde
+            LT.actividades = LT.actividades.filter(x => x.id !== a.id);
+            LT.total = Math.max(0, (+LT.total || 1) - 1);
+            const cT = $('lt-cont-total');
+            if (cT) cT.textContent = LT.total;
+          }
+        }
+        popOcultar();
+        aviso('Restricción resuelta.', 'ok');
+        pintar();
+      })
+      .catch(() => aviso('Error de conexión: la restricción no se pudo resolver.', 'error'));
+  }
+
+  // Retardo al pasar el cursor sobre la ⚠ (los chips de estado no capturan el puntero)
+  document.addEventListener('mouseover', e => {
+    if (e.pointerType === 'touch') return;
+    const chip = e.target instanceof Element ? e.target.closest('.lt-chip-restr') : null;
+    if (chip) popProgramar(chip);
+  });
+  document.addEventListener('mouseout', e => {
+    const chip = e.target instanceof Element ? e.target.closest('.lt-chip-restr') : null;
+    if (!chip || (e.relatedTarget && chip.contains(e.relatedTarget))) return;
+    if (pop && e.relatedTarget instanceof Node && pop.contains(e.relatedTarget)) return;
+    clearTimeout(popT);
+    popOcultarPronto();
+  });
+  document.addEventListener('click', e => {
+    const b = e.target instanceof Element ? e.target.closest('.lt-pop-btn') : null;
+    if (b) { resolverRest(+b.dataset.res); return; }
+    const sobre = e.target instanceof Element && (e.target.closest('.lt-restr-pop') || e.target.closest('.lt-chip-restr'));
+    if (pop && !pop.hidden && !sobre) popOcultar();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') popOcultar(); });
+  addEventListener('scroll', () => { if (pop && !pop.hidden) popOcultar(); }, true);
+  addEventListener('resize', () => { if (pop && !pop.hidden) popOcultar(); });
 
   // ---------- inicio ----------
   pintar();

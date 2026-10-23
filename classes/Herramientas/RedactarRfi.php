@@ -85,9 +85,9 @@ class RedactarRfi extends Base
             'fecha_limite' => $datos['fecha_limite'], 'actividad_id' => $a ? (int)$a['id'] : 0,
         ];
         $secs = [
-            Informes::kpis('RFI', [['Prioridad', \Classes\Rfi::PRIORIDADES[$params['prioridad']] ?? $params['prioridad']], ['Respuesta requerida para', $datos['fecha_limite'] ? self::fmt($datos['fecha_limite']) : 'sin fecha'], ['Redactado con', $ia ? 'IA' : 'plantilla']]),
+            Informes::kpis('RFI', [['Prioridad', \Classes\Rfi::PRIORIDADES[$params['prioridad']] ?? $params['prioridad']], ['Respuesta requerida para', $datos['fecha_limite'] ? self::fmt($datos['fecha_limite']) : 'sin fecha']]),
             Informes::texto('Asunto', $asunto),
-            Informes::texto('Texto del RFI' . ($ia ? ' (redactado con IA, revísalo)' : ' (plantilla)'), $cuerpo),
+            Informes::texto('Texto del RFI', $cuerpo),
         ];
         if ($a) $secs[] = Informes::lista('Contexto que agrega el sistema', array_values(array_filter([
             "Actividad: {$a['codigo']} {$a['nombre']} · {$a['partida']} · " . self::fmt($a['inicio']) . ' a ' . self::fmt($a['fin']) . " · avance {$a['progreso']} %",

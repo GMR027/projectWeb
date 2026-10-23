@@ -242,8 +242,9 @@ HTML],
 <li><strong>Todos los meses con actividades</strong> en una sola barra de tiempo: la banda superior trae el nombre de cada mes. Las actividades que empezaron antes o terminan después de lo que se ve se recortan al borde con una flechita ◀ ▶ que indica que continúan.</li>
 <li>Las actividades se agrupan por <strong>partida, con el color de la partida</strong> en cada barra; en el centro de cada barra está el <strong>número de la actividad y, entre paréntesis, los días que dura</strong> (por ejemplo <code>1.4 (5 d)</code>).</li>
 <li>Por defecto se ven las <strong>no iniciadas y en proceso</strong> (lo que se está ejecutando). En <em>Estado</em> puedes ver todas o solo las completadas.</li>
-<li>Con <em>Solo con restricción</em> te quedas únicamente con las actividades (y partidas) que tienen una restricción activa; ⚠ marca cada una y al pasar el cursor ves de qué se trata.</li>
-<li>Con la casilla <strong>Icono de actividad</strong> cada actividad muestra, en forma <strong>circular y sobre su barra</strong>, la imagen que se le cargó al crearla o editarla (se ve más grande si amplías con la rueda).</li>
+<li>Con <em>Solo con restricción</em> te quedas únicamente con las actividades (y partidas) que tienen una restricción activa; la marca⚠ queda <strong>fuera de la barra, a la derecha y en rojo</strong> y <strong>al acercar el puntero se abre una ventana flotante</strong> (con retardo, igual que las burbujas de ayuda de arriba) con el detalle de cada restricción y un botón <strong>Resolver</strong> que la marca como resuelta sin recargar.</li>
+<li>Cada barra lleva, <strong>fuera de ella y a la derecha</strong> (justo antes de la restricción), el estado en un circulito <strong>relleno con la marca en blanco</strong>: <strong style="color:#ef4444">rojo con ✕</strong> si está <em>no iniciada</em>, <strong style="color:#d97706">ámbar con reloj</strong> si está <em>en proceso</em> y <strong style="color:#22c55e">verde con paloma</strong> si está <em>completada</em> (los tres están explicados en la leyenda de arriba).</li>
+<li>Con la casilla <strong>Icono de actividad</strong> cada actividad muestra, en forma <strong>circular y sobre su barra</strong>, la imagen que se le cargó al crearla o editarla (el disco mide 48 px y las filas se hacen más altas para no tapar la barra).</li>
 <li>Los <strong>días no hábiles</strong> (según la jornada del proyecto y sus festivos) aparecen sombreados y la línea naranja es <em>hoy</em>.</li>
 </ul>
 <h4>2. Cómo se mueven las fechas</h4>
@@ -262,6 +263,13 @@ HTML],
 <li>Los filtros quedan en la dirección de la página: puedes recargar, marcar la página como favorita o compartirla con la misma partida.</li>
 <li>El cliente y los visitantes ven la línea de tiempo <strong>en solo lectura</strong>.</li>
 </ul>
+<h4>4. Exportar la vista</h4>
+<p>Con <strong>Exportar</strong> (arriba, junto al botón <em>Programa</em>) descargas <strong>exactamente lo que estás viendo, con los filtros elegidos</strong> (partida, estado, «solo con restricción» e icono de actividad):</p>
+<ul>
+<li><strong>PDF (una sola hoja):</strong> el papel mide el tamaño que haga falta para caber todo en una hoja (el ancho según los días del rango y el alto según las actividades), así que nunca sale partido en varias páginas.</li>
+<li><strong>LibreOffice Calc (.ods):</strong> la misma línea de tiempo como tabla editable: a la izquierda el código, la actividad, el estado, el % de avance, fechas, duración y restricción; a la derecha, una columna por día con la barra de cada actividad (parte completada en color aclarado) y los días no hábiles sombreados.</li>
+</ul>
+<p class="manual-nota">Los dos formatos se generan al instante con los datos actuales del programa: si moviste fechas o cambiaste avances, vuelve a exportar y tendrás lo último. El nombre del archivo sigue la <a href="#exportar">nomenclatura de exportación</a> que hayas configurado. Lo mismo puedes hacer desde <em>Exportar</em> (Centro de Exportación), donde además combinas los estados por casillas (no iniciadas, en proceso, completadas) y puedes marcar <strong>varios meses</strong> a la vez: cada mes sale como archivo propio dentro de un ZIP.</p>
 HTML],
 
 ['id' => 'planificador', 'titulo' => 'Planificador', 'icono' => 'fa-diagram-next', 'roles' => $todos, 'herr' => 'planificador', 'cuerpo' => <<<'HTML'
@@ -847,6 +855,7 @@ HTML],
 <tr><td><strong>Last Planner</strong></td><td>Post-its de 7×7 cm por día y partida, en hojas carta con marcas de corte. Eliges la partida y las tarjetas por fila.</td></tr>
 <tr><td><strong>Curvas de productividad</strong></td><td>Una curva con su tabla y gráfica, o la gráfica maestra con todas. PDF carta horizontal; .xlsx / .ods con tabla y gráfica.</td></tr>
 <tr><td><strong>MSR</strong></td><td>Status de submittals y entrega de materiales con fotos. PDF en A4 horizontal; .xlsx / .ods editables.</td></tr>
+<tr><td><strong>Línea de tiempo activa</strong></td><td>El Gantt diario agrupado por partida con casillas de <em>estado</em> (no iniciadas, en proceso, completadas —cualquier combinación—), «solo con restricción», icono de actividad y partida; y casillas de <em>meses</em>: sin marcar ninguno sale el rango completo del proyecto y con varios marcados un archivo por mes en un ZIP. PDF en una sola hoja del tamaño que haga falta, o .ods editable.</td></tr>
 <tr><td><strong>Reportes de obra (PDF)</strong></td><td>Reporte diario (un día o un mes), Bitácora (por día, mes, departamento o importancia), Minutas (por importancia, día o mes), Submittals (uno, varios o todos), Materiales (por especialidad, estatus de compra o entrega) y Evidencias (por día, semana, mes o actividad). Carta vertical; los filtros se combinan y los vacíos no filtran.</td></tr>
 </tbody>
 </table>
@@ -867,7 +876,7 @@ HTML],
 HTML],
 
 ['id' => 'integraciones', 'titulo' => 'Integraciones: API y webhooks', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>En <strong>Integraciones</strong> (menú Proyecto) conectas ProjectWeb con otras herramientas (Power BI, Excel, Zapier, Slack, un sistema propio…).</p>
+<p>En <strong>Integraciones</strong> (menú Proyecto) conectas ProjectWeb con otras herramientas (Power BI, Excel, Zapier, Slack, un sistema propio…). Para recibir avisos y reportar avance desde el celular, mira la sección <a href="#telegram">Telegram</a>.</p>
 <h4>API REST</h4>
 <ul>
 <li>Crea un <strong>token</strong> con un nombre que diga para qué es. Se muestra <em>una sola vez</em>: cópialo. Actúa como tú: ve y cambia lo mismo que tú en la web. Hazlo <strong>de solo lectura</strong> si la otra herramienta solo consulta, y ligado a un <strong>proyecto</strong> si no debe ver los demás. Puedes ponerle vigencia y revocarlo cuando quieras.</li>
@@ -876,6 +885,38 @@ HTML],
 </ul>
 <h4>Webhooks</h4>
 <p>Un webhook avisa a otra dirección cuando algo cambia en el proyecto (actividad, restricción, bitácora, reporte, submittal, punch, RFI). Cada aviso es un POST con el evento en JSON y una <strong>firma</strong> (<code>X-ProjectWeb-Signature</code>, HMAC-SHA256 del cuerpo con el secreto del webhook) para comprobar que viene de ProjectWeb. Solo se llama a direcciones públicas. Usa <em>Probar</em> para ver si responde, <em>Envíos</em> para ver el historial y <em>Reintentar</em> los que fallaron. Con 10 fallos seguidos el webhook se pausa solo.</p>
+HTML],
+
+['id' => 'telegram', 'titulo' => 'Telegram: avisos, avance y fotos desde el celular', 'icono' => 'fa-paper-plane', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Con el bot de Telegram trabajas desde el celular sin abrir la plataforma: recibes avisos de la obra, reportas avance, mandas fotos y anotas en la bitácora. Es gratis y no necesitas saber nada técnico.</p>
+<h4>Conectar tu Telegram (1 minuto)</h4>
+<ol>
+<li>Entra a <strong>Integraciones</strong> (menú Proyecto) y pulsa <strong>Conectar mi Telegram</strong>.</li>
+<li>Se abre Telegram con el bot de la plataforma: pulsa <strong>Iniciar</strong>. Listo, el bot te saluda con tu nombre.</li>
+</ol>
+<p>Si no hay botón porque Telegram no está activado en tu servidor, pídele al administrador que lo active una vez (se explica en la misma pantalla).</p>
+<h4>Recibir avisos</h4>
+<ul>
+<li><strong>En tu chat:</strong> en <em>Avisos de un proyecto</em> pulsa «Recibir avisos de este proyecto en mi chat».</li>
+<li><strong>En el grupo de la obra:</strong> pulsa «Agregar a un grupo de la obra», elige el grupo en Telegram y confirma. Todos los del grupo verán los avisos.</li>
+<li>Con <strong>Qué avisos recibe</strong> eliges cuáles llegan: nuevo RFI, cambio de estado, nuevo pendiente del punch list, nueva restricción, cambio de submittal, bitácora importante y alerta de clima. Con <strong>Probar</strong> mandas un mensaje de prueba.</li>
+</ul>
+<h4>Reportar avance</h4>
+<ol>
+<li>En el chat con el bot escribe <code>/avance</code>. Te muestra las actividades de hoy y las atrasadas como botones (o busca una con <code>/avance muro</code>).</li>
+<li>Toca la actividad y luego un porcentaje (0, 25, 50, 75, 90, 100) o <strong>escribe el número</strong> (por ejemplo <code>65</code>).</li>
+</ol>
+<p>El avance cambia igual que en el programa: 0 % queda sin iniciar, 100 % completada y lo demás en proceso. Con <code>/hoy</code> ves qué toca hoy.</p>
+<h4>Mandar fotos</h4>
+<p>Manda la foto al bot. Si ya elegiste una actividad con <code>/avance</code>, se guarda en ella; si no, el bot te pregunta a cuál pertenece con botones. La foto queda como <strong>evidencia</strong> (sección Evidencias) y lo que escribas como pie de foto será su descripción. Puedes mandar varias a la vez.</p>
+<h4>Notas y clima</h4>
+<ul>
+<li><code>/nota</code> seguido del texto lo anota en la bitácora; puedes poner la importancia al inicio: <code>/nota alta: falta concreto</code>.</li>
+<li><code>/clima</code> da el pronóstico de hoy y mañana. <code>/proyecto</code> cambia de proyecto si tienes varios.</li>
+</ul>
+<p><strong>Quién puede qué:</strong> ver y consultar, cualquier persona con acceso al proyecto (menos visitantes). Reportar avance, mandar fotos y notas, solo el administrador o el dueño del proyecto, igual que en la web. Si cambias de teléfono, pulsa <em>Desconectar</em> y vuelve a conectar.</p>
+<h4>Clima automático</h4>
+<p>En Integraciones, <strong>Clima automático</strong> → <em>Activar</em>. El proyecto necesita su <em>ubicación</em> (ciudad o «lat,lon») en Ajustes del proyecto. Cada tarde (después de las 6 pm) se anota en la bitácora el clima del día (temperaturas, lluvia y viento) y, si mañana habrá lluvia o viento fuerte, el bot avisa con las actividades de exterior que caen ese día para reprogramarlas. <em>Probar ahora</em> lo ejecuta en el momento. Los datos vienen de Open-Meteo (gratis); solo se envía el nombre del lugar.</p>
 HTML],
 
 ['id' => 'personalizacion', 'titulo' => 'Personalizar el proyecto', 'icono' => 'fa-sliders', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'

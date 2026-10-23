@@ -188,15 +188,15 @@ class Contradicciones extends Base
         }
         $nombre = fn($c) => $c['a']['dato'] . ' vs ' . $c['b']['dato'];
         $kpis = [['Documentos revisados', $datos['documentos']], ['Oraciones con magnitudes', $datos['oraciones']], ['Casos encontrados', count($datos['candidatas'])]];
-        if ($ia) $kpis[] = ['Contradicciones confirmadas', count($conf), 'juzgadas por la IA: revísalas'];
+        if ($ia) $kpis[] = ['Contradicciones confirmadas', count($conf)];
         $secs = [Informes::kpis('Resultado', $kpis)];
         if (!$datos['candidatas']) $secs[] = Informes::texto('Sin hallazgos', 'No se encontraron datos que dos documentos digan distinto con los criterios elegidos. ' . ($datos['documentos'] ? '' : 'Sube las especificaciones, normas o planos (PDF o Word) en «Normativa y especificaciones» para poder compararlos.'));
         $sevEtq = ['alta' => '🔴 Alta', 'media' => '🟡 Media', 'baja' => '🟢 Baja'];
         if ($conf) $secs[] = Informes::tabla('Contradicciones confirmadas', ['Tema', 'Fuente A', 'Fuente B', 'Dice A / Dice B', 'Severidad', 'Explicación'],
             array_map(fn($c) => [self::NOMBRE_DIM[$c['dim']], $c['a']['fuente'], $c['b']['fuente'], $nombre($c), $sevEtq[$c['sev']], $c['expl'] ?: '—'], $conf));
-        if ($otras) $secs[] = Informes::tabla($ia ? 'Casos descartados por la IA (hablan de cosas distintas)' : 'Posibles contradicciones (sin IA no se pueden confirmar: revísalas)', ['Tema', 'Fuente A', 'Fuente B', 'Dice A / Dice B', 'Texto A', 'Texto B'],
+        if ($otras) $secs[] = Informes::tabla($ia ? 'Casos descartados (hablan de cosas distintas)' : 'Posibles contradicciones (revísalas)', ['Tema', 'Fuente A', 'Fuente B', 'Dice A / Dice B', 'Texto A', 'Texto B'],
             array_map(fn($c) => [self::NOMBRE_DIM[$c['dim']], $c['a']['fuente'], $c['b']['fuente'], $nombre($c), self::corto($c['a']['texto'], 160), self::corto($c['b']['texto'], 160)], $otras));
-        $secs[] = Informes::texto('Cómo funciona', 'El sistema compara oraciones de documentos distintos que hablan de lo mismo (palabras técnicas en común, también entre español e inglés) y que dan una cifra distinta en la misma magnitud (longitud, voltaje, calibre, etc., con conversión de unidades). Eso solo detecta candidatas: ' . ($ia ? 'la IA decidió cuáles son contradicciones reales y puede equivocarse; ' : 'sin IA no se puede confirmar cuáles son reales; ') . 'verifica siempre contra el documento original antes de actuar. Solo se comparan las oraciones que traen número con unidad.');
+        $secs[] = Informes::texto('Cómo funciona', 'El sistema compara oraciones de documentos distintos que hablan de lo mismo (palabras técnicas en común, también entre español e inglés) y que dan una cifra distinta en la misma magnitud (longitud, voltaje, calibre, etc., con conversión de unidades). Eso solo detecta candidatas: verifica siempre contra el documento original antes de actuar. Solo se comparan las oraciones que traen número con unidad.');
         $rfis = array_map(fn($c) => [
             'asunto' => self::corto('Contradicción de ' . self::NOMBRE_DIM[$c['dim']] . ': ' . $nombre($c), 100),
             'pregunta' => "Se detectó una contradicción entre dos documentos del proyecto.\n\nFuente A — {$c['a']['fuente']}: «" . self::corto($c['a']['texto'], 300) . "»\nFuente B — {$c['b']['fuente']}: «" . self::corto($c['b']['texto'], 300) . "»\n" . ($c['expl'] ? "\n{$c['expl']}\n" : '') . "\nSe solicita confirmar cuál prevalece para ejecutar conforme a lo correcto.",

@@ -43,7 +43,7 @@ class DictadoBitacora extends Base
         $texto = $ia !== '' ? $ia : $orig;
         $imp = self::dato($respuestas, 'importancia');
         $imp = isset(Bitacora::IMPORTANCIAS[$imp]) ? $imp : $params['importancia'];
-        $secs = [Informes::kpis('Entrada de bitácora', [['Fecha', self::fmt($params['fecha'])], ['Departamento', $params['departamento']], ['Importancia', Bitacora::IMPORTANCIAS[$imp]]]), Informes::texto('Texto de la entrada' . ($ia !== '' ? ' (corregido con IA, revísalo)' : ''), $texto)];
+        $secs = [Informes::kpis('Entrada de bitácora', [['Fecha', self::fmt($params['fecha'])], ['Departamento', $params['departamento']], ['Importancia', Bitacora::IMPORTANCIAS[$imp]]]), Informes::texto('Texto de la entrada', $texto)];
         if ($ia !== '' && $ia !== $orig) $secs[] = Informes::texto('Texto original dictado', $orig);
         return ['secciones' => $secs, 'aplicar' => ['tipo' => 'bitacora', 'fecha' => $params['fecha'], 'departamento' => $params['departamento'], 'descripcion' => $texto, 'importancia' => $imp]];
     }

@@ -62,6 +62,12 @@ class Clima
         return null;
     }
 
+    /** Lugar ya ubicado del proyecto (sin consultar nada), o null */
+    public static function lugarGuardado(int $pid): ?string
+    {
+        return self::filas("SELECT lugar FROM clima_proyecto WHERE proyecto_id = $pid")[0]['lugar'] ?? null;
+    }
+
     private static function guardar(int $pid, array $d, string $tipo): int
     {
         $db = self::db();

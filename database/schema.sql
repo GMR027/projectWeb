@@ -64,6 +64,9 @@ CREATE TABLE proyectos (
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
+    clima_auto TINYINT(1) NOT NULL DEFAULT 0,     -- bitácora de clima automática + aviso del pronóstico (Telegram)
+    clima_ultimo DATE NULL,
+    clima_aviso DATE NULL,
     programa_nombre VARCHAR(200) NULL,
     programa_columnas_json TEXT NULL,
     programa_indicador_json TEXT NULL,
@@ -1881,4 +1884,50 @@ CREATE TABLE IF NOT EXISTS webhook_entregas (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_whe (webhook_id, id),
     FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS telegram_vinculos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    nombre_tg VARCHAR(150) NOT NULL DEFAULT '',
+    proyecto_id INT NULL,                          -- proyecto activo para /avance, /foto, /nota
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_tg_usuario (usuario_id),
+    UNIQUE KEY uq_tg_chat (chat_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Códigos de un solo uso (vencen en 15 min) para vincular un chat privado (tipo usuario) o un grupo a un proyecto (tipo grupo)
+CREATE TABLE IF NOT EXISTS telegram_codigos (
+    codigo CHAR(12) PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo ENUM('usuario','grupo') NOT NULL DEFAULT 'usuario',
+    proyecto_id INT NULL,
+    expira DATETIME NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Dónde se avisa de cada proyecto: un grupo o el chat privado de una persona (usuario_id)
+CREATE TABLE IF NOT EXISTS telegram_destinos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    titulo VARCHAR(150) NOT NULL DEFAULT '',
+    usuario_id INT NULL,                           -- NULL = grupo
+    eventos VARCHAR(500) NOT NULL DEFAULT '',      -- lista separada por comas
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    fallos_seguidos INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_tg_destino (proyecto_id, chat_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Conversación de cada chat privado (paso, datos temporales) y último update atendido (evita repetir si Telegram reintenta)
+CREATE TABLE IF NOT EXISTS telegram_estado (
+    chat_id BIGINT PRIMARY KEY,
+    paso VARCHAR(20) NOT NULL DEFAULT '',
+    datos TEXT NULL,
+    ultimo_update BIGINT NOT NULL DEFAULT 0,
+    actualizado DATETIME NOT NULL
 ) ENGINE=InnoDB;

@@ -74,7 +74,7 @@ class SeguridadCharla extends Base
         }
         $secs = [
             Informes::kpis('Seguridad de los próximos ' . $params['dias'] . ' días', [['Actividades revisadas', count($datos['actividades'])], ['Permisos requeridos', count($datos['requeridos'])], ['Sin permiso', count($falta)], ['Borradores creados', $creados, $creados ? 'en Seguridad y permisos' : '']]),
-            Informes::texto('Charla de seguridad de 5 minutos' . ($charla !== '' ? ' (redactada con IA, revísala)' : ''), $charla !== '' ? $charla : 'Sin IA: reúne a la cuadrilla, repasa los riesgos y medidas de la tabla de abajo (especialmente los trabajos que exigen permiso), verifica el EPP de cada persona y confirma quién es el responsable de cada frente.'),
+            Informes::texto('Charla de seguridad de 5 minutos', $charla !== '' ? $charla : 'Reúne a la cuadrilla, repasa los riesgos y medidas de la tabla de abajo (especialmente los trabajos que exigen permiso), verifica el EPP de cada persona y confirma quién es el responsable de cada frente.'),
             Informes::tabla('Riesgos, medidas y EPP por actividad', ['Actividad', 'Inicio', 'Riesgos', 'Medidas de control', 'EPP'], $filas),
             Informes::tabla('Permisos de trabajo requeridos', ['Actividad', 'Inicio', 'Permiso', 'Situación'], array_map(fn($r) => [$r['codigo'] . ' ' . self::corto($r['nombre'], 60), self::fmt($r['inicio']), $T[$r['tipo']]['nombre'], ['ok' => 'Aprobado', 'tramite' => 'En trámite', 'falta' => 'FALTA'][$r['estado']]], $datos['requeridos'])),
         ];
