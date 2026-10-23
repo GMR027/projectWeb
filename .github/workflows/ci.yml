@@ -87,3 +87,17 @@ jobs:
 
       - name: Compilar SCSS y JS
         run: npx gulp
+
+  desktop:
+    name: App de escritorio (pruebas Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # los tests solo usan módulos de Node (los CLI se simulan con binarios falsos): no hay que instalar nada
+      - name: Pruebas de la app de escritorio
+        run: npm test
+        working-directory: desktop
