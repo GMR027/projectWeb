@@ -47,13 +47,18 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
     <?php if (!$tg['tablas']): ?>
         <p class="text-muted">Falta aplicar la migración <code>database/migracion_telegram.sql</code>.</p>
     <?php elseif (!$tg['configurado']): ?>
-        <p class="text-muted">Telegram todavía no está activado en este servidor. <?php if ($tg['esAdmin']): ?>Solo se hace <strong>una vez</strong>:</p>
-        <ol class="text-sm">
-            <li>En Telegram abre <strong>@BotFather</strong>, escribe <code>/newbot</code>, ponle un nombre y copia el <em>token</em> que te da.</li>
-            <li>Pégalo en el archivo <code>.env</code> del servidor como <code>TELEGRAM_BOT_TOKEN=…</code> y reinicia.</li>
-            <li>Regresa aquí y pulsa <em>Activar el bot</em>. Con servidor local (sin https) usa <code>php bin/telegram.php --sondeo</code>.</li>
-        </ol>
-        <?php else: ?>Pide al administrador que lo active.</p><?php endif; ?>
+        <p class="text-muted">Telegram todavía no está activado en este servidor.</p>
+        <?php if ($tg['esAdmin']): ?>
+        <p class="text-sm text-muted">Solo se hace <strong>una vez</strong>: crea el bot en Telegram (<strong>@BotFather</strong> → <code>/newbot</code>) y pega aquí su <em>token</em>. Se guarda <strong>cifrado en la base</strong> (aquí solo se ve enmascarado), no hace falta tocar el servidor y lo puedes cambiar cuando quieras.</p>
+        <?php if ($tg['config'] !== []): ?>
+        <form method="POST" action="/integraciones/telegram/token" class="formulario" style="max-width:44rem">
+            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+            <div class="campo"><label for="tg-token">Token del bot</label>
+                <input type="password" id="tg-token" name="token" autocomplete="off" placeholder="123456789:AA…" required></div>
+            <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-key"></i> Guardar y activar el bot</button>
+        </form>
+        <?php else: ?><p class="text-sm text-muted">Falta aplicar la migración <code>database/migracion_telegram_config.sql</code>.</p><?php endif; ?>
+        <?php else: ?><p class="text-sm">Pide al administrador que lo active.</p><?php endif; ?>
     <?php else: ?>
         <p class="text-sm text-muted">Un solo bot para todos. Conecta tu Telegram y podrás: <strong>recibir avisos</strong> (RFI, pendientes, restricciones, clima), <strong>reportar el avance</strong> de una actividad con botones, <strong>mandar fotos</strong> como evidencia y <strong>anotar en la bitácora</strong>, sin abrir la plataforma.</p>
 
@@ -105,6 +110,23 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
             <p class="text-sm text-muted">Bot <code>@<?php echo s($tg['bot'] ?: '?'); ?></code>. Telegram entrega los mensajes en <code><?php echo s($url); ?>/api/telegram/webhook</code> (necesita https público).
                 <?php if ($tg['webhook']): ?> Estado: <?php echo $tg['webhook']['url'] ? '<span class="cb-tag">Registrado</span> · ' . (int)($tg['webhook']['pending_update_count'] ?? 0) . ' pendiente(s)' . (!empty($tg['webhook']['last_error_message']) ? ' · <span class="prg-peor">último error: ' . s($tg['webhook']['last_error_message']) . '</span>' : '') : '<span class="cb-tag cb-tag-critica">Sin registrar</span>'; ?><?php endif; ?></p>
             <form method="POST" action="/integraciones/telegram/webhook"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-primary" type="submit">Activar el bot (registrar webhook)</button></form>
+            <?php $cfgTg = $tg['config'] ?? []; if ($cfgTg): ?>
+            <p class="text-sm" style="margin-top:.8rem">Token: <span class="mono"><?php echo s($cfgTg['mascara'] ?: '(no guardado)'); ?></span>
+                <?php if ($cfgTg['origen'] === 'base'): ?><span class="cb-tag">guardado en la base</span><?php elseif ($cfgTg['origen'] === 'entorno'): ?><span class="cb-tag">del entorno</span><?php endif; ?>
+                <?php if ($cfgTg['actualizado']): ?> · guardado el <?php echo s(date('d/m/Y H:i', strtotime($cfgTg['actualizado']))); ?> por <?php echo s($cfgTg['actualizado_por'] ?: '—'); ?><?php endif; ?>
+                <?php if (!empty($cfgTg['ilegible'])): ?> <span class="prg-peor">no se pudo descifrar: vuelve a pegarlo</span><?php endif; ?></p>
+            <?php if ($cfgTg['origen'] !== 'entorno' || $cfgTg['guardado']): ?>
+            <form method="POST" action="/integraciones/telegram/token" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.4rem">
+                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                <input type="password" name="token" autocomplete="off" placeholder="Nuevo token de @BotFather" aria-label="Token del bot" style="max-width:22rem" required>
+                <button class="btn btn-sm btn-ghost" type="submit">Cambiar token</button>
+            </form>
+            <?php if ($cfgTg['guardado']): ?>
+            <form method="POST" action="/integraciones/telegram/token/quitar" data-confirm="¿Quitar el token de la base?|El bot dejará de responder hasta que guardes uno nuevo.|Quitar">
+                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit">Quitar token de la base</button></form>
+            <?php endif; ?>
+            <?php endif; ?>
+            <?php endif; ?>
         </details>
         <?php endif; ?>
     <?php endif; ?>

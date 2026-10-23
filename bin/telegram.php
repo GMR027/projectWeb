@@ -3,7 +3,8 @@
 //   php bin/telegram.php --sondeo     escucha mensajes preguntando a Telegram (sirve en tu equipo, sin dirección pública ni https)
 //   php bin/telegram.php --webhook    registra https://<APP_URL>/api/telegram/webhook (servidor público con https)
 //   php bin/telegram.php --info       muestra el bot y el estado del webhook
-// Necesita TELEGRAM_BOT_TOKEN en el .env. Con --sondeo se quita el webhook (Telegram no permite los dos a la vez).
+// El token sale de la base (Integraciones → Telegram, guardado cifrado) o, si no, de TELEGRAM_BOT_TOKEN en el .env.
+// Con --sondeo se quita el webhook (Telegram no permite los dos a la vez).
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/app.php';
@@ -11,8 +12,9 @@ require_once __DIR__ . '/../includes/app.php';
 use Classes\Telegram;
 use Classes\TelegramBot;
 
-if (!Telegram::configurado()) { fwrite(STDERR, "Falta TELEGRAM_BOT_TOKEN en el .env\n"); exit(1); }
+if (!Telegram::configurado()) { fwrite(STDERR, "No hay token del bot: pégalo en Integraciones → Telegram (o define TELEGRAM_BOT_TOKEN en el .env)\n"); exit(1); }
 if (!Telegram::disponible()) { fwrite(STDERR, "Falta aplicar database/migracion_telegram.sql\n"); exit(1); }
+if (!Telegram::disponibleConfig()) { fwrite(STDERR, "Aviso: falta database/migracion_telegram_config.sql; el token no se puede guardar en la base\n"); }
 $arg = $argv[1] ?? '--info';
 
 if ($arg === '--info') {

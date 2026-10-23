@@ -270,6 +270,17 @@ $d = ['tmax' => 31.4, 'tmin' => 17.6, 'precip_mm' => 12.0, 'prob' => 85, 'viento
 $ok('el resumen del clima es legible y marca la lluvia', ClimaAuto::resumen($d) === 'máx 31° / mín 18° · lluvia 12 mm (85%) · viento 35 km/h ⚠ lluvia');
 $ok('la fecha larga va en español', ClimaAuto::fechaLarga('2026-10-22') === 'jueves 22 oct');
 
+// Token del bot: se guarda cifrado en telegram_config; en pantalla solo se ve la máscara
+$tokPrueba = '123456789:AAFSECRETODEPRUEBA_0123456789abcdef';
+$cif = Telegram::cifrar($tokPrueba);
+$ok('el token se cifra (AES-256-GCM) y se recupera idéntico', $cif !== '' && $cif !== $tokPrueba && Telegram::descifrar($cif) === $tokPrueba);
+$ok('la clave de cifrado es de 32 bytes', preg_match('/^[0-9a-f]{64}$/', Telegram::clave()) === 1);
+$mal = $cif;
+$mal[0] = $mal[0] === 'a' ? 'b' : 'a';
+$ok('un dato alterado o muy corto devuelve vacío, no basura', Telegram::descifrar($mal) === '' && Telegram::descifrar('corto') === '');
+$ok('la máscara enseña solo los últimos 4 y nunca el token', Telegram::mascara($tokPrueba) === '•••• cdef' && !str_contains(Telegram::mascara($tokPrueba), 'SECRET'));
+$ok('sin tabla de configuración el token viene del entorno', Telegram::disponibleConfig() === false && Telegram::token() === Telegram::env('TELEGRAM_BOT_TOKEN'));
+
 
 echo "Informes sin menciones de IA\n";
 $inf = Classes\Informes::sinMencionesIA(['secciones' => [

@@ -76,7 +76,8 @@ class IntegracionesController
     {
         $pid = $p ? (int)$p->id : 0;
         $tg = ['tablas' => Telegram::disponible(), 'configurado' => Telegram::configurado(), 'bot' => '', 'vinculo' => null, 'destinos' => [], 'enlace' => $_SESSION['tg_enlace'] ?? null,
-            'webhook' => null, 'eventos' => Telegram::EVENTOS, 'clima' => false, 'lugar' => '', 'ubicacion' => $p ? (string)$p->ubicacion : '', 'esAdmin' => is_admin()];
+            'webhook' => null, 'eventos' => Telegram::EVENTOS, 'clima' => false, 'lugar' => '', 'ubicacion' => $p ? (string)$p->ubicacion : '', 'esAdmin' => is_admin(),
+            'config' => Telegram::disponibleConfig() ? Telegram::configGuardada() : []];
         if (!$tg['tablas']) return $tg;
         $tg['clima'] = $pid && ClimaAuto::activo($pid);
         if ($pid) $tg['lugar'] = (string)(Clima::lugarGuardado($pid) ?? '');
@@ -142,6 +143,34 @@ class IntegracionesController
         if (!is_admin()) { header('Location: /integraciones'); exit; }
         [$ok, $msg] = Telegram::registrarWebhook(self::baseUrl());
         self::volver((int)($_POST['proyecto'] ?? 0), $ok, $msg, '#telegram');
+    }
+
+    /** Guarda el token del bot (cifrado en la base) y registra el webhook. Solo admin, sin tocar el clúster. */
+    public static function telegramGuardar()
+    {
+        self::usuario();
+        $pid = (int)($_POST['proyecto'] ?? 0);
+        if (!is_admin()) self::volver($pid, false, 'Solo el administrador puede guardar el token del bot.', '#telegram');
+        $token = trim((string)($_POST['token'] ?? ''));
+        if ($token === '') self::volver($pid, false, 'Pega el token que te dio @BotFather.', '#telegram');
+        [$ok, $msg] = Telegram::guardarToken($token, (string)(usuario_actual()['nombre'] ?? ''));
+        if (!$ok) self::volver($pid, false, $msg, '#telegram');
+        // el secreto del webhook se deriva del token: al cambiarlo hay que registrarlo otra vez
+        if (str_starts_with(self::baseUrl(), 'https://')) [, $msg] = Telegram::registrarWebhook(self::baseUrl());
+        else $msg .= ' Con servidor local (sin https) se activa con «php bin/telegram.php --sondeo».';
+        self::volver($pid, true, $msg, '#telegram');
+    }
+
+    /** Quita el token de la base (si había uno en el entorno, el bot sigue con ese) */
+    public static function telegramQuitar()
+    {
+        self::usuario();
+        $pid = (int)($_POST['proyecto'] ?? 0);
+        if (!is_admin()) self::volver($pid, false, 'Solo el administrador puede quitar el token.', '#telegram');
+        $ok = Telegram::borrarToken();
+        $enEntorno = Telegram::configGuardada()['origen'] === 'entorno';
+        self::volver($pid, $ok, !$ok ? 'No se pudo eliminar el token.'
+            : ($enEntorno ? 'Token de la base eliminado: el bot sigue con el del entorno (TELEGRAM_BOT_TOKEN).' : 'Token eliminado. El bot queda apagado hasta que guardes uno nuevo.'), '#telegram');
     }
 
     public static function climaAuto()

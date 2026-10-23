@@ -53,4 +53,6 @@
 # Motor y modelos del Traductor (≈ 400 MB; se instalan con bin/instalar_traductor.sh)
 /storage/traductor/
 /storage/telegram_bot.json
+# Clave de cifrado del token de Telegram (si no se usa TELEGRAM_KEY): nunca al repo
+/storage/secretos/
 /storage/clima_auto.json*

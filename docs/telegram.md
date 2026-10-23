@@ -3,7 +3,7 @@
 Un solo bot para toda la plataforma. Migración: `database/migracion_telegram.sql` (tablas `telegram_vinculos`, `telegram_codigos`, `telegram_destinos`, `telegram_estado`; columnas `proyectos.clima_auto|clima_ultimo|clima_aviso`; también en `schema.sql` y `aplicar_migraciones_cluster.sh`). UI: sección «Telegram» y «Clima automático» de `/integraciones`. Manual: sección `telegram`.
 
 ## Configuración (una vez, el administrador)
-1. `@BotFather` → `/newbot` → token. `.env`: `TELEGRAM_BOT_TOKEN=…` (opcional `TELEGRAM_BOT_USERNAME`; si falta se consulta con `getMe` y se guarda en `storage/telegram_bot.json`). El token vive solo en el entorno.
+1. `@BotFather` → `/newbot` → token. El admin lo pega en **Integraciones → Telegram** y se guarda **cifrado** en la tabla `telegram_config` (AES-256-GCM; clave en `TELEGRAM_KEY` o en `storage/secretos/telegram.key`, 0600 y fuera del repo). En pantalla solo se ve la máscara (últimos 4). **Respaldos:** si no hay fila, se usa `TELEGRAM_BOT_TOKEN` del `.env`/entorno (igual que antes) y `TELEGRAM_BOT_USERNAME` es opcional: si falta, se consulta con `getMe` y se guarda en `storage/telegram_bot.json`. **Rotar el token** = pegarlo otra vez ahí; el botón *Guardar y activar* además re-registra el webhook (el secreto se deriva del token).
 2. Servidor público con https: botón «Activar el bot (registrar webhook)» en `/integraciones` o `php bin/telegram.php --webhook` (usa `APP_URL`). Equipo local: `php bin/telegram.php --sondeo` (quita el webhook y pregunta a Telegram con `getUpdates`). `php bin/telegram.php --info` muestra el estado.
 3. Clima: `bin/clima_programado.php` en cron a las 18:00 (`CLIMA_AUTO_HORA`); sin cron lo dispara la primera petición de alguien con sesión pasada la hora (`public/index.php`).
 

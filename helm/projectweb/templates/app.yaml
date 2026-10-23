@@ -33,7 +33,7 @@ spec:
             - -c
             - |
               until nc -z mysql 3306; do echo "esperando mysql"; sleep 2; done
-              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones
+              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones /files/secretos
               chown -R 33:33 /files
           volumeMounts:
             - { name: files, mountPath: /files }
@@ -81,6 +81,7 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/sesiones-app, subPath: sesiones-app }
             - { name: files, mountPath: /var/www/html/storage/normativa, subPath: normativa }
             - { name: files, mountPath: /var/www/html/storage/grabaciones, subPath: grabaciones }
+            - { name: files, mountPath: /var/www/html/storage/secretos, subPath: secretos }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}
       volumes:
         - name: files

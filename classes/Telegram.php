@@ -6,7 +6,9 @@ use Model\Proyecto;
 use Model\ProyectoAcceso;
 
 /**
- * Bot de Telegram de la plataforma (un solo bot para todos; el token vive en TELEGRAM_BOT_TOKEN, nunca en la base).
+ * Bot de Telegram de la plataforma (un solo bot para todos; el token lo pone el admin desde Integraciones y se guarda
+ * CIFRADO en la tabla `telegram_config` —AES-256-GCM con la clave de TELEGRAM_KEY o storage/secretos—, y el del entorno
+ * TELEGRAM_BOT_TOKEN queda solo como respaldo. En pantalla nunca se vuelve a mostrar completo).
  * - Vinculación: cada persona pulsa «Conectar mi Telegram» en Integraciones y se abre el bot con un código de un solo uso (15 min).
  *   Un grupo se vincula igual (enlace «startgroup») y queda como destino de avisos de UN proyecto.
  * - Avisos: Webhooks::emitir() también llama a aviso(); se envían al terminar la petición a los destinos del proyecto que pidieron ese evento.
@@ -34,6 +36,10 @@ class Telegram
 
     private static array $cola = [];
     private static bool $programado = false;
+    /** telegram_config ya leída y descifrada: null = sin leer, [] = sin fila (se cachea para no repetir la consulta) */
+    private static ?array $cfg = null;
+    private static ?bool $cfgTabla = null;
+    private static ?string $clave = null;
 
     // ---------- configuración ----------
 
@@ -45,12 +51,133 @@ class Telegram
 
     public static function token(): string
     {
-        return self::env('TELEGRAM_BOT_TOKEN');
+        $t = self::cfgFila()['token'] ?? '';
+        return $t !== '' ? $t : self::env('TELEGRAM_BOT_TOKEN');
     }
 
     public static function configurado(): bool
     {
         return self::token() !== '';
+    }
+
+    /** Tabla de configuración creada (migración telegram_config) */
+    public static function disponibleConfig(): bool
+    {
+        if (self::$cfgTabla === null) self::$cfgTabla = isset($GLOBALS['db']) && (bool)self::filas("SHOW TABLES LIKE 'telegram_config'");
+        return self::$cfgTabla;
+    }
+
+    // ---------- token en la base (cifrado) ----------
+
+    /** Últimos4 caracteres del token, para mostrarlo en pantalla sin exponerlo */
+    public static function mascara(string $token): string
+    {
+        return $token !== '' ? '•••• ' . mb_substr($token, -4) : '';
+    }
+
+    /**
+     * Clave de32 bytes para cifrar el token: `TELEGRAM_KEY` (hex de64, base64 o cualquier texto) o en su
+     * defecto `storage/secretos/telegram.key`, que se crea sola la primera vez con permisos0600 (fuera de
+     * public y del repositorio). Vacío si no se puede crear: en ese caso no se guarda nada en claro.
+     */
+    public static function clave(): string
+    {
+        if (self::$clave !== null) return self::$clave;
+        $k = trim(self::env('TELEGRAM_KEY'));
+        if ($k !== '') return self::$clave = preg_match('/^[0-9a-f]{64}$/i', $k) ? strtolower($k) : hash('sha256', $k);
+        $dir = __DIR__ . '/../storage/secretos';
+        $ruta = $dir . '/telegram.key';
+        if (!is_dir($dir)) @mkdir($dir, 0700, true);
+        if (is_file($ruta)) {
+            $v = trim((string)@file_get_contents($ruta));
+            if (preg_match('/^[0-9a-f]{64}$/i', $v)) return self::$clave = strtolower($v);
+        }
+        $n = bin2hex(random_bytes(32));
+        if (@file_put_contents($ruta, $n, LOCK_EX) === false) return self::$clave = '';
+        @chmod($ruta, 0600);
+        return self::$clave = $n;
+    }
+
+    /** AES-256-GCM. Vacío si no hay clave: así nunca se guarda el token en claro por accidente */
+    public static function cifrar(string $texto): string
+    {
+        $k = self::clave();
+        if ($k === '' || !function_exists('openssl_encrypt')) return '';
+        $iv = random_bytes(12);
+        $tag = '';
+        $c = openssl_encrypt($texto, 'aes-256-gcm', hex2bin($k), OPENSSL_RAW_DATA, $iv, $tag);
+        return $c === false ? '' : $iv . $tag . $c;
+    }
+
+    /** Vacío si la clave cambió o el dato está dañado (no lanza error) */
+    public static function descifrar(string $blob): string
+    {
+        $k = self::clave();
+        if ($k === '' || strlen($blob) < 29 || !function_exists('openssl_decrypt')) return '';
+        $d = openssl_decrypt(substr($blob, 28), 'aes-256-gcm', hex2bin($k), OPENSSL_RAW_DATA, substr($blob, 0, 12), substr($blob, 12, 16));
+        return $d === false ? '' : $d;
+    }
+
+    /** Fila de telegram_config ya leída y descifrada (se cachea; [] si no hay) */
+    private static function cfgFila(): array
+    {
+        if (self::$cfg !== null) return self::$cfg;
+        if (!self::disponibleConfig()) return self::$cfg = [];
+        $f = self::filas('SELECT token_cifrado, bot_username, actualizado, actualizado_por FROM telegram_config WHERE id = 1')[0] ?? [];
+        if (!$f) return self::$cfg = [];
+        $f['token'] = self::descifrar((string)($f['token_cifrado'] ?? ''));
+        unset($f['token_cifrado']);
+        return self::$cfg = $f;
+    }
+
+    /**
+     * Qué se sabe del token para la pantalla: de dónde sale (base o entorno), la máscara, el @usuario y
+     * cuándo/quién lo guardó. `ilegible` = hay fila pero ya no se puede descifrar (clave perdida o cambiada).
+     */
+    public static function configGuardada(): array
+    {
+        $f = self::cfgFila();
+        $deBD = (string)($f['token'] ?? '');
+        $deEnv = self::env('TELEGRAM_BOT_TOKEN');
+        $efectivo = $deBD !== '' ? $deBD : $deEnv;
+        return ['guardado' => $deBD !== '', 'ilegible' => ($f !== [] && $deBD === ''),
+            'origen' => $deBD !== '' ? 'base' : ($deEnv !== '' ? 'entorno' : ''), 'mascara' => self::mascara($efectivo),
+            'username' => (string)($f['bot_username'] ?? ''), 'actualizado' => (string)($f['actualizado'] ?? ''),
+            'actualizado_por' => (string)($f['actualizado_por'] ?? '')];
+    }
+
+    /**
+     * Guarda el token cifrado en la base (solo admin, desde Integraciones). Antes de guardarlo lo comprueba
+     * contra Telegram con getMe, así un token mal pegado no deja al bot «configurado» a medias.
+     * @return array{0: bool, 1: string} [ok, mensaje]
+     */
+    public static function guardarToken(string $token, string $quien): array
+    {
+        $token = trim($token);
+        if (!self::disponibleConfig()) return [false, 'Falta aplicar la migración database/migracion_telegram_config.sql.'];
+        if (!preg_match('/^\d{5,}:[A-Za-z0-9_-]{20,}$/', $token)) return [false, 'Ese token no tiene el formato que da @BotFather (números, dos puntos y el resto).'];
+        $cif = self::cifrar($token);
+        if ($cif === '') return [false, 'No se pudo cifrar el token: faltan permisos de escritura en storage/secretos o la extensión openssl.'];
+        $r = self::consultar($token, 'getMe', [], 6);
+        if (empty($r['ok'])) return [false, 'Telegram no reconoce ese token: ' . (string)($r['description'] ?? 'revisa que sea el que dio @BotFather') . '.'];
+        $bot = mb_substr((string)($r['result']['username'] ?? ''), 0, 100);
+        $db = self::db();
+        $sql = "INSERT INTO telegram_config (id, token_cifrado, bot_username, actualizado, actualizado_por) VALUES (1, '"
+            . $db->real_escape_string($cif) . "', '" . $db->real_escape_string($bot) . "', NOW(), '" . $db->real_escape_string(mb_substr(trim($quien), 0, 150)) . "')
+            ON DUPLICATE KEY UPDATE token_cifrado = VALUES(token_cifrado), bot_username = VALUES(bot_username), actualizado = NOW(), actualizado_por = VALUES(actualizado_por)";
+        if (!$db->query($sql)) return [false, 'No se pudo guardar: ' . $db->error];
+        self::$cfg = null;
+        @unlink(__DIR__ . '/../storage/telegram_bot.json');   // el caché de getMe va firmado con sha1(token)
+        return [true, 'Token guardado: el bot es @' . $bot . '.'];
+    }
+
+    /** Borra el token de la base (vuelve al del entorno, si lo hay) */
+    public static function borrarToken(): bool
+    {
+        if (!self::disponibleConfig()) return false;
+        $ok = (bool)self::db()->query('DELETE FROM telegram_config WHERE id = 1');
+        if ($ok) { self::$cfg = null; @unlink(__DIR__ . '/../storage/telegram_bot.json'); }
+        return $ok;
     }
 
     public static function disponible(): bool
@@ -75,7 +202,15 @@ class Telegram
     {
         if (self::$http) return (self::$http)($metodo, $params);
         if (!self::configurado()) return null;
-        $ch = curl_init('https://api.telegram.org/bot' . self::token() . '/' . $metodo);
+        return self::consultar(self::token(), $metodo, $params, $espera);
+    }
+
+    /** Llamada con un token explícito (para validar uno recién pegado antes de guardarlo) */
+    public static function consultar(string $token, string $metodo, array $params = [], int $espera = 10): ?array
+    {
+        if (self::$http) return (self::$http)($metodo, $params);
+        if ($token === '') return null;
+        $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $metodo);
         curl_setopt_array($ch, [
             CURLOPT_POST => true, CURLOPT_POSTFIELDS => json_encode($params, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_RETURNTRANSFER => true,
@@ -104,6 +239,7 @@ class Telegram
     public static function usuarioBot(): string
     {
         $u = ltrim(self::env('TELEGRAM_BOT_USERNAME'), '@');
+        if ($u === '') $u = ltrim((string)self::configGuardada()['username'], '@');
         return $u !== '' ? $u : (string)(self::bot()['username'] ?? '');
     }
 

@@ -124,6 +124,24 @@ $db->query("INSERT INTO actividades (partida_id, codigo, nombre, fecha_inicio, d
 $act2 = $db->insert_id;
 
 $ok('el secreto del webhook se deriva del token (48 caracteres)', strlen(Telegram::secretoWebhook()) === 48 && Telegram::secretoWebhook() !== hash('sha256', 'x'));
+
+// token en la base (cifrado): se guarda y se quita desde la interfaz, sin tocar el entorno ni el clúster
+$mockBase = Telegram::$http;
+$nuevoTok = '987654321:AAFDEMOGUARDADO_0123456789abcdefghijklmnop';
+Telegram::$http = fn(string $m, array $p) => $m === 'getMe'
+    ? ['ok' => true, 'result' => ['username' => 'projectweb_prueba_bot', 'first_name' => 'ProjectWeb']]
+    : ['ok' => true, 'result' => []];
+[$okTok, $msgTok] = Telegram::guardarToken($nuevoTok, 'Admin de pruebas');
+Telegram::$http = $mockBase;
+$ok('el token pasa la comprobación con getMe y queda activo', $okTok && Telegram::token() === $nuevoTok);
+$ok('lo que se guarda en la tabla no es el token en claro', (string)$db->query('SELECT token_cifrado c FROM telegram_config WHERE id = 1')->fetch_assoc()['c'] !== $nuevoTok);
+$cfgTok = Telegram::configGuardada();
+$ok('en la pantalla solo se ven la máscara y el @del bot', $cfgTok['guardado'] && $cfgTok['origen'] === 'base' && $cfgTok['username'] === 'projectweb_prueba_bot'
+    && str_contains($cfgTok['mascara'], 'mnop') && !str_contains($cfgTok['mascara'], 'DEMO') && $cfgTok['actualizado_por'] === 'Admin de pruebas');
+$secConToken = Telegram::secretoWebhook();   // derivado del token que está en la base
+$ok('un token con formato raro no se guarda', Telegram::guardarToken('no-es-token', 'x')[0] === false && Telegram::token() === $nuevoTok);
+$ok('al quitarlo vuelve el token del entorno', Telegram::borrarToken() && Telegram::token() === '123456:TOKEN-DE-PRUEBA' && Telegram::configGuardada()['origen'] === 'entorno');
+$ok('el secreto del webhook cambia con el token (hay que re-registrarlo)', $secConToken !== Telegram::secretoWebhook() && strlen($secConToken) === 48);
 $ok('el comando se separa de su texto y del @bot', TelegramBot::comando('/Avance@pw_bot muro 3') === ['avance', 'muro 3'] && TelegramBot::comando('hola') === null);
 
 // persona sin vincular

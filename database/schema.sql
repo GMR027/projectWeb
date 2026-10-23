@@ -1931,3 +1931,14 @@ CREATE TABLE IF NOT EXISTS telegram_estado (
     ultimo_update BIGINT NOT NULL DEFAULT 0,
     actualizado DATETIME NOT NULL
 ) ENGINE=InnoDB;
+
+-- Configuración única del bot: token CIFRADO y @usuario, editables desde la interfaz (Integraciones → Telegram,
+-- solo admin) para no tener que tocar el clúster para rotarlo. Una sola fila (id = 1).
+-- El cifrado usa TELEGRAM_KEY (entorno) o storage/secretos/telegram.key (fuera de public y del repo).
+CREATE TABLE IF NOT EXISTS telegram_config (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    token_cifrado MEDIUMBLOB NOT NULL,
+    bot_username VARCHAR(100) NOT NULL DEFAULT '',
+    actualizado DATETIME NOT NULL,
+    actualizado_por VARCHAR(150) NOT NULL DEFAULT ''
+) ENGINE=InnoDB;

@@ -367,6 +367,8 @@ $router->post('/integraciones/telegram/grupo', [Controllers\IntegracionesControl
 $router->post('/integraciones/telegram/mi-chat', [Controllers\IntegracionesController::class, 'telegramMiChat']);
 $router->post('/integraciones/telegram/destino', [Controllers\IntegracionesController::class, 'telegramDestino']);
 $router->post('/integraciones/telegram/webhook', [Controllers\IntegracionesController::class, 'telegramRegistrar']);
+$router->post('/integraciones/telegram/token', [Controllers\IntegracionesController::class, 'telegramGuardar']);
+$router->post('/integraciones/telegram/token/quitar', [Controllers\IntegracionesController::class, 'telegramQuitar']);
 $router->post('/integraciones/clima', [Controllers\IntegracionesController::class, 'climaAuto']);
 $router->get('/campos', [PersonalizacionController::class, 'campos']);
 $router->post('/campos/guardar', [PersonalizacionController::class, 'guardarCampo']);
