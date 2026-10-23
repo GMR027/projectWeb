@@ -1,7 +1,5 @@
 // SheetFlow: tablas del proyecto (editor de cuadrícula)
-.sf-pestanas { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
-  button { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; i { margin-right: .5rem; }
-    &:hover { color: var(--text); background: var(--surface-hover); } &.activo { background: var(--surface); border-color: var(--border); color: var(--primary); font-weight: 600; } } }
+// Pestañas de página: barra compartida en componentes/_tabs.scss (.pestanas + alias .vp-/ve-/rd-/sf-)
 .sf-barra .sf-panel { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: center; width: 100%; &[hidden] { display: none; } }
 .sf-barra { margin-top: 0 !important; border-top-left-radius: 0 !important; }
 .sf-barra { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: center; margin: 1rem 0 .8rem; padding: .8rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; box-shadow: var(--shadow);

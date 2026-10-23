@@ -39,7 +39,8 @@ $pestanas = [
 
 <section class="sim-panel" id="sim-p-proyecto" role="tabpanel" hidden>
     <div class="sim-barra">
-        <input type="search" class="sim-buscar" data-lista="sim-l-proyecto" placeholder="Buscar símbolo…" aria-label="Buscar símbolo">
+        <div class="pn-busca"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" class="sim-buscar" data-lista="sim-l-proyecto" placeholder="Buscar símbolo…" aria-label="Buscar símbolo"></div>
         <div class="sim-chips" data-lista="sim-l-proyecto"><?php foreach ($cats as $c => $n): ?><button type="button" class="sim-chip" data-cat="<?php echo s($c); ?>"><?php echo s($c); ?> <em><?php echo (int)$n; ?></em></button><?php endforeach; ?></div>
         <?php if ($puedeEditar): ?><?php endif; ?>
     </div>
@@ -172,7 +173,8 @@ $pestanas = [
 <section class="sim-panel" id="sim-p-predeterminados" role="tabpanel" hidden>
     <p class="text-muted text-sm">Incluidos con la aplicación para todos los proyectos.</p>
     <div class="sim-barra">
-        <input type="search" class="sim-buscar" data-lista="sim-l-pre" placeholder="Buscar símbolo…" aria-label="Buscar símbolo">
+        <div class="pn-busca"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" class="sim-buscar" data-lista="sim-l-pre" placeholder="Buscar símbolo…" aria-label="Buscar símbolo"></div>
         <div class="sim-chips" data-lista="sim-l-pre"><?php foreach ($catsPre as $c => $n): ?><button type="button" class="sim-chip" data-cat="<?php echo s($c); ?>"><?php echo s($c); ?> <em><?php echo (int)$n; ?></em></button><?php endforeach; ?></div>
         
     </div>

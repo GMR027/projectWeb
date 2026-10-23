@@ -503,7 +503,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 
 <div class="rd-area">
 <aside class="rd-paginas" id="rd-paginas" aria-label="Navegador de páginas">
-    <div class="rd-paginas-tit"><strong><i class="fa-regular fa-copy"></i> Páginas</strong> <span id="rd-pg-n" class="rd-contador">1</span></div>
+    <header class="pn-cab"><span class="pn-cab-ico"><i class="fa-regular fa-copy"></i></span><div class="pn-cab-txt"><b>Páginas</b><small>el documento, de izquierda a derecha</small></div><span class="pn-cab-acc"><span id="rd-pg-n" class="rd-contador">1</span></span></header>
     <button type="button" class="btn btn-sm btn-ghost" id="rd-pg-nueva" title="Agregar una página en blanco al final"><i class="fa-solid fa-plus"></i> Agregar página</button>
     <div id="rd-pg-lista" class="rd-pg-lista"></div>
     <p class="text-sm text-muted">Mover o eliminar una página afecta a los bloques que empiezan en ella.</p>
@@ -515,6 +515,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     </div>
 </div>
 <aside class="rd-lateral" id="rd-lateral" aria-label="Comentarios y cambios">
+    <header class="pn-cab"><span class="pn-cab-ico"><i class="fa-regular fa-comments"></i></span><div class="pn-cab-txt"><b>Panel</b><small>Comentarios y cambios del documento</small></div></header>
     <div class="rd-tabs"><button type="button" class="activo" data-lat="comentarios">Comentarios</button><button type="button" data-lat="cambios">Cambios</button></div>
     <div id="rd-lat-comentarios"></div>
     <div id="rd-lat-cambios" hidden></div>

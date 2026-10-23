@@ -68,7 +68,8 @@
 .rd-lateral { flex: 0 0 32rem; position: sticky; top: 6rem; max-height: calc(100vh - 8rem); overflow: auto; margin-top: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; font-size: 1.3rem;
   &[hidden] { display: none; } blockquote { margin: .4rem 0; padding-left: .8rem; border-left: 3px solid var(--border-accent); color: var(--text-muted); font-size: 1.2rem; } }
 @media (max-width: 80rem) { .rd-area { flex-direction: column; } .rd-lateral { flex-basis: auto; width: 100%; position: static; max-height: none; } }
-.rd-tabs { display: flex; gap: .4rem; margin-bottom: 1rem; button { flex: 1; padding: .6rem 1rem; border: 1px solid var(--border); border-radius: .5rem; background: transparent; color: var(--text); cursor: pointer; &.activo { background: var(--primary-glow); border-color: var(--primary); color: var(--primary); } } }
+// .rd-tabs es alias de las pestañas de panel compartidas .pn-tabs (componentes/_paneles.scss)
+.rd-tabs { margin-bottom: 1rem; }
 .rd-com-item, .rd-cam-item, .rd-com-form { padding: .8rem; margin-bottom: .8rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--bg-secondary); cursor: pointer; p { margin: .3rem 0; } .rd-resp { color: var(--text-muted); } &.resuelto { opacity: .6; } &.rd-flash { border-color: #eab308; box-shadow: 0 0 0 2px rgba(234, 179, 8, .5); }
   textarea, .rd-resp-txt { width: 100%; padding: .5rem .7rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text); font-size: 1.3rem; box-sizing: border-box; } }
 .rd-com-acc { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-top: .4rem; .rd-resp-txt { flex: 1 1 12rem; width: auto; } }
@@ -96,16 +97,21 @@
   .btn-icono { position: absolute; top: .6rem; right: .6rem; background: none; border: 0; color: var(--text-muted); cursor: pointer; } }
 
 // Pestañas de la barra
-.rd-pestanas { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
-  button { padding: .7rem 1.4rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; i { margin-right: .4rem; }
-    &:hover { color: var(--text); background: var(--surface-hover); } &.activo { background: var(--surface); border-color: var(--border); color: var(--primary); font-weight: 600; } } }
+// Pestañas de página: barra compartida en componentes/_tabs.scss (.pestanas + alias .vp-/ve-/rd-/sf-)
 .rd-barra .rd-grupo-b.rd-oculto { display: none; }
 .rd-barra { margin-top: 0; border-top-left-radius: 0; }
 .rd-barra select { max-width: 14rem; }
 
 // Navegador de páginas (izquierda)
 .rd-paginas { flex: 0 0 15rem; position: sticky; top: 6rem; max-height: calc(100vh - 8rem); overflow: auto; margin-top: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; font-size: 1.2rem;
-  .rd-paginas-tit { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; } p { margin: 1rem 0 0; } }
+  p { margin: 1rem 0 0; } }
+// Cabeceras de los paneles laterales y sus pestañas: piezas compartidas .pn-cab y .pn-tabs, a sangre dentro del panel
+.rd-paginas > .pn-cab, .rd-lateral > .pn-cab { margin: -1rem -1rem 1rem; }
+// El navegador de páginas mide 15rem: la cabecera va compacta y sin subtítulo
+.rd-paginas > .pn-cab { height: 4.2rem; padding: 0 .8rem; gap: .6rem;
+  .pn-cab-ico { width: 2.6rem; height: 2.6rem; font-size: 1.2rem; }
+  .pn-cab-txt small { display: none; } }
+.rd-lateral > .rd-tabs { margin: 0 -1rem 1rem; }
 .rd-pg-lista { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
 .rd-pg { cursor: pointer; .rd-pg-vista { position: relative; overflow: hidden; background: #fff; border: 1px solid var(--border); box-shadow: 0 .2rem .8rem rgba(0, 0, 0, .3); }
   &:hover .rd-pg-vista { border-color: var(--primary); }

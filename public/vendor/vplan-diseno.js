@@ -289,6 +289,21 @@
     }));
     sincronizarToggles();
 
+    // ---- Panel: ocultarlo deja la hoja en todo el ancho (se recuerda) ----
+    const wrapDis = document.querySelector('.vp-dis-wrap'), panelLado = $('vp-dis-panel'), btnPanel = $('vp-dis-panel-abrir');
+    function panelVisible(v) {
+        if (!panelLado) return;
+        panelLado.hidden = !v;
+        if (btnPanel) btnPanel.hidden = v;
+        if (wrapDis) wrapDis.classList.toggle('vp-dis-fuera', !v);
+        guarda('vp-dis-panel', v ? '1' : '0');
+        requestAnimationFrame(dibujarReglas);
+    }
+    const btnOcultar = $('vp-dis-panel-tgl');
+    if (btnOcultar) btnOcultar.addEventListener('click', () => panelVisible(false));
+    if (btnPanel) btnPanel.addEventListener('click', () => panelVisible(true));
+    panelVisible(guardado('vp-dis-panel', '1') !== '0');
+
     // ---- Panel con pestañas ----
     let pestana = guardado('vp-dis-ptab', 'props');
     function irAPestana(p) {
@@ -439,6 +454,7 @@
 
     // ---- Selección y propiedades ----
     function seleccionar(b, desdeLienzo) {
+        if (b && panelLado && panelLado.hidden) panelVisible(true);   // al elegir un bloque se abre el panel para ver sus propiedades
         seleccion = b;
         if (b) guiaSel = null;
         sheet.querySelectorAll('.vp-blk.vp-sel').forEach(x => x.classList.remove('vp-sel'));
@@ -461,6 +477,7 @@
         pintarCampos(b);
     }
     function seleccionarGuia(g, desdeLienzo) {
+        if (g && panelLado && panelLado.hidden) panelVisible(true);
         guiaSel = g;
         if (g) seleccion = null;
         sheet.querySelectorAll('.vp-blk.vp-sel').forEach(x => x.classList.remove('vp-sel'));
@@ -577,8 +594,11 @@
         } else {
             h += '<p class="text-sm text-muted">La imagen se ajusta al bloque sin deformarse. Se cambia en «Editar lámina».</p>';
         }
+        // La paleta de colores de la plataforma (selector-color.js) también en los campos nuevos de este panel
+        document.querySelectorAll('.ve-paleta').forEach(p => { if (p._dueno && !p._dueno.isConnected) p.remove(); else p.hidden = true; });
         panel.innerHTML = h;
         enlazarCampos(b);
+        if (window.VPColor) window.VPColor.iniciar(panel);
         $('vp-c-nombre').addEventListener('input', e => {
             const v = e.target.value.trim();
             if (v) c.nombre = v; else delete c.nombre;
@@ -764,25 +784,118 @@
         asegurarCapa(b, el); aplicar(b); marcarSucio(); pintarCapas();
         return b;
     }
-    function agregarBloque(tipo) {
+    function agregarBloque(tipo, pos) {
         if (UNICOS.includes(tipo) && bloques.some(b => b.tipo === tipo)) { window.avisoModal('Bloque repetido', 'Esta lámina ya tiene un bloque de ese tipo.'); return; }
         const b = crearBloque(tipo);
+        centrarEn(b, pos);
         seleccionar(b, true);
+        anotarReciente({ t: 'tipo', v: tipo });
     }
+    /** Si el bloque se soltó en un punto de la hoja, lo deja centrado ahí */
+    const centrarEn = (b, pos) => {
+        if (!pos) return;
+        b.x = redond(Math.max(0, Math.min(100 - b.w, pos.cx - b.w / 2)));
+        b.y = redond(Math.max(0, Math.min(100 - b.h, pos.cy - b.h / 2)));
+        aplicar(b); llenarPosicion(b);
+    };
+    // Fichas de bloques: icono + nombre + para qué sirve. Se pulsa (centro) o se arrastra a la hoja.
+    const AYUDAS = { titulo: 'Proyecto y lámina', logo: 'Contratista o empresa', plano: 'Imagen del plano', tareas: 'Tabla del programa', schedule: 'Calendario del proyecto', supervisor: 'El supervisor', fecha: 'La de hoy', texto: 'Nota o leyenda' };
     function actualizarInsertar() {
-        const caja = $('vp-ins-bloques');
-        caja.innerHTML = Object.keys(D.tipos).filter(t => t !== 'tabla' && t !== 'imagen' && t !== 'cajetin' && t !== 'estampa' && t !== 'simbologia').map(t => {
+        const caja = $('vp-ins-bloques'); if (!caja) return;
+        const q = buscaIns();
+        const tipos = Object.keys(D.tipos).filter(t => !['tabla', 'imagen', 'cajetin', 'estampa', 'simbologia'].includes(t));
+        const visibles = tipos.filter(t => !q || ((D.tipos[t] || '') + ' ' + (AYUDAS[t] || '')).toLowerCase().includes(q));
+        cuenta.bloques = visibles.length;
+        caja.innerHTML = visibles.map(t => {
             const usado = UNICOS.includes(t) && bloques.some(b => b.tipo === t);
-            return '<button type="button" class="vp-ins-bloque" data-tipo="' + t + '"' + (usado ? ' disabled title="Ya está en la lámina"' : '') + '><i class="fa-solid ' + (ICONOS[t] || 'fa-square') + '"></i><span>' + esc(D.tipos[t]) + '</span></button>';
+            return '<button type="button" class="pn-ficha" data-tipo="' + t + '"' + (usado ? ' disabled title="Ya está en la lámina"' : '') + '>' +
+                '<i class="fa-solid ' + (ICONOS[t] || 'fa-square') + '"></i><b>' + esc(D.tipos[t]) + '</b><small>' + esc(AYUDAS[t] || '') + '</small></button>';
+        }).join('') || '<p class="text-sm text-muted">Ningún bloque coincide.</p>';
+    }
+
+    // ================== Buscador, categorías y recientes ==================
+    const INS = { cat: guardado('vp-dis-inscat', 'bloques') };
+    const cuenta = { bloques: 0, simbolos: 0, cajetines: 0, estampas: 0, tablas: 0 };
+    const buscaIns = () => { const i = $('vp-ins-todo'); return i ? i.value.trim().toLowerCase() : ''; };
+    /** Sección visible: con texto de búsqueda se ven todas las que tengan coincidencias; sin texto, la categoría elegida */
+    function pintarVisibilidad() {
+        const q = buscaIns();
+        let total = 0;
+        document.querySelectorAll('[data-ins]').forEach(s => {
+            const c = s.dataset.ins;
+            if (c === 'recientes') { s.hidden = !!q || !recientes.length; return; }
+            const v = q ? cuenta[c] > 0 : (INS.cat === 'todo' || INS.cat === c);
+            s.hidden = !v;
+            if (v) total += cuenta[c] || 0;
+        });
+        const nada = $('vp-ins-nada'); if (nada) nada.hidden = !(q && total === 0);
+        document.querySelectorAll('[data-cat]').forEach(b => {
+            const a = b.dataset.cat === INS.cat;
+            b.classList.toggle('activo', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
+        });
+    }
+    document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+        INS.cat = b.dataset.cat; guarda('vp-dis-inscat', INS.cat); pintarVisibilidad();
+    }));
+
+    // Recientes: lo último insertado, a un clic
+    let recientes = [];
+    try { const v = JSON.parse(guardado('vp-dis-recientes', '[]')); if (Array.isArray(v)) recientes = v; } catch (_) { recientes = []; }
+    const claveRec = r => r.t + ':' + (r.v || r.id || r.src || '');
+    const nomBib = (lista, id) => { const x = (lista || []).find(y => (+y.id || 0) === (+id || 0)); return x ? x.nombre : '—'; };
+    function anotarReciente(r) {
+        recientes = [r, ...recientes.filter(x => claveRec(x) !== claveRec(r))].slice(0, 8);
+        guarda('vp-dis-recientes', JSON.stringify(recientes));
+        pintarRecientes(); pintarVisibilidad();
+    }
+    function pintarRecientes() {
+        const caja = $('vp-ins-recientes'); if (!caja) return;
+        caja.innerHTML = recientes.map(r => {
+            if (r.t === 'tipo' && D.tipos[r.v]) return '<button type="button" class="pn-ficha" data-tipo="' + esc(r.v) + '"><i class="fa-solid ' + (ICONOS[r.v] || 'fa-square') + '"></i><b>' + esc(D.tipos[r.v]) + '</b><small>bloque</small></button>';
+            if (r.t === 'sim') return '<button type="button" class="vp-sim" data-src="' + esc(r.src) + '" data-nombre="' + esc(r.nombre) + '"' + (r.ref ? ' data-ref="' + esc(r.ref) + '" data-v="' + esc(r.refv || '') + '"' : '') + ' title="' + esc(r.nombre) + '"><img src="' + esc(r.src) + '" alt="" loading="lazy"><span>' + esc(r.nombre) + '</span></button>';
+            if (r.t === 'caj') return '<button type="button" class="pn-ficha" data-cajetin="' + (+r.id) + '"><i class="fa-solid fa-table-list"></i><b>' + esc(nomBib((BIB.cajetines || []), r.id)) + '</b><small>cajetín</small></button>';
+            if (r.t === 'est') return '<button type="button" class="pn-ficha" data-estampa="' + (+r.id) + '"><i class="fa-solid fa-wand-magic-sparkles"></i><b>' + esc(nomBib((BIB.estampas || []), r.id)) + '</b><small>estampa</small></button>';
+            return '';
         }).join('');
     }
-    $('vp-ins-bloques').addEventListener('click', e => { const b = e.target.closest('.vp-ins-bloque'); if (b && !b.disabled) agregarBloque(b.dataset.tipo); });
+
+    /** Inserta lo que representa un elemento de Insertar (bloque, símbolo, cajetín o estampa); `pos` = punto de la hoja en % */
+    function insertarDesdeElemento(el, pos) {
+        if (el.dataset.tipo) { agregarBloque(el.dataset.tipo, pos); return; }
+        if (el.dataset.estampa) {
+            const x = (BIB.estampas || []).find(y => +y.id === +el.dataset.estampa); if (!x) return;
+            const blk = crearBloque('estampa', { estampa_id: +x.id, fecha_modo: 'hoy' }, null, null, Math.min(100, x.w || 26), Math.min(100, x.h || 16));
+            centrarEn(blk, pos); seleccionar(blk, true); cargarEstampa(blk);
+            anotarReciente({ t: 'est', id: +x.id }); return;
+        }
+        if (el.dataset.cajetin) {
+            const id = +el.dataset.cajetin || 0, c = (BIB.cajetines || []).find(x => (+x.id || 0) === id) || {};
+            const banda = c.orientacion === 'banda', n = (c.filas || []).length || 4;
+            const w = banda ? Math.min(90, Math.max(30, n * 12)) : Math.min(60, Math.max(15, +c.ancho || 26));
+            const h = banda ? 6 : Math.min(40, Math.max(6, n * 3.2));
+            const blk = crearBloque('cajetin', { cajetin_id: id }, null, null, w, h);
+            centrarEn(blk, pos); seleccionar(blk, true);
+            anotarReciente({ t: 'caj', id }); return;
+        }
+        if (el.dataset.src) insertarImagen(el.dataset.src, el.dataset.nombre, el.dataset.ref, el.dataset.v, pos);
+    }
+
+    // Un solo clic para todo lo insertable (fichas, símbolos, cajetines, estampas y recientes)
+    let arrastroEn = 0;   // para no confundir el clic de después de un arrastre con una inserción
+    const recienArrastro = () => Date.now() - arrastroEn < 400;
+    const panIns = document.querySelector('[data-pan="insertar"]');
+    if (panIns) panIns.addEventListener('click', e => {
+        if (recienArrastro()) return;
+        const el = e.target.closest('[data-tipo], .vp-sim, [data-cajetin], [data-estampa]');
+        if (!el || el.disabled) return;
+        insertarDesdeElemento(el, null);
+    });
 
     // Símbolos, simbologías del proyecto y cajetines: se insertan como copia propia (imagen) o como tabla con variables
     const BIB = D.biblioteca || { simbolos: [], graficos: [], cajetines: [], estampas: [] };
     function pintarBiblioteca() {
         const lista = $('vp-sim-lista'); if (!lista) return;
-        const q = $('vp-sim-buscar').value.trim().toLowerCase();
+        const q = buscaIns();
         const grupos = {};
         (BIB.simbolos || []).filter(x => !q || (x.nombre + ' ' + x.cat).toLowerCase().includes(q)).forEach(x => { (grupos[x.cat] = grupos[x.cat] || []).push(x); });
         const gr = (BIB.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q));
@@ -796,15 +909,23 @@
         const btnTodas = $('vp-sim-todas'); if (btnTodas) btnTodas.hidden = !(BIB.graficos || []).some(x => x.tipo === 'simbologia');
         lista.innerHTML = Object.keys(grupos).map(cat => '<h5 class="vp-ins-grupo">' + esc(cat) + '</h5><div class="vp-sim-grid">' + grupos[cat].map(x =>
             '<button type="button" class="vp-sim" data-src="' + esc(x.src) + '" data-nombre="' + esc(x.nombre) + '"' + (x.ref ? ' data-ref="' + esc(x.ref) + '" data-v="' + esc(x.v || '') + '"' : '') + ' title="' + esc(x.nombre) + (x.ref ? ' (vinculada: se actualiza sola)' : '') + '"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') + '</div>').join('')
-            || '<p class="text-sm text-muted">Sin resultados.</p>';
+            || '<p class="text-sm text-muted">' + (q ? 'Ningún símbolo coincide.' : 'Sin símbolos.') + '</p>';
+        cuenta.simbolos = lista.querySelectorAll('.vp-sim').length;
+
+        const ests = (BIB.estampas || []).filter(x => !q || String(x.nombre).toLowerCase().includes(q));
         const est = $('vp-sim-estampas');
-        if (est) est.innerHTML = (BIB.estampas || []).map(x => '<button type="button" class="vp-ins-bloque" data-estampa="' + (+x.id) + '" title="Estampa inteligente: se actualiza sola con los datos del proyecto"><i class="fa-solid fa-wand-magic-sparkles"></i><span>' + esc(x.nombre) + '</span></button>').join('')
-            || '<p class="text-sm text-muted">Aún no hay estampas. Créalas en <a href="/simbolos?proyecto=' + D.proyecto + '#estampas" target="_blank" rel="noopener">Símbolos › Estampas inteligentes</a>.</p>';
-        $('vp-sim-cajetines').innerHTML = (BIB.cajetines || []).map(c =>
-            '<button type="button" class="vp-ins-bloque" data-cajetin="' + (+c.id || 0) + '" title="' + esc(c.orientacion === 'banda' ? 'Banda' : 'Tabla de dos columnas') + '"><i class="fa-solid fa-table-list"></i><span>' + esc(c.nombre) + '</span></button>').join('');
+        if (est) est.innerHTML = ests.map(x => '<button type="button" class="pn-ficha" data-estampa="' + (+x.id) + '" title="Estampa inteligente: se actualiza sola con los datos del proyecto"><i class="fa-solid fa-wand-magic-sparkles"></i><b>' + esc(x.nombre) + '</b><small>se llena sola</small></button>').join('')
+            || '<p class="text-sm text-muted">' + (q ? 'Ninguna estampa coincide.' : 'Aún no hay estampas. Créalas en <a href="/simbolos?proyecto=' + D.proyecto + '#estampas" target="_blank" rel="noopener">Símbolos › Estampas inteligentes</a>.') + '</p>';
+        cuenta.estampas = ests.length;
+
+        const cajs = (BIB.cajetines || []).filter(c => !q || String(c.nombre).toLowerCase().includes(q));
+        $('vp-sim-cajetines').innerHTML = cajs.map(c =>
+            '<button type="button" class="pn-ficha" data-cajetin="' + (+c.id || 0) + '" title="' + esc(c.orientacion === 'banda' ? 'Banda' : 'Tabla de dos columnas') + '"><i class="fa-solid fa-table-list"></i><b>' + esc(c.nombre) + '</b><small>' + (c.orientacion === 'banda' ? 'banda' : 'cajetín') + '</small></button>').join('')
+            || '<p class="text-sm text-muted">' + (q ? 'Ningún cajetín coincide.' : 'Aún no hay cajetines.') + '</p>';
+        cuenta.cajetines = cajs.length;
     }
     const rasterizar = url => window.KitEdicion.rasterizar(url, 1024);
-    async function insertarImagen(src, nombre, ref, refv) {
+    async function insertarImagen(src, nombre, ref, refv, pos) {
         const est = $('vp-sim-estado'); est.textContent = 'Insertando…';
         try {
             const blob = await rasterizar(src);
@@ -817,42 +938,29 @@
             if (h > 40) { h = 40; w = redond(h / hojaR * dim[0] / dim[1]); }
             const b = crearBloque('imagen', Object.assign({ archivo: d.src.split('/').pop(), nombre }, ref ? { ref, refv: refv || '' } : {}), null, null, w, h);
             const el = elDe(b); if (el) el.innerHTML = '<div class="vp-img" style="justify-content:center"><img src="' + esc(d.src) + '" alt=""></div>';
+            centrarEn(b, pos);
             seleccionar(b, true);
+            anotarReciente({ t: 'sim', src: String(src), nombre: String(nombre || ''), ref: ref || '', refv: refv || '' });
             est.textContent = '';
         } catch (e) { est.textContent = 'No se pudo insertar: ' + (e.message || 'error'); }
     }
     if ($('vp-sim-lista')) {
         pintarBiblioteca();
-        $('vp-sim-buscar').addEventListener('input', pintarBiblioteca);
         $('vp-sim-todas').addEventListener('click', async () => {
             for (const x of (BIB.graficos || []).filter(x => x.tipo === 'simbologia')) await insertarImagen(x.src, x.nombre, x.ref, x.v);
-        });
-        $('vp-sim-lista').addEventListener('click', e => { const b = e.target.closest('.vp-sim'); if (b) insertarImagen(b.dataset.src, b.dataset.nombre, b.dataset.ref, b.dataset.v); });
-        if ($('vp-sim-estampas')) $('vp-sim-estampas').addEventListener('click', e => {
-            const b = e.target.closest('[data-estampa]'); if (!b) return;
-            const x = (BIB.estampas || []).find(y => +y.id === +b.dataset.estampa); if (!x) return;
-            const blk = crearBloque('estampa', { estampa_id: +x.id, fecha_modo: 'hoy' }, null, null, Math.min(100, x.w || 26), Math.min(100, x.h || 16));
-            seleccionar(blk, true); cargarEstampa(blk);
-        });
-        $('vp-sim-cajetines').addEventListener('click', e => {
-            const b = e.target.closest('[data-cajetin]'); if (!b) return;
-            const id = +b.dataset.cajetin || 0, c = (BIB.cajetines || []).find(x => (+x.id || 0) === id) || {};
-            const banda = c.orientacion === 'banda', n = (c.filas || []).length || 4;
-            const w = banda ? Math.min(90, Math.max(30, n * 12)) : Math.min(60, Math.max(15, +c.ancho || 26));
-            const h = banda ? 6 : Math.min(40, Math.max(6, n * 3.2));
-            seleccionar(crearBloque('cajetin', { cajetin_id: id }, null, null, w, h), true);
         });
     }
 
     // Tablas: todas las del catálogo (de todos los tipos) y las hojas de SheetFlow
     const catalogo = D.catalogo || [];
     function pintarTablas() {
-        const q = $('vp-ins-buscar').value.trim().toLowerCase();
+        const q = buscaIns();
         const lista = catalogo.map((t, i) => ({ t, i })).filter(({ t }) => !q || (t.nombre + ' ' + t.titulo + ' ' + t.tipoNombre).toLowerCase().includes(q));
         const grupos = {};
         lista.forEach(x => { (grupos[x.t.tipoNombre] = grupos[x.t.tipoNombre] || []).push(x); });
         const caja = $('vp-ins-tablas');
-        if (!lista.length) { caja.innerHTML = '<p class="text-sm text-muted">' + (catalogo.length ? 'Ninguna tabla coincide.' : 'Aún no hay tablas. Crea la primera abajo.') + '</p>'; return; }
+        cuenta.tablas = lista.length;
+        if (!lista.length) { caja.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ninguna tabla coincide.' : catalogo.length ? 'Ninguna tabla.' : 'Aún no hay tablas. Crea la primera arriba.') + '</p>'; return; }
         caja.innerHTML = Object.keys(grupos).map(g =>
             '<h5 class="vp-ins-grupo">' + esc(g) + ' <small>(' + grupos[g].length + ')</small></h5>' + grupos[g].map(({ t, i }) =>
                 '<div class="vp-ins-tabla' + (t.enLamina ? ' vp-ya' : '') + '" data-i="' + i + '"><div class="vp-ins-tabla-txt"><b>' + esc(t.nombre) + '</b><small>' + t.filas + ' renglón(es)' + (t.sheetflow ? ' · SheetFlow' : '') + '</small></div>' +
@@ -860,8 +968,11 @@
                 (t.id ? '<button type="button" class="vp-ib vp-ib-sm" data-acc="copia" title="Insertar una copia independiente (sus cambios no afectan a las demás láminas)" aria-label="Insertar copia"><i class="fa-regular fa-copy"></i></button>' : '') +
                 '</div>').join('')).join('');
     }
-    $('vp-ins-buscar').addEventListener('input', pintarTablas);
+    // Un solo buscador para todas las categorías
+    const insTodo = $('vp-ins-todo');
+    if (insTodo) insTodo.addEventListener('input', () => { actualizarInsertar(); pintarBiblioteca(); pintarTablas(); pintarVisibilidad(); });
     $('vp-ins-tablas').addEventListener('click', async e => {
+        if (recienArrastro()) return;
         const btn = e.target.closest('[data-acc]'), fila = e.target.closest('.vp-ins-tabla');
         if (!btn || !fila) return;
         const t = catalogo[+fila.dataset.i];
@@ -901,6 +1012,68 @@
         }
     }
 
+    // ---- Arrastrar desde Insertar hasta la hoja (ratón/lápiz; en táctil se inserta con el clic) ----
+    const dimsDe = el => {
+        if (el.dataset.tipo) return DIMS[el.dataset.tipo] || [20, 8];
+        if (el.dataset.estampa) { const x = (BIB.estampas || []).find(y => +y.id === +el.dataset.estampa) || {}; return [Math.min(100, x.w || 26), Math.min(100, x.h || 16)]; }
+        if (el.dataset.cajetin) return [26, 16];
+        return [12, 16];   // símbolo: aproximado hasta conocer su proporción real
+    };
+    document.addEventListener('pointerdown', e => {
+        if (e.button !== 0 || e.pointerType === 'touch' || !panIns) return;
+        const o = e.target.closest && e.target.closest('[data-tipo], .vp-sim, [data-cajetin], [data-estampa]');
+        if (!o || o.disabled || !o.closest('[data-pan="insertar"]')) return;
+        const ini = { x: e.clientX, y: e.clientY };
+        const dims = dimsDe(o);
+        let activo = false, fantasma = null, marco = null, pos = null;
+        const mover = ev => {
+            if (!activo) {
+                if (Math.hypot(ev.clientX - ini.x, ev.clientY - ini.y) < 6) return;
+                activo = true;
+                document.body.classList.add('vp-arrastrando');
+                fantasma = document.createElement('div');
+                fantasma.className = 'vp-ins-fantasma';
+                const ico = o.querySelector('i'), txt = o.querySelector('b, span');
+                fantasma.innerHTML = (ico ? ico.outerHTML : '') + '<span>' + esc(txt && txt.textContent ? txt.textContent : 'Elemento') + '</span>';
+                document.body.appendChild(fantasma);
+                marco = document.createElement('div');
+                marco.className = 'vp-ins-drop';
+                sheet.appendChild(marco);
+            }
+            fantasma.style.transform = 'translate(' + (ev.clientX + 14) + 'px,' + (ev.clientY + 10) + 'px)';
+            const r = sheet.getBoundingClientRect();
+            const dentro = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+            marco.hidden = !dentro;
+            if (!dentro) { pos = null; return; }
+            const w = dims[0], h = dims[1];
+            const ux = 6 / r.width * 100, uy = 6 / r.height * 100;
+            let x = (ev.clientX - r.left) / r.width * 100 - w / 2, y = (ev.clientY - r.top) / r.height * 100 - h / 2;
+            const sx = imantar([x, x + w / 2, x + w], 'x', ux), sy = imantar([y, y + h / 2, y + h], 'y', uy);
+            if (sx) x += sx.d; else x = rejilla(x);
+            if (sy) y += sy.d; else y = rejilla(y);
+            x = Math.max(0, Math.min(100 - w, x)); y = Math.max(0, Math.min(100 - h, y));
+            pos = { cx: redond(x + w / 2), cy: redond(y + h / 2) };
+            marco.style.left = redond(x) + '%'; marco.style.top = redond(y) + '%';
+            marco.style.width = w + '%'; marco.style.height = h + '%';
+        };
+        const fin = ev => {
+            document.removeEventListener('pointermove', mover);
+            document.removeEventListener('pointerup', fin);
+            document.removeEventListener('pointercancel', fin);
+            document.body.classList.remove('vp-arrastrando');
+            if (fantasma) fantasma.remove();
+            if (marco) marco.remove();
+            if (!activo) return;
+            arrastroEn = Date.now();
+            if (ev.cancelable) ev.preventDefault();
+            const destino = pos; pos = null;
+            if (destino) insertarDesdeElemento(o, destino);
+        };
+        document.addEventListener('pointermove', mover);
+        document.addEventListener('pointerup', fin);
+        document.addEventListener('pointercancel', fin);
+    });
+
     // ---- Tamaño de la hoja ----
     const selPreset = document.getElementById('vp-dis-preset'), selOri = document.getElementById('vp-dis-orientacion'), custom = document.getElementById('vp-dis-custom');
     const leerTamano = () => {
@@ -923,11 +1096,39 @@
         sheet.style.setProperty('--vp-ratio', t.w / t.h);
         document.getElementById('vp-dis-medidas').textContent = t.w + ' × ' + t.h + ' mm';
         if (seleccion) llenarPosicion(seleccion);
+        pintarPresets();
         marcarSucio();
     };
     [selPreset, selOri, document.getElementById('vp-dis-ancho'), document.getElementById('vp-dis-alto'), document.getElementById('vp-dis-unidad')].forEach(i => i.addEventListener('change', cambioTamano));
     custom.hidden = selPreset.value !== 'personalizado';
     selOri.disabled = selPreset.value === 'personalizado';
+
+    // Tarjetas de tamaño y orientación: reflejan lo que manda el <select> oculto
+    function pintarPresets() {
+        const vert = selOri.value === 'vertical';
+        document.querySelectorAll('#vp-dis-presets [data-preset]').forEach(b => {
+            const a = b.dataset.preset === selPreset.value;
+            b.classList.toggle('activo', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
+        });
+        document.querySelectorAll('#vp-dis-presets [data-w]').forEach(f => {
+            const w = +f.dataset.w, h = +f.dataset.h, i = f.querySelector('i');
+            if (i) i.style.setProperty('--ar', String(vert ? h / w : w / h));
+            const s = f.querySelector('small');
+            if (s) s.textContent = (vert ? h : w) + ' × ' + (vert ? w : h) + ' mm';
+        });
+        document.querySelectorAll('[data-ori]').forEach(b => {
+            const a = b.dataset.ori === selOri.value;
+            b.classList.toggle('activo', a); b.setAttribute('aria-pressed', a ? 'true' : 'false'); b.disabled = selOri.disabled;
+        });
+    }
+    document.querySelectorAll('#vp-dis-presets [data-preset]').forEach(b => b.addEventListener('click', () => {
+        selPreset.value = b.dataset.preset; selPreset.dispatchEvent(new Event('change'));
+    }));
+    document.querySelectorAll('[data-ori]').forEach(b => b.addEventListener('click', () => {
+        if (selOri.disabled) return;
+        selOri.value = b.dataset.ori; selOri.dispatchEvent(new Event('change'));
+    }));
+    pintarPresets();
 
 
     // ================== Guardar ==================
@@ -963,10 +1164,31 @@
             aplicarTodos(); pintarGuias(); pintarGuiasLista(); seleccionar(null); pintarCapas(); marcarSucio();
         },
     });
-    ['input', 'change', 'click', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, hist.programar));
+    // Botones de deshacer/rehacer en la barra (el atajo sigue siendo Ctrl+Z / Ctrl+Y)
+    let refHist = 0;
+    const pintarHist = () => {
+        const d = $('vp-dis-deshacer'), r = $('vp-dis-rehacer');
+        if (d) d.disabled = !hist.hayPasado();
+        if (r) r.disabled = !hist.hayFuturo();
+    };
+    const programarHist = () => { hist.programar(); clearTimeout(refHist); refHist = setTimeout(pintarHist, 450); };
+    ['input', 'change', 'click', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, programarHist));
+    if ($('vp-dis-deshacer')) $('vp-dis-deshacer').addEventListener('click', () => { hist.deshacer(); pintarHist(); });
+    if ($('vp-dis-rehacer')) $('vp-dis-rehacer').addEventListener('click', () => { hist.rehacer(); pintarHist(); });
+    pintarHist();
     window.KitEdicion.atajos({
         deshacer: hist.deshacer, rehacer: hist.rehacer,
         antes: (e, k) => { if (k !== 's') return false; e.preventDefault(); $('vp-dis-guardar').click(); return true; },
+    });
+    // Ayuda de la barra: atajos y trucos del modo diseño
+    if ($('vp-dis-ayuda')) $('vp-dis-ayuda').addEventListener('click', () => window.avisoModal('Modo diseño', 'Arrastra un bloque para moverlo y sus esquinas para redimensionarlo · flechas para afinar (Mayús = más rápido) · Supr para quitar · Ctrl+Z deshacer · Ctrl+Y rehacer · Ctrl+S guarda · arrastra desde las reglas para crear guías · / abre el buscador de Insertar · desde Insertar también puedes arrastrar un bloque hasta la hoja para ponerlo donde quieras.'));
+    // Atajo «/»: buscar en Insertar
+    document.addEventListener('keydown', e => {
+        if (e.key !== '/' || pestana !== 'insertar' || e.ctrlKey || e.metaKey || e.altKey) return;
+        const t = ((document.activeElement || {}).tagName || '');
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
+        const i = $('vp-ins-todo'); if (!i) return;
+        e.preventDefault(); i.focus(); i.select();
     });
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña o recargar)
     window.KitEdicion.avisoSalir({
@@ -974,7 +1196,7 @@
         titulo: '¿Salir sin guardar el diseño?', mensaje: 'Hiciste cambios en el diseño de la lámina que aún no se guardan.',
     });
 
-    pintarGuias(); pintarCapas(); pintarGuiasLista(); actualizarInsertar(); pintarTablas(); pintarRecovery();
+    pintarGuias(); pintarCapas(); pintarGuiasLista(); actualizarInsertar(); pintarTablas(); pintarRecovery(); pintarRecientes(); pintarVisibilidad();
     seleccionar(null);
     requestAnimationFrame(dibujarReglas);
 })();

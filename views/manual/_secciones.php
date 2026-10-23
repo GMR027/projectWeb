@@ -306,19 +306,21 @@ HTML],
 <li>Escribe el <strong>título</strong> y el <strong>supervisor</strong>.</li>
 <li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda).</li>
 <li>Si elegiste partida, marca qué actividades muestra. Si no marcas ninguna, muestra toda la partida.</li>
-<li>Agrega las columnas de <strong>recovery</strong> que necesites (una o más) en el modo diseño, pestaña «Insertar».</li>
+<li>Agrega las columnas de <strong>recovery</strong> que necesites (una o más) en el modo diseño, pestaña «Hoja».</li>
 </ol>
 <h4>Modo diseño: poner cada cosa donde quieras</h4>
-<p>En la lámina pulsa <strong>Modo diseño</strong>. Cada elemento es un bloque que arrastras para moverlo y redimensionas con las esquinas o los bordes (flechas para afinar, Supr para quitarlo; «Rejilla» alinea a 0.5 %). Las herramientas están en el panel de la derecha, en cuatro pestañas: <strong>Propiedades</strong>, <strong>Capas</strong>, <strong>Insertar</strong> y <strong>Hoja</strong>. A la izquierda de la lámina, el panel de <strong>láminas</strong> (con miniaturas, agrupadas) te deja cambiar de área con un clic.</p>
+<p>En la lámina pulsa <strong>Modo diseño</strong>. Cada elemento es un bloque que arrastras para moverlo y redimensionas con las esquinas o los bordes (flechas para afinar, Supr para quitarlo; «Rejilla» alinea a 0.5 %). Las herramientas están en el panel de la derecha, en cuatro pestañas: <strong>Propiedades</strong>, <strong>Capas</strong>, <strong>Insertar</strong> y <strong>Hoja</strong>; con la flecha de la cabecera ocultas el panel para ver más hoja, y con <strong>↶ ↷</strong> deshaces o rehaces (igual que con Ctrl+Z y Ctrl+Y) y con <strong>?</strong> ves todos los atajos. A la izquierda de la lámina, el panel de <strong>láminas</strong> (con miniaturas, agrupadas) te deja cambiar de área con un clic.</p>
 <ul>
 <li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
 <li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
 <li><strong>Tareas (partidas):</strong> un bloque puede mostrar <strong>varias partidas</strong>, completas o solo algunas actividades, con su propio título y color. La numeración (SEQ) es <strong>continua 1..n</strong> o <strong>la de cada partida</strong>, con un subtítulo por partida. Puedes tener varios bloques de tareas en la misma lámina.</li>
 <li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos (también las hojas de SheetFlow), con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos.</li>
+<li><strong>Insertar:</strong> el buscador de arriba filtra <em>todo</em> a la vez (bloques, símbolos, cajetines, estampas y tablas) y los chips (Bloques, Símbolos, Cajetines, Estampas, Tablas, Todo) muestran una categoría a la vez; lo último que insertaste queda en «Recientes». Un clic pone el bloque en el centro de la hoja y <strong>arrastrarlo hasta la hoja</strong> lo deja exactamente donde lo sueltes (se pega a las guías como los demás bloques).</li>
+<li><strong>Colores:</strong> donde hay un selector de color aparece también el botón <strong>Paleta</strong> con los colores básicos, la maestra Pantone y tus colores guardados.</li>
 <li><strong>Capas:</strong> lista de todos los objetos; arrástralos para cambiar el orden (arriba = al frente), ocúltalos con el ojo, bloquéalos con el candado para no moverlos por error y renómbralos con doble clic.</li>
 <li><strong>Guías (como en Inkscape):</strong> arrastra desde las <strong>reglas</strong> (la de arriba da guías horizontales; la de la izquierda, verticales) y suelta dentro de la hoja. Los bloques se <strong>imantan</strong> a las guías, a los bordes y al centro de la hoja. Las guías también están en «Capas»: puedes ocultarlas, bloquearlas, escribir su posición en cm o quitarlas (o arrastrarlas fuera de la hoja). No se imprimen ni se exportan.</li>
-<li><strong>Recovery:</strong> en «Insertar» agregas tantas columnas de recovery como necesites (Recovery, Recovery 02, 03…) y quitas la última; las fechas capturadas se conservan.</li>
-<li><strong>Hoja:</strong> cambia el tamaño u orientación en cualquier momento; los bloques conservan su lugar en proporción. «Restablecer diseño estándar» vuelve a la disposición clásica.</li>
+<li><strong>Recovery:</strong> en «Hoja» agregas tantas columnas de recovery como necesites (Recovery, Recovery 02, 03…) y quitas la última; las fechas capturadas se conservan.</li>
+<li><strong>Hoja:</strong> cambia el tamaño u orientación en cualquier momento con las tarjetas de tamaños (tabloide, carta, oficio, A4…A1, Arch D o una medida tuya); los bloques conservan su lugar en proporción. «Restablecer diseño estándar» vuelve a la disposición clásica.</li>
 </ul>
 <p class="manual-nota">Las restricciones se numeran en toda la lámina (en el orden en que se leen los bloques de tareas), así que un rombo con el mismo número es siempre la misma restricción.</p>
 <h4>La lámina (vista de lectura)</h4>
@@ -332,7 +334,7 @@ HTML],
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>
 <h4>Editar las marcas</h4>
-<p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina.</p>
+<p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Capas</em>, <em>Láminas</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>

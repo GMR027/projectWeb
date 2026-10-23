@@ -3,17 +3,30 @@
 use Classes\VplanDiseno;
 $preset = $lamina->preset;
 $vertical = $lamina->alto_mm > $lamina->ancho_mm;
+$corto = fn(string $n): string => preg_split('/\s+(?=[0-9])/', $n)[0];   // «Tabloide 11×17"» → «Tabloide»
+$pestanas = [['props', 'fa-sliders', 'Propiedades'], ['capas', 'fa-layer-group', 'Capas'], ['insertar', 'fa-plus', 'Insertar'], ['hoja', 'fa-file-lines', 'Hoja']];
+$categorias = [['bloques', 'Bloques'], ['simbolos', 'Símbolos'], ['cajetines', 'Cajetines'], ['estampas', 'Estampas'], ['tablas', 'Tablas'], ['todo', 'Todo']];
+/** Proporción (ancho/alto) de un preset, según la orientación elegida */
+$prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 4) : round($p[1] / max(1, $p[2]), 4);
 ?>
-<aside class="vp-dis-panel no-print" aria-label="Herramientas del diseño">
-    <div class="vp-ptabs" role="tablist">
-        <button type="button" role="tab" class="activo" data-ptab="props"><i class="fa-solid fa-sliders"></i> Propiedades</button>
-        <button type="button" role="tab" data-ptab="capas"><i class="fa-solid fa-layer-group"></i> Capas <span class="vp-cont" id="vp-cont-capas"></span></button>
-        <button type="button" role="tab" data-ptab="insertar"><i class="fa-solid fa-plus"></i> Insertar</button>
-        <button type="button" role="tab" data-ptab="hoja"><i class="fa-regular fa-file"></i> Hoja</button>
+<button type="button" class="pn-abrir no-print" id="vp-dis-panel-abrir" hidden data-etq="Panel" title="Mostrar el panel de diseño"><i class="fa-solid fa-sliders"></i></button>
+<aside class="vp-dis-panel no-print" id="vp-dis-panel" aria-label="Herramientas del diseño">
+    <header class="pn-cab">
+        <span class="pn-cab-ico"><i class="fa-solid fa-pen-ruler"></i></span>
+        <div class="pn-cab-txt"><b>Diseño</b><small><?php echo s($lamina->titulo); ?></small></div>
+        <span class="pn-cab-acc"><button type="button" class="vp-ib vp-ib-sm" id="vp-dis-panel-tgl" title="Ocultar el panel para ver más hoja"><i class="fa-solid fa-angles-right"></i></button></span>
+    </header>
+
+    <div class="pn-tabs" role="tablist" aria-label="Secciones del panel">
+        <?php foreach ($pestanas as [$k, $ic, $t]): ?>
+            <button type="button" role="tab" data-ptab="<?php echo s($k); ?>" aria-selected="<?php echo $k === 'props' ? 'true' : 'false'; ?>"<?php echo $k === 'props' ? ' class="activo"' : ''; ?>>
+                <i class="fa-solid <?php echo s($ic); ?>"></i><span><?php echo s($t); ?></span><?php if ($k === 'capas'): ?><span class="pn-cont" id="vp-cont-capas"></span><?php endif; ?>
+            </button>
+        <?php endforeach; ?>
     </div>
 
     <section data-pan="props">
-        <div class="vp-prop-vacio" id="vp-dis-vacio"><i class="fa-regular fa-hand-pointer"></i><b>Nada seleccionado</b><p class="text-muted">Haz clic en un bloque de la hoja, o en una capa, para ver y cambiar sus propiedades.</p></div>
+        <div class="pn-vacio" id="vp-dis-vacio"><i class="fa-regular fa-hand-pointer"></i><b>Nada seleccionado</b><p class="text-muted">Haz clic en un bloque de la hoja, o en una capa, para ver y cambiar sus propiedades.</p></div>
         <div id="vp-dis-cuerpo" hidden>
             <header class="vp-prop-cab">
                 <span class="vp-prop-ico"><i class="fa-solid fa-square" id="vp-dis-ico"></i></span>
@@ -74,43 +87,84 @@ $vertical = $lamina->alto_mm > $lamina->ancho_mm;
     </section>
 
     <section data-pan="insertar" hidden>
-        <h4 class="vp-cap-tit"><i class="fa-solid fa-shapes"></i> Bloques</h4>
-        <div class="vp-ins-grid" id="vp-ins-bloques"></div>
-
-        <h4 class="vp-cap-tit"><i class="fa-solid fa-icons"></i> Símbolos</h4>
-        <p class="text-sm text-muted">Un clic coloca una copia en el centro de la hoja. Las simbologías las creas con la herramienta de <a href="/simbolos?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">Simbologías</a> y aparecen aquí.</p>
-        <button type="button" class="btn btn-sm btn-ghost" id="vp-sim-todas" hidden title="Inserta todas las simbologías del proyecto"><i class="fa-solid fa-layer-group"></i> Insertar todas las simbologías</button>
-        <input type="search" id="vp-sim-buscar" placeholder="Buscar símbolo…" aria-label="Buscar símbolo">
-        <div id="vp-sim-estado" class="text-sm text-muted" aria-live="polite"></div>
-        <div id="vp-sim-lista"></div>
-        <h5 class="vp-ins-grupo">Cajetines</h5>
-        <div id="vp-sim-cajetines" class="vp-ins-grid"></div>
-        <h5 class="vp-ins-grupo">Estampas inteligentes</h5>
-        <p class="text-sm text-muted">Bloques que se llenan solos con datos del proyecto (fecha, avance, actividades del día…).</p>
-        <div id="vp-sim-estampas" class="vp-ins-grid"></div>
-
-        <h4 class="vp-cap-tit"><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
-        <input type="search" id="vp-ins-buscar" placeholder="Buscar tabla…" aria-label="Buscar tabla">
-        <div id="vp-ins-tablas" class="vp-ins-tablas"></div>
-        <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost vp-ins-nueva"><i class="fa-solid fa-plus"></i> Crear tabla nueva</a>
-
-        <h4 class="vp-cap-tit"><i class="fa-solid fa-rotate-left"></i> Recovery</h4>
-        <p class="text-sm text-muted">Cada recovery es un par de columnas (inicio y fin) en las tablas de tareas de la lámina. Las fechas capturadas se conservan aunque quites la columna.</p>
-        <ul id="vp-ins-recovery" class="vp-capas-lista"></ul>
-        <div class="vp-dis-fila">
-            <button type="button" class="btn btn-sm btn-primary" id="vp-rec-mas"><i class="fa-solid fa-plus"></i> Agregar recovery</button>
-            <button type="button" class="btn btn-sm btn-danger" id="vp-rec-menos"><i class="fa-solid fa-minus"></i> Quitar el último</button>
+        <div class="vp-ins-top">
+            <div class="pn-busca">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="vp-ins-todo" placeholder="Buscar en todo  ( / )" aria-label="Buscar en Insertar">
+            </div>
+            <div class="pn-chips" role="group" aria-label="Filtrar por categoría">
+                <?php foreach ($categorias as [$k, $t]): ?>
+                    <button type="button" class="pn-chip<?php echo $k === 'bloques' ? ' activo' : ''; ?>" data-cat="<?php echo s($k); ?>" aria-pressed="<?php echo $k === 'bloques' ? 'true' : 'false'; ?>"><?php echo s($t); ?></button>
+                <?php endforeach; ?>
+            </div>
         </div>
+
+        <p class="vp-ins-nada text-sm text-muted" id="vp-ins-nada" hidden><i class="fa-solid fa-magnifying-glass"></i> Nada coincide con la búsqueda.</p>
+
+        <section class="pn-secc" data-ins="recientes" hidden>
+            <h4 class="pn-tit"><i class="fa-solid fa-clock-rotate-left"></i> Recientes</h4>
+            <div class="pn-grid" id="vp-ins-recientes"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="bloques">
+            <h4 class="pn-tit"><i class="fa-solid fa-shapes"></i> Bloques <small class="text-muted">clic = centro de la hoja · arrastra = donde lo sueltes</small></h4>
+            <div class="pn-grid" id="vp-ins-bloques"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="simbolos">
+            <h4 class="pn-tit"><i class="fa-solid fa-icons"></i> Símbolos</h4>
+            <p class="text-sm text-muted">Un clic (o arrastrar) coloca una copia en la hoja. Las simbologías las creas con la herramienta de <a href="/simbolos?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">Simbologías</a> y aparecen aquí.</p>
+            <button type="button" class="btn btn-sm btn-ghost" id="vp-sim-todas" hidden title="Inserta todas las simbologías del proyecto"><i class="fa-solid fa-layer-group"></i> Insertar todas las simbologías</button>
+            <div id="vp-sim-estado" class="text-sm text-muted" aria-live="polite"></div>
+            <div id="vp-sim-lista"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="cajetines">
+            <h4 class="pn-tit"><i class="fa-solid fa-table-list"></i> Cajetines</h4>
+            <div id="vp-sim-cajetines" class="pn-grid"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="estampas">
+            <h4 class="pn-tit"><i class="fa-solid fa-wand-magic-sparkles"></i> Estampas inteligentes</h4>
+            <p class="text-sm text-muted">Bloques que se llenan solos con datos del proyecto (fecha, avance, actividades del día…).</p>
+            <div id="vp-sim-estampas" class="pn-grid"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="tablas">
+            <h4 class="pn-tit"><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
+            <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost vp-ins-nueva"><i class="fa-solid fa-plus"></i> Crear tabla nueva</a>
+            <div id="vp-ins-tablas" class="vp-ins-tablas"></div>
+        </section>
     </section>
 
     <section data-pan="hoja" hidden>
-        <div class="campo"><label for="vp-dis-preset">Tamaño de hoja</label>
-            <select id="vp-dis-preset">
-                <?php foreach (VplanDiseno::PRESETS as $k => $p): ?><option value="<?php echo s($k); ?>"<?php echo $preset === $k ? ' selected' : ''; ?>><?php echo s($p[0]); ?></option><?php endforeach; ?>
-                <option value="personalizado"<?php echo $preset === 'personalizado' ? ' selected' : ''; ?>>Personalizada…</option>
-            </select></div>
-        <div class="campo"><label for="vp-dis-orientacion">Orientación</label>
-            <select id="vp-dis-orientacion"><option value="horizontal">Horizontal</option><option value="vertical"<?php echo $vertical ? ' selected' : ''; ?>>Vertical</option></select></div>
+        <h4 class="vp-prop-tit"><i class="fa-solid fa-expand"></i> Tamaño de hoja</h4>
+        <div class="vp-hoj-presets" id="vp-dis-presets" role="group" aria-label="Tamaño de hoja">
+            <?php foreach (VplanDiseno::PRESETS as $k => $p): ?>
+                <button type="button" class="vp-hoj-preset<?php echo $preset === $k ? ' activo' : ''; ?>" data-preset="<?php echo s($k); ?>" data-w="<?php echo (int)$p[1]; ?>" data-h="<?php echo (int)$p[2]; ?>" aria-pressed="<?php echo $preset === $k ? 'true' : 'false'; ?>">
+                    <span class="vp-hoj-fig"><i style="--ar:<?php echo $prop($p, $vertical); ?>"></i></span>
+                    <b><?php echo s($corto($p[0])); ?></b>
+                    <small><?php echo $vertical ? (int)$p[2] : (int)$p[1]; ?> × <?php echo $vertical ? (int)$p[1] : (int)$p[2]; ?> mm</small>
+                </button>
+            <?php endforeach; ?>
+            <button type="button" class="vp-hoj-preset<?php echo $preset === 'personalizado' ? ' activo' : ''; ?>" data-preset="personalizado" aria-pressed="<?php echo $preset === 'personalizado' ? 'true' : 'false'; ?>">
+                <span class="vp-hoj-fig"><i class="vp-hoj-fig-libre"><span class="fa-solid fa-pen-ruler"></span></i></span>
+                <b>Personalizada</b>
+                <small>tú eliges</small>
+            </button>
+        </div>
+        <select id="vp-dis-preset" hidden>
+            <?php foreach (VplanDiseno::PRESETS as $k => $p): ?><option value="<?php echo s($k); ?>"<?php echo $preset === $k ? ' selected' : ''; ?>><?php echo s($p[0]); ?></option><?php endforeach; ?>
+            <option value="personalizado"<?php echo $preset === 'personalizado' ? ' selected' : ''; ?>>Personalizada…</option>
+        </select>
+
+        <h4 class="vp-prop-tit"><i class="fa-solid fa-arrows-left-right"></i> Orientación</h4>
+        <div class="vp-hoj-ori" role="group" aria-label="Orientación">
+            <button type="button" class="vp-hoj-orib<?php echo $vertical ? '' : ' activo'; ?>" data-ori="horizontal" aria-pressed="<?php echo $vertical ? 'false' : 'true'; ?>"><i class="fa-solid fa-arrows-left-right"></i> Horizontal</button>
+            <button type="button" class="vp-hoj-orib<?php echo $vertical ? ' activo' : ''; ?>" data-ori="vertical" aria-pressed="<?php echo $vertical ? 'true' : 'false'; ?>"><i class="fa-solid fa-arrows-up-down"></i> Vertical</button>
+        </div>
+        <select id="vp-dis-orientacion" hidden><option value="horizontal">Horizontal</option><option value="vertical"<?php echo $vertical ? ' selected' : ''; ?>>Vertical</option></select>
+
         <div id="vp-dis-custom" class="vp-dis-fila" hidden>
             <input type="number" id="vp-dis-ancho" min="10" step="0.1" style="width:8rem" value="<?php echo (int)$lamina->ancho_mm; ?>" aria-label="Ancho">
             ×
@@ -122,5 +176,15 @@ $vertical = $lamina->alto_mm > $lamina->ancho_mm;
             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($lamina->id); ?>">
             <button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-rotate-left"></i> Restablecer diseño estándar</button>
         </form>
+
+        <div class="vp-prop-sec">
+            <h4 class="vp-cap-tit"><i class="fa-solid fa-rotate-left"></i> Recovery <small class="text-muted">columnas de las tablas de tareas</small></h4>
+            <p class="text-sm text-muted">Cada recovery es un par de columnas (inicio y fin) en las tablas de tareas de la lámina. Las fechas capturadas se conservan aunque quites la columna.</p>
+            <ul id="vp-ins-recovery" class="vp-capas-lista"></ul>
+            <div class="vp-dis-fila">
+                <button type="button" class="btn btn-sm btn-primary" id="vp-rec-mas"><i class="fa-solid fa-plus"></i> Agregar recovery</button>
+                <button type="button" class="btn btn-sm btn-danger" id="vp-rec-menos"><i class="fa-solid fa-minus"></i> Quitar el último</button>
+            </div>
+        </div>
     </section>
 </aside>

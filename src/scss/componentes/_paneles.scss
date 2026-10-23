@@ -1,0 +1,69 @@
+// ============================================================
+// Lenguaje de panel lateral — pieza compartida entre herramientas
+// Origen: el modo diseño de vPlan (2026-10-23). Herramienta nueva con panel usa estas clases:
+//   .pn-cab (cabecera con acciones) · .pn-tabs (pestañas píldora, con .pn-cont de contador)
+//   .pn-busca (buscador con lupa)   · .pn-chips + .pn-chip (filtros de categoría)
+//   .pn-grid + .pn-ficha (rejilla de elementos insertables) · .pn-secc (sección plegable con [hidden])
+//   .pn-vacio (estado vacío)        · .pn-abrir (pestaña para reabrir el panel oculto)
+// Los alias .ve-tabs / .vp-ins-grid se dejan para no renombrar marcado o selectores del JS.
+// ============================================================
+
+// ---------- Cabecera del panel (título + acciones) ----------
+.pn-cab { display: flex; align-items: center; gap: .9rem; height: 5rem; padding: 0 1.2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+.pn-cab-ico { display: grid; place-items: center; flex: none; width: 3rem; height: 3rem; border-radius: .8rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 1.4rem; }
+.pn-cab-txt { display: grid; min-width: 0; flex: 1;
+  b { font-size: 1.35rem; line-height: 1.2; }
+  small { color: var(--text-muted); font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
+.pn-cab-acc { display: inline-flex; gap: .4rem; margin-left: auto; flex: none; }
+
+// ---------- Pestañas del panel (píldoras, 2 por fila) ----------
+// .ve-tabs (Editor de marcas) y .rd-tabs (panel lateral del Redactor) son alias: su marcado no cambia.
+.pn-tabs, .ve-tabs, .rd-tabs { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: .5rem; height: 4.6rem; padding: 0 1.2rem; background: var(--surface); border-bottom: 1px solid var(--border);
+  button { display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: 1.25rem; font-weight: 600; cursor: pointer; transition: all .15s ease;
+    i { flex: none; width: 1.5rem; text-align: center; font-size: 1.3rem; }
+    > span:not(.pn-cont) { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+    &:hover { color: var(--text); border-color: var(--border-accent, var(--border)); }
+    &.activo, &.activa, &[aria-selected=true] { background: rgba(0, 112, 192, .18); border-color: rgba(0, 112, 192, .6); color: #38a1f3; } } }
+.pn-cont { flex: none !important; margin-left: auto; text-align: center !important; font-size: 1rem; font-weight: 700; background: rgba(0, 112, 192, .35); border-radius: 1rem; padding: 0 .5rem; &:empty { display: none; } }
+
+// ---------- Buscador con lupa ----------
+.pn-busca { display: flex; align-items: center; gap: .6rem; padding: 0 .9rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--bg-tertiary); transition: border-color .15s;
+  i { flex: none; color: var(--text-muted); font-size: 1.2rem; }
+  &:focus-within { border-color: #38a1f3; }
+  input[type=search], input[type=text] { flex: 1; min-width: 0; width: auto !important; height: 3.4rem; padding: 0; border: 0; background: none; font-size: 1.3rem; color: inherit; } }
+
+// ---------- Filtros de categoría ----------
+.pn-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+// .sim-chip (Símbolos) es alias de la misma píldora de filtro
+.pn-chip, .sim-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .9rem; border: 1px solid var(--border); border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: 1.15rem; font-weight: 600; cursor: pointer; transition: all .15s ease;
+  em, span { font-style: normal; font-size: 1.05rem; color: var(--text-muted); }
+  &:hover { color: var(--text); border-color: var(--border-accent, var(--border)); }
+  &.activo, &.activa, &.on { background: rgba(0, 112, 192, .2); border-color: rgba(0, 112, 192, .6); color: #38a1f3; em, span { color: inherit; } } }
+
+// ---------- Rejilla de fichas (elementos que se insertan) ----------
+.pn-grid, .vp-ins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr)); gap: .6rem; }
+.pn-ficha { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .15rem .9rem; align-items: center; padding: .8rem .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary); color: var(--text); cursor: grab; text-align: left; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  > i { grid-row: 1 / span 2; display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: .7rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 1.5rem; }
+  b { font-size: 1.25rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  small { grid-column: 2; font-size: 1.05rem; line-height: 1.25; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &:hover:not(:disabled) { border-color: #38a1f3; transform: translateY(-1px); box-shadow: var(--shadow); }
+  &:active:not(:disabled) { cursor: grabbing; transform: none; }
+  &:disabled { opacity: .4; cursor: default; } }
+
+// ---------- Secciones y estados vacíos ----------
+.pn-secc[hidden] { display: none; }
+.pn-secc > :first-child { margin-top: .8rem; }
+// .vp-cap-tit (modo diseño de vPlan) es alias del título de sección
+.pn-tit, .vp-cap-tit { display: flex; align-items: center; gap: .6rem; margin: 1.4rem 0 .6rem; font-size: 1.25rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+  small { text-transform: none; letter-spacing: 0; font-weight: 400; } }
+.pn-vacio { display: grid; justify-items: center; gap: .4rem; padding: 3rem 1rem; text-align: center;
+  i { font-size: 3.2rem; color: var(--text-muted); opacity: .6; margin-bottom: .6rem; }
+  b { font-size: 1.5rem; }
+  p { margin: 0; max-width: 24rem; font-size: 1.3rem; }
+  &[hidden] { display: none; } }
+
+// ---------- Panel oculto: pestaña para volver a abrirlo ----------
+.pn-abrir { align-self: start; justify-self: start; display: flex; flex-direction: column; align-items: center; gap: .8rem; width: 3.8rem; min-height: 9rem; padding: 1rem 0; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: all .15s ease;
+  &::after { content: attr(data-etq); writing-mode: vertical-rl; transform: rotate(180deg); font-size: 1.05rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+  &:hover { background: var(--surface-hover); color: #38a1f3; border-color: rgba(0, 112, 192, .6); }
+  &[hidden] { display: none; } }

@@ -168,10 +168,16 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     mostrar(g);
 })();
 </script>
-<div class="ve-area">
+<div class="ve-area" id="ve-area">
     <div id="ve-lienzo" class="ve-lienzo"><div id="ek-stage"></div><canvas id="ve-regla-h" class="ve-regla ve-regla-h"></canvas><canvas id="ve-regla-v" class="ve-regla ve-regla-v"></canvas><span id="ve-regla-esq" class="ve-regla-esq"></span><div id="ve-guias" class="ve-guias"></div></div>
-    <div class="ve-lateral">
-    <div class="ve-tabs card" role="tablist" aria-label="Paneles del editor">
+    <button type="button" class="pn-abrir no-print" id="ve-panel-abrir" hidden data-etq="Panel" title="Mostrar el panel del editor"><i class="fa-solid fa-sliders"></i></button>
+    <div class="ve-lateral" id="ve-lateral">
+    <header class="pn-cab">
+        <span class="pn-cab-ico"><i class="fa-solid fa-pen-ruler"></i></span>
+        <div class="pn-cab-txt"><b>Panel</b><small>Propiedades, capas, láminas y símbolos</small></div>
+        <span class="pn-cab-acc"><button type="button" class="vp-ib vp-ib-sm" id="ve-panel-tgl" title="Ocultar el panel para ver más lienzo"><i class="fa-solid fa-angles-left"></i></button></span>
+    </header>
+    <div class="ve-tabs" role="tablist" aria-label="Paneles del editor">
         <button type="button" role="tab" data-tab="props" class="activa">Propiedades</button>
         <button type="button" role="tab" data-tab="capas">Capas</button>
         <?php if (!empty($config['laminas'])): ?><button type="button" role="tab" data-tab="laminas">Láminas</button><?php endif; ?>
@@ -353,7 +359,8 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
                 <div class="ve-btns"><button type="button" class="btn btn-sm btn-primary" id="sim-punch-ok">Insertar</button> <button type="button" class="btn btn-sm btn-ghost" id="sim-punch-x">Cancelar</button></div>
             </div>
         </div>
-        <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar">
+        <div class="pn-busca"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="sim-buscar" placeholder="Buscar símbolo o gráfico…" aria-label="Buscar"></div>
         <div id="sim-lista"></div>
         <h4 style="margin-top:1.2rem">Gráficos y simbologías del proyecto</h4>
         <div class="ve-btns" style="margin-bottom:.8rem">

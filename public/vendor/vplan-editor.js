@@ -1859,6 +1859,24 @@
     ir(tabs.some(t => t.dataset.tab === guardada) ? guardada : 'props');
   }
 
+  // ---------- ocultar / mostrar el panel lateral (más lienzo; se recuerda) ----------
+  function iniciarPanel() {
+    const area = document.getElementById('ve-area'), lat = document.querySelector('.ve-lateral');
+    const tgl = document.getElementById('ve-panel-tgl'), abrir = document.getElementById('ve-panel-abrir');
+    if (!area || !lat) return;
+    const ver = v => {
+      lat.hidden = !v;
+      if (tgl) tgl.hidden = !v;
+      if (abrir) abrir.hidden = v;
+      area.classList.toggle('ve-sin-lateral', !v);
+      try { localStorage.setItem('ve-panel', v ? '1' : '0'); } catch (_) {}
+    };
+    if (tgl) tgl.addEventListener('click', () => ver(false));
+    if (abrir) abrir.addEventListener('click', () => ver(true));
+    let g = null; try { g = localStorage.getItem('ve-panel'); } catch (_) {}
+    ver(g !== '0');
+  }
+
   // ---------- gestor de capas ----------
   const IC = {
     ojo: '<path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
@@ -2101,7 +2119,7 @@
     $('#t-stroke').addEventListener('change', guardarTrazo);
     $('#t-op').addEventListener('input', e => { $('#t-op-n').value = e.target.value; guardarTrazo(); });
     $('#t-op-n').addEventListener('change', e => { const v = Math.min(100, Math.max(5, +e.target.value || 100)); e.target.value = $('#t-op').value = v; guardarTrazo(); });
-    window.VPColor && VPColor.iniciar(); iniciarPestanas(); enlazarExportar();
+    window.VPColor && VPColor.iniciar(); iniciarPestanas(); iniciarPanel(); enlazarExportar();
     const bp = document.getElementById('ve-presentar'); if (bp) bp.addEventListener('click', presentar);
     $('#ve-guardar').addEventListener('click', () => guardar());
     // Desplegable «Más formas»

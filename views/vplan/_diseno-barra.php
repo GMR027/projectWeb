@@ -11,5 +11,10 @@
         <button type="button" class="vp-tgl" data-opt="guias" aria-pressed="true" title="Mostrar u ocultar todas las guías"><i class="fa-solid fa-grip-lines"></i> Guías</button>
         <button type="button" class="vp-tgl" data-opt="reglas" aria-pressed="true" title="Reglas en cm; arrastra desde ellas para crear guías"><i class="fa-solid fa-ruler-combined"></i> Reglas</button>
     </div>
-    <span class="vp-dis-ayuda text-sm text-muted">Arrastra un bloque para moverlo · flechas para afinar · Supr para quitar · arrastra desde las reglas para crear guías</span>
+    <span class="vp-barra-sep"></span>
+    <div class="vp-tgls" role="group" aria-label="Historial">
+        <button type="button" class="vp-ib" id="vp-dis-deshacer" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled><i class="fa-solid fa-rotate-left"></i></button>
+        <button type="button" class="vp-ib" id="vp-dis-rehacer" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+    <button type="button" class="vp-ib vp-ib-ayuda" id="vp-dis-ayuda" title="Atajos y ayuda del modo diseño" aria-label="Atajos y ayuda"><i class="fa-regular fa-circle-question"></i></button>
 </div>

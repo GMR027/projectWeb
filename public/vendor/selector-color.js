@@ -22,8 +22,11 @@
     return f;
   };
   // Cada selector de color recibe un botón con la paleta; el selector nativo queda para colores personalizados
-  function iniciar() {
-    document.querySelectorAll('input[type=color]').forEach(inp => {
+  // `raiz` (opcional): solo mejora los selectores dentro de ese elemento (p. ej. un panel que se re-dibuja);
+  // los listeners globales se registran una sola vez aunque se llame varias veces.
+  let globales = false;
+  function iniciar(raiz) {
+    (raiz || document).querySelectorAll('input[type=color]').forEach(inp => {
       if (inp.closest('.ve-color') || inp.dataset.sinPaleta !== undefined) return;
       const w = document.createElement('span'); w.className = 've-color';
       inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
@@ -132,6 +135,8 @@
         aplicar(x.dataset.c, false);
       });
     });
+    if (globales) return;
+    globales = true;
     const cerrarTodas = () => document.querySelectorAll('.ve-paleta').forEach(x => { x.hidden = true; });
     const reubicar = e => { if (e && e.target && e.target.closest && e.target.closest('.ve-paleta')) return; document.querySelectorAll('.ve-paleta:not([hidden])').forEach(x => x._colocar && x._colocar()); };
     document.addEventListener('click', e => { if (!e.target.closest('.ve-color, .ve-paleta')) cerrarTodas(); });
@@ -140,5 +145,5 @@
   }
 
   window.VPColor = { iniciar };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => iniciar()); else iniciar();
 })();

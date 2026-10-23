@@ -6,12 +6,11 @@
   &.on { color: var(--primary); background: var(--bg-secondary, var(--bg-tertiary)); border-color: var(--border); em { background: var(--primary); color: #fff; } } }
 .sim-panel[hidden], .sim-tarjeta[hidden], .sim-vacio[hidden] { display: none; }
 .sim-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.4rem; margin-bottom: 1.8rem;
-  .sim-buscar { flex: 0 1 28rem; min-width: 16rem; } }
+  // El buscador usa la caja compartida .pn-busca (lupa + campo)
+  .pn-busca { flex: 0 1 28rem; min-width: 16rem; } }
 .sim-chips { display: flex; flex-wrap: wrap; gap: .6rem; flex: 1 1 24rem; }
-.sim-chip { font: inherit; font-size: 1.25rem; padding: .45rem 1.1rem; border-radius: 99rem; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text); cursor: pointer;
-  em { font-style: normal; color: var(--text-muted); margin-left: .3rem; }
-  &:hover { border-color: var(--primary); }
-  &.on { background: var(--primary); border-color: var(--primary); color: #fff; em { color: rgba(255, 255, 255, .8); } } }
+// .sim-chip es alias de la píldora compartida .pn-chip (componentes/_paneles.scss)
+.sim-chip em { margin-left: .3rem; }
 .sim-nuevo { margin-bottom: 1.8rem;
   > summary { display: inline-flex; list-style: none; cursor: pointer; &::-webkit-details-marker { display: none; } }
   .sim-nuevo-in { margin-top: 1.2rem; padding: 1.8rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--bg-tertiary); } }

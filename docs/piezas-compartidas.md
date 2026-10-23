@@ -37,6 +37,25 @@ El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (
 
 **Lo que NO se comparte entre los motores, a propósito:** guías, reglas, zoom y panel de capas. El Konva trabaja en píxeles del dibujo con escala y desplazamiento propios (guías `{pos px, locked}`), el modo diseño en porcentaje de la hoja con zoom de CSS (guías `{pos %, bloqueada, nombre}`) y las estampas con zoom de CSS y scroll. Compartirlos exigiría adaptadores del tamaño del código que se quitaría, y los datos guardados tienen formatos distintos. Solo desaparecerían copias si los motores se funden (estampas dentro del Konva).
 
+## SCSS (`src/scss/componentes/`)
+
+Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`). `app.scss` los carga **antes** de `paginas/`, así que cada herramienta puede ajustarlos encima.
+
+| Pieza | Clases | Para qué | Quién la usa |
+|---|---|---|---|
+| `_tabs.scss` | `.pestanas` (alias `.vp-pestanas`, `.ve-pestanas`, `.rd-pestanas`, `.sf-pestanas`) | Barra de pestañas de página; la activa se marca con `.activo`/`.activa` o `aria-selected` | vPlan, Editor de marcas, Redactor, SheetFlow |
+| `_paneles.scss` | `.pn-cab`, `.pn-cab-ico`, `.pn-cab-txt`, `.pn-cab-acc` | Cabecera de panel lateral (icono + título + acciones) | vPlan (modo diseño), Editor de marcas, Redactor («Páginas» y «Panel») |
+| | `.pn-tabs` (alias `.ve-tabs`, `.rd-tabs`), `.pn-cont` | Pestañas del panel: píldoras de 2×2 con contador | ídem |
+| | `.pn-busca` | Buscador con lupa (envuelve `input[type=search]` o `type=text`) | vPlan, Editor de marcas, Símbolos |
+| | `.pn-chips`, `.pn-chip` (alias `.sim-chip`) | Filtros de categoría en píldora | vPlan, Símbolos |
+| | `.pn-grid`, `.pn-ficha` | Rejilla de elementos insertables (icono + nombre + para qué sirve); la ficha se pulsa o se arrastra | vPlan |
+| | `.pn-secc`, `.pn-tit` (alias `.vp-cap-tit`), `.pn-vacio` | Sección plegable (`[hidden]`), título de sección y estado vacío | vPlan |
+| | `.pn-abrir` (`data-etq` = rótulo vertical) | Pestaña lateral que reabre un panel oculto | vPlan y Editor de marcas |
+
+**Patrón de panel ocultable** (vPlan y Editor de marcas): la cabecera lleva un botón que esconde el panel, agrega una clase a la retícula (`vp-dis-fuera` en `.vp-dis-wrap` / `ve-sin-lateral` en `.ve-area`), muestra `.pn-abrir` y guarda la decisión en `localStorage` (`vp-dis-panel` / `ve-panel`); al elegir un elemento en la hoja el panel se reabre solo (`seleccionar()` en `vplan-diseno.js`).
+
+`public/vendor/selector-color.js` → `window.VPColor.iniciar(raiz?)`: la **paleta de colores de la plataforma** para todos los `input[type=color]` (básicos, maestra Pantone, mis colores, gotero). Los paneles que se re-dibujan la llaman con su raíz (p. ej. `VPColor.iniciar(document.getElementById('vp-dis-campos'))`); los listeners globales se registran una sola vez.
+
 ## Pendiente de la reestructuración
 - Guías, reglas, zoom y panel de capas siguen separados en los motores (ver arriba el porqué). El imán, el renombrado en línea y el reordenado ya son compartidos.
 - Fusionar el editor de estampas dentro del Konva (hoy son pestañas hermanas bajo «Editor»).
