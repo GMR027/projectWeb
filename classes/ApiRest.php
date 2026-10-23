@@ -220,7 +220,7 @@ class ApiRest
             'api' => 'ProjectWeb', 'version' => self::VERSION,
             'usuario' => ['id' => (int)self::$usuario['id'], 'nombre' => self::$usuario['nombre'], 'rol' => self::$usuario['rol']],
             'token' => ['nombre' => self::$token['nombre'], 'escritura' => (bool)(int)self::$token['escritura'], 'proyecto_id' => self::$token['proyecto_id'] ? (int)self::$token['proyecto_id'] : null, 'expira' => self::$token['expira']],
-            'limite_por_minuto' => ApiTokens::LIMITE_POR_MINUTO, 'eventos_webhook' => array_keys(Webhooks::EVENTOS),
+            'limite_por_minuto' => ApiTokens::LIMITE_POR_MINUTO,
         ]]);
     }
 
@@ -456,7 +456,7 @@ class ApiRest
         }
         return [
             'openapi' => '3.0.3',
-            'info' => ['title' => 'ProjectWeb API', 'version' => self::VERSION, 'description' => 'Autenticación: «Authorization: Bearer pw_…». Los tokens se crean en Integraciones. Límite: ' . ApiTokens::LIMITE_POR_MINUTO . ' peticiones por minuto. Webhooks: ' . implode(', ', array_keys(Webhooks::EVENTOS)) . '.'],
+            'info' => ['title' => 'ProjectWeb API', 'version' => self::VERSION, 'description' => 'Autenticación: «Authorization: Bearer pw_…». Los tokens se crean en Integraciones. Límite: ' . ApiTokens::LIMITE_POR_MINUTO . ' peticiones por minuto.'],
             'servers' => [['url' => '/api/v1']],
             'components' => ['securitySchemes' => ['bearer' => ['type' => 'http', 'scheme' => 'bearer']]],
             'security' => [['bearer' => []]],

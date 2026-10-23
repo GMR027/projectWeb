@@ -238,11 +238,6 @@ echo "Cobertura de la traducción\n";
 exec('php ' . escapeshellarg(__DIR__ . '/../bin/idioma_cobertura.php') . ' 2>&1', $salida, $codigo);
 $ok('todos los t() tienen su traducción al inglés' . ($codigo ? ' — ' . implode(' / ', array_slice($salida, 1, 3)) : ''), $codigo === 0);
 
-echo "Webhooks y API (Fase 5.1)\n";
-$ok('eventos de webhook: solo los conocidos, vacío = todos', Classes\Webhooks::normalizarEventos(['punch.creado', 'x.y']) === 'punch.creado' && Classes\Webhooks::normalizarEventos([]) === '*' && Classes\Webhooks::normalizarEventos('rfi.creado, rfi.estado') === 'rfi.creado,rfi.estado');
-$ok('webhook: rechaza direcciones locales, privadas y esquemas raros', Classes\Webhooks::validarUrl('http://127.0.0.1/x') !== null && Classes\Webhooks::validarUrl('http://192.168.1.5/') !== null && Classes\Webhooks::validarUrl('http://169.254.169.254/') !== null && Classes\Webhooks::validarUrl('file:///etc/passwd') !== null && Classes\Webhooks::validarUrl('https://u:p@8.8.8.8/') !== null);
-$ok('webhook: acepta una IP pública', Classes\Webhooks::validarUrl('https://8.8.8.8/hook') === null);
-
 echo "Predicción de atrasos y contradicciones (Fase 5.4)\n";
 use Classes\Herramientas\PrediccionAtrasos as PA;
 use Classes\Herramientas\Contradicciones as CTR;

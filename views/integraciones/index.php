@@ -1,13 +1,12 @@
 <?php
-/** Integraciones. Variables: $usuario, $tg (Telegram y clima), $disponible, $tokens, $proyectos, $proyecto, $webhooks, $entregas, $verEntregas, $tokenNuevo, $mensaje, $url */
-use Classes\Webhooks;
+/** Integraciones. Variables: $usuario, $tg (Telegram y clima), $disponible, $tokens, $proyectos, $proyecto, $tokenNuevo, $mensaje, $url */
 
 $pid = $proyecto ? (int)$proyecto->id : 0;
 ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-plug"></i> <?php echo s(t('Integraciones')); ?></h2>
-        <p class="text-muted"><?php echo s(t('Conecta ProjectWeb con otras herramientas: la')); ?> <strong><?php echo s(t('API REST')); ?></strong> <?php echo s(t('lee y escribe datos con un token, y los')); ?> <strong><?php echo s(t('webhooks')); ?></strong> <?php echo s(t('avisan a otro sistema cuando algo cambia en un proyecto.')); ?></p>
+        <p class="text-muted"><?php echo s(t('Conecta ProjectWeb con otras herramientas: la')); ?> <strong><?php echo s(t('API REST')); ?></strong> <?php echo s(t('lee y escribe datos con un token, el')); ?> <strong><?php echo s(t('bot de Telegram')); ?></strong> <?php echo s(t('manda los avisos a tu móvil y el clima automático anota el día en la bitácora.')); ?></p>
     </div>
 </div>
 <?php if (!$disponible): ?><div class="card"><p><?php echo s(t('Falta aplicar la migración')); ?> <code>database/migracion_fase5.sql</code>.</p></div><?php return; endif; ?>
@@ -124,57 +123,14 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
     <?php endif; ?>
 </section>
 
-<section class="card" id="webhooks">
-    <h3><?php echo s(t('Webhooks')); ?></h3>
-    <?php if (!$proyectos): ?><p class="text-muted"><?php echo s(t('Necesitas un proyecto que puedas gestionar.')); ?></p><?php else: ?>
-    <form method="GET" class="inc-filtros"><label><?php echo s(t('Proyecto')); ?> <select name="proyecto" onchange="this.form.submit()"><?php foreach ($proyectos as $p): ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$p->id === $pid ? ' selected' : ''; ?>><?php echo s($p->nombre); ?></option><?php endforeach; ?></select></label></form>
-    <p class="text-sm text-muted"><?php echo s(t('Cada aviso es un POST con el JSON del evento y la cabecera')); ?> <code>X-ProjectWeb-Signature: sha256=…</code> <?php echo s(t('(HMAC-SHA256 del cuerpo con el secreto del webhook). Solo se llama a direcciones públicas; con 10 fallos seguidos el webhook se pausa solo.')); ?></p>
-    <?php foreach ($webhooks as $w): ?>
-        <div class="integ-wh<?php echo (int)$w['activo'] ? '' : ' integ-wh-pausado'; ?>">
-            <div><strong><?php echo s($w['nombre'] ?: 'Webhook'); ?></strong> <?php echo (int)$w['activo'] ? '<span class="cb-tag">Activo</span>' : '<span class="cb-tag cb-tag-critica">Pausado</span>'; ?><?php echo (int)$w['fallos_seguidos'] ? ' <small class="prg-peor">' . (int)$w['fallos_seguidos'] . ' fallo(s) seguidos</small>' : ''; ?><br>
-                <small class="mono"><?php echo s($w['url']); ?></small><br>
-                <small class="text-muted">Eventos: <?php echo $w['eventos'] === '*' ? 'todos' : s(str_replace(',', ', ', $w['eventos'])); ?> · <?php echo (int)$w['entregas']; ?> envíos</small>
-                <details><summary class="text-sm"><?php echo s(t('Secreto de firma')); ?></summary><input type="text" readonly value="<?php echo s($w['secreto']); ?>" onfocus="this.select()" class="mono" style="width:100%"></details></div>
-            <div class="acciones">
-                <form method="POST" action="/integraciones/webhook/probar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$w['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><?php echo s(t('Probar')); ?></button></form>
-                <a class="btn btn-sm btn-ghost" href="/integraciones?proyecto=<?php echo $pid; ?>&entregas=<?php echo (int)$w['id']; ?>#webhooks"><?php echo s(t('Envíos')); ?></a>
-                <form method="POST" action="/integraciones/webhook/activo"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$w['id']; ?>"><?php if (!(int)$w['activo']): ?><input type="hidden" name="activo" value="1"><?php endif; ?><button class="btn btn-sm btn-ghost" type="submit"><?php echo (int)$w['activo'] ? 'Pausar' : 'Activar'; ?></button></form>
-                <form method="POST" action="/integraciones/webhook/eliminar" data-confirm="¿Eliminar el webhook?|Se borra también su historial de envíos.|Eliminar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$w['id']; ?>"><button class="btn btn-sm btn-danger" type="submit">✕</button></form>
-            </div>
-        </div>
-        <?php if ($verEntregas === (int)$w['id']): ?>
-            <div class="tabla-wrapper"><table class="tabla"><thead><tr><th><?php echo s(t('Cuándo')); ?></th><th><?php echo s(t('Evento')); ?></th><th><?php echo s(t('Resultado')); ?></th><th class="hide-m">ms</th><th></th></tr></thead><tbody>
-                <?php foreach ($entregas as $e): ?><tr><td class="mono text-sm"><?php echo s($e['creado']); ?></td><td><?php echo s($e['evento']); ?></td>
-                    <td><?php echo (int)$e['ok'] ? '<span class="prg-mejor">HTTP ' . (int)$e['codigo_http'] . '</span>' : '<span class="prg-peor">' . s($e['error']) . '</span>'; ?></td><td class="mono hide-m"><?php echo (int)$e['ms']; ?></td>
-                    <td class="acciones"><?php if (!(int)$e['ok'] && $e['evento'] !== 'ping'): ?><form method="POST" action="/integraciones/webhook/reintentar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="entrega" value="<?php echo (int)$e['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><?php echo s(t('Reintentar')); ?></button></form><?php endif; ?></td></tr><?php endforeach; ?>
-                <?php if (!$entregas): ?><tr><td colspan="5" class="text-muted"><?php echo s(t('Aún no hay envíos.')); ?></td></tr><?php endif; ?>
-            </tbody></table></div>
-        <?php endif; ?>
-    <?php endforeach; ?>
-    <form method="POST" action="/integraciones/webhook/crear" class="formulario cp-nuevo" style="margin-top:1rem">
-        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-        <div class="form-grid">
-            <div class="campo"><label for="wh-nombre"><?php echo s(t('Nombre')); ?></label><input type="text" id="wh-nombre" name="nombre" maxlength="100" placeholder="ej. Slack de obra"></div>
-            <div class="campo"><label for="wh-url"><?php echo s(t('URL que recibe los avisos')); ?></label><input type="url" id="wh-url" name="url" maxlength="500" placeholder="https://…" required></div>
-        </div>
-        <details><summary class="text-sm"><?php echo s(t('Eventos (vacío = todos)')); ?></summary>
-            <div class="integ-eventos"><?php foreach (Webhooks::EVENTOS as $k => $d): ?><label class="campo-check"><input type="checkbox" name="eventos[]" value="<?php echo s($k); ?>"> <code><?php echo s($k); ?></code> <small class="text-muted"><?php echo s($d); ?></small></label><?php endforeach; ?></div></details>
-        <button class="btn btn-primary btn-sm" type="submit"><?php echo s(t('+ Agregar webhook')); ?></button>
-    </form>
-    <?php endif; ?>
-</section>
-
 <section class="card integ-guia" id="guia">
     <h3><i class="fa-solid fa-book-open"></i> Guía completa de integraciones</h3>
     <p class="text-muted">Qué es cada cosa, cómo se conecta y ejemplos listos para copiar. Abre la parte que necesites.</p>
 
     <details open><summary>1. Qué es y para qué sirve</summary>
-        <p>ProjectWeb puede hablar con otras herramientas de dos maneras que se complementan:</p>
-        <ul>
-            <li><strong>API REST (la otra herramienta pregunta):</strong> un programa externo —Power BI, Excel, un script, Zapier/Make, tu propio sistema— pide datos a ProjectWeb (<em>«dame las actividades atrasadas del proyecto 14»</em>) o le manda datos (<em>«marca la actividad 388 al 60 %»</em>). Tú decides cuándo; ProjectWeb solo responde.</li>
-            <li><strong>Webhooks (ProjectWeb avisa):</strong> cuando algo cambia en el proyecto (se actualiza una actividad, se abre un RFI, se registra un pendiente…), ProjectWeb manda <em>por su cuenta</em> un aviso a la dirección que registraste (un canal de Slack, un flujo de Zapier, tu servidor). No hay que estar preguntando a cada rato.</li>
-        </ul>
-        <p>Ejemplos típicos: un tablero de Power BI con el avance de todas tus obras · un aviso en Slack/Teams cuando se abre un RFI o un pendiente crítico · registrar en ProjectWeb el avance que reporta el sistema de otro contratista · respaldar los datos en tu propio servidor.</p>
+        <p><strong>API REST (la otra herramienta pregunta):</strong> un programa externo —Power BI, Excel, un script, Zapier/Make, tu propio sistema— pide datos a ProjectWeb (<em>«dame las actividades atrasadas del proyecto 14»</em>) o le manda datos (<em>«marca la actividad 388 al 60 %»</em>). Tú decides cuándo; ProjectWeb solo responde.</p>
+        <p>Para los avisos al equipo está el <strong>bot de Telegram</strong> y para que el día quede registrado solo, el <strong>clima automático</strong> (las dos secciones siguientes).</p>
+        <p>Ejemplos típicos: un tablero de Power BI con el avance de todas tus obras · registrar en ProjectWeb el avance que reporta el sistema de otro contratista · respaldar los datos en tu propio servidor.</p>
     </details>
 
     <details><summary>2. Empezar en 5 minutos (API)</summary>
@@ -261,70 +217,18 @@ const { data } = await r.json();</pre>
         <p>Los errores siempre llegan así: <code>{"error": {"codigo": "datos_invalidos", "mensaje": "La descripción es obligatoria"}}</code></p>
     </details>
 
-    <details><summary>7. Webhooks: cómo funcionan</summary>
-        <ol>
-            <li>Elige el proyecto, escribe la <strong>URL</strong> que recibirá los avisos (pública, <code>https://…</code>) y, si quieres, marca solo los eventos que te importan (vacío = todos). Pulsa <em>Agregar webhook</em>.</li>
-            <li>Pulsa <strong>Probar</strong>: ProjectWeb manda un evento <code>ping</code> y te dice si tu dirección respondió con éxito (cualquier código 2xx).</li>
-            <li>Desde ese momento, cada cambio de los eventos elegidos llega a tu URL como un <code>POST</code> en JSON, <em>después</em> de que ProjectWeb terminó de guardar (no hace esperar a quien hizo el cambio).</li>
-        </ol>
-        <p><strong>Qué recibes:</strong></p>
-<pre class="integ-codigo">POST https://tu-servidor.com/hook
-Content-Type: application/json
-X-ProjectWeb-Event: actividad.actualizada
-X-ProjectWeb-Delivery: 9f2c1a7e5b3d4c10
-X-ProjectWeb-Signature: sha256=3b1f…
-
-{ "id": "9f2c1a7e5b3d4c10", "evento": "actividad.actualizada", "fecha": "2026-10-21T19:50:00-07:00",
-  "proyecto": { "id": 14, "nombre": "Torre Aurora" },
-  "datos": { "id": 388, "codigo": "4.2", "nombre": "Muros de block", "progreso": 60, "status": "en_proceso" } }</pre>
-        <p><strong>Tu servidor debe</strong> responder rápido (máx. 4 segundos) con un código <code>2xx</code>. Cualquier otra cosa cuenta como fallo. ProjectWeb <em>no</em> sigue redirecciones. Tras <strong>10 fallos seguidos</strong> el webhook se pausa solo (puedes reactivarlo). En <em>Envíos</em> ves los últimos 100 intentos y puedes <em>Reintentar</em> los que fallaron.</p>
-        <p class="text-sm text-muted"><strong>Puede llegar repetido:</strong> si reintentas, el mismo aviso llega otra vez con el mismo <code>id</code> (también en <code>X-ProjectWeb-Delivery</code>). Guarda los ids que ya procesaste para ignorar repetidos.</p>
-    </details>
-
-    <details><summary>8. Verificar la firma (importante)</summary>
-        <p>Cualquiera que conozca tu URL podría mandarle avisos falsos. Para comprobar que vienen de ProjectWeb, calcula el HMAC-SHA256 del <strong>cuerpo exacto</strong> (sin modificarlo) usando el <em>secreto de firma</em> del webhook (se ve en «Secreto de firma») y compáralo con la cabecera <code>X-ProjectWeb-Signature</code>. Si no coincide, ignora la petición.</p>
-        <h4>Python</h4>
-<pre class="integ-codigo">import hmac, hashlib
-def valido(cuerpo_bytes, cabecera, secreto):
-    esperado = "sha256=" + hmac.new(secreto.encode(), cuerpo_bytes, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(esperado, cabecera)</pre>
-        <h4>Node.js</h4>
-<pre class="integ-codigo">const crypto = require("crypto");
-const valido = (cuerpoCrudo, cabecera, secreto) => {
-  const esperado = "sha256=" + crypto.createHmac("sha256", secreto).update(cuerpoCrudo).digest("hex");
-  return cabecera.length === esperado.length && crypto.timingSafeEqual(Buffer.from(esperado), Buffer.from(cabecera));
-};</pre>
-        <h4>PHP</h4>
-<pre class="integ-codigo">$cuerpo = file_get_contents('php://input');
-$esperado = 'sha256=' . hash_hmac('sha256', $cuerpo, $secreto);
-if (!hash_equals($esperado, $_SERVER['HTTP_X_PROJECTWEB_SIGNATURE'] ?? '')) { http_response_code(401); exit; }</pre>
-        <p class="text-sm text-muted">Usa el cuerpo <em>crudo</em> tal como llegó, no uno vuelto a codificar. Compara con una función de tiempo constante (como las de arriba).</p>
-    </details>
-
-    <details><summary>9. Eventos disponibles</summary>
-        <div class="tabla-wrapper"><table class="tabla">
-            <thead><tr><th>Evento</th><th>Cuándo se envía</th></tr></thead>
-            <tbody><?php foreach (Webhooks::EVENTOS as $k => $d): ?><tr><td class="mono"><?php echo s($k); ?></td><td><?php echo s($d); ?></td></tr><?php endforeach; ?></tbody>
-        </table></div>
-        <p class="text-sm text-muted">En <code>datos</code> viene el registro con sus campos principales (id, nombres, fechas, estado, avance…). Para ver todo el detalle usa después la API con ese <code>id</code>. Un cambio hecho por la API también dispara su webhook.</p>
-    </details>
-
-    <details><summary>10. Seguridad y buenas prácticas</summary>
+    <details><summary>7. Seguridad y buenas prácticas</summary>
         <ul>
             <li>Un token por herramienta, con el mínimo alcance (solo lectura, un proyecto, con vigencia). Si se filtra, <strong>revócalo</strong> aquí y listo: deja de funcionar al instante.</li>
-            <li>Los webhooks solo llaman a direcciones públicas por seguridad: no funcionan hacia <code>localhost</code> ni redes internas. Para pruebas usa un servicio como webhook.site o un túnel (ngrok, Cloudflare Tunnel).</li>
-            <li>Siempre verifica la firma (sección 8) y responde 2xx rápido; haz el trabajo pesado después, en segundo plano.</li>
             <li>No uses un token en una página web o app móvil que otros puedan inspeccionar: ponlo en un servidor tuyo.</li>
-            <li>Quien puede gestionar un proyecto puede crear sus webhooks; los tokens son personales de cada usuario.</li>
         </ul>
     </details>
 
-    <details><summary>11. Preguntas frecuentes</summary>
+    <details><summary>8. Preguntas frecuentes</summary>
         <p><strong>¿Cuesta algo o hay que instalar algo?</strong> No: viene incluido. Solo necesitas que el servidor sea alcanzable desde la otra herramienta.</p>
         <p><strong>¿Puedo traer datos de varios proyectos?</strong> Sí: <code>/api/v1/proyectos</code> lista todos los que ves y pides cada uno por su <code>id</code>, salvo que el token esté ligado a un solo proyecto.</p>
         <p><strong>¿Puedo borrar datos con la API?</strong> No: por seguridad solo hay lectura, altas y cambios puntuales (avance, estados). Borrar se hace desde la web.</p>
         <p><strong>¿Veo en la web lo que cambió la API?</strong> Sí, al instante: es la misma información.</p>
-        <p><strong>No me llegan avisos al webhook.</strong> Revisa que esté <em>Activo</em> (no pausado), que el evento esté marcado, que la URL sea pública y mira «Envíos» para ver el motivo del último fallo.</p>
     </details>
 </section>
 

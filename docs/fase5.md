@@ -1,10 +1,10 @@
 # Fase 5 — API, idiomas, calidad de la IA e IA nueva
 
-Migración: `database/migracion_fase5.sql` (tablas `api_tokens`, `webhooks`, `webhook_entregas`; también en `schema.sql` y `aplicar_migraciones_cluster.sh`).
+Migración: `database/migracion_fase5.sql` (crea `api_tokens`, `webhooks` y `webhook_entregas`; también está en `schema.sql` y en `aplicar_migraciones_cluster.sh`).
 
 | # | Qué | Dónde |
 |---|---|---|
-| 5.1 | API REST y webhooks | `classes/ApiRest.php`, `ApiTokens.php`, `Webhooks.php`, `IntegracionesController`, `views/integraciones/`, ruta `/integraciones` |
+| 5.1 | API REST | `classes/ApiRest.php`, `ApiTokens.php`, `Webhooks.php` (bus interno), `IntegracionesController`, `views/integraciones/`, ruta `/integraciones` |
 | 5.2 | Interfaz ES/EN | `includes/idioma.php` (`t()`), `includes/lang/en.php`, `bin/idioma_cobertura.php` |
 | 5.3 | Pruebas de calidad de la IA | `classes/PruebasIA.php`, `Herramientas/PruebasCalidad.php`, `/calidad-ia` (pestaña del Centro de IA) |
 | 5.4 | IA nueva | `Herramientas/PrediccionAtrasos.php`, `RedactarRfi.php`, `Contradicciones.php` (registradas en `Registro::todas()`) |
@@ -16,13 +16,12 @@ Migración: `database/migracion_fase5.sql` (tablas `api_tokens`, `webhooks`, `we
 - Respuestas `{"data": …, "meta": {pagina, por_pagina, total, paginas}}` y errores `{"error": {"codigo", "mensaje"}}`. Un proyecto ajeno responde 404 (no se distingue de «no existe»).
 - Escritura: `PATCH /actividades/{id}` (progreso, prioridad, pta, campos libres), `POST /proyectos/{id}/bitacora|punch|rfis`, `PATCH /punch/{id}`, `PATCH /rfis/{id}`.
 
-### Webhooks
-- Tabla `webhooks` (por proyecto: URL, secreto, eventos o `*`, activo, `fallos_seguidos`) y `webhook_entregas` (últimas 100 con su carga, para reintentar).
-- Emiten solos los modelos de `Webhooks::EVENTO_DE` (`ActiveRecord::crear/actualizar/eliminar` → `avisar()`), y explícitamente `Punch` y `Rfi`. `Webhooks::emitir($pid, $evento, $datos)` pone en cola (máx. 50 por petición y webhook) y envía **al terminar la petición** (`register_shutdown_function`). **Ojo:** `ActiveRecord::crear` guarda `insert_id` *antes* de avisar (el aviso hace consultas); haz lo mismo en cualquier código nuevo.
-- Firma: `X-ProjectWeb-Signature: sha256=<HMAC-SHA256(cuerpo, secreto)>`; además `X-ProjectWeb-Event` y `X-ProjectWeb-Delivery`. Tiempo máx. 4 s, sin seguir redirecciones, respuesta ≤ 64 KB.
-- **Seguridad (SSRF):** solo `http(s)` sin usuario/contraseña y a IP **públicas**; se resuelve el host, se rechaza si alguna IP es privada/local/de metadatos y la conexión se fija a la IP comprobada (`CURLOPT_RESOLVE`). `WEBHOOKS_PERMITIR_PRIVADOS=1` en el entorno lo relaja (pruebas en red interna). 10 fallos seguidos desactivan el webhook.
-- El mismo `Webhooks::emitir()` alimenta el bot de Telegram (`docs/telegram.md`).
-- Eventos: `Webhooks::EVENTOS` (actividad, restricción, bitácora, reporte, submittal, punch, RFI).
+### Bus de eventos (`Webhooks`) — la herramienta «Webhooks» se retiró
+- **`Webhooks.php` hoy es solo el bus interno**: `Webhooks::emitir($pid, $evento, $datos)` reparte el evento y el único suscriptor es el bot de Telegram (`Telegram::aviso()`, que filtra con `Telegram::EVENTOS`). Ya **no envía HTTP a URL de terceros**: no hay cola, firma ni reintentos.
+- Se retiraron la sección y las rutas de `/integraciones/webhook/*` (crear, activo, eliminar, probar, reintentar) y los métodos del controlador; `/api/v1/info` y el OpenAPI ya no anuncian `eventos_webhook`.
+- **Las tablas `webhooks` y `webhook_entregas` siguen en la BD** (no se borran datos); ya no se leen ni se escriben. Si algún día se reintegra el envío, la lógica SSRF/firma está en el historial de git.
+- Emiten solos los modelos de `Webhooks::EVENTO_DE` (`ActiveRecord::crear/actualizar/eliminar` → `avisar()`), y explícitamente `Punch`, `Rfi` y `ApiRest`. **Ojo:** `ActiveRecord::crear` guarda el `insert_id` *antes* de avisar (el aviso hace consultas); haz lo mismo en cualquier código nuevo.
+- Eventos: `Webhooks::EVENTOS` (actividad, restricción, bitácora, reporte, submittal, punch, RFI). El subconjunto que escucha Telegram está en `Telegram::EVENTOS` (`docs/telegram.md`).
 
 ## 5.2 Multi-idioma
 - El idioma (cookie `idioma`, selector ES/EN en la barra superior y en Ajustes) ya existía; esta fase cubrió las pantallas principales: inicio, proyectos, login, programa, Submittals, Bitácora, Reporte diario, Punch, Lookahead (columnas), diseño de listas, campos, plantillas, marca e integraciones.
@@ -43,4 +42,4 @@ Migración: `database/migracion_fase5.sql` (tablas `api_tokens`, `webhooks`, `we
 - Las tres se descubren solas en el menú de la app (`GET /api/ia/herramientas`).
 
 ## Pruebas
-`php tests/run.php` (piezas sin BD: puntuación de la IA, cobertura de traducción, webhooks, predicción y magnitudes). Con copia de BD (AGENTS.md, punto 8) se probó el recorrido completo: token → lectura → escritura → webhook firmado recibido → informe → RFI creado.
+`php tests/run.php` (piezas sin BD: puntuación de la IA, cobertura de traducción, predicción y magnitudes). Con copia de BD (AGENTS.md, punto 8) se probó el recorrido completo: token → lectura → escritura → informe → RFI creado. El bus de eventos (`Webhooks::emitir()` → Telegram) está probado en `tests/integracion.php`.

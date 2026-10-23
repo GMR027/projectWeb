@@ -368,11 +368,6 @@ $router->post('/integraciones/telegram/mi-chat', [Controllers\IntegracionesContr
 $router->post('/integraciones/telegram/destino', [Controllers\IntegracionesController::class, 'telegramDestino']);
 $router->post('/integraciones/telegram/webhook', [Controllers\IntegracionesController::class, 'telegramRegistrar']);
 $router->post('/integraciones/clima', [Controllers\IntegracionesController::class, 'climaAuto']);
-$router->post('/integraciones/webhook/crear', [Controllers\IntegracionesController::class, 'crearWebhook']);
-$router->post('/integraciones/webhook/activo', [Controllers\IntegracionesController::class, 'toggleWebhook']);
-$router->post('/integraciones/webhook/eliminar', [Controllers\IntegracionesController::class, 'eliminarWebhook']);
-$router->post('/integraciones/webhook/probar', [Controllers\IntegracionesController::class, 'probarWebhook']);
-$router->post('/integraciones/webhook/reintentar', [Controllers\IntegracionesController::class, 'reintentarEntrega']);
 $router->get('/campos', [PersonalizacionController::class, 'campos']);
 $router->post('/campos/guardar', [PersonalizacionController::class, 'guardarCampo']);
 $router->post('/campos/eliminar', [PersonalizacionController::class, 'eliminarCampo']);

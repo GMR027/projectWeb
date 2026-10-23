@@ -77,7 +77,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/notificaciones.md` | **Campana de notificaciones** (novedades de la plataforma + actividades de hoy + acciones rápidas, con el filtro de rol del cliente) y **Novedades de la plataforma** (Ajustes + `/novedades`). Cómo publicar una novedad: `classes/Novedades.php` |
 | `docs/fase3.md` | **Fase 3**: Costos y presupuesto (valor ganado, CPI/SPI, curva ligada a la Curva S y a las órdenes de cambio), Recursos y cuadrillas (carga semanal), RFI (chip de revisión, actividad bloqueada) y enlaces de solo lectura (cliente temporal + calendario `.ics`) |
 | `docs/telegram.md` | **Telegram** (bot único: avisos por proyecto/grupo, avance por botones, fotos como evidencia, notas; `Telegram`, `TelegramBot`) y **clima automático** en la bitácora (`ClimaAuto`, `bin/telegram.php`, `bin/clima_programado.php`) |
-| `docs/fase5.md` | **Fase 5**: API REST `/api/v1` con tokens y webhooks firmados (`ApiRest`, `ApiTokens`, `Webhooks`, `/integraciones`), interfaz ES/EN (`t()`, `bin/idioma_cobertura.php`), pruebas de calidad de la IA con casos fijos (`PruebasIA`, `/calidad-ia`) e IA nueva (predicción de atrasos, redactar RFI, contradicciones) |
+| `docs/fase5.md` | **Fase 5**: API REST `/api/v1` con tokens (`ApiRest`, `ApiTokens`, `Webhooks` como bus interno que hoy solo alimenta Telegram, `/integraciones`), interfaz ES/EN (`t()`, `bin/idioma_cobertura.php`), pruebas de calidad de la IA con casos fijos (`PruebasIA`, `/calidad-ia`) e IA nueva (predicción de atrasos, redactar RFI, contradicciones) |
 | `docs/personalizacion.md` | **Fase 4**: diseño de columnas de las listas (`ListaDiseno`), campos personalizados con filtro/agrupación (`CamposPersonalizados`), plantillas de proyecto completas (`PlantillaProyecto`), marca del cliente en los PDF (`Marca`, opción `'marca'` de `Pdf`) e inicio personalizable (`InicioUsuario`) |
 | `docs/piezas-compartidas.md` | **Piezas compartidas** (PHP y JS) que reemplazaron copias: `json_respuesta`, `proyecto_api`, `Pdf`, `ShellTools`, `AccesoDb`, `MarcasLienzo`, `NotasApi`, `kit-edicion.js`, `notas.js`. Revisar **antes** de escribir código parecido |
 
@@ -134,7 +134,7 @@ Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`
 - [x] Dependencias entre actividades y ruta crítica (CPM) — `classes/RutaCritica.php`, `classes/Dependencias.php`
 - [x] Curva S de avance programado vs real — `classes/CurvaS.php`
 - [ ] Integración con 4WLA (vista semanal lookahead)
-- [x] API REST para sincronización con herramientas externas — `classes/ApiRest.php`, `classes/Webhooks.php` (`docs/fase5.md`)
+- [x] API REST para sincronización con herramientas externas — `classes/ApiRest.php` (la herramienta «Webhooks» salientes se retiró: `classes/Webhooks.php` quedó como bus interno de eventos, hoy solo para Telegram) (`docs/fase5.md`)
 - [x] Adjuntar evidencias fotográficas a actividades — `EvidenciaController`
 - [x] Multi-idioma (ES/EN) — `t()` + `includes/lang/en.php`; `php bin/idioma_cobertura.php` (`docs/fase5.md`)
 

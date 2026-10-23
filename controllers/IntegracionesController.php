@@ -5,12 +5,11 @@ namespace Controllers;
 use MVC\Router;
 use Model\Proyecto;
 use Classes\ApiTokens;
-use Classes\Webhooks;
 use Classes\Telegram;
 use Classes\ClimaAuto;
 use Classes\Clima;
 
-/** Fase 5.1: tokens de la API REST y webhooks por proyecto */
+/** Integraciones: tokens de la API REST, bot de Telegram y clima automático */
 class IntegracionesController
 {
     private static function usuario(): array
@@ -34,13 +33,10 @@ class IntegracionesController
         $sel = null;
         foreach ($proyectos as $p) if ((int)$p->id === (int)($_GET['proyecto'] ?? 0)) $sel = $p;
         $sel ??= $proyectos[0] ?? null;
-        $wh = $sel && Webhooks::disponible() ? Webhooks::lista((int)$sel->id) : [];
-        $ver = (int)($_GET['entregas'] ?? 0);
         $tg = self::datosTelegram($u, $sel);
         $router->render('integraciones/index', [
-            'titulo' => 'Integraciones', 'usuario' => $u, 'disponible' => ApiTokens::disponible() && Webhooks::disponible(),
-            'tokens' => ApiTokens::disponible() ? ApiTokens::lista((int)$u['id']) : [], 'proyectos' => $proyectos, 'proyecto' => $sel, 'webhooks' => $wh,
-            'entregas' => $sel && $ver ? Webhooks::entregas((int)$sel->id, $ver) : [], 'verEntregas' => $ver,
+            'titulo' => 'Integraciones', 'usuario' => $u, 'disponible' => ApiTokens::disponible(),
+            'tokens' => ApiTokens::disponible() ? ApiTokens::lista((int)$u['id']) : [], 'proyectos' => $proyectos, 'proyecto' => $sel,
             'tg' => $tg, 'tokenNuevo' => $_SESSION['api_token_nuevo'] ?? null, 'mensaje' => $_SESSION['integ_msg'] ?? null, 'url' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
         ]);
         unset($_SESSION['api_token_nuevo'], $_SESSION['integ_msg'], $_SESSION['tg_enlace']);
@@ -67,41 +63,6 @@ class IntegracionesController
     {
         self::usuario();
         return proyecto_de_peticion(true);
-    }
-
-    public static function crearWebhook()
-    {
-        $p = self::proyectoGestionable();
-        [$ok, $r] = Webhooks::crear((int)$p->id, (string)($_POST['nombre'] ?? ''), (string)($_POST['url'] ?? ''), $_POST['eventos'] ?? [], (string)($_SESSION['nombre'] ?? ''));
-        self::volver((int)$p->id, $ok, $ok ? 'Webhook creado. Usa «Probar» para comprobar que responde.' : $r, '#webhooks');
-    }
-
-    public static function toggleWebhook()
-    {
-        $p = self::proyectoGestionable();
-        Webhooks::cambiarActivo((int)$p->id, (int)($_POST['id'] ?? 0), !empty($_POST['activo']));
-        self::volver((int)$p->id, true, !empty($_POST['activo']) ? 'Webhook activado.' : 'Webhook pausado.', '#webhooks');
-    }
-
-    public static function eliminarWebhook()
-    {
-        $p = self::proyectoGestionable();
-        Webhooks::eliminar((int)$p->id, (int)($_POST['id'] ?? 0));
-        self::volver((int)$p->id, true, 'Webhook eliminado.', '#webhooks');
-    }
-
-    public static function probarWebhook()
-    {
-        $p = self::proyectoGestionable();
-        [$ok, $codigo, $err] = Webhooks::probar((int)$p->id, (int)($_POST['id'] ?? 0));
-        self::volver((int)$p->id, $ok, $ok ? "La prueba llegó (HTTP $codigo)." : "La prueba falló: $err", '#webhooks');
-    }
-
-    public static function reintentarEntrega()
-    {
-        $p = self::proyectoGestionable();
-        [$ok, $codigo, $err] = Webhooks::reintentar((int)$p->id, (int)($_POST['entrega'] ?? 0));
-        self::volver((int)$p->id, $ok, $ok ? "Reenviado (HTTP $codigo)." : "Falló: $err", '#webhooks');
     }
 
     // ---------- Telegram y clima automático ----------

@@ -18,10 +18,17 @@ trustedProxies: "10.1.0.0/16"
 
 secretName: projectweb-db
 
+# Secreto con el token del bot de Telegram. Se crea FUERA de git (el token nunca va aquí ni en la imagen):
+#   kubectl -n projectweb create secret generic projectweb-telegram --from-literal=TELEGRAM_BOT_TOKEN=…
+# Si el secreto no existe el pod arranca igual y el bot queda «no configurado» (secretKeyRef optional: true)
+telegramSecret: projectweb-telegram
+
 app:
   timezone: America/Mazatlan
   contactEmail: ""
   storage: 45Gi
+  # Hora (0-23) a la que el clima automático anota el día en la bitácora y avisa del pronóstico de mañana
+  climaHora: 18
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }

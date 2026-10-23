@@ -875,7 +875,7 @@ HTML],
 <p>El enlace <strong>Ver todas en otra pestaña</strong> abre la lista completa con todos los pendientes, y en cada sección <em>Ver todas (n) →</em> abre esa sección completa. Una sección sin pendientes indica «Nada pendiente».</p>
 HTML],
 
-['id' => 'integraciones', 'titulo' => 'Integraciones: API y webhooks', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
+['id' => 'integraciones', 'titulo' => 'Integraciones: API, Telegram y clima', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>En <strong>Integraciones</strong> (menú Proyecto) conectas ProjectWeb con otras herramientas (Power BI, Excel, Zapier, Slack, un sistema propio…). Para recibir avisos y reportar avance desde el celular, mira la sección <a href="#telegram">Telegram</a>.</p>
 <h4>API REST</h4>
 <ul>
@@ -883,8 +883,6 @@ HTML],
 <li>Se usa con la cabecera <code>Authorization: Bearer pw_…</code> en <code>/api/v1/…</code>. Puedes leer proyectos, partidas, actividades, restricciones, bitácora, punch, RFI, submittals, reportes y la Curva S; y escribir (con un token de escritura) el avance de una actividad, registros de bitácora, pendientes del punch y RFI.</li>
 <li>La descripción completa (OpenAPI 3) está en <code>/api/v1/openapi</code> y se puede importar en Postman o Swagger. Límite: 120 peticiones por minuto por token.</li>
 </ul>
-<h4>Webhooks</h4>
-<p>Un webhook avisa a otra dirección cuando algo cambia en el proyecto (actividad, restricción, bitácora, reporte, submittal, punch, RFI). Cada aviso es un POST con el evento en JSON y una <strong>firma</strong> (<code>X-ProjectWeb-Signature</code>, HMAC-SHA256 del cuerpo con el secreto del webhook) para comprobar que viene de ProjectWeb. Solo se llama a direcciones públicas. Usa <em>Probar</em> para ver si responde, <em>Envíos</em> para ver el historial y <em>Reintentar</em> los que fallaron. Con 10 fallos seguidos el webhook se pausa solo.</p>
 HTML],
 
 ['id' => 'telegram', 'titulo' => 'Telegram: avisos, avance y fotos desde el celular', 'icono' => 'fa-paper-plane', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
