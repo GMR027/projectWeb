@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const http = require('http');
-const { chat, modelos, familiaOpencode, probar, estado, urlBase } = require('../src/providers');
+const { chat, modelos, familiaOpencode, probar, estado, detectarCli, urlBase } = require('../src/providers');
 const { comparar } = require('../src/updater');
 
 function servidor(manejar) {
@@ -105,5 +105,25 @@ test('opencode: manda el modelo con --model, sin permisos de escritura, y lista 
     assert.match(e.texto, /Comprobar/);
     assert.strictEqual((await estado({ tipo: 'opencode' }, '')).nivel, 'error');   // la conexión sin modelo no se marca como lista
   } finally { process.env.PATH = anterior; fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('opencode se encuentra aunque la app arranque SIN PATH (menú de escritorio)', async () => {
+  const fs = require('fs'), os = require('os'), path = require('path');
+  const hogar = fs.mkdtempSync(path.join(os.tmpdir(), 'pwd-home-')), dir = path.join(hogar, '.opencode', 'bin');
+  fs.mkdirSync(dir, { recursive: true });
+  // «opencode» instalado en ~/.opencode/bin (donde lo pone su instalador), escrito en sh para no depender de node
+  fs.writeFileSync(path.join(dir, 'opencode'), '#!/bin/sh\n'
+    + 'if [ "$1" = "--version" ]; then echo "opencode v9.9.9"; exit 0; fi\n'
+    + 'if [ "$1" = "models" ]; then echo "opencode-go/mimo-v2.6-flash"; exit 0; fi\n'
+    + 'echo listo\n', { mode: 0o755 });
+  const PATH = process.env.PATH, HOME = process.env.HOME;
+  process.env.HOME = hogar; process.env.PATH = '';
+  try {
+    assert.strictEqual((await detectarCli()).opencode, true);
+    assert.strictEqual(await chat({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, '', [{ role: 'user', content: 'hola' }], {}), 'listo');
+    assert.match(await probar({ tipo: 'opencode', modelo: 'opencode-go/mimo-v2.6-flash' }, ''), /responde \(listo\)/);
+    // el error de un CLI que sí falta explica dónde se busca
+    await assert.rejects(chat({ tipo: 'claude-code' }, '', [{ role: 'user', content: 'x' }], {}), /no está instalado.*\.opencode\/bin/);
+  } finally { process.env.PATH = PATH; process.env.HOME = HOME; fs.rmSync(hogar, { recursive: true, force: true }); }
 });
 

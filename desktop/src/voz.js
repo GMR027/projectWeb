@@ -5,6 +5,10 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { PATH_SISTEMA } = require('./providers');   // la app puede arrancar sin PATH (menú de escritorio)
+
+/** Entorno de los procesos de voz: el del proceso y, si vino vacío, el del sistema (sin añadir rutas de agentes) */
+const entornoVoz = () => ({ ...process.env, PATH: process.env.PATH ? process.env.PATH : PATH_SISTEMA });
 
 const MOTORES = ['auto', 'whisper-cli', 'faster-whisper', 'openai'];
 const IDIOMAS = ['auto', 'es', 'en'];
@@ -21,10 +25,10 @@ const PY_SCRIPT = [
 const INSTRUCCIONES = 'Para dictar y grabar reuniones instala un motor de transcripción local: (a) whisper.cpp — compílalo o instala «whisper-cli» y descarga un modelo (por ejemplo ggml-base.bin o ggml-small.bin) y pon su ruta en Ajustes → Voz; o (b) faster-whisper — «pip install faster-whisper» (descarga el modelo la primera vez). También puedes elegir una API compatible con OpenAI (/audio/transcriptions). Mientras tanto puedes escribir o pegar el texto.';
 
 function ejecutar(bin, args, { timeout = 60000, env } = {}) {
-  return new Promise((resolve, reject) => execFile(bin, args, { timeout, maxBuffer: 64 * 1024 * 1024, env: env || process.env }, (e, out, err) => e ? reject(Object.assign(e, { stderr: String(err || '') })) : resolve({ out: String(out), err: String(err || '') })));
+  return new Promise((resolve, reject) => execFile(bin, args, { timeout, maxBuffer: 64 * 1024 * 1024, env: env || entornoVoz() }, (e, out, err) => e ? reject(Object.assign(e, { stderr: String(err || '') })) : resolve({ out: String(out), err: String(err || '') })));
 }
-async function cual(bin, entorno = process.env) {
-  for (const d of String(entorno.PATH || '').split(path.delimiter)) {
+async function cual(bin, env = entornoVoz()) {
+  for (const d of String(env.PATH || '').split(path.delimiter)) {
     if (!d) continue;
     const r = path.join(d, bin);
     try { fs.accessSync(r, fs.constants.X_OK); if (fs.statSync(r).isFile()) return r; } catch { /* siguiente */ }

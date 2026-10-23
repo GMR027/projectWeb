@@ -62,6 +62,16 @@ test('whisper-cli simulado: se invoca con modelo, idioma y -nt, y se limpia la s
   } finally { process.env.PATH = viejo; fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('la voz encuentra los binarios del sistema aunque la app arranque sin PATH', async () => {
+  const PATH = process.env.PATH;
+  delete process.env.PATH;   // así arranca la app al abrirla desde el menú del escritorio
+  try {
+    const e = await voz.estado({ motor: 'faster-whisper' }, null);
+    assert.doesNotMatch(e.detalle, /No se encontró Python 3/);   // el PATH del sistema sí trae python3
+    if (!e.disponible) assert.match(e.detalle, /faster-whisper no está instalado/);
+  } finally { if (PATH !== undefined) process.env.PATH = PATH; }
+});
+
 test('API compatible con OpenAI: manda el audio y devuelve el texto', async () => {
   let visto = null;
   const srv = await new Promise(ok => { const s = http.createServer((req, res) => { let n = 0; req.on('data', c => n += c.length); req.on('end', () => { visto = { url: req.url, auth: req.headers.authorization, ct: req.headers['content-type'], n }; res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ text: ' Acuerdos de la reunión ' })); }); }).listen(0, '127.0.0.1', () => ok(s)); });

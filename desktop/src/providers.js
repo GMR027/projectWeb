@@ -94,11 +94,18 @@ async function http(url, opciones, timeout = TIMEOUT_MS) {
   return j;
 }
 
-/** Al abrir la app desde el menú (no desde un terminal) el PATH no incluye donde suelen instalarse los agentes CLI */
+// Al lanzar la app desde el menú del escritorio puede llegar SIN PATH (se comprobó en este equipo: la app
+// arranca con el entorno vacío): entonces se usa el del sistema y se añaden las rutas donde suelen quedar
+// los agentes CLI — opencode en ~/.opencode/bin, claude en ~/.local/bin (por eso Claude sí se encontraba)
+const PATH_SISTEMA = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
+const rutasAgentes = () => ['.opencode/bin', '.local/bin', '.claude/local', '.npm-global/bin', '.bun/bin'].map(r => path.join(os.homedir(), r));
+const rutasExtra = () => [...rutasAgentes(), '/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin'];
+
+/** Entorno para ejecutar los CLI: el del proceso (o el del sistema si vino vacío) más las rutas de los agentes */
 function entorno() {
-  const extra = [path.join(os.homedir(), '.local', 'bin'), path.join(os.homedir(), '.claude', 'local'), path.join(os.homedir(), '.npm-global', 'bin'), path.join(os.homedir(), '.bun', 'bin'), '/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin'];
   const actual = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
-  return { ...process.env, PATH: [...actual, ...extra.filter(d => !actual.includes(d))].join(path.delimiter) };
+  const base = actual.length ? actual : PATH_SISTEMA.split(path.delimiter);
+  return { ...process.env, PATH: [...base, ...rutasExtra().filter(d => !base.includes(d))].join(path.delimiter) };
 }
 
 /** Quita los códigos de color y las líneas de estado de los agentes («> build · modelo») que los CLI imprimen en stderr */
@@ -107,7 +114,7 @@ function limpiarCli(t) {
 }
 
 function errorCli(bin, err, errout) {
-  if (err.code === 'ENOENT') return new Error(bin + ' no está instalado o no está en el PATH');
+  if (err.code === 'ENOENT') return new Error(bin + ' no está instalado o no está en el PATH (esta app también mira en ' + rutasAgentes().map(r => r.replace(os.homedir(), '~')).join(', ') + ')');
   const texto = limpiarCli(errout || err.message);
   if (/free usage limit/i.test(texto))   // opencode: se agotó la cuota de los modelos gratuitos
     return new Error(texto + ' (se agotó la cuota de los modelos gratuitos: elige otro modelo con «Listar modelos», por ejemplo uno de opencode-go/, o conecta un proveedor con «opencode auth» en el terminal).');
@@ -359,7 +366,7 @@ async function ollamaChatStream(base, cuerpo, timeout, alAvanzar) {
 /** Estado de Ollama: si responde, qué modelos hay descargados y cuáles están cargados en memoria */
 async function ollamaEstado(url) {
   const base = urlOllama(url);
-  const binario = await new Promise(res => execFile('which', ['ollama'], e => res(!e)));
+  const binario = await new Promise(res => execFile('which', ['ollama'], { env: entorno() }, e => res(!e)));
   try {
     const tags = await http(base + '/api/tags', {}, 8000);
     const ps = await http(base + '/api/ps', {}, 8000).catch(() => ({ models: [] }));
@@ -433,4 +440,4 @@ async function estado(p, clave) {
   }
 }
 
-module.exports = { conUso, medirUso, uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, familiaOpencode, detectarCli, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
+module.exports = { conUso, medirUso, uso, usoConfigurar, usoSondear, estado, TIPOS, probar, chat, modelos, familiaOpencode, detectarCli, entorno, PATH_SISTEMA, urlBase, ollamaEstado, ollamaDescargar, ollamaCargar, ollamaEliminar, nombreModelo };
