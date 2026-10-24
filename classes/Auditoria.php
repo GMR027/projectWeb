@@ -147,7 +147,7 @@ class Auditoria
     {
         $t = [['Fecha', 'Usuario', 'Herramienta', 'Evento', 'Acción', 'Entidad', 'Resumen', 'Modelo']];
         foreach (self::listar($pid, $f, 1, 2000) as $x) {
-            $t[] = [$x['creado'], $x['usuario'], self::HERRAMIENTAS[$x['herramienta']] ?? $x['herramienta'], self::EVENTOS[$x['evento']] ?? $x['evento'], $x['accion'], trim($x['entidad_tipo'] . ' ' . $x['entidad_nombre']), $x['resumen'], $x['modelo']];
+            $t[] = [$x['creado'], $x['usuario'], self::HERRAMIENTAS[$x['herramienta']] ?? $x['herramienta'], self::EVENTOS[$x['evento']] ?? $x['evento'], $x['accion'], trim($x['entidad_tipo'] . ' ' . CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid)), $x['resumen'], $x['modelo']];
         }
         return $t;
     }

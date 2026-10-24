@@ -11,13 +11,29 @@ class LastPlannerPdfExporter extends BaseExporter
 {
     private string $partida = 'todas';
     private int $columnas = 2;
+    private string $desde = '1900-01-01';
+    private string $hasta = '2999-12-31';
+    private bool $soloRestriccion = false;
 
-    /** Siempre se exportan todos los post-its de la(s) partida(s) elegida(s) */
+    /** Partida y número de columnas, como se ven en la pantalla */
     public function setOpciones(string $partida, int $columnas): self
     {
         $this->partida = $partida;
         $this->columnas = $columnas === 3 ? 3 : 2;
         return $this;
+    }
+
+    /** Mismos filtros que en la pantalla de Last Planner: período y solo con restricción */
+    public function setFiltros(string $periodo, string $desde, string $hasta, string $mes, bool $soloRestriccion): self
+    {
+        [$this->desde, $this->hasta] = LastPlanner::rangoPeriodo($periodo, $desde, $hasta, $mes);
+        $this->soloRestriccion = $soloRestriccion;
+        return $this;
+    }
+
+    private function tarjetas(array $t): array
+    {
+        return $this->soloRestriccion ? LastPlanner::conRestriccion($t) : $t;
     }
 
     public function generar(string $nombreBase): string
@@ -43,17 +59,17 @@ class LastPlannerPdfExporter extends BaseExporter
         $paginas = [];
         $total = 0;
         if ($this->partida === 'juntas') {
-            $t = LastPlanner::tarjetasTodas($this->proyecto);
+            $t = $this->tarjetas(LastPlanner::tarjetasTodas($this->proyecto, false, $this->desde, $this->hasta));
             $total += count($t);
             foreach (array_chunk($t, $porPagina) as $grupo) $paginas[] = $grupo;
         }
         foreach ($partidas as $p) {
-            $t = LastPlanner::tarjetas($this->proyecto, $p, '1900-01-01', '2999-12-31');
+            $t = $this->tarjetas(LastPlanner::tarjetas($this->proyecto, $p, $this->desde, $this->hasta));
             $total += count($t);
             foreach (array_chunk($t, $porPagina) as $grupo) $paginas[] = $grupo;
         }
         if (!$paginas) {
-            throw new \Exception('La partida no tiene actividades');
+            throw new \Exception('No hay post-its con los filtros elegidos');
         }
 
         $proyecto = $this->proyecto;

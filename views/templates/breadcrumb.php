@@ -3,7 +3,10 @@
 function breadcrumb_proyecto($proyecto, $pagina_actual = '') {
     if (!$proyecto) return;
     require_once __DIR__ . '/herramientas-proyecto.php';
-    $grupos = ['Navegación' => [['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos', 'key' => 'proyectos', 'ayuda' => ayudas_herramientas()['/proyectos'][0], 'manual' => 'inicio']]] + herramientas_proyecto($proyecto);
+    $grupos = ['Navegación' => [
+        ['url' => '/dashboard', 'icon' => 'fa-house', 'label' => 'Inicio', 'key' => 'dashboard', 'ayuda' => ayudas_herramientas()['/dashboard'][0], 'manual' => 'inicio'],
+        ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos', 'key' => 'proyectos', 'ayuda' => ayudas_herramientas()['/proyectos'][0], 'manual' => 'inicio'],
+    ]] + herramientas_proyecto($proyecto);
     ?>
     <nav class="breadcrumb-nav" aria-label="<?php echo s(t('Herramientas del proyecto')); ?>">
         <div class="breadcrumb-container">

@@ -82,7 +82,22 @@ class LastPlanner
      * "Mostrar todas": un post-it por día hábil del proyecto con las actividades de TODAS las partidas de ese día.
      * Cada renglón lleva su partida ('partida'); la tarjeta no pertenece a una sola partida ('partida' => null).
      */
-    public static function tarjetasTodas(Proyecto $proyecto, bool $ocultarCompletadas = false): array
+    /** Rango [desde, hasta] de un período: «fechas» (campos vacíos = abierto) o «mes» (YYYY-MM). Sin período, todo el programa */
+    public static function rangoPeriodo(string $periodo, string $desde, string $hasta, string $mes): array
+    {
+        $fecha = fn(string $v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : '';
+        if ($periodo === 'fechas') return [$fecha($desde) ?: '1900-01-01', $fecha($hasta) ?: '2999-12-31'];
+        if ($periodo === 'mes' && preg_match('/^\d{4}-\d{2}$/', $mes)) return [$mes . '-01', date('Y-m-t', strtotime($mes . '-01'))];
+        return ['1900-01-01', '2999-12-31'];
+    }
+
+    /** Solo los post-its que traen alguna actividad con restricción */
+    public static function conRestriccion(array $tarjetas): array
+    {
+        return array_values(array_filter($tarjetas, fn($t) => array_filter($t['items'], fn($i) => !empty($i['restriccion']))));
+    }
+
+    public static function tarjetasTodas(Proyecto $proyecto, bool $ocultarCompletadas = false, string $desde = '1900-01-01', string $hasta = '2999-12-31'): array
     {
         $acts = [];
         foreach ($proyecto->getPartidas() as $partida) {
@@ -101,10 +116,10 @@ class LastPlanner
         $fin = max($proyecto->fecha_fin, max(array_map(fn($x) => $x[1]->fecha_fin, $acts)));
 
         $acum = self::acumuladoHabil($cal, $ini, $fin);
-        $limite = new \DateTime($fin);
+        $limite = new \DateTime(min($hasta, $fin));
 
         $tarjetas = [];
-        $d = new \DateTime($ini);
+        $d = new \DateTime(max($desde, $ini));
         for ($i = 0; $d <= $limite && $i < self::MAX_DIAS; $i++, $d->modify('+1 day')) {
             $dia = $d->format('Y-m-d');
             if (!$cal->esHabil($dia)) continue;

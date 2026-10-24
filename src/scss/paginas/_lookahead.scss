@@ -184,6 +184,8 @@ td.msr-atraso, b.msr-atraso { background: rgba(220, 38, 38, .35); color: #fff; p
 // Last Planner (post-it 7 x 7 cm)
 // ============================================================
 .lp-filtros { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-end; .campo { margin: 0; } }
+.lp-plantillas { h3 { margin: 0 0 1rem; font-size: 1.5rem; display: flex; gap: .8rem; align-items: center; i { color: var(--primary); } }
+  .lp-plantillas-form { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-end; margin-bottom: 1rem; .campo { margin: 0; } } }
 .lp-check { display: flex; gap: .6rem; align-items: center; font-size: 1.3rem; }
 .lp-leyenda { margin: 1rem 0; }
 .lp-rombo { font-style: normal; line-height: 1; }

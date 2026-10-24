@@ -34,7 +34,11 @@
 .hist-estado { display: inline-block; font-size: 1.15rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted);
   &.est-aceptado { color: var(--success); } &.est-revertido { color: var(--warning); } &.est-pendiente { color: var(--primary); } }
 .hist-det { margin-top: .4rem; }
-.hist-par { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; pre { margin: .3rem 0 0; padding: .6rem; background: var(--bg-tertiary); border-radius: .6rem; font-size: 1.1rem; max-height: 18rem; overflow: auto; white-space: pre-wrap; } }
+.hist-cmp { width: 100%; margin-top: .6rem; font-size: 1.25rem; border-collapse: collapse;
+  th, td { padding: .5rem .8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+  thead th { font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  tbody th { font-weight: 600; width: 22%; }
+  td { word-break: break-word; white-space: pre-wrap; } }
 .hist-pag { display: flex; gap: 1.2rem; align-items: center; justify-content: center; margin: 1.6rem 0; }
 .hist-lista { list-style: none; margin: .8rem 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; }
 .bib-intro { margin-bottom: 1.6rem; border-left: .4rem solid var(--secondary); h3 { margin: 0 0 .8rem; display: flex; gap: .8rem; align-items: center; i { color: var(--secondary); } } p { margin: 0 0 1rem; font-size: 1.35rem; } }

@@ -21,11 +21,15 @@ class LastPlannerController
         $todas = ($_GET['partida'] ?? '') === 'todas';
         $partida = $todas ? null : ($partida ?? ($partidas[0] ?? null));
 
-        $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, '1900-01-01', '2999-12-31') : []);
+        $periodo = in_array($_GET['periodo'] ?? '', ['fechas', 'mes'], true) ? $_GET['periodo'] : '';
+        $pDesde = self::fechaGet($_GET['desde'] ?? '');
+        $pHasta = self::fechaGet($_GET['hasta'] ?? '');
+        $pMes = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['mes'] ?? '')) ? $_GET['mes'] : '';
+        [$desde, $hasta] = LastPlanner::rangoPeriodo($periodo, $pDesde, $pHasta, $pMes);
+
+        $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto, false, $desde, $hasta) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, $desde, $hasta) : []);
         $soloRestriccion = !empty($_GET['restriccion']);
-        if ($soloRestriccion) {
-            $tarjetas = array_values(array_filter($tarjetas, fn($t) => array_filter($t['items'], fn($i) => !empty($i['restriccion']))));
-        }
+        if ($soloRestriccion) $tarjetas = LastPlanner::conRestriccion($tarjetas);
 
         $plantilla = \Model\Estampa::lastPlanner((int)$proyecto->id);
         $plantillasPostit = array_filter(\Classes\Estampas::plantillas(), fn($p) => str_starts_with($p['nombre'], 'Last Planner') && ($p['config']['modo'] ?? '') === 'lienzo');
@@ -36,7 +40,13 @@ class LastPlannerController
             'proyecto' => $proyecto, 'partidas' => $partidas, 'partida' => $partida,
             'todas' => $todas,
             'tarjetas' => $tarjetas, 'soloRestriccion' => $soloRestriccion,
+            'periodo' => $periodo, 'pDesde' => $pDesde, 'pHasta' => $pHasta, 'pMes' => $pMes,
         ]);
+    }
+
+    private static function fechaGet($v): string
+    {
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) ? (string)$v : '';
     }
 
     /** Elige la estampa que sirve de plantilla del post-it (0 = diseño clásico) o carga una plantilla de obra */

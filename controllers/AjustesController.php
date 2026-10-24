@@ -560,6 +560,9 @@ class AjustesController
                 case 'lastplanner':
                     $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setOpciones(
                         $_POST['partida_id'] ?? 'todas', (int)($_POST['columnas'] ?? 2)
+                    )->setFiltros(
+                        (string)($_POST['periodo'] ?? ''), (string)($_POST['desde'] ?? ''), (string)($_POST['hasta'] ?? ''),
+                        (string)($_POST['mes'] ?? ''), !empty($_POST['restriccion'])
                     );
                     break;
                 case 'curva':

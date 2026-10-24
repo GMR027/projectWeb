@@ -65,6 +65,7 @@ function ayudas_herramientas(): array
         '/ajustes' => ['Jornada semanal, festivos y configuración del proyecto.', 'ajustes'],
         '/exportar' => ['Exporta el programa a PDF, XML (MS Project) y otros formatos.', 'exportar'],
         '/proyectos' => ['Lista de los proyectos a los que tienes acceso.', 'inicio'],
+        '/dashboard' => ['Inicio: resumen de los proyectos a los que tienes acceso y lo que necesita tu atención.', 'inicio'],
     ];
 }
 

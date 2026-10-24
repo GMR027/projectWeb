@@ -74,13 +74,11 @@ $vacio = match ($pestana) {
                     <td class="fecha"><?php echo s($fmt($x['creado'])); ?></td>
                     <td>
                         <strong class="hist-desc"><?php echo s($x['resumen']); ?></strong><br>
-                        <small class="text-muted"><?php echo s($x['usuario'] ?: 'Sin usuario'); ?><?php echo $x['entidad_nombre'] !== '' ? ' · ' . s($x['entidad_nombre']) : ''; ?><?php echo $x['estado'] !== 'pendiente' && $x['estado_por'] !== '' ? ' · ' . s(t(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'])) . ' por ' . s($x['estado_por']) : ''; ?></small>
+                        <?php $elemento = \Classes\CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid); ?>
+                        <small class="text-muted"><?php echo s($x['usuario'] ?: 'Sin usuario'); ?><?php echo $elemento !== '' ? ' · ' . s($elemento) : ''; ?><?php echo $x['estado'] !== 'pendiente' && $x['estado_por'] !== '' ? ' · ' . s(t(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'])) . ' por ' . s($x['estado_por']) : ''; ?></small>
                         <?php if ($x['antes'] !== null || $x['despues'] !== null): ?>
                             <details class="hist-det"><summary>Antes / después</summary>
-                                <div class="hist-par">
-                                    <div><b>Antes</b><pre><?php echo s($x['antes'] !== null ? json_encode($x['antes'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '—'); ?></pre></div>
-                                    <div><b>Después</b><pre><?php echo s($x['despues'] !== null ? json_encode($x['despues'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '—'); ?></pre></div>
-                                </div>
+                                <?php $antes = $x['antes']; $despues = $x['despues']; include __DIR__ . '/../templates/cambios-antes-despues.php'; ?>
                             </details>
                         <?php endif; ?>
                     </td>

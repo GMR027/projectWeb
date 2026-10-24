@@ -3,6 +3,7 @@
 namespace Controllers;
 
 use MVC\Router;
+use Classes\CambiosLegibles;
 use Classes\HistorialCambios;
 
 /**
@@ -118,7 +119,7 @@ class HistorialCambiosController
                 $html .= '<tr><td>' . $e(date('d/m/Y H:i', strtotime($x['creado']))) . '</td><td>' . $e($x['usuario'] ?: '—') . '</td><td>'
                     . $e(HistorialCambios::herramientas()[$x['herramienta']] ?? $x['herramienta']) . '</td><td>'
                     . $e(HistorialCambios::EVENTOS[$x['evento']] ?? $x['evento']) . '</td><td>'
-                    . $e(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado']) . '</td><td>' . $e($x['entidad_nombre'] ?: '—') . '</td><td>' . $e($x['resumen']) . '</td></tr>';
+                    . $e(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado']) . '</td><td>' . $e(CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid) ?: '—') . '</td><td>' . $e($x['resumen']) . '</td></tr>';
             }
             enviar_descarga(\Classes\Pdf::generar($html . '</table></body></html>', 'letter', 'landscape'),
                 'application/pdf', 'historial-cambios-' . $p->codigo . '-' . date('Y-m-d') . '.pdf');
@@ -130,7 +131,7 @@ class HistorialCambiosController
         $datos = [['Fecha', 'Usuario', 'Herramienta', 'Evento', 'Estado', 'Elemento', 'Cambio']];
         foreach ($filas as $x) {
             $datos[] = [date('d/m/Y H:i', strtotime($x['creado'])), $x['usuario'] ?: '—', HistorialCambios::herramientas()[$x['herramienta']] ?? $x['herramienta'],
-                HistorialCambios::EVENTOS[$x['evento']] ?? $x['evento'], HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'], $x['entidad_nombre'] ?: '—', $x['resumen']];
+                HistorialCambios::EVENTOS[$x['evento']] ?? $x['evento'], HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'], CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid) ?: '—', $x['resumen']];
         }
         $hoja->fromArray($datos, null, 'A1');
         $hoja->getStyle('A1:G1')->getFont()->setBold(true);

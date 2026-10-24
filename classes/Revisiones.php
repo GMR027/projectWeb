@@ -134,7 +134,7 @@ class Revisiones
         }
         if ($tipo === 'actividad') {
             $a = self::filas("SELECT a.codigo, a.nombre FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE a.id = $id AND p.proyecto_id = $pid")[0] ?? null;
-            return $a ? $a['codigo'] . ' ' . $a['nombre'] : '';
+            return $a ? CambiosLegibles::elemento('actividad', $id, $a['codigo'] . ' ' . $a['nombre'], $pid) : '';
         }
         return self::HERRAMIENTAS[$ref][0] ?? (str_starts_with($ref, 'informe:') ? 'Informe: ' . substr($ref, 8) : $ref);
     }

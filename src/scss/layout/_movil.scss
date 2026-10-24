@@ -258,8 +258,8 @@
   .proyecto-acciones { flex-wrap: wrap; }
 
   // ---------- Last Planner: filtro arriba y un post-it por línea ----------
-  .lp-filtros { flex-direction: column; align-items: stretch; }
-  .lp-filtros .campo, .lp-filtros select, .lp-filtros label { width: 100%; min-width: 0; }
+  .lp-filtros, .lp-plantillas-form { flex-direction: column; align-items: stretch; }
+  .lp-filtros .campo, .lp-filtros select, .lp-filtros label, .lp-plantillas-form .campo, .lp-plantillas-form select, .lp-plantillas-form label { width: 100%; min-width: 0; }
   .lp-grid { flex-direction: column; align-items: center; gap: 1.6rem; }
   .lp-tarjeta { zoom: .8; }   // el post-it mide 7 cm × 1.7 (≈ 450 px): se reduce para que quepa en la pantalla
   @media (max-width: 36rem) { .lp-tarjeta { zoom: .7; } }

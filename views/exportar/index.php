@@ -151,6 +151,22 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="todas">Todas (cada partida en hoja nueva)</option>
                     <?php foreach ($proyecto->getPartidas() as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
                 </select>
+                <label class="text-sm text-muted" for="lp_filtro">Filtro</label>
+                <select id="lp_filtro" name="restriccion">
+                    <option value="">Todos los post-it</option>
+                    <option value="1">Solo con restricción</option>
+                </select>
+                <label class="text-sm text-muted" for="lp_periodo">Período</label>
+                <select id="lp_periodo" name="periodo">
+                    <option value="">Todo el programa</option>
+                    <option value="fechas">Entre fechas (usa Desde y Hasta)</option>
+                    <option value="mes">Por mes (usa Mes)</option>
+                </select>
+                <div class="exportador-fechas">
+                    <label class="text-sm text-muted">Desde <input type="date" name="desde"></label>
+                    <label class="text-sm text-muted">Hasta <input type="date" name="hasta"></label>
+                    <label class="text-sm text-muted">Mes <input type="month" name="mes"></label>
+                </div>
                 <label class="text-sm text-muted" for="lp_cols">Tarjetas por fila</label>
                 <select id="lp_cols" name="columnas">
                     <option value="2">2 columnas × 3 filas (6 por hoja, margen cómodo)</option>

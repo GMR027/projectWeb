@@ -348,9 +348,10 @@ HTML],
 <li>El rombo de cada tarjeta indica el estado: <strong>verde</strong> actividad finalizada, <strong>amarillo</strong> en proceso, <strong>rojo</strong> con restricción activa.</li>
 <li>El triángulo <strong>naranja</strong> ▲ marca una actividad <em>en riesgo</em> (ver «Actividades en riesgo» en Programa de obra); pasa el cursor para ver el motivo. Solo se muestra en pantalla, no en el PDF.</li>
 <li>Los post-its se calculan solos: si cambian las fechas del programa, se ajustan.</li>
+<li>Con <strong>Filtro</strong> puedes ver solo los post-its con restricción, y con <strong>Período</strong> solo los de un rango de fechas o de un mes. Los mismos filtros se aplican al exportar.</li>
 <li>En <strong>Plantilla del post-it</strong> puedes elegir el diseño clásico o una estampa propia. En <strong>Plantillas de obra</strong> hay diseños listos de 7×7 cm: <em>Cuadrilla</em>, <em>Restricciones</em>, <em>Calidad</em> y <em>Seguridad</em>. Al pulsar <strong>Cargar y usar</strong> se copia la plantilla al proyecto y queda seleccionada; después puedes ajustarla en el editor de estampas.</li>
 </ul>
-<p>Para imprimirlos usa <em>Exportar → Last Planner</em>: tarjetas de 7×7 cm en hojas carta con marcas de corte; puedes elegir la partida y cuántas tarjetas van por fila.</p>
+<p>Para imprimirlos usa <em>Exportar → Last Planner</em>: tarjetas de 7×7 cm en hojas carta con marcas de corte; puedes elegir la partida, el filtro, el período y cuántas tarjetas van por fila.</p>
 HTML],
 
 ['id' => 'reportes', 'titulo' => 'Reporte diario', 'icono' => 'fa-clipboard-list', 'roles' => $todos, 'herr' => 'reportes', 'cuerpo' => <<<'HTML'

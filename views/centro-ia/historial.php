@@ -101,19 +101,18 @@ $q = fn(array $c) => http_build_query(array_filter(['proyecto' => $pid] + $c + $
         <table class="prg-tabla hist-tabla">
             <thead><tr><th>Fecha</th><th>Usuario</th><th>Herramienta</th><th>Evento</th><th>Entidad</th><th>Resumen</th></tr></thead>
             <tbody>
-            <?php foreach ($filas as $x): $link = $enlaceEntidad($x); ?>
+            <?php foreach ($filas as $x): $link = $enlaceEntidad($x); $elemento = \Classes\CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid); ?>
                 <tr>
                     <td class="fecha"><?php echo s($fmt($x['creado'])); ?></td>
                     <td><?php echo s($x['usuario'] ?: '—'); ?></td>
                     <td><?php echo s(Auditoria::HERRAMIENTAS[$x['herramienta']] ?? $x['herramienta']); ?><?php echo $x['modelo'] ? '<br><small class="text-muted">' . s($x['modelo']) . '</small>' : ''; ?></td>
                     <td><span class="hist-ev ev-<?php echo s($x['evento']); ?>"><?php echo s(Auditoria::EVENTOS[$x['evento']] ?? $x['evento']); ?></span></td>
-                    <td><?php if ($x['entidad_tipo'] !== ''): ?><small class="text-muted"><?php echo s($x['entidad_tipo']); ?></small><br><?php echo $link ? '<a href="' . s($link) . '">' . s($x['entidad_nombre']) . '</a>' : s($x['entidad_nombre']); ?> <a class="text-sm" title="Historial de esta entidad" href="/historial-cambios?proyecto=<?php echo $pid; ?>&entidad_tipo=<?php echo s($x['entidad_tipo']); ?>&entidad_id=<?php echo (int)$x['entidad_id']; ?>"><i class="fa-solid fa-clock-rotate-left"></i></a><?php else: ?>—<?php endif; ?></td>
+                    <td><?php if ($x['entidad_tipo'] !== ''): ?><small class="text-muted"><?php echo s($x['entidad_tipo']); ?></small><br><?php echo $link ? '<a href="' . s($link) . '">' . s($elemento) . '</a>' : s($elemento); ?> <a class="text-sm" title="Historial de esta entidad" href="/historial-cambios?proyecto=<?php echo $pid; ?>&entidad_tipo=<?php echo s($x['entidad_tipo']); ?>&entidad_id=<?php echo (int)$x['entidad_id']; ?>"><i class="fa-solid fa-clock-rotate-left"></i></a><?php else: ?>—<?php endif; ?></td>
                     <td>
                         <?php echo s($x['resumen']); ?>
                         <?php if ($x['antes'] !== null || $x['despues'] !== null): ?>
                             <details class="hist-det"><summary>Antes / después</summary>
-                                <div class="hist-par"><div><b>Antes</b><pre><?php echo s($x['antes'] !== null ? json_encode($x['antes'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '—'); ?></pre></div>
-                                <div><b>Después</b><pre><?php echo s($x['despues'] !== null ? json_encode($x['despues'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '—'); ?></pre></div></div>
+                                <?php $antes = $x['antes']; $despues = $x['despues']; include __DIR__ . '/../templates/cambios-antes-despues.php'; ?>
                             </details>
                         <?php endif; ?>
                     </td>

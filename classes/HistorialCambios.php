@@ -152,19 +152,6 @@ class HistorialCambios
         'clima_ultimo', 'clima_aviso', 'resumen_ultimo', 'ultimo_acceso', 'accesos',
     ];
 
-    /** Columnas que se leen como sí/no */
-    private const BOOLEANAS = ['hito', 'sin_material', 'fecha_fija', 'visible', 'revocado', 'requiere_retiro', 'numerar', 'rastrear', 'leido', 'comprado', 'oculto'];
-
-    /** Etiquetas bonitas para columnas frecuentes */
-    private const ETIQUETAS_COL = [
-        'fecha_inicio' => 'inicio', 'fecha_fin' => 'fin', 'progreso' => 'avance', 'status' => 'estado',
-        'descripcion' => 'descripción', 'fecha_limite' => 'fecha límite', 'fecha_respuesta' => 'fecha de respuesta',
-        'fecha_compra_prog' => 'compra programada', 'fecha_entrega_prog' => 'entrega programada',
-        'fecha_instalacion_prog' => 'instalación programada', 'fecha_compra_real' => 'compra real',
-        'fecha_entrega_real' => 'entrega real', 'numero_submittal' => 'número de submittal',
-        'color_bg' => 'color', 'fecha_fija' => 'fecha fija', 'duracion_dias' => 'duración (días)',
-    ];
-
     private static $silencio = 0;   // contador anidado: silenciar() se puede anidar sin romper
     private static $disponible;     // ¿ya existen las columnas nuevas? (migración pendiente no debe romper nada)
 
@@ -297,7 +284,9 @@ class HistorialCambios
             [$pid, $entidad] = self::entidad($tabla, $id, $tipo, $completa, $colsNombre);
             if (!$pid) return;
 
-            $resumen = self::resumen($evento, $etiqueta, self::nombreDe($tabla, $completa, $colsNombre), $antes, $despues);
+            $nombre = self::nombreDe($tabla, $completa, $colsNombre);
+            if ($tabla === 'actividades') $nombre = CambiosLegibles::elemento('actividad', $id, $nombre, $pid);
+            $resumen = self::resumen($evento, $etiqueta, $nombre, $antes, $despues, $pid);
 
             self::anotar($pid, 'manual', $herramienta, $evento, $tabla, $resumen, $antes, $despues, $entidad, 'pendiente');
         } catch (\Throwable $e) {
@@ -374,7 +363,7 @@ class HistorialCambios
     }
 
     /** Frase que se muestra en la lista */
-    private static function resumen(string $evento, string $etiqueta, string $nombre, ?array $antes, ?array $despues): string
+    private static function resumen(string $evento, string $etiqueta, string $nombre, ?array $antes, ?array $despues, int $pid): string
     {
         $que = mb_strtolower($etiqueta) . ($nombre !== '' ? ' ' . $nombre : '');
         if ($evento === 'creado') return 'Se creó ' . $que;
@@ -383,25 +372,13 @@ class HistorialCambios
         $cambios = [];
         $campos = array_diff(array_keys($despues ?? []), ['id']);
         foreach (array_slice($campos, 0, 3) as $c) {
-            $cambios[] = self::etiquetaCol($c) . ': ' . self::valor($antes[$c] ?? null, $c) . ' → ' . self::valor($despues[$c] ?? null, $c);
+            $cambios[] = CambiosLegibles::etiqueta($c) . ': ' . CambiosLegibles::valor($c, $antes[$c] ?? null, $pid, true)
+                . ' → ' . CambiosLegibles::valor($c, $despues[$c] ?? null, $pid, true);
         }
         $extra = count($campos) - 3;
         $txt = implode(' · ', $cambios);
         if ($extra > 0) $txt .= ($txt !== '' ? ' · ' : '') . "+$extra campo(s) más";
         return mb_substr($que . ($txt !== '' ? ' — ' . $txt : ''), 0, 500);
-    }
-
-    private static function etiquetaCol(string $c): string
-    {
-        return self::ETIQUETAS_COL[$c] ?? str_replace('_', ' ', $c);
-    }
-
-    private static function valor($v, string $col): string
-    {
-        if ($v === null || $v === '') return '—';
-        if (in_array($col, self::BOOLEANAS, true)) return $v ? 'sí' : 'no';
-        $s = (string)$v;
-        return mb_strlen($s) > 60 ? mb_substr($s, 0, 59) . '…' : $s;
     }
 
     /**
