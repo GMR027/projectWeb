@@ -4,6 +4,28 @@ use Model\VplanTabla;
 $fd = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '';
 $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
+/**
+ * Dompdf ignora <colgroup> (sus anchos se pierden): repite el reparto de columnas de `VplanDiseno::repartoColumnas()`
+ * en la celda de la PRIMERA fila de datos de cada tabla adicional, así las columnas quedan como en la lámina de trabajo.
+ */
+$conAnchos = function (string $tabla, array $pct): string {
+    if (!$pct || !preg_match('/<tr\b[^>]*>(?:(?!<\/tr>).)*<td/ s', $tabla, $m, PREG_OFFSET_CAPTURE)) return $tabla;
+    $ini = (int)$m[0][1];
+    $fin = strpos($tabla, '</tr>', $ini);
+    if ($fin === false) return $tabla;
+    $fila = substr($tabla, $ini, $fin - $ini);
+    $k = 0;
+    $nuevo = preg_replace_callback('/<td\b([^>]*)>/', function ($c) use (&$k, $pct) {
+        if (!isset($pct[$k])) { $k++; return $c[0]; }
+        $ancho = 'width:' . $pct[$k++] . '%';
+        $attrs = (string)$c[1];
+        if (preg_match('/\sstyle="([^"]*)"/', $attrs, $s)) $attrs = str_replace($s[0], ' style="' . rtrim($s[1], '; ') . ';' . $ancho . '"', $attrs);
+        else $attrs .= ' style="' . $ancho . '"';
+        return '<td' . $attrs . '>';
+    }, $fila);
+    if ($nuevo !== null) $fila = $nuevo;
+    return substr($tabla, 0, $ini) . $fila . substr($tabla, (int)$fin);
+};
 ?>
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8">
@@ -12,9 +34,13 @@ $actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
     body { font-family: Helvetica, Arial, sans-serif; color: #000; margin: 0; }
     .hoja { position: relative; overflow: hidden; page-break-after: always; }
     .hoja.ultima { page-break-after: auto; }
-    .blk { position: absolute; }
+    /* overflow:hidden = red de seguridad: aunque una tabla no quepa, se recorta en su bloque en vez de
+       imprimirse encima del de abajo */
+    .blk { position: absolute; overflow: hidden; }
     table { border-collapse: collapse; }
-    .t { width: 100%; margin-bottom: 7pt; table-layout: fixed; }
+    /* Sin table-layout:fixed: Dompdf solo lee los anchos de la PRIMERA fila (aquí el título, con colspan)
+       e ignora <colgroup>, así que repartía el ancho por igual y las tablas crecían fuera de su bloque. */
+    .t { width: 100%; margin-bottom: 7pt; }
     .t th, .t td { border: 0.7pt solid #000; vertical-align: middle; overflow-wrap: anywhere; }
     .t th { background: #5b82b4; color: #fff; text-align: center; font-weight: bold; }
     .c { text-align: center; }
@@ -183,6 +209,7 @@ foreach ($paginas as $pi => $d):
                 // El mismo reparto de columnas que la vista (y que el estimador): la lámina y el PDF se ven igual
                 [$pctCol] = \Classes\VplanDiseno::repartoColumnas($tb->tipo, $b2['filas'], $campos, \Classes\VplanDiseno::anchoRefCm($b), $fz, $pz, 0, $tb->metaColumnas());
                 $colgroup = '<colgroup>' . implode('', array_map(fn($w) => '<col style="width:' . $w . '%">', $pctCol)) . '</colgroup>';
+                ob_start();   // Dompdf ignora <colgroup>: abajo se repiten los anchos en la primera fila de datos
             ?>
                 <?php if ($tb->tipo === 'punch'): ?>
                     <table class="t punch">
@@ -225,6 +252,7 @@ foreach ($paginas as $pi => $d):
                         <?php endforeach; ?>
                     </table>
                 <?php endif; ?>
+                <?php echo $conAnchos(ob_get_clean(), $pctCol); ?>
             <?php endif; ?>
             </div>
             <?php break;

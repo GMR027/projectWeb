@@ -96,22 +96,70 @@ class VplanPdfExporter extends BaseExporter
         return Pdf::preparar($html, [0, 0, $anchoMm * 72 / 25.4, $altoMm * 72 / 25.4], 'portrait', ['isHtml5ParserEnabled' => true, 'defaultFont' => 'Helvetica']);
     }
 
-    private function contarPaginas(string $html, VplanLamina $l): int
+    /**
+     * Renderiza la lámina y devuelve [páginas, desborde máximo de una tabla sobre su bloque, en pt].
+     * El desbordamiento es lo que hace que las tablas se impriman unas encima de otras: el `extra`
+     * solo se probaba contra el número de páginas, y una tabla puede salirse de su bloque sin que
+     * la hoja se pase a otra página.
+     * @return array{0:int,1:float}
+     */
+    private function medir(string $html, VplanLamina $l): array
     {
+        $pila = [];    // frames abiertos: ['id' => id del frame, 'blk' => caja del bloque o null]
+        $tablas = [];  // ['tabla' => caja, 'bloque' => caja del .blk que la contiene]
+        $entra = function ($frame) use (&$pila, &$tablas) {
+            $id = spl_object_id($frame);
+            $n = $frame->get_node();
+            $reg = ['id' => $id, 'blk' => null];
+            if ($n->nodeType === \XML_ELEMENT_NODE) {
+                $cls = (string)$n->getAttribute('class');
+                if ($n->nodeName === 'div' && preg_match('/\bbk\d+_\d+\b/', $cls)) {
+                    $b = $frame->get_padding_box();
+                    $reg['blk'] = ['x' => $b['x'], 'y' => $b['y'], 'w' => $b['w'], 'h' => $b['h']];
+                } elseif ($n->nodeName === 'table') {
+                    for ($i = count($pila) - 1; $i >= 0; $i--) {   // el bloque más cercano por arriba
+                        if ($pila[$i]['blk']) {
+                            $b = $frame->get_padding_box();
+                            $tablas[] = ['tabla' => ['x' => $b['x'], 'y' => $b['y'], 'w' => $b['w'], 'h' => $b['h']], 'bloque' => $pila[$i]['blk']];
+                            break;
+                        }
+                    }
+                }
+            }
+            $pila[] = $reg;
+        };
+        // Dompdf no dispara end_frame en los frames con visibility:hidden: al cerrar uno, se cierra
+        // también todo lo que haya quedado abierto por debajo (si no, la pila se descuadra).
+        $sale = function ($frame) use (&$pila) {
+            $i = array_search(spl_object_id($frame), array_column($pila, 'id'), true);
+            if ($i !== false) array_splice($pila, $i);
+        };
         $dompdf = $this->nuevoDompdf($html, (float)$l->ancho_mm, (float)$l->alto_mm);
+        $dompdf->setCallbacks([['event' => 'begin_frame', 'f' => $entra], ['event' => 'end_frame', 'f' => $sale]]);
         $dompdf->render();
-        return $dompdf->getCanvas()->get_page_count();
+
+        $desborde = 0.0;
+        foreach ($tablas as $x) {
+            $t = $x['tabla'];
+            $b = $x['bloque'];
+            $desborde = max($desborde,
+                ($t['y'] + $t['h']) - ($b['y'] + $b['h']),
+                ($t['x'] + $t['w']) - ($b['x'] + $b['w']));
+        }
+        return [$dompdf->getCanvas()->get_page_count(), $desborde];
     }
 
     /**
      * Las tablas se ajustan al espacio de su bloque con una estimación; se comprueba renderizando la lámina sola
-     * y, si algo se sale de la hoja (más de una página), se baja la letra de todas las tablas un paso más.
+     * y, si se pasa de una página o alguna tabla se sale de su bloque (lo que la imprimiría encima de la de abajo),
+     * se baja la letra de todas las tablas un paso más.
      */
     private function elegirAjuste(array $d, \Closure $htmlDe): int
     {
         for ($extra = 0; $extra < 3; $extra++) {
             $d['extra'] = $extra;
-            if ($this->contarPaginas($htmlDe([$d]), $d['lamina']) <= 1) return $extra;
+            [$paginas, $desborde] = $this->medir($htmlDe([$d]), $d['lamina']);
+            if ($paginas <= 1 && $desborde <= 1.5) return $extra;
         }
         return 2;
     }
