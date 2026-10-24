@@ -25,10 +25,24 @@ class Telegram
         'punch.creado' => 'Nuevo pendiente del punch list', 'punch.estado' => 'Cambia el estado de un pendiente',
         'restriccion.creada' => 'Nueva restricción en una actividad', 'submittal.actualizado' => 'Cambia un submittal',
         'bitacora.creada' => 'Registro de la bitácora con importancia alta o crítica', 'clima.alerta' => 'Mañana habrá lluvia o viento fuerte',
+        'resumen.matutino' => 'Resumen de la obra cada mañana',
     ];
     public const INICIALES = ['rfi.creado', 'punch.creado', 'restriccion.creada', 'clima.alerta'];
+    /** Comandos que enseña el menú «/» de Telegram (se registran al registrar el webhook) */
+    public const COMANDOS = [
+        ['ayuda', 'Qué puedo hacer aquí'],
+        ['hoy', 'Actividades de hoy y atrasadas'],
+        ['avance', 'Reportar el avance de una actividad'],
+        ['nota', 'Anotar algo en la bitácora'],
+        ['salud', 'Estado del proyecto (semáforo)'],
+        ['pdf', 'Descargar el PDF del programa o del punch'],
+        ['clima', 'Pronóstico de hoy y mañana'],
+        ['proyecto', 'Cambiar de proyecto'],
+        ['cancelar', 'Cancelar lo que estaba haciendo'],
+    ];
     private const MAX_FALLOS = 5;
     private const MAX_COLA = 30;
+    private const MAX_ARCHIVO = 50 * 1024 * 1024;   // límite de subida de bots en Telegram
     public const VIGENCIA_CODIGO = 900;
 
     /** Para pruebas: función (método, parámetros) → arreglo de respuesta; reemplaza las llamadas HTTP a Telegram */
@@ -259,6 +273,90 @@ class Telegram
         return [false, (int)($r['error_code'] ?? 0)];
     }
 
+    /** Dirección pública de la app (para botones «Ver en la web»): APP_URL o la petición en curso */
+    public static function urlApp(string $ruta = '/'): string
+    {
+        $base = rtrim(self::env('APP_URL'), '/');
+        if ($base === '') {
+            $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+            $base = ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        }
+        return $base . $ruta;
+    }
+
+    /** Envía un archivo local como documento (PDF…). @return array{0: bool, 1: int} [ok, código de error de Telegram] */
+    public static function enviarArchivo(int $chat, string $ruta, string $nombre, string $pie = ''): array
+    {
+        if (!is_file($ruta) || filesize($ruta) === 0) return [false, 0];
+        if (filesize($ruta) > self::MAX_ARCHIVO) return [false, 413];
+        if (self::$http) {
+            $r = (self::$http)('sendDocument', ['chat_id' => $chat, 'file_name' => $nombre, 'caption' => $pie, 'bytes' => @file_get_contents($ruta)]);
+            return [!empty($r['ok']), (int)($r['error_code'] ?? 0)];
+        }
+        if (!self::configurado()) return [false, 0];
+        $mime = function_exists('mime_content_type') ? (mime_content_type($ruta) ?: '') : '';
+        $p = ['chat_id' => (string)$chat, 'document' => new \CURLFile($ruta, $mime ?: 'application/octet-stream', $nombre)];
+        if ($pie !== '') { $p['caption'] = mb_substr($pie, 0, 1024); $p['parse_mode'] = 'HTML'; }
+        $ch = curl_init('https://api.telegram.org/bot' . self::token() . '/sendDocument');
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true, CURLOPT_POSTFIELDS => $p, CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 60, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_FOLLOWLOCATION => false, CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+        ]);
+        $r = curl_exec($ch);
+        curl_close($ch);
+        $j = $r === false ? null : json_decode((string)$r, true);
+        return [!empty($j['ok']), (int)($j['error_code'] ?? 0)];
+    }
+
+    /** Registra en Telegram el menú «/» con los comandos del bot (mejora best-effort) */
+    public static function registrarComandos(): bool
+    {
+        if (!self::configurado()) return false;
+        $cmds = [];
+        foreach (self::COMANDOS as [$c, $d]) $cmds[] = ['command' => $c, 'description' => mb_substr($d, 0, 256)];
+        $r = self::api('setMyCommands', ['commands' => $cmds]);
+        return !empty($r['ok']);
+    }
+
+    /** Botones de acción de un aviso (privado: botones que cambian datos; grupo: solo «Ver en la web») */
+    public static function botonesEvento(int $pid, string $evento, array $d, bool $privado): ?array
+    {
+        $ver = ['text' => '🌐 Ver en la web', 'url' => self::urlApp(self::rutaSeccion($evento, $pid))];
+        $id = (int)($d['id'] ?? 0);
+        if ($privado && $id) {
+            switch ($evento) {
+                case 'punch.creado':
+                    return [
+                        [['text' => '✅ Corregido', 'callback_data' => "pu:$id:corregido"], ['text' => '🔧 En proceso', 'callback_data' => "pu:$id:en_proceso"]],
+                        [$ver],
+                    ];
+                case 'rfi.creado':
+                    return [[['text' => '✍️ Responder', 'callback_data' => "rs:$id"]], [$ver]];
+                case 'submittal.actualizado':
+                    return [
+                        [['text' => '👍 Aprobado', 'callback_data' => "su:$id:aprobado"], ['text' => 'A/AN', 'callback_data' => "su:$id:aprobado_an"]],
+                        [['text' => '👎 Resubmitar', 'callback_data' => "su:$id:rechazado"], $ver],
+                    ];
+            }
+        }
+        return [[$ver]];   // en grupos (y en el resto de eventos) solo el enlace: ningún botón cambia datos
+    }
+
+    /** Sección de la web a la que lleva cada aviso */
+    private static function rutaSeccion(string $evento, int $pid): string
+    {
+        $ruta = match (true) {
+            str_starts_with($evento, 'rfi') => '/rfi',
+            str_starts_with($evento, 'punch') => '/punch',
+            str_starts_with($evento, 'restriccion') => '/lookahead',
+            str_starts_with($evento, 'submittal') => '/submittals',
+            str_starts_with($evento, 'bitacora') => '/bitacora',
+            $evento === 'clima.alerta' => '/ajustes?proyecto=',
+            default => '/programa',
+        };
+        return str_contains($ruta, '?') ? $ruta . $pid : "$ruta?proyecto=$pid";
+    }
+
     /** Descarga un archivo enviado al bot (hasta $max bytes). Devuelve la ruta de un archivo temporal o null */
     public static function descargar(string $fileId, int $max = 15 * 1024 * 1024): ?string
     {
@@ -474,7 +572,7 @@ class Telegram
         $cola = self::$cola;
         self::$cola = [];
         foreach ($cola as [$pid, $evento, $datos]) {
-            try { self::entregarAviso($pid, $evento, $datos); } catch (\Throwable $e) { error_log('Telegram: ' . $e->getMessage()); }
+            try { self::entregarAviso($pid, $evento, $datos); } catch (\Throwable $e) { error_log('Telegram: ' . self::sanearError($e->getMessage())); }
         }
     }
 
@@ -488,7 +586,8 @@ class Telegram
         foreach (self::filas("SELECT * FROM telegram_destinos WHERE proyecto_id = $pid AND activo = 1") as $d) {
             if (!in_array($evento, explode(',', $d['eventos']), true)) continue;
             if ($d['usuario_id'] && !self::usuarioVe((int)$d['usuario_id'], $pid)) continue;   // perdió el acceso al proyecto
-            [$ok] = self::enviar((int)$d['chat_id'], '<b>' . self::h($nombre) . "</b>\n" . $texto);
+            $botones = self::botonesEvento($pid, $evento, $datos, $d['usuario_id'] !== null);   // los grupos (usuario_id NULL) solo reciben «Ver»
+            [$ok] = self::enviar((int)$d['chat_id'], '<b>' . self::h($nombre) . "</b>\n" . $texto, $botones);
             self::resultado((int)$d['id'], $ok);
             if ($ok) $n++;
         }
@@ -531,6 +630,8 @@ class Telegram
                 return '📒 <b>Bitácora</b> ' . (self::PRIO[$d['importancia']] ?? '') . ' ' . $h($d['importancia']) . "\n" . $h(self::corto($d['descripcion'] ?? '', 500));
             case 'clima.alerta':
                 return (string)($d['texto'] ?? '') ?: null;
+            case 'resumen.matutino':
+                return (string)($d['texto'] ?? '') ?: null;
         }
         return null;
     }
@@ -542,10 +643,43 @@ class Telegram
         return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/') === '/api/telegram/webhook';
     }
 
+    private static ?bool $tablaLimites = null;
+    private const MAX_BODY = 1048576;   // 1 MB: un update de Telegram (file_id, no binarios) nunca se acerca
+
+    /** La tabla de límites existe (si falta la migración el bot sigue funcionando, sin límite) */
+    private static function tablaLimites(): bool
+    {
+        if (self::$tablaLimites === null) self::$tablaLimites = isset($GLOBALS['db']) && (bool)self::filas("SHOW TABLES LIKE 'telegram_limites'");
+        return self::$tablaLimites;
+    }
+
+    /**
+     * Ventana de un minuto por IP (TELEGRAM_RATE_MAX por minuto, 120 si no se configura; 0 = sin límite).
+     * Devuelve false si esa IP ya se pasó del tope: quien está en el tope solo hace UNA consulta por
+     * petición (SELECT), sin INSERT, para no dar trabajo a MySQL justo al atacante.
+     */
+    public static function limite(string $ip): bool
+    {
+        $v = self::env('TELEGRAM_RATE_MAX');
+        $max = $v === '' ? 120 : (int)$v;
+        if ($max <= 0 || $ip === '' || !self::tablaLimites()) return true;
+        $ipE = self::esc(mb_substr($ip, 0, 45));
+        $ventana = intdiv(time(), 60);
+        $n = (int)(self::filas("SELECT n FROM telegram_limites WHERE ip = '$ipE' AND ventana = $ventana")[0]['n'] ?? -1);
+        if ($n >= $max) return false;
+        self::db()->query("INSERT INTO telegram_limites (ip, ventana, n) VALUES ('$ipE', $ventana, 1) ON DUPLICATE KEY UPDATE n = n + 1");
+        if ($n < 0 && random_int(1, 20) === 1) self::db()->query('DELETE FROM telegram_limites WHERE ventana < ' . ($ventana - 5));   // barre las ventanas viejas de vez en cuando
+        return true;
+    }
+
     /** Atiende la llamada de Telegram y termina. Siempre 200 si el secreto es correcto (si no, Telegram reintentaría sin parar) */
     public static function atender(): never
     {
         header('Content-Type: application/json');
+        // Límite por IP ANTES de todo (cada IP tiene su cuota: un intruso solo quema la suya, nunca la de Telegram)
+        $ip = function_exists('ip_cliente') ? ip_cliente() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        if (!self::limite($ip)) { echo '{"ok":true}'; exit; }   // 200 en silencio: no se procesa y no se provocan reintentos
+        if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > self::MAX_BODY) { http_response_code(413); echo '{"ok":false}'; exit; }
         $secreto = (string)($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '');
         if (!self::configurado() || !self::disponible() || !hash_equals(self::secretoWebhook(), $secreto)) {
             http_response_code(403);
@@ -556,10 +690,16 @@ class Telegram
         try {
             if (is_array($upd)) TelegramBot::procesar($upd);
         } catch (\Throwable $e) {
-            error_log('Telegram bot: ' . $e->getMessage() . ' @' . basename($e->getFile()) . ':' . $e->getLine());
+            error_log('Telegram bot: ' . self::sanearError($e->getMessage()) . ' @' . basename($e->getFile()) . ':' . $e->getLine());
         }
         echo '{"ok":true}';
         exit;
+    }
+
+    /** Enmascara el token si alguna excepción llega a incluir la URL (api.telegram.org/bot<TOKEN>/…) en el log */
+    public static function sanearError(string $msg): string
+    {
+        return preg_replace('#/bot[0-9]{5,}:[A-Za-z0-9_-]+#', '/bot***', $msg) ?? $msg;
     }
 
     /** Registra en Telegram la dirección pública del webhook. @return array{0: bool, 1: string} */
@@ -568,7 +708,9 @@ class Telegram
         if (!self::configurado()) return [false, 'Falta TELEGRAM_BOT_TOKEN en el servidor.'];
         if (!str_starts_with($base, 'https://')) return [false, 'Telegram solo acepta direcciones https:// públicas. En tu equipo local usa «php bin/telegram.php --sondeo».'];
         $r = self::api('setWebhook', ['url' => rtrim($base, '/') . '/api/telegram/webhook', 'secret_token' => self::secretoWebhook(), 'allowed_updates' => ['message', 'callback_query', 'my_chat_member'], 'max_connections' => 10]);
-        return !empty($r['ok']) ? [true, 'Webhook registrado: el bot ya recibe mensajes.'] : [false, 'Telegram respondió: ' . ($r['description'] ?? 'sin respuesta')];
+        if (empty($r['ok'])) return [false, 'Telegram respondió: ' . ($r['description'] ?? 'sin respuesta')];
+        self::registrarComandos();   // menú «/» de Telegram (best-effort: si falla, el bot igual funciona)
+        return [true, 'Webhook registrado: el bot ya recibe mensajes.'];
     }
 
     public static function estadoWebhook(): ?array

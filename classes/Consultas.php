@@ -160,7 +160,7 @@ class Consultas
                 return self::res('Análisis inteligente: pendientes', ['Herramienta', 'Severidad', 'Cantidad'], array_map(fn($x) => [$x['h'], $x['severidad'], $x['n']], $r), 'Se aceptan o rechazan en Análisis inteligente.');
             case 'historial':
                 $r = self::filas("SELECT creado, usuario, herramienta, evento, resumen FROM auditoria_cambios WHERE proyecto_id = $pid ORDER BY id DESC LIMIT $L");
-                return self::res('Historial de cambios de IA', ['Fecha', 'Usuario', 'Herramienta', 'Evento', 'Resumen'], array_map(fn($x) => [$x['creado'], $x['usuario'], $x['herramienta'], $x['evento'], self::corto($x['resumen'], 120)], $r));
+                return self::res('Auditoría de la IA', ['Fecha', 'Usuario', 'Herramienta', 'Evento', 'Resumen'], array_map(fn($x) => [$x['creado'], $x['usuario'], $x['herramienta'], $x['evento'], self::corto($x['resumen'], 120)], $r));
         }
         return self::res('Sin datos', ['Resultado'], []);
     }

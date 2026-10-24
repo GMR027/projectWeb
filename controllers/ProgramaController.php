@@ -330,7 +330,8 @@ class ProgramaController
     {
         $proyecto = proyecto_de_peticion(true);
         try {
-            $r = \Classes\ProgramaImportador::aplicar($_POST['token'] ?? '', $proyecto);
+            // Importación masiva: el resumen de lo importado basta; fila por fila llenaría el historial de cambios
+            $r = \Classes\HistorialCambios::silenciar(fn() => \Classes\ProgramaImportador::aplicar($_POST['token'] ?? '', $proyecto));
             header('Location: /programa?proyecto=' . $proyecto->id . '&importado=' . $r['actividades'] . '&partidas=' . $r['partidas']);
         } catch (\Throwable $e) {
             header('Location: /programa/importar?proyecto=' . $proyecto->id . '&error=' . urlencode($e->getMessage()));

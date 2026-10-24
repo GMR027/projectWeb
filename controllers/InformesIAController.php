@@ -153,7 +153,7 @@ class InformesIAController
             Auditoria::registrar((int)$p->id, 'informes', 'rechazado', 'rechazar_informe', 'Informe descartado: ' . $inf['titulo'], null, ['informe_id' => $id, 'tipo' => $inf['tipo']], $id, (string)$inf['modelo']);
             json_respuesta(['success' => true, 'estado' => 'descartado', 'mensaje' => 'Informe descartado.']);
         }
-        [$ok, $msg, $ref] = \Classes\AplicarInforme::aplicar($p, $inf);
+        [$ok, $msg, $ref] = \Classes\HistorialCambios::silenciar(fn() => \Classes\AplicarInforme::aplicar($p, $inf));
         if (!$ok) json_respuesta(['success' => false, 'error' => $msg], 422);
         Informes::marcarAplicado((int)$p->id, $id, $ref);
         Auditoria::registrar((int)$p->id, 'informes', 'aplicado', 'aplicar_informe', $msg, null, ['informe_id' => $id, 'tipo' => $inf['tipo']], $id, (string)$inf['modelo'], ['informe', $id, $inf['titulo']]);
@@ -268,7 +268,7 @@ class InformesIAController
         $p = proyecto_api();
         $id = (int)($_POST['id'] ?? 0);
         $inf = Informes::obtener((int)$p->id, $id);
-        [$ok, $msg, $ref] = $inf && !$inf['aplicado_en'] ? \Classes\AplicarInforme::aplicar($p, $inf) : [false, $inf ? 'Este informe ya se aplicó.' : 'Informe no encontrado.', ''];
+        [$ok, $msg, $ref] = $inf && !$inf['aplicado_en'] ? \Classes\HistorialCambios::silenciar(fn() => \Classes\AplicarInforme::aplicar($p, $inf)) : [false, $inf ? 'Este informe ya se aplicó.' : 'Informe no encontrado.', ''];
         if ($ok) {
             Informes::marcarAplicado((int)$p->id, $id, $ref);
             Auditoria::registrar((int)$p->id, 'informes', 'aplicado', 'aplicar_informe', $msg, null, ['informe_id' => $id, 'tipo' => $inf['tipo']], $id, (string)$inf['modelo'], ['informe', $id, $inf['titulo']]);

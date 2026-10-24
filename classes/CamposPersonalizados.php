@@ -61,16 +61,21 @@ class CamposPersonalizados
         if ($id > 0) {
             $actual = self::deProyecto($pid)[$id] ?? null;
             if (!$actual) return [false, 'El campo no existe.'];
-            $st = $db->prepare('UPDATE campos_personalizados SET nombre = ?, tipo = ?, opciones = ? WHERE id = ? AND proyecto_id = ?');
-            $st->bind_param('sssii', $nombre, $tipo, $opTexto, $id, $pid);
+            $ok = HistorialCambios::escribir('campos_personalizados', 'modificado', $id, function () use ($db, $nombre, $tipo, $opTexto, $id, $pid) {
+                $st = $db->prepare('UPDATE campos_personalizados SET nombre = ?, tipo = ?, opciones = ? WHERE id = ? AND proyecto_id = ?');
+                $st->bind_param('sssii', $nombre, $tipo, $opTexto, $id, $pid);
+                return $st->execute();
+            });
         } else {
             if (count(self::deProyecto($pid, $entidad)) >= self::MAX_POR_ENTIDAD) return [false, 'Máximo ' . self::MAX_POR_ENTIDAD . ' campos por herramienta.'];
             foreach (self::deProyecto($pid, $entidad) as $c) if (mb_strtolower($c['nombre']) === mb_strtolower($nombre)) return [false, 'Ya existe un campo con ese nombre.'];
             $orden = count(self::deProyecto($pid));
-            $st = $db->prepare('INSERT INTO campos_personalizados (proyecto_id, entidad, nombre, tipo, opciones, orden) VALUES (?, ?, ?, ?, ?, ?)');
-            $st->bind_param('issssi', $pid, $entidad, $nombre, $tipo, $opTexto, $orden);
+            $ok = HistorialCambios::escribir('campos_personalizados', 'creado', 0, function () use ($db, $pid, $entidad, $nombre, $tipo, $opTexto, $orden) {
+                $st = $db->prepare('INSERT INTO campos_personalizados (proyecto_id, entidad, nombre, tipo, opciones, orden) VALUES (?, ?, ?, ?, ?, ?)');
+                $st->bind_param('issssi', $pid, $entidad, $nombre, $tipo, $opTexto, $orden);
+                return $st->execute();
+            });
         }
-        $ok = $st->execute();
         self::deProyecto($pid, null, true);
         return $ok ? [true, ''] : [false, 'No se pudo guardar.'];
     }
@@ -79,7 +84,8 @@ class CamposPersonalizados
     {
         $c = self::deProyecto($pid)[$id] ?? null;
         if (!$c) return false;
-        self::db()->query("DELETE FROM campos_personalizados WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('campos_personalizados', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM campos_personalizados WHERE id = $id AND proyecto_id = $pid"));
         self::deProyecto($pid, null, true);
         ListaDiseno::quitarClave($pid, 'cp_' . $id);
         return true;
@@ -123,13 +129,23 @@ class CamposPersonalizados
             }
         }
         if ($valor === '') {
+            $antes = self::filaValor($campoId, $registroId);
             self::db()->query("DELETE FROM campos_valores WHERE campo_id = $campoId AND registro_id = $registroId");
+            HistorialCambios::desdeImagen('campos_valores', 'eliminado', $antes, null);
         } else {
+            $antes = self::filaValor($campoId, $registroId);
             $st = self::db()->prepare('INSERT INTO campos_valores (campo_id, registro_id, valor) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)');
             $st->bind_param('iis', $campoId, $registroId, $valor);
             if (!$st->execute()) return [false, 'No se pudo guardar'];
+            HistorialCambios::desdeImagen('campos_valores', $antes ? 'modificado' : 'creado', $antes, self::filaValor($campoId, $registroId));
         }
         return [true, $valor];
+    }
+
+    /** Valor guardado de un campo en un registro (la tabla no tiene `id`, se localiza por sus dos llaves) */
+    private static function filaValor(int $campoId, int $registroId): ?array
+    {
+        return self::filas("SELECT campo_id, registro_id, valor FROM campos_valores WHERE campo_id = $campoId AND registro_id = $registroId")[0] ?? null;
     }
 
     /** Texto para mostrar un valor (las fechas en d/m/y) */

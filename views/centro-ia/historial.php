@@ -16,8 +16,8 @@ $q = fn(array $c) => http_build_query(array_filter(['proyecto' => $pid] + $c + $
 <?php $pestana = 'historial'; include __DIR__ . '/../centro-ia/_pestanas.php'; ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-clock-rotate-left"></i> <?php echo s(t('Historial de cambios')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · cada cambio que aplican, revierten o rechazan las herramientas de IA queda registrado aquí (quién, cuándo, qué modelo y los valores de antes y después). <strong>El registro no se puede editar.</strong></p>
+        <h2><i class="fa-solid fa-clock-rotate-left"></i> <?php echo s(t('Auditoría de la IA')); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · cada cambio que aplican, revierten o rechazan las herramientas de IA queda registrado aquí (quién, cuándo, qué modelo y los valores de antes y después). <strong>El registro no se puede editar.</strong> Los cambios hechos a mano están en <a href="/historial?proyecto=<?php echo $pid; ?>">Historial de cambios</a>.</p>
     </div>
     <div class="inc-acciones">
         <a class="btn btn-ghost" href="/historial-cambios/exportar?<?php echo s($q(['formato' => 'xlsx'])); ?>"><i class="fa-solid fa-file-excel"></i> Excel</a>

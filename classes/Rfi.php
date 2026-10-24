@@ -79,11 +79,13 @@ class Rfi
         $campos = "asunto = {$v($asunto)}, pregunta = {$v(mb_substr(trim((string)($d['pregunta'] ?? '')), 0, 5000))}, respuesta = {$v($resp)}, responsable = {$v(mb_substr(trim((string)($d['responsable'] ?? '')), 0, 150))},
             solicitante = {$v(mb_substr(trim((string)($d['solicitante'] ?? '')) ?: $usuario, 0, 150))}, prioridad = '$prio', estado = '$estado', fecha = '$fecha',
             fecha_limite = " . ($limite ? "'$limite'" : 'NULL') . ", fecha_respuesta = $respFecha, actividad_id = " . ($act ?: 'NULL');
-        if ($id) { self::db()->query("UPDATE rfis SET $campos WHERE id = $id"); Webhooks::emitir($pid, 'rfi.actualizado', ['id' => $id, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio]); }
-        else {
+        if ($id) {
+            HistorialCambios::escribir('rfis', 'modificado', $id, fn() => self::db()->query("UPDATE rfis SET $campos WHERE id = $id"));
+            Webhooks::emitir($pid, 'rfi.actualizado', ['id' => $id, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio]);
+        } else {
             $numero = mb_substr(trim((string)($d['numero'] ?? '')), 0, 30) ?: self::siguienteNumero($pid);
             if (self::filas("SELECT id FROM rfis WHERE proyecto_id = $pid AND numero = {$v($numero)}")) return 'Ya existe un RFI con ese número';
-            self::db()->query("INSERT INTO rfis SET proyecto_id = $pid, numero = {$v($numero)}, $campos");
+            HistorialCambios::escribir('rfis', 'creado', 0, fn() => self::db()->query("INSERT INTO rfis SET proyecto_id = $pid, numero = {$v($numero)}, $campos"));
             Webhooks::emitir($pid, 'rfi.creado', ['id' => (int)self::db()->insert_id, 'numero' => $numero, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio, 'fecha_limite' => $limite]);
         }
         return null;
@@ -93,14 +95,15 @@ class Rfi
     {
         if (!isset(self::ESTADOS[$estado])) return false;
         $f = $estado === 'abierto' ? 'NULL' : "COALESCE(fecha_respuesta, CURDATE())";
-        self::db()->query("UPDATE rfis SET estado = '$estado', fecha_respuesta = $f WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('rfis', 'modificado', $id,
+            fn() => self::db()->query("UPDATE rfis SET estado = '$estado', fecha_respuesta = $f WHERE id = $id AND proyecto_id = $pid"));
         Webhooks::emitir($pid, 'rfi.estado', ['id' => $id, 'estado' => $estado]);
         return self::db()->affected_rows >= 0;
     }
 
     public static function eliminar(int $pid, int $id): void
     {
-        self::db()->query("DELETE FROM rfis WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('rfis', 'eliminado', $id, fn() => self::db()->query("DELETE FROM rfis WHERE id = $id AND proyecto_id = $pid"));
         self::db()->query("DELETE FROM revisiones WHERE proyecto_id = $pid AND tipo = 'rfi' AND ref = '$id'");
     }
 

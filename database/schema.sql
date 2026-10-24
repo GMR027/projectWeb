@@ -67,6 +67,8 @@ CREATE TABLE proyectos (
     clima_auto TINYINT(1) NOT NULL DEFAULT 0,     -- bitácora de clima automática + aviso del pronóstico (Telegram)
     clima_ultimo DATE NULL,
     clima_aviso DATE NULL,
+    resumen_matutino TINYINT(1) NOT NULL DEFAULT 0,   -- resumen de la obra por la mañana (Telegram, evento resumen.matutino)
+    resumen_ultimo DATE NULL,
     programa_nombre VARCHAR(200) NULL,
     programa_columnas_json TEXT NULL,
     programa_indicador_json TEXT NULL,
@@ -75,6 +77,7 @@ CREATE TABLE proyectos (
     marca_logo VARCHAR(100) NULL,
     marca_color VARCHAR(7) NULL,
     marca_color2 VARCHAR(7) NULL,
+    limite_almacenamiento_mb INT NULL,   -- MB asignados por el admin a este proyecto (NULL = hereda del cliente o 300 MB)
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -960,12 +963,18 @@ CREATE TABLE IF NOT EXISTS analisis_materiales_lotes (
     FOREIGN KEY (corrida_id) REFERENCES analisis_materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Historial de cambios / auditoría global de las herramientas de IA. Solo se agregan filas: revertir o reabrir crea otro evento.
+-- Historial de cambios del proyecto: lo que hace la IA (Auditoria::registrar) y lo que se cambia a mano en las
+-- herramientas (HistorialCambios::registrar). Solo se agregan filas: revertir, aceptar o reabrir crea otro evento.
+-- origen 'ia' nace aceptado (nada cambia datos sin que el admin lo acepte); origen 'manual' nace pendiente de revisión.
 CREATE TABLE IF NOT EXISTS auditoria_cambios (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    herramienta VARCHAR(30) NOT NULL,                 -- programador | inconsistencias | materiales | ...
-    evento ENUM('aplicado','revertido','rechazado','reabierto') NOT NULL,
+    origen ENUM('ia','manual') NOT NULL DEFAULT 'ia',
+    herramienta VARCHAR(30) NOT NULL,                 -- programador | inconsistencias | materiales | programa | ...
+    evento ENUM('aplicado','revertido','rechazado','reabierto','creado','modificado','eliminado') NOT NULL,
+    estado ENUM('pendiente','aceptado','revertido') NOT NULL DEFAULT 'pendiente',
+    estado_en DATETIME NULL,
+    estado_por VARCHAR(150) NOT NULL DEFAULT '',
     accion VARCHAR(40) NOT NULL,
     entidad_tipo VARCHAR(20) NOT NULL DEFAULT '',     -- actividad | partida | material | restriccion | dependencia | submittal | proyecto
     entidad_id INT NULL,
@@ -978,6 +987,7 @@ CREATE TABLE IF NOT EXISTS auditoria_cambios (
     usuario VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_proyecto_fecha (proyecto_id, creado),
+    KEY idx_proyecto_estado (proyecto_id, estado, creado),
     KEY idx_entidad (proyecto_id, entidad_tipo, entidad_id),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -1941,4 +1951,12 @@ CREATE TABLE IF NOT EXISTS telegram_config (
     bot_username VARCHAR(100) NOT NULL DEFAULT '',
     actualizado DATETIME NOT NULL,
     actualizado_por VARCHAR(150) NOT NULL DEFAULT ''
+) ENGINE=InnoDB;
+
+-- Límite de peticiones al webhook por IP (Telegram::limite): ventana de un minuto, para que nadie martille /api/telegram/webhook
+CREATE TABLE IF NOT EXISTS telegram_limites (
+    ip VARCHAR(45) NOT NULL,              -- IPv4/IPv6 (la IP real viene de X-Forwarded-For vía ip_cliente())
+    ventana INT NOT NULL,                 -- minuto epoch (UNIX_TIMESTAMP() DIV 60)
+    n INT NOT NULL DEFAULT 0,             -- peticiones de esa IP en esa ventana
+    PRIMARY KEY (ip, ventana)
 ) ENGINE=InnoDB;

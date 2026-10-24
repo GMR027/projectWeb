@@ -122,7 +122,7 @@ class ClimaAuto
             $c = Clima::condicion($d);
             $b = new Bitacora(['proyecto_id' => $pid, 'fecha' => $hoy, 'departamento' => self::DEPARTAMENTO, 'importancia' => $c ? (Clima::esFuerte($d) ? 'alta' : 'media') : 'baja',
                 'descripcion' => self::MARCA . ' (' . ($r['lugar'] ?: 'Open-Meteo') . '): ' . self::resumen($d) . ($c ? '. Puede afectar los trabajos de exterior.' : '.')]);
-            if (!$b->validar() && ($b->guardar()['resultado'] ?? false)) $hecho[] = 'bitácora de hoy registrada';
+            if (!$b->validar() && (HistorialCambios::silenciar(fn() => $b->guardar())['resultado'] ?? false)) $hecho[] = 'bitácora de hoy registrada';   // la escribe el sistema, no una decisión del usuario
         }
         if (isset($dias[$hoy])) self::db()->query("UPDATE proyectos SET clima_ultimo = '$hoy' WHERE id = $pid");
 

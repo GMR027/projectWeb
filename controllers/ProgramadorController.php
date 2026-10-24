@@ -91,7 +91,7 @@ class ProgramadorController
     {
         $p = proyecto_api();
         $id = (int)($_POST['id'] ?? 0);
-        [$ok, $msg] = ProgramadorAcciones::aceptarPartida($p, $id, (int)($_POST['partida'] ?? 0));
+        [$ok, $msg] = \Classes\HistorialCambios::silenciar(fn() => ProgramadorAcciones::aceptarPartida($p, $id, (int)($_POST['partida'] ?? 0)));
         $_SESSION['programador_msg'] = ['ok' => $ok, 'texto' => $msg];
         header('Location: /programador?proyecto=' . (int)$p->id . '&propuesta=' . $id);
         exit;
@@ -101,7 +101,7 @@ class ProgramadorController
     {
         $p = proyecto_api();
         $id = (int)($_POST['id'] ?? 0);
-        [$ok, $msg] = ProgramadorAcciones::deshacerPartida($p, $id, (int)($_POST['partida'] ?? 0));
+        [$ok, $msg] = \Classes\HistorialCambios::silenciar(fn() => ProgramadorAcciones::deshacerPartida($p, $id, (int)($_POST['partida'] ?? 0)));
         $_SESSION['programador_msg'] = ['ok' => $ok, 'texto' => $msg];
         header('Location: /programador?proyecto=' . (int)$p->id . '&propuesta=' . $id);
         exit;

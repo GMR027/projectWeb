@@ -151,6 +151,7 @@ class Submittal extends ActiveRecord
         $db = self::$db;
         $sid = (int)$this->id;
         $pid = (int)$this->proyecto_id;
+        $n0 = (int)($db->query("SELECT COUNT(*) FROM submittal_materiales WHERE submittal_id = $sid")->fetch_row()[0] ?? 0);
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
         if ($ids) {
             $lista = implode(',', $ids);
@@ -184,5 +185,13 @@ class Submittal extends ActiveRecord
         self::$db->query("UPDATE msr_items i JOIN materiales m ON m.id = i.material_id SET i.fecha_compra_prog = m.fecha_compra_prog, i.fecha_compra_real = m.fecha_compra_real, i.fecha_entrega_prog = m.fecha_entrega_prog, i.fecha_entrega_real = m.fecha_entrega_real WHERE i.submittal_id = $sid");
         self::$db->query("UPDATE msr_items SET fecha_envio_real = '" . self::$db->escape_string($this->fecha) . "' WHERE submittal_id = $sid");
         if ($this->fecha_respuesta) self::$db->query("UPDATE msr_items SET fecha_respuesta = '" . self::$db->escape_string($this->fecha_respuesta) . "' WHERE submittal_id = $sid AND fecha_respuesta IS NULL");
+        // Los materiales se agregan/quitan en bloque: se anota un solo cambio (sin reversión automática)
+        $n1 = count($ids);
+        if ($n1 !== $n0) {
+            $etq = trim((string)($this->numero_submittal ?? '')) ?: ('#' . $sid);
+            \Classes\HistorialCambios::registrar($pid, 'submittals', 'modificado',
+                "Materiales del submittal $etq: $n0 → $n1 renglón(es)", ['materiales' => $n0], ['materiales' => $n1],
+                ['submittal', $sid, $etq]);
+        }
     }
 }

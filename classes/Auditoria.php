@@ -3,7 +3,9 @@
 namespace Classes;
 
 /**
- * Historial de cambios global: cada acción que aplican, revierten o rechazan las herramientas de IA deja una fila que no se edita.
+ * Auditoría de la IA: cada acción que aplican, revierten o rechazan las herramientas de IA deja una fila que no se edita.
+ * (Se mostraba como «Historial de cambios»: hoy ese nombre es la pantalla de la sección Administración, que además
+ * registra los cambios hechos a mano; esta se reserva a lo que hizo la IA y filtra `origen = 'ia'`.)
  * Si la tabla aún no existe (migración pendiente) registrar() no rompe la acción que lo llamó.
  */
 class Auditoria
@@ -67,8 +69,28 @@ class Auditoria
             [$tipo, $eid, $nombre] = $entidad ?? self::entidad($pid, $accion, $despues ?? []);
             $esc = fn($v) => $db->real_escape_string((string)$v);
             $js = fn($v) => $v === null ? 'NULL' : "'" . $esc(json_encode($v, JSON_UNESCAPED_UNICODE)) . "'";
-            $db->query("INSERT INTO auditoria_cambios (proyecto_id, herramienta, evento, accion, entidad_tipo, entidad_id, entidad_nombre, resumen, antes_json, despues_json, referencia_id, modelo, usuario) VALUES ($pid, '{$esc($herramienta)}', '{$esc($evento)}', '{$esc($accion)}', '{$esc($tipo)}', "
-                . ($eid === null ? 'NULL' : (int)$eid) . ", '" . $esc(mb_substr((string)$nombre, 0, 255)) . "', '" . $esc(mb_substr($resumen, 0, 500)) . "', {$js($antes)}, {$js($despues)}, " . ($referencia === null ? 'NULL' : (int)$referencia) . ", '" . $esc(mb_substr($modelo, 0, 150)) . "', '" . $esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "')");
+            $usuario = $esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150));
+
+            // Con migracion_historial_cambios.sql la fila nace aceptada: nada cambia datos sin que el admin lo acepte
+            $campos = ['proyecto_id'];
+            $valores = [(string)$pid];
+            if (\Classes\HistorialCambios::disponible()) {
+                $campos[] = 'origen';
+                $valores[] = "'ia'";
+                $campos[] = 'estado';
+                $valores[] = "'aceptado'";
+                $campos[] = 'estado_en';
+                $valores[] = 'NOW()';
+                $campos[] = 'estado_por';
+                $valores[] = "'$usuario'";
+            }
+            array_push($campos, 'herramienta', 'evento', 'accion', 'entidad_tipo', 'entidad_id', 'entidad_nombre', 'resumen', 'antes_json', 'despues_json', 'referencia_id', 'modelo', 'usuario');
+            array_push($valores,
+                "'" . $esc($herramienta) . "'", "'" . $esc($evento) . "'", "'" . $esc($accion) . "'", "'" . $esc($tipo) . "'",
+                $eid === null ? 'NULL' : (int)$eid, "'" . $esc(mb_substr((string)$nombre, 0, 255)) . "'", "'" . $esc(mb_substr($resumen, 0, 500)) . "'",
+                $js($antes), $js($despues), $referencia === null ? 'NULL' : (int)$referencia, "'" . $esc(mb_substr($modelo, 0, 150)) . "'", "'$usuario'");
+
+            $db->query('INSERT INTO auditoria_cambios (' . implode(', ', $campos) . ') VALUES (' . implode(', ', $valores) . ')');
         } catch (\Throwable $e) {
             error_log('Auditoria::registrar: ' . $e->getMessage());
         }
@@ -78,6 +100,8 @@ class Auditoria
     {
         $db = self::db();
         $w = ["proyecto_id = $pid"];
+        // Esta pantalla es la de la IA: los cambios manuales (Historial de cambios, en Administración) no aparecen aquí
+        if (\Classes\HistorialCambios::disponible()) $w[] = "origen = 'ia'";
         if (isset(self::HERRAMIENTAS[$f['herramienta'] ?? ''])) $w[] = "herramienta = '{$f['herramienta']}'";
         if (isset(self::EVENTOS[$f['evento'] ?? ''])) $w[] = "evento = '{$f['evento']}'";
         if (($f['usuario'] ?? '') !== '') $w[] = "usuario = '" . $db->real_escape_string($f['usuario']) . "'";
@@ -132,7 +156,7 @@ class Auditoria
     {
         $libro = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $h = $libro->getActiveSheet();
-        $h->setTitle('Historial de cambios');
+        $h->setTitle('Auditoría de la IA');
         $h->fromArray(self::tabla((int)$p->id, $f), null, 'A1');
         $h->getStyle('A1:H1')->getFont()->setBold(true);
         foreach (range('A', 'H') as $c) $h->getColumnDimension($c)->setAutoSize(true);
@@ -147,7 +171,7 @@ class Auditoria
     public static function pdf(\Model\Proyecto $p, array $f): string
     {
         $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-        $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:8px;color:#111}h1{font-size:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:2px 4px;text-align:left;vertical-align:top}th{background:#e8ecf1}</style></head><body><h1>Historial de cambios · ' . $e($p->nombre) . '</h1><p>Generado el ' . date('d/m/Y H:i') . '</p><table>';
+        $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:8px;color:#111}h1{font-size:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:2px 4px;text-align:left;vertical-align:top}th{background:#e8ecf1}</style></head><body><h1>Auditoría de la IA · ' . $e($p->nombre) . '</h1><p>Generado el ' . date('d/m/Y H:i') . '</p><table>';
         foreach (self::tabla((int)$p->id, $f) as $i => $fila) $html .= '<tr>' . implode('', array_map(fn($c) => ($i === 0 ? '<th>' : '<td>') . $e($c) . ($i === 0 ? '</th>' : '</td>'), $fila)) . '</tr>';
         return Pdf::generar($html . '</table></body></html>', 'letter', 'landscape');
     }

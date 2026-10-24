@@ -69,7 +69,7 @@ class TandaIA
         switch ($a['herramienta']) {
             case 'inconsistencias': return Inconsistencias::reabrir($p, $ref);
             case 'materiales': return AnalisisMateriales::reabrir($p, $ref);
-            case 'programador': return ProgramadorAcciones::deshacerPartida($p, $ref, (int)$a['entidad_id']);
+            case 'programador': return HistorialCambios::silenciar(fn() => ProgramadorAcciones::deshacerPartida($p, $ref, (int)$a['entidad_id']));
             case 'normativa':
                 self::db()->query("UPDATE normativa_aplicaciones SET estado = 'propuesta', resuelto_por = '' WHERE id = $ref AND proyecto_id = $pid");
                 Auditoria::registrar($pid, 'normativa', 'reabierto', 'vincular_normativa', 'Vínculo de normativa devuelto a propuesta (revertir por tanda): ' . $a['entidad_nombre'], null, null, $ref, '', [$a['entidad_tipo'], $a['entidad_id'] === null ? null : (int)$a['entidad_id'], $a['entidad_nombre']]);

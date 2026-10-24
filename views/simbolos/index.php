@@ -276,7 +276,9 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
     ir(validas.includes(h) ? h : guardada, false);
     // Filtro por texto y categoría de cada lista de símbolos
     document.querySelectorAll('.sim-barra').forEach(barra => {
-        const buscar = barra.querySelector('.sim-buscar'), lista = document.getElementById(buscar.dataset.lista), chips = [...barra.querySelectorAll('.sim-chip')];
+        const buscar = barra.querySelector('.sim-buscar'); if (!buscar) return;
+        const lista = document.getElementById(buscar.dataset.lista); if (!lista) return;   // la lista puede no existir (p. ej. el proyecto no tiene símbolos propios)
+        const chips = [...barra.querySelectorAll('.sim-chip')];
         const vacio = lista.parentElement.querySelector('.sim-vacio'); let cat = '';
         const norm = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         function filtrar() {

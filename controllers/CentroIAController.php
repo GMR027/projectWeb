@@ -143,7 +143,7 @@ class CentroIAController
         $pid = (int)$proyecto->id;
         $total = Auditoria::contar($pid, $f);
         $pagina = max(1, min((int)($_GET['pagina'] ?? 1), max(1, (int)ceil($total / Auditoria::POR_PAGINA))));
-        $router->render('centro-ia/historial', ['titulo' => 'Historial de cambios - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'filas' => Auditoria::listar($pid, $f, $pagina), 'total' => $total,
+        $router->render('centro-ia/historial', ['titulo' => 'Auditoría de la IA - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'filas' => Auditoria::listar($pid, $f, $pagina), 'total' => $total,
             'pagina' => $pagina, 'paginas' => max(1, (int)ceil($total / Auditoria::POR_PAGINA)), 'usuarios' => Auditoria::usuarios($pid)]);
     }
 

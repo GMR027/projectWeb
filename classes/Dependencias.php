@@ -120,23 +120,28 @@ class Dependencias
         if (!$existe && self::alcanza($suc, $pred, $rels)) return [false, 'Esa relación crearía un ciclo (A depende de B y B de A, directa o indirectamente)'];
         $db = self::db();
         if ($existe) {
-            $db->query("UPDATE actividad_dependencias SET tipo = '" . $db->real_escape_string($tipo) . "', retraso = $retraso WHERE id = " . (int)$existe['id']);
+            $idRel = (int)$existe['id'];
+            HistorialCambios::escribir('actividad_dependencias', 'modificado', $idRel,
+                fn() => $db->query("UPDATE actividad_dependencias SET tipo = '" . $db->real_escape_string($tipo) . "', retraso = $retraso WHERE id = " . $idRel));
         } else {
-            $db->query("INSERT INTO actividad_dependencias (proyecto_id, predecesora_id, sucesora_id, tipo, retraso) VALUES ($proyectoId, $pred, $suc, '" . $db->real_escape_string($tipo) . "', $retraso)");
+            HistorialCambios::escribir('actividad_dependencias', 'creado', 0,
+                fn() => $db->query("INSERT INTO actividad_dependencias (proyecto_id, predecesora_id, sucesora_id, tipo, retraso) VALUES ($proyectoId, $pred, $suc, '" . $db->real_escape_string($tipo) . "', $retraso)"));
         }
         return [true, ''];
     }
 
     public static function eliminar(int $proyectoId, int $id): void
     {
-        self::db()->query("DELETE FROM actividad_dependencias WHERE id = $id AND proyecto_id = $proyectoId");
+        HistorialCambios::escribir('actividad_dependencias', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM actividad_dependencias WHERE id = $id AND proyecto_id = $proyectoId"));
     }
 
     public static function fijar(int $proyectoId, int $actividadId, bool $fija): bool
     {
         $acts = self::actividades($proyectoId);
         if (!isset($acts[$actividadId])) return false;
-        self::db()->query('UPDATE actividades SET fecha_fija = ' . ($fija ? 1 : 0) . ' WHERE id = ' . $actividadId);
+        HistorialCambios::escribir('actividades', 'modificado', $actividadId,
+            fn() => self::db()->query('UPDATE actividades SET fecha_fija = ' . ($fija ? 1 : 0) . ' WHERE id = ' . $actividadId));
         return true;
     }
 

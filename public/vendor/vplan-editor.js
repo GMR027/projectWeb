@@ -31,6 +31,8 @@
   const estiloDe = (d, neg) => [d.italic ? 'italic' : '', neg || d.bold ? 'bold' : ''].filter(Boolean).join(' ') || 'normal';
   const decoDe = d => [d.underline ? 'underline' : '', d.strike ? 'line-through' : ''].filter(Boolean).join(' ');
   const cssTexto = (d, neg) => ({ fontFamily: famDe(d), fontStyle: d.italic ? 'italic' : 'normal', fontWeight: neg || d.bold ? 'bold' : 'normal', textDecoration: decoDe(d) || 'none' });
+  // Ancho que ocuparía el texto de un renglón (para abrir cajas de texto del ancho justo)
+  const anchoTexto = d => { const t = new Konva.Text({ text: (d.text || ' ').split('\n')[0], fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d), textDecoration: decoDe(d) }); return Math.ceil(t.width()); };
   const uid = () => 's' + Date.now().toString(36) + (seq++);
   const clone = o => JSON.parse(JSON.stringify(o));
   const status = t => { $('#ve-estado').textContent = t; };
@@ -273,6 +275,7 @@
       case 'zone': n = new Konva.Ellipse({ ...base, radiusX: d.rx, radiusY: d.ry, fill: relleno, ...trazo }); break;
       case 'text': {
         const props = { text: d.text, fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d), textDecoration: decoDe(d), align: d.align || 'left', fill: lig || d.fill || '#000' };
+        if (d.boxW) { props.width = Math.max(20, d.boxW); props.wrap = 'word'; }   // caja de texto: el texto baja en vez de desbordarse a la derecha
         if (!d.bg) { n = new Konva.Text({ ...base, ...props }); break; }
         // Con fondo: rectángulo del tamaño del texto (más un margen) detrás del texto
         const t = new Konva.Text(props), m = Math.max(3, d.fontSize * 0.3);
@@ -381,7 +384,8 @@
     tr.rotateEnabled(!ids.some(i => (forma(i) || {}).type === 'link'));
     tr.keepRatio(!!d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr'));
     tr.enabledAnchors(esLinea ? (ids.length === 1 ? [] : ['middle-left', 'middle-right'])
-      : d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr' || d.type === 'text') ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+      : d && (d.type === 'image' || d.type === 'pin' || d.type === 'restr') ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+      : d && d.type === 'text' ? (d.boxW ? ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right'] : ['top-left', 'top-right', 'bottom-left', 'bottom-right'])
       : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']);
     pintarNodos();
     trLayer.batchDraw();
@@ -507,7 +511,12 @@
       else if (POLI.includes(t.type) || RECT.includes(t.type)) { t.w = Math.max(4, t.w * sx); t.h = Math.max(4, t.h * sy); }
       else if (ELIPSE.includes(t.type)) { t.rx = Math.max(2, t.rx * sx); t.ry = Math.max(2, t.ry * sy); }
       else if (LINEAS.includes(t.type)) { t.points = t.points.map((v, i) => v * (i % 2 ? sy : sx)); }
-      else if (t.type === 'text') { t.fontSize = Math.max(6, Math.round(t.fontSize * Math.max(sx, sy))); }
+      else if (t.type === 'text') {
+        if (t.boxW) {   // caja de texto: las asas laterales cambian el ancho; las de esquina también agrandan la letra
+          t.boxW = Math.max(40, Math.round(t.boxW * sx));
+          const k = Math.sqrt(sx * sy); if (Math.abs(k - 1) > 0.005) t.fontSize = Math.max(6, Math.min(400, +(t.fontSize * k).toFixed(2)));
+        } else t.fontSize = Math.max(6, Math.round(t.fontSize * Math.max(sx, sy)));
+      }
       else if (t.type === 'restr' || t.type === 'pin') { t.size = Math.max(8, t.size * Math.max(sx, sy)); }
     });
     commit(nuevas);
@@ -540,7 +549,8 @@
     const ta = document.createElement('textarea');
     const pos = n.getAbsolutePosition(), box = stage.container().getBoundingClientRect(), sc = stage.scaleX();
     Object.assign(ta.style, { position: 'fixed', left: box.left + pos.x + 'px', top: box.top + pos.y + 'px', fontSize: d.fontSize * sc + 'px', ...cssTexto(d), textAlign: d.align || 'left', lineHeight: 1.2,
-      color: d.fill || '#000', background: 'rgba(255,255,255,.85)', border: '1px solid #0070c0', padding: '2px', margin: 0, minWidth: '120px', minHeight: d.fontSize * sc * 1.4 + 'px', zIndex: 10000, transformOrigin: 'left top', transform: 'rotate(' + (d.rotation || 0) + 'deg)' });
+      color: d.fill || '#000', background: 'rgba(255,255,255,.85)', border: '1px solid #0070c0', padding: '2px', margin: 0, minWidth: d.boxW ? '40px' : '120px', minHeight: d.fontSize * sc * 1.4 + 'px', zIndex: 10000, transformOrigin: 'left top', transform: 'rotate(' + (d.rotation || 0) + 'deg)' });
+    if (d.boxW) Object.assign(ta.style, { width: Math.max(40, d.boxW * sc) + 'px', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' });   // caja de texto: se escribe dentro del ancho
     ta.value = d.text; (document.fullscreenElement || document.body).appendChild(ta);   // en pantalla completa solo se ve lo que está dentro del elemento ampliado
     ta.focus(); ta.select();
     n.hide(); layer.batchDraw();
@@ -614,6 +624,9 @@
     const conLetra = esTexto || esTabla || d.type === 'measure';
     $('#p-fs').value = d.fontSize || 40; mostrar('#p-fs', conLetra);
     mostrar('#p-b', conLetra); mostrar('#p-ff', conLetra); mostrar('#p-al', esTexto);
+    $('#p-box').checked = !!d.boxW; mostrar('#p-box', esTexto);
+    if (esTexto) sincroniza('#p-boxw-r', '#p-boxw', Math.round(d.boxW || anchoTexto(d)));
+    mostrar('#p-boxw', esTexto && !!d.boxW);
     [['#p-b', d.bold], ['#p-i', d.italic], ['#p-u', d.underline], ['#p-s', d.strike]].forEach(([q, on]) => { $(q).classList.toggle('activo', !!on); $(q).setAttribute('aria-pressed', !!on); });
     $('#p-ff').value = FUENTES.includes(d.fontFamily) ? d.fontFamily : 'Arial'; $('#p-al').value = d.align || 'left';
     const esMedida = d.type === 'measure';
@@ -704,6 +717,25 @@
     $('#ve-coment-lista').addEventListener('click', e => { const li = e.target.closest('li'); if (li) { select(li.dataset.id); const t = document.querySelector('.ve-tabs [data-tab=props]'); if (t) t.click(); } });
     on('#p-ff', 'change', e => cur() && actualizar(state.selId, { fontFamily: e.target.value }));
     on('#p-al', 'change', e => cur() && actualizar(state.selId, { align: e.target.value }));
+    // Caja de texto: el texto baja a la siguiente línea dentro del ancho elegido (no se desborda a la derecha)
+    on('#p-box', 'change', e => {
+      const d = cur(); if (!d) return;
+      if (e.target.checked) actualizar(state.selId, { boxW: d.boxW || Math.max(80, Math.round(anchoTexto(d) + d.fontSize * 0.6)) });
+      else actualizar(state.selId, { boxW: undefined });
+    });
+    const boxW = () => { const d = cur(); if (!d || !d.boxW) return; const v = Math.round(num($('#p-boxw').value, 20, 4000, d.boxW)); sincroniza('#p-boxw-r', '#p-boxw', Math.min(4000, v)); actualizar(state.selId, { boxW: v }); };
+    on('#p-boxw-r', 'input', e => {   // vista previa del ancho mientras se arrastra el deslizador
+      $('#p-boxw').value = e.target.value;
+      const d = cur(), n = nodes[state.selId];
+      if (!d || !d.boxW || !n) return;
+      const t = n instanceof Konva.Group ? n.findOne('Text') : n, r = n instanceof Konva.Group ? n.findOne('Rect') : null;
+      if (!t) return;
+      t.setAttrs({ width: Math.max(20, +e.target.value), wrap: 'word' });
+      if (r) { const m = Math.max(3, d.fontSize * 0.3); r.setAttrs({ width: t.width() + 2 * m, height: t.height() + 2 * m }); }
+      layer.batchDraw();
+    });
+    on('#p-boxw-r', 'change', boxW);
+    on('#p-boxw', 'change', boxW);
     on('#p-unit', 'change', e => cur() && actualizar(state.selId, { unit: e.target.value }));
     on('#p-ref', 'click', async () => {
       const d = cur(); if (!d || d.type !== 'measure') return;
@@ -911,7 +943,7 @@
         return;
       }
       if (!capaOk()) return;
-      if (['text', 'restr', 'pin', 'image'].includes(state.tool)) return;   // se crean en el clic
+      if (['text', 'textbox', 'restr', 'pin', 'image'].includes(state.tool)) return;   // se crean en el clic
       const p = posRel();
       if (state.tool === 'poly') {
         if (!poli) {
@@ -980,11 +1012,13 @@
     });
     stage.on('dblclick dbltap', () => { if (state.tool === 'poly') finalizarPoli(); });
     stage.on('click tap', e => {
-      if (!['text', 'restr', 'pin'].includes(state.tool)) return;
+      if (!['text', 'textbox', 'restr', 'pin'].includes(state.tool)) return;
       if (!capaOk()) return;
       const p = posRel();
-      if (state.tool === 'text') {
+      if (state.tool === 'text' || state.tool === 'textbox') {
+        const caja = state.tool === 'textbox';
         const d = { id: uid(), type: 'text', x: p.x, y: p.y, text: 'Texto', fontSize: Math.round(sw * 10), fill: $('#t-stroke').value, bold: true, rotation: 0, opacity: 100 };
+        if (caja) d.boxW = Math.max(Math.round(state.W * 0.25), anchoTexto(d) + Math.round(d.fontSize * 0.5));   // ~un cuarto del lienzo, o el ancho justo si es mayor
         state.selId = d.id; commit([...clone(state.shapes), d]); setTool('select'); setTimeout(() => editarTexto(d.id), 30); return;
       }
       const tipo = state.tool;

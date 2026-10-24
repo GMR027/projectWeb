@@ -92,6 +92,8 @@ class TelegramBot
                 case 'hoy': self::hoy($chat, $v, $u); return;
                 case 'nota': self::nota($chat, $v, $u, $cmd[1]); return;
                 case 'clima': self::clima($chat, $v, $u); return;
+                case 'salud': self::salud($chat, $v, $u); return;
+                case 'pdf': self::pdf($chat, $v, $u, $cmd[1]); return;
                 case 'cancelar': self::fijar($chat, ''); self::decir($chat, 'Listo, no hay nada pendiente.'); return;
             }
             self::decir($chat, 'No conozco ese comando. Escribe /ayuda.');
@@ -102,6 +104,10 @@ class TelegramBot
         if ($e['paso'] === 'act' && preg_match('/^(\d{1,3})\s*%?$/', $t, $x)) {
             if ((int)$x[1] > 100) { self::decir($chat, 'El avance va de 0 a 100.'); return; }
             self::decir($chat, self::aplicarAvance((int)($e['datos']['a'] ?? 0), (int)$x[1], $u));
+            return;
+        }
+        if ($e['paso'] === 'rfi' && $t !== '') {   // respondió al RFI que eligió con el botón «Responder»
+            self::rfiGuardarRespuesta($chat, $u, (int)($e['datos']['r'] ?? 0), $t);
             return;
         }
         self::decir($chat, "No entendí 🤔. Usa /avance para reportar avance, manda una foto para guardarla como evidencia, o /ayuda.");
@@ -121,6 +127,8 @@ class TelegramBot
             . "/hoy — actividades de hoy y atrasadas\n"
             . "📷 Manda una <b>foto</b> y la guardo como evidencia de la actividad que elijas\n"
             . "/nota <i>texto</i> — anotar en la bitácora (ej. <code>/nota alta: falta concreto</code>)\n"
+            . "/salud — semáforo del proyecto (atrasos, restricciones, punch, RFI…)\n"
+            . "/pdf — descargar el PDF del programa o del punch list\n"
             . "/clima — pronóstico de hoy y mañana\n"
             . "/proyecto — cambiar de proyecto\n\n"
             . "Atajo: elige una actividad con /avance y luego escribe solo el número (ej. <code>65</code>).");
@@ -340,6 +348,73 @@ class TelegramBot
         self::decir($chat, $t);
     }
 
+    // ---------- salud y PDF ----------
+
+    /** Semáforo del proyecto (Salud): indicadores que no están en verde, con su detalle */
+    private static function salud(int $chat, array $v, array $u): void
+    {
+        $p = self::activo($chat, $v, $u, false);
+        if (!$p) return;
+        $s = Salud::semaforo($p);
+        $ico = ['ok' => '🟢', 'aviso' => '🟠', 'critico' => '🔴'];
+        $t = $ico[$s['nivel']] . ' <b>Salud de ' . Telegram::h($p->nombre) . '</b> — ' . Telegram::h(Salud::NIVELES[$s['nivel']]) . "\n";
+        $mal = array_values(array_filter($s['indicadores'], fn($i) => $i['nivel'] !== 'ok'));
+        if (!$mal) $t .= "\nTodo en orden: sin atrasos, restricciones ni pendientes graves.";
+        foreach ($mal as $i) {
+            $t .= "\n" . $ico[$i['nivel']] . ' <b>' . Telegram::h($i['titulo']) . ':</b> ' . Telegram::h((string)$i['valor']) . ' — ' . Telegram::h(mb_substr((string)$i['detalle'], 0, 180));
+        }
+        $t .= "\n\n<i>Detalles en la web, sección Salud del proyecto.</i>";
+        self::decir($chat, $t);
+    }
+
+    /** /pdf [tipo] — manda el PDF del programa o del punch list al chat (sin tipo, pregunta con botones) */
+    private static function pdf(int $chat, array $v, array $u, string $tipo): void
+    {
+        $p = self::activo($chat, $v, $u, false);
+        if (!$p) return;
+        $tipo = strtolower(trim($tipo));
+        if (!in_array($tipo, ['programa', 'punch'], true)) {
+            self::decir($chat, '¿Qué PDF quieres de <b>' . Telegram::h($p->nombre) . '</b>?', [
+                [['text' => '📄 Programa (Gantt)', 'callback_data' => 'doc:programa']],
+                [['text' => '🔧 Punch list', 'callback_data' => 'doc:punch']],
+            ]);
+            return;
+        }
+        self::enviarPdf($chat, $v, $u, $tipo);
+    }
+
+    /** Genera y manda el PDF; lo borra después (las exportaciones no se quedan en el servidor) */
+    private static function enviarPdf(int $chat, array $v, array $u, string $tipo): void
+    {
+        $p = self::activo($chat, $v, $u, false);
+        if (!$p) return;
+        self::decir($chat, 'Generando el PDF…');
+        $ruta = null;
+        try {
+            if ($tipo === 'punch') {
+                $tmp = tempnam(sys_get_temp_dir(), 'tgpunch');
+                $ruta = $tmp . '.pdf';
+                @unlink($tmp);   // el que creó tempnam no lleva extensión; el PDF va en su lugar
+                file_put_contents($ruta, Punch::pdf($p));
+                $pie = '🔧 <b>Punch list</b> · ' . Telegram::h($p->nombre);
+            } else {
+                $ruta = (new \Classes\Exportadores\PdfExporter($p))->generar('Programa');
+                $pie = '📄 <b>Programa</b> · ' . Telegram::h($p->nombre);
+            }
+        } catch (\Throwable $e) {
+            error_log('Telegram /pdf: ' . $e->getMessage());
+            if ($ruta) @unlink($ruta);
+            self::decir($chat, 'No pude generar el PDF. Inténtalo desde la web.');
+            return;
+        }
+        try {
+            [$ok, $err] = Telegram::enviarArchivo($chat, $ruta, basename($ruta), $pie);
+            if (!$ok) self::decir($chat, 'No pude enviar el PDF' . ($err ? ' (error de Telegram ' . (int)$err . ')' : '') . '. Inténtalo desde la web.');
+        } finally {
+            @unlink($ruta);
+        }
+    }
+
     // ---------- botones ----------
 
     private static function callback(array $cq, int $updateId): void
@@ -350,7 +425,13 @@ class TelegramBot
         if (!$chat || ($cq['message']['chat']['type'] ?? '') !== 'private' || !self::nuevo($chat, $updateId)) return;
         $v = Telegram::vinculoDeChat($chat);
         $u = $v ? Telegram::usuarioPorId((int)$v['usuario_id']) : null;
-        if (!$v || !$u || $u['rol'] === 'visitante' || !preg_match('/^(pr|a|p|f):(\d+)(?::(\d{1,3}))?$/', $data, $x)) return;
+        if (!$v || !$u || $u['rol'] === 'visitante') return;
+        // Acciones sobre avisos (punch, RFI, submittal) y descarga de PDF: se revalida el permiso en cada una
+        if (preg_match('/^doc:(programa|punch)$/', $data, $x)) { self::enviarPdf($chat, $v, $u, $x[1]); return; }
+        if (preg_match('/^pu:(\d+):([a-z_]+)$/', $data, $x)) { self::punchEstado($chat, $u, (int)$x[1], $x[2]); return; }
+        if (preg_match('/^rs:(\d+)$/', $data, $x)) { self::rfiResponder($chat, $u, (int)$x[1]); return; }
+        if (preg_match('/^su:(\d+):([a-z_]+)$/', $data, $x)) { self::submittalEstatus($chat, $u, (int)$x[1], $x[2]); return; }
+        if (!preg_match('/^(pr|a|p|f):(\d+)(?::(\d{1,3}))?$/', $data, $x)) return;
         $id = (int)$x[2];
         switch ($x[1]) {
             case 'pr':
@@ -381,5 +462,67 @@ class TelegramBot
                 self::decir($chat, self::guardarFotos($fotos, $id, $u));
                 return;
         }
+    }
+
+    // ---------- acciones sobre los avisos (punch, RFI, submittal) ----------
+
+    /** Proyecto del registro y quién lo puede cambiar; null + mensaje de error si no se puede */
+    private static function gestionableDe(string $sql, array $u, string $accion): array
+    {
+        $f = self::filas($sql)[0] ?? null;
+        $p = $f ? Proyecto::find((int)$f['proyecto_id']) : null;
+        if (!$f || !$p || !Telegram::puedeVer($u, $p)) return [null, $f, 'No encuentro ese registro.'];
+        if (!Telegram::puedeGestionar($u, $p)) return [null, $f, "Solo el administrador o el dueño del proyecto puede $accion desde Telegram."];
+        return [$p, $f, null];
+    }
+
+    /** Botón «Corregido/En proceso» de un aviso de punch */
+    private static function punchEstado(int $chat, array $u, int $id, string $estado): void
+    {
+        if (!isset(Punch::ESTADOS[$estado])) return;
+        [$p, $f, $err] = self::gestionableDe("SELECT i.id, i.proyecto_id, i.titulo, i.estado FROM punch_items i WHERE i.id = $id", $u, 'cambiar pendientes');
+        if (!$p) { self::decir($chat, $err); return; }
+        if ($f['estado'] === $estado) { self::decir($chat, 'Ese pendiente ya estaba en «' . Telegram::h(Punch::ESTADOS[$estado]) . '».'); return; }
+        [$ok, $msg] = Punch::estado($p, $id, $estado);
+        self::decir($chat, $ok ? '✅ «' . Telegram::h($f['titulo']) . '»: ' . Telegram::h(Punch::ESTADOS[$f['estado']]) . ' → <b>' . Telegram::h(Punch::ESTADOS[$estado]) . "</b>\n<i>Si requiere verificación, queda como «corregido» hasta que el inspector lo cierre.</i>" : Telegram::h($msg));
+    }
+
+    /** Botón «Responder» de un aviso de RFI: fija el paso y el siguiente texto es la respuesta */
+    private static function rfiResponder(int $chat, array $u, int $id): void
+    {
+        [$p, $f, $err] = self::gestionableDe("SELECT id, proyecto_id, numero, asunto, estado FROM rfis WHERE id = $id", $u, 'responder RFI');
+        if (!$p) { self::decir($chat, $err); return; }
+        if ($f['estado'] === 'cerrado') { self::decir($chat, 'Ese RFI está cerrado; ábrelo en la web si necesita otra respuesta.'); return; }
+        self::fijar($chat, 'rfi', ['r' => $id, 'p' => (int)$f['proyecto_id']]);
+        self::decir($chat, '✍️ Escribe la respuesta al <b>RFI ' . Telegram::h($f['numero']) . '</b> («' . Telegram::h(mb_substr((string)$f['asunto'], 0, 80)) . "»):\nEl estado pasará a <b>Respondido</b>.");
+    }
+
+    /** El texto escrito tras «Responder» se guarda como respuesta del RFI */
+    private static function rfiGuardarRespuesta(int $chat, array $u, int $rid, string $texto): void
+    {
+        [$p, $f, $err] = self::gestionableDe("SELECT * FROM rfis WHERE id = $rid", $u, 'responder RFI');
+        if (!$p || !$f) { self::fijar($chat, ''); self::decir($chat, $err ?: 'No encuentro ese RFI.'); return; }
+        $d = ['id' => $rid, 'numero' => $f['numero'], 'asunto' => $f['asunto'], 'pregunta' => $f['pregunta'], 'respuesta' => $texto,
+            'responsable' => $f['responsable'], 'solicitante' => $f['solicitante'], 'prioridad' => $f['prioridad'], 'estado' => 'respondido',
+            'fecha' => $f['fecha'], 'fecha_limite' => $f['fecha_limite'], 'actividad_id' => $f['actividad_id']];
+        $e = Rfi::guardar((int)$f['proyecto_id'], $d, $u['nombre']);
+        self::fijar($chat, '');
+        if ($e) { self::decir($chat, 'No pude guardar la respuesta: ' . Telegram::h($e)); return; }
+        self::decir($chat, '✅ Respuesta guardada en el <b>RFI ' . Telegram::h($f['numero']) . '</b>. Estado: <b>Respondido</b>.');
+    }
+
+    /** Botones «Aprobado / A/AN / Resubmitar» de un aviso de submittal (mueve también el MSR) */
+    private static function submittalEstatus(int $chat, array $u, int $id, string $estatus): void
+    {
+        if (!\Model\Submittal::esAprobado($estatus) && $estatus !== 'rechazado' && $estatus !== 'enviado') return;
+        [$p, $f, $err] = self::gestionableDe("SELECT id, proyecto_id, numero_submittal, estatus FROM submittals WHERE id = $id", $u, 'cambiar submittals');
+        if (!$p) { self::decir($chat, $err); return; }
+        if ($f['estatus'] === $estatus) { self::decir($chat, 'Ese submittal ya estaba en «' . Telegram::h(\Model\Submittal::ESTATUS[$estatus]) . '».'); return; }
+        $s = \Model\Submittal::find($id);
+        $anterior = $s->estatus;
+        $s->estatus = $estatus;
+        if (!$s->guardar()) { self::decir($chat, 'No pude guardar el cambio. Inténtalo desde la web.'); return; }
+        $s->sincronizarMsr($anterior);
+        self::decir($chat, '📄 Submittal <b>' . Telegram::h($f['numero_submittal']) . '</b>: ' . Telegram::h(\Model\Submittal::ESTATUS[$anterior]) . ' → <b>' . Telegram::h(\Model\Submittal::ESTATUS[$estatus]) . '</b> (MSR actualizado).');
     }
 }

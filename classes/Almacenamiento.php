@@ -12,6 +12,8 @@ use Model\VplanLamina;
 /** Espacio en disco que ocupa la información subida a un proyecto (límite fijo por proyecto) */
 class Almacenamiento
 {
+    use AccesoDb;
+
     public const LIMITE = 300 * 1024 * 1024;   // 300 MB por defecto (proyectos de admin o sin dueño)
     private const RAIZ = __DIR__ . '/..';
 
@@ -74,12 +76,66 @@ class Almacenamiento
         return $r;
     }
 
-    /** Límite en bytes del proyecto: el que el admin fijó al cliente dueño; si no, el predeterminado */
+    /** Límite en bytes del proyecto: el propio que le fijó el admin; si no, el del cliente dueño; si no, el predeterminado */
     public static function limite(int $proyectoId): int
+    {
+        $p = Proyecto::find($proyectoId);
+        if ($p && (int)($p->limite_almacenamiento_mb ?? 0) > 0) {
+            return (int)$p->limite_almacenamiento_mb * 1048576;
+        }
+        $u = $p && $p->usuario_id ? \Model\Usuario::find($p->usuario_id) : null;
+        return $u && $u->rol === 'cliente' && (int)$u->limite_almacenamiento_mb > 0 ? (int)$u->limite_almacenamiento_mb * 1048576 : self::LIMITE;
+    }
+
+    /** Límite en bytes sin el ajuste propio del proyecto (el heredado del cliente o el predeterminado) */
+    public static function limiteHeredado(int $proyectoId): int
     {
         $p = Proyecto::find($proyectoId);
         $u = $p && $p->usuario_id ? \Model\Usuario::find($p->usuario_id) : null;
         return $u && $u->rol === 'cliente' && (int)$u->limite_almacenamiento_mb > 0 ? (int)$u->limite_almacenamiento_mb * 1048576 : self::LIMITE;
+    }
+
+    /** MB asignados a un proyecto por el admin (0 si no tiene límite propio) */
+    public static function limiteMb(int $proyectoId): int
+    {
+        $p = Proyecto::find($proyectoId);
+        return $p ? (int)($p->limite_almacenamiento_mb ?? 0) : 0;
+    }
+
+    /** ¿Existe la columna del límite propio del proyecto? (migración aplicada) */
+    public static function hayColumnaProyecto(): bool
+    {
+        static $existe = null;
+        if ($existe !== null) return $existe;
+        $existe = in_array('limite_almacenamiento_mb', self::columnasProyecto(), true);
+        return $existe;
+    }
+
+    /** Columnas de la tabla proyectos (con caché) */
+    private static function columnasProyecto(): array
+    {
+        static $cols = null;
+        if ($cols !== null) return $cols;
+        $cols = [];
+        try {
+            $r = self::db()->query("SHOW COLUMNS FROM proyectos");
+            if ($r) while ($f = $r->fetch_assoc()) $cols[] = $f['Field'];
+        } catch (\Throwable $e) {
+            $cols = [];
+        }
+        return $cols;
+    }
+
+    /**
+     * Fija el espacio propio del proyecto (MB). Con $mb = 0 se vuelve al límite
+     * heredado del cliente dueño (o al predeterminado de 300 MB).
+     */
+    public static function fijarLimiteProyecto(int $proyectoId, int $mb): bool
+    {
+        if (!self::hayColumnaProyecto()) return false;
+        $valor = $mb > 0 ? (int)$mb : 'NULL';
+        return (bool)HistorialCambios::escribir('proyectos', 'modificado', (int)$proyectoId,
+            fn() => self::db()->query("UPDATE proyectos SET limite_almacenamiento_mb = $valor WHERE id = " . (int)$proyectoId));
     }
 
     public static function usado(int $proyectoId): int

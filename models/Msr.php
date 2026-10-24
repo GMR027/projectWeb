@@ -245,6 +245,8 @@ class Msr extends ActiveRecord
         $conservar = [];
         $orden = (int)$db->query("SELECT COALESCE(MAX(orden),0) FROM msr_items WHERE proyecto_id = $pid")->fetch_row()[0];
         $nPart = 0;
+        $nRenglones0 = (int)$db->query("SELECT COUNT(*) FROM msr_items WHERE msr_id = $mid")->fetch_row()[0];
+        $renombrados = 0;
         foreach ($partidas as $p) {
             $titulo = trim($p['titulo'] ?? '');
             if ($titulo === '') continue;
@@ -255,10 +257,13 @@ class Msr extends ActiveRecord
                 if ($existentes[$id] !== $titulo) {
                     $viejo = $esc($existentes[$id]);
                     $db->query("UPDATE msr_items SET seccion = '$t' WHERE msr_id = $mid AND seccion = '$viejo'");
+                    $renombrados++;
                 }
-                $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color', orden = $nPart WHERE id = $id");
+                HistorialCambios::escribir('msr_partidas', 'modificado', $id,
+                    fn() => $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color', orden = $nPart WHERE id = $id"));
             } else {
-                $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $nPart)");
+                HistorialCambios::escribir('msr_partidas', 'creado', 0,
+                    fn() => $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $nPart)"));
                 $id = (int)$db->insert_id;
             }
             $conservar[] = $id;
@@ -283,12 +288,20 @@ class Msr extends ActiveRecord
         foreach ($existentes as $id => $titulo) {
             if (in_array($id, $conservar, true)) continue;
             $db->query("DELETE FROM msr_items WHERE msr_id = $mid AND submittal_id IS NULL AND seccion = '" . $esc($titulo) . "'");
-            $db->query("DELETE FROM msr_partidas WHERE id = $id");
+            HistorialCambios::escribir('msr_partidas', 'eliminado', $id,
+                fn() => $db->query("DELETE FROM msr_partidas WHERE id = $id"));
         }
         // Fechas de compra/entrega compartidas con el catálogo
         $db->query("UPDATE msr_items i JOIN materiales m ON m.id = i.material_id
             SET i.fecha_compra_prog = m.fecha_compra_prog, i.fecha_compra_real = m.fecha_compra_real,
                 i.fecha_entrega_prog = m.fecha_entrega_prog, i.fecha_entrega_real = m.fecha_entrega_real
             WHERE i.msr_id = $mid AND i.submittal_id IS NULL");
+        // Los renglones se agregan/quitan en bloque (uno por material): se anotan como un solo cambio
+        $nRenglones1 = (int)$db->query("SELECT COUNT(*) FROM msr_items WHERE msr_id = $mid")->fetch_row()[0];
+        if ($nRenglones1 !== $nRenglones0 || $renombrados > 0) {
+            HistorialCambios::registrar($pid, 'msr', 'modificado',
+                'Renglones del MSR: ' . $nRenglones0 . ' → ' . $nRenglones1 . ($renombrados ? " · $renombrados partida(s) renombrada(s)" : ''),
+                ['renglones' => $nRenglones0], ['renglones' => $nRenglones1], ['msr', $mid, (string)($this->nombre ?? '')]);
+        }
     }
 }

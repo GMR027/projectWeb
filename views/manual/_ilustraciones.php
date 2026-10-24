@@ -148,13 +148,13 @@ return [
         . mf_caja(140, 60, 100, 56, 'Propone', 'con casillas') . mf_flecha(240, 88, 264, 88)
         . mf_caja(266, 60, 100, 56, 'Tú decides', 'aceptar / rechazar') . mf_flecha(366, 88, 390, 88)
         . mf_caja(392, 60, 110, 56, 'Se aplica', 'guarda el «antes»') . mf_flecha(502, 88, 526, 88)
-        . mf_caja(528, 60, 100, 56, 'Historial', 'revertir') . mf_t(320, 150, 'Nada cambia en tus datos sin tu aceptación', 'fg-pri-t', 13, 'middle', true)
+        . mf_caja(528, 60, 100, 56, 'Auditoría', 'revertir') . mf_t(320, 150, 'Nada cambia en tus datos sin tu aceptación', 'fg-pri-t', 13, 'middle', true)
         . mf_t(320, 170, 'Las cifras y fechas las calcula el servidor; la IA solo clasifica, explica y redacta.', 'fg-mut', 11, 'middle')
         . mf_n(1, 64, 54) . mf_n(2, 190, 54) . mf_n(3, 316, 54) . mf_n(4, 447, 54) . mf_n(5, 578, 54))],
 
 'centro-ia' => ['Centro de IA: ① pestañas, ② propuestas pendientes con severidad, ③ aceptar o rechazar.',
     mf_svg(640, 250, 'Centro de IA', mf_lateral(0, 23, 227, $menuApp, 8)
-        . mf_btn(134, 32, 84, 'Propuestas') . mf_btn(222, 32, 66, 'Informes', 'fg-ghost') . mf_btn(292, 32, 90, 'Grabaciones', 'fg-ghost') . mf_btn(386, 32, 130, 'Historial de cambios', 'fg-ghost') . mf_btn(520, 32, 80, 'Biblioteca', 'fg-ghost')
+        . mf_btn(134, 32, 84, 'Propuestas') . mf_btn(222, 32, 66, 'Informes', 'fg-ghost') . mf_btn(292, 32, 90, 'Grabaciones', 'fg-ghost') . mf_btn(386, 32, 150, 'Auditoría de la IA', 'fg-ghost') . mf_btn(540, 32, 80, 'Biblioteca', 'fg-ghost')
         . mf_r(134, 66, 494, 164, 'fg-panel')
         . mf_t(146, 86, 'Herramienta', 'fg-mut', 10, 'start', true) . mf_t(280, 86, 'Propuesta', 'fg-mut', 10, 'start', true) . mf_t(450, 86, 'Severidad', 'fg-mut', 10, 'start', true) . mf_l(140, 92, 620, 92)
         . mf_t(146, 114, 'Inconsistencias', 'fg-txt', 10) . mf_t(280, 114, 'Act. 3.4 fin antes de inicio', 'fg-txt', 10) . mf_chip(450, 102, 50, 'alta', 'fg-bad') . mf_btn(520, 100, 46, '✔', 'fg-ok', 20) . mf_btn(572, 100, 46, '✖', 'fg-ghost', 20)

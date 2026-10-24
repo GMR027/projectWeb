@@ -34,8 +34,16 @@ class Costos
     {
         if (!self::filas("SELECT id FROM partidas WHERE id = $partidaId AND proyecto_id = $pid")) return false;
         $monto = max(0, round($monto, 2));
+        $antes = self::presupuestoDe($partidaId);
         self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto) VALUES ($partidaId, $pid, $monto) ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto)");
+        HistorialCambios::desdeImagen('costos_partidas', $antes ? 'modificado' : 'creado', $antes, self::presupuestoDe($partidaId));
         return true;
+    }
+
+    /** Presupuesto de una partida (la tabla no tiene `id`, se localiza por `partida_id`) */
+    private static function presupuestoDe(int $partidaId): ?array
+    {
+        return self::filas("SELECT partida_id, proyecto_id, presupuesto FROM costos_partidas WHERE partida_id = $partidaId")[0] ?? null;
     }
 
     /** @return string|null mensaje de error */
@@ -57,14 +65,15 @@ class Costos
         if ($id && !self::filas("SELECT id FROM costos_movimientos WHERE id = $id AND proyecto_id = $pid")) return 'El movimiento no existe';
         $v = fn($x) => "'" . self::esc($x) . "'";
         $campos = "partida_id = " . ($partida ?: 'NULL') . ", tipo = {$v($tipo)}, fecha = {$v($d['fecha'])}, concepto = {$v($concepto)}, referencia = {$v(mb_substr(trim((string)($d['referencia'] ?? '')), 0, 100))}, monto = $monto, estado = {$v($estado)}, orden_cambio_id = " . ($oc ?: 'NULL');
-        if ($id) self::db()->query("UPDATE costos_movimientos SET $campos WHERE id = $id");
-        else self::db()->query("INSERT INTO costos_movimientos SET proyecto_id = $pid, usuario = {$v(mb_substr($usuario, 0, 150))}, $campos");
+        if ($id) HistorialCambios::escribir('costos_movimientos', 'modificado', $id, fn() => self::db()->query("UPDATE costos_movimientos SET $campos WHERE id = $id"));
+        else HistorialCambios::escribir('costos_movimientos', 'creado', 0, fn() => self::db()->query("INSERT INTO costos_movimientos SET proyecto_id = $pid, usuario = {$v(mb_substr($usuario, 0, 150))}, $campos"));
         return null;
     }
 
     public static function eliminarMovimiento(int $pid, int $id): void
     {
-        self::db()->query("DELETE FROM costos_movimientos WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('costos_movimientos', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM costos_movimientos WHERE id = $id AND proyecto_id = $pid"));
     }
 
     // ---------- lectura ----------

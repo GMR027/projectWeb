@@ -33,7 +33,7 @@ spec:
             - -c
             - |
               until nc -z mysql 3306; do echo "esperando mysql"; sleep 2; done
-              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones /files/secretos
+              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones
               chown -R 33:33 /files
           volumeMounts:
             - { name: files, mountPath: /files }
@@ -52,6 +52,7 @@ spec:
             - { name: TRUSTED_PROXIES, value: {{ .Values.trustedProxies | quote }} }
             - { name: CONTACT_EMAIL, value: {{ .Values.app.contactEmail | quote }} }
             - { name: CLIMA_AUTO_HORA, value: {{ .Values.app.climaHora | default 18 | quote }} }
+            - { name: RESUMEN_HORA, value: {{ .Values.app.resumenHora | default 6 | quote }} }
             # Token del bot: vive en un secreto creado fuera de git (ver telegramSecret en values.yaml)
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:
@@ -81,11 +82,17 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/sesiones-app, subPath: sesiones-app }
             - { name: files, mountPath: /var/www/html/storage/normativa, subPath: normativa }
             - { name: files, mountPath: /var/www/html/storage/grabaciones, subPath: grabaciones }
-            - { name: files, mountPath: /var/www/html/storage/secretos, subPath: secretos }
+            # Clave AES del token: del secreto de K8s, NUNCA del PVC de usuarios (un bug de subida no debe poder leerla ni reemplazarla)
+            - { name: telegram-clave, mountPath: /var/www/html/storage/secretos, readOnly: true }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}
       volumes:
         - name: files
           persistentVolumeClaim: { claimName: projectweb-files }
+        # Si el secreto no existe o le falta telegram.key, el pod arranca igual (Telegram::clave() degrada y no guarda token en claro)
+        - name: telegram-clave
+          secret:
+            secretName: {{ .Values.telegramSecret | default "projectweb-telegram" }}
+            optional: true
 ---
 apiVersion: v1
 kind: Service

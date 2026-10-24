@@ -30,6 +30,8 @@ class Proyecto extends ActiveRecord
     public $programa_columnas_json;
     public $programa_indicador_json;
     public $tema_paleta;
+    // Espacio propio del proyecto en MB (lo asigna el admin; NULL = hereda del cliente dueño)
+    public $limite_almacenamiento_mb;
 
     public function __construct($args = [])
     {
@@ -116,14 +118,17 @@ class Proyecto extends ActiveRecord
             6 => 0.5, // Sábado
             7 => 0.0  // Domingo
         ];
-        foreach ($defaults as $dia => $factor) {
-            $jornada = new CalendarioJornada([
-                'proyecto_id' => $this->id,
-                'dia_semana' => $dia,
-                'factor' => $factor
-            ]);
-            $jornada->guardar();
-        }
+        // Es la puesta en marcha del proyecto, no una edición del usuario: no debe llenar el historial de cambios
+        \Classes\HistorialCambios::silenciar(function () use ($defaults) {
+            foreach ($defaults as $dia => $factor) {
+                $jornada = new CalendarioJornada([
+                    'proyecto_id' => $this->id,
+                    'dia_semana' => $dia,
+                    'factor' => $factor
+                ]);
+                $jornada->guardar();
+            }
+        });
     }
 
     /** Calcula progreso ponderado del proyecto */

@@ -80,6 +80,7 @@ HTML],
 </tbody>
 </table>
 <p class="manual-nota"><strong>Regla de oro de la IA.</strong> Ninguna herramienta de IA cambia tus datos por sí sola: propone, tú aceptas, y todo queda en el historial con opción de revertir.</p>
+<p class="manual-nota"><strong>Espacio de los proyectos que creas.</strong> Cada proyecto tiene un tope de espacio para sus archivos, fotos, planos y fichas. En los proyectos que te pertenecen (creados por ti) puedes ampliarlo o reducirlo cuando quieras en <em>Ajustes del proyecto → Datos → Almacenamiento</em>: escribe los MB y pulsa <em>Ampliar o reducir</em>. Con <strong>0</strong> el proyecto vuelve al límite heredado. Los proyectos de un cliente usan el espacio que tú le fijaste en <em>Usuarios y Accesos</em>.</p>
 HTML],
 
 ['id' => 'escritorio', 'despues' => 'sistema', 'titulo' => 'App de escritorio', 'icono' => 'fa-desktop', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -142,7 +143,7 @@ HTML],
 <li><strong>Propuestas.</strong> Bandeja de lo que la IA encontró y sigue pendiente de tu decisión, con herramienta, severidad (alta, media, baja) y quién lo detectó. Aquí aceptas o rechazas.</li>
 <li><strong>Informes.</strong> Informes generados (semanal, resumen ejecutivo, etc.). Puedes <em>Generar un informe</em> con IA o <em>sin IA</em> (con texto de plantilla), revisarlo, aprobarlo y descargarlo en PDF.</li>
 <li><strong>Grabaciones.</strong> Graba una reunión o sube un audio; se transcribe y de ahí salen minutas, compromisos y tareas.</li>
-<li><strong>Historial de cambios.</strong> Registro de auditoría de todo lo que la IA aplicó, revirtió o rechazó, con valores antes/después. Filtra por herramienta, evento, usuario y fechas, y exporta a Excel o PDF.</li>
+<li><strong>Auditoría de la IA.</strong> Registro de auditoría de todo lo que la IA aplicó, revirtió o rechazó, con valores antes/después. Filtra por herramienta, evento, usuario y fechas, y exporta a Excel o PDF. (Los cambios hechos a mano están en <em>Historial de cambios</em>, de la sección Administración.)</li>
 <li><strong>Biblioteca.</strong> Análisis guardados (★) para consultarlos o compararlos con uno nuevo.</li>
 <li><strong>Uso de la IA.</strong> Medidor: cuántas llamadas hizo cada herramienta al modelo, con cuál modelo y cuánto tardó (por herramienta, modelo y día). Lo informa la app de escritorio.</li>
 </ul>
@@ -150,14 +151,14 @@ HTML],
 <ul>
 <li><strong>Niveles de riesgo.</strong> Al pie de <em>Propuestas</em>, elige para cada tipo de cambio si <em>pide permiso</em> (mover fechas, relaciones, avance… se acepta una por una y con confirmación) o es <em>simple</em> (renombrar, vincular normativa… se acepta con un clic).</li>
 <li><strong>Aprobación por lotes.</strong> En <em>Propuestas</em>, el botón <em>Aceptar todas las de bajo riesgo</em> aplica solo las simples que ves con los filtros; filtra por <em>Partida</em> para aceptar solo las de una. Las que piden permiso nunca entran.</li>
-<li><strong>Revertir por tanda.</strong> En <em>Historial de cambios</em>, <em>Revertir lo que hizo la IA</em>: elige desde qué hora (hoy, última hora, 24 h o una fecha), revisa la lista y revierte lo marcado. Cada reversión queda en el historial.</li>
+<li><strong>Revertir por tanda.</strong> En <em>Auditoría de la IA</em>, <em>Revertir lo que hizo la IA</em>: elige desde qué hora (hoy, última hora, 24 h o una fecha), revisa la lista y revierte lo marcado. Cada reversión queda en la auditoría.</li>
 </ul>
 <h4>Decidir una propuesta ②③</h4>
 <ol>
 <li>Abre la propuesta para ver el <em>por qué</em> y el <em>antes / después</em>.</li>
 <li>Pulsa <strong>✔ Aceptar</strong> para aplicarla. El sistema guarda el valor anterior.</li>
 <li>Pulsa <strong>✖ Rechazar</strong> si no procede; queda registrado y no vuelve a molestarte.</li>
-<li>Si te arrepientes, en <em>Historial de cambios</em> usa <strong>Revertir</strong> sobre esa entrada.</li>
+<li>Si te arrepientes, en <em>Auditoría de la IA</em> usa <strong>Revertir</strong> sobre esa entrada.</li>
 </ol>
 <p class="manual-nota">En la app de escritorio, <em>Análisis inteligente</em> muestra un resumen gráfico de propuestas pendientes por herramienta y severidad, junto con el historial.</p>
 HTML],

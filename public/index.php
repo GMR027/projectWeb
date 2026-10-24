@@ -7,6 +7,7 @@ use Controllers\AuthController;
 use Controllers\BuscarController;
 use Controllers\CarpetaController;
 use Controllers\EstampaController;
+use Controllers\HistorialCambiosController;
 use Controllers\ComparadorController;
 use Controllers\TraductorController;
 use Controllers\EscritorioApiController;
@@ -197,6 +198,11 @@ $router->post('/materiales/eliminar', [MaterialController::class, 'eliminar']);
 $router->get('/materiales/ficha', [MaterialController::class, 'ficha']);
 $router->get('/planificador', [PlanificadorController::class, 'index']);
 $router->get('/acciones', [AccionesController::class, 'index']);
+// Historial de cambios del proyecto (sección Administración): lo ven admin, cliente y visitante habilitado
+$router->get('/historial', [HistorialCambiosController::class, 'index']);
+$router->get('/historial/exportar', [HistorialCambiosController::class, 'exportar']);
+$router->post('/api/historial/aceptar', [HistorialCambiosController::class, 'aceptar']);
+$router->post('/api/historial/cancelar', [HistorialCambiosController::class, 'cancelar']);
 $router->get('/directorio', [DirectorioController::class, 'index']);
 $router->post('/directorio/departamento', [DirectorioController::class, 'departamentoGuardar']);
 $router->post('/directorio/departamento/eliminar', [DirectorioController::class, 'departamentoEliminar']);
@@ -370,6 +376,7 @@ $router->post('/integraciones/telegram/webhook', [Controllers\IntegracionesContr
 $router->post('/integraciones/telegram/token', [Controllers\IntegracionesController::class, 'telegramGuardar']);
 $router->post('/integraciones/telegram/token/quitar', [Controllers\IntegracionesController::class, 'telegramQuitar']);
 $router->post('/integraciones/clima', [Controllers\IntegracionesController::class, 'climaAuto']);
+$router->post('/integraciones/resumen', [Controllers\IntegracionesController::class, 'resumenObra']);
 $router->get('/campos', [PersonalizacionController::class, 'campos']);
 $router->post('/campos/guardar', [PersonalizacionController::class, 'guardarCampo']);
 $router->post('/campos/eliminar', [PersonalizacionController::class, 'eliminarCampo']);
@@ -693,6 +700,7 @@ $router->post('/ajustes/jornada', [AjustesController::class, 'guardarJornada']);
 $router->post('/ajustes/registros', [AjustesController::class, 'guardarRegistros']);
 $router->post('/ajustes/tema', [AjustesController::class, 'guardarTema']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);
+$router->post('/ajustes/almacenamiento', [AjustesController::class, 'guardarAlmacenamiento']);
 $router->post('/ajustes/festivo/eliminar', [AjustesController::class, 'eliminarFestivo']);
 $router->post('/ajustes/respaldo/crear', [AjustesController::class, 'respaldoCrear']);
 $router->post('/ajustes/respaldo/restaurar', [AjustesController::class, 'respaldoRestaurar']);
@@ -727,12 +735,21 @@ if (is_auth() && is_visitante() && !herramienta_permitida(herramienta_de_ruta($_
     }
     exit;
 }
-// Clima automático sin cron: pasada la hora, la primera persona con sesión lo dispara al terminar su petición
-if (is_auth() && \Classes\ClimaAuto::pendiente()) {
+// Clima automático sin cron: pasada la hora, la primera visita de un ADMIN lo dispara al terminar su petición
+// (en clúster lo hace el CronJob telegram-clima; esto es la red local sin clúster — solo admin, no cualquier sesión)
+if (is_admin() && \Classes\ClimaAuto::pendiente()) {
     register_shutdown_function(function () {
         ignore_user_abort(true);
         if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
         try { \Classes\ClimaAuto::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Clima automático: ' . $e->getMessage()); }
+    });
+}
+// Resumen de la obra sin cron: igual que el clima, pero solo si entra un admin pasada la hora
+if (is_admin() && \Classes\ResumenObra::pendiente()) {
+    register_shutdown_function(function () {
+        ignore_user_abort(true);
+        if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+        try { \Classes\ResumenObra::ejecutarSiToca(); } catch (\Throwable $e) { error_log('Resumen de obra: ' . $e->getMessage()); }
     });
 }
 // Respaldo diario sin cron: si el admin entra después de la hora programada y falta el de hoy, se hace al terminar la petición

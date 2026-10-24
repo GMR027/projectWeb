@@ -154,9 +154,12 @@ class Actividad extends ActiveRecord
         if (!$nombre) return $anterior;
         self::borrarIcono($anterior);
         try {
-            $st = self::$db->prepare('UPDATE actividades SET icono = ? WHERE id = ?');
-            $st->bind_param('si', $nombre, $actividadId);
-            if (!$st->execute()) return $anterior;
+            $ok = \Classes\HistorialCambios::escribir('actividades', 'modificado', $actividadId, function () use ($nombre, $actividadId) {
+                $st = self::$db->prepare('UPDATE actividades SET icono = ? WHERE id = ?');
+                $st->bind_param('si', $nombre, $actividadId);
+                return $st->execute();
+            });
+            if (!$ok) return $anterior;
         } catch (\Throwable $e) {   // migración pendiente: se conserva el icono anterior
             return $anterior;
         }
@@ -169,9 +172,11 @@ class Actividad extends ActiveRecord
         if (!$nombre) return;
         self::borrarIcono($nombre);
         try {
-            $st = self::$db->prepare('UPDATE actividades SET icono = NULL WHERE id = ?');
-            $st->bind_param('i', $actividadId);
-            $st->execute();
+            \Classes\HistorialCambios::escribir('actividades', 'modificado', $actividadId, function () use ($actividadId) {
+                $st = self::$db->prepare('UPDATE actividades SET icono = NULL WHERE id = ?');
+                $st->bind_param('i', $actividadId);
+                return $st->execute();
+            });
         } catch (\Throwable $e) {
         }
     }

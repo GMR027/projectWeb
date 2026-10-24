@@ -77,9 +77,11 @@ class IntegracionesController
         $pid = $p ? (int)$p->id : 0;
         $tg = ['tablas' => Telegram::disponible(), 'configurado' => Telegram::configurado(), 'bot' => '', 'vinculo' => null, 'destinos' => [], 'enlace' => $_SESSION['tg_enlace'] ?? null,
             'webhook' => null, 'eventos' => Telegram::EVENTOS, 'clima' => false, 'lugar' => '', 'ubicacion' => $p ? (string)$p->ubicacion : '', 'esAdmin' => is_admin(),
+            'resumen' => false, 'resumenHora' => \Classes\ResumenObra::hora(),
             'config' => Telegram::disponibleConfig() ? Telegram::configGuardada() : []];
         if (!$tg['tablas']) return $tg;
         $tg['clima'] = $pid && ClimaAuto::activo($pid);
+        $tg['resumen'] = $pid && \Classes\ResumenObra::activo($pid);
         if ($pid) $tg['lugar'] = (string)(Clima::lugarGuardado($pid) ?? '');
         if (!$tg['configurado']) return $tg;
         $tg['bot'] = Telegram::usuarioBot();
@@ -183,5 +185,18 @@ class IntegracionesController
             case 'probar': $r = ClimaAuto::procesar($p, true); self::volver($pid, $r['ok'], $r['mensaje'], '#clima');
         }
         self::volver($pid, false, 'Acción no válida.', '#clima');
+    }
+
+    /** Resumen de la obra cada mañana (evento de Telegram resumen.matutino) */
+    public static function resumenObra()
+    {
+        $p = self::proyectoGestionable();
+        $pid = (int)$p->id;
+        switch ($_POST['accion'] ?? '') {
+            case 'activar': \Classes\ResumenObra::cambiarActivo($pid, true); self::volver($pid, true, 'Resumen activado: cada mañana (después de las ' . \Classes\ResumenObra::hora() . ':00) llegará el resumen a los destinos que marquen «Resumen de la obra cada mañana» en sus avisos.', '#resumen');
+            case 'desactivar': \Classes\ResumenObra::cambiarActivo($pid, false); self::volver($pid, true, 'Resumen de la obra desactivado.', '#resumen');
+            case 'probar': $r = \Classes\ResumenObra::procesar($p, true); \Classes\Telegram::vaciar(); self::volver($pid, $r['ok'], $r['mensaje'], '#resumen');
+        }
+        self::volver($pid, false, 'Acción no válida.', '#resumen');
     }
 }

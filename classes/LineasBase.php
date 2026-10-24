@@ -22,8 +22,8 @@ class LineasBase
         $fin = $acts ? max(array_column($acts, 'fecha_fin')) : null;
         $db->begin_transaction();
         try {
-            $db->query("INSERT INTO lineas_base (proyecto_id, nombre, notas, fin_programado, total_actividades, criticas_json, creado_por) VALUES ($pid, '{$esc(mb_substr($nombre, 0, 150))}', '{$esc(mb_substr($notas, 0, 500))}', "
-                . ($fin ? "'$fin'" : 'NULL') . ', ' . count($acts) . ", '" . $esc(json_encode($criticas)) . "', '{$esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150))}')");
+            HistorialCambios::escribir('lineas_base', 'creado', 0, fn() => $db->query("INSERT INTO lineas_base (proyecto_id, nombre, notas, fin_programado, total_actividades, criticas_json, creado_por) VALUES ($pid, '{$esc(mb_substr($nombre, 0, 150))}', '{$esc(mb_substr($notas, 0, 500))}', "
+                . ($fin ? "'$fin'" : 'NULL') . ', ' . count($acts) . ", '" . $esc(json_encode($criticas)) . "', '{$esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150))}')"));
             $id = (int)$db->insert_id;
             foreach ($acts as $a) {
                 $db->query("INSERT INTO lineas_base_actividades (linea_id, actividad_id, codigo, nombre, partida, fecha_inicio, fecha_fin, duracion_dias, progreso, hito) VALUES ($id, " . (int)$a['id'] . ", '{$esc($a['codigo'])}', '{$esc($a['nombre'])}', '{$esc($a['partida_codigo'] . ' · ' . $a['partida'])}', '{$a['fecha_inicio']}', '{$a['fecha_fin']}', " . (int)$a['duracion_dias'] . ', ' . (int)$a['progreso'] . ', ' . (int)$a['hito'] . ')');
@@ -39,7 +39,8 @@ class LineasBase
 
     public static function eliminar(int $pid, int $id): void
     {
-        self::db()->query("DELETE FROM lineas_base WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('lineas_base', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM lineas_base WHERE id = $id AND proyecto_id = $pid"));
     }
 
     /** Línea base contra la que se compara por defecto: la más antigua (el programa inicial) */

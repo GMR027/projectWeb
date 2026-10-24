@@ -7,7 +7,7 @@ NS=projectweb
 sql() { kubectl -n $NS exec -i deploy/mysql -c mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --default-character-set=utf8mb4 -N project' 2>&1 | grep -v 'Using a password' || true; }
 
 # Tablas nuevas (CREATE TABLE IF NOT EXISTS)
-for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_inconsistencias_lotes migracion_analisis_materiales; do echo ">> $f"; sql < $f.sql; done
+for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales; do echo ">> $f"; sql < $f.sql; done
 
 # Columnas nuevas: se agregan solo si no existen
 col() {   # tabla columna "ALTER completo"
@@ -36,7 +36,11 @@ col usuarios novedades_vistas "ALTER TABLE usuarios ADD COLUMN novedades_vistas 
 col proyectos registros_por_pagina "ALTER TABLE proyectos ADD COLUMN registros_por_pagina SMALLINT NOT NULL DEFAULT 10;"
 col proyectos tema_modo "ALTER TABLE proyectos ADD COLUMN tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario';"
 col proyectos tema_paleta "ALTER TABLE proyectos ADD COLUMN tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja';"
+col proyectos limite_almacenamiento_mb "ALTER TABLE proyectos ADD COLUMN limite_almacenamiento_mb INT NULL AFTER marca_color2;"
 for c in "clima_auto TINYINT(1) NOT NULL DEFAULT 0" "clima_ultimo DATE NULL" "clima_aviso DATE NULL"; do
+  col proyectos "${c%% *}" "ALTER TABLE proyectos ADD COLUMN $c;"
+done
+for c in "resumen_matutino TINYINT(1) NOT NULL DEFAULT 0" "resumen_ultimo DATE NULL"; do
   col proyectos "${c%% *}" "ALTER TABLE proyectos ADD COLUMN $c;"
 done
 for c in "programa_nombre VARCHAR(200) NULL" "programa_columnas_json TEXT NULL" "programa_indicador_json TEXT NULL"; do
@@ -46,6 +50,15 @@ for c in "responsable VARCHAR(150) NULL" "rec_inicio DATE NULL" "rec_fin DATE NU
   col actividades "${c%% *}" "ALTER TABLE actividades ADD COLUMN $c;"
 done
 echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
+
+# Historial de cambios (sección Administración): origen, estado de revisión y sus eventos manuales
+for c in "origen ENUM('ia','manual') NOT NULL DEFAULT 'ia' AFTER proyecto_id" "estado ENUM('pendiente','aceptado','revertido') NOT NULL DEFAULT 'pendiente' AFTER evento" "estado_en DATETIME NULL AFTER estado" "estado_por VARCHAR(150) NOT NULL DEFAULT '' AFTER estado_en"; do
+  col auditoria_cambios "${c%% *}" "ALTER TABLE auditoria_cambios ADD COLUMN $c;"
+done
+nk=$(echo "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='project' AND table_name='auditoria_cambios' AND index_name='idx_proyecto_estado';" | sql | tail -1)
+if [ "$nk" = "0" ]; then echo ">> auditoria_cambios.idx_proyecto_estado"; echo "ALTER TABLE auditoria_cambios ADD KEY idx_proyecto_estado (proyecto_id, estado, creado);" | sql; else echo "ok  auditoria_cambios.idx_proyecto_estado ya existe"; fi
+echo "ALTER TABLE auditoria_cambios MODIFY COLUMN evento ENUM('aplicado','revertido','rechazado','reabierto','creado','modificado','eliminado') NOT NULL;" | sql   # idempotente
+echo "UPDATE auditoria_cambios SET estado='aceptado', estado_en=creado, estado_por=usuario WHERE origen='ia' AND estado='pendiente';" | sql   # idempotente
 
 # Instaladores de la app de escritorio (Ajustes → App de escritorio)
 R=../desktop/release

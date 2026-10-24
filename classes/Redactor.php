@@ -345,6 +345,23 @@ class Redactor
     {
         if (trim($html) === '') return '<p></p>';
         $dom = self::cargarDom($html);
+        // Cajas de texto (div.rd-caja): PhpWord ignora los divs flotantes, así que viajan como tabla de una sola celda.
+        // Va antes de contar las tablas para que el orden de self::$tablasOdt siga siendo el del documento.
+        foreach (iterator_to_array($dom->getElementsByTagName('div')) as $div) {
+            if (!preg_match('/(^|\s)rd-caja(\s|$)/', $div->getAttribute('class'))) continue;
+            $estilo = $div->getAttribute('style');
+            $borde = preg_match('/border\s*:\s*([^;]+)/', $estilo, $mb) ? trim($mb[1]) : '';
+            $fondo = preg_match('/background-color\s*:\s*([^;]+)/', $estilo, $mf) ? trim($mf[1]) : '';
+            $ancho = preg_match('/(?:^|;)\s*width\s*:\s*([\d.]+%)/', $estilo, $ma) ? $ma[1] : '100%';
+            $tabla = $dom->createElement('table');
+            $tabla->setAttribute('style', 'width:' . $ancho . ';border-collapse:collapse;margin:6pt 0');
+            $celda = $dom->createElement('td');
+            $celda->setAttribute('style', 'border:' . ($borde !== '' ? $borde : '1px solid #999999') . ';padding:8pt' . ($fondo !== '' ? ';background-color:' . $fondo : ''));
+            $tabla->appendChild($dom->createElement('tbody'))->appendChild($dom->createElement('tr'))->appendChild($celda);
+            while ($div->firstChild) $celda->appendChild($div->firstChild);
+            $div->parentNode->insertBefore($tabla, $div);
+            $div->parentNode->removeChild($div);
+        }
         foreach ($dom->getElementsByTagName('table') as $t) {
             $celda = $t->getElementsByTagName('td')->item(0) ?? $t->getElementsByTagName('th')->item(0);
             self::$tablasOdt[] = $celda && preg_match('/border(?:-\w+)?\s*:\s*[1-9]/', $celda->getAttribute('style'));
@@ -636,7 +653,9 @@ class Redactor
         $css = '@page{margin:' . $m['sup'] . 'cm ' . $m['der'] . 'cm ' . $m['inf'] . 'cm ' . $m['izq'] . 'cm}'
             . 'body{font-family:DejaVu Sans,Helvetica,sans-serif;font-size:11pt;line-height:1.35;color:#000;margin:0}'
             . 'h1{font-size:20pt}h2{font-size:16pt}h3{font-size:13pt}table{border-collapse:collapse}td,th{border:1px solid #888;padding:3pt 5pt;vertical-align:top}'
-            . 'blockquote{margin:6pt 0 6pt 18pt;padding-left:8pt;border-left:3pt solid #bbb;color:#444}pre{font-family:DejaVu Sans Mono,monospace;font-size:10pt}img{max-width:100%}img.rd-img-izq{float:left;margin:0 8pt 4pt 0}img.rd-img-der{float:right;margin:0 0 4pt 8pt}img.rd-img-bloque{display:block;margin:6pt auto}a{color:#0563c1}.rd-indice p{margin:2pt 0}';
+            . 'blockquote{margin:6pt 0 6pt 18pt;padding-left:8pt;border-left:3pt solid #bbb;color:#444}pre{font-family:DejaVu Sans Mono,monospace;font-size:10pt;white-space:pre-wrap}img{max-width:100%}img.rd-img-izq{float:left;margin:0 8pt 4pt 0}img.rd-img-der{float:right;margin:0 0 4pt 8pt}img.rd-img-bloque{display:block;margin:6pt auto}a{color:#0563c1}.rd-indice p{margin:2pt 0}'
+            // Cajas de texto y palabras largas: el texto baja en vez de salirse por el margen derecho
+            . 'p,div,td,th{word-wrap:break-word;overflow-wrap:break-word}.rd-caja{box-sizing:border-box;padding:8pt;margin:4pt 0}';
         $marca = $d->marca_agua !== '' ? '<div style="position:fixed;left:0;right:0;top:40%;text-align:center;font-size:96pt;font-weight:bold;color:#cccccc;opacity:0.35;transform:rotate(-45deg);z-index:-1">' . htmlspecialchars($d->marca_agua) . '</div>' : '';
         $dompdf = Pdf::preparar('<html><head><meta charset="utf-8"><title>' . htmlspecialchars($d->nombre) . '</title><style>' . $css . '</style></head><body>' . $marca . $html . '</body></html>',
             [0, 0, $w / 2.54 * 72, $h / 2.54 * 72], 'portrait',

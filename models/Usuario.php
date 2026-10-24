@@ -48,6 +48,7 @@ class Usuario extends ActiveRecord
         'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos']],
         'traductor' => ['Traductor', ['/traductor', '/api/traductor']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
+        'historial' => ['Historial de cambios', ['/historial', '/api/historial']],
         'costos' => ['Costos y presupuesto', ['/costos']],
         'recursos' => ['Recursos y cuadrillas', ['/recursos']],
         'rfi' => ['RFI', ['/rfi']],

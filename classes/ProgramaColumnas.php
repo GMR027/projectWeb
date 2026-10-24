@@ -223,9 +223,11 @@ class ProgramaColumnas
         $nombre = mb_substr(trim($nombre), 0, 200);
         $nombre = $nombre === '' ? null : $nombre;
         try {
-            $st = self::db()->prepare('UPDATE proyectos SET programa_nombre = ?, programa_columnas_json = ?, programa_indicador_json = ? WHERE id = ?');
-            $st->bind_param('sssi', $nombre, $json, $ind, $pid);
-            return $st->execute();
+            return (bool)HistorialCambios::escribir('proyectos', 'modificado', (int)$pid, function () use ($nombre, $json, $ind, $pid) {
+                $st = self::db()->prepare('UPDATE proyectos SET programa_nombre = ?, programa_columnas_json = ?, programa_indicador_json = ? WHERE id = ?');
+                $st->bind_param('sssi', $nombre, $json, $ind, $pid);
+                return $st->execute();
+            });
         } catch (\Throwable $e) {   // migración pendiente
             error_log('Programa: ' . $e->getMessage());
             return false;
@@ -242,9 +244,11 @@ class ProgramaColumnas
     {
         $json = json_encode(self::normalizar($cols), JSON_UNESCAPED_UNICODE);
         try {
-            $st = self::db()->prepare('UPDATE proyectos SET programa_columnas_json = ? WHERE id = ?');
-            $st->bind_param('si', $json, $pid);
-            return $st->execute();
+            return (bool)HistorialCambios::escribir('proyectos', 'modificado', (int)$pid, function () use ($json, $pid) {
+                $st = self::db()->prepare('UPDATE proyectos SET programa_columnas_json = ? WHERE id = ?');
+                $st->bind_param('si', $json, $pid);
+                return $st->execute();
+            });
         } catch (\Throwable $e) {
             return false;
         }
@@ -296,9 +300,12 @@ class ProgramaColumnas
             if ($ov && (($campo === 'rec_inicio' && $dato > $ov) || ($campo === 'rec_fin' && $dato < $ov))) return [false, 'La fecha final de recuperación no puede ser anterior a la inicial'];
         }
         try {
-            $st = self::db()->prepare("UPDATE actividades SET $campo = ? WHERE id = ?");
-            $st->bind_param('si', $dato, $actividadId);
-            if (!$st->execute()) return [false, 'No se pudo guardar'];
+            $ok = HistorialCambios::escribir('actividades', 'modificado', (int)$actividadId, function () use ($campo, $dato, $actividadId) {
+                $st = self::db()->prepare("UPDATE actividades SET $campo = ? WHERE id = ?");
+                $st->bind_param('si', $dato, $actividadId);
+                return $st->execute();
+            });
+            if (!$ok) return [false, 'No se pudo guardar'];
         } catch (\Throwable $e) {
             return [false, 'Falta aplicar la migración del programa'];
         }

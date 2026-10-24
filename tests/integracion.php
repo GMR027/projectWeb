@@ -13,6 +13,8 @@ use Model\Usuario;
 
 $fallos = 0;
 $ok = function (string $nombre, bool $cond) use (&$fallos) { echo ($cond ? '  ok   ' : '  FALLA ') . $nombre . "\n"; if (!$cond) $fallos++; };
+// Sesión desde el principio: funciones como usuario_actual() la piden y en CLI ya habría salida (aviso de headers)
+if (session_status() === PHP_SESSION_NONE) @session_start();
 
 // ---------- conexión y esquema ----------
 $host = getenv('DB_HOST') ?: '127.0.0.1';
@@ -284,7 +286,112 @@ $antes = count($enviados);
 ClimaAuto::procesar($proy, true); Telegram::vaciar();
 $ok('«Probar ahora» (forzar) vuelve a avisar sin duplicar la bitácora', count($enviados) === $antes + 1 && (int)$db->query("SELECT COUNT(*) n FROM bitacora WHERE proyecto_id = {$proy->id} AND departamento = 'Clima'")->fetch_assoc()['n'] === 1);
 Clima::$http = null;
+
+// ---- /salud, /pdf y acciones sobre avisos ----
+echo "Bot: /salud, /pdf y acciones sobre avisos\n";
+// datos de prueba del bloque: pendiente, RFI y submittal, y el destino con todos los avisos activos
+$db->query("INSERT INTO punch_items (proyecto_id, titulo, severidad, estado) VALUES ({$proy->id}, 'Falta etiqueta en gabinete', 'alta', 'abierto')");
+$puId = (int)$db->insert_id;
+$db->query("INSERT INTO rfis (proyecto_id, numero, asunto, pregunta, prioridad, estado, fecha, fecha_limite) VALUES ({$proy->id}, 'RFI-002', 'Tipo de impermeabilizante', '¿Cuál especificación?', 'alta', 'abierto', '$hoy', DATE_ADD('$hoy', INTERVAL 3 DAY))");
+$rfiId = (int)$db->insert_id;
+$db->query("INSERT INTO submittals (proyecto_id, fecha, numero_submittal, estatus) VALUES ({$proy->id}, '$hoy', 'SUB-001', 'enviado')");
+$subId = (int)$db->insert_id;
+$destinoId = (int)Telegram::destinos((int)$proy->id)[0]['id'];
+Telegram::guardarEventos((int)$proy->id, $destinoId, array_keys(Telegram::EVENTOS));
+
+TelegramBot::procesar($msg(1001, '/salud'));
+$ok('/salud devuelve el semáforo con su indicador ámbar o rojo', str_contains($ultimo(), 'Salud de Prueba CI') && preg_match('/[🔴🟠]/u', $ultimo()) === 1 && str_contains($ultimo(), 'punch'));
+TelegramBot::procesar($msg(1001, '/pdf'));
+$ok('/pdf sin tipo pregunta con botones de tipo', count(array_filter($teclas(), fn($t) => ($t['callback_data'] ?? '') === 'doc:punch')) === 1 && count(array_filter($teclas(), fn($t) => ($t['callback_data'] ?? '') === 'doc:programa')) === 1);
+$docs = [];
+$mockBase2 = Telegram::$http;
+Telegram::$http = function (string $m, array $p) use (&$enviados, &$docs) {
+    if ($m === 'sendDocument') { $docs[] = $p; $enviados[] = ['chat_id' => $p['chat_id'], 'text' => '[archivo] ' . $p['file_name']]; return ['ok' => true]; }
+    if ($m === 'sendMessage') { $enviados[] = $p; return ['ok' => true]; }
+    return ['ok' => true, 'result' => []];
+};
+TelegramBot::procesar($cb(1001, 'doc:punch'));
+$ok('el botón del punch manda el PDF al chat', count($docs) === 1 && str_ends_with($docs[0]['file_name'], '.pdf') && ($docs[0]['bytes'] ?? '') !== '' && str_contains((string)$docs[0]['caption'], 'Punch list'));
+$ok('el PDF generado no se queda en el servidor', count(glob(sys_get_temp_dir() . '/tgpunch*.pdf') ?: []) === 0);
+Telegram::$http = $mockBase2;
+
+// punch: botón «Corregido» desde un aviso (con permiso) y sin permiso
+$antes = count($enviados);
+Telegram::entregarAviso((int)$proy->id, 'punch.creado', ['id' => $puId, 'titulo' => 'Falta etiqueta en gabinete', 'severidad' => 'alta', 'ubicacion' => 'Nivel 2', 'responsable' => 'Juan']);
+$ok('el aviso de punch trae los botones de acción en el chat privado', count($enviados) === $antes + 1 && count(array_filter($teclas(), fn($t) => ($t['callback_data'] ?? '') === "pu:$puId:corregido")) === 1);
+TelegramBot::procesar($cb(1001, "pu:$puId:corregido"));
+$ok('el botón «Corregido» cambia el estado del pendiente', (string)$db->query("SELECT estado FROM punch_items WHERE id = $puId")->fetch_row()[0] === 'corregido' && str_contains($ultimo(), 'Corregido'));
+TelegramBot::procesar($cb(1001, "pu:$puId:corregido"));
+$ok('pulsarlo dos veces no repite el cambio', str_contains($ultimo(), 'ya estaba'));
+TelegramBot::procesar($cb(2001, "pu:$puId:corregido"));   // cliente con acceso pero no dueño
+$ok('un cliente que no es dueño no puede cambiar el punch por botón', (string)$db->query("SELECT estado FROM punch_items WHERE id = $puId")->fetch_row()[0] === 'corregido' && str_contains($ultimo(), 'dueño del proyecto'));
+
+// RFI: botón «Responder» → el siguiente texto se guarda como respuesta
+$antes = count($enviados);
+Telegram::entregarAviso((int)$proy->id, 'rfi.creado', ['id' => $rfiId, 'numero' => 'RFI-002', 'asunto' => 'Tipo de impermeabilizante', 'prioridad' => 'alta', 'fecha_limite' => date('Y-m-d', strtotime('+3 days'))]);
+$ok('el aviso de RFI trae el botón «Responder»', count($enviados) === $antes + 1 && count(array_filter($teclas(), fn($t) => ($t['callback_data'] ?? '') === "rs:$rfiId")) === 1);
+TelegramBot::procesar($cb(1001, "rs:$rfiId"));
+$ok('el botón «Responder» pide el texto', str_contains($ultimo(), 'RFI-002') && str_contains($ultimo(), 'Respondido'));
+TelegramBot::procesar($cb(2001, "rs:$rfiId"));   // el cliente no dueño lo intenta
+$ok('un cliente que no es dueño no puede responder RFI', str_contains($ultimo(), 'dueño del proyecto'));
+TelegramBot::procesar($msg(1001, 'Usar impermeabilizante de 2 capas, marca Sika.'));
+$rf = $db->query("SELECT respuesta, estado, fecha_respuesta FROM rfis WHERE id = $rfiId")->fetch_assoc();
+$ok('el texto escrito se guarda como respuesta y pasa a Respondido', str_contains($rf['respuesta'], '2 capas') && $rf['estado'] === 'respondido' && $rf['fecha_respuesta'] !== null);
+
+// submittal: botones de estatus
+$antes = count($enviados);
+Telegram::entregarAviso((int)$proy->id, 'submittal.actualizado', ['id' => $subId, 'numero_submittal' => 'SUB-001', 'estatus' => 'enviado']);
+$ok('el aviso de submittal trae Aprobado, A/AN y Resubmitar', count($enviados) === $antes + 1 && count(array_filter($teclas(), fn($t) => str_starts_with($t['callback_data'] ?? '', "su:$subId:"))) === 3);
+TelegramBot::procesar($cb(1001, "su:$subId:aprobado"));
+$ok('el botón «Aprobado» cambia el estatus del submittal', (string)$db->query("SELECT estatus FROM submittals WHERE id = $subId")->fetch_row()[0] === 'aprobado' && str_contains($ultimo(), 'Aprobado'));
+TelegramBot::procesar($cb(2001, "su:$subId:rechazado"));
+$ok('un cliente que no es dueño no cambia submittals por botón', (string)$db->query("SELECT estatus FROM submittals WHERE id = $subId")->fetch_row()[0] === 'aprobado');
+
+// ---- resumen de la obra cada mañana ----
+echo "Resumen de la obra\n";
+$ok('el resumen arranca apagado y sin corridas', !Classes\ResumenObra::activo((int)$proy->id) && Classes\ResumenObra::ejecutar() === [] && Classes\ResumenObra::texto($proy) !== '');
+Classes\ResumenObra::cambiarActivo((int)$proy->id, true);
+Telegram::guardarEventos((int)$proy->id, $destinoId, ['resumen.matutino']);
+$antes = count($enviados);
+$r = Classes\ResumenObra::procesar($proy); Telegram::vaciar();
+$ok('el resumen se envía a los destinos que pidieron el evento', $r['ok'] && count($enviados) === $antes + 1 && str_contains($ultimo(), 'Resumen de la mañana') && str_contains($ultimo(), 'Actividades de hoy'));
+$ok('queda marcado el día para no repetir', (string)$db->query("SELECT resumen_ultimo FROM proyectos WHERE id = {$proy->id}")->fetch_row()[0] === $hoy);
+$antes = count($enviados);
+$r = Classes\ResumenObra::procesar($proy); Telegram::vaciar();
+$ok('una segunda corrida el mismo día no repite el resumen', $r['ok'] && count($enviados) === $antes);
+$antes = count($enviados);
+$r = Classes\ResumenObra::procesar($proy, true); Telegram::vaciar();
+$ok('«Probar ahora» (forzar) lo vuelve a mandar', $r['ok'] && count($enviados) === $antes + 1 && str_contains($ultimo(), 'Resumen de la mañana'));
+Telegram::guardarEventos((int)$proy->id, $destinoId, ['clima.alerta']);
+$antes = count($enviados);
+$r = Classes\ResumenObra::procesar($proy, true); Telegram::vaciar();
+$ok('si ningún destino pidió el evento se explica en vez de mandar a ciegas', $r['ok'] && count($enviados) === $antes && str_contains($r['mensaje'], 'Resumen de la obra cada mañana'));
+$sinEvento = Classes\ResumenObra::texto($proy);
+$ok('el resumen trae clima, actividades y semáforo', str_contains($sinEvento, 'Resumen de la mañana') && str_contains($sinEvento, 'Actividades de hoy') && str_contains($sinEvento, 'Semáforo'));
+// día sin nada relevante: sin actividades de hoy, atrasadas, restricciones, punch ni RFI → no manda nada
+$vt = new Model\Proyecto(['codigo' => 'VACIO', 'nombre' => 'Sin actividades', 'fecha_inicio' => '2026-11-02', 'fecha_fin' => '2026-12-31', 'usuario_id' => (int)$u->id]);
+$vt->id = $vt->guardar()['id'];
+$ok('un proyecto sin nada relevante no manda resumen', Classes\ResumenObra::texto($vt) === '');
+Classes\ResumenObra::cambiarActivo((int)$proy->id, false);
 Telegram::$http = null;
+
+// ---- límite de peticiones al webhook por IP ----
+echo "Límite del webhook por IP\n";
+$ok('la tabla de límites existe en el esquema', (bool)$db->query("SHOW TABLES LIKE 'telegram_limites'")->fetch_row());
+putenv('TELEGRAM_RATE_MAX=3'); $_ENV['TELEGRAM_RATE_MAX'] = '3';
+$ipL = '203.0.113.77';
+$db->query("DELETE FROM telegram_limites WHERE ip = '$ipL'");
+$pasa = 0;
+for ($i = 0; $i < 5; $i++) if (Telegram::limite($ipL)) $pasa++;
+$ok('la IP pasa hasta el tope (3) y luego queda bloqueada', $pasa === 3);
+$otra = 0;
+for ($i = 0; $i < 3; $i++) if (Telegram::limite('198.51.100.' . $i)) $otra++;
+$ok('otra IP tiene su propia cuota (no comparte el bloqueo)', $otra === 3);
+putenv('TELEGRAM_RATE_MAX=0'); $_ENV['TELEGRAM_RATE_MAX'] = '0';
+$ok('TELEGRAM_RATE_MAX=0 desactiva el límite', Telegram::limite($ipL) && Telegram::limite($ipL));
+putenv('TELEGRAM_RATE_MAX'); unset($_ENV['TELEGRAM_RATE_MAX']);
+$ok('una IP vacía nunca se bloquea (sin identidad no hay cuota)', Telegram::limite(''));
+$db->query("DELETE FROM telegram_limites WHERE ip LIKE '203.0.113.%' OR ip LIKE '198.51.100.%'");
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nIntegración OK\n";
 exit($fallos ? 1 : 0);

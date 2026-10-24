@@ -30,7 +30,7 @@ return [
     // Barra de herramientas del proyecto
     'Herramientas del proyecto' => 'Project tools', 'Navegación' => 'Navigation', 'Proyecto' => 'Project', 'Planeación' => 'Planning', 'Campo' => 'Field', 'Materiales y cambios' => 'Materials & changes', 'Documentos y diseño' => 'Documents & design', 'Ensamblador de documentos' => 'Document assembler',
     'Inteligencia artificial' => 'Artificial intelligence',
-    'Administración' => 'Administration', 'Especialidades' => 'Specialties', 'Informes de IA' => 'AI reports', 'Grabaciones de reuniones' => 'Meeting recordings', 'Historial de cambios de IA' => 'AI change history', 'Biblioteca de IA' => 'AI library', 'Acciones rápidas' => 'Quick actions',
+    'Administración' => 'Administration', 'Especialidades' => 'Specialties', 'Informes de IA' => 'AI reports', 'Grabaciones de reuniones' => 'Meeting recordings', 'Auditoría de la IA' => 'AI audit log', 'Biblioteca de IA' => 'AI library', 'Acciones rápidas' => 'Quick actions',
     // Notificaciones (campana) y novedades de la plataforma
     'Notificaciones' => 'Notifications', 'nuevas' => 'new', 'sin ver' => 'unread', 'Novedades de la plataforma' => 'Platform news',
     'Actividades de hoy' => "Today's activities", 'Nada programado para hoy.' => 'Nothing scheduled for today.', 'Ver el programa' => 'View schedule',
@@ -49,7 +49,9 @@ return [
     'Al acceder aceptas los' => 'By signing in you accept the',
     'términos y condiciones de uso' => 'terms and conditions of use',
     'Biblioteca de análisis' => 'Analysis library',
-    'Historial de cambios' => 'Change history',
+    'Historial de cambios' => 'Change history', 'Cambios pendientes' => 'Pending changes', 'Cambios aceptados' => 'Accepted changes',
+    'Cambios revertidos' => 'Reverted changes', 'Descripción del cambio' => 'Change description', 'Herramienta' => 'Tool',
+    'Aceptar todo' => 'Accept all', 'Aceptado' => 'Accepted', 'Revertido' => 'Reverted', 'Pendiente' => 'Pending',
     'Propuestas de IA' => 'AI proposals',
     'Resumen de IA' => 'AI summary',
     'Uso de la IA' => 'AI usage',

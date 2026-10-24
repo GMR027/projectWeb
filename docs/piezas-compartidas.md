@@ -54,6 +54,8 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 
 **Patrón de panel ocultable** (vPlan y Editor de marcas): la cabecera lleva un botón que esconde el panel, agrega una clase a la retícula (`vp-dis-fuera` en `.vp-dis-wrap` / `ve-sin-lateral` en `.ve-area`), muestra `.pn-abrir` y guarda la decisión en `localStorage` (`vp-dis-panel` / `ve-panel`); al elegir un elemento en la hoja el panel se reabre solo (`seleccionar()` en `vplan-diseno.js`).
 
+**Panel con cabecera y pestañas pegajosas** (vPlan): cabecera + pestañas van dentro de `.pn-cab-bloque`, que es lo pegajoso; su **alto se mide con JS** y se publica en la variable `--pn-cab-alto` del panel, para que lo que va debajo (p. ej. la barra de búsqueda de «Insertar», `top: var(--pn-cab-alto)`) se detenga justo debajo y nunca se monte encima. **Las pestañas no llevan alto fijo**: si ocupan dos filas, la caja crece (con altura fija la segunda fila se salía y se montaba sobre el contenido).
+
 `public/vendor/selector-color.js` → `window.VPColor.iniciar(raiz?)`: la **paleta de colores de la plataforma** para todos los `input[type=color]` (básicos, maestra Pantone, mis colores, gotero). Los paneles que se re-dibujan la llaman con su raíz (p. ej. `VPColor.iniciar(document.getElementById('vp-dis-campos'))`); los listeners globales se registran una sola vez.
 
 ## Pendiente de la reestructuración

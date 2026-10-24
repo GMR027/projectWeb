@@ -304,6 +304,15 @@
     if (btnPanel) btnPanel.addEventListener('click', () => panelVisible(true));
     panelVisible(guardado('vp-dis-panel', '1') !== '0');
 
+    // Alto del bloque pegajoso (cabecera + pestañas): se mide y se publica en --pn-cab-alto para que
+    // la barra de búsqueda de «Insertar» se detenga justo debajo y nunca se monte sobre las pestañas.
+    const bloqueCab = document.querySelector('.pn-cab-bloque');
+    if (bloqueCab && panelLado) {
+        const medir = () => { const h = Math.round(bloqueCab.getBoundingClientRect().height); if (h > 0) panelLado.style.setProperty('--pn-cab-alto', h + 'px'); };
+        medir();
+        if (window.ResizeObserver) new ResizeObserver(medir).observe(bloqueCab); else window.addEventListener('resize', medir);
+    }
+
     // ---- Panel con pestañas ----
     let pestana = guardado('vp-dis-ptab', 'props');
     function irAPestana(p) {
@@ -818,13 +827,15 @@
     const cuenta = { bloques: 0, simbolos: 0, cajetines: 0, estampas: 0, tablas: 0 };
     const buscaIns = () => { const i = $('vp-ins-todo'); return i ? i.value.trim().toLowerCase() : ''; };
     /** Sección visible: con texto de búsqueda se ven todas las que tengan coincidencias; sin texto, la categoría elegida */
+    const CAT_INS = { 'tablas-sf': 'tablas' };   // las hojas de SheetFlow comparten la categoría «Tablas»
     function pintarVisibilidad() {
         const q = buscaIns();
         let total = 0;
         document.querySelectorAll('[data-ins]').forEach(s => {
             const c = s.dataset.ins;
             if (c === 'recientes') { s.hidden = !!q || !recientes.length; return; }
-            const v = q ? cuenta[c] > 0 : (INS.cat === 'todo' || INS.cat === c);
+            const cat = CAT_INS[c] || c;
+            const v = q ? cuenta[c] > 0 : (INS.cat === 'todo' || INS.cat === cat);
             s.hidden = !v;
             if (v) total += cuenta[c] || 0;
         });
@@ -956,31 +967,49 @@
     function pintarTablas() {
         const q = buscaIns();
         const lista = catalogo.map((t, i) => ({ t, i })).filter(({ t }) => !q || (t.nombre + ' ' + t.titulo + ' ' + t.tipoNombre).toLowerCase().includes(q));
-        const grupos = {};
-        lista.forEach(x => { (grupos[x.t.tipoNombre] = grupos[x.t.tipoNombre] || []).push(x); });
+        const fila = ({ t, i }) =>
+            '<div class="vp-ins-tabla' + (t.enLamina ? ' vp-ya' : '') + '" data-i="' + i + '"><div class="vp-ins-tabla-txt"><b>' + esc(t.nombre) + '</b><small>' + t.filas + ' renglón(es)</small></div>' +
+            (t.sheetflow ? '<span class="vp-chip vp-chip-sf" title="Enlazada a una hoja de SheetFlow: sus datos se actualizan solos">SheetFlow</span>' : '') +
+            (t.enLamina ? '<span class="vp-chip" title="Ya está en esta lámina">En la lámina</span>' : '<button type="button" class="btn btn-sm btn-primary" data-acc="ins"><i class="fa-solid fa-plus"></i> Insertar</button>') +
+            (t.id ? '<button type="button" class="vp-ib vp-ib-sm" data-acc="copia" title="Insertar una copia independiente (sus cambios no afectan a las demás láminas)" aria-label="Insertar copia"><i class="fa-regular fa-copy"></i></button>' : '') +
+            '</div>';
+        // Las tablas del vPlan (las del catálogo del proyecto, incluidas las enlazadas a SheetFlow)…
+        const propias = lista.filter(({ t }) => !t.sheetflow || t.id > 0);
+        // …y las hojas de SheetFlow que aún no están en el vPlan (al insertarlas se crean y quedan enlazadas)
+        const hojaSf = lista.filter(({ t }) => t.sheetflow && !t.id);
+        cuenta.tablas = propias.length;
+        cuenta['tablas-sf'] = hojaSf.length;
         const caja = $('vp-ins-tablas');
-        cuenta.tablas = lista.length;
-        if (!lista.length) { caja.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ninguna tabla coincide.' : catalogo.length ? 'Ninguna tabla.' : 'Aún no hay tablas. Crea la primera arriba.') + '</p>'; return; }
-        caja.innerHTML = Object.keys(grupos).map(g =>
-            '<h5 class="vp-ins-grupo">' + esc(g) + ' <small>(' + grupos[g].length + ')</small></h5>' + grupos[g].map(({ t, i }) =>
-                '<div class="vp-ins-tabla' + (t.enLamina ? ' vp-ya' : '') + '" data-i="' + i + '"><div class="vp-ins-tabla-txt"><b>' + esc(t.nombre) + '</b><small>' + t.filas + ' renglón(es)' + (t.sheetflow ? ' · SheetFlow' : '') + '</small></div>' +
-                (t.enLamina ? '<span class="vp-chip" title="Ya está en esta lámina">En la lámina</span>' : '<button type="button" class="btn btn-sm btn-primary" data-acc="ins"><i class="fa-solid fa-plus"></i> Insertar</button>') +
-                (t.id ? '<button type="button" class="vp-ib vp-ib-sm" data-acc="copia" title="Insertar una copia independiente (sus cambios no afectan a las demás láminas)" aria-label="Insertar copia"><i class="fa-regular fa-copy"></i></button>' : '') +
-                '</div>').join('')).join('');
+        if (!propias.length) {
+            caja.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ninguna tabla coincide.' : 'Aún no hay tablas en el vPlan. Crea la primera arriba.') + '</p>';
+        } else {
+            const grupos = {};
+            propias.forEach(x => { (grupos[x.t.tipoNombre] = grupos[x.t.tipoNombre] || []).push(x); });
+            caja.innerHTML = Object.keys(grupos).map(g =>
+                '<h5 class="vp-ins-grupo">' + esc(g) + ' <small>(' + grupos[g].length + ')</small></h5>' + grupos[g].map(fila).join('')).join('');
+        }
+        const cajaSf = $('vp-ins-tablas-sf');
+        if (cajaSf) cajaSf.innerHTML = hojaSf.length ? hojaSf.map(fila).join('')
+            : '<p class="text-sm text-muted">' + (q ? 'Ninguna hoja coincide.'
+                : catalogo.some(t => t.sheetflow) ? 'Todas las hojas de SheetFlow del proyecto ya están en el vPlan.'
+                    : 'Este proyecto no tiene hojas de SheetFlow.') + '</p>';
     }
     // Un solo buscador para todas las categorías
     const insTodo = $('vp-ins-todo');
     if (insTodo) insTodo.addEventListener('input', () => { actualizarInsertar(); pintarBiblioteca(); pintarTablas(); pintarVisibilidad(); });
-    $('vp-ins-tablas').addEventListener('click', async e => {
+    // Insertar una tabla del catálogo (o una hoja de SheetFlow) en la lámina
+    const insertarTabla = async e => {
         if (recienArrastro()) return;
         const btn = e.target.closest('[data-acc]'), fila = e.target.closest('.vp-ins-tabla');
         if (!btn || !fila) return;
         const t = catalogo[+fila.dataset.i];
+        if (!t) return;
         const datos = { proyecto: D.proyecto, lamina: D.lamina, accion: 'agregar', ajax: 1 };
         if (t.id) datos.tabla_id = t.id; else datos.sheetflow_id = t.sheetflow_id;
         if (btn.dataset.acc === 'copia') datos.copia = 1;
         await conServidor(datos, '/vplan/lamina/tabla', 'No se pudo insertar la tabla');
-    });
+    };
+    [$('vp-ins-tablas'), $('vp-ins-tablas-sf')].forEach(c => c && c.addEventListener('click', insertarTabla));
 
     // Recovery: tantas columnas como se necesiten
     function pintarRecovery() {

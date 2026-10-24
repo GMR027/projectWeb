@@ -58,7 +58,7 @@ HTML],
 <h4>Buscar en el proyecto</h4>
 <p>Dentro de un proyecto, la caja <em>Buscar en el proyecto</em> de la barra superior busca en el programa, materiales, submittals, minutas, bitácora, reportes, archivo, punch, órdenes de cambio, permisos, documentos del Redactor y normativa. Todas las palabras deben aparecer; no importan acentos ni mayúsculas. Los visitantes solo ven resultados de las herramientas que tienen permitidas.</p>
 <p>Desde el listado también puedes <strong>Editar</strong> o <strong>Eliminar</strong> un proyecto (al eliminarlo se borra todo lo que contiene).</p>
-<p class="manual-nota"><strong>Espacio de almacenamiento.</strong> Cada proyecto tiene un límite de espacio para sus archivos, fotos, planos, fichas y logos. Si se llena, el sistema avisa y no deja subir más hasta que borres algo. Lo ves en <em>Ajustes del proyecto</em>.</p>
+<p class="manual-nota"><strong>Espacio de almacenamiento.</strong> Cada proyecto tiene un límite de espacio para sus archivos, fotos, planos, fichas y logos. Si se llena, el sistema avisa y no deja subir más hasta que borres algo. Lo ves en <em>Ajustes del proyecto</em>. El administrador puede ampliar o reducir el espacio de los proyectos que creó: en <em>Ajustes del proyecto → Datos → Almacenamiento</em> escribe los MB que quieras asignarle (con 0 vuelve al límite heredado). Los clientes no pueden cambiarlo.</p>
 <p class="manual-nota"><strong>Por dónde empezar.</strong> Al crear un proyecto eliges cómo arrancar: <em>paso a paso</em> (una ventana con un paso a la vez), <em>lista de pasos</em> (todos a la vista) o solo crear el proyecto. Los pasos son: calendario y festivos, primera partida o importación del programa, equipo, materiales, documentos y fechas del contrato; cada uno tiene su captura rápida y un enlace a la herramienta completa. Lo que captures se guarda en esa herramienta. Puedes volver cuando quieras en <em>Ajustes del proyecto → Por dónde empezar</em>. Nada es obligatorio.</p>
 <p class="manual-nota"><strong>Apariencia del proyecto.</strong> En <em>Ajustes del proyecto → General → Apariencia del proyecto</em> eliges si el proyecto se abre <em>siempre claro</em>, <em>siempre oscuro</em> o «como cada usuario» (lo que cada quien tenga en su navegador), y su <strong>color de acento</strong> entre 24 tonos. Se guarda en el proyecto: se mantiene al cambiar de navegador o de equipo y lo ven todos los que abran ese proyecto; el mismo color pinta la carátula en el portafolio. No afecta a lo que se exporta (PDF, Excel, XML).</p>
 <p class="manual-nota"><strong>Campana de notificaciones.</strong> En la barra superior, la campana reúne tres cosas: las <em>novedades de la plataforma</em> (lo último que cambió en ProjectWeb), las <em>actividades de hoy</em> del proyecto que estés viendo y lo que está pendiente en <em>Acciones rápidas</em>. Al abrirla, las novedades quedan marcadas como vistas. Cada quien ve solo lo que le toca: el cliente no recibe avisos de herramientas del administrador. El historial completo de novedades está en <em>Ajustes del proyecto → Novedades</em> y también en <a href="/novedades">Novedades de la plataforma</a>.</p>
@@ -314,7 +314,7 @@ HTML],
 <li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
 <li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
 <li><strong>Tareas (partidas):</strong> un bloque puede mostrar <strong>varias partidas</strong>, completas o solo algunas actividades, con su propio título y color. La numeración (SEQ) es <strong>continua 1..n</strong> o <strong>la de cada partida</strong>, con un subtítulo por partida. Puedes tener varios bloques de tareas en la misma lámina.</li>
-<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos (también las hojas de SheetFlow), con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos.</li>
+<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos, con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos. En «Insertar» hay dos apartados: <strong>Tablas adicionales</strong> (las creadas en vPlan; llevan la etiqueta «SheetFlow» si están enlazadas a una hoja) y <strong>Tablas SheetFlow</strong> (las hojas de SheetFlow que todavía no están en el vPlan: al insertarlas se crea la tabla y quedan enlazadas).</li>
 <li><strong>Insertar:</strong> el buscador de arriba filtra <em>todo</em> a la vez (bloques, símbolos, cajetines, estampas y tablas) y los chips (Bloques, Símbolos, Cajetines, Estampas, Tablas, Todo) muestran una categoría a la vez; lo último que insertaste queda en «Recientes». Un clic pone el bloque en el centro de la hoja y <strong>arrastrarlo hasta la hoja</strong> lo deja exactamente donde lo sueltes (se pega a las guías como los demás bloques).</li>
 <li><strong>Colores:</strong> donde hay un selector de color aparece también el botón <strong>Paleta</strong> con los colores básicos, la maestra Pantone y tus colores guardados.</li>
 <li><strong>Capas:</strong> lista de todos los objetos; arrástralos para cambiar el orden (arriba = al frente), ocúltalos con el ojo, bloquéalos con el candado para no moverlos por error y renómbralos con doble clic.</li>
@@ -334,7 +334,7 @@ HTML],
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>
 <h4>Editar las marcas</h4>
-<p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Capas</em>, <em>Láminas</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
+<p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, <strong>cajas de texto</strong> (el texto baja a la siguiente línea dentro del ancho de la caja, sin desbordarse), tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Capas</em>, <em>Láminas</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
@@ -615,7 +615,7 @@ HTML],
 <tr><td><strong>Selección</strong></td><td>Seleccionar y mover (Esc), y selección múltiple con recuadro. Con Mayús o Ctrl + clic sumas marcas.</td></tr>
 <tr><td><strong>Líneas</strong></td><td>Continua, discontinua, trazo y punto, punteada, polilínea (clic por punto, doble clic o Enter para terminar), lápiz libre, flecha y flecha doble.</td></tr>
 <tr><td><strong>Formas</strong></td><td>Rectángulo, redondeado, elipse, triángulo, rombo, pentágono, hexágono, estrella, cruz, equis, palomita, flecha de bloque, chevron, trapecio y zona translúcida, más 22 formas extra (octágono, corazón, rayo, gota, globo de texto, bandera, flechas de bloque en cuatro direcciones, estrellas, etc.). Las líneas recuerdan el último color, grosor y opacidad usados.</td></tr>
-<tr><td><strong>Texto y marcadores</strong></td><td>Texto, tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente; al escalarla con las asas la letra crece o se reduce junto con ella y las filas se reajustan), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
+<tr><td><strong>Texto y marcadores</strong></td><td>Texto, <strong>caja de texto</strong> (haz clic y escribe: el texto baja a la siguiente línea dentro del ancho de la caja y no se desborda a la derecha; el ancho se cambia con las asas laterales o en Propiedades, donde también puedes convertir un texto normal en caja), tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente; al escalarla con las asas la letra crece o se reduce junto con ella y las filas se reajustan), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
 <tr><td><strong>Medir</strong></td><td>Traza dos puntos; la primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas. Eliges la unidad (mm, cm, m, pulgadas).</td></tr>
 </tbody>
 </table>
@@ -685,6 +685,7 @@ HTML],
 <li><strong>Cortar, copiar y pegar</strong> (también pegado sin formato; lo pegado desde Word o LibreOffice se limpia).</li>
 <li><strong>Tablas:</strong> inserta con filas y columnas; con el cursor dentro aparecen agregar/quitar fila o columna, color de celda y eliminar tabla. <kbd>Tab</kbd> pasa a la siguiente celda.</li>
 <li><strong>Imágenes</strong> (desde tu equipo, pegadas o gráficos del Editor; clic en la imagen para cambiar su tamaño y alineación) y <strong>figuras</strong> (rectángulo, círculo, triángulo, rombo, estrella, flecha, línea).</li>
+<li><strong>Cuadro de texto</strong> (pestaña <em>Insertar</em>): una caja con ancho propio, fondo y borde, a la izquierda, a la derecha o centrada. El texto baja solo a la siguiente línea dentro de su ancho (no se desborda) y la caja crece en alto conforme escribes. Sale igual en PDF, Word y LibreOffice.</li>
 <li><strong>Hipervínculos:</strong> a una página web, a un correo o a <em>cualquier sección o documento de la plataforma</em> (programa, láminas, gráficos, otros documentos…). <kbd>Ctrl</kbd>+clic abre el enlace al editar.</li>
 <li><strong>Página:</strong> márgenes en cm (normal, estrecho, amplio, encuadernado o personalizados), numeración de páginas («Página N de M»), encabezado con nombre · departamento · fecha y <strong>salto de página</strong>.</li>
 <li><strong>Buscar y reemplazar</strong> (<kbd>Ctrl</kbd>+<kbd>F</kbd>).</li>
@@ -877,6 +878,34 @@ HTML],
 <p>El enlace <strong>Ver todas en otra pestaña</strong> abre la lista completa con todos los pendientes, y en cada sección <em>Ver todas (n) →</em> abre esa sección completa. Una sección sin pendientes indica «Nada pendiente».</p>
 HTML],
 
+['id' => 'historial', 'titulo' => 'Historial de cambios', 'icono' => 'fa-clock-rotate-left', 'roles' => $todos, 'herr' => 'historial', 'cuerpo' => <<<'HTML'
+<p>En <strong>Historial de cambios</strong> (sección <em>Administración</em> de la barra del proyecto) queda registrado todo lo que se modifica en el proyecto: quién lo hizo, cuándo, qué cambió exactamente y en qué herramienta. El registro <strong>no se puede editar ni borrar</strong>.</p>
+<h4>Las tres pestañas</h4>
+<ul>
+<li><strong>Cambios pendientes</strong> (la que se abre): todo lo nuevo, esperando revisión.</li>
+<li><strong>Cambios aceptados</strong>: lo que el administrador o el cliente ya validaron, con quién y cuándo lo aceptaron. Aquí también quedan los cambios que hace la IA, porque la IA nunca toca los datos sin que alguien la acepte.</li>
+<li><strong>Cambios revertidos</strong>: los que se cancelaron, junto con el registro de lo que se revirtió.</li>
+</ul>
+<h4>Cada renglón muestra</h4>
+<ul>
+<li><strong>Fecha</strong> en que se hizo el cambio.</li>
+<li><strong>Descripción del cambio</strong>: qué se creó, qué se modificó (con su valor anterior → nuevo) o qué se eliminó, quién lo hizo y a qué elemento afectó. Debajo, <em>Antes / después</em> despliega los valores completos.</li>
+<li><strong>Herramienta</strong> donde ocurrió (Programa, Materiales, Archivo…) y el tipo de evento.</li>
+<li><strong>Acciones</strong>: <em>Ver detalle</em> abre la herramienta justo en ese elemento; <em>Aceptar</em> lo pasa a «Cambios aceptados»; <em>Cancelar</em> devuelve los datos a como estaban antes de ese cambio.</li>
+</ul>
+<p class="manual-nota">Aceptar o cancelar solo lo hacen el administrador y el cliente dueño del proyecto; el visitante solo consulta.</p>
+<h4>Filtros y descarga</h4>
+<ul>
+<li>Filtra por herramienta, evento, quién lo hizo, rango de fechas y texto libre.</li>
+<li><strong>Aceptar todo</strong> (en la pestaña de pendientes) mueve de una vez todo lo que coincide con el filtro.</li>
+<li><strong>Excel</strong> y <strong>PDF</strong> descargan la lista con esos mismos filtros, para administradores y clientes.</li>
+</ul>
+<h4>Cuándo no se puede cancelar</h4>
+<p>Si el registro no conserva los valores antiguos, el botón lo explica y el cambio queda únicamente como registro. Al cancelar un borrado se recupera la fila, pero lo que colgaba de ella con borrado en cascada (fotos, relaciones, partidas hijas) no vuelve.</p>
+<h4>Visibilidad para los visitantes</h4>
+<p>El dueño del proyecto decide si un visitante ve esta herramienta: en <em>Mis visitantes</em>, marca <em>Historial de cambios</em> dentro de «Herramientas que puede ver». Si no está marcada, la entrada desaparece de su menú y tampoco puede entrar por enlace directo.</p>
+HTML],
+
 ['id' => 'integraciones', 'titulo' => 'Integraciones: API, Telegram y clima', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>En <strong>Integraciones</strong> (menú Proyecto) conectas ProjectWeb con otras herramientas (Power BI, Excel, Zapier, Slack, un sistema propio…). Para recibir avisos y reportar avance desde el celular, mira la sección <a href="#telegram">Telegram</a>.</p>
 <h4>API REST</h4>
@@ -894,12 +923,13 @@ HTML],
 <li>Entra a <strong>Integraciones</strong> (menú Proyecto) y pulsa <strong>Conectar mi Telegram</strong>.</li>
 <li>Se abre Telegram con el bot de la plataforma: pulsa <strong>Iniciar</strong>. Listo, el bot te saluda con tu nombre.</li>
 </ol>
-<p>Si no hay botón porque Telegram no está activado en tu servidor, pídele al administrador que lo active una vez (se explica en la misma pantalla).</p>
+<p>Si no hay botón porque Telegram no está activado en tu servidor, pídele al administrador que lo active una vez (se explica en la misma pantalla). Al abrir el chat verás el <strong>menú de comandos</strong> con lo que el bot sabe hacer.</p>
 <h4>Recibir avisos</h4>
 <ul>
 <li><strong>En tu chat:</strong> en <em>Avisos de un proyecto</em> pulsa «Recibir avisos de este proyecto en mi chat».</li>
 <li><strong>En el grupo de la obra:</strong> pulsa «Agregar a un grupo de la obra», elige el grupo en Telegram y confirma. Todos los del grupo verán los avisos.</li>
-<li>Con <strong>Qué avisos recibe</strong> eliges cuáles llegan: nuevo RFI, cambio de estado, nuevo pendiente del punch list, nueva restricción, cambio de submittal, bitácora importante y alerta de clima. Con <strong>Probar</strong> mandas un mensaje de prueba.</li>
+<li>Con <strong>Qué avisos recibe</strong> eliges cuáles llegan: nuevo RFI, cambio de estado, nuevo pendiente del punch list, nueva restricción, cambio de submittal, bitácora importante, alerta de clima y <strong>resumen de la obra cada mañana</strong>. Con <strong>Probar</strong> mandas un mensaje de prueba.</li>
+<li><strong>Desde el aviso mismo puedes actuar</strong> (solo en tu chat, no en el grupo): en un pendiente del punch, los botones <em>Corregido</em> o <em>En proceso</em>; en un RFI, <em>Responder</em> (escribes la respuesta y pasa a Respondido); en un submittal, <em>Aprobado</em>, <em>A/AN</em> o <em>Resubmitar</em>. Todos llevan también <em>Ver en la web</em>. Quien no sea administrador ni dueño del proyecto ve los botones pero no puede usarlos.</li>
 </ul>
 <h4>Reportar avance</h4>
 <ol>
@@ -909,14 +939,21 @@ HTML],
 <p>El avance cambia igual que en el programa: 0 % queda sin iniciar, 100 % completada y lo demás en proceso. Con <code>/hoy</code> ves qué toca hoy.</p>
 <h4>Mandar fotos</h4>
 <p>Manda la foto al bot. Si ya elegiste una actividad con <code>/avance</code>, se guarda en ella; si no, el bot te pregunta a cuál pertenece con botones. La foto queda como <strong>evidencia</strong> (sección Evidencias) y lo que escribas como pie de foto será su descripción. Puedes mandar varias a la vez.</p>
-<h4>Notas y clima</h4>
+<h4>Consultas: salud y PDF</h4>
+<ul>
+<li><code>/salud</code> — semáforo del proyecto: actividades atrasadas, restricciones, submittals con problema, punch, RFI, recursos, costos, seguridad y actividades en riesgo, solo los que no están en verde.</li>
+<li><code>/pdf</code> — manda al chat el <strong>PDF del programa</strong> (Gantt) o del <strong>punch list</strong> para descargarlo o compartirlo desde el celular.</li>
+<li><code>/clima</code> — pronóstico de hoy y mañana. <code>/proyecto</code> cambia de proyecto si tienes varios.</li>
+</ul>
+<h4>Notas</h4>
 <ul>
 <li><code>/nota</code> seguido del texto lo anota en la bitácora; puedes poner la importancia al inicio: <code>/nota alta: falta concreto</code>.</li>
-<li><code>/clima</code> da el pronóstico de hoy y mañana. <code>/proyecto</code> cambia de proyecto si tienes varios.</li>
 </ul>
-<p><strong>Quién puede qué:</strong> ver y consultar, cualquier persona con acceso al proyecto (menos visitantes). Reportar avance, mandar fotos y notas, solo el administrador o el dueño del proyecto, igual que en la web. Si cambias de teléfono, pulsa <em>Desconectar</em> y vuelve a conectar.</p>
+<p><strong>Quién puede qué:</strong> ver y consultar, cualquier persona con acceso al proyecto (menos visitantes). Reportar avance, mandar fotos y notas, y usar los botones de acción, solo el administrador o el dueño del proyecto, igual que en la web. Si cambias de teléfono, pulsa <em>Desconectar</em> y vuelve a conectar.</p>
 <h4>Clima automático</h4>
 <p>En Integraciones, <strong>Clima automático</strong> → <em>Activar</em>. El proyecto necesita su <em>ubicación</em> (ciudad o «lat,lon») en Ajustes del proyecto. Cada tarde (después de las 6 pm) se anota en la bitácora el clima del día (temperaturas, lluvia y viento) y, si mañana habrá lluvia o viento fuerte, el bot avisa con las actividades de exterior que caen ese día para reprogramarlas. <em>Probar ahora</em> lo ejecuta en el momento. Los datos vienen de Open-Meteo (gratis); solo se envía el nombre del lugar.</p>
+<h4>Resumen de la obra cada mañana</h4>
+<p>En Integraciones, <strong>Resumen de la obra</strong> → <em>Activar</em>. Después de las 6 am (o la hora configurada en el servidor) el bot manda a tus chats el resumen del día: clima, actividades de hoy, atrasadas, restricciones urgentes, punch grave, RFI y el semáforo. Si no hay nada relevante, no se manda nada; cada proyecto lo manda una vez al día. Para elegir quién lo recibe, marca la casilla <em>«Resumen de la obra cada mañana»</em> en los avisos de cada destino. <em>Probar ahora</em> lo manda en el momento.</p>
 HTML],
 
 ['id' => 'personalizacion', 'titulo' => 'Personalizar el proyecto', 'icono' => 'fa-sliders', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'

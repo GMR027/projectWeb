@@ -167,7 +167,10 @@ class ActiveRecord
         $query = "INSERT INTO " . static::$tabla . " (" . join(', ', $columnas) . ") VALUES (" . join(', ', $valores) . ")";
         $resultado = self::$db->query($query);
         $nuevoId = self::$db->insert_id;   // antes de avisar(): los webhooks hacen consultas y borrarían este valor
-        if ($resultado) $this->avisar('creada', $nuevoId);
+        if ($resultado) {
+            $this->avisar('creada', $nuevoId);
+            $this->anotarCambio('creado', (int)$nuevoId, null, $this->atributos());
+        }
         return [
             'resultado' => $resultado,
             'id' => $nuevoId
@@ -176,6 +179,8 @@ class ActiveRecord
 
     public function actualizar()
     {
+        // Imagen de la fila antes de tocarla: hace falta para el historial y para poder revertir el cambio
+        $antes = \Classes\HistorialCambios::antesDe(static::$tabla, (int)$this->id);
         $atributos = $this->sanitizarAtributos();
         $valores = [];
         foreach ($atributos as $key => $value) {
@@ -184,17 +189,37 @@ class ActiveRecord
         $query = "UPDATE " . static::$tabla . " SET " . join(', ', $valores);
         $query .= " WHERE id = '" . self::$db->escape_string($this->id) . "' LIMIT 1";
         $resultado = self::$db->query($query);
-        if ($resultado) $this->avisar('actualizada', (int)$this->id);
+        if ($resultado) {
+            $this->avisar('actualizada', (int)$this->id);
+            $this->anotarCambio('modificado', (int)$this->id, $antes, $this->atributos());
+        }
         return $resultado;
     }
 
     public function eliminar()
     {
         $aviso = isset(\Classes\Webhooks::EVENTO_DE[static::$tabla]['eliminada']) ? $this->datosParaAviso() : null;   // el proyecto se resuelve antes de borrar
+        $historial = \Classes\HistorialCambios::observa(static::$tabla) ? $this->datosParaAviso() : null;
         $query = "DELETE FROM " . static::$tabla . " WHERE id = " . self::$db->escape_string($this->id) . " LIMIT 1";
         $resultado = self::$db->query($query);
         if ($resultado && $aviso) $this->avisar('eliminada', (int)$this->id);
+        if ($resultado && $historial) $this->anotarCambio('eliminado', (int)$this->id, $historial, null);
         return $resultado;
+    }
+
+    /**
+     * Deja constancia del cambio en el Historial de cambios (sección Administración). Nunca lanza: la auditoría
+     * no debe impedir el guardado. Lo observa `Classes\HistorialCambios`, que además decide si está silenciado.
+     * $antes/$despues traen los valores crudos (no sanitizados), tal como están en la base.
+     */
+    private function anotarCambio(string $evento, int $id, ?array $antes, ?array $despues): void
+    {
+        if (!\Classes\HistorialCambios::observa(static::$tabla)) return;
+        try {
+            \Classes\HistorialCambios::desdeFila(static::$tabla, $evento, $id, $antes, $despues);
+        } catch (\Throwable $e) {
+            error_log('Historial de cambios: ' . $e->getMessage());
+        }
     }
 
     private function datosParaAviso(): array

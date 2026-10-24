@@ -38,7 +38,7 @@ class PlantillasController
     public static function aplicar()
     {
         $p = self::admin();
-        [$ok, $msg] = Plantillas::aplicarBase($p);
+        [$ok, $msg] = \Classes\HistorialCambios::silenciar(fn() => Plantillas::aplicarBase($p));
         $_SESSION['plantillas_msg'] = ['ok' => $ok, 'texto' => $msg];
         header('Location: /plantillas?proyecto=' . (int)$p->id);
         exit;

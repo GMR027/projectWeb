@@ -69,6 +69,7 @@ $ic = [
     'flag' => '<path d="M5 3v18M5 4h15l-4 5 4 5H5"/>',
     'zone' => '<circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".28"/>',
     'text' => '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
+    'textbox' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 9V7.5h8V9M12 7.5v7M10 14.5h4"/>',
     'table' => '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 14.5h18M9 4v16M15 4v16"/>',
     'restr' => '<path d="M12 2l10 10-10 10L2 12z" fill="#dc2626" stroke="#991b1b"/><text x="12" y="15.6" font-size="10" font-weight="700" text-anchor="middle" fill="#fff" stroke="none">1</text>',
     'pin' => '<circle cx="12" cy="12" r="9" fill="#0070c0" stroke="#fff" stroke-width="1.5"/><text x="12" y="15.6" font-size="10" font-weight="700" text-anchor="middle" fill="#fff" stroke="none">1</text>',
@@ -112,7 +113,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     </div>
     <?php endif; ?>
     <div class="ve-grupo" data-pan="insertar" data-nombre="Texto y marcadores">
-        <?php foreach ([['text', 'Texto'], ['table', 'Tabla: arrastra para dibujarla; doble clic en una celda para escribir (Tab pasa a la siguiente)'], ['restr', 'Rombo de restricción numerado'], ['pin', 'Círculo numerado'], ['image', 'Insertar imagen'], ['link', 'Hipervínculo: dibuja un área sobre el plano y asígnale un enlace externo o una sección del proyecto'], ['v360', 'Vista 360: carga una foto 360 (equirectangular, 2:1), dibuja el área en el plano y se abrirá como vista interactiva en View360']] as [$t, $ti]) echo $tool($t, $ti); ?>
+        <?php foreach ([['text', 'Texto'], ['textbox', 'Caja de texto: el texto baja a la siguiente línea dentro del ancho de la caja (no se desborda a la derecha); ajusta el ancho con las asas laterales o en Propiedades'], ['table', 'Tabla: arrastra para dibujarla; doble clic en una celda para escribir (Tab pasa a la siguiente)'], ['restr', 'Rombo de restricción numerado'], ['pin', 'Círculo numerado'], ['image', 'Insertar imagen'], ['link', 'Hipervínculo: dibuja un área sobre el plano y asígnale un enlace externo o una sección del proyecto'], ['v360', 'Vista 360: carga una foto 360 (equirectangular, 2:1), dibuja el área en el plano y se abrirá como vista interactiva en View360']] as [$t, $ti]) echo $tool($t, $ti); ?>
         <button type="button" id="ve-simbolos-btn" title="Símbolos: abre la biblioteca (cámaras, extintores, simbologías, cajetines…) para insertarlos de un clic" aria-label="Insertar símbolo"><?php echo $svg('<path d="M12 3l2.6 5.600 6.100.700-4.500 4.200 1.200 6L12 16.500 6.600 19.500l1.200-6L3.300 9.300l6.100-.7z"/>'); ?></button>
         <input type="file" id="ve-archivo" accept="image/*" hidden>
         <input type="file" id="ve-archivo-360" accept="image/jpeg,image/png,image/webp" hidden>
@@ -234,6 +235,10 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <div class="ve-f"><label>Alineación</label>
                 <select id="p-al"><option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option></select></div>
             <div class="ve-f"><label>Tamaño de letra</label><input type="number" id="p-fs" min="6" max="400"></div>
+            <div class="ve-f"><label class="ve-chk"><input type="checkbox" id="p-box"> Caja de texto <small class="text-muted">(el texto baja a la siguiente línea y no se desborda)</small></label></div>
+            <div class="ve-f"><label>Ancho de la caja</label>
+                <div class="ve-rango"><input type="range" id="p-boxw-r" min="40" max="4000" step="10" aria-label="Ancho de la caja"><span><input type="number" id="p-boxw" min="20" max="4000"> px</span></div>
+                <small class="text-muted">También se cambia arrastrando las asas laterales de la caja.</small></div>
             <div class="ve-f"><label>Unidad de esta medida</label><select id="p-unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option><option value="in">pulgadas</option></select>
                 <p class="text-sm" style="margin-top:.4rem">Mide: <b id="p-medida"></b></p></div>
             <div class="ve-f"><button type="button" id="p-ref" class="btn btn-sm btn-ghost" title="Indica cuánto mide en la realidad este segmento y recalcula la escala">Usar como referencia…</button></div>

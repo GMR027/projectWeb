@@ -323,8 +323,9 @@ class VplanTablaController
         $h = new SheetflowHoja(['proyecto_id' => $proyecto->id, 'nombre' => $nombre, 'fecha' => date('Y-m-d'), 'departamento' => '', 'descripcion' => mb_substr('Creada desde ' . trim((string)($_POST['origen'] ?? 'un documento')), 0, 500), 'creado_por' => $_SESSION['id'] ?? null]);
         if ($alertas = $h->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $h->datos = json_encode(Sheetflow::normalizar($datos), JSON_UNESCAPED_UNICODE);
-        $h->id = $h->guardar()['id'];
-        $t = Sheetflow::aVplan($h);
+        // Creada con IA: queda en la auditoría de la IA, no como cambio manual pendiente
+        $h->id = \Classes\HistorialCambios::silenciar(fn() => $h->guardar()['id']);
+        $t = \Classes\HistorialCambios::silenciar(fn() => Sheetflow::aVplan($h));
         if ($metodo === 'ia') {
             Auditoria::registrar((int)$proyecto->id, 'tabla-documento', 'aplicado', 'tabla_de_documento', 'Tabla «' . $nombre . '» creada con IA a partir de ' . mb_substr((string)($_POST['origen'] ?? 'un documento'), 0, 120), null, ['tabla' => (int)$t->id, 'hoja' => (int)$h->id, 'renglones' => count($datos['rows'])], (int)$t->id, mb_substr((string)($_POST['modelo'] ?? ''), 0, 150), ['vplan_tabla', (int)$t->id, $nombre]);
         }

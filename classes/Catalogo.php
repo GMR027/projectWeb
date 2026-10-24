@@ -71,8 +71,17 @@ class Catalogo
         $e = self::esc($nombre);
         $f = self::filas("SELECT nombre FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '$e' LIMIT 1");
         if ($f) return $f[0]['nombre'];
-        self::db()->query("INSERT IGNORE INTO bitacora_departamentos (proyecto_id, nombre) VALUES ($pid, '$e')");
+        HistorialCambios::escribir('bitacora_departamentos', 'creado', 0,
+            fn() => self::db()->query("INSERT IGNORE INTO bitacora_departamentos (proyecto_id, nombre) VALUES ($pid, '$e')"));
         return $nombre;
+    }
+
+    /** id de una fila del catálogo que se localiza por nombre (0 si la tabla no se lleva en el historial) */
+    private static function idPorNombre(string $tabla, int $pid, string $nombreEsc): int
+    {
+        if (!HistorialCambios::observa($tabla) || !preg_match('/^[a-z0-9_]+$/', $tabla)) return 0;
+        $f = self::filas("SELECT id FROM $tabla WHERE proyecto_id = $pid AND nombre = '$nombreEsc' LIMIT 1");
+        return (int)($f[0]['id'] ?? 0);
     }
 
     /** Cambia el nombre en el catálogo y en todas las herramientas; si el nuevo ya existe, se unen. Devuelve los registros cambiados */
@@ -88,8 +97,13 @@ class Catalogo
             $cambios += max(0, self::db()->affected_rows);
         }
         $existe = self::filas("SELECT id FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '$n' LIMIT 1");
-        if ($existe) self::db()->query("DELETE FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '$d'");
-        else self::db()->query("UPDATE bitacora_departamentos SET nombre = '$n' WHERE proyecto_id = $pid AND nombre = '$d'");
+        if ($existe) {
+            HistorialCambios::escribir('bitacora_departamentos', 'eliminado', self::idPorNombre('bitacora_departamentos', $pid, $d),
+                fn() => self::db()->query("DELETE FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '$d'"));
+        } else {
+            HistorialCambios::escribir('bitacora_departamentos', 'modificado', self::idPorNombre('bitacora_departamentos', $pid, $d),
+                fn() => self::db()->query("UPDATE bitacora_departamentos SET nombre = '$n' WHERE proyecto_id = $pid AND nombre = '$d'"));
+        }
         return $cambios;
     }
 
@@ -98,7 +112,9 @@ class Catalogo
     {
         $u = self::departamentosConUso($pid)[$nombre] ?? null;
         if ($u && $u['total'] > 0) return false;
-        self::db()->query("DELETE FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '" . self::esc($nombre) . "'");
+        $d = self::esc($nombre);
+        HistorialCambios::escribir('bitacora_departamentos', 'eliminado', self::idPorNombre('bitacora_departamentos', $pid, $d),
+            fn() => self::db()->query("DELETE FROM bitacora_departamentos WHERE proyecto_id = $pid AND nombre = '$d'"));
         return true;
     }
 
@@ -154,9 +170,9 @@ class Catalogo
         if (isset($a['tabla'])) {
             $f = self::filas("SELECT nombre FROM {$a['tabla']} WHERE proyecto_id = $pid AND LOWER(nombre) = LOWER('$e') LIMIT 1");
             if ($f) return $f[0]['nombre'];
-            self::db()->query("INSERT INTO {$a['tabla']} (proyecto_id, nombre) VALUES ($pid, '$e')");
+            HistorialCambios::escribir($a['tabla'], 'creado', 0, fn() => self::db()->query("INSERT INTO {$a['tabla']} (proyecto_id, nombre) VALUES ($pid, '$e')"));
         } else {
-            self::db()->query("INSERT IGNORE INTO catalogo_categorias (proyecto_id, ambito, nombre) VALUES ($pid, '" . self::esc($ambito) . "', '$e')");
+            HistorialCambios::escribir('catalogo_categorias', 'creado', 0, fn() => self::db()->query("INSERT IGNORE INTO catalogo_categorias (proyecto_id, ambito, nombre) VALUES ($pid, '" . self::esc($ambito) . "', '$e')"));
         }
         return $nombre;
     }
@@ -170,7 +186,8 @@ class Catalogo
         $n = self::esc($a);
         $cambios = 0;
         if (isset($def['tabla'])) {
-            self::db()->query("UPDATE {$def['tabla']} SET nombre = '$n' WHERE proyecto_id = $pid AND nombre = '$d'");
+            HistorialCambios::escribir($def['tabla'], 'modificado', self::idPorNombre($def['tabla'], $pid, $d),
+                fn() => self::db()->query("UPDATE {$def['tabla']} SET nombre = '$n' WHERE proyecto_id = $pid AND nombre = '$d'"));
             return max(0, self::db()->affected_rows);
         }
         foreach ($def['usos'] as $t => $c) {
@@ -179,9 +196,11 @@ class Catalogo
         }
         $amb = self::esc($ambito);
         if (self::filas("SELECT id FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '$amb' AND nombre = '$n' LIMIT 1")) {
-            self::db()->query("DELETE FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '$amb' AND nombre = '$d'");
+            HistorialCambios::escribir('catalogo_categorias', 'eliminado', self::idPorNombre('catalogo_categorias', $pid, $d),
+                fn() => self::db()->query("DELETE FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '$amb' AND nombre = '$d'"));
         } else {
-            self::db()->query("UPDATE catalogo_categorias SET nombre = '$n' WHERE proyecto_id = $pid AND ambito = '$amb' AND nombre = '$d'");
+            HistorialCambios::escribir('catalogo_categorias', 'modificado', self::idPorNombre('catalogo_categorias', $pid, $d),
+                fn() => self::db()->query("UPDATE catalogo_categorias SET nombre = '$n' WHERE proyecto_id = $pid AND ambito = '$amb' AND nombre = '$d'"));
         }
         return $cambios;
     }
@@ -196,8 +215,13 @@ class Catalogo
             if (!$liberar || isset($def['tabla'])) return false;
             foreach ($def['usos'] as $t => $c) self::db()->query("UPDATE $t SET $c = '' WHERE proyecto_id = $pid AND $c = '$e'");
         }
-        if (isset($def['tabla'])) self::db()->query("DELETE FROM {$def['tabla']} WHERE proyecto_id = $pid AND nombre = '$e'");
-        else self::db()->query("DELETE FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '" . self::esc($ambito) . "' AND nombre = '$e'");
+        if (isset($def['tabla'])) {
+            HistorialCambios::escribir($def['tabla'], 'eliminado', self::idPorNombre($def['tabla'], $pid, $e),
+                fn() => self::db()->query("DELETE FROM {$def['tabla']} WHERE proyecto_id = $pid AND nombre = '$e'"));
+        } else {
+            HistorialCambios::escribir('catalogo_categorias', 'eliminado', 0,
+                fn() => self::db()->query("DELETE FROM catalogo_categorias WHERE proyecto_id = $pid AND ambito = '" . self::esc($ambito) . "' AND nombre = '$e'"));
+        }
         return true;
     }
 }

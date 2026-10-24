@@ -86,8 +86,13 @@ class Punch
         $campos = "titulo = '" . self::esc($titulo) . "', descripcion = '" . self::esc(mb_substr((string)($d['descripcion'] ?? ''), 0, 3000)) . "', actividad_id = " . ($aid ?: 'NULL') . ", ubicacion = '" . self::esc(mb_substr((string)($d['ubicacion'] ?? ''), 0, 200)) . "', categoria = '" . self::esc(mb_substr((string)($d['categoria'] ?? ''), 0, 60))
             . "', severidad = '$sev', responsable = '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', contratista = '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', fecha_limite = " . ($lim && $lim->format('Y-m-d') === $d['fecha_limite'] ? "'{$d['fecha_limite']}'" : 'NULL');
         $db = self::db();
-        if ($existente) { $db->query("UPDATE punch_items SET $campos WHERE id = " . (int)$existente['id'] . " AND proyecto_id = $pid"); Webhooks::emitir($pid, 'punch.actualizado', ['id' => (int)$existente['id'], 'titulo' => $titulo, 'severidad' => $sev]); return [true, 'Pendiente actualizado.', (int)$existente['id']]; }
-        $db->query("INSERT INTO punch_items SET proyecto_id = $pid, $campos, origen = '" . (in_array($origen, ['manual', 'inspeccion', 'ia'], true) ? $origen : 'manual') . "', creado_por = '" . self::esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "'");
+        if ($existente) {
+            $idExp = (int)$existente['id'];
+            HistorialCambios::escribir('punch_items', 'modificado', $idExp, fn() => $db->query("UPDATE punch_items SET $campos WHERE id = $idExp AND proyecto_id = $pid"));
+            Webhooks::emitir($pid, 'punch.actualizado', ['id' => $idExp, 'titulo' => $titulo, 'severidad' => $sev]);
+            return [true, 'Pendiente actualizado.', $idExp];
+        }
+        HistorialCambios::escribir('punch_items', 'creado', 0, fn() => $db->query("INSERT INTO punch_items SET proyecto_id = $pid, $campos, origen = '" . (in_array($origen, ['manual', 'inspeccion', 'ia'], true) ? $origen : 'manual') . "', creado_por = '" . self::esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "'"));
         $nuevo = (int)$db->insert_id;   // antes de emitir: el aviso hace consultas
         Webhooks::emitir($pid, 'punch.creado', ['id' => $nuevo, 'titulo' => $titulo, 'severidad' => $sev, 'ubicacion' => (string)($d['ubicacion'] ?? ''), 'responsable' => (string)($d['responsable'] ?? '')]);
         return [true, 'Pendiente registrado.', $nuevo];
@@ -99,7 +104,8 @@ class Punch
         $x = self::obtener($pid, $id);
         if (!$x) return;
         if ($x[$campo]) { Imagenes::eliminarEn(self::CARPETA, $x[$campo]); PunchVista::borrarMiniatura($x[$campo]); }
-        self::db()->query("UPDATE punch_items SET $campo = '" . self::esc($nombre) . "' WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('punch_items', 'modificado', $id,
+            fn() => self::db()->query("UPDATE punch_items SET $campo = '" . self::esc($nombre) . "' WHERE id = $id AND proyecto_id = $pid"));
     }
 
     public static function estado(Proyecto $p, int $id, string $estado): array
@@ -118,7 +124,8 @@ class Punch
         $x = self::obtener($pid, $id);
         if (!$x) return;
         foreach (['foto_antes', 'foto_despues'] as $c) if ($x[$c]) { Imagenes::eliminarEn(self::CARPETA, $x[$c]); PunchVista::borrarMiniatura($x[$c]); }
-        self::db()->query("DELETE FROM punch_items WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('punch_items', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM punch_items WHERE id = $id AND proyecto_id = $pid"));
     }
 
     /** Crea un pendiente por cada falla de una inspección. @param array $resultados lista de ['texto','categoria','estado'=>ok|falla|na,'nota'] */

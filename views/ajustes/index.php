@@ -27,6 +27,9 @@ $usado = array_sum($alm);
 $limite = \Classes\Almacenamiento::limite((int)$proyecto->id);
 $pct = min(100, $usado / $limite * 100);
 $fmt = fn($b) => \Classes\Almacenamiento::formato((int)$b);
+$limiteMb = \Classes\Almacenamiento::limiteMb((int)$proyecto->id);
+$limiteHeredado = \Classes\Almacenamiento::limiteHeredado((int)$proyecto->id);
+$puedeAjustarAlmacenamiento = is_admin() && \Classes\Almacenamiento::hayColumnaProyecto();
 ?>
 <?php
 $pidResp = (int)$proyecto->id;
@@ -286,9 +289,40 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
 
 <section class="ajustes-seccion" id="datos">
     <h3 class="seccion-titulo"><i class="fa-solid fa-database"></i> Datos</h3>
-<div class="card">
+<div class="card" id="almacenamiento">
     <h3 class="card-titulo"><i class="fa-solid fa-database"></i> <?php echo s(t('Almacenamiento')); ?></h3>
     <p class="text-muted text-sm">Cada proyecto dispone de <?php echo $fmt($limite); ?> para sus archivos, fotos, planos, fichas y logos. No cuenta lo generado al exportar.</p>
+    <?php if ($puedeAjustarAlmacenamiento): ?>
+        <form method="POST" action="/ajustes/almacenamiento">
+            <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">
+            <div class="form-grid form-grid-inline" style="margin-top:1rem">
+                <div class="campo">
+                    <label for="limite_almacenamiento_mb">Espacio del proyecto (MB)</label>
+                    <input type="number" id="limite_almacenamiento_mb" name="limite_almacenamiento_mb" min="0" max="100000" step="1" value="<?php echo $limiteMb ?>">
+                </div>
+                <div class="campo" style="align-self:end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-arrows-up-down"></i> Ampliar o reducir
+                    </button>
+                </div>
+            </div>
+        </form>
+        <p class="text-muted text-sm" style="margin-top:.6rem">
+            <?php if ($limiteMb > 0): ?>
+                Límite propio de este proyecto: <strong><?php echo number_format($limiteMb, 0, '.', ','); ?> MB</strong>.
+                Escribe <strong>0</strong> para volver al límite heredado (<?php echo $fmt($limiteHeredado); ?>).
+            <?php else: ?>
+                Este proyecto usa el límite heredado: <strong><?php echo $fmt($limiteHeredado); ?></strong>. Escribe los MB que quieras asignarle.
+            <?php endif; ?>
+            <?php if (!empty($_GET['alm'])): ?>
+                <br><span class="text-sm" style="color:var(--primary)">Espacio actualizado.</span>
+            <?php endif; ?>
+        </p>
+    <?php elseif (is_admin()): ?>
+        <p class="text-muted text-sm" style="margin-top:.8rem">
+            <i class="fa-solid fa-lock"></i> Este proyecto usa el límite heredado: <strong><?php echo $fmt($limiteHeredado); ?></strong>.
+        </p>
+    <?php endif; ?>
     <div class="alm-barra" title="<?php echo number_format($pct, 1); ?> %"><span class="<?php echo $pct >= 90 ? 'alm-rojo' : ($pct >= 70 ? 'alm-amarillo' : ''); ?>" style="width: <?php echo number_format($pct, 2, '.', ''); ?>%"></span></div>
     <p><strong><?php echo $fmt($usado); ?></strong> usados de <?php echo $fmt($limite); ?> · <?php echo number_format($pct, 1); ?> % · libres <?php echo $fmt(max(0, $limite - $usado)); ?></p>
     <table class="tabla">

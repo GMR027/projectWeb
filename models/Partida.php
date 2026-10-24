@@ -56,8 +56,16 @@ class Partida extends ActiveRecord
     {
         $id = (int)$this->id;
         $proyectoId = (int)$this->proyecto_id;
+        $n = (int)(self::$db->query("SELECT COUNT(*) FROM actividades WHERE partida_id = $id")->fetch_row()[0]);
         self::$db->query("DELETE FROM actividades WHERE partida_id = $id");
         $ok = $this->eliminar();
+        if ($ok && $n > 0) {
+            // Las actividades se borran con SQL directo (cascada): se anotan aparte, sin qué revertir
+            $etiqueta = trim(($this->codigo ?? '') . ' ' . ($this->nombre ?? ''));
+            \Classes\HistorialCambios::registrar($proyectoId, 'programa', 'eliminado',
+                "Se eliminaron $n actividad(es) con la partida " . $etiqueta, ['id' => $id, 'actividades' => $n], null,
+                ['partida', $id, $etiqueta]);
+        }
         if ($ok) {
             self::quitarDeBloquesVplan($proyectoId, $id);
             ActividadMaterial::sincronizarInstalacion($proyectoId);

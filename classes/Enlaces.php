@@ -32,14 +32,15 @@ class Enlaces
         $token = bin2hex(random_bytes(20));
         $expira = $tipo === 'cliente' && isset(self::DIAS[$dias]) ? "DATE_ADD(NOW(), INTERVAL $dias DAY)" : 'NULL';
         if ($tipo === 'cliente' && !isset(self::DIAS[$dias])) return 'Elige cuánto debe durar el enlace';
-        self::db()->query("INSERT INTO enlaces_proyecto SET proyecto_id = $pid, tipo = '$tipo', token = '$token', nombre = '" . self::esc(mb_substr(trim($nombre), 0, 150)) . "',
-            secciones = '" . self::esc(implode(',', $tipo === 'cliente' ? $sec : [])) . "', expira = $expira, creado_por = '" . self::esc(mb_substr($usuario, 0, 150)) . "'");
+        HistorialCambios::escribir('enlaces_proyecto', 'creado', 0, fn() => self::db()->query("INSERT INTO enlaces_proyecto SET proyecto_id = $pid, tipo = '$tipo', token = '$token', nombre = '" . self::esc(mb_substr(trim($nombre), 0, 150)) . "',
+            secciones = '" . self::esc(implode(',', $tipo === 'cliente' ? $sec : [])) . "', expira = $expira, creado_por = '" . self::esc(mb_substr($usuario, 0, 150)) . "'"));
         return null;
     }
 
     public static function revocar(int $pid, int $id): void
     {
-        self::db()->query("UPDATE enlaces_proyecto SET revocado = 1 WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('enlaces_proyecto', 'modificado', $id,
+            fn() => self::db()->query("UPDATE enlaces_proyecto SET revocado = 1 WHERE id = $id AND proyecto_id = $pid"));
     }
 
     public static function lista(int $pid, string $tipo): array

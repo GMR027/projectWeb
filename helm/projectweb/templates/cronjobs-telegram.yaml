@@ -1,0 +1,91 @@
+# Tareas programadas del bot de Telegram: clima automático y resumen de la obra.
+# Mismo patrón que almacenamiento-snapshot: corren con la imagen de la app, sin sesión y con el mismo volumen.
+# En local (sin clúster) estas mismas corridas las hace public/index.php pasada la hora, pero solo si entra un admin.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: telegram-clima
+spec:
+  schedule: "0 {{ .Values.app.climaHora | default 18 }} * * *"
+  timeZone: {{ .Values.app.timezone | quote }}   # si no, k8s lo interpretaría en UTC (el controller corre sin timezone)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector: {{ toYaml .Values.nodeSelector | nindent 12 }}
+          containers:
+            - name: clima
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              command: ["php", "bin/clima_programado.php"]
+              env:
+                - { name: DB_HOST, value: mysql }
+                - { name: DB_NAME, value: {{ .Values.mysql.database | quote }} }
+                - { name: DB_USER, value: {{ .Values.mysql.user | quote }} }
+                - name: DB_PASS
+                  valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_PASSWORD } }
+                - { name: APP_URL, value: "https://{{ .Values.host }}" }
+                - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
+                - { name: CLIMA_AUTO_HORA, value: {{ .Values.app.climaHora | default 18 | quote }} }
+                # Token solo como respaldo (la clave es de BD cifrada); mismo secreto que el pod de la app
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.telegramSecret | default "projectweb-telegram" }}
+                      key: TELEGRAM_BOT_TOKEN
+                      optional: true
+              volumeMounts:
+                - { name: telegram-clave, mountPath: /var/www/html/storage/secretos, readOnly: true }
+          volumes:
+            - name: telegram-clave
+              secret:
+                secretName: {{ .Values.telegramSecret | default "projectweb-telegram" }}
+                optional: true
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: telegram-resumen
+spec:
+  schedule: "0 {{ .Values.app.resumenHora | default 6 }} * * *"
+  timeZone: {{ .Values.app.timezone | quote }}   # si no, k8s lo interpretaría en UTC (el controller corre sin timezone)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector: {{ toYaml .Values.nodeSelector | nindent 12 }}
+          containers:
+            - name: resumen
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              command: ["php", "bin/resumen_programado.php"]
+              env:
+                - { name: DB_HOST, value: mysql }
+                - { name: DB_NAME, value: {{ .Values.mysql.database | quote }} }
+                - { name: DB_USER, value: {{ .Values.mysql.user | quote }} }
+                - name: DB_PASS
+                  valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_PASSWORD } }
+                - { name: APP_URL, value: "https://{{ .Values.host }}" }
+                - { name: APP_TIMEZONE, value: {{ .Values.app.timezone | quote }} }
+                - { name: RESUMEN_HORA, value: {{ .Values.app.resumenHora | default 6 | quote }} }
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.telegramSecret | default "projectweb-telegram" }}
+                      key: TELEGRAM_BOT_TOKEN
+                      optional: true
+              volumeMounts:
+                - { name: telegram-clave, mountPath: /var/www/html/storage/secretos, readOnly: true }
+          volumes:
+            - name: telegram-clave
+              secret:
+                secretName: {{ .Values.telegramSecret | default "projectweb-telegram" }}
+                optional: true

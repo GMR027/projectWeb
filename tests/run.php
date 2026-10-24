@@ -270,6 +270,30 @@ $d = ['tmax' => 31.4, 'tmin' => 17.6, 'precip_mm' => 12.0, 'prob' => 85, 'viento
 $ok('el resumen del clima es legible y marca la lluvia', ClimaAuto::resumen($d) === 'máx 31° / mín 18° · lluvia 12 mm (85%) · viento 35 km/h ⚠ lluvia');
 $ok('la fecha larga va en español', ClimaAuto::fechaLarga('2026-10-22') === 'jueves 22 oct');
 
+// Botones de acción en los avisos: en el chat privado se cambian datos; en grupo o sin id, solo «Ver»
+$bp = Telegram::botonesEvento(1, 'punch.creado', ['id' => 5], true);
+$bpData = array_map(fn($fila) => array_column($fila, 'callback_data'), $bp);
+$ok('el aviso de punch en privado ofrece corregir o en proceso', in_array(['pu:5:corregido', 'pu:5:en_proceso'], $bpData, true) && str_contains(json_encode($bp), 'url'));
+$ok('el aviso de punch en grupo solo lleva el enlace a la web', Telegram::botonesEvento(1, 'punch.creado', ['id' => 5], false) === [[['text' => '🌐 Ver en la web', 'url' => Telegram::urlApp('/punch?proyecto=1')]]]);
+$br = Telegram::botonesEvento(1, 'rfi.creado', ['id' => 7], true);
+$ok('el aviso de RFI ofrece «Responder»', in_array('rs:7', array_merge(...array_map(fn($f) => array_column($f, 'callback_data'), $br)), true));
+$bs = Telegram::botonesEvento(1, 'submittal.actualizado', ['id' => 3], true);
+$ok('el aviso de submittal ofrece Aprobado, A/AN y Resubmitar', count(array_filter(array_merge(...array_map(fn($f) => array_column($f, 'callback_data'), $bs)), fn($c) => str_starts_with((string)$c, 'su:3:'))) === 3);
+$ok('un evento sin id (clima) no ofrece acciones, solo el enlace', count(Telegram::botonesEvento(1, 'clima.alerta', [], true)[0]) === 1 && Telegram::botonesEvento(1, 'clima.alerta', [], true)[0][0]['url'] !== '');
+$ok('el resumen matutino tiene su mensaje en el catálogo', Telegram::mensajeEvento(1, 'resumen.matutino', ['texto' => 'Buenos días']) === 'Buenos días' && Telegram::mensajeEvento(1, 'resumen.matutino', []) === null);
+$ok('el resumen matutino no es un aviso inicial (es opt-in)', !in_array('resumen.matutino', Telegram::INICIALES, true));
+$ok('el menú «/» trae los comandos del bot, incluidos /salud y /pdf', in_array('salud', array_column(Telegram::COMANDOS, 0), true) && in_array('pdf', array_column(Telegram::COMANDOS, 0), true));
+$ok('la URL de la web sale de APP_URL o del servidor', str_starts_with(Telegram::urlApp('/punch'), 'http'));
+$ok('los errores saneados ocultan el token de la API', Telegram::sanearError('fallo en https://api.telegram.org/bot123456:AAEsecret_x/sendMessage') === 'fallo en https://api.telegram.org/bot***/sendMessage'
+    && Telegram::sanearError('sin token en el texto') === 'sin token en el texto');
+
+// Resumen de la obra: la hora viene del entorno (RESUMEN_HORA), por defecto las 6
+putenv('RESUMEN_HORA'); unset($_ENV['RESUMEN_HORA']);
+$ok('la hora del resumen es las 6 si no se configura', Classes\ResumenObra::hora() === 6);
+putenv('RESUMEN_HORA=7'); $_ENV['RESUMEN_HORA'] = '7';
+$ok('RESUMEN_HORA fija otra hora', Classes\ResumenObra::hora() === 7);
+putenv('RESUMEN_HORA'); unset($_ENV['RESUMEN_HORA']);
+
 // Token del bot: se guarda cifrado en telegram_config; en pantalla solo se ve la máscara
 $tokPrueba = '123456789:AAFSECRETODEPRUEBA_0123456789abcdef';
 $cif = Telegram::cifrar($tokPrueba);
@@ -347,6 +371,25 @@ foreach ([['detallado', 'medio', $br], ['simple', 'basico', $simple], ['detallad
     $salida = strip_tags(\Classes\Informes::html(['secciones' => $r['secciones']]));
     $ok("el informe $tk/$nk exportado no menciona IA ni modelos", !preg_match('/\bIA\b/', $salida) && !preg_match('/inteligencia artificial|redactado con|modelo de visi|app de escritorio/i', $salida));
 }
+
+echo "Redactor (cuadro de texto → DOCX/ODT)\n";
+$xhtml = new ReflectionMethod(\Classes\Redactor::class, 'xhtml');
+$xhtml->setAccessible(true);
+$tablasOdt = new ReflectionProperty(\Classes\Redactor::class, 'tablasOdt');
+$tablasOdt->setAccessible(true);
+$especiales = [];
+$conv = function (string $html) use ($xhtml, &$especiales) { $args = [&$html, &$especiales]; return $xhtml->invokeArgs(null, $args); };
+$caja = '<p>Antes</p><div class="rd-caja" style="float:right;width:40%;border:1px solid #d97706;background-color:#fef3c7;padding:8px"><p>Dentro de la caja</p></div><table style="width:100%"><tbody><tr><td style="border:1px solid #888888">c</td></tbody></table>';
+$sal = $conv($caja);
+$ok('la caja de texto viaja como tabla de una sola celda', str_contains($sal, '<table') && !str_contains($sal, 'rd-caja') && str_contains($sal, 'Dentro de la caja'));
+$ok('conserva el ancho, el borde (en orden para PhpWord) y el fondo', str_contains($sal, 'width:40%') && str_contains($sal, 'border:1px #d97706 solid') && str_contains($sal, 'background-color:#fef3c7'));
+$ok('las celdas de la caja llevan borde para que el ODT lo pinte', preg_match('/<td[^>]*border:[^>]*>/', $sal) === 1);
+$tablasOdt->setValue(null, []);
+$conv($caja);
+$ok('tablasOdt sigue el orden del documento (caja incluida)', $tablasOdt->getValue() === [true, true]);
+$tablasOdt->setValue(null, []);
+$otra = $conv('<table><tbody><tr><td>a</td></tbody></table><div class="rd-caja" style="padding:8px"><p>b</p></div>');
+$ok('una caja sin estilo conserva ancho y borde por defecto', str_contains($otra, 'width:100%') && str_contains($otra, 'border:1px #999999 solid') && $tablasOdt->getValue() === [false, true]);
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

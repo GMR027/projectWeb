@@ -133,7 +133,8 @@ abstract class HallazgosIA
         if (!$h || $h['estado'] === 'pendiente') return [false, 'No hay nada que reabrir'];
         $revirtio = $h['estado'] === 'aceptada' && $h['antes_json'] !== null;
         if ($revirtio) {
-            [$ok, $msg] = static::restaurarAccion($p, json_decode($h['antes_json'], true) ?: []);
+            // Lo que deshace la IA ya queda en Auditoria: aquí no debe nacer un registro manual aparte
+            [$ok, $msg] = \Classes\HistorialCambios::silenciar(fn() => static::restaurarAccion($p, json_decode($h['antes_json'], true) ?: []));
             if (!$ok) return [false, $msg];
         }
         self::db()->query('UPDATE ' . static::TABLA_HALLAZGOS . " SET estado = 'pendiente', antes_json = NULL, resuelto_por = '', resuelto_en = NULL WHERE id = $id AND proyecto_id = $pid");
@@ -155,7 +156,8 @@ abstract class HallazgosIA
         $db = self::db();
         $db->begin_transaction();
         try {
-            [$ok, $msg, $antes] = static::ejecutarAccion($p, $accion, $params);
+            // Los datos que mueve la IA se anotan en Auditoria; el historial manual no debe duplicarlos
+            [$ok, $msg, $antes] = \Classes\HistorialCambios::silenciar(fn() => static::ejecutarAccion($p, $accion, $params));
             if (!$ok) { $db->rollback(); return [false, $msg]; }
             self::cerrar($pid, $id, 'aceptada', $antes);
             Auditoria::registrar($pid, static::HERRAMIENTA, 'aplicado', $accion, $msg, $antes, $params, $id, $h['origen'] === 'ia' ? (string)$h['modelo'] : '');

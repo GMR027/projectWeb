@@ -11,6 +11,7 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
 ?>
 <button type="button" class="pn-abrir no-print" id="vp-dis-panel-abrir" hidden data-etq="Panel" title="Mostrar el panel de diseño"><i class="fa-solid fa-sliders"></i></button>
 <aside class="vp-dis-panel no-print" id="vp-dis-panel" aria-label="Herramientas del diseño">
+    <div class="pn-cab-bloque">
     <header class="pn-cab">
         <span class="pn-cab-ico"><i class="fa-solid fa-pen-ruler"></i></span>
         <div class="pn-cab-txt"><b>Diseño</b><small><?php echo s($lamina->titulo); ?></small></div>
@@ -23,6 +24,7 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
                 <i class="fa-solid <?php echo s($ic); ?>"></i><span><?php echo s($t); ?></span><?php if ($k === 'capas'): ?><span class="pn-cont" id="vp-cont-capas"></span><?php endif; ?>
             </button>
         <?php endforeach; ?>
+    </div>
     </div>
 
     <section data-pan="props">
@@ -132,8 +134,15 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
 
         <section class="pn-secc" data-ins="tablas">
             <h4 class="pn-tit"><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
+            <p class="text-sm text-muted">Tablas del proyecto creadas en vPlan. Las que están <strong>enlazadas a una hoja de SheetFlow</strong> se actualizan solas.</p>
             <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost vp-ins-nueva"><i class="fa-solid fa-plus"></i> Crear tabla nueva</a>
             <div id="vp-ins-tablas" class="vp-ins-tablas"></div>
+        </section>
+
+        <section class="pn-secc" data-ins="tablas-sf">
+            <h4 class="pn-tit"><i class="fa-solid fa-table-cells"></i> Tablas SheetFlow</h4>
+            <p class="text-sm text-muted">Hojas de <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">SheetFlow</a> que todavía no están en el vPlan. Al insertarlas se crea la tabla y quedan <strong>enlazadas</strong>: sus datos se leen en vivo y se actualizan solos.</p>
+            <div id="vp-ins-tablas-sf" class="vp-ins-tablas"></div>
         </section>
     </section>
 

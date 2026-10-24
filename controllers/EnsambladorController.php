@@ -88,7 +88,7 @@ class EnsambladorController
         $ids = json_decode((string)($_POST['items'] ?? '[]'), true);
         if (!is_array($ids) || !$ids) json_respuesta(['success' => false, 'error' => 'Elige al menos un cambio'], 422);
         try {
-            json_respuesta(['success' => true] + Ensamblador::aplicar($p, (int)($_POST['id'] ?? 0), array_map('strval', $ids)));
+            json_respuesta(['success' => true] + \Classes\HistorialCambios::silenciar(fn() => Ensamblador::aplicar($p, (int)($_POST['id'] ?? 0), array_map('strval', $ids))));
         } catch (\Throwable $e) {
             json_respuesta(['success' => false, 'error' => $e->getMessage()], 409);
         }
@@ -98,7 +98,7 @@ class EnsambladorController
     {
         $p = proyecto_api();
         try {
-            json_respuesta(['success' => true] + Ensamblador::revertir($p, (int)($_POST['id'] ?? 0)));
+            json_respuesta(['success' => true] + \Classes\HistorialCambios::silenciar(fn() => Ensamblador::revertir($p, (int)($_POST['id'] ?? 0))));
         } catch (\Throwable $e) {
             json_respuesta(['success' => false, 'error' => $e->getMessage()], 409);
         }

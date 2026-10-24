@@ -145,6 +145,19 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
     <?php endif; ?>
 </section>
 
+<section class="card" id="resumen">
+    <h3><i class="fa-solid fa-sun"></i> Resumen de la obra</h3>
+    <?php if (!$proyecto || !$tg['tablas']): ?><p class="text-muted">Necesitas un proyecto que puedas gestionar<?php echo $tg['tablas'] ? '' : ' y aplicar la migración de Telegram'; ?>.</p><?php else: ?>
+    <p class="text-sm text-muted">Cada mañana (después de las <?php echo \Classes\ResumenObra::hora(); ?>:00) el bot manda a los destinos que lo pidan un resumen del día en <strong><?php echo s($proyecto->nombre); ?></strong>: clima, actividades de hoy, atrasadas, restricciones urgentes, punch grave, RFI abiertos y el semáforo. Si el día no trae nada relevante, no se manda nada (una sola vez al día por proyecto).</p>
+    <p class="text-sm text-muted">Además de activarlo aquí, marca la casilla <strong>«Resumen de la obra cada mañana»</strong> en los avisos de cada destino (arriba) para decidir quién lo recibe. <em>Probar ahora</em> lo envía en el momento aunque ya se haya mandado hoy.</p>
+    <div class="cp-fila" style="gap:1rem;flex-wrap:wrap">
+        <form method="POST" action="/integraciones/resumen"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="accion" value="<?php echo $tg['resumen'] ? 'desactivar' : 'activar'; ?>">
+            <button class="btn btn-sm <?php echo $tg['resumen'] ? 'btn-ghost' : 'btn-primary'; ?>" type="submit"><?php echo $tg['resumen'] ? 'Desactivar resumen' : 'Activar resumen de la obra'; ?></button></form>
+        <form method="POST" action="/integraciones/resumen"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="accion" value="probar"><button class="btn btn-sm btn-ghost" type="submit" title="Manda el resumen de hoy a los destinos que lo pidan">Probar ahora</button></form>
+    </div>
+    <?php endif; ?>
+</section>
+
 <section class="card integ-guia" id="guia">
     <h3><i class="fa-solid fa-book-open"></i> Guía completa de integraciones</h3>
     <p class="text-muted">Qué es cada cosa, cómo se conecta y ejemplos listos para copiar. Abre la parte que necesites.</p>

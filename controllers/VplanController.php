@@ -106,7 +106,12 @@ class VplanController
         $proyecto = proyecto_de_peticion(true);
         if ($p = self::paqueteDe($proyecto)) {
             $v = !empty($_POST['visible']) ? 1 : 0;
-            VplanLamina::ejecutar("UPDATE vplan_laminas SET visible = $v WHERE paquete_id = " . (int)$p->id . " AND grupo = '" . VplanLamina::escapar(trim((string)($_POST['grupo'] ?? ''))) . "'");
+            $grupo = trim((string)($_POST['grupo'] ?? ''));
+            VplanLamina::ejecutar("UPDATE vplan_laminas SET visible = $v WHERE paquete_id = " . (int)$p->id . " AND grupo = '" . VplanLamina::escapar($grupo) . "'");
+            // Cambio en bloque sobre varias láminas: un solo registro (sin reversión automática)
+            \Classes\HistorialCambios::registrar((int)$proyecto->id, 'vplan', 'modificado',
+                'Láminas del grupo «' . $grupo . '» pasaron a ' . ($v ? 'visibles' : 'ocultas'),
+                ['visible' => !$v], ['visible' => (bool)$v], ['lamina', null, $grupo]);
         }
         header('Location: /vplan/paquete?proyecto=' . $proyecto->id . '&id=' . ($p->id ?? ''));
         exit;

@@ -246,6 +246,34 @@ class AjustesController
         exit;
     }
 
+    /**
+     * Espacio de almacenamiento del proyecto (MB). Solo el administrador puede
+     * cambiarlo (los clientes y visitantes no ven el control).
+     * Con 0 (o vacío) se vuelve al límite heredado (el del cliente dueño
+     * o el predeterminado de 300 MB).
+     */
+    public static function guardarAlmacenamiento()
+    {
+        redirigir_si_no_auth();
+        $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $proyectoId ? Proyecto::find($proyectoId) : null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        if (!is_admin()) {
+            header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '#datos');
+            exit;
+        }
+
+        $mb = (int)($_POST['limite_almacenamiento_mb'] ?? 0);
+        if ($mb < 0 || $mb > 100000) $mb = 0;   // fuera de rango: se deja el límite heredado
+        \Classes\Almacenamiento::fijarLimiteProyecto((int)$proyecto->id, $mb);
+
+        header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&alm=' . ($mb > 0 ? 'ok' : 'auto') . '#datos');
+        exit;
+    }
+
     /** Agregar día festivo / paro */
     public static function agregarFestivo()
     {

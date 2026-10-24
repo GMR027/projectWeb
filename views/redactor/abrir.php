@@ -97,7 +97,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     </div>
     <div class="rd-grupo-b" data-pest="insertar">
         <button type="button" class="rd-b" id="rd-x-ecuacion" title="Ecuación o fórmula"><i class="fa-solid fa-square-root-variable"></i> Ecuación</button>
-        <button type="button" class="rd-b" id="rd-x-caja" title="Cuadro de texto a un lado del texto"><i class="fa-regular fa-note-sticky"></i> Cuadro de texto</button>
+        <button type="button" class="rd-b" id="rd-x-caja" title="Cuadro de texto (ventana de texto): caja con ancho propio a un lado del texto; el texto baja a la siguiente línea y no se desborda"><i class="fa-regular fa-note-sticky"></i> Cuadro de texto</button>
         <button type="button" class="rd-b" id="rd-x-portada" title="Portada con plantillas"><i class="fa-regular fa-file-image"></i> Portada</button>
     </div>
     <div class="rd-grupo-b" data-pest="insertar">
@@ -353,6 +353,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <label>Fondo <input type="color" id="rd-x-caja-fondo" value="#fef3c7"></label>
     <label>Borde <input type="color" id="rd-x-caja-borde" value="#d97706"></label>
     <button type="button" class="btn btn-sm btn-primary" id="rd-x-caja-ok">Insertar</button>
+    <span class="text-sm text-muted">El texto de la caja baja solo a la siguiente línea dentro de su ancho (no se desborda) y la caja crece en alto conforme escribes.</span>
 </div>
 <div class="rd-panel" id="rd-p-portada" hidden>
     <strong>Portada</strong>

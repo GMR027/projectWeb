@@ -122,9 +122,10 @@
   .ve-color { display: flex; width: 100%; gap: .6rem; input[type=color] { flex: none; } }
   section[hidden] { display: none; } }
 // Cabecera y pestañas: piezas compartidas .pn-cab y .pn-tabs (componentes/_paneles.scss).
-// Aquí solo lo propio del panel: quedan pegajosas porque el panel es su contenedor de scroll y van a sangre.
-.vp-dis-panel { .pn-cab { position: sticky; top: 0; z-index: 5; margin: 0 -1.2rem; }
-  .pn-tabs { position: sticky; top: 5rem; z-index: 4; margin: 0 -1.2rem 1rem; } }
+// Aquí solo lo propio del panel: van a sangre (el padding del panel los empuja a los bordes) y
+// la cabecera + pestañas van dentro de .pn-cab-bloque, que es lo pegajoso.
+.vp-dis-panel { .pn-cab { margin: 0 -1.2rem; }
+  .pn-tabs { margin: 0 -1.2rem 1rem; } }
 .vp-dis-fila[hidden] { display: none; }
 .vp-dis-fila { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: center; margin-bottom: .8rem; > .campo { flex: 1; min-width: 12rem; } }
 .vp-cap-herr { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: .6rem; }
@@ -151,8 +152,10 @@
 .vp-guia-in { width: 7rem !important; height: 2.6rem; flex: none; padding: 0 .4rem; }
 
 // ---------- Insertar (la rejilla .pn-grid, el buscador .pn-busca, los chips y las fichas .pn-ficha son compartidos) ----------
-// Barra fija arriba: buscador que cubre todas las categorías + chips para ver una a la vez
-.vp-ins-top { position: sticky; top: 9.7rem; z-index: 3; display: grid; gap: .7rem; margin: 0 -1.2rem .4rem; padding: .8rem 1.2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+// Barra fija arriba: buscador que cubre todas las categorías + chips para ver una a la vez.
+// El alto del bloque pegajoso (cabecera + pestañas) lo mide el JS y lo publica en --pn-cab-alto,
+// así esta barra nunca queda debajo de las pestañas.
+.vp-ins-top { position: sticky; top: var(--pn-cab-alto, 10rem); z-index: 4; display: grid; gap: .7rem; margin: 0 -1.2rem .4rem; padding: .8rem 1.2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
 .vp-ins-nada { display: flex; align-items: center; gap: .6rem; margin: 1.2rem 0;
   &[hidden] { display: none; } }
 // Las fichas de inserción son la pieza compartida .pn-ficha (componentes/_paneles.scss)
@@ -164,11 +167,13 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   &[hidden] { display: none; } }
 .vp-ins-tablas { max-height: 34rem; overflow-y: auto; margin: .6rem 0; }
 .vp-ins-grupo { margin: 1rem 0 .4rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); small { text-transform: none; } }
-.vp-ins-tabla { display: flex; align-items: center; gap: .6rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: .6rem; margin-bottom: .4rem;
+.vp-ins-tabla { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: .6rem; margin-bottom: .4rem;
   &.vp-ya { background: rgba(5, 150, 105, .08); }
-  .vp-ins-tabla-txt { flex: 1; min-width: 0; display: grid; b { font-size: 1.25rem; overflow-wrap: anywhere; } small { color: var(--text-muted); font-size: 1.1rem; } }
+  .vp-ins-tabla-txt { flex: 1 1 12rem; min-width: 0; display: grid; b { font-size: 1.25rem; overflow-wrap: anywhere; } small { color: var(--text-muted); font-size: 1.1rem; } }
   .btn-sm { height: 3rem; flex: none; } }
 .vp-chip { font-size: 1.05rem; font-weight: 700; padding: .2rem .7rem; border-radius: 1rem; background: rgba(5, 150, 105, .25); color: #34d399; white-space: nowrap; }
+// Etiqueta de la tabla enlazada a una hoja de SheetFlow
+.vp-chip-sf { background: rgba(0, 112, 192, .3); color: #7cc4ff; }
 .vp-ins-nueva { width: 100%; margin-bottom: .6rem; }
 
 // ---------- Hoja: tamaño y orientación en tarjetas ----------

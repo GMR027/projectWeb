@@ -29,6 +29,8 @@ app:
   storage: 45Gi
   # Hora (0-23) a la que el clima automático anota el día en la bitácora y avisa del pronóstico de mañana
   climaHora: 18
+  # Hora (0-23) a la que el bot manda el resumen de la obra (CronJob telegram-resumen; también se usa como env RESUMEN_HORA)
+  resumenHora: 6
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }

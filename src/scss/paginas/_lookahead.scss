@@ -373,7 +373,9 @@ $vp-rojo: #dc2626;
 }
 // Selector de color con paleta preestablecida
 .ve-color { position: relative; display: inline-flex; align-items: center; gap: .4rem; input[type=color] { flex: 1; min-width: 4rem; } }
-.ve-paleta-btn { height: 3rem; padding: 0 .8rem; gap: .5rem; font: inherit; font-size: 1.2rem; font-weight: 600; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #ff5a1f; background: var(--bg-tertiary); color: var(--text); border-radius: .6rem; cursor: pointer; &:hover { background: var(--bg-secondary, var(--bg-tertiary)); } }
+.ve-paleta-btn { height: 3rem; width: 3rem; padding: 0; gap: .5rem; font: inherit; font-size: 1.2rem; font-weight: 600; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #ff5a1f; background: var(--bg-tertiary); color: var(--text); border-radius: .6rem; cursor: pointer; &:hover { background: var(--bg-secondary, var(--bg-tertiary)); } }
+// Solo el icono: el texto «Paleta» repetido en las barras saturaba (el title y el aria-label lo explican)
+.ve-paleta-btn > span { display: none; }
 .ve-paleta { position: fixed; z-index: 3000; top: 0; left: 0; width: 36rem; max-width: calc(100vw - 1.6rem); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: .8rem; padding: 1rem; background: var(--surface, #1e293b); border: 1px solid var(--border); border-radius: 1rem; box-shadow: 0 1rem 3rem rgba(0, 0, 0, .5);
   &[hidden] { display: none; }
   .ve-pestanas { display: flex; gap: .4rem; border-bottom: 1px solid var(--border); }
@@ -390,7 +392,7 @@ $vp-rojo: #dc2626;
 .ve-props .ve-color { display: flex; width: 100%; }
 // Barras compactas (Redactor, dibujo, editor): el botón de la paleta es solo un icono y el selector no se estira
 .rd-color .ve-color, .rd-dib-barra .ve-color, .ve-mini .ve-color { flex: none; gap: .2rem; }
-.rd-color .ve-paleta-btn, .rd-dib-barra .ve-paleta-btn, .ve-mini .ve-paleta-btn { height: 2.4rem; padding: 0 .4rem; border-color: var(--border); }
+.rd-color .ve-paleta-btn, .rd-dib-barra .ve-paleta-btn, .ve-mini .ve-paleta-btn { height: 2.4rem; width: 2.4rem; padding: 0; border-color: var(--border); }
 .rd-color .ve-color input[type=color], .rd-dib-barra .ve-color input[type=color], .ve-mini .ve-color input[type=color] { flex: none; min-width: 0; }
 .ve-par .ve-color { flex: 1; min-width: 0; }
 .ve-f .ve-color { min-width: 0; }

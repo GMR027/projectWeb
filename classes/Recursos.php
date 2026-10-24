@@ -44,14 +44,15 @@ class Recursos
         $id = (int)($d['id'] ?? 0);
         if ($id && !self::filas("SELECT id FROM recursos WHERE id = $id AND proyecto_id = $pid")) return 'El recurso no existe';
         $campos = "nombre = '" . self::esc($nombre) . "', tipo = '$tipo', personal_id = " . ($personal ?: 'NULL') . ", integrantes = $integrantes, horas_dia = $horas";
-        if ($id) self::db()->query("UPDATE recursos SET $campos WHERE id = $id");
-        else self::db()->query("INSERT INTO recursos SET proyecto_id = $pid, $campos");
+        if ($id) HistorialCambios::escribir('recursos', 'modificado', $id, fn() => self::db()->query("UPDATE recursos SET $campos WHERE id = $id"));
+        else HistorialCambios::escribir('recursos', 'creado', 0, fn() => self::db()->query("INSERT INTO recursos SET proyecto_id = $pid, $campos"));
         return null;
     }
 
     public static function eliminar(int $pid, int $id): void
     {
-        self::db()->query("DELETE FROM recursos WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('recursos', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM recursos WHERE id = $id AND proyecto_id = $pid"));
     }
 
     /** @return string|null mensaje de error */

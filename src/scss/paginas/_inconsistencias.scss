@@ -21,10 +21,18 @@
 .inc-acts ul { margin: .4rem 0 0; padding-left: 1.8rem; columns: 2; font-size: 1.25rem; }
 .inc-acts summary { cursor: pointer; }
 
-// Centro de IA: historial de cambios y biblioteca
+// Historial de cambios: lo comparten la pestaña del Centro de IA (solo la IA) y la pantalla de la sección Administración
 .hist-tabla td { font-size: 1.25rem; }
 .hist-ev { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary);
-  &.ev-aplicado { color: var(--success); } &.ev-revertido, &.ev-reabierto { color: var(--warning); } &.ev-rechazado { color: var(--text-muted); } }
+  &.ev-aplicado { color: var(--success); } &.ev-revertido, &.ev-reabierto { color: var(--warning); } &.ev-rechazado { color: var(--text-muted); }
+  &.ev-creado { color: var(--secondary); } &.ev-modificado { color: var(--primary); } &.ev-eliminado { color: var(--danger); } }
+.hist-num { display: inline-block; min-width: 2.4rem; margin-left: .3rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-dim); text-align: center; font-weight: 700; font-size: 1.2rem; }
+.centro-ia-tabs__tab.activa .hist-num { background: var(--surface); color: inherit; }
+.hist-desc { display: inline-block; line-height: 1.4; }
+.hist-acciones { white-space: nowrap; }
+.hist-acciones .btn { vertical-align: middle; }
+.hist-estado { display: inline-block; font-size: 1.15rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted);
+  &.est-aceptado { color: var(--success); } &.est-revertido { color: var(--warning); } &.est-pendiente { color: var(--primary); } }
 .hist-det { margin-top: .4rem; }
 .hist-par { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; pre { margin: .3rem 0 0; padding: .6rem; background: var(--bg-tertiary); border-radius: .6rem; font-size: 1.1rem; max-height: 18rem; overflow: auto; white-space: pre-wrap; } }
 .hist-pag { display: flex; gap: 1.2rem; align-items: center; justify-content: center; margin: 1.6rem 0; }

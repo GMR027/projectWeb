@@ -56,15 +56,17 @@ class Marca
         $color2 = self::colorValido($color2) ?? self::COLOR2_DEFECTO;
         $a = $activa ? 1 : 0;
         try {
-            if ($logo === null) {
-                $st = self::db()->prepare('UPDATE proyectos SET marca_activa = ?, marca_nombre = ?, marca_color = ?, marca_color2 = ? WHERE id = ?');
-                $st->bind_param('isssi', $a, $nombre, $color, $color2, $pid);
-            } else {
-                $l = $logo === '' ? null : $logo;
-                $st = self::db()->prepare('UPDATE proyectos SET marca_activa = ?, marca_nombre = ?, marca_color = ?, marca_color2 = ?, marca_logo = ? WHERE id = ?');
-                $st->bind_param('issssi', $a, $nombre, $color, $color2, $l, $pid);
-            }
-            return $st->execute();
+            return (bool)HistorialCambios::escribir('proyectos', 'modificado', (int)$pid, function () use ($logo, $a, $nombre, $color, $color2, $pid) {
+                if ($logo === null) {
+                    $st = self::db()->prepare('UPDATE proyectos SET marca_activa = ?, marca_nombre = ?, marca_color = ?, marca_color2 = ? WHERE id = ?');
+                    $st->bind_param('isssi', $a, $nombre, $color, $color2, $pid);
+                } else {
+                    $l = $logo === '' ? null : $logo;
+                    $st = self::db()->prepare('UPDATE proyectos SET marca_activa = ?, marca_nombre = ?, marca_color = ?, marca_color2 = ?, marca_logo = ? WHERE id = ?');
+                    $st->bind_param('issssi', $a, $nombre, $color, $color2, $l, $pid);
+                }
+                return $st->execute();
+            });
         } catch (\Throwable $e) {
             error_log('Marca: ' . $e->getMessage());
             return false;

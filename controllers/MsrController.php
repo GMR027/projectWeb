@@ -302,6 +302,9 @@ class MsrController
         if ($i === false || $j === false) json_respuesta(['success' => false, 'error' => 'Renglón no encontrado'], 404);
         [$ids[$i], $ids[$j]] = [$ids[$j], $ids[$i]];
         foreach ($ids as $n => $id) $db->query('UPDATE msr_items SET orden = ' . ($n + 1) . ' WHERE id = ' . $id);
+        \Classes\HistorialCambios::registrar((int)$proyecto->id, 'msr', 'modificado',
+            'Renglones del MSR reordenados (' . count($ids) . ')', ['orden' => 'anteriores'], ['orden' => 'nuevo'],
+            ['msr', (int)$msr->id, (string)($msr->nombre ?? '')]);
         json_respuesta(['success' => true]);
     }
 
@@ -327,10 +330,12 @@ class MsrController
         }
         $existe = $db->query("SELECT id FROM msr_partidas WHERE msr_id = $mid AND titulo = '$v' LIMIT 1");
         if ($existe && ($f = $existe->fetch_row())) {
-            $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color' WHERE id = " . (int)$f[0]);
+            \Classes\HistorialCambios::escribir('msr_partidas', 'modificado', (int)$f[0],
+                fn() => $db->query("UPDATE msr_partidas SET titulo = '$t', color = '$color' WHERE id = " . (int)$f[0]));
         } else {
             $orden = (int)$db->query("SELECT COALESCE(MAX(orden),-1)+1 FROM msr_partidas WHERE msr_id = $mid")->fetch_row()[0];
-            $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $orden)");
+            \Classes\HistorialCambios::escribir('msr_partidas', 'creado', 0,
+                fn() => $db->query("INSERT INTO msr_partidas (msr_id, titulo, color, orden) VALUES ($mid, '$t', '$color', $orden)"));
         }
         json_respuesta(['success' => true, 'titulo' => $titulo, 'color' => $color]);
     }
@@ -382,7 +387,7 @@ class MsrController
         try {
             @set_time_limit(180);
             $msr = self::msrDe($proyecto) ?? Msr::asegurar((int)$proyecto->id);
-            $r = MsrImportador::aplicar($_POST['token'] ?? '', $proyecto, (int)$msr->id, self::unionDePost());
+            $r = \Classes\HistorialCambios::silenciar(fn() => MsrImportador::aplicar($_POST['token'] ?? '', $proyecto, (int)$msr->id, self::unionDePost()));
             $q = http_build_query(['proyecto' => $proyecto->id, 'id' => $msr->id, 'importado' => $r['renglones'], 'mat' => $r['materiales'], 'sub' => $r['submittals'], 'omitidos' => $r['omitidos']]);
             header("Location: /msr/ver?$q");
         } catch (\Throwable $e) {

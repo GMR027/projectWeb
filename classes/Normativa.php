@@ -254,6 +254,8 @@ class Normativa
         if ($codigo !== '') $cambios[] = "codigo = '" . self::esc(mb_substr($codigo, 0, 80)) . "'";
         if (!isset(self::TIPOS[$tipo])) $cambios[] = "tipo = '" . self::detectarTipo($codigo, $titulo) . "'";
         if ($cambios) $db->query('UPDATE normativa_documentos SET ' . implode(', ', $cambios) . " WHERE id = $id");
+        // Un solo registro con la ficha ya completa (lo que se completó al indexar va incluido)
+        HistorialCambios::desdeImagen('normativa_documentos', 'creado', null, self::obtener($pid, $id));
         return [true, $msg, $id];
     }
 
@@ -318,7 +320,8 @@ class Normativa
         $d = self::obtener($pid, $id);
         if (!$d) return;
         @unlink(self::ruta($d));
-        self::db()->query("DELETE FROM normativa_documentos WHERE id = $id AND proyecto_id = $pid");
+        HistorialCambios::escribir('normativa_documentos', 'eliminado', $id,
+            fn() => self::db()->query("DELETE FROM normativa_documentos WHERE id = $id AND proyecto_id = $pid"));
     }
 
     public static function fragmentos(int $docId, string $q = '', int $limite = 200): array
@@ -406,6 +409,10 @@ class Normativa
         $db->query("INSERT IGNORE INTO normativa_aplicaciones (proyecto_id, documento_id, fragmento_id, entidad_tipo, entidad_id, referencia, requisito, nota, origen, estado, puntaje, modelo) VALUES ($pid, " . ($doc ?: 'NULL') . ', ' . ($frag ?: 'NULL') . ", '$tipo', $id, '" . self::esc(mb_substr($ref, 0, 200)) . "', " . ($req === null || $req === '' ? 'NULL' : "'" . self::esc(mb_substr($req, 0, 1500)) . "'") . ", '" . self::esc(mb_substr($nota, 0, 500)) . "', '$origen', '$estado', $puntaje, '" . self::esc(mb_substr($modelo, 0, 150)) . "')");
         $creado = (int)$db->affected_rows > 0 ? (int)$db->insert_id : 0;
         if ($creado) {
+            // Solo el vínculo que el usuario ató a mano es un cambio suyo; las propuestas de la IA no lo son
+            if ($origen === 'manual' && $estado === 'aceptada') {
+                HistorialCambios::desdeImagen('normativa_aplicaciones', 'creado', null, self::filas("SELECT * FROM normativa_aplicaciones WHERE id = $creado")[0] ?? null);
+            }
             static $registrado = [];
             if (empty($registrado[$pid])) { $registrado[$pid] = true; Revisiones::registrarEjecucion($pid, 'normativa'); }   // estado de uso: una vez por petición
         }
