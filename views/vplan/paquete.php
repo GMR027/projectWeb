@@ -20,7 +20,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
             <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-galeria" title="Tarjetas con miniatura, se reordenan arrastrando"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
             <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-tabla" title="Lista detallada con orden y grupos"><i class="fa-solid fa-table-list"></i> <span class="hide-m">Lista</span></button>
         </span>
-        <a href="/vplan/crear?<?php echo $q; ?>&paquete=<?php echo s($paquete->id); ?>" class="btn btn-primary">+ Nueva lámina</a><?php endif; ?>
+        <a href="/vplan/crear?<?php echo $q; ?>&paquete=<?php echo s($paquete->id); ?>" class="btn btn-primary"<?php echo glosario('lamina'); ?>>+ Nueva lámina</a><?php endif; ?>
     </div>
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>

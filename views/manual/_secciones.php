@@ -676,6 +676,7 @@ HTML],
 
 ['id' => 'redactor', 'titulo' => 'Redactor (documentos)', 'icono' => 'fa-file-pen', 'roles' => $todos, 'herr' => 'redactor', 'cuerpo' => <<<'HTML'
 <p>Escribe documentos como en Word o LibreOffice sin salir de la plataforma: informes, memorias, actas, oficios.</p>
+<p>Primera vez: el botón <strong>Guía rápida</strong> (lista y editor) recorre la herramienta paso a paso; se muestra solo la primera vez y se repite cuando quieras. Al pasar el cursor por los términos con línea punteada (departamento, plantilla…) aparece su definición del glosario.</p>
 <h4>Crear un documento</h4>
 <ol>
 <li>Pulsa <strong>Nuevo documento</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong> (elige uno de la lista o escribe uno nuevo). La lista se agrupa por departamento.</li>
@@ -710,6 +711,7 @@ HTML],
 
 ['id' => 'sheetflow', 'titulo' => 'SheetFlow (tablas)', 'icono' => 'fa-table-cells', 'roles' => $todos, 'herr' => 'sheetflow', 'cuerpo' => <<<'HTML'
 <p>Crea <strong>tablas</strong> como en una hoja de cálculo (materiales, presupuestos, asistencias, registros) y úsalas en el <strong>vPlan</strong>, el <strong>Editor</strong> y el <strong>Redactor</strong> sin volver a capturarlas.</p>
+<p>Primera vez: el botón <strong>Guía rápida</strong> (lista y editor) recorre la herramienta paso a paso, y los términos con línea punteada (SheetFlow, fórmulas, departamento…) muestran su definición al pasar el cursor.</p>
 <h4>Crear una tabla</h4>
 <ol>
 <li>Pulsa <strong>Nueva tabla</strong> y captura el <strong>nombre*</strong>, la <strong>fecha*</strong> y el <strong>departamento</strong>; la lista se agrupa por departamento.</li>
@@ -884,6 +886,7 @@ HTML],
 
 ['id' => 'historial', 'titulo' => 'Historial de cambios', 'icono' => 'fa-clock-rotate-left', 'roles' => $todos, 'herr' => 'historial', 'cuerpo' => <<<'HTML'
 <p>En <strong>Historial de cambios</strong> (sección <em>Administración</em> de la barra del proyecto) queda registrado todo lo que se modifica en el proyecto: quién lo hizo, cuándo, qué cambió exactamente y en qué herramienta. El registro <strong>no se puede editar ni borrar</strong>.</p>
+<p class="manual-nota"><strong>Solo cambios hechos a mano.</strong> Aquí aparece lo que el usuario cambia con las herramientas. Lo que calcula el sistema por sí solo —las fechas que se recalculan en las partidas, las actualizaciones automáticas al abrir una lámina o un documento, las tareas programadas y el bot de Telegram— no se registra ni ensucia la lista.</p>
 <h4>Las tres pestañas</h4>
 <ul>
 <li><strong>Cambios pendientes</strong> (la que se abre): todo lo nuevo, esperando revisión.</li>

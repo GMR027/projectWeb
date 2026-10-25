@@ -100,7 +100,9 @@ class Partida extends ActiveRecord
         $fines = array_map(fn($a) => $a->fecha_fin, $actividades);
         $this->fecha_inicio = min($inicios);
         $this->fecha_fin = max($fines);
-        $this->guardar();
+        // Cálculo del sistema (las fechas salen de sus actividades): no es un cambio que el usuario hiciera a mano,
+        // así que no se anota en el historial (el cambio real que lo provocó sí queda registrado)
+        \Classes\HistorialCambios::silenciar(fn() => $this->guardar());
     }
 
     /** Progreso ponderado de la partida */

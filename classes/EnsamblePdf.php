@@ -154,7 +154,8 @@ class EnsamblePdf
             if (Archivo::reemplazarContenido($tmp, $dest)) {
                 $a->tamano = (int)filesize($dest);
                 $a->archivo_original = self::nombreArchivo($e);
-                $a->guardar();
+                // Actualización automática al abrir el archivo: no es un cambio que el usuario hiciera a mano
+                HistorialCambios::silenciar(fn() => $a->guardar());
                 $e->firma = self::firma($e);
                 $e->guardar();
             } else @unlink($tmp);

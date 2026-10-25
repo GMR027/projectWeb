@@ -556,6 +556,40 @@ function atributos_ayuda(array $item, bool $conTitulo = false): string
 }
 
 /**
+ * Glosario de la plataforma (2026-10-25): el vocabulario interno se define UNA vez aquí y cualquier vista lo
+ * reusa con `<?php echo glosario('lamina'); ?>` → burbuja de ayuda con título y botón a su sección del manual.
+ * Así «lámina», «bloque», «cajetín», «estampa»… significan lo mismo en todas las herramientas.
+ */
+function glosario(string $termino): string
+{
+    static $G = null;
+    $G ??= [
+        'vplan' => ['vPlan', 'Grupo de láminas que se gestionan juntas (p. ej. una por área o disciplina): cada lámina lleva su plano, sus tablas y su programa.', 'vplan'],
+        'lamina' => ['Lámina', 'Cada hoja del vPlan: un plano de fondo con bloques (tablas, títulos, estampas) colocados donde tú quieras.', 'vplan'],
+        'bloque' => ['Bloque', 'Cada cosa que vive en una lámina: tabla del programa, título, logo, plano, estampa… Se mueve y redimensiona en «Acomodar bloques».', 'vplan'],
+        'marcas' => ['Marcas', 'Lo que se dibuja sobre el plano (líneas, formas, textos, símbolos) con «Dibujar sobre el plano». Se guarda como imagen de la lámina.', 'vplan'],
+        'partida' => ['Partida', 'Grupo de actividades del programa de obra (p. ej. «Cimentación»). Las tablas de tareas del vPlan salen de aquí.', 'programa'],
+        'plano' => ['Plano', 'La imagen de fondo de la lámina: el dibujo técnico de la obra sobre el que se marcan cosas.', 'vplan'],
+        'simbologia' => ['Simbología', 'La leyenda del dibujo (COMPLETE, IN PROGRESS, ON HOLD…). Se dibuja con el Editor y se elige por lámina.', 'simbolos'],
+        'cajetin' => ['Cajetín', 'La tablita con los datos del dibujo (proyecto, título, fecha, revisión…) que se inserta con un clic y se llena sola.', 'simbolos'],
+        'estampa' => ['Estampa inteligente', 'Bloque que se llena solo con datos del proyecto (fecha, avance, restricciones, actividades del día) y se actualiza en cada visita.', 'simbolos'],
+        'recovery' => ['Recovery', 'Recuperación de una actividad: cuánto se recuperó cada día que se retrasó (las 5R del programa).', 'programa'],
+        'tabla' => ['Tabla adicional', 'Tabla reutilizable del vPlan (punch list, restricciones, secundarias…) que se crea una vez y se inserta en cuantas láminas quieras.', 'vplan'],
+        'sheetflow' => ['SheetFlow', 'Hojas de cálculo del proyecto: se crean aquí y se usan en vPlan, Editor y Redactor; las enlazadas se actualizan solas.', 'sheetflow'],
+        'grafico' => ['Gráfico', 'Dibujo libre (croquis, diagrama, leyenda) hecho en el Editor; puede tener varias láminas, como una presentación.', 'editor'],
+        'documento' => ['Documento', 'Documento de texto del proyecto (oficio, minuta, RFI…) con corrector, plantillas y exportación a Word, LibreOffice o PDF.', 'redactor'],
+        'plantilla' => ['Plantilla', 'Punto de partida listo para editar: trae el formato armado y las marcas (proyecto, fecha, tu nombre) se llenan solas.', null],
+        'departamento' => ['Departamento (carpeta)', 'Agrupa los documentos o las tablas de la lista; se renombra con el lápiz y cada uno se mueve con «Mover a…».', 'redactor'],
+        'formula' => ['Fórmulas', 'Como en Excel: =A1*2, SUMA(A1:A5), SI(…). Las calcula el navegador y el resultado queda guardado con la tabla.', 'sheetflow'],
+    ];
+    $t = $G[strtolower(trim($termino))] ?? null;
+    if (!$t) return '';
+    $proy = (int)($_GET['proyecto'] ?? $_POST['proyecto'] ?? 0);
+    $manual = $t[2] ? '/manual' . ($proy ? '?proyecto=' . $proy : '') . '#' . $t[2] : '';
+    return ' data-ayuda="' . s(t($t[1])) . '" data-ayuda-titulo="' . s(t($t[0])) . '"' . ($manual ? ' data-manual="' . s($manual) . '"' : '');
+}
+
+/**
  * `<option>` de actividades agrupadas por partida; cada partida lleva su color (franja ● y fondo) para no confundirlas.
  * $actividades: salida de `Dependencias::actividades()`. $sel: id seleccionado. $largo: recorte del nombre.
  */

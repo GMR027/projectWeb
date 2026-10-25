@@ -124,30 +124,33 @@ class Vplan
     /**
      * Si las actividades de la lámina tienen restricciones activas, agrega por defecto la tabla de
      * restricciones a la lámina (una sola vez: si luego se quita a mano, no se vuelve a agregar).
+     * Lo decide el sistema al abrir la lámina, así que no se anota en el historial de cambios.
      */
     public static function asegurarRestricciones(VplanLamina $lamina, Proyecto $proyecto): void
     {
-        if ((int)$lamina->restr_auto === 1 || !$lamina->id) return;
-        $ids = [];
-        foreach (self::tareasEnOrden($lamina->bloques()) as $b) {
-            foreach (self::tareasDeBloque($b, $proyecto)['grupos'] as $g) foreach ($g['tareas'] as $t) $ids[] = (int)$t['actividad']->id;
-        }
-        if (!self::restriccionesDe($ids)['lista']) return;   // sin restricciones todavía: se vuelve a evaluar en la siguiente visita
-
-        // Si la lámina ya tiene una tabla de restricciones (p. ej. con renglones manuales), no se duplica;
-        // si no, se crea una propia de la lámina para que los renglones manuales no se compartan con otras láminas.
-        foreach ($lamina->tablas() as $t) {
-            if ($t->tipo === 'restricciones') {
-                $lamina->restr_auto = 1;
-                $lamina->guardar();
-                return;
+        HistorialCambios::silenciar(function () use ($lamina, $proyecto) {
+            if ((int)$lamina->restr_auto === 1 || !$lamina->id) return;
+            $ids = [];
+            foreach (self::tareasEnOrden($lamina->bloques()) as $b) {
+                foreach (self::tareasDeBloque($b, $proyecto)['grupos'] as $g) foreach ($g['tareas'] as $t) $ids[] = (int)$t['actividad']->id;
             }
-        }
-        $tabla = new \Model\VplanTabla(['proyecto_id' => $proyecto->id, 'titulo' => 'RESTRICCIONES', 'nombre_interno' => 'Restricciones · ' . $lamina->titulo, 'tipo' => 'restricciones']);
-        $tabla->id = $tabla->guardar()['id'];
-        $lamina->agregarTabla((int)$tabla->id);
-        $lamina->restr_auto = 1;
-        $lamina->guardar();
+            if (!self::restriccionesDe($ids)['lista']) return;   // sin restricciones todavía: se vuelve a evaluar en la siguiente visita
+
+            // Si la lámina ya tiene una tabla de restricciones (p. ej. con renglones manuales), no se duplica;
+            // si no, se crea una propia de la lámina para que los renglones manuales no se compartan con otras láminas.
+            foreach ($lamina->tablas() as $t) {
+                if ($t->tipo === 'restricciones') {
+                    $lamina->restr_auto = 1;
+                    $lamina->guardar();
+                    return;
+                }
+            }
+            $tabla = new \Model\VplanTabla(['proyecto_id' => $proyecto->id, 'titulo' => 'RESTRICCIONES', 'nombre_interno' => 'Restricciones · ' . $lamina->titulo, 'tipo' => 'restricciones']);
+            $tabla->id = $tabla->guardar()['id'];
+            $lamina->agregarTabla((int)$tabla->id);
+            $lamina->restr_auto = 1;
+            $lamina->guardar();
+        });
     }
 
     public static function textoFecha(): string

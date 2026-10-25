@@ -10,7 +10,7 @@
             <button type="button" class="btn btn-sm btn-ghost" id="gr-vista-galeria" title="Tarjetas con la portada de cada gráfico"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
             <button type="button" class="btn btn-sm btn-ghost" id="gr-vista-tabla" title="Lista detallada"><i class="fa-solid fa-table-list"></i> <span class="hide-m">Lista</span></button>
         </span>
-        <?php if ($puedeEditar): ?><a href="/graficos/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary btn-nuevo-grafico"><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo gráfico')); ?></a><?php endif; ?>
+        <?php if ($puedeEditar): ?><a href="/graficos/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary btn-nuevo-grafico"<?php echo glosario('grafico'); ?>><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo gráfico')); ?></a><?php endif; ?>
     </div>
 </div>
 
@@ -44,7 +44,7 @@
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?>
                             <form method="POST" action="/graficos/duplicar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button></form>
-                            <form method="POST" action="/graficos/tipo"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia"><button type="submit" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"><i class="fa-solid fa-list-check"></i> Guardar como simbología</button></form>
+                            <form method="POST" action="/graficos/tipo"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia"><button type="submit" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"<?php echo glosario('simbologia'); ?>><i class="fa-solid fa-list-check"></i> Guardar como simbología</button></form>
                             <form method="POST" action="/graficos/eliminar" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit" class="peligro"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button></form>
                         <?php endif; ?>
                     </div>

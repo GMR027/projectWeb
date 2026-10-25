@@ -25,7 +25,7 @@
             <p class="text-muted">Elige de qué partidas del programa trae las tareas y si arranca con una tabla. Después podrás sumar o quitar cosas en el modo diseño.</p>
             <div class="form-grid">
             <div class="campo">
-                <label for="partida_id"><?php echo s(t('Partida inicial')); ?></label>
+                <label for="partida_id"<?php echo glosario('partida'); ?>><?php echo s(t('Partida inicial')); ?></label>
                 <select id="partida_id" name="partida_id">
                     <option value="">— <?php echo s(t('Ninguna (la lámina empieza sin tareas)')); ?> —</option>
                     <?php foreach ($partidas as $p): ?><option value="<?php echo s($p->id); ?>" data-nombre="<?php echo s($p->nombre); ?>" <?php echo (int)$lamina->partida_id === (int)$p->id ? 'selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?>
@@ -45,7 +45,7 @@
                 <div id="vp-acts-lista" class="vp-acts-lista"></div>
             </div>
             <div class="campo" style="grid-column:1/-1">
-                <label for="tabla_inicial">Tabla inicial (SheetFlow)</label>
+                <label for="tabla_inicial"<?php echo glosario('sheetflow'); ?>>Tabla inicial (SheetFlow)</label>
                 <select id="tabla_inicial" name="tabla_inicial">
                     <option value="">— Ninguna —</option>
                     <option value="nueva"<?php echo $tablaInicial === 'nueva' ? ' selected' : ''; ?>>Nueva tabla en blanco</option>
@@ -110,7 +110,7 @@
             <div class="campo"><label for="grupo">Grupo (disciplina, nivel…)</label><input type="text" id="grupo" name="grupo" value="<?php echo s($lamina->grupo); ?>" maxlength="100" placeholder="Opcional: agrupa las láminas en el vPlan"></div>
             <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: JUAN PÉREZ / ANA LÓPEZ"></div>
             <div class="campo">
-                <label for="plano"><?php echo s(t('Imagen del plano')); ?> (hasta Full HD o 4K)</label>
+                <label for="plano"<?php echo glosario('plano'); ?>><?php echo s(t('Imagen del plano')); ?> (hasta Full HD o 4K)</label>
                 <input type="file" id="plano" name="plano" accept="image/*">
                 <?php if ($lamina->plano): ?>
                     <img class="vp-mini" src="/uploads/vplan/<?php echo s($lamina->plano); ?>" alt="" style="margin-top:.5rem">
@@ -118,7 +118,7 @@
                 <?php endif; ?>
             </div>
             <div class="campo">
-                <label for="simbologia_grafico_id">Simbología del schedule</label>
+                <label for="simbologia_grafico_id"<?php echo glosario('simbologia'); ?>>Simbología del schedule</label>
                 <select id="simbologia_grafico_id" name="simbologia_grafico_id">
                     <option value="">Tabla estándar (SYMBOLOGY FOR SCHEDULE)</option>
                     <?php foreach ($simbologias ?? [] as $sg): ?><option value="<?php echo (int)$sg->id; ?>"<?php echo (int)$lamina->simbologia_grafico_id === (int)$sg->id ? ' selected' : ''; ?>><?php echo s($sg->nombre); ?></option><?php endforeach; ?>

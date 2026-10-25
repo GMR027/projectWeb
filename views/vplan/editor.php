@@ -1,7 +1,7 @@
 <?php // Variables: $proyecto, $lamina, $config ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-pen-ruler"></i> Marcas del plano</h2>
+        <h2<?php echo glosario('marcas'); ?>><i class="fa-solid fa-pen-ruler"></i> Marcas del plano</h2>
         <p class="text-muted"><?php echo s($lamina->titulo); ?> · <?php echo s($proyecto->nombre); ?></p>
     </div>
     <div class="la-controles">

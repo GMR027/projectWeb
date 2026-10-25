@@ -24,14 +24,17 @@
   const posicionar = () => {
     if (!burbuja || !objetivo) return;
     const r = objetivo.getBoundingClientRect(), w = burbuja.offsetWidth, h = burbuja.offsetHeight, m = 8;
-    // Preferimos a la derecha del elemento (menú lateral); si no cabe, debajo; si tampoco, arriba
+    // Preferimos a la derecha del elemento (menú lateral); si no cabe, debajo; si tampoco, arriba.
+    // La burbuja SIEMPRE queda dentro de la ventana: si es más alta que ella, el max-height de su CSS
+    // (src/scss/layout/_layout.scss) la recorta con scroll interno en vez de dejarla fuera de la vista.
     let x = r.right + m, y = r.top + r.height / 2 - h / 2, lado = 'derecha';
     if (x + w > innerWidth - m) {
-      x = Math.min(Math.max(m, r.left + r.width / 2 - w / 2), innerWidth - w - m);
+      x = Math.min(Math.max(m, r.left + r.width / 2 - w / 2), Math.max(m, innerWidth - w - m));
       y = r.bottom + m; lado = 'abajo';
       if (y + h > innerHeight - m) { y = r.top - h - m; lado = 'arriba'; }
     }
-    y = Math.min(Math.max(m, y), innerHeight - h - m);
+    x = Math.min(Math.max(m, x), Math.max(m, innerWidth - w - m));
+    y = Math.min(Math.max(m, y), Math.max(m, innerHeight - h - m));
     burbuja.style.left = x + 'px';
     burbuja.style.top = y + 'px';
     burbuja.dataset.lado = lado;

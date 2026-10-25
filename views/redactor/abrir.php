@@ -11,6 +11,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <div class="la-controles">
         <span id="rd-estado" class="text-sm text-muted" role="status"></span>
         <button type="button" id="rd-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        <button type="button" class="btn btn-ghost" data-tour="redactor-editor" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> Guía rápida</button>
         <?php if (puede_descargar()): ?>
             <details class="gr-descargar">
                 <summary class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Exportar</summary>
@@ -533,3 +534,17 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 <script src="/vendor/redactor/typo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor/typo.js'); ?>"></script>
 <script src="/vendor/redactor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor.js'); ?>"></script>
 <script src="/vendor/redactor-extras.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor-extras.js'); ?>"></script>
+<script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
+<script>
+// Guía rápida del editor del Redactor
+window.Tour.registrar('redactor-editor', {
+    auto: true,
+    pasos: [
+        { icono: 'fa-file-pen', titulo: 'El editor', texto: 'Escribe como en Word: los cambios se <b>autoguardan</b> unos segundos después de soltar el teclado, y Ctrl + Z deshace.' },
+        { sel: '#rd-pestanas', icono: 'fa-table-columns', titulo: 'Cinco pestañas', texto: '<b>Inicio</b> (formato), <b>Insertar</b> (imágenes, tablas del programa, cuadros), <b>Diseño</b> (página y márgenes), <b>Revisión</b> (corrector y comentarios) y <b>Herramientas</b> (extras de obra).' },
+        { sel: '#rd-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar y exportar', texto: 'Guarda el documento (también con <b>Ctrl + S</b>). «Exportar» genera el Word, LibreOffice o PDF con el formato tal cual.' },
+        { sel: '#rd-paginas', icono: 'fa-map', titulo: 'Navegador de páginas', texto: 'Las miniaturas de la izquierda son las páginas del documento: haz clic para ir a una y arrastra para reordenar los bloques.' },
+        { icono: 'fa-circle-check', titulo: 'Listo para escribir', texto: 'El corrector subraya las faltas (clic derecho para corregir), y las plantillas del Redactor traen encabezados y firmas ya armados.' }
+    ]
+});
+</script>

@@ -11,7 +11,7 @@
             <div class="campo campo-full"><label for="nombre">Nombre *</label><input type="text" id="nombre" name="nombre" maxlength="150" value="<?php echo s($documento->nombre); ?>" placeholder="Ej: Memoria de cálculo de cimentación" required autofocus></div>
             <div class="campo"><label for="fecha">Fecha *</label><input type="date" id="fecha" name="fecha" value="<?php echo s($documento->fecha); ?>" required></div>
             <div class="campo">
-                <label for="departamento">Departamento</label>
+                <label for="departamento"<?php echo glosario('departamento'); ?>>Departamento</label>
                 <input type="text" id="departamento" name="departamento" maxlength="100" list="rd-deptos" value="<?php echo s($documento->departamento); ?>" placeholder="Ej: Ingeniería" autocomplete="off">
                 <datalist id="rd-deptos"><?php foreach ($departamentos as $dp): ?><option value="<?php echo s($dp); ?>"><?php endforeach; ?></datalist>
                 <small class="text-muted">Elige uno de la lista o escribe uno nuevo; los documentos se agrupan por departamento.</small>
@@ -23,7 +23,7 @@
             <div class="campo"><label for="orientacion">Orientación</label>
                 <select id="orientacion" name="orientacion"><option value="vertical">Vertical</option><option value="horizontal"<?php echo $documento->orientacion === 'horizontal' ? ' selected' : ''; ?>>Horizontal</option></select></div>
         </div>
-        <h3 class="mt-2">Plantilla</h3>
+        <h3 class="mt-2"<?php echo glosario('plantilla'); ?>>Plantilla</h3>
         <p class="text-muted text-sm">Parte de una plantilla o de una hoja en blanco. Las marcas (proyecto, fecha, departamento, tu nombre) se llenan solas.</p>
         <div class="rd-plantillas">
             <label class="rd-plantilla"><input type="radio" name="plantilla" value="" checked><span><i class="fa-regular fa-file"></i><strong>En blanco</strong><small>Hoja vacía</small></span></label>

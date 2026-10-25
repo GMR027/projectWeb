@@ -26,7 +26,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
     <div class="vp-herr" data-panel="lamina">
         <?php if (!$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary" data-ayuda="Acomodar bloques (modo diseño): mueve y redimensiona lo que hay en la hoja e inserta tablas, estampas, símbolos y títulos" data-ayuda-titulo="Acomodar bloques"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a><?php endif; ?>
         <?php if ($lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost" data-ayuda="Dibuja sobre el plano: líneas, formas, textos, símbolos y enlaces" data-ayuda-titulo="Dibujar sobre el plano"><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Dibujar sobre el plano')); ?></a><?php endif; ?>
-        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> <?php echo s(t('Datos de la lámina')); ?></a>
+        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"<?php echo glosario('lamina'); ?>><i class="fa-solid fa-sliders"></i> <?php echo s(t('Datos de la lámina')); ?></a>
     </div>
     <?php endif; ?>
     <div class="vp-herr" data-panel="vista"<?php echo $puedeEditar ? ' hidden' : ''; ?>>

@@ -24,17 +24,18 @@ ksort($cats);
 $catsPre = [];
 foreach ($predeterminados as $x) { $catsPre[$x['cat']] = ($catsPre[$x['cat']] ?? 0) + 1; }
 ksort($catsPre);
+// El tercer valor es la entrada del glosario (includes/funciones.php): la burbuja de cada pestaña define su término
 $pestanas = [
-    'proyecto' => ['Del proyecto', 'fa-folder-open', count($simbolos)],
-    'predeterminados' => ['Predeterminados', 'fa-shapes', count($predeterminados)],
-    'simbologias' => ['Simbologías', 'fa-list-check', count($simbologias)],
-    'cajetines' => ['Cajetines', 'fa-table-cells-large', count($cajetines)],
-    'estampas' => ['Estampas inteligentes', 'fa-wand-magic-sparkles', count($estampas)],
+    'proyecto' => ['Del proyecto', 'fa-folder-open', count($simbolos), ''],
+    'predeterminados' => ['Predeterminados', 'fa-shapes', count($predeterminados), ''],
+    'simbologias' => ['Simbologías', 'fa-list-check', count($simbologias), 'simbologia'],
+    'cajetines' => ['Cajetines', 'fa-table-cells-large', count($cajetines), 'cajetin'],
+    'estampas' => ['Estampas inteligentes', 'fa-wand-magic-sparkles', count($estampas), 'estampa'],
 ];
 ?>
 <div class="sim-tabs" role="tablist" id="sim-tabs">
-    <?php foreach ($pestanas as $k => [$etq, $ico, $n]): ?>
-        <button type="button" role="tab" class="sim-tab" data-tab="<?php echo $k; ?>" aria-controls="sim-p-<?php echo $k; ?>"><i class="fa-solid <?php echo $ico; ?>"></i> <span><?php echo s(t($etq)); ?></span> <em><?php echo (int)$n; ?></em></button>
+    <?php foreach ($pestanas as $k => [$etq, $ico, $n, $gl]): ?>
+        <button type="button" role="tab" class="sim-tab" data-tab="<?php echo $k; ?>" aria-controls="sim-p-<?php echo $k; ?>"<?php echo $gl !== '' ? glosario($gl) : ''; ?>><i class="fa-solid <?php echo $ico; ?>"></i> <span><?php echo s(t($etq)); ?></span> <em><?php echo (int)$n; ?></em></button>
     <?php endforeach; ?>
 </div>
 
@@ -130,7 +131,7 @@ $pestanas = [
     <div id="cajetines"></div>
     <p class="text-muted text-sm">El cajetín es la tablita con los datos del dibujo (proyecto, título, fecha, revisión…) que se inserta con un clic en el vPlan y en el Editor. Los datos se llenan solos, así que no hay que escribirlos en cada lámina. Ya existe uno «Estándar» para todos los proyectos. ¿Quieres algo con más libertad (semáforos, post-its, varios estilos)? Usa las <a href="#estampas" data-ir-tab="estampas">Estampas inteligentes</a>.</p>
     <?php if ($puedeEditar): ?>
-    <details class="sim-nuevo"><summary class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo cajetín</summary><div class="sim-nuevo-in">
+    <details class="sim-nuevo"><summary class="btn btn-primary"<?php echo glosario('cajetin'); ?>><i class="fa-solid fa-plus"></i> Nuevo cajetín</summary><div class="sim-nuevo-in">
     <form method="POST" action="/simbolos/cajetin" class="formulario cj-form">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div class="form-grid">
@@ -192,7 +193,7 @@ $pestanas = [
     <p class="text-muted text-sm">Una <strong>estampa</strong> es un bloque que se coloca en cualquier lámina del vPlan y <strong>se actualiza solo</strong>: está hecha de etiquetas, y cada etiqueta combina un texto antes (prefijo), un dato del proyecto que se llena solo (fecha, avance, actividad, restricciones…) y un texto después (sufijo). También puede traer semáforos y los <strong>post-its de las actividades del día</strong> del Last Planner.</p>
     <?php if ($puedeEditar): ?>
     <div class="est-barra">
-        <button type="button" class="btn btn-primary" data-est="nueva"><i class="fa-solid fa-plus"></i> Nueva estampa (lienzo)</button>
+        <button type="button" class="btn btn-primary" data-est="nueva"<?php echo glosario('estampa'); ?>><i class="fa-solid fa-plus"></i> Nueva estampa (lienzo)</button>
         <button type="button" class="btn btn-ghost" data-est="nueva-et" title="Lista de etiquetas, sin dibujo"><i class="fa-solid fa-list"></i> Nueva por etiquetas</button>
         <span class="text-sm text-muted">o empieza con un ejemplo:</span>
         <?php // Galería de plantillas con la estampa ya dibujada (con datos de ejemplo del proyecto) ?>

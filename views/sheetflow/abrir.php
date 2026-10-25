@@ -11,6 +11,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <div class="la-controles">
         <span id="sf-estado" class="text-sm text-muted" role="status"></span>
         <button type="button" id="sf-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        <button type="button" class="btn btn-ghost" data-tour="sheetflow-editor" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> Guía rápida</button>
         <?php if (puede_descargar()): ?>
             <details class="gr-descargar">
                 <summary class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Exportar</summary>
@@ -186,3 +187,17 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 </div>
 <script>window.SF_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
 <script src="/vendor/sheetflow.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/sheetflow.js'); ?>"></script>
+<script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
+<script>
+// Guía rápida del editor de SheetFlow
+window.Tour.registrar('sheetflow-editor', {
+    auto: true,
+    pasos: [
+        { icono: 'fa-table-cells', titulo: 'La hoja', texto: 'Escribe y navega con las flechas como en Excel. Los cambios se <b>autoguardan</b> unos segundos después de editar.' },
+        { sel: '#sf-pestanas', icono: 'fa-table-columns', titulo: 'Cuatro pestañas', texto: '<b>Inicio</b> (formato de celda), <b>Insertar</b> (renglones, columnas, imágenes), <b>Datos</b> (ordenar, totales, importar) y <b>Vista</b> (zebra, bordes, zoom).' },
+        { sel: '#sf-fx', icono: 'fa-square-root-variable', titulo: 'Fórmulas', texto: 'En la barra de abajo: empieza con <b>=</b> y usa SUMA, SI, SUMAR.SI… Las referencias son como en Excel (B3, C2:C10) y se reescriben solas al mover renglones.' },
+        { sel: '#sf-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar y exportar', texto: 'Guarda la hoja (también con <b>Ctrl + S</b>). «Exportar» entrega el Excel, el CSV o el PDF con los formatos.' },
+        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Recuerda: la tabla puede irse a una lámina del vPlan con «A vPlan», y las enlazadas se actualizan solas cuando cambia la hoja.' }
+    ]
+});
+</script>

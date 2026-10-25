@@ -20,7 +20,7 @@ $vacio = match ($pestana) {
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-clock-rotate-left"></i> <?php echo s(t('Historial de cambios')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · todos los cambios hechos en el proyecto, con su fecha, su descripción y la herramienta donde se hicieron. <strong>El registro no se puede editar.</strong><?php if (is_admin()): ?> Lo que hizo la IA está en <a href="/historial-cambios?proyecto=<?php echo $pid; ?>">Auditoría de la IA</a>.<?php endif; ?></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · los cambios hechos en el proyecto con las herramientas, con su fecha, su descripción y la herramienta donde ocurrieron. <strong>El registro no se puede editar.</strong><?php if (is_admin()): ?> Lo que hizo la IA está en <a href="/historial-cambios?proyecto=<?php echo $pid; ?>">Auditoría de la IA</a>.<?php endif; ?></p>
     </div>
     <div class="inc-acciones">
         <?php if ($puede && $pestana === 'pendiente' && $conteos['pendiente']): ?>

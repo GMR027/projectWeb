@@ -5,7 +5,8 @@ $preset = $lamina->preset;
 $vertical = $lamina->alto_mm > $lamina->ancho_mm;
 $corto = fn(string $n): string => preg_split('/\s+(?=[0-9])/', $n)[0];   // «Tabloide 11×17"» → «Tabloide»
 $pestanas = [['props', 'fa-sliders', 'Propiedades'], ['capas', 'fa-layer-group', 'Capas'], ['insertar', 'fa-plus', 'Insertar'], ['hoja', 'fa-file-lines', 'Hoja']];
-$categorias = [['bloques', 'Bloques'], ['simbolos', 'Símbolos'], ['cajetines', 'Cajetines'], ['estampas', 'Estampas'], ['tablas', 'Tablas'], ['todo', 'Todo']];
+// El glosario (includes/funciones.php) define una vez qué es un cajetín, una estampa, una tabla…
+$categorias = [['bloques', 'Bloques', ''], ['simbolos', 'Símbolos', ''], ['cajetines', 'Cajetines', 'cajetin'], ['estampas', 'Estampas', 'estampa'], ['tablas', 'Tablas', 'tabla'], ['todo', 'Todo', '']];
 /** Proporción (ancho/alto) de un preset, según la orientación elegida */
 $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 4) : round($p[1] / max(1, $p[2]), 4);
 ?>
@@ -95,8 +96,8 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
                 <input type="search" id="vp-ins-todo" placeholder="Buscar en todo  ( / )" aria-label="Buscar en Insertar">
             </div>
             <div class="pn-chips" role="group" aria-label="Filtrar por categoría">
-                <?php foreach ($categorias as [$k, $t]): ?>
-                    <button type="button" class="pn-chip<?php echo $k === 'bloques' ? ' activo' : ''; ?>" data-cat="<?php echo s($k); ?>" aria-pressed="<?php echo $k === 'bloques' ? 'true' : 'false'; ?>"><?php echo s($t); ?></button>
+                <?php foreach ($categorias as [$k, $t, $gl]): ?>
+                    <button type="button" class="pn-chip<?php echo $k === 'bloques' ? ' activo' : ''; ?>" data-cat="<?php echo s($k); ?>" aria-pressed="<?php echo $k === 'bloques' ? 'true' : 'false'; ?>"<?php echo $gl !== '' ? glosario($gl) : ''; ?>><?php echo s($t); ?></button>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -122,25 +123,25 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
         </section>
 
         <section class="pn-secc" data-ins="cajetines">
-            <h4 class="pn-tit"><i class="fa-solid fa-table-list"></i> Cajetines</h4>
+            <h4 class="pn-tit"<?php echo glosario('cajetin'); ?>><i class="fa-solid fa-table-list"></i> Cajetines</h4>
             <div id="vp-sim-cajetines" class="pn-grid"></div>
         </section>
 
         <section class="pn-secc" data-ins="estampas">
-            <h4 class="pn-tit"><i class="fa-solid fa-wand-magic-sparkles"></i> Estampas inteligentes</h4>
+            <h4 class="pn-tit"<?php echo glosario('estampa'); ?>><i class="fa-solid fa-wand-magic-sparkles"></i> Estampas inteligentes</h4>
             <p class="text-sm text-muted">Bloques que se llenan solos con datos del proyecto (fecha, avance, actividades del día…).</p>
             <div id="vp-sim-estampas" class="pn-grid"></div>
         </section>
 
         <section class="pn-secc" data-ins="tablas">
-            <h4 class="pn-tit"><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
+            <h4 class="pn-tit"<?php echo glosario('tabla'); ?>><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
             <p class="text-sm text-muted">Tablas del proyecto creadas en vPlan. Las que están <strong>enlazadas a una hoja de SheetFlow</strong> se actualizan solas.</p>
             <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost vp-ins-nueva"><i class="fa-solid fa-plus"></i> Crear tabla nueva</a>
             <div id="vp-ins-tablas" class="vp-ins-tablas"></div>
         </section>
 
         <section class="pn-secc" data-ins="tablas-sf">
-            <h4 class="pn-tit"><i class="fa-solid fa-table-cells"></i> Tablas SheetFlow</h4>
+            <h4 class="pn-tit"<?php echo glosario('sheetflow'); ?>><i class="fa-solid fa-table-cells"></i> Tablas SheetFlow</h4>
             <p class="text-sm text-muted">Hojas de <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">SheetFlow</a> que todavía no están en el vPlan. Al insertarlas se crea la tabla y quedan <strong>enlazadas</strong>: sus datos se leen en vivo y se actualizan solos.</p>
             <div id="vp-ins-tablas-sf" class="vp-ins-tablas"></div>
         </section>

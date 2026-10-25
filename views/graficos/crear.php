@@ -37,7 +37,7 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
             </div>
         </div><?php endif; ?>
 
-        <h3 class="mt-2">Plantilla</h3>
+        <h3 class="mt-2"<?php echo glosario('plantilla'); ?>>Plantilla</h3>
         <h4 class="gr-sub">Tamaño</h4>
         <?php // Tarjetas con la proporción dibujada (el <select> oculto es el que envía el formulario; las tarjetas lo sincronizan) ?>
         <?php $claveSel = $esSimb ? 'simb-schedule' : 'fullhd'; $valSel = ''; foreach (Grafico::TAMANOS as $lista) foreach ($lista as $clave => [$etq, $w, $h]) if ($clave === $claveSel) $valSel = $w . 'x' . $h; ?>

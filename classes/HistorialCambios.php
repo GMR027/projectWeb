@@ -21,6 +21,11 @@ namespace Classes;
  *
  * Para que las acciones de IA no aparezcan duplicadas, los puntos que aplican cambios de IA deben correr dentro
  * de `HistorialCambios::silenciar(fn () => …)`.
+ *
+ * **Solo cambios que hace el usuario con las herramientas.** Lo que escribe el código por su cuenta (cron, bot de
+ * Telegram, tareas automáticas, lecturas que recalculan fechas solas) NO se registra: sin una persona con sesión no
+ * hay nada que anotar (ver `conUsuario()`) y los cálculos derivados van dentro de `silenciar()`. Las filas que
+ * quedaron de antes sin usuario tampoco se enseñan (ver `donde()`).
  */
 class HistorialCambios
 {
@@ -189,10 +194,20 @@ class HistorialCambios
         return self::$silencio > 0;
     }
 
-    /** ¿Esta tabla se registra en el historial? (no si está silenciada o falta la migración) */
+    /**
+     * ¿Hay una persona con sesión detrás de lo que se está escribiendo? Sin usuario no se registra nada: lo que hace
+     * el código solo (cron, bot de Telegram, importaciones automáticas, tareas programadas) no es un cambio del
+     * usuario y ensuciaría el historial. La API REST y la app de escritorio traen la sesión de siempre, así que sí.
+     */
+    public static function conUsuario(): bool
+    {
+        return !empty($_SESSION['id']) && trim((string)($_SESSION['nombre'] ?? '')) !== '';
+    }
+
+    /** ¿Esta tabla se registra en el historial? (no si está silenciada, no hay usuario o falta la migración) */
     public static function observa(string $tabla): bool
     {
-        return self::$silencio === 0 && isset(self::TABLAS[$tabla]) && self::disponible();
+        return self::$silencio === 0 && self::conUsuario() && isset(self::TABLAS[$tabla]) && self::disponible();
     }
 
     // ===================================================================== captura (la llama ActiveRecord)
@@ -447,6 +462,7 @@ class HistorialCambios
 
     private static function anotar(int $pid, string $origen, string $herramienta, string $evento, string $accion, string $resumen, ?array $antes, ?array $despues, array $entidad, string $estado): void
     {
+        if (!self::conUsuario()) return;   // red de seguridad: sin usuario no hay cambio del usuario que anotar
         $db = self::db();
         [$tipo, $eid, $nombre] = $entidad;
         $esc = fn($v) => $db->real_escape_string((string)$v);
@@ -467,7 +483,7 @@ class HistorialCambios
     public static function registrar(int $pid, string $herramienta, string $evento, string $resumen, ?array $antes = null, ?array $despues = null, ?array $entidad = null, string $tabla = ''): void
     {
         try {
-            if (self::$silencio > 0) return;
+            if (self::$silencio > 0 || !self::conUsuario()) return;
             if (!in_array($evento, ['creado', 'modificado', 'eliminado'], true)) $evento = 'modificado';
             self::anotar($pid, 'manual', $herramienta, $evento, $tabla, $resumen, $antes, $despues, $entidad ?? ['', null, ''], 'pendiente');
         } catch (\Throwable $e) {
@@ -481,6 +497,9 @@ class HistorialCambios
     {
         $db = self::db();
         $w = ["proyecto_id = $pid"];
+        // Solo cambios hechos por alguien: las filas que escribió el sistema sin usuario no se muestran
+        // (ni en la lista, ni en los contadores, ni en el Excel/PDF)
+        $w[] = "usuario <> ''";
         $origen = (string)($f['origen'] ?? '');
         if (in_array($origen, ['ia', 'manual'], true)) $w[] = "origen = '$origen'";
         $estado = (string)($f['estado'] ?? '');

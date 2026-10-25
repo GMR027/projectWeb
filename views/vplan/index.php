@@ -1,7 +1,7 @@
 <?php $tab = 'laminas'; ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-sheet-plastic"></i> vPlan · Plan visual</h2>
+        <h2><i class="fa-solid fa-sheet-plastic"></i> vPlan · Plan visual</h2><?php // el glosario está en la pestaña y en la ayuda de la herramienta ?>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($paquetes); ?> vPlan</p>
     </div>
     <div class="la-controles">
@@ -13,7 +13,7 @@
 <?php if ($puedeEditar): ?>
 <form method="POST" action="/vplan/paquete/crear" class="card vp-nuevo-paquete">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-    <label for="vp-np-nombre" class="text-sm">Nuevo vPlan:</label>
+    <label for="vp-np-nombre" class="text-sm"<?php echo glosario('vplan'); ?>>Nuevo vPlan:</label>
     <input type="text" id="vp-np-nombre" name="nombre" maxlength="200" placeholder="Ej: Videovigilancia, Fase 2, Torre A…" required>
     <button type="submit" class="btn btn-primary btn-sm">+ Crear vPlan</button>
     <span class="text-sm text-muted">Cada vPlan reúne las láminas (una por área) que quieras gestionar juntas.</span>
