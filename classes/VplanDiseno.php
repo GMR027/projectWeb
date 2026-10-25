@@ -66,26 +66,55 @@ class VplanDiseno
     // ---------- estimación de altura (pt de referencia) ----------
 
     private const PT_CM = 28.35;
+    /**
+     * Ancho medio del carácter en múltiplos de la letra (Helvetica/Arial).
+     * Medido con las métricas reales de Dompdf: «100%» ocupa 14,57 pt con letra de 5,7 pt (0,64 por
+     * carácter) y «CONSTRAINS» 37,37 pt; con el 0,55 de antes las columnas salían estrechas, el texto se
+     * partía en dos renglones y la fila crecía, con lo que la tabla se salía de su bloque.
+     */
+    private const ANCHO_CHAR = 0.64;
 
     /**
      * Líneas que ocupa un texto en una columna de $cm (cm de referencia), con letra $f y relleno $p.
-     * El ancho medio del carácter es 0.55 de la letra (Helvetica/Arial), como en el PDF y en el navegador.
+     * Se parte por palabras (como hacen el navegador y Dompdf): una palabra larga ocupa su propio renglón,
+     * y solo se parte a mitad de palabra si no cabe ni siquiera sola (`overflow-wrap: anywhere`).
      */
     private static function lineas(string $t, float $cm, float $f, float $p): int
     {
-        $cpl = max(4, (int)floor(($cm * self::PT_CM - 3.6 * $p - 2) / (0.55 * $f)));
-        return max(1, (int)ceil(mb_strlen($t) / $cpl));
+        $cpl = max(4, (int)floor(($cm * self::PT_CM - 3.6 * $p - 2) / (self::ANCHO_CHAR * $f)));
+        $n = 1;
+        $uso = 0;
+        foreach (preg_split('/\s+/u', trim($t)) ?: [] as $pal) {
+            $l = mb_strlen($pal);
+            if ($l === 0) continue;
+            if ($uso === 0) $uso = $l;
+            elseif ($uso + 1 + $l <= $cpl) $uso += 1 + $l;
+            else { $n++; $uso = $l; }
+            while ($uso > $cpl) { $n++; $uso -= $cpl; }   // palabra más ancha que la columna
+        }
+        return max(1, $n);
     }
 
-    private static function fila(int $lineas, float $f, float $p): float
+    private static function fila(int $lineas, float $f, float $p, float $altoMin = 0.0): float
     {
-        return $lineas * 1.25 * $f + 2 * $p + 1.5;   // línea + relleno + bordes
+        // línea + relleno + bordes; $altoMin = la celda más alta del renglón, en múltiplos de la letra
+        return max($lineas * 1.25, $altoMin) * $f + 2 * $p + 1.5;
     }
+
+    /**
+     * Altura mínima de un renglón (en múltiplos de la letra) según lo que la vista mete en la celda.
+     * Son cosas más altas que una línea de texto: si el estimador no las cuenta, la letra que elige
+     * no cabe en pantalla y `vplan-ajuste.js` la baja, con lo que la lámina y el PDF acaban distintos.
+     */
+    public const ALTO_INPUT = 1.3;     // .vp-rec / .vp-in: height:1.3em
+    public const ALTO_ROMBO = 2.2;     // .vp-rombo: 1.7em + .25em de margen arriba y abajo
+    public const ALTO_FOTO = 3.4;      // .vp-foto: max-height:3.4em
+    public const ALTO_SEMAFORO = 1.45; // .vp-semaforo: una línea + .1em de relleno
 
     /** Ancho (cm) que necesita una columna con $caracteres de texto */
     private static function colCm(int $caracteres, float $f, float $p): float
     {
-        return ($caracteres * 0.55 * $f + 3.6 * $p + 3) / self::PT_CM;
+        return ($caracteres * self::ANCHO_CHAR * $f + 3.6 * $p + 3) / self::PT_CM;
     }
 
     /** Columnas fijas de la tabla de tareas (`rec` agrupa todas las de recovery) */
@@ -162,13 +191,34 @@ class VplanDiseno
     }
 
     /** Alto de la tabla de tareas. $nombres = textos de cada renglón; $subtitulos = renglones de partida */
-    public static function estimarTareas(array $nombres, int $nRec, int $subtitulos, float $anchoCm, float $f, float $p, ?array $orden = null): float
+    public static function estimarTareas(array $nombres, int $nRec, int $subtitulos, float $anchoCm, float $f, float $p, ?array $orden = null, ?array $altos = null): float
     {
         $orden ??= self::COLS_BASE;
         $anchoTarea = self::columnasTareas($anchoCm, $nRec, $f, $p, $orden)[self::posTarea($orden, $nRec)] / 100 * $anchoCm;
         $h = self::fila(1, $f, $p) * (3 + $subtitulos) + 0.25 * $f * 1.25;   // el título es 25 % más grande
-        foreach ($nombres as $n) $h += self::fila(self::lineas((string)$n, $anchoTarea, $f, $p), $f, $p);
+        foreach ($nombres as $i => $n) $h += self::fila(self::lineas((string)$n, $anchoTarea, $f, $p), $f, $p, (float)($altos[$i] ?? self::ALTO_INPUT));
         return $h;
+    }
+
+    /**
+     * Altura mínima de cada renglón de un bloque de tareas (en múltiplos de la letra), según la vista:
+     * los campos editables miden 1,3em y una fila con restricciones lleva el rombo de 2,2em.
+     * @return float[]
+     */
+    public static function altosDeTareas(array $td): array
+    {
+        $out = [];
+        foreach ($td['grupos'] as $g) foreach ($g['tareas'] as $t) $out[] = !empty($t['restricciones']) ? self::ALTO_ROMBO : self::ALTO_INPUT;
+        return $out;
+    }
+
+    /**
+     * Columnas de acciones que la vista pinta para una tabla de ese tipo (el PDF no lleva ninguna):
+     * la del botón de borrar y, en las secundarias, además la del selector de estado.
+     */
+    public static function accionesVista(string $tipo): int
+    {
+        return $tipo === 'secundarias' ? 2 : 1;
     }
 
     /** Anchos (%) de las columnas de una tabla adicional según su tipo; la primera de texto es la que "crece" */
@@ -240,7 +290,11 @@ class VplanDiseno
     public static function repartoColumnas(string $tipo, array $filas, array $campos, float $anchoCm, float $f, float $p, int $nAcciones = 0, array $tipos = []): array
     {
         $nCampos = count($campos);
-        $accPct = $nAcciones > 0 ? min(14.0, 2.4 * $f / max(1.0, $anchoCm * self::PT_CM) * 100) : 0.0;
+        // Cada columna de acción necesita sitio para su control (el selector de estado o el botón de borrar).
+        // Con la fórmula anterior (2,4 × la letra, sin multiplicar por el número de columnas) solo cabía un
+        // carácter: el encabezado «ESTADO» se partía en seis renglones, la tabla crecía y la vista tenía que
+        // bajar la letra, con lo que la lámina y el PDF acababan con tamaños distintos.
+        $accPct = $nAcciones > 0 ? min(45.0, self::colCm(10, $f, $p) * $nAcciones / max(1.0, $anchoCm) * 100) : 0.0;
         $disponible = 100 - $accPct;
         if (in_array($tipo, ['punch', 'restricciones', 'secundarias'], true)) {
             $pct = self::columnasTabla($tipo, $nCampos);
@@ -295,14 +349,18 @@ class VplanDiseno
             $lineasCab = max($lineasCab, self::lineas((string)$etq, $anchos[$c], $f, $p));
         }
         $h = self::fila($lineasCab, $f, $p) * $nCab + 0.25 * $f * 1.25;
-        // Renglones: cada uno mide lo que mide su celda más alta
+        // Renglones: cada uno mide lo que mide su celda más alta (texto o elemento de la vista)
         foreach ($filas as $fila) {
             $lineas = 1;
+            $alto = $tipo === 'restricciones' ? self::ALTO_ROMBO : self::ALTO_INPUT;
             foreach (self::celdasDeFila($tipo, $fila, $nCampos) as $c => $txt) {
                 if (!isset($anchos[$c])) continue;
                 $lineas = max($lineas, self::lineas((string)$txt, $anchos[$c], $f, $p));
+                $tipoCelda = $c >= 1 ? (string)($tipos['c' . ($c - 1)]['t'] ?? '') : '';
+                if ($tipoCelda === 'foto') $alto = max($alto, self::ALTO_FOTO);
+                elseif ($tipoCelda === 'semaforo') $alto = max($alto, self::ALTO_SEMAFORO);
             }
-            $h += self::fila($lineas, $f, $p);
+            $h += self::fila($lineas, $f, $p, $alto);
         }
         return $h;
     }
@@ -342,10 +400,11 @@ class VplanDiseno
     public static function escalaTareas(VplanLamina $l, VplanBloque $b, array $td, int $nRec): int
     {
         $nombres = self::textosDeTareas($td);
+        $altos = self::altosDeTareas($td);
         $sub = $td['subtitulos'] ? count($td['grupos']) : 0;
         $ancho = self::anchoRefCm($b);
         $orden = self::ordenTareas($b->config());
-        return self::elegirEscala(fn($f, $p) => self::estimarTareas($nombres, $nRec, $sub, $ancho, $f, $p, $orden), self::capacidadPt($l, $b));
+        return self::elegirEscala(fn($f, $p) => self::estimarTareas($nombres, $nRec, $sub, $ancho, $f, $p, $orden, $altos), self::capacidadPt($l, $b));
     }
 
     public static function escalaTabla(VplanLamina $l, VplanBloque $b, array $tb): int
@@ -354,7 +413,7 @@ class VplanDiseno
         $tipo = $tb['tabla']->tipo;
         $filas = $tb['filas'];
         $campos = $tb['campos'];
-        return self::elegirEscala(fn($f, $p) => self::estimarTablaDe($tipo, $filas, $campos, $ancho, $f, $p, 1, $tb['tabla']->metaColumnas()), self::capacidadPt($l, $b));
+        return self::elegirEscala(fn($f, $p) => self::estimarTablaDe($tipo, $filas, $campos, $ancho, $f, $p, self::accionesVista($tipo), $tb['tabla']->metaColumnas()), self::capacidadPt($l, $b));
     }
 
     /** [letra, relleno] en pt de una tabla: la escala de ESCALAS y, si cabe con la más grande, crece (hasta 48 pt) para llenar el bloque */
@@ -368,7 +427,7 @@ class VplanDiseno
         $filas = $tb['filas'];
         $campos = $tb['campos'];
         $cap = self::capacidadPt($l, $b);
-        $cabe = fn(float $fz) => self::estimarTablaDe($tipo, $filas, $campos, $ancho, $fz, $fz / 3, 1, $tb['tabla']->metaColumnas()) * 1.06 <= $cap;
+        $cabe = fn(float $fz) => self::estimarTablaDe($tipo, $filas, $campos, $ancho, $fz, $fz / 3, self::accionesVista($tipo), $tb['tabla']->metaColumnas()) * 1.06 <= $cap;
         $lo = 9.0; $hi = 48.0;
         if ($cabe($hi)) return [$hi, $hi / 3];
         for ($k = 0; $k < 14; $k++) { $m = ($lo + $hi) / 2; if ($cabe($m)) $lo = $m; else $hi = $m; }
@@ -444,7 +503,7 @@ class VplanDiseno
             $tmp = new VplanBloque(['tipo' => 'tareas']);
             $tmp->setConfig(['fuentes' => $fuentes, 'seq' => $seq]);
             $td = Vplan::tareasDeBloque($tmp, $proyecto);
-            $apilar[] = ['tareas', $tmp, self::textosDeTareas($td), $td['subtitulos'] ? count($td['grupos']) : 0];
+            $apilar[] = ['tareas', $tmp, self::textosDeTareas($td), $td['subtitulos'] ? count($td['grupos']) : 0, self::altosDeTareas($td)];
             $ids = [];
             foreach ($td['grupos'] as $g) foreach ($g['tareas'] as $t) $ids[] = (int)$t['actividad']->id;
             $nRestr = count(Vplan::restriccionesDe($ids)['lista']);
@@ -460,8 +519,8 @@ class VplanDiseno
         $altoRef = self::altoRefPt($l);
         $anchoCol = $colW / 100 * (self::REF_ANCHO_MM / 10);
         $alto = fn($a, $f, $p) => $a[0] === 'tareas'
-            ? self::estimarTareas($a[2], $nRec, $a[3], $anchoCol, $f, $p)
-            : self::estimarTablaDe($a[1]->tipo, $a[2], $a[1]->campos(), $anchoCol, $f, $p, 1, $a[1]->metaColumnas());
+            ? self::estimarTareas($a[2], $nRec, $a[3], $anchoCol, $f, $p, null, $a[4] ?? null)
+            : self::estimarTablaDe($a[1]->tipo, $a[2], $a[1]->campos(), $anchoCol, $f, $p, self::accionesVista($a[1]->tipo), $a[1]->metaColumnas());
         $esc = self::elegirEscala(function ($f, $p) use ($apilar, $alto) {
             $h = 0;
             foreach ($apilar as $a) $h += $alto($a, $f, $p) * 1.1 + 8;
@@ -492,7 +551,7 @@ class VplanDiseno
                 $fondo = max($fondo, (float)$e->y + (float)$e->h + 0.9);
             }
         }
-        $pt = self::estimarTablaDe($t->tipo, $t->filas(), $t->campos(), $w / 100 * 43.2, 6.2, 1.5, 1, $t->metaColumnas());
+        $pt = self::estimarTablaDe($t->tipo, $t->filas(), $t->campos(), $w / 100 * 43.2, 6.2, 1.5, self::accionesVista($t->tipo), $t->metaColumnas());
         $h = max(5.0, round($pt * 1.1 / self::altoRefPt($l) * 100, 3));
         $b = new VplanBloque(['lamina_id' => $l->id, 'tipo' => 'tabla', 'x' => $x, 'y' => max(0, min($fondo, 100 - $h)), 'w' => $w, 'h' => $h, 'z' => count($existentes)]);
         $b->setConfig(['tabla_id' => (int)$t->id]);

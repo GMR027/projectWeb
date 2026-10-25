@@ -49,11 +49,45 @@
     };
     sheet.querySelectorAll('.vp-blk').forEach(el => { const b = bloques.find(x => x.clave === el.dataset.id); if (b) asegurarCapa(b, el); });
 
+    // ---- Techo de la letra: al cambiar el tamaño de un bloque (o de la hoja) el servidor recalcula la
+    // misma letra que usarán la vista y el PDF, para ver en el modo diseño el tamaño real sin guardar ----
+    let escalaReloj = null, escalaFirma = '';
+    const firmasEscala = () => tamano.ancho_mm + 'x' + tamano.alto_mm + '|' +
+        bloques.filter(b => b.tipo === 'tareas' || b.tipo === 'tabla').map(b => b.clave + ':' + b.w + 'x' + b.h).join(',');
+    const pedirEscala = () => {
+        const firma = firmasEscala();
+        if (firma === escalaFirma) return;
+        clearTimeout(escalaReloj);
+        escalaReloj = setTimeout(async () => {
+            const rel = bloques.filter(b => b.tipo === 'tareas' || b.tipo === 'tabla');
+            escalaFirma = firma;
+            if (!rel.length) return;
+            try {
+                const fd = new FormData();
+                fd.append('lamina', D.lamina);
+                fd.append('ancho', tamano.ancho_mm);
+                fd.append('alto', tamano.alto_mm);
+                fd.append('bloques', JSON.stringify(rel.map(b => ({ clave: b.clave, tipo: b.tipo, x: b.x, y: b.y, w: b.w, h: b.h, config: b.config }))));
+                const r = await (await fetch('/api/vplan/diseno/escala', { method: 'POST', body: fd })).json();
+                if (!r.success || !r.escala) return;
+                rel.forEach(b => {
+                    const max = r.escala[b.clave];
+                    const el = elDe(b);
+                    const tab = el && el.querySelector(':scope > .vp-tab');
+                    if (!max || !tab) return;
+                    tab.style.setProperty('--vp-max', max);
+                    if (window.vplanAjustar) window.vplanAjustar(el);
+                });
+            } catch (e) { /* sin conexión: el tamaño real se verá al guardar */ }
+        }, 300);
+    };
+
     const aplicar = b => {
         const el = elDe(b);
         if (!el) return;
         el.style.left = b.x + '%'; el.style.top = b.y + '%'; el.style.width = b.w + '%'; el.style.height = b.h + '%'; el.style.zIndex = b.z;
         if (window.vplanAjustar) window.vplanAjustar(el);
+        pedirEscala();
     };
     const aplicarTodos = () => bloques.forEach(aplicar);
 
@@ -1127,6 +1161,7 @@
         if (seleccion) llenarPosicion(seleccion);
         pintarPresets();
         marcarSucio();
+        pedirEscala();   // la hoja más alta o más ancha cambia el hueco de cada tabla
     };
     [selPreset, selOri, document.getElementById('vp-dis-ancho'), document.getElementById('vp-dis-alto'), document.getElementById('vp-dis-unidad')].forEach(i => i.addEventListener('change', cambioTamano));
     custom.hidden = selPreset.value !== 'personalizado';

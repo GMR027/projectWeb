@@ -282,6 +282,7 @@ $router->get('/vplan/editor', [VplanController::class, 'editor']);
 $router->post('/api/vplan/tablas-version', [VplanController::class, 'versionTablas']);
 $router->post('/api/vplan/marcas', [VplanController::class, 'guardarMarcas']);
 $router->post('/api/vplan/diseno', [VplanController::class, 'guardarDiseno']);
+$router->post('/api/vplan/diseno/escala', [VplanController::class, 'escalaBloque']);
 $router->post('/vplan/diseno/restablecer', [VplanController::class, 'restablecerDiseno']);
 $router->post('/api/vplan/fila', [VplanTablaController::class, 'apiFila']);
 $router->post('/api/vplan/nota/guardar', [VplanNotaController::class, 'guardar']);

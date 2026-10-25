@@ -197,7 +197,7 @@ foreach ($paginas as $pi => $d):
                                     case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><img src="<?php echo \Classes\Exportadores\VplanPdfExporter::rombo((int)$n); ?>" style="width:<?php echo round($fz * 1.45 * $K, 1); ?>pt"> <?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
                                     case 'responsable': case 'libre_texto': case 'libre_numero': case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'predecesora': case 'sucesora': case 'indicador':
                                         $vp = \Classes\ProgramaColumnas::valorVplan($o, $a, $prg); ?>
-                                        <td<?php echo in_array($o, ['responsable', 'libre_texto'], true) ? '' : ' class="c"'; ?>><?php if ($o === 'indicador'): if ($vp['color']): ?><span style="color:<?php echo s($vp['color']); ?>;font-size:<?php echo round($fz * 1.6, 1); ?>pt">●</span><?php endif; else: echo s($vp['texto']); endif; ?></td><?php break;
+                                        <td<?php echo in_array($o, ['responsable', 'libre_texto'], true) ? '' : ' class="c"'; ?>><?php if ($o === 'indicador'): if ($vp['color']): ?><span style="display:inline-block;width:<?php echo round($fz * 1.1, 2); ?>pt;height:<?php echo round($fz * 1.1, 2); ?>pt;border-radius:50%;background:<?php echo s($vp['color']); ?>;border:0.7pt solid rgba(0,0,0,.25);vertical-align:middle"></span><?php endif; else: echo s($vp['texto']); endif; ?></td><?php break;
                                     default: ?><td><?php echo s($t['textos'][substr($o, 2)] ?? ''); ?></td><?php
                                 endswitch;
                             endforeach; ?>

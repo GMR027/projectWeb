@@ -703,6 +703,70 @@ class VplanController
         exit;
     }
 
+    /**
+     * Tamaño de letra (en cqw) con el que la tabla de cada bloque cabe en su caja.
+     * El modo diseño lo pide al terminar de redimensionar, así la lámina muestra la misma letra que
+     * verán la vista y el PDF sin tener que guardar: mismas llamadas que hace `_hoja.php`.
+     * @param POST lamina, bloques (JSON: [{clave, tipo, x, y, w, h, config}]), ancho, alto (mm de la hoja)
+     */
+    public static function escalaBloque()
+    {
+        header('Content-Type: application/json');
+        $l = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth() ? VplanLamina::find(filter_var($_POST['lamina'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $proyecto = $l ? \Model\Proyecto::find($l->proyecto_id) : null;
+        if (!$proyecto || !puede_gestionar_proyecto($proyecto)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No autorizado']);
+            exit;
+        }
+        $in = json_decode((string)($_POST['bloques'] ?? ''), true);
+        if (!is_array($in) || count($in) > 80) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => 'Bloques no válidos']);
+            exit;
+        }
+        $num = fn($v, $def) => is_numeric($v) ? (float)$v : $def;
+        $hoja = clone $l;   // tamaño de la hoja como quedó en el editor (aún sin guardar); nunca se guarda
+        if (is_numeric($_POST['ancho'] ?? null)) $hoja->ancho_mm = (int)$_POST['ancho'];
+        if (is_numeric($_POST['alto'] ?? null)) $hoja->alto_mm = (int)$_POST['alto'];
+
+        $sinteticos = [];
+        foreach ($in as $x) {
+            $tipo = (string)($x['tipo'] ?? '');
+            $clave = (string)($x['clave'] ?? '');
+            if ($clave === '' || !in_array($tipo, ['tareas', 'tabla'], true)) continue;
+            $b = new VplanBloque(['lamina_id' => (int)$l->id, 'tipo' => $tipo,
+                'x' => $num($x['x'] ?? null, 0), 'y' => $num($x['y'] ?? null, 0),
+                'w' => $num($x['w'] ?? null, 10), 'h' => $num($x['h'] ?? null, 5)]);
+            $b->setConfig(self::configDeBloque($tipo, (array)($x['config'] ?? []), $proyecto, $l));
+            $sinteticos[$clave] = $b;
+        }
+        $escala = [];
+        if ($sinteticos) {
+            // Los mismos datos que pinta la vista (con las restricciones numeradas) y los bloques del editor
+            $datos = Vplan::datos($l, $proyecto, array_merge($l->bloques(), array_values($sinteticos)));
+            $cqw = fn($pt) => round($pt / 1224.57 * 100, 4) . 'cqw';
+            foreach ($sinteticos as $clave => $b) {
+                try {
+                    if ($b->tipo === 'tareas') {
+                        $td = $datos['porBloque'][spl_object_id($b)] ?? null;
+                        if (!$td) continue;
+                        $fz = \Classes\VplanDiseno::ESCALAS[\Classes\VplanDiseno::escalaTareas($hoja, $b, $td, (int)$datos['nRec'])][1];
+                    } else {
+                        $bt = $datos['tablasPorId'][(int)($b->config()['tabla_id'] ?? 0)] ?? null;
+                        if (!$bt) continue;
+                        [$fz] = \Classes\VplanDiseno::medidasTabla($hoja, $b, $bt, 0);
+                    }
+                    $escala[$clave] = $cqw($fz);
+                } catch (\Throwable $e) {
+                    error_log('vPlan escala de bloque: ' . $e->getMessage());
+                }
+            }
+        }
+        echo json_encode(['success' => true, 'escala' => $escala]);
+        exit;
+    }
+
     /** Vuelve al diseño estándar de la hoja (conserva el contenido del primer bloque de tareas y las tablas) */
     public static function restablecerDiseno()
     {

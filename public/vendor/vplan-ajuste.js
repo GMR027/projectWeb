@@ -33,8 +33,22 @@
     }
 
     const todos = () => sheet.querySelectorAll('.vp-blk').forEach(ajustar);
-    let t = null;
-    const pronto = blk => { cancelAnimationFrame(t); t = requestAnimationFrame(() => (blk ? ajustar(blk) : todos())); };
+    // Los pedidos se acumulan hasta el siguiente cuadro: antes había un solo requestAnimationFrame compartido
+    // y ajustar un bloque cancelaba el del anterior, con lo que solo el último se reajustaba y la lámina
+    // se quedaba con la letra vieja.
+    let t = null, todoPendiente = false;
+    const pendientes = new Set();
+    const correr = () => {
+        if (todoPendiente) { todoPendiente = false; pendientes.clear(); todos(); return; }
+        const lista = [...pendientes];
+        pendientes.clear();
+        lista.forEach(ajustar);
+    };
+    const pronto = blk => {
+        if (blk) pendientes.add(blk); else todoPendiente = true;
+        cancelAnimationFrame(t);
+        t = requestAnimationFrame(correr);
+    };
 
     window.vplanAjustar = blk => { if (blk) pronto(blk); else pronto(); };
     new MutationObserver(() => pronto()).observe(sheet, { childList: true, subtree: true });
