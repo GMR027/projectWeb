@@ -197,10 +197,12 @@ class HistorialCambios
     /**
      * ¿Hay una persona con sesión detrás de lo que se está escribiendo? Sin usuario no se registra nada: lo que hace
      * el código solo (cron, bot de Telegram, importaciones automáticas, tareas programadas) no es un cambio del
-     * usuario y ensuciaría el historial. La API REST y la app de escritorio traen la sesión de siempre, así que sí.
+     * usuario y ensuciaría el historial. La sesión siempre está activa antes de que corra un controlador de la web,
+     * así que la API REST y la app de escritorio (que traen la de siempre) sí registran.
      */
     public static function conUsuario(): bool
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) return false;   // CLI y cron: no hay sesión de nadie
         return !empty($_SESSION['id']) && trim((string)($_SESSION['nombre'] ?? '')) !== '';
     }
 

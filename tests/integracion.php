@@ -393,5 +393,40 @@ putenv('TELEGRAM_RATE_MAX'); unset($_ENV['TELEGRAM_RATE_MAX']);
 $ok('una IP vacía nunca se bloquea (sin identidad no hay cuota)', Telegram::limite(''));
 $db->query("DELETE FROM telegram_limites WHERE ip LIKE '203.0.113.%' OR ip LIKE '198.51.100.%'");
 
+// ---- Historial de cambios: solo lo que cambia el usuario con las herramientas ----
+echo "Historial de cambios\n";
+$pidH = (int)$proy->id;
+$cuenta = fn() => (int)$db->query("SELECT COUNT(*) FROM auditoria_cambios WHERE proyecto_id = $pidH")->fetch_row()[0];
+$_SESSION = ['id' => (int)$u->id, 'nombre' => 'Historial Prueba', 'email' => $u->email, 'rol' => $u->rol];
+$ok('con alguien en sesión hay a quién atribuir el cambio', Classes\HistorialCambios::conUsuario());
+$antesH = $cuenta();
+$ph = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'HIST.1', 'nombre' => 'Partida del historial', 'orden' => 900]);
+$ph->id = $ph->guardar()['id'];
+$filaH = $db->query('SELECT usuario, evento, herramienta FROM auditoria_cambios ORDER BY id DESC LIMIT 1')->fetch_assoc();
+$ok('un cambio del usuario queda registrado con su nombre', $cuenta() === $antesH + 1 && ($filaH['usuario'] ?? '') === 'Historial Prueba'
+    && ($filaH['evento'] ?? '') === 'creado' && ($filaH['herramienta'] ?? '') === 'programa');
+$ah = new Model\Actividad(['partida_id' => $ph->id, 'codigo' => 'HIST.1.1', 'nombre' => 'Actividad del historial',
+    'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'duracion_dias' => 5, 'progreso' => 0]);
+$ok('crear una actividad también queda registrada', (bool)$ah->guardar()['resultado'] && $cuenta() === $antesH + 2);
+$antesH = $cuenta();
+$rec = Model\Partida::find($ph->id);
+$rec->recalcularFechas();
+$ok('las fechas que recalcula el sistema no ensucian el historial', $cuenta() === $antesH
+    && (string)$db->query("SELECT fecha_inicio FROM partidas WHERE id = {$ph->id}")->fetch_row()[0] === '2026-11-04');
+$_SESSION = [];
+$ok('sin nadie con sesión no hay usuario que atribuir', !Classes\HistorialCambios::conUsuario());
+$antesH = $cuenta();
+$ph2 = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'HIST.2', 'nombre' => 'Partida sin sesión', 'orden' => 901]);
+$ok('lo que escribe el código solo se guarda, pero no se anota', (bool)$ph2->guardar()['resultado'] && $cuenta() === $antesH);
+$_SESSION = ['id' => (int)$u->id, 'nombre' => 'Historial Prueba', 'email' => $u->email, 'rol' => $u->rol];
+$db->query("INSERT INTO auditoria_cambios (proyecto_id, origen, herramienta, evento, estado, accion, resumen, usuario) VALUES ($pidH, 'manual', 'programa', 'modificado', 'pendiente', 'actividades', 'Fila del sistema', '')");
+$selH = ['estado' => 'pendiente', 'q' => 'Fila del sistema'];
+$ok('una fila vieja sin usuario ya no se cuenta', Classes\HistorialCambios::contar($pidH, $selH) === 0);
+$ok('una fila vieja sin usuario ya no aparece en la lista (ni en el Excel/PDF)', Classes\HistorialCambios::listar($pidH, $selH, 1, 10) === []);
+$db->query("DELETE FROM auditoria_cambios WHERE proyecto_id = $pidH AND (usuario = 'Historial Prueba' OR resumen = 'Fila del sistema')");
+$db->query("DELETE FROM actividades WHERE partida_id = {$ph->id}");
+$db->query("DELETE FROM partidas WHERE proyecto_id = $pidH AND codigo IN ('HIST.1', 'HIST.2')");
+$_SESSION = [];
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nIntegración OK\n";
 exit($fallos ? 1 : 0);
