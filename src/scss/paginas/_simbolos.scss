@@ -1,9 +1,8 @@
-// Símbolos: pestañas, barra de búsqueda/categorías y alta plegable
-.sim-tabs { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.6rem 0 2rem; border-bottom: 1px solid var(--border); }
-.sim-tab { display: inline-flex; align-items: center; gap: .8rem; padding: 1rem 1.6rem; margin-bottom: -1px; font: inherit; font-weight: 600; font-size: 1.4rem; color: var(--text-muted); background: none; border: 1px solid transparent; border-bottom: 0; border-radius: .8rem .8rem 0 0; cursor: pointer; transition: color .15s, background .15s;
-  em { font-style: normal; font-size: 1.15rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); }
-  &:hover { color: var(--text); background: var(--bg-tertiary); }
-  &.on { color: var(--primary); background: var(--bg-secondary, var(--bg-tertiary)); border-color: var(--border); em { background: var(--primary); color: #fff; } } }
+// Símbolos: barra de búsqueda/categorías y alta plegable.
+// Las pestañas (.sim-tabs) son alias de la barra compartida .pestanas (componentes/_tabs.scss);
+// aquí solo queda lo propio: la píldora de contador (em) de cada pestaña.
+.sim-tab { em { font-style: normal; font-size: 1.15rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); }
+  &[aria-selected=true] em, &.on em { background: var(--primary); color: #fff; } }
 .sim-panel[hidden], .sim-tarjeta[hidden], .sim-vacio[hidden] { display: none; }
 .sim-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.4rem; margin-bottom: 1.8rem;
   // El buscador usa la caja compartida .pn-busca (lupa + campo)
@@ -94,3 +93,23 @@
 .est-sep { width: 1px; height: 2rem; background: var(--border); margin: 0 .4rem; }
 @media (max-width: 62.5rem) { .est-lz-lado { position: static; max-height: none; } }
 .est-cap-nueva { width: 100%; margin-top: .8rem; padding: .6rem .8rem; border-radius: .6rem; border: 1px dashed var(--border); background: transparent; color: inherit; font-size: 1.25rem; cursor: pointer; }
+
+// ---------- Tarjeta de símbolo: acciones y badge de uso ----------
+.sim-tarjeta { position: relative; }
+.sim-tarjeta-acc { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; form { display: inline-flex; } }
+.sim-uso { position: absolute; top: .5rem; right: .5rem; display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .6rem; border-radius: 99rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 1.05rem; font-weight: 700; }
+
+// ---------- Galería de plantillas de estampas y modal «Probar en una lámina» ----------
+.est-plantillas { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: .8rem; margin: .8rem 0 1rem; }
+.est-plantilla { display: flex; flex-direction: column; gap: 0; overflow: hidden; padding: 0; border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); cursor: pointer; text-align: left; transition: box-shadow .15s ease, transform .15s ease, border-color .15s;
+  &:hover { border-color: rgba(0, 112, 192, .6); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .est-miniatura { display: grid; place-items: center; min-height: 12rem; padding: .8rem; background: repeating-conic-gradient(var(--bg-tertiary) 0% 25%, var(--surface) 0% 50%) 50% / 1.6rem 1.6rem; border-bottom: 1px solid var(--border); }
+  .est-plantilla-pie { display: grid; gap: .1rem; padding: .8rem 1rem;
+    b { display: flex; align-items: center; gap: .5rem; font-size: 1.25rem; color: var(--text); i { color: #38a1f3; } }
+    small { font-size: 1.05rem; color: var(--text-muted); } } }
+.est-probar-lista { list-style: none; margin: 0; padding: .4rem 1.2rem 1.4rem; max-height: 34rem; overflow-y: auto;
+  a { display: flex; align-items: center; gap: .7rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: .7rem; margin-bottom: .4rem; background: var(--bg-tertiary); color: var(--text); font-size: 1.25rem; text-decoration: none;
+    i:first-child { color: #38a1f3; }
+    i:last-child { margin-left: auto; opacity: 0; transition: opacity .15s; }
+    &:hover { border-color: rgba(0, 112, 192, .6); i:last-child { opacity: 1; } } } }
+.est-plantilla .est-miniatura > span { display: block; background: #fff; box-shadow: 0 .2rem .8rem rgba(0, 0, 0, .25); }

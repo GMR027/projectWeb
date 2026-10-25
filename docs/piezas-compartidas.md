@@ -58,6 +58,12 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 
 `public/vendor/selector-color.js` → `window.VPColor.iniciar(raiz?)`: la **paleta de colores de la plataforma** para todos los `input[type=color]` (básicos, maestra Pantone, mis colores, gotero). Los paneles que se re-dibujan la llaman con su raíz (p. ej. `VPColor.iniciar(document.getElementById('vp-dis-campos'))`); los listeners globales se registran una sola vez.
 
+## Estado vacío ilustrado y tour de guía rápida (2026-10-25)
+
+- **`estado_vacio()`** (`includes/funciones.php`, estilos `.estado-vacio` en `componentes/_estados.scss`): icono + título + texto + hasta dos acciones (y `$extra` para HTML propio, `$clase` para la variante `estado-vacio-sm`). Sustituye al «Aún no hay…» en gris; con `$puedeEditar` se le pasa la acción de crear. Lo usan vPlan (lista, gestor, tablas, hoja sin bloques), Editor y Símbolos. En la misma hoja están `.guia-tarjetas` (tarjetas de ayuda dentro de un modal).
+- **`public/vendor/tour.js`** → `window.Tour`: guía paso a paso con spotlight. `Tour.registrar(id, { auto, pasos: [{ sel, titulo, texto, icono, alEntrar }] })`; se dispara solo la primera vez por usuario y herramienta (`localStorage «tour-<id>»`), con el botón `[data-tour="id"]` («Guía rápida») o con `?tour=1`. Un paso sin `sel` sale centrado; `alEntrar` abre pestañas/paneles antes de destacarlos. Estilos en `componentes/_tour.scss`. Registrados: `vplan-diseno` (ver.php), `editor-canvas` (lienzo, vPlan y Editor) y `simbolos`.
+- **Asistentes de creación** (`componentes/_asistentes.scss`): `.pasos` + `.paso-tab` (barra 1·2·3) y `.tamano-cards` + `.tamano-card` (tarjetas de tamaño con la proporción dibujada que sincronizan un `<select>` oculto). Los usan «Nueva lámina de vPlan» (3 pasos) y «Nuevo gráfico» del Editor.
+
 ## Pendiente de la reestructuración
 - Guías, reglas, zoom y panel de capas siguen separados en los motores (ver arriba el porqué). El imán, el renombrado en línea y el reordenado ya son compartidos.
 - Fusionar el editor de estampas dentro del Konva (hoy son pestañas hermanas bajo «Editor»).

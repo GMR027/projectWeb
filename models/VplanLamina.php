@@ -71,6 +71,18 @@ class VplanLamina extends ActiveRecord
         foreach ($ids as $orden => $id) self::$db->query("UPDATE vplan_laminas SET orden = " . ($orden + 1) . " WHERE id = $id");
     }
 
+    /** La coloca en la posición $pos (0 = primera) del vPlan: la Galería del gestor la arrastra hasta ahí */
+    public function ordenar(int $pos): void
+    {
+        $ids = array_map(fn($l) => (int)$l->id, VplanPaquete::find($this->paquete_id)?->laminas() ?? []);
+        $i = array_search((int)$this->id, $ids, true);
+        if ($i === false || count($ids) < 2) return;
+        array_splice($ids, $i, 1);
+        $pos = max(0, min(count($ids), $pos));
+        array_splice($ids, $pos, 0, [(int)$this->id]);
+        foreach ($ids as $orden => $id) self::$db->query("UPDATE vplan_laminas SET orden = " . ($orden + 1) . " WHERE id = $id");
+    }
+
     /**
      * Copia el diseño de la lámina como una lámina nueva del mismo vPlan: tamaño, bloques, tablas (copias
      * independientes con sus renglones), simbología y supervisor. NO copia el plano ni las marcas: se sube el del área nueva.

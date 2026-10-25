@@ -7,6 +7,7 @@
     <div class="la-controles">
         <span id="ve-estado" class="text-sm text-muted"></span>
         <button type="button" id="ve-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        <button type="button" class="btn btn-ghost" data-tour="editor-canvas" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> Guía rápida</button>
         <a href="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="btn btn-ghost">← Lámina</a>
     </div>
 </div>

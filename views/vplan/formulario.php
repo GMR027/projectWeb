@@ -1,25 +1,39 @@
 <?php $esNueva = !$lamina->id; ?>
 <div class="page-header">
-    <h2><?php echo $esNueva ? 'Nueva lámina de vPlan' : 'Editar lámina'; ?></h2>
-    <a href="<?php echo $lamina->paquete_id ? '/vplan/paquete?proyecto=' . s($proyecto->id) . '&id=' . s($lamina->paquete_id) : '/vplan?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <h2><?php echo $esNueva ? '<i class="fa-solid fa-wand-sparkles"></i> ' . s(t('Nueva lámina de vPlan')) : '<i class="fa-solid fa-sliders"></i> ' . s(t('Editar lámina')); ?></h2>
+    <a href="<?php echo $lamina->paquete_id ? '/vplan/paquete?proyecto=' . s($proyecto->id) . '&id=' . s($lamina->paquete_id) : '/vplan?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← <?php echo s(t('Volver')); ?></a>
 </div>
 <div class="card">
-    <form method="POST" action="/vplan/<?php echo $esNueva ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">
+<?php if ($esNueva): ?>
+    <?php // ---- Asistente de 3 pasos: qué lleva · tamaño de hoja · datos (los pasos se envían juntos) ---- ?>
+    <div class="pasos" role="tablist" aria-label="<?php echo s(t('Pasos de creación')); ?>">
+        <?php foreach ([[1, 'fa-list-check', '¿Qué lleva?', 'partidas y tablas'], [2, 'fa-expand', 'Tamaño de hoja', 'elige el papel'], [3, 'fa-pen-to-square', 'Datos y plano', 'todo opcional']] as [$n, $ic, $tt, $sub]): ?>
+        <button type="button" class="paso-tab<?php echo $n === 1 ? ' activo' : ''; ?>" data-paso="<?php echo $n; ?>" role="tab" aria-selected="<?php echo $n === 1 ? 'true' : 'false'; ?>">
+            <span class="paso-num"><?php echo $n; ?></span><span><b><i class="fa-solid <?php echo $ic; ?>"></i> <?php echo s(t($tt)); ?></b><small><?php echo s($sub); ?></small></span>
+        </button>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+    <form method="POST" action="/vplan/<?php echo $esNueva ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario" id="vp-form">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if ($lamina->paquete_id): ?><input type="hidden" name="paquete" value="<?php echo s($lamina->paquete_id); ?>"><?php endif; ?>
         <?php if (!$esNueva): ?><input type="hidden" name="id" value="<?php echo s($lamina->id); ?>"><?php endif; ?>
-        <div class="form-grid">
-            <?php if ($esNueva): ?>
+
+        <?php if ($esNueva): ?><div class="paso-secc" data-paso="1"><?php endif; ?>
+        <?php if ($esNueva): ?>
+            <h3>¿Qué lleva esta lámina?</h3>
+            <p class="text-muted">Elige de qué partidas del programa trae las tareas y si arranca con una tabla. Después podrás sumar o quitar cosas en el modo diseño.</p>
+            <div class="form-grid">
             <div class="campo">
-                <label for="partida_id">Partida inicial</label>
+                <label for="partida_id"><?php echo s(t('Partida inicial')); ?></label>
                 <select id="partida_id" name="partida_id">
-                    <option value="">— Ninguna (la lámina empieza sin tareas) —</option>
+                    <option value="">— <?php echo s(t('Ninguna (la lámina empieza sin tareas)')); ?> —</option>
                     <?php foreach ($partidas as $p): ?><option value="<?php echo s($p->id); ?>" data-nombre="<?php echo s($p->nombre); ?>" <?php echo (int)$lamina->partida_id === (int)$p->id ? 'selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?>
                 </select>
-                <small class="text-muted">Es solo el punto de partida: después, en «Modo diseño», puedes sumar otras partidas, elegir actividades y mover cada bloque donde quieras.</small>
+                <small class="text-muted"><?php echo s(t('Es solo el punto de partida: después, en «Acomodar bloques», puedes sumar otras partidas, elegir actividades y mover cada bloque donde quieras.')); ?></small>
             </div>
             <div class="campo vp-acts-campo" id="vp-acts" hidden style="grid-column:1/-1">
-                <label>Actividades a mostrar en esta lámina</label>
+                <label><?php echo s(t('Actividades a mostrar en esta lámina')); ?></label>
                 <p class="text-sm text-muted">Marca solo las que quieras ver aquí; si marcas todas (o ninguna) se muestra la partida completa. Una actividad puede estar en varias láminas.</p>
                 <div class="vp-acts-atajos">
                     <button type="button" class="btn btn-sm btn-ghost" data-atajo="todas">Todas</button>
@@ -41,35 +55,62 @@
                 </select>
                 <small class="text-muted">La tabla se edita en SheetFlow y se ve igual aquí. ¿Tienes un documento (Excel, Word, PDF)? Después usa «Tabla en base a documento» en el vPlan.</small>
             </div>
-            <?php endif; ?>
-            <div class="campo" style="grid-column:1/-1">
-                <label for="preset">Tamaño de la hoja</label>
-                <div class="vp-dis-fila">
-                    <select id="preset" name="preset">
-                        <?php foreach (\Classes\VplanDiseno::PRESETS as $k => $pr): ?><option value="<?php echo s($k); ?>"<?php echo $lamina->preset === $k ? ' selected' : ''; ?>><?php echo s($pr[0] . ' · ' . $pr[1] . '×' . $pr[2] . ' mm'); ?></option><?php endforeach; ?>
-                        <option value="personalizado"<?php echo $lamina->preset === 'personalizado' ? ' selected' : ''; ?>>Personalizada…</option>
-                    </select>
-                    <select id="orientacion" name="orientacion"><option value="horizontal">Horizontal</option><option value="vertical"<?php echo $lamina->alto_mm > $lamina->ancho_mm && $lamina->preset !== 'personalizado' ? ' selected' : ''; ?>>Vertical</option></select>
-                    <span id="preset-custom" class="vp-dis-fila" hidden>
-                        <input type="number" name="ancho" id="ancho" min="1" step="0.1" value="<?php echo (int)$lamina->ancho_mm; ?>" style="width:9rem" aria-label="Ancho"> ×
-                        <input type="number" name="alto" id="alto" min="1" step="0.1" value="<?php echo (int)$lamina->alto_mm; ?>" style="width:9rem" aria-label="Alto">
-                        <select name="unidad" aria-label="Unidad"><option value="mm">mm</option><option value="cm">cm</option><option value="in">pulgadas</option></select>
-                    </span>
-                </div>
-                <small class="text-muted">Los bloques conservan su lugar en proporción si cambias el tamaño después. Mínimo 100 mm, máximo 1500 mm por lado.</small>
-                <script>
-                (function () {
-                    const p = document.getElementById('preset'), c = document.getElementById('preset-custom'), o = document.getElementById('orientacion');
-                    const f = () => { c.hidden = p.value !== 'personalizado'; o.disabled = p.value === 'personalizado'; };
-                    p.addEventListener('change', f); f();
-                })();
-                </script>
             </div>
-            <div class="campo"><label for="titulo">Título de la lámina</label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida inicial"></div>
+        </div>
+        <div class="paso-secc" data-paso="2" hidden>
+            <h3>¿De qué tamaño es la hoja?</h3>
+            <p class="text-muted">Elige la proporción del papel. La más usada en obra es <strong>Tabloide</strong>, la misma del programa y del PDF.</p>
+        <?php else: ?>
+        <?php endif; ?>
+
+        <?php // ---- Tamaño de hoja (paso 2 al crear; sección normal al editar) ---- ?>
+        <?php $personalizado = $lamina->preset === 'personalizado'; ?>
+        <div class="campo" style="grid-column:1/-1">
+            <label for="preset"><?php echo s(t('Tamaño de la hoja')); ?></label>
+            <div class="tamano-cards" role="radiogroup" aria-label="<?php echo s(t('Tamaño de hoja')); ?>" id="preset-cards">
+                <?php $recom = 'tabloide'; foreach (\Classes\VplanDiseno::PRESETS as $k => $pr): [$nombre, $w, $h] = $pr; ?>
+                <?php $maxW = 8.6; $ancho = $maxW; $alto = round($maxW * $h / max(1, $w), 2);   // rectángulo a escala del papel ?>
+                <button type="button" class="tamano-card<?php echo $lamina->preset === $k ? ' activo' : ''; ?>" data-preset="<?php echo s($k); ?>" role="radio" aria-checked="<?php echo $lamina->preset === $k ? 'true' : 'false'; ?>" title="<?php echo s($nombre . ' · ' . $w . ' × ' . $h . ' mm'); ?>">
+                    <span class="tamano-mini"><div style="width:<?php echo $ancho; ?>rem;height:<?php echo $alto; ?>rem"></div></span>
+                    <b><?php echo s($nombre); ?><?php echo $k === $recom ? ' ★' : ''; ?></b>
+                    <small><?php echo (int)$w; ?> × <?php echo (int)$h; ?> mm<?php echo $k === $recom ? ' · recomendada' : ''; ?></small>
+                </button>
+                <?php endforeach; ?>
+                <button type="button" class="tamano-card tamano-custom<?php echo $personalizado ? ' activo' : ''; ?>" data-preset="personalizado" role="radio" aria-checked="<?php echo $personalizado ? 'true' : 'false'; ?>">
+                    <span class="tamano-mini"><i class="fa-solid fa-sliders" style="font-size:1.8rem"></i></span>
+                    <b>Personalizada…</b>
+                    <small>medidas exactas</small>
+                </button>
+            </div>
+            <select id="preset" name="preset" hidden aria-hidden="true" tabindex="-1">
+                <?php foreach (\Classes\VplanDiseno::PRESETS as $k => $pr): ?><option value="<?php echo s($k); ?>"<?php echo $lamina->preset === $k ? ' selected' : ''; ?>><?php echo s($pr[0]); ?></option><?php endforeach; ?>
+                <option value="personalizado"<?php echo $personalizado ? ' selected' : ''; ?>>Personalizada</option>
+            </select>
+            <div class="vp-dis-fila" style="margin-top:.8rem">
+                <label class="text-sm" for="orientacion" style="align-self:center">Orientación:</label>
+                <select id="orientacion" name="orientacion"><option value="horizontal">Horizontal</option><option value="vertical"<?php echo $lamina->alto_mm > $lamina->ancho_mm && !$personalizado ? ' selected' : ''; ?>>Vertical</option></select>
+                <span id="preset-custom" class="vp-dis-fila" <?php echo !$personalizado ? ' hidden' : ''; ?>>
+                    <input type="number" name="ancho" id="ancho" min="1" step="0.1" value="<?php echo (int)$lamina->ancho_mm; ?>" style="width:9rem" aria-label="Ancho"> ×
+                    <input type="number" name="alto" id="alto" min="1" step="0.1" value="<?php echo (int)$lamina->alto_mm; ?>" style="width:9rem" aria-label="Alto">
+                    <select name="unidad" aria-label="Unidad"><option value="mm">mm</option><option value="cm">cm</option><option value="in">pulgadas</option></select>
+                </span>
+            </div>
+            <small class="text-muted">Los bloques conservan su lugar en proporción si cambias el tamaño después. Mínimo 100 mm, máximo 1500 mm por lado.</small>
+        </div>
+
+        <?php if ($esNueva): ?>
+        </div>
+        <div class="paso-secc" data-paso="3" hidden>
+            <h3>Datos y plano <small class="text-muted">(todo opcional)</small></h3>
+            <p class="text-muted">Puedes dejarlo así y rellenarlo luego: la lámina se crea con lo de los pasos anteriores.</p>
+        <?php endif; ?>
+        <?php // ---- Datos de la lámina (paso 3 al crear; sección normal al editar) ---- ?>
+        <div class="form-grid">
+            <div class="campo"><label for="titulo"><?php echo s(t('Título de la lámina')); ?></label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida inicial"></div>
             <div class="campo"><label for="grupo">Grupo (disciplina, nivel…)</label><input type="text" id="grupo" name="grupo" value="<?php echo s($lamina->grupo); ?>" maxlength="100" placeholder="Opcional: agrupa las láminas en el vPlan"></div>
             <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: JUAN PÉREZ / ANA LÓPEZ"></div>
             <div class="campo">
-                <label for="plano">Imagen del plano (hasta Full HD o 4K)</label>
+                <label for="plano"><?php echo s(t('Imagen del plano')); ?> (hasta Full HD o 4K)</label>
                 <input type="file" id="plano" name="plano" accept="image/*">
                 <?php if ($lamina->plano): ?>
                     <img class="vp-mini" src="/uploads/vplan/<?php echo s($lamina->plano); ?>" alt="" style="margin-top:.5rem">
@@ -84,35 +125,81 @@
                 </select>
                 <?php $previas = []; foreach ($simbologias ?? [] as $sg) $previas[(int)$sg->id] = $sg->imagenSimbologia(); ?>
                 <div id="simb-previa" class="text-sm" style="margin-top:.5rem" aria-live="polite"></div>
-                <script>
-                (function () {
-                    const sel = document.getElementById('simbologia_grafico_id'), caja = document.getElementById('simb-previa'), img = <?php echo json_encode($previas); ?>;
-                    const pinta = () => {
-                        caja.textContent = '';
-                        if (!sel.value) return;
-                        if (!img[sel.value]) { caja.className = 'text-sm text-muted'; caja.textContent = 'Esta simbología aún no tiene imagen: ábrela en Símbolos → Simbologías y guárdala. Mientras tanto se usa la tabla estándar.'; return; }
-                        const i = document.createElement('img'); i.src = '/uploads/vplan/' + img[sel.value]; i.alt = 'Vista previa'; i.style.maxWidth = '24rem'; i.style.maxHeight = '16rem'; i.style.border = '1px solid #8b95a5'; caja.appendChild(i);
-                    };
-                    sel.addEventListener('change', pinta); pinta();
-                })();
-                </script>
                 <small class="text-muted">Se crean y editan en <a href="/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>#simbologias">Símbolos → Simbologías</a>; si cambian, cambian en todas las láminas que las usan.</small>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar lámina</button>
+        <?php if ($esNueva): ?>
+        </div>
+        <?php endif; ?>
+
+        <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
+        <?php if ($esNueva): ?>
+        <div class="paso-nav">
+            <span class="paso-nav-info" id="vp-paso-info">Paso 1 de 3 · <?php echo s(t('Puedes volver con «Anterior»')); ?></span>
+            <button type="button" class="btn btn-ghost" id="vp-paso-ant" hidden><i class="fa-solid fa-arrow-left"></i> <?php echo s(t('Anterior')); ?></button>
+            <button type="button" class="btn btn-primary" id="vp-paso-sig">Siguiente <i class="fa-solid fa-arrow-right"></i></button>
+            <button type="submit" class="btn btn-primary" id="vp-paso-fin" hidden><i class="fa-solid fa-wand-sparkles"></i> Crear y acomodar bloques</button>
+        </div>
+        <?php else: ?>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar lámina')); ?></button>
+        <?php endif; ?>
     </form>
 </div>
-<?php if ($esNueva): ?>
 <script>
 (function () {
     const sel = document.getElementById('partida_id'), tit = document.getElementById('titulo');
-    sel.addEventListener('change', () => { if (!tit.value.trim() && sel.selectedOptions[0]) tit.value = sel.selectedOptions[0].dataset.nombre || ''; });
+    if (sel && tit) sel.addEventListener('change', () => { if (!tit.value.trim() && sel.selectedOptions[0]) tit.value = sel.selectedOptions[0].dataset.nombre || ''; });
 
-    // Selección de actividades de la partida
+    // ---- Tarjetas de tamaño: sincronizan el <select> oculto que envía el formulario ----
+    const preset = document.getElementById('preset'), cards = document.getElementById('preset-cards'),
+        custom = document.getElementById('preset-custom'), ori = document.getElementById('orientacion');
+    const pintaCards = () => {
+        custom.hidden = preset.value !== 'personalizado';
+        if (ori) ori.disabled = preset.value === 'personalizado';
+        if (!cards) return;
+        cards.querySelectorAll('.tamano-card').forEach(c => {
+            const on = c.dataset.preset === preset.value;
+            c.classList.toggle('activo', on); c.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    };
+    if (cards) cards.addEventListener('click', e => {
+        const c = e.target.closest('.tamano-card'); if (!c) return;
+        preset.value = c.dataset.preset; pintaCards();
+    });
+    if (preset) preset.addEventListener('change', pintaCards);
+    pintaCards();
+
+    // ---- Asistente: se envía todo junto al final ----
+    const pasos = [...document.querySelectorAll('#vp-form .paso-secc')];
+    if (!pasos.length) return;
+    const tabs = [...document.querySelectorAll('.paso-tab')], ant = document.getElementById('vp-paso-ant'),
+        sig = document.getElementById('vp-paso-sig'), fin = document.getElementById('vp-paso-fin'), info = document.getElementById('vp-paso-info');
+    let actual = 1;
+    const ver = n => {
+        actual = n;
+        pasos.forEach(s => { s.hidden = +s.dataset.paso !== n; });
+        tabs.forEach(t => { const k = +t.dataset.paso; t.classList.toggle('activo', k === n); t.classList.toggle('hecho', k < n); t.setAttribute('aria-selected', k === n ? 'true' : 'false'); t.disabled = k > n; });
+        ant.hidden = n === 1;
+        sig.hidden = n === pasos.length;
+        fin.hidden = n !== pasos.length;
+        if (info) info.textContent = 'Paso ' + n + ' de ' + pasos.length + (n === pasos.length ? ' · revisa y crea' : '');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    tabs.forEach(t => t.addEventListener('click', () => { if (+t.dataset.paso <= actual) ver(+t.dataset.paso); }));
+    sig.addEventListener('click', () => ver(Math.min(pasos.length, actual + 1)));
+    ant.addEventListener('click', () => ver(Math.max(1, actual - 1)));
+    ver(1);
+})();
+</script>
+<?php if ($esNueva): ?>
+<script>
+(function () {
+    // Selección de actividades de la partida (paso 1 del asistente)
     const datos = <?php echo json_encode($actividadesPorPartida, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const guardadas = new Set(<?php echo json_encode(array_map('intval', $seleccion)); ?>);
     const partidaInicial = <?php echo (int)$lamina->partida_id; ?>;
     const caja = document.getElementById('vp-acts'), lista = document.getElementById('vp-acts-lista'), resumen = document.getElementById('vp-acts-resumen');
+    const sel = document.getElementById('partida_id');
     const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const cajas = () => [...lista.querySelectorAll('input[type=checkbox]')];
 
@@ -151,6 +238,20 @@
         actualizar();
     });
     pintar();
+})();
+</script>
+<script>
+(function () {
+    // Vista previa de la simbología elegida (paso 3)
+    const sel = document.getElementById('simbologia_grafico_id'), caja = document.getElementById('simb-previa'), img = <?php echo json_encode($previas); ?>;
+    if (!sel || !caja) return;
+    const pinta = () => {
+        caja.textContent = '';
+        if (!sel.value) return;
+        if (!img[sel.value]) { caja.className = 'text-sm text-muted'; caja.textContent = 'Esta simbología aún no tiene imagen: ábrela en Símbolos → Simbologías y guárdala. Mientras tanto se usa la tabla estándar.'; return; }
+        const i = document.createElement('img'); i.src = '/uploads/vplan/' + img[sel.value]; i.alt = 'Vista previa'; i.style.maxWidth = '24rem'; i.style.maxHeight = '16rem'; i.style.border = '1px solid #8b95a5'; caja.appendChild(i);
+    };
+    sel.addEventListener('change', pinta); pinta();
 })();
 </script>
 <?php endif; ?>

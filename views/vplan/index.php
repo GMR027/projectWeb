@@ -21,7 +21,7 @@
 <?php endif; ?>
 
 <?php if (!$paquetes): ?>
-    <div class="card"><p class="text-muted">Aún no hay vPlan. <?php echo $puedeEditar ? 'Crea el primero arriba y agrégale una lámina por área.' : ''; ?></p></div>
+    <div class="card"><?php echo estado_vacio('fa-sheet-plastic', 'Aún no hay vPlan', 'Un vPlan reúne las láminas (una por área) que quieres gestionar juntas: plano, tablas y programa en una sola hoja.', $puedeEditar ? ['texto' => 'Crear el primer vPlan', 'url' => '#vp-np-nombre', 'icono' => 'fa-plus'] : null, $puedeEditar ? ['texto' => 'Ver el manual', 'url' => '/manual' . ($proyecto ? '?proyecto=' . (int)$proyecto->id : '') . '#vplan', 'icono' => 'fa-book-open'] : null); ?></div>
 <?php else: ?>
 <div class="vp-paquetes">
     <?php foreach ($paquetes as $p): ?>

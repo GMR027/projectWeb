@@ -1,10 +1,10 @@
 // ============================================================
 // Barra de pestañas de página — pieza compartida entre herramientas
-// Antes cada herramienta tenía su copia byte a byte (.vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas).
+// Antes cada herramienta tenía su copia byte a byte (.vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas, .sim-tabs).
 // Herramienta nueva: usa la clase .pestanas; los alias se conservan para no tocar el marcado existente.
 // Las pestañas de panel (dentro de un panel lateral) son .pn-tabs, en componentes/_paneles.scss.
 // ============================================================
-.pestanas, .vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas {
+.pestanas, .vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas, .sim-tabs {
   display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
   button, a { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; text-decoration: none;
     i { margin-right: .5rem; }

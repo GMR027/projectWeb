@@ -20,6 +20,7 @@ class SimboloController
             'predeterminados' => Simbolo::predeterminados(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
             'estampas' => \Model\Estampa::deProyecto((int)$proyecto->id), 'plantillasEstampa' => \Classes\Estampas::plantillas(),
             'categorias' => array_values(array_unique(array_filter(array_map(fn($s) => $s->categoria, $propios)))),
+            'usosSimbolos' => Simbolo::usos((int)$proyecto->id),
         ]);
     }
 

@@ -36,3 +36,7 @@ En `/lastplanner` el gestor elige «Plantilla del post-it»: *Clásica* o una es
 
 ## Encabezado del MSR dinámico
 `msrs.encabezado_id` (migración `database/migracion_msr_encabezado.sql`; sin ella el MSR sigue con el encabezado de siempre). El formulario del MSR (`views/msr/formulario.php`) elige una estampa de lienzo; `pdf-msr.php` la dibuja a todo el ancho (`K = 802 / ancho`). Pendiente: usarlo también en la hoja de cálculo/pantalla del MSR.
+
+## Experiencia de uso (2026-10-25)
+- **Plantillas con vista previa**: en `views/simbolos/index.php` cada plantilla de `Estampas::plantillas()` se dibuja en el servidor (`Estampas::limpiarConfig` + `render` con un `EstampaContexto` y `unidad('px', 1.3)`) como tarjeta `.est-plantilla`; el clic sigue siendo `data-est="plantilla"`.
+- **«Probar en una lámina»**: cada estampa guardada lleva el botón (solo si hay láminas); el modal lista las del proyecto y abre `/vplan/ver?…&diseno=1&insertar=estampa:ID`. `vplan-diseno.js` lee `insertar`, abre la pestaña Insertar y pulsa la ficha (`[data-estampa]`): se coloca, se selecciona y queda sucio, sin endpoint nuevo.

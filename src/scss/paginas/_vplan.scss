@@ -290,3 +290,70 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   .vp-prev-cab span { font-weight: 700; color: var(--text-muted); background: var(--bg-tertiary); }
   .vp-prev-vacia span { color: var(--text-dim); font-style: italic; }
 }
+
+// ---------- Estado vacío sobre la hoja (ver.php sin bloques) ----------
+// Va centrado sobre el papel, tapado a medias para que se siga viendo la hoja detrás.
+#vp-hoja { position: relative; }
+.estado-vacio-hoja { position: absolute; inset: 0; z-index: 6; display: grid; place-content: center; justify-items: center; padding: 2rem; text-align: center;
+  background: rgba(248, 250, 252, .82);
+  [data-theme="oscuro"] & { background: rgba(15, 23, 42, .82); }
+  > i { display: grid; place-items: center; width: 6.4rem; height: 6.4rem; border-radius: 1.8rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 2.8rem; margin-bottom: .4rem; }
+  b { font-size: 1.8rem; }
+  p { margin: .2rem 0 1rem; max-width: 46rem; font-size: 1.3rem; color: var(--text-muted); }
+  .estado-vacio-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; } }
+
+// ---------- Galería de láminas del gestor (paquete.php): tarjetas con miniatura, se reordenan arrastrando ----------
+.vp-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 1rem; margin-top: 1rem;
+  &[hidden] { display: none; } }
+.vp-gal-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); transition: box-shadow .15s ease, transform .15s ease, opacity .15s;
+  &:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  &.vp-oculta { opacity: .55; }
+  &.vp-gal-arrastrando { opacity: .4; }
+  &.vp-gal-encima { outline: 2px dashed #38a1f3; outline-offset: 2px; } }
+.vp-galeria-lectura .vp-gal-card { cursor: default; }
+.vp-gal-img { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--bg-tertiary); color: var(--text-muted); text-decoration: none; overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: contain; padding: .4rem; }
+  > i { font-size: 3rem; opacity: .5; } }
+.vp-gal-oculta { position: absolute; top: .6rem; left: .6rem; display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .7rem; border-radius: 99rem; background: rgba(190, 18, 60, .9); color: #fff; font-size: 1.05rem; font-weight: 600; }
+.vp-gal-cuerpo { display: flex; flex-direction: column; gap: .3rem; padding: .9rem 1rem 1rem; border-top: 1px solid var(--border); }
+.vp-gal-titulo { font-size: 1.35rem; font-weight: 600; color: var(--text); text-decoration: none;
+  &:hover { color: #38a1f3; } }
+.vp-gal-acc { display: flex; align-items: center; gap: .4rem; margin-top: .5rem;
+  .vp-gal-asa { margin-right: auto; color: var(--text-muted); font-size: 1.1rem; cursor: grab; }
+  form { display: inline-flex; } }
+.vp-galeria-lectura .vp-gal-asa { display: none; }
+
+// ---------- Galería de gráficos (graficos/index.php): tarjetas con portada y menú ⋮ ----------
+.gr-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); gap: 1rem;
+  &[hidden] { display: none; } }
+.gr-gal-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); transition: box-shadow .15s ease, transform .15s ease;
+  &:hover { box-shadow: var(--shadow); transform: translateY(-2px); } }
+.gr-gal-img { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--bg-tertiary); color: var(--text-muted); overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: contain; padding: .4rem; }
+  > i { font-size: 3rem; opacity: .5; } }
+.gr-gal-n { position: absolute; top: .6rem; right: .6rem; padding: .2rem .7rem; border-radius: 99rem; background: rgba(0, 112, 192, .9); color: #fff; font-size: 1.05rem; font-weight: 600; }
+.gr-gal-cuerpo { display: flex; flex-direction: column; gap: .3rem; padding: .9rem 1rem 1rem; border-top: 1px solid var(--border); }
+.gr-gal-titulo { font-size: 1.35rem; font-weight: 600; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  &:hover { color: #38a1f3; } }
+.gr-gal-acc { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; }
+.gr-gal-menu { position: relative; margin-left: auto;
+  summary { list-style: none; &::-webkit-details-marker { display: none; } }
+  &[open] .gr-gal-menu-in { display: grid; } }
+.gr-gal-menu-in { display: none; position: absolute; right: 0; top: calc(100% + .3rem); z-index: 20; min-width: 22rem; padding: .4rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); box-shadow: var(--shadow);
+  a, button { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .6rem .8rem; border: 0; border-radius: .5rem; background: none; color: var(--text); font-size: 1.2rem; text-align: left; text-decoration: none; cursor: pointer;
+    &:hover { background: var(--surface-hover); }
+    &.peligro { color: #dc2626; &:hover { background: rgba(220, 38, 38, .12); } } }
+  form { display: contents; } }
+
+// ---------- «Lienzo en blanco»: arranque rápido del Editor de gráficos (_editor-lienzo.php) ----------
+#ve-hoja { position: relative; }
+.ve-lienzo-vacio { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; pointer-events: none;
+  &[hidden] { display: none; } }
+.ve-lienzo-vacio-caja { display: grid; justify-items: center; gap: .5rem; padding: 2.4rem 2.8rem; text-align: center; border: 1px solid var(--border); border-radius: 1.2rem; background: var(--surface); box-shadow: var(--shadow); pointer-events: auto; max-width: 40rem;
+  > i { display: grid; place-items: center; width: 6rem; height: 6rem; border-radius: 1.6rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 2.6rem; margin-bottom: .3rem; }
+  b { font-size: 1.7rem; }
+  p { margin: 0; font-size: 1.25rem; color: var(--text-muted); } }
+.ve-lienzo-vacio-botones { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: .8rem;
+  button { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary); color: var(--text); font-size: 1.25rem; cursor: pointer; transition: all .15s ease;
+    i { color: #38a1f3; }
+    &:hover { border-color: rgba(0, 112, 192, .6); transform: translateY(-1px); box-shadow: var(--shadow); } } }

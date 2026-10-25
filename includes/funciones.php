@@ -574,6 +574,24 @@ function opciones_actividades(array $actividades, $sel = null, int $largo = 60):
     return $h;
 }
 
+/**
+ * Estado vacío ilustrado (componente compartido `.estado-vacio` de componentes/_estados.scss): icono,
+ * título, texto de una línea y hasta dos acciones. Sustituye al «Aún no hay…» en gris de las listas:
+ * el usuario nuevo ve qué hacer, no solo que no hay nada.
+ * $accion / $secundaria = ['texto', 'url', 'icono' (fa-solid opcional)]; $extra = HTML adicional dentro.
+ */
+function estado_vacio(string $icono, string $titulo, string $texto, ?array $accion = null, ?array $secundaria = null, string $extra = '', string $clase = ''): string
+{
+    $btn = function (array $a, string $clase): string {
+        if (empty($a['url'])) return '';
+        return '<a class="btn ' . $clase . '" href="' . s($a['url']) . '">' . (empty($a['icono']) ? '' : '<i class="fa-solid ' . s($a['icono']) . '"></i> ') . s($a['texto']) . '</a>';
+    };
+    $acciones = $btn($accion ?? [], 'btn-primary') . $btn($secundaria ?? [], 'btn-ghost');
+    return '<div class="estado-vacio' . ($clase !== '' ? ' ' . s($clase) : '') . '"><i class="fa-solid ' . s($icono) . '"></i><b>' . s(t($titulo)) . '</b><p>' . s(t($texto)) . '</p>'
+        . ($acciones ? '<div class="estado-vacio-acciones">' . $acciones . '</div>' : '')
+        . $extra . '</div>';
+}
+
 /** Registros por página de las listas del proyecto (Ajustes del proyecto; 10 por defecto). Si falta la migración, 10. */
 function registros_por_pagina($proyecto): int
 {

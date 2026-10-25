@@ -24,9 +24,9 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 <div class="vp-barra-pest no-print" id="vp-barra-pest">
     <?php if ($puedeEditar): ?>
     <div class="vp-herr" data-panel="lamina">
-        <?php if (!$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary"><i class="fa-solid fa-vector-square"></i> Modo diseño</a><?php endif; ?>
-        <?php if ($lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a><?php endif; ?>
-        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> Datos de la lámina</a>
+        <?php if (!$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary" data-ayuda="Acomodar bloques (modo diseño): mueve y redimensiona lo que hay en la hoja e inserta tablas, estampas, símbolos y títulos" data-ayuda-titulo="Acomodar bloques"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a><?php endif; ?>
+        <?php if ($lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost" data-ayuda="Dibuja sobre el plano: líneas, formas, textos, símbolos y enlaces" data-ayuda-titulo="Dibujar sobre el plano"><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Dibujar sobre el plano')); ?></a><?php endif; ?>
+        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-sliders"></i> <?php echo s(t('Datos de la lámina')); ?></a>
     </div>
     <?php endif; ?>
     <div class="vp-herr" data-panel="vista"<?php echo $puedeEditar ? ' hidden' : ''; ?>>
@@ -81,6 +81,19 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 <div class="vp-hoja" id="vp-hoja">
 <button type="button" class="vp-cerrar-ampliado no-print" id="vp-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 <?php include __DIR__ . '/_hoja.php'; ?>
+<?php // Hoja sin nada: el usuario nuevo ve por dónde empezar, no una hoja en blanco
+if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
+<div class="estado-vacio estado-vacio-hoja no-print">
+    <i class="fa-solid fa-wand-sparkles"></i>
+    <b><?php echo s(t('Esta hoja está vacía')); ?></b>
+    <p><?php echo s(t('Acomoda los bloques (tablas del programa, estampas, símbolos…) y sube el plano de fondo. Se hace en dos minutos.')); ?></p>
+    <div class="estado-vacio-acciones">
+        <a class="btn btn-primary" href="/vplan/ver?<?php echo $q; ?>&diseno=1&amp;tour=1"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a>
+        <a class="btn btn-ghost" href="/vplan/editar?<?php echo $q; ?>"><i class="fa-regular fa-image"></i> <?php echo s(t('Subir el plano')); ?></a>
+        <a class="btn btn-ghost" href="/manual<?php echo $proyecto ? '?proyecto=' . (int)$proyecto->id : ''; ?>#vplan"><i class="fa-regular fa-circle-question"></i> <?php echo s(t('Guía de 1 minuto')); ?></a>
+    </div>
+</div>
+<?php endif; ?>
 </div><!-- /vp-hoja -->
 <?php if ($modoDiseno): ?>
     </div>
@@ -287,3 +300,19 @@ window.VP_DISENO = <?php echo json_encode([
 <script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
 <script src="/vendor/vplan-diseno.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-diseno.js"); ?>"></script>
 <?php endif; ?>
+<script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
+<script>
+// Guía rápida del «Acomodar bloques»: se muestra sola la primera vez (y con el botón de la barra o ?tour=1).
+// Los pasos que destacan una pestaña del panel la abren antes con alEntrar.
+window.Tour.registrar('vplan-diseno', {
+    auto: true,
+    pasos: [
+        { icono: 'fa-vector-square', titulo: 'Acomodar bloques', texto: 'Aquí se arma la lámina: cada bloque (tablas del programa, estampas, títulos…) se <b>arrastra</b> para moverlo y se estira por sus <b>esquinas</b>. Nada se guarda hasta que pulsas «Guardar diseño».' },
+        { sel: '#vp-dis-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar diseño', texto: 'Guarda la posición y el tamaño de todos los bloques. También con <b>Ctrl + S</b>. Antes de salirte te avisa si algo quedó sin guardar.' },
+        { sel: '.vp-tgls', icono: 'fa-magnet', titulo: 'Rejilla, imán y reglas', texto: 'Con el <b>imán</b> los bloques se pegan a las guías y a los bordes de la hoja; arrastra desde las <b>reglas</b> para crear guías.' },
+        { sel: '#vp-dis-panel .pn-tabs', icono: 'fa-plus', titulo: 'Panel: Insertar', texto: 'La pestaña «Insertar» trae todo lo que puede llevar una lámina: tablas, estampas, símbolos, cajetines… Un clic lo pone en el centro; arrastrándolo lo dejas donde quieras.', alEntrar: () => document.querySelector('#vp-dis-panel [data-ptab="insertar"]')?.click() },
+        { sel: '#vp-dis-panel .pn-tabs', icono: 'fa-sliders', titulo: 'Panel: Propiedades', texto: 'Haz clic en cualquier bloque de la hoja y aquí aparecen su posición exacta, su contenido, su visibilidad y sus acciones (duplicar, al frente, quitar…).', alEntrar: () => document.querySelector('#vp-dis-panel [data-ptab="props"]')?.click() },
+        { icono: 'fa-wand-magic-sparkles', titulo: 'Listo para armar la lámina', texto: 'Deshacer con <b>Ctrl + Z</b>, rehacer con <b>Ctrl + Y</b>, quitar con <b>Supr</b>. El botón <b>?</b> de la barra abre los trucos, y «Guía rápida» vuelve a mostrar este recorrido.' }
+    ]
+});
+</script>

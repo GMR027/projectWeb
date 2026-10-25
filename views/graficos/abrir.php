@@ -13,6 +13,7 @@ $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
         </form>
         <span id="ve-estado" class="text-sm text-muted"></span>
         <button type="button" id="ve-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <?php echo s(t('Guardar')); ?></button>
+        <button type="button" class="btn btn-ghost" data-tour="editor-canvas" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> <?php echo s(t('Guía rápida')); ?></button>
         <?php if ($grafico->tipo === 'simbologia'): ?><a href="/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>#simbologias" class="btn btn-ghost">← Simbologías</a>
         <?php else: ?><a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Gráficos</a><?php endif; ?>
     </div>

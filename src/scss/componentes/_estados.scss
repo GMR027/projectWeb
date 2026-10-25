@@ -1,0 +1,24 @@
+// ============================================================
+// Estados vacíos ilustrados — pieza compartida entre herramientas
+// Origen: vPlan/Editor/Símbolos (2026-10-25). Una lista sin datos ya no es un renglón gris:
+// se pinta con `estado_vacio()` (includes/funciones.php) → icono, título, texto y botón de acción.
+// ============================================================
+.estado-vacio { display: grid; justify-items: center; gap: .6rem; padding: 4.5rem 1.6rem; text-align: center;
+  > i { display: grid; place-items: center; width: 6.4rem; height: 6.4rem; border-radius: 1.8rem; background: rgba(0, 112, 192, .14); color: #38a1f3; font-size: 2.8rem; margin-bottom: .4rem; }
+  b { font-size: 1.7rem; line-height: 1.25; }
+  p { margin: 0; max-width: 44rem; font-size: 1.3rem; line-height: 1.45; color: var(--text-muted); }
+  .estado-vacio-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1rem; }
+  // Variante compacta (dentro de un panel o pestaña, no a página completa)
+  &.estado-vacio-sm { padding: 2.4rem 1rem;
+    > i { width: 4.6rem; height: 4.6rem; border-radius: 1.2rem; font-size: 2rem; }
+    b { font-size: 1.45rem; } }
+}
+
+// ---------- Tarjetas de la ayuda en modal (ventana «Guía rápida» / trucos) ----------
+.guia-tarjetas { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin: .4rem 0; text-align: left;
+  .guia-tarjeta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .2rem .9rem; align-items: start; padding: .9rem 1rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary);
+    i { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border-radius: .7rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 1.3rem; }
+    b { font-size: 1.25rem; line-height: 1.2; padding-top: .2rem; }
+    small { grid-column: 2; font-size: 1.1rem; line-height: 1.35; color: var(--text-muted); }
+    kbd { font-family: 'Fira Code', monospace; font-size: 1rem; padding: 0 .3rem; border: 1px solid var(--border); border-radius: .3rem; background: var(--bg-tertiary); } }
+  @media (max-width: 48rem) { grid-template-columns: 1fr; } }

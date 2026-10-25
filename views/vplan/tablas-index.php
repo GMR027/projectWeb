@@ -36,7 +36,7 @@
 <?php endif; ?>
 <div class="card">
     <?php if (empty($tablas)): ?>
-        <p class="text-muted">Aún no hay tablas. Crea una punch list, una tabla de restricciones, de actividades secundarias u otra.</p>
+        <?php echo estado_vacio('fa-table', 'Aún no hay tablas en el catálogo', 'Las tablas (punch list, restricciones, secundarias…) se crean una vez y se insertan en cuantas láminas quieras.', puede_gestionar_proyecto($proyecto) ? ['texto' => '+ Crear tabla', 'url' => '/vplan/tablas/crear?proyecto=' . s($proyecto->id), 'icono' => 'fa-plus'] : null); ?>
     <?php else: ?>
     <table class="tabla">
         <thead><tr><th>Nombre en el catálogo</th><th class="hide-m">Título impreso</th><th class="hide-m">Tipo</th><th class="hide-m">Renglones</th><th>Acciones</th></tr></thead>

@@ -79,7 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modal) { resolve(true); return; }
     if (resolverModal) cerrarModal(false);   // cierra uno anterior sin resolver en "aceptar"
     modalTitulo.textContent = opciones.titulo || '¿Eliminar registro?';
-    modalMensaje.textContent = opciones.mensaje || 'Esta acción no se puede deshacer.';
+    // opciones.html: el mensaje llega como HTML (tarjetas de ayuda); si no, texto plano (seguro por defecto)
+    if (opciones.html) modalMensaje.innerHTML = opciones.mensaje || '';
+    else modalMensaje.textContent = opciones.mensaje || 'Esta acción no se puede deshacer.';
     modalAceptar.innerHTML = opciones.aceptar
       ? '<i class="fa-solid ' + (opciones.iconoBoton || 'fa-check') + '"></i> ' + opciones.aceptar
       : aceptarPorDefecto;
@@ -99,8 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modalAceptar.focus();
   });
 
-  window.avisoModal = (titulo, mensaje) => window.confirmarModal({
-    titulo, mensaje, aceptar: 'Entendido', tipo: 'aviso', soloAceptar: true,
+  // avisoModal(titulo, mensaje, html=false): con html=true el mensaje se interpreta (guías con tarjetas)
+  window.avisoModal = (titulo, mensaje, html = false) => window.confirmarModal({
+    titulo, mensaje, aceptar: 'Entendido', tipo: 'aviso', soloAceptar: true, html,
   });
 
   modalCancelar?.addEventListener('click', () => cerrarModal(false));

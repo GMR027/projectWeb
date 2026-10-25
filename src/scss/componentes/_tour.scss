@@ -1,0 +1,25 @@
+// ============================================================
+// Tour de guía rápida — pieza compartida (public/vendor/tour.js)
+// Spotlight: oscurece la página y recorta el elemento del paso; burbuja con título, texto y
+// Anterior/Siguiente/Saltar. Se dispara solo la primera vez por herramienta (localStorage) o con
+// el botón «Guía rápida» ([data-tour]) o con ?tour=1 en la URL.
+// ============================================================
+.tour-overlay { position: fixed; inset: 0; z-index: 1300; pointer-events: none; }
+// Recorte del elemento destacado: la sombra gigante hace de «pantalla oscura» con agujero
+.tour-foco { position: absolute; border-radius: .7rem; border: 2px solid #38a1f3; box-shadow: 0 0 0 9999rem rgba(2, 6, 23, .72), 0 0 1.4rem rgba(56, 161, 243, .55); transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease; }
+// Burbuja del paso
+.tour-burbuja { position: absolute; z-index: 1301; max-width: 34rem; padding: 1.4rem 1.5rem 1.1rem; border-radius: 1rem; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); pointer-events: auto;
+  header { display: flex; align-items: center; gap: .8rem; margin-bottom: .5rem;
+    i { display: grid; place-items: center; flex: none; width: 2.9rem; height: 2.9rem; border-radius: .8rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 1.4rem; }
+    b { font-size: 1.4rem; line-height: 1.2; } }
+  p { margin: 0 0 1rem; font-size: 1.25rem; line-height: 1.45; color: var(--text-muted);
+    b, strong { color: var(--text); } }
+  .tour-pie { display: flex; align-items: center; gap: .5rem;
+    .tour-puntos { display: flex; gap: .3rem; margin-right: auto;
+      span { width: .6rem; height: .6rem; border-radius: 50%; background: var(--border); transition: background .15s;
+        &.activo { background: #38a1f3; } } }
+    .tour-saltar { background: none; border: 0; color: var(--text-muted); font-size: 1.15rem; cursor: pointer; padding: .5rem .6rem;
+      &:hover { color: var(--text); } } }
+  &[hidden] { display: none; } }
+// Paso sin elemento destacado (centrado, tipo presentación)
+.tour-foco.tour-centrado { border: 0; box-shadow: none; background: none; }

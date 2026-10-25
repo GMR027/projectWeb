@@ -299,10 +299,12 @@ HTML],
 <p>El vPlan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
 <h4>vPlans y áreas</h4>
 <p>Puedes tener <strong>varios vPlan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada vPlan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del vPlan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
+<p>Es la primera vez que usas estas herramientas: el botón <strong>Guía rápida</strong> (o <em>abrir con <code>?tour=1</code></em>) recorre la pantalla paso a paso; se muestra sola la primera vez y se puede repetir cuando quieras. En el gestor del vPlan hay dos vistas: <strong>Galería</strong> (tarjetas con miniatura que se reordenan arrastrando) y <strong>Lista</strong> (detallada, con orden y grupos).</p>
 <h4>Crear una lámina</h4>
+<p>Al crearla se abre un <strong>asistente de tres pasos</strong> (qué lleva · tamaño de hoja · datos y plano) y, al terminar, la lámina entra directa a <strong>Acomodar bloques</strong> con la guía encima: ahí colocas el plano y las tablas.</p>
 <ol>
 <li>En <strong>vPlan</strong> pulsa para crear una lámina. La <strong>partida inicial</strong> es opcional: solo arma el primer bloque de tareas.</li>
-<li>Elige el <strong>tamaño de la hoja</strong> (tabloide, carta, A4, A3, A2, A1, Arch D u otra medida en mm, cm o pulgadas) y su orientación.</li>
+<li>Elige el <strong>tamaño de la hoja</strong> con las tarjetas de proporción (tabloide ★ es la más usada, carta, A4, A3, A2, A1, Arch D u otra medida en mm, cm o pulgadas) y su orientación.</li>
 <li>Escribe el <strong>título</strong> y el <strong>supervisor</strong>.</li>
 <li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda).</li>
 <li>Si elegiste partida, marca qué actividades muestra. Si no marcas ninguna, muestra toda la partida.</li>
@@ -334,7 +336,7 @@ HTML],
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>
 <h4>Editar las marcas</h4>
-<p>El botón <strong>Editar marcas</strong> abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, <strong>cajas de texto</strong> (el texto baja a la siguiente línea dentro del ancho de la caja, sin desbordarse), tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Capas</em>, <em>Láminas</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
+<p>El botón <strong>Dibujar sobre el plano</strong> (antes <em>Editar marcas</em>) abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, <strong>cajas de texto</strong> (el texto baja a la siguiente línea dentro del ancho de la caja, sin desbordarse), tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Capas</em>, <em>Láminas</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
@@ -598,14 +600,14 @@ HTML],
 ['id' => 'editor', 'titulo' => 'Editor (gráficos)', 'icono' => 'fa-pen-ruler', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'
 <p>Un lienzo libre para hacer <strong>diagramas, croquis, esquemas y láminas</strong> con las mismas herramientas de dibujo del vPlan. Cada gráfico puede tener varias <strong>láminas</strong>, como una presentación.</p>
 <h4>El listado</h4>
-<p>Muestra fecha, nombre (con miniatura), categoría y tamaño. Por gráfico: <strong>Ver</strong>, <strong>Editar</strong>, <strong>Descargar</strong> (PNG, PDF o presentación .odp), <strong>Duplicar</strong> (conserva la categoría) y <strong>Eliminar</strong>.</p>
+<p>Tiene dos vistas: <strong>Galería</strong> (tarjetas con la portada y las acciones en el menú <em>⋮</em>: descargar, duplicar, guardar como simbología, eliminar) y <strong>Lista</strong> (tabla detallada). La vista se recuerda para la próxima vez.</p>
 <h4>Categorías</h4>
 <p>El botón <strong>Categorías</strong> abre un pequeño CRUD para clasificar tus gráficos: crear, renombrar y eliminar (no se puede eliminar una categoría que algún gráfico use; los nombres no se repiten). El selector <em>Categoría</em> aparece al crear un gráfico y en <em>Tamaño y fondo</em>.</p>
 <h4>Crear un gráfico</h4>
 <ol>
 <li>Pulsa <strong>Nuevo gráfico</strong>. La fecha se pone sola.</li>
 <li>Escribe el <strong>nombre*</strong> y elige la <strong>categoría</strong> (opcional).</li>
-<li><strong>Tamaño:</strong> un formato común (pantalla, papel a 300 dpi, redes) u <em>Personalizado</em>, la orientación y el ancho × alto en píxeles.</li>
+<li><strong>Tamaño:</strong> elige la tarjeta con la proporción del papel (pantalla, papel a 300 dpi, redes) u <em>Personalizado</em>, la orientación y el ancho × alto en píxeles.</li>
 <li><strong>Fondo:</strong> una plantilla (liso, retícula, milimetrado, papel de ingeniería, texturas, fondos oscuros…) o <em>Imagen propia</em>, que puedes ajustar (modo, zoom, posición, repeticiones, opacidad).</li>
 <li>Se abre el editor. Puedes cambiar tamaño y fondo después con <strong>Tamaño y fondo</strong>; el contenido se centra o se queda en la esquina, tú eliges.</li>
 </ol>
@@ -758,6 +760,7 @@ HTML],
 <li><strong>Nuevo símbolo:</strong> escribe el <em>nombre*</em>, una categoría y sube la imagen (PNG con fondo transparente o SVG funcionan mejor). Pulsa <strong>Agregar símbolo</strong>.</li>
 <li><strong>Importar símbolos:</strong> sube un <strong>.zip</strong> de biblioteca o varias imágenes de una vez. <strong>Exportar biblioteca</strong> descarga la tuya para reusarla en otro proyecto.</li>
 <li>Puedes <strong>cambiar la imagen</strong> o eliminar un símbolo propio. Los <em>incluidos con la aplicación</em> sirven para todos los proyectos y no se editan.</li>
+<li>El botón <strong>Guía rápida</strong> de la cabecera recorre la biblioteca paso a paso (pestañas, importación, estampas); el número azul de cada tarjeta dice en cuántas láminas se usa el símbolo.</li>
 </ul>
 <h4>Cajetines</h4>
 <p>Un <strong>cajetín</strong> es el cuadro de datos de un plano (proyecto, título, fecha, revisión…) que insertas de un clic. Cada <strong>renglón</strong> tiene un <em>título</em> (a la izquierda) y un <em>dato</em> (a la derecha). El dato puede ser un texto fijo o un <strong>campo</strong> que se llena solo: elígelo con el botón <em>＋ Campo…</em> (nombre del proyecto, fecha, avance, SPI, restricciones activas…). Puedes añadir, quitar y mover renglones, empezar con una <em>plantilla</em> y ver abajo la <strong>vista previa con datos reales</strong>.</p>

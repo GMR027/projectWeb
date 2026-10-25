@@ -96,4 +96,32 @@ class Simbolo extends ActiveRecord
         }
         return $out;
     }
+
+    /**
+     * Cuántas láminas usan cada símbolo (id => nº). Se cuenta en PHP sobre el JSON de las marcas
+     * (vPlan y Editor): un símbolo insertado queda como imagen con su `src`, así que sirve aunque
+     * la marca no lleve la referencia `s:<id>`. Solo lectura, para la tarjeta de la biblioteca.
+     */
+    public static function usos(int $proyectoId): array
+    {
+        $out = [];
+        try {
+            $simbolos = self::deProyecto($proyectoId);
+            if (!$simbolos) return $out;
+            $sql = 'SELECT marcas_json FROM vplan_laminas WHERE proyecto_id = ' . (int)$proyectoId . ' AND marcas_json IS NOT NULL'
+                . ' UNION ALL SELECT l.marcas_json FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE g.proyecto_id = ' . (int)$proyectoId . ' AND l.marcas_json IS NOT NULL';
+            $r = self::$db->query($sql);
+            $blobs = [];
+            while ($r && ($fila = $r->fetch_row())) $blobs[] = (string)$fila[0];
+            foreach ($simbolos as $s) {
+                $url = $s->url();
+                if ($url === '/uploads/' . self::CARPETA . '/') continue;
+                $n = 0;
+                foreach ($blobs as $b) if (strpos($b, '"src":"' . $url . '"') !== false) $n++;
+                if ($n) $out[(int)$s->id] = $n;
+            }
+        } catch (\Throwable $e) {   // migraciones pendientes
+        }
+        return $out;
+    }
 }

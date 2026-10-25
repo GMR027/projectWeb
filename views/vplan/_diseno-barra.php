@@ -16,5 +16,6 @@
         <button type="button" class="vp-ib" id="vp-dis-deshacer" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled><i class="fa-solid fa-rotate-left"></i></button>
         <button type="button" class="vp-ib" id="vp-dis-rehacer" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled><i class="fa-solid fa-rotate-right"></i></button>
     </div>
-    <button type="button" class="vp-ib vp-ib-ayuda" id="vp-dis-ayuda" title="Atajos y ayuda del modo diseño" aria-label="Atajos y ayuda"><i class="fa-regular fa-circle-question"></i></button>
+    <button type="button" class="vp-ib" id="vp-dis-ayuda" title="Atajos y trucos del modo diseño" aria-label="Atajos y ayuda"><i class="fa-regular fa-circle-question"></i></button>
+    <button type="button" class="btn btn-ghost" data-tour="vplan-diseno" title="Recorrer la herramienta paso a paso (se muestra sola la primera vez)"><i class="fa-solid fa-circle-play"></i> <?php echo s(t('Guía rápida')); ?></button>
 </div>

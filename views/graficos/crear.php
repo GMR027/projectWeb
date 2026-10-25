@@ -39,18 +39,33 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
 
         <h3 class="mt-2">Plantilla</h3>
         <h4 class="gr-sub">Tamaño</h4>
+        <?php // Tarjetas con la proporción dibujada (el <select> oculto es el que envía el formulario; las tarjetas lo sincronizan) ?>
+        <?php $claveSel = $esSimb ? 'simb-schedule' : 'fullhd'; $valSel = ''; foreach (Grafico::TAMANOS as $lista) foreach ($lista as $clave => [$etq, $w, $h]) if ($clave === $claveSel) $valSel = $w . 'x' . $h; ?>
+        <div class="tamano-cards" id="gr-tam-cards" role="radiogroup" aria-label="Formato común">
+            <?php foreach (Grafico::TAMANOS as $grupo => $lista): ?>
+            <h5 class="tamano-cards-grupo"><?php echo s(t($grupo)); ?></h5>
+            <?php foreach ($lista as $clave => [$etq, $w, $h]): $v = $w . 'x' . $h; $on = $v === $valSel; ?>
+            <button type="button" class="tamano-card<?php echo $on ? ' activo' : ''; ?>" data-v="<?php echo s($v); ?>" role="radio" aria-checked="<?php echo $on ? 'true' : 'false'; ?>">
+                <span class="tamano-mini"><div style="width:<?php echo $w >= $h ? '8.4' : round(8.4 * $w / max(1, $h), 2); ?>rem;height:<?php echo $w >= $h ? round(5.6 * $h / max(1, $w), 2) : '5.6'; ?>rem"></div></span>
+                <b><?php echo s($etq); ?></b>
+                <small><?php echo (int)$w; ?> × <?php echo (int)$h; ?> px</small>
+            </button>
+            <?php endforeach; endforeach; ?>
+            <button type="button" class="tamano-card tamano-custom" data-v="custom">
+                <span class="tamano-mini"><i class="fa-solid fa-sliders" style="font-size:1.8rem"></i></span>
+                <b>Personalizado</b>
+                <small>medidas exactas</small>
+            </button>
+        </div>
+        <select id="gr-tamano" hidden aria-hidden="true" tabindex="-1">
+            <?php foreach (Grafico::TAMANOS as $grupo => $lista): ?>
+                <optgroup label="<?php echo s($grupo); ?>">
+                    <?php foreach ($lista as $clave => [$etq, $w, $h]): ?><option value="<?php echo (int)$w . 'x' . (int)$h; ?>"<?php echo $clave === ($esSimb ? 'simb-schedule' : 'fullhd') ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?>
+                </optgroup>
+            <?php endforeach; ?>
+            <option value="custom">Personalizado</option>
+        </select>
         <div class="form-grid">
-            <div class="campo">
-                <label for="gr-tamano">Formato común</label>
-                <select id="gr-tamano">
-                    <?php foreach (Grafico::TAMANOS as $grupo => $lista): ?>
-                        <optgroup label="<?php echo s($grupo); ?>">
-                            <?php foreach ($lista as $clave => [$etq, $w, $h]): ?><option value="<?php echo (int)$w . 'x' . (int)$h; ?>"<?php echo $clave === ($esSimb ? 'simb-schedule' : 'fullhd') ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?>
-                        </optgroup>
-                    <?php endforeach; ?>
-                    <option value="custom">Personalizado</option>
-                </select>
-            </div>
             <div class="campo">
                 <label>Orientación</label>
                 <div class="gr-orient" role="group" aria-label="Orientación">
@@ -156,13 +171,21 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
     };
     const resumen = () => { $('gr-resumen').textContent = (+ancho.value && +alto.value) ? ((+ancho.value) * (+alto.value) / 1e6).toFixed(1) + ' MP · ' + (+ancho.value >= +alto.value ? 'horizontal' : 'vertical') : ''; };
     tam.addEventListener('change', aplicar);
+    // Tarjetas de tamaño: sincronizan el <select> oculto (el que envía el formulario)
+    const cards = $('gr-tam-cards');
+    const marcarTam = () => cards && [...cards.querySelectorAll('.tamano-card')].forEach(c => c.classList.toggle('activo', c.dataset.v === tam.value));
+    if (cards) cards.addEventListener('click', e => {
+        const c = e.target.closest('.tamano-card'); if (!c) return;
+        tam.value = c.dataset.v; aplicar(); marcarTam();
+    });
+    tam.addEventListener('change', marcarTam);
     document.querySelectorAll('[data-orient]').forEach(b => b.addEventListener('click', () => {
         orient = b.dataset.orient;
         document.querySelectorAll('[data-orient]').forEach(x => x.classList.toggle('activo', x === b));
         if (tam.value !== 'custom') aplicar();
         else { const a = ancho.value; ancho.value = alto.value; alto.value = a; resumen(); }
     }));
-    [ancho, alto].forEach(i => i.addEventListener('input', () => { tam.value = 'custom'; orient = +ancho.value >= +alto.value ? 'h' : 'v'; document.querySelectorAll('[data-orient]').forEach(x => x.classList.toggle('activo', x.dataset.orient === orient)); resumen(); }));
+    [ancho, alto].forEach(i => i.addEventListener('input', () => { tam.value = 'custom'; orient = +ancho.value >= +alto.value ? 'h' : 'v'; document.querySelectorAll('[data-orient]').forEach(x => x.classList.toggle('activo', x.dataset.orient === orient)); marcarTam(); resumen(); }));
 
     // Vistas previas de los fondos (el mismo dibujo que usa el editor)
     const marcar = () => document.querySelectorAll('.gr-fondo').forEach(l => l.classList.toggle('activo', l.querySelector('input[name=fondo]').checked));

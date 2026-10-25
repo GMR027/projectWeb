@@ -131,6 +131,7 @@ class VplanController
         if (isset($_POST['visible'])) $l->visible = (int)(!empty($_POST['visible']));
         if (isset($_POST['grupo'])) $l->grupo = mb_substr(trim((string)$_POST['grupo']), 0, 100);
         if (isset($_POST['titulo']) && trim((string)$_POST['titulo']) !== '') $l->titulo = mb_substr(trim((string)$_POST['titulo']), 0, 200);
+        if (isset($_POST['orden']) && ($_POST['orden'] = filter_var($_POST['orden'], FILTER_VALIDATE_INT)) !== false) $l->ordenar(max(0, $_POST['orden']));   // galería del vPlan: arrastrar para reordenar
         $l->guardar();
         echo json_encode(['success' => true, 'visible' => (int)$l->visible, 'grupo' => $l->grupo, 'titulo' => $l->titulo]);
         exit;
@@ -271,7 +272,9 @@ class VplanController
                     if ($t = self::tablaInicial($proyecto, (string)($_POST['tabla_inicial'] ?? ''), $l->titulo)) $l->agregarTabla((int)$t->id);
                 }
                 Vplan::asegurarRestricciones($l, $proyecto);
-                header('Location: /vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id);
+                // Tras crearla se entra directo al modo diseño (con la guía de 3 pasos): el usuario ve
+                // la hoja vacía y dónde meter su plano y sus tablas, no una lámina terminada de golpe.
+                header('Location: /vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id . ($esNueva ? '&diseno=1&tour=1' : ''));
                 exit;
             }
         }

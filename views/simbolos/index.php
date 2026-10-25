@@ -11,6 +11,7 @@
             <input type="file" id="sim-imp-archivo" accept=".zip,image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" multiple hidden>
         <?php endif; ?>
         <a href="/simbolos/exportar?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> <?php echo s(t('Exportar biblioteca')); ?></a>
+        <button type="button" class="btn btn-ghost" data-tour="simbolos" title="Recorrer la biblioteca paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> <?php echo s(t('Guía rápida')); ?></button>
         <a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Editor</a>
     </div>
 </div>
@@ -63,29 +64,23 @@ $pestanas = [
 
 
     <?php if (!$simbolos): ?>
-        <p class="text-muted">Aún no hay símbolos propios.<?php echo $puedeEditar ? ' Agrega el primero arriba; aparecerá en la pestaña «Símbolos» de los editores.' : ''; ?></p>
+        <?php echo estado_vacio('fa-shapes', 'Aún no hay símbolos propios', 'Los símbolos se insertan con un clic en el vPlan y en el Editor. Trae los tuyos con «Importar símbolos» (arriba) o usa los incluidos con la aplicación en la pestaña «Predeterminados».', null, null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="sim-admin" id="sim-l-proyecto">
-        <?php foreach ($simbolos as $sim): ?>
+        <?php foreach ($simbolos as $sim): $usos = (int)($usosSimbolos[$sim->id] ?? 0); ?>
             <div class="sim-tarjeta" data-cat="<?php echo s($sim->categoria !== '' ? $sim->categoria : 'Sin categoría'); ?>" data-q="<?php echo s(mb_strtolower($sim->nombre . ' ' . $sim->categoria)); ?>">
                 <div class="sim-img"><img src="<?php echo s($sim->url()); ?>" alt="" loading="lazy"></div>
                 <div class="sim-nombre"><?php echo s($sim->nombre); ?></div>
                 <div class="text-muted text-sm"><?php echo s($sim->categoria !== '' ? $sim->categoria : 'Sin categoría'); ?></div>
+                <?php if ($usos): ?><span class="sim-uso" title="Aparece en <?php echo $usos; ?> lámina(s) del proyecto"><i class="fa-solid fa-layer-group"></i> <?php echo $usos; ?></span><?php endif; ?>
                 <?php if ($puedeEditar): ?>
-                <details>
-                    <summary><?php echo s(t('Editar')); ?></summary>
-                    <form method="POST" action="/simbolos/guardar" enctype="multipart/form-data" class="formulario">
+                <div class="sim-tarjeta-acc">
+                    <button type="button" class="btn btn-sm btn-primary sim-editar" data-id="<?php echo (int)$sim->id; ?>" data-nombre="<?php echo s($sim->nombre); ?>" data-cat="<?php echo s($sim->categoria); ?>"><i class="fa-solid fa-pen"></i> <?php echo s(t('Editar')); ?></button>
+                    <form method="POST" action="/simbolos/eliminar" data-confirm="¿Eliminar «<?php echo s($sim->nombre); ?>»?|Las marcas que ya lo usan en tus dibujos no cambian.|Sí, eliminar">
                         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$sim->id; ?>">
-                        <div class="campo"><label><?php echo s(t('Nombre')); ?></label><input type="text" name="nombre" maxlength="100" value="<?php echo s($sim->nombre); ?>" required></div>
-                        <div class="campo"><label>Categoría</label><input type="text" name="categoria" maxlength="60" list="sim-cats" value="<?php echo s($sim->categoria); ?>"></div>
-                        <div class="campo"><label>Cambiar imagen</label><input type="file" name="archivo" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg"></div>
-                        <button type="submit" class="btn btn-sm btn-primary"><?php echo s(t('Guardar')); ?></button>
+                        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button>
                     </form>
-                </details>
-                <form method="POST" action="/simbolos/eliminar" data-confirm="¿Eliminar «<?php echo s($sim->nombre); ?>»?|Las marcas que ya lo usan en tus dibujos no cambian.|Sí, eliminar">
-                    <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$sim->id; ?>">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button>
-                </form>
+                </div>
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>
@@ -107,7 +102,8 @@ $pestanas = [
     </div>
     <?php endif; ?>
     <?php if (!$simbologias): ?>
-        <p class="text-muted">Aún no hay simbologías. Mientras tanto, las láminas muestran la tabla estándar.</p>
+        <?php echo estado_vacio('fa-list-check', 'Aún no hay simbologías', 'Una simbología es la leyenda del dibujo (COMPLETE, IN PROGRESS, ON HOLD…). Empieza con la plantilla estándar y edítala en el Editor.', null, null,
+            $puedeEditar ? '<form method="POST" action="/graficos/simbologia-estandar" class="estado-vacio-acciones"><input type="hidden" name="proyecto" value="' . (int)$proyecto->id . '"><input type="hidden" name="forma" value="rectangular"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Crear la estándar</button><a class="btn btn-ghost" href="/simbolos?proyecto=' . (int)$proyecto->id . '&tour=1"><i class="fa-solid fa-circle-play"></i> Ver la guía</a></form>' : '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="sim-admin">
         <?php foreach ($simbologias as $g): $img = $g->imagenSimbologia(); ?>
@@ -189,6 +185,8 @@ $pestanas = [
     </div>
     <p class="text-muted sim-vacio" hidden>Ningún símbolo coincide con la búsqueda.</p>
 </section>
+<?php // Láminas donde se puede probar una estampa (botón «Probar en una lámina» de cada tarjeta) ?>
+<?php $laminasProbar = $puedeEditar ? \Model\VplanLamina::deProyecto((int)$proyecto->id) : []; ?>
 <section class="sim-panel" id="sim-p-estampas" role="tabpanel" hidden>
     <div id="estampas"></div>
     <p class="text-muted text-sm">Una <strong>estampa</strong> es un bloque que se coloca en cualquier lámina del vPlan y <strong>se actualiza solo</strong>: está hecha de etiquetas, y cada etiqueta combina un texto antes (prefijo), un dato del proyecto que se llena solo (fecha, avance, actividad, restricciones…) y un texto después (sufijo). También puede traer semáforos y los <strong>post-its de las actividades del día</strong> del Last Planner.</p>
@@ -197,12 +195,24 @@ $pestanas = [
         <button type="button" class="btn btn-primary" data-est="nueva"><i class="fa-solid fa-plus"></i> Nueva estampa (lienzo)</button>
         <button type="button" class="btn btn-ghost" data-est="nueva-et" title="Lista de etiquetas, sin dibujo"><i class="fa-solid fa-list"></i> Nueva por etiquetas</button>
         <span class="text-sm text-muted">o empieza con un ejemplo:</span>
-        <?php foreach ($plantillasEstampa as $clave => $pl): ?><button type="button" class="btn btn-sm btn-ghost" data-est="plantilla" data-clave="<?php echo s($clave); ?>"><i class="fa-solid <?php echo str_starts_with($clave, 'lastplanner') ? 'fa-note-sticky' : 'fa-stamp'; ?>"></i> <?php echo s($pl['nombre']); ?></button><?php endforeach; ?>
+        <?php // Galería de plantillas con la estampa ya dibujada (con datos de ejemplo del proyecto) ?>
+        <?php $ctxPlant = new \Classes\EstampaContexto($proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1]); ?>
+        <div class="est-plantillas">
+        <?php foreach ($plantillasEstampa as $clave => $pl): $cfgP = \Classes\Estampas::limpiarConfig($pl['config'], (int)$proyecto->id);
+            $W = round((float)($cfgP['w'] ?? 26) * 16); $H = round((float)($cfgP['h'] ?? 16) * 10.33); $zoom = min(.55, 340 / max(1, $W)); ?>
+            <button type="button" class="est-plantilla" data-est="plantilla" data-clave="<?php echo s($clave); ?>" title="Copia esta plantilla al proyecto para editarla">
+                <span class="est-miniatura"><span style="width:<?php echo $W; ?>px;height:<?php echo $H; ?>px;zoom:<?php echo round($zoom, 3); ?>"><?php echo \Classes\Estampas::render($cfgP, $ctxPlant, \Classes\Estampas::unidad('px', 1.3)); ?></span></span>
+                <span class="est-plantilla-pie"><b><i class="fa-solid <?php echo str_starts_with($clave, 'lastplanner') || str_starts_with($clave, 'postit') ? 'fa-note-sticky' : 'fa-stamp'; ?>"></i> <?php echo s($pl['nombre']); ?></b>
+                <small>copiar y editar</small></span>
+            </button>
+        <?php endforeach; ?>
+        </div>
     </div>
     <div id="est-editor" class="est-editor card" hidden></div>
     <?php endif; ?>
     <?php if (!$estampas): ?>
-        <p class="text-muted sim-vacio">Aún no hay estampas en este proyecto.<?php echo $puedeEditar ? ' Crea una o copia un ejemplo con los botones de arriba.' : ''; ?></p>
+        <?php echo estado_vacio('fa-wand-magic-sparkles', 'Aún no hay estampas en este proyecto', 'Una estampa es un bloque que se llena solo con datos del proyecto (fecha, avance, actividades del día…) y se coloca en cualquier lámina del vPlan. Empieza con uno de los ejemplos de abajo.', null, null,
+            $puedeEditar ? '<div class="estado-vacio-acciones"><button type="button" class="btn btn-primary" data-est="nueva"><i class="fa-solid fa-plus"></i> Nueva estampa</button><a class="btn btn-ghost" href="/simbolos?proyecto=' . (int)$proyecto->id . '&tour=1"><i class="fa-solid fa-circle-play"></i> Ver la guía</a></div>' : '', 'estado-vacio-sm'); ?>
     <?php else:
         $ctxEst = new \Classes\EstampaContexto($proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1]); ?>
         <div class="est-lista">
@@ -214,6 +224,7 @@ $pestanas = [
                     <span class="text-sm text-muted"><?php echo count($c['etiquetas'] ?? []); ?> etiqueta(s) · <?php echo s(['lineas' => 'en líneas', 'tabla' => 'en tabla', 'banda' => 'en banda'][$c['disposicion'] ?? 'lineas'] ?? ''); ?></span>
                     <?php if ($puedeEditar): ?>
                     <div class="est-card-acc"><button type="button" class="btn btn-sm btn-primary" data-est="editar" data-id="<?php echo (int)$es->id; ?>"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <?php if (!empty($laminasProbar)): ?><button type="button" class="btn btn-sm btn-ghost est-probar" data-id="<?php echo (int)$es->id; ?>" data-nombre="<?php echo s($es->nombre); ?>" title="La inserta en una lámina que elijas, lista para colocar"><i class="fa-solid fa-sheet-plastic"></i> Probar en una lámina</button><?php endif; ?>
                         <button type="button" class="btn btn-sm btn-ghost" data-est="duplicar" data-id="<?php echo (int)$es->id; ?>"><i class="fa-regular fa-copy"></i> Duplicar</button>
                         <button type="button" class="btn btn-sm btn-danger" data-est="eliminar" data-id="<?php echo (int)$es->id; ?>" data-nombre="<?php echo s($es->nombre); ?>"><i class="fa-solid fa-trash-can"></i></button></div>
                     <?php endif; ?>
@@ -223,6 +234,81 @@ $pestanas = [
         </div>
     <?php endif; ?>
 </section>
+<?php if (!empty($laminasProbar)): ?>
+<!-- Modal «Probar en una lámina»: inserta la estampa en la lámina elegida (modo diseño) -->
+<div class="modal-overlay" id="est-probar-modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="est-probar-titulo" style="max-width:44rem">
+        <div class="bj-cab"><h3 id="est-probar-titulo">Probar en una lámina</h3><button type="button" class="btn btn-sm btn-ghost" id="est-probar-x" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+        <p class="text-sm text-muted" style="margin:0 1.6rem .6rem">Se abre la lámina en «Acomodar bloques» con <b id="est-probar-nombre"></b> ya insertada: colócala donde quieras y guarda.</p>
+        <ul class="est-probar-lista" id="est-probar-lista"></ul>
+    </div>
+</div>
+<script>
+(function () {
+    const m = document.getElementById('est-probar-modal'), lista = document.getElementById('est-probar-lista');
+    if (!m || !lista) return;
+    const laminas = <?php echo json_encode(array_map(fn($l) => ['id' => (int)$l->id, 'titulo' => $l->titulo], $laminasProbar), JSON_UNESCAPED_UNICODE); ?>;
+    let id = 0;
+    const cerrar = () => { m.classList.remove('abierto'); m.setAttribute('aria-hidden', 'true'); };
+    document.addEventListener('click', e => {
+        const b = e.target.closest('.est-probar');
+        if (!b) return;
+        e.preventDefault();
+        id = +b.dataset.id;
+        document.getElementById('est-probar-nombre').textContent = b.dataset.nombre || '';
+        lista.innerHTML = laminas.map(l => '<li><a href="/vplan/ver?proyecto=<?php echo (int)$proyecto->id; ?>&id=' + l.id + '&diseno=1&insertar=estampa:' + id + '"><i class="fa-solid fa-sheet-plastic"></i> ' + l.titulo + ' <i class="fa-solid fa-arrow-right"></i></a></li>').join('');
+        m.classList.add('abierto'); m.setAttribute('aria-hidden', 'false');
+    });
+    document.getElementById('est-probar-x').addEventListener('click', cerrar);
+    m.addEventListener('click', e => { if (e.target === m) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.classList.contains('abierto')) cerrar(); });
+})();
+</script>
+<?php endif; ?>
+<?php if ($puedeEditar): ?>
+<!-- Modal de edición de símbolo (la tarjeta ya no despliega un formulario: se edita aquí) -->
+<div class="modal-overlay" id="sim-modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="sim-modal-titulo" style="max-width:46rem">
+        <div class="bj-cab"><h3 id="sim-modal-titulo">Editar símbolo</h3><button type="button" class="btn btn-sm btn-ghost" id="sim-modal-x" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+        <form method="POST" action="/simbolos/guardar" enctype="multipart/form-data" class="formulario" id="sim-modal-form">
+            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+            <input type="hidden" name="id" id="sim-modal-id" value="">
+            <div class="form-grid">
+                <div class="campo"><label for="sim-modal-nombre">Nombre *</label><input type="text" id="sim-modal-nombre" name="nombre" maxlength="100" required></div>
+                <div class="campo"><label for="sim-modal-cat">Categoría</label><input type="text" id="sim-modal-cat" name="categoria" maxlength="60" list="sim-cats"></div>
+                <div class="campo campo-full"><label for="sim-modal-archivo">Cambiar imagen (png con fondo transparente o svg funcionan mejor)</label><input type="file" id="sim-modal-archivo" name="archivo" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg"></div>
+            </div>
+            <div class="modal-acciones">
+                <button type="button" class="btn btn-ghost" id="sim-modal-cancelar"><i class="fa-solid fa-xmark"></i> <?php echo s(t('Cancelar')); ?></button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> <?php echo s(t('Guardar')); ?></button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+    const m = document.getElementById('sim-modal');
+    if (!m) return;
+    const abrir = b => {
+        document.getElementById('sim-modal-id').value = b.dataset.id;
+        document.getElementById('sim-modal-nombre').value = b.dataset.nombre || '';
+        document.getElementById('sim-modal-cat').value = b.dataset.cat || '';
+        document.getElementById('sim-modal-archivo').value = '';
+        m.classList.add('abierto'); m.setAttribute('aria-hidden', 'false');
+        document.getElementById('sim-modal-nombre').focus();
+    };
+    const cerrar = () => { m.classList.remove('abierto'); m.setAttribute('aria-hidden', 'true'); };
+    document.addEventListener('click', e => {
+        const b = e.target.closest('.sim-editar');
+        if (b) { e.preventDefault(); abrir(b); }
+    });
+    document.getElementById('sim-modal-x').addEventListener('click', cerrar);
+    document.getElementById('sim-modal-cancelar').addEventListener('click', cerrar);
+    m.addEventListener('click', e => { if (e.target === m) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.classList.contains('abierto')) cerrar(); });
+})();
+</script>
+<?php endif; ?>
 <?php
 $ctxDatos = new \Classes\EstampaContexto($proyecto);
 $partidasEst = [];
@@ -293,4 +379,19 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
         chips.forEach(c => c.addEventListener('click', () => { cat = cat === c.dataset.cat ? '' : c.dataset.cat; chips.forEach(x => x.classList.toggle('on', x.dataset.cat === cat)); filtrar(); }));
     });
 })();
+</script>
+<script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
+<script>
+// Guía rápida de la biblioteca (Símbolos): las pestañas se abren con alEntrar para destacarlas
+window.Tour.registrar('simbolos', {
+    auto: true,
+    pasos: [
+        { icono: 'fa-shapes', titulo: 'La biblioteca del proyecto', texto: 'Aquí viven los símbolos que se insertan en el vPlan y en el Editor con un clic, y sus dos primos: los <b>cajetines</b> (la tablita de datos del dibujo) y las <b>estampas inteligentes</b> (bloques que se llenan solos).' },
+        { sel: '#sim-tabs', icono: 'fa-table-columns', titulo: 'Cinco pestañas', texto: 'Los símbolos del proyecto y los incluidos con la aplicación, las simbologías (leyendas), los cajetines y las estampas. Cada una tiene su contador.' },
+        { sel: '#sim-imp-btn', icono: 'fa-file-import', titulo: 'Importar en bloque', texto: 'Sube un .zip con varias imágenes (o varias sueltas) y quedan en la pestaña «Del proyecto», con categorías y buscador.' },
+        { sel: '#sim-p-predeterminados', icono: 'fa-shapes', titulo: 'Predeterminados', texto: 'Los símbolos que ya vienen con la aplicación: cámaras, extintores, señalética… Se insertan igual que los tuyos.', alEntrar: () => document.querySelector('.sim-tab[data-tab="predeterminados"]')?.click() },
+        { sel: '#sim-p-estampas', icono: 'fa-wand-magic-sparkles', titulo: 'Estampas inteligentes', texto: 'Se colocan en una lámina del vPlan y se actualizan solas: fecha, avance, restricciones, las actividades del día… Empieza con una de las plantillas.', alEntrar: () => document.querySelector('.sim-tab[data-tab="estampas"]')?.click() },
+        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Los símbolos se usan desde el panel «Insertar» del modo diseño del vPlan y desde la pestaña de símbolos del Editor. Edita cualquier tarjeta con su botón «Editar».' }
+    ]
+});
 </script>

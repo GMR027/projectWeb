@@ -27,6 +27,8 @@
     try { Object.assign(opts, JSON.parse(guardado('vp-dis-opts', '{}'))); } catch (_) { /* valores por defecto */ }
 
     const marcarSucio = () => { sucio = true; $('vp-dis-guardar').classList.add('vp-pendiente'); $('vp-dis-msg').textContent = 'Cambios sin guardar'; };
+    // Aviso antes de perder el diseño sin guardar (al cerrar la pestaña o navegar a otra página)
+    window.addEventListener('beforeunload', e => { if (!sucio) return; e.preventDefault(); e.returnValue = ''; });
 
     const porClave = k => bloques.find(b => b.clave === k);
     const elDe = b => sheet.querySelector('.vp-blk[data-clave="' + b.clave + '"]');
@@ -1245,7 +1247,23 @@
         antes: (e, k) => { if (k !== 's') return false; e.preventDefault(); $('vp-dis-guardar').click(); return true; },
     });
     // Ayuda de la barra: atajos y trucos del modo diseño
-    if ($('vp-dis-ayuda')) $('vp-dis-ayuda').addEventListener('click', () => window.avisoModal('Modo diseño', 'Arrastra un bloque para moverlo y sus esquinas para redimensionarlo · flechas para afinar (Mayús = más rápido) · Supr para quitar · Ctrl+Z deshacer · Ctrl+Y rehacer · Ctrl+S guarda · arrastra desde las reglas para crear guías · / abre el buscador de Insertar · desde Insertar también puedes arrastrar un bloque hasta la hoja para ponerlo donde quieras.'));
+    // Ayuda de la barra: tarjetas por tema con los atajos (antes era un muro de texto de 90 palabras)
+    if ($('vp-dis-ayuda')) $('vp-dis-ayuda').addEventListener('click', () => window.avisoModal('Acomodar bloques · trucos y atajos',
+        '<div class="guia-tarjetas">' +
+        [[
+            'fa-up-down-left-right', 'Mover y redimensionar',
+            'Arrastra el bloque para moverlo y sus esquinas para cambiarle el tamaño. Las <kbd>flechas</kbd> lo afinan (<kbd>Mayús</kbd> = más rápido) y <kbd>Supr</kbd> lo quita.'
+        ], [
+            'fa-plus', 'Insertar cosas',
+            'En el panel «Insertar»: un clic pone el bloque en el centro de la hoja y arrastrándolo lo dejas donde quieras. <kbd>/</kbd> abre el buscador.'
+        ], [
+            'fa-ruler-combined', 'Guías, imán y reglas',
+            'Arrastra desde las reglas para crear guías. Con el imán activo los bloques se pegan a las guías y a los bordes y centros de la hoja.'
+        ], [
+            'fa-floppy-disk', 'Guardar y deshacer',
+            '<kbd>Ctrl</kbd>+<kbd>S</kbd> guarda el diseño, <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshace y <kbd>Ctrl</kbd>+<kbd>Y</kbd> rehace. El botón «Guía rápida» de la barra recorre la herramienta paso a paso.'
+        ]].map(t => '<div class="guia-tarjeta"><i class="fa-solid ' + t[0] + '"></i><b>' + t[1] + '</b><small>' + t[2] + '</small></div>').join('') +
+        '</div>', true));
     // Atajo «/»: buscar en Insertar
     document.addEventListener('keydown', e => {
         if (e.key !== '/' || pestana !== 'insertar' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1263,4 +1281,17 @@
     pintarGuias(); pintarCapas(); pintarGuiasLista(); actualizarInsertar(); pintarTablas(); pintarRecovery(); pintarRecientes(); pintarVisibilidad();
     seleccionar(null);
     requestAnimationFrame(dibujarReglas);
+
+    // ---- «Probar en una lámina» (Símbolos › Estampas): llega ?insertar=estampa:ID, se inserta sola ----
+    // Reusa el clic de la ficha del panel Insertar: así el bloque se coloca, se selecciona y queda sucio
+    (function () {
+        const p = new URLSearchParams(location.search).get('insertar') || '';
+        if (!p.startsWith('estampa:')) return;
+        const id = p.slice(8);
+        history.replaceState(null, '', location.pathname + '?proyecto=' + D.proyecto + '&id=' + D.lamina + '&diseno=1');
+        irAPestana('insertar');
+        const ficha = document.querySelector('[data-estampa="' + (+id) + '"]');
+        if (ficha) { ficha.click(); $('vp-dis-msg').textContent = 'Estampa insertada: colócala y guarda el diseño'; }
+        else window.avisoModal('Estampa no encontrada', 'Esa estampa ya no está en la biblioteca. Selecciona otra desde el panel «Insertar».');
+    })();
 })();

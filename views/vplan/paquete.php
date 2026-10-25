@@ -15,16 +15,22 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
     <div class="la-controles">
         <a href="/vplan?<?php echo $q; ?>" class="btn btn-ghost">← vPlans</a>
         <a href="/exportar?<?php echo $q; ?>&vplan=<?php echo s($paquete->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</a>
-        <?php if ($puedeEditar): ?><a href="/vplan/crear?<?php echo $q; ?>&paquete=<?php echo s($paquete->id); ?>" class="btn btn-primary">+ Nueva lámina</a><?php endif; ?>
+        <?php if ($puedeEditar): ?>
+        <span class="vp-seg" role="group" aria-label="Vista de la lista">
+            <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-galeria" title="Tarjetas con miniatura, se reordenan arrastrando"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
+            <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-tabla" title="Lista detallada con orden y grupos"><i class="fa-solid fa-table-list"></i> <span class="hide-m">Lista</span></button>
+        </span>
+        <a href="/vplan/crear?<?php echo $q; ?>&paquete=<?php echo s($paquete->id); ?>" class="btn btn-primary">+ Nueva lámina</a><?php endif; ?>
     </div>
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>
 
 <?php if (!$laminas): ?>
-    <div class="card"><p class="text-muted">Este vPlan aún no tiene láminas. <?php echo $puedeEditar ? 'Crea una por área: cada una lleva su plano, sus tablas, su título y su simbología.' : ''; ?></p></div>
+    <div class="card"><?php echo estado_vacio('fa-layer-group', 'Este vPlan aún no tiene láminas', 'Cada lámina lleva su plano, sus tablas, su título y su simbología: una por área es lo normal.', $puedeEditar ? ['texto' => '+ Nueva lámina', 'url' => '/vplan/crear?' . $q . '&paquete=' . s($paquete->id), 'icono' => 'fa-plus'] : null, $puedeEditar ? ['texto' => 'Guía de 1 minuto', 'url' => '/manual?proyecto=' . (int)$proyecto->id . '#vplan', 'icono' => 'fa-circle-play'] : null); ?></div>
 <?php else: ?>
 <?php if ($puedeEditar): ?><p class="text-sm text-muted vp-ayuda vp-ayuda-lista">Usa el ojo para mostrar u ocultar una lámina (lo oculto no se ve ni se exporta, pero se conserva). «Grupo» las reúne por disciplina, nivel o lo que prefieras.</p><?php endif; ?>
 <datalist id="vp-grupos"><?php foreach ($grupos as $g): ?><option value="<?php echo s($g); ?>"><?php endforeach; ?></datalist>
+<div id="vp-lista">
 <?php foreach ($porGrupo as $g => $lista): ?>
 <div class="card vp-grupo">
     <?php if ($g !== '' || count($porGrupo) > 1): ?>
@@ -78,7 +84,88 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
     </table>
 </div>
 <?php endforeach; ?>
+</div><!-- /vp-grupos-contenedor -->
 <?php endif; ?>
+
+<?php // ---- Galería: tarjetas con miniatura; las láminas se reordenan arrastrando (API /api/vplan/lamina/ajustar) ---- ?>
+<div class="vp-galeria<?php echo $puedeEditar ? '' : ' vp-galeria-lectura'; ?>" id="vp-galeria"<?php echo $laminas ? ' hidden' : ''; ?>>
+    <?php foreach ($porGrupo as $g => $lista): foreach ($lista as $l): $img = $l->marcas_png ?: $l->plano; $oculta = !(int)$l->visible; ?>
+    <article class="vp-gal-card<?php echo $oculta ? ' vp-oculta' : ''; ?>" data-lamina="<?php echo s($l->id); ?>"<?php echo $puedeEditar ? ' draggable="true"' : ''; ?>>
+        <a class="vp-gal-img" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" aria-label="Abrir <?php echo s($l->titulo); ?>">
+            <?php if ($img): ?><img src="/uploads/vplan/<?php echo s($img); ?>" alt="" loading="lazy"><?php else: ?><i class="fa-regular fa-image"></i><?php endif; ?>
+            <?php if ($oculta): ?><span class="vp-gal-oculta"><i class="fa-solid fa-eye-slash"></i> <?php echo s(t('Oculta')); ?></span><?php endif; ?>
+        </a>
+        <div class="vp-gal-cuerpo">
+            <a class="vp-gal-titulo" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>"><?php echo s($l->titulo); ?></a>
+            <div class="text-sm text-muted"><?php echo (int)$l->ancho_mm; ?> × <?php echo (int)$l->alto_mm; ?> mm<?php echo $g !== '' ? ' · ' . s($g) : ''; ?></div>
+            <?php if ($puedeEditar): ?>
+            <div class="vp-gal-acc">
+                <i class="fa-solid fa-grip-vertical vp-gal-asa" title="Arrastra para reordenar" aria-hidden="true"></i>
+                <a href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" class="btn btn-sm btn-primary"><i class="fa-regular fa-eye"></i> <?php echo s(t('Abrir')); ?></a>
+                <a href="/vplan/editar?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" class="vp-ib" title="Editar lámina (título, imágenes, supervisor)"><i class="fa-solid fa-pen"></i></a>
+                <form method="POST" action="/vplan/lamina/duplicar" style="display:inline" title="Copia el diseño, las tablas y la simbología"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><button type="submit" class="vp-ib" aria-label="Duplicar"><i class="fa-regular fa-copy"></i></button></form>
+                <form method="POST" action="/vplan/eliminar" data-confirm="¿Eliminar lámina?|Se borrarán sus imágenes y las marcas dibujadas.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><button type="submit" class="vp-ib vp-ib-peligro" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button></form>
+            </div>
+            <?php endif; ?>
+        </div>
+    </article>
+    <?php endforeach; endforeach; ?>
+    <p class="text-muted text-sm" id="vp-gal-estado" aria-live="polite"></p>
+</div>
+<script>
+(function () {
+    // ---- Vista Galería / Lista (se recuerda) ----
+    const lista = document.getElementById('vp-lista'), galeria = document.getElementById('vp-galeria'),
+        bG = document.getElementById('vp-vista-galeria'), bT = document.getElementById('vp-vista-tabla');
+    if (!galeria || !bG || !bT) return;
+    const ver = k => {
+        galeria.hidden = k !== 'galeria';
+        if (lista) lista.hidden = k === 'galeria';
+        bG.classList.toggle('btn-primary', k === 'galeria'); bG.classList.toggle('activo', k === 'galeria');
+        bT.classList.toggle('btn-primary', k !== 'galeria'); bT.classList.toggle('activo', k !== 'galeria');
+        try { localStorage.setItem('vp-paq-vista', k); } catch (e) { /* sin almacenamiento */ }
+    };
+    bG.addEventListener('click', () => ver('galeria'));
+    bT.addEventListener('click', () => ver('lista'));
+    let inicial = 'lista'; try { inicial = localStorage.getItem('vp-paq-vista') || 'lista'; } catch (e) { /* idem */ }
+    ver(inicial);
+
+    // ---- Reordenar arrastrando: se guarda al soltar (API /api/vplan/lamina/ajustar con «orden») ----
+    let arrastrada = null;
+    galeria.addEventListener('dragstart', e => {
+        const c = e.target.closest('.vp-gal-card'); if (!c) return;
+        arrastrada = c; c.classList.add('vp-gal-arrastrando');
+        try { e.dataTransfer.setData('text/plain', c.dataset.lamina); } catch (_) { /* viejos navegadores */ }
+    });
+    galeria.addEventListener('dragend', () => {
+        galeria.querySelectorAll('.vp-gal-card').forEach(c => c.classList.remove('vp-gal-arrastrando', 'vp-gal-encima'));
+        arrastrada = null;
+    });
+    galeria.addEventListener('dragover', e => {
+        const sobre = e.target.closest('.vp-gal-card');
+        if (!arrastrada || !sobre || sobre === arrastrada) return;
+        e.preventDefault();
+        galeria.querySelectorAll('.vp-gal-card').forEach(c => c.classList.remove('vp-gal-encima'));
+        const r = sobre.getBoundingClientRect();
+        const antes = e.clientY < r.top + r.height / 2;
+        sobre.parentNode.insertBefore(arrastrada, antes ? sobre : sobre.nextSibling);
+        sobre.classList.add('vp-gal-encima');
+    });
+    galeria.addEventListener('drop', async e => {
+        e.preventDefault();
+        if (!arrastrada) return;
+        const orden = [...galeria.querySelectorAll('.vp-gal-card')].findIndex(c => c === arrastrada);
+        const estado = document.getElementById('vp-gal-estado');
+        if (estado) estado.textContent = 'Guardando el orden…';
+        try {
+            const d = await fetch('/api/vplan/lamina/ajustar', { method: 'POST', body: new URLSearchParams({ lamina: arrastrada.dataset.lamina, orden }) }).then(r => r.json());
+            if (estado) estado.textContent = d.success ? 'Orden guardado ✓' : 'No se pudo guardar el orden';
+            if (!d.success) location.reload();
+        } catch (_) { if (estado) estado.textContent = 'No se pudo guardar el orden'; }
+        arrastrada = null;
+    });
+})();
+</script>
 
 <?php if ($puedeEditar): ?>
 <form method="POST" action="/vplan/paquete/renombrar" class="card vp-nuevo-paquete">

@@ -2,6 +2,20 @@
 // Lo usan el editor de marcas del vPlan y el Editor de gráficos. ?>
 <div class="ve-hoja" id="ve-hoja">
 <button type="button" class="ve-cerrar-ampliado" id="ve-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+<?php // Lienzo en blanco (solo el Editor de gráficos): cuatro arranques rápidos; se oculta al primer trazo ?>
+<div class="ve-lienzo-vacio" id="ve-lienzo-vacio" hidden>
+    <div class="ve-lienzo-vacio-caja">
+        <i class="fa-solid fa-pen-ruler"></i>
+        <b>Lienzo en blanco</b>
+        <p>Empieza con lo que necesites: se oculta en cuanto dibujes algo.</p>
+        <div class="ve-lienzo-vacio-botones">
+            <button type="button" data-quick="rect"><i class="fa-solid fa-square"></i> Forma</button>
+            <button type="button" data-quick="text"><i class="fa-solid fa-font"></i> Texto</button>
+            <button type="button" data-quick="#ve-simbolos-btn"><i class="fa-solid fa-shapes"></i> Símbolo</button>
+            <button type="button" data-quick="image"><i class="fa-regular fa-image"></i> Imagen</button>
+        </div>
+    </div>
+</div>
 <?php
 // Iconos de las herramientas (SVG de 24x24 con el color del texto; todos con el mismo trazo)
 $svg = fn(string $d, string $extra = '') => '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' . $extra . '>' . $d . '</svg>';
