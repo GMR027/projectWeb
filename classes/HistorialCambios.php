@@ -122,6 +122,8 @@ class HistorialCambios
         'costos_partidas' => ['costos', 'partida', 'Presupuesto de partida', [], ['partidas', 'partida_id']],
         'curva_reales' => ['curvas', 'curva', 'Punto real de la curva', ['periodo'], ['curvas', 'curva_id']],
         'submittal_materiales' => ['submittals', 'submittal', 'Material del submittal', [], ['submittals', 'submittal_id']],
+        'submittal_laminas' => ['submittals', 'submittal', 'Lámina del submittal', [], ['submittals', 'submittal_id']],
+        'rfi_laminas' => ['rfi', 'rfi', 'Lámina del RFI', [], ['rfis', 'rfi_id']],
     ];
 
     /**
@@ -129,7 +131,7 @@ class HistorialCambios
      * cancelar automáticamente**, porque no hay con qué volver a localizar la fila.
      */
     private const SIN_ID = ['campos_valores', 'actividad_avance', 'actividad_cantidades', 'actividad_recursos',
-        'costos_partidas', 'curva_reales', 'submittal_materiales', 'lineas_base_actividades', 'lineas_base_materiales', 'disenos_lista'];
+        'costos_partidas', 'curva_reales', 'submittal_materiales', 'submittal_laminas', 'rfi_laminas', 'lineas_base_actividades', 'lineas_base_materiales', 'disenos_lista'];
 
     /**
      * Tablas sin `proyecto_id` que se suben por su padre: tabla => [tabla padre, columna que apunta al padre].
@@ -148,6 +150,8 @@ class HistorialCambios
         'costos_partidas' => ['partidas', 'partida_id'],
         'curva_reales' => ['curvas', 'curva_id'],
         'submittal_materiales' => ['submittals', 'submittal_id'],
+        'submittal_laminas' => ['submittals', 'submittal_id'],
+        'rfi_laminas' => ['rfis', 'rfi_id'],
     ];
 
     /** Columnas que no se guardan en las imágenes antes/después (contraseñas, tokens, binarios y rutas de archivo) */

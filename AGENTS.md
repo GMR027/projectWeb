@@ -28,7 +28,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 
 | Topic | Guidance |
 |---|---|
-| **Roles** | 3 roles: `admin` (full), `cliente` (ver+descargar), `visitante` (solo ver). Helpers: `is_admin()`, `puede_editar()`, `puede_descargar()` |
+| **Roles** | 3 roles: `admin` (full), `cliente` (ver+descargar), `visitante` (solo ver). Helpers: `is_admin()`, `puede_editar()`, `puede_descargar()`. El módulo **Normativa y especificaciones** (documentos, vínculos, propuestas de IA, «Por material y actividad», búsqueda y sección en formularios) es **solo del admin** |
 | **Calendario** | Cada proyecto tiene jornada semanal (factor 0-1 por día) + festivos. `Calendario::calcularFechaFin($inicio, $diasHabiles)` respeta esta config. |
 | **Gantt** | Renderizado con CSS Grid. `GanttRenderer::getFilas()` retorna array con posiciones de columna para cada partida/actividad. |
 | **Exportación** | Nombre `prefijo-nombre-CÓDIGO-EMPRESA-sufijo.ext`: prefijo/sufijo (fecha Y-m-d, d-m-Y, numerador, texto) se eligen una vez en el Centro de Exportación (`/exportar`, guardado en localStorage) y viajan como `nom_*` en cada POST; el servidor los lee con `nomenclatura_desde_post()` y los usa `generar_nombre_archivo()`. Sin `nom_*` queda fecha al inicio. «Exportar todo» filtra con `incluir[]`; curvas, MSR y láminas de vPlan aceptan varios (`curva_ids[]`, `msr_ids[]`, `lamina_ids[]`) y entregan ZIP. PDF tabloide 11x17" landscape; columnas semanales (≤16 sem), quincenales (≤40) o mensuales, máx. 14 columnas por página. XML es MSPDI. POD renombra el XML. |

@@ -3,14 +3,19 @@
  * Sección «Normativa y especificaciones» de los formularios de actividad y de material.
  * Variables: $proyecto, $tipoEntidad ('actividad'|'material'), $entidadId (null al crear)
  * Los vínculos manuales viajan en el propio formulario (normativa_doc[], normativa_ref[], normativa_nota[]); lo demás usa fetch (sin formularios anidados).
+ * Todo el módulo (y por tanto esta sección) es solo para el administrador.
  */
+if (!is_admin()) return;
 $pidN = (int)$proyecto->id;
 $docsN = \Classes\Normativa::listar($pidN);
 $vinculosN = !empty($entidadId) ? \Classes\Normativa::deEntidad($pidN, $tipoEntidad, (int)$entidadId) : [];
 $puedeN = puede_gestionar_proyecto($proyecto);
-if (!$puedeN && !$vinculosN) return;
+if (!$puedeN) return;
+$origenN = ['manual' => 'Manual', 'csi' => 'Sección CSI', 'palabras' => 'Palabras', 'ia' => 'IA'];
+$aplN = count(array_filter($vinculosN, fn($v) => $v['estado'] === 'aceptada'));
+$propN = count($vinculosN) - $aplN;
 ?>
-<div class="campo campo-full normativa-seccion" id="normativa-seccion" data-proyecto="<?php echo $pidN; ?>" data-tipo="<?php echo s($tipoEntidad); ?>" data-entidad="<?php echo (int)($entidadId ?? 0); ?>">
+<div class="campo campo-full normativa-seccion" id="normativa-seccion" data-proyecto="<?php echo $pidN; ?>" data-tipo="<?php echo s($tipoEntidad); ?>" data-entidad="<?php echo (int)($entidadId ?? 0); ?>" data-norm-raiz>
     <h3><i class="fa-solid fa-scale-balanced"></i> Normativa y especificaciones</h3>
     <?php if (!empty($entidadId)):
         $refN = (string)(int)$entidadId; $dataN = \Classes\Revisiones::elementos($pidN, $tipoEntidad);
@@ -24,20 +29,29 @@ if (!$puedeN && !$vinculosN) return;
         <?php endif; ?>
     <?php endif; ?>
     <?php if ($vinculosN): ?>
+        <p class="text-sm text-muted"><?php echo $aplN; ?> aplica(n) · <?php echo $propN; ?> propuesta(s)</p>
         <ul class="norm-lista">
-            <?php foreach ($vinculosN as $v): ?>
-                <li data-id="<?php echo (int)$v['id']; ?>" class="<?php echo $v['estado'] === 'propuesta' ? 'norm-propuesta' : ''; ?>">
+            <?php foreach ($vinculosN as $v): $cN = \Classes\Normativa::cita($v); $oriN = $origenN[$v['origen']] ?? $v['origen']; ?>
+                <li class="norm-vinculo<?php echo $v['estado'] === 'propuesta' ? ' norm-propuesta' : ''; ?>" data-id="<?php echo (int)$v['id']; ?>" data-estado="<?php echo s($v['estado']); ?>">
                     <div>
-                        <strong><?php echo s($v['doc'] ?: ($v['referencia'] ?: 'Referencia')); ?></strong>
-                        <?php echo ($v['clausula'] ?? '') !== '' ? ' · ' . s($v['clausula']) : ''; ?><?php echo $v['pagina'] ? ' · pág. ' . (int)$v['pagina'] : ''; ?><?php echo $v['referencia'] !== '' && $v['doc'] ? ' · ' . s($v['referencia']) : ''; ?>
-                        <?php if ($v['estado'] === 'propuesta'): ?><span class="prg-sev">Propuesta</span><?php endif; ?>
-                        <?php if ($v['requisito']): ?><small class="text-muted" style="display:block"><?php echo s($v['requisito']); ?></small><?php elseif ($v['ftexto']): ?><small class="text-muted" style="display:block"><?php echo s(mb_substr($v['ftitulo'] . '. ' . $v['ftexto'], 0, 220)); ?>…</small><?php endif; ?>
+                        <strong><?php echo s($cN['documento'] ?: ($v['referencia'] ?: 'Referencia')); ?></strong>
+                        <?php if ($cN['codigo'] !== ''): ?> · <?php echo s($cN['codigo']); ?><?php endif; ?>
+                        <?php if ($cN['seccion'] !== ''): ?> · <?php echo s($cN['seccion']); ?><?php endif; ?>
+                        <?php if ($cN['clausula'] !== ''): ?> · <?php echo s($cN['clausula']); ?><?php endif; ?>
+                        <?php if ($cN['pagina']): ?> · pág. <?php echo (int)$cN['pagina']; ?><?php endif; ?>
+                        <?php if ($cN['idioma'] !== ''): ?> · <?php echo strtoupper(s($cN['idioma'])); ?><?php endif; ?>
+                        <?php if ($v['referencia'] !== '' && $cN['documento'] !== ''): ?> · <?php echo s($v['referencia']); ?><?php endif; ?>
+                        <span class="prg-sev"><?php echo $v['estado'] === 'propuesta' ? 'Propuesta · ' : ''; ?><?php echo s($oriN); ?></span>
+                        <?php if ($v['requisito']): ?><small class="text-muted" style="display:block"><?php echo s($v['requisito']); ?></small>
+                        <?php elseif ($v['ftexto']): ?><small class="text-muted" style="display:block"><?php echo s(mb_substr(trim($v['ftitulo'] . '. ' . $v['ftexto']), 0, 220)); ?>…</small><?php endif; ?>
                         <?php if ($v['nota'] !== ''): ?><small class="text-muted" style="display:block">Nota: <?php echo s($v['nota']); ?></small><?php endif; ?>
+                        <?php if ($v['documento_id'] && $cN['pagina']): ?><a class="text-sm" href="/normativa/pdf?proyecto=<?php echo $pidN; ?>&id=<?php echo (int)$v['documento_id']; ?>#page=<?php echo (int)$cN['pagina']; ?>" target="_blank" rel="noopener">Ver en el documento (pág. <?php echo (int)$cN['pagina']; ?>)</a><?php endif; ?>
                     </div>
-                    <?php if ($puedeN): ?><span>
+                    <span>
                         <?php if ($v['estado'] === 'propuesta'): ?><button type="button" class="btn btn-sm btn-primary" data-norm="aceptada">Aplica</button><button type="button" class="btn btn-sm btn-ghost" data-norm="rechazada">No aplica</button>
                         <?php else: ?><button type="button" class="btn btn-sm btn-ghost" data-norm="quitar" title="Desvincular"><i class="fa-solid fa-xmark"></i></button><?php endif; ?>
-                    </span><?php endif; ?>
+                        <span class="norm-msg text-sm text-muted" aria-live="polite"></span>
+                    </span>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -70,11 +84,9 @@ if (!$puedeN && !$vinculosN) return;
         if (add) add.addEventListener('click', function () { filas.appendChild(tpl.content.cloneNode(true)); });
         raiz.addEventListener('click', function (e) {
             var q = e.target.closest('[data-norm-quitar-fila]'); if (q) { q.closest('.norm-fila').remove(); return; }
-            var b = e.target.closest('button[data-norm]'); if (!b) return;
-            var li = b.closest('li'), id = li.dataset.id;
-            (b.dataset.norm === 'quitar' ? post('/normativa/quitar', { id: id }) : post('/normativa/resolver', { id: id, estado: b.dataset.norm })).then(function (j) { if (j.success) location.reload(); else if (msg) msg.textContent = j.mensaje || 'No se pudo'; });
         });
         var sug = document.getElementById('norm-sugerir');
         if (sug) sug.addEventListener('click', function () { msg.textContent = 'Buscando…'; post('/normativa/sugerir', { tipo: raiz.dataset.tipo, entidad: raiz.dataset.entidad }).then(function (j) { msg.textContent = j.propuestas ? j.propuestas + ' propuesta(s) nueva(s)' : 'No se encontraron cláusulas nuevas'; if (j.propuestas) setTimeout(function () { location.reload(); }, 600); }); });
     })();
 </script>
+<?php include __DIR__ . '/_resolver-js.php'; ?>

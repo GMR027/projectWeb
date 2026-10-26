@@ -14,6 +14,9 @@ class Rfi
     public const ESTADOS = ['abierto' => 'Abierto', 'respondido' => 'Respondido', 'cerrado' => 'Cerrado'];
     public const PRIORIDADES = ['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'critica' => 'Crítica'];
 
+    /** Id del RFI recién creado o actualizado (lo usa el controlador para guardar sus láminas) */
+    public static ?int $ultimoId = null;
+
     public static function disponible(): bool
     {
         try {
@@ -44,6 +47,70 @@ class Rfi
         return $rows;
     }
 
+    /** Un RFI con la actividad que bloquea (para verlo y exportarlo) */
+    public static function obtener(int $pid, int $id): ?array
+    {
+        return self::filas("SELECT r.*, a.codigo act_codigo, a.nombre act_nombre, a.fecha_inicio act_inicio, a.fecha_fin act_fin,
+                a.progreso act_progreso, DATEDIFF(CURDATE(), r.fecha_limite) dias_retraso
+            FROM rfis r LEFT JOIN actividades a ON a.id = r.actividad_id
+            WHERE r.id = $id AND r.proyecto_id = $pid")[0] ?? null;
+    }
+
+    /** Láminas del Editor (/graficos) adjuntas al RFI */
+    public static function laminas(int $rfiId): array
+    {
+        try {
+            return \Model\GraficoLamina::consultarSQL(
+                "SELECT l.*, g.nombre AS grafico_nombre, g.categoria_id, g.ancho AS grafico_ancho, g.alto AS grafico_alto,
+                        c.nombre AS categoria_nombre
+                 FROM rfi_laminas rl
+                 JOIN editor_laminas l ON l.id = rl.lamina_id
+                 JOIN editor_graficos g ON g.id = l.grafico_id
+                 LEFT JOIN editor_categorias c ON c.id = g.categoria_id
+                 WHERE rl.rfi_id = $rfiId
+                 ORDER BY rl.orden ASC, l.orden ASC, l.id ASC"
+            );
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+    }
+
+    /** Ids de láminas adjuntas al RFI */
+    public static function idsLaminas(int $rfiId): array
+    {
+        return array_map(fn($l) => (int)$l->id, self::laminas($rfiId));
+    }
+
+    /** Reemplaza las láminas adjuntas (solo del proyecto y de gráficos, no simbologías) */
+    public static function sincronizarLaminas(int $pid, int $rfiId, array $ids): void
+    {
+        try {
+            $db = self::db();
+            $rfiId = (int)$rfiId;
+            $n0 = (int)($db->query("SELECT COUNT(*) FROM rfi_laminas WHERE rfi_id = $rfiId")->fetch_row()[0] ?? 0);
+            $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+            if ($ids) {
+                $res = $db->query("SELECT l.id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id
+                                   WHERE g.proyecto_id = $pid AND g.tipo = 'grafico' AND l.id IN (" . implode(',', $ids) . ")");
+                $ids = [];
+                while ($r = $res->fetch_assoc()) $ids[] = (int)$r['id'];
+            }
+            $db->query("DELETE FROM rfi_laminas WHERE rfi_id = $rfiId");
+            $orden = 0;
+            foreach ($ids as $lid) {
+                $db->query("INSERT INTO rfi_laminas (rfi_id, lamina_id, orden) VALUES ($rfiId, $lid, " . (++$orden) . ")");
+            }
+            $n1 = count($ids);
+            if ($n1 !== $n0) {
+                $etq = (string)(self::filas("SELECT numero FROM rfis WHERE id = $rfiId")[0]['numero'] ?? ('#' . $rfiId));
+                HistorialCambios::registrar($pid, 'rfi', 'modificado',
+                    "Láminas del RFI $etq: $n0 → $n1", ['laminas' => $n0], ['laminas' => $n1],
+                    ['rfi', $rfiId, $etq]);
+            }
+        } catch (\Throwable $e) {   // migración pendiente
+        }
+    }
+
     public static function resumen(int $pid): array
     {
         $r = ['total' => 0, 'abierto' => 0, 'respondido' => 0, 'cerrado' => 0, 'vencidos' => 0, 'bloqueando' => 0];
@@ -59,6 +126,7 @@ class Rfi
     /** @return string|null mensaje de error */
     public static function guardar(int $pid, array $d, string $usuario): ?string
     {
+        self::$ultimoId = null;
         $asunto = mb_substr(trim((string)($d['asunto'] ?? '')), 0, 200);
         if ($asunto === '') return 'El asunto es obligatorio';
         $fecha = self::fecha($d['fecha'] ?? '') ?? date('Y-m-d');
@@ -81,12 +149,15 @@ class Rfi
             fecha_limite = " . ($limite ? "'$limite'" : 'NULL') . ", fecha_respuesta = $respFecha, actividad_id = " . ($act ?: 'NULL');
         if ($id) {
             HistorialCambios::escribir('rfis', 'modificado', $id, fn() => self::db()->query("UPDATE rfis SET $campos WHERE id = $id"));
+            self::$ultimoId = $id;
             Webhooks::emitir($pid, 'rfi.actualizado', ['id' => $id, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio]);
         } else {
             $numero = mb_substr(trim((string)($d['numero'] ?? '')), 0, 30) ?: self::siguienteNumero($pid);
             if (self::filas("SELECT id FROM rfis WHERE proyecto_id = $pid AND numero = {$v($numero)}")) return 'Ya existe un RFI con ese número';
             HistorialCambios::escribir('rfis', 'creado', 0, fn() => self::db()->query("INSERT INTO rfis SET proyecto_id = $pid, numero = {$v($numero)}, $campos"));
-            Webhooks::emitir($pid, 'rfi.creado', ['id' => (int)self::db()->insert_id, 'numero' => $numero, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio, 'fecha_limite' => $limite]);
+            // El historial puede haber insertado después: se localiza por número para no depender de insert_id
+            self::$ultimoId = (int)(self::filas("SELECT id FROM rfis WHERE proyecto_id = $pid AND numero = {$v($numero)} ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
+            Webhooks::emitir($pid, 'rfi.creado', ['id' => self::$ultimoId, 'numero' => $numero, 'asunto' => $asunto, 'estado' => $estado, 'prioridad' => $prio, 'fecha_limite' => $limite]);
         }
         return null;
     }

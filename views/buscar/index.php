@@ -5,7 +5,7 @@ $total = array_sum(array_map(fn($g) => count($g['items']), $grupos));
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-magnifying-glass"></i> Buscar en el proyecto</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · busca en el programa, materiales, submittals, minutas, bitácora, reportes, archivo, punch, órdenes de cambio, permisos, Redactor y normativa. Todas las palabras deben aparecer; no importan acentos ni mayúsculas.</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · busca en el programa, materiales, submittals, minutas, bitácora, reportes, archivo, punch, órdenes de cambio, permisos, Redactor y normativa (solo administrador). Todas las palabras deben aparecer; no importan acentos ni mayúsculas.</p>
     </div>
 </div>
 

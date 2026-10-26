@@ -359,6 +359,7 @@ class AjustesController
             'departamentosBitacora' => array_map(fn($d) => $d->nombre, \Model\BitacoraDepartamento::deProyecto((int)$proyecto->id)),
             'especialidades' => array_map(fn($e) => $e->nombre, \Model\Especialidad::deProyecto((int)$proyecto->id)),
             'submittals' => \Model\Submittal::deProyecto((int)$proyecto->id),
+            'rfis' => \Classes\Rfi::disponible() ? \Classes\Rfi::lista((int)$proyecto->id) : [],
             'actividadesEvidencia' => array_merge(...array_values(array_map(fn($p) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $p->getActividades()), $proyecto->getPartidas()))) ?: [],
             'mesesLt' => LineatiempoController::mesesConActividades($proyecto)
         ]);
@@ -633,6 +634,17 @@ class AjustesController
                     $sub = \Model\Submittal::find(filter_var($_POST['submittal_id'] ?? null, FILTER_VALIDATE_INT));
                     if (!$sub || (int)$sub->proyecto_id !== (int)$proyecto->id) throw new \Exception('Submittal no encontrado');
                     $exporter = (new \Classes\Exportadores\SubmittalPdfExporter($proyecto))->setSubmittal($sub);
+                    break;
+                case 'rfi':
+                    $lista = [];
+                    foreach (array_values(array_unique(array_map('intval', (array)($_POST['rfi_ids'] ?? [])))) as $rid) {
+                        $rf = \Classes\Rfi::obtener((int)$proyecto->id, $rid);
+                        if (!$rf) continue;
+                        $lista[] = [(new \Classes\Exportadores\RfiPdfExporter($proyecto))->setRfi($rf, \Classes\Rfi::laminas($rid)), $nombreBase . '-' . $rf['numero']];
+                    }
+                    if (!$lista) throw new \Exception('No hay RFI para exportar');
+                    if (count($lista) > 1) $varios = $lista;
+                    else { $exporter = $lista[0][0]; $nombreBase = $lista[0][1]; }
                     break;
                 case 'reportes':
                     $f = $_POST;

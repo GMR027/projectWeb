@@ -19,7 +19,7 @@ $pid = (int)$proyecto->id;
 <?php if (!$fragmentos): ?><div class="card prg-vacio"><h3>Sin cláusulas</h3><p class="text-muted"><?php echo s($doc['nota'] ?: 'No hay cláusulas que mostrar.'); ?></p></div>
 <?php else: ?>
     <ul class="inc-lista"><?php foreach ($fragmentos as $f): ?>
-        <li class="card inc-item sev-baja"><div class="inc-cab"><strong><?php echo s(($f['clausula'] !== '' ? $f['clausula'] . ' ' : '') . $f['titulo']); ?></strong><small class="text-muted">pág. <?php echo (int)$f['pagina']; ?> · <?php echo strtoupper(s($f['idioma'])); ?><?php echo $f['csi'] ? ' · CSI ' . s($f['csi']) : ''; ?></small></div>
+        <li class="card inc-item sev-baja"><div class="inc-cab"><strong><?php echo s(($f['clausula'] !== '' ? $f['clausula'] . ' ' : '') . $f['titulo']); ?></strong><small class="text-muted">pág. <?php echo (int)$f['pagina']; ?> · <?php echo strtoupper(s($f['idioma'])); ?><?php echo \Classes\Normativa::seccionCsi($f['csi']) !== '' ? ' · ' . s(\Classes\Normativa::seccionCsi($f['csi'])) : ''; ?></small></div>
             <p><?php echo s($f['texto']); ?></p></li>
     <?php endforeach; ?></ul>
 <?php endif; ?>

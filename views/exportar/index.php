@@ -337,6 +337,23 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
         </div>
 
         <div class="exportador-card">
+            <div class="exportador-icono pdf">❓</div>
+            <h4>RFI · Solicitudes de información</h4>
+            <p class="text-sm text-muted">Uno o varios RFI con su pregunta, respuesta y las láminas del Editor adjuntas. Con varios marcados se entregan en un ZIP.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="rfi">
+                <?php if ($rfis): ?>
+                    <?php echo $casillas('rfi_ids[]', 'RFI', array_map(fn($rf) => [$rf['id'], $rf['numero'] . ' · ' . $rf['asunto'], false], $rfis), 'Marca al menos uno.'); ?>
+                <?php else: ?>
+                    <p class="text-sm text-muted">Aún no hay RFI.</p>
+                <?php endif; ?>
+                <input type="text" name="nombre_base" value="RFI" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"<?php echo $rfis ? '' : ' disabled'; ?>><i class="fa-solid fa-file-pdf"></i> Exportar RFI</button>
+            </form>
+        </div>
+
+        <div class="exportador-card">
             <div class="exportador-icono pdf">🧱</div>
             <h4>Materiales</h4>
             <p class="text-sm text-muted">Listado de materiales con foto, por especialidad, estatus de compra y/o estado de entrega.</p>

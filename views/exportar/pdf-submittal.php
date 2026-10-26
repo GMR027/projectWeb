@@ -11,6 +11,10 @@
     .mat th { background: #1f3a5f; color: #fff; padding: 4pt; border: 0.5pt solid #1f3a5f; }
     .mat td { border: 0.5pt solid #888; padding: 3pt 5pt; vertical-align: middle; }
     tr { page-break-inside: avoid; }
+    .laminas-titulo { font-size: 11pt; margin: 14pt 0 6pt; padding: 4pt 6pt; background: #1f3a5f; color: #fff; }
+    .lamina { page-break-inside: avoid; margin: 0 0 12pt; text-align: center; }
+    .lamina h2 { font-size: 9.5pt; color: #1f3a5f; margin: 0 0 4pt; text-align: left; }
+    .lamina img { max-width: 100%; max-height: 640pt; border: 0.5pt solid #aaa; }
 </style></head><body>
 <table class="cab"><tr>
     <td style="width:25%"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:40pt;max-width:120pt"><?php endif; ?></td>
@@ -37,4 +41,20 @@
     <?php endforeach; ?>
     </tbody>
 </table>
+<?php
+$laminasPdf = [];
+foreach (($laminas ?? []) as $l) {
+    $im = $img($l->marcas_png, 'uploads/vplan');
+    if ($im) $laminasPdf[] = [$l, $im];
+}
+?>
+<?php if ($laminasPdf): ?>
+<h2 class="laminas-titulo">Láminas adjuntas</h2>
+<?php foreach ($laminasPdf as [$l, $im]): ?>
+    <div class="lamina">
+        <h2><?php echo s($l->grafico_nombre . ' · ' . $l->titulo((int)$l->orden)); ?><?php echo $l->categoria_nombre ? ' · ' . s($l->categoria_nombre) : ''; ?></h2>
+        <img src="<?php echo $im; ?>" alt="">
+    </div>
+<?php endforeach; ?>
+<?php endif; ?>
 </body></html>

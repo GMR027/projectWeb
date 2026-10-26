@@ -26,6 +26,7 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 - `rfis` (número RFI-001…, asunto, pregunta, respuesta, responsable, prioridad, estado abierto/respondido/cerrado, fecha, fecha_limite, fecha_respuesta, `actividad_id` = la que bloquea).
 - Un RFI **abierto** sobre una actividad sin terminar la marca «en riesgo» (`Salud::riesgosActividades`, tipo `rfi`; sale en Programa, Lookahead y Last Planner) y vence al pasar la fecha límite. Indicador «RFI abiertos» en Salud.
 - **Chip de revisión:** `Revisiones` tiene el tipo `rfi` (`huellaRfi`, `elementos`, `nombreDe`, `huellaDe`); la lista de RFI pinta el chip (solo admin) y Revisiones tiene la pestaña «RFI».
+- **Láminas del Editor:** `rfi_laminas` adjunta láminas de `/graficos` (misma consulta `Grafico::laminasParaSeleccion`, migración `database/migracion_rfi_laminas.sql`). El botón **PDF** de la lista (`/rfi/pdf`) y la tarjeta de RFI del Centro de Exportación (`formato=rfi`, varios en ZIP) usan `RfiPdfExporter` y ponen las láminas debajo de la pregunta y la respuesta.
 
 ## 3.4 / 3.5 Enlaces
 - `enlaces_proyecto(tipo cliente|ics, token 40 hex, secciones, expira, revocado, accesos, ultimo_acceso)`. `Enlaces::resolver()` valida token, tipo, caducidad y revocación y cuenta el acceso. El token viaja en la URL (`t=`); no hay lista de enlaces pública.

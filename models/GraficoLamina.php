@@ -12,6 +12,8 @@ class GraficoLamina extends ActiveRecord
 
     public $id, $grafico_id, $orden, $nombre, $marcas_json, $marcas_png;
     public $creado, $actualizado;
+    // Datos del gráfico al listar láminas para otro módulo (p. ej. el selector de submittals)
+    public $grafico_nombre, $categoria_id, $categoria_nombre, $grafico_ancho, $grafico_alto;
 
     public function __construct($args = [])
     {

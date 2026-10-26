@@ -540,6 +540,16 @@ CREATE TABLE editor_laminas (
     FOREIGN KEY (grafico_id) REFERENCES editor_graficos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Láminas del Editor (/graficos) adjuntas a un paquete de submittal (ver database/migracion_submittal_laminas.sql)
+CREATE TABLE submittal_laminas (
+    submittal_id INT NOT NULL,
+    lamina_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (submittal_id, lamina_id),
+    FOREIGN KEY (submittal_id) REFERENCES submittals(id) ON DELETE CASCADE,
+    FOREIGN KEY (lamina_id) REFERENCES editor_laminas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 ALTER TABLE vplan_laminas ADD CONSTRAINT fk_lamina_simbologia FOREIGN KEY (simbologia_grafico_id) REFERENCES editor_graficos(id) ON DELETE SET NULL;
 
 -- Biblioteca de símbolos por proyecto (ver database/migracion_simbolos.sql)
@@ -1771,6 +1781,16 @@ CREATE TABLE IF NOT EXISTS rfis (
     KEY idx_rfi_proyecto (proyecto_id, estado),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Láminas del Editor (/graficos) adjuntas a un RFI (ver database/migracion_rfi_laminas.sql)
+CREATE TABLE IF NOT EXISTS rfi_laminas (
+    rfi_id INT NOT NULL,
+    lamina_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (rfi_id, lamina_id),
+    FOREIGN KEY (rfi_id) REFERENCES rfis(id) ON DELETE CASCADE,
+    FOREIGN KEY (lamina_id) REFERENCES editor_laminas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- 3.4 y 3.5 Enlaces de solo lectura: para el cliente (temporal) y suscripción de calendario .ics

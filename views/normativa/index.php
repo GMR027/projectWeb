@@ -9,7 +9,10 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
         <h2><i class="fa-solid fa-scale-balanced"></i> <?php echo s(t('Normativa y especificaciones')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · carga normas y especificaciones en PDF o Word (español o inglés, o mezclados). El sistema las lee, las parte por cláusulas y propone en qué materiales y actividades aplica cada una. Tú decides.</p>
     </div>
-    <div class="inc-acciones"><a href="/normativa/vinculos?proyecto=<?php echo $pid; ?>" class="btn btn-primary"><i class="fa-solid fa-link"></i> Vínculos<?php echo $pendientes ? ' (' . (int)$pendientes . ' por revisar)' : ''; ?></a></div>
+    <div class="inc-acciones">
+        <a href="/normativa/por-elemento?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-list-check"></i> Por material y actividad</a>
+        <a href="/normativa/vinculos?proyecto=<?php echo $pid; ?>" class="btn btn-primary"><i class="fa-solid fa-link"></i> Vínculos<?php echo $pendientes ? ' (' . (int)$pendientes . ' por revisar)' : ''; ?></a>
+    </div>
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 

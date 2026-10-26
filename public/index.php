@@ -219,6 +219,7 @@ $router->get('/submittals/editar', [SubmittalController::class, 'editar']);
 $router->post('/submittals/editar', [SubmittalController::class, 'editar']);
 $router->post('/api/materiales/estado', [MaterialController::class, 'estado']);
 $router->post('/api/submittals/estatus', [SubmittalController::class, 'estatus']);
+$router->post('/submittals/tabla-materiales', [SubmittalController::class, 'tablaMateriales']);
 $router->post('/submittals/eliminar', [SubmittalController::class, 'eliminar']);
 
 // ========== ÓRDENES DE CAMBIO Y LÍNEAS BASE ==========
@@ -350,6 +351,7 @@ $router->post('/recursos/eliminar', [RecursosController::class, 'eliminar']);
 $router->post('/recursos/asignar', [RecursosController::class, 'asignar']);
 $router->post('/recursos/quitar', [RecursosController::class, 'quitar']);
 $router->get('/rfi', [RfiController::class, 'index']);
+$router->get('/rfi/pdf', [RfiController::class, 'pdf']);
 $router->post('/rfi/guardar', [RfiController::class, 'guardar']);
 $router->post('/rfi/estado', [RfiController::class, 'estado']);
 $router->post('/rfi/eliminar', [RfiController::class, 'eliminar']);
@@ -567,6 +569,7 @@ $router->get('/normativa/pdf', [NormativaController::class, 'pdf']);
 $router->post('/normativa/reindexar', [NormativaController::class, 'reindexar']);
 $router->post('/normativa/eliminar', [NormativaController::class, 'eliminar']);
 $router->get('/normativa/vinculos', [NormativaController::class, 'vinculos']);
+$router->get('/normativa/por-elemento', [NormativaController::class, 'porElemento']);
 $router->post('/normativa/resolver', [NormativaController::class, 'resolver']);
 $router->post('/normativa/quitar', [NormativaController::class, 'quitar']);
 $router->post('/normativa/agregar', [NormativaController::class, 'agregar']);

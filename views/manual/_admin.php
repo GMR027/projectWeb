@@ -28,7 +28,7 @@ return [
 <li><strong><a href="#traductor">Traductor</a></strong> español ↔ inglés de textos y documentos.</li>
 <li><strong><a href="#sheetflow">SheetFlow</a></strong>: fórmulas, formato por celda, bordes, imágenes, importación de Excel/CSV y archivo propio <code>.sheetflow</code>.</li>
 <li><strong><a href="#cambios">Órdenes de cambio</a> y <a href="#lineas-base">líneas base</a></strong>: cada desviación con su impacto y su causa; comparación con barra «fantasma».</li>
-<li><strong><a href="#datos-obra">Datos de obra</a></strong>, <strong><a href="#normativa">Normativa y especificaciones</a></strong> y <strong><a href="#tipo-obra">Tipo de obra y Mapa de avance</a></strong>.</li>
+<li><strong><a href="#datos-obra">Datos de obra</a></strong> y <strong><a href="#tipo-obra">Tipo de obra y Mapa de avance</a></strong>.</li>
 <li><strong><a href="#dependencias">Dependencias y ruta crítica</a></strong>, <strong>Curva S</strong>, <strong><a href="#msr">MSR configurable</a></strong> (columnas, nombre y color a tu gusto), <strong><a href="#view360">View360</a></strong> y <strong>carpetas por departamento</strong>.</li>
 </ul>
 <p class="manual-nota">¿Te falta algo? Escríbenos desde <em>Soporte</em> (si eres cliente) o desde el formulario de contacto de la página principal.</p>
@@ -323,7 +323,7 @@ HTML],
 <tr><td>⟳</td><td>Cambió después de revisarse: el dato se modificó y conviene revisarlo otra vez.</td></tr>
 </tbody>
 </table>
-<p>Pulsa el chip de un material o actividad (en el catálogo, en la tabla del programa y en Normativa) y elige el veredicto; queda guardado quién y cuándo, con una nota opcional. Pueden marcar el administrador y los clientes con acceso; el visitante solo ve. Todo cambio queda en la pestaña <em>Historial</em>.</p>
+<p>Pulsa el chip de un material o actividad (en el catálogo y en la tabla del programa; el administrador también lo ve en Normativa) y elige el veredicto; queda guardado quién y cuándo, con una nota opcional. Pueden marcar el administrador y los clientes con acceso; el visitante solo ve. Todo cambio queda en la pestaña <em>Historial</em>.</p>
 <h4>Herramientas de IA ②</h4>
 <p>Cada herramienta muestra si está <strong>al día</strong>, <strong>desactualizada</strong> (los materiales o actividades cambiaron después de su último análisis) o <strong>sin ejecutar</strong>. Esa misma marca aparece junto a la herramienta en el menú de la app de escritorio.</p>
 <p class="manual-nota">La IA propone y tú decides: el veredicto de Revisiones es independiente de la verificación automática de Materiales inteligentes.</p>
@@ -353,14 +353,15 @@ HTML],
 <p>Si el pronóstico del proyecto marca lluvia o viento fuerte en los próximos 7 días y hay permisos de trabajo vigentes (aprobados o por aprobar) de altura, izaje, excavación, eléctrico o en caliente, aparece la tabla <em>Permisos en días de lluvia o viento</em> para que decidas si reprogramas o suspendes. La propuesta de «día no hábil por clima» también menciona cuántos permisos caen ese día.</p>
 HTML],
 
-['id' => 'normativa', 'despues' => 'seguridad', 'titulo' => 'Normativa y especificaciones', 'icono' => 'fa-scale-balanced', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Biblioteca de normas y especificaciones del proyecto, con búsqueda y vínculos a las actividades y materiales a los que aplican. Está en el menú del proyecto como <strong>Normativa y especificaciones</strong>.</p>
+['id' => 'normativa', 'despues' => 'seguridad', 'titulo' => 'Normativa y especificaciones', 'icono' => 'fa-scale-balanced', 'roles' => ['admin'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Biblioteca de normas y especificaciones del proyecto, con búsqueda y vínculos a las actividades y materiales a los que aplican. Está en el menú del proyecto como <strong>Normativa y especificaciones</strong>. <strong>Este módulo es solo del administrador</strong>: el cliente y el visitante no lo ven en el menú ni en la búsqueda, y no pueden abrir sus páginas.</p>
 [[fig:normativa]]
 <ol>
 <li><strong>Carga ①</strong> uno o varios PDF o Word. El título, código y tipo se detectan del contenido.</li>
 <li><strong>Busca ②</strong> en todos los documentos; la búsqueda cruza español e inglés. Dentro de un documento también puedes buscar y ver cada cláusula.</li>
-<li><strong>Vincula ③.</strong> El sistema (o la IA, desde la app de escritorio) <em>propone</em> a qué actividades y materiales aplica cada cláusula. Tú marcas <em>Aplica</em> o <em>No aplica</em>, o <em>Desvincula</em>. Nada queda vinculado sin tu confirmación.</li>
-<li>Descarga el <strong>PDF</strong> del documento o de una cláusula.</li>
+<li><strong>Vincula ③.</strong> El sistema (o la IA, desde la app de escritorio) <em>propone</em> a qué actividades y materiales aplica cada cláusula. Tú marcas <em>Aplica</em> o <em>No aplica</em>, o <em>Desvincula</em>. Nada queda vinculado sin tu confirmación. Cada propuesta muestra el <strong>documento, la sección, la cláusula y la página</strong> (con enlace al PDF en esa página) y el requisito resumido.</li>
+<li><strong>Por material y actividad ④</strong> (botón junto a <em>Vínculos</em>): una lista por elemento con toda la normativa que le aplica o se le propone. Filtra por material/actividad, estado, «solo sin normativa aplicada» o texto; abre la ficha del elemento, acepta todas sus propuestas de una vez o pide <em>Sugerir de los documentos</em>.</li>
+<li>Descarga el <strong>PDF</strong> del documento o de una cláusula. El informe de «Aplicar normativa y especificaciones» (app de escritorio) trae la cita completa (documento, sección, cláusula, página) y una lista por elemento.</li>
 </ol>
 HTML],
 

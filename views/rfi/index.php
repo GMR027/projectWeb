@@ -43,6 +43,35 @@ $e = $editar;
         <label class="co-ancho">Actividad que bloquea<select name="actividad_id"><option value="0">— Ninguna —</option><?php echo opciones_actividades($actividades, $e['actividad_id'] ?? null); ?></select></label>
         <label class="co-ancho">Pregunta<textarea name="pregunta" rows="3" maxlength="5000"><?php echo s($e['pregunta'] ?? ''); ?></textarea></label>
         <label class="co-ancho">Respuesta<textarea name="respuesta" rows="3" maxlength="5000"><?php echo s($e['respuesta'] ?? ''); ?></textarea></label>
+        <div class="co-ancho">
+            <label for="laminas">Láminas del Editor <span class="text-muted">(opcional)</span></label>
+            <small class="text-muted">Láminas creadas en <a href="/graficos?proyecto=<?php echo $pid; ?>">/graficos</a>. Se incluyen debajo del RFI en el PDF exportado. Usa Ctrl/Cmd + clic para elegir varias.</small>
+            <?php if (!$laminasDisponibles): ?>
+                <p class="text-muted">No hay láminas en los gráficos de este proyecto. <a href="/graficos/crear?proyecto=<?php echo $pid; ?>">Crear un gráfico</a>.</p>
+            <?php else: ?>
+                <?php $laminasMarcadas = array_map('intval', $laminasMarcadas ?? []); ?>
+                <?php if ($categoriasLamina): ?>
+                    <div class="campo" style="max-width:36rem">
+                        <label for="lamina-categoria">Filtrar por categoría</label>
+                        <select id="lamina-categoria">
+                            <option value="">Todas las categorías</option>
+                            <?php foreach ($categoriasLamina as $c): ?>
+                                <option value="<?php echo s($c->id); ?>"><?php echo s($c->nombre); ?></option>
+                            <?php endforeach; ?>
+                            <option value="0">Sin categoría</option>
+                        </select>
+                    </div>
+                <?php endif; ?>
+                <select id="laminas" name="laminas[]" multiple size="10" style="width:100%;max-width:70rem">
+                    <?php foreach ($laminasDisponibles as $l): ?>
+                        <option value="<?php echo s($l->id); ?>" data-categoria="<?php echo s($l->categoria_id ?: '0'); ?>"<?php echo in_array((int)$l->id, $laminasMarcadas, true) ? ' selected' : ''; ?>>
+                            <?php echo s($l->grafico_nombre . ' · ' . $l->titulo((int)$l->orden)); ?><?php echo $l->categoria_nombre ? ' · ' . s($l->categoria_nombre) : ''; ?><?php echo !$l->marcas_png ? ' (sin imagen guardada)' : ''; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small id="laminas-resumen" class="text-muted"></small>
+            <?php endif; ?>
+        </div>
     </div>
     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
     <a href="<?php echo s($url()); ?>" class="btn btn-ghost">Cancelar</a>
@@ -67,6 +96,7 @@ $e = $editar;
                     <strong><?php echo s($r['asunto']); ?></strong>
                     <?php if (trim((string)$r['pregunta']) !== ''): ?><br><small class="text-muted"><?php echo s(mb_strimwidth($r['pregunta'], 0, 160, '…')); ?></small><?php endif; ?>
                     <?php if (trim((string)$r['respuesta']) !== ''): ?><br><small><i class="fa-solid fa-reply"></i> <?php echo s(mb_strimwidth($r['respuesta'], 0, 160, '…')); ?></small><?php endif; ?>
+                    <?php if ((int)($r['laminas_n'] ?? 0)): ?><br><small class="text-muted"><i class="fa-solid fa-pen-ruler"></i> <?php echo (int)$r['laminas_n']; ?> lámina(s) adjunta(s)</small><?php endif; ?>
                 </td>
                 <td class="hide-m"><?php echo s($r['responsable']); ?></td>
                 <td class="mono"><?php echo $r['fecha_limite'] ? formatear_fecha($r['fecha_limite']) : '—'; ?><?php if ($r['vencido']): ?> <span class="cb-tag cb-tag-critica"><?php echo (int)$r['dias_retraso']; ?> d vencido</span><?php endif; ?></td>
@@ -80,6 +110,7 @@ $e = $editar;
                     <?php else: ?><span class="cb-tag"><?php echo s(Rfi::ESTADOS[$r['estado']]); ?></span><?php endif; ?>
                 </td>
                 <td class="acciones">
+                    <?php if (puede_descargar()): ?><a href="/rfi/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$r['id']; ?>" class="btn btn-sm btn-ghost" title="PDF del RFI con sus láminas"><i class="fa-solid fa-file-pdf"></i> PDF</a><?php endif; ?>
                     <?php if ($puedeEditar): ?>
                         <a href="<?php echo s($url(['editar' => $r['id']])); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <form method="POST" action="/rfi/eliminar" style="display:inline" data-confirm="¿Eliminar este RFI?|Se borra también su revisión.">
@@ -93,3 +124,41 @@ $e = $editar;
     </table></div>
     <?php endif; ?>
 </div>
+<?php if (!empty($laminasDisponibles)): ?>
+<script>
+(function () {
+    const sel = document.getElementById('laminas');
+    if (!sel) return;
+    const filtro = document.getElementById('lamina-categoria');
+    const resumen = document.getElementById('laminas-resumen');
+    const opciones = Array.from(sel.options).map(o => ({ value: o.value, texto: o.textContent.replace(/\s+/g, ' ').trim(), categoria: o.dataset.categoria || '0' }));
+    let seleccion = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+
+    const actualizarResumen = () => {
+        const n = sel.selectedOptions.length;
+        if (resumen) resumen.textContent = n ? n + ' lámina(s) seleccionada(s)' : 'Ninguna lámina seleccionada';
+    };
+    const pintar = () => {
+        const cat = filtro ? filtro.value : '';
+        sel.innerHTML = '';
+        opciones.forEach(d => {
+            // Las ya elegidas siguen visibles aunque el filtro sea de otra categoría
+            if (cat && d.categoria !== cat && !seleccion.has(d.value)) return;
+            const o = document.createElement('option');
+            o.value = d.value;
+            o.textContent = d.texto;
+            o.dataset.categoria = d.categoria;
+            o.selected = seleccion.has(d.value);
+            sel.appendChild(o);
+        });
+        actualizarResumen();
+    };
+    sel.addEventListener('change', () => {
+        seleccion = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+        actualizarResumen();
+    });
+    if (filtro) filtro.addEventListener('change', pintar);
+    actualizarResumen();
+})();
+</script>
+<?php endif; ?>

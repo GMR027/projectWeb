@@ -6,25 +6,27 @@ use MVC\Router;
 use Model\Proyecto;
 use Classes\Normativa;
 
-/** Normativa y especificaciones: documentos PDF indexados, vínculos con materiales y actividades. Ver: quien tiene acceso al proyecto; gestionar: admin / dueño */
+/** Normativa y especificaciones: documentos PDF indexados, vínculos con materiales y actividades. Solo admin (todo el módulo, incluidas las propuestas de IA) */
 class NormativaController
 {
-    private static function gestion(): Proyecto
+    /** Página del módulo: solo el administrador */
+    private static function soloAdmin(): Proyecto
     {
-        $p = proyecto_de_peticion(true);
+        $p = proyecto_de_peticion();
+        if (!is_admin()) { http_response_code(403); exit('Solo el administrador puede usar Normativa y especificaciones'); }
         return $p;
     }
 
     private static function gestionApi(): Proyecto
     {
         $p = Proyecto::find(filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT));
-        if (!$p || !is_auth() || !puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
+        if (!$p || !is_auth() || !is_admin()) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         return $p;
     }
 
     public static function index(Router $router)
     {
-        $proyecto = proyecto_de_peticion();
+        $proyecto = self::soloAdmin();
         $pid = (int)$proyecto->id;
         $q = trim((string)($_GET['q'] ?? ''));
         $router->render('normativa/index', ['titulo' => 'Normativa y especificaciones - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'documentos' => Normativa::listar($pid), 'pendientes' => Normativa::conteoPendientes($pid),
@@ -47,7 +49,7 @@ class NormativaController
 
     public static function documento(Router $router)
     {
-        $proyecto = proyecto_de_peticion();
+        $proyecto = self::soloAdmin();
         $d = Normativa::obtener((int)$proyecto->id, (int)($_GET['id'] ?? 0));
         if (!$d) { header('Location: /normativa?proyecto=' . (int)$proyecto->id); exit; }
         $q = trim((string)($_GET['q'] ?? ''));
@@ -57,7 +59,7 @@ class NormativaController
     /** Entrega el PDF original (con control de acceso; fuera de public) */
     public static function pdf()
     {
-        $p = proyecto_de_peticion();
+        $p = self::soloAdmin();
         $d = Normativa::obtener((int)$p->id, (int)($_GET['id'] ?? 0));
         $ruta = $d ? Normativa::ruta($d) : '';
         if (!$d || !is_file($ruta)) { http_response_code(404); exit('Documento no encontrado'); }
@@ -91,9 +93,24 @@ class NormativaController
 
     public static function vinculos(Router $router)
     {
-        $proyecto = proyecto_de_peticion();
+        $proyecto = self::soloAdmin();
         $f = ['estado' => $_GET['estado'] ?? 'propuesta', 'entidad_tipo' => $_GET['tipo'] ?? ''];
-        $router->render('normativa/vinculos', ['titulo' => 'Vínculos de normativa - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'lista' => Normativa::aplicaciones((int)$proyecto->id, $f), 'puede' => puede_gestionar_proyecto($proyecto)]);
+        $router->render('normativa/vinculos', ['titulo' => 'Vínculos de normativa - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'lista' => Normativa::aplicaciones((int)$proyecto->id, $f), 'puede' => true]);
+    }
+
+    /** Vista «Por material y actividad»: cada elemento con la normativa que le aplica (solo admin) */
+    public static function porElemento(Router $router)
+    {
+        $proyecto = self::soloAdmin();
+        $f = [
+            'tipo' => in_array($_GET['tipo'] ?? '', ['material', 'actividad'], true) ? $_GET['tipo'] : '',
+            'estado' => in_array($_GET['estado'] ?? '', ['aceptada', 'propuesta'], true) ? $_GET['estado'] : '',
+            'sin' => !empty($_GET['sin']),
+            'q' => is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '',
+        ];
+        if ($f['sin']) $f['estado'] = '';   // «solo sin normativa aplicada» ya incluye propuestas y elementos sin vínculos
+        $router->render('normativa/por-elemento', ['titulo' => 'Por material y actividad - ' . $proyecto->nombre, 'proyecto' => $proyecto,
+            'filtros' => $f, 'elementos' => Normativa::porEntidad((int)$proyecto->id, $f), 'puede' => true]);
     }
 
     public static function resolver()

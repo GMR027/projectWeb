@@ -27,7 +27,7 @@
                 <label>Materiales del paquete</label>
                 <small class="text-muted">Cada material marcado genera su renglón en el MSR. <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>">Agregar material al catálogo</a></small>
                 <?php
-                $noAprobados = $noAprobados ?? [];
+                $noAprobados = is_admin() ? ($noAprobados ?? []) : [];
                 $items = array_map(fn($m) => ['id' => (int)$m->id, 'titulo' => $m->nombre . (isset($noAprobados[(int)$m->id]) ? ' ⚠ NO APROBADO por normativa: ' . $noAprobados[(int)$m->id]['resumen'] : ''), 'detalle' => trim($m->especialidad . ' ' . $m->referencia)], $materiales);
                 $nombreCampo = 'materiales';
                 $marcados = $marcados ?? [];
@@ -40,7 +40,74 @@
                     </div>
                 <?php endif; ?>
             </div>
+            <div class="campo campo-full">
+                <label for="laminas">Láminas del Editor <span class="text-muted">(opcional)</span></label>
+                <small class="text-muted">Láminas creadas en <a href="/graficos?proyecto=<?php echo s($proyecto->id); ?>">/graficos</a>. Se exportan en el PDF debajo de la lista de materiales. Usa Ctrl/Cmd + clic para elegir varias.</small>
+                <?php if (!$laminasDisponibles): ?>
+                    <p class="text-muted">No hay láminas en los gráficos de este proyecto. <a href="/graficos/crear?proyecto=<?php echo s($proyecto->id); ?>">Crear un gráfico</a>.</p>
+                <?php else: ?>
+                    <?php $laminasMarcadas = array_map('intval', $laminasMarcadas ?? []); ?>
+                    <?php if ($categoriasLamina): ?>
+                        <div class="campo" style="max-width:36rem">
+                            <label for="lamina-categoria">Filtrar por categoría</label>
+                            <select id="lamina-categoria">
+                                <option value="">Todas las categorías</option>
+                                <?php foreach ($categoriasLamina as $c): ?>
+                                    <option value="<?php echo s($c->id); ?>"><?php echo s($c->nombre); ?></option>
+                                <?php endforeach; ?>
+                                <option value="0">Sin categoría</option>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+                    <select id="laminas" name="laminas[]" multiple size="10" style="width:100%;max-width:70rem">
+                        <?php foreach ($laminasDisponibles as $l): ?>
+                            <option value="<?php echo s($l->id); ?>" data-categoria="<?php echo s($l->categoria_id ?: '0'); ?>"<?php echo in_array((int)$l->id, $laminasMarcadas, true) ? ' selected' : ''; ?>>
+                                <?php echo s($l->grafico_nombre . ' · ' . $l->titulo((int)$l->orden)); ?><?php echo $l->categoria_nombre ? ' · ' . s($l->categoria_nombre) : ''; ?><?php echo !$l->marcas_png ? ' (sin imagen guardada)' : ''; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small id="laminas-resumen" class="text-muted"></small>
+                <?php endif; ?>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Guardar paquete</button>
     </form>
 </div>
+<?php if (!empty($laminasDisponibles)): ?>
+<script>
+(function () {
+    const sel = document.getElementById('laminas');
+    if (!sel) return;
+    const filtro = document.getElementById('lamina-categoria');
+    const resumen = document.getElementById('laminas-resumen');
+    const opciones = Array.from(sel.options).map(o => ({ value: o.value, texto: o.textContent.replace(/\s+/g, ' ').trim(), categoria: o.dataset.categoria || '0' }));
+    let seleccion = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+
+    const pintar = () => {
+        const cat = filtro ? filtro.value : '';
+        sel.innerHTML = '';
+        opciones.forEach(d => {
+            // Las ya elegidas siguen visibles aunque el filtro sea de otra categoría
+            if (cat && d.categoria !== cat && !seleccion.has(d.value)) return;
+            const o = document.createElement('option');
+            o.value = d.value;
+            o.textContent = d.texto;
+            o.dataset.categoria = d.categoria;
+            o.selected = seleccion.has(d.value);
+            sel.appendChild(o);
+        });
+        actualizarResumen();
+    };
+    const actualizarResumen = () => {
+        const n = sel.selectedOptions.length;
+        if (resumen) resumen.textContent = n ? n + ' lámina(s) seleccionada(s)' : 'Ninguna lámina seleccionada';
+    };
+    sel.addEventListener('change', () => {
+        seleccion = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+        actualizarResumen();
+    });
+    if (filtro) filtro.addEventListener('change', pintar);
+    actualizarResumen();
+})();
+</script>
+<?php endif; ?>

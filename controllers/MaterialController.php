@@ -54,8 +54,8 @@ class MaterialController
             'q' => $q,
             'fEsp' => $fEsp, 'fEntrega' => $fEntrega, 'fCompra' => $fCompra,
             'especialidades' => \Model\Especialidad::nombres((int)$proyecto->id),
-            'inteligentes' => MaterialesInteligentes::activo((int)$proyecto->id),
-            'verificaciones' => MaterialesInteligentes::deProyecto((int)$proyecto->id),
+            'inteligentes' => is_admin() && MaterialesInteligentes::activo((int)$proyecto->id),
+            'verificaciones' => is_admin() ? MaterialesInteligentes::deProyecto((int)$proyecto->id) : [],
             'revisiones' => \Classes\Revisiones::mapa((int)$proyecto->id, 'material'),
         ]);
     }
@@ -74,7 +74,7 @@ class MaterialController
         }
         $router->render('materiales/formulario', [
             'titulo' => 'Nuevo material', 'proyecto' => $proyecto, 'material' => $material, 'alertas' => $alertas,
-            'inteligentes' => MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => null,
+            'inteligentes' => is_admin() && MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => null,
         ]);
     }
 
@@ -97,7 +97,7 @@ class MaterialController
         }
         $router->render('materiales/formulario', [
             'titulo' => 'Editar material', 'proyecto' => $proyecto, 'material' => $material, 'alertas' => $alertas,
-            'inteligentes' => MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => MaterialesInteligentes::deMaterial((int)$material->id),
+            'inteligentes' => is_admin() && MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => is_admin() ? MaterialesInteligentes::deMaterial((int)$material->id) : null,
         ]);
     }
 

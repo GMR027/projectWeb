@@ -195,6 +195,24 @@ class Grafico extends ActiveRecord
         return $out;
     }
 
+    /** Láminas de todos los gráficos del proyecto (para elegirlas en otra herramienta, p. ej. un submittal) */
+    public static function laminasParaSeleccion(int $proyectoId): array
+    {
+        try {
+            return GraficoLamina::consultarSQL(
+                "SELECT l.*, g.nombre AS grafico_nombre, g.categoria_id, g.ancho AS grafico_ancho, g.alto AS grafico_alto,
+                        c.nombre AS categoria_nombre
+                 FROM editor_laminas l
+                 JOIN editor_graficos g ON g.id = l.grafico_id
+                 LEFT JOIN editor_categorias c ON c.id = g.categoria_id
+                 WHERE g.proyecto_id = $proyectoId AND g.tipo = 'grafico'" . self::sinView360() . "
+                 ORDER BY g.nombre ASC, l.orden ASC, l.id ASC"
+            );
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+    }
+
     /** Láminas del gráfico, en orden */
     public function laminas(): array
     {

@@ -29,7 +29,8 @@
 </div>
 
 <?php
-$verif = $verificaciones ?? [];
+$verif = is_admin() ? ($verificaciones ?? []) : [];   // Materiales inteligentes: solo el administrador ve el resultado de la IA
+$inteligentes = is_admin() && ($inteligentes ?? false);
 $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) && $v['estado'] === 'no_aprobado' && \Classes\MaterialesInteligentes::vigente($v, $m));
 ?>
 <?php if ($malos): ?>

@@ -19,6 +19,37 @@ class Normativa
     public const TIPOS = ['norma' => 'Norma', 'especificacion' => 'Especificación', 'otro' => 'Otro'];
     public const IDIOMAS = ['es' => 'Español', 'en' => 'Inglés', 'mixto' => 'Mixto'];
 
+    // ---------- citas ----------
+
+    /** Sección CSI legible: '271500' → 'Sección 27 15 00'; '' si no es una sección de 6 dígitos */
+    public static function seccionCsi(?string $csi): string
+    {
+        $d = preg_replace('/\D/', '', (string)$csi);
+        return strlen($d) === 6 ? 'Sección ' . substr($d, 0, 2) . ' ' . substr($d, 2, 2) . ' ' . substr($d, 4, 2) : '';
+    }
+
+    /**
+     * Partes de una cita para mostrarla igual en el reporte, los vínculos y el formulario del material/actividad.
+     * Acepta filas de fragmentos, de aplicaciones (con la cláusula como `ftitulo`) y vínculos manuales.
+     * @return array{documento:string,codigo:string,seccion:string,clausula:string,pagina:int,idioma:string,referencia:string}
+     */
+    public static function cita(array $f): array
+    {
+        $doc = trim((string)($f['doc'] ?? $f['documento'] ?? ''));
+        $codigo = trim((string)($f['codigo'] ?? ''));
+        $clau = trim((string)($f['clausula'] ?? ''));
+        $tit = trim((string)($f['titulo'] ?? $f['ftitulo'] ?? ''));
+        $sec = self::seccionCsi($f['csi'] ?? null);
+        if ($clau !== '' && preg_match('/^(?:secci[oó]n|section)\s+\d{2}\s?\d{2}\s?\d{2}/iu', $clau)) $sec = $clau;
+
+        if ($sec !== '' && $clau === $sec) $clau = $tit;                 // la cláusula era la etiqueta de la sección
+        elseif ($clau === '') $clau = $tit;
+        elseif ($tit !== '' && !str_contains(mb_strtolower($clau), mb_strtolower($tit))) $clau .= ' · ' . $tit;
+
+        return ['documento' => $doc, 'codigo' => $codigo, 'seccion' => $sec, 'clausula' => $clau,
+            'pagina' => (int)($f['pagina'] ?? 0), 'idioma' => trim((string)($f['idioma'] ?? '')), 'referencia' => trim((string)($f['referencia'] ?? ''))];
+    }
+
     // ---------- documentos ----------
 
     public static function carpeta(int $pid): string
@@ -497,7 +528,7 @@ class Normativa
     /** Vínculos de una entidad (para su formulario) con la cita del fragmento */
     public static function deEntidad(int $pid, string $tipo, int $id): array
     {
-        return self::filas("SELECT a.*, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo ftitulo, LEFT(f.texto, 500) ftexto, f.idioma FROM normativa_aplicaciones a LEFT JOIN normativa_documentos d ON d.id = a.documento_id LEFT JOIN normativa_fragmentos f ON f.id = a.fragmento_id
+        return self::filas("SELECT a.*, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo ftitulo, LEFT(f.texto, 500) ftexto, f.idioma, f.csi FROM normativa_aplicaciones a LEFT JOIN normativa_documentos d ON d.id = a.documento_id LEFT JOIN normativa_fragmentos f ON f.id = a.fragmento_id
             WHERE a.proyecto_id = $pid AND a.entidad_tipo = '$tipo' AND a.entidad_id = $id AND a.estado <> 'rechazada' ORDER BY FIELD(a.estado, 'aceptada', 'propuesta'), a.id");
     }
 
@@ -506,9 +537,69 @@ class Normativa
         $w = ["a.proyecto_id = $pid"];
         if (in_array($f['estado'] ?? 'propuesta', ['propuesta', 'aceptada', 'rechazada'], true)) $w[] = "a.estado = '" . ($f['estado'] ?? 'propuesta') . "'";
         if (in_array($f['entidad_tipo'] ?? '', ['actividad', 'material'], true)) $w[] = "a.entidad_tipo = '{$f['entidad_tipo']}'";
-        $filas = self::filas("SELECT a.*, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo ftitulo, LEFT(f.texto, 700) ftexto, f.idioma FROM normativa_aplicaciones a LEFT JOIN normativa_documentos d ON d.id = a.documento_id LEFT JOIN normativa_fragmentos f ON f.id = a.fragmento_id WHERE " . implode(' AND ', $w) . ' ORDER BY a.puntaje DESC, a.id DESC LIMIT 300');
+        $filas = self::filas("SELECT a.*, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo ftitulo, LEFT(f.texto, 700) ftexto, f.idioma, f.csi FROM normativa_aplicaciones a LEFT JOIN normativa_documentos d ON d.id = a.documento_id LEFT JOIN normativa_fragmentos f ON f.id = a.fragmento_id WHERE " . implode(' AND ', $w) . ' ORDER BY a.puntaje DESC, a.id DESC LIMIT 300');
         foreach ($filas as &$x) $x['entidad'] = self::entidad($pid, $x['entidad_tipo'], (int)$x['entidad_id'])['nombre'] ?? '(eliminada)';
         return $filas;
+    }
+
+    /**
+     * Vínculos agrupados por material o actividad para la vista «Por material y actividad».
+     * $f: tipo (material|actividad|''), estado (aceptada|propuesta|'' = todas), sin (1 = solo elementos sin normativa aplicada), q (texto).
+     * @return array<int,array{tipo:string,id:int,nombre:string,meta:string,vinculos:array,aceptadas:int,propuestas:int}>
+     */
+    public static function porEntidad(int $pid, array $f = []): array
+    {
+        $tipo = in_array($f['tipo'] ?? '', ['material', 'actividad'], true) ? $f['tipo'] : '';
+        $estado = in_array($f['estado'] ?? '', ['aceptada', 'propuesta'], true) ? $f['estado'] : '';
+        $soloSin = !empty($f['sin']);
+        $q = trim((string)($f['q'] ?? ''));
+
+        $w = ["a.proyecto_id = $pid", "a.estado <> 'rechazada'"];
+        if ($tipo !== '') $w[] = "a.entidad_tipo = '$tipo'";
+        if ($estado !== '' && !$soloSin) $w[] = "a.estado = '$estado'";
+        $filas = self::filas("SELECT a.*, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo ftitulo, LEFT(f.texto, 700) ftexto, f.idioma, f.csi
+            FROM normativa_aplicaciones a
+            LEFT JOIN normativa_documentos d ON d.id = a.documento_id
+            LEFT JOIN normativa_fragmentos f ON f.id = a.fragmento_id
+            WHERE " . implode(' AND ', $w) . "
+            ORDER BY a.entidad_tipo, a.entidad_id, FIELD(a.estado, 'aceptada', 'propuesta'), a.puntaje DESC, a.id");
+
+        $por = [];
+        foreach ($filas as $x) $por[$x['entidad_tipo'] . ':' . (int)$x['entidad_id']]['vinculos'][] = $x;
+
+        // Nombres: solo los que tienen vínculos, salvo que se busque o se pidan los que no tienen normativa
+        $cargarTodo = $soloSin || $q !== '';
+        $ids = ['material' => [], 'actividad' => []];
+        if (!$cargarTodo) foreach (array_keys($por) as $k) { [$t, $id] = explode(':', $k); $ids[$t][] = (int)$id; }
+
+        $ents = [];
+        if ($tipo !== 'actividad' && ($cargarTodo || $ids['material'])) {
+            $en = $cargarTodo ? '' : ' AND id IN (' . implode(',', $ids['material']) . ')';
+            foreach (self::filas("SELECT id, nombre, referencia, especialidad FROM materiales WHERE proyecto_id = $pid$en ORDER BY nombre LIMIT 3000") as $m) {
+                $ents['material:' . (int)$m['id']] = ['tipo' => 'material', 'id' => (int)$m['id'], 'nombre' => $m['nombre'], 'meta' => trim($m['referencia'] . ' · ' . $m['especialidad'], ' ·')];
+            }
+        }
+        if ($tipo !== 'material' && ($cargarTodo || $ids['actividad'])) {
+            $en = $cargarTodo ? '' : ' AND a.id IN (' . implode(',', $ids['actividad']) . ')';
+            foreach (self::filas("SELECT a.id, a.codigo, a.nombre, p.nombre partida FROM actividades a JOIN partidas p ON p.id = a.partida_id
+                WHERE p.proyecto_id = $pid AND a.hito = 0$en ORDER BY p.orden, p.id, a.orden, a.id LIMIT 3000") as $a) {
+                $ents['actividad:' . (int)$a['id']] = ['tipo' => 'actividad', 'id' => (int)$a['id'], 'nombre' => trim($a['codigo'] . ' ' . $a['nombre']), 'meta' => $a['partida']];
+            }
+        }
+        foreach ($por as $k => $_) if (!isset($ents[$k])) { [$t, $id] = explode(':', $k); $ents[$k] = ['tipo' => $t, 'id' => (int)$id, 'nombre' => '(elemento eliminado)', 'meta' => '']; }
+
+        $out = [];
+        foreach ($ents as $k => $e) {
+            $v = $por[$k]['vinculos'] ?? [];
+            $aceptadas = count(array_filter($v, fn($x) => $x['estado'] === 'aceptada'));
+            $propuestas = count(array_filter($v, fn($x) => $x['estado'] === 'propuesta'));
+            if ($soloSin && $aceptadas > 0) continue;
+            if (!$soloSin && !$v) continue;
+            if ($q !== '' && mb_stripos($e['nombre'], $q) === false && mb_stripos($e['meta'], $q) === false) continue;
+            $out[] = $e + ['vinculos' => $v, 'aceptadas' => $aceptadas, 'propuestas' => $propuestas];
+            if (count($out) >= 200) break;
+        }
+        return $out;
     }
 
     public static function conteoPendientes(int $pid): int

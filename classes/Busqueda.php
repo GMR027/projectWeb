@@ -103,6 +103,7 @@ class Busqueda
         $out = [];
         $gestiona = puede_gestionar_proyecto($proyecto);
         foreach (self::fuentes($pid, $gestiona) as $clave => [$titulo, $icono, $ruta, $sql, $armar]) {
+            if ($clave === 'normativa' && !\is_admin()) continue;   // el módulo de normativa es solo del administrador
             if (!herramienta_permitida(herramienta_de_ruta($ruta))) continue;
             $sql = str_replace('{P}', (string)$pid, $sql);
             $sql = preg_replace_callback('/\{W:([^}]+)\}/', fn($m) => self::condicion(explode(',', $m[1]), $palabras), $sql);

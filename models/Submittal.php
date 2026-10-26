@@ -143,6 +143,65 @@ class Submittal extends ActiveRecord
     }
 
     /**
+     * Láminas del Editor (/graficos) adjuntas al paquete, con el nombre del gráfico y su categoría.
+     * @return GraficoLamina[]
+     */
+    public function laminas(): array
+    {
+        try {
+            return GraficoLamina::consultarSQL(
+                "SELECT l.*, g.nombre AS grafico_nombre, g.categoria_id, g.ancho AS grafico_ancho, g.alto AS grafico_alto,
+                        c.nombre AS categoria_nombre
+                 FROM submittal_laminas sl
+                 JOIN editor_laminas l ON l.id = sl.lamina_id
+                 JOIN editor_graficos g ON g.id = l.grafico_id
+                 LEFT JOIN editor_categorias c ON c.id = g.categoria_id
+                 WHERE sl.submittal_id = " . (int)$this->id . "
+                 ORDER BY g.nombre ASC, l.orden ASC, l.id ASC"
+            );
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+    }
+
+    /** Ids de láminas adjuntas al paquete */
+    public function idsLaminas(): array
+    {
+        return array_map(fn($l) => (int)$l->id, $this->laminas());
+    }
+
+    /** Reemplaza las láminas adjuntas (solo del proyecto y de gráficos, no simbologías) */
+    public function sincronizarLaminas(array $ids): void
+    {
+        try {
+            $db = self::$db;
+            $sid = (int)$this->id;
+            $pid = (int)$this->proyecto_id;
+            $n0 = (int)($db->query("SELECT COUNT(*) FROM submittal_laminas WHERE submittal_id = $sid")->fetch_row()[0] ?? 0);
+            $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+            if ($ids) {
+                $res = $db->query("SELECT l.id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id
+                                   WHERE g.proyecto_id = $pid AND g.tipo = 'grafico' AND l.id IN (" . implode(',', $ids) . ")");
+                $ids = [];
+                while ($r = $res->fetch_assoc()) $ids[] = (int)$r['id'];
+            }
+            $db->query("DELETE FROM submittal_laminas WHERE submittal_id = $sid");
+            $orden = 0;
+            foreach ($ids as $lid) {
+                $db->query("INSERT INTO submittal_laminas (submittal_id, lamina_id, orden) VALUES ($sid, $lid, " . (++$orden) . ")");
+            }
+            $n1 = count($ids);
+            if ($n1 !== $n0) {
+                $etq = trim((string)($this->numero_submittal ?? '')) ?: ('#' . $sid);
+                \Classes\HistorialCambios::registrar($pid, 'submittals', 'modificado',
+                    "Láminas del submittal $etq: $n0 → $n1", ['laminas' => $n0], ['laminas' => $n1],
+                    ['submittal', $sid, $etq]);
+            }
+        } catch (\Throwable $e) {   // migración pendiente
+        }
+    }
+
+    /**
      * Reemplaza los materiales del paquete (solo del mismo proyecto) y mantiene el MSR:
      * agrega renglones nuevos y quita los de materiales retirados, sin tocar lo ya capturado.
      */

@@ -391,5 +391,17 @@ $tablasOdt->setValue(null, []);
 $otra = $conv('<table><tbody><tr><td>a</td></tbody></table><div class="rd-caja" style="padding:8px"><p>b</p></div>');
 $ok('una caja sin estilo conserva ancho y borde por defecto', str_contains($otra, 'width:100%') && str_contains($otra, 'border:1px #999999 solid') && $tablasOdt->getValue() === [false, true]);
 
+echo "Normativa: citas\n";
+$ok('la sección CSI se muestra en formato legible', \Classes\Normativa::seccionCsi('271500') === 'Sección 27 15 00');
+$ok('una sección CSI inválida no inventa texto', \Classes\Normativa::seccionCsi('27-15') === '' && \Classes\Normativa::seccionCsi(null) === '');
+$cita = \Classes\Normativa::cita(['doc' => 'Norma XYZ', 'csi' => '271500', 'clausula' => '', 'titulo' => 'Cableado estructurado', 'pagina' => 12, 'idioma' => 'es']);
+$ok('la cita trae documento, sección, título y página', $cita['documento'] === 'Norma XYZ' && $cita['seccion'] === 'Sección 27 15 00' && $cita['clausula'] === 'Cableado estructurado' && $cita['pagina'] === 12);
+$cita = \Classes\Normativa::cita(['doc' => 'Norma XYZ', 'csi' => '271500', 'clausula' => '3.2.1', 'titulo' => 'Requisitos', 'pagina' => 4]);
+$ok('la cláusula numerada convive con la sección y el título', $cita['seccion'] === 'Sección 27 15 00' && str_contains($cita['clausula'], '3.2.1') && str_contains($cita['clausula'], 'Requisitos'));
+$cita = \Classes\Normativa::cita(['documento' => 'Especificación', 'clausula' => 'ARTÍCULO 250', 'titulo' => '', 'pagina' => 0]);
+$ok('una cláusula sin CSI se respeta tal cual', $cita['seccion'] === '' && $cita['clausula'] === 'ARTÍCULO 250' && $cita['pagina'] === 0);
+$cita = \Classes\Normativa::cita(['referencia' => 'NOM-001-STPS', 'clausula' => '', 'titulo' => '']);
+$ok('un vínculo manual conserva su referencia', $cita['documento'] === '' && $cita['seccion'] === '' && $cita['referencia'] === 'NOM-001-STPS');
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

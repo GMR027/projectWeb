@@ -36,8 +36,9 @@ class NormativaAplicar extends Base
         $pid = (int)$p->id;
         $max = (int)$params['maximo'];
         $ids = [];
-        if (in_array($params['ambito'], ['materiales', 'ambos'], true)) foreach (self::filas("SELECT id FROM materiales WHERE proyecto_id = $pid AND id NOT IN (SELECT entidad_id FROM normativa_aplicaciones WHERE entidad_tipo = 'material' AND proyecto_id = $pid) ORDER BY id LIMIT 300") as $f) $ids[] = ['material', (int)$f['id']];
-        if (in_array($params['ambito'], ['actividades', 'ambos'], true)) foreach (self::filas("SELECT a.id FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND a.hito = 0 AND a.id NOT IN (SELECT entidad_id FROM normativa_aplicaciones WHERE entidad_tipo = 'actividad' AND proyecto_id = $pid) ORDER BY a.id LIMIT 300") as $f) $ids[] = ['actividad', (int)$f['id']];
+        // Solo se saltan los que ya tienen una propuesta o un vínculo aceptado: si todo se rechazó, se vuelve a evaluar
+        if (in_array($params['ambito'], ['materiales', 'ambos'], true)) foreach (self::filas("SELECT id FROM materiales WHERE proyecto_id = $pid AND id NOT IN (SELECT entidad_id FROM normativa_aplicaciones WHERE entidad_tipo = 'material' AND proyecto_id = $pid AND estado IN ('propuesta','aceptada')) ORDER BY id LIMIT 300") as $f) $ids[] = ['material', (int)$f['id']];
+        if (in_array($params['ambito'], ['actividades', 'ambos'], true)) foreach (self::filas("SELECT a.id FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND a.hito = 0 AND a.id NOT IN (SELECT entidad_id FROM normativa_aplicaciones WHERE entidad_tipo = 'actividad' AND proyecto_id = $pid AND estado IN ('propuesta','aceptada')) ORDER BY a.id LIMIT 300") as $f) $ids[] = ['actividad', (int)$f['id']];
         $out = [];
         foreach ($ids as [$tipo, $id]) {
             $c = Normativa::candidatos($pid, $tipo, $id, 4);
@@ -55,7 +56,11 @@ class NormativaAplicar extends Base
         $n = 0;
         foreach ($el as $k => $e) {
             $n++;
-            $cands = implode("\n", array_map(fn($c) => "- CLÁUSULA {$c['id']} [{$c['doc']} · " . ($c['clausula'] !== '' ? $c['clausula'] . ' · ' : '') . "pág. {$c['pagina']} · " . strtoupper($c['idioma']) . "] " . self::corto(trim($c['titulo'] . '. ' . $c['texto']), 420), $e['cand']));
+            $cands = implode("\n", array_map(function ($c) {
+                $z = Normativa::cita($c);
+                $ref = trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento'] . ($z['seccion'] !== '' ? ' · ' . $z['seccion'] : '') . ($z['clausula'] !== '' ? ' · ' . $z['clausula'] : ''));
+                return "- CLÁUSULA {$c['id']} [{$ref} · pág. {$z['pagina']} · " . strtoupper($c['idioma']) . '] ' . self::corto(trim($c['titulo'] . '. ' . $c['texto']), 420);
+            }, $e['cand']));
             $lotes[] = ['titulo' => "Revisando normativa: elemento $n de " . count($el) . ' (' . self::corto($e['nombre'], 40) . ')', 'clave' => $k, 'prompt' =>
                 "Eres especialista en normativa y especificaciones de construcción. Decide cuáles de estas CLÁUSULAS le aplican DE VERDAD al elemento (que exijan algo sobre ese material o trabajo, no solo que compartan palabras). Las cláusulas pueden estar en inglés o en español; resume SIEMPRE el requisito en español, con base solo en el texto de la cláusula; no inventes requisitos.\n\n"
                 . "ELEMENTO (" . ($e['tipo'] === 'material' ? 'material' : 'actividad') . "): " . self::corto($e['nombre'], 140) . "\n\nCLÁUSULAS CANDIDATAS:\n$cands\n\n"
@@ -70,7 +75,11 @@ class NormativaAplicar extends Base
         $el = $datos['elementos'];
         $ia = $reglas = 0;
         $filas = [];
+        $porElemento = [];
         $decididos = [];
+
+        $etiqueta = fn(array $e) => ($e['tipo'] === 'material' ? 'Material' : 'Actividad') . ' · ' . self::corto($e['nombre'], 70);
+
         foreach ($respuestas as $r) {
             foreach ((array)($r['aplicaciones'] ?? []) as $a) {
                 if (!is_array($a)) continue;
@@ -83,7 +92,11 @@ class NormativaAplicar extends Base
                 if (Normativa::proponerIA($pid, $el[$k]['tipo'], $el[$k]['id'], $cid, $req, '')) {
                     $ia++;
                     $c = array_values(array_filter($el[$k]['cand'], fn($c) => (int)$c['id'] === $cid))[0];
-                    $filas[] = [self::corto($el[$k]['nombre'], 60), $c['doc'] . ' · ' . ($c['clausula'] ?: 'pág. ' . $c['pagina']), 'Documento', self::corto($req, 140)];
+                    $z = Normativa::cita($c);
+                    $filas[] = [$etiqueta($el[$k]), self::corto(trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento']), 80), $z['seccion'], self::corto($z['clausula'], 80), $z['pagina'] ?: '', 'IA', self::corto($req, 160)];
+                    $porElemento[$k]['tipo'] = $el[$k]['tipo'];
+                    $porElemento[$k]['nombre'] = $el[$k]['nombre'];
+                    $porElemento[$k]['citas'][] = $z + ['origen' => 'IA'];
                 }
             }
         }
@@ -94,14 +107,33 @@ class NormativaAplicar extends Base
                 if ($c['origen'] === 'palabras' && $c['puntaje'] < 60) continue;
                 if (Normativa::proponerRegla($pid, $e['tipo'], $e['id'], $c)) {
                     $reglas++;
-                    $filas[] = [self::corto($e['nombre'], 60), $c['doc'] . ' · ' . ($c['clausula'] ?: 'pág. ' . $c['pagina']), $c['origen'] === 'csi' ? 'Sección CSI' : 'Palabras', ''];
+                    $z = Normativa::cita($c);
+                    $origen = $c['origen'] === 'csi' ? 'Sección CSI' : 'Palabras';
+                    $filas[] = [$etiqueta($e), self::corto(trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento']), 80), $z['seccion'], self::corto($z['clausula'], 80), $z['pagina'] ?: '', $origen, ''];
+                    $porElemento[$k]['tipo'] = $e['tipo'];
+                    $porElemento[$k]['nombre'] = $e['nombre'];
+                    $porElemento[$k]['citas'][] = $z + ['origen' => $origen];
                 }
             }
         }
-        return ['secciones' => [
+
+        // Lista corta por elemento: «Material · X — Doc (Sección 27 15 00, pág. 12); Doc 2 (pág. 40)»
+        $lista = [];
+        foreach ($porElemento as $e) {
+            $citas = array_map(function ($z) {
+                $doc = trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento']);
+                $donde = trim(($z['seccion'] !== '' ? $z['seccion'] : '') . ($z['pagina'] ? ($z['seccion'] !== '' ? ', ' : '') . 'pág. ' . $z['pagina'] : ''));
+                return trim($doc . ($z['clausula'] !== '' ? ' · ' . $z['clausula'] : '') . ($donde !== '' ? ' (' . $donde . ')' : ''));
+            }, $e['citas']);
+            $lista[] = ($e['tipo'] === 'material' ? 'Material · ' : 'Actividad · ') . self::corto($e['nombre'], 90) . ' — ' . implode('; ', $citas);
+        }
+
+        $secciones = [
             Informes::kpis('Resultado', [['Elementos revisados', count($el)], ['Vínculos propuestos', $ia], ['Propuestos por reglas', $reglas], ['Pendientes de decidir', Normativa::conteoPendientes($pid)]]),
-            Informes::texto('Qué sigue', 'Nada se aplica todavía: acepta o rechaza cada vínculo en Normativa y especificaciones → Vínculos (o en Análisis inteligente). Los aceptados aparecen en el formulario de cada material y actividad.' . (!$el ? ' No hay elementos con cláusulas candidatas: carga documentos en Normativa y especificaciones o revisa que los materiales tengan referencia o nombre descriptivo.' : '')),
-            Informes::tabla('Vínculos propuestos en esta corrida', ['Elemento', 'Cláusula', 'Origen', 'Requisito (resumen)'], array_slice($filas, 0, 60)),
-        ]];
+            Informes::lista('Normativa que aplicaría a cada elemento', array_slice($lista, 0, 40)),
+            Informes::tabla('Vínculos propuestos en esta corrida', ['Elemento', 'Documento', 'Sección', 'Cláusula', 'Página', 'Origen', 'Requisito (resumen)'], array_slice($filas, 0, 80)),
+            Informes::texto('Qué sigue', 'Nada se aplica todavía: acepta o rechaza cada vínculo en Normativa y especificaciones → Vínculos o en «Por material y actividad». Los aceptados aparecen en el formulario de cada material y actividad.' . (!$el ? ' No hay elementos con cláusulas candidatas: carga documentos en Normativa y especificaciones o revisa que los materiales tengan referencia o nombre descriptivo.' : '')),
+        ];
+        return ['orientacion' => 'landscape', 'secciones' => $secciones];
     }
 }

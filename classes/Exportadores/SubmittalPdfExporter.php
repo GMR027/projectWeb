@@ -21,6 +21,7 @@ class SubmittalPdfExporter extends BaseExporter
         $proyecto = $this->proyecto;
         $submittal = $this->submittal;
         $materiales = $submittal->materiales();
+        $laminas = $submittal->laminas();
         $dueno = \Model\Usuario::find($proyecto->usuario_id);
         $img = fn(?string $a, string $c) => MsrPdfExporter::imagenBase64($a, $c);
         $logoE = $img($dueno && $dueno->logo ? $dueno->logo : $proyecto->logo, 'build/img/logos');

@@ -9,7 +9,7 @@
 
 <?php
 $verif = $verificacion ?? null;
-if ($verif || ($inteligentes ?? false)):
+if (is_admin() && ($verif || ($inteligentes ?? false))):
     $vigente = $verif && \Classes\MaterialesInteligentes::vigente($verif, $material);
 ?>
 <div class="card norma-detalle" id="normativas-especificaciones">
