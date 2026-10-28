@@ -1526,6 +1526,13 @@
       } catch (_) { return false; }
     };
     w = Math.max(16, Math.round(w)); h = Math.max(16, Math.round(h));
+    // En pantallas táctiles (iPad/iPhone/tablet) el límite típico es 4096 px por lado y ~16 Mpx:
+    // se recorta antes de probar para no reservar un canvas gigante que el equipo no puede manejar.
+    const tactil = (navigator.maxTouchPoints || 0) > 0 || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    if (tactil) {
+      const k = Math.min(1, 4096 / w, 4096 / h, Math.sqrt(16_000_000 / (w * h)));
+      w = Math.max(16, Math.round(w * k)); h = Math.max(16, Math.round(h * k));
+    }
     if (probar(w, h)) return { w, h };
     let k = 1;
     for (let i = 0; i < 10; i++) {
