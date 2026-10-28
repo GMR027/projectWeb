@@ -69,9 +69,10 @@ class LookaheadController
         $restricciones = self::restriccionesActivas((int)$proyecto->id);
 
         $filas = [];
-        foreach ($proyecto->getPartidas() as $partida) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            $partida = $bloque['partida'];
             $acts = [];
-            foreach ($partida->getActividades() as $act) {
+            foreach ($bloque['actividades'] as $act) {
                 $atrasada = $act->fecha_fin < $lunes->format('Y-m-d') && (int)$act->progreso < 100;
                 $porTipo = $restricciones[$act->id] ?? [];
                 $celdas = [];

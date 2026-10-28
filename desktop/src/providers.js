@@ -20,6 +20,7 @@ const TIPOS = {
 };
 const esOpenAI = t => t === 'openai' || t === 'opencode-api';   // opencode Zen habla el protocolo de OpenAI
 const TIMEOUT_MS = 120000;
+const MAX_RESPUESTA = 16 * 1024 * 1024;   // tope de texto para no llenar la memoria con una respuesta descontrolada
 // opencode aprueba por defecto cualquier escritura o comando: en la carpeta temporal de la consulta se le quitan esos permisos
 const CFG_OPENCODE = JSON.stringify({ permission: { edit: 'deny', shell: 'deny', webfetch: 'deny' } }, null, 1);
 const escribirCfgOpencode = carpeta => fs.writeFileSync(path.join(carpeta, 'opencode.json'), CFG_OPENCODE);
@@ -89,6 +90,7 @@ function fetchLargo(url, { method = 'GET', headers = {}, body, timeout = TIMEOUT
 async function http(url, opciones, timeout = TIMEOUT_MS) {
   const r = await fetchLargo(url, { ...opciones, timeout });
   const texto = await r.text();
+  if (texto.length > MAX_RESPUESTA) throw new Error('La respuesta del modelo supera el tamaño máximo permitido');
   let j = null; try { j = JSON.parse(texto); } catch { /* respuesta no JSON */ }
   if (!r.ok) throw new Error('El servidor respondió ' + r.status + (j && (j.error?.message || j.error) ? ': ' + (j.error.message || j.error) : ''));
   return j;
@@ -179,7 +181,7 @@ function claudeCode(mensajes, opts, timeout) {
     const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence',
       ...(rutas.length ? ['--tools', 'Read', '--allowedTools', 'Read'] : ['--tools', '']), ...(sistema ? ['--append-system-prompt', sistema] : [])];
     const hijo = spawn('claude', args, { cwd, env: entorno(), stdio: ['ignore', 'pipe', 'pipe'] });
-    let resto = '', final = null, n = 0, errtxt = '', terminado = false;
+    let resto = '', out = '', final = null, n = 0, errtxt = '', terminado = false, lleno = false;
     const acabar = (f, v) => { if (terminado) return; terminado = true; clearTimeout(tope); limpiar(); f(v); };
     const tope = setTimeout(() => { hijo.kill(); acabar(reject, new Error('Tiempo de espera agotado (' + Math.round(timeout / 60000) + ' min)')); }, timeout);
     opts.alAvanzar?.({ tokens: 0, fase: 'leyendo' });
@@ -189,10 +191,14 @@ function claudeCode(mensajes, opts, timeout) {
       else if (j.type === 'rate_limit_event') usoVentanas(j.rate_limit_info);
       else if (j.type === 'result') { final = j; usoResultado(j); }
     };
-    hijo.stdout.on('data', d => { resto += d; const partes = resto.split('\n'); resto = partes.pop(); partes.forEach(linea); });
+    hijo.stdout.on('data', d => {
+      if (out.length + d.length > MAX_SALIDA) { lleno = true; hijo.kill('SIGKILL'); return; }
+      out += d; resto += d; const partes = resto.split('\n'); resto = partes.pop(); partes.forEach(linea);
+    });
     hijo.stderr.on('data', d => { errtxt += d; });
     hijo.on('error', e => acabar(reject, errorCli('claude', e, '')));
     hijo.on('close', () => {
+      if (lleno) return acabar(reject, new Error('La respuesta de Claude Code supera el tamaño máximo permitido'));
       if (resto.trim()) linea(resto);
       if (final && !final.is_error) { opts.alAvanzar?.({ tokens: n, fase: 'listo' }); return acabar(resolve, String(final.result ?? '').trim()); }
       const motivo = String(final?.result || errtxt || 'Claude Code terminó sin respuesta').trim();
@@ -349,7 +355,11 @@ async function ollamaChatStream(base, cuerpo, timeout, alAvanzar) {
     if (!l.trim()) return;
     let j; try { j = JSON.parse(l); } catch { return; }
     if (j.error) throw new Error(j.error);
-    if (j.message?.content) { texto += j.message.content; n++; if (n % 5 === 0) alAvanzar({ tokens: n, fase: 'escribiendo' }); }
+    if (j.message?.content) {
+      texto += j.message.content; n++;
+      if (texto.length > MAX_RESPUESTA) throw new Error('La respuesta del modelo supera el tamaño máximo permitido');
+      if (n % 5 === 0) alAvanzar({ tokens: n, fase: 'escribiendo' });
+    }
   };
   for (;;) {
     const { done, value } = await lector.read();

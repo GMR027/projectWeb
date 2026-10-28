@@ -34,13 +34,16 @@ class Seguridad
     /** Tipos fijos + los creados en el proyecto (clave `t<id>`). Sin proyecto, solo los fijos. */
     public static function tipos(int $pid = 0): array
     {
+        // El Gantt/Programa pide los tipos por cada actividad: se cargan una vez por proyecto y petición
+        static $cache = [];
+        if ($pid > 0 && isset($cache[$pid])) return $cache[$pid];
         $t = self::TIPOS;
         if ($pid > 0) foreach (self::filas("SELECT * FROM permisos_tipos WHERE proyecto_id = $pid ORDER BY nombre") as $r) {
             $med = json_decode((string)$r['medidas_json'], true) ?: [];
             $t['t' . $r['id']] = ['nombre' => $r['nombre'], 'propio' => true, 'id' => (int)$r['id'], 'medidas' => $med ?: self::TIPOS['general']['medidas'],
                 'palabras' => array_values(array_filter(array_map(fn($w) => Voz::sinAcentos(trim($w)), preg_split('/\R/', (string)$r['palabras']) ?: [])))];
         }
-        return $t;
+        return $pid > 0 ? ($cache[$pid] = $t) : $t;
     }
 
     /** @return array{0: bool, 1: string} */

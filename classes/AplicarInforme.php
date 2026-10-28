@@ -21,6 +21,7 @@ class AplicarInforme
             'punch' => self::punch($p, $a),
             'rfi' => self::rfi($p, $a),
             'contradicciones' => self::contradicciones($p, $a),
+            'itp_calidad' => self::itp($p, $a),
             default => [false, 'Este tipo de informe no se aplica a ningún módulo.', ''],
         };
     }
@@ -86,6 +87,29 @@ class AplicarInforme
         $res = $b->guardar();
         $id = is_array($res) ? ($res['id'] ?? $b->id) : $b->id;
         return [true, 'Entrada de bitácora creada.', 'bitacora:' . $id];
+    }
+
+    /** Planes de inspección propuestos: crea el plan y sus puntos en Calidad e inspecciones */
+    private static function itp(Proyecto $p, array $a): array
+    {
+        if (!Calidad::disponible()) return [false, 'Calidad e inspecciones no está instalado (falta la migración).', ''];
+        $n = 0; $puntos = 0;
+        foreach (array_slice((array)($a['planes'] ?? []), 0, 30) as $plan) {
+            $pts = array_values(array_filter((array)($plan['puntos'] ?? []), fn($x) => is_array($x) && trim((string)($x['descripcion'] ?? '')) !== ''));
+            if (!$pts) continue;
+            $lineas = array_map(fn($x) => str_replace('|', '/', trim((string)$x['descripcion'])) . ' | ' . str_replace('|', '/', trim((string)($x['criterio'] ?? ''))), $pts);
+            [$ok, , $id] = Calidad::guardarPlan((int)$p->id, [
+                'actividad_id' => (int)($plan['actividad_id'] ?? 0),
+                'codigo' => (string)($plan['codigo'] ?? ''),
+                'titulo' => (string)($plan['titulo'] ?? 'ITP'),
+                'tipo' => 'itp',
+                'norma' => (string)($plan['norma'] ?? ''),
+                'estado' => 'pendiente',
+                'puntos' => implode("\n", $lineas),
+            ]);
+            if ($ok) { $n++; $puntos += count($pts); }
+        }
+        return $n ? [true, "$n plan(es) de inspección creados con $puntos punto(s) en Calidad e inspecciones.", 'itp:' . $n] : [false, 'No había puntos de inspección que crear.', ''];
     }
 
     private static function minuta(Proyecto $p, array $a): array

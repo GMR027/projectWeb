@@ -14,6 +14,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
     </div>
     <?php return ob_get_clean();
 };
+$partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $proyecto->getPartidas() : [];
 ?>
 <div class="page-header">
     <div>
@@ -72,7 +73,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
             </div>
         </div>
         <div class="exp-todo-accion">
-            <input type="text" name="nombre_base" value="Exportacion" placeholder="Nombre base" required>
+            <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Exportacion" placeholder="Nombre base" required>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-zipper"></i> Exportar todo</button>
         </div>
     </form>
@@ -90,7 +91,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="xml">Microsoft Project (.xml)</option>
                     <option value="pod">ProjectLibre (.pod)</option>
                 </select>
-                <input type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar programa</button>
             </form>
         </div>
@@ -110,7 +111,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 </select>
                 <label class="text-sm text-muted" for="fecha_ref">Semana de referencia</label>
                 <input type="date" id="fecha_ref" name="fecha_ref" value="<?php echo s($lunes->format('Y-m-d')); ?>" required>
-                <input type="text" name="nombre_base" value="4WLA" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="4WLA" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar Lookahead</button>
             </form>
         </div>
@@ -133,7 +134,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <?php elseif ($laminasVplan): ?>
                     <input type="hidden" name="lamina_ids[]" value="<?php echo s($laminasVplan[0]->id); ?>">
                 <?php endif; ?>
-                <input type="text" name="nombre_base" value="vPlan" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="vPlan" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar vPlan</button>
             </form>
         </div>
@@ -149,7 +150,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <select id="lp_partida" name="partida_id">
                     <option value="juntas">★ Mostrar todas juntas (un post-it por día con todas las partidas)</option>
                     <option value="todas">Todas (cada partida en hoja nueva)</option>
-                    <?php foreach ($proyecto->getPartidas() as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
+                    <?php foreach ($partidasExport as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
                 </select>
                 <label class="text-sm text-muted" for="lp_filtro">Filtro</label>
                 <select id="lp_filtro" name="restriccion">
@@ -172,7 +173,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="2">2 columnas × 3 filas (6 por hoja, margen cómodo)</option>
                     <option value="3">3 columnas × 3 filas (9 por hoja, margen mínimo)</option>
                 </select>
-                <input type="text" name="nombre_base" value="LastPlanner" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="LastPlanner" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar Last Planner</button>
             </form>
         </div>
@@ -196,7 +197,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="xlsx">Excel (.xlsx)</option>
                     <option value="ods">LibreOffice Calc (.ods)</option>
                 </select>
-                <input type="text" name="nombre_base" value="Curva" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Curva" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar curva</button>
             </form>
         </div>
@@ -223,7 +224,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="xlsx">Excel (.xlsx)</option>
                     <option value="ods">LibreOffice Calc (.ods)</option>
                 </select>
-                <input type="text" name="nombre_base" value="MSR" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="MSR" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar MSR</button>
             </form>
         </div>
@@ -245,7 +246,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <label class="text-sm text-muted" for="lt_partida">Partida</label>
                 <select id="lt_partida" name="partida_id">
                     <option value="">Todas</option>
-                    <?php foreach ($proyecto->getPartidas() as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
+                    <?php foreach ($partidasExport as $pt): ?><option value="<?php echo s($pt->id); ?>"><?php echo s($pt->codigo . ' · ' . $pt->nombre); ?></option><?php endforeach; ?>
                 </select>
                 <?php if ($mesesLt): ?>
                     <?php echo $casillas('mes[]', 'Meses', array_map(fn($m, $t) => [$m, $t, false], array_keys($mesesLt), array_values($mesesLt)), 'Sin marcar ninguno se exporta el rango completo del proyecto; con uno o varios marcados, un archivo por mes (varios = ZIP).'); ?>
@@ -255,7 +256,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                     <option value="pdf">PDF (.pdf)</option>
                     <option value="ods">LibreOffice Calc (.ods)</option>
                 </select>
-                <input type="text" name="nombre_base" value="Linea-de-tiempo" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Linea-de-tiempo" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar línea de tiempo</button>
             </form>
         </div>
@@ -273,7 +274,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <input type="date" id="rd_fecha" name="fecha">
                 <label class="text-sm text-muted" for="rd_mes">Mes</label>
                 <input type="month" id="rd_mes" name="mes">
-                <input type="text" name="nombre_base" value="Reporte-diario" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Reporte-diario" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar reporte diario</button>
             </form>
         </div>
@@ -294,7 +295,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <select id="bi_dep" name="departamento"><option value="">Todos</option><?php foreach ($departamentosBitacora as $dp): ?><option value="<?php echo s($dp); ?>"><?php echo s($dp); ?></option><?php endforeach; ?></select>
                 <label class="text-sm text-muted" for="bi_imp">Importancia</label>
                 <select id="bi_imp" name="importancia"><option value="">Todas</option><?php foreach (\Model\Bitacora::IMPORTANCIAS as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
-                <input type="text" name="nombre_base" value="Bitacora" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Bitacora" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar bitácora</button>
             </form>
         </div>
@@ -313,7 +314,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <input type="month" id="mi_mes" name="mes">
                 <label class="text-sm text-muted" for="mi_imp">Importancia</label>
                 <select id="mi_imp" name="importancia"><option value="">Todas</option><?php foreach (\Model\Bitacora::IMPORTANCIAS as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
-                <input type="text" name="nombre_base" value="Minutas" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Minutas" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar minutas</button>
             </form>
         </div>
@@ -331,7 +332,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <?php elseif (!$submittals): ?>
                     <p class="text-sm text-muted">Aún no hay submittals.</p>
                 <?php endif; ?>
-                <input type="text" name="nombre_base" value="Submittals" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Submittals" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar submittals</button>
             </form>
         </div>
@@ -348,7 +349,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <?php else: ?>
                     <p class="text-sm text-muted">Aún no hay RFI.</p>
                 <?php endif; ?>
-                <input type="text" name="nombre_base" value="RFI" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="RFI" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"<?php echo $rfis ? '' : ' disabled'; ?>><i class="fa-solid fa-file-pdf"></i> Exportar RFI</button>
             </form>
         </div>
@@ -367,7 +368,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <select id="ma_compra" name="compra"><option value="">Todos</option><?php foreach (\Model\Material::COMPRA as $k => $v): ?><option value="<?php echo s($k); ?>"><?php echo s($v); ?></option><?php endforeach; ?></select>
                 <label class="text-sm text-muted" for="ma_entrega">Entrega</label>
                 <select id="ma_entrega" name="entrega"><option value="">Todos</option><option value="entregado">Entregados</option><option value="por_entregar">Por entregar</option></select>
-                <input type="text" name="nombre_base" value="Materiales" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Materiales" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar materiales</button>
             </form>
         </div>
@@ -388,7 +389,7 @@ $casillas = function (string $name, string $titulo, array $items, string $ayuda 
                 <input type="month" id="ev_mes" name="mes">
                 <label class="text-sm text-muted" for="ev_act">Actividad</label>
                 <select id="ev_act" name="actividad_id"><option value="">Todas</option><?php foreach ($actividadesEvidencia as [$aid, $anom]): ?><option value="<?php echo s($aid); ?>"><?php echo s($anom); ?></option><?php endforeach; ?></select>
-                <input type="text" name="nombre_base" value="Evidencias" placeholder="Nombre base" required>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Evidencias" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar evidencias</button>
             </form>
         </div>

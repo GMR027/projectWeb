@@ -59,6 +59,17 @@ class Enlaces
         return $e;
     }
 
+    /**
+     * Proyecto de un token vigente, sin contar el acceso. Lo usa `Classes\Media` para las fotos que se
+     * muestran en la página pública del cliente (cada imagen no debe inflar el contador de visitas).
+     */
+    public static function proyectoDeToken(string $token, int $proyectoId): bool
+    {
+        if (!preg_match('/^[0-9a-f]{40}$/', $token)) return false;
+        $e = self::filas("SELECT proyecto_id FROM enlaces_proyecto WHERE token = '" . self::esc($token) . "' AND revocado = 0 AND (expira IS NULL OR expira > NOW()) LIMIT 1")[0] ?? null;
+        return $e && (int)$e['proyecto_id'] === $proyectoId;
+    }
+
     public static function url(array $e): string
     {
         $base = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');

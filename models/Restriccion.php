@@ -30,4 +30,23 @@ class Restriccion extends ActiveRecord
     {
         return TipoRestriccion::find($this->tipo_id);
     }
+
+    /**
+     * Restricciones activas del proyecto agrupadas por actividad: [actividad_id => [Restriccion, …]].
+     * Una sola consulta para todo el programa (antes el Gantt hacía dos por actividad).
+     */
+    public static function activasPorProyecto(int $proyectoId): array
+    {
+        $id = (int)$proyectoId;
+        $rows = self::consultarSQL(
+            "SELECT r.* FROM restricciones r
+             JOIN actividades a ON a.id = r.actividad_id
+             JOIN partidas p ON p.id = a.partida_id
+             WHERE p.proyecto_id = $id AND r.estado = 'activa'
+             ORDER BY r.creado DESC"
+        );
+        $out = [];
+        foreach ($rows as $r) $out[(int)$r->actividad_id][] = $r;
+        return $out;
+    }
 }

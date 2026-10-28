@@ -20,15 +20,23 @@ class EscanerArchivos
     private const MAX_DESCOMPRIMIDO = 4 * 1024 * 1024 * 1024;   // 4 GB
     private const MAX_RATIO = 250;                                // descomprimido / comprimido por entrada
 
-    /** @return string[] motivos de rechazo (vacío = archivo limpio) */
-    public static function revisar(string $ruta, string $nombreOriginal): array
+    /**
+     * @param bool $permitirBinarios Instaladores de la app de escritorio (.deb, AppImage…): son ejecutables
+     *                               a propósito, así que solo se revisan nombre, tamaño y antivirus.
+     * @return string[] motivos de rechazo (vacío = archivo limpio)
+     */
+    public static function revisar(string $ruta, string $nombreOriginal, bool $permitirBinarios = false): array
     {
         $ext = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
         if ($e = self::revisarNombre($nombreOriginal)) return [$e];
 
         $cabeza = (string)@file_get_contents($ruta, false, null, 0, 4096);
         if ($cabeza === '' && (int)@filesize($ruta) === 0) return ['El archivo está vacío'];
-        if ($e = self::revisarFirma($ruta, $ext, $cabeza)) return [$e];
+        if (!$permitirBinarios && ($e = self::revisarFirma($ruta, $ext, $cabeza))) return [$e];
+        if ($permitirBinarios && $ext === 'gz' && str_contains($nombreOriginal, '.tar.gz')) {
+            // Un .tar.gz de instalación tampoco debe traer rutas «../»; se revisa al descomprimir el nombre
+            if (preg_match('#(^|/)\.\.(/|$)#', $nombreOriginal)) return ['Nombre de archivo no válido'];
+        }
 
         if (in_array($ext, ['zip', 'ifczip', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'odg', 'otg', 'ott', 'ots', 'otp', 'odf'], true)) {
             if ($e = self::revisarZip($ruta, $ext === 'zip' || $ext === 'ifczip')) return [$e];

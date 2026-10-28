@@ -20,11 +20,20 @@ Responde SOLO con JSON: {"notas":[{"id":"<id del grupo>","texto":"<explicación>
 
 function crear({ cfg, sesion, avisar }) {
   const srv = () => cfg.leer().servidor;
+  const cacheToken = { pid: 0, t: 0, token: '' };
   const get = async (ruta, que) => json(await sesion(srv() + ruta, { credentials: 'include' }), que);
   const post = async (ruta, campos, csrf, que) => json(await sesion(srv() + ruta, {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrf }, body: new URLSearchParams(campos).toString(),
   }), que);
-  const leer = pid => get('/api/ordenar-ia/propuesta?proyecto=' + encodeURIComponent(pid), 'No se pudo calcular el orden por fechas');
+  const leer = async pid => {
+    const p = await get('/api/ordenar-ia/propuesta?proyecto=' + encodeURIComponent(pid), 'No se pudo calcular el orden por fechas');
+    cacheToken.pid = pid; cacheToken.t = Date.now(); cacheToken.token = String(p.csrf || '');
+    return p;
+  };
+  const token = async pid => {
+    if (cacheToken.pid === pid && cacheToken.token && Date.now() - cacheToken.t < 5 * 60 * 1000) return cacheToken.token;
+    return (await leer(pid)).csrf;
+  };
 
   /** Propuesta del servidor + explicación de la IA (si falla o no hay conexión, se devuelve sin notas) */
   async function propuesta(pid, conexion, clave) {
@@ -44,7 +53,7 @@ function crear({ cfg, sesion, avisar }) {
     return p;
   }
 
-  const accion = async (ruta, pid, campos, que) => { const p = await leer(pid); return post(ruta, { proyecto: pid, ...campos }, p.csrf, que); };
+  const accion = async (ruta, pid, campos, que) => post(ruta, { proyecto: pid, ...campos }, await token(pid), que);
   return {
     propuesta,
     aplicar: (pid, huella, seleccion) => accion('/api/ordenar-ia/aplicar', pid, { huella, seleccion: JSON.stringify(seleccion) }, 'No se pudo aplicar'),

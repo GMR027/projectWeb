@@ -78,8 +78,8 @@ if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte 
                         $factor = $jornadaMap[$num] ?? ($num <= 5 ? 1 : ($num === 6 ? 0.5 : 0));
                     ?>
                         <div class="jornada-dia">
-                            <label><?php echo s($nombre); ?></label>
-                            <select name="factor_<?php echo $num; ?>">
+                            <label for="factor_<?php echo $num; ?>"><?php echo s($nombre); ?></label>
+                            <select id="factor_<?php echo $num; ?>" name="factor_<?php echo $num; ?>">
                                 <option value="0" <?php echo (float)$factor === 0.0 ? 'selected' : ''; ?>><?php echo s(t('0 — Inhábil')); ?></option>
                                 <option value="0.5" <?php echo (float)$factor === 0.5 ? 'selected' : ''; ?>><?php echo s(t('0.5 — Medio turno')); ?></option>
                                 <option value="1" <?php echo (float)$factor === 1.0 ? 'selected' : ''; ?>><?php echo s(t('1 — Completa')); ?></option>
@@ -461,11 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
         </div>
         <div class="campo">
             <label for="password_nueva"><?php echo s(t('Nueva contraseña')); ?></label>
-            <input type="password" id="password_nueva" name="password_nueva" minlength="6" autocomplete="new-password" required>
+            <input type="password" id="password_nueva" name="password_nueva" minlength="10" autocomplete="new-password" required>
         </div>
         <div class="campo">
             <label for="password_nueva2"><?php echo s(t('Repetir nueva contraseña')); ?></label>
-            <input type="password" id="password_nueva2" name="password_nueva2" minlength="6" autocomplete="new-password" required>
+            <input type="password" id="password_nueva2" name="password_nueva2" minlength="10" autocomplete="new-password" required>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> <?php echo s(t('Actualizar contraseña')); ?></button>
     </form>

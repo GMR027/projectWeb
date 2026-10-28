@@ -2,6 +2,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+    # Los archivos de usuarios (fotos, planos, símbolos…) no se sirven como estáticos: pasan por
+    # index.php, que comprueba el permiso del proyecto (Classes\Media).
+    RewriteRule ^uploads/ index.php [L,QSA]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php [L,QSA]

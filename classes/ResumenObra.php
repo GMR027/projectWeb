@@ -128,8 +128,10 @@ class ResumenObra
             WHERE pa.proyecto_id = $pid AND r.estado = 'activa' AND a.progreso < 100 AND a.fecha_inicio <= '$en7'");
         $punchN = $cuenta("SELECT COUNT(*) n FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND severidad IN ('alta','critica')");
         $rfi = Rfi::disponible() ? Rfi::resumen($pid) : ['abierto' => 0, 'vencidos' => 0, 'bloqueando' => 0];
+        $contratos = Contratos::disponible() ? Contratos::porVencer($pid) : [];
+        $servicios = Equipo::disponible() ? Equipo::serviciosProximos($pid) : [];
 
-        if (!$hoyN && !$atrN && !$restUrg && !$punchN && !($rfi['abierto'] ?? 0)) return '';
+        if (!$hoyN && !$atrN && !$restUrg && !$punchN && !($rfi['abierto'] ?? 0) && !$contratos && !$servicios) return '';
 
         $t = '🌅 <b>Resumen de la mañana · ' . ClimaAuto::fechaLarga($hoy) . "</b>\n";
 
@@ -157,6 +159,18 @@ class ResumenObra
         if ($restUrg) $t .= "\n\n🚧 <b>$restUrg restricción(es)</b> afectan actividades que inician en 7 días o ya están en curso.";
         if ($punchN) $t .= "\n🔧 <b>$punchN pendiente(s) grave(s)</b> del punch list.";
         if ($rfi['abierto'] ?? 0) $t .= "\n❓ <b>{$rfi['abierto']} RFI abierto(s)</b>" . ($rfi['vencidos'] ? " · {$rfi['vencidos']} vencido(s)" : '') . '.';
+        if ($contratos) {
+            $t .= "\n\n📄 <b>" . count($contratos) . " contrato(s), fianza(s) o seguro(s) por vencer</b>";
+            foreach (array_slice($contratos, 0, 3) as $c) {
+                $dias = (int)($c['dias'] ?? 0);
+                $t .= "\n• " . $h(trim(($c['numero'] ? $c['numero'] . ' · ' : '') . ($c['contraparte'] ?: (Contratos::TIPOS[$c['tipo']] ?? 'Registro'))))
+                    . ' — ' . ($dias < 0 ? '<b>vencido hace ' . abs($dias) . ' día(s)</b>' : 'vence en ' . $dias . ' día(s)');
+            }
+        }
+        if ($servicios) {
+            $t .= "\n\n🛠 <b>" . count($servicios) . " equipo(s) con servicio próximo</b>";
+            foreach (array_slice($servicios, 0, 3) as $e) $t .= "\n• " . $h($e['nombre']) . ($e['proximo_servicio'] ? ' — ' . date('d/m', strtotime((string)$e['proximo_servicio'])) : ' — por horas');
+        }
 
         $sem = Salud::semaforo($p);
         $ico = ['ok' => '🟢', 'aviso' => '🟠', 'critico' => '🔴'];

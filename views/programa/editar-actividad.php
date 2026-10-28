@@ -75,7 +75,16 @@
             </div>
             <div class="campo">
                 <label for="progreso">Progreso (%) *</label>
-                <input type="number" id="progreso" name="progreso" value="<?php echo s($actividad->progreso); ?>" min="0" max="100" required>
+                <?php $tieneSubactividades = !empty($subactividades ?? []); ?>
+                <input type="number" id="progreso" name="progreso" value="<?php echo s($actividad->progreso); ?>" min="0" max="100" required
+                       <?php echo $tieneSubactividades ? 'readonly' : ''; ?>>
+                <small class="text-muted">
+                    <?php if ($tieneSubactividades): ?>
+                        Se calcula como promedio de <?php echo count($subactividades); ?> subactividad<?php echo count($subactividades) === 1 ? '' : 'es'; ?> (se gestionan al final de la actividad).
+                    <?php else: ?>
+                        Sin subactividades, este es el avance de la actividad.
+                    <?php endif; ?>
+                </small>
             </div>
             <div class="campo">
                 <label for="prioridad">Prioridad</label>
@@ -120,8 +129,8 @@
     <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
 
     <?php if (es_modal()): ?>
-        <p class="text-muted text-sm">Las restricciones se gestionan en la página completa de la actividad.</p>
-        <a href="/programa/actividades/editar?id=<?php echo s($actividad->id); ?>" target="_top" class="btn btn-ghost btn-sm"><i class="fa-solid fa-up-right-from-square"></i> Abrir actividad completa (restricciones)</a>
+        <p class="text-muted text-sm">Las restricciones y subactividades se gestionan en la página completa de la actividad.</p>
+        <a href="/programa/actividades/editar?id=<?php echo s($actividad->id); ?>" target="_top" class="btn btn-ghost btn-sm"><i class="fa-solid fa-up-right-from-square"></i> Abrir actividad completa (restricciones y subactividades)</a>
 </div>
 <?php return; endif; ?>
 
@@ -168,6 +177,116 @@
         </table>
     <?php endif; ?>
     <a href="/programa/restricciones/crear?actividad=<?php echo s($actividad->id); ?>" class="btn btn-secondary" style="margin-top: 1rem;">+ Agregar Restricción</a>
+
+    <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
+
+    <?php
+    $subEstado = $subEstado ?? '';
+    $subError = $subError ?? '';
+    $totalSub = count($subactividades ?? []);
+    $promedioSub = $totalSub ? \Model\Subactividad::promedio(array_map(fn($x) => (int)$x->status, $subactividades)) : 0;
+    $hojaSub = $hojaSubactividades ?? null;
+    $hojaVersion = $hojaSub ? (string)$hojaSub->actualizado : '';
+    ?>
+    <h4 id="subactividades">Subactividades</h4>
+    <p class="text-muted text-sm">
+        Divide la actividad en partes con su propio avance. Si hay subactividades, el <strong>Progreso (%)</strong> de la actividad es su promedio y no se puede escribir a mano.
+        Las subactividades no aparecen en el programa, dependencias, línea de tiempo ni Lookahead.
+    </p>
+    <?php if ($subEstado === 'creada'): ?><div class="alerta alerta-exito">Subactividad agregada.</div><?php endif; ?>
+    <?php if ($subEstado === 'editada'): ?><div class="alerta alerta-exito">Subactividades guardadas y avance de la actividad recalculado.</div><?php endif; ?>
+    <?php if ($subEstado === 'eliminada'): ?><div class="alerta alerta-exito">Subactividad eliminada.</div><?php endif; ?>
+    <?php if ($subEstado === 'desvinculada'): ?><div class="alerta alerta-exito">Tabla desvinculada. Se conserva como una tabla normal de SheetFlow.</div><?php endif; ?>
+    <?php if ($subError !== ''): ?><div class="alerta alerta-error"><?php echo s($subError); ?></div><?php endif; ?>
+
+    <div class="sub-sheetflow" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:.9rem 1rem;margin:1rem 0;border:1px solid rgba(255,255,255,.08);border-radius:.6rem;background:rgba(255,255,255,.02);">
+        <?php if ($hojaSub): ?>
+            <span class="badge" style="background:rgba(0,180,216,.12);color:var(--secondary);border-color:rgba(0,180,216,.3);"><i class="fa-solid fa-table-cells"></i> Vinculada a SheetFlow</span>
+            <strong class="text-sm"><?php echo s($hojaSub->nombre); ?></strong>
+            <a class="btn btn-secondary btn-sm" href="/sheetflow/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&amp;id=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-up-right-from-square"></i> Abrir tabla</a>
+            <a class="btn btn-ghost btn-sm" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Usar en vPlan</a>
+            <form method="POST" action="/programa/subactividades/sheetflow/quitar" style="display:inline" data-confirm="¿Desvincular la tabla?|La tabla se conserva como una tabla normal de SheetFlow, pero dejará de sincronizarse con las subactividades. Las subactividades no se borran.|Desvincular">
+                <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
+                <input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>">
+                <button type="submit" class="btn btn-ghost btn-sm"><i class="fa-solid fa-link-slash"></i> Desvincular</button>
+            </form>
+            <p class="text-muted text-sm" style="flex-basis:100%;margin:.25rem 0 0;">Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos con la tabla. Las columnas extra se quedan en SheetFlow y vPlan. Si eliminas un renglón en la tabla, se elimina su subactividad.</p>
+        <?php else: ?>
+            <form method="POST" action="/programa/subactividades/sheetflow" style="display:inline">
+                <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
+                <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-table-cells"></i> Generar tabla en SheetFlow</button>
+            </form>
+            <span class="text-muted text-sm">Crea una tabla vinculada con una fila por subactividad. Se puede editar en SheetFlow y en vPlan sin que se desincronice.</span>
+        <?php endif; ?>
+    </div>
+
+    <?php if (!$totalSub): ?>
+        <p class="text-muted">Esta actividad no tiene subactividades: su avance se toma del campo Progreso.</p>
+    <?php else: ?>
+        <p>Avance calculado: <strong><?php echo (int)$promedioSub; ?> %</strong> · promedio de <?php echo (int)$totalSub; ?> subactividad<?php echo $totalSub === 1 ? '' : 'es'; ?>.</p>
+        <form method="POST" action="/programa/subactividades/editar">
+            <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
+            <?php if ($hojaSub): ?><input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>"><?php endif; ?>
+            <div class="tabla-wrapper">
+                <table class="tabla tabla-subactividades">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Avance</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($subactividades as $sub): $sid = (int)$sub->id; ?>
+                            <tr>
+                                <td><input type="text" name="sub[<?php echo $sid; ?>][nombre]" value="<?php echo s($sub->nombre); ?>" maxlength="200" required aria-label="Nombre de la subactividad"></td>
+                                <td><input type="date" name="sub[<?php echo $sid; ?>][fecha_inicio]" value="<?php echo s($sub->fecha_inicio); ?>" required aria-label="Fecha de inicio"></td>
+                                <td><input type="date" name="sub[<?php echo $sid; ?>][fecha_fin]" value="<?php echo s($sub->fecha_fin); ?>" required aria-label="Fecha de fin"></td>
+                                <td class="mono"><input type="number" name="sub[<?php echo $sid; ?>][status]" value="<?php echo (int)$sub->status; ?>" min="0" max="100" step="1" required aria-label="Avance (%)" style="width:7rem"> %</td>
+                                <td class="acciones">
+                                    <button type="submit" form="sub-del-<?php echo $sid; ?>" class="btn btn-xs btn-danger" title="Eliminar subactividad">✕</button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar subactividades</button>
+        </form>
+        <?php foreach ($subactividades as $sub): ?>
+            <form method="POST" action="/programa/subactividades/eliminar" id="sub-del-<?php echo (int)$sub->id; ?>" style="display:inline" data-confirm="¿Eliminar subactividad?|Se quitará «<?php echo s($sub->nombre); ?>» y el avance de la actividad se recalculará. Esta acción no se puede deshacer.|Eliminar">
+                <input type="hidden" name="id" value="<?php echo s($sub->id); ?>">
+                <?php if ($hojaSub): ?><input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>"><?php endif; ?>
+            </form>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <h5 style="margin-top: 1.5rem;">Agregar subactividad</h5>
+    <form method="POST" action="/programa/subactividades/crear" class="form-grid formulario-subactividad">
+        <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
+        <?php if ($hojaSub): ?><input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>"><?php endif; ?>
+        <div class="campo campo-full">
+            <label for="sub-nombre">Nombre *</label>
+            <input type="text" id="sub-nombre" name="nombre" maxlength="200" required placeholder="Ej.: Instalación de tubería en el eje A">
+        </div>
+        <div class="campo">
+            <label for="sub-inicio">Fecha de inicio *</label>
+            <input type="date" id="sub-inicio" name="fecha_inicio" value="<?php echo s($actividad->fecha_inicio); ?>" required>
+        </div>
+        <div class="campo">
+            <label for="sub-fin">Fecha de fin *</label>
+            <input type="date" id="sub-fin" name="fecha_fin" value="<?php echo s($actividad->fecha_fin ?: $actividad->fecha_inicio); ?>" required>
+        </div>
+        <div class="campo">
+            <label for="sub-status">Avance (%) *</label>
+            <input type="number" id="sub-status" name="status" value="0" min="0" max="100" step="1" required>
+        </div>
+        <div class="campo campo-full">
+            <button type="submit" class="btn btn-secondary">+ Agregar subactividad</button>
+        </div>
+    </form>
 </div>
 
 <?php if (puede_gestionar_proyecto($proyecto)): ?>

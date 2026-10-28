@@ -50,7 +50,8 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
         <?php $ayudasMenu = ayudas_herramientas(); ?>
         <?php foreach ($menu as $item): ?>
             <?php if (($ayudasMenu[$item['match']] ?? null) && empty($item['ayuda'])) $item += ['ayuda' => $ayudasMenu[$item['match']][0], 'manual' => $ayudasMenu[$item['match']][1]]; ?>
-            <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $_SERVER['REQUEST_URI'] !== '/' && (pagina_actual($item['match']) || array_filter($item['tambien'] ?? [], 'pagina_actual')) && !($item['match'] === '/proyectos' && pagina_actual('/proyectos/crear')) ? 'active' : ''; ?>"<?php echo atributos_ayuda($item); ?>>
+            <?php $activo = $_SERVER['REQUEST_URI'] !== '/' && (pagina_actual($item['match']) || array_filter($item['tambien'] ?? [], 'pagina_actual')) && !($item['match'] === '/proyectos' && pagina_actual('/proyectos/crear')); ?>
+            <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $activo ? 'active' : ''; ?>"<?php echo $activo ? ' aria-current="page"' : ''; ?><?php echo atributos_ayuda($item); ?>>
                 <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
                 <span><?php echo s(t($item['label'])); ?></span>
                 <?php if (!empty($item['badge'])): ?><b class="nav-badge"><?php echo (int)$item['badge']; ?></b><?php endif; ?>
@@ -60,7 +61,8 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
             <?php foreach ($gruposProyecto as $nombreGrupo => $itemsGrupo): ?>
                 <div class="nav-section"><?php echo s(t($nombreGrupo)); ?></div>
                 <?php foreach ($itemsGrupo as $item): ?>
-                    <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo pagina_actual($item['match']) || array_filter($item['tambien'], 'pagina_actual') ? 'active' : ''; ?>"<?php echo atributos_ayuda($item); ?>>
+                    <?php $activo = pagina_actual($item['match']) || array_filter($item['tambien'], 'pagina_actual'); ?>
+                    <a href="<?php echo s($item['url']); ?>" class="nav-link <?php echo $activo ? 'active' : ''; ?>"<?php echo $activo ? ' aria-current="page"' : ''; ?><?php echo atributos_ayuda($item); ?>>
                         <i class="fa-solid <?php echo s($item['icon']); ?> nav-icon"></i>
                         <span><?php echo s(t($item['label'])); ?></span>
                     </a>

@@ -20,8 +20,8 @@ class EvidenciaController
     private static function actividades(Proyecto $proyecto): array
     {
         $r = [];
-        foreach ($proyecto->getPartidas() as $p) {
-            foreach ($p->getActividades() as $a) $r[(int)$a->id] = ['actividad' => $a, 'partida' => $p];
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            foreach ($bloque['actividades'] as $a) $r[(int)$a->id] = ['actividad' => $a, 'partida' => $bloque['partida']];
         }
         return $r;
     }
@@ -83,7 +83,7 @@ class EvidenciaController
             'totalDias' => $totalDias, 'totalFotos' => $totalFotos, 'pagina' => $pagina, 'porPagina' => self::POR_PAGINA,
             'filtros' => ['actividad' => $fActividad, 'partida' => $fPartida, 'desde' => $fDesde, 'hasta' => $fHasta, 'origen' => $fOrigen, 'departamento' => $fDepto, 'categoria' => $fCat],
             'departamentos' => \Classes\Catalogo::departamentos((int)$proyecto->id), 'categorias' => \Classes\Catalogo::categorias((int)$proyecto->id, 'evidencias'),
-            'partidas' => $proyecto->getPartidas(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
+            'bloques' => $proyecto->getPartidasConActividades(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
         ]);
     }
 

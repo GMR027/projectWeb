@@ -131,8 +131,8 @@ class ReportesPdfExporter extends BaseExporter
     private function actividades(): array
     {
         $r = [];
-        foreach ($this->proyecto->getPartidas() as $p) {
-            foreach ($p->getActividades() as $a) $r[(int)$a->id] = [$a, $p];
+        foreach ($this->proyecto->getPartidasConActividades() as $bloque) {
+            foreach ($bloque['actividades'] as $a) $r[(int)$a->id] = [$a, $bloque['partida']];
         }
         return $r;
     }

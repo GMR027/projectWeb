@@ -34,11 +34,17 @@ class EnlaceClienteController
         $pid = (int)$proyecto->id;
         $secciones = array_filter(explode(',', (string)$e['secciones']));
         $curva = in_array('avance', $secciones, true) ? CurvaS::calcular($proyecto) : null;
+        // Las fotos viven detrás de /uploads (con permiso): el enlace público las autoriza con su token
+        $fotos = in_array('fotos', $secciones, true) ? Enlaces::fotos($pid) : [];
+        foreach ($fotos as &$foto) {
+            $foto['url'] .= (str_contains($foto['url'], '?') ? '&' : '?') . 't=' . urlencode((string)$e['token']);
+        }
+        unset($foto);
         $router->render('cliente/ver', [
             'titulo' => $proyecto->nombre, 'publicoLayout' => true, 'proyecto' => $proyecto, 'enlace' => $e, 'secciones' => $secciones,
             'avance' => in_array('avance', $secciones, true) ? Enlaces::avancePartidas($pid) : null,
             'curva' => $curva, 'proximas' => in_array('avance', $secciones, true) ? Enlaces::proximas($pid) : null,
-            'fotos' => in_array('fotos', $secciones, true) ? Enlaces::fotos($pid) : [],
+            'fotos' => $fotos,
             'reportes' => in_array('reportes', $secciones, true) ? Enlaces::reportes($pid) : [],
         ]);
     }

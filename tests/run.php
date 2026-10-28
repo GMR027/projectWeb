@@ -8,6 +8,7 @@ use Classes\SvgSeguro;
 use Classes\Exportadores\OdpExporter;
 use Model\Grafico;
 use Model\Cajetin;
+use Model\Subactividad;
 
 $fallos = 0;
 $ok = function (string $nombre, bool $cond) use (&$fallos) { echo ($cond ? '  ok   ' : '  FALLA ') . $nombre . "\n"; if (!$cond) $fallos++; };
@@ -27,6 +28,20 @@ echo "Cajetin\n";
 $f = json_decode(Cajetin::filasDeTexto("Proyecto | {proyecto}\n\nRevisó |\n"), true);
 $ok('una fila por línea, sin líneas vacías', $f === [['Proyecto', '{proyecto}'], ['Revisó', '']]);
 $ok('máximo 20 filas', count(json_decode(Cajetin::filasDeTexto(str_repeat("a | b\n", 30)), true)) === 20);
+
+echo "Subactividad\n";
+$ok('sin subactividades el promedio es 0', Subactividad::promedio([]) === 0);
+$ok('promedia y redondea los avances', Subactividad::promedio([100, 50]) === 75 && Subactividad::promedio([100, 1]) === 51);
+$ok('acota los avances fuera de 0–100', Subactividad::promedio([-10, 150]) === 50);
+$sub = new Subactividad(['nombre' => '', 'fecha_inicio' => '', 'fecha_fin' => '']);
+$sub->validar();
+$ok('exige nombre y fechas', count(Subactividad::getAlertas()['error'] ?? []) === 3);
+$sub = new Subactividad(['nombre' => 'Tramo A', 'fecha_inicio' => '2026-10-10', 'fecha_fin' => '2026-10-01', 'status' => 40]);
+$sub->validar();
+$ok('rechaza fin anterior al inicio', !empty(Subactividad::getAlertas()['error']));
+$sub = new Subactividad(['nombre' => 'Tramo A', 'fecha_inicio' => '2026-10-01', 'fecha_fin' => '2026-10-10', 'status' => 140]);
+$alertas = $sub->validar();
+$ok('una subactividad válida no tiene errores y acota el avance', empty($alertas) && $sub->status === 100);
 
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
@@ -199,6 +214,22 @@ try { \Classes\Sheetflow::importar("$dImp/a.csv", 'x.docx'); } catch (\RuntimeEx
 $ok('rechaza formatos que no son hoja de cálculo', $rechazado);
 array_map('unlink', glob("$dImp/*"));
 rmdir($dImp);
+
+echo "SheetFlow: vínculo con subactividades\n";
+$sfVinculo = \Classes\Sheetflow::limpiar([
+    'cols' => [
+        ['n' => 'Nombre', 'rol' => 'nombre', 'fija' => 1],
+        ['n' => 'Inicio', 't' => 'fecha', 'rol' => 'inicio', 'fija' => 1],
+        ['n' => 'Extra'],
+    ],
+    'rows' => [['Tramo A', '2026-10-01', 'nota'], ['', '', '']],
+    'meta' => ['subactividad' => ['actividad_id' => 7, 'ids' => [12, null]]],
+]);
+$ok('conserva los ids de subactividad por renglón', $sfVinculo['meta']['subactividad']['ids'] === [12, null]);
+$ok('conserva el rol y la protección de las columnas base', $sfVinculo['cols'][0]['rol'] === 'nombre' && $sfVinculo['cols'][1]['fija'] === 1 && !isset($sfVinculo['cols'][2]['rol']));
+$ok('los ids se recortan o completan según los renglones', \Classes\Sheetflow::limpiar(['rows' => [['a'], ['b'], ['c']], 'meta' => ['subactividad' => ['ids' => [4]]]])['meta']['subactividad']['ids'] === [4, null, null]);
+$sinVinculo = \Classes\Sheetflow::sinVinculo($sfVinculo);
+$ok('sinVinculo quita los ids y los roles, pero conserva los datos', !isset($sinVinculo['meta']['subactividad']) && !isset($sinVinculo['cols'][0]['rol']) && $sinVinculo['rows'][0][0] === 'Tramo A');
 
 echo "Personalización (Fase 4)\n";
 use Classes\CamposPersonalizados as CPz;
@@ -402,6 +433,47 @@ $cita = \Classes\Normativa::cita(['documento' => 'Especificación', 'clausula' =
 $ok('una cláusula sin CSI se respeta tal cual', $cita['seccion'] === '' && $cita['clausula'] === 'ARTÍCULO 250' && $cita['pagina'] === 0);
 $cita = \Classes\Normativa::cita(['referencia' => 'NOM-001-STPS', 'clausula' => '', 'titulo' => '']);
 $ok('un vínculo manual conserva su referencia', $cita['documento'] === '' && $cita['seccion'] === '' && $cita['referencia'] === 'NOM-001-STPS');
+
+echo "Administración de obra\n";
+$ok('la situación del contrato se calcula por fecha', \Classes\Contratos::situacion(['estado' => 'vigente', 'vencimiento' => date('Y-m-d', strtotime('-1 day')), 'aviso_dias' => 30]) === 'vencido'
+    && \Classes\Contratos::situacion(['estado' => 'vigente', 'vencimiento' => null, 'aviso_dias' => 30]) === 'vigente'
+    && \Classes\Contratos::situacion(['estado' => 'cerrado', 'vencimiento' => date('Y-m-d', strtotime('-1 day')), 'aviso_dias' => 30]) === 'cerrado');
+$ok('las cuatro herramientas nuevas están declaradas para el visitante', in_array('calidad', array_keys(\Model\Usuario::HERRAMIENTAS), true)
+    && in_array('equipo', array_keys(\Model\Usuario::HERRAMIENTAS), true)
+    && in_array('contratos', array_keys(\Model\Usuario::HERRAMIENTAS), true)
+    && in_array('cierre', array_keys(\Model\Usuario::HERRAMIENTAS), true));
+$ok('Calidad, Equipo y Cierre tienen sus catálogos completos', count(\Classes\Calidad::ESTADOS) === 5 && count(\Classes\Equipo::ESTADOS) === 3 && count(\Classes\Cierre::CATEGORIAS) === 6);
+$ok('el ITP con IA se aplica a Calidad y pide actividad/máximo', \Classes\Herramientas\ItpCalidad::ficha()['aplicable'] === true
+    && \Classes\Herramientas\ItpCalidad::ficha()['tipo'] === 'itp_calidad'
+    && \Classes\Herramientas\Registro::parametros(\Classes\Herramientas\ItpCalidad::class, ['maximo' => 999])['maximo'] === 20);
+$ok('Compras y suministros está en el grupo compras y no cambia datos solo', \Classes\Herramientas\ComprasMateriales::ficha()['grupo'] === 'compras'
+    && \Classes\Herramientas\ComprasMateriales::ficha()['aplicable'] === false);
+$ok('el registro descubre las dos herramientas nuevas', isset(\Classes\Herramientas\Registro::todas()['itp_calidad'], \Classes\Herramientas\Registro::todas()['compras']));
+echo "Contexto de IA\n";
+$ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
+$leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');
+$ok('el contexto se guarda y se lee con el mismo proyecto y herramienta', $ctx !== '' && $leido && $leido['datos']['dato'] === 'valor' && $leido['params']['x'] === 1);
+$ok('otro proyecto no puede leer el contexto', \Classes\ContextoIA::leer($ctx, 100, 'prueba') === null);
+$ok('un token inventado no lee nada', \Classes\ContextoIA::leer('../../etc/passwd', 99, 'prueba') === null);
+\Classes\ContextoIA::borrar($ctx);
+
+echo "Seguridad: control de acceso del visitante\n";
+$ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRAMIENTAS', (function () {
+    $src = (string)file_get_contents(__DIR__ . '/../views/templates/herramientas-proyecto.php');
+    preg_match_all("/\\['[^']+',\\s*'(\\/[^']+)'/", $src, $m);
+    $sin = [];
+    foreach (array_unique($m[1]) as $ruta) {
+        if (in_array($ruta, ['/proyectos/ver', '/dashboard'], true)) continue;   // rutas generales, no herramientas
+        if (herramienta_de_ruta($ruta) !== null) continue;
+        $sin[] = $ruta;
+    }
+    if ($sin) fwrite(STDERR, '  sin declarar: ' . implode(', ', $sin) . "\n");
+    return !$sin;
+})());
+$ok('una herramienta declarada se resuelve por su ruta', herramienta_de_ruta('/punch') === 'punch' && herramienta_de_ruta('/seguridad') === 'seguridad');
+$ok('historial-cambios no se confunde con historial', herramienta_de_ruta('/historial-cambios') === 'centro-ia' && herramienta_de_ruta('/historial') === 'historial');
+$ok('las rutas generales del visitante no son herramientas', ruta_general('/proyectos') && ruta_general('/manual') && ruta_general('/') && !ruta_general('/punch'));
+$ok('la contraseña mínima es de 10 y rechaza las comunes', \Model\Usuario::passwordDebil('corta') !== null && \Model\Usuario::passwordDebil('1234567890') !== null && \Model\Usuario::passwordDebil('Obra2026-segura') === null);
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

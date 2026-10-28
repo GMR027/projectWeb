@@ -154,8 +154,10 @@ $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
             <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>">
             <?php foreach (IDIOMAS as $cod => $nom): ?><button type="submit" name="idioma" value="<?php echo $cod; ?>" class="<?php echo idioma_actual() === $cod ? 'activo' : ''; ?>" aria-label="<?php echo s($nom); ?>"><?php echo strtoupper($cod); ?></button><?php endforeach; ?>
         </form>
-        <a href="/logout" class="btn btn-ghost btn-sm topbar-salir" title="<?php echo s(t('Salir')); ?>">
-            <i class="fa-solid fa-right-from-bracket"></i> <span class="hide-m"><?php echo s(t('Salir')); ?></span>
-        </a>
+        <form method="POST" action="/logout" class="form-inline">
+            <button type="submit" class="btn btn-ghost btn-sm topbar-salir" title="<?php echo s(t('Salir')); ?>">
+                <i class="fa-solid fa-right-from-bracket"></i> <span class="hide-m"><?php echo s(t('Salir')); ?></span>
+            </button>
+        </form>
     </div>
 </header>

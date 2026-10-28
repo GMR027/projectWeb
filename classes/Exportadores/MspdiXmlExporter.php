@@ -11,7 +11,7 @@ class MspdiXmlExporter extends BaseExporter
     public function generar(string $nombreBase): string
     {
         $proyecto = $this->proyecto;
-        $partidas = $proyecto->getPartidas();
+        $partidas = $proyecto->getPartidasConActividades();
 
         $xml = new \DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
@@ -37,7 +37,8 @@ class MspdiXmlExporter extends BaseExporter
         $tasks->appendChild($tarea0);
 
         $uid = 1;
-        foreach ($partidas as $partida) {
+        foreach ($partidas as $bloque) {
+            $partida = $bloque['partida'];
             $partidaUid = $uid;
             $tareaP = $xml->createElement('Task');
             $tareaP->appendChild($xml->createElement('UID', (string)$uid));
@@ -54,7 +55,7 @@ class MspdiXmlExporter extends BaseExporter
             $tasks->appendChild($tareaP);
             $uid++;
 
-            foreach ($partida->getActividades() as $act) {
+            foreach ($bloque['actividades'] as $act) {
                 $tareaA = $xml->createElement('Task');
                 $tareaA->appendChild($xml->createElement('UID', (string)$uid));
                 $tareaA->appendChild($xml->createElement('ID', (string)$uid));

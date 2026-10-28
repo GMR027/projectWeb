@@ -1,14 +1,6 @@
 <?php
 // includes/funciones.php
 
-function debuguear($variable): void
-{
-    echo "<pre style='background:#111;color:#0f0;padding:1rem;font-size:12px;'>";
-    var_dump($variable);
-    echo "</pre>";
-    exit;
-}
-
 function s($html): string
 {
     // Un arreglo manipulado en la URL (?error[]=…) no debe provocar un TypeError al escapar
@@ -19,6 +11,82 @@ function s($html): string
 function pagina_actual($path): bool
 {
     return str_contains($_SERVER['REQUEST_URI'] ?? '', $path);
+}
+
+/** ¿La petición llegó por HTTPS? (directo o detrás del Ingress) */
+function es_https(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+        || (int)($_SERVER['SERVER_PORT'] ?? 0) === 443;
+}
+
+/**
+ * Cabeceras de seguridad comunes a toda la aplicación. La CSP va en modo «Report-Only»: la plataforma usa
+ * scripts y estilos en línea, así que primero se observan las violaciones en la consola antes de bloquear.
+ */
+function cabeceras_seguridad(): void
+{
+    if (PHP_SAPI === 'cli' || headers_sent()) return;
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');          // no se puede incrustar en un sitio ajeno (clickjacking)
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(self), microphone=(self), geolocation=(self)');
+    // Todos los recursos (íconos, fuentes, PDF.js) se sirven desde el propio dominio: sin CDN externos.
+    header("Content-Security-Policy-Report-Only: default-src 'self'; "
+        . "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        . "style-src 'self' 'unsafe-inline'; "
+        . "font-src 'self' data:; "
+        . "img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; "
+        . "frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'");
+    if (es_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+
+/**
+ * Caducidad por inactividad de la web (la app de escritorio mantiene su sesión). Se llama al arrancar la
+ * sesión; si pasaron más de 12 h sin actividad, se cierra antes de atender la petición.
+ */
+function sesion_por_inactividad(): void
+{
+    if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'ProjectWebDesktop')) return;
+    if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['id'])) return;
+    $limite = 12 * 3600;
+    if (isset($_SESSION['_ultimo']) && (time() - (int)$_SESSION['_ultimo']) > $limite) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+    }
+    $_SESSION['_ultimo'] = time();
+}
+
+/**
+ * Última red de seguridad: un error no controlado nunca debe dejar la página en blanco ni mostrar la
+ * consulta SQL. Se registra con una referencia corta y se responde 500 (HTML o JSON según la petición).
+ */
+function manejar_error_no_controlado(\Throwable $e): void
+{
+    $ref = bin2hex(random_bytes(4));
+    error_log("[error $ref] " . get_class($e) . ': ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
+    if (headers_sent()) {
+        echo "\nError interno (ref. $ref)";
+        return;
+    }
+    while (ob_get_level() > 0) ob_end_clean();
+    http_response_code(500);
+    $ruta = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $json = str_starts_with($ruta, '/api/') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+    if ($json) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Error interno del servidor', 'ref' => $ref], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    $refE = htmlspecialchars($ref, ENT_QUOTES, 'UTF-8');
+    echo '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>Error interno | ProjectWeb</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f172a;color:#e2e8f0;font:16px/1.6 system-ui,sans-serif}'
+        . '.c{max-width:44rem;padding:3rem;text-align:center}h1{font-size:2.2rem;margin:0 0 1rem}p{color:#94a3b8}code{background:#1e293b;padding:.2rem .5rem;border-radius:.4rem}'
+        . 'a{display:inline-block;margin-top:1.6rem;padding:.8rem 1.6rem;border-radius:.8rem;background:#f97316;color:#fff;text-decoration:none;font-weight:600}</style></head><body><div class="c">'
+        . '<h1>Algo salió mal</h1><p>El error quedó registrado. Vuelve a intentarlo; si sigue pasando, envía esta referencia al administrador.</p>'
+        . '<p>Referencia: <code>' . $refE . '</code></p><a href="/dashboard">Volver al inicio</a></div></body></html>';
 }
 
 /** Usuario de solo lectura que se usa en el demo público (lo crea database/seed_demo.php) */
@@ -59,11 +127,6 @@ function is_cliente(): bool
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
     return in_array($_SESSION['rol'] ?? '', ['admin', 'cliente']);
-}
-
-function puede_editar(): bool
-{
-    return is_admin();
 }
 
 function is_visitante(): bool
@@ -248,22 +311,33 @@ function nomenclatura_pieza(array $pz): string
 
 /**
  * Guarda una imagen subida (jpg/png/webp/gif) en public/build/img/{carpeta}.
- * Devuelve el nombre del archivo o null si no hay archivo válido.
+ * Se vuelve a codificar con GD (quita EXIF, scripts incrustados y payloads), se limita el tamaño y se
+ * decide el nombre y la extensión en el servidor. Devuelve el nombre o null si la imagen no es válida.
  */
 function guardar_imagen_subida(string $campo, string $carpeta): ?string
 {
-    if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
+    $f = $_FILES[$campo] ?? null;
+    if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($f['tmp_name']) || !is_uploaded_file($f['tmp_name'])) {
         return null;
     }
+    if ((int)($f['size'] ?? 0) > 10 * 1024 * 1024) return null;   // 10 MB
     $permitidos = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
-    $mime = mime_content_type($_FILES[$campo]['tmp_name']);
-    if (!isset($permitidos[$mime])) {
+    $mime = mime_content_type($f['tmp_name']);
+    if (!isset($permitidos[$mime])) return null;
+    $ext = $permitidos[$mime];
+    try {
+        $img = (new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver()))->read($f['tmp_name']);
+        if ($img->width() > 2000 || $img->height() > 2000) $img->scaleDown(width: 2000, height: 2000);
+        $destino = __DIR__ . '/../public/build/img/' . preg_replace('/[^a-z0-9_-]/', '', $carpeta);
+        if (!is_dir($destino)) mkdir($destino, 0775, true);
+        $nombre = bin2hex(random_bytes(16)) . '.' . $ext;
+        $salida = in_array($ext, ['png', 'gif'], true) ? $img->toPng() : ($ext === 'webp' ? $img->toWebp(88) : $img->toJpeg(88));
+        $salida->save($destino . '/' . $nombre);
+        return is_file($destino . '/' . $nombre) ? $nombre : null;
+    } catch (\Throwable $e) {
+        error_log('Imagen subida: ' . $e->getMessage());
         return null;
     }
-    $destino = __DIR__ . '/../public/build/img/' . $carpeta;
-    if (!is_dir($destino)) mkdir($destino, 0775, true);
-    $nombre = md5(uniqid('', true)) . '.' . $permitidos[$mime];
-    return move_uploaded_file($_FILES[$campo]['tmp_name'], $destino . '/' . $nombre) ? $nombre : null;
 }
 
 /** Texto seguro para nombres de archivo: sin acentos ni espacios ("Tubo Conduit 1/2" => "Tubo-Conduit-1-2") */
@@ -434,11 +508,30 @@ function herramientas_visitante(): ?array
     return $cache = $u ? $u->herramientasPermitidas() : null;
 }
 
-function herramienta_permitida(?string $clave): bool
+/**
+ * Rutas que no son una herramienta del proyecto y que un visitante siempre puede usar
+ * (navegación general, soporte, enlaces públicos, media autenticada…).
+ */
+function ruta_general(string $ruta): bool
 {
-    if ($clave === null) return true;
+    $ruta = parse_url($ruta, PHP_URL_PATH) ?: '/';
+    foreach (\Model\Usuario::RUTAS_GENERALES as $p) {
+        if ($ruta === $p || str_starts_with($ruta, $p . '/')) return true;
+    }
+    return false;
+}
+
+/**
+ * ¿El visitante puede usar esta herramienta? Con `$clave` se resuelve contra `Usuario::HERRAMIENTAS`.
+ * Sin clave (ruta que no es una herramienta declarada) se aplica **denegar por defecto**: solo pasan
+ * las rutas generales. Así una herramienta nueva no queda expuesta al visitante por olvido.
+ */
+function herramienta_permitida(?string $clave, ?string $ruta = null): bool
+{
     $h = herramientas_visitante();
-    return $h === null || in_array($clave, $h, true);
+    if ($h === null) return true;   // admin, cliente o demo: sin restricción
+    if ($clave !== null) return in_array($clave, $h, true);
+    return ruta_general($ruta ?? (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'));
 }
 
 /** Primera pantalla del proyecto a la que el usuario tiene acceso (el programa, salvo que se le haya ocultado) */
@@ -467,6 +560,8 @@ function csrf_token(): string
 function csrf_verificar(): void
 {
     if (in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'OPTIONS'], true)) return;
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    sesion_por_inactividad();   // una sesión vencida no puede seguir enviando formularios
     $enviado = (string)($_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
     if ($enviado !== '' && hash_equals(csrf_token(), $enviado)) return;
 

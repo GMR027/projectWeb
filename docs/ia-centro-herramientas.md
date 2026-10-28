@@ -2,6 +2,15 @@
 
 _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 
+## Revisión 2026-10-27: contexto, menú y dos herramientas nuevas
+
+- **Contexto reutilizado:** `InformesIAController::contexto` guarda lo que devuelve `preparar()` en `Classes\ContextoIA` (`storage/cache/ia`, 30 min) y `resultado` lo reutiliza. Antes cada informe calculaba dos veces Curva S, líneas base, punch, causas y riesgos. Si el contexto caducó, se vuelve a preparar.
+- **Borradores de reportes diarios:** `diasSinReporte` los lee en una sola consulta (antes pedía el informe completo de cada uno). Índice `idx_informes_borrador` (`database/migracion_ia_rendimiento.sql`).
+- **Medidor de uso:** el chat se mide con su proyecto real y «Tabla desde documento» ya cuenta; `UsoIA::registrar` valida proyectos y guarda en una sola operación.
+- **Menú del escritorio:** buscador, favoritos y recientes; el grupo «Páginas del proyecto» sustituye a «Project Web (páginas, no son IA)». Se agregaron «Centro de trabajo» (`/resumen-ia`) y «Revisiones» (`/revisiones`).
+- **Claude Code con visión:** `capacidad.js` ya lo reconoce con imágenes (lee las fotos con `Read`), así que «Avance por fotos» y las tablas desde imagen no se bloquean.
+- **Herramientas nuevas:** `ItpCalidad` («Plan de inspección (ITP) con IA», crea planes y puntos en Calidad al aprobar) y `ComprasMateriales` («Compras y suministros», llena el grupo Compras).
+
 ## 🗂 Centro de IA (propuestas, historial y biblioteca)
 
 - Solo admin; ocho pestañas (`views/centro-ia/_pestanas.php`, una sola entrada «Centro de IA» en el menú: Resumen, Propuestas, Informes, Grabaciones, Auditoría de la IA, Biblioteca, Uso de la IA y Calidad de la IA) que reúnen las herramientas de IA (`classes/CentroIA.php`, `classes/Auditoria.php`, `controllers/CentroIAController.php`, vistas `views/centro-ia/`): **Propuestas** `/propuestas-ia` (bandeja web de lo pendiente; el panel «Análisis inteligente» con gráfico circular vive solo en la app de escritorio, `AppIAController::analisis` + `classes/AnalisisInteligente.php`), **Auditoría de la IA** `/historial-cambios` (antes se llamaba «Historial de cambios»; el nombre hoy es la pantalla de la sección Administración. Filtra `origen = 'ia'`, con filtros, exportación PDF/Excel, `?entidad_tipo=actividad&entidad_id=` para el historial de una entidad; enlazado desde la edición de actividad y de material) y **Biblioteca de análisis** `/biblioteca-ia` (todos los análisis, guardar/quitar/eliminar, comparar dos análisis por `huella`: nuevos, persisten, ya no aparecen).

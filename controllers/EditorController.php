@@ -213,7 +213,7 @@ class EditorController
             }
             $fondo = null;
             if ($g->fondo_imagen && is_file(Imagenes::CARPETA_VPLAN . '/' . basename($g->fondo_imagen))) {
-                $fondo = md5(uniqid('', true)) . '.' . pathinfo($g->fondo_imagen, PATHINFO_EXTENSION);
+                $fondo = bin2hex(random_bytes(16)) . '.' . pathinfo($g->fondo_imagen, PATHINFO_EXTENSION);
                 copy(Imagenes::CARPETA_VPLAN . '/' . basename($g->fondo_imagen), Imagenes::CARPETA_VPLAN . '/' . $fondo);
             }
             $nueva = new Grafico([

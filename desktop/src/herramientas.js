@@ -11,7 +11,7 @@ const GRUPOS = [
   { id: 'documentos', titulo: 'Documentos' },
   { id: 'seguridad', titulo: 'Seguridad y calidad' },
   { id: 'cierre', titulo: 'Entrega y conocimiento' },
-  { id: 'centro', titulo: 'Project Web (páginas, no son IA)' },
+  { id: 'centro', titulo: 'Páginas del proyecto' },
 ];
 
 const HERRAMIENTAS = [
@@ -25,6 +25,8 @@ const HERRAMIENTAS = [
   { id: 'materiales', grupo: 'datos', oculto: true, titulo: 'Análisis de materiales', sec: 'materiales', requiere: { minimo: 'basico', recomendado: 'basico' } },
   { id: 'inteligentes', grupo: 'datos', oculto: true, titulo: 'Materiales inteligentes', sec: 'inteligentes', requiere: { minimo: 'basico', recomendado: 'medio' } },
   { id: 'propuestas', grupo: 'control', titulo: 'Análisis inteligente (propuestas e historial)', sec: 'propuestas', requiere: null },
+  { id: 'centro-trabajo', grupo: 'control', titulo: 'Centro de trabajo (pendientes y alertas)', web: '/resumen-ia', requiere: null },
+  { id: 'revisiones', grupo: 'control', titulo: 'Revisiones del proyecto', web: '/revisiones', requiere: null },
   { id: 'informes', grupo: 'centro', titulo: 'Informes de IA', web: '/informes-ia', requiere: null },
   { id: 'normativa', grupo: 'centro', titulo: 'Normativa y especificaciones', web: '/normativa', requiere: null },
   { id: 'mapa', grupo: 'centro', titulo: 'Mapa de avance (planos)', web: '/mapa-avance', requiere: null },

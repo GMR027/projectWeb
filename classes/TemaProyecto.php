@@ -106,14 +106,25 @@ class TemaProyecto
         [, $claro, $oscuro] = self::PALETAS[$id];
         $rc = self::rgb($claro);
         $ro = self::rgb($oscuro);
+        // Texto legible encima del color primario (blanco u oscuro), calculado por contraste
+        $onClaro = self::textoSobre($claro);
+        $onOscuro = self::textoSobre($oscuro);
+        $onClaroHover = self::textoSobre(self::oscurecer($claro, 0.12));
+        $onOscuroHover = self::textoSobre(self::oscurecer($oscuro, 0.12));
 
         return ':root{--primary:' . $oscuro
+            . ';--on-primary:' . $onOscuro
+            . ';--on-primary-hover:' . $onOscuroHover
             . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}'
             . ':root[data-theme="light"]{--primary:' . $claro
+            . ';--on-primary:' . $onClaro
+            . ';--on-primary-hover:' . $onClaroHover
             . ';--primary-hover:' . self::oscurecer($claro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $rc) . ',.15)}'
             . ':root[data-theme="dark"]{--primary:' . $oscuro
+            . ';--on-primary:' . $onOscuro
+            . ';--on-primary-hover:' . $onOscuroHover
             . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}';
     }
@@ -127,6 +138,23 @@ class TemaProyecto
             (int)hexdec(substr($hex, 2, 2)),
             (int)hexdec(substr($hex, 4, 2)),
         ];
+    }
+
+    /**
+     * Color de texto que se lee mejor encima de $hex: blanco o el texto oscuro de la app.
+     * Usa el contraste WCAG (4.5:1) para no dejar botones ilegibles con paletas claras (ámbar, oro, lima…).
+     */
+    private static function textoSobre(string $hex): string
+    {
+        $lum = function (int $v): float {
+            $c = $v / 255;
+            return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        };
+        [$r, $g, $b] = self::rgb($hex);
+        $L = 0.2126 * $lum($r) + 0.7152 * $lum($g) + 0.0722 * $lum($b);
+        $conBlanco = 1.05 / ($L + 0.05);
+        $conOscuro = ($L + 0.05) / 0.05;   // #000 aproximado; el texto de la app (#0f172a) da casi lo mismo
+        return $conBlanco >= $conOscuro ? '#ffffff' : '#0f172a';
     }
 
     /** Mezcla el color con negro (0 = igual, 0.5 = mitad de brillo) */

@@ -63,7 +63,7 @@ class GraficoLamina extends ActiveRecord
         $copiar = function (string $nombre) use ($dir): ?string {
             $origen = $dir . '/' . basename($nombre);
             if (!is_file($origen)) return null;
-            $nuevo = md5(uniqid('', true)) . '.' . pathinfo($nombre, PATHINFO_EXTENSION);
+            $nuevo = bin2hex(random_bytes(16)) . '.' . pathinfo($nombre, PATHINFO_EXTENSION);
             return copy($origen, $dir . '/' . $nuevo) ? $nuevo : null;
         };
         $json = $this->marcas_json;

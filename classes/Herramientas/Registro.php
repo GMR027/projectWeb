@@ -8,7 +8,7 @@ class Registro
     /** @return array<string, class-string<Herramienta>> */
     public static function todas(): array
     {
-        $clases = [ReporteDiario::class, ResumenSemanal::class, DictadoBitacora::class, ComandosVoz::class, Minuta::class, NormativaAplicar::class, Lookahead::class, CausasRetraso::class, RiesgosPatron::class, Simulador::class, ClimaCalendario::class, FotosAvance::class, SeguridadCharla::class, PunchDictado::class, PunchAnalisis::class, CierreProyecto::class, ResumenEjecutivoDiario::class, PruebasCalidad::class, PrediccionAtrasos::class, RedactarRfi::class, Contradicciones::class];
+        $clases = [ReporteDiario::class, ResumenSemanal::class, DictadoBitacora::class, ComandosVoz::class, Minuta::class, NormativaAplicar::class, Lookahead::class, CausasRetraso::class, RiesgosPatron::class, Simulador::class, ClimaCalendario::class, FotosAvance::class, SeguridadCharla::class, PunchDictado::class, PunchAnalisis::class, CierreProyecto::class, ResumenEjecutivoDiario::class, PruebasCalidad::class, PrediccionAtrasos::class, RedactarRfi::class, Contradicciones::class, ItpCalidad::class, ComprasMateriales::class];
         $out = [];
         foreach ($clases as $c) $out[$c::id()] = $c;
         return $out;

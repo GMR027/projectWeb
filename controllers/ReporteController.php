@@ -6,6 +6,7 @@ use MVC\Router;
 use Model\Proyecto;
 use Model\Personal;
 use Model\ReporteDiario;
+use Model\Subactividad;
 use Classes\Imagenes;
 
 /** Reporte diario de obra y catálogo de personal del proyecto */
@@ -18,8 +19,8 @@ class ReporteController
     private static function actividades(Proyecto $proyecto): array
     {
         $r = [];
-        foreach ($proyecto->getPartidas() as $p) {
-            foreach ($p->getActividades() as $a) $r[(int)$a->id] = [$a, $p];
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            foreach ($bloque['actividades'] as $a) $r[(int)$a->id] = [$a, $bloque['partida']];
         }
         return $r;
     }
@@ -60,6 +61,7 @@ class ReporteController
             'titulo' => 'Reporte del ' . fecha_corta_es($r->fecha) . ' - ' . $proyecto->nombre,
             'proyecto' => $proyecto, 'reporte' => $r,
             'actividades' => array_values(array_filter(array_map(fn($id) => $acts[$id] ?? null, $r->getActividades()))),
+            'subactividades' => Subactividad::conteoPorProyecto((int)$proyecto->id),
             'personal' => array_values(array_filter(array_map(fn($id) => $personal[$id] ?? null, $r->getPersonal()))),
         ]);
     }
@@ -163,6 +165,7 @@ class ReporteController
             if (!in_array($actId, $r->getActividades(), true) || !isset($acts[$actId]) || !is_numeric($valor)) continue;
             [$a] = $acts[$actId];
             if ($a->esHito()) continue;
+            if ($a->tieneSubactividades()) continue;   // su avance es el promedio de las subactividades
             $nuevo = max(0, min(100, (int)round((float)$valor)));
             if ($nuevo === (int)$a->progreso) continue;
             $res = $db->query("SELECT progreso FROM actividad_avance WHERE actividad_id = $actId AND fecha = CURDATE()");

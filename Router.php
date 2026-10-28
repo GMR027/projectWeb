@@ -20,6 +20,7 @@ class Router
     public function comprobarRutas()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();   // algún include ya pudo iniciarla
+        sesion_por_inactividad();                                      // cierra la sesión de la web tras 12 h sin uso
         $currentUrl = strtok($_SERVER['REQUEST_URI'], '?') ?: '/';
         // Normalizar: si el proyecto corre en subdirectorio, se limpia aquí
         $method = $_SERVER['REQUEST_METHOD'];

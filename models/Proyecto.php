@@ -91,13 +91,31 @@ class Proyecto extends ActiveRecord
     /** Logo de la empresa: el del usuario dueño (rol cliente) o, si no tiene, el del proyecto */
     public function logoEmpresa(): ?string
     {
-        $dueno = Usuario::find($this->usuario_id);
+        static $cache = [];   // en listas se repite el dueño: una consulta por usuario, no por proyecto
+        $uid = (int)$this->usuario_id;
+        if (!array_key_exists($uid, $cache)) $cache[$uid] = Usuario::find($uid);
+        $dueno = $cache[$uid];
         return ($dueno && $dueno->logo) ? $dueno->logo : ($this->logo ?: null);
     }
 
     public function getPartidas(): array
     {
         return Partida::whereAll('proyecto_id', $this->id, 'orden ASC, codigo ASC');
+    }
+
+    /**
+     * Partidas con sus actividades cargadas en dos consultas (no una por partida).
+     * [ ['partida' => Partida, 'actividades' => [Actividad, …]], … ]
+     */
+    public function getPartidasConActividades(): array
+    {
+        $partidas = $this->getPartidas();
+        if (!$partidas) return [];
+        $porPartida = [];
+        foreach (Actividad::deProyecto((int)$this->id) as $a) $porPartida[(int)$a->partida_id][] = $a;
+        $out = [];
+        foreach ($partidas as $p) $out[] = ['partida' => $p, 'actividades' => $porPartida[(int)$p->id] ?? []];
+        return $out;
     }
 
     public function getJornada(): array
@@ -132,16 +150,24 @@ class Proyecto extends ActiveRecord
     }
 
     /** Calcula progreso ponderado del proyecto */
+    /**
+     * Avance general del proyecto ponderado por duración (los hitos no pesan), la misma regla que la partida,
+     * el Gantt y la Curva S. Si solo hay hitos se usa el promedio simple para no mostrar 0 %.
+     * Se memoriza por proyecto: las vistas lo piden 2–3 veces.
+     */
     public function getProgreso(): float
     {
-        $total = 0;
-        $suma = 0;
-        foreach ($this->getPartidas() as $partida) {
-            foreach ($partida->getActividades() as $act) {
-                $total++;
-                $suma += (int)$act->progreso;
-            }
-        }
-        return $total > 0 ? round($suma / $total, 1) : 0.0;
+        static $memo = [];
+        $id = (int)$this->id;
+        if (array_key_exists($id, $memo)) return $memo[$id];
+        $r = self::$db->query(
+            "SELECT ROUND(COALESCE(
+                SUM(CASE WHEN a.hito = 0 THEN GREATEST(1, a.duracion_dias) * a.progreso ELSE 0 END) /
+                NULLIF(SUM(CASE WHEN a.hito = 0 THEN GREATEST(1, a.duracion_dias) ELSE 0 END), 0),
+                AVG(a.progreso)
+            ), 1) pct
+            FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $id"
+        );
+        return $memo[$id] = (float)($r ? ($r->fetch_row()[0] ?? 0) : 0);
     }
 }

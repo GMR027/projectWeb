@@ -32,6 +32,30 @@ class Novedades
 
     private const ENTRADAS = [
         [
+            'fecha'  => '2026-10-27 10:00',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Línea de tiempo activa e historial de cambios',
+            'texto'  => 'La Línea de tiempo muestra todos los meses con actividades en un Gantt diario: arrastra las barras para reprogramar, usa la rueda para ampliar y el botón central para moverte; el cambio se guarda al instante y recalcula duraciones y dependencias. En Administración, Historial de cambios reúne lo que se modificó en cada herramienta (quién, cuándo y qué), con opción de aceptar o cancelar el cambio.',
+        ],
+        [
+            'fecha'  => '2026-10-26 18:30',
+            'tipo'   => 'nuevo',
+            'titulo' => 'Láminas del Editor en submittals y RFI, y vínculos por elemento en normativa',
+            'texto'  => 'Los paquetes de submittals y los RFI ahora pueden llevar láminas del Editor adjuntas: el PDF de cada documento las incluye y, en submittals, la tabla de materiales muestra el detalle de lo que se está revisando. En Normativa, cada vínculo queda ligado al material o la actividad concreta y se consulta desde «Por material y actividad».',
+        ],
+        [
+            'fecha'  => '2026-10-26 12:00',
+            'tipo'   => 'mejora',
+            'titulo' => 'vPlan, Editor y Símbolos más fáciles de usar',
+            'texto'  => 'Al entrar por primera vez, vPlan, el Editor y la biblioteca de Símbolos explican qué se puede hacer y cómo empezar; el modo diseño del vPlan muestra el tamaño real de la hoja y los paneles estrenan la misma cabecera, pestañas y buscador en todas las herramientas.',
+        ],
+        [
+            'fecha'  => '2026-10-25 09:00',
+            'tipo'   => 'mejora',
+            'titulo' => 'Tablas de vPlan y filtros de Last Planner en el PDF',
+            'texto'  => 'Las tablas dentro de las láminas de vPlan se imprimen completas, sin encimarse ni salirse de su bloque, y la lámina y su PDF usan la misma letra. El PDF del Last Planner respeta los filtros de partida, periodo y restricción que tengas puestos en pantalla, y el Historial de cambios muestra nombres legibles en lugar de códigos internos.',
+        ],
+        [
             'fecha'  => '2026-10-22 11:00',
             'tipo'   => 'nuevo',
             'titulo' => 'Telegram: avisos, avance y fotos desde el celular, y clima automático',

@@ -56,3 +56,6 @@
 # Clave de cifrado del token de Telegram (si no se usa TELEGRAM_KEY): nunca al repo
 /storage/secretos/
 /storage/clima_auto.json*
+
+# Contexto temporal de las herramientas de IA (se regenera solo)
+/storage/cache/

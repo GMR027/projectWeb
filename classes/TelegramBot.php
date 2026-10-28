@@ -260,6 +260,7 @@ class TelegramBot
         if (!$f) return $err;
         if ((int)$f['hito']) return 'Un hito no lleva porcentaje de avance.';
         $a = Actividad::find($aid);
+        if ($a->tieneSubactividades()) return 'El avance de <b>' . Telegram::h(trim($f['codigo'] . ' ' . $f['nombre'])) . '</b> se calcula como promedio de sus subactividades. Edítalas desde la actividad en la web.';
         $antes = (int)$a->progreso;
         $a->progreso = max(0, min(100, $pct));
         $a->sincronizarStatus();

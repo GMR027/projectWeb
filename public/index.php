@@ -71,17 +71,27 @@ use Controllers\MinutaController;
 use Controllers\CostosController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
+use Controllers\CalidadController;
+use Controllers\EquipoController;
+use Controllers\ContratosController;
+use Controllers\CierreController;
 use Controllers\CompartirController;
 use Controllers\EnlaceClienteController;
 use Controllers\PersonalizacionController;
 use Controllers\DatosObraController;
+
+// Fotos y planos de los proyectos: se entregan solo con permiso (antes eran archivos estáticos).
+// Apache reescribe /uploads/… aquí; el servidor de desarrollo usa public/router.php.
+if (str_starts_with(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/uploads/')) {
+    \Classes\Media::atender();
+}
 
 $router = new Router();
 
 // ========== AUTH ==========
 $router->get('/login', [AuthController::class, 'login']);
 $router->post('/login', [AuthController::class, 'login']);
-$router->get('/logout', [AuthController::class, 'logout']);
+$router->post('/logout', [AuthController::class, 'logout']);   // cerrar sesión cambia estado: solo por POST
 $router->get('/usuarios', [AuthController::class, 'listar']);
 $router->get('/usuarios/crear', [AuthController::class, 'crear']);
 $router->post('/usuarios/crear', [AuthController::class, 'crear']);
@@ -174,6 +184,12 @@ $router->post('/programa/actividades/editar', [ProgramaController::class, 'edita
 $router->post('/programa/actividades/eliminar', [ProgramaController::class, 'eliminarActividad']);
 $router->post('/programa/actividades/rapida', [ProgramaController::class, 'actividadRapida']);
 $router->post('/programa/actividades/mover', [ProgramaController::class, 'moverActividad']);
+// Subactividades (solo se gestionan desde la edición de la actividad)
+$router->post('/programa/subactividades/crear', [ProgramaController::class, 'crearSubactividad']);
+$router->post('/programa/subactividades/editar', [ProgramaController::class, 'editarSubactividad']);
+$router->post('/programa/subactividades/eliminar', [ProgramaController::class, 'eliminarSubactividad']);
+$router->post('/programa/subactividades/sheetflow', [ProgramaController::class, 'crearTablaSubactividades']);
+$router->post('/programa/subactividades/sheetflow/quitar', [ProgramaController::class, 'quitarTablaSubactividades']);
 // Restricciones
 $router->get('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
 $router->post('/programa/restricciones/crear', [ProgramaController::class, 'crearRestriccion']);
@@ -355,6 +371,30 @@ $router->get('/rfi/pdf', [RfiController::class, 'pdf']);
 $router->post('/rfi/guardar', [RfiController::class, 'guardar']);
 $router->post('/rfi/estado', [RfiController::class, 'estado']);
 $router->post('/rfi/eliminar', [RfiController::class, 'eliminar']);
+
+// Calidad e inspecciones (ITP)
+$router->get('/calidad', [CalidadController::class, 'index']);
+$router->post('/calidad/guardar', [CalidadController::class, 'guardar']);
+$router->post('/calidad/punto', [CalidadController::class, 'punto']);
+$router->post('/calidad/punto/agregar', [CalidadController::class, 'puntoAgregar']);
+$router->post('/calidad/eliminar', [CalidadController::class, 'eliminar']);
+// Equipo y maquinaria
+$router->get('/equipo', [EquipoController::class, 'index']);
+$router->post('/equipo/guardar', [EquipoController::class, 'guardar']);
+$router->post('/equipo/horas', [EquipoController::class, 'horas']);
+$router->post('/equipo/horas/eliminar', [EquipoController::class, 'eliminarHoras']);
+$router->post('/equipo/eliminar', [EquipoController::class, 'eliminar']);
+// Contratos, fianzas y seguros
+$router->get('/contratos', [ContratosController::class, 'index']);
+$router->post('/contratos/guardar', [ContratosController::class, 'guardar']);
+$router->post('/contratos/eliminar', [ContratosController::class, 'eliminar']);
+// Cierre de obra
+$router->get('/cierre', [CierreController::class, 'index']);
+$router->post('/cierre/config', [CierreController::class, 'config']);
+$router->post('/cierre/item', [CierreController::class, 'guardarItem']);
+$router->post('/cierre/item/eliminar', [CierreController::class, 'eliminarItem']);
+$router->post('/cierre/sugeridos', [CierreController::class, 'sugeridos']);
+$router->get('/cierre/pdf', [CierreController::class, 'pdf']);
 $router->get('/compartir', [CompartirController::class, 'index']);
 $router->post('/compartir/crear', [CompartirController::class, 'crear']);
 $router->post('/compartir/revocar', [CompartirController::class, 'revocar']);

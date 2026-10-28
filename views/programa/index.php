@@ -255,7 +255,8 @@
                                            class="input-fecha fecha-inicio-input hide-m"
                                            value="<?php echo s($fila['fecha_inicio']); ?>"
                                            data-actividad-id="<?php echo s($fila['id']); ?>"
-                                           data-tipo="inicio">
+                                           data-tipo="inicio"
+                                           aria-label="Fecha de inicio de <?php echo s($fila['codigo']); ?>">
                                     <span class="solo-movil mono"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
                                 <?php else: ?>
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
@@ -268,7 +269,8 @@
                                            class="input-fecha fecha-fin-input hide-m"
                                            value="<?php echo s($fila['fecha_fin']); ?>"
                                            data-actividad-id="<?php echo s($fila['id']); ?>"
-                                           data-tipo="fin">
+                                           data-tipo="fin"
+                                           aria-label="Fecha de fin de <?php echo s($fila['codigo']); ?>">
                                     <span class="solo-movil mono"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
                                 <?php else: ?>
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
@@ -282,12 +284,16 @@
                                     <div class="barra-progreso barra-sm barra-status-<?php echo s($fila['status']); ?>">
                                         <div class="barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
                                     </div>
-                                    <?php if ($puedeGestionar): ?>
+                                    <?php $conSubactividades = !empty($fila['subactividades_total']); ?>
+                                    <?php if ($puedeGestionar && !$conSubactividades): ?>
                                         <input type="number" class="input-avance input-progreso" min="0" max="100" step="1"
                                                value="<?php echo (int)$fila['progreso']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>"
                                                aria-label="Avance (%)" title="Avance (%)">%
                                     <?php else: ?>
                                         <span class="mono text-sm"><?php echo s($fila['progreso']); ?>%</span>
+                                        <?php if ($conSubactividades): ?>
+                                            <i class="fa-solid fa-lock text-muted" data-ayuda="El avance es el promedio de <?php echo (int)$fila['subactividades_total']; ?> subactividad(es). Se editan dentro de la actividad." data-manual="/manual#programa" title="Promedio de <?php echo (int)$fila['subactividades_total']; ?> subactividad(es)"></i>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>

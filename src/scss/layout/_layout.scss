@@ -40,7 +40,7 @@ body.menu-abierto { overflow: hidden; }
   display: flex; align-items: center; justify-content: center;
   position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
   width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 0; cursor: pointer;
-  background: $primary; color: #fff; font-size: 2.4rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
+  background: $primary; color: $on-primary; font-size: 2.4rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
 }
 @media print { .btn-menu-movil, .sidebar-fondo { display: none !important; } }
 
@@ -89,7 +89,7 @@ body.menu-abierto { overflow: hidden; }
 
   &.active {
     background-color: var(--primary-glow);
-    color: $primary;
+    color: $text;
     border-left: 3px solid $primary;
     padding-left: calc(1.2rem - 3px);
   }
@@ -368,6 +368,10 @@ body.menu-abierto { overflow: hidden; }
     opacity: 0.5;
 }
 
+// Formularios y botones que deben verse como un enlace (p. ej. «Salir», que ahora es POST)
+.form-inline { display: inline; margin: 0; }
+.enlace-boton { border: 0; background: none; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+
 // Barra del demo público (solo lectura)
 .demo-banner {
   display: flex; align-items: center; justify-content: center; gap: 1.6rem; flex-wrap: wrap;
@@ -376,9 +380,9 @@ body.menu-abierto { overflow: hidden; }
   .demo-banner-salir { background: rgba(0, 0, 0, .25); padding: .3rem 1rem; border-radius: 99rem; text-decoration: none; }
 }
 
-.nav-badge { margin-left: auto; background: var(--primary); color: #fff; font-size: 1.1rem; font-weight: 700; min-width: 2rem; height: 2rem; padding: 0 .6rem; border-radius: 99rem; display: inline-grid; place-items: center; }
+.nav-badge { margin-left: auto; background: var(--primary); color: var(--on-primary); font-size: 1.1rem; font-weight: 700; min-width: 2rem; height: 2rem; padding: 0 .6rem; border-radius: 99rem; display: inline-grid; place-items: center; }
 .msg-fila { cursor: pointer; &.sin-leer td { font-weight: 700; } &.sin-leer td:first-child { box-shadow: inset 3px 0 0 var(--primary); } }
-.msg-tabs { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 1.6rem; a { padding: .6rem 1.4rem; border-radius: 99rem; border: 1px solid var(--border); color: var(--text-muted); text-decoration: none; font-size: 1.3rem; &.activo { background: var(--primary); border-color: var(--primary); color: #fff; } } }
+.msg-tabs { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 1.6rem; a { padding: .6rem 1.4rem; border-radius: 99rem; border: 1px solid var(--border); color: var(--text-muted); text-decoration: none; font-size: 1.3rem; &.activo { background: var(--primary); border-color: var(--primary); color: var(--on-primary); } } }
 .msg-cuerpo { white-space: pre-wrap; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 1rem; padding: 1.6rem; line-height: 1.7; }
 .msg-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.2rem 2.4rem; margin-bottom: 2rem; dt { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); } dd { margin: .2rem 0 0; font-weight: 600; word-break: break-word; } }
 
@@ -419,7 +423,7 @@ body.menu-abierto { overflow: hidden; }
   a { padding: .6rem 1.4rem; border-radius: 99rem; border: 1px solid var(--border); color: var(--text-muted); font-size: 1.3rem; text-decoration: none;
     &:hover { border-color: var(--primary); color: var(--text); }
     &.vacia { opacity: .5; }
-    b { background: var(--primary); color: #fff; border-radius: 99rem; padding: 0 .6rem; margin-left: .4rem; font-size: 1.1rem; } }
+    b { background: var(--primary); color: var(--on-primary); border-radius: 99rem; padding: 0 .6rem; margin-left: .4rem; font-size: 1.1rem; } }
 }
 .acc-pag-sec { margin-bottom: 1.6rem; scroll-margin-top: 2rem; h3 { margin-bottom: 1rem; } }
 .acc-ir { float: right; }
@@ -454,9 +458,17 @@ body.menu-abierto { overflow: hidden; }
   .burbuja-manual {
     display: inline-flex; align-items: center; gap: .5rem; margin-top: .8rem; padding: .35rem .9rem; border-radius: .6rem;
     background: var(--primary-glow); color: var(--primary); font-weight: 600; font-size: 1.2rem; text-decoration: none;
-    &:hover, &:focus-visible { background: var(--primary); color: #fff; }
+    &:hover, &:focus-visible { background: var(--primary); color: var(--on-primary); }
   }
 }
 @keyframes burbuja-entra { from { opacity: 0; transform: translateY(.3rem); } to { opacity: 1; transform: none; } }
 @media (hover: none) { .burbuja-ayuda { display: none !important; } }
 @media print { .burbuja-ayuda { display: none !important; } }
+
+// Enlace para saltar la navegación (solo visible con teclado)
+.saltar-contenido {
+  position: absolute; left: -9999px; top: 0; z-index: 3000;
+  padding: 1rem 1.6rem; border-radius: 0 0 $radius-md 0;
+  background: $primary; color: $on-primary; font-weight: 700; text-decoration: none;
+  &:focus { left: 0; outline: 3px solid var(--secondary); outline-offset: 2px; }
+}

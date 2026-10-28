@@ -3,8 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Mientras no se configure otro, se usa el servidor local de desarrollo: ahí aparece el inicio de sesión
-const SERVIDOR_DEFECTO = 'http://localhost:8010';   // el 8000 suele estar ocupado por otra app
+// En una instalación nueva no se adivina el servidor: el usuario lo escribe en Ajustes → Servidor.
+// (Antes apuntaba a localhost:8010 y la app instalada fallaba en el primer arranque.)
+const SERVIDOR_DEFECTO = '';
 const VACIA = { servidor: SERVIDOR_DEFECTO, proveedores: [], secretos: {}, zoom: 100, activa: '', voz: { motor: 'auto', modelo: '', idioma: 'auto', conexion: '', binario: '' }, vigilancia: { activa: false, minutos: 30 }, porTarea: { rapida: '', avanzada: '' } };
 const ZOOM_MIN = 50, ZOOM_MAX = 200;
 

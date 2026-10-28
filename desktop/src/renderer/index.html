@@ -22,13 +22,15 @@
 <div id="cuerpo">
 <div id="hueco"><p id="hueco-msg" class="nota"></p>
   <div id="hueco-error" hidden><form id="err-form"><h2>Servidor de Project Web</h2><p id="err-detalle" class="msg"></p>
+    <p class="nota">Escribe la dirección de tu Project Web (por ejemplo <code>https://projectweb.tu-empresa.com</code>). La app la recuerda en este equipo.</p>
     <label>Dirección del servidor <input id="err-url" placeholder="https://tu-dominio" required></label>
-    <button type="submit">Reintentar</button></form></div></div>
+    <button type="submit">Guardar y conectar</button></form></div></div>
 
 <main id="panel-ia" class="panel" hidden>
 <aside id="ia-menu" aria-label="Herramientas IA">
   <h3>Herramientas IA</h3>
   <label class="menu-proy">Proyecto <select id="ia-menu-proyecto"></select></label>
+  <input type="search" id="ia-menu-buscar" placeholder="Buscar herramienta…" aria-label="Buscar herramienta de IA" autocomplete="off">
   <div id="ia-menu-lista"></div>
   <p id="ia-menu-conn" class="nota"></p>
 </aside>

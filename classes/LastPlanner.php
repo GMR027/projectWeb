@@ -100,10 +100,10 @@ class LastPlanner
     public static function tarjetasTodas(Proyecto $proyecto, bool $ocultarCompletadas = false, string $desde = '1900-01-01', string $hasta = '2999-12-31'): array
     {
         $acts = [];
-        foreach ($proyecto->getPartidas() as $partida) {
-            foreach ($partida->getActividades() as $a) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            foreach ($bloque['actividades'] as $a) {
                 if ($ocultarCompletadas && self::completada($a)) continue;
-                $acts[] = [$partida, $a];
+                $acts[] = [$bloque['partida'], $a];
             }
         }
         if (!$acts) return [];

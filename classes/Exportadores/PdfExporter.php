@@ -74,7 +74,9 @@ class PdfExporter extends BaseExporter
         include __DIR__ . '/../../views/exportar/pdf-gantt.php';
         $html = ob_get_clean();
 
-        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto, 'isRemoteEnabled' => true, 'chroot' => realpath(__DIR__ . '/../../public')]);
+        // isRemoteEnabled en false: el HTML no puede provocar peticiones salientes (SSRF); las imágenes
+        // se leen del disco con chroot en public/.
+        $pdf = Pdf::generar($html, 'tabloid', 'landscape', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto, 'isRemoteEnabled' => false, 'chroot' => realpath(__DIR__ . '/../../public')]);
 
         $nombreArchivo = $this->nombreFinal($nombreBase, 'pdf');
         $ruta = $this->carpetaSalida . '/' . $nombreArchivo;

@@ -46,6 +46,14 @@ class SoporteController
     public static function crear(Router $router)
     {
         self::exigirCliente();
+        // Límite anti-abuso: 10 mensajes por hora y usuario (el formulario público de contacto ya tiene el suyo)
+        if (Soporte::total('usuario_id = ' . (int)$_SESSION['id'] . ' AND creado > (NOW() - INTERVAL 1 HOUR)') >= 10) {
+            $router->render('soporte/index', [
+                'titulo' => 'Soporte', 'mensajes' => $mensajes = Soporte::deUsuario((int)$_SESSION['id']), 'respuestas' => self::respuestasDe($mensajes),
+                'soporte' => new Soporte(), 'alertas' => ['error' => ['Has enviado varios mensajes seguidos. Espera un momento o responde en el hilo que ya abriste.']],
+            ]);
+            return;
+        }
         $soporte = new Soporte($_POST);
         $soporte->usuario_id = (int)$_SESSION['id'];   // siempre el usuario en sesión
         $soporte->leido = 0;

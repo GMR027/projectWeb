@@ -77,6 +77,8 @@ class Instaladores
         }
         $nombre = self::nombreValido($destino ?: (string)$archivo['name']);
         if (!$nombre) throw new \RuntimeException('Nombre o tipo no permitido. Usa .deb, .rpm, .pacman, .AppImage, .tar.gz o SHA256SUMS.txt o latest-linux.yml (sin espacios).');
+        // Un instalador es un binario: se revisa igual que cualquier archivo subido (antivirus incluido)
+        if ($motivos = EscanerArchivos::revisar($archivo['tmp_name'], $nombre, true)) throw new \RuntimeException(implode(' ', $motivos));
         $final = self::dir() . '/' . $nombre;
         $reemplazo = is_file($final);
         $antes = $reemplazo ? self::sha($final) : '';

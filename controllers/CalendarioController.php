@@ -42,8 +42,9 @@ class CalendarioController
         $finMes->modify('last day of this month');
 
         $resultado = [];
-        foreach ($proyecto->getPartidas() as $partida) {
-            foreach ($partida->getActividades() as $act) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            $partida = $bloque['partida'];
+            foreach ($bloque['actividades'] as $act) {
                 $inicioAct = new \DateTime($act->fecha_inicio);
                 $finAct = new \DateTime($act->fecha_fin);
 

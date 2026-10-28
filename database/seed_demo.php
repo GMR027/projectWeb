@@ -7,7 +7,8 @@
  * - Crea (o recrea) el proyecto ficticio "DEMO" (edificio corporativo multidisciplinario: obra civil, estructura,
  *   instalaciones eléctricas, hidrosanitarias, HVAC, voz y datos, acabados) con programa, restricciones, reportes diarios,
  *   bitácora, minutas, materiales, submittals/MSR, curvas de productividad y vPlan (y, con seed_demo_extras.php, dependencias,
- *   Archivo, Editor, Símbolos y View360). Las fechas son relativas a hoy.
+ *   Archivo, Editor, Símbolos y View360). Al final, seed_demo_nuevas.php y seed_demo_herramientas.php completan las herramientas
+ *   de campo, planeación, costos y documentos. Las fechas son relativas a hoy.
  * - Crea el usuario de solo lectura «demo» (rol visitante) con acceso únicamente a ese proyecto.
  *   No tiene contraseña utilizable: se entra desde el botón «Demo» de la página principal (/demo).
  * - Las fotos se descargan de Unsplash (licencia gratuita) y se guardan en public/uploads.
@@ -17,6 +18,7 @@
  */
 
 require_once __DIR__ . '/../includes/app.php';
+if (PHP_SAPI === 'cli' && session_status() === PHP_SESSION_NONE && !headers_sent()) @session_start();   // las herramientas que pasan por usuario_actual() la piden
 
 use Classes\Calendario;
 use Classes\CurvaProductividad;
@@ -215,8 +217,8 @@ foreach ($programa as $i => [$nombrePartida, $color, $acts]) {
             'prioridad' => $prio, 'hito' => $hito, 'orden' => $j + 1, 'pta' => 1,
         ]);
         $a->sincronizarStatus();
-        $a->guardar();
-        $aid = (int)$db->insert_id;
+        $res = $a->guardar();
+        $aid = (int)($res['id'] ?? 0);   // Actividad::guardar también anota el avance en actividad_avance: insert_id ya no es la actividad
         $todas[] = ['id' => $aid, 'nombre' => $nombre, 'inicio' => $inicio, 'fin' => $fin, 'prog' => $prog, 'partida' => $partidaId, 'ipartida' => $i];
     }
     Partida::find($partidaId)->recalcularFechas();
@@ -439,7 +441,8 @@ $hash = password_hash(bin2hex(random_bytes(24)), PASSWORD_BCRYPT);   // contrase
 $uid = (int)$q("INSERT INTO usuarios (nombre, email, password, rol, confirmado) VALUES ('Usuario Demo', 'demo@projectweb.demo', {$str($hash)}, 'visitante', 1)");
 $q("INSERT INTO proyecto_accesos (proyecto_id, usuario_id) VALUES ($pid, $uid)");
 
-require __DIR__ . '/seed_demo_extras.php';   // dependencias, Archivo, Editor, Símbolos y View360
-require __DIR__ . '/seed_demo_nuevas.php';   // órdenes de cambio, líneas base, Redactor, SheetFlow, MSR configurable, vPlan libre, Comparador
+require __DIR__ . '/seed_demo_extras.php';       // dependencias, Archivo, Editor, Símbolos y View360
+require __DIR__ . '/seed_demo_nuevas.php';       // órdenes de cambio, líneas base, Redactor, SheetFlow, MSR configurable, vPlan libre, Comparador
+// seed_demo_nuevas.php (que ya ejecuta seed_demo_estampas.php) termina con seed_demo_herramientas.php (campo, costos, recursos, RFI, seguridad, punch, evidencias…)
 
 echo "Listo. Demo: proyecto $pid · usuario demo $uid (entra por /demo)\n";

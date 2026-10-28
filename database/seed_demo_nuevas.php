@@ -4,6 +4,8 @@
  * órdenes de cambio, líneas base (con comparación), cruce de materiales (materiales nuevos + vínculos con actividades),
  * Redactor (documentos en carpetas), SheetFlow (tablas con fórmulas), carpetas de Minutas, un MSR configurable,
  * un vPlan de láminas libres, Comparador (dos revisiones de un plano en Archivo) y calendario con más festivos/paros.
+ * Al final ejecuta seed_demo_herramientas.php (evidencias, punch, seguridad, RFI, recursos, costos, mapa de avance,
+ * subactividades, campos personalizados, carpetas del Archivo y Unir documentos).
  *
  *   php database/seed_demo_nuevas.php            (crea/recrea)
  *   php database/seed_demo_nuevas.php --limpiar  (solo borra lo que sembró)
@@ -138,12 +140,12 @@ if (in_array('--limpiar', $argv ?? [], true)) { echo "Solo se limpió lo anterio
 
 // ---------------------------------------------------------------- imágenes de la obra
 echo "Imágenes...\n";
-$fotoAcero = $wiki('Steel frame building under construction in Taiwan.jpg', 1800, 'wiki-acero-taiwan.jpg');
-$fotoEstr = $wiki('Steel frame structure.jpg', 1800, 'wiki-acero-estructura.jpg');
-$planoBase = $wiki('Oliver Building typical floor plan.png', 1200, 'wiki-oliver-tipica.png');
 $fotoCampo = "$landing/campo.jpg";
 $fotoGrua = "$landing/grua.jpg";
 $fotoPlanos = "$landing/planos.jpg";
+$fotoAcero = $wiki('Steel frame building under construction in Taiwan.jpg', 1800, 'wiki-acero-taiwan.jpg') ?: $fotoCampo;
+$fotoEstr = $wiki('Steel frame structure.jpg', 1800, 'wiki-acero-estructura.jpg') ?: $fotoGrua;
+$planoBase = $wiki('Oliver Building typical floor plan.png', 1200, 'wiki-oliver-tipica.png') ?: (is_file($fotoPlanos) ? $fotoPlanos : null);   // sin red: plano local de la landing
 
 // Logos ficticios
 $logo = function (string $nombre, string $hexA, string $hexB, string $sub) use ($color, $texto, $cache): ?string {
@@ -163,7 +165,7 @@ $logoHorizonte = $guardarImg($logo('HORIZONTE', '#00b4d8', '#1c2541', 'CONSTRUCT
 
 // Planta tipo: recorte del plano de dominio público con cajetín de ProjectWeb (R1 y R2 con cambios marcados)
 $plantaR1 = $plantaR2 = null;
-if ($planoBase && ($src = @imagecreatefrompng($planoBase))) {
+if ($planoBase && ($src = @imagecreatefromstring((string)@file_get_contents($planoBase)))) {
     $crop = imagecreatetruecolor(1121, 700);
     imagefill($crop, 0, 0, imagecolorallocate($crop, 255, 255, 255));
     imagecopy($crop, $src, 0, 0, 0, 0, 1121, 615);
@@ -646,5 +648,8 @@ require __DIR__ . '/seed_demo_estampas.php';
 
 // El demo solo muestra el MSR configurable (el «MSR 1» clásico se quita; seed_demo.php lo vuelve a crear)
 $q("DELETE FROM msrs WHERE proyecto_id = $pid AND nombre = 'MSR 1'");
+
+// Evidencias, punch, seguridad, RFI, recursos, costos, mapa de avance, subactividades, campos, carpetas, Unir documentos…
+require __DIR__ . '/seed_demo_herramientas.php';
 
 echo "Herramientas nuevas del demo listas.\n";

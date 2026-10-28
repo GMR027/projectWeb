@@ -109,11 +109,20 @@ class Salud
      */
     public static function climaYPermisos(int $pid, int $dias = 7): array
     {
+        $ini = date('Y-m-d');
+        $fin = date('Y-m-d', strtotime("+$dias days"));
+        $diasClima = Clima::dias($pid, $ini, $fin);
+        if (!$diasClima) return [];
+        // Un solo SELECT para los permisos del rango (antes: uno por cada día con lluvia o viento)
+        $tipos = "'" . implode("','", self::PERMISOS_CLIMA) . "'";
+        $permisos = self::filas("SELECT id, tipo, titulo, estado, actividad_id, vigente_desde, vigente_hasta FROM permisos_trabajo
+            WHERE proyecto_id = $pid AND estado IN ('solicitado','aprobado')
+              AND vigente_desde <= '$fin' AND vigente_hasta >= '$ini' AND tipo IN ($tipos) ORDER BY vigente_hasta");
         $out = [];
-        foreach (Clima::dias($pid, date('Y-m-d'), date('Y-m-d', strtotime("+$dias days"))) as $d) {
+        foreach ($diasClima as $d) {
             if (!($c = Clima::condicion($d))) continue;
-            $p = self::permisosDelDia($pid, $d['fecha']);
-            if ($p) $out[] = ['fecha' => $d['fecha'], 'condicion' => $c, 'precip' => (float)$d['precip_mm'], 'viento' => (float)$d['viento_kmh'], 'permisos' => $p];
+            $delDia = array_values(array_filter($permisos, fn($p) => $p['vigente_desde'] <= $d['fecha'] && $p['vigente_hasta'] >= $d['fecha']));
+            if ($delDia) $out[] = ['fecha' => $d['fecha'], 'condicion' => $c, 'precip' => (float)$d['precip_mm'], 'viento' => (float)$d['viento_kmh'], 'permisos' => $delDia];
         }
         return $out;
     }
@@ -128,41 +137,55 @@ class Salud
         $pid = (int)$proyecto->id;
         $hoy = date('Y-m-d');
         $en7 = date('Y-m-d', strtotime('+7 days'));
-        $n = fn(string $sql) => (int)(self::filas($sql)[0]['n'] ?? 0);
         $ind = [];
 
+        // Los conteos de programa, restricciones, submittals, punch y cambios en UNA consulta
+        // (antes eran 10 consultas por proyecto: el panel de inicio lo hacía por cada tarjeta).
+        $c = self::filas("SELECT
+            (SELECT COUNT(*) FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND a.hito = 0) total,
+            (SELECT COUNT(*) FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND a.hito = 0 AND a.progreso < 100 AND a.fecha_fin < '$hoy') atras,
+            (SELECT COUNT(*) FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND r.estado = 'activa') rest,
+            (SELECT COUNT(DISTINCT r.id) FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas p ON p.id = a.partida_id
+                WHERE p.proyecto_id = $pid AND r.estado = 'activa' AND a.progreso < 100 AND a.fecha_inicio <= '$en7') rest_urg,
+            (SELECT COUNT(*) FROM msr_items WHERE proyecto_id = $pid AND status = 'P' AND fecha_envio_real IS NULL AND fecha_envio_requerida IS NOT NULL AND fecha_envio_requerida < '$hoy') venc,
+            (SELECT COUNT(*) FROM submittals WHERE proyecto_id = $pid AND estatus = 'rechazado') rech,
+            (SELECT COUNT(*) FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND severidad IN ('alta','critica')) graves,
+            (SELECT COUNT(*) FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND severidad = 'critica') crit,
+            (SELECT COUNT(*) FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND fecha_limite IS NOT NULL AND fecha_limite < '$hoy') venc_p,
+            (SELECT COUNT(*) FROM ordenes_cambio WHERE proyecto_id = $pid AND estado = 'solicitada') oc
+        ")[0] ?? [];
+        $total = (int)($c['total'] ?? 0);
+        $atras = (int)($c['atras'] ?? 0);
+        $rest = (int)($c['rest'] ?? 0);
+        $restUrg = (int)($c['rest_urg'] ?? 0);
+        $venc = (int)($c['venc'] ?? 0);
+        $rech = (int)($c['rech'] ?? 0);
+        $graves = (int)($c['graves'] ?? 0);
+        $crit = (int)($c['crit'] ?? 0);
+        $vencP = (int)($c['venc_p'] ?? 0);
+        $oc = (int)($c['oc'] ?? 0);
+
         // Atraso del programa
-        $total = $n("SELECT COUNT(*) n FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND a.hito = 0");
-        $atras = $n("SELECT COUNT(*) n FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND a.hito = 0 AND a.progreso < 100 AND a.fecha_fin < '$hoy'");
         $ind[] = ['clave' => 'atraso', 'titulo' => 'Actividades atrasadas', 'valor' => $atras, 'icono' => 'fa-clock', 'url' => "/programa?proyecto=$pid",
             'nivel' => !$atras ? 'ok' : (($total && $atras / $total >= 0.15) || $atras >= 8 ? 'critico' : 'aviso'),
             'detalle' => $atras ? "Ya debieron terminar y no están al 100 % (de $total)." : 'Ninguna actividad vencida sin terminar.'];
 
         // Restricciones activas
-        $rest = $n("SELECT COUNT(*) n FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND r.estado = 'activa'");
-        $restUrg = $n("SELECT COUNT(DISTINCT r.id) n FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas p ON p.id = a.partida_id
-            WHERE p.proyecto_id = $pid AND r.estado = 'activa' AND a.progreso < 100 AND a.fecha_inicio <= '$en7'");
         $ind[] = ['clave' => 'restricciones', 'titulo' => 'Restricciones abiertas', 'valor' => $rest, 'icono' => 'fa-ban', 'url' => "/lookahead?proyecto=$pid",
             'nivel' => !$rest ? 'ok' : ($restUrg ? 'critico' : 'aviso'),
             'detalle' => $rest ? ($restUrg ? "$restUrg afectan actividades que inician en 7 días o ya están en curso." : 'Ninguna afecta todavía actividades de la próxima semana.') : 'Sin restricciones activas.'];
 
         // Submittals vencidos o rechazados
-        $venc = $n("SELECT COUNT(*) n FROM msr_items WHERE proyecto_id = $pid AND status = 'P' AND fecha_envio_real IS NULL AND fecha_envio_requerida IS NOT NULL AND fecha_envio_requerida < '$hoy'");
-        $rech = $n("SELECT COUNT(*) n FROM submittals WHERE proyecto_id = $pid AND estatus = 'rechazado'");
         $ind[] = ['clave' => 'submittals', 'titulo' => 'Submittals con problema', 'valor' => $venc + $rech, 'icono' => 'fa-file-circle-exclamation', 'url' => "/submittals?proyecto=$pid",
             'nivel' => !($venc + $rech) ? 'ok' : (($venc + $rech) >= 5 ? 'critico' : 'aviso'),
             'detalle' => ($venc + $rech) ? "$venc material(es) con envío vencido sin enviar · $rech submittal(s) rechazado(s) por resubmitar." : 'Envíos al corriente.'];
 
         // Punch
-        $graves = $n("SELECT COUNT(*) n FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND severidad IN ('alta','critica')");
-        $crit = $n("SELECT COUNT(*) n FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND severidad = 'critica'");
-        $vencP = $n("SELECT COUNT(*) n FROM punch_items WHERE proyecto_id = $pid AND estado IN ('abierto','en_proceso') AND fecha_limite IS NOT NULL AND fecha_limite < '$hoy'");
         $ind[] = ['clave' => 'punch', 'titulo' => 'Pendientes graves (punch)', 'valor' => $graves, 'icono' => 'fa-list-check', 'url' => "/punch?proyecto=$pid",
             'nivel' => $crit ? 'critico' : ($graves || $vencP ? 'aviso' : 'ok'),
             'detalle' => ($graves || $vencP) ? "$graves de severidad alta o crítica ($crit crítico) · $vencP con fecha límite vencida." : 'Sin pendientes graves abiertos.'];
 
         // Órdenes de cambio por aprobar
-        $oc = $n("SELECT COUNT(*) n FROM ordenes_cambio WHERE proyecto_id = $pid AND estado = 'solicitada'");
         $ind[] = ['clave' => 'cambios', 'titulo' => 'Órdenes de cambio por aprobar', 'valor' => $oc, 'icono' => 'fa-file-signature', 'url' => "/cambios?proyecto=$pid",
             'nivel' => $oc ? 'aviso' : 'ok', 'detalle' => $oc ? 'Esperan una decisión del administrador.' : 'Nada pendiente de aprobar.'];
 

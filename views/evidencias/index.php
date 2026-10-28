@@ -1,4 +1,4 @@
-<?php // Variables: $proyecto, $acts, $dias, $totalDias, $totalFotos, $pagina, $porPagina, $filtros, $partidas, $puedeEditar
+<?php // Variables: $proyecto, $acts, $dias, $totalDias, $totalFotos, $pagina, $porPagina, $filtros, $bloques, $puedeEditar
 $meses = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $fechaLarga = function (string $f) use ($meses) { $t = strtotime($f); return date('d', $t) . ' de ' . $meses[(int)date('n', $t)] . ' de ' . date('Y', $t); };
 $q = fn(array $extra = []) => '/evidencias?' . http_build_query(array_filter(array_merge(['proyecto' => $proyecto->id], $filtros, $extra), fn($v) => $v !== '' && $v !== 0 && $v !== null));
@@ -21,9 +21,9 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
             <div class="campo campo-full"><label for="ev-act">Actividad *</label>
                 <select id="ev-act" name="actividad_id" required>
                     <option value="">— Selecciona —</option>
-                    <?php foreach ($partidas as $p): ?>
+                    <?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?>
                         <optgroup label="● <?php echo s($p->codigo . ' · ' . $p->nombre); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff">
-                            <?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . $a->nombre); ?></option><?php endforeach; ?>
+                            <?php foreach ($bloque['actividades'] as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . $a->nombre); ?></option><?php endforeach; ?>
                         </optgroup>
                     <?php endforeach; ?>
                 </select></div>
@@ -42,10 +42,10 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
     <form method="GET" action="/evidencias" class="ev-filtros">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div><label class="text-sm text-muted"><?php echo s(t('Partida')); ?></label><br>
-            <select name="partida"><option value=""><?php echo s(t('Todas')); ?></option><?php foreach ($partidas as $p): ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$filtros['partida'] === (int)$p->id ? ' selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?></select></div>
+            <select name="partida"><option value=""><?php echo s(t('Todas')); ?></option><?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$filtros['partida'] === (int)$p->id ? ' selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?></select></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Actividad')); ?></label><br>
             <select name="actividad"><option value=""><?php echo s(t('Todas')); ?></option>
-                <?php foreach ($partidas as $p): ?><optgroup label="● <?php echo s($p->codigo); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff"><?php foreach ($p->getActividades() as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
+                <?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?><optgroup label="● <?php echo s($p->codigo); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff"><?php foreach ($bloque['actividades'] as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
             </select></div>
         <?php foreach (['departamento' => ['Departamento', $departamentos], 'categoria' => ['Categoría', $categorias]] as $k => [$et, $op]): if (!$op) continue; ?>
         <div><label class="text-sm text-muted"><?php echo s(t($et)); ?></label><br>

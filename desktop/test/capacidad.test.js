@@ -24,7 +24,9 @@ test('perfil: niveles por tamaño, nube y visión', () => {
   assert.strictEqual(perfil({ tipo: 'openai', modelo: 'gpt-4o', url: 'https://api.openai.com/v1' }).nube, true);
   assert.strictEqual(perfil({ tipo: 'openai', modelo: 'mistral:7b', url: 'http://localhost:1234/v1' }).nube, false);
   const cli = perfil({ tipo: 'claude-code' });
-  assert.deepStrictEqual([cli.nivel, cli.vision], ['grande', false]);
+  assert.deepStrictEqual([cli.nivel, cli.vision], ['grande', true]);   // Claude Code lee imágenes con Read
+  assert.strictEqual(evaluar({ vision: true }, cli).estado, 'ok');
+  assert.strictEqual(perfil({ tipo: 'opencode', modelo: '' }).vision, false);
 });
 
 test('evaluar: ok, limitado, bloqueado y sin conexión', () => {

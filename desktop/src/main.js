@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, WebContentsView, ipcMain, safeStorage, shell, Notification, dialog } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, safeStorage, shell, Notification, dialog, nativeImage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -30,13 +30,14 @@ if (process.env.APPIMAGE) {
 if (!app.requestSingleInstanceLock()) app.quit();
 
 // Medidor de uso de la IA: las tareas que llaman al modelo corren dentro de prov.conUso y cada llamada se informa al servidor (por lotes)
-const HERRAMIENTA_USO = { 'prog:ejecutar': 'programador', 'inc:ejecutar': 'inconsistencias', 'mat:ejecutar': 'materiales', 'mi:verificar': 'inteligentes', 'chat:enviar': 'chat', 'ord:propuesta': 'ordenar', 'ens:mensaje': 'ensamblador', 'gen:ejecutar': 'informes' };
+// El chat y la tabla desde documento se miden dentro de su propio manejador: el proyecto no está en el primer argumento.
+const HERRAMIENTA_USO = { 'prog:ejecutar': 'programador', 'inc:ejecutar': 'inconsistencias', 'mat:ejecutar': 'materiales', 'mi:verificar': 'inteligentes', 'ord:propuesta': 'ordenar', 'ens:mensaje': 'ensamblador', 'gen:ejecutar': 'informes' };
 const handleOriginal = ipcMain.handle.bind(ipcMain);
 ipcMain.handle = (canal, fn) => handleOriginal(canal, !HERRAMIENTA_USO[canal] ? fn : (e, ...a) => {
   const gen = canal === 'gen:ejecutar', id = parseInt(gen ? a[1] : (a[0] && typeof a[0] === 'object' ? a[0].pid : a[0]), 10) || 0;
   return prov.conUso({ herramienta: gen ? 'informe:' + String(a[0]).slice(0, 40) : HERRAMIENTA_USO[canal], proyectoId: id }, () => fn(e, ...a));
 });
-let cfg, win, vista, cancelarProg = false, ejecutandoProg = false, cancelarInc = false, ejecutandoInc = false, cancelarMat = false, ejecutandoMat = false, cancelarMI = false, cancelarGen = false, ejecutandoGen = false, proyectoVigilado = null, timerVig = null, vistaChat = null, chatAbierto = false, sesionActiva = false, errorWebMain = false, ejecutandoChat = false, nombresProyectos = { t: 0, mapa: {} }, cacheFichas = { t: 0, lista: [] }, descargaOllama = null, alNavegar = null, verificandoMI = false;
+let cfg, win, vista, cancelarProg = false, ejecutandoProg = false, cancelarInc = false, ejecutandoInc = false, cancelarMat = false, ejecutandoMat = false, cancelarMI = false, cancelarGen = false, ejecutandoGen = false, proyectoVigilado = null, timerVig = null, vistaChat = null, chatAbierto = false, sesionActiva = false, errorWebMain = false, ejecutandoChat = false, nombresProyectos = { t: 0, mapa: {} }, cacheFichas = { t: 0, lista: [] }, cacheUso = { t: 0, pid: 0, data: null }, descargaOllama = null, alNavegar = null, verificandoMI = false;
 const intentosMI = {};   // proyecto → última verificación automática (evita repetirla en cada clic)
 
 // Zoom de la vista de Project Web (Ctrl +, Ctrl -, Ctrl 0 o desde la interfaz)
@@ -53,6 +54,20 @@ function atajosZoom(wc) {
     else if (i.key === '-' || i.key === '_') { e.preventDefault(); cambiarZoom(z => z - 10); }
     else if (i.key === '0') { e.preventDefault(); cambiarZoom(() => 100); }
   });
+}
+
+/** Reduce la imagen antes de mandarla a un modelo (máx. 1600 px, JPEG 82) para no gastar contexto ni subir 25 MB */
+function imagenComprimida(archivo) {
+  try {
+    const nombre = String(archivo?.nombre || '');
+    if (!/\.(png|jpe?g|webp)$/i.test(nombre)) return archivo;
+    const img = nativeImage.createFromBuffer(Buffer.from(archivo.datos));
+    if (img.isEmpty()) return archivo;
+    const { width, height } = img.getSize(), max = 1600, escala = Math.min(1, max / Math.max(width, height));
+    const salida = escala < 1 ? img.resize({ width: Math.round(width * escala), height: Math.round(height * escala), quality: 'good' }) : img;
+    const jpg = salida.toJPEG(82);
+    return jpg.length < archivo.datos.byteLength ? { nombre, datos: jpg, mime: 'image/jpeg' } : archivo;
+  } catch { return archivo; }
 }
 
 function ventana() {
@@ -178,9 +193,11 @@ app.whenReady().then(() => {
   ipcMain.handle('ocr:instalar', async () => { await ocr.instalar(p => win?.webContents.send('ocr:progreso', p)); return { instalado: ocr.instalados() }; });
   ipcMain.handle('ocr:quitar', async () => { await ocr.quitar(); return { instalado: false }; });
   const tdoc = tablaDocumento.crear({ cfg, ocr, sesion: (u, o) => vista.webContents.session.fetch(u, o), avisar: p => win?.webContents.send('tdoc:progreso', p) });
-  ipcMain.handle('tdoc:leer', (_e, pid, archivo, provId, usarIA) => {
+  ipcMain.handle('tdoc:leer', async (_e, pid, archivo, provId, usarIA) => {
     const conexion = provId ? cfg.leer().proveedores.find(x => x.id === provId) : null;
-    return tdoc.leer(idEns(pid), { nombre: String(archivo?.nombre || 'documento'), datos: Buffer.from(archivo?.datos || []) }, conexion, conexion ? cfg.secreto(conexion.id) : '', !!usarIA);
+    const id = idEns(pid), base = { nombre: String(archivo?.nombre || 'documento'), datos: Buffer.from(archivo?.datos || []) };
+    const entrada = usarIA ? imagenComprimida(base) : base;
+    return prov.conUso({ herramienta: 'tabla_documento', proyectoId: id }, () => tdoc.leer(id, entrada, conexion, conexion ? cfg.secreto(conexion.id) : '', !!usarIA));
   });
   ipcMain.handle('tdoc:crear', (_e, pid, o) => tdoc.crearTabla(idEns(pid), { nombre: String(o?.nombre || '').slice(0, 140), origen: String(o?.origen || '').slice(0, 200), metodo: o?.metodo === 'ia' ? 'ia' : 'motor', modelo: String(o?.modelo || '').slice(0, 150), filas: Array.isArray(o?.filas) ? o.filas : [] }));
   // Ordenar y renumerar por fechas: el servidor calcula, la IA explica, el admin elige qué ordenar y qué renumerar
@@ -219,9 +236,12 @@ app.whenReady().then(() => {
   ipcMain.handle('herr:uso', async (_e, proyectoId) => {
     const pid = parseInt(proyectoId, 10);
     if (!(pid > 0) || !vista) return null;
+    if (cacheUso.pid === pid && Date.now() - cacheUso.t < 15000) return cacheUso.data;
     try {
       const r = await (await vista.webContents.session.fetch(cfg.leer().servidor + '/api/revisiones/resumen?proyecto=' + pid, { credentials: 'include' })).json();
-      return r?.success ? r.lista_herramientas : null;
+      const data = r?.success ? r.lista_herramientas : null;
+      if (data) cacheUso = { t: Date.now(), pid, data };
+      return data;
     } catch { return null; }
   });
   ipcMain.handle('inc:ejecutar', async (_e, proyectoId, provId) => {
@@ -273,6 +293,15 @@ app.whenReady().then(() => {
   ipcMain.handle('gen:cancelar', () => { cancelarGen = true; });
   // Materiales inteligentes: activar la opción por proyecto, verificar ahora y verificación automática al ver materiales/submittals
   const sesionWeb = (u, o) => vista.webContents.session.fetch(u, o);
+  // El token CSRF se pide una vez y se reutiliza; si el servidor lo rechaza (403) se vuelve a pedir.
+  const cacheCsrf = { t: 0, token: '' };
+  const csrfWeb = async (forzar = false) => {
+    if (!forzar && cacheCsrf.token && Date.now() - cacheCsrf.t < 5 * 60 * 1000) return cacheCsrf.token;
+    const cat = await (await sesionWeb(cfg.leer().servidor + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
+    if (!cat?.success) throw new Error('Inicia sesión como administrador en Project Web.');
+    cacheCsrf.t = Date.now(); cacheCsrf.token = String(cat.csrf || '');
+    return cacheCsrf.token;
+  };
   const conexionPrincipalMI = () => cfg.conexionPara('rapida');
   // Centro de IA dentro de la app: resultados guardados, espacio, pendientes y auditoría (solo rutas conocidas; el servidor exige sesión de administrador)
   const API_IA_GET = new Set(['/api/ia/centro', '/api/ia/pendientes', '/api/ia/analisis', '/api/ia/auditoria', '/api/ia/dias-sin-reporte', '/api/ia/informe']);
@@ -295,9 +324,10 @@ app.whenReady().then(() => {
     for (const [k, v] of Object.entries(params && typeof params === 'object' ? params : {})) if (v != null && v !== '') campos[k] = String(v).slice(0, 2000);
     let r;
     if (post) {
-      const cat = await (await sesionWeb(srv + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
-      if (!cat?.success) throw new Error('Inicia sesión como administrador en Project Web.');
-      r = await sesionWeb(srv + ruta, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': cat.csrf }, body: new URLSearchParams({ ...campos, _csrf: cat.csrf }).toString() });
+      let token = await csrfWeb();
+      const enviar = () => sesionWeb(srv + ruta, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': token }, body: new URLSearchParams({ ...campos, _csrf: token }).toString() });
+      r = await enviar();
+      if (r.status === 403 || r.status === 401) { token = await csrfWeb(true); r = await enviar(); }
     } else r = await sesionWeb(srv + ruta + '?' + new URLSearchParams(campos).toString(), { credentials: 'include' });
     const j = await r.json().catch(() => null);
     if (!j) throw new Error(r.status === 403 || r.status === 401 ? 'Inicia sesión como administrador en Project Web.' : 'Respuesta no válida del servidor (' + r.status + ')');
@@ -366,8 +396,8 @@ app.whenReady().then(() => {
     if (ejecutandoChat) throw new Error('Espera a que termine la respuesta anterior.');
     ejecutandoChat = true;
     try {
-      const c = cfg.leer(), conexion = conexionPrincipal();
-      return await chat.responder({ servidor: c.servidor, proyectoId: proyectoDelChat(), pregunta, historial, conexion, clave: conexion ? cfg.secreto(conexion.id) : '', sesion: (u, o) => vista.webContents.session.fetch(u, o), alAvanzar: t => vistaChat?.webContents.send('chat:avance', t) });
+      const c = cfg.leer(), conexion = conexionPrincipal(), pid = proyectoDelChat();
+      return await prov.conUso({ herramienta: 'chat', proyectoId: pid || 0 }, () => chat.responder({ servidor: c.servidor, proyectoId: pid, pregunta, historial, conexion, clave: conexion ? cfg.secreto(conexion.id) : '', sesion: (u, o) => vista.webContents.session.fetch(u, o), alAvanzar: t => vistaChat?.webContents.send('chat:avance', t) }));
     } finally { ejecutandoChat = false; }
   });
   // Vigilancia continua: cada cierto tiempo comprueba el proyecto abierto con las reglas del sistema (sin IA) y avisa si hay algo nuevo
@@ -375,9 +405,11 @@ app.whenReady().then(() => {
     if (!proyectoVigilado || !vista) return;
     try {
       const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o);
-      const cat = await (await sesion(c.servidor + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
-      if (!cat?.success) return;   // sin sesión de administrador no hay nada que vigilar
-      const r = await (await sesion(c.servidor + '/api/inconsistencias/vigilancia', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': cat.csrf }, body: new URLSearchParams({ proyecto: String(proyectoVigilado), _csrf: cat.csrf }).toString() })).json().catch(() => null);
+      let token = await csrfWeb();
+      const enviar = () => sesion(c.servidor + '/api/inconsistencias/vigilancia', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': token }, body: new URLSearchParams({ proyecto: String(proyectoVigilado), _csrf: token }).toString() });
+      let r = await enviar();
+      if (r.status === 403 || r.status === 401) { token = await csrfWeb(true); r = await enviar(); }
+      r = await r.json().catch(() => null);
       if (!r?.success || r.primera || (!r.total_nuevos && !r.cambios.length)) return;
       const n = new Notification({ title: 'Project Web: vigilancia del proyecto', body: [r.total_nuevos ? r.total_nuevos + ' inconsistencia(s) nueva(s)' : '', ...r.cambios.slice(0, 2).map(x => x.titulo)].filter(Boolean).join(' · ') });
       n.on('click', () => { win?.show(); win?.focus(); vista.webContents.loadURL(c.servidor + '/inconsistencias?proyecto=' + proyectoVigilado); win?.webContents.send('vig:abrir'); });
@@ -397,10 +429,8 @@ app.whenReady().then(() => {
     if (!colaUso.length || !vista) return;
     const lote = colaUso; colaUso = [];
     try {
-      const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o);
-      const cat = await (await sesion(c.servidor + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
-      if (!cat?.success) throw new Error('sin sesión');
-      const r = await (await sesion(c.servidor + '/api/ia/uso', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': cat.csrf }, body: new URLSearchParams({ registros: JSON.stringify(lote), _csrf: cat.csrf }).toString() })).json().catch(() => null);
+      const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o), token = await csrfWeb();
+      const r = await (await sesion(c.servidor + '/api/ia/uso', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': token }, body: new URLSearchParams({ registros: JSON.stringify(lote), _csrf: token }).toString() })).json().catch(() => null);
       if (!r?.success) throw new Error('rechazado');
     } catch { colaUso = lote.concat(colaUso).slice(-500); }
   };
@@ -417,14 +447,12 @@ app.whenReady().then(() => {
     return voz.transcribir(Buffer.from(wav), { voz: c.voz, conexion, clave: conexion ? cfg.secreto(conexion.id) : '', idioma });
   });
   ipcMain.handle('voz:subir', async (_e, proyectoId, audio, mime, nombre, duracion, transcripcion) => {
-    const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o);
-    const cat = await (await sesion(c.servidor + '/api/ia/herramientas', { credentials: 'include' })).json().catch(() => null);
-    if (!cat?.success) throw new Error('Inicia sesión como administrador en Project Web.');
+    const c = cfg.leer(), sesion = (u, o) => vista.webContents.session.fetch(u, o), token = await csrfWeb();
     const f = new FormData();
-    f.append('proyecto', String(parseInt(proyectoId, 10))); f.append('nombre', String(nombre || '').slice(0, 200)); f.append('duracion', String(Math.max(0, parseInt(duracion, 10) || 0))); f.append('_csrf', cat.csrf);
+    f.append('proyecto', String(parseInt(proyectoId, 10))); f.append('nombre', String(nombre || '').slice(0, 200)); f.append('duracion', String(Math.max(0, parseInt(duracion, 10) || 0))); f.append('_csrf', token);
     if (transcripcion) f.append('transcripcion', String(transcripcion).slice(0, 200000));
     f.append('audio', new Blob([Buffer.from(audio)], { type: String(mime || 'audio/webm').split(';')[0] }), 'grabacion.webm');
-    const r = await sesion(c.servidor + '/api/ia/grabacion', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': cat.csrf }, body: f });
+    const r = await sesion(c.servidor + '/api/ia/grabacion', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': token }, body: f });
     const j = await r.json().catch(() => null);
     if (!r.ok || !j?.success) throw new Error(j?.error || 'No se pudo guardar la grabación (' + r.status + ')');
     return j.id;

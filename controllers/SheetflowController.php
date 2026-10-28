@@ -3,8 +3,10 @@
 namespace Controllers;
 
 use MVC\Router;
+use Model\Actividad;
 use Model\Proyecto;
 use Model\SheetflowHoja;
+use Model\SubactividadHoja;
 use Model\VplanTabla;
 use Classes\Sheetflow;
 use Classes\Imagenes;
@@ -89,10 +91,12 @@ class SheetflowController
             header('Location: /sheetflow?proyecto=' . $proyecto->id);
             exit;
         }
+        $vinculo = SubactividadHoja::deHoja((int)$h->id);
         $router->render('sheetflow/abrir', [
             'titulo' => 'SheetFlow - ' . $h->nombre, 'proyecto' => $proyecto, 'hoja' => $h,
             'departamentos' => SheetflowHoja::departamentos((int)$proyecto->id),
             'usos' => $h->usosVplan(), 'redactor' => $h->usosRedactor(),
+            'vinculo' => $vinculo, 'actividadVinculo' => $vinculo ? Actividad::find((int)$vinculo->actividad_id) : null,
             'config' => [
                 'id' => (int)$h->id, 'proyecto' => (int)$proyecto->id, 'version' => (string)$h->actualizado, 'datos' => $h->contenido(),
                 'max' => ['cols' => Sheetflow::MAX_COLS, 'filas' => Sheetflow::MAX_FILAS],
@@ -150,6 +154,8 @@ class SheetflowController
             $n->nombre = mb_substr($h->nombre, 0, 140) . ' (copia)';
             $n->fecha = date('Y-m-d');
             $n->creado_por = $_SESSION['id'] ?? null;
+            $n->descripcion = mb_substr('Copia de «' . $h->nombre . '».', 0, 300);
+            $n->datos = json_encode(Sheetflow::normalizar(Sheetflow::sinVinculo($h->contenido())), JSON_UNESCAPED_UNICODE);
             $n->guardar();
         }
         header('Location: /sheetflow?proyecto=' . $proyecto->id . '&ok=1');
@@ -181,20 +187,40 @@ class SheetflowController
         $h = self::hojaApi(true);
         $ver = (string)($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$h->actualizado) {
-            json_respuesta(['success' => false, 'conflicto' => true, 'error' => 'Esta tabla se guardó desde otra sesión después de que la abrieras.'], 409);
+            $mensaje = SubactividadHoja::deHoja((int)$h->id)
+                ? 'Esta tabla está vinculada a las subactividades de una actividad y se guardó desde otra sesión (o desde la actividad). Recarga para no perder cambios.'
+                : 'Esta tabla se guardó desde otra sesión después de que la abrieras.';
+            json_respuesta(['success' => false, 'conflicto' => true, 'error' => $mensaje], 409);
         }
         $crudo = (string)($_POST['datos'] ?? '');
         if (strlen($crudo) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla es demasiado grande'], 422);
         $limpio = Sheetflow::normalizar(json_decode($crudo, true));
-        $nuevo = new SheetflowHoja([
-            'id' => $h->id, 'proyecto_id' => $h->proyecto_id, 'creado_por' => $h->creado_por, 'descripcion' => $_POST['descripcion'] ?? $h->descripcion,
-            'nombre' => $_POST['nombre'] ?? $h->nombre, 'fecha' => $_POST['fecha'] ?? $h->fecha, 'departamento' => $_POST['departamento'] ?? $h->departamento,
-            'datos' => json_encode($limpio, JSON_UNESCAPED_UNICODE),
+        $texto = fn(string $campo, string $defecto): string => is_string($_POST[$campo] ?? null) ? (string)$_POST[$campo] : $defecto;
+        $campos = new SheetflowHoja([
+            'id' => $h->id, 'proyecto_id' => $h->proyecto_id, 'creado_por' => $h->creado_por,
+            'descripcion' => $texto('descripcion', (string)$h->descripcion),
+            'nombre' => $texto('nombre', (string)$h->nombre),
+            'fecha' => $texto('fecha', (string)$h->fecha),
+            'departamento' => $texto('departamento', (string)$h->departamento),
         ]);
-        if ($alertas = $nuevo->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
-        $nuevo->guardar();
-        Sheetflow::limpiarImagenes($h->imagenes(), $nuevo->imagenes(), (int)$h->proyecto_id, (int)$h->id);
+        if ($alertas = $campos->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
+        $h->nombre = $campos->nombre;
+        $h->fecha = $campos->fecha;
+        $h->departamento = $campos->departamento;
+        $h->descripcion = $campos->descripcion;
+
+        $antes = $h->imagenes();
+        try {
+            Sheetflow::guardarDatos($h, $limpio);
+        } catch (\RuntimeException $e) {
+            json_respuesta(['success' => false, 'error' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            error_log('SheetFlow guardar: ' . $e->getMessage());
+            json_respuesta(['success' => false, 'error' => 'No se pudo guardar la tabla. Inténtalo de nuevo.'], 500);
+        }
+        Sheetflow::limpiarImagenes($antes, $h->imagenes(), (int)$h->proyecto_id, (int)$h->id);
         $act = SheetflowHoja::find($h->id);
+        if (!$act) json_respuesta(['success' => false, 'error' => 'La tabla ya no existe.'], 404);
         json_respuesta(['success' => true, 'version' => (string)$act->actualizado]);
     }
 

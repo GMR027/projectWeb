@@ -251,7 +251,11 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
         const del = e.target.closest('.vp-del');
         if (del) {
             const tr = del.closest('tr'), tabla = del.closest('table');
-            const ok = await window.confirmarModal({ titulo: '¿Quitar este dato?', mensaje: 'Se quitará este renglón de la tabla. Esta acción no se puede deshacer.', aceptar: 'Sí, quitar', iconoBoton: 'fa-trash-can' });
+            const esSub = tabla.dataset.subactividades === '1';
+            const mensaje = esSub
+                ? 'Se quitará este renglón de la tabla y también su subactividad. El avance de la actividad se recalculará. Esta acción no se puede deshacer.'
+                : 'Se quitará este renglón de la tabla. Esta acción no se puede deshacer.';
+            const ok = await window.confirmarModal({ titulo: '¿Quitar este dato?', mensaje, aceptar: 'Sí, quitar', iconoBoton: 'fa-trash-can' });
             if (!ok) return;
             const d = await post('/api/vplan/fila', { tabla: tabla.dataset.tabla, accion: 'del', indice: tr.dataset.indice });
             if (d.success) {

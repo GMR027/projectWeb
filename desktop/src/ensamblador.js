@@ -18,6 +18,7 @@ function multipart(campos, nombre, datos) {
 
 function crear({ cfg, sesion, avisar }) {
   let cancelar = false, ocupado = false;
+  const cacheToken = { pid: 0, t: 0, token: '' };
 
   const srv = () => cfg.leer().servidor;
   const get = async (ruta, que) => json(await sesion(srv() + ruta, { credentials: 'include' }), que);
@@ -27,6 +28,14 @@ function crear({ cfg, sesion, avisar }) {
 
   async function estado(pid) {
     return get('/api/ensamblador/estado?proyecto=' + encodeURIComponent(pid), 'No se pudo leer el Ensamblador');
+  }
+
+  /** El CSRF cambia poco: se reutiliza 5 minutos para no pedir el estado antes de cada acción */
+  async function token(pid) {
+    if (cacheToken.pid === pid && cacheToken.token && Date.now() - cacheToken.t < 5 * 60 * 1000) return cacheToken.token;
+    const st = await estado(pid);
+    cacheToken.pid = pid; cacheToken.t = Date.now(); cacheToken.token = String(st.csrf || '');
+    return cacheToken.token;
   }
 
   /** archivos: [{nombre, datos: Uint8Array}]. Un archivo con problema no detiene a los demás */
@@ -47,8 +56,7 @@ function crear({ cfg, sesion, avisar }) {
   }
 
   async function quitar(pid, ses, archivo) {
-    const st = await estado(pid);
-    return post('/api/ensamblador/quitar', { proyecto: pid, sesion: ses, archivo }, st.csrf, 'No se pudo quitar el archivo');
+    return post('/api/ensamblador/quitar', { proyecto: pid, sesion: ses, archivo }, await token(pid), 'No se pudo quitar el archivo');
   }
 
   /**
@@ -60,8 +68,8 @@ function crear({ cfg, sesion, avisar }) {
     ocupado = true; cancelar = false;
     try {
       avisar({ texto: 'Preparando el documento…', hecho: 0, total: 1 });
-      const st = await estado(pid);
-      const ctx = await post('/api/ensamblador/contexto', { proyecto: pid, sesion: ses, instruccion: texto || '', modos: JSON.stringify(modos || []), submittal_id: submittalId || 0 }, st.csrf, 'No se pudo preparar el análisis');
+      const csrf = await token(pid);
+      const ctx = await post('/api/ensamblador/contexto', { proyecto: pid, sesion: ses, instruccion: texto || '', modos: JSON.stringify(modos || []), submittal_id: submittalId || 0 }, csrf, 'No se pudo preparar el análisis');
       if (!ctx.lotes.length && ctx.tipo !== 'local') return { tipo: 'nada', mensaje: ctx.mensaje || 'No hay nada que analizar.', notas: [] };
       const respuestas = []; let fallidos = 0, ultimoError = '';
       for (let i = 0; i < ctx.lotes.length; i++) {
@@ -86,14 +94,14 @@ function crear({ cfg, sesion, avisar }) {
       if (!respuestas.length && ctx.tipo !== 'local') throw new Error('El modelo no pudo analizar ningún fragmento: ' + ultimoError);
       avisar({ texto: 'Comparando con el programa y los materiales del proyecto…', hecho: ctx.lotes.length, total: ctx.lotes.length });
       const datos = { modelo: conexion.nombre + (conexion.modelo ? ' · ' + conexion.modelo : ''), tipo: ctx.tipo, instruccion: texto || '', modos: modos || [], submittal_id: submittalId || 0, respuestas };
-      const r = await post('/api/ensamblador/resultado', { proyecto: pid, sesion: ses, datos: JSON.stringify(datos) }, ctx.csrf || st.csrf, 'No se pudo guardar la propuesta');
+      const r = await post('/api/ensamblador/resultado', { proyecto: pid, sesion: ses, datos: JSON.stringify(datos) }, ctx.csrf || csrf, 'No se pudo guardar la propuesta');
       if (ctx.tipo === 'pregunta') return { tipo: 'respuesta', respuesta: r.respuesta, aviso: ctx.aviso || '' };
       if (!r.propuesta) return { tipo: 'nada', notas: r.notas || [], mensaje: 'No encontré en el documento información que encaje con lo que pediste.', fallidos };
       return { tipo: 'propuesta', propuesta: r.propuesta, notas: r.notas || [], fallidos, aviso: ctx.aviso || '' };
     } finally { ocupado = false; }
   }
 
-  const accion = async (ruta, pid, campos, que) => { const st = await estado(pid); return post(ruta, { proyecto: pid, ...campos }, st.csrf, que); };
+  const accion = async (ruta, pid, campos, que) => post(ruta, { proyecto: pid, ...campos }, await token(pid), que);
 
   return {
     estado, subir, quitar, mensaje,

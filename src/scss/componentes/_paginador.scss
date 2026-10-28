@@ -23,7 +23,7 @@
         cursor: pointer;
 
         &:hover:not(:disabled) { border-color: var(--primary); }
-        &.activa { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+        &.activa { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
         &:disabled { opacity: 0.4; cursor: default; }
     }
 }

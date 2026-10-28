@@ -11,7 +11,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `npm install` | Instalar dependencias Node |
 | `npx gulp` | Compilar SCSS + JS |
 | `npx gulp dev` | Watch mode para desarrollo |
-| `cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000` | Servidor local (los -d permiten subir archivos de hasta 250 MB en la sección Archivo) |
+| `cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000 router.php` | Servidor local (los -d permiten subir archivos de hasta 250 MB en la sección Archivo) |
 | `php tests/run.php` | Pruebas de las piezas que no necesitan base de datos (también las ejecuta CI) |
 | `DB_HOST=… DB_NAME=project_ci php tests/integracion.php` | Pruebas con BD real: esquema, seed, límite de intentos y calendario (CI usa MySQL de servicio; **borra y recrea la BD indicada**, nunca usar con datos reales) |
 | `mysql -u root < database/schema.sql` | Crear/resetear BD |
@@ -28,8 +28,10 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 
 | Topic | Guidance |
 |---|---|
-| **Roles** | 3 roles: `admin` (full), `cliente` (ver+descargar), `visitante` (solo ver). Helpers: `is_admin()`, `puede_editar()`, `puede_descargar()`. El módulo **Normativa y especificaciones** (documentos, vínculos, propuestas de IA, «Por material y actividad», búsqueda y sección en formularios) es **solo del admin** |
+| **Roles** | 3 roles: `admin` (full), `cliente` (ver+descargar), `visitante` (solo ver). Helpers: `is_admin()`, `puede_gestionar_proyecto()`, `puede_ver_proyecto()`, `puede_descargar()`. El módulo **Normativa y especificaciones** (documentos, vínculos, propuestas de IA, «Por material y actividad», búsqueda y sección en formularios) es **solo del admin** |
 | **Calendario** | Cada proyecto tiene jornada semanal (factor 0-1 por día) + festivos. `Calendario::calcularFechaFin($inicio, $diasHabiles)` respeta esta config. |
+| **Avance** | `Proyecto::getProgreso()`, `Partida::getProgreso()` y `Partida::progresosDeProyecto()` ponderan por duración y no cuentan los hitos (si solo hay hitos, promedio simple), igual que la Curva S. Así Programa, Inicio, Gantt y exportaciones muestran la misma cifra. |
+| **Subactividades** | `models/Subactividad.php`; el avance de la actividad es su promedio si tiene. En la edición de la actividad, **Generar tabla en SheetFlow** crea una hoja vinculada (`subactividad_hojas`, `models/SubactividadHoja.php`): el nombre, fechas y avance se sincronizan en los dos sentidos; las columnas extra solo viven en SheetFlow/vPlan. Detalle en `docs/sheetflow.md`. |
 | **Gantt** | Renderizado con CSS Grid. `GanttRenderer::getFilas()` retorna array con posiciones de columna para cada partida/actividad. |
 | **Exportación** | Nombre `prefijo-nombre-CÓDIGO-EMPRESA-sufijo.ext`: prefijo/sufijo (fecha Y-m-d, d-m-Y, numerador, texto) se eligen una vez en el Centro de Exportación (`/exportar`, guardado en localStorage) y viajan como `nom_*` en cada POST; el servidor los lee con `nomenclatura_desde_post()` y los usa `generar_nombre_archivo()`. Sin `nom_*` queda fecha al inicio. «Exportar todo» filtra con `incluir[]`; curvas, MSR y láminas de vPlan aceptan varios (`curva_ids[]`, `msr_ids[]`, `lamina_ids[]`) y entregan ZIP. PDF tabloide 11x17" landscape; columnas semanales (≤16 sem), quincenales (≤40) o mensuales, máx. 14 columnas por página. XML es MSPDI. POD renombra el XML. |
 | **Almacenamiento** | Límite por proyecto en `proyectos.limite_almacenamiento_mb` (MB, NULL = heredado). Solo el **admin** lo cambia desde Ajustes → Datos → Almacenamiento (`POST /ajustes/almacenamiento`, `Classes\Almacenamiento::fijarLimiteProyecto()`); con 0 vuelve al heredado (el del cliente dueño o 300 MB). `Almacenamiento::limite()` da el valor propio si hay, si no el heredado (`limiteHeredado()`). Los clientes/visitantes no ven el control y el POST se rechaza. |
@@ -74,6 +76,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `classes/PorDondeEmpezar.php`, `controllers/EmpezarController.php`, `views/templates/por-donde-empezar.php` (+ `pde-modal.php`, `src/js/empezar.js`) | Guía «Por dónde empezar»: modal tras crear el proyecto (`?inicio=guiado\|lista`, elegido en `proyectos/crear`) y sección en Ajustes. Estado de cada paso calculado con datos reales; capturas rápidas en `/api/empezar/*`. Para añadir un paso: `PorDondeEmpezar::pasos()` + formulario en el `switch` de la vista + ruta/método en el controlador |
 | `classes/RespaldoProyecto.php` | Respaldo/restauración de UN proyecto (Ajustes del proyecto): tablas por FK desde `proyectos`, archivos referenciados, auto 23:30 (`bin/respaldo_programado.php --proyectos` o primera petición tras la hora), restaurar solo recupera archivos faltantes |
 | `docs/directorio.md` | **Directorio** (Administración): personal, departamentos, categorías y especialidades compartidos por las herramientas (`Classes\Catalogo`) |
+| `docs/administracion-obra.md` | **Calidad e inspecciones (ITP)**, **Equipo y maquinaria**, **Contratos/fianzas/seguros** y **Cierre de obra**: tablas, rutas, permisos, acta PDF y migración `database/migracion_calidad_equipo_contratos_cierre.sql` |
 | `docs/salud-busqueda.md` | **Salud del proyecto** (semáforo en Inicio y ficha), **actividades en riesgo** (material sin submittal aprobado, punch grave, permiso faltante; marca en Programa/Lookahead/Last Planner), clima↔permisos, avance desde el reporte diario y **buscador global** `/buscar` (`classes/Salud.php`, `classes/Busqueda.php`) |
 | `docs/notificaciones.md` | **Campana de notificaciones** (novedades de la plataforma + actividades de hoy + acciones rápidas, con el filtro de rol del cliente) y **Novedades de la plataforma** (Ajustes + `/novedades`). Cómo publicar una novedad: `classes/Novedades.php` |
 | `docs/fase3.md` | **Fase 3**: Costos y presupuesto (valor ganado, CPI/SPI, curva ligada a la Curva S y a las órdenes de cambio), Recursos y cuadrillas (carga semanal), RFI (chip de revisión, actividad bloqueada) y enlaces de solo lectura (cliente temporal + calendario `.ics`) |
@@ -98,7 +101,9 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 
 10. **Paneles y pestañas:** una herramienta con panel lateral usa las piezas de `src/scss/componentes/_paneles.scss` (`.pn-cab` cabecera, `.pn-tabs` pestañas píldora, `.pn-busca` buscador con lupa, `.pn-chips`/`.pn-chip` filtros, `.pn-grid`/`.pn-ficha` fichas insertables, `.pn-vacio` estado vacío, `.pn-abrir` pestaña para reabrir el panel oculto) y la barra de pestañas de página `.pestanas` de `_tabs.scss`. No copies bloques de CSS de otra herramienta: alias en la hoja compartida (ver `docs/piezas-compartidas.md`).
 
-11. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 700 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
+11. **Consultas en bucles:** para listas, Gantt y PDF usa `Proyecto::getPartidasConActividades()` (dos consultas) o `Actividad::deProyecto()`; `Partida::progresosDeProyecto()` y `Restriccion::activasPorProyecto()` evitan una consulta por partida/actividad. No llames `getActividades()` dentro de un `foreach`. Los índices de las consultas frecuentes están en `database/migracion_indices_rendimiento.sql`.
+
+12. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 700 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
 
 ## 🔍 Need to Verify?
 
@@ -123,12 +128,17 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 
 ## 🎨 Design System
 
+- **Sin CDN:** Font Awesome, las tipografías (Inter/Fira Code) y PDF.js/jsPDF se sirven desde `public/vendor/` (`fontawesome/`, `fuentes/`, `pdfjs/`, `jspdf/`). No vuelvas a enlazar cdnjs ni Google Fonts: en obra la conexión es mala y los íconos desaparecen. La CSP ya no permite esos dominios.
+- **Accesibilidad:** `src/js/accesibilidad.js` pone nombre (`aria-label`) a los botones que solo llevan un ícono. Aun así, al crear un botón nuevo con solo icono ponle `title` o `aria-label` con la acción concreta. Los avisos usan `role="alert"`/`status`; el layout tiene el enlace «Saltar al contenido».
+- **Contraste:** `--on-primary` lo calcula `TemaProyecto::css()` (blanco u oscuro) para que el texto de los botones se lea con cualquier paleta; `--text-dim` del tema claro se oscureció para cumplir 4.5:1.
+- **Táctil:** en móvil los botones (`btn-sm`, `btn-xs`, acciones de tablas) tienen mínimo 4.4rem de alto.
+
 Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`):
 - Tema claro/oscuro con variables CSS (`src/scss/base/_variables.scss`, atributo `data-theme`; por defecto oscuro)
-- **Tema por proyecto** (Ajustes → General → Apariencia del proyecto): `proyectos.tema_modo` (`usuario`/`claro`/`oscuro`) y `proyectos.tema_paleta` (24 paletas en `classes/TemaProyecto.php`, cada una con su tono claro y oscuro de la paleta ya cargada). `views/layout.php` pinta `data-tema-fijo` + `data-paleta` y un `<style>` con `--primary`, `--primary-hover` y `--primary-glow`; con `tema_modo = usuario` manda `localStorage.theme` como siempre. Se guarda en la BD (no en el navegador) y las exportaciones no cambian
+- **Tema por proyecto** (Ajustes → General → Apariencia del proyecto): `proyectos.tema_modo` (`usuario`/`claro`/`oscuro`) y `proyectos.tema_paleta` (24 paletas en `classes/TemaProyecto.php`, cada una con su tono claro y oscuro de la paleta ya cargada). `views/layout.php` pinta `data-tema-fijo` + `data-paleta` y un `<style>` con `--primary`, `--on-primary`, `--primary-hover` y `--primary-glow`; con `tema_modo = usuario` manda `localStorage.theme` como siempre. Se guarda en la BD (no en el navegador) y las exportaciones no cambian
 - Paleta slate con acento naranja (`--primary`) y azul (`--secondary`)
 - Tipografía: Inter (texto) y Fira Code (códigos/fechas)
-- Medidas en `rem` (html font-size: 62.5%)
+- Medidas en `rem` (html font-size: 70%)
 - Responsive con breakpoints `$bp-mobile: 48rem`, `$bp-tablet: 80rem`
 
 ## 🚧 Pendiente / Roadmap futuro
@@ -143,7 +153,11 @@ Implementación de **Vanguard CivilTech** (`design/vanguard_civiltech/DESIGN.md`
 
 ## 🔐 Seguridad y operación (añadido 2026-10-16)
 
-- **Subidas de imágenes:** usa siempre `guardar_imagen_subida($campo, $carpeta)` (comprueba el tipo real y genera el nombre). Nunca uses la extensión de `$_FILES[..]['name']`.
+- **Subidas de imágenes:** usa siempre `guardar_imagen_subida($campo, $carpeta)` (comprueba el tipo real, re-codifica con GD, limita a 10 MB y genera el nombre). Nunca uses la extensión de `$_FILES[..]['name']`. Para archivos usa `EscanerArchivos::revisar()` **antes** de mover (Archivo, Ensamble, Traductor, Normativa e Instaladores ya lo hacen).
+- **Fotos y planos de usuarios:** `public/uploads/**` **no se sirve como archivo estático**. Apache reescribe `/uploads/…` a `index.php` (y el servidor local usa `public/router.php`); `Classes\Media` resuelve el proyecto dueño del archivo y exige `puede_ver_proyecto()` (o el token del enlace público del cliente). Si una carpeta nueva guarda archivos, añádela al resolver de `Media` y a `HERRAMIENTAS`.
+- **Visitantes:** la lista de `Usuario::HERRAMIENTAS` es la única fuente; `herramienta_permitida()` **deniega por defecto** lo que no esté declarado (salvo `Usuario::RUTAS_GENERALES`). Al crear una herramienta con URL propia, declárala ahí: `tests/run.php` comprueba que las rutas del menú estén cubiertas.
+- **Sesión y cabeceras:** `includes/app.php` fija `PWSESSID`, `use_strict_mode`, cierre por inactividad (12 h en la web; la app de escritorio conserva la suya) y `cabeceras_seguridad()` (X-Frame-Options, Referrer-Policy, Permissions-Policy, HSTS y CSP en `Report-Only`). Cerrar sesión es **POST** (`/logout`), nunca un enlace GET.
+- **Contraseñas:** mínimo 10 caracteres (`Usuario::passwordDebil()`); el login rehace el hash si `password_needs_rehash()`.
 - **IP del visitante:** `ip_cliente()` (en `includes/funciones.php`); detrás del Ingress hay que definir `TRUSTED_PROXIES` (el chart de Helm ya lo hace con `10.1.0.0/16`).
 - **Bot de Telegram:** la clave AES del token (`telegram.key`) vive en el Secret `projectweb-telegram` montado read-only sobre `storage/secretos` — **nunca en el PVC de usuarios** (el chart ya no lo monta desde ahí); el webhook limita 120 peticiones/min por IP (`telegram_limites`, env `TELEGRAM_RATE_MAX`) y los `error_log` del bot enmascaran `bot<TOKEN>` (`Telegram::sanearError`). Detalle en `docs/telegram.md` → Seguridad y operación.
 - **Fuerza bruta:** `Classes\LoginLimite` bloquea 15 min tras 5 fallos por IP + correo (tabla `login_intentos`, migración `database/migracion_login_intentos.sql`). Si la tabla no existe, el login sigue funcionando sin límite. `limpiar()` borra registros de +24 h y se llama en ~1 % de los inicios de sesión.

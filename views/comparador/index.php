@@ -96,7 +96,7 @@
     <p class="text-sm text-muted">Rueda = zoom · arrastrar = desplazar · activa «Mover B» para alinear B con A (flechas del teclado para afinar, Mayús = 10 px) · el deslizador también se mueve con ← →.</p>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>window.CMP_CONFIG = { proyecto: <?php echo (int)$proyecto->id; ?>, nombreProyecto: <?php echo json_encode($proyecto->nombre, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, usuario: <?php echo json_encode($_SESSION['nombre'] ?? '', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js' };</script>
+<script src="/vendor/pdfjs/pdf.min.js"></script>
+<script src="/vendor/jspdf/jspdf.umd.min.js"></script>
+<script>window.CMP_CONFIG = { proyecto: <?php echo (int)$proyecto->id; ?>, nombreProyecto: <?php echo json_encode($proyecto->nombre, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, usuario: <?php echo json_encode($_SESSION['nombre'] ?? '', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, worker: '/vendor/pdfjs/pdf.worker.min.js' };</script>
 <script src="/vendor/comparador.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/comparador.js'); ?>"></script>

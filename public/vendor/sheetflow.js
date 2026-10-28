@@ -10,6 +10,11 @@
     var S = C.datos;
     S.calc = S.calc && !Array.isArray(S.calc) ? S.calc : {};
     S.tot = S.tot && !Array.isArray(S.tot) ? S.tot : {};
+    S.meta = S.meta && typeof S.meta === 'object' ? S.meta : {};
+    // IDs de subactividad por renglón (solo en tablas vinculadas; no se ven en la cuadrícula)
+    var ids = (S.meta.subactividad && Array.isArray(S.meta.subactividad.ids)) ? S.meta.subactividad.ids.slice() : S.rows.map(function () { return null; });
+    while (ids.length < S.rows.length) ids.push(null);
+    ids = ids.slice(0, S.rows.length).map(function (v) { var n = parseInt(v, 10); return n > 0 ? n : null; });
     var grid = $('sf-grid'), area = $('sf-area'), fx = $('sf-fx');
     var version = C.version, sucio = false, guardando = false, temporizador = null;
     var sel = { r0: 0, c0: 0, r1: 0, c1: 0 };   // rango elegido; (r0,c0) es el ancla. r = -1 es el encabezado
@@ -426,11 +431,14 @@
     }
 
     // ================= Cambios, deshacer y guardado =================
-    function copia() { return JSON.stringify({ cols: S.cols, rows: S.rows, estilo: S.estilo, sty: sty, hsty: hsty }); }
+    function copia() { return JSON.stringify({ cols: S.cols, rows: S.rows, estilo: S.estilo, sty: sty, hsty: hsty, ids: ids }); }
     function antes() { pasado.push(copia()); if (pasado.length > 100) pasado.shift(); futuro = []; }
     function cambio() { sucio = true; estado('Cambios sin guardar…'); clearTimeout(temporizador); temporizador = setTimeout(function () { guardar(false); }, 1800); }
     function restaurar(json) {
         var d = JSON.parse(json); S.cols = d.cols; S.rows = d.rows; S.estilo = d.estilo; sty = d.sty; hsty = d.hsty;
+        ids = Array.isArray(d.ids) ? d.ids.slice() : S.rows.map(function () { return null; });
+        while (ids.length < S.rows.length) ids.push(null);
+        ids = ids.slice(0, S.rows.length);
         sel.r0 = Math.min(sel.r0, S.rows.length - 1); sel.r1 = Math.min(sel.r1, S.rows.length - 1); sel.c0 = Math.min(sel.c0, S.cols.length - 1); sel.c1 = Math.min(sel.c1, S.cols.length - 1);
         dibujar(); cambio();
     }
@@ -442,7 +450,11 @@
         var fd = new FormData();
         fd.append('id', C.id); fd.append('proyecto', C.proyecto); fd.append('version', version);
         fd.append('nombre', $('sf-nombre').value); fd.append('fecha', $('sf-fecha').value); fd.append('departamento', $('sf-depto').value); fd.append('descripcion', $('sf-desc').value);
-        fd.append('datos', JSON.stringify({ cols: S.cols, rows: S.rows, calc: S.calc, tot: S.tot, estilo: S.estilo, fmt: fmtMapa() }));
+        while (ids.length < S.rows.length) ids.push(null);
+        ids = ids.slice(0, S.rows.length);
+        var meta = (S.meta && typeof S.meta === 'object') ? S.meta : {};
+        if (meta.subactividad) meta.subactividad.ids = ids.slice();
+        fd.append('datos', JSON.stringify({ cols: S.cols, rows: S.rows, calc: S.calc, tot: S.tot, estilo: S.estilo, fmt: fmtMapa(), meta: meta }));
         if (forzar) fd.append('forzar', '1');
         return fd;
     }
@@ -628,7 +640,7 @@
         antes();
         var nf = uno ? n.r1 - r0 + 1 : filas.length, nc = uno ? n.c1 - c0 + 1 : Math.max.apply(null, filas.map(function (f) { return f.length; }));
         while (S.cols.length < Math.min(MAX_C, c0 + nc)) { S.cols.push({ n: 'Columna ' + (S.cols.length + 1), t: 'texto', a: 'izquierda', tot: '', w: 0 }); hsty.push(null); S.rows.forEach(function (f, r) { f.push(''); sty[r].push(null); }); }
-        while (S.rows.length < Math.min(MAX_F, r0 + nf)) { S.rows.push(S.cols.map(function () { return ''; })); sty.push(S.cols.map(function () { return null; })); }
+        while (S.rows.length < Math.min(MAX_F, r0 + nf)) { S.rows.push(S.cols.map(function () { return ''; })); sty.push(S.cols.map(function () { return null; })); ids.push(null); }
         var cortado = false;
         for (var i = 0; i < nf; i++) for (var j = 0; j < nc; j++) {
             var r = r0 + i, c = c0 + j;
@@ -663,7 +675,7 @@
     }
     function insertar(eje, en, k) {
         reescribir(eje, function (v) { return v >= en ? v + k : v; });
-        if (eje === 'r') for (var i = 0; i < k; i++) { S.rows.splice(en, 0, S.cols.map(function () { return ''; })); sty.splice(en, 0, S.cols.map(function () { return null; })); }
+        if (eje === 'r') for (var i = 0; i < k; i++) { S.rows.splice(en, 0, S.cols.map(function () { return ''; })); sty.splice(en, 0, S.cols.map(function () { return null; })); ids.splice(en, 0, null); }
         else for (var j = 0; j < k; j++) { S.cols.splice(en, 0, { n: 'Columna ' + (S.cols.length + 1), t: 'texto', a: 'izquierda', tot: '', w: 0 }); hsty.splice(en, 0, null); S.rows.forEach(function (f, r) { f.splice(en, 0, ''); sty[r].splice(en, 0, null); }); }
     }
     function eliminar(eje, desde, hasta) {
@@ -674,7 +686,7 @@
             // dentro de lo borrado: un rango se acorta, una celda suelta se pierde
             return modo === 'solo' ? -1 : modo === 'fin' ? (desde - 1 >= 0 ? desde - 1 : -1) : desde;
         });
-        if (eje === 'r') { S.rows.splice(desde, k); sty.splice(desde, k); }
+        if (eje === 'r') { S.rows.splice(desde, k); sty.splice(desde, k); ids.splice(desde, k); }
         else { S.cols.splice(desde, k); hsty.splice(desde, k); S.rows.forEach(function (f, r) { f.splice(desde, k); sty[r].splice(desde, k); }); }
     }
     document.querySelectorAll('[data-acc]').forEach(function (b) {
@@ -687,8 +699,11 @@
                 sel.r0 = sel.r1 = en; sel.c1 = sel.c0;
             } else if (a === 'fila-borrar') {
                 var d = Math.max(0, n.r0); if (n.r1 < 0) return;
+                var vinculadas = 0;
+                for (var rr = d; rr <= n.r1; rr++) if (ids[rr]) vinculadas++;
+                if (vinculadas && !window.confirm('Este renglón está vinculado a una subactividad. Si lo eliminas, también se eliminará la subactividad.\n\n¿Eliminar ' + vinculadas + ' subactividad' + (vinculadas === 1 ? '' : 'es') + '?')) return;
                 antes(); eliminar('r', d, n.r1);
-                if (!S.rows.length) { S.rows.push(S.cols.map(function () { return ''; })); sty.push(S.cols.map(function () { return null; })); }
+                if (!S.rows.length) { S.rows.push(S.cols.map(function () { return ''; })); sty.push(S.cols.map(function () { return null; })); ids.push(null); }
                 sel.r0 = sel.r1 = Math.min(d, S.rows.length - 1);
             } else if (a === 'col-izq' || a === 'col-der') {
                 k = n.c1 - n.c0 + 1;
@@ -697,12 +712,13 @@
                 sel.c0 = sel.c1 = ec;
             } else if (a === 'col-borrar') {
                 if (n.c1 - n.c0 + 1 >= S.cols.length) { estado('La tabla necesita al menos una columna', true); return; }
+                for (var cc = n.c0; cc <= n.c1; cc++) if (S.cols[cc] && S.cols[cc].fija) { estado('Las columnas Nombre, Inicio, Fin y Avance están vinculadas a las subactividades y no se pueden eliminar.', true); return; }
                 antes(); eliminar('c', n.c0, n.c1); sel.c0 = sel.c1 = Math.min(n.c0, S.cols.length - 1);
             } else if (a === 'orden-asc' || a === 'orden-desc') {
                 if (S.rows.some(function (f) { return f.some(esFormula); })) { estado('No se puede ordenar una tabla con fórmulas (las referencias cambiarían)', true); return; }
                 var col = sel.c0, tipo = S.cols[col].t, dir = a === 'orden-asc' ? 1 : -1;
                 antes();
-                var pares = S.rows.map(function (f, r) { return { f: f, s: sty[r] }; });
+                var pares = S.rows.map(function (f, r) { return { f: f, s: sty[r], i: ids[r] || null }; });
                 var vacio = function (p) { return !p.f.some(function (x) { return x !== ''; }); };
                 var llenas = pares.filter(function (p) { return !vacio(p); }), vacias = pares.filter(vacio);
                 llenas.sort(function (x, y) {
@@ -713,7 +729,7 @@
                     return String(p).localeCompare(String(q), 'es', { numeric: true, sensitivity: 'base' }) * dir;
                 });
                 var todas = llenas.concat(vacias);
-                S.rows = todas.map(function (p) { return p.f; }); sty = todas.map(function (p) { return p.s; });
+                S.rows = todas.map(function (p) { return p.f; }); sty = todas.map(function (p) { return p.s; }); ids = todas.map(function (p) { return p.i; });
             }
             dibujar(); cambio(); area.focus();
         });

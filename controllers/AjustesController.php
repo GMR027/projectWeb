@@ -53,8 +53,9 @@ class AjustesController
         $finMes->modify('last day of this month');
 
         $resultado = [];
-        foreach ($proyecto->getPartidas() as $partida) {
-            foreach ($partida->getActividades() as $act) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            $partida = $bloque['partida'];
+            foreach ($bloque['actividades'] as $act) {
                 $inicioAct = new \DateTime($act->fecha_inicio);
                 $finAct = new \DateTime($act->fecha_fin);
 
@@ -360,7 +361,7 @@ class AjustesController
             'especialidades' => array_map(fn($e) => $e->nombre, \Model\Especialidad::deProyecto((int)$proyecto->id)),
             'submittals' => \Model\Submittal::deProyecto((int)$proyecto->id),
             'rfis' => \Classes\Rfi::disponible() ? \Classes\Rfi::lista((int)$proyecto->id) : [],
-            'actividadesEvidencia' => array_merge(...array_values(array_map(fn($p) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $p->getActividades()), $proyecto->getPartidas()))) ?: [],
+            'actividadesEvidencia' => array_merge(...array_values(array_map(fn($b) => array_map(fn($a) => [(int)$a->id, $a->codigo . ' · ' . $a->nombre], $b['actividades']), $proyecto->getPartidasConActividades()))) ?: [],
             'mesesLt' => LineatiempoController::mesesConActividades($proyecto)
         ]);
     }

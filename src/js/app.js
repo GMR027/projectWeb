@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalIcono = modal?.querySelector('.modal-icono i');
   const aceptarPorDefecto = modalAceptar ? modalAceptar.innerHTML : '';
   let resolverModal = null;
+  let focoPrevio = null;
 
   const cerrarModal = (ok = false) => {
     if (!modal) return;
@@ -73,6 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const r = resolverModal;
     resolverModal = null;
     if (r) r(ok);
+    if (focoPrevio && document.contains(focoPrevio)) focoPrevio.focus();
+    focoPrevio = null;
+  };
+
+  // Bloquea el botón mientras se envía (evita guardar dos veces con doble clic)
+  const bloquearEnvio = (form, btn) => {
+    if (!form || !btn || btn.disabled) return;
+    if (btn.tagName === 'INPUT') { btn.dataset.valorOriginal = btn.value; btn.value = 'Procesando…'; }
+    else { btn.dataset.htmlOriginal = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…'; }
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
   };
 
   window.confirmarModal = (opciones = {}) => new Promise((resolve) => {
@@ -95,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     modalCancelar.innerHTML = '<i class="fa-solid fa-xmark"></i> ' + (opciones.cancelar || 'Cancelar');
     modalCancelar.style.display = opciones.soloAceptar ? 'none' : '';
+    focoPrevio = document.activeElement;
     resolverModal = resolve;
     modal.classList.add('abierto');
     modal.setAttribute('aria-hidden', 'false');
@@ -111,7 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === modal) cerrarModal(false);
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('abierto')) cerrarModal(false);
+    if (!modal?.classList.contains('abierto')) return;
+    if (e.key === 'Escape') { cerrarModal(false); return; }
+    // El foco no se escapa del modal mientras está abierto
+    if (e.key === 'Tab') {
+      const focos = Array.from(modal.querySelectorAll('button:not([hidden]):not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+        .filter(el => el.offsetParent !== null);
+      if (!focos.length) return;
+      const primero = focos[0], ultimo = focos[focos.length - 1];
+      if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+    }
   });
   modalAceptar?.addEventListener('click', () => cerrarModal(true));
   modalExtra?.addEventListener('click', () => cerrarModal('extra'));
@@ -119,9 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('form[data-confirm]').forEach((form) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      const enviador = e.submitter;
       const partes = (form.dataset.confirm || '').split('|');
       window.confirmarModal({ titulo: partes[0]?.trim(), mensaje: partes[1]?.trim(), aceptar: partes[2]?.trim() }).then((ok) => {
-        if (ok) form.submit();
+        if (!ok) return;
+        bloquearEnvio(form, enviador || form.querySelector('button[type=submit], input[type=submit]'));
+        form.submit();
       });
     });
   });
@@ -138,9 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
           h.type = 'hidden'; h.name = enviador.name; h.value = enviador.value;
           form.appendChild(h);
         }
+        bloquearEnvio(form, enviador || form.querySelector('button[type=submit], input[type=submit]'));
         form.submit();
       });
     });
+  });
+
+  // Envío normal (sin confirmación): se bloquea el botón para que un doble clic no guarde dos veces.
+  // Los formularios con confirmación ya bloquean su botón cuando el usuario acepta.
+  document.addEventListener('submit', (e) => {
+    if (e.defaultPrevented) return;
+    const form = e.target;
+    if (!form || String(form.method || 'get').toLowerCase() !== 'post') return;
+    if (form.dataset.sinBloqueo) return;
+    bloquearEnvio(form, e.submitter || form.querySelector('button[type=submit], input[type=submit]'));
   });
 
   // ============ VISOR DE IMÁGENES ============

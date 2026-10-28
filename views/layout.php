@@ -19,10 +19,8 @@ if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title><?php echo s($titulo ?? 'Programa de Obra'); ?> | ProjectWeb</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/vendor/fuentes/fuentes.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fuentes/fuentes.css'); ?>">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fontawesome/css/all.min.css'); ?>">
     <link rel="stylesheet" href="/build/css/app.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/app.css'); ?>">
     <?php if ($temaCssProyecto): ?><style><?php echo $temaCssProyecto; ?></style><?php endif; ?>
     <script>
@@ -37,18 +35,19 @@ if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     </script>
 </head>
 <body>
+    <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
     <?php if (es_demo()): ?>
         <div class="demo-banner">
             <span><i class="fa-solid fa-eye"></i> Estás viendo el <strong>demo</strong> con datos de ejemplo · solo lectura</span>
             <span class="demo-banner-acciones">
                 <a href="/inicio#planes">Ver planes</a>
-                <a href="/logout" class="demo-banner-salir">Salir del demo</a>
+                <form method="POST" action="/logout" class="form-inline"><button type="submit" class="demo-banner-salir enlace-boton">Salir del demo</button></form>
             </span>
         </div>
     <?php endif; ?>
     <div class="app-container">
         <?php include_once __DIR__ . '/templates/sidebar.php'; ?>
-        <main class="main-content">
+        <main class="main-content" id="contenido-principal">
             <?php include_once __DIR__ . '/templates/topbar.php'; ?>
             <?php if (isset($proyecto)): ?>
                 <?php

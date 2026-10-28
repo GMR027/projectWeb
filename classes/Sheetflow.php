@@ -3,6 +3,7 @@
 namespace Classes;
 
 use Model\SheetflowHoja;
+use Model\SubactividadHoja;
 use Model\VplanTabla;
 use Model\RedactorDocumento;
 
@@ -26,6 +27,8 @@ class Sheetflow
     public const MAX_FILAS = 1000;
     public const MAX_CELDA = 500;
     public const MAX_BYTES = 2_000_000;
+    /** Columnas base de una tabla vinculada a las subactividades de una actividad */
+    public const ROLES_SUBACTIVIDAD = ['nombre', 'inicio', 'fin', 'status'];
 
     private static function hex($c, string $def): string
     {
@@ -59,6 +62,9 @@ class Sheetflow
                 'w' => isset($c['w']) && is_numeric($c['w']) && $c['w'] >= 40 ? (int)min(800, $c['w']) : 0,
             ];
             if ($t === 'lista') $cols[count($cols) - 1]['op'] = self::opciones($c['op'] ?? []);
+            $rol = (string)($c['rol'] ?? '');
+            if (in_array($rol, self::ROLES_SUBACTIVIDAD, true)) $cols[count($cols) - 1]['rol'] = $rol;
+            if (!empty($c['fija'])) $cols[count($cols) - 1]['fija'] = 1;
         }
         if (!$cols) $cols[] = ['n' => 'Columna 1', 't' => 'texto', 'a' => 'izquierda', 'tot' => ''];
         $nc = count($cols);
@@ -87,7 +93,16 @@ class Sheetflow
             if (!preg_match('/^(-1|\d+),(\d+)$/', (string)$k, $m) || $m[1] >= $nr || $m[2] >= $nc) continue;
             if ($f = self::limpiarFmt($f)) $fmt[$k] = $f;
         }
-        return ['cols' => $cols, 'rows' => $rows, 'calc' => (object)$calc, 'tot' => (object)$tot, 'estilo' => $estilo, 'fmt' => (object)$fmt];
+        $meta = [];
+        $m = is_array($d['meta'] ?? null) ? $d['meta'] : [];
+        $s = is_array($m['subactividad'] ?? null) ? $m['subactividad'] : [];
+        if (!empty($s) && array_key_exists('ids', $s)) {
+            $ids = [];
+            foreach ((array)($s['ids'] ?? []) as $id) $ids[] = (is_numeric($id) && (int)$id > 0) ? (int)$id : null;
+            $ids = array_slice(array_pad($ids, $nr, null), 0, $nr);
+            $meta['subactividad'] = ['actividad_id' => (int)($s['actividad_id'] ?? 0), 'ids' => $ids];
+        }
+        return ['cols' => $cols, 'rows' => $rows, 'calc' => (object)$calc, 'tot' => (object)$tot, 'estilo' => $estilo, 'fmt' => (object)$fmt, 'meta' => $meta];
     }
 
     public const BORDES = ['bt' => 'top', 'br' => 'right', 'bb' => 'bottom', 'bl' => 'left'];
@@ -276,12 +291,46 @@ class Sheetflow
         return SheetflowFormulas::recalcular(self::limpiar($d));
     }
 
-    /** Guarda el contenido de la hoja (saneado y recalculado). Devuelve la hoja ya con los datos puestos */
+    /**
+     * Guarda el contenido de la hoja (saneado y recalculado). Si la hoja está vinculada
+     * a las subactividades de una actividad, primero aplica los cambios a las subactividades
+     * y guarda el identificador de cada renglón; todo en una transacción.
+     */
     public static function guardarDatos(SheetflowHoja $h, array $d): SheetflowHoja
     {
-        $h->datos = json_encode(self::normalizar($d), JSON_UNESCAPED_UNICODE);
-        $h->guardar();
+        $d = self::normalizar($d);
+        $vinculo = SubactividadHoja::deHoja((int)$h->id);
+        if (!$vinculo) {
+            $h->datos = json_encode(self::sinVinculo($d), JSON_UNESCAPED_UNICODE);
+            $h->guardar();
+            return $h;
+        }
+        $db = SheetflowHoja::conexion();
+        $db->begin_transaction();
+        try {
+            $d = SubactividadHoja::aplicar($h, $d);
+            $d = self::normalizar($d);   // los valores ya validados pueden cambiar fórmulas y totales
+            $h->datos = json_encode($d, JSON_UNESCAPED_UNICODE);
+            if (!$h->guardar()) throw new \RuntimeException('No se pudo guardar la tabla.');
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
+        }
         return $h;
+    }
+
+    /** Copia de los datos sin el vínculo a subactividades (para duplicar, exportar o importar) */
+    public static function sinVinculo($d): array
+    {
+        $d = is_array($d) ? $d : [];
+        if (isset($d['meta']['subactividad'])) unset($d['meta']['subactividad']);
+        if (empty($d['meta'])) unset($d['meta']);
+        if (isset($d['cols']) && is_array($d['cols'])) {
+            foreach ($d['cols'] as &$c) if (is_array($c)) unset($c['rol'], $c['fija']);
+            unset($c);
+        }
+        return $d;
     }
 
     /** Datos iniciales de una plantilla (o null si la clave no existe) */
@@ -553,7 +602,7 @@ class Sheetflow
 
     public static function aArchivo(SheetflowHoja $h): string
     {
-        $d = $h->contenido();
+        $d = self::sinVinculo($h->contenido());
         $img = [];
         foreach (self::imagenesDe($d) as $n) {
             $ruta = Imagenes::CARPETA_VPLAN . '/' . $n;
@@ -576,7 +625,7 @@ class Sheetflow
             @unlink($tmp);
         }
         $json = strtr(json_encode($j['datos'], JSON_UNESCAPED_SLASHES), $mapa);
-        return [self::normalizar(json_decode($json, true)), ['nombre' => (string)($j['nombre'] ?? ''), 'descripcion' => (string)($j['descripcion'] ?? ''), 'departamento' => (string)($j['departamento'] ?? '')]];
+        return [self::normalizar(self::sinVinculo(json_decode($json, true))), ['nombre' => (string)($j['nombre'] ?? ''), 'descripcion' => (string)($j['descripcion'] ?? ''), 'departamento' => (string)($j['departamento'] ?? '')]];
     }
 
     /** HTML de la tabla (PDF y vista de solo lectura). Todo va escapado. $rutas = las imágenes salen como ruta del disco (Dompdf) */
@@ -802,7 +851,11 @@ class Sheetflow
         elseif (in_array($tipo, ['casilla', 'semaforo'], true)) $valor = self::normalizarValor($valor, $tipo);
         elseif ($tipo === 'lista' && $valor !== '' && ($op = $d['cols'][$col]['op'] ?? []) && !in_array($valor, $op, true)) return 'Elige una de las opciones de la lista';
         $d['rows'][$fila][$col] = mb_substr($valor, 0, self::MAX_CELDA);
-        self::guardarDatos($h, $d);
+        try {
+            self::guardarDatos($h, $d);
+        } catch (\RuntimeException $e) {
+            return $e->getMessage();
+        }
         return null;
     }
 
@@ -815,8 +868,30 @@ class Sheetflow
         if (self::filaReal($d, $fila) === null) return null;   // era un renglón nuevo todavía vacío
         foreach ($d['rows'] as $f) foreach ($f as $x) if (SheetflowFormulas::esFormula($x)) return 'La tabla tiene fórmulas; quita el renglón en SheetFlow para que sus referencias se ajusten';
         array_splice($d['rows'], $fila, 1);
+        if (isset($d['meta']['subactividad']['ids']) && is_array($d['meta']['subactividad']['ids'])) {
+            array_splice($d['meta']['subactividad']['ids'], $fila, 1);
+        }
+        $d['fmt'] = self::fmtSinFila($d['fmt'] ?? [], $fila);
         if (!$d['rows']) $d['rows'][] = array_fill(0, count($d['cols']), '');
-        self::guardarDatos($h, $d);
+        try {
+            self::guardarDatos($h, $d);
+        } catch (\RuntimeException $e) {
+            return $e->getMessage();
+        }
         return null;
+    }
+
+    /** Quita una fila del mapa de formatos y desplaza las siguientes */
+    public static function fmtSinFila($fmt, int $fila): array
+    {
+        $out = [];
+        foreach ((array)$fmt as $k => $f) {
+            if (!preg_match('/^(-1|\d+),(\d+)$/', (string)$k, $m)) continue;
+            $r = (int)$m[1];
+            if ($r === $fila) continue;
+            if ($r > $fila) $r--;
+            $out[$r . ',' . $m[2]] = $f;
+        }
+        return $out;
     }
 }

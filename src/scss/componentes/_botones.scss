@@ -27,12 +27,12 @@
 
 .btn-primary {
   background-color: $primary;
-  color: #fff;
+  color: $on-primary;   // blanco u oscuro según el contraste de la paleta
 
   &:hover {
     background-color: $primary-hover;
     box-shadow: 0 0 2rem -0.4rem $primary-glow;
-    color: #fff;
+    color: $on-primary-hover;
   }
 }
 

@@ -81,6 +81,11 @@
   .tabla td.acciones > * + * { margin-top: .5rem !important; }
   .tabla td.acciones .btn { display: flex; }
   .tabla .acciones .btn { width: 100%; padding: .7rem .8rem; font-size: 1.2rem; margin: 0 !important; text-align: center; justify-content: center; }
+  // Objetivos táctiles cómodos (mínimo 44 px): en obra se usa con guantes y a pleno sol
+  .btn-sm, .btn-xs, .tabla .acciones .btn, .acciones .btn { min-height: 4.4rem; padding-top: .8rem; padding-bottom: .8rem; }
+  .nav-link { min-height: 4.4rem; }
+  .idioma-sel button { min-height: 4rem; padding: .5rem 1rem; }
+  .topbar-right .topbar-salir { width: 4.4rem; height: 4.4rem; }
   .tabla .acciones form { display: block !important; margin: 0 !important; }
   .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 

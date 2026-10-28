@@ -172,6 +172,14 @@ HTML],
 <li>Elige el <strong>tipo*</strong>, un código opcional (ej. RFI-04), la fecha y una <strong>descripción*</strong>.</li>
 <li>Cuando se resuelva, pulsa <strong>Resolver</strong>. Las restricciones activas aparecen en el Gantt, en el Lookahead (columna de limitaciones), en vPlan y en las Acciones rápidas.</li>
 </ol>
+<h4>Subactividades</h4>
+<p>Una actividad se puede dividir en <strong>subactividades</strong> con su propio nombre, fechas y avance (0–100 %). Se agregan, editan y eliminan en la página de la actividad completa, debajo de «Restricciones de esta Actividad».</p>
+<ul>
+<li>Mientras la actividad tenga subactividades, su <strong>Progreso (%)</strong> es el <strong>promedio</strong> de ellas y el campo queda bloqueado; en la tabla del programa se muestra con un candado.</li>
+<li>Si eliminas la última subactividad, se conserva el último promedio como avance manual de la actividad.</li>
+<li>Las subactividades <strong>no</strong> aparecen en el programa de obra, dependencias, línea de tiempo ni Lookahead: solo alimentan el avance de su actividad.</li>
+</ul>
+<p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad y las columnas <em>Nombre, Inicio, Fin y Avance (%)</em>. La tabla se abre en <a href="#sheetflow">SheetFlow</a> y desde ese momento se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan; no aparecen en la actividad. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). Si la tabla tiene fórmulas en columnas adicionales, agrega o elimina renglones en SheetFlow para que las referencias se ajusten. <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
 <h4>Filtros</h4>
 <p>Arriba de la tabla puedes filtrar por <strong>partida</strong>, <strong>estatus</strong>, <strong>prioridad</strong> y <strong>restricción</strong> (con o sin). <em>Limpiar</em> quita los filtros.</p>
 <h4>Importar desde otro programa</h4>

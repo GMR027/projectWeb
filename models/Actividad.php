@@ -87,9 +87,19 @@ class Actividad extends ActiveRecord
         }
     }
 
-    /** Guarda y, si cambió el avance, anota el valor del día para la Curva S (cuando una actividad se marca completada queda su fecha) */
+    /**
+     * Si la actividad tiene subactividades, su avance es el promedio de ellas:
+     * cualquier guardado (edición, reporte diario, Telegram, API…) respeta ese cálculo.
+     */
     public function guardar()
     {
+        if (!is_null($this->id)) {
+            $promedio = $this->progresoDesdeSubactividades();
+            if ($promedio !== null) {
+                $this->progreso = $promedio;
+                $this->sincronizarStatus();
+            }
+        }
         $antes = null;
         if (!is_null($this->id)) {
             $r = self::$db->query('SELECT progreso FROM actividades WHERE id = ' . (int)$this->id);
@@ -124,6 +134,64 @@ class Actividad extends ActiveRecord
     public function getRestricciones(): array
     {
         return Restriccion::whereAll('actividad_id', $this->id, 'creado DESC');
+    }
+
+    /**
+     * Todas las actividades del proyecto en UNA consulta (antes: una por partida). Para listas, Gantt y
+     * exportadores; el orden respeta partida y actividad.
+     */
+    public static function deProyecto(int $proyectoId): array
+    {
+        $id = (int)$proyectoId;
+        return self::consultarSQL(
+            "SELECT a.* FROM actividades a JOIN partidas p ON p.id = a.partida_id
+             WHERE p.proyecto_id = $id ORDER BY p.orden ASC, p.codigo ASC, a.orden ASC, a.codigo ASC"
+        );
+    }
+
+    /** Subactividades de la actividad (solo se ven en su edición) */
+    public function getSubactividades(): array
+    {
+        try {
+            return Subactividad::deActividad((int)$this->id);
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+    }
+
+    public function tieneSubactividades(): bool
+    {
+        return Subactividad::existePara((int)$this->id);
+    }
+
+    /** Promedio de las subactividades, o null si la actividad no tiene ninguna */
+    public function progresoDesdeSubactividades(): ?int
+    {
+        $statuses = [];
+        try {
+            $r = self::$db->query('SELECT status FROM subactividades WHERE actividad_id = ' . (int)$this->id);
+            if ($r) {
+                while ($f = $r->fetch_row()) $statuses[] = (int)$f[0];
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {   // migración pendiente
+            return null;
+        }
+        return $statuses ? Subactividad::promedio($statuses) : null;
+    }
+
+    /**
+     * Aplica el avance calculado desde las subactividades y lo guarda.
+     * Si no quedan subactividades se conserva el último % (vuelve a ser manual).
+     */
+    public function recalcularDesdeSubactividades(): void
+    {
+        $promedio = $this->progresoDesdeSubactividades();
+        if ($promedio === null) return;
+        $this->progreso = $promedio;
+        $this->sincronizarStatus();
+        $this->guardar();
     }
 
     public function getRestriccionesActivas(): array

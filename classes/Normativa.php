@@ -264,6 +264,8 @@ class Normativa
         $tam = (int)filesize($tmp);
         if ($tam < 1 || $tam > self::MAX_PDF) return [false, 'El archivo está vacío o supera ' . Almacenamiento::formato(self::MAX_PDF) . '.', 0];
         if (!Almacenamiento::cabe($pid, $tam)) return [false, Almacenamiento::mensajeLleno($pid), 0];
+        // Mismo control que en Archivo: firma real, macros, zip peligroso y antivirus
+        if ($motivos = EscanerArchivos::revisar($tmp, $nombreOrig)) return [false, implode(' ', $motivos), 0];
         $dir = self::carpeta($pid);
         if (!is_dir($dir) && !@mkdir($dir, 0750, true)) return [false, 'No se pudo crear la carpeta de normativa.', 0];
         $nombre = bin2hex(random_bytes(12)) . '.' . $ext;

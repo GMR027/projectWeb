@@ -28,10 +28,11 @@
             <?php if ($puede && $actividades): ?><form method="post" action="/reportes/avance"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo s($reporte->id); ?>"><?php endif; ?>
             <ul class="rd-acts">
                 <?php foreach ($actividades as [$a, $p]): ?>
+                    <?php $conSubactividades = !empty(($subactividades ?? [])[(int)$a->id]); ?>
                     <li>
                         <span class="mono"><?php echo s($a->codigo); ?></span> <strong><?php echo s($a->nombre); ?></strong>
-                        <div class="text-sm text-muted"><?php echo s($p->nombre); ?> · <?php echo s(fecha_corta_es($a->fecha_inicio)); ?> → <?php echo s(fecha_corta_es($a->fecha_fin)); ?> · <?php echo $a->esHito() ? 'Hito' : (int)$a->progreso . ' %'; ?>
-                            <?php if ($puede && !$a->esHito()): ?> · <label>Avance real: <input type="number" name="avance[<?php echo (int)$a->id; ?>]" min="0" max="100" step="1" value="<?php echo (int)$a->progreso; ?>" style="width:7rem"> %</label><?php endif; ?></div>
+                        <div class="text-sm text-muted"><?php echo s($p->nombre); ?> · <?php echo s(fecha_corta_es($a->fecha_inicio)); ?> → <?php echo s(fecha_corta_es($a->fecha_fin)); ?> · <?php echo $a->esHito() ? 'Hito' : (int)$a->progreso . ' %'; ?><?php if ($conSubactividades): ?> <span title="El avance se calcula como promedio de sus subactividades"><i class="fa-solid fa-lock"></i> calculado de subactividades</span><?php endif; ?>
+                            <?php if ($puede && !$a->esHito() && !$conSubactividades): ?> · <label>Avance real: <input type="number" name="avance[<?php echo (int)$a->id; ?>]" min="0" max="100" step="1" value="<?php echo (int)$a->progreso; ?>" style="width:7rem"> %</label><?php endif; ?></div>
                     </li>
                 <?php endforeach; ?>
             </ul>

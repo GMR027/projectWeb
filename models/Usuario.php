@@ -21,13 +21,17 @@ class Usuario extends ActiveRecord
     public $creado_por;
     public $herramientas;
 
-    /** Herramientas del proyecto que se pueden mostrar u ocultar a un visitante: clave => [etiqueta, prefijos de ruta] */
+    /**
+     * Herramientas del proyecto que se pueden mostrar u ocultar a un visitante: clave => [etiqueta, prefijos de ruta].
+     * Toda herramienta con URL propia debe estar aquí: lo que no se declara se niega al visitante (ver
+     * `herramienta_permitida()`), y `tests/run.php` lo comprueba contra las rutas registradas.
+     */
     public const HERRAMIENTAS = [
-        'programa' => ['Programa', ['/programa']],
+        'programa' => ['Programa', ['/programa', '/api/programa', '/api/actividad', '/api/duracion-sugerida']],
         'dependencias' => ['Dependencias de obra', ['/dependencias', '/api/dependencias']],
         'lineatiempo' => ['Línea de tiempo activa', ['/lineatiempo', '/api/lineatiempo']],
         'planificador' => ['Planificador', ['/planificador']],
-        'lookahead' => ['Lookahead', ['/lookahead']],
+        'lookahead' => ['Lookahead', ['/lookahead', '/api/lookahead']],
         'vplan' => ['vPlan', ['/vplan', '/api/vplan']],
         'lastplanner' => ['Last Planner', ['/lastplanner']],
         'reportes' => ['Reporte diario', ['/reportes']],
@@ -40,18 +44,53 @@ class Usuario extends ActiveRecord
         'msr' => ['MSR · Materiales', ['/msr', '/api/msr']],
         'cambios' => ['Órdenes de cambio y líneas base', ['/cambios', '/api/cambios', '/lineas-base']],
         'calendario' => ['Calendario', ['/calendario']],
-        'graficos' => ['Editor y símbolos', ['/graficos', '/api/graficos', '/simbolos', '/api/simbolos']],
+        'graficos' => ['Editor y símbolos', ['/graficos', '/api/graficos', '/simbolos', '/api/simbolos', '/api/estampas']],
         'redactor' => ['Redactor', ['/redactor', '/api/redactor']],
         'sheetflow' => ['SheetFlow (tablas)', ['/sheetflow', '/api/sheetflow']],
         'view360' => ['View360', ['/view360', '/api/view360']],
         'comparador' => ['Comparador de documentos', ['/comparador']],
-        'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos']],
+        'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos', '/api/ensamblador', '/api/ordenar-ia']],
         'traductor' => ['Traductor', ['/traductor', '/api/traductor']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
         'historial' => ['Historial de cambios', ['/historial', '/api/historial']],
         'costos' => ['Costos y presupuesto', ['/costos']],
         'recursos' => ['Recursos y cuadrillas', ['/recursos']],
         'rfi' => ['RFI', ['/rfi']],
+        'seguridad' => ['Seguridad y permisos', ['/seguridad']],
+        'punch' => ['Punch list', ['/punch']],
+        'calidad' => ['Calidad e inspecciones', ['/calidad']],
+        'equipo' => ['Equipo y maquinaria', ['/equipo']],
+        'contratos' => ['Contratos, fianzas y seguros', ['/contratos']],
+        'cierre' => ['Cierre de obra', ['/cierre']],
+        'mapa-avance' => ['Mapa de avance', ['/mapa-avance']],
+        'submittals' => ['Submittals', ['/submittals', '/api/submittals']],
+        'materiales' => ['Catálogo de materiales', ['/materiales', '/api/materiales']],
+        'plantillas' => ['Tipo de obra', ['/plantillas']],
+        'datos-obra' => ['Datos de obra', ['/datos-obra']],
+        'normativa' => ['Normativa y especificaciones', ['/normativa']],
+        'programador' => ['Programador de actividades', ['/programador', '/api/programador']],
+        'revision-datos' => ['Revisión de datos (IA)', ['/inconsistencias', '/api/inconsistencias', '/analisis-materiales', '/api/analisis-materiales', '/api/materiales-inteligentes']],
+        'centro-ia' => ['Centro de IA', ['/propuestas-ia', '/resumen-ia', '/uso-ia', '/calidad-ia', '/api/ia', '/biblioteca-ia', '/informes-ia', '/grabaciones', '/historial-cambios']],
+        'revisiones' => ['Revisiones', ['/revisiones', '/api/revisiones']],
+        'directorio' => ['Directorio', ['/directorio']],
+        'especialidades' => ['Especialidades', ['/especialidades']],
+        'campos' => ['Campos personalizados', ['/campos', '/api/campos']],
+        'lista-diseno' => ['Diseño de listas', ['/lista']],
+        'plantillas-proyecto' => ['Plantillas de proyecto', ['/plantillas-proyecto']],
+        'marca' => ['Marca del cliente', ['/marca']],
+        'integraciones' => ['Integraciones', ['/integraciones', '/api/escritorio']],
+        'compartir' => ['Compartir en solo lectura', ['/compartir']],
+        'ajustes' => ['Ajustes del proyecto', ['/ajustes', '/exportar']],
+    ];
+
+    /**
+     * Rutas que no son una herramienta y que un visitante siempre puede usar (navegación, soporte,
+     * enlaces públicos, media autenticada y landing). Todo lo demás se le niega si no está en su lista.
+     */
+    public const RUTAS_GENERALES = [
+        '/', '/proyectos', '/dashboard', '/inicio', '/manual', '/novedades', '/buscar', '/idioma',
+        '/soporte', '/api/soporte', '/api/empezar', '/cliente', '/calendario/ics', '/media',
+        '/login', '/logout', '/contacto', '/terminos', '/servicios', '/demo',
     ];
 
     /** Claves permitidas al visitante (null = todas) */
@@ -67,6 +106,23 @@ class Usuario extends ActiveRecord
     {
         $validas = array_values(array_intersect(array_keys(self::HERRAMIENTAS), is_array($marcadas) ? $marcadas : []));
         return count($validas) === count(self::HERRAMIENTAS) ? null : json_encode($validas);
+    }
+
+    /** Longitud mínima de contraseña y lista de las más usadas (no se aceptan) */
+    public const PASSWORD_MIN = 10;
+    private const PASSWORD_COMUNES = [
+        '1234567890', '123456789', '12345678', '12345678910', 'password', 'password1', 'password123',
+        'qwertyuiop', 'qwerty123', 'abc123456', 'admin123', 'administrador', 'iloveyou', 'bienvenido',
+        'contraseña', 'contrasena', '123456789a', 'a123456789', '1q2w3e4r5t', '0000000000',
+    ];
+
+    /** Devuelve el motivo si la contraseña es débil, o null si es aceptable */
+    public static function passwordDebil(string $password): ?string
+    {
+        if (strlen($password) < self::PASSWORD_MIN) return 'La contraseña debe tener al menos ' . self::PASSWORD_MIN . ' caracteres';
+        if (in_array(mb_strtolower($password), self::PASSWORD_COMUNES, true)) return 'Esa contraseña es demasiado común; elige otra';
+        if (preg_match('/^(.)\1+$/', $password)) return 'La contraseña no puede ser un solo carácter repetido';
+        return null;
     }
 
     /** Visitantes (solo lectura) que un cliente puede crear */
@@ -118,9 +174,8 @@ class Usuario extends ActiveRecord
         }
         if (!$this->password) {
             self::$alertas['error'][] = 'El password no puede ir vacío';
-        }
-        if (strlen($this->password) < 6) {
-            self::$alertas['error'][] = 'El password debe contener al menos 6 caracteres';
+        } elseif ($motivo = self::passwordDebil((string)$this->password)) {
+            self::$alertas['error'][] = $motivo;
         }
         if ($this->password !== $this->password2) {
             self::$alertas['error'][] = 'Los passwords son diferentes';
@@ -175,9 +230,10 @@ class Usuario extends ActiveRecord
         $this->password = password_hash($this->password, PASSWORD_BCRYPT);
     }
 
+    /** Token de un solo uso (32 bytes al azar, no predecible como uniqid) */
     public function crearToken(): void
     {
-        $this->token = uniqid();
+        $this->token = bin2hex(random_bytes(32));
     }
 
     public function comprobarPassword(string $password): bool

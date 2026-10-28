@@ -7,6 +7,9 @@ use Model\Proyecto;
 use Model\Partida;
 use Model\Actividad;
 use Model\Restriccion;
+use Model\SheetflowHoja;
+use Model\Subactividad;
+use Model\SubactividadHoja;
 use Model\TipoRestriccion;
 use Classes\Calendario;
 use Classes\GanttRenderer;
@@ -290,6 +293,11 @@ class ProgramaController
         if (!is_numeric($valor)) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Valor inválido']);
+            exit;
+        }
+        if ($actividad->tieneSubactividades()) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => 'El avance se calcula a partir de sus subactividades. Edítalas en la actividad.']);
             exit;
         }
         $actividad->progreso = max(0, min(100, (int)round((float)$valor)));
@@ -652,10 +660,10 @@ class ProgramaController
         $finProyecto = null;
         $sugeridas = [];
         $finPartida = [];
-        foreach ($partidas as $p) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
             $fin = null;
-            foreach ($p->getActividades() as $a) if ($a->fecha_fin && (!$fin || $a->fecha_fin > $fin)) $fin = $a->fecha_fin;
-            $finPartida[$p->id] = $fin;
+            foreach ($bloque['actividades'] as $a) if ($a->fecha_fin && (!$fin || $a->fecha_fin > $fin)) $fin = $a->fecha_fin;
+            $finPartida[(int)$bloque['partida']->id] = $fin;
             if ($fin && (!$finProyecto || $fin > $finProyecto)) $finProyecto = $fin;
         }
         foreach ($partidas as $p) {
@@ -806,17 +814,17 @@ class ProgramaController
     private static function codigoActividadDuplicado(Actividad $actividad, Proyecto $proyecto): ?array
     {
         $usados = [];
-        foreach ($proyecto->getPartidas() as $p) {
-            foreach ($p->getActividades() as $a) {
-                if ((int)$a->id !== (int)$actividad->id) $usados[mb_strtolower(trim((string)$a->codigo))] = true;
-            }
+        $propias = [];
+        foreach (Actividad::deProyecto((int)$proyecto->id) as $a) {
+            if ((int)$a->id !== (int)$actividad->id) $usados[mb_strtolower(trim((string)$a->codigo))] = true;
+            if ((int)$a->partida_id === (int)$actividad->partida_id) $propias[] = $a;
         }
         if (!isset($usados[mb_strtolower(trim((string)$actividad->codigo))])) return null;
 
         $partida = Partida::find($actividad->partida_id);
         $prefijo = self::prefijoPartida($partida);
         $max = 0;
-        foreach ($partida->getActividades() as $a) {
+        foreach ($propias as $a) {
             if ((int)$a->id !== (int)$actividad->id && preg_match('/^' . preg_quote($prefijo, '/') . '\.(\d+)$/', trim((string)$a->codigo), $m)) {
                 $max = max($max, (int)$m[1]);
             }
@@ -889,6 +897,10 @@ class ProgramaController
             'actividad' => $actividad,
             'alertas' => $alertas,
             'duplicado' => $duplicado,
+            'subactividades' => $actividad->getSubactividades(),
+            'hojaSubactividades' => SubactividadHoja::hojaDeActividad((int)$id),
+            'subEstado' => in_array($_GET['sub'] ?? '', ['creada', 'editada', 'eliminada', 'desvinculada'], true) ? $_GET['sub'] : '',
+            'subError' => trim((string)($_GET['sub_error'] ?? '')),
             'catalogo' => self::catalogoMateriales((int)$proyecto->id),
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
             'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
@@ -906,6 +918,7 @@ class ProgramaController
                 $proyectoId = $partida->proyecto_id;
                 exigir_gestionar_proyecto(Proyecto::find($proyectoId));
                 Actividad::quitarIcono((int)$id, (string)($actividad->icono ?? ''));   // borra también el archivo del icono
+                try { SubactividadHoja::desvincular($actividad); } catch (\Throwable $e) { error_log('Subactividades al eliminar actividad: ' . $e->getMessage()); }
                 $actividad->eliminar();
                 $partida->recalcularFechas();
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);
@@ -915,6 +928,183 @@ class ProgramaController
             header('Location: /proyectos');
             exit;
         }
+    }
+
+    // ==================== SUBACTIVIDADES ====================
+    /* Las subactividades no salen en el programa, dependencias, línea de tiempo ni lookahead:
+       solo se gestionan desde la edición de la actividad y alimentan su % de avance. */
+
+    public static function crearSubactividad()
+    {
+        redirigir_si_no_auth();
+        [$actividad] = self::contextoSubactividad($_POST['actividad_id'] ?? null, true);
+        self::verificarVersionHoja($actividad);
+
+        $subactividad = new Subactividad([
+            'actividad_id' => $actividad->id,
+            'nombre' => $_POST['nombre'] ?? '',
+            'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
+            'fecha_fin' => $_POST['fecha_fin'] ?? '',
+            'status' => $_POST['status'] ?? 0,
+        ]);
+        $alertas = $subactividad->validar();
+        if (!empty($alertas)) {
+            self::volverSubactividad($actividad, 'error', implode(' ', $alertas['error'] ?? []));
+        }
+        self::aplicarCambioSubactividades($actividad, function () use ($subactividad) {
+            $resultado = $subactividad->guardar();
+            if (!$resultado || (is_array($resultado) && empty($resultado['resultado']))) {
+                throw new \RuntimeException('No se pudo guardar la subactividad.');
+            }
+        });
+        self::volverSubactividad($actividad, 'creada');
+    }
+
+    public static function editarSubactividad()
+    {
+        redirigir_si_no_auth();
+        [$actividad] = self::contextoSubactividad($_POST['actividad_id'] ?? null, true);
+        self::verificarVersionHoja($actividad);
+
+        $filas = (array)($_POST['sub'] ?? []);
+        $errores = [];
+        $cambios = [];
+        foreach ($filas as $id => $datos) {
+            if (!is_array($datos)) continue;
+            $subactividad = Subactividad::find((int)$id);
+            if (!$subactividad || (int)$subactividad->actividad_id !== (int)$actividad->id) continue;
+            $subactividad->nombre = $datos['nombre'] ?? '';
+            $subactividad->fecha_inicio = $datos['fecha_inicio'] ?? '';
+            $subactividad->fecha_fin = $datos['fecha_fin'] ?? '';
+            $subactividad->status = $datos['status'] ?? 0;
+            $alertas = $subactividad->validar();
+            if (!empty($alertas)) {
+                $errores = array_merge($errores, $alertas['error'] ?? []);
+                continue;
+            }
+            $cambios[] = $subactividad;
+        }
+        if ($errores) {
+            self::volverSubactividad($actividad, 'error', implode(' ', array_unique($errores)));
+        }
+        if ($cambios) {
+            self::aplicarCambioSubactividades($actividad, function () use ($cambios) {
+                foreach ($cambios as $subactividad) {
+                    if (!$subactividad->guardar()) throw new \RuntimeException('No se pudo guardar una subactividad.');
+                }
+            });
+        }
+        self::volverSubactividad($actividad, 'editada');
+    }
+
+    public static function eliminarSubactividad()
+    {
+        redirigir_si_no_auth();
+        $subactividad = Subactividad::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        if (!$subactividad) {
+            header('Location: /proyectos');
+            exit;
+        }
+        [$actividad] = self::contextoSubactividad($subactividad->actividad_id, true);
+        self::verificarVersionHoja($actividad);
+
+        self::aplicarCambioSubactividades($actividad, function () use ($subactividad) {
+            $subactividad->eliminar();
+        });
+        self::volverSubactividad($actividad, 'eliminada');
+    }
+
+    /** Genera la tabla de SheetFlow vinculada a las subactividades de la actividad */
+    public static function crearTablaSubactividades()
+    {
+        redirigir_si_no_auth();
+        [$actividad, $proyecto] = self::contextoSubactividad($_POST['actividad_id'] ?? null, true);
+        try {
+            [$hoja] = SubactividadHoja::crearParaActividad($actividad, $proyecto, $_SESSION['id'] ?? null);
+        } catch (\Throwable $e) {
+            error_log('Subactividades SheetFlow: ' . $e->getMessage());
+            self::volverSubactividad($actividad, 'error', 'No se pudo crear la tabla en SheetFlow. Revisa que la migración esté aplicada.');
+        }
+        header('Location: /sheetflow/abrir?proyecto=' . (int)$proyecto->id . '&id=' . (int)$hoja->id);
+        exit;
+    }
+
+    /** Desvincula la tabla (se conserva como tabla normal de SheetFlow) */
+    public static function quitarTablaSubactividades()
+    {
+        redirigir_si_no_auth();
+        [$actividad] = self::contextoSubactividad($_POST['actividad_id'] ?? null, true);
+        try {
+            SubactividadHoja::desvincular($actividad);
+        } catch (\Throwable $e) {
+            error_log('Subactividades SheetFlow desvincular: ' . $e->getMessage());
+            self::volverSubactividad($actividad, 'error', 'No se pudo desvincular la tabla. Inténtalo de nuevo.');
+        }
+        self::volverSubactividad($actividad, 'desvinculada');
+    }
+
+    /**
+     * Guarda un cambio de subactividades, recalcula el avance y lo refleja en la tabla
+     * vinculada. Si algo falla, se deshace todo (incluida la subactividad).
+     */
+    private static function aplicarCambioSubactividades(Actividad $actividad, callable $cambio): void
+    {
+        $db = SheetflowHoja::conexion();
+        $db->begin_transaction();
+        try {
+            $cambio();
+            $actividad->recalcularDesdeSubactividades();
+            $error = SubactividadHoja::reflejar($actividad);
+            if ($error !== null) {
+                $db->rollback();
+                self::volverSubactividad($actividad, 'error', $error);
+            }
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            error_log('Subactividades: ' . $e->getMessage());
+            self::volverSubactividad($actividad, 'error', 'No se pudo guardar la subactividad. Inténtalo de nuevo.');
+        }
+    }
+
+    /** Comprueba que la tabla vinculada no cambió desde que se abrió el formulario */
+    private static function verificarVersionHoja(Actividad $actividad): void
+    {
+        $hoja = SubactividadHoja::hojaDeActividad((int)$actividad->id);
+        if (!$hoja) return;
+        $version = trim((string)($_POST['hoja_version'] ?? ''));
+        if ($version !== '' && $version !== (string)$hoja->actualizado) {
+            self::volverSubactividad($actividad, 'error', 'La tabla vinculada cambió desde otra sesión. Recarga la actividad y vuelve a intentarlo.');
+        }
+    }
+
+    /**
+     * Actividad y proyecto de una subactividad, comprobando que se puede gestionar.
+     * Las acciones de subactividades son solo POST.
+     */
+    private static function contextoSubactividad($actividadId, bool $soloPost): array
+    {
+        if ($soloPost && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $actividad = Actividad::find(filter_var($actividadId, FILTER_VALIDATE_INT));
+        $partida = $actividad ? Partida::find($actividad->partida_id) : null;
+        $proyecto = $partida ? Proyecto::find($partida->proyecto_id) : null;
+        if (!$actividad || !$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+        return [$actividad, $proyecto];
+    }
+
+    private static function volverSubactividad(Actividad $actividad, string $estado, string $mensaje = ''): void
+    {
+        $url = '/programa/actividades/editar?id=' . (int)$actividad->id;
+        $url .= $estado === 'error' ? '&sub_error=' . urlencode($mensaje) : '&sub=' . urlencode($estado);
+        header('Location: ' . $url . '#subactividades');
+        exit;
     }
 
     // ==================== RESTRICCIONES ====================

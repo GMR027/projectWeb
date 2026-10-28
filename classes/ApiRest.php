@@ -414,6 +414,7 @@ class ApiRest
         $cambios = [];
         if (array_key_exists('progreso', $d)) {
             if (!is_numeric($d['progreso']) || $d['progreso'] < 0 || $d['progreso'] > 100) self::error(422, 'datos_invalidos', 'El progreso debe ser un número de 0 a 100.');
+            if ($a->tieneSubactividades()) self::error(422, 'datos_invalidos', 'El avance se calcula como promedio de las subactividades de la actividad.');
             $a->progreso = (int)round((float)$d['progreso']);
             $a->sincronizarStatus();
             $cambios[] = 'progreso';

@@ -94,29 +94,45 @@ class Partida extends ActiveRecord
     /** Recalcula fecha_inicio y fecha_fin de la partida según sus actividades */
     public function recalcularFechas(): void
     {
-        $actividades = $this->getActividades();
-        if (empty($actividades)) return;
-        $inicios = array_map(fn($a) => $a->fecha_inicio, $actividades);
-        $fines = array_map(fn($a) => $a->fecha_fin, $actividades);
-        $this->fecha_inicio = min($inicios);
-        $this->fecha_fin = max($fines);
+        // Una consulta en vez de cargar todas las actividades; sin actividades, la partida queda sin fechas
+        $id = (int)$this->id;
+        $r = self::$db->query("SELECT MIN(fecha_inicio) inicio, MAX(fecha_fin) fin FROM actividades WHERE partida_id = $id");
+        $f = $r ? ($r->fetch_assoc() ?: []) : [];
+        $this->fecha_inicio = $f['inicio'] ?? null;
+        $this->fecha_fin = $f['fin'] ?? null;
         // Cálculo del sistema (las fechas salen de sus actividades): no es un cambio que el usuario hiciera a mano,
         // así que no se anota en el historial (el cambio real que lo provocó sí queda registrado)
         \Classes\HistorialCambios::silenciar(fn() => $this->guardar());
     }
 
-    /** Progreso ponderado de la partida */
+    /**
+     * Progreso ponderado de la partida por duración (los hitos no pesan; si solo hay hitos, promedio simple).
+     * Una consulta, sin cargar las actividades.
+     */
     public function getProgreso(): float
     {
-        $actividades = $this->getActividades();
-        if (empty($actividades)) return 0;
-        $total = 0;
-        $suma = 0;
-        foreach ($actividades as $act) {
-            $peso = max(1, (int)$act->duracion_dias);
-            $total += $peso;
-            $suma += $peso * (int)$act->progreso;
-        }
-        return $total > 0 ? round($suma / $total, 1) : 0;
+        $id = (int)$this->id;
+        $r = self::$db->query("SELECT ROUND(COALESCE(
+            SUM(CASE WHEN hito = 0 THEN GREATEST(1, duracion_dias) * progreso ELSE 0 END) /
+            NULLIF(SUM(CASE WHEN hito = 0 THEN GREATEST(1, duracion_dias) ELSE 0 END), 0),
+            AVG(progreso)), 1) pct FROM actividades WHERE partida_id = $id");
+        return (float)($r ? ($r->fetch_row()[0] ?? 0) : 0);
+    }
+
+    /** [partida_id => %] de todas las partidas del proyecto en una sola consulta (Gantt y listas) */
+    public static function progresosDeProyecto(int $proyectoId): array
+    {
+        $id = (int)$proyectoId;
+        $r = self::$db->query(
+            "SELECT a.partida_id, ROUND(COALESCE(
+                SUM(CASE WHEN a.hito = 0 THEN GREATEST(1, a.duracion_dias) * a.progreso ELSE 0 END) /
+                NULLIF(SUM(CASE WHEN a.hito = 0 THEN GREATEST(1, a.duracion_dias) ELSE 0 END), 0),
+                AVG(a.progreso)
+             ), 1) pct
+             FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $id GROUP BY a.partida_id"
+        );
+        $out = [];
+        while ($r && ($f = $r->fetch_assoc())) $out[(int)$f['partida_id']] = (float)$f['pct'];
+        return $out;
     }
 }

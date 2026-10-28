@@ -28,6 +28,17 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
         <a href="/sheetflow?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Tablas</a>
     </div>
 </div>
+<?php if (!empty($vinculo) && !empty($actividadVinculo)): ?>
+<div class="alerta alerta-info">
+    <i class="fa-solid fa-link"></i>
+    Esta tabla está <strong>vinculada a las subactividades</strong> de la actividad
+    <strong><?php echo s(trim($actividadVinculo->codigo . ' ' . $actividadVinculo->nombre)); ?></strong>.
+    Los cambios de Nombre, Inicio, Fin y Avance se guardan también en la actividad; las columnas adicionales se quedan en SheetFlow y vPlan.
+    <?php if (puede_gestionar_proyecto($proyecto)): ?>
+        <a href="/programa/actividades/editar?id=<?php echo (int)$actividadVinculo->id; ?>#subactividades">Abrir la actividad</a>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 <?php $avisoTexto = 'Las tablas solo se pueden editar en una tablet o en un equipo de escritorio.'; $avisoLectura = true; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <div class="card rd-datos">

@@ -188,7 +188,8 @@ class VplanController
     private static function formulario(Router $router, $proyecto, VplanLamina $l)
     {
         $alertas = [];
-        $partidas = $proyecto->getPartidas();
+        $bloques = $proyecto->getPartidasConActividades();
+        $partidas = array_map(fn($b) => $b['partida'], $bloques);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $esNueva = !$l->id;
             if ($esNueva) {   // en una lámina existente la partida y las actividades se cambian en el bloque de tareas (modo diseño)
@@ -216,7 +217,8 @@ class VplanController
             // Actividades del bloque de tareas inicial: solo las de la partida elegida; todas o ninguna = partida completa
             $seleccion = [];
             if ($esNueva && $partida && $l->partida_id) {
-                $idsPartida = array_map(fn($a) => (int)$a->id, $partida->getActividades());
+                $idsPartida = [];
+                foreach ($bloques as $b) if ((int)$b['partida']->id === (int)$partida->id) $idsPartida = array_map(fn($a) => (int)$a->id, $b['actividades']);
                 $pedidas = array_unique(array_map('intval', (array)($_POST['actividades'] ?? [])));
                 $seleccion = array_values(array_intersect($pedidas, $idsPartida));
                 if ($pedidas && !$seleccion) $alertas['error'][] = 'Las actividades elegidas no pertenecen a la partida';
@@ -280,7 +282,7 @@ class VplanController
         }
         $router->render('vplan/formulario', [
             'titulo' => $l->id ? 'Editar lámina' : 'Nueva lámina', 'proyecto' => $proyecto, 'lamina' => $l,
-            'partidas' => $partidas, 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id), 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $partidas, $l),
+            'partidas' => $partidas, 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id), 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $bloques, $l),
             'hojasSheetflow' => $l->id ? [] : \Model\SheetflowHoja::resumen((int)$proyecto->id),
             'tablaInicial' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (string)($_POST['tabla_inicial'] ?? '') : (!empty($_GET['sheetflow']) ? 'sf:' . (int)$_GET['sheetflow'] : ''),
             'seleccion' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', (array)($_POST['actividades'] ?? [])) : $l->seleccion(),
@@ -305,7 +307,7 @@ class VplanController
      * Para el formulario: por partida, sus actividades con su número original y en qué OTRAS láminas ya se muestran.
      * Una lámina sin selección muestra toda su partida.
      */
-    private static function actividadesPorPartida($proyecto, array $partidas, VplanLamina $actual): array
+    private static function actividadesPorPartida($proyecto, array $bloques, VplanLamina $actual): array
     {
         $porPartida = [];   // partida_id => [actividad_id|'*' => [títulos]]
         foreach (VplanLamina::deProyecto((int)$proyecto->id) as $o) {
@@ -314,9 +316,10 @@ class VplanController
             foreach ($sel ?: ['*'] as $aid) $porPartida[(int)$o->partida_id][$aid][] = $o->titulo;
         }
         $out = [];
-        foreach ($partidas as $p) {
+        foreach ($bloques as $bloque) {
+            $p = $bloque['partida'];
             $lista = [];
-            foreach ($p->getActividades() as $i => $a) {
+            foreach ($bloque['actividades'] as $i => $a) {
                 $en = array_merge($porPartida[(int)$p->id]['*'] ?? [], $porPartida[(int)$p->id][(int)$a->id] ?? []);
                 $lista[] = ['id' => (int)$a->id, 'seq' => $i + 1, 'nombre' => $a->nombre, 'en' => array_values(array_unique($en))];
             }
@@ -551,9 +554,10 @@ class VplanController
     private static function partidasParaDiseno($proyecto): array
     {
         $out = [];
-        foreach ($proyecto->getPartidas() as $p) {
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            $p = $bloque['partida'];
             $out[] = ['id' => (int)$p->id, 'codigo' => (string)$p->codigo, 'nombre' => (string)$p->nombre, 'color' => (string)$p->color_bg,
-                'actividades' => array_map(fn($a, $i) => ['id' => (int)$a->id, 'seq' => $i + 1, 'nombre' => (string)$a->nombre], $p->getActividades(), array_keys($p->getActividades()))];
+                'actividades' => array_map(fn($a, $i) => ['id' => (int)$a->id, 'seq' => $i + 1, 'nombre' => (string)$a->nombre], $bloque['actividades'], array_keys($bloque['actividades']))];
         }
         return $out;
     }

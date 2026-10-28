@@ -127,7 +127,8 @@ CREATE TABLE actividades (
     icono VARCHAR(120) NULL,                       -- imagen pequeña de la actividad (public/build/img/actividades-iconos/)
     orden INT DEFAULT 0,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
-    UNIQUE KEY uq_actividad_codigo (partida_id, codigo)
+    UNIQUE KEY uq_actividad_codigo (partida_id, codigo),
+    KEY idx_actividad_orden (partida_id, orden)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -161,7 +162,23 @@ CREATE TABLE restricciones (
     estado ENUM('activa', 'resuelta', 'cancelada') DEFAULT 'activa',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
-    FOREIGN KEY (tipo_id) REFERENCES tipos_restriccion(id)
+    FOREIGN KEY (tipo_id) REFERENCES tipos_restriccion(id),
+    KEY idx_restriccion_estado (actividad_id, estado)
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- SUBACTIVIDADES (avance de una actividad por partes)
+-- ============================================================
+CREATE TABLE subactividades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    actividad_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    status TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'avance de la subactividad, 0-100',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    KEY idx_subactividades_actividad (actividad_id)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -607,7 +624,8 @@ CREATE TABLE reportes_diarios (
     actividades_json LONGTEXT,   -- [id de actividad del programa, ...]
     fotos_json LONGTEXT,         -- [nombre de archivo, ...]
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    KEY idx_reporte_proyecto_fecha (proyecto_id, fecha)
 ) ENGINE=InnoDB;
 
 CREATE TABLE bitacora (
@@ -618,7 +636,8 @@ CREATE TABLE bitacora (
     descripcion TEXT NOT NULL,
     importancia ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    KEY idx_bitacora_proyecto_fecha (proyecto_id, fecha)
 ) ENGINE=InnoDB;
 
 CREATE TABLE bitacora_departamentos (
@@ -780,7 +799,8 @@ CREATE TABLE evidencias (
     usuario_id INT DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    KEY idx_evidencia_proyecto_fecha (proyecto_id, fecha)
 ) ENGINE=InnoDB;
 
 -- Curva S (ver database/migracion_curva_s.sql)
@@ -1019,6 +1039,7 @@ CREATE TABLE IF NOT EXISTS informes_ia (
     creado_por VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_proyecto_tipo (proyecto_id, tipo, creado),
+    KEY idx_informes_borrador (proyecto_id, tipo, estado, aplicado_en),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -1230,6 +1251,21 @@ ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secund
 ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;
 ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
 ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;
+
+-- Vínculo entre las subactividades de una actividad y su tabla de SheetFlow (sincronización en los dos sentidos)
+CREATE TABLE IF NOT EXISTS subactividad_hojas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    hoja_id INT NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_subhoja_actividad (actividad_id),
+    UNIQUE KEY uq_subhoja_hoja (hoja_id),
+    KEY idx_subhoja_proyecto (proyecto_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (hoja_id) REFERENCES sheetflow_hojas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- Clima por proyecto (Open-Meteo): ubicación geocodificada y días de pronóstico / registro real, para anomalías y días no hábiles probables.
 CREATE TABLE IF NOT EXISTS clima_proyecto (
@@ -1979,4 +2015,138 @@ CREATE TABLE IF NOT EXISTS telegram_limites (
     ventana INT NOT NULL,                 -- minuto epoch (UNIX_TIMESTAMP() DIV 60)
     n INT NOT NULL DEFAULT 0,             -- peticiones de esa IP en esa ventana
     PRIMARY KEY (ip, ventana)
+) ENGINE=InnoDB;
+-- Herramientas de administración de obra: Calidad (ITP), Equipo y maquinaria,
+-- Contratos/fianzas/seguros y Cierre de obra. Idempotente.
+--
+--   mysql -u root project < database/migracion_calidad_equipo_contratos_cierre.sql
+
+-- ============================================================
+-- CALIDAD E INSPECCIONES (ITP)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS calidad_planes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    actividad_id INT NULL,
+    codigo VARCHAR(40) NOT NULL DEFAULT '',
+    titulo VARCHAR(200) NOT NULL,
+    tipo ENUM('itp','inspeccion','prueba') NOT NULL DEFAULT 'itp',
+    norma VARCHAR(200) NOT NULL DEFAULT '',
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    fecha DATE NULL,
+    estado ENUM('pendiente','en_proceso','conforme','no_conforme','cerrado') NOT NULL DEFAULT 'pendiente',
+    notas TEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_calidad_proyecto (proyecto_id, estado, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS calidad_puntos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plan_id INT NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    descripcion VARCHAR(500) NOT NULL,
+    criterio VARCHAR(300) NOT NULL DEFAULT '',
+    resultado ENUM('pendiente','cumple','no_cumple','na') NOT NULL DEFAULT 'pendiente',
+    observacion VARCHAR(1000) NOT NULL DEFAULT '',
+    fecha DATE NULL,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    resuelto TINYINT(1) NOT NULL DEFAULT 0,
+    KEY idx_calidad_puntos_plan (plan_id, orden),
+    FOREIGN KEY (plan_id) REFERENCES calidad_planes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- EQUIPO Y MAQUINARIA
+-- ============================================================
+CREATE TABLE IF NOT EXISTS equipo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    tipo VARCHAR(80) NOT NULL DEFAULT '',
+    marca VARCHAR(80) NOT NULL DEFAULT '',
+    modelo VARCHAR(80) NOT NULL DEFAULT '',
+    serie VARCHAR(80) NOT NULL DEFAULT '',
+    propietario VARCHAR(150) NOT NULL DEFAULT '',
+    rentado TINYINT(1) NOT NULL DEFAULT 0,
+    tarifa_hora DECIMAL(12,2) NOT NULL DEFAULT 0,
+    proximo_servicio DATE NULL,
+    proximo_servicio_horas INT NULL,
+    estado ENUM('operativo','mantenimiento','baja') NOT NULL DEFAULT 'operativo',
+    notas VARCHAR(1000) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_equipo_proyecto (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS equipo_horas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    equipo_id INT NOT NULL,
+    actividad_id INT NULL,
+    fecha DATE NOT NULL,
+    horas DECIMAL(6,2) NOT NULL DEFAULT 0,
+    operador VARCHAR(150) NOT NULL DEFAULT '',
+    observaciones VARCHAR(1000) NOT NULL DEFAULT '',
+    importe DECIMAL(12,2) NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_equipo_horas (proyecto_id, fecha),
+    KEY idx_equipo_horas_equipo (equipo_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id) REFERENCES equipo(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- CONTRATOS, FIANZAS, SEGUROS Y LICENCIAS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS contratos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo ENUM('contrato','fianza','seguro','licencia','otro') NOT NULL DEFAULT 'contrato',
+    numero VARCHAR(80) NOT NULL DEFAULT '',
+    contraparte VARCHAR(200) NOT NULL DEFAULT '',
+    objeto VARCHAR(300) NOT NULL DEFAULT '',
+    monto DECIMAL(16,2) NOT NULL DEFAULT 0,
+    moneda VARCHAR(3) NOT NULL DEFAULT 'MXN',
+    inicio DATE NULL,
+    vencimiento DATE NULL,
+    aviso_dias SMALLINT NOT NULL DEFAULT 30,
+    estado ENUM('vigente','cerrado') NOT NULL DEFAULT 'vigente',
+    archivo_id INT NULL,
+    notas TEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_contratos_proyecto (proyecto_id, estado, vencimiento),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (archivo_id) REFERENCES archivos(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- CIERRE DE OBRA (entrega-recepción)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cierre_obra (
+    proyecto_id INT NOT NULL PRIMARY KEY,
+    fecha_entrega DATE NULL,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    notas TEXT,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cierre_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    categoria ENUM('as_built','garantia','manual','punch','documento','otro') NOT NULL DEFAULT 'documento',
+    titulo VARCHAR(250) NOT NULL,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    fecha_compromiso DATE NULL,
+    estado ENUM('pendiente','en_proceso','completado','na') NOT NULL DEFAULT 'pendiente',
+    archivo_id INT NULL,
+    notas VARCHAR(1000) NOT NULL DEFAULT '',
+    orden INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_cierre_proyecto (proyecto_id, estado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (archivo_id) REFERENCES archivos(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

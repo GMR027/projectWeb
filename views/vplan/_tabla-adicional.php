@@ -7,10 +7,12 @@ $campos = $bloque['campos'];
 $estEnc = $t->estiloEncabezados();
 $extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
 $nAcc = $t->tipo === 'secundarias' ? $extra * 2 : $extra;
+// ¿La tabla muestra las subactividades de una actividad? (para avisar al quitar un renglón)
+$esSubactividades = $t->sheetflow_id && \Model\SubactividadHoja::deHoja((int)$t->sheetflow_id);
 // El reparto de columnas es el mismo que usan el PDF y el estimador: así la lámina y el PDF se ven igual
 [$pct, $pctAcc] = VplanDiseno::repartoColumnas($t->tipo, $bloque['filas'], $campos, $anchoTablaCm, $f, $p, $nAcc, $t->metaColumnas());
 ?>
-<table class="vp-tabla vp-adic vp-adic-<?php echo s($t->tipo); ?>" data-tabla="<?php echo (int)$t->id; ?>" data-base="<?php echo (int)($bloque['base'] ?? 0); ?>" data-tipo="<?php echo s($t->tipo); ?>">
+<table class="vp-tabla vp-adic vp-adic-<?php echo s($t->tipo); ?>" data-tabla="<?php echo (int)$t->id; ?>" data-base="<?php echo (int)($bloque['base'] ?? 0); ?>" data-tipo="<?php echo s($t->tipo); ?>" data-subactividades="<?php echo $esSubactividades ? '1' : '0'; ?>">
     <colgroup>
         <?php foreach ($pct as $w): ?><col style="width:<?php echo $w; ?>%"><?php endforeach; ?>
         <?php for ($i = 0; $i < $nAcc; $i++): ?><col style="width:<?php echo round($pctAcc / max(1, $nAcc), 3); ?>%"><?php endfor; ?>

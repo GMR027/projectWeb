@@ -245,12 +245,50 @@ $('#ia-menu-proyecto').addEventListener('change', () => { fijarProyectoMenu($('#
 for (const s of ['#prog-proyecto', '#inc-proyecto', '#mat-proyecto', '#int-proyecto', '#gen-proyecto']) $(s).addEventListener('change', e => { fijarProyectoMenu(e.target.value); pintarMenuIA(); });
 /** Icono y color de cada herramienta del menú (por id; las generadas por el servidor, por palabras del título; si no, por grupo) */
 const ICONOS = { ensamblador: ['🧩', '#0891b2'], 'ordenar-ia': ['🔢', '#0891b2'], 'tabla-doc': ['📄', '#0891b2'], config: ['⚙️', '#64748b'], calidad: ['🔎', '#ea580c'], programador: ['🗓️', '#7c3aed'], inconsistencias: ['🔎', '#ea580c'], materiales: ['🧱', '#0284c7'], inteligentes: ['🧠', '#c026d3'], propuestas: ['✨', '#f59e0b'], auditoria: ['📜', '#64748b'],
-  informes: ['📄', '#0ea5e9'], normativa: ['⚖️', '#059669'], mapa: ['🗺️', '#14b8a6'], seguridad: ['🦺', '#eab308'], punch: ['✅', '#22c55e'], cambios: ['🔁', '#f97316'], tipoobra: ['🏗️', '#78716c'], grabaciones: ['🎙️', '#ef4444'] };
+  informes: ['📄', '#0ea5e9'], normativa: ['⚖️', '#059669'], mapa: ['🗺️', '#14b8a6'], seguridad: ['🦺', '#eab308'], punch: ['✅', '#22c55e'], cambios: ['🔁', '#f97316'], tipoobra: ['🏗️', '#78716c'], grabaciones: ['🎙️', '#ef4444'],
+  'centro-trabajo': ['✅', '#0ea5e9'], revisiones: ['📋', '#64748b'] };
 const ICONOS_TITULO = [[/ejecutivo/i, ['📊', '#2563eb']], [/semanal/i, ['📈', '#0891b2']], [/reporte diario/i, ['📝', '#16a34a']], [/lookahead/i, ['🔭', '#6366f1']], [/simulador/i, ['🎲', '#a855f7']], [/clima/i, ['⛅', '#38bdf8']], [/riesgo/i, ['⚠️', '#dc2626']],
-  [/causas/i, ['🧩', '#d97706']], [/voz|dictado/i, ['🎤', '#ec4899']], [/foto|visi/i, ['📷', '#8b5cf6']], [/minuta|reuni/i, ['🤝', '#0d9488']], [/seguridad|charla/i, ['🦺', '#eab308']], [/punch/i, ['✅', '#22c55e']], [/cierre|entrega/i, ['📦', '#84cc16']], [/normativa/i, ['⚖️', '#059669']]];
+  [/causas/i, ['🧩', '#d97706']], [/voz|dictado/i, ['🎤', '#ec4899']], [/foto|visi/i, ['📷', '#8b5cf6']], [/minuta|reuni/i, ['🤝', '#0d9488']], [/seguridad|charla/i, ['🦺', '#eab308']], [/punch/i, ['✅', '#22c55e']], [/cierre|entrega/i, ['📦', '#84cc16']], [/normativa/i, ['⚖️', '#059669']],
+  [/compras|suministro/i, ['🛒', '#0284c7']], [/inspecci|itp/i, ['🔍', '#0d9488']]];
 const ICONOS_GRUPO = { ensamblador: ['🧩', '#0891b2'], config: ['⚙️', '#64748b'], control: ['🎛️', '#f59e0b'], planeacion: ['🗓️', '#6366f1'], campo: ['👷', '#16a34a'], datos: ['🔎', '#ea580c'], compras: ['🛒', '#0284c7'], documentos: ['📚', '#0d9488'], seguridad: ['🦺', '#eab308'], cierre: ['📦', '#84cc16'], centro: ['🌐', '#0ea5e9'] };
 const iconoHerr = h => ICONOS[h.id] || (ICONOS_TITULO.find(([re]) => re.test(h.titulo)) || [])[1] || ICONOS_GRUPO[h.grupo] || ['🔧', '#64748b'];
 let menuCentroAbierto = guardado('menu-centro') === '1';
+let menuBusqueda = '';
+const FAV_KEY = 'ia-favoritos', REC_KEY = 'ia-recientes';
+const leerFavoritos = () => { try { const j = JSON.parse(guardado(FAV_KEY) || '[]'); return new Set(Array.isArray(j) ? j : []); } catch { return new Set(); } };
+const guardarFavoritos = s => guardado(FAV_KEY, JSON.stringify([...s]));
+let menuRecientes = (() => { try { return String(guardado(REC_KEY) || '').split(',').filter(Boolean).slice(0, 6); } catch { return []; } })();
+const marcarReciente = id => { if (!id) return; menuRecientes = [id, ...menuRecientes.filter(x => x !== id)].slice(0, 6); guardado(REC_KEY, menuRecientes.join(',')); };
+/** Una fila del menú: la herramienta y su estrella de favoritos */
+function botonMenu(h, actual, r) {
+  const e = r.estados[h.id] || { estado: 'ok', texto: '' }, fila = el('div', null, 'herr-fila'), b = el('button');
+  b.dataset.id = h.id; if (h.sec) b.dataset.sec = h.sec; if (h.web) b.dataset.web = h.web; if (h.gen) { b.dataset.gen = h.gen; b.dataset.sec = 'gen:' + h.gen; }
+  const [ico, col] = iconoHerr(h), chip = el('i', ico, 'ico'); chip.style.setProperty('--ico', col); b.append(chip, el('span', h.titulo, 'tit'));
+  b.setAttribute('aria-label', h.titulo);
+  if (h.web) { if (seccionActual === h.web && webEnIA) b.classList.add('on'); }
+  else if (h.requiere) { const i = el('i', null, 'ind ' + e.estado); b.append(i); }
+  b.title = h.titulo + (h.requiere ? ' — ' + NOMBRE_ESTADO[e.estado] + (e.texto && e.estado !== 'ok' ? ': ' + e.texto : '') : '');
+  if (e.estado === 'bloqueado') b.disabled = true;
+  if (h.sec && h.sec === actual) b.classList.add('on');
+  const fav = el('button', leerFavoritos().has(h.id) ? '★' : '☆', 'fav'); fav.type = 'button';
+  fav.title = leerFavoritos().has(h.id) ? 'Quitar de favoritos' : 'Agregar a favoritos';
+  fav.setAttribute('aria-label', fav.title);
+  fav.addEventListener('click', ev => { ev.stopPropagation(); const s = leerFavoritos(); s.has(h.id) ? s.delete(h.id) : s.add(h.id); guardarFavoritos(s); pintarMenuIA(); });
+  fila.append(b, fav); return fila;
+}
+function bloqueMenu(titulo, hs, r, actual, plegable, id) {
+  const grupo = el('div', null, 'grupo'), botones = el('div', null, 'botones');
+  let t;
+  if (plegable) {
+    t = el('h4', (menuCentroAbierto ? '▾ ' : '▸ ') + (ICONOS_GRUPO.centro?.[0] || '') + ' ' + titulo, 'plegable'); t.tabIndex = 0; t.setAttribute('role', 'button');
+    const alternar = () => { menuCentroAbierto = !menuCentroAbierto; guardado('menu-centro', menuCentroAbierto ? '1' : '0'); pintarMenuIA(); };
+    t.addEventListener('click', alternar); t.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); alternar(); } });
+  } else t = el('h4', (ICONOS_GRUPO[id] ? ICONOS_GRUPO[id][0] + ' ' : '') + titulo);
+  grupo.append(t, botones);
+  for (const h of hs) botones.append(botonMenu(h, actual, r));
+  if (plegable && !menuCentroAbierto && !webEnIA) botones.hidden = true;
+  return grupo;
+}
 async function pintarMenuIA() {
   let r;
   await cargarProyectosMenu();
@@ -258,29 +296,19 @@ async function pintarMenuIA() {
   const lista = $('#ia-menu-lista'), actual = document.querySelector('#ia-menu button.on')?.dataset.sec;
   lista.replaceChildren();
   herramientasMenu = r.herramientas;
-  for (const g of r.grupos) {
-    const hs = r.herramientas.filter(h => h.grupo === g.id && !h.oculto);
-    if (!hs.length) continue;
-    const grupo = el('div', null, 'grupo'), botones = el('div', null, 'botones');
-    let t;
-    if (g.id === 'centro') {   // páginas de Project Web: no son IA, van plegadas
-      t = el('h4', (menuCentroAbierto ? '▾ ' : '▸ ') + (ICONOS_GRUPO.centro?.[0] || '') + ' ' + g.titulo, 'plegable'); t.tabIndex = 0; t.setAttribute('role', 'button');
-      const alternar = () => { menuCentroAbierto = !menuCentroAbierto; guardado('menu-centro', menuCentroAbierto ? '1' : '0'); pintarMenuIA(); };
-      t.addEventListener('click', alternar); t.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); alternar(); } });
-    } else t = el('h4', (ICONOS_GRUPO[g.id] ? ICONOS_GRUPO[g.id][0] + ' ' : '') + g.titulo);
-    grupo.append(t, botones); lista.append(grupo);
-    if (g.id === 'centro' && !menuCentroAbierto && !webEnIA) { botones.hidden = true; continue; }
-    for (const h of hs) {
-      const e = r.estados[h.id], b = el('button');
-      b.dataset.id = h.id; if (h.sec) b.dataset.sec = h.sec; if (h.web) b.dataset.web = h.web; if (h.gen) { b.dataset.gen = h.gen; b.dataset.sec = 'gen:' + h.gen; }
-      const [ico, col] = iconoHerr(h), chip = el('i', ico, 'ico'); chip.style.setProperty('--ico', col); b.append(chip, el('span', h.titulo, 'tit'));
-      b.setAttribute('aria-label', h.titulo);
-      if (h.web) { if (seccionActual === h.web && webEnIA) b.classList.add('on'); }
-      else if (h.requiere) { const i = el('i', null, 'ind ' + e.estado); b.append(i); }
-      b.title = h.titulo + (h.requiere ? ' — ' + NOMBRE_ESTADO[e.estado] + (e.texto && e.estado !== 'ok' ? ': ' + e.texto : '') : '');
-      if (e.estado === 'bloqueado') b.disabled = true;
-      if (h.sec && h.sec === actual) b.classList.add('on');
-      botones.append(b);
+  const visibles = r.herramientas.filter(h => !h.oculto), q = menuBusqueda.trim().toLowerCase();
+  if (q) {
+    const hits = visibles.filter(h => (h.titulo + ' ' + (h.descripcion || '')).toLowerCase().includes(q));
+    if (!hits.length) lista.append(el('p', 'Sin resultados.', 'nota'));
+    else lista.append(bloqueMenu('Resultados (' + hits.length + ')', hits, r, actual, false));
+  } else {
+    const favs = leerFavoritos(), favH = [...favs].map(id => visibles.find(h => h.id === id)).filter(Boolean);
+    if (favH.length) lista.append(bloqueMenu('★ Favoritos', favH, r, actual, false));
+    const recH = menuRecientes.map(id => visibles.find(h => h.id === id)).filter(h => h && !favs.has(h.id));
+    if (recH.length) lista.append(bloqueMenu('Recientes', recH, r, actual, false));
+    for (const g of r.grupos) {
+      const hs = visibles.filter(h => h.grupo === g.id);
+      if (hs.length) lista.append(bloqueMenu(g.titulo, hs, r, actual, g.id === 'centro', g.id));
     }
   }
   marcarUsoMenu(lista).catch(() => {});
@@ -317,11 +345,14 @@ async function abrirWebEnIA(b) {
 }
 $('#ia-menu-lista').addEventListener('click', e => {
   const b = e.target.closest('button');
-  if (!b || b.disabled) return;
+  if (!b || b.disabled || b.classList.contains('fav')) return;
+  if (b.dataset.id) marcarReciente(b.dataset.id);
   if (b.dataset.web) { abrirWebEnIA(b); return; }
   if (b.dataset.gen) { abrirGenerica(b.dataset.gen); return; }
   elegirSeccionIA(b.dataset.sec);
 });
+const buscadorMenu = $('#ia-menu-buscar');
+if (buscadorMenu) buscadorMenu.addEventListener('input', e => { menuBusqueda = e.target.value || ''; pintarMenuIA(); });
 /** Aviso bajo el selector de conexión de una herramienta: ¿qué tan bien funcionará con la conexión elegida? Devuelve el estado */
 async function pintarCapacidad(herrId, provId, selector) {
   const caja = $(selector);
@@ -586,8 +617,15 @@ async function ejecutarGenerica(sinIA) {
     (r.fallidos || []).forEach(a => t.append(el('small', '⚠ La IA no pudo redactar un paso (' + a + '); se usó texto de plantilla.')));
     const ver = el('button', 'Ver informe');
     ver.addEventListener('click', () => { seccionActual = '/informes-ia'; mostrar('web'); pw.irWeb(r.url); });
-    caja.append(t, ver); res.replaceChildren(caja); res.hidden = false;
+    caja.append(t, ver);
+    const vista = el('div', null, 'res-caja'); vista.append(el('h3', 'Vista previa'));
+    try {
+      const inf = await pw.apiIA('GET', '/api/ia/informe', { proyecto: pid, id: r.informe_id });
+      vista.append(...pintarSecciones(inf.secciones).slice(0, 3));
+    } catch { vista.append(el('p', 'Abre el informe para ver todas las secciones.', 'nota')); }
+    res.replaceChildren(caja, vista); res.hidden = false;
     $('#gen-msg').textContent = 'Listo.';
+    try { if (window.Notification && Notification.permission === 'granted') new Notification('Informe listo', { body: r.titulo }); } catch { /* sin permiso */ }
   } catch (x) { $('#gen-msg').textContent = '✘ ' + msgErr(x); }
   ejecutandoGen = false; $('#gen-barra').hidden = true; $('#gen-cancelar').hidden = true; pintarGenerica();
 }
@@ -1013,6 +1051,7 @@ $('#des-ir').addEventListener('click', async () => {
 });
 
 (async () => {
+  document.querySelectorAll('progress').forEach(p => { if (!p.getAttribute('aria-label')) p.setAttribute('aria-label', 'Progreso de la tarea'); });
   $('#ver').textContent = 'v' + await pw.version();
   tipos = await pw.tipos();
   elegirCategoria('local'); await recargar(); pintarZoom(cfg.zoom);

@@ -46,7 +46,7 @@ class Simbolo extends ActiveRecord
             if (!$limpio) return null;
             $dir = __DIR__ . '/../public/uploads/' . self::CARPETA;
             if (!is_dir($dir)) @mkdir($dir, 0775, true);
-            $archivo = md5(uniqid('', true)) . '.svg';
+            $archivo = bin2hex(random_bytes(16)) . '.svg';
             return file_put_contents($dir . '/' . $archivo, $limpio) !== false ? $archivo : null;
         }
         return Imagenes::guardarEn(self::CARPETA, $ruta, self::LADO, 90);

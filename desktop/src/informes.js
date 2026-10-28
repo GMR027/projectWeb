@@ -22,12 +22,18 @@ async function ejecutar({ servidor, sesion, proyectoId, herramienta, parametros,
     const lote = lotes[i], base = lote.titulo || 'Redactando', inicio = Date.now();
     alAvanzar({ texto: base + '…', hecho: i, total });
     try {
-      // Si el lote trae imágenes (fotos de evidencia) se descargan del servidor y viajan con el prompt al modelo de visión
-      const imagenes = [];
-      for (const im of (lote.imagenes || []).slice(0, 4)) {
-        try { const r = await sesion(servidor + im.url, { credentials: 'include' }); if (r.ok) imagenes.push({ mime: (r.headers.get('content-type') || 'image/jpeg').split(';')[0], base64: Buffer.from(await r.arrayBuffer()).toString('base64') }); } catch { /* foto no disponible */ }
-      }
+      // Si el lote trae imágenes (fotos de evidencia) se descargan en paralelo y viajan con el prompt al modelo de visión.
+      // El servidor ya las reduce a 1024 px; aquí solo se limita el peso total para no reventar el contexto.
+      const MAX_IMG = 12 * 1024 * 1024;
+      const imagenes = (await Promise.all((lote.imagenes || []).slice(0, 4).map(async im => {
+        try {
+          const r = await sesion(servidor + im.url, { credentials: 'include' });
+          if (!r.ok) return null;
+          return { mime: (r.headers.get('content-type') || 'image/jpeg').split(';')[0], base64: Buffer.from(await r.arrayBuffer()).toString('base64') };
+        } catch { return null; }
+      }))).filter(Boolean);
       if ((lote.imagenes || []).length && !imagenes.length) throw new Error('no se pudieron descargar las fotos');
+      if (imagenes.reduce((n, i) => n + i.base64.length, 0) > MAX_IMG) throw new Error('las fotos pesan demasiado para el modelo');
       const j = await analizarLote(conexion, clave, lote.prompt, a => {
         const min = Math.floor((Date.now() - inicio) / 60000);
         alAvanzar({ texto: base + (a.fase === 'leyendo' ? ' · leyendo' : ' · escribiendo: ' + a.tokens + ' fragmentos') + (min ? ' · ' + min + ' min' : '') + '…', hecho: i, total });
@@ -40,7 +46,7 @@ async function ejecutar({ servidor, sesion, proyectoId, herramienta, parametros,
   }
   alAvanzar({ texto: 'Armando el informe…', hecho: total - 1, total });
   const modelo = respuestas.length ? conexion.nombre + (conexion.modelo ? ' · ' + conexion.modelo : '') : '';
-  const r = await post('/api/ia/resultado', { proyecto: String(proyectoId), herramienta, datos: JSON.stringify({ modelo, params: parametros || {}, respuestas }) }, cat.csrf);
+  const r = await post('/api/ia/resultado', { proyecto: String(proyectoId), herramienta, contexto: String(ctx.contexto || ''), datos: JSON.stringify({ modelo, params: parametros || {}, respuestas }) }, cat.csrf);
   return { informe_id: r.informe_id, titulo: r.titulo, con_ia: r.con_ia, url: r.url, fallidos };
 }
 

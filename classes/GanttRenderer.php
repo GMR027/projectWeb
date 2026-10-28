@@ -4,6 +4,7 @@ namespace Classes;
 
 use Model\Proyecto;
 use Model\Partida;
+use Model\Subactividad;
 
 /**
  * Prepara los datos para renderizar el Gantt en la vista.
@@ -60,8 +61,13 @@ class GanttRenderer
     public function getFilas(): array
     {
         $filas = [];
-        $partidas = $this->proyecto->getPartidas();
-        foreach ($partidas as $partida) {
+        $pid = (int)$this->proyecto->id;
+        // Tres consultas para todo el Gantt: partidas+actividades, avance por partida y restricciones activas
+        $subactividades = Subactividad::conteoPorProyecto($pid);
+        $progresos = \Model\Partida::progresosDeProyecto($pid);
+        $restricciones = \Model\Restriccion::activasPorProyecto($pid);
+        foreach ($this->proyecto->getPartidasConActividades() as $bloque) {
+            $partida = $bloque['partida'];
             $filas[] = [
                 'tipo' => 'partida',
                 'id' => $partida->id,
@@ -70,12 +76,13 @@ class GanttRenderer
                 'color_bg' => $partida->color_bg,
                 'fecha_inicio' => $partida->fecha_inicio,
                 'fecha_fin' => $partida->fecha_fin,
-                'progreso' => $partida->getProgreso(),
+                'progreso' => $progresos[(int)$partida->id] ?? 0.0,
                 'pos' => $partida->fecha_inicio && $partida->fecha_fin
                     ? $this->calcularPosicion($partida->fecha_inicio, $partida->fecha_fin)
                     : [1, 1]
             ];
-            foreach ($partida->getActividades() as $act) {
+            foreach ($bloque['actividades'] as $act) {
+                $activas = $restricciones[(int)$act->id] ?? [];
                 $filas[] = [
                     'tipo' => 'actividad',
                     'id' => $act->id,
@@ -95,8 +102,9 @@ class GanttRenderer
                     'libre_numero' => $act->libre_numero,
                     'libre_fecha' => $act->libre_fecha,
                     'prioridad' => $act->prioridad,
-                    'tiene_restriccion' => $act->tieneRestriccionActiva(),
-                    'restricciones' => $act->getRestriccionesActivas(),
+                    'tiene_restriccion' => !empty($activas),
+                    'subactividades_total' => (int)($subactividades[(int)$act->id] ?? 0),
+                    'restricciones' => $activas,
                     'pos' => $this->calcularPosicion($act->fecha_inicio, $act->fecha_fin)
                 ];
             }

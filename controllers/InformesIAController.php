@@ -8,6 +8,7 @@ use Classes\Auditoria;
 use Classes\Herramientas\Registro;
 use Classes\Grabaciones;
 use Classes\Informes;
+use Classes\ContextoIA;
 
 /** Informes de IA: API para la app de escritorio (contexto y resultado de cada herramienta) y páginas web para verlos, aprobarlos, aplicarlos y exportarlos a PDF. Solo admin */
 class InformesIAController
@@ -41,7 +42,8 @@ class InformesIAController
         $c = self::herramienta($_POST);
         $params = Registro::parametros($c, (array)json_decode((string)($_POST['params'] ?? '{}'), true));
         $r = $c::preparar($p, $params);
-        json_respuesta(['success' => true, 'csrf' => csrf_token(), 'proyecto' => $p->nombre, 'titulo' => $c::titulo($p, $params), 'lotes' => $r['lotes']]);
+        $contexto = ContextoIA::guardar((int)$p->id, $c::id(), $params, $r['datos'], $r['lotes']);
+        json_respuesta(['success' => true, 'csrf' => csrf_token(), 'contexto' => $contexto, 'proyecto' => $p->nombre, 'titulo' => $c::titulo($p, $params), 'lotes' => $r['lotes']]);
     }
 
     public static function resultado()
@@ -50,10 +52,14 @@ class InformesIAController
         $c = self::herramienta($_POST);
         $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
-        $params = Registro::parametros($c, (array)($cuerpo['params'] ?? []));
         $respuestas = array_values(array_filter((array)($cuerpo['respuestas'] ?? []), 'is_array'));
-        $r = $c::preparar($p, $params);   // los datos se recalculan en el servidor: el cliente solo aporta lo que redactó la IA
-        $contenido = $c::componer($p, $params, $r['datos'], $respuestas);
+        // El contexto viene de /contexto y ya trae los datos calculados por el servidor; así no se prepara dos veces.
+        $token = is_string($_POST['contexto'] ?? null) ? $_POST['contexto'] : '';
+        $ctx = ContextoIA::leer($token, (int)$p->id, $c::id());
+        $params = $ctx ? (array)$ctx['params'] : Registro::parametros($c, (array)($cuerpo['params'] ?? []));
+        $datos = $ctx ? (array)$ctx['datos'] : $c::preparar($p, $params)['datos'];
+        $contenido = $c::componer($p, $params, $datos, $respuestas);
+        if ($ctx) ContextoIA::borrar($token);
         $id = Informes::crear($p, $c::ficha()['tipo'], $c::titulo($p, $params), $contenido, $params, $respuestas ? 'ia' : 'sistema', (string)($cuerpo['modelo'] ?? ''));
         json_respuesta(['success' => true, 'informe_id' => $id, 'titulo' => $c::titulo($p, $params), 'con_ia' => (bool)$respuestas, 'url' => '/informes-ia/ver?proyecto=' . (int)$p->id . '&id=' . $id]);
     }
@@ -120,12 +126,15 @@ class InformesIAController
             $f = date('Y-m-d', $t);
             if (!in_array($f, $existen, true)) $dias[] = ['fecha' => $f, 'habil' => $cal->esHabil($f), 'sin_cambios' => !isset($con[$f])];
         }
-        // borradores de reporte diario aún sin resolver: se retoman en vez de generarlos otra vez
+        // Borradores de reporte diario aún sin resolver: se retoman en vez de generarlos otra vez.
+        // Una sola consulta (antes se pedía el informe completo de cada borrador).
         $borradores = [];
-        foreach (Informes::listar($pid, ['tipo' => 'reporte_diario', 'estado' => 'borrador']) as $b) {
-            if ($b['aplicado_en']) continue;
-            $inf = Informes::obtener($pid, (int)$b['id']);
-            $f = $inf['parametros']['fecha'] ?? '';
+        $q = $GLOBALS['db']->query("SELECT id, parametros_json FROM informes_ia
+            WHERE proyecto_id = $pid AND tipo = 'reporte_diario' AND estado = 'borrador' AND aplicado_en IS NULL
+            ORDER BY id DESC LIMIT 500");
+        while ($q && ($b = $q->fetch_assoc())) {
+            $par = json_decode((string)$b['parametros_json'], true) ?: [];
+            $f = (string)($par['fecha'] ?? '');
             if ($f >= $desde && $f <= $hasta && !isset($borradores[$f])) $borradores[$f] = (int)$b['id'];
         }
         json_respuesta(['success' => true, 'dias' => $dias, 'con_reporte' => count($existen), 'borradores' => (object)$borradores]);

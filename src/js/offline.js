@@ -143,7 +143,7 @@
 
     // Al cerrar sesión se borran las copias guardadas: en un equipo compartido no deben quedar páginas de otro usuario
     document.addEventListener('click', e => {
-        if (e.target.closest('a[href="/logout"]') && window.caches) caches.keys().then(ks => ks.filter(k => k.startsWith('po-')).forEach(k => caches.delete(k)));
+        if (e.target.closest('form[action="/logout"], a[href="/logout"]') && window.caches) caches.keys().then(ks => ks.filter(k => k.startsWith('po-')).forEach(k => caches.delete(k)));
     }, true);
 
     window.addEventListener('online', () => { vaciar(); pintar(); });

@@ -26,8 +26,15 @@ Responde SOLO con JSON: {"titulo":"<nombre corto de la tabla>","filas":[["<encab
 
 function crear({ cfg, sesion, avisar, ocr }) {
   const srv = () => cfg.leer().servidor;
+  const cacheToken = new Map();
   /** El token CSRF de la sesión web lo da cualquier API de administrador (la misma que usa el Ensamblador) */
-  const csrf = async pid => (await json(await sesion(srv() + '/api/ensamblador/estado?proyecto=' + encodeURIComponent(pid), { credentials: 'include' }), 'No se pudo conectar con el servidor')).csrf;
+  const csrf = async pid => {
+    const c = cacheToken.get(pid);
+    if (c && Date.now() - c.t < 5 * 60 * 1000) return c.token;
+    const token = (await json(await sesion(srv() + '/api/ensamblador/estado?proyecto=' + encodeURIComponent(pid), { credentials: 'include' }), 'No se pudo conectar con el servidor')).csrf;
+    cacheToken.set(pid, { t: Date.now(), token });
+    return token;
+  };
 
   const formulario = async (ruta, campos, token, que) => json(await sesion(srv() + ruta, {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': token }, body: new URLSearchParams(campos).toString(),
@@ -37,8 +44,9 @@ function crear({ cfg, sesion, avisar, ocr }) {
   async function leer(pid, archivo, conexion, clave, usarIA) {
     if (archivo.datos.byteLength > MAX_BYTES) throw new Error('El archivo supera los 25 MB');
     const token = await csrf(pid);
-    const ext = (archivo.nombre.split('.').pop() || '').toLowerCase();
-    const esImagen = !!MIME[ext];
+    const mime = String(archivo.mime || '');
+    const ext = mime ? (Object.entries(MIME).find(([, v]) => v === mime)?.[0] || '') : (archivo.nombre.split('.').pop() || '').toLowerCase();
+    const esImagen = !!MIME[ext] || /^image\//.test(mime);
     let r = { filas: [], texto: '', avisos: [] };
     if (esImagen) {
       // Imagen: OCR local (sin IA); su texto con columnas lo separa el motor del servidor
@@ -60,7 +68,7 @@ function crear({ cfg, sesion, avisar, ocr }) {
     if (!usarIA) return { filas: motor, metodo: esImagen ? 'OCR' : 'motor', avisos: r.avisos || [], titulo: '', modelo: '' };
     if (!conexion) throw new Error('Elige una conexión de IA (Ajustes → Configuración de IA).');
     // Imagen: si el modelo ve imágenes se le manda la imagen; si no, el texto del OCR
-    const imagenes = esImagen && capacidad.perfil(conexion).vision ? [{ mime: MIME[ext], base64: Buffer.from(archivo.datos).toString('base64') }] : [];
+    const imagenes = esImagen && capacidad.perfil(conexion).vision ? [{ mime: mime || MIME[ext], base64: Buffer.from(archivo.datos).toString('base64') }] : [];
     if (esImagen && !imagenes.length && !r.texto) throw new Error('Esta conexión no ve imágenes: elige un modelo con visión (p. ej. llava, gemma3, qwen-vl, GPT-4o, Claude) o instala el OCR (Ajustes → OCR).');
     const texto = String(r.texto || '');
     if (!imagenes.length && !texto.trim() && !motor.length) throw new Error(r.error || (r.avisos || []).join(' ') || 'El documento no tiene texto que leer: sube una imagen de la tabla.');

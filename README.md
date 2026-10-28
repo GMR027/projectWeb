@@ -30,7 +30,7 @@ mysql -u root < database/schema.sql
 npx gulp
 
 # 6. Levantar servidor
-cd public && php -S localhost:8000
+cd public && php -S localhost:8000 router.php
 ```
 
 Abre `http://localhost:8000/login`. Credenciales iniciales:
@@ -125,7 +125,7 @@ npx gulp dev
 npx gulp
 
 # Servidor local (permite archivos de hasta 250 MB en la sección Archivo)
-cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000
+cd public && php -d upload_max_filesize=250M -d post_max_size=260M -d max_execution_time=300 -S localhost:8000 router.php
 
 # Pruebas de las piezas que no necesitan base de datos
 php tests/run.php

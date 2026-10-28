@@ -18,8 +18,10 @@ function perfil(conexion) {
   const c = conexion || {};
   const tipo = c.tipo || '';
   const b = parametrosB(c.modelo);
-  // Agentes de línea de comandos (Claude Code, opencode) y APIs de proveedores: modelos grandes en la nube; los CLI solo reciben texto
-  if (tipo === 'claude-code' || tipo === 'opencode') return { nivel: 'grande', vision: false, local: false, nube: true, parametros: null };
+  // Agentes de línea de comandos (Claude Code, opencode) y APIs de proveedores: modelos grandes en la nube.
+  // Claude Code sí puede leer imágenes (las deja en una carpeta temporal y las abre con Read); opencode no.
+  if (tipo === 'claude-code') return { nivel: 'grande', vision: true, local: false, nube: true, parametros: null };
+  if (tipo === 'opencode') return { nivel: 'grande', vision: false, local: false, nube: true, parametros: null };
   const url = String(c.url || '');
   const localUrl = /^https?:\/\/(localhost|127\.|192\.168\.|10\.|\[::1\])/i.test(url);
   if (tipo === 'anthropic' || ((tipo === 'openai' || tipo === 'opencode-api') && !localUrl)) return { nivel: 'grande', vision: VISION.test(String(c.modelo || (tipo === 'anthropic' ? 'claude' : ''))), local: false, nube: true, parametros: b };

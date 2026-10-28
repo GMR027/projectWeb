@@ -20,7 +20,7 @@ class Imagenes
             $img = (new ImageManager(new Driver()))->read($origen)->scaleDown(width: self::ANCHO, height: self::ANCHO);
             if (!is_dir(self::CARPETA)) mkdir(self::CARPETA, 0775, true);
             $png = $mime === 'image/png' || $mime === 'image/gif';
-            $nombre = md5(uniqid('', true)) . ($png ? '.png' : '.jpg');
+            $nombre = bin2hex(random_bytes(16)) . ($png ? '.png' : '.jpg');
             ($png ? $img->toPng() : $img->toJpeg(80))->save(self::CARPETA . '/' . $nombre);
             return $nombre;
         } catch (\Throwable $e) {
@@ -39,7 +39,7 @@ class Imagenes
             $img = (new ImageManager(new Driver()))->read($origen)->scaleDown(width: $maxAncho);
             if (!is_dir(self::CARPETA_VPLAN)) mkdir(self::CARPETA_VPLAN, 0775, true);
             $png = $mime === 'image/png' || $mime === 'image/gif';
-            $nombre = md5(uniqid('', true)) . ($png ? '.png' : '.jpg');
+            $nombre = bin2hex(random_bytes(16)) . ($png ? '.png' : '.jpg');
             ($png ? $img->toPng() : $img->toJpeg(88))->save(self::CARPETA_VPLAN . '/' . $nombre);
             return $nombre;
         } catch (\Throwable $e) {
@@ -52,7 +52,7 @@ class Imagenes
     {
         $ruta = $nombre ? self::CARPETA_VPLAN . '/' . basename($nombre) : null;
         if (!$ruta || !is_file($ruta)) return null;
-        $nuevo = md5(uniqid('', true)) . '.' . pathinfo($ruta, PATHINFO_EXTENSION);
+        $nuevo = bin2hex(random_bytes(16)) . '.' . pathinfo($ruta, PATHINFO_EXTENSION);
         return @copy($ruta, self::CARPETA_VPLAN . '/' . $nuevo) ? $nuevo : null;
     }
 
@@ -96,7 +96,7 @@ class Imagenes
             if (!is_dir($dir)) mkdir($dir, 0775, true);
             $img = (new ImageManager(new Driver()))->read($origen)->scaleDown(width: $maxLado, height: $maxLado);
             $png = $mime === 'image/png' || $mime === 'image/gif';
-            $nombre = md5(uniqid('', true)) . ($png ? '.png' : '.jpg');
+            $nombre = bin2hex(random_bytes(16)) . ($png ? '.png' : '.jpg');
             ($png ? $img->toPng() : $img->toJpeg($calidad))->save($dir . '/' . $nombre);
             return $nombre;
         } catch (\Throwable $e) {

@@ -37,6 +37,12 @@ class AuthController
                     } else {
                         if ($usuarioDB->comprobarPassword($password)) {
                             LoginLimite::exito($ip, $email);
+                            // Coste del hash actualizado con el tiempo: se rehace sin pedir nada al usuario
+                            if (password_needs_rehash((string)$usuarioDB->password, PASSWORD_BCRYPT)) {
+                                $usuarioDB->password = $password;
+                                $usuarioDB->hashPassword();
+                                $usuarioDB->guardar();
+                            }
                             session_regenerate_id(true);
                             $_SESSION['id'] = $usuarioDB->id;
                             $_SESSION['nombre'] = $usuarioDB->nombre;
@@ -64,6 +70,10 @@ class AuthController
 
     public static function logout()
     {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {   // cerrar sesión cambia estado: nada de enlaces GET
+            header('Location: /');
+            exit;
+        }
         $_SESSION = [];
         session_destroy();
         header('Location: /');   // al cerrar sesión se vuelve a la página principal
@@ -175,8 +185,8 @@ class AuthController
                 Usuario::setAlerta('error', 'No puedes quitarte tu propio rol de administrador');
             }
             if (!empty($_POST['password'])) {
-                if (strlen($_POST['password']) < 6) {
-                    Usuario::setAlerta('error', 'El password debe tener al menos 6 caracteres');
+                if ($motivo = Usuario::passwordDebil((string)$_POST['password'])) {
+                    Usuario::setAlerta('error', $motivo);
                 } elseif ($_POST['password'] !== $_POST['password2']) {
                     Usuario::setAlerta('error', 'Los passwords no coinciden');
                 } else {
@@ -250,7 +260,7 @@ class AuthController
         $actual = (string)($_POST['password_actual'] ?? '');
         $nueva = (string)($_POST['password_nueva'] ?? '');
         if (!$usuario || !$usuario->comprobarPassword($actual)) $fallo('La contraseña actual no es correcta');
-        if (strlen($nueva) < 6) $fallo('La nueva contraseña debe tener al menos 6 caracteres');
+        if ($motivo = Usuario::passwordDebil($nueva)) $fallo($motivo);
         if ($nueva !== (string)($_POST['password_nueva2'] ?? '')) $fallo('Las contraseñas nuevas no coinciden');
         if ($nueva === $actual) $fallo('La nueva contraseña debe ser distinta a la actual');
 
@@ -347,7 +357,7 @@ class AuthController
             $otro = Usuario::where('email', $usuario->email);
             if ($otro && (int)$otro->id !== (int)$usuario->id) Usuario::setAlerta('error', 'El email ya está registrado');
             if (!empty($_POST['password'])) {
-                if (strlen($_POST['password']) < 6) Usuario::setAlerta('error', 'El password debe tener al menos 6 caracteres');
+                if ($motivo = Usuario::passwordDebil((string)$_POST['password'])) Usuario::setAlerta('error', $motivo);
                 elseif ($_POST['password'] !== ($_POST['password2'] ?? '')) Usuario::setAlerta('error', 'Los passwords no coinciden');
                 else {
                     $usuario->password = $_POST['password'];

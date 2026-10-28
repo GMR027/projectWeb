@@ -36,7 +36,7 @@ class RedactorFirmas
         $info = $bin !== false ? @getimagesizefromstring($bin) : false;
         if (!$info || $info[2] !== IMAGETYPE_PNG || $info[0] > 1600 || $info[1] > 800) return 'La firma no es una imagen PNG válida';
         if (!is_dir(self::CARPETA)) mkdir(self::CARPETA, 0775, true);
-        $archivo = md5(uniqid('', true)) . '.png';
+        $archivo = bin2hex(random_bytes(16)) . '.png';
         if (file_put_contents(self::CARPETA . '/' . $archivo, $bin) === false) return 'No se pudo guardar la firma';
         $n = self::db()->real_escape_string($nombre);
         self::db()->query("INSERT INTO redactor_firmas (usuario_id, nombre, archivo) VALUES ($usuarioId, '$n', '$archivo')");

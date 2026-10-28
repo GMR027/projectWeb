@@ -413,6 +413,136 @@ $rec = Model\Partida::find($ph->id);
 $rec->recalcularFechas();
 $ok('las fechas que recalcula el sistema no ensucian el historial', $cuenta() === $antesH
     && (string)$db->query("SELECT fecha_inicio FROM partidas WHERE id = {$ph->id}")->fetch_row()[0] === '2026-11-04');
+// ---- Subactividades: el avance de la actividad es su promedio ----
+echo "Subactividades\n";
+$ps = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.1', 'nombre' => 'Partida con subactividades', 'orden' => 902]);
+$ps->id = $ps->guardar()['id'];
+$as = new Model\Actividad(['partida_id' => $ps->id, 'codigo' => 'SUB.1.1', 'nombre' => 'Actividad con subactividades',
+    'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'duracion_dias' => 5, 'progreso' => 40]);
+$as->id = $as->guardar()['id'];
+$ok('sin subactividades conserva el avance manual', (int)Model\Actividad::find($as->id)->progreso === 40 && !$as->tieneSubactividades());
+foreach ([100, 50] as $i => $st) {
+    $sb = new Model\Subactividad(['actividad_id' => $as->id, 'nombre' => 'Tramo ' . ($i + 1),
+        'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'status' => $st]);
+    $ok('se guarda la subactividad ' . ($i + 1), (bool)$sb->guardar()['resultado']);
+}
+$as->recalcularDesdeSubactividades();
+$f = Model\Actividad::find($as->id);
+$ok('con subactividades el avance es su promedio', (int)$f->progreso === 75 && $f->status === 'en_proceso' && $as->tieneSubactividades());
+$ok('el programa sabe qué actividades tienen subactividades', (Model\Subactividad::conteoPorProyecto($pidH)[$as->id] ?? 0) === 2);
+$subs = Model\Subactividad::deActividad((int)$as->id);
+$subs[1]->status = 100;
+$ok('se edita una subactividad', (bool)$subs[1]->guardar());
+$as->recalcularDesdeSubactividades();
+$f = Model\Actividad::find($as->id);
+$ok('al completar la última sube a 100 y queda completada', (int)$f->progreso === 100 && $f->status === 'completada');
+$f->progreso = 10;
+$f->sincronizarStatus();
+$f->guardar();
+$ok('cualquier guardado de la actividad respeta el promedio', (int)Model\Actividad::find($as->id)->progreso === 100);
+$subs[0]->eliminar();
+$as->recalcularDesdeSubactividades();
+$ok('al quitar una subactividad recalcula con las que quedan', (int)Model\Actividad::find($as->id)->progreso === 100);
+$subs[1]->eliminar();
+$as->recalcularDesdeSubactividades();
+$ok('al quitar la última se conserva el último promedio como avance manual',
+    (int)Model\Actividad::find($as->id)->progreso === 100 && !$as->tieneSubactividades());
+
+// ---- Subactividades ↔ SheetFlow: el vínculo se actualiza en los dos sentidos ----
+echo "Subactividades ↔ SheetFlow\n";
+$pf = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.2', 'nombre' => 'Partida vinculada a SheetFlow', 'orden' => 903]);
+$pf->id = $pf->guardar()['id'];
+$asf = new Model\Actividad(['partida_id' => $pf->id, 'codigo' => 'SUB.2.1', 'nombre' => 'Actividad vinculada a SheetFlow',
+    'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'duracion_dias' => 5, 'progreso' => 0]);
+$asf->id = $asf->guardar()['id'];
+$sfA = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo A', 'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-06', 'status' => 40]);
+$sfA->id = $sfA->guardar()['id'];
+$sfB = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo B', 'fecha_inicio' => '2026-11-07', 'fecha_fin' => '2026-11-10', 'status' => 60]);
+$sfB->id = $sfB->guardar()['id'];
+$asf->recalcularDesdeSubactividades();
+[$sh, $sv] = Model\SubactividadHoja::crearParaActividad($asf, $proy, null);
+$ok('crea la hoja y el vínculo con la actividad', $sh->id && $sv->id && (int)$sv->hoja_id === (int)$sh->id);
+$shd = $sh->contenido();
+$ok('la hoja trae una fila por subactividad', count($shd['rows']) === 2 && count($shd['meta']['subactividad']['ids']) === 2);
+$roles = [];
+foreach ($shd['cols'] as $i => $c) if (!empty($c['rol'])) $roles[$c['rol']] = $i;
+$ok('las columnas base llevan su rol y están protegidas', ($roles['nombre'] ?? -1) === 0 && ($roles['status'] ?? -1) === 3 && !empty($shd['cols'][0]['fija']));
+
+// Editar A, borrar B, agregar C y una columna extra desde la hoja
+$ids = $shd['meta']['subactividad']['ids'];
+$rA = array_search((int)$sfA->id, $ids, true);
+$rB = array_search((int)$sfB->id, $ids, true);
+$shd['rows'][$rA][0] = 'Tramo A editado';
+$shd['rows'][$rA][3] = '100';
+array_splice($shd['rows'], $rB, 1);
+array_splice($ids, $rB, 1);
+$shd['cols'][] = ['n' => 'Responsable'];
+foreach ($shd['rows'] as &$fila) $fila[] = 'Ing. X';
+unset($fila);
+$shd['rows'][] = ['Tramo C', '2026-11-05', '2026-11-08', '25', 'Ing. Y'];
+$ids[] = null;
+$shd['meta']['subactividad']['ids'] = $ids;
+\Classes\Sheetflow::guardarDatos($sh, $shd);
+
+$subsF = Model\Subactividad::deActividad((int)$asf->id);
+$porNombre = [];
+foreach ($subsF as $s) $porNombre[$s->nombre] = (int)$s->status;
+$ok('la hoja actualiza, crea y elimina subactividades', $porNombre === ['Tramo A editado' => 100, 'Tramo C' => 25]);
+$ok('el avance de la actividad se recalcula desde la hoja', (int)Model\Actividad::find($asf->id)->progreso === 63);
+$shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
+$idsF = $shd['meta']['subactividad']['ids'];
+$ok('la hoja conserva los ids de las subactividades', in_array((int)$subsF[0]->id, $idsF, true) && in_array((int)$subsF[1]->id, $idsF, true));
+$ok('la columna extra se queda en SheetFlow', in_array('Responsable', array_column($shd['cols'], 'n'), true) && $shd['rows'][0][4] === 'Ing. X');
+
+// La hoja se queda con los valores ya validados (límite de avance y fechas de respaldo)
+$rA2 = array_search((int)$subsF[0]->id, $shd['meta']['subactividad']['ids'], true);
+$shd['rows'][$rA2][1] = '';
+$shd['rows'][$rA2][2] = '';
+$shd['rows'][$rA2][3] = '150';
+\Classes\Sheetflow::guardarDatos($sh, $shd);
+$shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
+$ok('la hoja se queda con el avance acotado y las fechas de la actividad', $shd['rows'][$rA2][1] === '2026-11-04'
+    && $shd['rows'][$rA2][2] === '2026-11-10' && $shd['rows'][$rA2][3] === '100');
+
+// Cambio desde la sección de subactividades y se refleja en la hoja
+$sfC = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo D', 'fecha_inicio' => '2026-11-09', 'fecha_fin' => '2026-11-10', 'status' => 50]);
+$sfC->id = $sfC->guardar()['id'];
+$asf->recalcularDesdeSubactividades();
+$errF = Model\SubactividadHoja::reflejar($asf);
+$shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
+$ok('la sección se refleja en la hoja', $errF === null && in_array((int)$sfC->id, $shd['meta']['subactividad']['ids'], true)
+    && in_array('Tramo D', array_column($shd['rows'], 0), true));
+$ok('la columna extra sigue después de reflejar', in_array('Responsable', array_column($shd['cols'], 'n'), true));
+
+// Quitar un renglón desde vPlan borra su subactividad y no desalinea los ids
+$rC = array_search((int)$subsF[1]->id, $shd['meta']['subactividad']['ids'], true);
+$errQ = \Classes\Sheetflow::quitarFila(Model\SheetflowHoja::find((int)$sh->id), (int)$rC);
+$ok('quitar un renglón elimina su subactividad y conserva las demás', $errQ === null
+    && Model\Subactividad::find((int)$subsF[1]->id) === null && Model\Subactividad::find((int)$sfC->id) !== null);
+$shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
+$ok('los ids siguen alineados después de quitar un renglón', in_array((int)$sfC->id, $shd['meta']['subactividad']['ids'], true));
+
+// No se puede dejar sin nombre una subactividad existente; el intento se deshace completo
+$shd2 = $shd;
+$rD = array_search((int)$sfC->id, $shd2['meta']['subactividad']['ids'], true);
+$shd2['rows'][$rD][0] = '';
+$falloF = null;
+try {
+    \Classes\Sheetflow::guardarDatos(Model\SheetflowHoja::find((int)$sh->id), $shd2);
+} catch (\RuntimeException $e) {
+    $falloF = $e->getMessage();
+}
+$sfC = Model\Subactividad::find((int)$sfC->id);
+$ok('no acepta dejar sin nombre una subactividad y no deja cambios a medias', $falloF !== null && str_contains($falloF, 'sin nombre')
+    && $sfC->nombre === 'Tramo D' && (int)$sfC->status === 50);
+
+// Desvincular conserva la tabla y las subactividades
+Model\SubactividadHoja::desvincular($asf);
+$ok('desvincular borra el vínculo pero conserva la hoja', !Model\SubactividadHoja::deActividad((int)$asf->id) && (bool)Model\SheetflowHoja::find((int)$sh->id));
+$ok('desvincular conserva las subactividades', count(Model\Subactividad::deActividad((int)$asf->id)) === 2);
+$shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
+$ok('la hoja desvinculada ya no tiene ids ni roles', empty($shd['meta']['subactividad']) && empty(array_filter(array_column($shd['cols'], 'rol'))));
+
 $_SESSION = [];
 $ok('sin nadie con sesión no hay usuario que atribuir', !Classes\HistorialCambios::conUsuario());
 $antesH = $cuenta();
