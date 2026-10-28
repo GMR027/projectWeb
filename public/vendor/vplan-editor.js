@@ -1512,9 +1512,34 @@
   }
 
   // ---------- guardado ----------
+  // Lienzo realmente soportado por el navegador. En tablets y celulares (sobre todo iOS) un canvas de
+  // más de 4096 px de lado o ~16 Mpx queda en blanco sin dar error: se reduce hasta que se pueda leer.
+  function lienzoSeguro(w, h) {
+    const probar = (ww, hh) => {
+      try {
+        const c = document.createElement('canvas'); c.width = ww; c.height = hh;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        if (!x) return false;
+        x.fillStyle = '#ff00ff'; x.fillRect(0, 0, 1, 1);
+        const d = x.getImageData(0, 0, 1, 1).data;
+        return d[0] > 200 && d[1] < 60 && d[2] > 200;
+      } catch (_) { return false; }
+    };
+    w = Math.max(16, Math.round(w)); h = Math.max(16, Math.round(h));
+    if (probar(w, h)) return { w, h };
+    let k = 1;
+    for (let i = 0; i < 10; i++) {
+      k *= 0.85;
+      const ww = Math.max(16, Math.round(w * k)), hh = Math.max(16, Math.round(h * k));
+      if (probar(ww, hh)) return { w: ww, h: hh };
+    }
+    const kk = Math.min(1, 4096 / Math.max(w, h));
+    return { w: Math.max(16, Math.round(w * kk)), h: Math.max(16, Math.round(h * kk)) };
+  }
   // Dibuja las marcas visibles en una imagen de ancho x alto píxeles. El contenido se ajusta (sin deformarse) y se centra;
   // el espacio sobrante y el fondo transparente se controlan con `transparente`.
   async function renderizar({ ancho, alto, mime = 'image/png', calidad = 0.92, transparente = false, datos, iconos = false }) {
+    ({ w: ancho, h: alto } = lienzoSeguro(ancho, alto));   // nunca dibujar en un canvas que quedará en blanco
     const shapes = datos ? datos.shapes : state.shapes, layers = datos ? datos.layers || [] : state.layers, escala = datos ? datos.escala || null : state.escala;
     await Promise.all(shapes.filter(s => s.type === 'image').map(s => new Promise(res => {
       const e = imgCache[s.src]; if (e && e.ok) return res();
