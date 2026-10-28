@@ -100,6 +100,9 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     <button type="button" role="tab" class="activo" data-pest="dibujo"><i class="fa-solid fa-pen-ruler"></i> Dibujo</button>
     <button type="button" role="tab" data-pest="insertar"><i class="fa-solid fa-plus"></i> Insertar</button>
     <button type="button" role="tab" data-pest="medir"><i class="fa-solid fa-ruler-combined"></i> Medir y cuadrícula</button>
+    <?php if (!empty($config['materiales'])): ?>
+    <button type="button" role="tab" data-pest="materiales"><i class="fa-solid fa-cubes"></i> Materiales</button>
+    <?php endif; ?>
 </div>
 <div class="ve-barra ve-barra-pest card">
     <div class="ve-grupo" data-pan="dibujo" data-nombre="Selección">
@@ -155,6 +158,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <input type="number" id="t-op-n" min="5" max="100" step="5" value="100"> <span class="text-muted">%</span></label>
         <label class="ve-mini ve-orto" title="Las líneas, flechas y polilíneas se trazan solo en horizontal o vertical (F8)"><input type="checkbox" id="t-orto"> Ortogonal <kbd>F8</kbd></label>
     </div>
+    <?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-barra.php'; ?>
     <div class="ve-grupo" data-nombre="Vista">
         <button type="button" id="ve-undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><?php echo $svg($ic['undo']); ?></button>
         <button type="button" id="ve-redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><?php echo $svg($ic['redo']); ?></button>
@@ -196,6 +200,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <button type="button" role="tab" data-tab="props" class="activa">Propiedades</button>
         <button type="button" role="tab" data-tab="capas">Capas</button>
         <?php if (!empty($config['laminas'])): ?><button type="button" role="tab" data-tab="laminas">Láminas</button><?php endif; ?>
+        <?php if (!empty($config['materiales'])): ?><button type="button" role="tab" data-tab="materiales"><i class="fa-solid fa-cubes"></i> Materiales</button><?php endif; ?>
         <button type="button" role="tab" data-tab="simbolos">Símbolos</button>
     </div>
     <div class="ve-tab-panel" data-panel="props">
@@ -314,6 +319,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
                 <select id="p-act"><option value="">— Sin ligar —</option>
                     <?php foreach ($config['actividades'] as $a): ?><option value="<?php echo (int)$a['id']; ?>"><?php echo (int)$a['seq'] . '. ' . s(mb_strimwidth($a['nombre'], 0, 40, '…')); ?></option><?php endforeach; ?>
                 </select></div>
+            <?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-props.php'; ?>
             <div class="ve-btns">
                 <button type="button" id="b-front" class="btn btn-sm btn-ghost">Al frente</button>
                 <button type="button" id="b-back" class="btn btn-sm btn-ghost">Al fondo</button>
@@ -391,6 +397,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <p class="text-muted text-sm">Un clic lo inserta en el centro de la vista, en la capa activa. Luego arrastra las esquinas para cambiar su tamaño.</p>
     </aside>
     </div>
+    <?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-panel.php'; ?>
     </div><!-- /ve-lateral -->
 </div>
 <!-- Pide una medida real (referencia de la escala) -->
@@ -403,4 +410,5 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <div class="modal-acciones"><button type="button" class="btn btn-ghost" id="mm-cancelar">Cancelar</button><button type="button" class="btn btn-primary" id="mm-ok"><i class="fa-solid fa-check"></i> Aceptar</button></div>
     </div>
 </div>
+<?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-modal.php'; ?>
 </div><!-- /ve-hoja -->

@@ -162,9 +162,11 @@ class VplanController
     /** Borra una lámina con sus imágenes y las que usan sus marcas */
     private static function borrarLamina(VplanLamina $l): void
     {
+        $materiales = $l->materiales_tabla_id ? VplanTabla::find((int)$l->materiales_tabla_id) : null;
         foreach (['plano', 'simbologia', 'marcas_png'] as $c) Imagenes::eliminarVplan($l->$c);
         foreach (Grafico::imagenesDe($l->marcas_json) as $img) Imagenes::eliminarVplan($img);
         $l->eliminar();
+        if ($materiales && $materiales->tipo === 'materiales') $materiales->eliminar();   // su hoja de SheetFlow se conserva
     }
 
     public static function crear(Router $router)
@@ -424,6 +426,7 @@ class VplanController
                 'urlSimbolos' => '/simbolos?proyecto=' . $proyecto->id,
                 'cajetines' => \Model\Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
                 'destinos' => \Classes\EnlacesLamina::destinos((int)$proyecto->id),
+                'materiales' => \Classes\MaterialesLamina::config($proyecto, $l),
                 'hash' => $datos['hash'],
                 'auto' => !empty($_GET['auto']),
                 'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id,
@@ -532,8 +535,12 @@ class VplanController
         $ok = false;
         if ($l && $t && (int)$t->proyecto_id === (int)$proyecto->id) {
             $ok = true;
+            if (($_POST['accion'] ?? '') === 'quitar' && (int)$l->materiales_tabla_id === (int)$t->id) {
+                $l->materiales_tabla_id = null;   // la tabla se puede volver a crear; la hoja de SheetFlow queda
+                $l->guardar();
+            }
             match ($_POST['accion'] ?? '') {
-                'agregar' => $l->agregarTabla((int)(!empty($_POST['copia']) ? $t->duplicar()->id : $t->id)),
+                'agregar' => $l->agregarTabla((int)(!empty($_POST['copia']) && !$t->esMateriales() ? $t->duplicar()->id : $t->id)),
                 'quitar' => $l->quitarTabla((int)$t->id),
                 'subir' => $l->moverTabla((int)$t->id, -1),
                 'bajar' => $l->moverTabla((int)$t->id, 1),

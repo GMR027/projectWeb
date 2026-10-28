@@ -79,7 +79,7 @@ class Cambios
     /** Material y plazos que piden las órdenes de cambio (renglones con material, no cancelados) */
     public static function materialesDeCambios(int $pid): array
     {
-        return self::filas("SELECT p.id, p.descripcion, p.cantidad, p.unidad, p.fecha_prevista, p.estado, o.numero, o.estado orden_estado, m.nombre material, m.compra, m.fecha_entrega_prog, m.fecha_entrega_real,
+        return self::filas("SELECT p.id, p.descripcion, p.cantidad, p.unidad, p.fecha_prevista, p.estado, o.numero, o.estado orden_estado, p.material_id, m.nombre material, m.compra, m.fecha_entrega_prog, m.fecha_entrega_real,
                 a.codigo act_codigo, a.fecha_inicio act_inicio
             FROM cambio_partidas p JOIN ordenes_cambio o ON o.id = p.orden_id JOIN materiales m ON m.id = p.material_id LEFT JOIN actividades a ON a.id = p.actividad_id
             WHERE p.proyecto_id = $pid AND p.estado <> 'cancelado' AND o.estado NOT IN ('rechazada','cerrada') ORDER BY o.id, p.id");

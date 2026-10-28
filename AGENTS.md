@@ -62,6 +62,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | Archivo | Contenido |
 |---|---|
 | `docs/ia-programador.md` | Programador (IA) — cuando se toque classes/Programador*.php, /programador |
+| `docs/dependencias-materiales.md` | **Dependencias de materiales** (muchos a muchos): disponibilidad efectiva, bloqueos, reprogramación y sugerencias de actividades |
 | `docs/ia-calidad-datos.md` | Inconsistencias, Análisis de materiales y Materiales inteligentes (IA) |
 | `docs/ia-centro-herramientas.md` | Centro de IA e Herramientas de IA fases 3-10 (informes, voz, chat, normativa, seguridad, punch…) y **Revisiones** (✅⚠❌ por proyecto, estado de uso de las herramientas) |
 | `docs/redactor.md` | Redactor (documentos de texto, exportación DOCX/ODT/PDF) |
@@ -69,6 +70,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/web-extras.md` | Landing/Demo, Bandeja/soporte/visitantes/importación y Buscador de listas |
 | `docs/cambios-lineas-base.md` | Órdenes de cambio (instalación/retiro, reubicación…), líneas base y comparación, cruce de materiales, resumen ejecutivo diario y modo sin conexión |
 | `docs/vplan.md` | **vPlan** libre: láminas de bloques posicionables, navegador de láminas, modo diseño (capas, guías, insertar tablas), recovery dinámico, tamaño de hoja, tareas multipartida y PDF por lámina |
+| `docs/materiales-vplan.md` | **Materiales en el plano** (vPlan): líneas/formas con varias actividades/subactividades, tabla de instalación en SheetFlow por lámina, fotos del catálogo sobre la marca y su tamaño |
 | `docs/estampas.md` | **Estampas inteligentes** (bloques con etiquetas que se llenan solas, post-its de las actividades del día, plantilla de Last Planner) y **cajetines dinámicos** |
 | `docs/ensamblador-documentos.md` | **Ensamblador de documentos** (PDF que une Redactor + PDF del Archivo y se actualiza solo; no es el Ensamblador de IA) |
 | `docs/traductor.md` | **Traductor** es↔en de texto y documentos (motor local CTranslate2, `bin/instalar_traductor.sh`) |

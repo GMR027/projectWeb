@@ -61,6 +61,7 @@ CREATE TABLE proyectos (
     color VARCHAR(7) DEFAULT '#FF5A1F',
     usuario_id INT NOT NULL,
     modo_dependencias ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
+    modo_dependencias_materiales ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
@@ -278,6 +279,7 @@ CREATE TABLE materiales (
 CREATE TABLE actividad_materiales (
     actividad_id INT NOT NULL,
     material_id INT NOT NULL,
+    rol ENUM('instala','consume') NOT NULL DEFAULT 'instala',   -- instala: la actividad lo coloca; consume: solo lo usa
     PRIMARY KEY (actividad_id, material_id),
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
     FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
@@ -413,6 +415,7 @@ CREATE TABLE vplan_laminas (
     marcas_json LONGTEXT,
     marcas_png VARCHAR(100) DEFAULT NULL,
     marcas_estados_hash VARCHAR(64) DEFAULT NULL,
+    materiales_tabla_id INT DEFAULT NULL,      -- tabla de instalación de materiales de la lámina (ver migracion_materiales_vplan.sql)
     guias_json TEXT,                          -- guías del modo diseño [{id,eje,pos,visible,bloqueada,nombre}]
     orden INT NOT NULL DEFAULT 0,
     visible TINYINT NOT NULL DEFAULT 1,       -- 0 = oculta (no sale en listas ni en el PDF)
@@ -475,7 +478,7 @@ CREATE TABLE vplan_tablas (
     proyecto_id INT NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     nombre_interno VARCHAR(150) DEFAULT NULL,   -- nombre en el catálogo (el título es el que se imprime)
-    tipo ENUM('punch','restricciones','secundarias','otro') NOT NULL DEFAULT 'punch',
+    tipo ENUM('punch','restricciones','secundarias','otro','punchlist','materiales') NOT NULL DEFAULT 'punchlist',
     columnas_json TEXT,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
@@ -839,6 +842,32 @@ CREATE TABLE dependencias_cambios (
     proyecto_id INT NOT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cambios_json LONGTEXT NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Dependencias entre materiales (ver database/migracion_dependencias_materiales.sql)
+CREATE TABLE material_dependencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    predecesor_id INT NOT NULL,
+    sucesor_id INT NOT NULL,
+    requisito ENUM('entrega','instalacion') NOT NULL DEFAULT 'entrega',
+    retraso INT NOT NULL DEFAULT 0,
+    nota VARCHAR(255) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_material_dependencia (proyecto_id, predecesor_id, sucesor_id),
+    KEY idx_matdep_sucesor (proyecto_id, sucesor_id),
+    KEY idx_matdep_predecesor (proyecto_id, predecesor_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (predecesor_id) REFERENCES materiales(id) ON DELETE CASCADE,
+    FOREIGN KEY (sucesor_id) REFERENCES materiales(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE material_dependencias_cambios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    cambios_json LONGTEXT NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 -- Conexiones de IA que el admin usa desde la app de escritorio (Project Web Desktop). No se guardan API keys.
@@ -1247,10 +1276,11 @@ CREATE TABLE IF NOT EXISTS sheetflow_hojas (
 ) ENGINE=InnoDB;
 
 -- Tabla de vPlan creada desde SheetFlow (permite «Actualizar desde SheetFlow»); si se borra la hoja solo se pierde el vínculo
-ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';
+ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist','materiales') NOT NULL DEFAULT 'punchlist';
 ALTER TABLE vplan_tablas ADD COLUMN punch_config TEXT NULL;
 ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
 ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;
+ALTER TABLE vplan_laminas ADD CONSTRAINT fk_vplan_lamina_materiales FOREIGN KEY (materiales_tabla_id) REFERENCES vplan_tablas(id) ON DELETE SET NULL;
 
 -- Vínculo entre las subactividades de una actividad y su tabla de SheetFlow (sincronización en los dos sentidos)
 CREATE TABLE IF NOT EXISTS subactividad_hojas (

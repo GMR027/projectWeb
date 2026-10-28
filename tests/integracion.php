@@ -41,6 +41,13 @@ $GLOBALS['db'] = new mysqli($host, $user, $pass, $name, $port, $sock);
 $GLOBALS['db']->set_charset('utf8mb4');
 ActiveRecord::setDB($GLOBALS['db']);
 
+// ---------- esquema de dependencias de materiales ----------
+echo "Dependencias de materiales (esquema)\n";
+$ok('tabla material_dependencias', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'material_dependencias'")->fetch_row());
+$ok('tabla material_dependencias_cambios', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'material_dependencias_cambios'")->fetch_row());
+$ok('columna rol en actividad_materiales', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM actividad_materiales LIKE 'rol'")->fetch_row());
+$ok('columna modo_dependencias_materiales en proyectos', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM proyectos LIKE 'modo_dependencias_materiales'")->fetch_row());
+
 // ---------- seed del administrador ----------
 echo "Seed del administrador\n";
 $u = Usuario::where('email', 'admin@po.local');

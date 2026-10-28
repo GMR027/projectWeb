@@ -40,6 +40,7 @@ function ayudas_herramientas(): array
         '/lineas-base' => ['Fotos del programa para comparar lo planeado contra lo real.', 'lineas-base'],
         '/submittals' => ['Paquetes de submittals con sus materiales para aprobación.', 'submittals'],
         '/materiales' => ['Catálogo de materiales del proyecto con referencia, especialidad y cantidades.', 'materiales'],
+        '/materiales/dependencias' => ['Conecta qué material necesita que otros estén entregados o instalados antes de usarse. Un material puede requerir varios y sirve para programar o sugerir actividades.', 'dependencias-materiales'],
         '/plantillas' => ['Plantillas de partidas y actividades según el tipo de obra.', 'tipo-obra'],
         '/archivos' => ['Archivero del proyecto: planos, documentos y revisiones, con revisión antivirus. La pestaña «Visor» muestra los archivos sin salir de la ventana.', 'archivos'],
         '/datos-obra' => ['Fechas contractuales, responsables, cantidades y contactos de la obra.', 'datos-obra'],
@@ -111,6 +112,7 @@ function herramientas_proyecto($proyecto): array
         ['Materiales y cambios', '/lineas-base', 'fa-timeline', 'Líneas base'],
         ['Materiales y cambios', '/submittals', 'fa-boxes-packing', 'Submittals', $gestiona],
         ['Materiales y cambios', '/materiales', 'fa-cubes', 'Catálogo de materiales', $gestiona],
+        ['Materiales y cambios', '/materiales/dependencias', 'fa-diagram-project', 'Dependencias de materiales', $gestiona],
         ['Materiales y cambios', '/plantillas', 'fa-layer-group', 'Tipo de obra'],
         ['Documentos y diseño', '/archivos', 'fa-folder-open', 'Archivo', true, ['/visor']],
         ['Documentos y diseño', '/datos-obra', 'fa-file-contract', 'Datos de obra'],
@@ -169,6 +171,7 @@ function pestanas_herramienta(string $grupo, string $activa, $proyecto): void
         'archivo' => ['fa-folder-open', 'Archivo', [['/archivos', 'fa-folder-open', 'Archivo'], ['/visor', 'fa-eye', 'Visor']]],
         'revision' => ['fa-magnifying-glass-chart', 'Revisión de datos (IA)', [['/inconsistencias', 'fa-magnifying-glass-chart', 'Inconsistencias'], ['/analisis-materiales', 'fa-boxes-stacked', 'Análisis de materiales']]],
         'editor' => ['fa-pen-ruler', 'Editor', [['/graficos', 'fa-pen-ruler', 'Gráficos'], ['/simbolos', 'fa-shapes', 'Símbolos, estampas y cajetines']]],
+        'materiales' => ['fa-cubes', 'Materiales', [['/materiales', 'fa-cubes', 'Catálogo'], ['/materiales/dependencias', 'fa-diagram-project', 'Dependencias de materiales']]],
     ];
     if (!isset($grupos[$grupo]) || !$proyecto) return;
     [$icono, $titulo, $tabs] = $grupos[$grupo];

@@ -15,6 +15,7 @@ class VplanTabla extends ActiveRecord
         'restricciones' => 'Restricciones',
         'secundarias' => 'Actividades secundarias',
         'otro' => 'Otro',
+        'materiales' => 'Instalación de materiales (SheetFlow)',
     ];
     /** Campos de cada fila por tipo: clave => [etiqueta, tipo de input] */
     public const CAMPOS = [
@@ -72,6 +73,17 @@ class VplanTabla extends ActiveRecord
         return $this->tipo === 'punchlist';
     }
 
+    public function esMateriales(): bool
+    {
+        return $this->tipo === 'materiales';
+    }
+
+    /** Tope de columnas que se muestran en la lámina (la tabla de materiales puede llevar las que agregue el usuario) */
+    private function maxColumnas(): int
+    {
+        return $this->esMateriales() ? \Classes\Sheetflow::MAX_COLS : 8;
+    }
+
     /** Configuración de la vista del Punch list (columnas visibles, filtros) */
     public function configPunch(): array
     {
@@ -83,7 +95,7 @@ class VplanTabla extends ActiveRecord
     {
         if ($this->esPunchVista()) return \Classes\PunchVista::etiquetas($this->configPunch());
         if ($h = $this->hoja()) {
-            $n = array_slice(\Classes\Sheetflow::matriz($h)['columnas'], 0, 8);
+            $n = array_slice(\Classes\Sheetflow::matriz($h)['columnas'], 0, $this->maxColumnas());
             return array_map(fn($x, $i) => mb_substr($x !== '' ? $x : 'Col. ' . ($i + 1), 0, 40), $n, array_keys($n));
         }
         $c = json_decode((string)$this->columnas_json, true);
@@ -98,7 +110,7 @@ class VplanTabla extends ActiveRecord
         if (!$h) return [];
         $m = \Classes\Sheetflow::matriz($h);
         $out = [];
-        foreach (array_slice($m['tipos'], 0, 8) as $i => $t) $out['c' . $i] = ['t' => $t, 'op' => $m['opciones'][$i] ?? []];
+        foreach (array_slice($m['tipos'], 0, $this->maxColumnas()) as $i => $t) $out['c' . $i] = ['t' => $t, 'op' => $m['opciones'][$i] ?? []];
         return $out;
     }
 
@@ -112,7 +124,7 @@ class VplanTabla extends ActiveRecord
     /** Claves de campo de cada fila según el tipo */
     public function campos(): array
     {
-        if ($this->tipo === 'otro' || $this->esPunchVista()) {
+        if ($this->tipo === 'otro' || $this->esMateriales() || $this->esPunchVista()) {
             $out = [];
             foreach ($this->columnasOtro() as $i => $n) $out['c' . $i] = [$n, 'text'];
             return $out;

@@ -4,6 +4,8 @@ namespace Controllers;
 
 use Model\Proyecto;
 use Classes\Ensamblador;
+use Classes\Auditoria;
+use Classes\Revisiones;
 
 /** Ensamblador: API para la app de escritorio (solo admin). La IA se ejecuta en el equipo del admin; aquí se extrae, valida, aplica y revierte */
 class EnsambladorController
@@ -80,6 +82,21 @@ class EnsambladorController
         $x = Ensamblador::propuesta((int)$p->id, (int)($_GET['id'] ?? 0));
         if (!$x) json_respuesta(['success' => false, 'error' => 'Propuesta no encontrada'], 404);
         json_respuesta(['success' => true, 'propuesta' => $x]);
+    }
+
+    /** Guarda el proyecto actual como plantilla (el admin lo usa después de aplicar una propuesta de tipo «plantilla») */
+    public static function guardarPlantilla()
+    {
+        $p = proyecto_api();
+        $nombre = trim((string)($_POST['nombre'] ?? ''));
+        $descripcion = trim((string)($_POST['descripcion'] ?? ''));
+        $documento = mb_substr(trim((string)($_POST['documento'] ?? '')), 0, 255);
+        $meta = ['fuente' => ['tipo' => 'documento', 'nombre' => $documento ?: (string)$p->nombre], 'generado_por' => 'ia'];
+        [$ok, $r] = \Classes\HistorialCambios::silenciar(fn() => \Classes\PlantillaProyecto::guardar($p, usuario_actual(), $nombre, $descripcion, !empty($_POST['compartida']), $meta));
+        if (!$ok) json_respuesta(['success' => false, 'error' => (string)$r], 422);
+        Auditoria::registrar((int)$p->id, 'ensamblador', 'aplicado', 'guardar_plantilla', 'Plantilla de proyecto «' . $nombre . '» guardada', null, ['plantilla_id' => (int)$r], null, '', ['proyecto', (int)$p->id, (string)$p->nombre]);
+        Revisiones::registrarEjecucion((int)$p->id, 'ensamblador');
+        json_respuesta(['success' => true, 'id' => (int)$r, 'nombre' => $nombre]);
     }
 
     public static function aplicar()

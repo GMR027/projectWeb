@@ -21,6 +21,7 @@ class Ensamblador
     public const EXTENSIONES = ['pdf', 'docx', 'doc', 'pptx', 'odt', 'txt', 'md'];
     public const MAX_BYTES = 50 * 1024 * 1024;
     public const MODOS = [
+        'plantilla' => 'Plantilla de proyecto completa (partidas, duraciones y materiales)',
         'partidas_nuevas' => 'Agregar partidas nuevas',
         'partidas_existentes' => 'Modificar partidas existentes (si coincide el nombre)',
         'materiales' => 'Agregar materiales',
@@ -354,7 +355,8 @@ class Ensamblador
 
         if ($modos === ['normativa']) return ['tipo' => 'local', 'lotes' => [], 'aviso' => $aviso];   // no necesita IA: solo se guarda el archivo
         $todos = !$modos;
-        $quiere = fn(string $m) => $m !== 'normativa' && ($todos || in_array($m, $modos, true));
+        $plantilla = in_array('plantilla', $modos, true);
+        $quiere = fn(string $m) => $m !== 'normativa' && ($todos || in_array($m, $modos, true) || ($plantilla && in_array($m, ['partidas_nuevas', 'materiales'], true)));
         $pide = [];
         if ($quiere('partidas_nuevas') || $quiere('partidas_existentes')) $pide[] = '"partidas"';
         if ($quiere('materiales') || $quiere('submittal_nuevo') || $quiere('submittal_existente')) $pide[] = '"materiales"';
@@ -407,6 +409,7 @@ TXT;
                 . ($instruccion !== '' ? 'INSTRUCCIÓN ADICIONAL DEL USUARIO: ' . $instruccion . "\n" : '')
                 . 'Claves a devolver: ' . implode(', ', $pide ?: ['"notas"']) . "\n\n"
                 . "DATOS ACTUALES DEL PROYECTO:\n$ctx\n\n"
+                . ($plantilla ? "REGLA DE PLANTILLA: esta propuesta será una PLANTILLA reutilizable, no el programa de una obra concreta. No incluyas fechas absolutas, avance ni datos de un cliente. Ordena las actividades en la secuencia típica del proceso. Si el documento no indica la duración de una actividad, estima una duración típica en días hábiles y anótalo en \"notas\". No devuelvas \"dependencias\": el sistema encadena las actividades al aplicarlas.\n\n" : '')
                 . 'FRAGMENTO ' . ($i + 1) . ' de ' . count($trozos) . ' (' . $t['titulo'] . "):\n" . $t['texto'] . "\n\n" . $formato;
             $lotes[] = ['titulo' => 'Fragmento ' . ($i + 1) . ' de ' . count($trozos) . ' · ' . $t['titulo'], 'prompt' => $prompt];
         }
@@ -434,7 +437,8 @@ TXT;
     {
         $pid = (int)$p->id;
         $todos = !$modos;
-        $quiere = fn(string $m) => $todos || in_array($m, $modos, true);
+        $plantilla = in_array('plantilla', $modos, true);
+        $quiere = fn(string $m) => $todos || in_array($m, $modos, true) || ($plantilla && in_array($m, ['partidas_nuevas', 'materiales'], true));
         $partidas = self::partidasProyecto($pid);
         $nombresPartida = array_column($partidas, 'nombre', 'id');
         $porId = array_column($partidas, null, 'id');
@@ -500,7 +504,7 @@ TXT;
                     if ($quiere('partidas_nuevas')) {   // ya existe y no se pidió modificar: se avisa y queda sin marcar
                         $items[] = ['id' => $nuevoId('p'), 'tipo' => 'partida_nueva', 'titulo' => $x['nombre'], 'confianza' => 'dudosa', 'marcado' => false,
                             'detalle' => 'Ya existe «' . $porId[$cid]['codigo'] . ' ' . $porId[$cid]['nombre'] . '» (' . round($sim * 100) . '% de parecido); no la agregues salvo que sea otra.',
-                            'datos' => ['nombre' => $x['nombre'], 'descripcion' => $x['descripcion'], 'actividades' => $actividades], 'estado' => 'pendiente'];
+                            'datos' => ['nombre' => $x['nombre'], 'descripcion' => $x['descripcion'], 'actividades' => $actividades, 'secuencial' => $plantilla], 'estado' => 'pendiente'];
                     }
                     continue;
                 }
@@ -527,8 +531,8 @@ TXT;
             } elseif ($quiere('partidas_nuevas')) {
                 $sinDur = count(array_filter($actividades, fn($a) => $a['duracion_dias'] === null));
                 $items[] = ['id' => $nuevoId('p'), 'tipo' => 'partida_nueva', 'titulo' => $x['nombre'], 'confianza' => 'alta', 'marcado' => true,
-                    'detalle' => count($actividades) . ' actividad(es)' . ($sinDur ? " · $sinDur sin duración en el documento (se pondrá 1 día)" : '') . ' · las fechas se calculan a continuación del programa actual',
-                    'datos' => ['nombre' => $x['nombre'], 'descripcion' => $x['descripcion'], 'actividades' => $actividades], 'estado' => 'pendiente'];
+                    'detalle' => count($actividades) . ' actividad(es)' . ($sinDur ? " · $sinDur sin duración en el documento (se pondrá 1 día)" : '') . ($plantilla ? ' · plantilla: se encadenan en secuencia' : ' · las fechas se calculan a continuación del programa actual'),
+                    'datos' => ['nombre' => $x['nombre'], 'descripcion' => $x['descripcion'], 'actividades' => $actividades, 'secuencial' => $plantilla], 'estado' => 'pendiente'];
             }
         }
 
@@ -939,6 +943,11 @@ TXT;
                 if (!is_array($res) || empty($res['id'])) throw new \RuntimeException('No se pudo crear la partida');
                 $pa->id = (int)$res['id'];
                 $ids = self::crearActividades($pa, $d['actividades'] ?? [], self::proximaFecha($p, $cal), $cal, preg_replace('/\.0$/', '', $codigo) . '.', 1, 1);
+                if (!empty($d['secuencial']) && count($ids) > 1) {   // plantilla: la secuencia del documento queda como dependencias FS
+                    for ($i = 1; $i < count($ids); $i++) {
+                        try { Dependencias::guardar($pid, $ids[$i - 1], $ids[$i], 'FS', 0); } catch (\Throwable $e) { }
+                    }
+                }
                 $pa->recalcularFechas();
                 return ['partida_id' => (int)$pa->id, 'actividades' => $ids, 'codigo' => $codigo];
             }

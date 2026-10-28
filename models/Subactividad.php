@@ -70,6 +70,27 @@ class Subactividad extends ActiveRecord
         return self::whereAll('actividad_id', $actividadId, 'fecha_inicio ASC, id ASC');
     }
 
+    /**
+     * Subactividades del proyecto agrupadas por actividad: [actividad_id => [Subactividad, …]].
+     * Una sola consulta para no repetirla por cada actividad (programa, vPlan, materiales…).
+     */
+    public static function deProyecto(int $proyectoId): array
+    {
+        $out = [];
+        try {
+            $filas = self::consultarSQL(
+                "SELECT s.* FROM subactividades s
+                 JOIN actividades a ON a.id = s.actividad_id
+                 JOIN partidas p ON p.id = a.partida_id
+                 WHERE p.proyecto_id = " . (int)$proyectoId . "
+                 ORDER BY s.actividad_id, s.fecha_inicio, s.id"
+            );
+            foreach ($filas as $s) $out[(int)$s->actividad_id][] = $s;
+        } catch (\Throwable $e) {   // migración pendiente: el programa sigue funcionando sin subactividades
+        }
+        return $out;
+    }
+
     /** [actividad_id => total] de las subactividades que tiene cada actividad del proyecto */
     public static function conteoPorProyecto(int $proyectoId): array
     {

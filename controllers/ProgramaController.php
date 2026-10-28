@@ -258,6 +258,7 @@ class ProgramaController
                 $partida->recalcularFechas();
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$partida->proyecto_id);
                 $movidas = \Classes\Dependencias::propagar(Proyecto::find($partida->proyecto_id));   // modo automático
+                \Classes\DependenciasMateriales::propagar(Proyecto::find($partida->proyecto_id));
 
                 echo json_encode([
                     'success' => true, 'dependientes_movidas' => $movidas,
@@ -598,7 +599,11 @@ class ProgramaController
             // Una actividad que no requiere material no conserva vínculos
             \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, []);
         } elseif (!empty($_POST['gestionar_materiales'])) {
-            \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, (array)($_POST['materiales'] ?? []));
+            $roles = [];
+            foreach ((array)($_POST['roles'] ?? []) as $mid => $rol) {
+                if (in_array($rol, ['instala', 'consume'], true)) $roles[(int)$mid] = $rol;
+            }
+            \Model\ActividadMaterial::guardarDeActividad($actividadId, $proyectoId, (array)($_POST['materiales'] ?? []), $roles);
         }
         \Model\ActividadMaterial::sincronizarInstalacion($proyectoId);
         \Classes\Normativa::guardarManuales('actividad', $actividadId, $proyectoId, $_POST);   // normativa capturada a mano en el formulario
@@ -651,6 +656,7 @@ class ProgramaController
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
                     self::guardarMaterialesActividad((int)$resultado['id'], (int)$proyectoId);
+                    \Classes\DependenciasMateriales::propagar($proyecto);
                     terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=actividad&foco=a' . (int)$resultado['id']);
                 }
             }
@@ -690,6 +696,7 @@ class ProgramaController
             'catalogo' => self::catalogoMateriales((int)$proyectoId),
             'seleccion' => !empty($_POST['gestionar_materiales'])
                 ? array_map('intval', (array)($_POST['materiales'] ?? [])) : [],
+            'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : [],
             'gestionarMateriales' => !empty($_POST['gestionar_materiales']),
         ]);
     }
@@ -761,6 +768,7 @@ class ProgramaController
         }
         $partida->recalcularFechas();
         \Model\ActividadMaterial::sincronizarInstalacion($proyectoId);
+        \Classes\DependenciasMateriales::propagar($proyecto);
         header('Location: ' . $volver . '&creado=actividad&foco=a' . (int)$r['id']);
         exit;
     }
@@ -884,6 +892,7 @@ class ProgramaController
                     }
                     \Classes\Dependencias::propagar($proyecto);   // modo automático: las sucesoras siguen a la actividad
                     self::guardarMaterialesActividad((int)$id, (int)$proyecto->id);
+                    \Classes\DependenciasMateriales::propagar($proyecto);   // los materiales prerrequisito siguen a la actividad
                     terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=actividad&foco=a' . (int)$id);
                 }
             }
@@ -903,6 +912,7 @@ class ProgramaController
             'subError' => trim((string)($_GET['sub_error'] ?? '')),
             'catalogo' => self::catalogoMateriales((int)$proyecto->id),
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
+            'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : \Model\ActividadMaterial::rolesDeActividad((int)$id),
             'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
         ]);
     }
@@ -922,6 +932,8 @@ class ProgramaController
                 $actividad->eliminar();
                 $partida->recalcularFechas();
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);
+                $proy = Proyecto::find($proyectoId);
+                if ($proy) \Classes\DependenciasMateriales::propagar($proy);
                 header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=actividad');
                 exit;
             }

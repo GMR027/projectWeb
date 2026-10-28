@@ -141,6 +141,27 @@ class AccionesRapidas
                     'chip' => '', 'url' => "/materiales/editar$p&id=" . (int)$f['id'],
                 ], $q("SELECT m.id, m.nombre, m.referencia, m.especialidad, m.compra, m.fecha_entrega_real $baseN ORDER BY m.especialidad ASC, m.nombre ASC LIMIT $L")),
                 'ver' => "/materiales$p"];
+
+            // --- Actividades bloqueadas o atrasadas por la disponibilidad de sus materiales ---
+            try {
+                $proyecto = DependenciasMateriales::relaciones($pid) ? \Model\Proyecto::find($pid) : null;
+                $dm = $proyecto ? DependenciasMateriales::datos($proyecto) : ['actividades' => []];
+                $items = [];
+                foreach ($dm['actividades'] as $a) {
+                    if (!$a['bloqueado'] && (int)$a['dias'] <= 0) continue;
+                    $items[] = [
+                        'titulo' => $a['codigo'] . ' · ' . $a['nombre'],
+                        'sub' => $a['bloqueado'] ? 'Sin fecha de material: ' . $cut(implode(' · ', $a['motivos']), 90) : 'Materiales disponibles hasta el ' . $fecha($a['piso']) . ' (inicia ' . $fecha($a['inicio']) . ')',
+                        'chip' => $a['bloqueado'] ? 'bloqueada' : 'material',
+                        'url' => "/materiales/dependencias$p",
+                    ];
+                }
+                if ($items) {
+                    $secs[] = ['clave' => 'matdep', 'titulo' => 'Materiales que bloquean actividades', 'icono' => 'fa-diagram-project', 'abierta' => false,
+                        'total' => count($items), 'items' => array_slice($items, 0, $L), 'ver' => "/materiales/dependencias$p"];
+                }
+            } catch (\Throwable $e) {
+            }
         }
         return $secs;
     }

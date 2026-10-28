@@ -7,7 +7,7 @@ NS=projectweb
 sql() { kubectl -n $NS exec -i deploy/mysql -c mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --default-character-set=utf8mb4 -N project' 2>&1 | grep -v 'Using a password' || true; }
 
 # Tablas nuevas (CREATE TABLE IF NOT EXISTS)
-for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento; do echo ">> $f"; sql < $f.sql; done
+for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento migracion_dependencias_materiales_tablas; do echo ">> $f"; sql < $f.sql; done
 
 # Columnas nuevas: se agregan solo si no existen
 col() {   # tabla columna "ALTER completo"
@@ -49,7 +49,12 @@ done
 for c in "responsable VARCHAR(150) NULL" "rec_inicio DATE NULL" "rec_fin DATE NULL" "libre_texto VARCHAR(255) NULL" "libre_numero DECIMAL(14,4) NULL" "libre_fecha DATE NULL" "icono VARCHAR(120) NULL"; do
   col actividades "${c%% *}" "ALTER TABLE actividades ADD COLUMN $c;"
 done
-echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
+col proyectos modo_dependencias_materiales "ALTER TABLE proyectos ADD COLUMN modo_dependencias_materiales ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado';"
+col actividad_materiales rol "ALTER TABLE actividad_materiales ADD COLUMN rol ENUM('instala','consume') NOT NULL DEFAULT 'instala';"
+echo "ALTER TABLE vplan_tablas MODIFY COLUMN tipo ENUM('punch','restricciones','secundarias','otro','punchlist','materiales') NOT NULL DEFAULT 'punchlist';" | sql   # idempotente
+col vplan_laminas materiales_tabla_id "ALTER TABLE vplan_laminas ADD COLUMN materiales_tabla_id INT NULL AFTER marcas_estados_hash;"
+nk=$(echo "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_schema='project' AND table_name='vplan_laminas' AND constraint_name='fk_vplan_lamina_materiales';" | sql | tail -1)
+if [ "$nk" = "0" ]; then echo ">> vplan_laminas.fk_vplan_lamina_materiales"; echo "ALTER TABLE vplan_laminas ADD CONSTRAINT fk_vplan_lamina_materiales FOREIGN KEY (materiales_tabla_id) REFERENCES vplan_tablas(id) ON DELETE SET NULL;" | sql; else echo "ok  vplan_laminas.fk_vplan_lamina_materiales ya existe"; fi
 
 # Historial de cambios (sección Administración): origen, estado de revisión y sus eventos manuales
 for c in "origen ENUM('ia','manual') NOT NULL DEFAULT 'ia' AFTER proyecto_id" "estado ENUM('pendiente','aceptado','revertido') NOT NULL DEFAULT 'pendiente' AFTER evento" "estado_en DATETIME NULL AFTER estado" "estado_por VARCHAR(150) NOT NULL DEFAULT '' AFTER estado_en"; do

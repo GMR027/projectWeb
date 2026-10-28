@@ -180,6 +180,22 @@ class Inconsistencias extends HallazgosIA
                 'Registrar la entrega del material o marcar la actividad «sin material» si no lo requiere (no se cambia nada automáticamente).');
         }
 
+        // Disponibilidad por dependencias entre materiales (muchos a muchos)
+        try {
+            foreach ((DependenciasMateriales::relaciones($pid) ? DependenciasMateriales::datos($p)['actividades'] : []) as $a) {
+                if ($a['bloqueado']) {
+                    $out[] = self::hallazgo("mat_requisito_sin_fecha:{$a['id']}:" . sha1(implode('|', $a['motivos'])), 'materiales', 'alta', "Actividad bloqueada por materiales: {$a['codigo']}",
+                        "«{$a['nombre']}» no puede programarse: " . self::corto(implode('; ', $a['motivos']), 220), [(int)$a['id']],
+                        'Programar la compra o entrega de los materiales prerrequisito en Dependencias de materiales (no se cambia nada automáticamente).');
+                } elseif ($a['piso'] && $a['inicio'] && $a['piso'] > $a['inicio']) {
+                    $out[] = self::hallazgo("mat_requisito_tarde:{$a['id']}:{$a['piso']}:{$a['inicio']}", 'materiales', 'media', "Actividad antes de sus materiales: {$a['codigo']}",
+                        "«{$a['nombre']}» inicia el {$a['inicio']} pero sus materiales no están disponibles hasta el {$a['piso']}.", [(int)$a['id']],
+                        'Mover el inicio o adelantar los materiales prerrequisito en Dependencias de materiales (no se cambia nada automáticamente).');
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
         // restricciones activas en actividades terminadas
         foreach (self::filas("SELECT r.id, r.descripcion, a.id AS aid, a.codigo, a.nombre FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND r.estado = 'activa' AND a.progreso >= 100") as $f) {
             $out[] = self::hallazgo("rest_activa_completa:{$f['id']}", 'restricciones', 'media', "Restricción activa en actividad terminada: {$f['codigo']}", "«{$f['nombre']}» está al 100% y aún tiene la restricción activa: " . self::corto($f['descripcion'], 140), [(int)$f['aid']],

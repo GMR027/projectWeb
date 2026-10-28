@@ -260,6 +260,7 @@ class LineatiempoController
             $partida->recalcularFechas();
             \Model\ActividadMaterial::sincronizarInstalacion((int)$partida->proyecto_id);
             $movidas = Dependencias::propagar($p);   // modo automático
+            DependenciasMateriales::propagar($p);
 
             json_respuesta([
                 'success' => true, 'dependientes_movidas' => $movidas,

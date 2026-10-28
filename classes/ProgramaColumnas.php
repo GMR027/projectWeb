@@ -346,6 +346,7 @@ class ProgramaColumnas
         if (!$ok) return [false, $msg];
         if ($primera) Dependencias::eliminar($pid, (int)$primera['id']);
         Dependencias::propagar($proyecto);
+        DependenciasMateriales::propagar($proyecto);
         return [true, ''];
     }
 }

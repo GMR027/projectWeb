@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('pw', {
   ens: {
     estado: inv('ens:estado'), subir: inv('ens:subir'), quitar: inv('ens:quitar'), mensaje: inv('ens:mensaje'), cancelar: inv('ens:cancelar'),
     aplicar: inv('ens:aplicar'), revertir: inv('ens:revertir'), rechazar: inv('ens:rechazar'), propuesta: inv('ens:propuesta'),
+    guardarPlantilla: inv('ens:guardarPlantilla'),
     alAvance: fn => ipcRenderer.on('ens:progreso', (_e, p) => fn(p)),
   },
   estadosHerramientas: inv('herr:estados'),

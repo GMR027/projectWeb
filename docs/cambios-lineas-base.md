@@ -15,7 +15,7 @@ _Se lee solo al trabajar en este módulo._ Migración: `database/migracion_cambi
 - La línea base de referencia del resumen diario es la más reciente (o la del parámetro `linea`).
 
 ## Materiales contra cronograma (`/cambios/cruce`)
-- `classes/CruceMateriales.php`: cruza la necesidad (inicio de la actividad o `fecha_prevista` del renglón con material) con compra, entrega y submittal. Estados: `compra_vencida`, `sin_fecha`, `tarde`, `submittal`, `a_tiempo`, `en_sitio`. `evaluar()` es puro y tiene pruebas en `tests/run.php`.
+- `classes/CruceMateriales.php`: cruza la necesidad (inicio de la actividad o `fecha_prevista` del renglón con material) con compra, entrega y submittal. Estados: `compra_vencida`, `sin_fecha`, `tarde`, `bloqueado_requisito` (la disponibilidad efectiva por dependencias de materiales llega después de la necesidad), `submittal`, `a_tiempo`, `en_sitio`. `evaluar()` es puro y tiene pruebas en `tests/run.php`.
 
 ## Resumen ejecutivo diario (IA)
 - Herramienta `resumen_diario` (`classes/Herramientas/ResumenEjecutivoDiario.php`, registrada en `Registro`): usa el marco de informes (`/informes-ia`, PDF, borrador/aprobado). **Toda cifra la calcula el servidor**; la IA (desde la app de escritorio) solo redacta el análisis, las sugerencias y los pendientes. Sin IA se genera igual con texto de plantilla (botón «Resumen ejecutivo de hoy» en `/cambios`, solo admin).

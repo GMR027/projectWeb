@@ -183,6 +183,38 @@ label:has(> input[type="radio"]) { cursor: pointer; }
   }
 }
 
+// Campo de contraseña con el botón para ver/ocultar
+.campo-clave {
+  position: relative;
+  display: block;
+
+  input { padding-right: 4.4rem; }
+
+  .btn-ver-clave {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.4rem;
+    height: 3.4rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: $radius-sm;
+    color: $text-muted;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+
+    &:hover { color: $text; background: var(--surface-hover); }
+    &:focus-visible { outline: 2px solid var(--secondary); outline-offset: 2px; }
+  }
+}
+
+.formulario .campo .campo-clave input { padding-right: 4.4rem; }
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;

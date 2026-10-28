@@ -6,7 +6,9 @@ namespace Model;
 class ActividadMaterial extends ActiveRecord
 {
     protected static $tabla = 'actividad_materiales';
-    protected static $columnasDB = ['actividad_id', 'material_id'];
+    protected static $columnasDB = ['actividad_id', 'material_id', 'rol'];
+
+    public const ROLES = ['instala' => 'Instala', 'consume' => 'Consume'];
 
     /** @return int[] ids de los materiales de la actividad */
     public static function deActividad(int $actividadId): array
@@ -17,8 +19,20 @@ class ActividadMaterial extends ActiveRecord
         return $out;
     }
 
-    /** Reemplaza los materiales de la actividad (solo del mismo proyecto). */
-    public static function guardarDeActividad(int $actividadId, int $proyectoId, array $ids): void
+    /** @return array<int,string> material_id => rol (instala|consume) */
+    public static function rolesDeActividad(int $actividadId): array
+    {
+        $out = [];
+        $res = self::$db->query("SELECT material_id, rol FROM actividad_materiales WHERE actividad_id = $actividadId");
+        while ($r = $res->fetch_assoc()) $out[(int)$r['material_id']] = (string)($r['rol'] ?: 'instala');
+        return $out;
+    }
+
+    /**
+     * Reemplaza los materiales de la actividad (solo del mismo proyecto).
+     * $roles es [material_id => 'instala'|'consume']; lo que no venga se queda en «instala».
+     */
+    public static function guardarDeActividad(int $actividadId, int $proyectoId, array $ids, array $roles = []): void
     {
         $db = self::$db;
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
@@ -29,7 +43,9 @@ class ActividadMaterial extends ActiveRecord
         }
         $db->query("DELETE FROM actividad_materiales WHERE actividad_id = $actividadId" . ($ids ? ' AND material_id NOT IN (' . implode(',', $ids) . ')' : ''));
         foreach ($ids as $mid) {
-            $db->query("INSERT IGNORE INTO actividad_materiales (actividad_id, material_id) VALUES ($actividadId, $mid)");
+            $rol = isset($roles[$mid]) && isset(self::ROLES[$roles[$mid]]) ? $roles[$mid] : 'instala';
+            $db->query("INSERT INTO actividad_materiales (actividad_id, material_id, rol) VALUES ($actividadId, $mid, '" . $db->real_escape_string($rol) . "')
+                        ON DUPLICATE KEY UPDATE rol = VALUES(rol)");
         }
     }
 

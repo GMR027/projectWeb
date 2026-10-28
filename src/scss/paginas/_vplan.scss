@@ -357,3 +357,60 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   button { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary); color: var(--text); font-size: 1.25rem; cursor: pointer; transition: all .15s ease;
     i { color: #38a1f3; }
     &:hover { border-color: rgba(0, 112, 192, .6); transform: translateY(-1px); box-shadow: var(--shadow); } } }
+
+// ---------- Materiales de una lámina de vPlan (editor de marcas) ----------
+.ve-materiales { padding: 1rem; overflow: auto;
+  > p { margin: .4rem 0 1rem; } }
+.mat-acciones { flex-wrap: wrap; margin-bottom: .6rem; }
+.mat-refrescar { margin: .6rem 0 1rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary);
+  summary { cursor: pointer; font-size: 1.15rem; font-weight: 600; }
+  p { margin: .6rem 0; } }
+.mat-resumen { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: .2rem 0 1rem; font-size: 1.1rem; color: var(--text-muted);
+  b { color: var(--text); font-size: 1.3rem; }
+  .mat-alerta b { color: #d97706; } }
+.mat-leyenda { display: grid; gap: .45rem; margin: 0 0 1.2rem; padding: 0; list-style: none; }
+.mat-fila { display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); cursor: pointer;
+  &:hover { border-color: rgba(0, 112, 192, .55); background: var(--surface-hover); }
+  &.mat-sin-ubicacion { opacity: .72; border-style: dashed; } }
+.mat-fila-col { display: flex; flex: 0 0 auto; align-items: center; gap: .2rem; min-width: 1.4rem; }
+.mat-fila-txt { display: grid; flex: 1 1 auto; min-width: 0;
+  b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.15rem; }
+  small { color: var(--text-muted); font-size: 1.05rem; } }
+.mat-fila-n { flex: 0 0 auto; min-width: 2.2rem; padding: .15rem .5rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: 1.05rem; text-align: center; }
+.mat-color { display: inline-block; width: 1.1rem; height: 1.1rem; border: 1px solid rgba(0, 0, 0, .18); border-radius: 50%; }
+.mat-color-mas { display: grid; place-items: center; width: auto; height: 1.4rem; padding: 0 .3rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: .95rem; font-style: normal; }
+.mat-tabla-cab { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; margin: .4rem 0 .4rem;
+  h5 { margin: 0; } }
+.mat-tabla-envoltura { max-height: 34rem; overflow: auto; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); }
+.mat-tabla { width: 100%; border-collapse: collapse; font-size: 1.08rem;
+  th, td { padding: .45rem .55rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; white-space: nowrap; }
+  th { position: sticky; top: 0; z-index: 1; background: var(--bg-tertiary); color: var(--text); font-size: 1.02rem; text-transform: uppercase; letter-spacing: .03em; }
+  tbody tr { cursor: pointer; &:hover { background: var(--surface-hover); } &.mat-sin-ubicacion { opacity: .7; } }
+  td.c { text-align: center; }
+  td.mat-material { min-width: 16rem; white-space: normal; }
+  .mat-color { margin-right: .3rem; } }
+.mat-vacio { padding: .8rem; color: var(--text-muted); font-size: 1.1rem; text-align: center; list-style: none; }
+// Propiedades de una marca de material
+.ve-mat-props { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--border);
+  h5 { margin: 0 0 .6rem; font-size: 1.2rem; }
+  .ve-btns { margin-top: .8rem; } }
+.mat-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .5rem; padding: 0; list-style: none; }
+.mat-chip { display: inline-flex; align-items: center; gap: .4rem; max-width: 100%; padding: .3rem .3rem .3rem .7rem; border: 1px solid var(--border); border-radius: 99rem; background: var(--bg-tertiary); font-size: 1.08rem;
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted); cursor: pointer; &:hover { background: rgba(220, 38, 38, .16); color: #dc2626; } }
+  &.mat-chip-mal { border-color: rgba(220, 38, 38, .5); } }
+// Selector de actividades
+.ve-mat-modal-card { max-width: 76rem; width: calc(100vw - 3rem); }
+.mat-modal-lista { max-height: min(58vh, 52rem); overflow: auto; margin: .8rem 0; padding-right: .2rem; }
+.mat-grupo { margin-bottom: .5rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface);
+  > summary { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .65rem .8rem; cursor: pointer; font-weight: 600;
+    small { color: var(--text-muted); font-weight: 400; } }
+  &[open] > summary { border-bottom: 1px solid var(--border); } }
+.mat-grupo-act { padding: .45rem .8rem .6rem; }
+.mat-check { display: flex; align-items: center; gap: .6rem; padding: .3rem .2rem; font-size: 1.12rem; cursor: pointer;
+  input { flex: 0 0 auto; }
+  span { flex: 1 1 auto; }
+  small { color: var(--text-muted); font-size: 1.02rem; }
+  &.mat-sub { padding-left: 2.4rem; font-size: 1.06rem; } }
+.mat-subs { margin: .2rem 0 .2rem 2.4rem; border-left: 2px solid var(--border); padding-left: .6rem;
+  > summary { cursor: pointer; color: var(--text-muted); font-size: 1.02rem; padding: .25rem 0; } }

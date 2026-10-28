@@ -213,6 +213,7 @@ app.whenReady().then(() => {
   ipcMain.handle('ens:revertir', (_e, pid, id) => ens.revertir(idEns(pid), parseInt(id, 10)));
   ipcMain.handle('ens:rechazar', (_e, pid, id) => ens.rechazar(idEns(pid), parseInt(id, 10)));
   ipcMain.handle('ens:propuesta', (_e, pid, id) => ens.propuesta(idEns(pid), parseInt(id, 10)));
+  ipcMain.handle('ens:guardarPlantilla', (_e, pid, nombre, descripcion, documento, compartida) => ens.guardarPlantilla(idEns(pid), String(nombre || ''), String(descripcion || ''), String(documento || ''), !!compartida));
   // Herramientas IA: catálogo del menú y qué puede hacer la conexión elegida con cada una (la principal si no se indica)
   const fichasServidor = async () => {
     if (Date.now() - cacheFichas.t < 30000 && cacheFichas.lista.length) return cacheFichas.lista;

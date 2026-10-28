@@ -17,6 +17,14 @@ $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
     Columnas y renglones se leen en vivo de esa tabla; lo que edites en la lámina se escribe allá. Aquí solo cambias el título y el nombre en el catálogo.
 </div>
 <?php endif; ?>
+<?php if (!$esNueva && $tabla->esMateriales()): ?>
+<div class="card">
+    <i class="fa-solid fa-cubes"></i> <strong>Tabla de instalación de materiales.</strong>
+    Se crea desde el editor de marcas de una lámina y se sincroniza con las líneas y formas que tengan actividades asignadas.
+    Agrega o cambia columnas en <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$tabla->sheetflow_id; ?>">SheetFlow</a>;
+    aquí solo cambias el título y el nombre del catálogo.
+</div>
+<?php endif; ?>
 <?php if (!$esNueva && $tabla->tipo === 'otro' && !$tabla->sheetflow_id): ?>
 <div class="card">
     <strong>Esta tabla guarda sus datos aquí.</strong> Pásala a SheetFlow para editarla con fórmulas, formato y exportarla a Excel; la lámina seguirá mostrándola igual.
@@ -45,7 +53,7 @@ $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
             <div class="campo">
                 <label for="tipo">Tipo</label>
                 <select id="tipo" name="tipo" <?php echo $esNueva ? '' : 'disabled'; ?>>
-                    <?php foreach (VplanTabla::TIPOS as $k => $t): ?><option value="<?php echo $k; ?>" <?php echo $tabla->tipo === $k ? 'selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?>
+                    <?php foreach (VplanTabla::TIPOS as $k => $t): if ($esNueva && $k === 'materiales') continue; // la crea el editor de marcas ?><option value="<?php echo $k; ?>" <?php echo $tabla->tipo === $k ? 'selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?>
                 </select>
                 <?php if (!$esNueva): ?><small class="text-muted">El tipo no se puede cambiar una vez creada la tabla.</small><?php endif; ?>
             </div>

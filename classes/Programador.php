@@ -42,6 +42,15 @@ class Programador
              FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE m.proyecto_id = $pid"
         ) as $f) $mats[(int)$f['actividad_id']][] = $f;
 
+        // Disponibilidad efectiva por materiales (incluye sus propios prerrequisitos)
+        $dispMat = DependenciasMateriales::disponibilidad($pid);
+        $nombresMat = [];
+        foreach (DependenciasMateriales::materiales($pid) as $mid => $mm) $nombresMat[$mid] = $mm['nombre'];
+        $cadenasMat = array_map(fn($r) => [
+            'pred' => $nombresMat[$r['pred']] ?? ('#' . $r['pred']), 'suc' => $nombresMat[$r['suc']] ?? ('#' . $r['suc']),
+            'requisito' => $r['requisito'], 'retraso' => (int)$r['retraso'],
+        ], array_slice(DependenciasMateriales::relaciones($pid), 0, 40));
+
         $restr = [];
         foreach (self::filas("SELECT r.actividad_id, r.descripcion, r.fecha, t.nombre AS tipo FROM restricciones r JOIN tipos_restriccion t ON t.id = r.tipo_id JOIN actividades a ON a.id = r.actividad_id JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND r.estado = 'activa'") as $f) $restr[(int)$f['actividad_id']][] = $f;
 
@@ -52,7 +61,13 @@ class Programador
         foreach ($acts as $id => $a) {
             $m = [];
             foreach ($mats[$id] ?? [] as $x) {
-                $m[] = ['nombre' => self::corto($x['nombre'], 80), 'compra' => $x['compra'], 'compra_prog' => $x['fecha_compra_prog'], 'entrega_prog' => $x['fecha_entrega_prog'], 'entrega_real' => $x['fecha_entrega_real'], 'submittal' => $x['submittal']];
+                $c = $dispMat['materiales'][(int)$x['id']] ?? null;
+                $m[] = [
+                    'id' => (int)$x['id'], 'nombre' => self::corto($x['nombre'], 80), 'compra' => $x['compra'], 'compra_prog' => $x['fecha_compra_prog'],
+                    'entrega_prog' => $x['fecha_entrega_prog'], 'entrega_real' => $x['fecha_entrega_real'], 'submittal' => $x['submittal'],
+                    'disponible' => $c['entrega_ef'] ?? null, 'bloqueado' => (bool)($c['bloqueado'] ?? false),
+                    'requiere' => array_values(array_map(fn($mid) => $nombresMat[$mid] ?? ('#' . $mid), $c['requiere'] ?? [])),
+                ];
             }
             $lista[$id] = [
                 'id' => $id, 'codigo' => $a['codigo'], 'partida' => $a['partida_codigo'] . ' ' . $a['partida'], 'nombre' => $a['nombre'],
@@ -79,6 +94,7 @@ class Programador
             'proyecto' => ['id' => $pid, 'nombre' => $p->nombre, 'inicio' => $p->fecha_inicio, 'fin' => $p->fecha_fin], 'hoy' => $hoy,
             'jornada_lun_a_dom' => array_values($jornada), 'festivos_proximos' => $festivos,
             'actividades' => $lista, 'bitacora' => $bitacora, 'reportes' => $reportes,
+            'dependencias_materiales' => $cadenasMat,
             'obstaculos' => self::obstaculosObjetivos($lista, $hoy),
         ];
     }
@@ -95,6 +111,16 @@ class Programador
                     $out[] = self::obst([$a['id']], 'material', $m['entrega_prog'] > $a['fin'] ? 'alta' : 'media', "«{$m['nombre']}» llega el {$m['entrega_prog']} y la actividad inicia el {$a['inicio']}", 'Adelantar la compra o mover el inicio hasta la entrega', 'sistema', $m['entrega_prog']);
                 } elseif (!$entrega && $m['compra'] !== 'comprado') {
                     $out[] = self::obst([$a['id']], 'material', 'media', "«{$m['nombre']}» sin comprar y sin fecha de entrega programada", 'Programar la compra y fijar fecha de entrega', 'sistema');
+                }
+                // La disponibilidad efectiva incluye los materiales que este requiere
+                $disp = $m['disponible'] ?? null;
+                $req = $m['requiere'] ?? [];
+                if (!$m['entrega_real'] && $req) {
+                    if ($disp === null) {
+                        $out[] = self::obst([$a['id']], 'material', 'alta', "«{$m['nombre']}» no tiene fecha disponible: requiere " . implode(', ', $req), 'Programar la entrega de los materiales prerrequisito', 'sistema');
+                    } elseif ($disp > $a['inicio'] && $disp !== ($m['entrega_prog'] ?: null)) {
+                        $out[] = self::obst([$a['id']], 'material', $disp > $a['fin'] ? 'alta' : 'media', "«{$m['nombre']}» no está disponible hasta el {$disp} porque requiere " . implode(', ', $req) . " y la actividad inicia el {$a['inicio']}", 'Adelantar los prerrequisitos o mover el inicio', 'sistema', $disp);
+                    }
                 }
                 if (in_array($m['submittal'], ['enviado', 'rechazado'], true) && !$m['entrega_real']) {
                     $out[] = self::obst([$a['id']], 'submittal', $m['submittal'] === 'rechazado' ? 'alta' : 'media', "Submittal de «{$m['nombre']}» " . ($m['submittal'] === 'rechazado' ? 'rechazado (hay que reenviarlo)' : 'aún en revisión'), 'Dar seguimiento a la aprobación antes de comprar', 'sistema');
@@ -130,7 +156,10 @@ class Programador
     private static function linea(array $a): string
     {
         $pr = implode(',', array_map(fn($p) => $p['id'] . ($p['tipo'] !== 'FS' ? $p['tipo'] : '') . ($p['retraso'] ? ($p['retraso'] > 0 ? '+' : '') . $p['retraso'] : ''), $a['predecesoras']));
-        $m = implode(';', array_map(fn($x) => self::corto($x['nombre'], 40) . '(' . ($x['entrega_real'] ? 'entregado' : ($x['entrega_prog'] ?: 'sin fecha')) . ($x['submittal'] ? ',sub:' . $x['submittal'] : ',sin sub') . ')', $a['materiales']));
+        $m = implode(';', array_map(fn($x) => self::corto($x['nombre'], 40) . '(' . ($x['entrega_real'] ? 'entregado' : ($x['entrega_prog'] ?: 'sin fecha'))
+            . (!empty($x['disponible']) ? ',disp:' . substr($x['disponible'], 5) : '')
+            . (!empty($x['requiere']) ? ',req:' . self::corto(implode('+', $x['requiere']), 40) : '')
+            . ($x['submittal'] ? ',sub:' . $x['submittal'] : ',sin sub') . ')', $a['materiales']));
         $r = implode(';', array_map(fn($x) => self::corto($x['tipo'] . ': ' . $x['descripcion'], 60), $a['restricciones']));
         return $a['id'] . '|' . $a['codigo'] . '|' . self::corto($a['nombre'], 70) . '|' . substr($a['inicio'], 5) . '→' . substr($a['fin'], 5) . '|' . $a['dur'] . 'd|' . ($a['clase'] === 'administrativa' ? 'adm' : 'op')
             . ($pr !== '' ? '|pred:' . $pr : '') . ($m !== '' ? '|mat:' . $m : '') . ($r !== '' ? '|rest:' . $r : '');
@@ -253,6 +282,12 @@ class Programador
         $partes[] = "## RUTA CRÍTICA PROPUESTA\n" . ($criticas ? implode("\n", array_map(fn($f) => $linea($f, true), array_slice($criticas, 0, 20))) : '(sin ruta crítica calculada)');
         $partes[] = "## SIN PREDECESORAS NI SUCESORAS (" . count($aisladas) . ")\n" . ($aisladas ? implode("\n", array_map(fn($f) => $f['id'] . '|' . $f['codigo'] . '|' . self::corto($f['nombre'], 55) . '|' . substr($f['propuesto']['inicio'], 5) . '→' . substr($f['propuesto']['fin'], 5), array_slice($aisladas, 0, 15))) : '(ninguna)');
         $partes[] = "## OBSTÁCULOS YA DETECTADOS (sistema + IA)\n" . ($obst ? implode("\n", array_map(fn($o) => "{$o['severidad']}|{$o['fuente']}|" . implode(',', $o['actividades']) . '|' . self::corto($o['descripcion'], 110), $obst)) : '(ninguno)');
+        if (!empty($r['cadenas_materiales'])) {
+            $partes[] = "## CADENAS DE MATERIALES (prerrequisito → material que lo requiere)\n" . implode("\n", array_map(
+                fn($c) => $c['pred'] . ' → ' . $c['suc'] . ' (' . ($c['requisito'] === 'instalacion' ? 'instalado' : 'entregado') . ($c['retraso'] ? ' +' . $c['retraso'] . 'd' : '') . ')',
+                array_slice($r['cadenas_materiales'], 0, 30)
+            ));
+        }
 
         $prompt = "Eres un analista senior de programas de obra. Abajo está la información que se obtuvo al analizar por paquetes un programa de obra (cambios propuestos, ruta crítica, obstáculos). NO generes un programa nuevo: REVISA críticamente esa información y dime qué se puede mejorar.\n\n"
             . "Busca, con base SOLO en los datos de abajo:\n"
@@ -274,7 +309,7 @@ class Programador
         return <<<'TXT'
 Eres un programador de obra (planner) experto en construcción. Analiza este PAQUETE de actividades aún no iniciadas y propón CÓMO ejecutarlas. Tu propuesta NO reemplaza el programa vigente: es un escenario alterno que el usuario compara.
 
-Cada actividad ya trae su clase probable (adm = administrativa: trámites, compras, submittals, aprobaciones, permisos, documentos; op = operativa: trabajo físico en obra), sus predecesoras actuales (pred), materiales con su fecha de entrega y submittal (mat) y restricciones (rest).
+Cada actividad ya trae su clase probable (adm = administrativa: trámites, compras, submittals, aprobaciones, permisos, documentos; op = operativa: trabajo físico en obra), sus predecesoras actuales (pred), materiales con su fecha de entrega y submittal (mat: disp = fecha efectiva considerando los materiales que requiere, req = materiales prerrequisito) y restricciones (rest).
 
 Tu trabajo:
 1. Corrige la clase SOLO si está mal.
@@ -442,6 +477,11 @@ TXT;
                 if (($nb = self::fechaValida($e['no_antes_de'] ?? null)) && $nb > $piso) { $piso = $motor->sig($nb); $motivo[] = "no antes del $nb"; }
                 foreach ($a['materiales'] as $m) {
                     if (!$m['entrega_real'] && $m['entrega_prog'] && $m['entrega_prog'] > $piso && !$a['sin_material']) { $piso = $motor->sig($m['entrega_prog']); $motivo[] = "espera material «{$m['nombre']}» ({$m['entrega_prog']})"; }
+                    // La fecha efectiva ya incluye los materiales prerrequisito (DependenciasMateriales)
+                    if (!$a['sin_material'] && !empty($m['disponible']) && $m['disponible'] > $piso) {
+                        $piso = $motor->sig($m['disponible']);
+                        $motivo[] = "espera disponibilidad de «{$m['nombre']}»" . (!empty($m['requiere']) ? ' (requiere ' . implode(', ', $m['requiere']) . ')' : '') . " ({$m['disponible']})";
+                    }
                 }
             }
             $fin = $bloqueada ? $a['fin'] : ($a['hito'] ? $piso : $cal->calcularFechaFin($piso, $dur));
@@ -489,6 +529,7 @@ TXT;
                 'relaciones_nuevas' => $nuevas, 'relaciones_reemplazadas' => $quitadas, 'fin_actual' => $finActual, 'fin_propuesto' => $finProp,
                 'dif_dias_habiles' => ($finActual && $finProp) ? $motor->difHab($finActual, $finProp) : 0, 'fin_proyecto' => $p->fecha_fin,
                 'obstaculos' => $obst, 'mejoras' => array_slice($mejoras, 0, 20), 'obstaculos_por_severidad' => $cont, 'avisos' => array_values(array_unique($avisos)), 'hoy' => $hoy,
+                'cadenas_materiales' => $ctx['dependencias_materiales'] ?? [],
             ],
             'filas' => $filas,
         ];

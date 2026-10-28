@@ -107,7 +107,12 @@ class VplanTablaController
     public static function duplicar()
     {
         $proyecto = proyecto_de_peticion(true);
-        $copia = ($t = self::tablaDe($proyecto)) ? $t->duplicar() : null;
+        $t = self::tablaDe($proyecto);
+        if ($t && $t->esMateriales()) {   // la tabla de materiales pertenece a su lámina: no se duplica suelta
+            header('Location: /vplan/tablas?proyecto=' . $proyecto->id . '&error=' . urlencode('La tabla de materiales se crea y se sincroniza desde el editor de marcas de su lámina.'));
+            exit;
+        }
+        $copia = $t ? $t->duplicar() : null;
         header('Location: ' . ($copia ? '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $copia->id : '/vplan/tablas?proyecto=' . $proyecto->id));
         exit;
     }

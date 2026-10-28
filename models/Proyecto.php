@@ -5,7 +5,7 @@ namespace Model;
 class Proyecto extends ActiveRecord
 {
     protected static $tabla = 'proyectos';
-    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias'];
+    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias', 'modo_dependencias_materiales'];
 
     public $id;
     public $codigo;
@@ -24,6 +24,7 @@ class Proyecto extends ActiveRecord
     public $color;
     public $usuario_id;
     public $modo_dependencias;
+    public $modo_dependencias_materiales;
     public $tema_modo;
     // Programa configurable (Classes\ProgramaColumnas): se escriben con SQL propio, no con guardar()
     public $programa_nombre;
@@ -52,6 +53,7 @@ class Proyecto extends ActiveRecord
         $this->color = $args['color'] ?? '#FF5A1F';
         $this->usuario_id = $args['usuario_id'] ?? null;
         $this->modo_dependencias = $args['modo_dependencias'] ?? 'apagado';
+        $this->modo_dependencias_materiales = $args['modo_dependencias_materiales'] ?? 'apagado';
     }
 
     public function validar(): array

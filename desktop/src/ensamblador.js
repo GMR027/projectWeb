@@ -110,6 +110,8 @@ function crear({ cfg, sesion, avisar }) {
     revertir: (pid, id) => accion('/api/ensamblador/revertir', pid, { id }, 'No se pudo deshacer'),
     rechazar: (pid, id) => accion('/api/ensamblador/rechazar', pid, { id }, 'No se pudo descartar'),
     propuesta: (pid, id) => get('/api/ensamblador/propuesta?proyecto=' + encodeURIComponent(pid) + '&id=' + encodeURIComponent(id), 'No se pudo leer la propuesta'),
+    guardarPlantilla: (pid, nombre, descripcion, documento, compartida) => accion('/api/ensamblador/plantilla', pid,
+      { nombre, descripcion, documento: documento || '', compartida: compartida ? 1 : 0 }, 'No se pudo guardar la plantilla'),
   };
 }
 

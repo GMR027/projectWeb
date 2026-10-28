@@ -180,7 +180,22 @@ class Plantillas
         foreach (self::filas("SELECT nombre FROM partidas WHERE proyecto_id = $pid") as $f) $partes[] = $f['nombre'];
         foreach (self::filas("SELECT a.nombre FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid LIMIT 800") as $f) $partes[] = $f['nombre'];
         foreach (self::filas("SELECT nombre FROM materiales WHERE proyecto_id = $pid LIMIT 800") as $f) $partes[] = $f['nombre'];
-        $texto = ' ' . Voz::sinAcentos(mb_strtolower(implode(' | ', $partes))) . ' ';
+        return self::puntuar(implode(' | ', $partes));
+    }
+
+    /**
+     * Tipo de obra probable a partir del texto libre de un documento (sin proyecto).
+     * Misma puntuación que `identificar`, pero limitada para no recorrer documentos enormes.
+     */
+    public static function detectarTexto(string $texto): array
+    {
+        return self::puntuar(mb_substr($texto, 0, 400000));
+    }
+
+    /** Puntúa un texto contra las pistas de cada tipo de obra. @return array{ranking: array, total: int, texto: bool} */
+    private static function puntuar(string $texto): array
+    {
+        $texto = ' ' . Voz::sinAcentos(mb_strtolower($texto)) . ' ';
         $res = [];
         foreach (self::PISTAS as $clave => $pistas) {
             $pts = 0;

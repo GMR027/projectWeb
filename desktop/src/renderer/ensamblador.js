@@ -6,7 +6,7 @@ const Ensamblador = (() => {
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
   const err = e => String(e && e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
   const fecha = f => { const d = new Date(String(f).replace(' ', 'T')); return isNaN(d) ? String(f || '') : d.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }); };
-  const MODOS = [['partidas_nuevas', '➕ Partidas nuevas'], ['partidas_existentes', '✏️ Modificar partidas existentes'], ['materiales', '🧱 Materiales'], ['submittal_nuevo', '📦 Submittal nuevo'], ['submittal_existente', '📎 Agregar a un submittal'], ['dependencias', '🔗 Dependencias'], ['contrato', '📑 Contrato: fechas, festivos, restricciones'], ['responsables', '👷 Contactos y responsables'], ['cantidades', '📐 Cantidades de obra'], ['minuta', '📝 Compromisos de minuta'], ['normativa', '📚 Guardar en Normativa']];
+  const MODOS = [['plantilla', '🏗 Plantilla de proyecto'], ['partidas_nuevas', '➕ Partidas nuevas'], ['partidas_existentes', '✏️ Modificar partidas existentes'], ['materiales', '🧱 Materiales'], ['submittal_nuevo', '📦 Submittal nuevo'], ['submittal_existente', '📎 Agregar a un submittal'], ['dependencias', '🔗 Dependencias'], ['contrato', '📑 Contrato: fechas, festivos, restricciones'], ['responsables', '👷 Contactos y responsables'], ['cantidades', '📐 Cantidades de obra'], ['minuta', '📝 Compromisos de minuta'], ['normativa', '📚 Guardar en Normativa']];
   const GRUPOS = [['partida_nueva', 'Partidas nuevas'], ['partida_actualizar', 'Partidas que se modifican'], ['material_nuevo', 'Materiales nuevos'], ['material_actualizar', 'Materiales que se completan'], ['submittal', 'Submittal'], ['fecha_contrato', 'Fechas contractuales'], ['festivo', 'Días no hábiles (festivos)'], ['dependencia', 'Dependencias entre actividades'], ['restriccion', 'Restricciones'], ['cantidad_obra', 'Cantidades de obra'], ['contacto', 'Contactos'], ['responsable', 'Responsables de actividad'], ['compromiso', 'Compromisos (a la bitácora)'], ['normativa_documento', 'Documentos para Normativa']];
   const ESTADO_PROP = { pendiente: 'Pendiente', aplicada: 'Aplicada', revertida: 'Deshecha', rechazada: 'Descartada' };
   const IRA = { partida_nueva: ['/programa', 'Ver programa'], partida_actualizar: ['/programa', 'Ver programa'], material_nuevo: ['/materiales', 'Ver materiales'], material_actualizar: ['/materiales', 'Ver materiales'], submittal: ['/submittals', 'Ver submittals'], dependencia: ['/dependencias', 'Ver dependencias'], festivo: ['/ajustes', 'Ver calendario'], restriccion: ['/programa', 'Ver programa'], fecha_contrato: ['/programa', 'Ver programa'], cantidad_obra: ['/programa', 'Ver programa'], contacto: ['/reportes/personal', 'Ver personal'], responsable: ['/programa', 'Ver programa'], compromiso: ['/bitacora', 'Ver bitácora'], normativa_documento: ['/normativa', 'Ver Normativa'] };
@@ -31,7 +31,13 @@ const Ensamblador = (() => {
     }));
     const todo = el('button', '✨ Lo que encuentres', 'sec chip' + (modos.size ? '' : ' on')); todo.type = 'button'; todo.title = 'Sin botones elegidos, la IA decide qué información útil trae el documento';
     todo.addEventListener('click', () => { modos.clear(); pintarChips(); });
-    caja.prepend(todo);
+    const plantilla = el('button', '🏗 Plantilla de proyecto', 'sec chip' + (modos.size === 1 && modos.has('plantilla') ? ' on' : ''));
+    plantilla.type = 'button'; plantilla.title = 'Leer el documento como un proceso constructivo y proponer una plantilla reutilizable (sin fechas ni avance)';
+    plantilla.addEventListener('click', () => {
+      modos.clear(); modos.add('plantilla'); pintarChips();
+      const t = $('#ens-texto'); if (!t.value.trim()) t.value = 'Analiza el documento como un proceso constructivo completo y propone una plantilla reutilizable.';
+    });
+    caja.prepend(todo); caja.prepend(plantilla);
     const sel = $('#ens-sub');
     sel.hidden = !modos.has('submittal_existente');
     sel.replaceChildren(...(submittals.length ? submittals : [{ id: '', numero: 'No hay submittals' }]).map(s => { const o = el('option', s.numero + (s.especialidad ? ' · ' + s.especialidad : '')); o.value = s.id; return o; }));
@@ -168,7 +174,26 @@ const Ensamblador = (() => {
       const lineas = r.resultados.map(x => el('small', (x.ok ? '✔ ' : '✘ ') + x.titulo + (x.error ? ': ' + x.error : ''), x.ok ? 'tenue' : 'aviso'));
       const tipos = new Set(r.propuesta.items.filter(i => i.estado === 'aplicado').map(i => i.tipo));
       const enlaces = el('div', null, 'fila');
-      if ([...tipos].some(t => t.startsWith('partida'))) { const b = el('button', '🔢 Ordenar y renumerar partidas', 'sec'); b.type = 'button'; b.addEventListener('click', () => abrirWeb('/programa/ordenar?proyecto=' + pid, '/programa')); enlaces.append(b); }
+      if ([...tipos].some(t => t.startsWith('partida'))) {
+        const b = el('button', '🔢 Ordenar y renumerar partidas', 'sec'); b.type = 'button'; b.addEventListener('click', () => abrirWeb('/programa/ordenar?proyecto=' + pid, '/programa')); enlaces.append(b);
+        // Guardar la estructura aplicada como plantilla reutilizable (sin salir del Ensamblador)
+        const cajaPl = el('div', null, 'fila');
+        const nombrePl = el('input'); nombrePl.type = 'text'; nombrePl.maxLength = 150; nombrePl.placeholder = 'Nombre de la plantilla';
+        const proyecto = (proyectos || []).find(p => String(p.id) === String(pid));
+        nombrePl.value = ((proyecto && proyecto.nombre) || 'Proyecto') + ' (plantilla)';
+        const descPl = el('input'); descPl.type = 'text'; descPl.maxLength = 500; descPl.placeholder = 'Descripción (opcional)';
+        descPl.value = 'Plantilla propuesta a partir de «' + ((archivos[0] && archivos[0].nombre) || 'documento') + '».';
+        const guardarPl = el('button', '💾 Guardar como plantilla', 'sec'); guardarPl.type = 'button';
+        const estadoPl = el('small', '', 'tenue');
+        guardarPl.addEventListener('click', async () => {
+          guardarPl.disabled = true; estadoPl.textContent = 'Guardando…';
+          try {
+            const r = await pw.ens.guardarPlantilla(pid, nombrePl.value.trim(), descPl.value.trim(), (archivos[0] && archivos[0].nombre) || '', false);
+            estadoPl.textContent = '✔ Plantilla guardada: ' + r.nombre + '. Ya aparece en Plantillas de proyecto.';
+          } catch (e) { estadoPl.textContent = '✘ ' + err(e); guardarPl.disabled = false; }
+        });
+        cajaPl.append(nombrePl, descPl, guardarPl, estadoPl); enlaces.append(cajaPl);
+      }
       for (const [ruta, etq] of new Map([...tipos].map(t => IRA[t]))) { const b = el('button', etq, 'sec'); b.type = 'button'; b.addEventListener('click', () => abrirWeb(ruta + '?proyecto=' + pid, ruta)); enlaces.append(b); }
       refrescar(r.propuesta, [...lineas, enlaces]);
     }));

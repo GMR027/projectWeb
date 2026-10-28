@@ -135,6 +135,45 @@ $ok('a tiempo pero con submittal sin aprobar', $e === 'submittal');
 [$e] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado', 'fecha_entrega_prog' => '2026-10-22', 'sub' => 'aprobado'], $hoy);
 $ok('a tiempo y aprobado', $e === 'a_tiempo');
 
+echo "Dependencias de materiales\n";
+$sumar = fn(string $f, int $n): string => date('Y-m-d', strtotime($f . ' +' . $n . ' day'));
+$calc = Classes\DependenciasMateriales::calcular([
+    1 => ['id' => 1, 'nombre' => 'Caja', 'entrega' => '2026-10-10', 'instalacion' => null],
+    2 => ['id' => 2, 'nombre' => 'Base', 'entrega' => '2026-10-12', 'instalacion' => null],
+    3 => ['id' => 3, 'nombre' => 'Cámara bullet', 'entrega' => '2026-10-05', 'instalacion' => null],
+], [
+    ['pred' => 1, 'suc' => 3, 'requisito' => 'entrega', 'retraso' => 0],
+    ['pred' => 2, 'suc' => 3, 'requisito' => 'entrega', 'retraso' => 0],
+], $sumar);
+$ok('varios prerrequisitos: la disponibilidad es el más tardío', $calc['materiales'][3]['entrega_ef'] === '2026-10-12');
+$ok('sin ciclo en un grafo de varios prerrequisitos', $calc['ciclo'] === null && count($calc['orden']) === 3);
+$ok('piso de la actividad = máximo de sus materiales', Classes\DependenciasMateriales::pisoActividad([1, 2, 3], $calc)['fecha'] === '2026-10-12');
+
+$calc = Classes\DependenciasMateriales::calcular([
+    1 => ['id' => 1, 'nombre' => 'Soportería', 'entrega' => '2026-10-10', 'instalacion' => '2026-10-20'],
+    2 => ['id' => 2, 'nombre' => 'Cable', 'entrega' => '2026-10-08', 'instalacion' => null],
+], [['pred' => 1, 'suc' => 2, 'requisito' => 'instalacion', 'retraso' => 2]], $sumar);
+$ok('requisito de instalación + retraso en días hábiles', $calc['materiales'][2]['entrega_ef'] === '2026-10-22');
+$ok('el material que se instala también tiene fecha de instalación', $calc['materiales'][1]['instalacion_ef'] === '2026-10-20');
+
+$calc = Classes\DependenciasMateriales::calcular([
+    1 => ['id' => 1, 'nombre' => 'A', 'entrega' => '2026-10-10', 'instalacion' => null],
+    2 => ['id' => 2, 'nombre' => 'B', 'entrega' => '2026-10-10', 'instalacion' => null],
+], [
+    ['pred' => 1, 'suc' => 2, 'requisito' => 'entrega', 'retraso' => 0],
+    ['pred' => 2, 'suc' => 1, 'requisito' => 'entrega', 'retraso' => 0],
+], $sumar);
+$ok('detecta el ciclo entre materiales', is_array($calc['ciclo']) && count($calc['ciclo']) === 2);
+
+$calc = Classes\DependenciasMateriales::calcular([
+    1 => ['id' => 1, 'nombre' => 'Sin fecha', 'entrega' => null, 'instalacion' => null],
+    2 => ['id' => 2, 'nombre' => 'Dependiente', 'entrega' => '2026-10-05', 'instalacion' => null],
+], [['pred' => 1, 'suc' => 2, 'requisito' => 'entrega', 'retraso' => 0]], $sumar);
+$ok('un prerrequisito sin fecha bloquea el material', $calc['materiales'][2]['entrega_ef'] === null && $calc['materiales'][2]['bloqueado']);
+$ok('el piso de una actividad bloqueada no inventa fecha', Classes\DependenciasMateriales::pisoActividad([2], $calc)['bloqueado'] === true && Classes\DependenciasMateriales::pisoActividad([2], $calc)['fecha'] === null);
+[$e, $d] = Classes\CruceMateriales::evaluar('2026-10-25', ['compra' => 'comprado', 'fecha_entrega_prog' => '2026-10-20'], '2026-10-18', '2026-10-28');
+$ok('cruce: el material llega por un prerrequisito después de la necesidad', $e === 'bloqueado_requisito' && $d === 3);
+
 echo "Renglones de órdenes de cambio\n";
 $ok('lo temporal se cierra al retirarlo', Model\CambioPartida::estadosDe('instalacion_temporal', true) === ['pendiente', 'ejecutado', 'retirado', 'cancelado']);
 $ok('lo demás se cierra al verificarlo', Model\CambioPartida::estadosDe('reubicacion', false) === ['pendiente', 'ejecutado', 'verificado', 'cancelado']);
@@ -230,6 +269,47 @@ $ok('conserva el rol y la protección de las columnas base', $sfVinculo['cols'][
 $ok('los ids se recortan o completan según los renglones', \Classes\Sheetflow::limpiar(['rows' => [['a'], ['b'], ['c']], 'meta' => ['subactividad' => ['ids' => [4]]]])['meta']['subactividad']['ids'] === [4, null, null]);
 $sinVinculo = \Classes\Sheetflow::sinVinculo($sfVinculo);
 $ok('sinVinculo quita los ids y los roles, pero conserva los datos', !isset($sinVinculo['meta']['subactividad']) && !isset($sinVinculo['cols'][0]['rol']) && $sinVinculo['rows'][0][0] === 'Tramo A');
+
+echo "SheetFlow: instalación de materiales\n";
+$sfMat = \Classes\Sheetflow::limpiar([
+    'cols' => [
+        ['n' => 'Material', 'rol' => 'material', 'fija' => 1],
+        ['n' => 'Fecha de material', 't' => 'fecha', 'rol' => 'fecha_material', 'fija' => 1],
+        ['n' => 'Status', 't' => 'lista', 'rol' => 'status_material', 'fija' => 1, 'op' => ['No iniciada', 'En proceso', 'Completada']],
+        ['n' => 'Observaciones'],
+    ],
+    'rows' => [['Soportería', '2026-10-01', 'No iniciada', 'nota'], ['Cableado', '2026-10-02', 'En proceso', '']],
+    'meta' => ['materiales' => ['ids' => ['a7', 's9']]],
+]);
+$ok('conserva los roles de las columnas de materiales', $sfMat['cols'][0]['rol'] === 'material' && $sfMat['cols'][2]['fija'] === 1);
+$ok('conserva la clave oculta de cada renglón', $sfMat['meta']['materiales']['ids'] === ['a7', 's9']);
+$ok('descarta claves de material que no son válidas', \Classes\Sheetflow::limpiar(['rows' => [['a'], ['b']], 'meta' => ['materiales' => ['ids' => ['a7', 'x9', 's3']]]])['meta']['materiales']['ids'] === ['a7', null]);
+$soloSub = \Classes\Sheetflow::sinVinculoSubactividades($sfMat);
+$ok('quitar el vínculo de subactividades conserva el de materiales', isset($soloSub['meta']['materiales']) && $soloSub['cols'][0]['rol'] === 'material');
+$todo = \Classes\Sheetflow::sinVinculo($sfMat);
+$ok('sinVinculo total quita también el vínculo de materiales', !isset($todo['meta']['materiales']) && !isset($todo['cols'][0]['rol']));
+
+$arbolMat = ['partidas' => [['id' => 1, 'codigo' => '01', 'nombre' => 'Instalaciones', 'color' => '#111111']], 'actividades' => [[
+    'id' => 7, 'codigo' => '01.01', 'nombre' => 'Soportería y cableado', 'partida_id' => 1, 'partida' => 'Instalaciones',
+    'estado' => 'espera', 'progreso' => 0, 'fecha_inicio' => '2026-10-01', 'fecha_fin' => '2026-10-10',
+    'subactividades' => [['id' => 9, 'nombre' => 'Caja NEMA', 'fecha_inicio' => '2026-10-02', 'fecha_fin' => '2026-10-05', 'status' => 50]],
+]]];
+$baseMat = \Classes\Sheetflow::normalizar([
+    'cols' => $sfMat['cols'],
+    'rows' => [['Soportería y cableado', '2026-10-10', 'No iniciada', 'conservar']],
+    'meta' => ['materiales' => ['ids' => ['a7']]],
+]);
+$fusion = \Classes\MaterialesLamina::fusionar($baseMat, ['a7', 's9'], $arbolMat);
+$ok('la sincronización agrega una fila por subactividad nueva', count($fusion['rows']) === 2 && $fusion['meta']['materiales']['ids'] === ['a7', 's9']);
+$ok('la sincronización no toca las columnas extra', $fusion['rows'][0][3] === 'conservar' && $fusion['rows'][1][3] === '');
+$refres = \Classes\MaterialesLamina::fusionar($baseMat, ['a7'], $arbolMat, true);
+$ok('refrescar las columnas base actualiza nombre, fecha y estado', $refres['rows'][0][0] === '01.01 · Soportería y cableado' && $refres['rows'][0][1] === '2026-10-10' && $refres['rows'][0][3] === 'conservar');
+$coloresMat = \Classes\MaterialesLamina::coloresDeMarcas(json_encode(['shapes' => [
+    ['id' => 's1', 'type' => 'line', 'stroke' => '#E11D48', 'material' => ['items' => [['tipo' => 'actividad', 'id' => 7], ['tipo' => 'subactividad', 'id' => 9, 'actividad_id' => 7]]]],
+    ['id' => 's2', 'type' => 'rect', 'fill' => '#22c55e', 'material' => ['items' => [['tipo' => 'actividad', 'id' => 7]]]],
+    ['id' => 's3', 'type' => 'line', 'stroke' => '#111111', 'actividad_id' => 8],
+]]));
+$ok('el color del material sale de la primera línea o forma que lo usa', $coloresMat === ['a7' => '#e11d48', 's9' => '#e11d48', 'a8' => '#111111']);
 
 echo "Personalización (Fase 4)\n";
 use Classes\CamposPersonalizados as CPz;
@@ -433,6 +513,17 @@ $cita = \Classes\Normativa::cita(['documento' => 'Especificación', 'clausula' =
 $ok('una cláusula sin CSI se respeta tal cual', $cita['seccion'] === '' && $cita['clausula'] === 'ARTÍCULO 250' && $cita['pagina'] === 0);
 $cita = \Classes\Normativa::cita(['referencia' => 'NOM-001-STPS', 'clausula' => '', 'titulo' => '']);
 $ok('un vínculo manual conserva su referencia', $cita['documento'] === '' && $cita['seccion'] === '' && $cita['referencia'] === 'NOM-001-STPS');
+
+echo "Plantillas de proyecto desde un proceso\n";
+$tpl = \Classes\PlantillaProyecto::desdeTipoObra('videovigilancia');
+$ok('el catálogo genera partidas y actividades encadenadas', $tpl && $tpl['encadenar'] === true && count($tpl['partidas']) === 5 && count($tpl['actividades']) > 0);
+$ok('las actividades quedan sin fecha y con duración positiva', $tpl && !array_filter($tpl['actividades'], fn($a) => $a['fecha_inicio'] !== null || (int)$a['duracion_dias'] < 1));
+$ok('el tipo de obra queda guardado en la plantilla', $tpl && $tpl['tipo_obra'] === 'videovigilancia' && $tpl['meta']['fuente']['tipo'] === 'tipo_obra');
+$ok('un tipo de obra inexistente no genera nada', \Classes\PlantillaProyecto::desdeTipoObra('no_existe') === []);
+$ok('la plantilla sin partidas se rechaza antes de tocar la BD', \Classes\PlantillaProyecto::guardarDatos(['partidas' => [], 'actividades' => []], ['id' => 1, 'rol' => 'admin'], 'X', '', false)[0] === false);
+$det = \Classes\Plantillas::detectarTexto('Proyecto de videovigilancia con cámaras IP, NVR y cableado estructurado para CCTV.');
+$ok('detecta el tipo de obra en el texto de un documento', array_key_first($det['ranking']) === 'videovigilancia' && $det['ranking']['videovigilancia']['puntos'] > 0);
+$ok('un texto sin pistas no inventa un tipo de obra', \Classes\Plantillas::detectarTexto('Texto genérico sin palabras del oficio.')['total'] === 0);
 
 echo "Administración de obra\n";
 $ok('la situación del contrato se calcula por fecha', \Classes\Contratos::situacion(['estado' => 'vigente', 'vencimiento' => date('Y-m-d', strtotime('-1 day')), 'aviso_dias' => 30]) === 'vencido'

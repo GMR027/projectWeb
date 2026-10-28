@@ -4,6 +4,7 @@
 <script src="/vendor/editor-fondos.js"></script>
 <script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
 <script src="/vendor/vplan-editor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/vplan-editor.js'); ?>"></script>
+<?php if (!empty($config['materiales'])): ?><script src="/vendor/materiales-vplan.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/materiales-vplan.js'); ?>"></script><?php endif; ?>
 <script>
 (function () {
     const hoja = document.getElementById('ve-hoja'), modalConfirm = document.getElementById('modal-confirm');

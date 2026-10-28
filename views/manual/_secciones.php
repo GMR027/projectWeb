@@ -351,6 +351,29 @@ HTML],
 <p class="manual-nota">Para imprimir una lámina o llevarla a PDF usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
 HTML],
 
+['id' => 'materiales', 'titulo' => 'Materiales en el plano', 'icono' => 'fa-cubes', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
+<p>En el editor de marcas de vPlan, la pestaña <strong>Materiales</strong> sirve para marcar en el plano <em>dónde</em> se instala cada material y <em>cuándo</em>. Sustituye a la liga simple de una actividad por una relación múltiple.</p>
+<h4>Dibujar y asignar</h4>
+<ol>
+<li>Abre la lámina y pulsa <strong>Dibujar sobre el plano</strong>. Elige la pestaña <strong>Materiales</strong>.</li>
+<li>Dibuja una <strong>línea de materiales</strong> o una <strong>forma de materiales</strong>. La marca nace preparada para recibir actividades.</li>
+<li>Con la marca seleccionada, en <strong>Propiedades → Materiales de esta marca</strong> pulsa <strong>Agregar actividad</strong>. Busca por partida, código o nombre y marca una o varias actividades; si una actividad tiene subactividades, despliégalas y marca las que correspondan.</li>
+<li>Repite con todas las líneas y formas. Una misma actividad puede estar en varias marcas; la tabla la muestra una sola vez y cuenta sus ubicaciones.</li>
+<li>Elige el <strong>color</strong> de cada línea o forma con el selector y la paleta. Las marcas de material conservan tu color; solo cambian al estado del programa si activas «Colorear la marca según el estado».</li>
+</ol>
+<h4>Fotos de los materiales</h4>
+<p>Si las actividades tienen materiales con foto en el catálogo, sobre la marca aparece un <strong>botón redondo</strong> con la primera foto. Al pulsarlo se muestra la galería de fotos; en <strong>Propiedades</strong> puedes activar o desactivar la galería, cambiar su <strong>tamaño en px</strong> con el deslizador (se ve al instante) y elegir si aparece <strong>en el centro de la forma</strong> o <strong>sobre el borde superior</strong>. En las líneas siempre se coloca arriba y centrada. El botón solo se ve mientras editas; las fotos sí salen en el PNG y en el PDF.</p>
+<h4>Tabla de instalación</h4>
+<ol>
+<li>En el panel <strong>Materiales</strong> pulsa <strong>Crear tabla de materiales</strong>. Se crea en SheetFlow con una fila por actividad o subactividad y tres columnas: <strong>Material</strong>, <strong>Fecha de material</strong> (la fecha fin del programa) y <strong>Status</strong>.</li>
+<li>La tabla se agrega como bloque a la lámina; en <strong>Modo diseño</strong> la mueves y redimensionas como cualquier otra.</li>
+<li>Cuando agregues o quites marcas, pulsa <strong>Sincronizar</strong>: añade las filas nuevas y no toca las columnas extra. Si cambió el programa y quieres actualizar nombre, fecha y status, usa <strong>Traer fechas y estado del programa</strong>.</li>
+<li>En <strong>SheetFlow</strong> puedes agregar todas las columnas que quieras (observaciones, fecha real, proveedor…). Aparecen en el panel del editor y en la tabla de la lámina.</li>
+<li>En el panel, haz clic en una fila para seleccionar en el plano todas sus líneas y formas. Los renglones cuya actividad ya no está en el plano se marcan como «sin ubicación» para no perder lo capturado.</li>
+</ol>
+<p class="manual-nota">La tabla de materiales es una tabla de SheetFlow normal: también puedes abrirla, editarla y exportarla desde SheetFlow.</p>
+HTML],
+
 ['id' => 'lastplanner', 'titulo' => 'Last Planner', 'icono' => 'fa-note-sticky', 'roles' => $todos, 'herr' => 'lastplanner', 'cuerpo' => <<<'HTML'
 <p>Genera los <strong>post-its de planeación</strong> a partir del programa de obra: una tarjeta por actividad y día.</p>
 <ul>
@@ -524,6 +547,30 @@ HTML],
 </ul>
 <h4>Especialidades</h4>
 <p>Con el botón <strong>Especialidades</strong> administras las categorías técnicas del proyecto (eléctrica, hidráulica, etc.). Son propias de cada proyecto y no las ven otros. Muestra cuántos materiales y submittals usa cada una.</p>
+HTML],
+
+['id' => 'dependencias-materiales', 'titulo' => 'Dependencias de materiales', 'icono' => 'fa-diagram-project', 'roles' => $gestion, 'herr' => 'materiales', 'cuerpo' => <<<'HTML'
+<p>Sirve para responder una pregunta de obra: <strong>¿este material puede usarse ya?</strong> Conectas un material con los que necesita y el sistema calcula cuándo está realmente disponible. Un material puede requerir <strong>varios</strong> a la vez: por ejemplo, una cámara bullet puede necesitar caja, base y cámara.</p>
+<h4>Conectar materiales</h4>
+<ol>
+<li>Entra a <strong>Materiales → Dependencias de materiales</strong> (o a la pestaña «Dependencias» del Catálogo).</li>
+<li>Pulsa <strong>Conectar materiales</strong> y haz clic primero en el material que debe estar disponible antes y luego en el que lo necesita. También puedes abrir un material y usar <strong>Agregar prerrequisito</strong>.</li>
+<li>Marca todos los materiales que hagan falta y elige para cada uno si debe estar <strong>entregado en obra</strong> o <strong>instalado</strong>, con los días hábiles de retraso que quieras sumar.</li>
+<li>Guarda. La cadena se dibuja en el tablero y el panel muestra «Requiere» y «Requerido por».</li>
+</ol>
+<h4>Qué calcula</h4>
+<ul>
+<li>La <strong>disponibilidad</strong> de un material es la más tardía entre su propia entrega y la de todos sus prerrequisitos. Si falta una fecha, el material queda <strong>bloqueado</strong> y no se inventa nada.</li>
+<li>Una actividad puede empezar cuando <strong>todos</strong> sus materiales están disponibles. Si alguno no tiene fecha, la actividad se marca como bloqueada.</li>
+<li>Los materiales de una actividad pueden ser <strong>Instala</strong> (la actividad los coloca) o <strong>Consume</strong> (solo los usa). Se elige en el formulario de la actividad.</li>
+</ul>
+<h4>Programar y sugerir</h4>
+<ul>
+<li><strong>Revisar y reprogramar</strong>: muestra qué actividades se moverían y por qué. Solo aplica en modo <strong>Automático</strong> y siempre se puede <strong>Deshacer</strong>.</li>
+<li><strong>Sugerir actividades</strong>: propone relaciones entre actividades que ya existen y actividades nuevas para los materiales de las cadenas que todavía no tienen ninguna. Puedes editar nombre, partida, duración y fecha antes de aceptar. Si una actividad existente recibe un prerrequisito nuevo, se mueve para respetarlo. Nada se guarda sin tu confirmación.</li>
+<li>El <a href="#programador-ia">Programador de actividades</a> recibe estas cadenas como referencia: usa la disponibilidad efectiva como piso de fecha y las reporta como obstáculos.</li>
+</ul>
+<p class="manual-nota">Los modos son: <strong>Apagado</strong> (se guardan y se ven las relaciones, pero no se mueve nada), <strong>Informativo</strong> (avisa de bloqueos y atrasos, sin mover fechas) y <strong>Automático</strong> (reprograma con vista previa y deshacer).</p>
 HTML],
 
 ['id' => 'directorio', 'titulo' => 'Directorio', 'icono' => 'fa-address-book', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -982,6 +1029,7 @@ HTML],
 <p>En <strong>Campos personalizados</strong> (menú Proyecto) creas tus propios datos —«Nivel», «Frente», «Torre»— para actividades, punch, submittals, bitácora o reportes. Pueden ser texto, número, fecha o una lista de opciones. Salen como una columna más (se editan ahí mismo), se pueden <strong>filtrar</strong> y, en las listas, <strong>agrupar</strong>. En el programa y en el Lookahead filtran; la agrupación del programa ya son las partidas. También salen en el PDF del programa si su columna está en el diseño.</p>
 <h4>Plantillas de proyecto</h4>
 <p>Desde <strong>Plantillas de proyecto</strong> guardas la estructura de un proyecto terminado: partidas, actividades, dependencias, jornada, diseños, campos, catálogos y materiales (sin avance, reportes, fotos ni costos). Al crear un proyecto nuevo eliges la plantilla y las fechas se cuentan desde su inicio. Una plantilla también se puede aplicar a un proyecto vacío. El administrador puede compartirlas con todos.</p>
+<p>También puedes crear una plantilla sin abrir un proyecto: en <strong>Empezar desde un tipo de obra</strong> eliges un proceso (videovigilancia, control de acceso, cableado, edificación, vivienda, nave industrial, remodelación o urbanización) y ajustas nombres y duraciones antes de guardarla. En <strong>Leer un proceso constructivo</strong> subes el pliego, la memoria o el procedimiento en PDF, Word, PowerPoint, OpenDocument o texto: el sistema detecta el tipo de obra y propone la plantilla. Esa lectura es local, sin IA ni internet; un PDF escaneado sin texto no se puede leer. Para procesos que no están en el catálogo, el administrador puede usar la app de escritorio: en el <strong>Ensamblador</strong> elige <em>Plantilla de proyecto</em>, revisa y aplica la propuesta y pulsa <em>Guardar como plantilla</em>.</p>
 <h4>Marca del cliente</h4>
 <p>En <strong>Marca del cliente</strong> subes el logo y eliges el nombre y dos colores. Al activarla, los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos) llevan una cabecera con el logo y los colores en títulos y encabezados de tabla. Las exportaciones XML/POD y las láminas del vPlan no cambian.</p>
 <h4>Mi inicio</h4>

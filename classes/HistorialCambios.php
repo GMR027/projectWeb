@@ -46,7 +46,7 @@ class HistorialCambios
         'bitacora' => 'Bitácora de obra', 'minutas' => 'Minutas', 'evidencias' => 'Evidencias',
         'curvas' => 'Curvas de productividad', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list',
         'rfi' => 'RFI', 'msr' => 'MSR · Materiales', 'cambios' => 'Órdenes de cambio', 'lineas-base' => 'Líneas base',
-        'submittals' => 'Submittals', 'catalogo-materiales' => 'Catálogo de materiales', 'costos' => 'Costos y presupuesto',
+        'submittals' => 'Submittals', 'catalogo-materiales' => 'Catálogo de materiales', 'dependencias-materiales' => 'Dependencias de materiales', 'costos' => 'Costos y presupuesto',
         'archivos' => 'Archivo', 'datos-obra' => 'Datos de obra', 'editor' => 'Editor', 'redactor' => 'Redactor',
         'sheetflow' => 'SheetFlow', 'view360' => 'View360', 'traductor' => 'Traductor',
         'normativa' => 'Normativa y especificaciones', 'personal' => 'Personal del proyecto',
@@ -82,6 +82,7 @@ class HistorialCambios
 
         // ---- Materiales y cambios ----
         'materiales' => ['catalogo-materiales', 'material', 'Material', ['nombre'], null],
+        'material_dependencias' => ['dependencias-materiales', 'material-dependencia', 'Dependencia de materiales', ['requisito'], ['materiales', 'sucesor_id']],
         'msrs' => ['msr', 'msr', 'Reporte MSR', ['nombre'], null],
         'msr_items' => ['msr', 'material', 'Renglón de MSR', [], ['msrs', 'msr_id']],
         'msr_partidas' => ['msr', 'msr', 'Partida del MSR', ['titulo'], ['msrs', 'msr_id']],
@@ -413,7 +414,7 @@ class HistorialCambios
         'reportes' => '/reportes', 'bitacora' => '/bitacora', 'minutas' => '/minutas', 'evidencias' => '/evidencias',
         'curvas' => '/curvas', 'seguridad' => '/seguridad', 'punch' => '/punch', 'rfi' => '/rfi',
         'msr' => '/msr', 'cambios' => '/cambios', 'lineas-base' => '/lineas-base', 'submittals' => '/submittals',
-        'catalogo-materiales' => '/materiales', 'costos' => '/costos', 'archivos' => '/archivos',
+        'catalogo-materiales' => '/materiales', 'dependencias-materiales' => '/materiales/dependencias', 'costos' => '/costos', 'archivos' => '/archivos',
         'datos-obra' => '/datos-obra', 'editor' => '/graficos', 'redactor' => '/redactor', 'sheetflow' => '/sheetflow',
         'view360' => '/view360', 'traductor' => '/traductor', 'normativa' => '/normativa',
         'personal' => '/directorio', 'campos' => '/campos', 'ajustes' => '/ajustes',

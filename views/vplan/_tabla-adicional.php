@@ -5,7 +5,8 @@ use Classes\VplanDiseno;
 $t = $bloque['tabla'];
 $campos = $bloque['campos'];
 $estEnc = $t->estiloEncabezados();
-$extra = $puedeEditar ? 1 : 0;   // columna de acciones (solo en pantalla)
+$acciones = $puedeEditar && !$t->esMateriales();   // los renglones de materiales no se agregan ni se quitan desde la lámina
+$extra = $acciones ? 1 : 0;   // columna de acciones (solo en pantalla)
 $nAcc = $t->tipo === 'secundarias' ? $extra * 2 : $extra;
 // ¿La tabla muestra las subactividades de una actividad? (para avisar al quitar un renglón)
 $esSubactividades = $t->sheetflow_id && \Model\SubactividadHoja::deHoja((int)$t->sheetflow_id);
@@ -44,6 +45,9 @@ $esSubactividades = $t->sheetflow_id && \Model\SubactividadHoja::deHoja((int)$t-
         <?php if ($t->tipo === 'punchlist'): ?>
             <a href="/punch?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-clipboard-check"></i> Agregar en Punch list</a>
             <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-eye"></i> Qué mostrar</a>
+        <?php elseif ($t->esMateriales()): ?>
+            <a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$lamina->id; ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-cubes"></i> Marcar materiales</a>
+            <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$t->sheetflow_id; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-cells"></i> Editar en SheetFlow</a>
         <?php else: ?>
         <button type="button" class="btn btn-sm btn-primary vp-agregar-dato" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
         <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>

@@ -4,6 +4,7 @@
 $t = $bloque['tabla'];
 $campos = $bloque['campos'];
 $editable = $puedeEditar && isset($fila['_i']);   // los renglones de restricciones del programa no se editan aquí
+if (!isset($acciones)) $acciones = $puedeEditar && !$t->esMateriales();
 $fd = fn($f) => $f ? formatear_fecha($f) : '';
 $meta = $t->metaColumnas();   // tipos de las columnas de una tabla vinculada a SheetFlow
 $ed = function (string $k, string $tipo, string $extra = '') use ($fila, $editable, $fd, $meta) {
@@ -66,5 +67,5 @@ $est = $fila['estado'] ?? 'proceso';
     <td class="c vp-n"><?php echo (int)$fila['n']; ?></td>
     <?php foreach ($campos as $k => $c): $ta = ($meta[$k]['t'] ?? '') === 'casilla' || ($meta[$k]['t'] ?? '') === 'semaforo'; ?><?php $es = (string)($fila['s' . substr($k, 1)] ?? ''); ?><td<?php echo ($ta || $es !== '') ? ' class="' . trim(($ta ? 'c ' : '') . ($es !== '' ? 'vp-conestilo' : '')) . '"' : ''; ?><?php echo $es !== '' ? ' style="' . s($es) . '"' : ''; ?>><?php echo $ed($k, 'text'); ?></td><?php endforeach; ?>
 <?php endif; ?>
-<?php if ($puedeEditar): ?><td class="c no-print vp-celda-acc"><?php if ($editable && $t->tipo !== 'punchlist'): ?><button type="button" class="vp-del" title="Quitar este dato">✕</button><?php endif; ?></td><?php endif; ?>
+<?php if (!empty($acciones)): ?><td class="c no-print vp-celda-acc"><?php if ($editable && $t->tipo !== 'punchlist'): ?><button type="button" class="vp-del" title="Quitar este dato">✕</button><?php endif; ?></td><?php endif; ?>
 </tr>

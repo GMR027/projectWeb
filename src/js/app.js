@@ -473,3 +473,39 @@ document.addEventListener('click', (e) => {
     });
   });
 })();
+
+// ============ MOSTRAR / OCULTAR CONTRASEÑA ============
+// Agrega el botón del ojo a los campos de contraseña de los formularios.
+// Funciona aunque el campo se cree después (login, usuarios y cuenta).
+(() => {
+  const mejorar = (input) => {
+    if (input.dataset.verClave || input.type !== 'password') return;
+    input.dataset.verClave = '1';
+
+    const caja = document.createElement('div');
+    caja.className = 'campo-clave';
+    input.parentNode.insertBefore(caja, input);
+    caja.appendChild(input);
+
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'btn-ver-clave';
+    boton.setAttribute('aria-pressed', 'false');
+    const fijarEstado = (visible) => {
+      input.type = visible ? 'text' : 'password';
+      boton.setAttribute('aria-pressed', visible ? 'true' : 'false');
+      const texto = visible ? 'Ocultar contraseña' : 'Mostrar contraseña';
+      boton.setAttribute('aria-label', texto);
+      boton.setAttribute('title', texto);
+      boton.querySelector('i').className = visible ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    };
+    boton.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
+    fijarEstado(false);
+    boton.addEventListener('click', () => fijarEstado(input.type === 'password'));
+    caja.appendChild(boton);
+  };
+
+  const iniciar = () => document.querySelectorAll('.formulario input[type="password"]').forEach(mejorar);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+  else iniciar();
+})();

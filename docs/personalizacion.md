@@ -29,6 +29,13 @@ Controlador de 4.1 y 4.2: `controllers/PersonalizacionController.php`.
 - Entra: configuración del proyecto (`CAMPOS_PROYECTO`), jornada, partidas, actividades (fechas como **días desde el inicio del proyecto**; el fin se recalcula con la jornada del proyecto nuevo; avance 0 / no iniciada / PTA 0), dependencias, campos personalizados y diseños (las claves `cp_` se reasignan), categorías y catálogos, tipos de permiso, estampas, config del Lookahead, tipo de obra y materiales (sin compras, fechas ni archivos).
 - No entra: avance, reportes, bitácora, minutas, fotos, archivos, costos, RFI, restricciones, festivos (son de fechas concretas), submittals, MSR, líneas base.
 - `aplicar()` solo a un proyecto **vacío** (sin partidas), en una transacción. Se usa al crear (`plantilla_id`) y desde `/plantillas-proyecto?proyecto=`.
+- **Crear una plantilla sin proyecto de origen** (`/plantillas-proyecto`):
+  - `PlantillaProyecto::desdeTipoObra($clave)` arma partidas, actividades y dependencias FS desde `Plantillas::CATALOGO`; las actividades van sin fecha y `aplicar()` las encadena con el calendario del proyecto nuevo (`encadenar: true`).
+  - `Plantillas::detectarTexto($texto)` puntúa el texto de un documento con las mismas pistas de `identificar()`. El controlador `procesar()` extrae el texto (`Ensamblador::extraer`) y propone la plantilla del tipo detectado.
+  - La vista muestra un **borrador editable** (nombre, duración, quitar actividades) guardado en `$_SESSION['pp_borrador']`; `guardarDatos()` valida y guarda (máx. 200 partidas / 2000 actividades).
+  - La plantilla guarda `meta.fuente` (`tipo_obra` o `documento`) y `resumen_json.fuente` para mostrarlo en la lista.
+- **Con IA (solo app de escritorio, admin):** el Ensamblador tiene el modo `plantilla`. Pide partidas, duraciones y materiales; el servidor encadena las actividades como dependencias FS (`secuencial`) y el escritorio ofrece **Guardar como plantilla** (`POST /api/ensamblador/plantilla`). No se piden fechas ni dependencias absolutas a la IA.
+- `resumen_json` no necesita migración: las claves nuevas (`fuente`) son opcionales.
 
 ## 4.4 Marca
 - `proyectos.marca_activa/nombre/logo/color/color2`. `Pdf::preparar` recibe `'marca' => Proyecto` y llama a `Marca::aplicar()` (banda con logo + CSS de títulos y `th`). Lo piden: Pdf (programa), Lookahead, Last Planner, Curva, MSR, Submittal, Minuta, Reportes, Punch, Informes y Seguridad. **No** lo piden los documentos que el usuario diseña (Redactor, SheetFlow, Editor, láminas del vPlan, Ensamblador).

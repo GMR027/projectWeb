@@ -29,6 +29,10 @@ class Sheetflow
     public const MAX_BYTES = 2_000_000;
     /** Columnas base de una tabla vinculada a las subactividades de una actividad */
     public const ROLES_SUBACTIVIDAD = ['nombre', 'inicio', 'fin', 'status'];
+    /** Columnas base de la tabla de instalación de materiales de una lámina de vPlan */
+    public const ROLES_MATERIALES = ['material', 'fecha_material', 'status_material'];
+    /** Roles que sobreviven a las herramientas (los demás se descartan) */
+    public const ROLES = ['nombre', 'inicio', 'fin', 'status', 'material', 'fecha_material', 'status_material'];
 
     private static function hex($c, string $def): string
     {
@@ -63,7 +67,7 @@ class Sheetflow
             ];
             if ($t === 'lista') $cols[count($cols) - 1]['op'] = self::opciones($c['op'] ?? []);
             $rol = (string)($c['rol'] ?? '');
-            if (in_array($rol, self::ROLES_SUBACTIVIDAD, true)) $cols[count($cols) - 1]['rol'] = $rol;
+            if (in_array($rol, self::ROLES, true)) $cols[count($cols) - 1]['rol'] = $rol;
             if (!empty($c['fija'])) $cols[count($cols) - 1]['fija'] = 1;
         }
         if (!$cols) $cols[] = ['n' => 'Columna 1', 't' => 'texto', 'a' => 'izquierda', 'tot' => ''];
@@ -101,6 +105,16 @@ class Sheetflow
             foreach ((array)($s['ids'] ?? []) as $id) $ids[] = (is_numeric($id) && (int)$id > 0) ? (int)$id : null;
             $ids = array_slice(array_pad($ids, $nr, null), 0, $nr);
             $meta['subactividad'] = ['actividad_id' => (int)($s['actividad_id'] ?? 0), 'ids' => $ids];
+        }
+        $mat = is_array($m['materiales'] ?? null) ? $m['materiales'] : [];
+        if (!empty($mat) && array_key_exists('ids', $mat)) {
+            $ids = [];
+            foreach ((array)($mat['ids'] ?? []) as $clave) {
+                $clave = is_string($clave) ? trim($clave) : '';
+                $ids[] = preg_match('/^[as]\d+$/', $clave) ? $clave : null;
+            }
+            $ids = array_slice(array_pad($ids, $nr, null), 0, $nr);
+            $meta['materiales'] = ['ids' => $ids];
         }
         return ['cols' => $cols, 'rows' => $rows, 'calc' => (object)$calc, 'tot' => (object)$tot, 'estilo' => $estilo, 'fmt' => (object)$fmt, 'meta' => $meta];
     }
@@ -258,7 +272,7 @@ class Sheetflow
             foreach ($cols as $c => $col) $totales[] = $col['tot'] !== '' && isset($tot[$c]) ? ($col['tot'] === 'cuenta' ? (string)$tot[$c] : self::formatear($tot[$c], $col['t'])) : '';
             $totales[0] = $totales[0] !== '' ? $totales[0] : 'Total';
         }
-        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w'), 'opciones' => array_map(fn($c) => $c['op'] ?? [], $cols)];
+        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w'), 'opciones' => array_map(fn($c) => $c['op'] ?? [], $cols), 'meta' => $d['meta'] ?? []];
     }
 
     // ---------- Plantillas ----------
@@ -301,7 +315,7 @@ class Sheetflow
         $d = self::normalizar($d);
         $vinculo = SubactividadHoja::deHoja((int)$h->id);
         if (!$vinculo) {
-            $h->datos = json_encode(self::sinVinculo($d), JSON_UNESCAPED_UNICODE);
+            $h->datos = json_encode(self::sinVinculoSubactividades($d), JSON_UNESCAPED_UNICODE);
             $h->guardar();
             return $h;
         }
@@ -323,11 +337,30 @@ class Sheetflow
     /** Copia de los datos sin el vínculo a subactividades (para duplicar, exportar o importar) */
     public static function sinVinculo($d): array
     {
+        $d = self::sinVinculoSubactividades($d);
+        if (isset($d['meta']['materiales'])) unset($d['meta']['materiales']);
+        if (empty($d['meta'])) unset($d['meta']);
+        if (isset($d['cols']) && is_array($d['cols'])) {
+            foreach ($d['cols'] as &$c) if (is_array($c)) unset($c['rol'], $c['fija']);
+            unset($c);
+        }
+        return $d;
+    }
+
+    /**
+     * Copia sin el vínculo a subactividades, pero conserva el de instalación de materiales
+     * (lo usa guardarDatos: una hoja normal no debe perder sus roles de materiales).
+     */
+    public static function sinVinculoSubactividades($d): array
+    {
         $d = is_array($d) ? $d : [];
         if (isset($d['meta']['subactividad'])) unset($d['meta']['subactividad']);
         if (empty($d['meta'])) unset($d['meta']);
         if (isset($d['cols']) && is_array($d['cols'])) {
-            foreach ($d['cols'] as &$c) if (is_array($c)) unset($c['rol'], $c['fija']);
+            foreach ($d['cols'] as &$c) {
+                if (!is_array($c)) continue;
+                if (in_array($c['rol'] ?? '', self::ROLES_SUBACTIVIDAD, true)) unset($c['rol'], $c['fija']);
+            }
             unset($c);
         }
         return $d;

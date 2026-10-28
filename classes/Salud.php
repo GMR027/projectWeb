@@ -59,6 +59,23 @@ class Salud
             $out[$a][] = ['tipo' => 'material', 'texto' => 'Material sin submittal aprobado: ' . implode(', ', array_slice($nombres, 0, 3)) . (count($nombres) > 3 ? ' y ' . (count($nombres) - 3) . ' más' : ''), 'url' => "/submittals?proyecto=$pid"];
         }
 
+        // Materiales que aún no están disponibles por sus propios prerrequisitos
+        try {
+            $proyecto = DependenciasMateriales::relaciones($pid) ? \Model\Proyecto::find($pid) : null;
+            if ($proyecto) {
+                foreach (DependenciasMateriales::datos($proyecto)['actividades'] as $a) {
+                    $aid = (int)$a['id'];
+                    if (!isset($ids[$aid])) continue;
+                    if ($a['bloqueado']) {
+                        $out[$aid][] = ['tipo' => 'material', 'texto' => 'Material bloqueado: ' . self::corto(implode('; ', $a['motivos']), 150), 'url' => "/materiales/dependencias?proyecto=$pid"];
+                    } elseif ($a['piso'] && $a['inicio'] && $a['piso'] > $a['inicio']) {
+                        $out[$aid][] = ['tipo' => 'material', 'texto' => 'Materiales disponibles hasta el ' . $a['piso'] . ' (la actividad inicia el ' . $a['inicio'] . ')', 'url' => "/materiales/dependencias?proyecto=$pid"];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
         // Pendientes graves del punch
         foreach (self::filas("SELECT actividad_id, COUNT(*) n, SUM(severidad = 'critica') c FROM punch_items
             WHERE proyecto_id = $pid AND actividad_id IN ($lista) AND estado IN ('abierto','en_proceso') AND severidad IN ('alta','critica') GROUP BY actividad_id") as $f) {

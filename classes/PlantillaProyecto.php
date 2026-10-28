@@ -18,7 +18,7 @@ class PlantillaProyecto
 
     public const VERSION = 1;
     /** Columnas del proyecto que viajan en la plantilla (nombre, código, fechas y logos son de cada obra) */
-    private const CAMPOS_PROYECTO = ['descripcion', 'color', 'modo_dependencias', 'registros_por_pagina', 'tema_modo', 'tema_paleta', 'msr_umbral_critico',
+    private const CAMPOS_PROYECTO = ['descripcion', 'color', 'modo_dependencias', 'modo_dependencias_materiales', 'registros_por_pagina', 'tema_modo', 'tema_paleta', 'msr_umbral_critico',
         'programa_nombre', 'programa_columnas_json', 'programa_indicador_json', 'marca_activa', 'marca_nombre', 'marca_color', 'marca_color2'];
     private const ACTIVIDAD = ['codigo', 'nombre', 'descripcion', 'duracion_dias', 'prioridad', 'hito', 'sin_material', 'orden', 'fecha_fija', 'responsable', 'libre_texto', 'libre_numero'];
     private const FECHAS_ACTIVIDAD = ['fecha_inicio', 'fecha_fin', 'rec_inicio', 'rec_fin', 'libre_fecha'];
@@ -89,7 +89,7 @@ class PlantillaProyecto
         $pid = (int)$p->id;
         $base = (string)$p->fecha_inicio;
         $d = ['version' => self::VERSION, 'duracion_dias' => max(0, (int)self::dias((string)$p->fecha_fin, $base)), 'proyecto' => [], 'partidas' => [], 'actividades' => [], 'dependencias' => [],
-            'simples' => [], 'campos' => [], 'disenos' => [], 'materiales' => [], 'actividad_materiales' => [], 'estampas' => [], 'lookahead' => null, 'tipo_obra' => null];
+            'simples' => [], 'campos' => [], 'disenos' => [], 'materiales' => [], 'actividad_materiales' => [], 'material_dependencias' => [], 'estampas' => [], 'lookahead' => null, 'tipo_obra' => null];
 
         $fila = self::filas("SELECT * FROM proyectos WHERE id = $pid")[0] ?? [];
         $d['proyecto'] = self::pick($fila, self::CAMPOS_PROYECTO);
@@ -115,8 +115,11 @@ class PlantillaProyecto
         foreach (self::filas("SELECT * FROM materiales WHERE proyecto_id = $pid ORDER BY id") as $r) {
             $d['materiales'][] = ['ref' => (int)$r['id']] + self::pick($r, self::MATERIAL);
         }
-        foreach (self::filas("SELECT am.actividad_id, am.material_id FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE m.proyecto_id = $pid") as $r) {
-            $d['actividad_materiales'][] = ['a' => (int)$r['actividad_id'], 'm' => (int)$r['material_id']];
+        foreach (self::filas("SELECT am.actividad_id, am.material_id, am.rol FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE m.proyecto_id = $pid") as $r) {
+            $d['actividad_materiales'][] = ['a' => (int)$r['actividad_id'], 'm' => (int)$r['material_id'], 'rol' => $r['rol'] ?: 'instala'];
+        }
+        foreach (self::filas("SELECT predecesor_id, sucesor_id, requisito, retraso, nota FROM material_dependencias WHERE proyecto_id = $pid") as $r) {
+            $d['material_dependencias'][] = ['pred' => (int)$r['predecesor_id'], 'suc' => (int)$r['sucesor_id'], 'requisito' => $r['requisito'], 'retraso' => (int)$r['retraso'], 'nota' => (string)$r['nota']];
         }
         foreach (self::filas("SELECT id, nombre, config_json FROM estampas WHERE proyecto_id = $pid") as $r) {
             $d['estampas'][] = ['ref' => (int)$r['id'], 'nombre' => $r['nombre'], 'config_json' => $r['config_json']];
@@ -128,22 +131,123 @@ class PlantillaProyecto
     }
 
     /** Guarda el proyecto como plantilla. Devuelve [ok, id | mensaje] */
-    public static function guardar(Proyecto $p, array $usuario, string $nombre, string $descripcion, bool $compartida): array
+    public static function guardar(Proyecto $p, array $usuario, string $nombre, string $descripcion, bool $compartida, array $meta = []): array
     {
         $nombre = mb_substr(trim(strip_tags($nombre)), 0, 150);
         if ($nombre === '') return [false, 'Ponle un nombre a la plantilla.'];
         $d = self::capturar($p);
+        if ($meta) $d['meta'] = $meta;
         if (!$d['partidas']) return [false, 'El proyecto no tiene partidas: no hay estructura que guardar.'];
         $resumen = [
             'partidas' => count($d['partidas']), 'actividades' => count($d['actividades']), 'dependencias' => count($d['dependencias']),
             'materiales' => count($d['materiales']), 'campos' => count($d['campos']), 'dias' => $d['duracion_dias'],
         ];
+        if (!empty($meta['fuente']['nombre'])) $resumen['fuente'] = (string)$meta['fuente']['nombre'];
         $json = json_encode($d, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         $resJson = json_encode($resumen);
         $desc = mb_substr(trim(strip_tags($descripcion)), 0, 500);
         $origen = mb_substr((string)$p->nombre, 0, 200);
         $comp = $compartida && ($usuario['rol'] ?? '') === 'admin' ? 1 : 0;
         $uid = (int)$usuario['id'];
+        $st = self::db()->prepare('INSERT INTO plantillas_proyecto (usuario_id, nombre, descripcion, compartida, origen, resumen_json, datos) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $st->bind_param('ississs', $uid, $nombre, $desc, $comp, $origen, $resJson, $json);
+        return $st->execute() ? [true, (int)self::db()->insert_id] : [false, 'No se pudo guardar la plantilla.'];
+    }
+
+    // ---------- crear una plantilla base (sin proyecto de origen) ----------
+
+    /**
+     * Estructura de una plantilla a partir del catálogo de tipos de obra (partidas, actividades y duraciones típicas).
+     * Las actividades quedan sin fecha: `aplicar()` las encadena con el calendario del proyecto nuevo.
+     */
+    public static function desdeTipoObra(string $clave): array
+    {
+        $t = Plantillas::CATALOGO[$clave] ?? null;
+        if (!$t) return [];
+        $colores = ['#2563eb', '#16a34a', '#f59e0b', '#9333ea', '#dc2626', '#0891b2'];
+        $d = ['version' => self::VERSION, 'encadenar' => true, 'duracion_dias' => 0, 'proyecto' => [], 'partidas' => [], 'actividades' => [], 'dependencias' => [],
+            'simples' => [], 'campos' => [], 'disenos' => [], 'materiales' => [], 'actividad_materiales' => [], 'material_dependencias' => [], 'estampas' => [], 'lookahead' => null,
+            'tipo_obra' => $clave,
+            'meta' => ['fuente' => ['tipo' => 'tipo_obra', 'clave' => $clave, 'nombre' => $t['nombre']], 'generado_por' => 'sistema']];
+        $ref = 0;
+        $prevPartida = null;
+        foreach ($t['partidas'] as $i => [$codigo, $nombre, $acts]) {
+            $refPartida = $i + 1;
+            $d['partidas'][] = ['ref' => $refPartida, 'codigo' => $codigo, 'nombre' => $nombre, 'descripcion' => '', 'color_bg' => $colores[$i % count($colores)], 'orden' => $i + 1];
+            $prevAct = null;
+            $prefijo = preg_replace('/\.0$/', '', (string)$codigo);
+            foreach ($acts as $j => [$an, $dur]) {
+                $ref++;
+                $dur = max(1, min(365, (int)$dur));
+                $d['actividades'][] = ['ref' => $ref, 'partida' => $refPartida, 'codigo' => $prefijo . '.' . ($j + 1), 'nombre' => $an, 'descripcion' => '',
+                    'duracion_dias' => $dur, 'prioridad' => 'media', 'hito' => 0, 'sin_material' => 0, 'orden' => $j + 1, 'fecha_fija' => 0, 'responsable' => '',
+                    'libre_texto' => '', 'libre_numero' => null,
+                    'fecha_inicio' => null, 'fecha_fin' => null, 'rec_inicio' => null, 'rec_fin' => null, 'libre_fecha' => null];
+                if ($prevAct !== null) $d['dependencias'][] = ['pred' => $prevAct, 'suc' => $ref, 'tipo' => 'FS', 'retraso' => 0];
+                elseif ($prevPartida !== null) $d['dependencias'][] = ['pred' => $prevPartida, 'suc' => $ref, 'tipo' => 'FS', 'retraso' => 0];
+                $prevAct = $ref;
+                $d['duracion_dias'] += $dur;
+            }
+            if ($prevAct !== null) $prevPartida = $prevAct;
+        }
+        return $d;
+    }
+
+    /** Valida y guarda una estructura ya construida (tipo de obra o documento). Devuelve [ok, id | mensaje] */
+    public static function guardarDatos(array $datos, array $usuario, string $nombre, string $descripcion, bool $compartida, string $origen = ''): array
+    {
+        $nombre = mb_substr(trim(strip_tags($nombre)), 0, 150);
+        if ($nombre === '') return [false, 'Ponle un nombre a la plantilla.'];
+        $datos += ['version' => self::VERSION, 'proyecto' => [], 'partidas' => [], 'actividades' => [], 'dependencias' => [],
+            'simples' => [], 'campos' => [], 'disenos' => [], 'materiales' => [], 'actividad_materiales' => [], 'material_dependencias' => [], 'estampas' => [], 'lookahead' => null];
+        $partidas = [];
+        foreach ((array)$datos['partidas'] as $i => $p) {
+            $ref = (int)($p['ref'] ?? 0);
+            $nom = mb_substr(trim(strip_tags((string)($p['nombre'] ?? ''))), 0, 200);
+            if ($ref <= 0 || $nom === '') continue;
+            $partidas[$ref] = ['ref' => $ref, 'codigo' => mb_substr(trim(strip_tags((string)($p['codigo'] ?? ($i + 1) . '.0'))), 0, 50) ?: (($i + 1) . '.0'),
+                'nombre' => $nom, 'descripcion' => mb_substr(trim(strip_tags((string)($p['descripcion'] ?? ''))), 0, 1000),
+                'color_bg' => preg_match('/^#[0-9a-f]{6}$/i', (string)($p['color_bg'] ?? '')) ? $p['color_bg'] : null, 'orden' => (int)($p['orden'] ?? ($i + 1))];
+        }
+        if (!$partidas) return [false, 'La plantilla no tiene partidas.'];
+        if (count($partidas) > 200) return [false, 'La plantilla tiene demasiadas partidas (máximo 200).'];
+        $actividades = [];
+        $refs = [];
+        foreach ((array)$datos['actividades'] as $i => $a) {
+            $partida = (int)($a['partida'] ?? 0);
+            $nom = mb_substr(trim(strip_tags((string)($a['nombre'] ?? ''))), 0, 200);
+            if (!isset($partidas[$partida]) || $nom === '') continue;
+            $ref = (int)($a['ref'] ?? 0) ?: (100000 + $i);
+            if (isset($refs[$ref])) continue;
+            $refs[$ref] = true;
+            $dur = max(1, min(365, (int)($a['duracion_dias'] ?? 1)));
+            $actividades[] = ['ref' => $ref, 'partida' => $partida,
+                'codigo' => mb_substr(trim(strip_tags((string)($a['codigo'] ?? ''))), 0, 50) ?: ($partidas[$partida]['codigo'] . '.' . ($i + 1)),
+                'nombre' => $nom, 'descripcion' => mb_substr(trim(strip_tags((string)($a['descripcion'] ?? ''))), 0, 1000),
+                'duracion_dias' => $dur, 'prioridad' => in_array($a['prioridad'] ?? '', ['baja', 'media', 'alta', 'critica'], true) ? $a['prioridad'] : 'media',
+                'hito' => !empty($a['hito']) ? 1 : 0, 'sin_material' => !empty($a['sin_material']) ? 1 : 0, 'orden' => (int)($a['orden'] ?? ($i + 1)), 'fecha_fija' => !empty($a['fecha_fija']) ? 1 : 0,
+                'responsable' => mb_substr(trim(strip_tags((string)($a['responsable'] ?? ''))), 0, 150), 'libre_texto' => '', 'libre_numero' => null,
+                'fecha_inicio' => null, 'fecha_fin' => null, 'rec_inicio' => null, 'rec_fin' => null, 'libre_fecha' => null];
+        }
+        if (!$actividades) return [false, 'La plantilla no tiene actividades.'];
+        if (count($actividades) > 2000) return [false, 'La plantilla tiene demasiadas actividades (máximo 2000).'];
+        $datos['partidas'] = array_values($partidas);
+        $datos['actividades'] = $actividades;
+        $datos['dependencias'] = array_values(array_filter((array)$datos['dependencias'], fn($x) => isset($refs[(int)($x['pred'] ?? 0)], $refs[(int)($x['suc'] ?? 0)])));
+        $datos['duracion_dias'] = array_sum(array_column($actividades, 'duracion_dias'));
+        $datos['version'] = self::VERSION;
+
+        $resumen = ['partidas' => count($partidas), 'actividades' => count($actividades), 'dependencias' => count($datos['dependencias']),
+            'materiales' => count($datos['materiales'] ?? []), 'campos' => count($datos['campos'] ?? []), 'dias' => (int)$datos['duracion_dias']];
+        $fuente = $datos['meta']['fuente'] ?? [];
+        if (!empty($fuente['nombre'])) $resumen['fuente'] = (string)$fuente['nombre'];
+        $json = json_encode($datos, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        if ($json === false) return [false, 'No se pudo preparar la plantilla.'];
+        $resJson = json_encode($resumen, JSON_UNESCAPED_UNICODE);
+        $desc = mb_substr(trim(strip_tags($descripcion)), 0, 500);
+        $origen = mb_substr(trim(strip_tags($origen ?: (string)($fuente['nombre'] ?? 'Plantilla nueva'))), 0, 200);
+        $comp = $compartida && ($usuario['rol'] ?? '') === 'admin' ? 1 : 0;
+        $uid = (int)($usuario['id'] ?? 0);
         $st = self::db()->prepare('INSERT INTO plantillas_proyecto (usuario_id, nombre, descripcion, compartida, origen, resumen_json, datos) VALUES (?, ?, ?, ?, ?, ?, ?)');
         $st->bind_param('ississs', $uid, $nombre, $desc, $comp, $origen, $resJson, $json);
         return $st->execute() ? [true, (int)self::db()->insert_id] : [false, 'No se pudo guardar la plantilla.'];
@@ -232,14 +336,22 @@ class PlantillaProyecto
 
             // programa
             $calendario = new Calendario($pid);
+            $rc = new RutaCritica($calendario);
+            $cursor = null;
             $mapPartidas = [];
             foreach ($d['partidas'] ?? [] as $r) $mapPartidas[(int)$r['ref']] = self::insertar('partidas', ['proyecto_id' => $pid] + array_diff_key($r, ['ref' => 1]));
             $mapActs = [];
             foreach ($d['actividades'] ?? [] as $a) {
                 if (!isset($mapPartidas[(int)$a['partida']])) continue;
                 $fila = array_diff_key($a, ['ref' => 1, 'partida' => 1]);
+                $sinFecha = ($a['fecha_inicio'] ?? null) === null;
                 foreach (self::FECHAS_ACTIVIDAD as $f) $fila[$f] = self::fecha($base, $a[$f] ?? null);
-                if ($fila['fecha_inicio']) {   // el fin se recalcula con la jornada y los festivos del proyecto nuevo
+                if ($sinFecha) {   // plantillas del catálogo: se encadenan desde el inicio del proyecto
+                    if ($cursor === null) $cursor = $rc->sig($base);
+                    $fila['fecha_inicio'] = $cursor;
+                    $fila['fecha_fin'] = !empty($a['hito']) ? $cursor : $calendario->calcularFechaFin($cursor, max(1, (int)$a['duracion_dias']));
+                    $cursor = $rc->sig(date('Y-m-d', strtotime($fila['fecha_fin'] . ' +1 day')));
+                } elseif ($fila['fecha_inicio']) {   // el fin se recalcula con la jornada y los festivos del proyecto nuevo
                     $fila['fecha_fin'] = !empty($a['hito']) ? $fila['fecha_inicio'] : $calendario->calcularFechaFin($fila['fecha_inicio'], (int)$a['duracion_dias']);
                 }
                 $fila += ['partida_id' => $mapPartidas[(int)$a['partida']], 'progreso' => 0, 'status' => 'no_iniciada', 'pta' => 0];
@@ -254,7 +366,18 @@ class PlantillaProyecto
             $mapMat = [];
             foreach ($d['materiales'] ?? [] as $m) $mapMat[(int)$m['ref']] = self::insertar('materiales', ['proyecto_id' => $pid, 'compra' => 'pendiente'] + array_diff_key($m, ['ref' => 1]));
             foreach ($d['actividad_materiales'] ?? [] as $x) {
-                if (isset($mapActs[(int)$x['a']], $mapMat[(int)$x['m']])) self::insertar('actividad_materiales', ['actividad_id' => $mapActs[(int)$x['a']], 'material_id' => $mapMat[(int)$x['m']]]);
+                if (isset($mapActs[(int)$x['a']], $mapMat[(int)$x['m']])) {
+                    self::insertar('actividad_materiales', ['actividad_id' => $mapActs[(int)$x['a']], 'material_id' => $mapMat[(int)$x['m']], 'rol' => in_array($x['rol'] ?? 'instala', ['instala', 'consume'], true) ? $x['rol'] : 'instala']);
+                }
+            }
+            foreach ($d['material_dependencias'] ?? [] as $x) {
+                if (isset($mapMat[(int)$x['pred']], $mapMat[(int)$x['suc']])) {
+                    self::insertar('material_dependencias', [
+                        'proyecto_id' => $pid, 'predecesor_id' => $mapMat[(int)$x['pred']], 'sucesor_id' => $mapMat[(int)$x['suc']],
+                        'requisito' => in_array($x['requisito'] ?? 'entrega', ['entrega', 'instalacion'], true) ? $x['requisito'] : 'entrega',
+                        'retraso' => max(0, (int)($x['retraso'] ?? 0)), 'nota' => (string)($x['nota'] ?? ''),
+                    ]);
+                }
             }
             $db->commit();
         } catch (\Throwable $e) {
@@ -267,8 +390,9 @@ class PlantillaProyecto
             if ($pa = Partida::find($nuevo)) $pa->recalcularFechas();
         }
         $nuevo = Proyecto::find($pid);
-        if ($nuevo && ($nuevo->modo_dependencias ?? 'apagado') === 'automatico' && $mapActs) {
+        if ($nuevo && $mapActs) {
             try { Dependencias::propagar($nuevo); } catch (\Throwable $e) { error_log('Plantilla: ' . $e->getMessage()); }
+            try { DependenciasMateriales::propagar($nuevo); } catch (\Throwable $e) { error_log('Plantilla: ' . $e->getMessage()); }
         }
         return [true, count($mapActs) . ' actividades en ' . count($mapPartidas) . ' partidas.'];
     }

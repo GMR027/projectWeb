@@ -22,7 +22,7 @@
   const UNIDADES = { mm: 1, cm: 10, m: 1000, in: 25.4 };   // milímetros que vale cada unidad
   const FUENTES = ['Arial', 'Verdana', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Courier New', 'Impact'];
   let capaActiva = null;
-  let stage, layer, trLayer, tr, bg, nodes = {};
+  let stage, layer, matLayer, trLayer, tr, bg, nodes = {};
   let sw = 4, seq = 1, sucio = false;
   const imgCache = {};
 
@@ -75,13 +75,29 @@
     return true;
   }
 
+  // ---------- materiales de una marca ----------
+  const TIPOS_MATERIAL = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', ...POLI];
+  const materialActivo = () => {
+    const t = document.querySelector('#ve-pestanas [data-pest].activo');
+    return !!t && t.dataset.pest === 'materiales';
+  };
+  // Lo que se dibuja desde la pestaña Materiales nace relacionado con actividades (aunque esté vacío)
+  function prepararMateriales(nuevas) {
+    if (!materialActivo() || !window.MaterialesVplan) return nuevas;
+    const antes = new Set(state.shapes.map(s => s.id));
+    return nuevas.map(s => {
+      if (antes.has(s.id) || !TIPOS_MATERIAL.includes(s.type) || s.material) return s;
+      return { ...s, material: { items: [] } };
+    });
+  }
+
   // ---------- historial ----------
   const snap = () => ({ s: clone(state.shapes), l: clone(state.layers), e: clone(state.escala), g: clone(state.guides || []) });
   function commit(nuevas, capas, escala) {
     state.past.push(snap());
     if (state.past.length > 100) state.past.shift();
     state.future = [];
-    state.shapes = nuevas || state.shapes;
+    state.shapes = prepararMateriales(nuevas || state.shapes);
     if (capas) state.layers = capas;
     if (escala !== undefined) state.escala = escala;
     state.shapes.forEach(sh => { if (!sh.layer) sh.layer = capaActiva; });   // lo que se dibuja cae en la capa activa
@@ -241,7 +257,8 @@
     return null;
   }
   function crearNodo(d) {
-    const lig = colorLigado(d);
+    // Las marcas de materiales conservan el color que eligió el usuario; el estado solo manda si se pide.
+    const lig = d.material && d.material.items && d.material.items.length && !d.mat_colorEstado ? null : colorLigado(d);
     const base = { id: d.id, x: d.x, y: d.y, rotation: d.rotation || 0, opacity: (d.opacity ?? 100) / 100, draggable: modoSel() };
     const esLinea = LINEAS.includes(d.type);
     const stroke = lig && d.type !== 'measure' && (esLinea || CERRADAS.includes(d.type)) && !d.fill ? lig : (esLinea ? (lig || d.stroke) : d.stroke);
@@ -332,6 +349,102 @@
     return n;
   }
 
+  // ---------- imágenes de los materiales sobre la marca ----------
+  function imagenesDeMarca(d) {
+    if (!window.MaterialesVplan || !d.material || !d.material.items || !d.material.items.length) return [];
+    return window.MaterialesVplan.imagenesParaMarca(d) || [];
+  }
+  // Botón redondo con la primera foto del material; al pulsarlo muestra u oculta la galería
+  function botonMaterial(d, box, imgs) {
+    const r = Math.max(11, Math.min(22, (d.mat_tam || 64) * 0.3));
+    const g = new Konva.Group({ x: box.x + box.width - r * 0.5, y: box.y - r * 0.6, listening: modoSel(), name: 'mat-btn' });
+    const col = d.stroke && /^#[0-9a-f]{6}$/i.test(d.stroke) ? d.stroke : '#0070c0';
+    g.add(new Konva.Circle({ radius: r, fill: '#ffffff', stroke: '#ffffff', strokeWidth: 3, shadowColor: '#0b132b', shadowBlur: 7, shadowOpacity: .28 }));
+    const foto = imgs.map(x => getImg(x.src)).find(x => x);
+    if (foto) {
+      const clip = new Konva.Group({ clipFunc: ctx => { ctx.arc(0, 0, r, 0, Math.PI * 2, false); } });
+      const lado = Math.min(foto.width || 1, foto.height || 1);
+      clip.add(new Konva.Image({
+        image: foto, x: -r, y: -r, width: r * 2, height: r * 2,
+        crop: { x: ((foto.width || 1) - lado) / 2, y: ((foto.height || 1) - lado) / 2, width: lado, height: lado },
+      }));
+      g.add(clip);
+    } else {
+      g.add(new Konva.Text({ text: '▣', x: -r, y: -r * 1.05, width: r * 2, height: r * 2, fontSize: r * 1.15, align: 'center', verticalAlign: 'middle', fill: col, listening: false }));
+    }
+    g.add(new Konva.Circle({ radius: r, stroke: col, strokeWidth: 2, listening: false }));
+    if (imgs.length > 1) {
+      const br = Math.max(6, r * 0.46);
+      g.add(new Konva.Circle({ x: r * 0.8, y: -r * 0.8, radius: br, fill: col, stroke: '#ffffff', strokeWidth: 1.5, listening: false }));
+      g.add(new Konva.Text({ x: r * 0.8 - br, y: -r * 0.8 - br, width: br * 2, height: br * 2, text: String(imgs.length), fontSize: br * 1.2, fontStyle: 'bold', fill: '#ffffff', align: 'center', verticalAlign: 'middle', listening: false }));
+    }
+    g.on('click tap', e => {
+      e.cancelBubble = true;
+      const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === d.id);
+      if (!t) return;
+      t.mat_mostrar = !t.mat_mostrar;
+      commit(nuevas);
+    });
+    g.on('mouseenter', () => { if (stage) stage.container().style.cursor = 'pointer'; });
+    g.on('mouseleave', () => { if (stage) stage.container().style.cursor = 'default'; });
+    return g;
+  }
+  // Galería centrada: en las líneas arriba del trazo; en las formas, al centro o sobre el borde superior
+  function galeriaMaterial(d, box, imgs) {
+    const tam = Math.max(24, Math.min(400, +d.mat_tam || 64));
+    const gap = Math.max(3, tam * 0.12), pad = Math.max(3, tam * 0.1);
+    const c = d.stroke && /^#[0-9a-f]{6}$/i.test(d.stroke) ? d.stroke : '#0070c0';
+    const fotos = [];
+    for (const it of imgs) {
+      const img = getImg(it.src);
+      if (!img) continue;
+      const rel = img.width && img.height ? img.width / img.height : 1;
+      fotos.push({ img, w: Math.max(tam * 0.5, Math.min(tam * 2, tam * rel)), h: tam });
+    }
+    if (!fotos.length) return null;
+    const total = fotos.reduce((s, f) => s + f.w, 0) + gap * (fotos.length - 1);
+    const alto = tam + pad * 2;
+    const esLinea = LINEAS.includes(d.type);
+    const ax = box.x + box.width / 2;
+    const ay = esLinea ? box.y - alto / 2 - Math.max(6, tam * 0.18)
+      : (d.mat_pos === 'borde' ? box.y : box.y + box.height / 2);
+    const g = new Konva.Group({ x: ax, y: ay, name: 'mat-galeria', listening: false });
+    g.add(new Konva.Rect({ x: -total / 2 - pad, y: -alto / 2, width: total + pad * 2, height: alto, fill: 'rgba(255,255,255,.94)', stroke: c, strokeWidth: Math.max(1, tam * 0.02), cornerRadius: Math.max(4, tam * 0.12), shadowColor: '#0b132b', shadowBlur: Math.max(4, tam * 0.12), shadowOpacity: .22, listening: false }));
+    let x = -total / 2;
+    for (const f of fotos) {
+      g.add(new Konva.Image({ image: f.img, x, y: -f.h / 2, width: f.w, height: f.h, cornerRadius: Math.max(2, tam * 0.06), listening: false }));
+      x += f.w + gap;
+    }
+    return g;
+  }
+  function crearOverlayMaterial(d, node, rel, exportando) {
+    if (!node || !d.material || !d.material.items || !d.material.items.length) return null;
+    const imgs = imagenesDeMarca(d);
+    if (!imgs.length) return null;
+    const box = node.getClientRect({ relativeTo: rel, skipShadow: true });
+    if (!box || box.width < 1 || box.height < 1) return null;
+    const grupo = new Konva.Group({ name: 'mat-overlay' });
+    const gal = d.mat_mostrar ? galeriaMaterial(d, box, imgs) : null;
+    if (gal) grupo.add(gal);
+    if (!exportando) grupo.add(botonMaterial(d, box, imgs));
+    return grupo.children.length ? grupo : null;
+  }
+  function renderOverlays() {
+    if (!matLayer) return;
+    matLayer.destroyChildren();
+    marcasOrdenadas().forEach(d => {
+      const n = nodes[d.id];
+      const o = crearOverlayMaterial(d, n, layer, false);
+      if (o) matLayer.add(o);
+    });
+    matLayer.batchDraw();
+  }
+  let overlayRaf = 0;
+  function programarOverlays() {
+    if (overlayRaf) return;
+    overlayRaf = requestAnimationFrame(() => { overlayRaf = 0; renderOverlays(); });
+  }
+
   function render() {
     layer.destroyChildren(); nodes = {};
     marcasOrdenadas().forEach(d => {
@@ -342,8 +455,10 @@
     });
     selectIds(state.selId && nodes[state.selId] ? [state.selId] : state.sel.filter(i => nodes[i]), false);
     layer.batchDraw();
+    renderOverlays();
     $('#ve-contador').textContent = state.shapes.length + ' marca(s)';
     pintarCapas(); pintarEscala(); pintarComentarios();
+    document.dispatchEvent(new CustomEvent('vplan:render'));
   }
 
   // ---------- comentarios sobre una marca: insignia amarilla en el editor (no sale en las imágenes exportadas) ----------
@@ -469,6 +584,7 @@
     n.on('dragmove', () => {
       if (imanOn() || guiasOn()) n.position(ajustar({ x: n.x(), y: n.y() }));
       if (arrastre && arrastre.id === d.id) { const dx = n.x() - arrastre.x, dy = n.y() - arrastre.y; arrastre.otros.forEach(o => nodes[o.id].position({ x: o.x + dx, y: o.y + dy })); }
+      programarOverlays();
     });
     n.on('dragend', () => {
       const nuevas = clone(state.shapes), ids = arrastre && arrastre.id === d.id ? [d.id, ...arrastre.otros.map(o => o.id)] : [d.id];
@@ -670,7 +786,10 @@
     }
     $('#p-n').value = d.n || 1; mostrar('#p-n', d.type === 'restr' || d.type === 'pin');
     $('#p-capa').innerHTML = [...state.layers].reverse().map(l => '<option value="' + l.id + '">' + nombreCapa(l).replace(/[<&]/g, '') + '</option>').join(''); $('#p-capa').value = d.layer;
-    $('#p-act').value = d.actividad_id || ''; mostrar('#p-act', !['restr', 'image', 'table', 'link'].includes(d.type) && !C.modo);
+    $('#p-act').value = d.actividad_id || '';
+    const esMat = !!(d.material && Array.isArray(d.material.items));
+    mostrar('#p-act', !['restr', 'image', 'table', 'link'].includes(d.type) && !C.modo && !esMat);   // en materiales se usa la lista múltiple
+    document.dispatchEvent(new CustomEvent('vplan:panel', { detail: { id: d.id } }));
   }
   function enlazarPanel() {
     const cur = () => state.shapes.find(s => s.id === state.selId);
@@ -1395,6 +1514,13 @@
       const e = imgCache[s.src]; if (e && e.ok) return res();
       const img = new Image(); img.onload = () => { imgCache[s.src] = { img, ok: true }; res(); }; img.onerror = res; img.src = s.src;
     })));
+    // Fotos de materiales: hay que tenerlas cargadas antes de dibujar la galería (si no, no saldrían en el PNG/PDF)
+    const matSrcs = new Set();
+    shapes.forEach(s => { if (window.MaterialesVplan) (MaterialesVplan.imagenesParaMarca(s) || []).forEach(i => matSrcs.add(i.src)); });
+    await Promise.all([...matSrcs].map(src => new Promise(res => {
+      const e = imgCache[src]; if (e && e.ok) return res();
+      const img = new Image(); img.onload = () => { imgCache[src] = { img, ok: true }; res(); }; img.onerror = res; img.src = src;
+    })));
     const k = Math.min(ancho / state.W, alto / state.H);
     const cont = document.createElement('div'); cont.style.cssText = 'position:fixed;left:-99999px;top:0';
     document.body.appendChild(cont);
@@ -1407,8 +1533,12 @@
     if (bg instanceof Konva.Image) g.add(new Konva.Image({ image: bg.image(), width: state.W, height: state.H }));
     else if (!transparente) g.add(fondoRect(state.W, state.H));   // fondo de plantilla del Editor
     escalaRender = escala; enExport = true;
-    try { ordenar(shapes, layers).filter(d => d.type !== 'link' || (iconos && d.showIcon && d.icon !== 'none')).forEach(d => { const n = crearNodo(d); n.draggable(false); g.add(n); }); }   // las capas ocultas no salen
-    finally { escalaRender = undefined; enExport = false; }
+    const pintadas = {};
+    try {
+      const visibles = ordenar(shapes, layers).filter(d => d.type !== 'link' || (iconos && d.showIcon && d.icon !== 'none'));
+      visibles.forEach(d => { const n = crearNodo(d); n.draggable(false); g.add(n); pintadas[d.id] = n; });   // las capas ocultas no salen
+      visibles.forEach(d => { const o = crearOverlayMaterial(d, pintadas[d.id], g, true); if (o) g.add(o); });   // galerías de materiales, sin el botón
+    } finally { escalaRender = undefined; enExport = false; }
     ly.draw();
     const url = st.toDataURL({ mimeType: mime, quality: calidad, pixelRatio: 1 });
     st.destroy(); cont.remove();
@@ -2117,9 +2247,11 @@
     glayer = new Konva.Layer({ listening: false }); stage.add(glayer);
     glayer.add(new Konva.Shape({ listening: false, sceneFunc: dibujarGrilla }));
     layer = new Konva.Layer(); stage.add(layer);
+    matLayer = new Konva.Layer(); stage.add(matLayer);   // imágenes y botones de materiales (encima de las marcas, debajo del transformer)
     trLayer = new Konva.Layer(); stage.add(trLayer);
     tr = new Konva.Transformer({ rotateEnabled: true, rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], borderStroke: '#0070c0', anchorStroke: '#0070c0', anchorSize: 10, keepRatio: false });
     trLayer.add(tr);
+    tr.on('transform', programarOverlays);
     tr.on('transformend', aplicarTransformacion);
     if (C.laminas && C.laminas.length) {   // Editor: varias láminas; se abre la elegida (o la primera)
       state.slides = C.laminas.map(l => ({ id: l.id, nombre: l.nombre || '', data: l.marcas || { shapes: [], layers: [], escala: null }, past: [], future: [], thumb: l.png || '', dirty: false, version: l.version || '' }));
@@ -2140,8 +2272,10 @@
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }
-    window.__vplan = { state, guardar, insertarCajetin, presentar, importarSimbolos, setTool, selectIds, alinear, distribuir, agrupar, desagrupar, irALamina, zipSinComprimir, nodes: () => nodes, editarCelda, select, celdasSel: () => celdasSel, capaActiva: () => capaActiva, renderizar };   // para pruebas
+    window.__vplan = { state, guardar, insertarCajetin, presentar, importarSimbolos, setTool, selectIds, alinear, distribuir, agrupar, desagrupar, irALamina, zipSinComprimir, nodes: () => nodes, editarCelda, select, celdasSel: () => celdasSel, capaActiva: () => capaActiva, renderizar,
+      commit, render, renderOverlays, dirty, panel, materialActivo, nodo: id => nodes[id] };   // materiales y pruebas
     if (C.auto) guardar().then(ok => { if (ok) location.href = C.volver; });
+    document.dispatchEvent(new CustomEvent('vplan:listo'));
   }
 
   document.addEventListener('DOMContentLoaded', () => {

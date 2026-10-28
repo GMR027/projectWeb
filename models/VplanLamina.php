@@ -5,9 +5,9 @@ namespace Model;
 class VplanLamina extends ActiveRecord
 {
     protected static $tabla = 'vplan_laminas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'paquete_id', 'partida_id', 'titulo', 'supervisor', 'ancho_mm', 'alto_mm', 'preset', 'recovery_cols', 'recovery_n', 'restr_auto', 'plano', 'simbologia', 'simbologia_grafico_id', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'guias_json', 'orden', 'visible', 'grupo'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'paquete_id', 'partida_id', 'titulo', 'supervisor', 'ancho_mm', 'alto_mm', 'preset', 'recovery_cols', 'recovery_n', 'restr_auto', 'plano', 'simbologia', 'simbologia_grafico_id', 'marcas_json', 'marcas_png', 'marcas_estados_hash', 'materiales_tabla_id', 'guias_json', 'orden', 'visible', 'grupo'];
 
-    public $id, $proyecto_id, $paquete_id, $partida_id, $titulo, $supervisor, $ancho_mm, $alto_mm, $preset, $recovery_cols, $recovery_n, $restr_auto, $plano, $simbologia, $simbologia_grafico_id, $marcas_json, $marcas_png, $marcas_estados_hash, $guias_json, $orden, $visible, $grupo;
+    public $id, $proyecto_id, $paquete_id, $partida_id, $titulo, $supervisor, $ancho_mm, $alto_mm, $preset, $recovery_cols, $recovery_n, $restr_auto, $plano, $simbologia, $simbologia_grafico_id, $marcas_json, $marcas_png, $marcas_estados_hash, $materiales_tabla_id, $guias_json, $orden, $visible, $grupo;
     // Unión (solo lectura)
     public $partida_nombre;
 
@@ -109,7 +109,7 @@ class VplanLamina extends ActiveRecord
             $cfg = $b->config();
             if ($b->tipo === 'tabla') {
                 $t = $porId[(int)($cfg['tabla_id'] ?? 0)] ?? null;
-                if (!$t) continue;
+                if (!$t || $t->esMateriales()) continue;   // la lámina nueva no tiene marcas: su tabla de materiales nace vacía
                 $nt = $t->duplicar();
                 $nt->nombre_interno = mb_substr($t->etiqueta(), 0, 120) . ' · ' . mb_substr((string)$copia->titulo, 0, 60);
                 $nt->guardar();

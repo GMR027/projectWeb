@@ -258,6 +258,15 @@ class Vplan
                 foreach ($filas as $i => &$f) { $f['n'] = $i + 1; $f['_i'] = $i; }
                 unset($f);
             }
+            if ($t->esMateriales() && ($h = $t->hoja())) {   // color de la marca en el renglón que le corresponde
+                $ids = \Classes\Sheetflow::matriz($h)['meta']['materiales']['ids'] ?? [];
+                $colores = \Classes\MaterialesLamina::coloresDeMarcas($lamina->marcas_json);
+                foreach ($filas as $i => &$f) {
+                    $k = (string)($ids[$i] ?? '');
+                    if ($k !== '' && !empty($colores[$k])) $f['s0'] = 'border-left:4px solid ' . $colores[$k] . ';';
+                }
+                unset($f);
+            }
             $tablas[] = $tablasPorId[(int)$t->id] = ['tabla' => $t, 'campos' => $t->campos(), 'filas' => $filas, 'base' => $t->tipo === 'restricciones' ? count($listaRestr) : 0];
         }
 

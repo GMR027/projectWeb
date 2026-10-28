@@ -130,6 +130,7 @@ class MaterialController
         else $m->fijarEntregado(($_POST['valor'] ?? '') === '1');
         $m->guardar();
         $m->sincronizarMsr();
+        try { \Classes\DependenciasMateriales::propagar($proyecto); } catch (\Throwable $e) { error_log('Dependencias de materiales: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'compra' => $m->compra, 'entregado' => $m->entregado(), 'fecha_entrega_real' => $m->fecha_entrega_real, 'fecha_compra_real' => $m->fecha_compra_real]);
         exit;
     }
@@ -234,6 +235,7 @@ class MaterialController
         $r = $material->guardar();
         if (!$material->id && is_array($r)) $material->id = $r['id'];
         $material->sincronizarMsr();
+        try { \Classes\DependenciasMateriales::propagar($proyecto); } catch (\Throwable $e) { error_log('Dependencias de materiales: ' . $e->getMessage()); }
         \Classes\Normativa::guardarManuales('material', (int)$material->id, (int)$proyecto->id, $_POST);   // normativa capturada a mano en el formulario
         return [];
     }
