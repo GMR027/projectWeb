@@ -135,29 +135,20 @@ class EditorController
         ]);
     }
 
-    /** PNG de cada lámina para descargar: [['bin' => binario, 'nombre' => ...], ...]. Las láminas que nunca se guardaron salen en blanco (con el color liso del fondo) */
+    /**
+     * PNG de cada lámina guardada para descargar: [['bin' => binario, 'nombre' => ...], ...].
+     * Las láminas que nunca se guardaron se omiten (antes se inventaba una imagen blanca que
+     * parecía un error: no reproducía el fondo, ni la retícula, ni la imagen del gráfico).
+     */
     private static function pngsGuardados(Grafico $g): array
     {
         $out = [];
-        $hayAlguna = false;
-        foreach ($g->laminas() as $l) $hayAlguna = $hayAlguna || ($l->marcas_png && is_file(Imagenes::CARPETA_VPLAN . '/' . basename($l->marcas_png)));
-        if (!$hayAlguna) return [];
         foreach ($g->laminas() as $i => $l) {
             $ruta = $l->marcas_png ? Imagenes::CARPETA_VPLAN . '/' . basename($l->marcas_png) : null;
-            $out[] = ['bin' => $ruta && is_file($ruta) ? (string)file_get_contents($ruta) : self::pngEnBlanco($g), 'nombre' => $l->titulo($i + 1), 'enlaces' => EnlacesLamina::externos(EnlacesLamina::de($l->marcas_json))];
+            if (!$ruta || !is_file($ruta)) continue;
+            $out[] = ['bin' => (string)file_get_contents($ruta), 'nombre' => $l->titulo($i + 1), 'enlaces' => EnlacesLamina::externos(EnlacesLamina::de($l->marcas_json))];
         }
         return $out;
-    }
-
-    private static function pngEnBlanco(Grafico $g): string
-    {
-        $k = min(1, 1200 / max(1, (int)$g->ancho));
-        $im = imagecreatetruecolor(max(16, (int)round($g->ancho * $k)), max(16, (int)round($g->alto * $k)));
-        $hex = $g->fondo === 'liso' && preg_match('/^#[0-9a-fA-F]{6}$/', (string)$g->fondo_color) ? $g->fondo_color : '#ffffff';
-        imagefill($im, 0, 0, imagecolorallocate($im, hexdec(substr($hex, 1, 2)), hexdec(substr($hex, 3, 2)), hexdec(substr($hex, 5, 2))));
-        ob_start();
-        imagepng($im);
-        return (string)ob_get_clean();
     }
 
     private static function enviar(string $tipo, string $nombre, string $datos): void
@@ -177,7 +168,10 @@ class EditorController
         $g = self::graficoDe($proyecto, $_GET['id'] ?? null);
         $lams = $g ? self::pngsGuardados($g) : [];
         if (!puede_descargar() || !$lams) {
-            header('Location: /graficos?proyecto=' . $proyecto->id . '&error=' . urlencode('No hay imagen para descargar. Abre el gráfico y guárdalo primero.'));
+            $volver = $g && $g->tipo === 'simbologia'
+                ? '/simbolos?proyecto=' . $proyecto->id
+                : '/graficos?proyecto=' . $proyecto->id;
+            header('Location: ' . $volver . '&error=' . urlencode('No hay imagen para descargar. Abre el gráfico y guárdalo primero.') . ($g && $g->tipo === 'simbologia' ? '#simbologias' : ''));
             exit;
         }
         $base = date('Y_m_d') . '_' . slug_archivo($g->nombre);

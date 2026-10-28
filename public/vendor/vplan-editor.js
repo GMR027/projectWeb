@@ -1107,7 +1107,9 @@
       } else { d.x = Math.min(p0.x, p.x); d.y = Math.min(p0.y, p.y); d.w = Math.abs(dx); d.h = Math.abs(dy); }
       dibujando.nodo.destroy(); dibujando.nodo = crearNodo(d); layer.add(dibujando.nodo); layer.batchDraw();
     });
-    window.addEventListener('mouseup', () => {
+    // Mouse y toque terminan igual el gesto. Antes solo se escuchaba «mouseup»: en el celular
+    // el trazo se quedaba a medias y no se guardaba nada.
+    const terminarGesto = () => {
       panning = null;
       if (marco) {   // elige lo que toca el recuadro
         const { r, base } = marco, a = r.getClientRect({ relativeTo: layer }); marco = null; r.destroy(); trLayer.batchDraw();
@@ -1128,7 +1130,10 @@
         state.selId = d.id; commit([...clone(state.shapes), d]); if (!libre) setTool('select');
         if (d.type === 'link') { pend360 = null; const t = document.querySelector('.ve-tabs [data-tab=props]'); if (t) t.click(); setTimeout(() => { const u = d.kind === '360' ? $('#p-lk-label') : $('#p-lk-url'); if (u) u.focus(); }, 60); }
       } else layer.batchDraw();
-    });
+    };
+    window.addEventListener('mouseup', terminarGesto);
+    window.addEventListener('touchend', terminarGesto);
+    window.addEventListener('touchcancel', terminarGesto);
     stage.on('dblclick dbltap', () => { if (state.tool === 'poly') finalizarPoli(); });
     stage.on('click tap', e => {
       if (!['text', 'textbox', 'restr', 'pin'].includes(state.tool)) return;
@@ -1236,6 +1241,7 @@
   // ---------- zoom / encuadre ----------
   function encuadrar() {
     const c = $('#ve-lienzo'), w = c.clientWidth, h = c.clientHeight, R = reglasOn() ? REGLA : 0;
+    if (!w || !h || w <= R + 16 || h <= R + 16) return;   // contenedor oculto o sin tamaño: no calcular escala negativa
     const k = Math.min((w - R - 16) / state.W, (h - R - 16) / state.H);
     stage.size({ width: w, height: h }); stage.scale({ x: k, y: k });
     stage.position({ x: R + (w - R - state.W * k) / 2, y: R + (h - R - state.H * k) / 2 });
@@ -2271,8 +2277,17 @@
     configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
-    if (C.regen && state.slides) { state.slides.forEach(x => { x.dirty = true; }); guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} }); }
-    window.__vplan = { state, guardar, insertarCajetin, presentar, importarSimbolos, setTool, selectIds, alinear, distribuir, agrupar, desagrupar, irALamina, zipSinComprimir, nodes: () => nodes, editarCelda, select, celdasSel: () => celdasSel, capaActiva: () => capaActiva, renderizar,
+    if (C.regen && state.slides) {
+      // Al cambiar tamaño o fondo solo se regeneran las láminas que tienen contenido.
+      // Marcar todas guardaba un PNG blanco de las vacías (y «Descargar» lo servía como imagen).
+      const tieneContenido = x => {
+        const d = x.data || {};
+        return !!((d.shapes || []).length || (d.guides || []).length || d.escala);
+      };
+      state.slides.forEach(x => { if (tieneContenido(x)) x.dirty = true; });
+      guardar().then(() => { try { history.replaceState(null, '', location.href.replace(/[?&]regen=1/, '')); } catch (_) {} });
+    }
+    window.__vplan = { state, guardar, encuadrar, insertarCajetin, presentar, importarSimbolos, setTool, selectIds, alinear, distribuir, agrupar, desagrupar, irALamina, zipSinComprimir, nodes: () => nodes, editarCelda, select, celdasSel: () => celdasSel, capaActiva: () => capaActiva, renderizar,
       commit, render, renderOverlays, dirty, panel, materialActivo, nodo: id => nodes[id] };   // materiales y pruebas
     if (C.auto) guardar().then(ok => { if (ok) location.href = C.volver; });
     document.dispatchEvent(new CustomEvent('vplan:listo'));

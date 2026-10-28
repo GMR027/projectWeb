@@ -126,7 +126,7 @@ class Grafico extends ActiveRecord
     {
         $filtro = $tipo !== null && in_array($tipo, self::TIPOS, true) ? " AND g.tipo = '$tipo'" : '';
         $lista = self::consultarSQL(
-            "SELECT g.*, (SELECT l.marcas_png FROM editor_laminas l WHERE l.grafico_id = g.id ORDER BY l.orden, l.id LIMIT 1) AS portada,
+            "SELECT g.*, (SELECT l.marcas_png FROM editor_laminas l WHERE l.grafico_id = g.id AND l.marcas_png IS NOT NULL AND l.marcas_png <> '' ORDER BY l.orden, l.id LIMIT 1) AS portada,
                     (SELECT COUNT(*) FROM editor_laminas l WHERE l.grafico_id = g.id) AS num_laminas,
                     (SELECT c.nombre FROM editor_categorias c WHERE c.id = g.categoria_id) AS categoria_nombre
              FROM editor_graficos g WHERE g.proyecto_id = $proyectoId" . $filtro . self::sinView360() . " ORDER BY g.creado DESC, g.id DESC"

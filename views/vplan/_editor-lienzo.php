@@ -176,15 +176,33 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
 <script>
 (function () {
     var ls = 've-pestana', bar = document.querySelector('.ve-barra-pest');
-    function mostrar(p) {
-        document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
+    var botones = document.querySelectorAll('#ve-pestanas [data-pest]');
+    if (!bar || !botones.length) return;
+    function aplicar(p) {
+        botones.forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
         bar.querySelectorAll('[data-pan]').forEach(function (g) { g.hidden = g.dataset.pan !== p; });
-        try { localStorage.setItem(ls, p); } catch (e) { /* sin almacenamiento */ }
     }
-    document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.pest); }); });
+    // La barra conserva el alto de la pestaña más alta: así el lienzo no salta al cambiar de pestaña.
+    function medir() {
+        var activo = (document.querySelector('#ve-pestanas [data-pest].activo') || {}).dataset;
+        activo = activo && activo.pest ? activo.pest : 'dibujo';
+        bar.style.minHeight = '0px';
+        var alto = 0;
+        botones.forEach(function (b) {
+            bar.querySelectorAll('[data-pan]').forEach(function (g) { g.hidden = g.dataset.pan !== b.dataset.pest; });
+            alto = Math.max(alto, bar.getBoundingClientRect().height);
+        });
+        aplicar(activo);   // medir no debe dejar visibles los grupos de la última pestaña probada
+        bar.style.minHeight = Math.ceil(alto) + 'px';
+    }
+    document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { aplicar(b.dataset.pest); try { localStorage.setItem(ls, b.dataset.pest); } catch (e) { /* sin almacenamiento */ } }); });
     var g = 'dibujo'; try { g = localStorage.getItem(ls) || 'dibujo'; } catch (e) { /* idem */ }
     if (!document.querySelector('#ve-pestanas [data-pest="' + g + '"]')) g = 'dibujo';
-    mostrar(g);
+    medir();
+    aplicar(g);
+    var r = 0;
+    window.addEventListener('resize', function () { cancelAnimationFrame(r); r = requestAnimationFrame(medir); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { requestAnimationFrame(medir); });
 })();
 </script>
 <div class="ve-area" id="ve-area">

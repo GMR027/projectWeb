@@ -409,12 +409,12 @@ $vp-rojo: #dc2626;
 // Cabecera y pestañas (piezas compartidas .pn-cab / .pn-tabs) forman la tarjeta del panel, a sangre
 .ve-lateral > .pn-cab { border: 1px solid var(--border); border-bottom: 0; border-radius: .8rem .8rem 0 0; }
 .ve-lateral > .pn-tabs { border: 1px solid var(--border); border-bottom: 0; border-radius: 0 0 .8rem .8rem; margin-bottom: 1.2rem; }
-.ve-lienzo { position: relative; height: 70vh; background: #3a3f4b; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden; }
+.ve-lienzo { position: relative; height: 70vh; height: 70dvh; background: #3a3f4b; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden; }
 .ve-props { h4 { margin-bottom: 1rem; }
   .ve-f { margin-bottom: 1rem; label { display: block; font-size: 1.1rem; margin-bottom: .3rem; } input[type=number], select { width: 100%; } input[type=color] { width: 100%; height: 3.2rem; padding: 0; } .ve-chk { display: flex; gap: .6rem; align-items: center; } }
   .ve-btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
 }
-@media (max-width: 80rem) { .ve-area { grid-template-columns: 1fr; } .ve-lateral { order: 0; } }
+@media (max-width: 64rem) { .ve-area { grid-template-columns: 1fr; } .ve-lateral { order: 0; } }
 
 .vp-recovery-btns { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-top: 1rem; }
 
@@ -492,6 +492,11 @@ body.vp-sin-scroll { overflow: hidden; }
   .ve-cerrar-ampliado { display: inline-flex !important; align-items: center; justify-content: center; position: fixed; left: 1.6rem; bottom: 1.6rem; width: 4.4rem; height: 4.4rem; border-radius: 50%; border: 0; background: #1c2541; color: #fff; font-size: 2rem; cursor: pointer; box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .35); z-index: 5; &:hover { background: $vp-rojo; } }
 }
 @media (max-width: 80rem) { .ve-hoja.ve-ampliado .ve-area { grid-template-rows: minmax(0, 1fr) auto; } }
+@media (max-width: 64rem) {
+  // Vista ampliada en celular/tablet: el panel no puede comerse el lienzo.
+  .ve-hoja.ve-ampliado .ve-area:not(.ve-sin-lateral) { grid-template-rows: minmax(0, 1fr) minmax(0, 45%); }
+  .ve-hoja.ve-ampliado .ve-lateral { max-height: 100%; overflow-y: auto; }
+}
 
 // Gestor de capas del editor de marcas
 .ve-lateral { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; }
@@ -513,6 +518,34 @@ body.vp-sin-scroll { overflow: hidden; }
 .gr-mini-vacio { display: inline-flex; align-items: center; justify-content: center; background: var(--bg-tertiary); color: var(--text-muted); font-size: 2rem; }
 .gr-vista { text-align: center; img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: .6rem; background: repeating-conic-gradient(#e5e7eb 0 25%, #fff 0 50%) 0 0 / 16px 16px; } }
 .gr-renombrar { display: inline-flex; gap: .4rem; input { width: 24rem; } }
+
+// Página del Editor de gráficos: el trabajo ocupa la ventana y el estado no mueve la cabecera
+body.gr-editor-page {
+  #ve-estado { flex: 1 1 auto; min-width: 0; max-width: 12rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+  #ve-estado-amp { max-width: 18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gr-renombrar { flex: 0 1 20rem; min-width: 12rem; input { width: 100%; min-width: 0; } }
+  .ve-hoja .ve-solo-ampliado { display: flex !important; margin-left: auto; gap: 1rem; }   // Guardar también junto al lienzo (la cabecera puede quedar arriba al desplazarse)
+}
+@media (min-width: 64.0625rem) {
+  body.gr-editor-page .la-controles { flex-wrap: nowrap; }   // el estado se recorta, no empuja los botones a otra fila
+}
+@media (max-width: 64rem) {
+  body.gr-editor-page {
+    .ve-hoja:not(.ve-ampliado) { padding: 0; }
+    #ve-estado { max-width: none; flex-basis: 100%; text-align: left; }
+    #ve-estado-amp { max-width: 10rem; }
+    #ve-pestanas, .ve-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    // La barra de herramientas es una sola fila que se desliza; así no se come el lienzo en el celular.
+    .ve-barra-pest { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+    .ve-barra-pest > .ve-grupo { flex: 0 0 auto; }
+    // Guardar siempre a la vista, aunque la barra esté desplazada.
+    .ve-barra-pest > .ve-solo-ampliado { position: sticky; right: 0; z-index: 5; background: var(--surface); }
+    // El desplegable «Más formas» quedaría recortado por el desplazamiento horizontal.
+    .ve-mas-panel { position: fixed; left: 50%; right: auto; top: auto; bottom: 2rem; transform: translateX(-50%); width: min(34rem, calc(100vw - 2rem)); grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); max-height: 55dvh; overflow-y: auto; z-index: 2000; }
+    .gr-renombrar { flex: 1 1 100%; input { width: 100%; min-width: 0; } }
+    .ve-hoja:not(.ve-ampliado) .ve-lienzo { height: 60dvh; }   // respaldo: el JS lo ajusta al alto real de la ventana
+  }
+}
 .gr-sub { margin: 1.6rem 0 .8rem; color: var(--text-muted); font-size: 1.3rem; text-transform: uppercase; letter-spacing: .08em; }
 .gr-orient { display: flex; gap: .6rem; .btn.activo { background: #0070c0; color: #fff; border-color: #0070c0; } }
 .gr-fondos { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }

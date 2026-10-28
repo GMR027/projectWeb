@@ -118,9 +118,11 @@
     p { margin: 0; font-size: 1.35rem; line-height: 1.5; }
     strong { font-size: 1.45rem; }
   }
-  // Editores de lienzo (vPlan, Editor de gráficos): no se muestran
-  .aviso-escritorio ~ .ve-hoja, .aviso-escritorio ~ .vp-acciones,
-  #ve-guardar, #ve-estado, #gr-renombrar { display: none !important; }
+  // Editores de lienzo: el Editor de gráficos sí funciona en el celular (body.gr-editor-page);
+  // vPlan y el resto conservan el aviso de «solo tablet o escritorio».
+  body.gr-editor-page .aviso-escritorio { display: none !important; }
+  body:not(.gr-editor-page) .aviso-escritorio ~ .ve-hoja, body:not(.gr-editor-page) .aviso-escritorio ~ .vp-acciones,
+  body:not(.gr-editor-page) #ve-guardar, body:not(.gr-editor-page) #ve-estado, body:not(.gr-editor-page) #gr-renombrar { display: none !important; }
   // Redactor y SheetFlow: queda el contenido para consultarlo, sin barras ni guardado
   .aviso-escritorio ~ .rd-pestanas, .aviso-escritorio ~ .rd-barra, .aviso-escritorio ~ .rd-panel, .aviso-escritorio ~ .rd-datos,
   .aviso-escritorio ~ .sf-pestanas, .aviso-escritorio ~ .sf-barra, .aviso-escritorio ~ .sf-formula, .aviso-escritorio ~ .sf-usos,

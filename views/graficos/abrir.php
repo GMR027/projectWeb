@@ -1,6 +1,7 @@
 <?php // Variables: $proyecto, $grafico, $config
 use Model\Grafico;
 $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
+<script>document.body.classList.add('gr-editor-page');</script>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-pen-ruler"></i> <span id="gr-titulo"><?php echo s($grafico->nombre); ?></span></h2>
@@ -18,8 +19,6 @@ $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
         <?php else: ?><a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Gráficos</a><?php endif; ?>
     </div>
 </div>
-<?php $avisoTexto = 'El editor de gráficos solo se puede usar en una tablet o en un equipo de escritorio.'; $avisoLectura = false; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
-
 <?php include __DIR__ . '/../vplan/_editor-lienzo.php'; ?>
 
 <section class="card vp-acciones" id="vp-acciones">
@@ -31,7 +30,7 @@ $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
         <a href="/graficos/fondo?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-image"></i> Tamaño y fondo</a>
         <?php if (puede_descargar()): ?>
             <details class="gr-descargar">
-                <summary class="btn btn-ghost"><i class="fa-solid fa-download"></i> Descargar lo guardado</summary>
+                <summary class="btn btn-ghost" title="Guarda los cambios pendientes y descarga la imagen actualizada"><i class="fa-solid fa-download"></i> <?php echo s(t('Descargar')); ?></summary>
                 <div class="gr-descargar-menu">
                     <a href="/graficos/descargar?<?php echo $q; ?>&formato=png"><i class="fa-regular fa-image"></i> PNG (ZIP si hay varias láminas)</a>
                     <a href="/graficos/descargar?<?php echo $q; ?>&formato=pdf"><i class="fa-regular fa-file-pdf"></i> PDF</a>
@@ -107,6 +106,22 @@ $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
         const est = document.getElementById('ve-estado');
         if (d.success) { document.getElementById('gr-titulo').textContent = d.nombre; i.value = d.nombre; window.VPLAN_CONFIG.nombre = d.nombre; est.textContent = 'Nombre guardado ✔'; }
         else est.textContent = 'Error: ' + (d.error || 'no se pudo renombrar');
+    });
+
+    // Descargar después de guardar: antes se bajaba la última imagen guardada y parecía en blanco
+    // si el dibujo era reciente o la lámina aún no se había guardado.
+    document.addEventListener('click', async e => {
+        const a = e.target.closest('.gr-descargar-menu a[href*="/graficos/descargar"]');
+        if (!a || !window.__vplan || typeof window.__vplan.guardar !== 'function') return;
+        e.preventDefault();
+        if (a.dataset.descargando) return;
+        a.dataset.descargando = '1';
+        const est = document.getElementById('ve-estado'), antes = est ? est.textContent : '';
+        if (est) est.textContent = 'Guardando antes de descargar…';
+        const ok = await window.__vplan.guardar();
+        delete a.dataset.descargando;
+        if (ok === false) { if (est) est.textContent = antes; return; }
+        window.location.href = a.href;
     });
 })();
 </script>
