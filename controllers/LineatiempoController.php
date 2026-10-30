@@ -10,6 +10,7 @@ use Model\Restriccion;
 use Classes\AccesoDb;
 use Classes\Calendario;
 use Classes\Dependencias;
+use Classes\DependenciasMateriales;
 
 /**
  * Línea de tiempo activa: Gantt diario del mes elegido, agrupado por partida y centrado en
@@ -260,7 +261,8 @@ class LineatiempoController
             $partida->recalcularFechas();
             \Model\ActividadMaterial::sincronizarInstalacion((int)$partida->proyecto_id);
             $movidas = Dependencias::propagar($p);   // modo automático
-            DependenciasMateriales::propagar($p);
+            // Los materiales nunca deben tumbar el guardado de fechas (igual que en MaterialController)
+            try { DependenciasMateriales::propagar($p); } catch (\Throwable $e) { error_log('Dependencias de materiales: ' . $e->getMessage()); }
 
             json_respuesta([
                 'success' => true, 'dependientes_movidas' => $movidas,
@@ -268,7 +270,7 @@ class LineatiempoController
                 'duracion_dias' => (int)$actividad->duracion_dias,
                 'duracion_real' => $calendario->calcularDuracion($actividad->fecha_inicio, $actividad->fecha_fin),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {   // \Throwable: un \Error también debe devolver JSON, no un 500 genérico
             json_respuesta(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
