@@ -8,7 +8,13 @@ class Contacto extends ActiveRecord
     protected static $tabla = 'contactos';
     protected static $columnasDB = ['id', 'nombre', 'empresa', 'puesto', 'correo', 'telefono', 'plan', 'proyectos_aprox', 'preferencia', 'origen', 'mensaje', 'ip', 'leido'];
 
-    public const PLANES = ['Plan Pro', 'Plan Gold', 'Plan Corporativo', 'Aún no lo sé'];
+    /** Agrupados para el selector: plataforma, servicio de seguimiento o ambos. */
+    public const PLANES = [
+        'Plataforma' => ['Plan Pro', 'Plan Gold', 'Plan Corporativo'],
+        'Servicio de seguimiento' => ['Seguimiento puntual', 'Acompañamiento continuo', 'Oficina de control de proyecto'],
+        'Plataforma + servicio' => ['Plataforma + seguimiento puntual', 'Plataforma + acompañamiento continuo', 'Plataforma + oficina de control'],
+        'Aún no lo sé' => ['Aún no lo sé'],
+    ];
     public const PROYECTOS = ['1 a 10', '11 a 70', '71 a 500', 'Más de 500'];
     public const PREFERENCIAS = ['correo' => 'Correo electrónico', 'telefono' => 'Llamada telefónica', 'whatsapp' => 'WhatsApp'];
     public const ORIGENES = ['Búsqueda en internet', 'Recomendación', 'Redes sociales', 'Evento o expo', 'Otro'];
@@ -26,6 +32,12 @@ class Contacto extends ActiveRecord
         $this->leido = (int)($args['leido'] ?? 0);
     }
 
+    /** Lista plana de las opciones, para validar lo que llega del formulario. */
+    public static function planesValidos(): array
+    {
+        return array_merge(...array_values(self::PLANES));
+    }
+
     public function validar(): array
     {
         self::$alertas = [];
@@ -33,7 +45,7 @@ class Contacto extends ActiveRecord
         if ($this->empresa === '') self::$alertas['error'][] = 'La empresa es obligatoria';
         if (!filter_var($this->correo, FILTER_VALIDATE_EMAIL)) self::$alertas['error'][] = 'El correo no es válido';
         if (!preg_match('/^[0-9 +()\-.]{7,25}$/', $this->telefono)) self::$alertas['error'][] = 'El teléfono no es válido';
-        if ($this->plan !== '' && !in_array($this->plan, self::PLANES, true)) self::$alertas['error'][] = 'Plan no válido';
+        if ($this->plan !== '' && !in_array($this->plan, self::planesValidos(), true)) self::$alertas['error'][] = 'Plan no válido';
         if ($this->proyectos_aprox !== '' && !in_array($this->proyectos_aprox, self::PROYECTOS, true)) $this->proyectos_aprox = '';
         if (!isset(self::PREFERENCIAS[$this->preferencia])) $this->preferencia = 'correo';
         if ($this->origen !== '' && !in_array($this->origen, self::ORIGENES, true)) $this->origen = '';

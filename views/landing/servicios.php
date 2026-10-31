@@ -16,47 +16,41 @@ $servicios = [
     ['fa-file-export', 'Exportaciones y respaldo', 'Entregamos el programa en PDF tabloide, Excel, LibreOffice, MS Project o ProjectLibre, y un ZIP completo del proyecto cuando lo necesites.', ['MS Project', 'Excel', 'ZIP']],
 ];
 $cifras = [
-    ['12', 'frentes de seguimiento que podemos asumir'],
+    ['12', 'frentes administrativos que podemos asumir'],
     ['1', 'sola plataforma para todo el proyecto'],
     ['24/7', 'consulta del cliente en solo lectura'],
-    ['5', 'formatos de entrega: PDF, Excel, ODS, XML y POD'],
+    ['14', 'formatos de entrega, del PDF al XML de MS Project'],
 ];
 $antesAhora = [
-    ['Programa en un archivo de escritorio que solo abre una persona', 'Programa en la nube: todos ven el mismo avance, en el celular o la computadora'],
-    ['Reporte diario en Word y fotos por WhatsApp', 'Reporte con personal, actividades y fotos por día, en PDF listo para el cliente'],
-    ['Lookahead y post-its armados a mano cada semana', 'Calculados del programa; al cambiar una fecha se actualizan solos'],
-    ['Materiales en una hoja aparte que nadie cruza con el cronograma', 'Cada material ligado a sus actividades, con aviso de compras vencidas'],
-    ['Tablas copiadas y pegadas en cada documento', 'Una tabla que se actualiza sola en las láminas, los gráficos y las actas'],
-    ['Cambios y atrasos explicados de memoria en la junta', 'Órdenes de cambio y líneas base: cada desviación con su causa documentada'],
-    ['Láminas de juntas hechas en un programa de dibujo', 'Láminas libres con capas, guías y datos vivos del programa'],
-    ['El cliente pide un PDF y espera la siguiente semana', 'El cliente consulta el avance cuando quiera, sin poder modificar nada'],
-];
-$mejoras = [
-    ['fa-up-right-and-down-left-from-center', 'Tablas que se adaptan', 'El texto crece o se reduce con el tamaño del bloque, de una lámina tabloide a una pantalla de celular. Nada queda diminuto.', 'Oct 2026'],
-    ['fa-arrows-rotate', 'Todo en tiempo real', 'Cambias una tabla en un lugar y las láminas, los gráficos y las vistas se actualizan solos, sin recargar ni volver a capturar.', 'Oct 2026'],
-    ['fa-wand-magic-sparkles', 'Tablas inteligentes', 'Columnas de lista, casilla y semáforo, con color de encabezado a tu gusto, también editables desde la lámina.', 'Oct 2026'],
-    ['fa-clipboard-check', 'Punch list conectado', 'Los pendientes de cierre se insertan como tabla en láminas, actas y gráficos, con fotos antes y después.', 'Oct 2026'],
-    ['fa-stamp', 'Estampas inteligentes', 'Cajetines y post-its cuyas etiquetas se llenan solas con avance, fechas, semáforos y actividades del día.', 'Oct 2026'],
-    ['fa-pen-ruler', 'Editor de planos más preciso', 'Líneas con nodos editables, trazos a medida y símbolos que se actualizan solos al cambiar su origen.', 'Oct 2026'],
-    ['fa-layer-group', 'vPlan de láminas libres', 'Bloques posicionables con capas, guías, rejilla, varios tamaños de hoja y PDF por lámina.', 'Oct 2026'],
-    ['fa-binoculars', 'Lookahead configurable', 'Encabezados con logos, nombres de columnas y de 1 a 8 semanas visibles, a la medida de cada obra.', 'Oct 2026'],
-    ['fa-puzzle-piece', 'Ensamblador de documentos', 'Un PDF que une actas y documentos del archivo y se actualiza solo cuando cambia alguno.', 'Oct 2026'],
-    ['fa-language', 'Traductor ES ↔ EN', 'Textos y documentos de obra traducidos sin salir de la plataforma, para contratos y clientes internacionales.', 'Oct 2026'],
-    ['fa-code-compare', 'Cambios y líneas base', 'Impacto de cada orden de cambio y comparación del programa contra su foto anterior, con barra «fantasma».', 'Sep 2026'],
-    ['fa-diagram-project', 'Dependencias y ruta crítica', 'Relaciones FS, SS, FF y SF con retraso, holguras y conflictos, sin otro software.', 'Sep 2026'],
+    ['fa-chart-gantt', 'Cada quien con su copia del programa y una junta para saber cuál es la buena.', 'Una sola versión en la nube: todos ven el mismo avance, del celular a la oficina.'],
+    ['fa-clipboard-list', 'El reporte se arma en Word al final del mes y las fotos andan en el chat.', 'Reporte diario con personal, actividades y fotos, en PDF listo para el cliente.'],
+    ['fa-binoculars', 'Las restricciones se descubren en la junta, cuando ya frenaron la obra.', 'Restricciones con responsable y fecha, visibles antes de que detengan el frente.'],
+    ['fa-truck-ramp-box', 'Los materiales viven en una hoja que nadie cruza con el cronograma.', 'Cada material ligado a su actividad, con compras vencidas y submittals a la vista.'],
+    ['fa-file-signature', 'Los cambios se explican de memoria y el atraso no tiene culpable.', 'Órdenes de cambio con impacto en costo y días, y línea base para comparar.'],
+    ['fa-user-check', 'El cliente espera el PDF de la semana para saber cómo va la obra.', 'Consulta el avance en solo lectura cuando quiera, sin poder modificar nada.'],
 ];
 $entregables = [
-    ['fa-file-pdf', 'Informe ejecutivo', 'Avance, semáforo, desviaciones y decisiones pendientes.', 'Semanal o quincenal'],
-    ['fa-binoculars', 'Lookahead y Last Planner', 'Las próximas semanas con sus limitaciones y los post-its del día.', 'Semanal'],
-    ['fa-sheet-plastic', 'Láminas vPlan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta'],
-    ['fa-handshake', 'Minutas con compromisos', 'Temas, responsables y fechas, en PDF.', 'Después de cada junta'],
-    ['fa-truck-ramp-box', 'Tablero de materiales', 'Qué falta aprobar, comprar o entregar, y qué lo frena.', 'Semanal'],
-    ['fa-file-signature', 'Registro de cambios', 'Órdenes de cambio, líneas base y desviaciones justificadas.', 'Al ocurrir cada cambio'],
+    ['fa-file-pdf', 'Informe ejecutivo', 'Avance, semáforo, desviaciones y decisiones pendientes.', 'Semanal o quincenal', 'base'],
+    ['fa-clipboard-list', 'Reporte diario', 'Personal, actividades y fotografías de cada día, listos para compartir.', 'Diario o por corte', 'base'],
+    ['fa-binoculars', 'Lookahead y Last Planner', 'Las próximas semanas con sus limitaciones y los post-its del día.', 'Semanal', 'base'],
+    ['fa-handshake', 'Minutas con compromisos', 'Temas, responsables y fechas, en PDF.', 'Después de cada junta', 'base'],
+    ['fa-folder-open', 'Archivo ordenado del proyecto', 'Planos, contratos y documentos por revisión, con acceso controlado.', 'Permanente', 'base'],
+    ['fa-sheet-plastic', 'Láminas vPlan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta', 'medida'],
+    ['fa-truck-ramp-box', 'Tablero de materiales', 'Qué falta aprobar, comprar o entregar, y qué lo frena.', 'Semanal', 'medida'],
+    ['fa-file-signature', 'Registro de cambios', 'Órdenes de cambio, líneas base y desviaciones justificadas.', 'Al ocurrir cada cambio', 'medida'],
+    ['fa-clipboard-check', 'Cierre y punch list', 'Pendientes de calidad con foto antes y después, y acta de entrega.', 'Al cierre de etapa', 'medida'],
+];
+$formatos = [
+    ['Documentos', ['PDF', 'Word (.docx)', 'ODT']],
+    ['Hojas de cálculo', ['Excel (.xlsx)', 'ODS', 'CSV']],
+    ['Programación', ['XML de MS Project', 'POD de ProjectLibre']],
+    ['Planos y gráficos', ['PDF', 'PNG', 'Presentación (.odp)', 'ZIP']],
+    ['Integración', ['JSON (API)', 'ICS (calendario)']],
 ];
 $modalidades = [
-    ['fa-bullseye', 'Seguimiento puntual', 'Para obras pequeñas o una etapa concreta.', ['Programa y reporte periódico', 'Control de materiales clave', 'Informe al cierre de la etapa']],
-    ['fa-people-group', 'Acompañamiento continuo', 'La opción más elegida para obras en marcha.', ['Todo lo anterior, con la frecuencia que necesites', 'Lookahead, juntas, minutas y cambios', 'Acceso de solo lectura para tu cliente'], true],
-    ['fa-building-circle-check', 'Oficina de control de proyecto', 'Para varias obras o grupos constructores.', ['Un mismo estándar en todos tus proyectos', 'Informes consolidados para dirección', 'Capacitación a tu equipo en la plataforma']],
+    ['fa-bullseye', 'Seguimiento puntual', 'Para obras pequeñas, una etapa o un frente concreto.', ['Informe ejecutivo y reporte periódico', 'Control de materiales clave', 'Minutas y acuerdos de cada junta', 'Cierre de etapa con punch list'], false, 'Esencial'],
+    ['fa-people-group', 'Acompañamiento continuo', 'Para obras en marcha que necesitan seguimiento semanal.', ['Todo lo del seguimiento puntual', 'Lookahead, Last Planner y restricciones', 'Tablero de materiales y cambios', 'Láminas vPlan para tus juntas', 'Acceso de solo lectura para tu cliente'], true, 'Completo'],
+    ['fa-building-circle-check', 'Oficina de control de proyecto', 'Para varias obras o grupos constructores.', ['Todo lo anterior, para varias obras', 'Informes consolidados para dirección', 'Curva S y valor ganado por proyecto', 'Capacitación a tu equipo en la plataforma'], false, 'Consolidado'],
 ];
 $deteccion = [
     ['fa-magnifying-glass-chart', 'Fechas que no cuadran', 'Compras, entregas y arranques que se contradicen entre sí o con el programa.'],
@@ -74,6 +68,8 @@ $pasos = [
 ];
 $faq = [
     ['¿Tengo que dejar mis herramientas actuales?', 'No. Nos adaptamos a tu forma de trabajar: podemos importar tu programa (XML de MS Project, ProjectLibre) y entregarte todo en los formatos que ya usas.'],
+    ['¿Ustedes aportan la experiencia técnica de la especialidad?', 'No. Nosotros administramos y damos seguimiento a la información; la experiencia y el criterio de cada disciplina los aporta tu empresa, supervisor o residente. Trabajamos con los datos que ellos comparten y validan las decisiones.'],
+    ['¿Puedo pedir más o menos información?', 'Sí. El alcance es a la medida: defines con nosotros qué entregables necesitas, con qué frecuencia y en qué formato, según tu presupuesto.'],
     ['¿Quién ve la información de mi obra?', 'Solo las personas que tú autorices. Tu cliente puede tener un acceso de solo lectura y tú eliges qué herramientas ve. Los respaldos son periódicos y cada proyecto tiene su propio espacio.'],
     ['¿Puedo contratar solo una parte del servicio?', 'Sí. Puedes asignarnos un solo frente (por ejemplo materiales o reportes) y ampliar el alcance cuando lo necesites.'],
     ['¿Cada cuánto recibo informes?', 'Lo defines tú: semanal, quincenal o por junta. Además puedes consultar el avance en cualquier momento desde la plataforma.'],
@@ -90,13 +86,14 @@ $faq = [
         <div class="lp-rev">
             <span class="lp-pill"><i class="fa-solid fa-handshake-angle"></i> Servicios administrativos de obra</span>
             <h1>Tú construyes.<br><span class="lp-grad">Nosotros damos seguimiento.</span></h1>
-            <p class="lp-lead">Nos encargamos del seguimiento administrativo de tu obra sobre una plataforma propia, conectada de punta a punta, para que tu equipo se enfoque en lo que mejor sabe hacer: construir. Tú decides con información clara y a tiempo.</p>
+            <p class="lp-lead">Nos encargamos de la administración y el seguimiento de tu obra sobre una plataforma propia. La experiencia técnica de cada disciplina la aporta tu equipo —residente, supervisor o empresa—; nosotros mantenemos la información al día, ordenada y lista para decidir.</p>
             <div class="lp-cta">
                 <a href="/#contacto" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-paper-plane"></i> Cuéntanos de tu obra</a>
                 <a href="#que-hacemos" class="lp-btn lp-btn-ghost lp-btn-lg">Ver qué ofrecemos</a>
             </div>
             <ul class="lp-check">
                 <li><i class="fa-solid fa-circle-check"></i> Informes semanales o por junta</li>
+                <li><i class="fa-solid fa-circle-check"></i> Tu equipo conserva la responsabilidad técnica</li>
                 <li><i class="fa-solid fa-circle-check"></i> Tu cliente consulta en solo lectura</li>
                 <li><i class="fa-solid fa-circle-check"></i> Alcance a tu medida</li>
             </ul>
@@ -132,7 +129,14 @@ $faq = [
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Qué podemos llevar por ti</span>
             <h2>El seguimiento de obra,<br>en manos de un equipo dedicado</h2>
-            <p>Doce frentes que podemos asumir total o parcialmente. Se ajustan al tamaño y la etapa de cada proyecto.</p>
+            <p>Doce frentes administrativos que podemos asumir total o parcialmente. Se ajustan al tamaño, la etapa y el presupuesto de cada proyecto.</p>
+        </div>
+        <div class="lp-rol lp-rev">
+            <i class="fa-solid fa-people-arrows"></i>
+            <div>
+                <h3>Nosotros administramos; tu equipo aporta la experiencia técnica</h3>
+                <p>Todo lo que llevamos va acompañado de la experiencia de tu empresa, supervisor o residente: ellos comparten la información de la disciplina y validan las decisiones. Nosotros actualizamos los datos, damos seguimiento, preparamos los reportes y mantenemos el control administrativo. No sustituimos la responsabilidad técnica de la obra.</p>
+            </div>
         </div>
         <div class="lp-grid lp-grid-3">
             <?php foreach ($servicios as $i => [$ico, $t, $d, $tags]): ?>
@@ -151,53 +155,33 @@ $faq = [
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Antes y ahora</span>
-            <h2>De llevar la obra en archivos sueltos<br>a tenerla conectada</h2>
-            <p>Nuestro servicio se apoya en una plataforma donde el programa, los materiales, los documentos y los cambios comparten los mismos datos.</p>
+            <h2>De apagar incendios con archivos sueltos<br>a dirigir la obra con un solo tablero</h2>
+            <p>El problema no es la falta de datos: es que viven en el programa de una persona, en el chat de la cuadrilla y en el Word de la junta. Cuando el seguimiento se centraliza, cambia lo que puedes ver y decidir.</p>
         </div>
-        <div class="lp-cmp-wrap lp-rev">
-            <table class="lp-cmp lp-antes">
-                <thead><tr><th>Como suele hacerse</th><th class="lp-cmp-us">Con nuestro seguimiento</th></tr></thead>
-                <tbody>
-                    <?php foreach ($antesAhora as [$a, $b]): ?>
-                        <tr><td><i class="fa-solid fa-circle-xmark lp-cmp-no"></i> <span><?php echo s($a); ?></span></td><td class="lp-cmp-us"><i class="fa-solid fa-circle-check lp-cmp-ok"></i> <span><?php echo s($b); ?></span></td></tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<section class="lp-sec" id="novedades">
-    <div class="lp-wrap">
-        <div class="lp-head lp-rev">
-            <span class="lp-eyebrow">Una plataforma que no se detiene</span>
-            <h2>Lo que hemos mejorado<br>para darte un mejor servicio</h2>
-            <p>Mejoramos la plataforma cada mes. Estas son algunas de las novedades recientes que ya trabajan para tu obra.</p>
-        </div>
-        <div class="lp-grid">
-            <?php foreach ($mejoras as $i => [$ico, $t, $d, $f]): ?>
-                <article class="lp-card lp-nuevo lp-rev" style="--d:<?php echo ($i % 4) * 70; ?>ms">
-                    <span class="lp-badge"><?php echo s($f); ?></span>
-                    <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
-                    <h3><?php echo s($t); ?></h3>
-                    <p><?php echo s($d); ?></p>
+        <div class="lp-antes-grid">
+            <?php foreach ($antesAhora as $i => [$ico, $a, $b]): ?>
+                <article class="lp-antes-card lp-rev" style="--d:<?php echo ($i % 3) * 70; ?>ms">
+                    <span class="lp-antes-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
+                    <div class="lp-antes-fila lp-antes-fila-no"><span class="lp-antes-tag">Antes</span><p><?php echo s($a); ?></p></div>
+                    <div class="lp-antes-fila lp-antes-fila-si"><span class="lp-antes-tag">Ahora</span><p><?php echo s($b); ?></p></div>
                 </article>
             <?php endforeach; ?>
         </div>
+        <p class="lp-antes-cierre lp-rev"><i class="fa-solid fa-arrow-trend-up"></i> Una sola fuente de verdad, menos retrabajo y decisiones con los datos del día.</p>
     </div>
 </section>
 
-<section class="lp-sec lp-alt" id="especializado">
+<section class="lp-sec" id="especializado">
     <div class="lp-wrap">
         <div class="lp-show lp-rev">
             <div class="lp-show-txt">
-                <span class="lp-eyebrow">Un grupo especializado detrás de tu proyecto</span>
-                <h2>Detalles que se escapan a simple vista, para decidir mejor</h2>
-                <p>Un proyecto de construcción genera cientos de datos que viven en archivos distintos. Nuestro grupo especializado, apoyado en análisis avanzado de la información, los revisa en conjunto y señala lo que merece atención antes de que se vuelva un problema.</p>
-                <p>A modo indicativo, esto es lo que podemos detectar y ponerte sobre la mesa:</p>
+                <span class="lp-eyebrow">Análisis administrativo de la información</span>
+                <h2>Detalles que se escapan cuando la obra<br>vive en archivos separados</h2>
+                <p>Un proyecto genera cientos de datos que viven en archivos distintos. Revisamos la información en conjunto —fechas, materiales, documentos y cambios— y señalamos lo que no cuadra para que tu equipo técnico lo valide y decida.</p>
+                <p>A modo indicativo, esto es lo que podemos detectar y poner sobre la mesa:</p>
                 <ul class="lp-list">
                     <li><i class="fa-solid fa-check"></i> Cada hallazgo llega con su explicación y una propuesta</li>
-                    <li><i class="fa-solid fa-check"></i> Tú revisas y decides; nada cambia sin tu aprobación</li>
+                    <li><i class="fa-solid fa-check"></i> Tu equipo técnico valida y decide; nada cambia sin tu aprobación</li>
                     <li><i class="fa-solid fa-check"></i> El alcance se define según tu proyecto</li>
                 </ul>
             </div>
@@ -215,43 +199,72 @@ $faq = [
     </div>
 </section>
 
-<section class="lp-sec" id="entregables">
+<section class="lp-sec lp-alt" id="entregables">
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Lo que recibes</span>
-            <h2>Entregables claros,<br>con la frecuencia que necesites</h2>
+            <h2>Entregables base,<br>más lo que tu obra necesite</h2>
+            <p>No todos los proyectos necesitan lo mismo. Estos son los entregables base; con cada cliente acordamos cuáles se incluyen, con qué frecuencia y en qué formato, según el alcance, el tamaño de la obra y el presupuesto.</p>
         </div>
         <div class="lp-grid lp-grid-3">
-            <?php foreach ($entregables as $i => [$ico, $t, $d, $f]): ?>
+            <?php foreach ($entregables as $i => [$ico, $t, $d, $f, $nivel]): ?>
                 <article class="lp-card lp-rev" style="--d:<?php echo ($i % 3) * 70; ?>ms">
                     <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
                     <h3><?php echo s($t); ?></h3>
                     <p><?php echo s($d); ?></p>
-                    <span class="lp-freq"><i class="fa-regular fa-clock"></i> <?php echo s($f); ?></span>
+                    <div class="lp-ent-meta">
+                        <span class="lp-nivel lp-nivel-<?php echo $nivel === 'base' ? 'base' : 'medida'; ?>"><?php echo $nivel === 'base' ? 'Base' : 'A medida'; ?></span>
+                        <span class="lp-freq"><i class="fa-regular fa-clock"></i> <?php echo s($f); ?></span>
+                    </div>
                 </article>
             <?php endforeach; ?>
+        </div>
+        <p class="lp-niveles-nota lp-rev"><span class="lp-nivel lp-nivel-base">Base</span> incluido en cualquier modalidad. <span class="lp-nivel lp-nivel-medida">A medida</span> se cotiza según alcance, frecuencia y presupuesto.</p>
+
+        <div class="lp-formatos lp-rev">
+            <div class="lp-formatos-txt">
+                <span class="lp-eyebrow">Formatos de entrega</span>
+                <h3>En el formato que ya usa tu equipo</h3>
+                <p>No tienes que adaptar tu forma de trabajar: entregamos el mismo dato en PDF, Excel, Word, XML de MS Project o en el formato que pida tu cliente. Si necesitas otro, lo revisamos contigo.</p>
+            </div>
+            <div class="lp-formatos-grupos">
+                <?php foreach ($formatos as [$grupo, $items]): ?>
+                    <div class="lp-formatos-grupo">
+                        <h4><?php echo s($grupo); ?></h4>
+                        <ul><?php foreach ($items as $it): ?><li><?php echo s($it); ?></li><?php endforeach; ?></ul>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="lp-sec lp-alt" id="modalidades">
+<section class="lp-sec" id="modalidades">
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Modalidades</span>
             <h2>Elige cuánto quieres delegar</h2>
-            <p>Cada esquema se cotiza según el tamaño de la obra, el alcance y la frecuencia del seguimiento.</p>
+            <p>No son paquetes cerrados: cada esquema se cotiza según el tamaño de la obra, el alcance y la frecuencia. Podemos empezar con una parte y ampliarla cuando la obra lo pida.</p>
         </div>
         <div class="lp-mods">
-            <?php foreach ($modalidades as $i => $m): [$ico, $t, $lema, $items] = $m; $dest = !empty($m[4]); ?>
+            <?php foreach ($modalidades as $i => $m): [$ico, $t, $lema, $items, $dest, $nivel] = $m; ?>
                 <article class="lp-mod lp-rev<?php echo $dest ? ' lp-mod-top' : ''; ?>" style="--d:<?php echo $i * 80; ?>ms">
                     <?php if ($dest): ?><span class="lp-badge">Más elegida</span><?php endif; ?>
                     <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
+                    <span class="lp-mod-nivel"><?php echo s($nivel); ?></span>
                     <h3><?php echo s($t); ?></h3>
                     <p class="lp-mod-lema"><?php echo s($lema); ?></p>
                     <ul class="lp-list"><?php foreach ($items as $it): ?><li><i class="fa-solid fa-check"></i> <?php echo s($it); ?></li><?php endforeach; ?></ul>
-                    <a href="/#contacto" class="lp-btn <?php echo $dest ? 'lp-btn-primary' : 'lp-btn-ghost'; ?>">Solicitar propuesta</a>
+                    <a href="/?plan=<?php echo urlencode($t); ?>#contacto" class="lp-btn <?php echo $dest ? 'lp-btn-primary' : 'lp-btn-ghost'; ?>">Cotizar esta modalidad</a>
                 </article>
             <?php endforeach; ?>
+        </div>
+        <div class="lp-mods-nota lp-rev">
+            <div>
+                <h3>¿No encaja en ninguna?</h3>
+                <p>Armamos un esquema mixto: tú llevas una parte y nosotros otra. El alcance, la frecuencia y los entregables se ajustan a tu presupuesto.</p>
+            </div>
+            <a href="/?plan=<?php echo urlencode('Plataforma + acompañamiento continuo'); ?>#contacto" class="lp-btn lp-btn-primary"><i class="fa-solid fa-paper-plane"></i> Armar mi esquema</a>
         </div>
     </div>
 </section>

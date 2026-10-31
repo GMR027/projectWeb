@@ -43,6 +43,12 @@ $sub = new Subactividad(['nombre' => 'Tramo A', 'fecha_inicio' => '2026-10-01', 
 $alertas = $sub->validar();
 $ok('una subactividad válida no tiene errores y acota el avance', empty($alertas) && $sub->status === 100);
 
+echo "Contacto\n";
+$ok('el interés agrupa plataforma, servicio y ambos', in_array('Plan Pro', \Model\Contacto::planesValidos(), true)
+    && in_array('Acompañamiento continuo', \Model\Contacto::planesValidos(), true)
+    && in_array('Plataforma + acompañamiento continuo', \Model\Contacto::planesValidos(), true)
+    && !in_array('Servicio de seguimiento', \Model\Contacto::planesValidos(), true));
+
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
 $ok('textos sin letras no llaman al motor', !Classes\Traductor::configurado() || Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-']);

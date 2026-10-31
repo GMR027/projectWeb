@@ -16,34 +16,17 @@ $planes = [
         'items' => ['De <strong>50 a 500 proyectos</strong>', '<strong>10 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
     ],
 ];
+// Solo las vistas que mejor explican el producto; el resto vive en Funciones.
 $tour = [
     ['programa', 'Programa y Gantt', 'fa-chart-gantt', 'Partidas por disciplina, actividades e hitos con avance, prioridad y restricciones. Las fechas respetan el calendario real de la obra.'],
     ['4wla', 'Lookahead 4 semanas', 'fa-binoculars', 'La semana actual y las 4 siguientes con PTA y limitaciones: qué puede arrancar y qué no.'],
     ['vplan', 'vPlan', 'fa-sheet-plastic', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
     ['reportes', 'Reporte diario', 'fa-clipboard-list', 'Personal, actividades del programa y fotografías de cada día, listos para compartir con el cliente.'],
     ['msr', 'MSR · materiales', 'fa-truck-ramp-box', 'Estatus de submittals, compra y entrega de materiales con fotos y proveedores.'],
-    ['dependencias', 'Dependencias y ruta crítica', 'fa-diagram-project', 'Relaciones FS, SS, FF y SF con retraso: la ruta crítica en rojo, las holguras y los conflictos, sin mover tus fechas hasta que tú lo decidas.'],
-    ['lastplanner', 'Last Planner', 'fa-note-sticky', 'Post-its por partida calculados desde el programa, con su estado y listos para imprimir.'],
-    ['curva-s', 'Curva S', 'fa-chart-area', 'Avance acumulado programado contra real, con desvío e índice SPI, para saber si la obra va en tiempo.'],
-    ['cambios', 'Órdenes de cambio', 'fa-file-signature', 'Cada cambio con su estado, su impacto en costo y días, y los retiros pendientes de lo que se instaló de forma temporal.'],
-    ['lineas-base', 'Líneas base', 'fa-code-compare', 'Compara el programa actual contra una foto anterior: qué se movió, qué es nuevo y si el atraso tiene causa documentada.'],
-    ['redactor', 'Redactor', 'fa-file-lines', 'Actas, memorias y procedimientos con tablas del programa, comentarios, control de cambios y exportación a Word, ODT o PDF.'],
-    ['sheetflow', 'SheetFlow', 'fa-table-cells', 'Tablas con fórmulas para presupuestos y controles, que se importan y exportan a Excel, CSV o PDF.'],
-    ['comparador', 'Comparador de documentos', 'fa-clone', 'Dos revisiones de un plano una sobre otra con un deslizador, para ver al instante qué cambió.'],
-    ['normativa', 'Normativa y especificaciones', 'fa-scale-balanced', 'Normas y especificaciones en PDF o Word, leídas por cláusulas y ligadas a los materiales y actividades a las que aplican.'],
+    ['view360', 'View360', 'fa-street-view', 'Un plano con zonas que abren fotos 360° de la obra: recorridos virtuales con notas para el cliente, sin viajar al sitio.'],
 ];
 // Solo se muestran las pestañas cuya captura ya existe
 $tour = array_values(array_filter($tour, fn($t) => is_file(__DIR__ . '/../../public/build/img/landing/tour-' . $t[0] . '.jpg')));
-$novedades = [
-    ['fa-up-right-and-down-left-from-center', 'Tablas que se adaptan a cualquier tamaño', 'El texto de las tablas crece o se reduce con el bloque de la lámina, el gráfico o la pantalla: nunca más letras diminutas.', 'Oct 2026'],
-    ['fa-arrows-rotate', 'Datos en tiempo real', 'Cambias una tabla en un lugar y las láminas, los gráficos y las vistas se actualizan solos.', 'Oct 2026'],
-    ['fa-wand-magic-sparkles', 'Tablas inteligentes', 'Columnas de lista, casilla y semáforo, editables también desde el vPlan.', 'Oct 2026'],
-    ['fa-clipboard-check', 'Punch list conectado', 'Insértalo como tabla en vPlan, Redactor y Editor, con fotos antes y después.', 'Oct 2026'],
-    ['fa-stamp', 'Estampas inteligentes', 'Post-its de Last Planner y cajetines que se llenan solos con los datos del proyecto.', 'Oct 2026'],
-    ['fa-layer-group', 'vPlan de láminas libres', 'Bloques con capas, guías y rejilla, varios tamaños de hoja y PDF por lámina.', 'Oct 2026'],
-    ['fa-binoculars', 'Lookahead configurable', 'Encabezado con logos, nombres de columnas y de 1 a 8 semanas visibles.', 'Oct 2026'],
-    ['fa-pen-ruler', 'Editor más preciso', 'Nodos editables en líneas, trazos a medida y símbolos que se actualizan solos.', 'Oct 2026'],
-];
 $funciones = [
     ['fa-chart-gantt', 'Programa y Gantt', 'Partidas, actividades e hitos con fechas calculadas sobre el calendario real de la obra. Cambia una fecha y todo se recalcula.'],
     ['fa-calendar-check', 'Calendario operativo', 'Jornada semanal por proyecto, festivos, paros técnicos y días de clima. Los días hábiles se respetan en cada actividad.'],
@@ -84,20 +67,21 @@ if (!function_exists('cmp_celda')) {
         return '<i class="fa-solid ' . $ico[$k][0] . ' lp-cmp-' . $ico[$k][1] . '"></i> <span>' . s($txt) . '</span>';
     }
 }
+// Columnas: ProjectWeb, suite empresarial, programas de escritorio + Excel, apps genéricas.
 $comparativa = [
-    ['Programa, Gantt y calendario real', ['si', 'Con festivos, paros y clima'], ['si', 'Sí, en el programa'], ['parcial', 'Gantt básico']],
-    ['Ruta crítica y dependencias', ['si', 'FS, SS, FF, SF'], ['si', 'Sí'], ['parcial', 'Limitado']],
-    ['Last Planner y lookahead 4S', ['si', 'Calculados del programa'], ['no', 'A mano en Excel'], ['no', 'No incluido']],
-    ['Materiales, submittals y MSR', ['si', 'Ligados a las actividades'], ['no', 'Hojas aparte'], ['parcial', 'Campos personalizados']],
-    ['Reporte diario, bitácora, minutas', ['si', 'Con fotos y PDF'], ['no', 'Word y WhatsApp'], ['parcial', 'Comentarios sueltos']],
-    ['Evidencias, View360 y planos', ['si', 'Incluidos'], ['no', 'Carpetas aparte'], ['parcial', 'Adjuntos']],
-    ['Una sola captura para todo', ['si', 'Todo se actualiza junto'], ['no', 'Se captura varias veces'], ['parcial', 'Depende de integraciones']],
-    ['Control de cambios y líneas base', ['si', 'Con impacto y comparación'], ['no', 'Excel y correos'], ['parcial', 'Solo seguimiento de tareas']],
-    ['Documentos y tablas de obra', ['si', 'Redactor y SheetFlow integrados'], ['no', 'Word y Excel aparte'], ['parcial', 'Notas o adjuntos']],
-    ['Comparar revisiones de planos', ['si', 'Comparador con deslizador'], ['no', 'Programa de dibujo aparte'], ['no', 'No incluido']],
-    ['Acceso del cliente solo lectura', ['si', 'Por herramienta'], ['no', 'Se envían PDF'], ['parcial', 'Con licencia por usuario']],
-    ['Instalación y licencias', ['si', 'Solo navegador'], ['no', 'Licencias por equipo'], ['si', 'Navegador']],
-    ['Exporta a MS Project y Excel', ['si', 'PDF, Excel, ODS, XML, POD'], ['si', 'Nativo'], ['parcial', 'Solo CSV o Excel']],
+    ['Programa, Gantt y calendario real', ['si', 'Con festivos, paros y clima'], ['si', 'Sí, con configuración'], ['si', 'Sí, en el programa'], ['parcial', 'Gantt básico']],
+    ['Ruta crítica y dependencias', ['si', 'FS, SS, FF, SF'], ['si', 'Sí'], ['si', 'Sí'], ['parcial', 'Limitado']],
+    ['Last Planner y lookahead 4S', ['si', 'Calculados del programa'], ['parcial', 'Según el módulo'], ['no', 'A mano en Excel'], ['no', 'No incluido']],
+    ['Materiales, submittals y MSR', ['si', 'Ligados a las actividades'], ['si', 'Con módulos'], ['no', 'Hojas aparte'], ['parcial', 'Campos personalizados']],
+    ['Reporte diario, bitácora, minutas', ['si', 'Con fotos y PDF'], ['parcial', 'Módulos separados'], ['no', 'Word y WhatsApp'], ['parcial', 'Comentarios sueltos']],
+    ['Evidencias, View360 y planos', ['si', 'Incluidos'], ['parcial', 'Según el módulo'], ['no', 'Carpetas aparte'], ['parcial', 'Adjuntos']],
+    ['Una sola captura para todo', ['si', 'Todo se actualiza junto'], ['parcial', 'Integración costosa'], ['no', 'Se captura varias veces'], ['parcial', 'Depende de integraciones']],
+    ['Control de cambios y líneas base', ['si', 'Con impacto y comparación'], ['si', 'Con módulo'], ['no', 'Excel y correos'], ['parcial', 'Solo seguimiento de tareas']],
+    ['Documentos y tablas de obra', ['si', 'Redactor y SheetFlow integrados'], ['parcial', 'Fuera de la suite'], ['no', 'Word y Excel aparte'], ['parcial', 'Notas o adjuntos']],
+    ['Comparar revisiones de planos', ['si', 'Comparador con deslizador'], ['parcial', 'Módulo aparte'], ['no', 'Programa de dibujo aparte'], ['no', 'No incluido']],
+    ['Acceso del cliente solo lectura', ['si', 'Por herramienta'], ['parcial', 'Licencia por usuario'], ['no', 'Se envían PDF'], ['parcial', 'Con licencia por usuario']],
+    ['Instalación y licencias', ['si', 'Solo navegador'], ['no', 'Implementación y licencias'], ['no', 'Licencias por equipo'], ['si', 'Navegador']],
+    ['Exporta a MS Project y Excel', ['si', 'PDF, Excel, ODS, XML, POD'], ['si', 'Sí'], ['si', 'Nativo'], ['parcial', 'Solo CSV o Excel']],
 ];
 $licenciaEquipo = 20000;                       // licencias de los programas que ProjectWeb reemplaza, por equipo (pago inicial)
 $planProAnual = 500 * 12;
@@ -110,13 +94,11 @@ $ventajas = [
     ['fa-layer-group', 'Una plataforma, no tres o cuatro programas', 'Gestionar un proyecto de forma tradicional exige varios programas distintos para llegar a lo que aquí ya viene integrado, con licencias que en promedio suman alrededor de <strong>$20,000 pesos</strong>.'],
     ['fa-shield-halved', 'Información que cuadra a la primera', 'Hecha a mano, la información se daña, se pierde o no coincide entre archivos. Aquí las herramientas están integradas: capturas una vez y todo cuadra.'],
     ['fa-mobile-screen-button', 'En cualquier equipo, sin reinstalar', 'Si cambias de computadora no recompras ni reinstalas licencias. Consulta y edita desde el celular, la tableta o la computadora.'],
-    ['fa-route', 'Ruta crítica sin otro software', 'Las dependencias, holguras y la ruta crítica viven junto al Gantt, sin exportar a un programa de escritorio para saber qué actividad no se puede atrasar.'],
     ['fa-people-roof', 'Hecha para el control de obra', 'Last Planner, lookahead, restricciones, MSR y submittals ya vienen pensados para el contratista, no adaptados desde un gestor genérico de tareas.'],
     ['fa-lock', 'Control de quién ve qué', 'Tres roles y accesos de visitante por herramienta: el cliente consulta avance y evidencias sin tocar el programa ni ver lo que no debe.'],
-    ['fa-cloud-arrow-up', 'Tu información respaldada', 'Respaldos programados y cuota de almacenamiento por proyecto: tus planos, fotos y reportes no dependen de la laptop de nadie.'],
     ['fa-puzzle-piece', 'Todo en uno, de verdad', 'Del programa al acta, de la compra al cambio aprobado: el programa, los materiales, los documentos y los cambios comparten los mismos datos y se hablan entre sí.'],
+    ['fa-route', 'Ruta crítica sin otro software', 'Las dependencias, holguras y la ruta crítica viven junto al Gantt, sin exportar a un programa de escritorio para saber qué actividad no se puede atrasar.'],
     ['fa-code-compare', 'Los cambios dejan huella', 'Órdenes de cambio, líneas base y comparación de planos explican por qué se movió una fecha y quién lo autorizó.'],
-    ['fa-bolt', 'Acciones rápidas para no andar perdido', 'Las actividades del día y de la semana, las restricciones activas y tus pendientes de bitácora, minutas, submittals y materiales, juntos en un solo lugar.'],
 ];
 ?>
 
@@ -242,26 +224,6 @@ $ventajas = [
     </div>
 </section>
 
-<section class="lp-sec" id="novedades">
-    <div class="lp-wrap">
-        <div class="lp-head lp-rev">
-            <span class="lp-eyebrow">Lo nuevo</span>
-            <h2>Una plataforma que mejora<br>cada mes</h2>
-            <p>Las últimas mejoras de ProjectWeb, pensadas para que la obra se vea clara en cualquier pantalla y la información nunca esté desactualizada.</p>
-        </div>
-        <div class="lp-grid">
-            <?php foreach ($novedades as $i => [$ico, $t, $d, $f]): ?>
-                <article class="lp-card lp-nuevo lp-rev" style="--d:<?php echo ($i % 4) * 70; ?>ms">
-                    <span class="lp-badge"><?php echo s($f); ?></span>
-                    <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
-                    <h3><?php echo s($t); ?></h3>
-                    <p><?php echo s($d); ?></p>
-                </article>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-
 <section class="lp-sec lp-alt" id="ventajas">
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
@@ -278,44 +240,61 @@ $ventajas = [
                 </article>
             <?php endforeach; ?>
         </div>
+
+        <div class="lp-cmp-block lp-rev">
+            <div class="lp-cmp-head">
+                <h3>Frente a otras formas de llevar la obra</h3>
+                <p>No comparamos marcas: comparamos tipos de herramienta. Una suite empresarial, una mezcla de programas de escritorio con Excel o una app genérica de tareas resuelven partes distintas; ninguna reúne el control de obra completo.</p>
+            </div>
+            <div class="lp-cmp-wrap">
+                <table class="lp-cmp">
+                    <thead>
+                        <tr><th></th><th class="lp-cmp-us">ProjectWeb</th><th>Suite empresarial de gestión de obra</th><th>Programas de escritorio + Excel</th><th>Apps genéricas de tareas</th></tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($comparativa as [$crit, $nosotros, $suite, $escritorio, $app]): ?>
+                        <tr>
+                            <th scope="row"><?php echo s($crit); ?></th>
+                            <td class="lp-cmp-us" data-label="ProjectWeb"><?php echo cmp_celda($nosotros); ?></td>
+                            <td data-label="Suite empresarial"><?php echo cmp_celda($suite); ?></td>
+                            <td data-label="Escritorio + Excel"><?php echo cmp_celda($escritorio); ?></td>
+                            <td data-label="Apps genéricas"><?php echo cmp_celda($app); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <p class="lp-cmp-nota"><i class="fa-solid fa-circle-info"></i> Comparación general por tipo de herramienta, no de un producto en particular. Los programas de escritorio siguen siendo útiles: por eso exportamos a MS Project, Excel y ProjectLibre.</p>
+        </div>
     </div>
 </section>
 
-<section class="lp-sec" id="comparativa">
-    <div class="lp-wrap">
-        <div class="lp-head lp-rev">
-            <span class="lp-eyebrow">Comparativa</span>
-            <h2>Lo que cambia frente a<br>las otras formas de llevar la obra</h2>
-            <p>Comparamos ProjectWeb con las dos maneras más comunes de controlar una obra hoy: combinar programas de escritorio y hojas de cálculo, o contratar un gestor de proyectos genérico.</p>
-        </div>
-        <div class="lp-cmp-wrap lp-rev">
-            <table class="lp-cmp">
-                <thead>
-                    <tr><th></th><th class="lp-cmp-us">ProjectWeb</th><th>Programas de escritorio + Excel</th><th>Gestor genérico de tareas</th></tr>
-                </thead>
-                <tbody>
-                <?php foreach ($comparativa as [$crit, $nosotros, $escritorio, $generico]): ?>
-                    <tr>
-                        <th scope="row"><?php echo s($crit); ?></th>
-                        <td class="lp-cmp-us"><?php echo cmp_celda($nosotros); ?></td>
-                        <td><?php echo cmp_celda($escritorio); ?></td>
-                        <td><?php echo cmp_celda($generico); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Comparación general por tipo de herramienta, no de un producto en particular. Los programas de escritorio siguen siendo útiles: por eso exportamos a MS Project, Excel y ProjectLibre.</p>
-    </div>
-</section>
-
-<section class="lp-sec lp-alt" id="ahorro">
+<section class="lp-sec" id="ahorro">
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Ahorro</span>
             <h2>Cuánto te ahorras<br>al reunir todo en un solo lugar</h2>
-            <p>Armar lo que ProjectWeb ya incluye con programas de escritorio cuesta alrededor de <strong>$<?php echo number_format($licenciaEquipo); ?> MXN por equipo</strong> en licencias. Con el Plan Pro pagas <strong>$<?php echo number_format($planProAnual); ?> MXN al año</strong> por todas las funciones.</p>
+            <p>Armar lo que ProjectWeb ya incluye con programas de escritorio cuesta alrededor de <strong>$<?php echo number_format($licenciaEquipo); ?> MXN por equipo</strong> en licencias, más servidores, instalación y actualizaciones. Con el Plan Pro pagas <strong>$<?php echo number_format($planProAnual); ?> MXN al año</strong> por todas las funciones y todos tus equipos.</p>
         </div>
+
+        <div class="lp-grid lp-grid-3 lp-ahorro-puntos lp-rev">
+            <article class="lp-card">
+                <span class="lp-ico"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                <h3>Sin instalar nada</h3>
+                <p>No hay programa que descargar, servidor que montar ni equipo que configurar. Entras desde el navegador y ya está: la obra puede empezar el mismo día.</p>
+            </article>
+            <article class="lp-card">
+                <span class="lp-ico"><i class="fa-solid fa-arrows-rotate"></i></span>
+                <h3>Sin recomprar licencias</h3>
+                <p>Cambiar de computadora, sumar a un residente o abrir otra obra no cuesta una licencia nueva. Das de alta al usuario y conserva el mismo acceso.</p>
+            </article>
+            <article class="lp-card">
+                <span class="lp-ico"><i class="fa-solid fa-hand-holding-hand"></i></span>
+                <h3>Todo a la mano</h3>
+                <p>Programa, materiales, reportes y documentos en el mismo lugar, desde el celular o la oficina. Sin carpetas compartidas ni versiones que alguien olvidó actualizar.</p>
+            </article>
+        </div>
+
         <div class="lp-cmp-wrap lp-rev">
             <table class="lp-cmp lp-ahorro">
                 <thead>
@@ -325,9 +304,9 @@ $ventajas = [
                 <?php foreach ($ahorro as $f): ?>
                     <tr>
                         <th scope="row"><?php echo (int)$f['equipos']; ?> <?php echo $f['equipos'] === 1 ? 'equipo' : 'equipos'; ?></th>
-                        <td>$<?php echo number_format($f['trad']); ?></td>
-                        <td class="lp-cmp-us">$<?php echo number_format($f['pw']); ?></td>
-                        <td class="lp-ahorro-n"><strong>$<?php echo number_format($f['ahorro']); ?></strong> <span><?php echo (int)$f['pct']; ?> % menos</span></td>
+                        <td data-label="Licencias tradicionales">$<?php echo number_format($f['trad']); ?></td>
+                        <td class="lp-cmp-us" data-label="ProjectWeb Plan Pro (1.er año)">$<?php echo number_format($f['pw']); ?></td>
+                        <td class="lp-ahorro-n" data-label="Ahorras en el primer año"><strong>$<?php echo number_format($f['ahorro']); ?></strong> <span><?php echo (int)$f['pct']; ?> % menos</span></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -335,11 +314,13 @@ $ventajas = [
         </div>
         <ul class="lp-ahorro-extra lp-rev">
             <li><i class="fa-solid fa-clock"></i><span><strong>Menos horas de captura.</strong> Capturas una vez y el programa, el lookahead, los reportes y el vPlan se actualizan juntos.</span></li>
-            <li><i class="fa-solid fa-laptop"></i><span><strong>Sin comprar de nuevo.</strong> Si cambias de computadora, no recompras ni reinstalas licencias: entras desde el navegador.</span></li>
             <li><i class="fa-solid fa-file-word"></i><span><strong>Menos licencias de ofimática y de dibujo.</strong> Actas, tablas con fórmulas y comparación de planos viven dentro de la misma plataforma, sin abrir otros programas.</span></li>
             <li><i class="fa-solid fa-people-arrows"></i><span><strong>Menos retrabajo.</strong> Todos ven la misma información, así no se corrigen datos distintos entre archivos.</span></li>
+            <li><i class="fa-solid fa-user-plus"></i><span><strong>Crece sin volver a cotizar.</strong> Sumar usuarios, obras o disciplinas no obliga a comprar otro paquete ni a migrar de sistema.</span></li>
+            <li><i class="fa-solid fa-shield-halved"></i><span><strong>Menos riesgo de perder información.</strong> Respaldos y cuota por proyecto: los planos y reportes no dependen de la laptop de nadie.</span></li>
+            <li><i class="fa-solid fa-graduation-cap"></i><span><strong>Menos costo de capacitación.</strong> Una sola forma de trabajar para toda la obra, en lugar de enseñar cuatro programas distintos.</span></li>
         </ul>
-        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones ni actualizaciones, que harían mayor el ahorro. El Plan Pro es de $500 MXN al mes (1 año = $<?php echo number_format($planProAnual); ?>).</p>
+        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones, actualizaciones ni horas de soporte, que harían mayor el ahorro. El Plan Pro es de $500 MXN al mes (1 año = $<?php echo number_format($planProAnual); ?>).</p>
     </div>
 </section>
 
@@ -347,23 +328,25 @@ $ventajas = [
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Todo en uno</span>
-            <h2>Cinco áreas de la obra,<br>una sola plataforma</h2>
-            <p>Lo que hoy vive en el Excel del programa, el Word de las actas, la carpeta de planos y el chat de la cuadrilla, aquí comparte la misma información.</p>
+            <h2>Cinco frentes de la obra,<br>una sola fuente de verdad</h2>
+            <p>Lo que hoy vive en el Excel del programa, el Word de las actas, la carpeta de planos y el chat de la cuadrilla, aquí comparte la misma información. No se trata de tener más herramientas: se trata de que todas hablen del mismo proyecto.</p>
         </div>
         <div class="lp-hub lp-rev">
             <?php foreach ([
-                ['Planear', 'fa-chart-gantt', ['Programa y Gantt', 'Calendario operativo', 'Dependencias y ruta crítica', 'Lookahead', 'Last Planner']],
-                ['Ejecutar', 'fa-helmet-safety', ['Reporte diario', 'Bitácora', 'Evidencias fotográficas', 'Restricciones', 'Acciones rápidas']],
-                ['Abastecer', 'fa-truck-ramp-box', ['Catálogo de materiales', 'Submittals', 'MSR configurable', 'Planificador por material', 'Materiales vs. cronograma']],
-                ['Documentar', 'fa-file-lines', ['Redactor', 'SheetFlow', 'Minutas', 'Archivo de planos', 'Comparador de documentos']],
-                ['Controlar', 'fa-scale-balanced', ['Órdenes de cambio', 'Líneas base', 'Curvas y Curva S', 'vPlan y View360', 'Accesos de cliente']],
-            ] as [$tit, $ico, $items]): ?>
+                ['Planear', 'fa-chart-gantt', 'Fechas, dependencias y semanas por venir.', ['Programa y Gantt', 'Calendario operativo', 'Dependencias y ruta crítica', 'Lookahead', 'Last Planner']],
+                ['Ejecutar', 'fa-helmet-safety', 'Lo que pasa en campo, fechado y con evidencia.', ['Reporte diario', 'Bitácora', 'Evidencias fotográficas', 'Restricciones', 'Acciones rápidas']],
+                ['Abastecer', 'fa-truck-ramp-box', 'Qué falta aprobar, comprar o entregar.', ['Catálogo de materiales', 'Submittals', 'MSR configurable', 'Planificador por material', 'Materiales vs. cronograma']],
+                ['Documentar', 'fa-file-lines', 'Actas, tablas y planos en su versión vigente.', ['Redactor', 'SheetFlow', 'Minutas', 'Archivo de planos', 'Comparador de documentos']],
+                ['Controlar', 'fa-scale-balanced', 'Desviaciones, cambios y quién puede ver qué.', ['Órdenes de cambio', 'Líneas base', 'Curvas y Curva S', 'vPlan y View360', 'Accesos de cliente']],
+            ] as [$tit, $ico, $desc, $items]): ?>
                 <div class="lp-hub-col">
                     <h3><i class="fa-solid <?php echo $ico; ?>"></i> <?php echo s($tit); ?></h3>
+                    <p class="lp-hub-desc"><?php echo s($desc); ?></p>
                     <ul><?php foreach ($items as $it): ?><li><i class="fa-solid fa-circle-check"></i> <?php echo s($it); ?></li><?php endforeach; ?></ul>
                 </div>
             <?php endforeach; ?>
         </div>
+        <p class="lp-hub-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cada frente puede usarse por separado; el valor aparece cuando comparten los mismos datos. Si además quieres que llevemos el seguimiento, revisa <a href="/servicios" class="lp-foot-link">Servicios</a>.</p>
     </div>
 </section>
 
@@ -472,13 +455,13 @@ $ventajas = [
             <div>
                 <span class="lp-eyebrow">Servicios</span>
                 <h2>¿Prefieres que nos encarguemos del seguimiento?</h2>
-                <p>Llevamos el seguimiento administrativo de tu obra para que tu equipo se dedique a construir.</p>
+                <p>Llevamos la administración y el seguimiento de tu obra para que tu equipo se dedique a construir. La experiencia técnica de cada disciplina sigue siendo tuya.</p>
                 <div class="lp-cta"><a href="/servicios" class="lp-btn lp-btn-primary lp-btn-lg">Conocer los servicios <i class="fa-solid fa-arrow-right"></i></a></div>
             </div>
             <ul>
                 <li><i class="fa-solid fa-circle-check"></i> Programa, materiales y reportes al día</li>
                 <li><i class="fa-solid fa-circle-check"></i> Control de cambios y documentación</li>
-                <li><i class="fa-solid fa-circle-check"></i> Un grupo especializado que detecta detalles para decidir mejor</li>
+                <li><i class="fa-solid fa-circle-check"></i> Un equipo administrativo que mantiene la información al día</li>
             </ul>
         </div>
     </div>
@@ -513,11 +496,18 @@ $ventajas = [
         <div class="lp-head lp-rev"><span class="lp-eyebrow">Preguntas frecuentes</span><h2>Lo que suelen preguntarnos</h2></div>
         <div class="lp-faq lp-rev">
             <details><summary>¿Puedo exportar mi programa a MS Project?</summary><p>Sí. Se exporta en XML (MSPDI) y lo abres en MS Project para guardarlo como .mpp. También en ProjectLibre, Excel, LibreOffice y PDF tabloide.</p></details>
+            <details><summary>¿Qué formatos de entrega tienen?</summary><p>PDF, Word (DOCX), ODT, Excel (XLSX), ODS, CSV, XML de MS Project, POD de ProjectLibre, PNG, ZIP, JSON para integraciones y calendario ICS. Si tu cliente pide otro, lo revisamos contigo.</p></details>
+            <details><summary>¿Puedo importar el programa que ya tengo?</summary><p>Sí. Importamos XML de MS Project o ProjectLibre y conservamos partidas, actividades y fechas. Después ajustamos el calendario y las dependencias para que el Gantt y la ruta crítica queden completos.</p></details>
             <details><summary>¿Necesito instalar algo o comprar licencias de otros programas?</summary><p>No. ProjectWeb funciona desde el navegador y reúne lo que tradicionalmente exige tres o cuatro programas distintos, con sus licencias. Si quieres, sigues exportando a PDF, Excel o MS Project.</p></details>
             <details><summary>¿Puedo trabajar desde el celular o si cambio de equipo?</summary><p>Sí. Entras con tu usuario desde el celular, la tableta o cualquier computadora y ves y editas la misma información, sin reinstalar ni volver a comprar nada.</p></details>
+            <details><summary>¿Qué pasa si no hay internet en la obra?</summary><p>Puedes seguir trabajando en campo y capturar cuando recuperes señal: la plataforma no exige conexión permanente. Para el demo y las juntas conviene revisar antes las zonas con cobertura.</p></details>
+            <details><summary>¿Quién es dueño de la información y qué pasa si me voy?</summary><p>La información es tuya. Puedes descargarla en cualquier momento en PDF, Excel, XML o los formatos disponibles, y llevarte los archivos originales. No queda retenida en la plataforma.</p></details>
+            <details><summary>¿Incluye capacitación y soporte?</summary><p>Sí. La puesta en marcha incluye la configuración inicial, el manual de usuario dentro de la plataforma y soporte para dudas. En el servicio de seguimiento también capacitamos a tu equipo.</p></details>
+            <details><summary>¿Cuánto tarda la puesta en marcha?</summary><p>Un proyecto nuevo puede quedar listo el mismo día: se crea, se define la jornada y se capturan o importan las partidas. Si vienes de otro sistema, coordinamos la migración y la validación de fechas.</p></details>
             <details><summary>¿Qué pasa si llego al límite de almacenamiento?</summary><p>Cada proyecto tiene su cuota según el plan. Al llegar al límite no se pueden subir más archivos hasta liberar espacio; lo ya guardado no se pierde.</p></details>
             <details><summary>¿En qué se diferencian los planes?</summary><p>En la cantidad de proyectos que puedes crear y el almacenamiento por proyecto. Todas las funciones están incluidas en cada plan.</p></details>
-            <details><summary>¿Pueden encargarse del seguimiento de mi obra?</summary><p>Sí. Además de la plataforma ofrecemos servicios administrativos de seguimiento de obra para que tu equipo se concentre en construir. Conoce el detalle en <a href="/servicios" class="lp-foot-link">Servicios</a>.</p></details>
+            <details><summary>¿Pueden encargarse del seguimiento de mi obra?</summary><p>Sí. Además de la plataforma ofrecemos servicios administrativos de seguimiento de obra para que tu equipo se concentre en construir. La experiencia técnica de cada disciplina sigue siendo de tu equipo, supervisor o residente. Conoce el detalle en <a href="/servicios" class="lp-foot-link">Servicios</a>.</p></details>
+            <details><summary>¿Puedo contratar solo el servicio, sin usar la plataforma?</summary><p>El servicio se apoya en la plataforma para que veas en vivo lo que actualizamos y conserves la información. Puedes contratar solo la plataforma, o combinar plataforma y servicio según tu alcance y presupuesto.</p></details>
             <details><summary>¿Puedo redactar actas o llevar tablas dentro de la plataforma?</summary><p>Sí. El Redactor exporta a Word, ODT y PDF, y SheetFlow maneja tablas con fórmulas que se importan y exportan a Excel, CSV y PDF.</p></details>
             <details><summary>¿Las tablas se ven bien en cualquier tamaño de pantalla o de hoja?</summary><p>Sí. El texto de las tablas se adapta solo: crece o se reduce con el bloque del vPlan, con las asas del Editor y con el ancho de la pantalla. Y si cambias los datos en un lugar, el resto de las vistas se actualiza en tiempo real.</p></details>
             <details><summary>¿El demo guarda mis cambios?</summary><p>No. El demo es de solo lectura y usa datos de ejemplo: no necesitas registrarte ni se guarda nada de lo que hagas.</p></details>
@@ -530,11 +520,12 @@ $ventajas = [
         <div class="lp-contact-txt lp-rev">
             <span class="lp-eyebrow">Contacto</span>
             <h2>Hablemos de tu próxima obra</h2>
-            <p>Cuéntanos qué necesitas y te ayudamos a elegir el plan ideal. También puedes ver el demo sin registrarte.</p>
+            <p>Cuéntanos si buscas la plataforma, el servicio de seguimiento o ambos. Te ayudamos a elegir el esquema que mejor se ajuste a tu alcance y presupuesto. También puedes ver el demo sin registrarte.</p>
             <ul class="lp-list">
+                <li><i class="fa-solid fa-check"></i> Plataforma, servicio o una combinación de ambos</li>
                 <li><i class="fa-solid fa-check"></i> Te contactamos por el medio que prefieras</li>
                 <li><i class="fa-solid fa-check"></i> Sin compromiso: resolvemos tus dudas primero</li>
-                <li><i class="fa-solid fa-check"></i> Planes de 10 a 500 proyectos</li>
+                <li><i class="fa-solid fa-check"></i> Desde una obra hasta un portafolio de 500 proyectos</li>
             </ul>
             <?php if ($contacto): ?><p class="lp-contact-mail"><i class="fa-solid fa-envelope"></i> <a href="mailto:<?php echo s($contacto); ?>"><?php echo s($contacto); ?></a></p><?php endif; ?>
             <?php if ($demoDisponible): ?><a href="/demo" class="lp-btn lp-btn-ghost lp-btn-lg" style="margin-top:2rem"><i class="fa-solid fa-play"></i> Probar el demo</a><?php endif; ?>
@@ -554,8 +545,8 @@ $ventajas = [
                 </div>
                 <div class="lp-row2">
                     <label>Puesto<input type="text" name="puesto" maxlength="100" autocomplete="organization-title" placeholder="Ej. Gerente de obra"></label>
-                    <label>Plan de interés
-                        <select name="plan" id="lp-plan"><option value="">Selecciona…</option><?php foreach (\Model\Contacto::PLANES as $o): ?><option><?php echo s($o); ?></option><?php endforeach; ?></select>
+                    <label>¿Qué te interesa?
+                        <select name="plan" id="lp-plan"><option value="">Selecciona…</option><?php foreach (\Model\Contacto::PLANES as $grupo => $opciones): ?><optgroup label="<?php echo s($grupo); ?>"><?php foreach ($opciones as $o): ?><option><?php echo s($o); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select>
                     </label>
                 </div>
                 <div class="lp-row2">
@@ -642,8 +633,12 @@ $ventajas = [
 (function () {
     const f = document.getElementById('lp-form'); if (!f) return;
     const t0 = Date.now(), err = document.getElementById('lp-err'), btn = document.getElementById('lp-send');
-    // Los botones de plan preseleccionan el plan en el formulario
-    document.querySelectorAll('[data-plan]').forEach(a => a.addEventListener('click', () => { document.getElementById('lp-plan').value = a.dataset.plan; }));
+    // Los botones de plan y los enlaces con ?plan= preseleccionan la opción
+    const selPlan = document.getElementById('lp-plan');
+    document.querySelectorAll('[data-plan]').forEach(a => a.addEventListener('click', () => { selPlan.value = a.dataset.plan; }));
+    const q = new URLSearchParams(location.search);
+    const pre = q.get('plan') || (q.get('interes') === 'servicio' ? 'Acompañamiento continuo' : '');
+    if (pre && [...selPlan.options].some(o => o.value === pre)) selPlan.value = pre;
     f.addEventListener('submit', async e => {
         e.preventDefault();
         err.hidden = true;
