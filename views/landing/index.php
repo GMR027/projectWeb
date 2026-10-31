@@ -186,7 +186,7 @@ $ventajas = [
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Recorrido por el producto</span>
             <h2>Así se ve una obra<br>multidisciplinaria en ProjectWeb</h2>
-            <p>Pantallas reales del proyecto demo: un edificio corporativo con obra civil, estructura, instalaciones, acabados y más.</p>
+            <p>Pantallas reales del proyecto demo: programa de obra, Gantt, vPlan, reportes diarios, materiales y más.</p>
         </div>
         <div class="lp-tabs lp-rev" role="tablist">
             <?php foreach ($tour as $i => [$id, $nom, $ico, $txt]): ?>

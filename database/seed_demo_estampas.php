@@ -41,22 +41,22 @@ foreach (\Classes\Estampas::plantillas() as $clave => $pl) {
 
 // Cajetines dinámicos: el de plano ahora usa campos que se llenan solos, y uno nuevo con el estado de la obra
 $q("UPDATE cajetines SET filas_json = {$str(json_encode([
-    ['Proyecto', '{proyecto}'], ['Cliente', '{cliente}'], ['Plano', '{titulo}'], ['Escala', '1:100'], ['Fecha', '{fecha:corto}'], ['Elaboró', '{autor}'], ['Revisó', 'Carlos Ibarra'],
+    ['Proyecto', '{proyecto}'], ['Cliente', '{cliente}'], ['Plano', '{titulo}'], ['Escala', '1:100'], ['Fecha', '{fecha:corto}'], ['Elaboró', '{autor}'], ['Revisó', 'Diego Carranza'],
     ['Avance al corte', '{avance_real} % de {avance_prog} %'], ['Hoja', '{lamina} de {total}'],
-], JSON_UNESCAPED_UNICODE))} WHERE proyecto_id = $pid AND nombre = 'Cajetín de plano · Torre Aurora'");
+], JSON_UNESCAPED_UNICODE))} WHERE proyecto_id = $pid AND nombre = 'Cajetín de plano · Nexo Data Campus'");
 $cajDin = (int)$q("INSERT INTO cajetines (proyecto_id, nombre, orientacion, ancho, filas_json) VALUES ($pid, 'Cajetín dinámico · Estado de la obra', 'vertical', 30, {$str(json_encode([
     ['Proyecto', '{codigo} · {proyecto}'], ['Corte', '{corte:largo}'], ['Semana de obra', '{semana}'], ['Avance real', '{avance_real} %'], ['SPI', '{spi}'], ['Restricciones activas', '{restr_activas}'],
     ['Órdenes de cambio abiertas', '{oc_abiertas}'], ['Retiros pendientes', '{retiros_pendientes}'], ['Último reporte', '{reporte_ultimo}'],
 ], JSON_UNESCAPED_UNICODE))})");
 
 // Lámina «Last Planner del día» en el mismo vPlan que las láminas libres del demo
-$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre = 'vPlan · Arquitectura y fachada' LIMIT 1")[0]['id'] ?? 0);
+$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre = 'vPlan · Sala blanca y patio de equipos' LIMIT 1")[0]['id'] ?? 0);
 if (!$paquete) $paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
 $orden = 1 + (int)($rows("SELECT COALESCE(MAX(orden),0) m FROM vplan_laminas WHERE paquete_id = $paquete")[0]['m'] ?? 0);
 $actEjemplo = (int)($rows("SELECT a.id FROM actividades a JOIN partidas p ON p.id = a.partida_id JOIN restricciones r ON r.actividad_id = a.id AND r.estado = 'activa'
     WHERE p.proyecto_id = $pid AND a.status = 'en_proceso' ORDER BY a.id LIMIT 1")[0]['id'] ?? ($rows("SELECT a.id FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $pid AND a.status = 'en_proceso' ORDER BY a.id LIMIT 1")[0]['id'] ?? 0));
 $l5 = (int)$q("INSERT INTO vplan_laminas (proyecto_id, paquete_id, partida_id, titulo, supervisor, ancho_mm, alto_mm, preset, recovery_n, restr_auto, plano, orden, grupo)
-    VALUES ($pid, $paquete, NULL, 'LAST PLANNER DEL DÍA', 'Laura Mendoza', 432, 279, 'tabloide', 0, 0, NULL, $orden, 'Obra')");
+    VALUES ($pid, $paquete, NULL, 'LAST PLANNER DEL DÍA', 'Valeria Sotomayor', 432, 279, 'tabloide', 0, 0, NULL, $orden, 'Obra')");
 $cmX = fn(float $cm) => round($cm / 43.2 * 100, 3);
 $cmY = fn(float $cm) => round($cm / 27.9 * 100, 3);
 $bl = [
