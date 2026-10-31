@@ -3,7 +3,7 @@
 _Se lee solo al trabajar en este módulo._
 
 ## Qué es
-La pestaña **Materiales** del editor de marcas de vPlan (`/vplan/editor?id=…`) permite dibujar **líneas y formas** sobre el plano y relacionarlas con **varias actividades y subactividades** del programa. Con ellas se crea **una tabla de instalación de materiales por lámina**, guardada en SheetFlow, que se imprime como un bloque más de la lámina.
+La pestaña **Materiales** del editor de marcas de vPlan (`/vplan/editor?id=…`) permite dibujar **líneas y formas** (incluido el **polígono libre**: clic en cada vértice y doble clic, Enter o clic en el primer punto para cerrar) sobre el plano y relacionarlas con **varias actividades y subactividades** del programa. Con ellas se crea **una tabla de instalación de materiales por lámina**, guardada en SheetFlow, que se imprime como un bloque más de la lámina.
 
 - Herramientas: `controllers/VplanMaterialesController.php`, lógica `classes/MaterialesLamina.php`, JS `public/vendor/materiales-vplan.js` (sin build).
 - Vistas: `views/vplan/_materiales-barra.php`, `_materiales-panel.php`, `_materiales-props.php`, `_materiales-modal.php` (se incluyen desde `_editor-lienzo.php`).
@@ -35,8 +35,9 @@ Cada marca guarda en su JSON (`vplan_laminas.marcas_json`):
 ## Editor de marcas
 - La pestaña **Materiales** solo aparece si `$config['materiales']` está presente (`VplanController::editor`). Al dibujar desde esa pestaña, la marca nace con `material.items = []`.
 - **Propiedades → Materiales de esta marca**: chips de actividades/subactividades, buscador por partida, casilla de fotos, deslizador de tamaño (en vivo) y posición centro/borde.
+- **Panel Materiales → Asignar a la marca seleccionada**: el mismo selector de actividades/subactividades, para no tener que cambiar a Propiedades. Si la marca se dibujó desde Dibujo, ofrece **Convertir en marca de material**. Se asignan actividades: los materiales y sus fotos salen de su catálogo.
 - **Fotos**: se resuelven del catálogo (`materiales.imagen` de los materiales de la actividad) con `POST /api/vplan/materiales/imagenes`. Se pintan en una capa Konva propia (`matLayer`) para no alterar el tamaño de la marca ni el transformer; el botón redondo con la primera foto solo se ve al editar y no sale en PNG/PDF.
-- En líneas la galería va **arriba del trazo, centrada**; en formas, **al centro** o **sobre el borde superior**. El botón se coloca en la esquina superior derecha.
+- En líneas la galería va **arriba del trazo, centrada**; en formas, **al centro** o **repartida por el borde**. El botón se coloca en la esquina superior derecha.
 - **Panel Materiales**: resumen, leyenda con colores y conteo de marcas, tabla completa con todas las columnas de SheetFlow, búsqueda y clic en una fila para seleccionar sus marcas en el plano.
 - Al guardar una foto o un cambio de asignación se llama a `cargarImagenes()` y `vplan:render` refresca el panel.
 

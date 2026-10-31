@@ -36,6 +36,8 @@ col usuarios novedades_vistas "ALTER TABLE usuarios ADD COLUMN novedades_vistas 
 col proyectos registros_por_pagina "ALTER TABLE proyectos ADD COLUMN registros_por_pagina SMALLINT NOT NULL DEFAULT 10;"
 col proyectos tema_modo "ALTER TABLE proyectos ADD COLUMN tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario';"
 col proyectos tema_paleta "ALTER TABLE proyectos ADD COLUMN tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja';"
+col proyectos nombres_herramientas "ALTER TABLE proyectos ADD COLUMN nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0 AFTER tema_paleta;"
+col proyectos menu_superior "ALTER TABLE proyectos ADD COLUMN menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico' AFTER nombres_herramientas;"
 col proyectos limite_almacenamiento_mb "ALTER TABLE proyectos ADD COLUMN limite_almacenamiento_mb INT NULL AFTER marca_color2;"
 for c in "clima_auto TINYINT(1) NOT NULL DEFAULT 0" "clima_ultimo DATE NULL" "clima_aviso DATE NULL"; do
   col proyectos "${c%% *}" "ALTER TABLE proyectos ADD COLUMN $c;"

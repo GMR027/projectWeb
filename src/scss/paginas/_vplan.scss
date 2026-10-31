@@ -390,6 +390,12 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   td.mat-material { min-width: 16rem; white-space: normal; }
   .mat-color { margin-right: .3rem; } }
 .mat-vacio { padding: .8rem; color: var(--text-muted); font-size: 1.1rem; text-align: center; list-style: none; }
+// Bloque de asignación del panel Materiales
+.mat-asignar { margin: 0 0 1.1rem; padding: .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary);
+  h5 { margin: 0 0 .5rem; font-size: 1.15rem; }
+  .ve-btns { flex-wrap: wrap; margin-top: .7rem; }
+  .mat-chips { margin-bottom: 0; }
+  .mat-asignar-nota { margin: .6rem 0 0; } }
 // Propiedades de una marca de material
 .ve-mat-props { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--border);
   h5 { margin: 0 0 .6rem; font-size: 1.2rem; }

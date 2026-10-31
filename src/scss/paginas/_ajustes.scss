@@ -430,6 +430,7 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
 .tema-bloque { display: flex; flex-direction: column; gap: .8rem; }
 .tema-etq { font-size: 1.1rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
 .tema-modos { display: flex; flex-wrap: wrap; gap: .6rem; }
+.tema-select { max-width: 46rem; }
 .tema-modo {
   display: inline-flex; align-items: center; gap: .6rem; padding: .7rem 1rem;
   border: 1px solid var(--border); border-radius: $radius-sm; background: var(--bg-secondary);

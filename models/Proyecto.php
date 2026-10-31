@@ -31,6 +31,10 @@ class Proyecto extends ActiveRecord
     public $programa_columnas_json;
     public $programa_indicador_json;
     public $tema_paleta;
+    // Barra superior de herramientas: escribe el nombre debajo de cada icono (Ajustes → Apariencia)
+    public $nombres_herramientas;
+    // Apariencia de la barra superior: clasico | panel | pestanas (Ajustes → Apariencia)
+    public $menu_superior;
     // Espacio propio del proyecto en MB (lo asigna el admin; NULL = hereda del cliente dueño)
     public $limite_almacenamiento_mb;
 

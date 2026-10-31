@@ -200,6 +200,8 @@ if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte 
 <?php
 $temaModo = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
 $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
+$temaNombres = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
+$temaMenu = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
 ?>
 <div class="card" id="tema">
     <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
@@ -233,6 +235,29 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
             </div>
         </div>
 
+        <div class="tema-bloque">
+            <span class="tema-etq">Mostrar nombres de herramientas</span>
+            <div class="tema-modos">
+                <?php foreach (\Classes\TemaProyecto::NOMBRES as $k => $etq): ?>
+                    <label class="tema-modo">
+                        <input type="radio" name="nombres_herramientas" value="<?php echo s($k); ?>"<?php echo $temaNombres === ((int)$k === 1) ? ' checked' : ''; ?>>
+                        <span><?php echo s($etq); ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <p class="text-muted text-sm" style="margin:.6rem 0 0">Escribe el nombre debajo de cada icono en la barra superior de herramientas del proyecto (Planeación, Campo, Materiales…). Con «No» queda solo el icono.</p>
+        </div>
+
+        <div class="tema-bloque">
+            <label class="tema-etq" for="tema-menu">Apariencia de menú superior</label>
+            <select name="menu_superior" id="tema-menu" class="tema-select">
+                <?php foreach (\Classes\TemaProyecto::MENUS as $k => $etq): ?>
+                    <option value="<?php echo s($k); ?>"<?php echo $temaMenu === $k ? ' selected' : ''; ?>><?php echo s($etq); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <p class="text-muted text-sm" id="tema-menu-ayuda" style="margin:.6rem 0 0"><?php echo s(\Classes\TemaProyecto::MENUS_AYUDA[$temaMenu]); ?></p>
+        </div>
+
         <p id="tema-aviso" class="text-muted text-sm" hidden><i class="fa-solid fa-circle-info"></i> Estás viendo una vista previa: pulsa <strong>Guardar apariencia</strong> para dejarla en el proyecto.</p>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
     </form>
@@ -243,6 +268,7 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
             if (!card) return;
             const raiz = document.documentElement;
             const TEMA = { usuario: null, claro: 'light', oscuro: 'dark' };
+            const AYUDA_MENU = <?php echo json_encode(\Classes\TemaProyecto::MENUS_AYUDA, JSON_UNESCAPED_UNICODE); ?>;
             const rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
             const oscurecer = (h, p) => '#' + rgb(h).map(v => Math.round(v * (1 - p)).toString(16).padStart(2, '0')).join('');
             card.addEventListener('change', () => {
@@ -250,6 +276,15 @@ $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naran
                 raiz.setAttribute('data-theme', TEMA[modo] || localStorage.getItem('theme') || 'dark');
                 const aviso = document.getElementById('tema-aviso');
                 if (aviso) aviso.hidden = false;
+                const nombres = card.querySelector('input[name="nombres_herramientas"]:checked');
+                if (nombres) raiz.classList.toggle('herr-con-nombres', nombres.value === '1');   // vista previa de la barra de herramientas
+                const menu = card.querySelector('#tema-menu');
+                if (menu) {   // vista previa de la barra superior (clásico, panel o pestañas)
+                    raiz.classList.remove('menu-panel', 'menu-pestanas');
+                    if (menu.value !== 'clasico') raiz.classList.add('menu-' + menu.value);
+                    const ayuda = document.getElementById('tema-menu-ayuda');
+                    if (ayuda && AYUDA_MENU[menu.value]) ayuda.textContent = AYUDA_MENU[menu.value];
+                }
                 const p = card.querySelector('input[name="tema_paleta"]:checked');
                 if (!p) return;
                 const claro = raiz.getAttribute('data-theme') === 'light';

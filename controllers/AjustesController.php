@@ -221,7 +221,7 @@ class AjustesController
         exit;
     }
 
-    /** Apariencia del proyecto: modo (usuario/claro/oscuro) y paleta de acento */
+    /** Apariencia del proyecto: modo (usuario/claro/oscuro), paleta de acento, nombres y barra superior de herramientas */
     public static function guardarTema()
     {
         redirigir_si_no_auth();
@@ -240,9 +240,11 @@ class AjustesController
         // Los dos valores se validan contra la lista blanca de TemaProyecto
         $modo = TemaProyecto::normModo($_POST['tema_modo'] ?? 'usuario');
         $paleta = TemaProyecto::normPaleta($_POST['tema_paleta'] ?? 'naranja');
+        $nombres = TemaProyecto::nombresHerramientas($_POST['nombres_herramientas'] ?? 0) ? 1 : 0;   // barra superior: nombre bajo el icono
+        $menu = TemaProyecto::normMenu($_POST['menu_superior'] ?? 'clasico');   // clásico, panel o pestañas
         $color = TemaProyecto::colorCaratula($paleta);   // la carátula del portafolio usa el mismo acento
 
-        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', color = '$color' WHERE id = " . (int)$proyecto->id);
+        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', nombres_herramientas = $nombres, menu_superior = '$menu', color = '$color' WHERE id = " . (int)$proyecto->id);
         header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&tema=ok#tema');
         exit;
     }

@@ -359,6 +359,97 @@ body.menu-abierto { overflow: hidden; }
   }
 }
 
+// Nombre de la herramienta debajo del icono: Ajustes → Apariencia del proyecto → «Mostrar nombres de herramientas».
+// Sin la clase en <html> el rótulo existe (lectores de pantalla) pero no se pinta.
+.breadcrumb-nombre {
+  display: none;
+}
+
+.herr-con-nombres .breadcrumb-item {
+  flex-direction: column;
+  gap: 0.25rem;
+  width: auto;
+  min-width: 4.6rem;
+  max-width: 14rem;
+  height: auto;
+  padding: 0.55rem 0.7rem;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.herr-con-nombres .breadcrumb-nombre {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: inherit;
+}
+
+// ============ APARIENCIA DEL MENÚ SUPERIOR ============
+// Ajustes → Apariencia del proyecto → «Apariencia de menú superior».
+
+// Modo panel: sin barra de iconos; el menú lateral queda fijo y visible en tablet/escritorio.
+@media (min-width: ($bp-movil + 0.01rem)) {
+  .menu-panel .app-container { grid-template-columns: 27rem minmax(0, 1fr); }
+  .menu-panel .sidebar {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    height: 100vh;
+    transform: none;
+    visibility: visible;
+    box-shadow: none;
+  }
+  .menu-panel .btn-menu-movil,
+  .menu-panel .sidebar-fondo { display: none !important; }
+  .menu-panel .main-content { min-width: 0; }
+}
+
+// Modo pestaña: una pestaña por sección y debajo los iconos de la sección elegida.
+.breadcrumb-pestanas { padding: $space-sm $space-md $space-md; }
+
+.bpest-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid $border;
+}
+
+.bpest-tab {
+  appearance: none;
+  cursor: pointer;
+  margin: 0;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $text-muted;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover { background-color: var(--surface-hover); color: $text; }
+
+  &.active,
+  &[aria-selected="true"] {
+    background-color: var(--primary-glow);
+    color: $primary;
+    border-color: $primary;
+    box-shadow: inset 0 -2px 0 $primary;
+  }
+
+  &:focus-visible { outline: 2px solid $primary; outline-offset: 2px; }
+}
+
+.bpest-panel[hidden] { display: none; }
+
 // Separador de sección en el sidebar
 .sidebar-nav .nav-section {
     margin: 1.6rem 1.6rem 0.4rem;

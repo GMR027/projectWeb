@@ -18,7 +18,7 @@ class PlantillaProyecto
 
     public const VERSION = 1;
     /** Columnas del proyecto que viajan en la plantilla (nombre, código, fechas y logos son de cada obra) */
-    private const CAMPOS_PROYECTO = ['descripcion', 'color', 'modo_dependencias', 'modo_dependencias_materiales', 'registros_por_pagina', 'tema_modo', 'tema_paleta', 'msr_umbral_critico',
+    private const CAMPOS_PROYECTO = ['descripcion', 'color', 'modo_dependencias', 'modo_dependencias_materiales', 'registros_por_pagina', 'tema_modo', 'tema_paleta', 'nombres_herramientas', 'menu_superior', 'msr_umbral_critico',
         'programa_nombre', 'programa_columnas_json', 'programa_indicador_json', 'marca_activa', 'marca_nombre', 'marca_color', 'marca_color2'];
     private const ACTIVIDAD = ['codigo', 'nombre', 'descripcion', 'duracion_dias', 'prioridad', 'hito', 'sin_material', 'orden', 'fecha_fija', 'responsable', 'libre_texto', 'libre_numero'];
     private const FECHAS_ACTIVIDAD = ['fecha_inicio', 'fecha_fin', 'rec_inicio', 'rec_fin', 'libre_fecha'];

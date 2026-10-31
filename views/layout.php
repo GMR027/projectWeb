@@ -6,14 +6,21 @@ require_once __DIR__ . '/templates/breadcrumb.php';
 $temaModoProyecto = null;   // 'light' | 'dark' | null (el que elige cada usuario)
 $temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
 $temaCssProyecto = '';
+$nombresHerramientas = false;   // barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
+$menuModoProyecto = 'clasico';  // barra superior: clásico, panel (menú lateral fijo) o pestañas
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
     $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
+    $nombresHerramientas = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
+    $menuModoProyecto = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
 }
+$clasesHtml = [];
+if ($nombresHerramientas) $clasesHtml[] = 'herr-con-nombres';
+if ($menuModoProyecto !== 'clasico') $clasesHtml[] = 'menu-' . $menuModoProyecto;
 ?>
 <!DOCTYPE html>
-<html lang="<?php echo idioma_actual(); ?>" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
+<html lang="<?php echo idioma_actual(); ?>" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php echo $clasesHtml ? ' class="' . s(implode(' ', $clasesHtml)) . '"' : ''; ?><?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +105,7 @@ if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
                 elseif (str_contains($uri, '/evidencias')) $pagina_actual = 'evidencias';
                 elseif (str_contains($uri, '/ajustes')) $pagina_actual = 'ajustes';
                 elseif (str_contains($uri, '/exportar')) $pagina_actual = 'exportar';
-                breadcrumb_proyecto($proyecto, $pagina_actual);
+                breadcrumb_proyecto($proyecto, $pagina_actual, $menuModoProyecto);
                 ?>
             <?php endif; ?>
             <?php include_once __DIR__ . '/templates/alertas.php'; ?>

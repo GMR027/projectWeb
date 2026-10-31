@@ -14,7 +14,7 @@
   (M.actividades || []).forEach(a => (a.subactividades || []).forEach(s => SUB.set(Number(s.id), { sub: s, act: a })));
   const PART = new Map((M.partidas || []).map(p => [Number(p.id), p]));
   const LINEAS = ['line', 'arrow', 'darrow'];
-  const TIPOS = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', 'triangle', 'diamond', 'star', 'pentagon', 'hexagon', 'cross', 'xmark', 'check', 'blockarrow', 'chevron', 'trapezoid', 'octagon', 'parallelogram', 'rtriangle', 'house', 'arrowleft', 'arrowup', 'arrowdown', 'arrowlr', 'homeplate', 'star4', 'star6', 'star8', 'heart', 'moon', 'semicircle', 'bolt', 'drop', 'lshape', 'tshape', 'ushape', 'callout', 'flag'];
+  const TIPOS = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', 'polygon', 'triangle', 'diamond', 'star', 'pentagon', 'hexagon', 'cross', 'xmark', 'check', 'blockarrow', 'chevron', 'trapezoid', 'octagon', 'parallelogram', 'rtriangle', 'house', 'arrowleft', 'arrowup', 'arrowdown', 'arrowlr', 'homeplate', 'star4', 'star6', 'star8', 'heart', 'moon', 'semicircle', 'bolt', 'drop', 'lshape', 'tshape', 'ushape', 'callout', 'flag'];
 
   const S = {
     tabla: M.tabla || null,
@@ -198,7 +198,54 @@
   }
 
   // ---------- panel de propiedades ----------
+  function chipsDeMarca(d) {
+    return itemsDe(d).map(it => {
+      const k = claveDe(it);
+      const ok = !!itemDeClave(k);
+      return '<li class="mat-chip' + (ok ? '' : ' mat-chip-mal') + '" data-clave="' + esc(k) + '"><span>' + esc(ok ? nombreClave(k) : 'Actividad eliminada') + '</span><button type="button" title="Quitar" aria-label="Quitar">✕</button></li>';
+    }).join('');
+  }
+
+  function conectarQuitar(lista) {
+    if (!lista) return;
+    lista.querySelectorAll('.mat-chip button').forEach(b => b.addEventListener('click', e => {
+      const k = e.currentTarget.closest('.mat-chip').dataset.clave;
+      modificarMarca(t => { t.material.items = itemsDe(t).filter(it => claveDe(it) !== k); });
+    }));
+  }
+
+  /** Bloque «Asignar a la marca seleccionada» del panel Materiales */
+  function pintarAsignacion() {
+    const caja = $('#mat-asignar');
+    if (!caja) return;
+    const d = marcaActual();
+    const lista = $('#mat-asig-lista'), vacio = $('#mat-asig-vacio');
+    const agr = $('#mat-asig-agregar'), conv = $('#mat-asig-convertir');
+    if (!compatible(d)) {
+      lista.innerHTML = '';
+      vacio.style.display = '';
+      vacio.textContent = d
+        ? 'Esta marca no admite materiales: elige una línea o una forma.'
+        : 'Dibuja o selecciona una línea o forma para asignarle actividades.';
+      agr.style.display = 'none';
+      conv.style.display = 'none';
+      return;
+    }
+    const convertida = !!(d.material && Array.isArray(d.material.items));
+    const items = convertida ? itemsDe(d) : [];
+    lista.innerHTML = convertida ? chipsDeMarca(d) : '';
+    conectarQuitar(lista);
+    vacio.style.display = convertida && items.length ? 'none' : '';
+    vacio.textContent = convertida
+      ? 'Sin actividades asignadas. Pulsa «Agregar actividad» para relacionar la marca con el programa.'
+      : 'Esta marca todavía no es de materiales. Conviértela para asignarle actividades y ver las fotos de sus materiales.';
+    agr.style.display = convertida ? '' : 'none';
+    conv.style.display = convertida ? 'none' : '';
+    caja.hidden = false;
+  }
+
   function actualizarProps() {
+    pintarAsignacion();
     const sec = $('#p-mat-seccion');
     if (!sec) return;
     const d = marcaActual();
@@ -219,11 +266,7 @@
     const items = itemsDe(d);
     vacio.style.display = items.length ? 'none' : '';
     vacio.textContent = 'Sin actividades asignadas. Agrega una actividad o subactividad para relacionar la forma con el programa.';
-    lista.innerHTML = items.map(it => {
-      const k = claveDe(it);
-      const ok = !!itemDeClave(k);
-      return '<li class="mat-chip' + (ok ? '' : ' mat-chip-mal') + '" data-clave="' + esc(k) + '"><span>' + esc(ok ? nombreClave(k) : 'Actividad eliminada') + '</span><button type="button" title="Quitar" aria-label="Quitar">✕</button></li>';
-    }).join('');
+    lista.innerHTML = chipsDeMarca(d);
     $('#p-mat-mostrar').checked = !!d.mat_mostrar;
     const tam = Math.max(24, Math.min(400, +d.mat_tam || 64));
     $('#p-mat-tam').value = tam; $('#p-mat-tam-n').value = tam;
@@ -232,10 +275,7 @@
     $('#p-mat-color-estado').checked = !!d.mat_colorEstado;
     const nImg = imagenesParaMarca(d).length;
     $('#p-mat-img-info').textContent = nImg ? nImg + ' imagen(es) del catálogo de materiales.' : (items.length ? 'Las actividades asignadas no tienen fotos en el catálogo de materiales.' : '');
-    lista.querySelectorAll('.mat-chip button').forEach(b => b.addEventListener('click', e => {
-      const k = e.currentTarget.closest('.mat-chip').dataset.clave;
-      modificarMarca(t => { t.material.items = itemsDe(t).filter(it => claveDe(it) !== k); });
-    }));
+    conectarQuitar(lista);
   }
 
   function modificarMarca(fn) {
@@ -366,8 +406,12 @@
     const buscar = $('#mat-buscar');
     if (buscar) buscar.addEventListener('input', () => { S.q = buscar.value; pintarTabla(); });
     // Propiedades
+    const convertir = () => { modificarMarca(t => { t.material = { items: [] }; }); abrirPicker(); };
     const agr = $('#p-mat-agregar'); if (agr) agr.addEventListener('click', abrirPicker);
-    const conv = $('#p-mat-convertir'); if (conv) conv.addEventListener('click', () => { modificarMarca(t => { t.material = { items: [] }; }); abrirPicker(); });
+    const conv = $('#p-mat-convertir'); if (conv) conv.addEventListener('click', convertir);
+    // Panel Materiales: asignación de la marca seleccionada
+    const agrPanel = $('#mat-asig-agregar'); if (agrPanel) agrPanel.addEventListener('click', abrirPicker);
+    const convPanel = $('#mat-asig-convertir'); if (convPanel) convPanel.addEventListener('click', convertir);
     const mostrar = $('#p-mat-mostrar'); if (mostrar) mostrar.addEventListener('change', () => modificarMarca(t => { t.mat_mostrar = mostrar.checked; }));
     const tam = $('#p-mat-tam'), tamN = $('#p-mat-tam-n');
     const aplicarTam = (val, commit) => {
@@ -408,9 +452,9 @@
       clearTimeout(tRender);
       tRender = setTimeout(() => { actualizarProps(); refrescarPanel(); cargarImagenes(); }, 80);
     });
-    // Al abrir la pestaña Materiales, refrescar los datos de SheetFlow
+    // Al abrir la pestaña Materiales, refrescar los datos de SheetFlow y la asignación de la marca
     document.querySelectorAll('#ve-pestanas [data-pest], .ve-tabs [data-tab]').forEach(b => b.addEventListener('click', () => {
-      if (b.dataset.pest === 'materiales' || b.dataset.tab === 'materiales') cargarDatos();
+      if (b.dataset.pest === 'materiales' || b.dataset.tab === 'materiales') { cargarDatos(); pintarAsignacion(); }
     }));
 
     refrescarPanel();

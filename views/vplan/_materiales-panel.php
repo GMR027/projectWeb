@@ -2,9 +2,20 @@
 <div class="ve-tab-panel" data-panel="materiales" hidden>
 <aside class="card ve-materiales" id="ve-materiales">
     <div class="ve-capas-cab">
-        <h4><i class="fa-solid fa-cubes"></i> Materiales <small class="text-muted" id="mat-contador"></small></h4>
+        <h4><i class="fa-solid fa-cubes"></i> Materiales de la lámina <small class="text-muted" id="mat-contador"></small></h4>
     </div>
     <p class="text-muted text-sm">Dibuja líneas y formas en el plano y asígnales actividades o subactividades. La tabla de esta lámina se guarda en SheetFlow y se imprime como un bloque más.</p>
+
+    <div class="mat-asignar" id="mat-asignar">
+        <h5><i class="fa-solid fa-link"></i> Asignar a la marca seleccionada</h5>
+        <ul class="mat-chips" id="mat-asig-lista"></ul>
+        <p class="text-muted text-sm" id="mat-asig-vacio">Dibuja o selecciona una línea o forma para asignarle actividades.</p>
+        <div class="ve-btns">
+            <button type="button" class="btn btn-sm btn-primary" id="mat-asig-agregar"><i class="fa-solid fa-plus"></i> Agregar actividad</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="mat-asig-convertir"><i class="fa-solid fa-cubes"></i> Convertir en marca de material</button>
+        </div>
+        <p class="text-muted text-sm mat-asignar-nota">Los materiales y sus fotos salen del catálogo de las actividades asignadas.</p>
+    </div>
 
     <div id="mat-sin-tabla">
         <button type="button" class="btn btn-sm btn-primary" id="mat-crear"><i class="fa-solid fa-plus"></i> Crear tabla de materiales</button>

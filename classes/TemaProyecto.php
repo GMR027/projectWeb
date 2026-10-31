@@ -24,6 +24,52 @@ class TemaProyecto
         'oscuro'  => 'Siempre oscuro',
     ];
 
+    /** Nombre debajo del icono en la barra superior de herramientas (proyectos.nombres_herramientas) */
+    public const NOMBRES = [
+        '1' => 'Sí',
+        '0' => 'No',
+    ];
+
+    /** ¿La barra superior de herramientas del proyecto escribe el nombre de cada una? */
+    public static function nombresHerramientas($valor): bool
+    {
+        return (int)$valor === 1;
+    }
+
+    /**
+     * Apariencia de la barra superior de herramientas (proyectos.menu_superior):
+     * clásico (iconos por sección), panel (sin barra, menú lateral fijo) o pestañas (una pestaña por sección).
+     */
+    public const MENUS = [
+        'clasico'  => 'Modo clásico',
+        'panel'    => 'Modo panel',
+        'pestanas' => 'Modo pestaña',
+    ];
+
+    /** Texto de ayuda de cada modo (bajo el selector de Apariencia del proyecto) */
+    public const MENUS_AYUDA = [
+        'clasico'  => 'Los iconos de las herramientas se agrupan por sección en una sola barra, como hasta ahora.',
+        'panel'    => 'Oculta la barra de iconos y deja fijo el menú lateral con todas las herramientas del proyecto.',
+        'pestanas' => 'Los iconos se acomodan por sección en pestañas: eliges la sección y ves sus herramientas.',
+    ];
+
+    /** Modo válido o 'clasico' */
+    public static function normMenu($menu): string
+    {
+        $menu = (string)$menu;
+        return isset(self::MENUS[$menu]) ? $menu : 'clasico';
+    }
+
+    public static function esPanel($valor): bool
+    {
+        return self::normMenu($valor) === 'panel';
+    }
+
+    public static function esPestanas($valor): bool
+    {
+        return self::normMenu($valor) === 'pestanas';
+    }
+
     /** id => [nombre, tono para tema claro, tono para tema oscuro] */
     public const PALETAS = [
         'naranja'   => ['Naranja CivilTech', '#ea580c', '#f97316'],

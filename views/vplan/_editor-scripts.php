@@ -103,6 +103,7 @@ window.Tour.registrar('editor-canvas', {
             const desdeArriba = Math.max(0, rBarra.bottom - rHoja.top) + 12;   // pestañas + barra + margen
             const alto = Math.min(window.innerHeight - 120, Math.round(window.innerHeight - desdeArriba - 24));
             lienzo.style.height = Math.max(300, alto) + 'px';
+            hoja.style.setProperty('--ve-alto', Math.max(300, alto) + 'px');   // el panel lateral usa el mismo alto que el lienzo
             // Konva vuelve a encuadrar sin disparar «resize» (este mismo ajuste escucha ese evento).
             if (window.__vplan && typeof window.__vplan.encuadrar === 'function') window.__vplan.encuadrar();
         });

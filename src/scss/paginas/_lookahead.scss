@@ -117,7 +117,7 @@
 // ============================================================
 // Materiales / Submittals / MSR
 // ============================================================
-.mat-thumb { width: 5.6rem; height: 5.6rem; object-fit: contain; background: #fff; border-radius: .4rem; display: inline-block; }
+.mat-thumb { width: 5.6rem; height: 5.6rem; object-fit: contain; background: #fff; border-radius: 50%; display: inline-block; }
 .mat-thumb-vacio { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.06); color: #7b8794; }
 .buscador-inline input { padding: .6rem 1rem; }
 .ficha-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem 2rem; margin: 0;
@@ -402,19 +402,28 @@ $vp-rojo: #dc2626;
 .campo .ve-color { display: flex; width: 100%; }
 .ve-par { display: flex; gap: .6rem; align-items: center; input { width: 100%; } }
 #ve-guardar.ve-pend { box-shadow: 0 0 0 3px rgba(255, 90, 31, .5); }
-.ve-area { display: grid; grid-template-columns: 32rem minmax(0, 1fr); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }   // panel lateral a la izquierda
+.ve-area { --ve-alto: 70dvh; position: relative; display: grid; grid-template-columns: 32rem minmax(0, 1fr); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }   // panel lateral a la izquierda
 .ve-area.ve-sin-lateral { grid-template-columns: auto minmax(0, 1fr); }   // panel oculto: solo queda la pestaña para reabrirlo
 .ve-area > .pn-abrir { order: -2; }
 .ve-lateral { order: -1; }
 // Cabecera y pestañas (piezas compartidas .pn-cab / .pn-tabs) forman la tarjeta del panel, a sangre
 .ve-lateral > .pn-cab { border: 1px solid var(--border); border-bottom: 0; border-radius: .8rem .8rem 0 0; }
 .ve-lateral > .pn-tabs { border: 1px solid var(--border); border-bottom: 0; border-radius: 0 0 .8rem .8rem; margin-bottom: 1.2rem; }
-.ve-lienzo { position: relative; height: 70vh; height: 70dvh; background: #3a3f4b; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden; }
+.ve-lienzo { position: relative; height: 70vh; height: var(--ve-alto, 70dvh); background: #3a3f4b; border: 1px solid var(--border); border-radius: .6rem; overflow: hidden; }
+// El panel nunca supera el alto del área de trabajo: cabecera y pestañas quedan fijas y el contenido
+// baja con su propio scroll, así el lienzo no se mueve al recorrer las propiedades.
+@media (min-width: 64.0625rem) {
+  .ve-lateral { max-height: var(--ve-alto, 70dvh); }
+  .ve-lateral > .pn-cab, .ve-lateral > .ve-tabs { flex: none; }
+  .ve-lateral > .ve-tab-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: .4rem; }
+}
 .ve-props { h4 { margin-bottom: 1rem; }
   .ve-f { margin-bottom: 1rem; label { display: block; font-size: 1.1rem; margin-bottom: .3rem; } input[type=number], select { width: 100%; } input[type=color] { width: 100%; height: 3.2rem; padding: 0; } .ve-chk { display: flex; gap: .6rem; align-items: center; } }
   .ve-btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
 }
-@media (max-width: 64rem) { .ve-area { grid-template-columns: 1fr; } .ve-lateral { order: 0; } }
+@media (max-width: 64rem) { .ve-area { grid-template-columns: 1fr; } .ve-lateral { order: 0; }
+  // El botón para reabrir el panel no debe empujar el lienzo hacia abajo
+  .ve-area.ve-sin-lateral > .pn-abrir { position: absolute; left: 0; top: 0; z-index: 6; } }
 
 .vp-recovery-btns { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-top: 1rem; }
 
@@ -488,7 +497,7 @@ body.vp-sin-scroll { overflow: hidden; }
   .ve-solo-ampliado { display: flex !important; margin-left: auto; gap: 1rem; }
   .ve-area { flex: 1; min-height: 0; margin-top: 1rem; grid-template-rows: minmax(0, 1fr); }
   .ve-lienzo { height: 100%; }
-  .ve-lateral { max-height: 100%; overflow-y: auto; }
+  .ve-lateral { max-height: 100%; overflow: hidden; }
   .ve-cerrar-ampliado { display: inline-flex !important; align-items: center; justify-content: center; position: fixed; left: 1.6rem; bottom: 1.6rem; width: 4.4rem; height: 4.4rem; border-radius: 50%; border: 0; background: #1c2541; color: #fff; font-size: 2rem; cursor: pointer; box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .35); z-index: 5; &:hover { background: $vp-rojo; } }
 }
 @media (max-width: 80rem) { .ve-hoja.ve-ampliado .ve-area { grid-template-rows: minmax(0, 1fr) auto; } }

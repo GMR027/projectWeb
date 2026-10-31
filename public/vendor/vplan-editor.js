@@ -14,7 +14,7 @@
   let enExport = false, pend360 = null, cambiar360 = null;   // pend360: foto ya subida que espera el área; cambiar360: id del enlace cuya foto se reemplaza
   const ELIPSE = ['ellipse', 'zone'];
   const LINEAS = ['line', 'arrow', 'darrow', 'measure'];
-  const CERRADAS = [...POLI, 'rect', 'rrect', 'ellipse', 'zone'];
+  const CERRADAS = [...POLI, 'rect', 'rrect', 'ellipse', 'zone', 'polygon'];
 
   // selId = marca elegida cuando hay una sola; sel = todas las elegidas (en el orden en que se eligieron)
   const modoSel = () => state.tool === 'select' || state.tool === 'multi';   // «multi»: recuadro de selección sin Mayús
@@ -76,7 +76,7 @@
   }
 
   // ---------- materiales de una marca ----------
-  const TIPOS_MATERIAL = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', ...POLI];
+  const TIPOS_MATERIAL = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', 'polygon', ...POLI];
   const materialActivo = () => {
     const t = document.querySelector('#ve-pestanas [data-pest].activo');
     return !!t && t.dataset.pest === 'materiales';
@@ -289,6 +289,7 @@
         break;
       }
       case 'ellipse': n = new Konva.Ellipse({ ...base, radiusX: d.rx, radiusY: d.ry, fill: relleno, ...trazo }); break;
+      case 'polygon': n = new Konva.Line({ ...base, points: d.points, closed: true, fill: relleno, ...trazo, hitStrokeWidth: Math.max(20, d.strokeWidth * 3) }); break;
       case 'zone': n = new Konva.Ellipse({ ...base, radiusX: d.rx, radiusY: d.ry, fill: relleno, ...trazo }); break;
       case 'text': {
         const props = { text: d.text, fontSize: d.fontSize, fontFamily: famDe(d), fontStyle: estiloDe(d), textDecoration: decoDe(d), align: d.align || 'left', fill: lig || d.fill || '#000' };
@@ -389,32 +390,106 @@
     g.on('mouseleave', () => { if (stage) stage.container().style.cursor = 'default'; });
     return g;
   }
-  // Galería centrada: en las líneas arriba del trazo; en las formas, al centro o sobre el borde superior
-  function galeriaMaterial(d, box, imgs) {
+  // Puntos del contorno de una forma cerrada, en coordenadas locales del nodo
+  function perimetroLocal(d) {
+    const tipo = d.type;
+    if (tipo === 'rect' || tipo === 'rrect') {
+      const w = Math.max(1, d.w), h = Math.max(1, d.h);
+      // Empieza en el centro del borde superior y recorre en sentido horario
+      return [[w / 2, 0], [w, 0], [w, h], [0, h], [0, 0]];
+    }
+    if (tipo === 'ellipse' || tipo === 'zone') {
+      const rx = Math.max(1, d.rx), ry = Math.max(1, d.ry), pts = [];
+      for (let i = 0; i < 160; i++) {
+        const a = -Math.PI / 2 + (Math.PI * 2 * i) / 160;   // desde arriba, en sentido horario
+        pts.push([Math.cos(a) * rx, Math.sin(a) * ry]);
+      }
+      return pts;
+    }
+    if (CERRADAS.includes(tipo)) {
+      const pts = [];
+      if (tipo === 'polygon' && Array.isArray(d.points)) {
+        for (let i = 0; i < d.points.length; i += 2) pts.push([d.points[i], d.points[i + 1]]);
+        return pts.length >= 3 ? pts : null;   // polígono libre: el contorno es su propia lista de puntos
+      }
+      const flat = puntos(tipo, Math.max(1, d.w), Math.max(1, d.h));
+      for (let i = 0; i < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
+      if (pts.length < 3) return null;
+      let arriba = 0;
+      pts.forEach((p, i) => { if (p[1] < pts[arriba][1] || (p[1] === pts[arriba][1] && p[0] < pts[arriba][0])) arriba = i; });
+      return pts.slice(arriba).concat(pts.slice(0, arriba));   // empieza en la punta superior
+    }
+    return null;
+  }
+
+  // Reparte n puntos a igual distancia sobre un contorno cerrado
+  function muestrearPerimetro(pts, n) {
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (len > 0) { segs.push({ a, b, len, ini: total }); total += len; }
+    }
+    if (!total) return [];
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const dist = (k / Math.max(1, n)) * total;
+      let s = segs[segs.length - 1];
+      for (const seg of segs) if (dist <= seg.ini + seg.len) { s = seg; break; }
+      const t = Math.min(1, Math.max(0, (dist - s.ini) / s.len));
+      out.push({ x: s.a[0] + (s.b[0] - s.a[0]) * t, y: s.a[1] + (s.b[1] - s.a[1]) * t });
+    }
+    return out;
+  }
+
+  // Centros de los materiales sobre el borde real de la forma (con su rotación)
+  function puntosEnBorde(d, n, node, rel) {
+    const pts = perimetroLocal(d);
+    if (!pts || !node) return null;
+    const t = node.getAbsoluteTransform(rel);
+    return muestrearPerimetro(pts, n).map(p => t.point(p));
+  }
+
+  // Galería centrada: en las líneas arriba del trazo; en las formas, al centro o repartida por el borde
+  function galeriaMaterial(d, box, imgs, node, rel) {
     const tam = Math.max(24, Math.min(400, +d.mat_tam || 64));
-    const gap = Math.max(3, tam * 0.12), pad = Math.max(3, tam * 0.1);
+    const gap = Math.max(3, tam * 0.12);
     const c = d.stroke && /^#[0-9a-f]{6}$/i.test(d.stroke) ? d.stroke : '#0070c0';
     const fotos = [];
     for (const it of imgs) {
       const img = getImg(it.src);
       if (!img) continue;
-      const rel = img.width && img.height ? img.width / img.height : 1;
-      fotos.push({ img, w: Math.max(tam * 0.5, Math.min(tam * 2, tam * rel)), h: tam });
+      const iw = img.width || 1, ih = img.height || 1, lado = Math.min(iw, ih);
+      // Miniatura circular: recorte cuadrado al centro y radio del 50 %
+      fotos.push({ img, crop: { x: (iw - lado) / 2, y: (ih - lado) / 2, width: lado, height: lado } });
     }
     if (!fotos.length) return null;
-    const total = fotos.reduce((s, f) => s + f.w, 0) + gap * (fotos.length - 1);
-    const alto = tam + pad * 2;
+    const total = fotos.length * tam + gap * (fotos.length - 1);
+    const alto = tam;
     const esLinea = LINEAS.includes(d.type);
+    const enBorde = !esLinea && d.mat_pos === 'borde';
+    const centros = enBorde ? puntosEnBorde(d, fotos.length, node, rel) : null;
     const ax = box.x + box.width / 2;
     const ay = esLinea ? box.y - alto / 2 - Math.max(6, tam * 0.18)
-      : (d.mat_pos === 'borde' ? box.y : box.y + box.height / 2);
-    const g = new Konva.Group({ x: ax, y: ay, name: 'mat-galeria', listening: false });
-    g.add(new Konva.Rect({ x: -total / 2 - pad, y: -alto / 2, width: total + pad * 2, height: alto, fill: 'rgba(255,255,255,.94)', stroke: c, strokeWidth: Math.max(1, tam * 0.02), cornerRadius: Math.max(4, tam * 0.12), shadowColor: '#0b132b', shadowBlur: Math.max(4, tam * 0.12), shadowOpacity: .22, listening: false }));
+      : (enBorde ? box.y : box.y + box.height / 2);
+    const g = new Konva.Group({ x: centros ? 0 : ax, y: centros ? 0 : ay, name: 'mat-galeria', listening: false });
+    const anillo = Math.max(1.5, tam * 0.04), interior = tam - anillo * 2;
     let x = -total / 2;
-    for (const f of fotos) {
-      g.add(new Konva.Image({ image: f.img, x, y: -f.h / 2, width: f.w, height: f.h, cornerRadius: Math.max(2, tam * 0.06), listening: false }));
-      x += f.w + gap;
-    }
+    fotos.forEach((f, i) => {
+      const cx = centros ? centros[i].x : x + tam / 2;
+      const cy = centros ? centros[i].y : 0;
+      // Cada material lleva su propio círculo blanco y su borde: no se encierran todos en una sola caja
+      g.add(new Konva.Circle({
+        x: cx, y: cy, radius: tam / 2, fill: '#ffffff', stroke: c,
+        strokeWidth: Math.max(1, tam * 0.02), shadowColor: '#0b132b', shadowBlur: Math.max(4, tam * 0.1), shadowOpacity: .22, listening: false,
+      }));
+      g.add(new Konva.Image({
+        image: f.img, x: cx - interior / 2, y: cy - interior / 2, width: interior, height: interior,
+        crop: f.crop, cornerRadius: interior / 2, listening: false,
+      }));
+      x += tam + gap;
+    });
     return g;
   }
   function crearOverlayMaterial(d, node, rel, exportando) {
@@ -424,7 +499,7 @@
     const box = node.getClientRect({ relativeTo: rel, skipShadow: true });
     if (!box || box.width < 1 || box.height < 1) return null;
     const grupo = new Konva.Group({ name: 'mat-overlay' });
-    const gal = d.mat_mostrar ? galeriaMaterial(d, box, imgs) : null;
+    const gal = d.mat_mostrar ? galeriaMaterial(d, box, imgs, node, rel) : null;
     if (gal) grupo.add(gal);
     if (!exportando) grupo.add(botonMaterial(d, box, imgs));
     return grupo.children.length ? grupo : null;
@@ -477,7 +552,7 @@
     $('#ve-coment-n').textContent = con.length ? '(' + con.length + ')' : '';
     ul.innerHTML = con.map(x => '<li data-id="' + x.id + '"><b>' + esc(NOMBRE_TIPO[x.type] || 'Marca') + '</b> ' + esc(x.comment.length > 90 ? x.comment.slice(0, 90) + '…' : x.comment) + '</li>').join('');
   }
-  const NOMBRE_TIPO = { text: 'Texto', table: 'Tabla', image: 'Imagen', measure: 'Medida', restr: 'Restricción', pin: 'Círculo', link: 'Hipervínculo', line: 'Línea', arrow: 'Flecha', darrow: 'Flecha', rect: 'Rectángulo', rrect: 'Rectángulo', ellipse: 'Elipse', zone: 'Zona' };
+  const NOMBRE_TIPO = { text: 'Texto', table: 'Tabla', image: 'Imagen', measure: 'Medida', restr: 'Restricción', pin: 'Círculo', link: 'Hipervínculo', line: 'Línea', arrow: 'Flecha', darrow: 'Flecha', rect: 'Rectángulo', rrect: 'Rectángulo', ellipse: 'Elipse', zone: 'Zona', polygon: 'Polígono' };
 
   // ---------- selección y transformación ----------
   // Una o varias marcas elegidas (state.sel, en orden de elección); state.selId solo vale cuando hay exactamente una.
@@ -518,7 +593,9 @@
     limpiarNodos();
     const d = state.sel.length === 1 ? forma(state.sel[0]) : null, n = d && nodes[d.id];
     const capa = d && capaPor(d.layer);
-    if (!d || !n || !modoSel() || !LINEAS.includes(d.type) || (capa && capa.locked) || !trLayer) return;
+    const esPoli = d && (LINEAS.includes(d.type) || d.type === 'polygon');
+    if (!d || !n || !modoSel() || !esPoli || (capa && capa.locked) || !trLayer) return;
+    const cerrada = d.type === 'polygon';
     const k = 1 / stage.scaleX(), editable = d.type !== 'measure';
     let pts = d.points.slice();
     nodosGrupo = new Konva.Group({ name: 'nodos' }); trLayer.add(nodosGrupo);
@@ -526,25 +603,32 @@
     const aCapa = (x, y) => n.getTransform().point({ x, y });
     const aLocal = p => n.getTransform().copy().invert().point(p);
     let vertices = [], medios = [];
+    const total = () => pts.length / 2;
+    const segs = () => cerrada ? total() : Math.max(0, total() - 1);
     const colocar = () => {
       const m = n.getTransform();
       vertices.forEach((c, i) => c.position(m.point({ x: pts[2 * i], y: pts[2 * i + 1] })));
-      medios.forEach((c, i) => c.position(m.point({ x: (pts[2 * i] + pts[2 * i + 2]) / 2, y: (pts[2 * i + 1] + pts[2 * i + 3]) / 2 })));
+      medios.forEach((c, i) => {
+        const j = (i + 1) % total();
+        c.position(m.point({ x: (pts[2 * i] + pts[2 * j]) / 2, y: (pts[2 * i + 1] + pts[2 * j + 1]) / 2 }));
+      });
       trLayer.batchDraw();
     };
     const vistaPrevia = () => { n.points(pts); layer.batchDraw(); };
     const terminar = () => { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === d.id); if (t) { t.points = pts.map(v => Math.round(v * 100) / 100); commit(nuevas); } };
+    const minVerts = cerrada ? 3 : 2;
     const mkVertice = i => {
       const c = new Konva.Circle({ radius: 6 * k, fill: '#ffffff', stroke: '#0070c0', strokeWidth: 2 * k, draggable: true, name: 'nodo' });
       c.on('mouseenter', () => { stage.container().style.cursor = 'move'; }); c.on('mouseleave', () => { stage.container().style.cursor = 'default'; });
       c.on('dragmove', () => { const p = aLocal(c.position()); pts[2 * i] = p.x; pts[2 * i + 1] = p.y; vistaPrevia(); colocar(); });
       c.on('dragend', terminar);
-      if (editable) c.on('dblclick dbltap', () => { if (pts.length <= 4) { status('Una línea necesita al menos dos nodos'); return; } pts.splice(2 * i, 2); terminar(); });
+      if (editable) c.on('dblclick dbltap', () => { if (total() <= minVerts) { status(cerrada ? 'Un polígono necesita al menos tres vértices' : 'Una línea necesita al menos dos nodos'); return; } pts.splice(2 * i, 2); terminar(); });
       return c;
     };
-    for (let i = 0; i < pts.length / 2; i++) { const c = mkVertice(i); vertices.push(c); nodosGrupo.add(c); }
+    for (let i = 0; i < total(); i++) { const c = mkVertice(i); vertices.push(c); nodosGrupo.add(c); }
     if (editable) {
-      for (let i = 0; i < pts.length / 2 - 1; i++) {
+      for (let i = 0; i < segs(); i++) {
+        const j = (i + 1) % total();
         const m = new Konva.Circle({ radius: 4.5 * k, fill: 'rgba(0,112,192,.35)', stroke: '#0070c0', strokeWidth: 1 * k, draggable: true, name: 'nodo-medio' });
         m.on('mouseenter', () => { stage.container().style.cursor = 'copy'; }); m.on('mouseleave', () => { stage.container().style.cursor = 'default'; });
         m.on('dragstart', () => {   // el punto medio se vuelve un nodo nuevo
@@ -626,7 +710,7 @@
       }
       else if (POLI.includes(t.type) || RECT.includes(t.type)) { t.w = Math.max(4, t.w * sx); t.h = Math.max(4, t.h * sy); }
       else if (ELIPSE.includes(t.type)) { t.rx = Math.max(2, t.rx * sx); t.ry = Math.max(2, t.ry * sy); }
-      else if (LINEAS.includes(t.type)) { t.points = t.points.map((v, i) => v * (i % 2 ? sy : sx)); }
+      else if (LINEAS.includes(t.type) || t.type === 'polygon') { t.points = t.points.map((v, i) => v * (i % 2 ? sy : sx)); }
       else if (t.type === 'text') {
         if (t.boxW) {   // caja de texto: las asas laterales cambian el ancho; las de esquina también agrandan la letra
           t.boxW = Math.max(40, Math.round(t.boxW * sx));
@@ -994,6 +1078,7 @@
     const caja = $('#ve-alinear'); if (!caja) return;
     const n = elegidas().length;
     caja.hidden = n < 1;
+    const vacio = $('#ve-alinear-vacio'); if (vacio) vacio.hidden = n > 0;
     $('#ve-sel-n').textContent = n > 1 ? n + ' marcas elegidas' : (n === 1 ? '1 marca elegida' : '');
     caja.querySelectorAll('[data-di]').forEach(b => { b.disabled = n < 3; });
     const tp = document.querySelector('.ve-tabs [data-tab=props]'); if (tp) tp.classList.toggle('con-sel', n > 0);
@@ -1043,8 +1128,23 @@
     if (!poli) return;
     const d = poli.d; poli.nodo.destroy();
     d.points = d.points.slice(0, -2);   // quita el punto temporal
+    // El doble clic deja dos vértices casi en el mismo sitio: se descartan los repetidos
+    const limpio = [];
+    for (let i = 0; i < d.points.length; i += 2) {
+      const x = d.points[i], y = d.points[i + 1], n = limpio.length;
+      if (n && Math.hypot(x - limpio[n - 2], y - limpio[n - 1]) < 2) continue;
+      limpio.push(x, y);
+    }
+    d.points = limpio;
     poli = null;
-    if (d.points.length >= 4) { state.selId = d.id; commit([...clone(state.shapes), d]); setTool('select'); } else layer.batchDraw();
+    const min = d.type === 'polygon' ? 6 : 4;   // un polígono necesita 3 vértices (6 números)
+    if (d.points.length >= min) { state.selId = d.id; commit([...clone(state.shapes), d]); setTool('select'); } else layer.batchDraw();
+  }
+  function cancelarPoli() {
+    if (!poli) return;
+    poli.nodo.destroy(); poli = null;
+    layer.batchDraw();
+    setTool('select');
   }
 
   function configurarEventos() {
@@ -1064,11 +1164,18 @@
       if (!capaOk()) return;
       if (['text', 'textbox', 'restr', 'pin', 'image'].includes(state.tool)) return;   // se crean en el clic
       const p = posRel();
-      if (state.tool === 'poly') {
+      if (state.tool === 'poly' || state.tool === 'polygon') {
         if (!poli) {
-          const d = { id: uid(), type: 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...estiloBase(), round: true };
+          const d = state.tool === 'polygon'
+            ? { id: uid(), type: 'polygon', x: p.x, y: p.y, points: [0, 0, 0, 0], fill: '', fillAlpha: 100, ...estiloBase() }
+            : { id: uid(), type: 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...estiloBase(), round: true };
           poli = { d, nodo: crearNodo(d) }; layer.add(poli.nodo);
         } else {
+          // En el polígono, un clic sobre el primer vértice cierra la figura (hacen falta 3 vértices fijos)
+          if (poli.d.type === 'polygon' && poli.d.points.length >= 8) {
+            const k = 10 / stage.scaleX(), x0 = poli.d.x + poli.d.points[0], y0 = poli.d.y + poli.d.points[1];
+            if (Math.hypot(p.x - x0, p.y - y0) <= k) { finalizarPoli(); return; }
+          }
           const q = puntoPoli(poli.d, p, e.evt.shiftKey);
           poli.d.points[poli.d.points.length - 2] = q[0]; poli.d.points[poli.d.points.length - 1] = q[1];   // fija el punto temporal
           poli.d.points.push(q[0], q[1]);                                                                    // y abre otro
@@ -1134,7 +1241,7 @@
     window.addEventListener('mouseup', terminarGesto);
     window.addEventListener('touchend', terminarGesto);
     window.addEventListener('touchcancel', terminarGesto);
-    stage.on('dblclick dbltap', () => { if (state.tool === 'poly') finalizarPoli(); });
+    stage.on('dblclick dbltap', () => { if (state.tool === 'poly' || state.tool === 'polygon') finalizarPoli(); });
     stage.on('click tap', e => {
       if (!['text', 'textbox', 'restr', 'pin'].includes(state.tool)) return;
       if (!capaOk()) return;
@@ -1164,7 +1271,8 @@
       if (e.key === 'F8') { e.preventDefault(); const o = $('#t-orto'); o.checked = !o.checked; status('Modo ortogonal ' + (o.checked ? 'activado' : 'desactivado')); return; }
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
       const k = e.key.toLowerCase();
-      if (poli && (k === 'enter' || k === 'escape')) { e.preventDefault(); finalizarPoli(); return; }
+      if (poli && k === 'enter') { e.preventDefault(); finalizarPoli(); return; }
+      if (poli && k === 'escape') { e.preventDefault(); cancelarPoli(); return; }
       if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
       else if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); }
       else if ((e.ctrlKey || e.metaKey) && k === 'c') copiar();
@@ -2067,11 +2175,18 @@
     const tgl = document.getElementById('ve-panel-tgl'), abrir = document.getElementById('ve-panel-abrir');
     if (!area || !lat) return;
     const ver = v => {
+      const y = window.scrollY;   // ocultar el panel no debe mover la vista
       lat.hidden = !v;
       if (tgl) tgl.hidden = !v;
       if (abrir) abrir.hidden = v;
       area.classList.toggle('ve-sin-lateral', !v);
       try { localStorage.setItem('ve-panel', v ? '1' : '0'); } catch (_) {}
+      const volver = () => window.scrollTo(0, y);
+      requestAnimationFrame(() => {
+        volver();
+        if (window.__vplan && typeof window.__vplan.encuadrar === 'function') window.__vplan.encuadrar();   // el lienzo aprovecha el nuevo ancho
+      });
+      setTimeout(volver, 80);
     };
     if (tgl) tgl.addEventListener('click', () => ver(false));
     if (abrir) abrir.addEventListener('click', () => ver(true));

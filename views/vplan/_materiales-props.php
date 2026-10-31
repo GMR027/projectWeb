@@ -1,6 +1,7 @@
 <?php // Sección «Materiales» del panel de Propiedades y selector de actividades/subactividades. ?>
 <div class="ve-mat-props" id="p-mat-seccion" style="display:none">
     <h5><i class="fa-solid fa-cubes"></i> Materiales de esta marca</h5>
+    <p class="text-muted text-sm">Se asignan actividades o subactividades; los materiales y sus fotos se toman del catálogo de cada una.</p>
     <ul class="mat-chips" id="p-mat-lista"></ul>
     <p class="text-muted text-sm" id="p-mat-vacio">Sin actividades asignadas. Agrega una actividad o subactividad para relacionar la forma con el programa.</p>
     <div class="ve-btns">
@@ -19,9 +20,9 @@
             <label for="p-mat-pos">Dónde se ven</label>
             <select id="p-mat-pos">
                 <option value="centro">En el centro de la forma</option>
-                <option value="borde">Sobre el borde superior</option>
+                <option value="borde">Sobre el borde de la forma</option>
             </select>
-            <small class="text-muted">En las líneas se colocan siempre arriba, centradas sobre el trazo.</small>
+            <small class="text-muted">En las líneas se colocan siempre arriba, centradas sobre el trazo; en las formas se reparten por su borde.</small>
         </div>
         <label class="ve-chk" style="margin-top:.8rem"><input type="checkbox" id="p-mat-color-estado"> Colorear la marca según el estado del programa</label>
         <p class="text-muted text-sm" id="p-mat-img-info"></p>

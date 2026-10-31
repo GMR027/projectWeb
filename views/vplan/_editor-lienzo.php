@@ -42,6 +42,7 @@ $ic = [
     'dashdot' => '<path d="M4 20l3.5-3.5M11 13l.01.01M14 10l.01.01M17 7l3-3"/>',
     'dot' => '<path d="M5 19l.01.01M9 15l.01.01M13 11l.01.01M17 7l.01.01M20 4l.01.01" stroke-width="3.2"/>',
     'poly' => '<path d="M3 18l6-9 5 6 7-10"/><circle cx="3" cy="18" r="1.4" fill="currentColor"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/><circle cx="14" cy="15" r="1.4" fill="currentColor"/><circle cx="21" cy="5" r="1.4" fill="currentColor"/>',
+    'polygon' => '<path d="M4 9l5-5 6 3 4 8-9 5-6-4z"/><circle cx="4" cy="9" r="1.3" fill="currentColor"/><circle cx="9" cy="4" r="1.3" fill="currentColor"/><circle cx="15" cy="7" r="1.3" fill="currentColor"/><circle cx="19" cy="15" r="1.3" fill="currentColor"/><circle cx="10" cy="20" r="1.3" fill="currentColor"/>',
     'pencil' => '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
     'arrow' => '<path d="M4 20L20 4M20 4h-7M20 4v7"/>',
     'darrow' => '<path d="M5 19L19 5M19 5h-6M19 5v6M5 19h6M5 19v-6"/>',
@@ -113,7 +114,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             ['poly', 'Polilínea: clic en cada punto, doble clic o Enter para terminar'], ['pencil', 'Lápiz (trazo libre)'], ['arrow', 'Flecha'], ['darrow', 'Flecha doble']] as [$t, $ti]) echo $tool($t, $ti); ?>
     </div>
     <div class="ve-grupo" data-pan="dibujo" data-nombre="Formas">
-        <?php foreach ([['rect', 'Rectángulo'], ['rrect', 'Rectángulo redondeado'], ['ellipse', 'Elipse / círculo'], ['triangle', 'Triángulo'], ['diamond', 'Rombo'], ['zone', 'Zona translúcida']] as [$t, $ti]) echo $tool($t, $ti); ?>
+        <?php foreach ([['rect', 'Rectángulo'], ['rrect', 'Rectángulo redondeado'], ['ellipse', 'Elipse / círculo'], ['triangle', 'Triángulo'], ['diamond', 'Rombo'], ['polygon', 'Polígono: clic en cada vértice y doble clic, Enter o clic en el primer punto para cerrar'], ['zone', 'Zona translúcida']] as [$t, $ti]) echo $tool($t, $ti); ?>
         <div class="ve-mas">
             <button type="button" id="ve-mas-formas" class="ve-mas-btn" title="Más formas" aria-label="Más formas" aria-haspopup="true" aria-expanded="false"><?php echo $svg($ic['star']); ?><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <div class="ve-mas-panel" id="ve-mas-panel" hidden>
@@ -216,33 +217,13 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     </header>
     <div class="ve-tabs" role="tablist" aria-label="Paneles del editor">
         <button type="button" role="tab" data-tab="props" class="activa">Propiedades</button>
+        <button type="button" role="tab" data-tab="alinear"><i class="fa-solid fa-object-group"></i> Alinear</button>
         <button type="button" role="tab" data-tab="capas">Capas</button>
         <?php if (!empty($config['laminas'])): ?><button type="button" role="tab" data-tab="laminas">Láminas</button><?php endif; ?>
         <?php if (!empty($config['materiales'])): ?><button type="button" role="tab" data-tab="materiales"><i class="fa-solid fa-cubes"></i> Materiales</button><?php endif; ?>
         <button type="button" role="tab" data-tab="simbolos">Símbolos</button>
     </div>
     <div class="ve-tab-panel" data-panel="props">
-    <aside id="ve-alinear" class="card ve-alinear" hidden>
-        <h4>Alinear y agrupar <small class="text-muted" id="ve-sel-n"></small></h4>
-        <div class="ve-f"><label for="al-rel">Alinear respecto a</label>
-            <select id="al-rel"><option value="sel">La selección</option><option value="pag">La página</option><option value="prim">La primera elegida</option><option value="ult">La última elegida</option><option value="grande">La más grande</option><option value="chica">La más pequeña</option></select></div>
-        <div class="ve-al-fila" role="group" aria-label="Alinear">
-            <?php foreach ([['izq', 'Alinear a la izquierda'], ['cx', 'Centrar horizontalmente'], ['der', 'Alinear a la derecha'], ['sup', 'Alinear arriba'], ['cy', 'Centrar verticalmente'], ['inf', 'Alinear abajo']] as [$a, $t]): ?>
-                <button type="button" data-al="<?php echo $a; ?>" title="<?php echo s($t); ?>" aria-label="<?php echo s($t); ?>"><?php echo $svg($ic['al-' . $a]); ?></button>
-            <?php endforeach; ?>
-        </div>
-        <label class="text-sm text-muted ve-solo-multi">Distribuir (3 o más marcas)</label>
-        <div class="ve-al-fila ve-solo-multi" role="group" aria-label="Distribuir">
-            <?php foreach ([['h-ini', 'di-h-ini', 'Distribuir bordes izquierdos'], ['h-cen', 'di-h-cen', 'Distribuir centros horizontales'], ['h-fin', 'di-h-fin', 'Distribuir bordes derechos'], ['h-gap', 'di-h-gap', 'Mismo espacio horizontal entre marcas'],
-                ['v-ini', 'di-v-ini', 'Distribuir bordes superiores'], ['v-cen', 'di-v-cen', 'Distribuir centros verticales'], ['v-fin', 'di-v-fin', 'Distribuir bordes inferiores'], ['v-gap', 'di-v-gap', 'Mismo espacio vertical entre marcas']] as [$a, $i, $t]): ?>
-                <button type="button" data-di="<?php echo $a; ?>" title="<?php echo s($t); ?>" aria-label="<?php echo s($t); ?>"><?php echo $svg($ic[$i]); ?></button>
-            <?php endforeach; ?>
-        </div>
-        <div class="ve-btns">
-            <button type="button" id="b-agrupar" class="btn btn-sm btn-ghost" title="Ctrl+G">Agrupar</button>
-            <button type="button" id="b-desagrupar" class="btn btn-sm btn-ghost" title="Ctrl+Mayús+G">Desagrupar</button>
-        </div>
-    </aside>
     <aside id="ve-props" class="card ve-props">
         <h4>Propiedades</h4>
         <p class="ve-vacio text-muted text-sm">Selecciona una marca para editarla. Rueda del mouse = zoom; arrastra el fondo para desplazar el plano. Mayús al dibujar líneas = recta. Polilínea: doble clic o Enter para terminar. Las imágenes se redimensionan con las esquinas.</p>
@@ -349,6 +330,30 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <ul id="ve-coment-lista" class="ve-coment-lista"></ul>
         <p class="text-muted text-sm" style="margin-top:1.2rem">Atajos: Supr borrar · Ctrl+C / V copiar y pegar · Ctrl+D duplicar · Ctrl+Z / Y deshacer y rehacer · Ctrl+S guardar · flechas mueven (Mayús = 10 px).</p>
     </aside>
+    </div>
+    <div class="ve-tab-panel" data-panel="alinear" hidden>
+    <aside id="ve-alinear" class="card ve-alinear" hidden>
+        <h4>Alinear y agrupar <small class="text-muted" id="ve-sel-n"></small></h4>
+        <div class="ve-f"><label for="al-rel">Alinear respecto a</label>
+            <select id="al-rel"><option value="sel">La selección</option><option value="pag">La página</option><option value="prim">La primera elegida</option><option value="ult">La última elegida</option><option value="grande">La más grande</option><option value="chica">La más pequeña</option></select></div>
+        <div class="ve-al-fila" role="group" aria-label="Alinear">
+            <?php foreach ([['izq', 'Alinear a la izquierda'], ['cx', 'Centrar horizontalmente'], ['der', 'Alinear a la derecha'], ['sup', 'Alinear arriba'], ['cy', 'Centrar verticalmente'], ['inf', 'Alinear abajo']] as [$a, $t]): ?>
+                <button type="button" data-al="<?php echo $a; ?>" title="<?php echo s($t); ?>" aria-label="<?php echo s($t); ?>"><?php echo $svg($ic['al-' . $a]); ?></button>
+            <?php endforeach; ?>
+        </div>
+        <label class="text-sm text-muted ve-solo-multi">Distribuir (3 o más marcas)</label>
+        <div class="ve-al-fila ve-solo-multi" role="group" aria-label="Distribuir">
+            <?php foreach ([['h-ini', 'di-h-ini', 'Distribuir bordes izquierdos'], ['h-cen', 'di-h-cen', 'Distribuir centros horizontales'], ['h-fin', 'di-h-fin', 'Distribuir bordes derechos'], ['h-gap', 'di-h-gap', 'Mismo espacio horizontal entre marcas'],
+                ['v-ini', 'di-v-ini', 'Distribuir bordes superiores'], ['v-cen', 'di-v-cen', 'Distribuir centros verticales'], ['v-fin', 'di-v-fin', 'Distribuir bordes inferiores'], ['v-gap', 'di-v-gap', 'Mismo espacio vertical entre marcas']] as [$a, $i, $t]): ?>
+                <button type="button" data-di="<?php echo $a; ?>" title="<?php echo s($t); ?>" aria-label="<?php echo s($t); ?>"><?php echo $svg($ic[$i]); ?></button>
+            <?php endforeach; ?>
+        </div>
+        <div class="ve-btns">
+            <button type="button" id="b-agrupar" class="btn btn-sm btn-ghost" title="Ctrl+G">Agrupar</button>
+            <button type="button" id="b-desagrupar" class="btn btn-sm btn-ghost" title="Ctrl+Mayús+G">Desagrupar</button>
+        </div>
+    </aside>
+    <p class="text-muted text-sm" id="ve-alinear-vacio">Selecciona una o más marcas en el lienzo con la herramienta de selección (Mayús o Ctrl + clic para sumar). Aquí podrás alinearlas, distribuirlas y agruparlas.</p>
     </div>
     <div class="ve-tab-panel" data-panel="capas" hidden>
     <aside id="ve-capas" class="card ve-capas">

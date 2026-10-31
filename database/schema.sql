@@ -65,6 +65,8 @@ CREATE TABLE proyectos (
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
+    nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0,   -- barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
+    menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico',   -- barra superior: clásico, panel fijo o pestañas por sección
     clima_auto TINYINT(1) NOT NULL DEFAULT 0,     -- bitácora de clima automática + aviso del pronóstico (Telegram)
     clima_ultimo DATE NULL,
     clima_aviso DATE NULL,
