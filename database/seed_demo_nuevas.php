@@ -151,7 +151,7 @@ $logo = function (string $nombre, string $hexA, string $hexB, string $sub) use (
     $im = imagecreatetruecolor(640, 200);
     imagefill($im, 0, 0, imagecolorallocate($im, 255, 255, 255));
     imagefilledrectangle($im, 20, 30, 150, 160, $color($im, $hexA));
-    imagefilledpolygon($im, [20, 160, 150, 160, 150, 60], 3, $color($im, $hexB));
+    imagefilledpolygon($im, [20, 160, 150, 160, 150, 60], $color($im, $hexB));
     $texto($im, 38, 175, 105, '#0f172a', $nombre, true);
     $texto($im, 15, 178, 145, '#667085', $sub);
     $f = "$cache/logo-" . md5($nombre) . '.png';
