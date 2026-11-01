@@ -863,10 +863,10 @@
             var x0 = Math.min(f.a[0], f.b[0]) - t, x1 = Math.max(f.a[0], f.b[0]) + t, y0 = Math.min(f.a[1], f.b[1]) - t, y1 = Math.max(f.a[1], f.b[1]) + t;
             return p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1;
         }
-        cv.addEventListener('pointerdown', function (e) {
+        cv.addEventListener('pointerdown', async function (e) {
             var p = pos(e), o = opciones();
             if (herr === 'borrar') { for (var i = formas.length - 1; i >= 0; i--) if (cerca(formas[i], p)) { formas.splice(i, 1); break; } redibujar(); return; }
-            if (herr === 'texto') { var t = prompt('Texto'); if (t) { o.t = 'texto'; o.a = p; o.txt = t; formas.push(o); redibujar(); } return; }
+            if (herr === 'texto') { var t = await window.solicitarModal({ titulo: 'Texto de la anotación', mensaje: 'Escribe el texto que quieres colocar en el dibujo.', etiqueta: 'Texto', valor: '', obligatorio: true, aceptar: 'Añadir', icono: 'fa-font' }); if (t) { o.t = 'texto'; o.a = p; o.txt = t; formas.push(o); redibujar(); } return; }
             cv.setPointerCapture(e.pointerId); o.t = herr; o.a = p; o.b = p; if (herr === 'lapiz') o.pts = [p]; actual = o;
         });
         cv.addEventListener('pointermove', function (e) {

@@ -32,6 +32,9 @@ function cabeceras_seguridad(): void
     header('X-Frame-Options: SAMEORIGIN');          // no se puede incrustar en un sitio ajeno (clickjacking)
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: camera=(self), microphone=(self), geolocation=(self)');
+    header('Cross-Origin-Opener-Policy: same-origin');       // aísla la ventana de ventanas ajenas
+    header('Cross-Origin-Resource-Policy: same-origin');     // nadie enlaza nuestros recursos desde fuera
+    header('X-Permitted-Cross-Domain-Policies: none');
     // Todos los recursos (íconos, fuentes, PDF.js) se sirven desde el propio dominio: sin CDN externos.
     header("Content-Security-Policy-Report-Only: default-src 'self'; "
         . "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
@@ -50,12 +53,26 @@ function sesion_por_inactividad(): void
 {
     if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'ProjectWebDesktop')) return;
     if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['id'])) return;
-    $limite = 12 * 3600;
-    if (isset($_SESSION['_ultimo']) && (time() - (int)$_SESSION['_ultimo']) > $limite) {
+    $ahora = time();
+    $limite = 12 * 3600;              // inactividad máxima de la web
+    $absoluta = 7 * 24 * 3600;        // vida máxima de la sesión, aunque haya actividad
+    if (empty($_SESSION['_inicio'])) $_SESSION['_inicio'] = $ahora;
+    if (isset($_SESSION['_ultimo']) && ($ahora - (int)$_SESSION['_ultimo']) > $limite) {
         $_SESSION = [];
         session_regenerate_id(true);
+        return;
     }
-    $_SESSION['_ultimo'] = time();
+    if (($ahora - (int)$_SESSION['_inicio']) > $absoluta) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        return;
+    }
+    // El identificador se renueva cada 30 min (limita el daño de una cookie robada)
+    if (empty($_SESSION['_regen']) || ($ahora - (int)$_SESSION['_regen']) > 1800) {
+        session_regenerate_id(true);
+        $_SESSION['_regen'] = $ahora;
+    }
+    $_SESSION['_ultimo'] = $ahora;
 }
 
 /**
@@ -115,6 +132,13 @@ function is_auth(): bool
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
     return !empty($_SESSION['id']);
+}
+
+/** La cuenta debe elegir una contraseña propia antes de usar la plataforma (seed o temporal) */
+function debe_cambiar_password(): bool
+{
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    return !empty($_SESSION['debe_cambiar']);
 }
 
 function is_admin(): bool
@@ -198,6 +222,22 @@ function puede_eliminar_contenido($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
     return is_admin() || (($_SESSION['rol'] ?? '') === 'cliente' && puede_gestionar_proyecto($proyecto));
+}
+
+/**
+ * Corta una acción destructiva que el colaborador no puede hacer (borrar, restaurar una versión,
+ * revertir cambios o aplicar una plantilla que reemplaza el programa). Es la guarda explícita que
+ * complementa `es_ruta_de_borrado()`: no depende de cómo se llame la URL.
+ */
+function exigir_eliminar_contenido($proyecto, bool $json = false): void
+{
+    if (puede_eliminar_contenido($proyecto)) return;
+    $ruta = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    if ($json || str_starts_with($ruta, '/api/')) {
+        json_respuesta(['success' => false, 'error' => 'Solo el dueño del proyecto (o el administrador) puede eliminar o restaurar'], 403);
+    }
+    header('Location: /proyectos?error=' . urlencode('Solo el dueño del proyecto (o el administrador) puede eliminar o restaurar'));
+    exit;
 }
 
 /** ¿Esta ruta de la petición es una acción de borrado explícita? (la usa la guarda central del front controller) */
@@ -498,6 +538,8 @@ function enviar_descarga(string $datos, string $mime, string $nombre, bool $inli
     header_remove('Content-Type');
     header('Content-Type: ' . $mime);
     header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $nombre . '"');
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
     header('Content-Length: ' . strlen($datos));
     echo $datos;
     exit;
@@ -508,6 +550,9 @@ function json_respuesta(array $datos, int $codigo = 200): void
 {
     http_response_code($codigo);
     header('Content-Type: application/json');
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Cache-Control: no-store');
     echo json_encode($datos, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
@@ -677,6 +722,10 @@ function csrf_inyectar(string $html): string
     $html = implode('', $partes);
     $cabeza = '<meta name="csrf-token" content="' . $t . '"><script>(function(){var t=document.querySelector(\'meta[name=csrf-token]\').content,f=window.fetch;'
         . 'window.fetch=function(u,o){o=o||{};var m=String(o.method||(u&&u.method)||"GET").toUpperCase();if(m!=="GET"&&m!=="HEAD"){var url=typeof u==="string"?u:(u&&u.url)||"";if(!/^[a-z]+:/i.test(url)||url.indexOf(location.origin)===0){var h=new Headers(o.headers||(u&&u.headers)||{});h.set("X-CSRF-Token",t);o.headers=h;}}return f.call(this,u,o);};'
+        // XMLHttpRequest (por si algún día se usa en vez de fetch): mismo encabezado, mismas exclusiones
+        . 'var xo=XMLHttpRequest.prototype.open,xs=XMLHttpRequest.prototype.send;'
+        . 'XMLHttpRequest.prototype.open=function(m,u){this.__pwM=String(m||"GET").toUpperCase();this.__pwU=String(u||"");return xo.apply(this,arguments)};'
+        . 'XMLHttpRequest.prototype.send=function(){try{if(this.__pwM!=="GET"&&this.__pwM!=="HEAD"&&(!/^[a-z]+:/i.test(this.__pwU)||this.__pwU.indexOf(location.origin)===0))this.setRequestHeader("X-CSRF-Token",t)}catch(e){}return xs.apply(this,arguments)};'
         . 'function poner(fm){if(!fm||String(fm.method).toLowerCase()!=="post"||fm.querySelector(\'input[name=_csrf]\'))return;var i=document.createElement("input");i.type="hidden";i.name="_csrf";i.value=t;fm.appendChild(i);}'
         . 'document.addEventListener("submit",function(e){poner(e.target)},true);var s=HTMLFormElement.prototype.submit;HTMLFormElement.prototype.submit=function(){poner(this);return s.call(this)};})();</script>';
     return preg_replace('#</head>#i', $cabeza . '</head>', $html, 1);

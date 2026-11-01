@@ -1,0 +1,23 @@
+{
+  "name": "ProjectWeb · Programas de obra",
+  "short_name": "ProjectWeb",
+  "description": "Programas de obra, planeación, campo y documentos del proyecto, también sin conexión.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "/build/img/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/build/img/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/build/img/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Programa de obra", "short_name": "Programa", "url": "/proyectos" },
+    { "name": "Reporte diario", "short_name": "Reporte", "url": "/proyectos" },
+    { "name": "Novedades", "short_name": "Novedades", "url": "/novedades" }
+  ]
+}

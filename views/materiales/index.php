@@ -55,7 +55,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
             <?php $revs = $revisiones ?? []; $puedeRev = puede_revisar($proyecto); foreach ($materiales as $m): ?>
                 <tr>
                     <?php if (is_admin()): ?><td class="hide-m"><?php echo \Classes\Revisiones::chip('material', (string)$m->id, \Classes\Revisiones::estado($revs[(string)$m->id] ?? null, \Classes\Revisiones::huellaMaterial((array)$m)), $puedeRev, $m->nombre); ?></td><?php endif; ?>
-                    <td class="hide-m"><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt=""><?php else: ?><span class="mat-thumb mat-thumb-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?></td>
+                    <td class="hide-m"><?php if ($m->imagen): ?><img class="mat-thumb" src="/uploads/materiales/<?php echo s($m->imagen); ?>" alt="" loading="lazy" decoding="async"><?php else: ?><span class="mat-thumb mat-thumb-vacio"><i class="fa-regular fa-image"></i></span><?php endif; ?></td>
                     <td class="mono hide-m"><?php echo s($m->referencia); ?></td>
                     <td class="col-mat"><?php echo s($m->nombre); ?></td>
                     <td class="hide-m"><?php echo s($m->especialidad); ?></td>
@@ -80,7 +80,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
                         <form method="POST" action="/materiales/eliminar" style="display:inline" data-confirm="¿Eliminar material?|Se quitará también de los submittals y del MSR.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($m->id); ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                            <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                     </td>
                 </tr>

@@ -7,7 +7,7 @@ NS=projectweb
 sql() { kubectl -n $NS exec -i deploy/mysql -c mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --default-character-set=utf8mb4 -N project' 2>&1 | grep -v 'Using a password' || true; }
 
 # Tablas nuevas (CREATE TABLE IF NOT EXISTS)
-for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento migracion_dependencias_materiales_tablas; do echo ">> $f"; sql < $f.sql; done
+for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento migracion_dependencias_materiales_tablas migracion_anotador migracion_accesos; do echo ">> $f"; sql < $f.sql; done
 
 # Columnas nuevas: se agregan solo si no existen
 col() {   # tabla columna "ALTER completo"
@@ -20,6 +20,9 @@ col proyectos marca_logo "ALTER TABLE proyectos ADD COLUMN marca_logo VARCHAR(10
 col proyectos marca_color "ALTER TABLE proyectos ADD COLUMN marca_color VARCHAR(7) NULL;"
 col proyectos marca_color2 "ALTER TABLE proyectos ADD COLUMN marca_color2 VARCHAR(7) NULL;"
 col usuarios inicio_json "ALTER TABLE usuarios ADD COLUMN inicio_json TEXT NULL;"
+# Contraseña inicial/temporal obligatoria y último acceso (migracion_password_inicial.sql)
+col usuarios debe_cambiar_password "ALTER TABLE usuarios ADD COLUMN debe_cambiar_password TINYINT(1) NOT NULL DEFAULT 0 AFTER confirmado;"
+col usuarios ultimo_acceso "ALTER TABLE usuarios ADD COLUMN ultimo_acceso DATETIME NULL AFTER debe_cambiar_password;"
 # Colaboradores (pueden editar) y topes de equipo por cliente
 col usuarios nivel_acceso "ALTER TABLE usuarios ADD COLUMN nivel_acceso ENUM('ver','editar') NOT NULL DEFAULT 'ver' AFTER rol;"
 col usuarios herramientas_edicion "ALTER TABLE usuarios ADD COLUMN herramientas_edicion TEXT NULL AFTER herramientas;"

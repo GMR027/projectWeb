@@ -62,12 +62,12 @@ $fechaCorta = fn($f) => $f ? date('d/m/y', strtotime($f)) : '—';
 <?php case 'resumen': ?>
 <div class="grid-stats">
     <div class="stat-card"><div class="stat-label"><?php echo s(t('Proyectos')); ?></div><div class="stat-valor"><?php echo s($totalProyectos); ?></div></div>
-    <div class="stat-card"><div class="stat-label"><?php echo s(t('Actividades de hoy')); ?></div><div class="stat-valor"><?php echo (int)$datos['n_hoy']; ?></div></div>
-    <div class="stat-card"><div class="stat-label"><?php echo s(t('Atrasadas')); ?></div><div class="stat-valor<?php echo $datos['n_atrasadas'] ? ' text-danger' : ''; ?>"><?php echo (int)$datos['n_atrasadas']; ?></div></div>
+    <div class="stat-card"><div class="stat-label"><?php echo s(t('Actividades de hoy')); ?></div><div class="stat-valor"><?php echo (int)($datos['n_hoy'] ?? 0); ?></div></div>
+    <div class="stat-card"><div class="stat-label"><?php echo s(t('Atrasadas')); ?></div><div class="stat-valor<?php echo !empty($datos['n_atrasadas']) ? ' text-danger' : ''; ?>"><?php echo (int)($datos['n_atrasadas'] ?? 0); ?></div></div>
 </div>
-<?php break; case 'hoy': case 'atrasadas': $filas = $datos[$bloque]; ?>
+<?php break; case 'hoy': case 'atrasadas': $filas = $datos[$bloque] ?? []; ?>
 <section class="card inicio-bloque">
-    <h3><i class="fa-solid <?php echo $bloque === 'hoy' ? 'fa-sun' : 'fa-triangle-exclamation'; ?>"></i> <?php echo s(InicioUsuario::BLOQUES[$bloque][0]); ?> <small class="text-muted">· <?php echo (int)$datos[$bloque === 'hoy' ? 'n_hoy' : 'n_atrasadas']; ?></small></h3>
+    <h3><i class="fa-solid <?php echo $bloque === 'hoy' ? 'fa-sun' : 'fa-triangle-exclamation'; ?>"></i> <?php echo s(InicioUsuario::BLOQUES[$bloque][0]); ?> <small class="text-muted">· <?php echo (int)($datos[$bloque === 'hoy' ? 'n_hoy' : 'n_atrasadas'] ?? 0); ?></small></h3>
     <?php if (!$filas): ?><p class="text-muted"><?php echo $bloque === 'hoy' ? 'Nada programado para hoy.' : 'Sin actividades atrasadas. 👏'; ?></p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th><?php echo s(t('Actividad')); ?></th><th class="hide-m"><?php echo s(t('Proyecto')); ?></th><th class="hide-m"><?php echo s(t('Fin')); ?></th><th><?php echo s(t('Avance')); ?></th></tr></thead>

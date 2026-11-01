@@ -11,7 +11,7 @@ if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
+<html lang="<?php echo idioma_actual(); ?>" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

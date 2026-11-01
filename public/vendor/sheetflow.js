@@ -765,7 +765,7 @@
         else { S.cols.splice(desde, k); hsty.splice(desde, k); S.rows.forEach(function (f, r) { f.splice(desde, k); sty[r].splice(desde, k); }); }
     }
     document.querySelectorAll('[data-acc]').forEach(function (b) {
-        b.addEventListener('click', function () {
+        b.addEventListener('click', async function () {
             var a = b.dataset.acc, n = rangoNorm(), k;
             if (a === 'fila-arriba' || a === 'fila-abajo') {
                 k = Math.max(1, n.r1 - Math.max(0, n.r0) + 1);
@@ -776,7 +776,7 @@
                 var d = Math.max(0, n.r0); if (n.r1 < 0) return;
                 var vinculadas = 0;
                 for (var rr = d; rr <= n.r1; rr++) if (ids[rr]) vinculadas++;
-                if (vinculadas && !window.confirm('Este renglón está vinculado a una subactividad. Si lo eliminas, también se eliminará la subactividad.\n\n¿Eliminar ' + vinculadas + ' subactividad' + (vinculadas === 1 ? '' : 'es') + '?')) return;
+                if (vinculadas && !await window.confirmarModal({ titulo: '¿Eliminar el renglón?', mensaje: 'Está vinculado a una subactividad. Si lo eliminas, también se eliminará ' + vinculadas + ' subactividad' + (vinculadas === 1 ? '' : 'es') + '.', aceptar: 'Eliminar', icono: 'fa-link-slash' })) return;
                 antes(); eliminar('r', d, n.r1);
                 if (!S.rows.length) { S.rows.push(S.cols.map(function () { return ''; })); sty.push(S.cols.map(function () { return null; })); ids.push(null); }
                 sel.r0 = sel.r1 = Math.min(d, S.rows.length - 1);

@@ -42,7 +42,7 @@ if (!is_admin()) return;
                 var elem = todas.closest('.norm-elem');
                 var botones = elem ? elem.querySelectorAll('.norm-vinculo[data-estado="propuesta"] button[data-norm="aceptada"]') : [];
                 if (!botones.length) return;
-                if (!confirm('¿Aceptar ' + botones.length + ' propuesta(s) de este elemento?')) return;
+                if (!await window.confirmarModal({ titulo: '¿Aceptar las propuestas?', mensaje: 'Se aceptarán ' + botones.length + ' propuesta(s) de normativa de este elemento.', aceptar: 'Aceptar', icono: 'fa-circle-check', tono: 'info' })) return;
                 todas.disabled = true;
                 for (var i = 0; i < botones.length; i++) {
                     botones[i].disabled = true;

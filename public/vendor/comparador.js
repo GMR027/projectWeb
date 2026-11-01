@@ -123,9 +123,9 @@
     if (est.modo === 'diff') programarDiff(true);
   }
   const extDe = nombre => (String(nombre).split('.').pop() || '').toLowerCase();
-  const avisarSiAnotaciones = k => {
+  const avisarSiAnotaciones = async k => {
     if (k !== 'a' || !anot.shapes.length) return true;
-    return confirm('Cambiar el documento A borrará sus anotaciones. ¿Continuar?');
+    return await window.confirmarModal({ titulo: '¿Cambiar el documento A?', mensaje: 'Se borrarán las anotaciones del documento A. Esta acción no se puede deshacer.', aceptar: 'Cambiar', icono: 'fa-triangle-exclamation' });
   };
 
   document.querySelectorAll('.cmp-proy').forEach(sel => sel.addEventListener('change', async () => {
@@ -134,7 +134,7 @@
     const [tipo, idTxt] = sel.value.split(':');
     const id = parseInt(idTxt, 10) || 0;
     if (!tipo || !id) return;
-    if (!avisarSiAnotaciones(k)) { pintarSelectores(); return; }
+    if (!await avisarSiAnotaciones(k)) { pintarSelectores(); return; }
     fuenteUI(k).querySelector('.cmp-ext').value = '';
     slots[k].archivo = null;
     if (k === 'a') { anot.shapes = []; anot.sel = -1; anot.multi = []; pintarAnotUI(); redibujarAnot(); }
@@ -155,7 +155,7 @@
     const k = inp.dataset.slot, f = inp.files[0]; if (!f) return;
     const ext = extDe(f.name) || (f.type === 'application/pdf' ? 'pdf' : '');
     if (ext !== 'pdf' && !EXT_IMG.includes(ext)) { estado(k, 'Formato no permitido: usa PDF o imagen (png, jpg, webp, gif)'); inp.value = ''; return; }
-    if (!avisarSiAnotaciones(k)) { inp.value = ''; return; }
+    if (!await avisarSiAnotaciones(k)) { inp.value = ''; return; }
     const sp = document.querySelector('.cmp-proy[data-slot="' + k + '"]'); if (sp) sp.value = '';
     if (k === 'a') { anot.shapes = []; anot.sel = -1; anot.multi = []; pintarAnotUI(); redibujarAnot(); }
     slots[k].origen = { tipo: 'nuevo', nombre: f.name, ext, pagina: 1 };
@@ -248,8 +248,8 @@
   $('#cmp-ajustar').addEventListener('click', ajustarB);
   $('#cmp-reset-b').addEventListener('click', () => { bT.x = bT.y = 0; bT.s = 1; bT.rot = 0; aplicar(); });
   $('#cmp-encuadrar').addEventListener('click', encuadrar);
-  $('#cmp-intercambiar').addEventListener('click', () => {
-    if (anot.shapes.length && !confirm('Intercambiar A y B borrará las anotaciones del documento A. ¿Continuar?')) return;
+  $('#cmp-intercambiar').addEventListener('click', async () => {
+    if (anot.shapes.length && !await window.confirmarModal({ titulo: '¿Intercambiar A y B?', mensaje: 'Se borrarán las anotaciones del documento A. Esta acción no se puede deshacer.', aceptar: 'Intercambiar', icono: 'fa-right-left' })) return;
     const A = slots.a, B = slots.b, ca = A.canvas, cb = B.canvas;
     const campos = ['w', 'h', 'pdf', 'nombre', 'listo', 'pagina', 'origen', 'archivo', 'tok'];
     campos.forEach(c => { const t = A[c]; A[c] = B[c]; B[c] = t; });
@@ -436,7 +436,9 @@
 
   // ===================================================================== anotaciones
   const escala = () => Math.max(0.7, Math.min(3, (slots.a.w || 1200) / 1200));
-  const vacia = sh => ['rect', 'elipse', 'nube', 'resaltado', 'area'].includes(sh.tipo);
+  const A = window.Anotaciones;
+  const anotCfg = () => ({ base: escala(), k: vista.k, mPorPx: anot.escala });
+  const vacia = sh => A.vacia(sh);
   const clone = o => JSON.parse(JSON.stringify(o));
   const deep = i => anot.shapes[i] ? clone(anot.shapes[i]) : null;
   /** Píxeles de pantalla → píxeles del documento (para tiradores, tolerancias y trazos de selección) */
@@ -488,199 +490,23 @@
     return { x: (e.clientX - r.left - vista.x) / k, y: (e.clientY - r.top - vista.y) / k };
   }
 
-  function envolver(g, texto, maxW) {
-    const lineas = [];
-    String(texto || '').split(/\r?\n/).forEach(par => {
-      const palabras = par.split(/\s+/);
-      let linea = '';
-      palabras.forEach(pal => {
-        const prueba = linea ? linea + ' ' + pal : pal;
-        if (linea && g.measureText(prueba).width > maxW) { lineas.push(linea); linea = pal; }
-        else linea = prueba;
-      });
-      lineas.push(linea || ' ');
-    });
-    return lineas;
-  }
-  function medidaTexto(sh, g = anotCtx) {
-    const e = escala(), f = (sh.fuente || 16) * e;
-    g.save(); g.font = '600 ' + f + 'px Inter, system-ui, sans-serif';
-    const maxW = 420 * e, lineas = envolver(g, sh.texto, maxW);
-    let w = 0; lineas.forEach(l => { w = Math.max(w, g.measureText(l).width); });
-    const out = { f, lineas, w: Math.max(20 * e, Math.min(maxW, w)), h: Math.max(f, lineas.length * f * 1.28), maxW };
-    g.restore();
-    return out;
-  }
-  function cajaTextoGlobo(sh, g = anotCtx) {
-    const e = escala(), m = medidaTexto(sh, g), r = (sh.radio || 28) * e;
-    return { x: sh.x + r + 10 * e, y: sh.y - r, w: Math.min(320 * e, m.w + 18 * e), h: Math.max(r * 2, m.h + 12 * e) };
-  }
-  function caja(sh, g = anotCtx) {
-    if (vacia(sh)) return { x: sh.x, y: sh.y, w: sh.w, h: sh.h };
-    if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') return { x: Math.min(sh.x1, sh.x2), y: Math.min(sh.y1, sh.y2), w: Math.abs(sh.x2 - sh.x1), h: Math.abs(sh.y2 - sh.y1) };
-    if (sh.tipo === 'mano') {
-      const xs = sh.pts.map(p => p[0]), ys = sh.pts.map(p => p[1]);
-      return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(1, Math.max(...xs) - Math.min(...xs)), h: Math.max(1, Math.max(...ys) - Math.min(...ys)) };
-    }
-    if (sh.tipo === 'texto') { const m = medidaTexto(sh, g); return { x: sh.x, y: sh.y, w: m.w, h: m.h }; }
-    if (sh.tipo === 'globo') {
-      const e = escala(), r = (sh.radio || 28) * e;
-      let b = { x: sh.x - r, y: sh.y - r, w: r * 2, h: r * 2 };
-      if (sh.texto) { const c = cajaTextoGlobo(sh, g); b = { x: Math.min(b.x, c.x), y: Math.min(b.y, c.y), w: Math.max(b.x + b.w, c.x + c.w) - Math.min(b.x, c.x), h: Math.max(b.y + b.h, c.y + c.h) - Math.min(b.y, c.y) }; }
-      return b;
-    }
-    return { x: 0, y: 0, w: 0, h: 0 };
-  }
+  const envolver = (g, texto, maxW) => A.envolver(g, texto, maxW);
+  const medidaTexto = (sh, g = anotCtx) => A.medidaTexto(sh, g, anotCfg());
+  const cajaTextoGlobo = (sh, g = anotCtx) => A.cajaTextoGlobo(sh, g, anotCfg());
+  const caja = (sh, g = anotCtx) => A.caja(sh, g, anotCfg());
 
-  const fmtLong = px => {
-    if (!anot.escala) return Math.round(px) + ' px';
-    const m = px * anot.escala;
-    if (m >= 1) return m.toFixed(2) + ' m';
-    if (m >= 0.01) return (m * 100).toFixed(0) + ' cm';
-    return (m * 1000).toFixed(0) + ' mm';
-  };
-  const fmtArea = px2 => {
-    if (!anot.escala) return Math.round(px2) + ' px²';
-    const m2 = px2 * anot.escala * anot.escala;
-    if (m2 >= 1) return m2.toFixed(2) + ' m²';
-    return (m2 * 10000).toFixed(0) + ' cm²';
-  };
-  const longitud = sh => Math.hypot(sh.x2 - sh.x1, sh.y2 - sh.y1);
+  const fmtLong = px => A.fmtLong(px, anotCfg());
+  const fmtArea = px2 => A.fmtArea(px2, anotCfg());
+  const longitud = sh => A.longitud(sh);
 
-  function etiqueta(g, x, y, texto, col) {
-    const e = escala(), f = Math.max(10, 13 * e);
-    g.save(); g.font = '700 ' + f + 'px Inter, system-ui, sans-serif';
-    const w = g.measureText(texto).width + 10 * e, h = f + 8 * e;
-    g.fillStyle = 'rgba(15,23,42,.88)'; g.strokeStyle = col; g.lineWidth = Math.max(1, 1.5 * e);
-    g.beginPath(); g.roundRect(x - w / 2, y - h / 2, w, h, 4 * e); g.fill(); g.stroke();
-    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(texto, x, y + f * .04);
-    g.restore();
-  }
+  const etiqueta = (g, x, y, texto, col) => A.etiqueta(g, x, y, texto, col, anotCfg());
+  const dibujarShape = (g, sh, seleccionada) => A.dibujar(g, sh, seleccionada, anotCfg());
+  const nube = (g, x, y, w, h, r) => A.nube(g, x, y, w, h, r);
 
-  function dibujarShape(g, sh, seleccionada) {
-    const e = escala(), col = sh.color || '#e11d48', grosor = Math.max(1, (sh.grosor || 5) * e);
-    g.save();
-    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = grosor; g.lineCap = 'round'; g.lineJoin = 'round';
-    if ((sh.estado || 'abierta') === 'resuelta' && (sh.tipo === 'globo' || sh.tipo === 'texto')) g.globalAlpha = 0.78;
-    switch (sh.tipo) {
-      case 'rect':
-      case 'elipse':
-        g.beginPath();
-        if (sh.tipo === 'rect') g.rect(sh.x, sh.y, sh.w, sh.h); else g.ellipse(sh.x + sh.w / 2, sh.y + sh.h / 2, Math.abs(sh.w / 2), Math.abs(sh.h / 2), 0, 0, Math.PI * 2);
-        if (sh.relleno) { g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; }
-        g.stroke(); break;
-      case 'resaltado':
-        g.globalAlpha = .32; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = 1; break;
-      case 'area':
-        g.globalAlpha = .14; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = 1; g.strokeRect(sh.x, sh.y, sh.w, sh.h);
-        etiqueta(g, sh.x + sh.w / 2, sh.y + sh.h / 2, fmtArea(Math.abs(sh.w * sh.h)), col); break;
-      case 'nube': nube(g, sh.x, sh.y, sh.w, sh.h, Math.max(8 * e, Math.min(sh.w, sh.h) / 8)); if (sh.relleno) { g.globalAlpha = .12; g.fill(); g.globalAlpha = 1; } g.stroke(); break;
-      case 'flecha': case 'linea':
-        g.beginPath(); g.moveTo(sh.x1, sh.y1); g.lineTo(sh.x2, sh.y2); g.stroke();
-        if (sh.tipo === 'flecha') {
-          const ang = Math.atan2(sh.y2 - sh.y1, sh.x2 - sh.x1), f = Math.max(10 * e, grosor * 2.6);
-          g.beginPath(); g.moveTo(sh.x2, sh.y2); g.lineTo(sh.x2 - f * Math.cos(ang - .42), sh.y2 - f * Math.sin(ang - .42)); g.lineTo(sh.x2 - f * Math.cos(ang + .42), sh.y2 - f * Math.sin(ang + .42)); g.closePath(); g.fill();
-        }
-        break;
-      case 'medir': {
-        const t = Math.max(6 * e, grosor * 1.8), ang = Math.atan2(sh.y2 - sh.y1, sh.x2 - sh.x1);
-        g.beginPath(); g.moveTo(sh.x1, sh.y1); g.lineTo(sh.x2, sh.y2); g.stroke();
-        [[sh.x1, sh.y1], [sh.x2, sh.y2]].forEach(([x, y]) => {
-          g.beginPath(); g.moveTo(x - Math.sin(ang) * t, y + Math.cos(ang) * t); g.lineTo(x + Math.sin(ang) * t, y - Math.cos(ang) * t); g.stroke();
-        });
-        etiqueta(g, (sh.x1 + sh.x2) / 2, (sh.y1 + sh.y2) / 2 - 16 * e, fmtLong(longitud(sh)), col);
-        break;
-      }
-      case 'mano': case 'resaltador':
-        if (!sh.pts || sh.pts.length < 2) break;
-        g.globalAlpha = sh.tipo === 'resaltador' ? .36 : 1;
-        g.lineWidth = sh.tipo === 'resaltador' ? grosor * 2.6 : grosor;
-        g.beginPath(); g.moveTo(sh.pts[0][0], sh.pts[0][1]); sh.pts.slice(1).forEach(p => g.lineTo(p[0], p[1])); g.stroke(); g.globalAlpha = 1; break;
-      case 'texto': {
-        const m = medidaTexto(sh, g); g.font = '600 ' + m.f + 'px Inter, system-ui, sans-serif'; g.textBaseline = 'top';
-        m.lineas.forEach((l, i) => g.fillText(l, sh.x, sh.y + i * m.f * 1.28));
-        if ((sh.estado || 'abierta') === 'resuelta') { g.globalAlpha = 1; g.fillStyle = '#16a34a'; g.font = '700 ' + Math.max(10, 12 * e) + 'px Inter, sans-serif'; g.fillText('✓ resuelta', sh.x, sh.y - 18 * e); }
-        break;
-      }
-      case 'globo': {
-        const r = (sh.radio || 28) * e;
-        g.beginPath(); g.moveTo(sh.ax, sh.ay); g.lineTo(sh.x, sh.y); g.stroke();
-        g.beginPath(); g.arc(sh.x, sh.y, r, 0, Math.PI * 2); g.fill();
-        g.lineWidth = Math.max(2, 2 * e); g.strokeStyle = '#fff'; g.stroke();
-        g.fillStyle = '#fff'; g.font = '700 ' + Math.round(r * .95) + 'px Inter, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-        g.fillText(String(sh.numero || ''), sh.x, sh.y + r * .02); g.textAlign = 'start'; g.textBaseline = 'alphabetic';
-        if (sh.texto) {
-          const c = cajaTextoGlobo(sh, g), m = medidaTexto(sh, g);
-          g.fillStyle = 'rgba(255,255,255,.94)'; g.strokeStyle = col; g.lineWidth = Math.max(1.5, 2 * e);
-          g.beginPath(); g.roundRect(c.x, c.y, c.w, c.h, 6 * e); g.fill(); g.stroke();
-          g.fillStyle = '#111827'; g.font = '600 ' + m.f + 'px Inter, system-ui, sans-serif'; g.textBaseline = 'top';
-          m.lineas.forEach((l, i) => g.fillText(l, c.x + 9 * e, c.y + 6 * e + i * m.f * 1.28));
-        }
-        if ((sh.estado || 'abierta') === 'resuelta') {
-          g.globalAlpha = 1; g.beginPath(); g.arc(sh.x + r * .78, sh.y - r * .78, r * .38, 0, Math.PI * 2); g.fillStyle = '#16a34a'; g.fill();
-          g.strokeStyle = '#fff'; g.lineWidth = Math.max(1.5, 2 * e); g.stroke();
-          g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-          g.font = '700 ' + Math.round(r * .55) + 'px Inter, sans-serif'; g.fillText('✓', sh.x + r * .78, sh.y - r * .78);
-          g.textAlign = 'start'; g.textBaseline = 'alphabetic';
-        }
-        break;
-      }
-    }
-    if (seleccionada) seleccion(g, sh);
-    g.restore();
-  }
-
-  function nube(g, x, y, w, h, r) {
-    r = Math.max(2, Math.min(r, Math.min(Math.abs(w), Math.abs(h)) / 4));
-    const nX = Math.max(2, Math.round(Math.abs(w) / (r * 1.7))), nY = Math.max(2, Math.round(Math.abs(h) / (r * 1.7)));
-    const dw = w / nX, dh = h / nY;
-    g.beginPath(); g.moveTo(x, y);
-    for (let i = 0; i < nX; i++) g.arc(x + dw * (i + .5), y, Math.abs(dw) / 2, Math.PI, 0, false);
-    for (let i = 0; i < nY; i++) g.arc(x + w, y + dh * (i + .5), Math.abs(dh) / 2, -Math.PI / 2, Math.PI / 2, false);
-    for (let i = 0; i < nX; i++) g.arc(x + w - dw * (i + .5), y + h, Math.abs(dw) / 2, 0, Math.PI, false);
-    for (let i = 0; i < nY; i++) g.arc(x, y + h - dh * (i + .5), Math.abs(dh) / 2, Math.PI / 2, Math.PI * 3 / 2, false);
-    g.closePath();
-  }
-
-  function handles(sh) {
-    const b = caja(sh);
-    return [
-      { k: 'nw', x: b.x, y: b.y }, { k: 'ne', x: b.x + b.w, y: b.y },
-      { k: 'sw', x: b.x, y: b.y + b.h }, { k: 'se', x: b.x + b.w, y: b.y + b.h },
-    ];
-  }
-  function seleccion(g, sh) {
-    const b = caja(sh), p = pxPantalla();
-    g.save(); g.strokeStyle = '#2563eb'; g.lineWidth = Math.max(1, 1.4 * p); g.setLineDash([6 * p, 4 * p]); g.strokeRect(b.x, b.y, b.w, b.h); g.setLineDash([]);
-    handles(sh).forEach(h => { g.fillStyle = '#fff'; g.strokeStyle = '#2563eb'; g.lineWidth = 1.6 * p; g.fillRect(h.x - 4 * p, h.y - 4 * p, 8 * p, 8 * p); g.strokeRect(h.x - 4 * p, h.y - 4 * p, 8 * p, 8 * p); });
-    g.restore();
-  }
-
-  function hitShape(sh, p) {
-    const e = escala(), b = caja(sh), t = Math.max(6 * pxPantalla(), (sh.grosor || 5) * e);
-    if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') return distSeg(p, { x: sh.x1, y: sh.y1 }, { x: sh.x2, y: sh.y2 }) <= t;
-    if (sh.tipo === 'globo') {
-      if (Math.hypot(p.x - sh.x, p.y - sh.y) <= (sh.radio || 28) * e + 6 * pxPantalla()) return true;
-      if (sh.texto) { const c = cajaTextoGlobo(sh); if (p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) return true; }
-      const d = distSeg(p, { x: sh.ax, y: sh.ay }, { x: sh.x, y: sh.y });
-      return d <= 8 * pxPantalla();
-    }
-    if (sh.tipo === 'mano' || sh.tipo === 'resaltador') {
-      const m = 8 * pxPantalla();
-      if (p.x < b.x - m || p.x > b.x + b.w + m || p.y < b.y - m || p.y > b.y + b.h + m) return false;
-      for (let i = 1; i < sh.pts.length; i++) if (distSeg(p, { x: sh.pts[i - 1][0], y: sh.pts[i - 1][1] }, { x: sh.pts[i][0], y: sh.pts[i][1] }) <= Math.max(10 * pxPantalla(), (sh.grosor || 5) * e)) return true;
-      return false;
-    }
-    const m = 4 * pxPantalla();
-    return p.x >= b.x - m && p.x <= b.x + b.w + m && p.y >= b.y - m && p.y <= b.y + b.h + m;
-  }
-  function distSeg(p, a, b) {
-    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
-    if (!l2) return Math.hypot(p.x - a.x, p.y - a.y);
-    let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2; t = Math.max(0, Math.min(1, t));
-    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-  }
+  const handles = (sh) => A.handles(sh, anotCfg());
+  const seleccion = (g, sh) => A.seleccion(g, sh, anotCfg());
+  const hitShape = (sh, p) => A.hit(sh, p, anotCfg());
+  const distSeg = (p, a, b) => A.distSeg(p, a, b);
   function hitIndex(p) {
     const ix = indicesPagina();
     for (let j = ix.length - 1; j >= 0; j--) if (hitShape(anot.shapes[ix[j]], p)) return ix[j];
@@ -693,20 +519,8 @@
     return null;
   }
 
-  function mover(sh, dx, dy) {
-    if (sh.tipo === 'mano' || sh.tipo === 'resaltador') { sh.pts = sh.pts.map(p => [p[0] + dx, p[1] + dy]); }
-    else if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') { sh.x1 += dx; sh.y1 += dy; sh.x2 += dx; sh.y2 += dy; }
-    else if (sh.tipo === 'globo') { sh.x += dx; sh.y += dy; sh.ax += dx; sh.ay += dy; }
-    else { sh.x += dx; sh.y += dy; }
-  }
-  function escalar(sh, ox, oy, sx, sy) {
-    const e = escala(), avg = (Math.abs(sx) + Math.abs(sy)) / 2;
-    const X = v => ox + (v - ox) * sx, Y = v => oy + (v - oy) * sy;
-    if (sh.tipo === 'mano' || sh.tipo === 'resaltador') sh.pts = sh.pts.map(p => [X(p[0]), Y(p[1])]);
-    else if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') { sh.x1 = X(sh.x1); sh.y1 = Y(sh.y1); sh.x2 = X(sh.x2); sh.y2 = Y(sh.y2); }
-    else if (sh.tipo === 'globo') { sh.x = X(sh.x); sh.y = Y(sh.y); sh.ax = X(sh.ax); sh.ay = Y(sh.ay); sh.radio = Math.max(8, (sh.radio || 28) * avg); }
-    else { sh.x = X(sh.x); sh.y = Y(sh.y); sh.w *= sx; sh.h *= sy; if (sh.tipo === 'texto') sh.fuente = Math.max(6, (sh.fuente || 16) * avg); }
-  }
+  const mover = (sh, dx, dy) => A.mover(sh, dx, dy);
+  const escalar = (sh, ox, oy, sx, sy) => A.escalar(sh, ox, oy, sx, sy, anotCfg());
 
   function redibujarAnot() {
     if (!anotCtx) return;
@@ -987,10 +801,11 @@
   }
   function moverCopia(orig, dx, dy) { const s = clone(orig); mover(s, dx, dy); return s; }
 
-  function calibrarCon(sh) {
+  async function calibrarCon(sh) {
     const px = longitud(sh); if (px <= 1) return;
-    const m = parseFloat(prompt('¿Cuántos metros mide la línea que dibujaste?', '1'));
+    const valor = await window.solicitarModal({ titulo: 'Calibrar la página', mensaje: '¿Cuántos metros mide la línea que dibujaste sobre la cota del plano?', etiqueta: 'Metros', tipo: 'number', valor: '1', min: 0.001, paso: 0.001, aceptar: 'Calibrar', icono: 'fa-ruler-combined' });
     anot.calibrando = false;
+    const m = parseFloat(valor);
     if (!Number.isFinite(m) || m <= 0) { pintarAnotUI(); return; }
     anot.escala = m / px; anot.unidad = 'm';
     sh.texto = sh.texto || '';
@@ -1054,10 +869,11 @@
       (sh.notas = sh.notas || []).push({ texto: t.value.trim(), autor: C.usuario || '', fecha: fechaISO() });
       t.value = ''; pintarAnotUI(); redibujarAnot();
     });
-    if ($('#cmp-det-mover')) $('#cmp-det-mover').addEventListener('click', () => {
+    if ($('#cmp-det-mover')) $('#cmp-det-mover').addEventListener('click', async () => {
       const sh = anot.shapes[anot.sel], max = slots.a.pdf ? slots.a.pdf.numPages : 1;
       if (!sh) return;
-      const n = parseInt(prompt('Mover la anotación a la página (1–' + max + '):', paginaDe(sh)), 10);
+      const valor = await window.solicitarModal({ titulo: 'Mover la anotación', mensaje: 'Escribe la página de destino (1–' + max + ').', etiqueta: 'Página', tipo: 'number', valor: String(paginaDe(sh)), min: 1, max: max, paso: 1, aceptar: 'Mover', icono: 'fa-file-export' });
+      const n = parseInt(valor, 10);
       if (!n || n < 1 || n > max) return;
       snapshot(); sh.pagina = n; anot.sel = -1; anot.multi = []; pintarAnotUI(); redibujarAnot();
     });
@@ -1168,7 +984,7 @@
       nombre: String(o.nombre || s.nombre || ''), ext: String(o.ext || ''), pagina: parseInt(s.pagina, 10) || 1,
     };
   }
-  function guardarDialogo() {
+  async function guardarDialogo() {
     if (!(slots.a.listo && slots.b.listo)) { avisar('Carga los dos documentos antes de guardar.'); return; }
     if (!C.puedeGuardar) { avisar('No tienes permiso para guardar comparaciones.'); return; }
     $('#cmp-nombre').value = nombreActual || '';
@@ -1178,7 +994,7 @@
     const externos = ['a', 'b'].some(k => slots[k].origen && (slots[k].origen.tipo === 'nuevo'));
     $('#cmp-guardar-aviso').textContent = externos ? 'Los documentos externos se guardarán como copia en el proyecto y ocuparán almacenamiento.' : '';
     const dlg = $('#cmp-guardar-dlg');
-    if (dlg && dlg.showModal) dlg.showModal(); else { if (nombreActual === '' && !(nombreActual = prompt('Nombre de la comparación') || '')) return; confirmarGuardar(); }
+    if (dlg && dlg.showModal) dlg.showModal(); else { if (nombreActual === '') { const n = await window.solicitarModal({ titulo: 'Guardar la comparación', mensaje: 'Escribe un nombre para encontrarla después.', etiqueta: 'Nombre', valor: '', obligatorio: true, aceptar: 'Guardar', icono: 'fa-floppy-disk' }); if (!n) return; nombreActual = n; } confirmarGuardar(); }
   }
   function miniatura() {
     const v = vistaEl, W = Math.max(1, v.clientWidth / Math.max(.02, vista.k)), H = Math.max(1, v.clientHeight / Math.max(.02, vista.k));
@@ -1314,7 +1130,7 @@
     catch (e) { $('#cmp-enlace').select(); document.execCommand('copy'); $('#cmp-compartir-estado').textContent = 'Enlace copiado.'; }
   });
   if ($('#cmp-revocar-enlace')) $('#cmp-revocar-enlace').addEventListener('click', async () => {
-    if (!guardadoId || !confirm('¿Revocar el enlace? Quien lo tenga dejará de poder abrirlo.')) return;
+    if (!guardadoId || !await window.confirmarModal({ titulo: '¿Revocar el enlace?', mensaje: 'Quien lo tenga dejará de poder abrirlo.', aceptar: 'Revocar', icono: 'fa-link-slash' })) return;
     const d = await compartirPost({ revocar: 1 });
     if (!d.success) { $('#cmp-compartir-estado').textContent = d.error || 'No se pudo revocar.'; return; }
     $('#cmp-enlace').value = ''; if (window.CMP_GUARDADO) window.CMP_GUARDADO.publico_url = ''; $('#cmp-compartir-estado').textContent = 'Enlace revocado.';
@@ -1361,11 +1177,11 @@
         i.append(b, s);
         const r2 = document.createElement('button'); r2.type = 'button'; r2.className = 'btn btn-xs btn-ghost'; r2.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Restaurar';
         r2.addEventListener('click', async () => {
-          if (!confirm('¿Restaurar esta versión? El estado actual se guarda como una versión más.')) return;
+          if (!await window.confirmarModal({ titulo: '¿Restaurar esta versión?', mensaje: 'El estado actual se guarda como una versión más.', aceptar: 'Restaurar', icono: 'fa-clock-rotate-left' })) return;
           const fd = new FormData(); fd.set('proyecto', C.proyecto); fd.set('id', guardadoId); fd.set('version', v.id);
           const rr = await fetch('/comparador/restaurar', { method: 'POST', body: fd, credentials: 'same-origin' });
           const dd = await rr.json();
-          if (!dd.success) { alert(dd.error || 'No se pudo restaurar.'); return; }
+          if (!dd.success) { window.avisoModal('No se pudo restaurar', dd.error || 'Inténtalo de nuevo.'); return; }
           if (dd.datos.vista) Object.assign(vista, dd.datos.vista);
           if (dd.datos.ajuste) Object.assign(bT, dd.datos.ajuste);
           if (dd.datos.modo) Object.assign(est, dd.datos.modo);

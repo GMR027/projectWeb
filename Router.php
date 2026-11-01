@@ -41,12 +41,14 @@ class Router
 
     public function render($view, $datos = [])
     {
-        foreach ($datos as $key => $value) {
-            $$key = $value;
-        }
+        // Las variables de la vista no pueden sobrescribir las internas del renderizador
+        // (antes un $datos con la clave «view» o «contenido» las pisaba).
+        $__vista = $view;
+        unset($view);
+        extract($datos, EXTR_SKIP);
 
         ob_start();
-        include __DIR__ . "/views/$view.php";
+        include __DIR__ . "/views/{$__vista}.php";
         $contenido = ob_get_clean();
 
         $layout = __DIR__ . '/views/layout.php';

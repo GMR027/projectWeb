@@ -24,19 +24,16 @@ if ($rol === 'admin') {
 require_once __DIR__ . '/herramientas-proyecto.php';
 $gruposProyecto = [];
 if ($proyectoCtx) {
-    $proyectoSidebar = \Model\Proyecto::find($proyectoCtx);
+    // Si la vista ya cargó el proyecto, se reutiliza (antes se consultaba dos veces en la misma página)
+    $proyectoSidebar = (isset($proyecto) && $proyecto instanceof \Model\Proyecto && (int)$proyecto->id === (int)$proyectoCtx)
+        ? $proyecto
+        : \Model\Proyecto::find($proyectoCtx);
     if ($proyectoSidebar && puede_ver_proyecto($proyectoSidebar)) $gruposProyecto = herramientas_proyecto($proyectoSidebar);
 }
 $menuProyecto = array_merge(...array_values($gruposProyecto ?: [[]]));
-// Acciones rápidas del proyecto en curso
-$accionesRapidas = [];
-if (!empty($proyectoSidebar) && $menuProyecto && herramienta_permitida('acciones')) {
-    try {
-        $accionesRapidas = \Classes\AccionesRapidas::secciones((int)$proyectoSidebar->id, puede_gestionar_proyecto($proyectoSidebar));
-    } catch (\Throwable $e) {
-        $accionesRapidas = [];
-    }
-}
+// Acciones rápidas: se cargan aparte (/api/acciones) la primera vez que se abre el menú.
+// Antes se calculaban en cada página (~20 consultas) aunque el panel estuviera cerrado.
+$cargarAcciones = !empty($proyectoSidebar) && $menuProyecto && herramienta_permitida('acciones');
 $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante' => 'Visitante'];
 ?>
 <aside class="sidebar">
@@ -57,6 +54,7 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
                 <?php if (!empty($item['badge'])): ?><b class="nav-badge"><?php echo (int)$item['badge']; ?></b><?php endif; ?>
             </a>
         <?php endforeach; ?>
+        <div id="nav-recientes" class="nav-recientes" data-titulo="<?php echo s(t('Recientes')); ?>"></div>
         <?php if ($menuProyecto || ($proyectoSidebar ?? null)): ?>
             <?php foreach ($gruposProyecto as $nombreGrupo => $itemsGrupo): ?>
                 <div class="nav-section"><?php echo s(t($nombreGrupo)); ?></div>
@@ -69,40 +67,8 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
                 <?php endforeach; ?>
             <?php endforeach; ?>
         <?php endif; ?>
-        <?php if ($accionesRapidas): ?>
-            <?php $totalAcciones = array_sum(array_column($accionesRapidas, 'total')); ?>
-            <div class="nav-section"><?php echo s(t('Acciones rápidas')); ?></div>
-            <?php if ($totalAcciones > 5): ?>
-                <a href="/acciones?proyecto=<?php echo (int)$proyectoSidebar->id; ?>" target="_blank" rel="noopener" class="nav-link acc-todas">
-                    <i class="fa-solid fa-up-right-from-square nav-icon"></i>
-                    <span><?php echo s(t('Ver todas en otra pestaña')); ?></span>
-                    <b class="nav-badge"><?php echo (int)$totalAcciones; ?></b>
-                </a>
-            <?php endif; ?>
-            <?php foreach ($accionesRapidas as $sec): ?>
-                <details class="acc-sec"<?php echo $sec['abierta'] && $sec['total'] ? ' open' : ''; ?>>
-                    <summary class="<?php echo $sec['total'] ? '' : 'vacia'; ?>">
-                        <i class="fa-solid <?php echo s($sec['icono']); ?> nav-icon"></i>
-                        <span><?php echo s($sec['titulo']); ?></span>
-                        <?php if ($sec['total']): ?><b class="nav-badge"><?php echo (int)$sec['total']; ?></b><?php endif; ?>
-                    </summary>
-                    <?php if (!$sec['items']): ?>
-                        <p class="acc-vacio"><?php echo s(t('Nada pendiente')); ?></p>
-                    <?php else: ?>
-                        <ul class="acc-lista">
-                            <?php foreach ($sec['items'] as $it): ?>
-                                <li><a href="<?php echo s($it['url']); ?>">
-                                    <span class="acc-titulo"><?php echo !empty($it['wbs']) ? '<span class="mono">' . s($it['wbs']) . '</span> · ' : ''; echo s($it['titulo']); ?></span>
-                                    <span class="acc-sub"><?php if ($it['chip']): ?><em class="acc-chip acc-<?php echo s(strtolower(str_replace('/', '', $it['chip']))); ?>"><?php echo s($it['chip']); ?></em> <?php endif; ?><?php echo s($it['sub']); ?></span>
-                                </a></li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <?php if ($sec['total'] > count($sec['items'])): ?>
-                            <a class="acc-mas" href="/acciones?proyecto=<?php echo (int)$proyectoSidebar->id; ?>#acc-<?php echo s($sec['clave']); ?>" target="_blank" rel="noopener">Ver todas (<?php echo (int)$sec['total']; ?>) →</a>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                </details>
-            <?php endforeach; ?>
+        <?php if ($cargarAcciones): ?>
+            <div class="acc-lazy" id="acc-rapidas" data-url="/api/acciones?proyecto=<?php echo (int)$proyectoSidebar->id; ?>" data-cargada="0"></div>
         <?php endif; ?>
     </nav>
     <div class="sidebar-footer">

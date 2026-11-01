@@ -57,7 +57,7 @@
                                 <form method="POST" action="/programa/restricciones/eliminar" style="display:inline" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
                                     <input type="hidden" name="id" value="<?php echo (int)$it['rid']; ?>">
                                     <input type="hidden" name="volver" value="/acciones">
-                                    <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                                 </form>
                             <?php endif; ?>
                         </td>

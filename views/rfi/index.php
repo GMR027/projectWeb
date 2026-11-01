@@ -120,7 +120,7 @@ $pre = [
                     <?php if ($puedeEditar): ?>
                         <a href="<?php echo s($url(['editar' => $r['id']])); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <form method="POST" action="/rfi/eliminar" style="display:inline" data-confirm="¿Eliminar este RFI?|Se borra también su revisión.">
-                            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button>
+                            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>"><button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                     <?php endif; ?>
                 </td>

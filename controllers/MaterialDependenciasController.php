@@ -95,6 +95,7 @@ class MaterialDependenciasController
     public static function deshacer()
     {
         $p = proyecto_api('gestionar');
+        exigir_eliminar_contenido($p);
         $n = DependenciasMateriales::deshacer($p);
         json_respuesta(['success' => $n > 0, 'restauradas' => $n, 'error' => $n ? null : 'No hay nada que deshacer', 'datos' => DependenciasMateriales::datos($p)]);
     }

@@ -54,6 +54,7 @@ class Usuario extends ActiveRecord
         'sheetflow' => ['SheetFlow (tablas)', ['/sheetflow', '/api/sheetflow']],
         'view360' => ['View360', ['/view360', '/api/view360']],
         'comparador' => ['Comparador de documentos', ['/comparador']],
+        'anotador' => ['Anotador de planos', ['/anotador']],
         'ensamble' => ['Ensamblador de documentos', ['/ensamblador-documentos', '/api/ensamblador', '/api/ordenar-ia']],
         'traductor' => ['Traductor', ['/traductor', '/api/traductor']],
         'acciones' => ['Acciones rápidas', ['/acciones']],
@@ -89,12 +90,47 @@ class Usuario extends ActiveRecord
     ];
 
     /**
+     * Agrupación de HERRAMIENTAS por sección, solo para presentarlas ordenadas en el formulario de
+     * usuarios. La fuente de verdad sigue siendo HERRAMIENTAS: una clave nueva que no esté aquí cae
+     * automáticamente en «Otras herramientas» (ver `gruposHerramientas()`).
+     */
+    public const HERRAMIENTAS_GRUPOS = [
+        'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'programador', 'calendario', 'curvas'],
+        'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
+        'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
+        'Materiales y costos' => ['msr', 'materiales', 'costos', 'recursos', 'cambios'],
+        'Administración del proyecto' => ['equipo', 'contratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
+        'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones'],
+    ];
+
+    /**
+     * Herramientas agrupadas y listas para pintar: [sección => [clave => etiqueta], …]. Nunca pierde
+     * ninguna clave de HERRAMIENTAS (lo que falte en HERRAMIENTAS_GRUPOS va a «Otras herramientas»).
+     */
+    public static function gruposHerramientas(): array
+    {
+        $grupos = [];
+        $usadas = [];
+        foreach (self::HERRAMIENTAS_GRUPOS as $seccion => $claves) {
+            foreach ($claves as $clave) {
+                if (!isset(self::HERRAMIENTAS[$clave])) continue;
+                $grupos[$seccion][$clave] = self::HERRAMIENTAS[$clave][0];
+                $usadas[$clave] = true;
+            }
+        }
+        foreach (self::HERRAMIENTAS as $clave => [$etiqueta]) {
+            if (!isset($usadas[$clave])) $grupos['Otras herramientas'][$clave] = $etiqueta;
+        }
+        return $grupos;
+    }
+
+    /**
      * Rutas que no son una herramienta y que un visitante siempre puede usar (navegación, soporte,
      * enlaces públicos, media autenticada y landing). Todo lo demás se le niega si no está en su lista.
      */
     public const RUTAS_GENERALES = [
         '/', '/proyectos', '/dashboard', '/inicio', '/manual', '/novedades', '/buscar', '/idioma',
-        '/soporte', '/api/soporte', '/api/empezar', '/cliente', '/calendario/ics', '/media',
+        '/soporte', '/api/soporte', '/api/empezar', '/api/acciones', '/cliente', '/calendario/ics', '/media',
         '/login', '/logout', '/contacto', '/terminos', '/servicios', '/demo',
         '/exportar',   // el Centro de Exportación filtra cada formato por la herramienta que el usuario ve
     ];
@@ -175,6 +211,50 @@ class Usuario extends ActiveRecord
         return null;
     }
 
+    /**
+     * ¿Esta cuenta debe cambiar la contraseña inicial antes de usar la plataforma?
+     * Columna `debe_cambiar_password` (database/migracion_password_inicial.sql). Sin ella, false.
+     */
+    public static function debeCambiarPassword(int $id): bool
+    {
+        static $cache = [];
+        if (array_key_exists($id, $cache)) return $cache[$id];
+        try {
+            $r = self::$db->query('SELECT debe_cambiar_password FROM usuarios WHERE id = ' . (int)$id);
+            $f = $r ? $r->fetch_row() : null;
+            return $cache[$id] = ($f && (int)$f[0] === 1);
+        } catch (\Throwable $e) {
+            return $cache[$id] = false;   // sin la migración aplicada no se bloquea a nadie
+        }
+    }
+
+    /** La cuenta ya eligió su contraseña: no se le vuelve a pedir */
+    public static function marcarPasswordCambiada(int $id): void
+    {
+        try {
+            self::$db->query('UPDATE usuarios SET debe_cambiar_password = 0 WHERE id = ' . (int)$id);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /** Marca una contraseña temporal (creada por el admin o por el dueño del equipo) para cambiarla al entrar */
+    public static function marcarPasswordTemporal(int $id): void
+    {
+        try {
+            self::$db->query('UPDATE usuarios SET debe_cambiar_password = 1 WHERE id = ' . (int)$id);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /** Guarda la fecha del último acceso correcto (columna `ultimo_acceso`, ya en el esquema) */
+    public static function marcarUltimoAcceso(int $id): void
+    {
+        try {
+            self::$db->query('UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ' . (int)$id);
+        } catch (\Throwable $e) {
+        }
+    }
+
     /** Visitantes de solo lectura que un cliente puede crear por defecto (el admin lo cambia por cuenta) */
     public const MAX_VISITANTES_CLIENTE = 2;
     /** Colaboradores (pueden editar) que un cliente puede crear por defecto */
@@ -191,6 +271,7 @@ class Usuario extends ActiveRecord
 
     public $token;
     public $confirmado;
+    public $ultimo_acceso;
 
     public function __construct($args = [])
     {

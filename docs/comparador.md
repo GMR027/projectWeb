@@ -13,6 +13,7 @@ Empareja dos PDF o imágenes para revisar cambios entre revisiones, con deslizad
 | `views/comparador/index.php` | Fuentes A/B, barra de anotaciones, lista, diálogos de guardado/compartir/historial/páginas/informe y exportación |
 | `views/comparador/publico-no-disponible.php` | Enlace caducado o revocado |
 | `public/vendor/comparador.js` | Motor de comparación, diferencias, anotaciones, medidas, páginas, versiones, compartir y PDF con jsPDF |
+| `public/vendor/anotaciones.js` | Motor compartido de formas (dibujo, selección, medidas, áreas, polígonos y volúmenes) que usan el Comparador y el Anotador |
 | `src/scss/paginas/_comparador.scss` | Estilos de la comparación, anotaciones, guardadas compactas y diálogos |
 
 ## Fuentes

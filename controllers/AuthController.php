@@ -28,11 +28,13 @@ class AuthController
                 if (random_int(1, 100) === 1) LoginLimite::limpiar();   // ~1 % de los intentos purga registros de +24 h
                 $espera = LoginLimite::espera($ip, $email);
                 if ($espera > 0) {
+                    \Classes\Accesos::registrar(null, $email, 'bloqueado');
                     Usuario::setAlerta('error', 'Demasiados intentos fallidos. Espera ' . (int)ceil($espera / 60) . ' minuto(s) antes de volver a probar.');
                 } else {
                     $usuarioDB = Usuario::where('email', $usuario->email);
                     if (!$usuarioDB || !$usuarioDB->confirmado) {
                         LoginLimite::fallo($ip, $email);
+                        \Classes\Accesos::registrar(null, $email, 'fallo');
                         Usuario::setAlerta('error', 'El usuario no existe o no está confirmado');
                     } else {
                         if ($usuarioDB->comprobarPassword($password)) {
@@ -48,10 +50,15 @@ class AuthController
                             $_SESSION['nombre'] = $usuarioDB->nombre;
                             $_SESSION['email'] = $usuarioDB->email;
                             $_SESSION['rol'] = $usuarioDB->rol;
-                            header('Location: /dashboard');
+                            // Contraseña inicial o temporal: se pide cambiarla antes de seguir
+                            $_SESSION['debe_cambiar'] = Usuario::debeCambiarPassword((int)$usuarioDB->id);
+                            \Model\Usuario::marcarUltimoAcceso((int)$usuarioDB->id);
+                            \Classes\Accesos::registrar((int)$usuarioDB->id, (string)$usuarioDB->email, 'ok');
+                            header('Location: ' . (!empty($_SESSION['debe_cambiar']) ? '/cuenta/password?obligatorio=1' : '/dashboard'));
                             exit;
                         } else {
                             LoginLimite::fallo($ip, $email);
+                            \Classes\Accesos::registrar((int)$usuarioDB->id, $email, 'fallo');
                             Usuario::setAlerta('error', 'Password incorrecto');
                         }
                     }
@@ -116,6 +123,8 @@ class AuthController
                     $usuario->crearToken();
                     $resultado = $usuario->guardar();
                     if ($resultado['resultado']) {
+                        // La contraseña la eligió quien creó la cuenta: se pide cambiarla al entrar
+                        Usuario::marcarPasswordTemporal((int)$resultado['id']);
                         if ($usuario->rol !== 'admin') {
                             ProyectoAcceso::sincronizarUsuario((int)$resultado['id'], $_POST['proyectos'] ?? []);
                         }
@@ -265,13 +274,14 @@ class AuthController
     public static function cambiarPassword()
     {
         redirigir_si_no_auth();
+        $obligatorio = !empty($_SESSION['debe_cambiar']);
         $proyecto = filter_var($_POST['proyecto'] ?? null, FILTER_VALIDATE_INT);
-        $volver = $proyecto ? '/ajustes?proyecto=' . $proyecto : '/dashboard';
+        $volver = $obligatorio ? '/cuenta/password?obligatorio=1' : ($proyecto ? '/ajustes?proyecto=' . $proyecto : '/dashboard');
         $fallo = function (string $m) use ($volver) {
-            header('Location: ' . $volver . (str_contains($volver, '?') ? '&' : '?') . 'pw_error=' . urlencode($m) . '#cuenta');
+            header('Location: ' . $volver . (str_contains($volver, '?') ? '&' : '?') . 'pw_error=' . urlencode($m) . (str_contains($volver, '/cuenta/password') ? '' : '#cuenta'));
             exit;
         };
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || ($_SESSION['rol'] ?? '') !== 'cliente') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /dashboard');
             exit;
         }
@@ -287,9 +297,22 @@ class AuthController
         $usuario->hashPassword();
         unset($usuario->password2);
         if (!$usuario->guardar()) $fallo('No se pudo guardar la nueva contraseña. Intenta de nuevo.');
+        Usuario::marcarPasswordCambiada((int)$usuario->id);
+        $_SESSION['debe_cambiar'] = false;
         session_regenerate_id(true);
-        header('Location: ' . $volver . (str_contains($volver, '?') ? '&' : '?') . 'pw=ok#cuenta');
+        header('Location: ' . ($obligatorio ? '/dashboard' : $volver . (str_contains($volver, '?') ? '&' : '?') . 'pw=ok#cuenta'));
         exit;
+    }
+
+    /** Formulario de contraseña (también el paso obligatorio de la contraseña inicial) */
+    public static function cambiarPasswordForm(Router $router)
+    {
+        redirigir_si_no_auth();
+        $router->render('auth/password', [
+            'titulo' => 'Cambiar contraseña',
+            'authLayout' => true,
+            'obligatorio' => !empty($_SESSION['debe_cambiar']),
+        ]);
     }
 
     // ==================== VISITANTES DE UN CLIENTE ====================
@@ -373,6 +396,7 @@ class AuthController
                 $usuario->crearToken();
                 $r = $usuario->guardar();
                 if ($r['resultado']) {
+                    Usuario::marcarPasswordTemporal((int)$r['id']);
                     ProyectoAcceso::sincronizarUsuarioEn((int)$r['id'], $_POST['proyectos'] ?? [], self::proyectosGestionables());
                     header('Location: /usuarios?creado=1');
                     exit;

@@ -87,7 +87,7 @@
                     <form method="POST" action="/vplan/tablas/eliminar" style="display:inline" data-confirm="¿Eliminar tabla?|Se quitará también de las láminas donde se use.">
                         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                         <input type="hidden" name="id" value="<?php echo s($t->id); ?>">
-                        <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                        <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                     </form>
                 </td>
             </tr>

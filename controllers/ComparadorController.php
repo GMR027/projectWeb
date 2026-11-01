@@ -147,6 +147,7 @@ class ComparadorController
     {
         $p = proyecto_api('ver');
         if (!puede_descargar()) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
+        exigir_eliminar_contenido($p);   // restaurar una versión pisa la actual: solo dueño o admin
         $g = Comparador::obtener((int)$p->id, (int)($_POST['id'] ?? 0));
         if (!$g) json_respuesta(['success' => false, 'error' => 'La comparación ya no existe.'], 404);
         if (!Comparador::puedeEditar(['usuario_id' => $g->usuario_id])) json_respuesta(['success' => false, 'error' => 'Solo quien la creó o el administrador pueden restaurarla.'], 403);

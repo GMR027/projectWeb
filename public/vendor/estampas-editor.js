@@ -355,9 +355,9 @@
                 const e = cfg.elementos[sel]; if (!e) return;
                 const fd = new FormData(); fd.append('proyecto', D.proyecto); fd.append('imagen', t.files[0]);
                 fetch('/api/estampas/imagen', { method: 'POST', body: fd }).then(r => r.json()).then(d => {
-                    if (!d.success) { alert(d.error || 'No se pudo subir la imagen'); return; }
+                    if (!d.success) { window.avisoModal('No se pudo subir la imagen', d.error || 'Inténtalo de nuevo.'); return; }
                     e.fuente = 'subida'; e.archivo = d.archivo; propsLienzo(); lzCambio();
-                }).catch(() => alert('No se pudo subir la imagen'));
+                }).catch(() => window.avisoModal('No se pudo subir la imagen', 'Revisa tu conexión e inténtalo de nuevo.'));
                 return;
             }
             if (t.dataset.ek && ['campo', 'modo', 'fecha_modo', 'partida_id', 'fuente'].includes(t.dataset.ek)) {

@@ -456,3 +456,15 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
 }
 :root[data-theme="dark"] .tema-chip { background: var(--chip-oscuro); }
 .tema-nom { overflow-wrap: anywhere; }
+
+// Buscador de secciones de ajustes
+.ajustes-busca {
+  position: relative; margin-bottom: 1rem;
+  i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 1.2rem; }
+  input {
+    width: 100%; padding: .8rem 1rem .8rem 3rem; font-size: 1.3rem;
+    border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-secondary); color: var(--text);
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  }
+}
+.ajustes-busca-vacio { font-size: 1.2rem; color: var(--text-muted); padding: .6rem .4rem; }

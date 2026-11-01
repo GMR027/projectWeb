@@ -53,13 +53,18 @@ $secNav = [
 ];
 if (is_admin() || $esElectron) $secNav[] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
 if ($esCliente) $secNav[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra al proyecto'];
-if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte y contraseña'];
+if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Contraseña y soporte'];
 ?>
 <div class="ajustes-layout">
 <nav class="ajustes-nav" role="tablist" aria-label="Secciones de ajustes">
+<div class="ajustes-busca">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input type="search" id="ajustes-busca" placeholder="<?php echo s(t('Buscar en los ajustes…')); ?>" aria-label="<?php echo s(t('Buscar en los ajustes')); ?>" autocomplete="off">
+</div>
 <?php foreach ($secNav as [$sid, $ico, $tit, $sub]): ?>
     <a href="#<?php echo $sid; ?>" role="tab" data-sec="<?php echo $sid; ?>"><i class="fa-solid <?php echo $ico; ?>"></i><span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span></a>
 <?php endforeach; ?>
+<p class="ajustes-busca-vacio" id="ajustes-busca-vacio" hidden><?php echo s(t('Ninguna sección coincide.')); ?></p>
 </nav>
 <div class="ajustes-contenido">
 
@@ -531,14 +536,16 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
 </section>
 <?php endif; ?>
 
-<?php if ($esCliente): ?>
+<?php if ($esCliente || is_admin()): ?>
 <section class="ajustes-seccion" id="cuenta-sec">
     <h3 class="seccion-titulo"><i class="fa-solid fa-user-shield"></i> Cuenta</h3>
+<?php if ($esCliente): ?>
 <div class="card">
     <h3 class="card-titulo"><i class="fa-solid fa-headset"></i> <?php echo s(t('Soporte')); ?></h3>
     <p class="text-muted text-sm"><?php echo s(t('¿Tienes una duda o necesitas ayuda? Escríbenos desde aquí y el administrador recibirá tu mensaje.')); ?></p>
     <a href="/soporte" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> <?php echo s(t('Abrir soporte')); ?></a>
 </div>
+<?php endif; ?>
 
 <div class="card" id="cuenta">
     <h3 class="card-titulo"><i class="fa-solid fa-key"></i> <?php echo s(t('Cambiar contraseña')); ?></h3>
@@ -586,5 +593,30 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
     links.forEach(a => a.addEventListener('click', e => { e.preventDefault(); mostrar(a.dataset.sec); history.replaceState(null, '', '#' + a.dataset.sec); }));
     window.addEventListener('hashchange', desdeHash);
     if (!desdeHash()) { let g = null; try { g = sessionStorage.getItem('ajustes-tab'); } catch (e) {} mostrar(g); }
+})();
+</script>
+<script>
+// Buscador de secciones de ajustes (filtra la barra lateral mientras se escribe)
+(function () {
+    const inp = document.getElementById('ajustes-busca');
+    const vacio = document.getElementById('ajustes-busca-vacio');
+    if (!inp) return;
+    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const links = [...document.querySelectorAll('.ajustes-nav a')];
+    const filtrar = () => {
+        const q = norm(inp.value.trim());
+        let n = 0;
+        links.forEach((a) => {
+            const on = !q || norm(a.textContent).includes(q);
+            a.hidden = !on;
+            if (on) n++;
+        });
+        if (vacio) vacio.hidden = n > 0;
+    };
+    inp.addEventListener('input', filtrar);
+    inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { inp.value = ''; filtrar(); }
+        if (e.key === 'Enter') { const a = links.find((x) => !x.hidden); if (a) a.click(); }
+    });
 })();
 </script>

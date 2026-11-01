@@ -83,7 +83,7 @@ $e = $editarPlan;
                     <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['ver' => $c['id']])); ?>" title="Ver puntos"><i class="fa-solid fa-list-check"></i></a>
                     <?php if ($puedeEditar): ?>
                         <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['editar' => $c['id']])); ?>" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                        <form method="POST" action="/calidad/eliminar" onsubmit="return confirm('¿Eliminar este plan y sus puntos?');" style="display:inline">
+                        <form method="POST" action="/calidad/eliminar" data-confirm="¿Eliminar el plan?|Se eliminarán el plan de inspección y todos sus puntos.|Eliminar" style="display:inline">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
                             <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>

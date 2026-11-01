@@ -143,6 +143,45 @@ $ok('el catálogo de fuentes incluye el Archivo del proyecto', count(array_filte
 $dupG = Classes\Comparador::duplicar($proy, Classes\Comparador::obtener((int)$proy->id, $idG));
 $ok('duplicar una comparación crea otra', $dupG > 0 && $dupG !== $idG && count(Classes\Comparador::listar((int)$proy->id)) === 2);
 $ok('eliminar borra la comparación', Classes\Comparador::eliminar((int)$proy->id, $idG) && Classes\Comparador::eliminar((int)$proy->id, $dupG) && count(Classes\Comparador::listar((int)$proy->id)) === 0);
+// ---------- Anotador: documento, medidas, versiones y firma ----------
+echo "Anotador de planos\n";
+$ok('las tablas del Anotador existen', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'anotador_documentos'")->fetch_row() && (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'anotador_firmas_aplicadas'")->fetch_row());
+$sig = str_repeat('a', 32) . '.png';
+if (!is_dir(Classes\Anotador::CARPETA)) @mkdir(Classes\Anotador::CARPETA, 0775, true);
+$im = imagecreatetruecolor(60, 24); imagepng($im, Classes\Anotador::CARPETA . '/' . $sig); imagedestroy($im);
+$postAnt = [
+    'nombre' => 'Anotador CI', 'fuente_tipo' => 'archivo', 'fuente_id' => (int)$arch->id, 'paginas' => 1,
+    'config' => json_encode(['escalas' => [1 => 0.002], 'unidad' => 'm']),
+    'anotaciones' => json_encode(['version' => 2, 'ancho' => 20, 'alto' => 20, 'escalas' => [1 => 0.002], 'shapes' => [
+        ['tipo' => 'poligono', 'pts' => [[0, 0], [10, 0], [10, 10]], 'pagina' => 1],
+        ['tipo' => 'volumen', 'pts' => [[0, 0], [10, 0], [10, 10]], 'profundidad' => 0.3, 'pagina' => 1],
+        ['tipo' => 'firma', 'x' => 2, 'y' => 2, 'w' => 8, 'h' => 3, 'imagen' => $sig, 'nombre' => 'Ana', 'pagina' => 1],
+    ]]),
+];
+$rAnt = Classes\Anotador::guardar($proy, $postAnt);
+$ok('guardar un documento del Anotador', !empty($rAnt['ok']) && (int)$rAnt['id'] > 0);
+$idAnt = (int)($rAnt['id'] ?? 0);
+$dAnt = Classes\Anotador::obtener((int)$proy->id, $idAnt);
+$ok('el documento conserva sus formas y su escala por página', $dAnt && count($dAnt->anotaciones()['shapes']) === 3 && $dAnt->config()['escalas'][1] === 0.002);
+$ok('la fuente del proyecto se puede entregar', $dAnt && (Classes\Anotador::fuenteDocumento($dAnt)['ext'] ?? '') === 'png');
+$ok('el documento aparece en la lista y cuenta para el almacenamiento', count(Classes\Anotador::listar((int)$proy->id)) === 1 && Classes\Anotador::bytes((int)$proy->id) > 0);
+$postAnt2 = $postAnt; $postAnt2['id'] = $idAnt; $postAnt2['nombre'] = 'Anotador CI 2';
+$rAnt2 = Classes\Anotador::guardar($proy, $postAnt2);
+$versionesAnt = Classes\Anotador::versiones((int)$proy->id, $idAnt);
+$ok('al actualizar se guarda la versión anterior', !empty($rAnt2['ok']) && count($versionesAnt) === 1 && $versionesAnt[0]['formas'] === 3);
+$restAnt = $versionesAnt ? Classes\Anotador::restaurarVersion((int)$proy->id, $idAnt, (int)$versionesAnt[0]['id']) : null;
+$ok('restaurar la versión devuelve las formas', $restAnt && count(Classes\Anotador::obtener((int)$proy->id, $idAnt)->anotaciones()['shapes']) === 3);
+$dAnt = Classes\Anotador::obtener((int)$proy->id, $idAnt);
+$finAnt = Classes\Anotador::finalizar($proy, $dAnt, 'Residente');
+$ok('finalizar la firma bloquea el documento y registra la huella', !empty($finAnt['ok']) && strlen((string)$finAnt['hash']) === 64 && $dAnt->finalizado());
+$ok('la firma aplicada queda registrada', (int)$GLOBALS['db']->query("SELECT COUNT(*) c FROM anotador_firmas_aplicadas WHERE documento_id = $idAnt")->fetch_assoc()['c'] === 1);
+$ok('un documento firmado no se puede volver a guardar', empty(Classes\Anotador::guardar($proy, $postAnt2)['ok']));
+$ok('el administrador puede reabrir el documento', Classes\Anotador::reabrir($proy, $dAnt) && !$dAnt->finalizado());
+$dupAnt = $dAnt ? Classes\Anotador::duplicar($proy, $dAnt) : null;
+$ok('duplicar no hereda el bloqueo de firma', $dupAnt && $dupAnt !== $idAnt && !Classes\Anotador::obtener((int)$proy->id, (int)$dupAnt)->finalizado());
+$ok('eliminar quita el documento', Classes\Anotador::eliminar((int)$proy->id, $idAnt) && Classes\Anotador::eliminar((int)$proy->id, (int)$dupAnt) && count(Classes\Anotador::listar((int)$proy->id)) === 0);
+@unlink(Classes\Anotador::CARPETA . '/' . $sig);
+
 @unlink($dirArch . '/cmp-ci.png');
 $GLOBALS['db']->query("DELETE FROM archivos WHERE id = " . (int)$arch->id);
 

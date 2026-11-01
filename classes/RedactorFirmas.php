@@ -26,6 +26,17 @@ class RedactorFirmas
         return $out;
     }
 
+    /** Archivo de una firma del usuario (para servirla sin depender del módulo Redactor) */
+    public static function archivoDe(int $usuarioId, int $id): ?string
+    {
+        try {
+            $r = self::db()->query("SELECT archivo FROM redactor_firmas WHERE id = $id AND usuario_id = $usuarioId LIMIT 1");
+            if ($r && ($f = $r->fetch_assoc())) return basename((string)$f['archivo']);
+        } catch (\Throwable $e) {
+        }
+        return null;
+    }
+
     /** Guarda una firma dibujada (data URI PNG) y devuelve ['id', 'nombre', 'src'] o un mensaje de error */
     public static function guardar(int $usuarioId, string $nombre, string $dataUri): array|string
     {

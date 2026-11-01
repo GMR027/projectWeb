@@ -9,6 +9,7 @@ use Controllers\CarpetaController;
 use Controllers\EstampaController;
 use Controllers\HistorialCambiosController;
 use Controllers\ComparadorController;
+use Controllers\AnotadorController;
 use Controllers\TraductorController;
 use Controllers\EscritorioApiController;
 use Controllers\EnsambladorController;
@@ -100,6 +101,7 @@ $router->post('/usuarios/crear', [AuthController::class, 'crear']);
 $router->get('/usuarios/editar', [AuthController::class, 'editar']);
 $router->post('/usuarios/editar', [AuthController::class, 'editar']);
 $router->post('/usuarios/eliminar', [AuthController::class, 'eliminar']);
+$router->get('/cuenta/password', [AuthController::class, 'cambiarPasswordForm']);
 $router->post('/cuenta/password', [AuthController::class, 'cambiarPassword']);
 
 // ========== DASHBOARD ==========
@@ -229,6 +231,7 @@ $router->get('/api/materiales/dependencias/sugerencias', [MaterialDependenciasCo
 $router->post('/api/materiales/dependencias/aplicar-sugerencias', [MaterialDependenciasController::class, 'aplicarSugerencias']);
 $router->get('/planificador', [PlanificadorController::class, 'index']);
 $router->get('/acciones', [AccionesController::class, 'index']);
+$router->get('/api/acciones', [AccionesController::class, 'fragmento']);
 // Historial de cambios del proyecto (sección Administración): lo ven admin, cliente y visitante habilitado
 $router->get('/historial', [HistorialCambiosController::class, 'index']);
 $router->get('/historial/exportar', [HistorialCambiosController::class, 'exportar']);
@@ -745,6 +748,23 @@ $router->get('/comparador/miniatura', [ComparadorController::class, 'miniatura']
 $router->post('/comparador/guardar', [ComparadorController::class, 'guardar']);
 $router->post('/comparador/eliminar', [ComparadorController::class, 'eliminar']);
 $router->post('/comparador/duplicar', [ComparadorController::class, 'duplicar']);
+$router->get('/anotador', [AnotadorController::class, 'index']);
+$router->get('/anotador/fuente', [AnotadorController::class, 'fuente']);
+$router->get('/anotador/miniatura', [AnotadorController::class, 'miniatura']);
+$router->post('/anotador/guardar', [AnotadorController::class, 'guardar']);
+$router->post('/anotador/eliminar', [AnotadorController::class, 'eliminar']);
+$router->post('/anotador/duplicar', [AnotadorController::class, 'duplicar']);
+$router->get('/anotador/versiones', [AnotadorController::class, 'versiones']);
+$router->post('/anotador/restaurar', [AnotadorController::class, 'restaurar']);
+$router->get('/anotador/imagen', [AnotadorController::class, 'imagenVer']);
+$router->post('/anotador/imagen', [AnotadorController::class, 'imagen']);
+$router->get('/anotador/firmas', [AnotadorController::class, 'firmas']);
+$router->get('/anotador/firma-ver', [AnotadorController::class, 'firmaVer']);
+$router->post('/anotador/firma', [AnotadorController::class, 'firma']);
+$router->post('/anotador/firmar', [AnotadorController::class, 'firmar']);
+$router->post('/anotador/reabrir', [AnotadorController::class, 'reabrir']);
+$router->get('/anotador/estampas', [AnotadorController::class, 'estampas']);
+$router->get('/anotador/estampa', [AnotadorController::class, 'estampa']);
 $router->get('/traductor', [TraductorController::class, 'index']);
 $router->post('/api/traductor/texto', [TraductorController::class, 'texto']);
 $router->post('/api/traductor/documento', [TraductorController::class, 'documento']);
@@ -806,6 +826,38 @@ if (\Classes\ApiRest::esDeLaApi()) \Classes\ApiRest::despachar();
 if (\Classes\Telegram::esWebhook()) \Classes\Telegram::atender();
 
 csrf_verificar();   // todo POST necesita el código de la sesión
+
+// Contraseña inicial o temporal: no se puede usar la plataforma hasta cambiarla.
+if (is_auth() && debe_cambiar_password()) {
+    $rutaPw = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    if (!in_array($rutaPw, ['/cuenta/password', '/logout', '/idioma'], true)) {
+        if (str_starts_with($rutaPw, '/api/')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Debes cambiar la contraseña inicial antes de continuar']);
+        } else {
+            header('Location: /cuenta/password?obligatorio=1');
+        }
+        exit;
+    }
+}
+
+// El demo público es de solo lectura: ninguna escritura sale de esa cuenta (defensa central,
+// no depende de que cada controlador se acuerde).
+if (is_auth() && es_demo() && !in_array(strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'), ['GET', 'HEAD', 'OPTIONS'], true)) {
+    $rutaDemo = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    if (!in_array($rutaDemo, ['/logout', '/login', '/idioma', '/contacto'], true)) {
+        if (str_starts_with($rutaDemo, '/api/')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'El demo es de solo lectura']);
+        } else {
+            header('Location: /proyectos?error=' . urlencode('El demo es de solo lectura'));
+        }
+        exit;
+    }
+}
+
 // Borrar es solo del dueño (y del admin): el colaborador puede crear y editar, pero no eliminar.
 if (is_auth() && es_colaborador() && es_ruta_de_borrado($_SERVER['REQUEST_URI'] ?? '/')) {
     if (str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '', '/api/')) {

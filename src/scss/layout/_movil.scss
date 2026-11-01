@@ -129,8 +129,8 @@
 
   // ---------- Toque cómodo: botones y campos más grandes, sin zoom automático en iOS ----------
   .btn { min-height: 4.4rem; padding-top: .9rem; padding-bottom: .9rem; }
-  .btn-xs, .btn-sm { min-height: 3.8rem; }
-  .btn-action { min-width: 3.6rem; min-height: 3.6rem; }
+  .btn-xs, .btn-sm { min-height: 4rem; }
+  .btn-action { min-width: 4rem; min-height: 4rem; }
   input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]), select, textarea { font-size: 1.6rem; min-height: 4.4rem; }
   input[type=checkbox], input[type=radio] { width: 2.2rem; height: 2.2rem; }
   .campo-check { min-height: 4.4rem; display: flex; align-items: center; gap: 1rem; }
@@ -188,16 +188,17 @@
   .tabla-programa .acciones .btn-action:not(.btn-action-edit),
   .tabla-programa .acciones form { display: none !important; }
   // El cambio de fechas se hace en el formulario de edición: aquí sobra el calendario
-  .tabla-programa .acciones .btn-fechas { display: none !important; }
+  // El cambio de fechas se hace aquí, en el móvil, con el modal nativo (antes estaba oculto)
+  .tabla-programa .acciones .btn-fechas { display: inline-flex !important; }
   .tabla-programa td.acciones > * + * { margin-top: 0 !important; }
   .tabla-programa .acciones .btn-action { margin: 0 .1rem; }
   .tabla-programa .fila-actividad td.indent { padding-left: 1.2rem; }
   .tabla-programa td, .tabla-programa th { padding: .8rem .4rem; }
   .tabla-programa td.fecha-editable, .tabla-programa .mono { font-size: 1.1rem; letter-spacing: -.02em; }
   .tabla-programa th { font-size: 1rem; letter-spacing: 0; }
-  .tabla-programa .acciones { width: 5.6rem; min-width: 5.6rem; padding: .4rem .2rem; }
-  .tabla-programa .btn-action { width: 3rem; height: 3rem; font-size: 1.2rem; }
-  .tabla-programa .btn-action-edit { width: 3.6rem; height: 3.6rem; font-size: 1.3rem; }
+  .tabla-programa .acciones { width: 9.4rem; min-width: 9.4rem; padding: .4rem .2rem; }
+  .tabla-programa .btn-action { width: 4rem; height: 4rem; font-size: 1.3rem; }
+  .tabla-programa .btn-action-edit { width: 4.4rem; height: 4.4rem; font-size: 1.4rem; }
   .tabla-programa { table-layout: fixed; width: 100%; }
   // Solo actividad y acciones: las fechas se cambian desde el icono del calendario
   .tabla-programa .col-fecha, .tabla-programa td.fecha-editable { display: none; }
@@ -294,3 +295,37 @@
 #modal-fechas h4 { margin-bottom: .4rem; }
 .mf-botones { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.4rem; }
 .mf-error { color: $danger; margin-top: 1rem; }
+
+// ============================================================
+// Modo tablet (entre móvil y escritorio): aprovecha el ancho
+// La tablet conserva el menú hamburguesa, pero recupera las columnas
+// de las tablas y la edición en línea que el móvil esconde.
+// ============================================================
+@media (min-width: ($bp-mobile + 0.01rem)) and (max-width: $bp-movil) {
+  .main-content { padding: 2rem; }
+
+  // Tablas: vuelven las columnas ocultas en el móvil
+  .tabla th.hide-m, .tabla td.hide-m { display: table-cell !important; }
+  .tabla .hide-m { display: inline !important; }
+  .tabla .solo-movil { display: none !important; }
+  .tabla .acciones { min-width: 0; width: auto; }
+  .tabla .acciones .btn { width: auto; }
+
+  // Programa: fechas y acciones completas, edición en línea con el selector nativo
+  .tabla-programa .col-fecha, .tabla-programa td.fecha-editable { display: table-cell; }
+  .tabla-programa .fecha-editable .input-fecha { display: inline-block !important; width: 100%; max-width: 14rem; }
+  .tabla-programa .fecha-texto-movil { display: none !important; }
+  .tabla-programa .acciones .btn-fechas { display: none !important; }   // en tablet se edita en la propia celda
+  .tabla-programa .acciones .btn-action:not(.btn-action-edit),
+  .tabla-programa .acciones form { display: inline-flex !important; }
+  .tabla-programa .acciones { width: auto; min-width: 0; }
+
+  // Formularios y ajustes a dos columnas
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ajustes-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .jornada-grid { grid-template-columns: repeat(7, 1fr); }
+  .modal-card { max-width: min(72rem, calc(100vw - 4rem)); }
+
+  // Rejillas de tarjetas
+  .grid-proyectos, .grid-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

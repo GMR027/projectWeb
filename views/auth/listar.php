@@ -23,6 +23,7 @@
                 <th class="hide-m">ID</th>
                 <th>Nombre</th>
                 <th class="hide-m">Email</th>
+                <th class="hide-m">Último acceso</th>
                 <th>Rol</th>
                 <th class="hide-m">Proyectos</th>
                 <th class="hide-m">Equipo (vis. / colab.)</th>
@@ -36,6 +37,7 @@
                     <td class="mono hide-m"><?php echo s($u->id); ?></td>
                     <td><?php echo s($u->nombre); ?></td>
                     <td class="hide-m"><?php echo s($u->email); ?></td>
+                    <td class="hide-m mono text-sm"><?php echo !empty($u->ultimo_acceso) ? s(date('d/m/Y H:i', strtotime($u->ultimo_acceso))) : '—'; ?></td>
                     <td><span class="badge badge-<?php echo s($u->rol); ?>"><?php echo s(ucfirst($u->rol)); ?></span><?php if ($u->rol === 'visitante' && ($u->nivel_acceso ?? 'ver') === 'editar'): ?> <span class="badge">Colaborador</span><?php endif; ?></td>
                     <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? proyectos_creados_por((int)$u->id) . ' / ' . (int)$u->limite_proyectos : '—'; ?></td>
                     <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? count(\Model\Usuario::equipoDe((int)$u->id, 'visitante')) . ' / ' . (int)($u->limite_visitantes ?? 2) . ' · ' . count(\Model\Usuario::equipoDe((int)$u->id, 'colaborador')) . ' / ' . (int)($u->limite_colaboradores ?? 3) : '—'; ?></td>
@@ -51,7 +53,7 @@
                     </td>
                 </tr>
             <?php endforeach; ?>
-            <?php if (!$usuarios): ?><tr><td colspan="8" class="text-muted">No se encontraron usuarios<?php echo $q !== '' ? ' para «' . s($q) . '»' : ''; ?>.</td></tr><?php endif; ?>
+            <?php if (!$usuarios): ?><tr><td colspan="9" class="text-muted">No se encontraron usuarios<?php echo $q !== '' ? ' para «' . s($q) . '»' : ''; ?>.</td></tr><?php endif; ?>
         </tbody>
     </table>
     <?php if ($paginas > 1): $url = fn($p) => '/usuarios?' . http_build_query(array_filter(['q' => $q, 'pagina' => $p > 1 ? $p : null])); ?>

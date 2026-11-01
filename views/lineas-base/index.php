@@ -39,7 +39,7 @@
                         <?php if ($puede): ?>
                         <form method="POST" action="/lineas-base/eliminar" style="display:inline" data-confirm="¿Eliminar la línea base?|Se pierde la foto del programa; no se puede recuperar.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                            <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                         <?php endif; ?>
                     </td>

@@ -140,7 +140,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             <td class="acciones">
                 <form method="POST" action="/especialidades/eliminar" style="display:inline" data-confirm="¿Eliminar especialidad?|Solo se puede si ningún material ni submittal la usa.">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="volver" value="directorio"><input type="hidden" name="id" value="<?php echo (int)$e->id; ?>">
-                    <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                    <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                 </form>
             </td>
         </tr>

@@ -3,6 +3,80 @@
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  // ============ BARRA DE PROGRESO + AVISO FLOTANTE ============
+  const barra = document.getElementById('pw-progreso');
+  let barraTimer = null;
+  const progreso = {
+    iniciar() {
+      if (!barra) return;
+      clearTimeout(barraTimer);
+      barra.classList.remove('completa');
+      barra.style.width = '8%';
+      requestAnimationFrame(() => { barra.classList.add('activa'); barra.style.width = '62%'; });
+      barraTimer = setTimeout(() => { if (barra) barra.style.width = '88%'; }, 1800);
+    },
+    terminar() {
+      if (!barra) return;
+      clearTimeout(barraTimer);
+      barra.classList.add('completa');
+      setTimeout(() => { barra.classList.remove('activa', 'completa'); barra.style.width = '0'; }, 500);
+    },
+  };
+  window.PWProgreso = progreso;
+  window.addEventListener('pageshow', () => progreso.terminar());
+  document.addEventListener('submit', () => progreso.iniciar(), true);
+  // En fase de burbuja: si la vista ya llamó preventDefault (modales, pestañas, visores), no se muestra la barra.
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || a.target === '_blank' || a.hasAttribute('download') || /^(mailto|tel|javascript):/i.test(href)) return;
+    try {
+      const url = new URL(href, location.href);
+      if (url.origin !== location.origin) return;
+      if (url.pathname === location.pathname && url.search === location.search) return;
+    } catch (_) { return; }
+    progreso.iniciar();
+  });
+
+  // Aviso flotante único (window.avisoToast). Los errores 5xx y de red se muestran solos.
+  const toast = (mensaje, tipo = 'error') => {
+    let caja = document.getElementById('toast-global');
+    if (!caja) {
+      caja = document.createElement('div');
+      caja.id = 'toast-global';
+      caja.className = 'toast-global';
+      caja.setAttribute('role', 'alert');
+      caja.setAttribute('aria-live', 'assertive');
+      document.body.appendChild(caja);
+    }
+    const icono = tipo === 'ok' ? 'fa-circle-check' : (tipo === 'aviso' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation');
+    caja.className = 'toast-global ' + tipo;
+    caja.innerHTML = '<i class="fa-solid ' + icono + '" aria-hidden="true"></i><span></span>';
+    caja.querySelector('span').textContent = mensaje;
+    requestAnimationFrame(() => caja.classList.add('visible'));
+    clearTimeout(caja._t);
+    caja._t = setTimeout(() => caja.classList.remove('visible'), 6000);
+  };
+  window.avisoToast = toast;
+
+  // Se envuelve fetch (después del parche de CSRF del layout) para avisar de fallos que nadie muestra.
+  if (!window.__pwFetchAvisos) {
+    window.__pwFetchAvisos = true;
+    const fetchOriginal = window.fetch;
+    window.fetch = function () {
+      return fetchOriginal.apply(this, arguments).then((r) => {
+        if (r.status === 419) toast('La sesión caducó. Recarga la página e inténtalo de nuevo.', 'aviso');
+        else if (r.status >= 500) toast('El servidor tuvo un problema (código ' + r.status + '). Inténtalo de nuevo.', 'error');
+        return r;
+      }).catch((err) => {
+        if (!navigator.onLine) toast('Sin conexión. Revisa la red e inténtalo de nuevo.', 'aviso');
+        throw err;
+      });
+    };
+  }
+
   // ============ TOGGLE DE TEMA ============
   // El tema lo elige el usuario con el botón y se guarda en localStorage.
   // Por defecto: oscuro.
@@ -36,6 +110,36 @@ document.addEventListener('DOMContentLoaded', () => {
     updateThemeIcon();
   });
 
+  // ============ HERRAMIENTAS RECIENTES ============
+  // Las últimas 6 herramientas abiertas, sin configuración: aparece una sección «Recientes» en el menú.
+  // Se guarda en este equipo (localStorage): no toca la base ni los permisos.
+  const navRec = document.getElementById('nav-recientes');
+  if (navRec) {
+    const CLAVE_REC = 'pw-recientes';
+    let lista = [];
+    try { lista = JSON.parse(localStorage.getItem(CLAVE_REC) || '[]'); } catch (e) { lista = []; }
+    if (!Array.isArray(lista)) lista = [];
+    const activo = document.querySelector('.breadcrumb-item.active, .sidebar .nav-link.active');
+    if (activo) {
+      const href = activo.getAttribute('href') || '';
+      const icono = activo.querySelector('i');
+      if (href && !href.startsWith('#')) {
+        const item = {
+          href,
+          label: activo.getAttribute('aria-label') || (activo.textContent || '').trim(),
+          icon: icono ? icono.className.replace(/\bactivo\b|\bactive\b/g, '').trim() : 'fa-solid fa-link',
+        };
+        lista = [item, ...lista.filter((x) => x && x.href !== href)].slice(0, 6);
+        try { localStorage.setItem(CLAVE_REC, JSON.stringify(lista)); } catch (e) {}
+      }
+    }
+    if (lista.length >= 2) {
+      const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      navRec.innerHTML = '<div class="nav-section">' + esc(navRec.dataset.titulo || 'Recientes') + '</div>' +
+        lista.map((x) => '<a class="nav-link" href="' + esc(x.href) + '"><i class="' + esc(x.icon) + ' nav-icon" aria-hidden="true"></i><span>' + esc(x.label) + '</span></a>').join('');
+    }
+  }
+
   // ============ MENÚ HAMBURGUESA (modo móvil) ============
   const btnMenu = document.getElementById('btn-menu');
   const fondoMenu = document.getElementById('sidebar-fondo');
@@ -49,6 +153,31 @@ document.addEventListener('DOMContentLoaded', () => {
   fondoMenu?.addEventListener('click', () => setMenu(false));
   document.querySelectorAll('.sidebar .nav-link').forEach(a => a.addEventListener('click', () => setMenu(false)));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+
+  // ============ ACCIONES RÁPIDAS DEL MENÚ (carga diferida) ============
+  // Se piden a /api/acciones la primera vez que se abre el menú (o al primer momento libre en «modo panel»).
+  // Antes el servidor las calculaba en todas las páginas (~20 consultas) aunque el panel estuviera cerrado.
+  const accRapidas = document.getElementById('acc-rapidas');
+  if (accRapidas) {
+    const cargarAcciones = () => {
+      if (accRapidas.dataset.cargada === '1') return;
+      accRapidas.dataset.cargada = '1';
+      accRapidas.innerHTML = '<p class="acc-vacio acc-cargando"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Cargando…</p>';
+      fetch(accRapidas.dataset.url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.text(); })
+        .then((html) => { accRapidas.innerHTML = html; })
+        .catch(() => {
+          accRapidas.dataset.cargada = '0';
+          accRapidas.innerHTML = '<p class="acc-vacio">No se pudieron cargar las acciones.</p>';
+        });
+    };
+    btnMenu?.addEventListener('click', () => { if (document.body.classList.contains('menu-abierto')) cargarAcciones(); });
+    // En «modo panel» el menú está siempre visible: se carga en el primer hueco libre.
+    if (document.documentElement.classList.contains('menu-panel')) {
+      if ('requestIdleCallback' in window) requestIdleCallback(cargarAcciones, { timeout: 2500 });
+      else setTimeout(cargarAcciones, 800);
+    }
+  }
 
   // ============ MODAL DE CONFIRMACIÓN ============
   // Un solo modal para toda la aplicación (en lugar de confirm() / alert() del navegador):
@@ -119,6 +248,105 @@ document.addEventListener('DOMContentLoaded', () => {
   // avisoModal(titulo, mensaje, html=false): con html=true el mensaje se interpreta (guías con tarjetas)
   window.avisoModal = (titulo, mensaje, html = false) => window.confirmarModal({
     titulo, mensaje, aceptar: 'Entendido', tipo: 'aviso', soloAceptar: true, html,
+  });
+
+  // ============ MODAL PARA PEDIR UN DATO ============
+  // Sustituye a prompt(): window.solicitarModal({ titulo, mensaje, etiqueta, tipo, valor, min, max, paso, obligatorio, aceptar, icono })
+  // Devuelve el texto escrito o null si se cancela.
+  const modalPedir = document.getElementById('modal-pedir');
+  const modalPedirTitulo = document.getElementById('modal-pedir-titulo');
+  const modalPedirMensaje = document.getElementById('modal-pedir-mensaje');
+  const modalPedirEtiqueta = document.getElementById('modal-pedir-etiqueta');
+  const modalPedirInput = document.getElementById('modal-pedir-input');
+  const modalPedirError = document.getElementById('modal-pedir-error');
+  const modalPedirAceptar = document.getElementById('modal-pedir-aceptar');
+  const modalPedirCancelar = document.getElementById('modal-pedir-cancelar');
+  let resolverPedir = null;
+  let focoPedir = null;
+
+  const cerrarPedir = (valor = null) => {
+    if (!modalPedir) return;
+    modalPedir.classList.remove('abierto');
+    modalPedir.setAttribute('aria-hidden', 'true');
+    const r = resolverPedir;
+    resolverPedir = null;
+    if (r) r(valor);
+    if (focoPedir && document.contains(focoPedir)) focoPedir.focus();
+    focoPedir = null;
+  };
+
+  const aceptarPedir = () => {
+    if (!modalPedirInput) return;
+    const v = String(modalPedirInput.value || '').trim();
+    const tipo = modalPedirInput.dataset.tipo || 'text';
+    const err = (txt) => {
+      if (modalPedirError) { modalPedirError.textContent = txt; modalPedirError.hidden = false; }
+      modalPedirInput.focus();
+    };
+    if (modalPedirInput.required && v === '') { err('Escribe un valor para continuar.'); return; }
+    if (tipo === 'number') {
+      const n = Number(v);
+      if (v === '' || !Number.isFinite(n)) { err('Escribe un número válido.'); return; }
+      const min = modalPedirInput.min !== '' ? Number(modalPedirInput.min) : null;
+      const max = modalPedirInput.max !== '' ? Number(modalPedirInput.max) : null;
+      if (min !== null && n < min) { err('El valor mínimo es ' + min + '.'); return; }
+      if (max !== null && n > max) { err('El valor máximo es ' + max + '.'); return; }
+    }
+    cerrarPedir(v);
+  };
+
+  window.solicitarModal = (opciones = {}) => new Promise((resolve) => {
+    if (!modalPedir) { resolve(null); return; }
+    if (resolverPedir) cerrarPedir(null);
+    if (modalPedirTitulo) modalPedirTitulo.textContent = opciones.titulo || 'Escribe un dato';
+    if (modalPedirMensaje) {
+      modalPedirMensaje.textContent = opciones.mensaje || '';
+      modalPedirMensaje.hidden = !opciones.mensaje;
+    }
+    if (modalPedirEtiqueta) {
+      modalPedirEtiqueta.textContent = opciones.etiqueta || '';
+      modalPedirEtiqueta.hidden = !opciones.etiqueta;
+    }
+    if (modalPedirInput) {
+      modalPedirInput.type = opciones.tipo === 'number' ? 'number' : 'text';
+      modalPedirInput.dataset.tipo = opciones.tipo === 'number' ? 'number' : 'text';
+      modalPedirInput.value = opciones.valor == null ? '' : String(opciones.valor);
+      modalPedirInput.placeholder = opciones.placeholder || '';
+      modalPedirInput.required = !!opciones.obligatorio;
+      if (opciones.min != null) modalPedirInput.min = String(opciones.min); else modalPedirInput.removeAttribute('min');
+      if (opciones.max != null) modalPedirInput.max = String(opciones.max); else modalPedirInput.removeAttribute('max');
+      if (opciones.paso != null) modalPedirInput.step = String(opciones.paso); else modalPedirInput.removeAttribute('step');
+    }
+    if (modalPedirError) { modalPedirError.textContent = ''; modalPedirError.hidden = true; }
+    if (modalPedirAceptar) modalPedirAceptar.innerHTML = '<i class="fa-solid ' + (opciones.icono || 'fa-check') + '"></i> ' + (opciones.aceptar || 'Aceptar');
+    if (modalPedirCancelar) modalPedirCancelar.innerHTML = '<i class="fa-solid fa-xmark"></i> ' + (opciones.cancelar || 'Cancelar');
+    if (modalPedirAceptar) modalPedirAceptar.className = 'btn ' + (opciones.tono === 'peligro' ? 'btn-danger' : 'btn-primary');
+    const icono = modalPedir.querySelector('.modal-icono i');
+    if (icono) icono.className = 'fa-solid ' + (opciones.icono || 'fa-keyboard');
+    focoPedir = document.activeElement;
+    resolverPedir = resolve;
+    if (window.CapaSuperior) CapaSuperior.adoptar(modalPedir);
+    modalPedir.classList.add('abierto');
+    modalPedir.setAttribute('aria-hidden', 'false');
+    setTimeout(() => { if (modalPedirInput) { modalPedirInput.focus(); modalPedirInput.select(); } }, 0);
+  });
+
+  modalPedirAceptar?.addEventListener('click', aceptarPedir);
+  modalPedirCancelar?.addEventListener('click', () => cerrarPedir(null));
+  modalPedir?.addEventListener('click', (e) => { if (e.target === modalPedir) cerrarPedir(null); });
+  modalPedirInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); aceptarPedir(); }
+    else if (e.key === 'Escape') { e.preventDefault(); cerrarPedir(null); }
+  });
+  modalPedir?.addEventListener('keydown', (e) => {
+    if (!modalPedir.classList.contains('abierto')) return;
+    if (e.key === 'Escape') { e.preventDefault(); cerrarPedir(null); return; }
+    if (e.key !== 'Tab') return;
+    const focos = Array.from(modalPedir.querySelectorAll('button:not([hidden]):not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+    if (!focos.length) return;
+    const primero = focos[0], ultimo = focos[focos.length - 1];
+    if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
   });
 
   modalCancelar?.addEventListener('click', () => cerrarModal(false));

@@ -50,7 +50,7 @@
                         <form method="POST" action="/submittals/eliminar" style="display:inline" data-confirm="¿Eliminar paquete?|Se quitarán también sus renglones del MSR.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($p->id); ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                            <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                     </td>
                     <?php break; default: if ($c['campo']) echo \Classes\CamposPersonalizados::celda($c['campo'], (int)$p->id, $cp['valores'][(int)$p->id][$c['campo']['id']] ?? '', $puede); endswitch; endforeach; ?>

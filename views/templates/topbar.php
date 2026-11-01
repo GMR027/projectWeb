@@ -6,12 +6,12 @@ $notifRol = $_SESSION['rol'] ?? 'visitante';
 $notifNovedades = \Classes\Novedades::para($notifRol, (int)($_SESSION['id'] ?? 0));
 $notifSinVer = \Classes\Novedades::sinVer($notifNovedades);
 $notifProyectoId = (int)($proyectoSidebar->id ?? 0);
+// Solo «actividades de hoy» (2 consultas). El resto de acciones rápidas se cargan al abrir el menú.
 $notifHoy = null;
-$notifAcciones = [];
-foreach (($accionesRapidas ?? []) as $sec) {
-    if ($sec['clave'] === 'hoy') { $notifHoy = $sec; continue; }
-    if ((int)$sec['total'] > 0) $notifAcciones[] = $sec;
+if ($notifProyectoId) {
+    try { $notifHoy = \Classes\AccionesRapidas::seccionHoy($notifProyectoId); } catch (\Throwable $e) { $notifHoy = null; }
 }
+$notifAcciones = [];
 $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
 ?>
     <div class="topbar-left">
@@ -133,6 +133,7 @@ $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
                 </div>
                 <div class="notif-pie">
                     <a href="/novedades"><?php echo s(t('Novedades de la plataforma')); ?></a>
+                    <?php if ($notifProyectoId): ?> · <a href="/acciones?proyecto=<?php echo $notifProyectoId; ?>"><?php echo s(t('Ver acciones rápidas')); ?></a><?php endif; ?>
                 </div>
             </div>
         </div>

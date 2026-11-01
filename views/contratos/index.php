@@ -85,7 +85,7 @@ $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
                     <?php if ($c['archivo_id']): ?><a class="btn btn-xs btn-ghost" href="/archivos/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$c['archivo_id']; ?>" title="Ver documento"><i class="fa-solid fa-paperclip"></i></a><?php endif; ?>
                     <?php if ($puedeEditar): ?>
                         <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['editar' => $c['id']])); ?>" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                        <form method="POST" action="/contratos/eliminar" onsubmit="return confirm('¿Eliminar este registro?');" style="display:inline">
+                        <form method="POST" action="/contratos/eliminar" data-confirm="¿Eliminar el registro?|Esta acción no se puede deshacer.|Eliminar" style="display:inline">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
                             <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>

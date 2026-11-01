@@ -8,6 +8,36 @@ class AccionesRapidas
     private const LIMITE = 5;
 
     /**
+     * Solo la sección «Actividades de hoy» (2 consultas). La usa la campana de notificaciones:
+     * así la cabecera no calcula las 10 secciones de acciones rápidas en cada página.
+     */
+    public static function seccionHoy(int $pid, ?int $limite = 5): ?array
+    {
+        global $db;
+        $pid = (int)$pid;
+        $base = "FROM actividades a JOIN partidas pa ON pa.id = a.partida_id
+                 WHERE pa.proyecto_id = $pid AND a.status <> 'completada'
+                   AND a.fecha_inicio <= CURDATE() AND a.fecha_fin >= CURDATE()";
+        $r = $db->query("SELECT COUNT(*) $base");
+        $total = (int)(($r ? $r->fetch_row()[0] : 0) ?? 0);
+        if ($total === 0) return null;
+        $L = max(1, (int)($limite ?? 5));
+        $items = [];
+        $q = $db->query("SELECT a.id, a.codigo, a.nombre, a.fecha_inicio, a.fecha_fin, a.progreso, a.prioridad
+                         $base ORDER BY a.fecha_fin ASC, a.id ASC LIMIT $L");
+        while ($q && ($f = $q->fetch_assoc())) {
+            $items[] = [
+                'titulo' => $f['codigo'] . ' · ' . $f['nombre'],
+                'sub' => formatear_fecha($f['fecha_inicio'], 'd/m') . ' → ' . formatear_fecha($f['fecha_fin'], 'd/m') . ' · ' . (int)$f['progreso'] . '%',
+                'chip' => in_array($f['prioridad'], ['alta', 'critica'], true) ? $f['prioridad'] : '',
+                'url' => '/programa/actividades/editar?proyecto=' . $pid . '&id=' . (int)$f['id'],
+            ];
+        }
+        return ['clave' => 'hoy', 'titulo' => 'Actividades de hoy', 'icono' => 'fa-sun',
+            'total' => $total, 'items' => $items, 'abierta' => true, 'ver' => '/programa?proyecto=' . $pid];
+    }
+
+    /**
      * @param int|null $limite elementos por sección (null = todos)
      * @return array<int, array{clave:string, titulo:string, icono:string, total:int, items:array, ver:string, abierta:bool}>
      */

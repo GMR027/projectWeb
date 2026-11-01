@@ -82,7 +82,7 @@
                         <a href="/cambios/editar?proyecto=<?php echo $pid; ?>&id=<?php echo s($o->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <form method="POST" action="/cambios/eliminar" style="display:inline" data-confirm="¿Eliminar la orden de cambio?|Se borrarán también sus renglones.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo s($o->id); ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                            <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                         <?php endif; ?>
                     </td>

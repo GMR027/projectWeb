@@ -928,6 +928,34 @@ HTML],
 <p>Al final puedes exportar la comparación a PDF eligiendo tamaño de hoja, orientación, qué incluir (A y B como se ven, solo A o solo B) y el área (vista actual o documento A completo). Marca <strong>Incluir anotaciones, medidas y leyenda</strong> para que salgan los dibujos, las medidas y el texto/estado de los globos debajo de la imagen.</p>
 HTML],
 
+['id' => 'anotador', 'titulo' => 'Anotador de planos', 'icono' => 'fa-pen-nib', 'roles' => $todos, 'herr' => 'anotador', 'cuerpo' => <<<'HTML'
+<p>Trabaja <strong>encima de un plano o documento PDF</strong>: anota, mide, marca áreas y volúmenes, inserta imágenes, estampas y firmas, y descarga el PDF anotado. Es distinto del <a href="#editor">Editor</a> (que crea dibujos desde cero) y del <a href="#comparador">Comparador</a> (que enfrenta dos revisiones).</p>
+<h4>Abrir un documento</h4>
+<ul>
+<li>Elige <strong>Del proyecto</strong>: Archivo, láminas de vPlan, gráficos del Editor o documentos del Redactor (se convierten a PDF).</li>
+<li>O sube un <strong>archivo externo</strong> (PDF, PNG, JPG, GIF o WEBP). La copia se guarda en el proyecto solo al guardar.</li>
+<li>Si el PDF tiene varias hojas, usa las <strong>miniaturas</strong> o las flechas del pie para cambiar de página. Cada anotación pertenece a su página.</li>
+</ul>
+<h4>Anotar</h4>
+<p>La barra superior reúne las herramientas: <strong>seleccionar</strong>, <strong>mano</strong> para mover la vista, <strong>globo numerado</strong>, <strong>texto</strong>, <strong>resaltador</strong>, <strong>rectángulo resaltado</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>rectángulo</strong>, <strong>elipse</strong>, <strong>nube de revisión</strong>, <strong>medir</strong>, <strong>área</strong>, <strong>polígono</strong>, <strong>volumen</strong>, <strong>imagen</strong>, <strong>estampa</strong> y <strong>firma</strong>. Con la selección puedes mover, redimensionar, copiar (Ctrl+C), pegar (Ctrl+V), duplicar (Ctrl+D) y borrar (Supr). <strong>Mayús+clic</strong> selecciona varias.</p>
+<h4>Medir áreas y volúmenes</h4>
+<ol>
+<li>En <strong>Medidas</strong> pulsa <strong>Calibrar página</strong> y dibuja una cota conocida; escribe cuántos metros mide. La escala se guarda por página.</li>
+<li><strong>Polígono</strong>: haz clic en cada vértice y cierra con doble clic o Enter. La etiqueta muestra el área y, si lo eliges en Propiedades, también el perímetro.</li>
+<li><strong>Volumen</strong>: dibuja el polígono y escribe la <strong>profundidad</strong> en metros. El resultado es área × profundidad en m³. Puedes cambiarla en Propiedades.</li>
+<li>La tabla de <strong>Medidas</strong> resume todo y suma áreas y volúmenes; <strong>CSV</strong> y <strong>Copiar</strong> llevan el cuadro a otros documentos.</li>
+</ol>
+<h4>Insertar imágenes, estampas y firmas</h4>
+<ul>
+<li><strong>Imagen</strong>: súbela desde el panel Insertar y haz clic en la página para colocarla. Se copia al proyecto y cuenta para el almacenamiento.</li>
+<li><strong>Estampa inteligente</strong>: se elige de las creadas en Símbolos. Se genera una imagen con los datos del proyecto y se coloca sobre la hoja; si los datos cambian, vuelve a insertarla para refrescarla.</li>
+<li><strong>Firma</strong>: dibújala o escríbela, guárdala en tu biblioteca (también sirve para el Redactor) y colócala. Lleva nombre, cargo y fecha. <strong>Finalizar firma</strong> guarda el documento, lo bloquea y descarga el PDF con la leyenda de firma y la huella del estado firmado. No es un certificado digital; es una firma visible con trazabilidad. Solo el administrador puede reabrir un documento firmado.</li>
+<li><strong>Resaltar texto</strong>: en PDF con texto seleccionable elige la herramienta y selecciona el texto con el ratón; se resalta, subraya o tacha. En planos escaneados usa el resaltador rectangular.</li>
+</ul>
+<h4>Guardar, versiones y PDF</h4>
+<p><strong>Guardar</strong> pide nombre y descripción. Cada vez que vuelves a guardar se conserva una versión anterior (máximo 20) que puedes restaurar desde <strong>Historial</strong>. <strong>PDF</strong> descarga el documento con todas las anotaciones aplanadas y, si hay medidas o firma, una hoja de leyenda. Quien creó el documento y el administrador pueden modificarlo; los demás pueden verlo y duplicarlo.</p>
+HTML],
+
 ['id' => 'traductor', 'titulo' => 'Traductor', 'icono' => 'fa-language', 'roles' => $todos, 'herr' => 'traductor', 'cuerpo' => <<<'HTML'
 <p>Traduce de <strong>español a inglés</strong> o de <strong>inglés a español</strong> un texto que escribas o un documento completo.</p>
 <h4>Texto</h4>

@@ -140,6 +140,45 @@ $vols = [
     </form>
 </div>
 
+<div class="card" id="accesos" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-key"></i> <?php echo s(t('Accesos recientes')); ?></h3>
+    <?php if (!\Classes\Accesos::disponible()): ?>
+        <p class="text-muted text-sm">Falta aplicar <code>database/migracion_accesos.sql</code> para registrar quién entra y desde dónde.</p>
+    <?php else: $acRes = \Classes\Accesos::resumen(); $acLista = \Classes\Accesos::recientes(30); ?>
+        <p class="text-muted text-sm">
+            Últimas 24 h: <strong><?php echo (int)$acRes['ok']; ?></strong> accesos correctos ·
+            <strong><?php echo (int)$acRes['fallo']; ?></strong> fallidos ·
+            <strong><?php echo (int)$acRes['ips']; ?></strong> IP distintas.
+            Se guardan los últimos <?php echo number_format(\Classes\Accesos::MAX_FILAS, 0, '.', ','); ?> registros.
+        </p>
+        <?php if (!$acLista): ?>
+            <p class="text-muted">Aún no hay accesos registrados.</p>
+        <?php else: ?>
+        <div class="tabla-wrapper">
+        <table class="tabla">
+            <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Usuario')); ?></th><th><?php echo s(t('Resultado')); ?></th><th class="hide-m">IP</th><th class="hide-m"><?php echo s(t('Equipo')); ?></th></tr></thead>
+            <tbody>
+            <?php foreach ($acLista as $ac): ?>
+                <tr>
+                    <td class="mono text-sm"><?php echo s(date('d/m/Y H:i', strtotime($ac['creado']))); ?></td>
+                    <td><?php echo s($ac['nombre'] ?: $ac['email']); ?><?php if (!empty($ac['rol'])): ?> <span class="badge badge-<?php echo s($ac['rol']); ?>"><?php echo s($ac['rol']); ?></span><?php endif; ?></td>
+                    <td><?php
+                        $res = (string)$ac['resultado'];
+                        $etq = ['ok' => 'Correcto', 'fallo' => 'Fallido', 'bloqueado' => 'Bloqueado', 'demo' => 'Demo'][$res] ?? $res;
+                        $tono = $res === 'ok' ? 'var(--success)' : 'var(--danger)';
+                        echo '<span class="badge" style="color:' . $tono . ';border-color:' . $tono . '">' . s($etq) . '</span>';
+                    ?></td>
+                    <td class="mono text-sm hide-m"><?php echo s($ac['ip']); ?></td>
+                    <td class="text-sm hide-m" style="max-width:38rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<?php echo s($ac['agente']); ?>"><?php echo s(mb_substr((string)$ac['agente'], 0, 70)); ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+        <?php endif; ?>
+    <?php endif; ?>
+</div>
+
 <div class="card" id="respaldo" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-box-archive"></i> <?php echo s(t('Respaldo')); ?></h3>
     <p class="text-muted text-sm">Cada respaldo es un .zip con la base de datos completa (incluye usuarios y contraseñas) y todo el volumen de archivos. Al restaurar se reemplaza todo el sistema y se cierra tu sesión; antes se guarda un respaldo automático «antes_de_restaurar».</p>

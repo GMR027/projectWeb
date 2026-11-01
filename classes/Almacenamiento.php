@@ -26,7 +26,7 @@ class Almacenamiento
     public static function desglose(int $proyectoId): array
     {
         $p = Proyecto::find($proyectoId);
-        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Redactor (documentos)' => 0, 'SheetFlow (tablas)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Logos y carátula' => 0];
+        $r = ['Archivos' => 0, 'Fotos de reportes diarios' => 0, 'Personal (fotos)' => 0, 'vPlan (planos e imágenes)' => 0, 'Editor (gráficos)' => 0, 'Redactor (documentos)' => 0, 'SheetFlow (tablas)' => 0, 'Símbolos' => 0, 'Evidencias' => 0, 'Materiales (fotos y fichas)' => 0, 'Anotador (planos y firmas)' => 0, 'Logos y carátula' => 0];
 
         foreach (Archivo::deProyecto($proyectoId) as $a) $r['Archivos'] += self::tam((string)$a->ruta()) ?: 0;
 
@@ -69,6 +69,10 @@ class Almacenamiento
         $r['Normativa y especificaciones'] = Normativa::bytes($proyectoId);
         $r['Punch list (fotos)'] = Punch::bytes($proyectoId);
         $r['Comparador de documentos'] = Comparador::bytes($proyectoId);
+        try {
+            $r['Anotador (planos y firmas)'] = \Classes\Anotador::bytes($proyectoId);
+        } catch (\Throwable $e) {
+        }
         if ($p) {
             foreach ([['logo', 'logos'], ['contratista_logo', 'logos'], ['caratula', 'caratulas']] as [$c, $dir]) {
                 if ($p->$c) $r['Logos y carátula'] += self::tam(self::RAIZ . "/public/build/img/$dir/" . basename($p->$c));

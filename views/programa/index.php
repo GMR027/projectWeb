@@ -49,7 +49,7 @@
     </div>
     <div class="hide-m">
         <?php if (puede_descargar()): ?>
-            <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><?php echo s(t('⚙ Ajustes & Exportar')); ?></a>
+            <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-gear" aria-hidden="true"></i> <?php echo s(t('Ajustes y exportar')); ?></a>
         <?php endif; ?>
         <a href="/proyectos" class="btn btn-ghost"><?php echo s(t('← Portafolio')); ?></a>
     </div>
@@ -257,7 +257,7 @@
                                            data-actividad-id="<?php echo s($fila['id']); ?>"
                                            data-tipo="inicio"
                                            aria-label="Fecha de inicio de <?php echo s($fila['codigo']); ?>">
-                                    <span class="solo-movil mono"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
+                                    <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
                                 <?php else: ?>
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
                                 <?php endif; ?>
@@ -271,7 +271,7 @@
                                            data-actividad-id="<?php echo s($fila['id']); ?>"
                                            data-tipo="fin"
                                            aria-label="Fecha de fin de <?php echo s($fila['codigo']); ?>">
-                                    <span class="solo-movil mono"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
+                                    <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
                                 <?php else: ?>
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
                                 <?php endif; ?>
@@ -395,6 +395,14 @@
         </table>
     </div>
 </div>
+
+<?php if (($totalFilas ?? 0) > count($filas)): $qMas = $_GET; $qMas['filas'] = (int)$limiteFilas + 300; ?>
+    <div class="programa-mas no-print">
+        <span class="text-muted text-sm"><?php echo s(t('Mostrando {a} de {b} filas', ['a' => count($filas), 'b' => (int)$totalFilas])); ?></span>
+        <a class="btn btn-ghost btn-sm" href="/programa?<?php echo s(http_build_query($qMas)); ?>"><i class="fa-solid fa-chevron-down"></i> <?php echo s(t('Mostrar 300 más')); ?></a>
+        <a class="btn btn-ghost btn-sm" href="/programa?<?php echo s(http_build_query(array_merge($_GET, ['filas' => 5000]))); ?>"><?php echo s(t('Mostrar todo')); ?></a>
+    </div>
+<?php endif; ?>
 
 <!-- Gantt (no se muestra en móvil) -->
 <div class="card hide-m">

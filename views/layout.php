@@ -28,6 +28,11 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/build/img/pwa/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ProjectWeb">
     <title><?php echo s($titulo ?? 'Programa de Obra'); ?> | ProjectWeb</title>
     <link rel="stylesheet" href="/vendor/fuentes/fuentes.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fuentes/fuentes.css'); ?>">
     <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fontawesome/css/all.min.css'); ?>">
@@ -45,6 +50,7 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
     </script>
 </head>
 <body>
+    <div class="barra-progreso" id="pw-progreso" aria-hidden="true"></div>
     <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
     <?php if (es_demo()): ?>
         <div class="demo-banner">

@@ -367,7 +367,7 @@
     p.querySelectorAll('[data-quitar]').forEach(x => {
       const quitar = async ev => {
         ev.stopPropagation();
-        if (!confirm('¿Quitar este requisito?')) return;
+        if (!await window.confirmarModal({ titulo: '¿Quitar este requisito?', mensaje: 'La dependencia se elimina del material.', aceptar: 'Quitar', icono: 'fa-link-slash' })) return;
         const d = await api('eliminar', { id: x.dataset.quitar });
         if (d) { toast('Requisito eliminado'); pintar(); }
       };
@@ -487,7 +487,7 @@
     pintar();
   }
   async function deshacer() {
-    if (!confirm('¿Restaurar las fechas anteriores a la última reprogramación?')) return;
+    if (!await window.confirmarModal({ titulo: '¿Restaurar las fechas?', mensaje: 'Se devuelven las fechas anteriores a la última reprogramación.', aceptar: 'Restaurar', icono: 'fa-clock-rotate-left' })) return;
     const d = await api('deshacer');
     if (d) { toast(d.restauradas + ' actividad(es) restaurada(s)'); pintar(); }
   }

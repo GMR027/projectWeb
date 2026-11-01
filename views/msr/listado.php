@@ -27,7 +27,7 @@
                             <span class="hide-m"><form method="POST" action="/msr/eliminar" style="display:inline" data-confirm="¿Eliminar MSR?|Se borrarán sus renglones. Los paquetes de submittal se conservan pero quedan «Sin MSR».">
                                 <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                                 <input type="hidden" name="id" value="<?php echo s($m->id); ?>">
-                                <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                                <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                             </form></span>
                         <?php endif; ?>
                     </td>

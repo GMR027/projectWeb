@@ -350,10 +350,10 @@
     if (popChip === chip && pop && !pop.hidden) return;
     popT = setTimeout(() => popMostrar(chip), 650);
   }
-  function resolverRest(id) {
+  async function resolverRest(id) {
     const a = popAct;
     if (!a) return;
-    if (!confirm('¿Marcar la restricción como resuelta?')) return;
+    if (!await window.confirmarModal({ titulo: '¿Resolver la restricción?', mensaje: 'Se marcará como resuelta en el programa y en la línea de tiempo.', aceptar: 'Resolver', icono: 'fa-circle-check', tono: 'info' })) return;
     const fd = new FormData();
     fd.append('proyecto', LT.proyecto); fd.append('id', id);
     fetch('/api/lineatiempo/resolver', { method: 'POST', body: fd })

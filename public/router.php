@@ -9,6 +9,12 @@ if (str_starts_with($ruta, '/uploads/')) {
     require __DIR__ . '/index.php';
     return true;
 }
+// El manifest de la PWA necesita su tipo MIME propio (el servidor de PHP no lo conoce)
+if ($ruta === '/manifest.webmanifest') {
+    header('Content-Type: application/manifest+json; charset=utf-8');
+    readfile(__DIR__ . '/manifest.webmanifest');
+    return true;
+}
 if ($ruta !== '/' && is_file(__DIR__ . $ruta)) {
     return false;   // deja que el servidor entregue el CSS, JS, imágenes públicas del build, etc.
 }

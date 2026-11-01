@@ -27,6 +27,8 @@ CREATE TABLE usuarios (
     puede_archivos_ajenos TINYINT(1) NOT NULL DEFAULT 0,   -- colaborador: editar archivos subidos por el dueño
     token VARCHAR(100) DEFAULT NULL,
     confirmado TINYINT(1) DEFAULT 0,
+    debe_cambiar_password TINYINT(1) NOT NULL DEFAULT 0,   -- contraseña inicial (seed o temporal): se pide cambiarla al entrar
+    ultimo_acceso DATETIME NULL,                        -- último acceso correcto
     novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
     inicio_json TEXT NULL,            -- Inicio personalizado (bloques y orden), Fase 4.5
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -243,9 +245,9 @@ CREATE TABLE IF NOT EXISTS proyecto_accesos (
 -- ============================================================
 -- DATOS SEMILLA
 -- ============================================================
--- Usuario admin por defecto (password: admin123 - CAMBIAR EN PRODUCCIÓN)
-INSERT INTO usuarios (nombre, email, password, rol, confirmado) VALUES
-('Administrador', 'admin@po.local', '$2y$12$n6xOV.ytNTY7dysHh66yeuxncU33gwjWbEWX2q6T9XIRYiqzoXX72', 'admin', 1);
+-- Usuario admin por defecto (password: admin123 - CAMBIAR EN PRODUCCIÓN; se pide cambiarla al entrar)
+INSERT INTO usuarios (nombre, email, password, rol, confirmado, debe_cambiar_password) VALUES
+('Administrador', 'admin@po.local', '$2y$12$n6xOV.ytNTY7dysHh66yeuxncU33gwjWbEWX2q6T9XIRYiqzoXX72', 'admin', 1, 1);
 
 -- ============================================================
 -- MSR (materiales, submittals, reporte de estatus)
@@ -2233,4 +2235,59 @@ CREATE TABLE IF NOT EXISTS cierre_items (
     KEY idx_cierre_proyecto (proyecto_id, estado),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (archivo_id) REFERENCES archivos(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- ANOTADOR DE PLANOS Y DOCUMENTOS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS anotador_documentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(500) NOT NULL DEFAULT '',
+    fuente_tipo VARCHAR(20) NOT NULL DEFAULT 'archivo',
+    fuente_id INT NULL,
+    archivo VARCHAR(100) NULL,
+    nombre_archivo VARCHAR(255) NOT NULL DEFAULT '',
+    ext VARCHAR(10) NOT NULL DEFAULT '',
+    paginas INT NOT NULL DEFAULT 1,
+    config_json TEXT NOT NULL,
+    anotaciones_json MEDIUMTEXT NOT NULL,
+    miniatura VARCHAR(100) NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    usuario_id INT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_ant_proyecto (proyecto_id, actualizado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS anotador_versiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    documento_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    config_json TEXT NOT NULL,
+    anotaciones_json MEDIUMTEXT NOT NULL,
+    miniatura VARCHAR(100) NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_ant_ver (documento_id, id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (documento_id) REFERENCES anotador_documentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS anotador_firmas_aplicadas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    documento_id INT NOT NULL,
+    usuario_id INT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    cargo VARCHAR(150) NOT NULL DEFAULT '',
+    pagina INT NOT NULL DEFAULT 1,
+    hash CHAR(64) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_ant_firma (documento_id, id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (documento_id) REFERENCES anotador_documentos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

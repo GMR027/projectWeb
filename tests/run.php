@@ -554,6 +554,29 @@ $ok('otro proyecto no puede leer el contexto', \Classes\ContextoIA::leer($ctx, 1
 $ok('un token inventado no lee nada', \Classes\ContextoIA::leer('../../etc/passwd', 99, 'prueba') === null);
 \Classes\ContextoIA::borrar($ctx);
 
+$asset = fn(string $p): string => (string)@file_get_contents(__DIR__ . '/../' . $p);
+echo "Anotador: plano, medidas y firmas\n";
+$ok('el esquema y su migración crean las tablas del Anotador', str_contains($asset('database/schema.sql'), 'CREATE TABLE IF NOT EXISTS anotador_documentos') && str_contains($asset('database/migracion_anotador.sql'), 'CREATE TABLE IF NOT EXISTS anotador_versiones') && str_contains($asset('database/migracion_anotador.sql'), 'anotador_firmas_aplicadas'));
+$ok('las rutas del Anotador están registradas', str_contains($asset('public/index.php'), "/anotador/guardar") && str_contains($asset('public/index.php'), "/anotador/estampa") && str_contains($asset('public/index.php'), "/anotador/firmar") && !str_contains($asset('public/index.php'), "/anotador/publico"));
+$ok('la herramienta está en el menú y en los permisos', str_contains($asset('views/templates/herramientas-proyecto.php'), "'/anotador', 'fa-pen-nib', 'Anotador'") && str_contains($asset('models/Usuario.php'), "'anotador' => ['Anotador de planos', ['/anotador']]"));
+$ok('la vista tiene el visor, las herramientas y los paneles', str_contains($asset('views/anotador/index.php'), 'id="ant-hoja"') && str_contains($asset('views/anotador/index.php'), "['poligono'") && str_contains($asset('views/anotador/index.php'), "['volumen'") && str_contains($asset('views/anotador/index.php'), "['firma'") && str_contains($asset('views/anotador/index.php'), 'id="ant-panel"'));
+$ok('el motor comparte las formas con el Comparador', str_contains($asset('views/anotador/index.php'), '/vendor/anotaciones.js') && str_contains($asset('views/comparador/index.php'), '/vendor/anotaciones.js') && str_contains($asset('public/vendor/anotador.js'), 'A.dibujar'));
+$ok('el Anotador dibuja polígonos, volúmenes, imágenes y firmas', str_contains($asset('public/vendor/anotaciones.js'), "case 'volumen'") && str_contains($asset('public/vendor/anotaciones.js'), 'areaPoligono') && str_contains($asset('public/vendor/anotaciones.js'), "case 'firma'"));
+$ok('el Anotador calibra por página y calcula el cuadro de medidas', str_contains($asset('public/vendor/anotador.js'), 'ant.cfg.escalas[paginaActual()]') && str_contains($asset('views/anotador/index.php'), 'id="ant-medidas-tabla"') && str_contains($asset('public/vendor/anotador.js'), 'medidasCsv'));
+$ok('el Anotador resalta texto del PDF y exporta PDF', str_contains($asset('public/vendor/anotador.js'), 'renderTextLayer') && str_contains($asset('public/vendor/anotador.js'), 'aplicarResaltadoTexto') && str_contains($asset('public/vendor/anotador.js'), 'jsPDF'));
+$ok('el Anotador firma, bloquea y permite reabrir al administrador', str_contains($asset('classes/Anotador.php'), 'function finalizar') && str_contains($asset('classes/Anotador.php'), 'anotador_firmas_aplicadas') && str_contains($asset('views/anotador/index.php'), 'ant-finalizado') && str_contains($asset('controllers/AnotadorController.php'), 'function reabrir'));
+$ok('las imágenes del Anotador se entregan con permiso del proyecto', str_contains($asset('classes/Media.php'), "'anotador'") && str_contains($asset('controllers/AnotadorController.php'), 'function imagenVer'));
+$ok('el Anotador cuenta para el almacenamiento', str_contains($asset('classes/Almacenamiento.php'), 'Anotador::bytes'));
+$anAnt = \Classes\Anotador::anotaciones(json_encode(['ancho' => 1000, 'alto' => 700, 'escalas' => [1 => 0.002], 'shapes' => [
+    ['tipo' => 'poligono', 'pts' => [[0, 0], [100, 0], [100, 100]], 'pagina' => 1],
+    ['tipo' => 'volumen', 'pts' => [[0, 0], [100, 0], [100, 100]], 'profundidad' => 0.3, 'pagina' => 1],
+    ['tipo' => 'firma', 'x' => 10, 'y' => 10, 'w' => 100, 'h' => 40, 'imagen' => str_repeat('a', 32) . '.png', 'nombre' => 'Ana', 'pagina' => 1],
+    ['tipo' => 'inventada', 'x' => 1, 'y' => 1],
+]]));
+$ok('el normalizador acepta polígonos, volúmenes y firmas y descarta lo desconocido', count($anAnt['shapes']) === 3 && $anAnt['shapes'][0]['tipo'] === 'poligono' && $anAnt['shapes'][1]['profundidad'] === 0.3 && $anAnt['shapes'][2]['nombre'] === 'Ana' && $anAnt['escalas'][1] === 0.002);
+$ok('una imagen de firma con nombre raro se rechaza', \Classes\Anotador::anotaciones(json_encode(['shapes' => [['tipo' => 'firma', 'imagen' => '../../etc/passwd', 'x' => 1, 'y' => 1, 'w' => 10, 'h' => 10]]]))['shapes'] === []);
+$ok('la configuración del Anotador acota las escalas por página', \Classes\Anotador::config(json_encode(['escalas' => [1 => 0.002, 2 => -5, 'x' => 1, 3 => '0.5'], 'unidad' => 'm']))['escalas'] === [1 => 0.002, 3 => 0.5]);
+
 echo "Seguridad: control de acceso del visitante\n";
 $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRAMIENTAS', (function () {
     $src = (string)file_get_contents(__DIR__ . '/../views/templates/herramientas-proyecto.php');
@@ -576,6 +599,15 @@ echo "Colaboradores: permisos y borrado\n";
 $ok('el colaborador nunca edita ajustes, compartir ni el historial', \Model\Usuario::herramientasEdicionDePost(['programa', 'ajustes', 'compartir', 'historial'], null) === json_encode(['programa']));
 $ok('lo que edita es siempre un subconjunto de lo que ve', \Model\Usuario::herramientasEdicionDePost(['programa', 'msr'], ['programa']) === json_encode(['programa']));
 $ok('sin herramientas de edición la lista queda vacía', \Model\Usuario::herramientasEdicionDePost([], null) === null);
+$ok('las herramientas se agrupan sin perder ninguna', (function () {
+    $grupos = \Model\Usuario::gruposHerramientas();
+    $claves = [];
+    foreach ($grupos as $filas) { $claves = array_merge($claves, array_keys($filas)); }
+    sort($claves);
+    $todas = array_keys(\Model\Usuario::HERRAMIENTAS);
+    sort($todas);
+    return $claves === $todas && !isset($grupos['Otras herramientas']);
+})());
 $u = new \Model\Usuario(['rol' => 'cliente']);
 $ok('los topes por defecto son 2 visitantes y 3 colaboradores', $u->limiteEquipo('visitante') === 2 && $u->limiteEquipo('colaborador') === 3);
 $ok('un visitante de nivel ver no es colaborador', !(new \Model\Usuario(['rol' => 'visitante', 'nivel_acceso' => 'ver']))->esColaborador());
@@ -656,7 +688,7 @@ $cmpJs = $asset('public/vendor/comparador.js');
 $ok('el esquema y su migración crean comparador_guardados', str_contains($asset('database/schema.sql'), 'CREATE TABLE IF NOT EXISTS comparador_guardados') && str_contains($asset('database/migracion_comparador_guardados.sql'), 'CREATE TABLE IF NOT EXISTS comparador_guardados'));
 $ok('las rutas de guardar, abrir y duplicar están registradas', str_contains($asset('public/index.php'), "/comparador/guardar") && str_contains($asset('public/index.php'), "/comparador/guardado/archivo") && str_contains($asset('public/index.php'), "/comparador/duplicar"));
 $ok('la vista tiene la barra de anotaciones y la lista de guardadas', str_contains($asset('views/comparador/index.php'), 'id="cmp-anot-toggle"') && str_contains($asset('views/comparador/index.php'), 'data-anot="globo"') && str_contains($asset('views/comparador/index.php'), 'cmp-anot-lista') && str_contains($asset('views/comparador/index.php'), 'Comparaciones guardadas'));
-$ok('el motor dibuja globos, textos, flechas, formas y nubes', str_contains($cmpJs, "'globo'") && str_contains($cmpJs, 'function nube') && str_contains($cmpJs, "case 'flecha'") && str_contains($cmpJs, 'function dibujarShape'));
+$ok('el motor dibuja globos, textos, flechas, formas y nubes', str_contains($asset('public/vendor/anotaciones.js'), "case 'globo'") && str_contains($asset('public/vendor/anotaciones.js'), "case 'nube'") && str_contains($asset('public/vendor/anotaciones.js'), "case 'flecha'") && str_contains($cmpJs, 'A.dibujar') && str_contains($asset('views/comparador/index.php'), '/vendor/anotaciones.js'));
 $ok('el motor guarda y reabre comparaciones', str_contains($cmpJs, '/comparador/guardar') && str_contains($cmpJs, 'restaurarGuardado') && str_contains($cmpJs, 'dibujarAnotaciones'));
 $ok('las formas comprueban el tipo recibido (sin variable global)', str_contains($cmpJs, 'const vacia = sh =>') && !preg_match('/\bvacia\(\)/', $cmpJs));
 $ok('las anotaciones se dibujan nítidas en la ventana (no dentro del documento)', str_contains($cmpJs, 'function redibujarAnot') && str_contains($cmpJs, 'window.devicePixelRatio') && str_contains($cmpJs, 'anotCtx.scale(vista.k, vista.k)') && !str_contains($asset('views/comparador/index.php'), 'cmp-mundo-anot'));

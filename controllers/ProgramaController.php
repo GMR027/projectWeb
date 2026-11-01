@@ -78,6 +78,18 @@ class ProgramaController
             }
         }
 
+        // Programas grandes: la tabla y el Gantt se pintan por tramos (300 filas por defecto).
+        // «Mostrar más» recarga con ?filas=N en vez de renderizar miles de filas de golpe.
+        $limiteFilas = filter_var($_GET['filas'] ?? null, FILTER_VALIDATE_INT) ?: 300;
+        $limiteFilas = max(50, min(5000, $limiteFilas));
+        $totalFilas = count($filas);
+        if ($totalFilas > $limiteFilas) {
+            // El corte cae en una partida para no dejar actividades sin su cabecera
+            $corte = $limiteFilas;
+            while ($corte > 0 && ($filas[$corte - 1]['tipo'] ?? '') !== 'partida') $corte--;
+            if ($corte > 0) $filas = array_slice($filas, 0, $corte);
+        }
+
         // Dependencias de obra: solo se dibujan si el modo no está apagado
         $depFlechas = [];
         if (($proyecto->modo_dependencias ?? 'apagado') !== 'apagado') {
@@ -106,6 +118,8 @@ class ProgramaController
             'proyecto' => $proyecto,
             'semanas' => $semanas,
             'filas' => $filas,
+            'limiteFilas' => $limiteFilas,
+            'totalFilas' => $totalFilas,
             'calendario' => $calendario
         ]);
     }
@@ -401,6 +415,7 @@ class ProgramaController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
+        exigir_eliminar_contenido($proyecto, true);   // deshacer la renumeración la hace el dueño, no un colaborador
         $error = \Classes\Renumeracion::deshacer((int)$proyecto->id, (int)($_POST['id'] ?? 0));
         if ($error !== '') http_response_code(409);
         echo json_encode($error === '' ? ['success' => true] : ['success' => false, 'error' => $error], JSON_UNESCAPED_UNICODE);

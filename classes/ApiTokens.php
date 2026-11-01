@@ -12,6 +12,8 @@ class ApiTokens
     use AccesoDb;
 
     public const LIMITE_POR_MINUTO = 120;
+    /** Cuota agregada de todos los tokens de una persona (evita 10 tokens × 120 rpm) */
+    public const LIMITE_USUARIO_POR_MINUTO = 300;
     public const MAX_POR_USUARIO = 10;
 
     public static function disponible(): bool
@@ -61,6 +63,10 @@ class ApiTokens
         $u = self::filas('SELECT id, nombre, email, rol, confirmado FROM usuarios WHERE id = ' . (int)$t['usuario_id'])[0] ?? null;
         if (!$u) return [null, 'invalido'];
         $min = intdiv(time(), 60);
+        // Cuota agregada del usuario: todos sus tokens suman en la misma ventana
+        $uid = (int)$t['usuario_id'];
+        $usado = (int)(self::filas("SELECT COALESCE(SUM(ventana_n), 0) n FROM api_tokens WHERE usuario_id = $uid AND ventana = $min")[0]['n'] ?? 0);
+        if ($usado >= self::LIMITE_USUARIO_POR_MINUTO) return [null, 'limite'];
         $n = $t['ventana'] == $min ? (int)$t['ventana_n'] + 1 : 1;
         if ($n > self::LIMITE_POR_MINUTO) return [null, 'limite'];
         self::db()->query("UPDATE api_tokens SET usos = usos + 1, ultimo_uso = NOW(), ventana = $min, ventana_n = $n WHERE id = " . (int)$t['id']);

@@ -136,6 +136,7 @@ class PlantillasProyectoController
     public static function aplicar()
     {
         $p = proyecto_de_peticion(true);
+        exigir_eliminar_contenido($p);   // aplicar una plantilla reemplaza el programa: no lo hace un colaborador
         [$ok, $msg] = PlantillaProyecto::aplicar((int)($_POST['id'] ?? 0), $p, usuario_actual());
         if ($ok) { header('Location: ' . url_inicio_proyecto((int)$p->id)); exit; }
         self::volver($p, false, $msg);

@@ -127,3 +127,34 @@
 
   &:hover { background: #dc2626; }
 }
+
+// Modal para pedir un dato (sustituye a prompt())
+.modal-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+  margin-bottom: $space-md;
+
+  > span {
+    font-size: 1.35rem;
+    color: $text-muted;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 1.5rem;
+    color: var(--text);
+    background-color: var(--surface-2, rgba(148, 163, 184, 0.08));
+    border: 1px solid $border;
+    border-radius: $radius-md;
+  }
+}
+
+.modal-error {
+  color: var(--danger);
+  font-size: 1.3rem;
+  margin: -$space-sm 0 $space-md;
+  text-align: left;
+}

@@ -50,7 +50,7 @@ class Media
             'evidencias' => ['evidencias'], 'reportes' => ['reportes', 'evidencias'], 'punch' => ['punch', 'vplan'],
             'materiales' => ['materiales', 'submittals', 'msr'], 'personal' => ['minutas', 'reportes', 'recursos', 'redactor'],
             'vplan' => ['vplan', 'graficos', 'submittals', 'view360', 'redactor'], 'simbolos' => ['graficos', 'vplan'],
-            'firmas' => ['redactor'], 'soporte' => [],
+            'firmas' => ['redactor'], 'soporte' => [], 'anotador' => ['anotador', 'comparador'],
         ][$carpeta] ?? [];
         if ($herramientas && !array_filter($herramientas, fn($k) => herramienta_permitida($k))) self::prohibido();
 
@@ -80,6 +80,11 @@ class Media
             $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
             return $id ?: null;
         }
+        if ($esMiniatura && $carpeta === 'anotador') {
+            $sql = "SELECT proyecto_id FROM anotador_documentos WHERE miniatura LIKE '%$a%' LIMIT 1";
+            $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
+            return $id ?: null;
+        }
         $sql = match ($carpeta) {
             'evidencias' => "SELECT proyecto_id FROM evidencias WHERE foto = '$a' LIMIT 1",
             'materiales' => "SELECT proyecto_id FROM materiales WHERE imagen = '$a' LIMIT 1",
@@ -87,6 +92,7 @@ class Media
             'simbolos' => "SELECT proyecto_id FROM simbolos WHERE archivo = '$a' LIMIT 1",
             'reportes' => "SELECT proyecto_id FROM reportes_diarios WHERE fotos_json LIKE '%\"$a\"%' LIMIT 1",
             'punch' => "SELECT proyecto_id FROM punch_items WHERE foto_antes = '$a' OR foto_despues = '$a' LIMIT 1",
+            'anotador' => "SELECT proyecto_id FROM anotador_documentos WHERE archivo = '$a' OR nombre_archivo = '$a' OR anotaciones_json LIKE '%$a%' LIMIT 1",
             'vplan' => "SELECT proyecto_id FROM vplan_laminas WHERE plano = '$a' OR simbologia = '$a' OR marcas_png = '$a' OR marcas_json LIKE '%$a%'"
                 . " UNION SELECT g.proyecto_id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE l.marcas_png = '$a' OR l.marcas_json LIKE '%$a%'"
                 . " UNION SELECT proyecto_id FROM editor_graficos WHERE fondo_imagen = '$a' LIMIT 1",

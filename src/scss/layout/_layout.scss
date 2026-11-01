@@ -115,6 +115,7 @@ body.menu-abierto { overflow: hidden; }
 // ============ MAIN ============
 .main-content {
   padding: $space-lg;
+  padding-bottom: 8rem;   // deja sitio al botón flotante del menú (también en escritorio)
   overflow-x: hidden;
 
   @media (max-width: $bp-mobile) {
@@ -564,4 +565,37 @@ html.sin-ayuda-burbujas .burbuja-ayuda { display: none !important; }
   padding: 1rem 1.6rem; border-radius: 0 0 $radius-md 0;
   background: $primary; color: $on-primary; font-weight: 700; text-decoration: none;
   &:focus { left: 0; outline: 3px solid var(--secondary); outline-offset: 2px; }
+}
+
+// ============ BARRA DE PROGRESO DE NAVEGACIÓN ============
+// Se muestra al cambiar de herramienta o al enviar un formulario: las páginas pesadas
+// (programa, vPlan, Línea de tiempo) tardan y sin señal el usuario cree que no pasó nada.
+.barra-progreso {
+  position: fixed; top: 0; left: 0; z-index: 3000;
+  height: .3rem; width: 0; opacity: 0;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  box-shadow: 0 0 .6rem var(--primary-glow);
+  transition: width .3s ease, opacity .4s ease;
+  pointer-events: none;
+  &.activa { opacity: 1; }
+  &.completa { width: 100% !important; opacity: 0; transition: width .15s ease, opacity .45s ease .1s; }
+}
+
+// ============ AVISO FLOTANTE (toast) ============
+// Un solo aviso para errores de red y respuestas del servidor que ninguna vista muestra.
+.toast-global {
+  position: fixed; left: 50%; bottom: 2.4rem; transform: translate(-50%, 1rem);
+  z-index: 2600; max-width: min(56rem, calc(100vw - 3rem));
+  display: flex; align-items: flex-start; gap: .8rem;
+  padding: 1.1rem 1.5rem; border-radius: .9rem;
+  background: var(--surface-raised); color: var(--text);
+  border: 1px solid var(--border-accent); border-left: .4rem solid var(--danger);
+  box-shadow: var(--shadow-lg); font-size: 1.35rem; line-height: 1.45;
+  opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+  &.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  &.ok { border-left-color: var(--success); }
+  &.aviso { border-left-color: var(--warning); }
+  i { margin-top: .1rem; color: var(--danger); }
+  &.ok i { color: var(--success); }
+  &.aviso i { color: var(--warning); }
 }

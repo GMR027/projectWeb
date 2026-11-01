@@ -304,3 +304,11 @@
 .prg-icono { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); box-shadow: 0 1px 3px rgba(0, 0, 0, .35); vertical-align: middle; }
 .prg-icono-vista { display: inline-flex; margin-bottom: .6rem;
   img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); box-shadow: 0 2px 5px rgba(0, 0, 0, .35); } }
+
+// Programas grandes: barra para cargar el resto de filas por tramos (300 por defecto)
+.programa-mas {
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 1rem;
+  margin: .4rem 0 1.6rem; padding: .8rem 1.2rem;
+  border: 1px dashed var(--border-accent); border-radius: .8rem; background: var(--surface);
+  .text-sm { margin-right: auto; }
+}
