@@ -46,6 +46,9 @@ $vacio = match ($pestana) {
 <?php if (!$puede): ?>
     <p class="text-muted text-sm"><i class="fa-solid fa-eye"></i> Solo lectura: aceptar o cancelar cambios lo hacen el administrador y el cliente dueño del proyecto.</p>
 <?php endif; ?>
+<?php if (es_colaborador()): ?>
+    <p class="text-muted text-sm"><i class="fa-solid fa-user"></i> Ves únicamente los cambios que hiciste tú. El dueño del proyecto ve los de todo el equipo.</p>
+<?php endif; ?>
 
 <form method="get" action="/historial" class="card inc-filtros">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">

@@ -95,6 +95,10 @@ class Renumeracion
         foreach (Partida::whereAll('proyecto_id', $pid) as $p) $p->recalcularFechas();
         $cambios = self::contarCambios($antes, self::instantanea($pid));
         Auditoria::registrar($pid, 'ordenar', 'aplicado', 'ordenar_renumerar', ($origen !== '' ? "Ordenar y renumerar ($origen)" : 'Ordenar y renumerar') . ": {$cambios['codigos']} código(s) y {$cambios['movidas']} actividad(es) con otra posición o partida", $antes, ['renumerar' => $renumerar] + $cambios, null, '', ['proyecto', $pid, 'Orden del programa']);
+        // También en el Historial de cambios (para que el dueño vea lo que hizo un colaborador)
+        \Classes\HistorialCambios::registrar($pid, 'programa', 'modificado',
+            ($origen !== '' ? "Ordenar y renumerar ($origen)" : 'Ordenar y renumerar') . ": {$cambios['codigos']} código(s) y {$cambios['movidas']} actividad(es) con otra posición o partida",
+            $antes, ['renumerar' => $renumerar] + $cambios, ['proyecto', $pid, 'Orden del programa']);
         return ['partidas' => count($orden), 'actividades' => $na, 'cambios' => $cambios, 'deshacer_id' => (int)$db->insert_id];
     }
 
@@ -167,6 +171,7 @@ class Renumeracion
         }
         foreach (Partida::whereAll('proyecto_id', $pid) as $p) $p->recalcularFechas();
         Auditoria::registrar($pid, 'ordenar', 'revertido', 'ordenar_renumerar', 'Se deshizo el orden y la numeración: ' . $u['resumen'], null, null, $auditoriaId, '', ['proyecto', $pid, 'Orden del programa']);
+        \Classes\HistorialCambios::registrar($pid, 'programa', 'modificado', 'Se deshizo el orden y la numeración: ' . $u['resumen'], null, null, ['proyecto', $pid, 'Orden del programa']);
         return '';
     }
 

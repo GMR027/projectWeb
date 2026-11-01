@@ -164,12 +164,78 @@ function es_propietario($proyecto): bool
     return is_auth() && (int)$proyecto->usuario_id === (int)$_SESSION['id'];
 }
 
-/** Admin: todos. Cliente: los suyos. Visitante: ninguno de forma propia. */
+/** Admin: todos. Cliente: los suyos. Colaborador: solo en las herramientas que el dueño le marcó como editables. */
 function puede_gestionar_proyecto($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
     if (is_admin()) return true;
+    if (($_SESSION['rol'] ?? '') === 'cliente' && es_propietario($proyecto)) return true;
+    // Colaborador: puede escribir solo en las herramientas que el dueño le marcó como editables.
+    // La herramienta sale de la ruta actual (todas las de escritura viven bajo el prefijo de su herramienta).
+    if (!es_colaborador($proyecto)) return false;
+    $herr = herramienta_de_ruta((string)($_SERVER['REQUEST_URI'] ?? '/'));
+    if ($herr === null) return false;   // fuera de una herramienta conocida: se niega por defecto
+    return in_array($herr, herramientas_edicion_permitidas(), true);
+}
+
+/** Borrar (crear no: eliminar) es siempre del dueño o del admin; el colaborador no borra nada */
+function puede_eliminar_proyecto($proyecto): bool
+{
+    if (!$proyecto || !is_auth()) return false;
+    if (is_admin()) return true;
     return ($_SESSION['rol'] ?? '') === 'cliente' && es_propietario($proyecto);
+}
+
+/** ¿Esta ruta de la petición es una acción de borrado explícita? (la usa la guarda central del front controller) */
+function es_ruta_de_borrado(string $ruta): bool
+{
+    $ruta = parse_url($ruta, PHP_URL_PATH) ?: '/';
+    return (bool)preg_match('~/(eliminar|borrar|quitar)(/|$)~i', $ruta);
+}
+
+/**
+ * ¿Puede esta persona editar/reemplazar este archivo? El dueño y el admin, siempre. El colaborador solo los
+ * suyos, salvo que el dueño le haya marcado «archivos ajenos». Los archivos anteriores (sin `subido_por`) son del dueño.
+ */
+function puede_gestionar_archivo($archivo, $proyecto = null): bool
+{
+    if (!$archivo || !is_auth()) return false;
+    if (is_admin()) return true;
+    if (($proyecto && es_propietario($proyecto)) || (!$proyecto && ($_SESSION['rol'] ?? '') === 'cliente')) return true;
+    $u = usuario_sesion();
+    if (!$u || !$u->esColaborador()) return false;
+    if (!empty($u->puede_archivos_ajenos)) return true;
+    return (int)($archivo->subido_por ?? 0) === (int)$u->id;
+}
+
+/** Fila del usuario en sesión (una consulta por petición) */
+function usuario_sesion(): ?\Model\Usuario
+{
+    static $u = false;
+    if ($u !== false) return $u;
+    if (!is_auth()) return $u = null;
+    return $u = \Model\Usuario::find((int)$_SESSION['id']);
+}
+
+/** ¿La cuenta en sesión es un colaborador (puede editar donde el dueño lo permita)? */
+function es_colaborador($proyecto = null): bool
+{
+    static $cache = [];
+    $u = usuario_sesion();
+    if (!$u || !$u->esColaborador()) return false;
+    if ($proyecto === null) return true;
+    $pid = (int)$proyecto->id;
+    if (!array_key_exists($pid, $cache)) $cache[$pid] = \Model\ProyectoAcceso::existe($pid, (int)$u->id);
+    return $cache[$pid];
+}
+
+/** Herramientas que el colaborador en sesión puede editar ([] = ninguna) */
+function herramientas_edicion_permitidas(): array
+{
+    static $h = null;
+    if ($h !== null) return $h;
+    $u = usuario_sesion();
+    return $h = $u ? $u->herramientasEdicionPermitidas() : [];
 }
 
 /** Admin: todos. Resto: propios o asignados por el admin. */
@@ -205,7 +271,8 @@ function puede_revisar($proyecto): bool
 function puede_descargar(): bool
 {
     if (session_status() === PHP_SESSION_NONE) session_start();
-    return in_array($_SESSION['rol'] ?? '', ['admin', 'cliente']);
+    if (in_array($_SESSION['rol'] ?? '', ['admin', 'cliente'], true)) return true;
+    return es_colaborador();   // el colaborador edita y exporta lo que ve
 }
 
 function usuario_actual(): ?array

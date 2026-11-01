@@ -14,7 +14,7 @@ if ($rol === 'admin') {
 } elseif ($rol === 'cliente') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Mis Proyectos', 'match' => '/proyectos'];
     if (puede_crear_proyecto()) $menu[] = ['url' => '/proyectos/crear', 'icon' => 'fa-plus', 'label' => 'Nuevo Proyecto', 'match' => '/proyectos/crear'];
-    $menu[] = ['url' => '/usuarios', 'icon' => 'fa-user-group', 'label' => 'Mis Visitantes', 'match' => '/usuarios'];
+    $menu[] = ['url' => '/usuarios', 'icon' => 'fa-user-group', 'label' => 'Mi equipo', 'match' => '/usuarios'];
     $menu[] = ['url' => '/soporte', 'icon' => 'fa-headset', 'label' => 'Soporte', 'match' => '/soporte', 'badge' => soporte_respuestas_nuevas()];
 } else {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Proyectos Asignados', 'match' => '/proyectos'];

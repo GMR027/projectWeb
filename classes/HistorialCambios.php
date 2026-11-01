@@ -176,6 +176,19 @@ class HistorialCambios
         return self::$disponible = (int)($n[0]['n'] ?? 0) > 0;
     }
 
+    /** ¿Ya existe `usuario_id` en el historial? (migracion_colaboradores.sql) Si no, se atribuye solo por nombre */
+    public static function conUsuarioId(): bool
+    {
+        static $hay = null;
+        if ($hay !== null) return $hay;
+        try {
+            $n = self::filas("SELECT COUNT(*) n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'auditoria_cambios' AND column_name = 'usuario_id'");
+            return $hay = (int)($n[0]['n'] ?? 0) > 0;
+        } catch (\Throwable $e) {
+            return $hay = false;
+        }
+    }
+
     // ===================================================================== silencio
 
     /**
@@ -475,12 +488,14 @@ class HistorialCambios
         $esc = fn($v) => $db->real_escape_string((string)$v);
         $js = fn($v) => $v === null ? 'NULL' : "'" . $esc(json_encode($v, JSON_UNESCAPED_UNICODE)) . "'";
         $usuario = function_exists('usuario_actual') ? (usuario_actual()['nombre'] ?? '') : '';
+        $usuarioId = function_exists('usuario_actual') ? (int)(usuario_actual()['id'] ?? 0) : 0;
         $ahora = $estado === 'pendiente' ? 'NULL' : 'NOW()';
 
-        $db->query("INSERT INTO auditoria_cambios (proyecto_id, origen, herramienta, evento, estado, estado_en, estado_por, accion, entidad_tipo, entidad_id, entidad_nombre, resumen, antes_json, despues_json, usuario) VALUES ("
+        $uid = self::conUsuarioId() ? ($usuarioId ?: 'NULL') : null;
+        $db->query("INSERT INTO auditoria_cambios (proyecto_id, origen, herramienta, evento, estado, estado_en, estado_por, accion, entidad_tipo, entidad_id, entidad_nombre, resumen, antes_json, despues_json, usuario" . ($uid === null ? '' : ', usuario_id') . ") VALUES ("
             . $pid . ", '$origen', '" . $esc(mb_substr($herramienta, 0, 30)) . "', '$evento', '$estado', $ahora, '" . $esc(mb_substr($usuario, 0, 150)) . "', '"
             . $esc(mb_substr($accion, 0, 40)) . "', '" . $esc(mb_substr($tipo, 0, 20)) . "', " . ($eid === null ? 'NULL' : (int)$eid) . ", '"
-            . $esc(mb_substr((string)$nombre, 0, 255)) . "', '" . $esc(mb_substr($resumen, 0, 500)) . "', {$js($antes)}, {$js($despues)}, '" . $esc(mb_substr($usuario, 0, 150)) . "')");
+            . $esc(mb_substr((string)$nombre, 0, 255)) . "', '" . $esc(mb_substr($resumen, 0, 500)) . "', {$js($antes)}, {$js($despues)}, '" . $esc(mb_substr($usuario, 0, 150)) . "'" . ($uid === null ? '' : ', ' . $uid) . ")");
     }
 
     /**
@@ -523,6 +538,17 @@ class HistorialCambios
             $q = $db->real_escape_string(str_replace(['%', '_'], ['\\%', '\\_'], trim($f['q'])));
             $w[] = "(resumen LIKE '%$q%' OR entidad_nombre LIKE '%$q%')";
         }
+        // El colaborador solo ve lo que hizo él; el dueño y el admin ven todo el proyecto
+        if (function_exists('es_colaborador') && es_colaborador()) {
+            $u = function_exists('usuario_sesion') ? usuario_sesion() : null;
+            if ($u) {
+                $uid = (int)$u->id;
+                $nombre = $db->real_escape_string((string)$u->nombre);
+                $w[] = self::conUsuarioId()
+                    ? "(usuario_id = $uid OR (usuario_id IS NULL AND usuario = '$nombre'))"
+                    : "(usuario = '$nombre')";
+            }
+        }
         return implode(' AND ', $w);
     }
 
@@ -561,7 +587,16 @@ class HistorialCambios
 
     public static function usuarios(int $pid): array
     {
-        return array_column(self::filas("SELECT DISTINCT usuario FROM auditoria_cambios WHERE proyecto_id = $pid AND usuario <> '' ORDER BY usuario"), 'usuario');
+        $w = "proyecto_id = $pid AND usuario <> ''";
+        if (function_exists('es_colaborador') && es_colaborador()) {
+            $u = function_exists('usuario_sesion') ? usuario_sesion() : null;
+            if ($u) {
+                $id = (int)$u->id;
+                $nombre = self::db()->real_escape_string((string)$u->nombre);
+                $w .= self::conUsuarioId() ? " AND (usuario_id = $id OR (usuario_id IS NULL AND usuario = '$nombre'))" : " AND usuario = '$nombre'";
+            }
+        }
+        return array_column(self::filas("SELECT DISTINCT usuario FROM auditoria_cambios WHERE $w ORDER BY usuario"), 'usuario');
     }
 
     // ===================================================================== acciones

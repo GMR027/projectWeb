@@ -28,6 +28,14 @@ class AjustesController
         $jornada = $proyecto->getJornada();
         $festivos = $proyecto->getFestivos();
 
+        // Accesos del proyecto: el dueño ve a su equipo y marca quién entra a esta obra
+        $equipoProyecto = [];
+        $equipoDisponible = [];
+        if (($_SESSION['rol'] ?? '') === 'cliente') {
+            $equipoDisponible = \Model\Usuario::equipoDe((int)$_SESSION['id']);
+            $equipoProyecto = array_values(array_intersect(\Model\ProyectoAcceso::usuariosDe((int)$proyecto->id), array_map(fn($u) => (int)$u->id, $equipoDisponible)));
+        }
+
         // Calendario del mes activo
         $mesActual = $_GET['mes'] ?? date('Y-m');
         $calendario = new Calendario($proyectoId);
@@ -41,8 +49,25 @@ class AjustesController
             'festivos' => $festivos,
             'mesActual' => $mesActual,
             'actividades' => $actividades,
-            'calendario' => $calendario
+            'calendario' => $calendario,
+            'equipoDisponible' => $equipoDisponible,
+            'equipoProyecto' => $equipoProyecto,
         ]);
+    }
+
+    /** El dueño marca qué miembros de su equipo entran a este proyecto (Ajustes → Accesos) */
+    public static function guardarAccesos()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        if (($_SESSION['rol'] ?? '') !== 'cliente' || !es_propietario($proyecto)) {
+            header('Location: /ajustes?proyecto=' . $proyecto->id);
+            exit;
+        }
+        $equipo = \Model\Usuario::equipoDe((int)$_SESSION['id']);
+        $permitidos = array_map(fn($u) => (int)$u->id, $equipo);
+        \Model\ProyectoAcceso::sincronizarProyectoEn((int)$proyecto->id, $_POST['usuarios'] ?? [], $permitidos);
+        header('Location: /ajustes?proyecto=' . $proyecto->id . '&ok=accesos#accesos');
+        exit;
     }
 
     /** Obtiene actividades que tienen días programados en el mes especificado */
@@ -338,6 +363,27 @@ class AjustesController
     }
 
     /** Página de exportación (separada) */
+    /** Qué herramienta respalda cada formato del Centro de Exportación (para saber si el usuario puede generarlo) */
+    public static function herramientaExportacion(string $formato, string $tipo = ''): ?string
+    {
+        return match ($formato) {
+            'pdf', 'xml', 'pod' => 'programa',
+            'lookahead' => 'lookahead',
+            'vplan' => 'vplan',
+            'lastplanner' => 'lastplanner',
+            'curva' => 'curvas',
+            'msr' => 'msr',
+            'lineatiempo' => 'lineatiempo',
+            'rfi' => 'rfi',
+            'submittal' => 'submittals',
+            'reportes' => ([
+                'reporte' => 'reportes', 'bitacora' => 'bitacora', 'minuta' => 'minutas',
+                'submittal' => 'submittals', 'material' => 'materiales', 'evidencia' => 'evidencias',
+            ][$tipo] ?? 'reportes'),
+            default => null,
+        };
+    }
+
     public static function exportarIndex(Router $router)
     {
         redirigir_si_no_auth();
@@ -390,7 +436,10 @@ class AjustesController
         nomenclatura_desde_post($_POST);
         // qué entregables lleva el ZIP (sin la lista se incluyen todos)
         $incluir = isset($_POST['incluir']) ? array_map('strval', (array)$_POST['incluir']) : (isset($_POST['elegir']) ? [] : null);
-        $quiere = fn(string $k) => $incluir === null || in_array($k, $incluir, true);
+        $toolDe = ['prog_pdf' => 'programa', 'prog_xml' => 'programa', 'prog_pod' => 'programa',
+            'la_pdf' => 'lookahead', 'la_xlsx' => 'lookahead', 'msr_pdf' => 'msr', 'msr_xlsx' => 'msr',
+            'curvas' => 'curvas', 'vplan' => 'vplan'];
+        $quiere = fn(string $k) => ($incluir === null || in_array($k, $incluir, true)) && herramienta_permitida($toolDe[$k] ?? 'programa');
         if ($incluir === []) {
             header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('Marca al menos un formato para exportar'));
             exit;
@@ -538,6 +587,12 @@ class AjustesController
             exit;
         }
         exigir_ver_proyecto($proyecto);
+        // El formato debe pertenecer a una herramienta que el usuario vea (colaboradores y visitantes)
+        $tool = self::herramientaExportacion((string)$formato, (string)($_POST['tipo'] ?? ''));
+        if ($tool !== null && !herramienta_permitida($tool)) {
+            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('No tienes acceso a esa herramienta, así que no puedes exportar ese formato'));
+            exit;
+        }
 
         $varios = [];   // si se eligen varios elementos se entregan en un ZIP: [[exportador, nombre base], …]
         try {

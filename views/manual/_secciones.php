@@ -20,8 +20,8 @@ return [
 <thead><tr><th>Rol</th><th>Qué puede hacer</th></tr></thead>
 <tbody>
 <tr><td><strong>Administrador</strong></td><td>Todo: crea proyectos y usuarios, ve todos los proyectos, edita cualquier dato, descarga documentos, responde la bandeja de entrada y administra el sistema (respaldos y almacenamiento).</td></tr>
-<tr><td><strong>Cliente</strong></td><td>Ve y <em>gestiona sus propios proyectos</em> (los que él creó), y ve los que el administrador le asigne. Puede descargar documentos, escribir a soporte y crear hasta 2 visitantes. Cuántos proyectos puede crear y cuánto espacio tiene por proyecto lo fija el administrador.</td></tr>
-<tr><td><strong>Visitante</strong></td><td>Solo <em>lectura</em>: ve los proyectos que le asignaron, pero no edita ni descarga. Además, quien lo creó puede limitarle las herramientas que ve.</td></tr>
+<tr><td><strong>Cliente</strong></td><td>Ve y <em>gestiona sus propios proyectos</em> (los que él creó), y ve los que el administrador le asigne. Puede descargar documentos, escribir a soporte y crear su propio equipo: <strong>visitantes</strong> (solo lectura) y <strong>colaboradores</strong> (editan donde él los autorice, nunca borran). Cuántos de cada tipo, cuántos proyectos y cuánto espacio tiene por proyecto lo fija el administrador.</td></tr>
+<tr><td><strong>Visitante</strong></td><td>Su acceso lo decide el dueño del proyecto: como <strong>visitante</strong> solo ve y descarga; como <strong>colaborador</strong> crea y edita en las herramientas que le marquen (pero no borra). En ambos casos ve solo los proyectos que le asignaron y las herramientas permitidas.</td></tr>
 </tbody>
 </table>
 <h4>Cómo está organizada la pantalla</h4>
@@ -78,7 +78,30 @@ HTML],
 </ol>
 <h4>Herramientas de un visitante</h4>
 <p>Al crear o editar un visitante puedes marcar <strong>qué herramientas puede ver</strong> (Programa, vPlan, Lookahead, etc.). Si dejas todas marcadas no tiene restricción; si desmarcas alguna, desaparece de su menú. El visitante nunca puede editar ni descargar.</p>
+<h4>Colaboradores y topes de equipo</h4>
+<p>En la ficha del cliente defines además <strong>cuántos visitantes</strong> y <strong>cuántos colaboradores</strong> puede crear (2 y 3 por defecto). Un colaborador es un visitante con «tipo de acceso: colaborador»: el dueño le marca qué herramientas puede <em>ver</em> y en cuáles puede <em>editar</em>. Nunca puede borrar ni entrar a Ajustes, Compartir, Integraciones, Marca, Directorio o al Centro de IA. Todo lo que cambia queda en el <em>Historial de cambios</em> con su nombre.</p>
 HTML],
+
+['id' => 'mi-equipo', 'titulo' => 'Mi equipo y colaboradores', 'icono' => 'fa-user-group', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>En el menú lateral, <strong>Mi equipo</strong> reúne a las personas que entran a tus proyectos. Hay dos tipos de cuenta:</p>
+<ul>
+<li><strong>Visitante:</strong> solo lee y descarga lo que le asignes.</li>
+<li><strong>Colaborador:</strong> crea y edita en las herramientas que le marques, pero <strong>no puede borrar</strong> (eliminar sigue siendo tuyo).</li>
+</ul>
+<p>El administrador fija cuántos puedes tener de cada tipo; el contador aparece arriba de cada lista. Si llegaste al tope, elimina una cuenta o pide al administrador que lo amplíe.</p>
+<h4>Crear una cuenta</h4>
+<ol>
+<li>Pulsa <strong>+ Nuevo visitante</strong> o <strong>+ Nuevo colaborador</strong>.</li>
+<li>Escribe nombre, correo y contraseña (el colaborador entra con esas credenciales; no hay invitación por correo).</li>
+<li>Marca los <strong>proyectos</strong> a los que entra.</li>
+<li>Marca lo que <strong>puede ver</strong> y, si es colaborador, lo que además <strong>puede editar</strong>. La casilla <em>archivos del dueño</em> permite reemplazar o mover archivos que subiste tú; si no, solo toca los suyos.</li>
+</ol>
+<h4>Historial de cambios</h4>
+<p>Cada cambio hecho con las herramientas queda registrado con la fecha, la persona y qué valores cambiaron. Tú ves los de todo tu equipo; el colaborador ve únicamente los suyos. Desde <a href="/historial">Historial de cambios</a> puedes aceptar el cambio o cancelarlo (volver a como estaba).</p>
+<h4>Accesos de un proyecto</h4>
+<p>Dentro de cada proyecto, en <em>Ajustes del proyecto → Accesos</em>, decides qué miembros de tu equipo entran a esa obra en concreto. Los permisos (ver o editar y en qué herramientas) se cambian aquí, en <em>Mi equipo</em>, una sola vez para todos sus proyectos.</p>
+HTML],
+
 
 ['id' => 'visitantes', 'titulo' => 'Mis visitantes', 'icono' => 'fa-user-group', 'roles' => ['cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Como cliente puedes dar acceso de <strong>solo lectura</strong> a otras personas (por ejemplo, tu cliente final o un supervisor) creando hasta <strong>2 visitantes</strong>.</p>

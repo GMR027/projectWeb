@@ -20,6 +20,19 @@ col proyectos marca_logo "ALTER TABLE proyectos ADD COLUMN marca_logo VARCHAR(10
 col proyectos marca_color "ALTER TABLE proyectos ADD COLUMN marca_color VARCHAR(7) NULL;"
 col proyectos marca_color2 "ALTER TABLE proyectos ADD COLUMN marca_color2 VARCHAR(7) NULL;"
 col usuarios inicio_json "ALTER TABLE usuarios ADD COLUMN inicio_json TEXT NULL;"
+# Colaboradores (pueden editar) y topes de equipo por cliente
+col usuarios nivel_acceso "ALTER TABLE usuarios ADD COLUMN nivel_acceso ENUM('ver','editar') NOT NULL DEFAULT 'ver' AFTER rol;"
+col usuarios herramientas_edicion "ALTER TABLE usuarios ADD COLUMN herramientas_edicion TEXT NULL AFTER herramientas;"
+col usuarios puede_archivos_ajenos "ALTER TABLE usuarios ADD COLUMN puede_archivos_ajenos TINYINT(1) NOT NULL DEFAULT 0 AFTER herramientas_edicion;"
+col usuarios limite_visitantes "ALTER TABLE usuarios ADD COLUMN limite_visitantes INT NOT NULL DEFAULT 2 AFTER creado_por;"
+col usuarios limite_colaboradores "ALTER TABLE usuarios ADD COLUMN limite_colaboradores INT NOT NULL DEFAULT 3 AFTER limite_visitantes;"
+# Quién subió cada archivo y atribución exacta en el historial
+col archivos subido_por "ALTER TABLE archivos ADD COLUMN subido_por INT NULL AFTER proyecto_id;"
+nk=$(echo "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='project' AND table_name='archivos' AND index_name='idx_archivos_subido_por';" | sql | tail -1)
+if [ "$nk" = "0" ]; then echo ">> archivos.idx_archivos_subido_por"; echo "ALTER TABLE archivos ADD KEY idx_archivos_subido_por (subido_por);" | sql; else echo "ok  archivos.idx_archivos_subido_por ya existe"; fi
+col auditoria_cambios usuario_id "ALTER TABLE auditoria_cambios ADD COLUMN usuario_id INT NULL AFTER usuario;"
+nk=$(echo "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='project' AND table_name='auditoria_cambios' AND index_name='idx_auditoria_usuario';" | sql | tail -1)
+if [ "$nk" = "0" ]; then echo ">> auditoria_cambios.idx_auditoria_usuario"; echo "ALTER TABLE auditoria_cambios ADD KEY idx_auditoria_usuario (proyecto_id, usuario_id);" | sql; else echo "ok  auditoria_cambios.idx_auditoria_usuario ya existe"; fi
 col minutas departamento "ALTER TABLE minutas ADD COLUMN departamento VARCHAR(100) NOT NULL DEFAULT '' AFTER importancia;"
 col msrs columnas_json "ALTER TABLE msrs ADD COLUMN columnas_json TEXT NULL AFTER descripcion;"
 col msr_items extras_json "ALTER TABLE msr_items ADD COLUMN extras_json TEXT NULL;"

@@ -64,6 +64,20 @@ class ProyectoAcceso extends ActiveRecord
         }
     }
 
+    /**
+     * Como sincronizarProyecto, pero solo toca a los usuarios de $permitidos (el equipo del dueño).
+     * Lo que el admin asignó a otras cuentas se conserva.
+     */
+    public static function sincronizarProyectoEn(int $proyectoId, array $usuarioIds, array $permitidos): void
+    {
+        $permitidos = array_values(array_unique(array_map('intval', $permitidos)));
+        if (!$permitidos) return;
+        self::$db->query("DELETE FROM proyecto_accesos WHERE proyecto_id = $proyectoId AND usuario_id IN (" . implode(',', $permitidos) . ")");
+        foreach (array_unique(array_map('intval', $usuarioIds)) as $uid) {
+            if (in_array($uid, $permitidos, true)) (new self(['proyecto_id' => $proyectoId, 'usuario_id' => $uid]))->guardar();
+        }
+    }
+
     /** @return int[] ids de usuarios con acceso asignado al proyecto */
     public static function usuariosDe(int $proyectoId): array
     {

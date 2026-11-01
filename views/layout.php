@@ -124,5 +124,17 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
     <script src="/vendor/divisor.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/divisor.js'); ?>"></script>
     <script src="/vendor/selector-color.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/selector-color.js'); ?>"></script>
     <script src="/build/js/bundle.min.js?v=<?php echo filemtime(__DIR__ . '/../public/build/js/bundle.min.js'); ?>"></script>
+<?php if (is_auth() && es_colaborador()): ?>
+<script>
+// El colaborador no borra: se ocultan los formularios de borrado (el servidor además los rechaza).
+(function () {
+    const selector = 'form[action*="/eliminar"], form[action*="/borrar"], form[action*="/quitar"]';
+    const quitar = raiz => raiz.querySelectorAll && raiz.querySelectorAll(selector).forEach(f => f.remove());
+    quitar(document);
+    new MutationObserver(lista => lista.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches(selector)) n.remove(); else quitar(n); } })))
+        .observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>

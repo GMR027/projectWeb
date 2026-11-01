@@ -52,6 +52,7 @@ $secNav = [
     ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
 ];
 if (is_admin() || $esElectron) $secNav[] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
+if ($esCliente) $secNav[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra al proyecto'];
 if ($esCliente) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Soporte y contraseña'];
 ?>
 <div class="ajustes-layout">
@@ -492,6 +493,37 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
 </script>
 <?php endif; ?>
 
+</section>
+<?php endif; ?>
+
+<?php if ($esCliente): ?>
+<section class="ajustes-seccion" id="accesos">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-user-lock"></i> Accesos al proyecto</h3>
+    <div class="card">
+        <h3 class="card-titulo"><i class="fa-solid fa-user-group"></i> Quién entra a «<?php echo s($proyecto->nombre); ?>»</h3>
+        <p class="text-muted text-sm">Marca a las personas de tu equipo que pueden entrar a <strong>este</strong> proyecto. Sus permisos (ver o editar y en qué herramientas) se cambian en <a href="/usuarios">Mi equipo</a>: aquí solo decides el acceso a esta obra.</p>
+        <?php if (isset($_GET['ok']) && $_GET['ok'] === 'accesos'): ?><div class="alerta alerta-exito">Accesos guardados.</div><?php endif; ?>
+        <?php if (!$equipoDisponible): ?>
+            <p class="text-muted">Todavía no tienes equipo. <a href="/usuarios/crear?tipo=colaborador">Crea un colaborador</a> o <a href="/usuarios/crear?tipo=visitante">un visitante</a>.</p>
+        <?php else: ?>
+        <form method="POST" action="/ajustes/accesos">
+            <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+            <?php
+            $items = array_map(fn($u) => [
+                'id' => (int)$u->id, 'titulo' => $u->nombre,
+                'detalle' => $u->esColaborador() ? 'Colaborador' : 'Visitante',
+            ], $equipoDisponible);
+            $nombreCampo = 'usuarios';
+            $marcados = $equipoProyecto ?? [];
+            include __DIR__ . '/../templates/lista-accesos.php';
+            ?>
+            <div style="margin-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar accesos</button>
+                <a href="/usuarios" class="btn btn-ghost">Gestionar mi equipo</a>
+            </div>
+        </form>
+        <?php endif; ?>
+    </div>
 </section>
 <?php endif; ?>
 

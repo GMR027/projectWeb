@@ -5,7 +5,7 @@ namespace Model;
 class Archivo extends ActiveRecord
 {
     protected static $tabla = 'archivos';
-    protected static $columnasDB = ['id', 'proyecto_id', 'categoria_id', 'carpeta_id', 'fecha', 'nombre', 'numero_revision', 'archivo_original', 'archivo_guardado', 'tamano'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'subido_por', 'categoria_id', 'carpeta_id', 'fecha', 'nombre', 'numero_revision', 'archivo_original', 'archivo_guardado', 'tamano'];
 
     /** Extensiones permitidas (se rechaza todo lo que pueda ejecutarse en el servidor o el navegador; además cada archivo pasa por Classes\EscanerArchivos) */
     public const EXTENSIONES = ['pdf', 'doc', 'docx', 'rtf', 'txt', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'xml',
@@ -16,6 +16,7 @@ class Archivo extends ActiveRecord
 
     public $id;
     public $proyecto_id;
+    public $subido_por;
     public $categoria_id;
     public $carpeta_id;
     public $fecha;
@@ -26,11 +27,13 @@ class Archivo extends ActiveRecord
     public $tamano;
     // Unión (solo lectura)
     public $categoria_nombre;
+    public $subido_por_nombre;
 
     public function __construct($args = [])
     {
         $this->id = $args['id'] ?? null;
         $this->proyecto_id = $args['proyecto_id'] ?? null;
+        $this->subido_por = $args['subido_por'] ?? null;
         $this->categoria_id = $args['categoria_id'] ?? null;
         $this->carpeta_id = $args['carpeta_id'] ?? null;
         $this->fecha = $args['fecha'] ?? date('Y-m-d');
@@ -58,7 +61,10 @@ class Archivo extends ActiveRecord
         $w = $categoriaId ? " AND a.categoria_id = $categoriaId" : '';
         if ($carpeta === 0) $w .= ' AND a.carpeta_id IS NULL';
         elseif ($carpeta) $w .= " AND a.carpeta_id = $carpeta";
-        return self::consultarSQL("SELECT a.*, c.nombre AS categoria_nombre FROM archivos a LEFT JOIN archivo_categorias c ON c.id = a.categoria_id
+        return self::consultarSQL("SELECT a.*, c.nombre AS categoria_nombre, u.nombre AS subido_por_nombre
+            FROM archivos a
+            LEFT JOIN archivo_categorias c ON c.id = a.categoria_id
+            LEFT JOIN usuarios u ON u.id = a.subido_por
             WHERE a.proyecto_id = $proyectoId$w ORDER BY a.fecha DESC, a.id DESC");
     }
 

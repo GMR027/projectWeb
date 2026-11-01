@@ -5,7 +5,7 @@ namespace Model;
 class Usuario extends ActiveRecord
 {
     protected static $tabla = 'usuarios';
-    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'herramientas', 'token', 'confirmado'];
+    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'nivel_acceso', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'limite_visitantes', 'limite_colaboradores', 'herramientas', 'herramientas_edicion', 'puede_archivos_ajenos', 'token', 'confirmado'];
 
     public $id;
     public $nombre;
@@ -15,11 +15,16 @@ class Usuario extends ActiveRecord
     public $password_actual;
     public $password_nuevo;
     public $rol;
+    public $nivel_acceso;
     public $logo;
     public $limite_proyectos;
     public $limite_almacenamiento_mb;
     public $creado_por;
+    public $limite_visitantes;
+    public $limite_colaboradores;
     public $herramientas;
+    public $herramientas_edicion;
+    public $puede_archivos_ajenos;
 
     /**
      * Herramientas del proyecto que se pueden mostrar u ocultar a un visitante: clave => [etiqueta, prefijos de ruta].
@@ -80,7 +85,7 @@ class Usuario extends ActiveRecord
         'marca' => ['Marca del cliente', ['/marca']],
         'integraciones' => ['Integraciones', ['/integraciones', '/api/escritorio']],
         'compartir' => ['Compartir en solo lectura', ['/compartir']],
-        'ajustes' => ['Ajustes del proyecto', ['/ajustes', '/exportar']],
+        'ajustes' => ['Ajustes del proyecto', ['/ajustes']],
     ];
 
     /**
@@ -91,6 +96,7 @@ class Usuario extends ActiveRecord
         '/', '/proyectos', '/dashboard', '/inicio', '/manual', '/novedades', '/buscar', '/idioma',
         '/soporte', '/api/soporte', '/api/empezar', '/cliente', '/calendario/ics', '/media',
         '/login', '/logout', '/contacto', '/terminos', '/servicios', '/demo',
+        '/exportar',   // el Centro de Exportación filtra cada formato por la herramienta que el usuario ve
     ];
 
     /** Claves permitidas al visitante (null = todas) */
@@ -106,6 +112,50 @@ class Usuario extends ActiveRecord
     {
         $validas = array_values(array_intersect(array_keys(self::HERRAMIENTAS), is_array($marcadas) ? $marcadas : []));
         return count($validas) === count(self::HERRAMIENTAS) ? null : json_encode($validas);
+    }
+
+    /** Herramientas que un colaborador puede editar ([] = ninguna) */
+    public function herramientasEdicionPermitidas(): array
+    {
+        if ($this->herramientas_edicion === null || $this->herramientas_edicion === '') return [];
+        $d = json_decode((string)$this->herramientas_edicion, true);
+        if (!is_array($d)) return [];
+        $validas = array_values(array_intersect(array_keys(self::HERRAMIENTAS), $d));
+        // Nunca se editan las herramientas de configuración/administración
+        return array_values(array_diff($validas, self::HERRAMIENTAS_NO_EDITABLES));
+    }
+
+    /**
+     * Casillas «Editar» del formulario → JSON. Solo cuentan las herramientas que el usuario ve y no están
+     * en la lista negra. Devuelve NULL si no puede editar ninguna.
+     */
+    public static function herramientasEdicionDePost($marcadas, ?array $visibles = null): ?string
+    {
+        $validas = array_values(array_intersect(array_keys(self::HERRAMIENTAS), is_array($marcadas) ? $marcadas : []));
+        $validas = array_values(array_diff($validas, self::HERRAMIENTAS_NO_EDITABLES));
+        if ($visibles !== null) $validas = array_values(array_intersect($visibles, $validas));
+        if (!$validas) return null;
+        return json_encode($validas);
+    }
+
+    /** ¿Esta cuenta es un colaborador (puede editar donde se le permita)? */
+    public function esColaborador(): bool
+    {
+        return $this->rol === 'visitante' && (string)$this->nivel_acceso === 'editar';
+    }
+
+    /** Valida los topes de equipo que fija el admin en una cuenta cliente */
+    public function validarLimitesEquipo(): void
+    {
+        foreach (['limite_visitantes' => self::MAX_VISITANTES_CLIENTE, 'limite_colaboradores' => self::MAX_COLABORADORES_CLIENTE] as $campo => $defecto) {
+            $v = filter_var($this->$campo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 999]]);
+            if ($v === false) {
+                if ($this->rol === 'cliente') self::setAlerta('error', 'El límite de ' . str_replace('_', ' ', substr($campo, 7)) . ' debe ser un número entero entre 0 y 999');
+                $this->$campo = $defecto;
+            } else {
+                $this->$campo = $v;
+            }
+        }
     }
 
     /** Longitud mínima de contraseña y lista de las más usadas (no se aceptan) */
@@ -125,8 +175,20 @@ class Usuario extends ActiveRecord
         return null;
     }
 
-    /** Visitantes (solo lectura) que un cliente puede crear */
+    /** Visitantes de solo lectura que un cliente puede crear por defecto (el admin lo cambia por cuenta) */
     public const MAX_VISITANTES_CLIENTE = 2;
+    /** Colaboradores (pueden editar) que un cliente puede crear por defecto */
+    public const MAX_COLABORADORES_CLIENTE = 3;
+
+    /**
+     * Herramientas que un colaborador nunca puede editar aunque el dueño las marque:
+     * cambian la configuración del proyecto, la cuenta o los permisos, o son solo del administrador.
+     */
+    public const HERRAMIENTAS_NO_EDITABLES = [
+        'ajustes', 'compartir', 'integraciones', 'marca', 'plantillas-proyecto', 'directorio',
+        'especialidades', 'centro-ia', 'revisiones', 'plantillas', 'historial', 'lista-diseno', 'campos',
+    ];
+
     public $token;
     public $confirmado;
 
@@ -138,11 +200,16 @@ class Usuario extends ActiveRecord
         $this->password = $args['password'] ?? '';
         $this->password2 = $args['password2'] ?? '';
         $this->rol = $args['rol'] ?? 'visitante';
+        $this->nivel_acceso = $args['nivel_acceso'] ?? 'ver';
         $this->logo = $args['logo'] ?? null;
         $this->limite_proyectos = $args['limite_proyectos'] ?? 1;
         $this->limite_almacenamiento_mb = $args['limite_almacenamiento_mb'] ?? 300;
         $this->creado_por = $args['creado_por'] ?? null;
+        $this->limite_visitantes = $args['limite_visitantes'] ?? self::MAX_VISITANTES_CLIENTE;
+        $this->limite_colaboradores = $args['limite_colaboradores'] ?? self::MAX_COLABORADORES_CLIENTE;
         $this->herramientas = $args['herramientas'] ?? null;
+        $this->herramientas_edicion = $args['herramientas_edicion'] ?? null;
+        $this->puede_archivos_ajenos = $args['puede_archivos_ajenos'] ?? 0;
         $this->token = $args['token'] ?? '';
         $this->confirmado = $args['confirmado'] ?? 0;
     }
@@ -223,6 +290,21 @@ class Usuario extends ActiveRecord
     public static function visitantesDe(int $clienteId): array
     {
         return array_values(array_filter(self::whereAll('creado_por', (string)$clienteId, 'id ASC'), fn($u) => $u->rol === 'visitante'));
+    }
+
+    /**
+     * Equipo que creó un cliente: 'visitante' (solo lectura) o 'colaborador' (puede editar).
+     * Ambos son `rol = 'visitante'`; los distingue `nivel_acceso`.
+     */
+    public static function equipoDe(int $clienteId, string $tipo = 'visitante'): array
+    {
+        return array_values(array_filter(self::visitantesDe($clienteId), fn($u) => $tipo === 'colaborador' ? $u->esColaborador() : !$u->esColaborador()));
+    }
+
+    /** Tope de equipo de esta cuenta para el tipo dado */
+    public function limiteEquipo(string $tipo): int
+    {
+        return $tipo === 'colaborador' ? (int)$this->limite_colaboradores : (int)$this->limite_visitantes;
     }
 
     public function hashPassword(): void

@@ -1,5 +1,6 @@
 <?php
 $puede = puede_gestionar_proyecto($proyecto); $desc = puede_descargar(); $id = s($proyecto->id);
+$borra = puede_eliminar_proyecto($proyecto);   // eliminar es solo del dueño/admin
 $carpetaActual = null;
 foreach ($carpetas as $k) if ($carpeta && (int)$k->id === (int)$carpeta) $carpetaActual = $k;
 $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta=' . $c : '') . ($filtro ? '&categoria=' . (int)$filtro : '');
@@ -38,7 +39,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
                     <a href="<?php echo s($urlCarpeta((int)$k->id)); ?>" class="<?php echo $carpetaActual && (int)$carpetaActual->id === (int)$k->id ? 'activa' : ''; ?>"><i class="fa-solid fa-folder"></i> <span><?php echo s($k->nombre); ?></span> <em><?php echo (int)$k->total; ?></em></a>
                     <?php if ($puede): ?>
                         <button type="button" class="btn-icono arch-renombrar" data-id="<?php echo s($k->id); ?>" data-nombre="<?php echo s($k->nombre); ?>" title="Renombrar" aria-label="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button>
-                        <button type="button" class="btn-icono arch-borrar" data-id="<?php echo s($k->id); ?>" data-nombre="<?php echo s($k->nombre); ?>" data-total="<?php echo (int)$k->total; ?>" title="Eliminar" aria-label="Eliminar carpeta"><i class="fa-solid fa-trash"></i></button>
+                        <?php if ($borra): ?><button type="button" class="btn-icono arch-borrar" data-id="<?php echo s($k->id); ?>" data-nombre="<?php echo s($k->nombre); ?>" data-total="<?php echo (int)$k->total; ?>" title="Eliminar" aria-label="Eliminar carpeta"><i class="fa-solid fa-trash"></i></button><?php endif; ?>
                     <?php endif; ?>
                 </li>
             <?php endforeach; ?>
@@ -71,7 +72,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
                     <td class="hide-m"><?php echo s($a->categoria_nombre ?: '—'); ?></td>
                     <td class="arch-nombre">
                         <?php echo archivo_icono_html($a->extension()); ?> <?php echo s($a->nombre); ?>
-                        <div class="text-sm text-muted mono"><span class="hide-m"><?php echo s($a->archivo_original); ?> · </span><?php echo s($a->tamanoLegible()); ?></div>
+                        <div class="text-sm text-muted mono"><span class="hide-m"><?php echo s($a->archivo_original); ?> · </span><?php echo s($a->tamanoLegible()); ?><?php echo !empty($a->subido_por_nombre) ? ' · ' . s($a->subido_por_nombre) : ''; ?></div>
                         <?php if (isset($ensamblados[(int)$a->id])): ?><div class="text-sm"><span class="badge-carpeta" title="Se regenera sola cuando cambia alguno de sus documentos"><i class="fa-solid fa-object-group"></i> Ensamblado · se actualiza solo</span></div><?php endif; ?>
                         <?php if ($carpeta === null && $a->carpeta_id && isset($nombresCarpeta[(int)$a->carpeta_id])): ?><div class="text-sm"><span class="badge-carpeta"><i class="fa-solid fa-folder"></i> <?php echo s($nombresCarpeta[(int)$a->carpeta_id]); ?></span></div><?php endif; ?>
                         <div class="solo-movil text-sm text-muted"><?php echo s(fecha_corta_es($a->fecha)); ?><?php echo $a->categoria_nombre ? ' · ' . s($a->categoria_nombre) : ''; ?><?php echo $a->numero_revision ? ' · Rev. ' . s($a->numero_revision) : ''; ?></div>
@@ -80,8 +81,11 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
                     <td class="acciones">
                         <?php if ($desc && \Classes\VistaArchivo::tipo($a->extension())): ?><a href="/visor?proyecto=<?php echo $id; ?>&archivo=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a><?php endif; ?>
                         <?php if ($desc): ?><a href="/archivos/descargar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-download"></i> Descargar</a><?php endif; ?>
-                        <?php if ($puede): ?>
+                        <?php $puedeFila = puede_gestionar_archivo($a, $proyecto); ?>
+                        <?php if ($puedeFila): ?>
                             <a href="/archivos/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
+                        <?php endif; ?>
+                        <?php if ($borra && $puedeFila): ?>
                             <span class="hide-m"><form method="POST" action="/archivos/eliminar" style="display:inline" data-confirm="¿Eliminar archivo?|Se borrará «<?php echo s($a->nombre); ?>» del servidor. Esta acción no se puede deshacer.|Eliminar">
                                 <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
                                 <input type="hidden" name="id" value="<?php echo s($a->id); ?>">

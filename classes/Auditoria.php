@@ -89,6 +89,10 @@ class Auditoria
                 "'" . $esc($herramienta) . "'", "'" . $esc($evento) . "'", "'" . $esc($accion) . "'", "'" . $esc($tipo) . "'",
                 $eid === null ? 'NULL' : (int)$eid, "'" . $esc(mb_substr((string)$nombre, 0, 255)) . "'", "'" . $esc(mb_substr($resumen, 0, 500)) . "'",
                 $js($antes), $js($despues), $referencia === null ? 'NULL' : (int)$referencia, "'" . $esc(mb_substr($modelo, 0, 150)) . "'", "'$usuario'");
+            if (\Classes\HistorialCambios::conUsuarioId()) {
+                $campos[] = 'usuario_id';
+                $valores[] = (string)(int)(usuario_actual()['id'] ?? 0);
+            }
 
             $db->query('INSERT INTO auditoria_cambios (' . implode(', ', $campos) . ') VALUES (' . implode(', ', $valores) . ')');
         } catch (\Throwable $e) {

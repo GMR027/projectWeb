@@ -60,6 +60,10 @@ class ArchivoController
     private static function formulario(Router $router, Archivo $a)
     {
         $proyecto = proyecto_de_peticion(true);
+        if ($a->id && !puede_gestionar_archivo($a, $proyecto)) {
+            header('Location: /archivos?proyecto=' . $proyecto->id);
+            exit;
+        }
         $categorias = ArchivoCategoria::deProyecto((int)$proyecto->id);
         $carpetas = ArchivoCarpeta::deProyecto((int)$proyecto->id);
         $alertas = [];
@@ -104,6 +108,7 @@ class ArchivoController
                     }
                 }
                 if (!$alertas) {
+                    if (!$a->id) $a->subido_por = (int)$_SESSION['id'];   // quién lo subió (para los permisos de colaborador)
                     $a->guardar();
                     header('Location: /archivos?proyecto=' . $proyecto->id . '&ok=1');
                     exit;
@@ -120,7 +125,7 @@ class ArchivoController
     {
         $proyecto = proyecto_de_peticion(true);
         $a = Archivo::find(self::idPeticion());
-        if ($a && (int)$a->proyecto_id === (int)$proyecto->id) {
+        if ($a && (int)$a->proyecto_id === (int)$proyecto->id && puede_gestionar_archivo($a, $proyecto)) {
             if ($r = $a->ruta()) @unlink($r);
             $a->eliminar();
         }
@@ -230,7 +235,7 @@ class ArchivoController
         }
         foreach ($ids as $id) {
             $a = Archivo::find($id);
-            if ($a && (int)$a->proyecto_id === (int)$proyecto->id) {
+            if ($a && (int)$a->proyecto_id === (int)$proyecto->id && puede_gestionar_archivo($a, $proyecto)) {
                 $a->carpeta_id = $destino;
                 $a->guardar();
             }

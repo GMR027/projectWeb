@@ -92,10 +92,17 @@ class AuthController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->sincronizar($_POST);
-            $usuario->herramientas = $usuario->rol === 'visitante' ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
+            $esVis = $usuario->rol === 'visitante';
+            // Colaborador = visitante con nivel_acceso 'editar' (solo puede escribir donde el dueño lo marque)
+            $usuario->nivel_acceso = $esVis && ($_POST['nivel_acceso'] ?? '') === 'editar' ? 'editar' : 'ver';
+            $usuario->herramientas = $esVis ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
+            $usuario->herramientas_edicion = $esVis && $usuario->nivel_acceso === 'editar'
+                ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
+            $usuario->puede_archivos_ajenos = $esVis && $usuario->nivel_acceso === 'editar' && !empty($_POST['archivos_ajenos']) ? 1 : 0;
             $usuario->logo = guardar_imagen_subida('logo', 'logos');
             $alertas = $usuario->validarNuevaCuenta();
             $usuario->validarLimiteProyectos();
+            $usuario->validarLimitesEquipo();
             $alertas = Usuario::getAlertas();
 
             if (empty($alertas)) {
@@ -127,6 +134,8 @@ class AuthController
             'proyectos' => Proyecto::all('nombre ASC'),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
+            'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
+            'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
         ]);
     }
 
@@ -174,9 +183,15 @@ class AuthController
             $logoActual = $usuario->logo;
             $usuario->sincronizar($_POST);
             $usuario->id = $id;
-            $usuario->herramientas = $usuario->rol === 'visitante' ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
+            $esVis = $usuario->rol === 'visitante';
+            $usuario->nivel_acceso = $esVis && ($_POST['nivel_acceso'] ?? '') === 'editar' ? 'editar' : 'ver';
+            $usuario->herramientas = $esVis ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
+            $usuario->herramientas_edicion = $esVis && $usuario->nivel_acceso === 'editar'
+                ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
+            $usuario->puede_archivos_ajenos = $esVis && $usuario->nivel_acceso === 'editar' && !empty($_POST['archivos_ajenos']) ? 1 : 0;
             $usuario->logo = guardar_imagen_subida('logo', 'logos') ?? $logoActual;
             $usuario->validarLimiteProyectos();
+            $usuario->validarLimitesEquipo();
             if (!in_array($usuario->rol, ['admin', 'cliente', 'visitante'], true)) {
                 Usuario::setAlerta('error', 'Rol no válido');
             }
@@ -219,6 +234,8 @@ class AuthController
                 ? array_map('intval', $_POST['proyectos'] ?? [])
                 : ProyectoAcceso::proyectosDe((int)$id),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
+            'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
+            'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
         ]);
     }
 
@@ -297,27 +314,49 @@ class AuthController
 
     private static function listarVisitantes(Router $router)
     {
+        $yo = Usuario::find((int)$_SESSION['id']);
+        $visitantes = Usuario::equipoDe((int)$_SESSION['id'], 'visitante');
+        $colaboradores = Usuario::equipoDe((int)$_SESSION['id'], 'colaborador');
         $router->render('auth/visitantes', [
-            'titulo' => 'Mis Visitantes',
-            'usuarios' => Usuario::visitantesDe((int)$_SESSION['id']),
-            'maximo' => Usuario::MAX_VISITANTES_CLIENTE,
+            'titulo' => 'Mi equipo',
+            'visitantes' => $visitantes,
+            'colaboradores' => $colaboradores,
+            'limiteVisitantes' => $yo ? $yo->limiteEquipo('visitante') : Usuario::MAX_VISITANTES_CLIENTE,
+            'limiteColaboradores' => $yo ? $yo->limiteEquipo('colaborador') : Usuario::MAX_COLABORADORES_CLIENTE,
         ]);
+    }
+
+    /** Normaliza el tipo de cuenta que puede crear el cliente: 'visitante' (solo lectura) o 'colaborador' */
+    private static function tipoEquipo($valor): string
+    {
+        return ($valor === 'colaborador') ? 'colaborador' : 'visitante';
     }
 
     private static function crearVisitante(Router $router)
     {
         $yo = (int)$_SESSION['id'];
-        $usuario = new Usuario();
-        $alertas = [];
-        $lleno = count(Usuario::visitantesDe($yo)) >= Usuario::MAX_VISITANTES_CLIENTE;
-        if ($lleno) Usuario::setAlerta('error', 'Ya tienes el máximo de ' . Usuario::MAX_VISITANTES_CLIENTE . ' visitantes. Elimina uno para crear otro.');
+        $cuenta = Usuario::find($yo);
+        $tipo = self::tipoEquipo($_POST['tipo'] ?? ($_GET['tipo'] ?? 'visitante'));
+        $usar = Usuario::equipoDe($yo, $tipo);
+        $limite = $cuenta ? $cuenta->limiteEquipo($tipo) : ($tipo === 'colaborador' ? Usuario::MAX_COLABORADORES_CLIENTE : Usuario::MAX_VISITANTES_CLIENTE);
+        $lleno = count($usar) >= $limite;
+        $usuario = new Usuario(['nivel_acceso' => $tipo === 'colaborador' ? 'editar' : 'ver']);
+        if ($lleno) Usuario::setAlerta('error', 'Ya tienes el máximo de ' . $limite . ' ' . ($tipo === 'colaborador' ? 'colaboradores' : 'visitantes') . '. Elimina uno para crear otro.');
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$lleno) {
+            $visibles = Usuario::herramientasDePost($_POST['herr'] ?? []);
             $usuario = new Usuario([
                 'nombre' => trim($_POST['nombre'] ?? ''), 'email' => trim($_POST['email'] ?? ''),
                 'password' => $_POST['password'] ?? '', 'password2' => $_POST['password2'] ?? '',
-                'rol' => 'visitante', 'creado_por' => $yo, 'confirmado' => 1, 'herramientas' => Usuario::herramientasDePost($_POST['herr'] ?? []),
+                'rol' => 'visitante', 'creado_por' => $yo, 'confirmado' => 1,
+                'nivel_acceso' => $tipo === 'colaborador' ? 'editar' : 'ver',
+                'herramientas' => $visibles,
+                'herramientas_edicion' => null,
+                'puede_archivos_ajenos' => $tipo === 'colaborador' && !empty($_POST['archivos_ajenos']) ? 1 : 0,
             ]);
+            // La lista de edición nunca puede incluir herramientas que no ve
+            $usuario->herramientas_edicion = $tipo === 'colaborador'
+                ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
             $usuario->validarNuevaCuenta();
             if (!Usuario::getAlertas() && Usuario::where('email', $usuario->email)) Usuario::setAlerta('error', 'El email ya está registrado');
             if (!Usuario::getAlertas()) {
@@ -333,10 +372,14 @@ class AuthController
             }
         }
         $router->render('auth/visitante-form', [
-            'titulo' => 'Nuevo visitante', 'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => $lleno,
+            'titulo' => $tipo === 'colaborador' ? 'Nuevo colaborador' : 'Nuevo visitante',
+            'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => $lleno, 'tipo' => $tipo,
+            'limite' => $limite, 'usados' => count($usar),
             'proyectos' => Proyecto::whereAll('usuario_id', (string)$yo, 'nombre ASC'),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
+            'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
+            'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
         ]);
     }
 
@@ -347,36 +390,58 @@ class AuthController
             header('Location: /usuarios');
             exit;
         }
+        $yo = (int)$_SESSION['id'];
+        $cuenta = Usuario::find($yo);
+        $tipo = self::tipoEquipo($_POST['tipo'] ?? ($usuario->esColaborador() ? 'colaborador' : 'visitante'));
+        $limite = $cuenta ? $cuenta->limiteEquipo($tipo) : Usuario::MAX_VISITANTES_CLIENTE;
+        $usar = Usuario::equipoDe($yo, $tipo);
+        // Cambiar de visitante a colaborador (o al revés) consume del tope del tipo nuevo
+        $cambiaTipo = ($tipo === 'colaborador') !== $usuario->esColaborador();
+        $lleno = $cambiaTipo && count($usar) >= $limite;
+
         $propios = self::proyectosPropios();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $usuario->nombre = trim($_POST['nombre'] ?? '');
-            $usuario->email = trim($_POST['email'] ?? '');
-            $usuario->herramientas = Usuario::herramientasDePost($_POST['herr'] ?? []);
-            if (!$usuario->nombre) Usuario::setAlerta('error', 'El nombre es obligatorio');
-            if (!filter_var($usuario->email, FILTER_VALIDATE_EMAIL)) Usuario::setAlerta('error', 'Email no válido');
-            $otro = Usuario::where('email', $usuario->email);
-            if ($otro && (int)$otro->id !== (int)$usuario->id) Usuario::setAlerta('error', 'El email ya está registrado');
-            if (!empty($_POST['password'])) {
-                if ($motivo = Usuario::passwordDebil((string)$_POST['password'])) Usuario::setAlerta('error', $motivo);
-                elseif ($_POST['password'] !== ($_POST['password2'] ?? '')) Usuario::setAlerta('error', 'Los passwords no coinciden');
-                else {
-                    $usuario->password = $_POST['password'];
-                    $usuario->hashPassword();
+            if ($lleno) {
+                Usuario::setAlerta('error', 'Ya tienes el máximo de ' . $limite . ' ' . ($tipo === 'colaborador' ? 'colaboradores' : 'visitantes') . '.');
+            } else {
+                $usuario->nombre = trim($_POST['nombre'] ?? '');
+                $usuario->email = trim($_POST['email'] ?? '');
+                $usuario->nivel_acceso = $tipo === 'colaborador' ? 'editar' : 'ver';
+                $usuario->herramientas = Usuario::herramientasDePost($_POST['herr'] ?? []);
+                $usuario->herramientas_edicion = $tipo === 'colaborador'
+                    ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
+                $usuario->puede_archivos_ajenos = $tipo === 'colaborador' && !empty($_POST['archivos_ajenos']) ? 1 : 0;
+                if (!$usuario->nombre) Usuario::setAlerta('error', 'El nombre es obligatorio');
+                if (!filter_var($usuario->email, FILTER_VALIDATE_EMAIL)) Usuario::setAlerta('error', 'Email no válido');
+                $otro = Usuario::where('email', $usuario->email);
+                if ($otro && (int)$otro->id !== (int)$usuario->id) Usuario::setAlerta('error', 'El email ya está registrado');
+                if (!empty($_POST['password'])) {
+                    if ($motivo = Usuario::passwordDebil((string)$_POST['password'])) Usuario::setAlerta('error', $motivo);
+                    elseif ($_POST['password'] !== ($_POST['password2'] ?? '')) Usuario::setAlerta('error', 'Los passwords no coinciden');
+                    else {
+                        $usuario->password = $_POST['password'];
+                        $usuario->hashPassword();
+                    }
                 }
-            }
-            unset($usuario->password2);
-            if (!Usuario::getAlertas() && $usuario->guardar()) {
-                ProyectoAcceso::sincronizarUsuarioEn((int)$usuario->id, $_POST['proyectos'] ?? [], $propios);
-                header('Location: /usuarios?editado=1');
-                exit;
+                unset($usuario->password2);
+                if (!Usuario::getAlertas() && $usuario->guardar()) {
+                    ProyectoAcceso::sincronizarUsuarioEn((int)$usuario->id, $_POST['proyectos'] ?? [], $propios);
+                    header('Location: /usuarios?editado=1');
+                    exit;
+                }
             }
         }
         $router->render('auth/visitante-form', [
-            'titulo' => 'Editar visitante', 'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => false,
-            'proyectos' => Proyecto::whereAll('usuario_id', (string)$_SESSION['id'], 'nombre ASC'),
+            'titulo' => 'Editar ' . ($usuario->esColaborador() ? 'colaborador' : 'visitante'),
+            'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => false,
+            'tipo' => $tipo,
+            'limite' => $limite, 'usados' => count($usar),
+            'proyectos' => Proyecto::whereAll('usuario_id', (string)$yo, 'nombre ASC'),
             'asignados' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', $_POST['proyectos'] ?? [])
                 : array_values(array_intersect(ProyectoAcceso::proyectosDe((int)$usuario->id), $propios)),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
+            'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
+            'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
         ]);
     }
 

@@ -29,6 +29,19 @@
             <label for="limite_almacenamiento_mb" style="margin-top:1.2rem">Espacio por proyecto en MB (rol cliente)</label>
             <input type="number" id="limite_almacenamiento_mb" name="limite_almacenamiento_mb" min="1" max="100000" step="1" value="<?php echo s($usuario->limite_almacenamiento_mb ?? 300); ?>">
             <small class="text-muted">Almacenamiento que puede ocupar cada proyecto de este cliente (archivos, fotos, planos, fichas y logos). 1024 MB = 1 GB.</small>
+            <label for="limite_visitantes" style="margin-top:1.2rem">Cuántos visitantes puede crear (solo lectura)</label>
+            <input type="number" id="limite_visitantes" name="limite_visitantes" min="0" max="999" step="1" value="<?php echo s($usuario->limite_visitantes ?? \Model\Usuario::MAX_VISITANTES_CLIENTE); ?>">
+            <label for="limite_colaboradores" style="margin-top:1.2rem">Cuántos colaboradores puede crear (pueden editar)</label>
+            <input type="number" id="limite_colaboradores" name="limite_colaboradores" min="0" max="999" step="1" value="<?php echo s($usuario->limite_colaboradores ?? \Model\Usuario::MAX_COLABORADORES_CLIENTE); ?>">
+            <small class="text-muted">El dueño crea a su equipo desde «Mi equipo» sin pasar del tope. 0 = no puede crear de ese tipo.</small>
+        </div>
+        <div class="campo" id="campo-nivel" style="display:none">
+            <label for="nivel_acceso">Tipo de acceso</label>
+            <select id="nivel_acceso" name="nivel_acceso">
+                <option value="ver" <?php echo ($usuario->nivel_acceso ?? 'ver') === 'ver' ? 'selected' : ''; ?>>Visitante · solo lectura</option>
+                <option value="editar" <?php echo ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'selected' : ''; ?>>Colaborador · puede editar</option>
+            </select>
+            <small class="text-muted">El colaborador edita solo en las herramientas marcadas abajo; borrar queda reservado al dueño y al administrador.</small>
         </div>
         <div class="campo" id="campo-logo">
             <label for="logo">Logo de la empresa (rol cliente)</label>
@@ -51,8 +64,13 @@
         <script>
             (function () {
                 const rol = document.getElementById('rol'), caja = document.getElementById('campo-accesos'), lim = document.getElementById('campo-limite');
-                const herr = document.getElementById('campo-herramientas');
-                const toggle = () => { caja.style.display = rol.value === 'admin' ? 'none' : ''; lim.style.display = rol.value === 'cliente' ? '' : 'none'; herr.style.display = rol.value === 'visitante' ? '' : 'none'; };
+                const herr = document.getElementById('campo-herramientas'), niv = document.getElementById('campo-nivel');
+                const toggle = () => {
+                    caja.style.display = rol.value === 'admin' ? 'none' : '';
+                    lim.style.display = rol.value === 'cliente' ? '' : 'none';
+                    herr.style.display = rol.value === 'visitante' ? '' : 'none';
+                    niv.style.display = rol.value === 'visitante' ? '' : 'none';
+                };
                 rol.addEventListener('change', toggle); toggle();
             })();
         </script>

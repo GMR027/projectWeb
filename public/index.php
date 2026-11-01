@@ -782,6 +782,7 @@ $router->post('/ajustes/registros', [AjustesController::class, 'guardarRegistros
 $router->post('/ajustes/tema', [AjustesController::class, 'guardarTema']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);
 $router->post('/ajustes/almacenamiento', [AjustesController::class, 'guardarAlmacenamiento']);
+$router->post('/ajustes/accesos', [AjustesController::class, 'guardarAccesos']);
 $router->post('/ajustes/festivo/eliminar', [AjustesController::class, 'eliminarFestivo']);
 $router->post('/ajustes/respaldo/crear', [AjustesController::class, 'respaldoCrear']);
 $router->post('/ajustes/respaldo/restaurar', [AjustesController::class, 'respaldoRestaurar']);
@@ -805,6 +806,17 @@ if (\Classes\ApiRest::esDeLaApi()) \Classes\ApiRest::despachar();
 if (\Classes\Telegram::esWebhook()) \Classes\Telegram::atender();
 
 csrf_verificar();   // todo POST necesita el código de la sesión
+// Borrar es solo del dueño (y del admin): el colaborador puede crear y editar, pero no eliminar.
+if (is_auth() && es_colaborador() && es_ruta_de_borrado($_SERVER['REQUEST_URI'] ?? '/')) {
+    if (str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '', '/api/')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Solo el dueño del proyecto puede eliminar']);
+    } else {
+        header('Location: /proyectos?error=' . urlencode('Solo el dueño del proyecto puede eliminar'));
+    }
+    exit;
+}
 // Un visitante solo entra a las herramientas que se le permitieron (también por enlace directo o API)
 if (is_auth() && is_visitante() && !herramienta_permitida(herramienta_de_ruta($_SERVER['REQUEST_URI'] ?? '/'))) {
     if (str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '', '/api/')) {

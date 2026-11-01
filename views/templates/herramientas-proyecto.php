@@ -140,7 +140,7 @@ function herramientas_proyecto($proyecto): array
         ['Proyecto', '/integraciones', 'fa-plug', 'Integraciones (API, webhooks y Telegram)', $gestiona && !is_visitante()],
         ['Proyecto', '/compartir', 'fa-share-nodes', 'Compartir en solo lectura', $gestiona && !is_visitante()],
         ['Proyecto', '/ajustes', 'fa-gear', 'Ajustes de proyecto', !is_visitante()],
-        ['Proyecto', '/exportar', 'fa-file-export', 'Exportar', !is_visitante()],
+        ['Proyecto', '/exportar', 'fa-file-export', 'Exportar', !is_visitante() || (function_exists('es_colaborador') && es_colaborador())],
     ];
     $ayudas = ayudas_herramientas();
     static $nombreLookahead = [];   // nombre propio del Lookahead por proyecto (Ajustes del Lookahead)

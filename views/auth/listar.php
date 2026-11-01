@@ -25,6 +25,7 @@
                 <th class="hide-m">Email</th>
                 <th>Rol</th>
                 <th class="hide-m">Proyectos</th>
+                <th class="hide-m">Equipo (vis. / colab.)</th>
                 <th class="hide-m">Espacio / proyecto</th>
                 <th>Acciones</th>
             </tr>
@@ -35,8 +36,9 @@
                     <td class="mono hide-m"><?php echo s($u->id); ?></td>
                     <td><?php echo s($u->nombre); ?></td>
                     <td class="hide-m"><?php echo s($u->email); ?></td>
-                    <td><span class="badge badge-<?php echo s($u->rol); ?>"><?php echo s(ucfirst($u->rol)); ?></span></td>
+                    <td><span class="badge badge-<?php echo s($u->rol); ?>"><?php echo s(ucfirst($u->rol)); ?></span><?php if ($u->rol === 'visitante' && ($u->nivel_acceso ?? 'ver') === 'editar'): ?> <span class="badge">Colaborador</span><?php endif; ?></td>
                     <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? proyectos_creados_por((int)$u->id) . ' / ' . (int)$u->limite_proyectos : '—'; ?></td>
+                    <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? count(\Model\Usuario::equipoDe((int)$u->id, 'visitante')) . ' / ' . (int)($u->limite_visitantes ?? 2) . ' · ' . count(\Model\Usuario::equipoDe((int)$u->id, 'colaborador')) . ' / ' . (int)($u->limite_colaboradores ?? 3) : '—'; ?></td>
                     <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? \Classes\Almacenamiento::formato((int)$u->limite_almacenamiento_mb * 1048576) : '—'; ?></td>
                     <td class="acciones">
                         <a href="/usuarios/editar?id=<?php echo s($u->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
@@ -49,7 +51,7 @@
                     </td>
                 </tr>
             <?php endforeach; ?>
-            <?php if (!$usuarios): ?><tr><td colspan="7" class="text-muted">No se encontraron usuarios<?php echo $q !== '' ? ' para «' . s($q) . '»' : ''; ?>.</td></tr><?php endif; ?>
+            <?php if (!$usuarios): ?><tr><td colspan="8" class="text-muted">No se encontraron usuarios<?php echo $q !== '' ? ' para «' . s($q) . '»' : ''; ?>.</td></tr><?php endif; ?>
         </tbody>
     </table>
     <?php if ($paginas > 1): $url = fn($p) => '/usuarios?' . http_build_query(array_filter(['q' => $q, 'pagina' => $p > 1 ? $p : null])); ?>

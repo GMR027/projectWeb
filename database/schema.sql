@@ -15,11 +15,16 @@ CREATE TABLE usuarios (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     rol ENUM('admin', 'cliente', 'visitante') NOT NULL DEFAULT 'visitante',
+    nivel_acceso ENUM('ver', 'editar') NOT NULL DEFAULT 'ver',   -- visitante de solo lectura o colaborador que edita
     logo VARCHAR(100) DEFAULT NULL,
     limite_proyectos INT NOT NULL DEFAULT 1,   -- proyectos que puede crear un cliente
     limite_almacenamiento_mb INT NOT NULL DEFAULT 300,   -- MB por proyecto de un cliente
-    creado_por INT DEFAULT NULL,   -- cliente que creó a este visitante (máx. 2 por cliente)
+    creado_por INT DEFAULT NULL,   -- cliente que creó a este visitante/colaborador
+    limite_visitantes INT NOT NULL DEFAULT 2,        -- cuántos visitantes puede crear un cliente
+    limite_colaboradores INT NOT NULL DEFAULT 3,     -- cuántos colaboradores puede crear un cliente
     herramientas TEXT NULL,        -- visitante: claves de las herramientas que ve (JSON); NULL = todas
+    herramientas_edicion TEXT NULL,   -- colaborador: claves de las que además puede editar (JSON)
+    puede_archivos_ajenos TINYINT(1) NOT NULL DEFAULT 0,   -- colaborador: editar archivos subidos por el dueño
     token VARCHAR(100) DEFAULT NULL,
     confirmado TINYINT(1) DEFAULT 0,
     novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
@@ -677,6 +682,7 @@ CREATE TABLE archivo_carpetas (
 CREATE TABLE archivos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
+    subido_por INT DEFAULT NULL,   -- usuario que subió el archivo (NULL = anterior / del dueño)
     categoria_id INT DEFAULT NULL,
     carpeta_id INT DEFAULT NULL,
     fecha DATE NOT NULL,
@@ -1047,8 +1053,10 @@ CREATE TABLE IF NOT EXISTS auditoria_cambios (
     referencia_id INT NULL,                           -- hallazgo, propuesta o corrida que originó el cambio
     modelo VARCHAR(150) NOT NULL DEFAULT '',
     usuario VARCHAR(150) NOT NULL DEFAULT '',
+    usuario_id INT NULL,                              -- autor exacto (NULL en filas anteriores a la migración)
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_proyecto_fecha (proyecto_id, creado),
+    KEY idx_auditoria_usuario (proyecto_id, usuario_id),
     KEY idx_proyecto_estado (proyecto_id, estado, creado),
     KEY idx_entidad (proyecto_id, entidad_tipo, entidad_id),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE

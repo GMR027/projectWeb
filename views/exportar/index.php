@@ -53,6 +53,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
         <p class="exp-nomen-vista text-sm">Así quedará: <strong class="mono" id="exp-nomen-ejemplo"></strong></p>
     </section>
 
+    <?php if (herramienta_permitida('programa') || herramienta_permitida('lookahead') || herramienta_permitida('msr') || herramienta_permitida('curvas') || herramienta_permitida('vplan')): ?>
     <form method="POST" action="/exportar/todo" class="exportar-todo">
         <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
         <input type="hidden" name="elegir" value="1">
@@ -63,10 +64,11 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                 <div class="exp-checks-cab"><span class="text-sm text-muted">Formatos a incluir</span><label class="text-sm"><input type="checkbox" data-exp-todos> Todos</label></div>
                 <div class="exp-checks-lista">
                     <?php foreach ([
-                        'prog_pdf' => 'Programa · PDF', 'prog_xml' => 'Programa · XML (MS Project)', 'prog_pod' => 'Programa · POD (ProjectLibre)',
-                        'la_pdf' => 'Lookahead · PDF', 'la_xlsx' => 'Lookahead · Excel', 'msr_pdf' => 'MSR · PDF', 'msr_xlsx' => 'MSR · Excel',
-                        'curvas' => 'Curvas de productividad · PDF', 'vplan' => 'vPlan · PDF',
-                    ] as $k => $etq): ?>
+                        'prog_pdf' => ['Programa · PDF', 'programa'], 'prog_xml' => ['Programa · XML (MS Project)', 'programa'], 'prog_pod' => ['Programa · POD (ProjectLibre)', 'programa'],
+                        'la_pdf' => ['Lookahead · PDF', 'lookahead'], 'la_xlsx' => ['Lookahead · Excel', 'lookahead'],
+                        'msr_pdf' => ['MSR · PDF', 'msr'], 'msr_xlsx' => ['MSR · Excel', 'msr'],
+                        'curvas' => ['Curvas de productividad · PDF', 'curvas'], 'vplan' => ['vPlan · PDF', 'vplan'],
+                    ] as $k => [$etq, $tool]): if (!herramienta_permitida($tool)) continue; ?>
                         <label><input type="checkbox" name="incluir[]" value="<?php echo $k; ?>" checked> <span><?php echo s($etq); ?></span></label>
                     <?php endforeach; ?>
                 </div>
@@ -77,9 +79,10 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-zipper"></i> Exportar todo</button>
         </div>
     </form>
+    <?php endif; ?>
 
     <div class="exportadores-grid">
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('programa') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📄</div>
             <h4>Programa de obra</h4>
             <p class="text-sm text-muted">PDF ejecutivo (Gantt + tabla en tabloide 11×17" horizontal), XML MSPDI para MS Project (ábrelo y guárdalo como .mpp) o POD para ProjectLibre.</p>
@@ -96,7 +99,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('lookahead') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🔭</div>
             <h4>Lookahead</h4>
             <p class="text-sm text-muted">Semana actual + las semanas que tengas visibles, con X por día, PTA y limitaciones. Tabloide (11×17") horizontal. En .xlsx / .ods queda editable.</p>
@@ -116,7 +119,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('vplan') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🗺️</div>
             <h4>vPlan · láminas</h4>
             <p class="text-sm text-muted">Plano con tablas del programa, recovery y tablas adicionales. Una lámina por página, con el tamaño de hoja de cada una. «Todas» lleva solo las láminas <strong>visibles</strong>.</p>
@@ -139,7 +142,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('lastplanner') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🗒️</div>
             <h4>Last Planner · post-its</h4>
             <p class="text-sm text-muted">Tarjetas de 7×7 cm por día y partida, en hojas carta con marcas de corte. Se calculan con el programa de obra.</p>
@@ -178,7 +181,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('curvas') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📈</div>
             <h4>Curvas de productividad</h4>
             <p class="text-sm text-muted">Una curva con su tabla y gráfica, o la gráfica maestra con todas. PDF carta horizontal; .xlsx / .ods con tabla y gráfica.</p>
@@ -202,7 +205,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('msr') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🚚</div>
             <h4>MSR · Materiales</h4>
             <p class="text-sm text-muted">Reporte del status de submittals y entrega de materiales con fotos. PDF en A4 horizontal; .xlsx / .ods editables.</p>
@@ -229,7 +232,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('lineatiempo') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📆</div>
             <h4>Línea de tiempo activa</h4>
             <p class="text-sm text-muted">Gantt diario agrupado por partida con los filtros elegidos, igual que la vista de la Línea de tiempo. PDF en una sola hoja del tamaño que haga falta, o .ods editable.</p>
@@ -262,7 +265,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
         </div>
 
         <?php /* Reportes de obra en PDF */ ?>
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('reportes') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📋</div>
             <h4>Reporte diario</h4>
             <p class="text-sm text-muted">Un día (o todo un mes, un reporte por página) con actividades, personal, comentarios y fotos. Se aplica el primero que llenes: día o mes.</p>
@@ -279,7 +282,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('bitacora') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📓</div>
             <h4>Bitácora</h4>
             <p class="text-sm text-muted">Registros por día, mes, departamento y/o nivel de importancia. Los filtros se combinan; los vacíos no filtran.</p>
@@ -300,7 +303,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('minutas') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🤝</div>
             <h4>Minutas</h4>
             <p class="text-sm text-muted">Minutas completas (asistentes, temas y compromisos), una por página, por importancia, día o mes.</p>
@@ -319,7 +322,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('submittals') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📦</div>
             <h4>Submittals</h4>
             <p class="text-sm text-muted">Uno o varios paquetes de submittal con sus materiales, uno por página. Si hay varios puedes marcar cuáles; sin marcar ninguno se exportan todos.</p>
@@ -337,7 +340,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('rfi') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">❓</div>
             <h4>RFI · Solicitudes de información</h4>
             <p class="text-sm text-muted">Uno o varios RFI con su pregunta, respuesta y las láminas del Editor adjuntas. Con varios marcados se entregan en un ZIP.</p>
@@ -354,7 +357,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('materiales') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🧱</div>
             <h4>Materiales</h4>
             <p class="text-sm text-muted">Listado de materiales con foto, por especialidad, estatus de compra y/o estado de entrega.</p>
@@ -373,7 +376,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </form>
         </div>
 
-        <div class="exportador-card">
+        <div class="exportador-card"<?php echo herramienta_permitida('evidencias') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">📷</div>
             <h4>Evidencias</h4>
             <p class="text-sm text-muted">Fotos de reportes diarios y evidencias subidas, agrupadas por fecha. Se aplica el primero que llenes: día, semana o mes.</p>

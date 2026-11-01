@@ -560,7 +560,7 @@ $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRA
     preg_match_all("/\\['[^']+',\\s*'(\\/[^']+)'/", $src, $m);
     $sin = [];
     foreach (array_unique($m[1]) as $ruta) {
-        if (in_array($ruta, ['/proyectos/ver', '/dashboard'], true)) continue;   // rutas generales, no herramientas
+        if (in_array($ruta, ['/proyectos/ver', '/dashboard', '/exportar'], true)) continue;   // rutas generales, no herramientas
         if (herramienta_de_ruta($ruta) !== null) continue;
         $sin[] = $ruta;
     }
@@ -570,6 +570,34 @@ $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRA
 $ok('una herramienta declarada se resuelve por su ruta', herramienta_de_ruta('/punch') === 'punch' && herramienta_de_ruta('/seguridad') === 'seguridad');
 $ok('historial-cambios no se confunde con historial', herramienta_de_ruta('/historial-cambios') === 'centro-ia' && herramienta_de_ruta('/historial') === 'historial');
 $ok('las rutas generales del visitante no son herramientas', ruta_general('/proyectos') && ruta_general('/manual') && ruta_general('/') && !ruta_general('/punch'));
+
+echo "Colaboradores: permisos y borrado\n";
+$ok('el colaborador nunca edita ajustes, compartir ni el historial', \Model\Usuario::herramientasEdicionDePost(['programa', 'ajustes', 'compartir', 'historial'], null) === json_encode(['programa']));
+$ok('lo que edita es siempre un subconjunto de lo que ve', \Model\Usuario::herramientasEdicionDePost(['programa', 'msr'], ['programa']) === json_encode(['programa']));
+$ok('sin herramientas de edición la lista queda vacía', \Model\Usuario::herramientasEdicionDePost([], null) === null);
+$u = new \Model\Usuario(['rol' => 'cliente']);
+$ok('los topes por defecto son 2 visitantes y 3 colaboradores', $u->limiteEquipo('visitante') === 2 && $u->limiteEquipo('colaborador') === 3);
+$ok('un visitante de nivel ver no es colaborador', !(new \Model\Usuario(['rol' => 'visitante', 'nivel_acceso' => 'ver']))->esColaborador());
+$ok('un visitante con nivel editar sí es colaborador', (new \Model\Usuario(['rol' => 'visitante', 'nivel_acceso' => 'editar']))->esColaborador());
+$ok('las rutas de borrado se reconocen', es_ruta_de_borrado('/programa/actividades/eliminar') && es_ruta_de_borrado('/api/dependencias/eliminar')
+    && es_ruta_de_borrado('/vplan/subactividades/sheetflow/quitar') && !es_ruta_de_borrado('/programa'));
+$ok('toda ruta de borrado del front controller queda bloqueada al colaborador', (function () {
+    $src = (string)file_get_contents(__DIR__ . '/../public/index.php');
+    preg_match_all("/\\\$router->(?:get|post)\\('(\\/[^']+)'/", $src, $m);
+    $sin = [];
+    foreach (array_unique($m[1]) as $ruta) {
+        if (preg_match('~/(eliminar|borrar|quitar)(/|$)~i', $ruta) && !es_ruta_de_borrado($ruta)) $sin[] = $ruta;
+    }
+    if ($sin) fwrite(STDERR, '  no detectadas: ' . implode(', ', $sin) . "\n");
+    return !$sin;
+})());
+$ok('el Centro de Exportación filtra por herramienta', \Controllers\AjustesController::herramientaExportacion('pdf') === 'programa'
+    && \Controllers\AjustesController::herramientaExportacion('reportes', 'bitacora') === 'bitacora'
+    && \Controllers\AjustesController::herramientaExportacion('reportes', 'evidencia') === 'evidencias'
+    && \Controllers\AjustesController::herramientaExportacion('msr') === 'msr');
+$ok('exportar no está atado a Ajustes y sí es ruta general', herramienta_de_ruta('/exportar') === null && ruta_general('/exportar'));
+$ok('el menú de Ajustes tiene la pestaña de accesos del proyecto', str_contains((string)file_get_contents(__DIR__ . '/../views/ajustes/index.php'), "id=\"accesos\""));
+
 $ok('la contraseña mínima es de 10 y rechaza las comunes', \Model\Usuario::passwordDebil('corta') !== null && \Model\Usuario::passwordDebil('1234567890') !== null && \Model\Usuario::passwordDebil('Obra2026-segura') === null);
 
 echo "Interfaz táctil de vPlan y editor\n";
