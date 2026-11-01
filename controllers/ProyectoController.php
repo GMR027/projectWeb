@@ -161,7 +161,7 @@ class ProyectoController
             $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
             if ($id) {
                 $proyecto = Proyecto::find($id);
-                if ($proyecto && puede_gestionar_proyecto($proyecto)) {
+                if ($proyecto && puede_eliminar_proyecto($proyecto)) {
                     // Las filas se borran en cascada; los archivos de fotos hay que quitarlos aparte
                     foreach (\Model\ReporteDiario::deProyecto((int)$proyecto->id) as $rd) {
                         foreach ($rd->getFotos() as $f) \Classes\Imagenes::eliminarEn('reportes', $f);

@@ -19,7 +19,7 @@ Un solo bot para toda la plataforma. Migración: `database/migracion_telegram.sq
 
 ## Reglas que conviene no romper
 - **Webhook**: `Telegram::esWebhook()` se atiende en `public/index.php` antes de CSRF y sesión. El secreto es `hash_hmac(token)` (cabecera `X-Telegram-Bot-Api-Secret-Token`); sin él, 403. Con secreto correcto siempre 200 (si no Telegram reintenta sin parar). Cada update se atiende una vez (`telegram_estado.ultimo_update`).
-- **Permisos**: ver = admin, dueño o acceso asignado; escribir (avance, fotos, notas **y los botones de punch/RFI/submittal**) = admin o cliente dueño, igual que `puede_gestionar_proyecto`. Los grupos solo reciben avisos: no aceptan órdenes (solo `/start CODIGO`) y sus avisos solo llevan botón URL.
+- **Permisos**: ver = admin, dueño o acceso asignado; escribir (avance, fotos, notas **y los botones de punch/RFI/submittal**) = admin o cliente que gestiona el proyecto (propietario o asignado), igual que `puede_gestionar_proyecto`. Los grupos solo reciben avisos: no aceptan órdenes (solo `/start CODIGO`) y sus avisos solo llevan botón URL.
 - **Botones de acción**: cada callback revalida el proyecto del registro con `gestionableDe()` antes de tocar datos; los cambios pasan por los mismos métodos de la web (`Punch::estado`, `Rfi::guardar`, `Submittal::sincronizarMsr`).
 - **Avisos**: `Webhooks::emitir()` llama también a `Telegram::aviso()`; eventos en `Telegram::EVENTOS` (los iniciales en `INICIALES`; `resumen.matutino` no está a propósito). Un destino privado se descarta si la persona perdió el acceso. 5 fallos seguidos pausan el destino; expulsar al bot de un grupo lo borra.
 - **Sesión en CLI**: `bin/telegram.php` arranca la sesión antes del primer `echo` (Auditoria/Salud llaman `usuario_actual()`).

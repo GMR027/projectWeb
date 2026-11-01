@@ -301,10 +301,16 @@ class AuthController
         return is_auth() && !is_admin() && ($_SESSION['rol'] ?? '') === 'cliente';
     }
 
-    /** ids de los proyectos de los que el cliente en sesión es dueño */
-    private static function proyectosPropios(): array
+    /** ids de los proyectos que el cliente en sesión puede gestionar: los que creó + los que el admin le asignó */
+    private static function proyectosGestionables(): array
     {
-        return array_map(fn($p) => (int)$p->id, Proyecto::whereAll('usuario_id', (string)$_SESSION['id']));
+        return array_map(fn($p) => (int)$p->id, Proyecto::gestionablesDe((int)$_SESSION['id']));
+    }
+
+    /** Proyectos gestionables como objetos, para las listas de «Mi equipo» */
+    private static function proyectosDeGestion(): array
+    {
+        return Proyecto::gestionablesDe((int)$_SESSION['id']);
     }
 
     /** Visitante creado por el cliente en sesión, o null (también si es de otro cliente o de otro rol) */
@@ -367,7 +373,7 @@ class AuthController
                 $usuario->crearToken();
                 $r = $usuario->guardar();
                 if ($r['resultado']) {
-                    ProyectoAcceso::sincronizarUsuarioEn((int)$r['id'], $_POST['proyectos'] ?? [], self::proyectosPropios());
+                    ProyectoAcceso::sincronizarUsuarioEn((int)$r['id'], $_POST['proyectos'] ?? [], self::proyectosGestionables());
                     header('Location: /usuarios?creado=1');
                     exit;
                 }
@@ -377,7 +383,7 @@ class AuthController
             'titulo' => $tipo === 'colaborador' ? 'Nuevo colaborador' : 'Nuevo visitante',
             'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => $lleno, 'tipo' => $tipo,
             'limite' => $limite, 'usados' => count($usar),
-            'proyectos' => Proyecto::whereAll('usuario_id', (string)$yo, 'nombre ASC'),
+            'proyectos' => self::proyectosDeGestion(),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
@@ -401,7 +407,7 @@ class AuthController
         $cambiaTipo = ($tipo === 'colaborador') !== $usuario->esColaborador();
         $lleno = $cambiaTipo && count($usar) >= $limite;
 
-        $propios = self::proyectosPropios();
+        $gestionables = self::proyectosGestionables();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($lleno) {
                 Usuario::setAlerta('error', 'Ya tienes el máximo de ' . $limite . ' ' . ($tipo === 'colaborador' ? 'colaboradores' : 'visitantes') . '.');
@@ -427,7 +433,7 @@ class AuthController
                 }
                 unset($usuario->password2);
                 if (!Usuario::getAlertas() && $usuario->guardar()) {
-                    ProyectoAcceso::sincronizarUsuarioEn((int)$usuario->id, $_POST['proyectos'] ?? [], $propios);
+                    ProyectoAcceso::sincronizarUsuarioEn((int)$usuario->id, $_POST['proyectos'] ?? [], $gestionables);
                     header('Location: /usuarios?editado=1');
                     exit;
                 }
@@ -438,9 +444,9 @@ class AuthController
             'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => false,
             'tipo' => $tipo,
             'limite' => $limite, 'usados' => count($usar),
-            'proyectos' => Proyecto::whereAll('usuario_id', (string)$yo, 'nombre ASC'),
+            'proyectos' => self::proyectosDeGestion(),
             'asignados' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', $_POST['proyectos'] ?? [])
-                : array_values(array_intersect(ProyectoAcceso::proyectosDe((int)$usuario->id), $propios)),
+                : array_values(array_intersect(ProyectoAcceso::proyectosDe((int)$usuario->id), $gestionables)),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,

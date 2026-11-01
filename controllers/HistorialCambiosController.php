@@ -9,7 +9,7 @@ use Classes\HistorialCambios;
 /**
  * Historial de cambios del proyecto (sección «Administración» del breadcrumb).
  * Lo ven admin, cliente y visitante (si el cliente le habilitó la herramienta): qué cambió, cuándo, en qué
- * herramienta y con qué valores de antes y después. Aceptar o cancelar es de admin y cliente dueño.
+ * herramienta y con qué valores de antes y después. Aceptar o cancelar es de admin y del cliente que gestiona el proyecto.
  */
 class HistorialCambiosController
 {
@@ -70,7 +70,7 @@ class HistorialCambiosController
     {
         $p = proyecto_api('ver');
         if (!herramienta_permitida('historial')) json_respuesta(['success' => false, 'error' => 'Esa herramienta no está habilitada para tu acceso'], 403);
-        if (!puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'Solo el administrador y el cliente dueño del proyecto aceptan o cancelan cambios'], 403);
+        if (!puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'Solo el administrador y el cliente que gestiona el proyecto aceptan o cancelan cambios'], 403);
         return $p;
     }
 

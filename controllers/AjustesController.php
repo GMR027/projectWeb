@@ -59,7 +59,7 @@ class AjustesController
     public static function guardarAccesos()
     {
         $proyecto = proyecto_de_peticion(true);
-        if (($_SESSION['rol'] ?? '') !== 'cliente' || !es_propietario($proyecto)) {
+        if (($_SESSION['rol'] ?? '') !== 'cliente' || !puede_gestionar_proyecto($proyecto)) {
             header('Location: /ajustes?proyecto=' . $proyecto->id);
             exit;
         }
@@ -114,12 +114,13 @@ class AjustesController
 
     // ---------- Respaldo de proyecto ----------
 
-    /** Proyecto del POST/GET validado: solo admin o el cliente dueño */
+    /** Proyecto del POST/GET validado: solo admin o el cliente propietario */
     private static function proyectoRespaldo(): Proyecto
     {
         redirigir_si_no_auth();
         $p = Proyecto::find(filter_var($_POST['proyecto_id'] ?? $_GET['proyecto'] ?? null, FILTER_VALIDATE_INT));
-        if (!$p || !puede_gestionar_proyecto($p)) {
+        // Respaldos: solo el propietario y el admin (un cliente con acceso asignado no revierte la obra entera)
+        if (!$p || !puede_eliminar_proyecto($p)) {
             header('Location: /proyectos');
             exit;
         }

@@ -97,6 +97,15 @@ class Proyecto extends ActiveRecord
         );
     }
 
+    /** Proyectos que un cliente puede gestionar: los que creó + los que el administrador le asignó */
+    public static function gestionablesDe(int $usuarioId): array
+    {
+        $propios = array_map(fn($p) => (int)$p->id, self::whereAll('usuario_id', (string)$usuarioId));
+        $ids = array_values(array_unique(array_merge($propios, ProyectoAcceso::proyectosDe($usuarioId))));
+        if (!$ids) return [];
+        return self::consultarSQL('SELECT * FROM proyectos WHERE id IN (' . implode(',', $ids) . ') ORDER BY nombre ASC');
+    }
+
     /** Logo de la empresa: el del usuario dueño (rol cliente) o, si no tiene, el del proyecto */
     public function logoEmpresa(): ?string
     {

@@ -52,7 +52,7 @@
     <?php if (is_admin()): ?>
         <div class="campo campo-full">
             <label><?php echo s(t('Usuarios con acceso a este proyecto')); ?></label>
-            <small class="text-muted"><?php echo s(t('Clientes y visitantes marcados podrán ver este proyecto (el propietario siempre lo ve).')); ?></small>
+            <small class="text-muted"><?php echo s(t('Los clientes marcados podrán gestionar este proyecto y los visitantes verlo (el propietario siempre lo ve).')); ?></small>
             <?php
             $items = [];
             foreach (\Model\Usuario::all('nombre ASC') as $u) {

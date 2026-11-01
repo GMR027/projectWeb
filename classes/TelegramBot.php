@@ -188,7 +188,7 @@ class TelegramBot
         foreach ($ps as $p) if ((int)$p->id === (int)$v['proyecto_id']) return $p;
         if (count($ps) === 1) { Telegram::proyectoActivo($chat, (int)$ps[0]->id); return $ps[0]; }
         if (!$ps) {
-            self::decir($chat, $escribir && Telegram::proyectosDe($u) ? 'Solo el administrador o el dueño del proyecto puede registrar avance, fotos y notas desde Telegram.' : 'No tienes proyectos asignados todavía.');
+            self::decir($chat, $escribir && Telegram::proyectosDe($u) ? 'Solo el administrador o quien gestiona el proyecto puede registrar avance, fotos y notas desde Telegram.' : 'No tienes proyectos asignados todavía.');
             return null;
         }
         self::elegirProyecto($chat, $u);
@@ -250,7 +250,7 @@ class TelegramBot
         $f = self::filas("SELECT a.id, a.codigo, a.nombre, a.progreso, a.hito, p.proyecto_id FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE a.id = $aid")[0] ?? null;
         $pr = $f ? Proyecto::find((int)$f['proyecto_id']) : null;
         if (!$f || !$pr || !Telegram::puedeVer($u, $pr)) return [null, 'No encuentro esa actividad.'];
-        if (!Telegram::puedeGestionar($u, $pr)) return [null, 'Solo el administrador o el dueño del proyecto puede registrar avance, fotos y notas desde Telegram.'];
+        if (!Telegram::puedeGestionar($u, $pr)) return [null, 'Solo el administrador o quien gestiona el proyecto puede registrar avance, fotos y notas desde Telegram.'];
         return [$f, null];
     }
 

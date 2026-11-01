@@ -31,7 +31,7 @@ $esColab = $tipo === 'colaborador';
         </div>
         <div class="campo campo-accesos">
             <label>Proyectos a los que entra</label>
-            <small class="text-muted">Solo aparecen tus proyectos.</small>
+            <small class="text-muted">Aparecen los proyectos que creaste y los que el administrador te asignó.</small>
             <?php
             $items = array_map(fn($p) => ['id' => (int)$p->id, 'titulo' => $p->nombre, 'detalle' => $p->codigo], $proyectos);
             $nombreCampo = 'proyectos';

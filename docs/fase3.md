@@ -4,7 +4,7 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 
 | Módulo | Ruta | Código | Quién |
 |---|---|---|---|
-| Costos y presupuesto | `/costos` | `classes/Costos.php`, `CostosController`, `views/costos/` | Solo quien gestiona el proyecto (admin / cliente dueño). Clave de visitante `costos` |
+| Costos y presupuesto | `/costos` | `classes/Costos.php`, `CostosController`, `views/costos/` | Solo quien gestiona el proyecto (admin / cliente propietario o asignado). Clave de visitante `costos` |
 | Recursos y cuadrillas | `/recursos` | `classes/Recursos.php`, `RecursosController`, `views/recursos/` | Ve todos; edita quien gestiona. Clave `recursos` |
 | RFI | `/rfi` | `classes/Rfi.php`, `RfiController`, `views/rfi/` | Ve todos; edita quien gestiona. Clave `rfi` |
 | Compartir (enlaces) | `/compartir` | `classes/Enlaces.php`, `CompartirController`, `views/compartir/` | Solo quien gestiona |

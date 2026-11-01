@@ -120,6 +120,7 @@ return [
     'Propietario' => 'Owner',
     'Usuarios con acceso a este proyecto' => 'Users with access to this project',
     'Clientes y visitantes marcados podrán ver este proyecto (el propietario siempre lo ve).' => 'Checked clients and visitors will be able to see this project (the owner always can).',
+    'Los clientes marcados podrán gestionar este proyecto y los visitantes verlo (el propietario siempre lo ve).' => 'Checked clients will be able to manage this project and visitors to see it (the owner always can).',
     'Color Identificador' => 'Identifier color',
     'Fecha de Inicio *' => 'Start date *',
     'Fecha de Fin *' => 'End date *',

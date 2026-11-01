@@ -393,6 +393,9 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
 
 <div class="card" id="respaldo-proyecto">
     <h3 class="card-titulo"><i class="fa-solid fa-clock-rotate-left"></i> Respaldo de proyecto</h3>
+    <?php if (!puede_eliminar_proyecto($proyecto)): ?>
+        <p class="text-muted text-sm">Solo el propietario del proyecto y el administrador pueden crear o restaurar respaldos. Si necesitas volver a una versión anterior, pídeselo al administrador.</p>
+    <?php else: ?>
     <p class="text-muted text-sm">Guarda una copia de los datos y archivos de este proyecto para poder recuperar los cambios del día anterior. Se hace a mano con el botón o automáticamente cada noche a las <?php echo \Classes\RespaldoProyecto::HORA_AUTO; ?>. Se conserva un respaldo diario, uno semanal y uno mensual, además de los manuales. Restaurar no borra archivos del servidor; solo devuelve los que falten.</p>
     <?php if (!empty($_GET['resp_msg'])): ?><div class="alerta <?php echo ($_GET['resp'] ?? '') === 'error' ? 'alerta-error' : 'alerta-exito'; ?>"><?php echo s($_GET['resp_msg']); ?></div><?php endif; ?>
     <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
@@ -435,6 +438,7 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
     </table>
     <?php else: ?>
         <p class="text-muted">Aún no hay respaldos de este proyecto.</p>
+    <?php endif; ?>
     <?php endif; ?>
 </div>
 

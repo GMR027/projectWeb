@@ -4,10 +4,10 @@ Cuatro herramientas para lo que pasa después de programar: controlar la calidad
 
 | Herramienta | Ruta | Menú | Quién captura |
 |---|---|---|---|
-| Calidad e inspecciones (ITP) | `/calidad` | Campo | admin y cliente dueño |
-| Equipo y maquinaria | `/equipo` | Campo | admin y cliente dueño |
-| Contratos, fianzas y seguros | `/contratos` | Administración | admin y cliente dueño |
-| Cierre de obra | `/cierre` | Administración | admin y cliente dueño |
+| Calidad e inspecciones (ITP) | `/calidad` | Campo | admin y cliente que gestiona el proyecto |
+| Equipo y maquinaria | `/equipo` | Campo | admin y cliente que gestiona el proyecto |
+| Contratos, fianzas y seguros | `/contratos` | Administración | admin y cliente que gestiona el proyecto |
+| Cierre de obra | `/cierre` | Administración | admin y cliente que gestiona el proyecto |
 
 El visitante puede consultarlas si se le habilitan en **Usuarios y accesos**, salvo Contratos y Cierre, que el menú oculta a los visitantes.
 
@@ -52,6 +52,6 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 
 ## Permisos y eventos
 
-- Las escrituras usan `proyecto_de_peticion(true)` (admin o cliente dueño).
+- Las escrituras usan `proyecto_de_peticion(true)` (admin o cliente propietario o con el proyecto asignado).
 - Las cuatro claves están en `Model\Usuario::HERRAMIENTAS` y en el menú (`views/templates/herramientas-proyecto.php`), así que el visitante solo las ve si se le habilitan.
 - **Resumen matutino:** si el proyecto tiene activado el resumen de la obra (Integraciones → Telegram), `Classes\ResumenObra` incluye los contratos/fianzas por vencer y los equipos con servicio próximo. Dentro de cada herramienta también se ven siempre.

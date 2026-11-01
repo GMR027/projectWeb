@@ -52,10 +52,12 @@
                     <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-sm btn-primary"><?php echo s(t('Ver Proyecto')); ?></a>
                     <?php if (puede_gestionar_proyecto($proyecto)): ?>
                         <a href="/proyectos/editar?id=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Editar')); ?></a>
+                        <?php if (puede_eliminar_proyecto($proyecto)): ?>
                         <form method="POST" action="/proyectos/eliminar" style="display:inline" data-confirm="¿Eliminar proyecto?|Se eliminarán todas sus partidas, actividades, restricciones y calendario. Esta acción no se puede deshacer.">
                             <input type="hidden" name="id" value="<?php echo s($proyecto->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger"><?php echo s(t('Eliminar')); ?></button>
                         </form>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

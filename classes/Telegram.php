@@ -395,7 +395,9 @@ class Telegram
 
     public static function puedeGestionar(array $u, Proyecto $p): bool
     {
-        return $u['rol'] === 'admin' || ($u['rol'] === 'cliente' && (int)$p->usuario_id === (int)$u['id']);
+        if ($u['rol'] === 'admin') return true;
+        if ($u['rol'] !== 'cliente') return false;
+        return (int)$p->usuario_id === (int)$u['id'] || ProyectoAcceso::existe((int)$p->id, (int)$u['id']);
     }
 
     /** Proyectos del usuario que puede ver (o solo gestionar) */

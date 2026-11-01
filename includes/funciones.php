@@ -164,12 +164,19 @@ function es_propietario($proyecto): bool
     return is_auth() && (int)$proyecto->usuario_id === (int)$_SESSION['id'];
 }
 
-/** Admin: todos. Cliente: los suyos. Colaborador: solo en las herramientas que el dueño le marcó como editables. */
+/** Admin: todos. Cliente: los suyos y los que el admin le asigna. Colaborador: solo en las herramientas marcadas. */
 function puede_gestionar_proyecto($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
     if (is_admin()) return true;
-    if (($_SESSION['rol'] ?? '') === 'cliente' && es_propietario($proyecto)) return true;
+    if (($_SESSION['rol'] ?? '') === 'cliente') {
+        if (es_propietario($proyecto)) return true;
+        // Proyecto asignado por el admin: el cliente lo gestiona igual que los que creó
+        static $asignados = [];
+        $pid = (int)$proyecto->id;
+        if (!array_key_exists($pid, $asignados)) $asignados[$pid] = \Model\ProyectoAcceso::existe($pid, (int)$_SESSION['id']);
+        return $asignados[$pid];
+    }
     // Colaborador: puede escribir solo en las herramientas que el dueño le marcó como editables.
     // La herramienta sale de la ruta actual (todas las de escritura viven bajo el prefijo de su herramienta).
     if (!es_colaborador($proyecto)) return false;
@@ -184,6 +191,13 @@ function puede_eliminar_proyecto($proyecto): bool
     if (!$proyecto || !is_auth()) return false;
     if (is_admin()) return true;
     return ($_SESSION['rol'] ?? '') === 'cliente' && es_propietario($proyecto);
+}
+
+/** Borrar contenido dentro de un proyecto (archivos, registros): admin y cliente que lo gestiona; el colaborador no */
+function puede_eliminar_contenido($proyecto): bool
+{
+    if (!$proyecto || !is_auth()) return false;
+    return is_admin() || (($_SESSION['rol'] ?? '') === 'cliente' && puede_gestionar_proyecto($proyecto));
 }
 
 /** ¿Esta ruta de la petición es una acción de borrado explícita? (la usa la guarda central del front controller) */
@@ -201,7 +215,8 @@ function puede_gestionar_archivo($archivo, $proyecto = null): bool
 {
     if (!$archivo || !is_auth()) return false;
     if (is_admin()) return true;
-    if (($proyecto && es_propietario($proyecto)) || (!$proyecto && ($_SESSION['rol'] ?? '') === 'cliente')) return true;
+    // El cliente que gestiona el proyecto (propietario o asignado) manda sobre sus archivos
+    if (($_SESSION['rol'] ?? '') === 'cliente' && (!$proyecto || puede_gestionar_proyecto($proyecto))) return true;
     $u = usuario_sesion();
     if (!$u || !$u->esColaborador()) return false;
     if (!empty($u->puede_archivos_ajenos)) return true;

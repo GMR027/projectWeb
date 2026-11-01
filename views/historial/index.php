@@ -44,10 +44,10 @@ $vacio = match ($pestana) {
 <div id="hist-msg" class="alerta alerta-exito" hidden></div>
 
 <?php if (!$puede): ?>
-    <p class="text-muted text-sm"><i class="fa-solid fa-eye"></i> Solo lectura: aceptar o cancelar cambios lo hacen el administrador y el cliente dueño del proyecto.</p>
+    <p class="text-muted text-sm"><i class="fa-solid fa-eye"></i> Solo lectura: aceptar o cancelar cambios lo hacen el administrador y el cliente que gestiona el proyecto.</p>
 <?php endif; ?>
 <?php if (es_colaborador()): ?>
-    <p class="text-muted text-sm"><i class="fa-solid fa-user"></i> Ves únicamente los cambios que hiciste tú. El dueño del proyecto ve los de todo el equipo.</p>
+    <p class="text-muted text-sm"><i class="fa-solid fa-user"></i> Ves únicamente los cambios que hiciste tú. Quien gestiona el proyecto ve los de todo el equipo.</p>
 <?php endif; ?>
 
 <form method="get" action="/historial" class="card inc-filtros">

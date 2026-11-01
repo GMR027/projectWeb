@@ -1,6 +1,6 @@
 <?php
 $puede = puede_gestionar_proyecto($proyecto); $desc = puede_descargar(); $id = s($proyecto->id);
-$borra = puede_eliminar_proyecto($proyecto);   // eliminar es solo del dueño/admin
+$borra = puede_eliminar_contenido($proyecto);   // admin y cliente que gestiona; el colaborador no borra
 $carpetaActual = null;
 foreach ($carpetas as $k) if ($carpeta && (int)$k->id === (int)$carpeta) $carpetaActual = $k;
 $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta=' . $c : '') . ($filtro ? '&categoria=' . (int)$filtro : '');

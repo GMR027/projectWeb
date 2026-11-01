@@ -51,7 +51,7 @@
         </div>
         <div class="campo campo-accesos" id="campo-accesos">
             <label>Proyectos con acceso</label>
-            <small class="text-muted">Cliente y visitante verán únicamente los proyectos marcados (el cliente además ve los que él mismo cree). El administrador ve todo.</small>
+            <small class="text-muted">Cliente: los proyectos marcados los puede <strong>gestionar</strong>, además de los que él mismo crea. Visitante: solo los <strong>ve</strong>. El administrador ve todo.</small>
             <?php
             $items = array_map(fn($p) => ['id' => (int)$p->id, 'titulo' => $p->nombre, 'detalle' => $p->codigo], $proyectos);
             $nombreCampo = 'proyectos';

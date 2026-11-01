@@ -255,17 +255,24 @@ TelegramBot::procesar($msg(1001, '/nota alta: falta concreto para el colado'));
 $b = $db->query("SELECT importancia, descripcion FROM bitacora WHERE proyecto_id = {$proy->id} ORDER BY id DESC LIMIT 1")->fetch_assoc();
 $ok('/nota crea la entrada de bitácora con su importancia', $b && $b['importancia'] === 'alta' && str_starts_with($b['descripcion'], 'falta concreto para el colado') && str_contains($b['descripcion'], 'Telegram'));
 
-// permisos: un cliente con acceso pero que no es dueño solo ve
+// permisos: un cliente con acceso gestiona el proyecto que el admin le asignó
 $cli = new Model\Usuario(['nombre' => 'Cliente CI', 'email' => 'cliente@ci.local', 'rol' => 'cliente', 'confirmado' => 1]);
 $cli->password = password_hash('x', PASSWORD_DEFAULT);
 $rc = $cli->guardar(); $cliId = (int)$rc['id'];
 (new Model\ProyectoAcceso(['proyecto_id' => $proy->id, 'usuario_id' => $cliId]))->guardar();
+$_SESSION = ['id' => $cliId, 'nombre' => 'Cliente CI', 'email' => 'cliente@ci.local', 'rol' => 'cliente'];
+$ok('un cliente con el proyecto asignado lo puede gestionar', puede_gestionar_proyecto($proy));
+$ok('pero no puede eliminar un proyecto que no creó', !puede_eliminar_proyecto($proy));
+$listaGestion = Model\Proyecto::gestionablesDe($cliId);
+$ok('el proyecto asignado aparece en la lista de proyectos del cliente', count(array_filter($listaGestion, fn($p) => (int)$p->id === (int)$proy->id)) === 1);
+$_SESSION = ['id' => (int)$u->id, 'nombre' => 'Admin CI', 'email' => $u->email, 'rol' => 'admin'];
 $cc = Telegram::crearCodigo($cliId, 'usuario');
 TelegramBot::procesar($msg(2001, "/start $cc"));
 TelegramBot::procesar($msg(2001, '/avance'));
-$ok('un cliente que no es dueño no puede reportar avance', str_contains($ultimo(), 'dueño del proyecto') && (int)Model\Actividad::find($act2)->progreso === 25);
+$ok('el cliente asignado puede entrar a /avance', in_array("a:$act2", array_column($teclas(), 'callback_data'), true));
 TelegramBot::procesar($cb(2001, "p:$act2:90"));
-$ok('ni forzando el botón', (int)Model\Actividad::find($act2)->progreso === 25);
+$ok('el botón del cliente asignado aplica el avance', (int)Model\Actividad::find($act2)->progreso === 90);
+$db->query("UPDATE actividades SET progreso = 25, status = 'en_proceso' WHERE id = $act2");   // el grupo sigue sin poder cambiarlo
 TelegramBot::procesar($msg(2001, '/hoy'));
 $ok('pero sí puede consultar /hoy', str_contains($ultimo(), 'Muros interiores'));
 $visId = (int)(new Model\Usuario(['nombre' => 'Vis', 'email' => 'vis@ci.local', 'rol' => 'visitante', 'confirmado' => 1, 'password' => 'x']))->guardar()['id'];
@@ -377,8 +384,9 @@ TelegramBot::procesar($cb(1001, "pu:$puId:corregido"));
 $ok('el botón «Corregido» cambia el estado del pendiente', (string)$db->query("SELECT estado FROM punch_items WHERE id = $puId")->fetch_row()[0] === 'corregido' && str_contains($ultimo(), 'Corregido'));
 TelegramBot::procesar($cb(1001, "pu:$puId:corregido"));
 $ok('pulsarlo dos veces no repite el cambio', str_contains($ultimo(), 'ya estaba'));
-TelegramBot::procesar($cb(2001, "pu:$puId:corregido"));   // cliente con acceso pero no dueño
-$ok('un cliente que no es dueño no puede cambiar el punch por botón', (string)$db->query("SELECT estado FROM punch_items WHERE id = $puId")->fetch_row()[0] === 'corregido' && str_contains($ultimo(), 'dueño del proyecto'));
+$db->query("UPDATE punch_items SET estado = 'abierto' WHERE id = $puId");   // se devuelve para probar al cliente asignado
+TelegramBot::procesar($cb(2001, "pu:$puId:corregido"));
+$ok('el cliente asignado sí cambia el punch por botón', (string)$db->query("SELECT estado FROM punch_items WHERE id = $puId")->fetch_row()[0] === 'corregido' && str_contains($ultimo(), 'Corregido'));
 
 // RFI: botón «Responder» → el siguiente texto se guarda como respuesta
 $antes = count($enviados);
@@ -386,8 +394,8 @@ Telegram::entregarAviso((int)$proy->id, 'rfi.creado', ['id' => $rfiId, 'numero' 
 $ok('el aviso de RFI trae el botón «Responder»', count($enviados) === $antes + 1 && count(array_filter($teclas(), fn($t) => ($t['callback_data'] ?? '') === "rs:$rfiId")) === 1);
 TelegramBot::procesar($cb(1001, "rs:$rfiId"));
 $ok('el botón «Responder» pide el texto', str_contains($ultimo(), 'RFI-002') && str_contains($ultimo(), 'Respondido'));
-TelegramBot::procesar($cb(2001, "rs:$rfiId"));   // el cliente no dueño lo intenta
-$ok('un cliente que no es dueño no puede responder RFI', str_contains($ultimo(), 'dueño del proyecto'));
+TelegramBot::procesar($cb(2001, "rs:$rfiId"));   // el cliente asignado también puede responder
+$ok('el cliente asignado puede responder un RFI', str_contains($ultimo(), 'RFI-002') && str_contains($ultimo(), 'Respondido'));
 TelegramBot::procesar($msg(1001, 'Usar impermeabilizante de 2 capas, marca Sika.'));
 $rf = $db->query("SELECT respuesta, estado, fecha_respuesta FROM rfis WHERE id = $rfiId")->fetch_assoc();
 $ok('el texto escrito se guarda como respuesta y pasa a Respondido', str_contains($rf['respuesta'], '2 capas') && $rf['estado'] === 'respondido' && $rf['fecha_respuesta'] !== null);
@@ -399,7 +407,7 @@ $ok('el aviso de submittal trae Aprobado, A/AN y Resubmitar', count($enviados) =
 TelegramBot::procesar($cb(1001, "su:$subId:aprobado"));
 $ok('el botón «Aprobado» cambia el estatus del submittal', (string)$db->query("SELECT estatus FROM submittals WHERE id = $subId")->fetch_row()[0] === 'aprobado' && str_contains($ultimo(), 'Aprobado'));
 TelegramBot::procesar($cb(2001, "su:$subId:rechazado"));
-$ok('un cliente que no es dueño no cambia submittals por botón', (string)$db->query("SELECT estatus FROM submittals WHERE id = $subId")->fetch_row()[0] === 'aprobado');
+$ok('el cliente asignado sí cambia submittals por botón', (string)$db->query("SELECT estatus FROM submittals WHERE id = $subId")->fetch_row()[0] === 'rechazado');
 
 // ---- resumen de la obra cada mañana ----
 echo "Resumen de la obra\n";

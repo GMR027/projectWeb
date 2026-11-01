@@ -13,7 +13,7 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 ## 📥 Bandeja, soporte, visitantes e importación
 
 - Formulario de contacto de la landing → `POST /contacto` (`ContactoController`, tabla `contactos`; trampas anti-spam y 5 mensajes/hora por IP). El admin los ve en `/bandeja` junto con los mensajes de soporte (tabla `soportes`); el menú muestra el número de sin leer.
-- Rol cliente: `/soporte` (CRUD de sus propios mensajes) y `/usuarios` como «Mis Visitantes» (máx. `Usuario::MAX_VISITANTES_CLIENTE` = 2, siempre rol visitante, `creado_por` = el cliente; solo asigna sus propios proyectos). Nunca se toma rol/límites del formulario.
+- Rol cliente: `/soporte` (CRUD de sus propios mensajes) y `/usuarios` como «Mi equipo» (visitantes de solo lectura y colaboradores que editan; los topes por cliente son `limite_visitantes`=2 y `limite_colaboradores`=3, `creado_por` = el cliente). El cliente puede asignar los proyectos que creó **y los que el admin le asignó** (`Proyecto::gestionablesDe`). Nunca se toma rol/límites del formulario.
 - `/programa/importar`: importa XML MSPDI o .pod en XML (`classes/ProgramaImportador.php`, sin IA). Solo trae nombre, fechas, avance, hitos, prioridad, notas y niveles; predecesoras/recursos/calendarios no.
 - Capturas del recorrido de la landing: `public/build/img/landing/tour-*.jpg` (tomadas del demo: 8 pestañas del recorrido; hay que regenerarlas si cambia mucho la UI).
 

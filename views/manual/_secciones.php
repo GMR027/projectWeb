@@ -20,7 +20,7 @@ return [
 <thead><tr><th>Rol</th><th>Qué puede hacer</th></tr></thead>
 <tbody>
 <tr><td><strong>Administrador</strong></td><td>Todo: crea proyectos y usuarios, ve todos los proyectos, edita cualquier dato, descarga documentos, responde la bandeja de entrada y administra el sistema (respaldos y almacenamiento).</td></tr>
-<tr><td><strong>Cliente</strong></td><td>Ve y <em>gestiona sus propios proyectos</em> (los que él creó), y ve los que el administrador le asigne. Puede descargar documentos, escribir a soporte y crear su propio equipo: <strong>visitantes</strong> (solo lectura) y <strong>colaboradores</strong> (editan donde él los autorice, nunca borran). Cuántos de cada tipo, cuántos proyectos y cuánto espacio tiene por proyecto lo fija el administrador.</td></tr>
+<tr><td><strong>Cliente</strong></td><td>Ve y <em>gestiona los proyectos que creó y los que el administrador le asigne</em>. Puede descargar documentos, escribir a soporte y crear su propio equipo: <strong>visitantes</strong> (solo lectura) y <strong>colaboradores</strong> (editan donde él los autorice, nunca borran). Cuántos de cada tipo, cuántos proyectos y cuánto espacio tiene por proyecto lo fija el administrador.</td></tr>
 <tr><td><strong>Visitante</strong></td><td>Su acceso lo decide el dueño del proyecto: como <strong>visitante</strong> solo ve y descarga; como <strong>colaborador</strong> crea y edita en las herramientas que le marquen (pero no borra). En ambos casos ve solo los proyectos que le asignaron y las herramientas permitidas.</td></tr>
 </tbody>
 </table>
@@ -73,7 +73,7 @@ HTML],
 <li>Pulsa <strong>+ Nuevo Usuario</strong>.</li>
 <li>Escribe nombre completo y correo, y elige el <strong>rol</strong> (administrador, cliente o visitante).</li>
 <li>Para un <strong>cliente</strong> define: <em>límite de proyectos</em> (0 = no puede crear proyectos; los que tú le asignes no cuentan), <em>espacio por proyecto en MB</em> (1024 MB = 1 GB) y, si quieres, el logo de su empresa.</li>
-<li>Marca los <strong>proyectos con acceso</strong>: cliente y visitante verán únicamente esos (el cliente además ve los que él mismo cree). El administrador ve todo.</li>
+<li>Marca los <strong>proyectos con acceso</strong>: los clientes marcados podrán <strong>gestionarlos</strong> (además de los que ellos crean) y los visitantes solo verlos. El administrador ve todo.</li>
 <li>Escribe y repite la contraseña. Al editar, deja los campos de contraseña vacíos para conservar la actual.</li>
 </ol>
 <h4>Herramientas de un visitante</h4>
@@ -93,7 +93,7 @@ HTML],
 <ol>
 <li>Pulsa <strong>+ Nuevo visitante</strong> o <strong>+ Nuevo colaborador</strong>.</li>
 <li>Escribe nombre, correo y contraseña (el colaborador entra con esas credenciales; no hay invitación por correo).</li>
-<li>Marca los <strong>proyectos</strong> a los que entra.</li>
+<li>Marca los <strong>proyectos</strong>: aparecen los que creaste y los que el administrador te asignó.</li>
 <li>Marca lo que <strong>puede ver</strong> y, si es colaborador, lo que además <strong>puede editar</strong>. La casilla <em>archivos del dueño</em> permite reemplazar o mover archivos que subiste tú; si no, solo toca los suyos.</li>
 </ol>
 <h4>Historial de cambios</h4>
@@ -102,17 +102,6 @@ HTML],
 <p>Dentro de cada proyecto, en <em>Ajustes del proyecto → Accesos</em>, decides qué miembros de tu equipo entran a esa obra en concreto. Los permisos (ver o editar y en qué herramientas) se cambian aquí, en <em>Mi equipo</em>, una sola vez para todos sus proyectos.</p>
 HTML],
 
-
-['id' => 'visitantes', 'titulo' => 'Mis visitantes', 'icono' => 'fa-user-group', 'roles' => ['cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Como cliente puedes dar acceso de <strong>solo lectura</strong> a otras personas (por ejemplo, tu cliente final o un supervisor) creando hasta <strong>2 visitantes</strong>.</p>
-<ol>
-<li>Entra a <strong>Mis Visitantes</strong> y pulsa <strong>+ Nuevo visitante</strong>.</li>
-<li>Escribe nombre, correo y contraseña (repítela).</li>
-<li>Marca los <strong>proyectos que puede ver</strong>. Solo aparecen tus proyectos.</li>
-<li>Puedes limitar las <strong>herramientas</strong> que verá. Si lo dejas completo, ve todas.</li>
-</ol>
-<p>Un visitante siempre tiene rol de visitante: no puede editar ni descargar, aunque tú sí. Para crear otro cuando ya tienes el máximo, elimina uno.</p>
-HTML],
 
 ['id' => 'bandeja', 'titulo' => 'Bandeja de entrada', 'icono' => 'fa-inbox', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Reúne en un solo lugar los <strong>mensajes del formulario de contacto</strong> de la página principal y los <strong>mensajes de soporte</strong> que escriben tus clientes. El menú lateral muestra el número de mensajes sin leer.</p>
@@ -620,7 +609,7 @@ HTML],
 <li>En <strong>Carga semanal</strong> ves una tabla de calor: verde (hasta 85 %), amarillo (85–100 %) y rojo (más de 100 %, sobrecarga). Pasa el cursor sobre una celda para ver las actividades y las horas. Los botones de arriba mueven la ventana de 4 en 4 semanas.</li>
 </ol>
 <p>La carga de una semana es la suma de las dedicaciones de las actividades que caen en ella, ponderadas por sus <strong>días hábiles</strong> (con el calendario y los festivos del proyecto). Las actividades al 100 % de avance ya no cargan al recurso. Una sobrecarga en las próximas 4 semanas aparece en la <a href="#inicio">Salud del proyecto</a>.</p>
-<p class="manual-nota">Solo el administrador y el cliente dueño del proyecto crean recursos y asignaciones; los visitantes solo consultan.</p>
+<p class="manual-nota">Solo el administrador y el cliente que gestiona el proyecto crean recursos y asignaciones; los visitantes solo consultan.</p>
 HTML],
 
 ['id' => 'rfi', 'titulo' => 'RFI (solicitudes de información)', 'icono' => 'fa-circle-question', 'roles' => $todos, 'herr' => 'rfi', 'cuerpo' => <<<'HTML'
@@ -636,7 +625,7 @@ HTML],
 HTML],
 
 ['id' => 'costos', 'titulo' => 'Costos y presupuesto', 'icono' => 'fa-sack-dollar', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Compara <strong>lo presupuestado, lo avanzado y lo gastado</strong>. Solo lo ven el administrador y el cliente dueño del proyecto (los visitantes no).</p>
+<p>Compara <strong>lo presupuestado, lo avanzado y lo gastado</strong>. Lo ven el administrador y el cliente que gestiona el proyecto (los visitantes no).</p>
 <h4>Qué capturas</h4>
 <ul>
 <li><strong>Presupuesto por partida:</strong> en la pestaña <em>Resumen</em>, un monto por partida y <em>Guardar presupuesto</em>.</li>
@@ -1019,7 +1008,7 @@ HTML],
 <li><strong>Herramienta</strong> donde ocurrió (Programa, Materiales, Archivo…) y el tipo de evento.</li>
 <li><strong>Acciones</strong>: <em>Ver detalle</em> abre la herramienta justo en ese elemento; <em>Aceptar</em> lo pasa a «Cambios aceptados»; <em>Cancelar</em> devuelve los datos a como estaban antes de ese cambio.</li>
 </ul>
-<p class="manual-nota">Aceptar o cancelar solo lo hacen el administrador y el cliente dueño del proyecto; el visitante solo consulta.</p>
+<p class="manual-nota">Aceptar o cancelar solo lo hacen el administrador y el cliente que gestiona el proyecto; el visitante solo consulta.</p>
 <h4>Filtros y descarga</h4>
 <ul>
 <li>Filtra por herramienta, evento, quién lo hizo, rango de fechas y texto libre.</li>
@@ -1029,7 +1018,7 @@ HTML],
 <h4>Cuándo no se puede cancelar</h4>
 <p>Si el registro no conserva los valores antiguos, el botón lo explica y el cambio queda únicamente como registro. Al cancelar un borrado se recupera la fila, pero lo que colgaba de ella con borrado en cascada (fotos, relaciones, partidas hijas) no vuelve.</p>
 <h4>Visibilidad para los visitantes</h4>
-<p>El dueño del proyecto decide si un visitante ve esta herramienta: en <em>Mis visitantes</em>, marca <em>Historial de cambios</em> dentro de «Herramientas que puede ver». Si no está marcada, la entrada desaparece de su menú y tampoco puede entrar por enlace directo.</p>
+<p>Quien gestiona el proyecto decide si un visitante ve esta herramienta: en <em>Mi equipo</em>, marca <em>Historial de cambios</em> dentro de «Herramientas». Si no está marcada, la entrada desaparece de su menú y tampoco puede entrar por enlace directo.</p>
 HTML],
 
 ['id' => 'integraciones', 'titulo' => 'Integraciones: API, Telegram y clima', 'icono' => 'fa-plug', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
@@ -1055,7 +1044,7 @@ HTML],
 <li><strong>En tu chat:</strong> en <em>Avisos de un proyecto</em> pulsa «Recibir avisos de este proyecto en mi chat».</li>
 <li><strong>En el grupo de la obra:</strong> pulsa «Agregar a un grupo de la obra», elige el grupo en Telegram y confirma. Todos los del grupo verán los avisos.</li>
 <li>Con <strong>Qué avisos recibe</strong> eliges cuáles llegan: nuevo RFI, cambio de estado, nuevo pendiente del punch list, nueva restricción, cambio de submittal, bitácora importante, alerta de clima y <strong>resumen de la obra cada mañana</strong>. Con <strong>Probar</strong> mandas un mensaje de prueba.</li>
-<li><strong>Desde el aviso mismo puedes actuar</strong> (solo en tu chat, no en el grupo): en un pendiente del punch, los botones <em>Corregido</em> o <em>En proceso</em>; en un RFI, <em>Responder</em> (escribes la respuesta y pasa a Respondido); en un submittal, <em>Aprobado</em>, <em>A/AN</em> o <em>Resubmitar</em>. Todos llevan también <em>Ver en la web</em>. Quien no sea administrador ni dueño del proyecto ve los botones pero no puede usarlos.</li>
+<li><strong>Desde el aviso mismo puedes actuar</strong> (solo en tu chat, no en el grupo): en un pendiente del punch, los botones <em>Corregido</em> o <em>En proceso</em>; en un RFI, <em>Responder</em> (escribes la respuesta y pasa a Respondido); en un submittal, <em>Aprobado</em>, <em>A/AN</em> o <em>Resubmitar</em>. Todos llevan también <em>Ver en la web</em>. Quien no sea administrador ni gestiones el proyecto ve los botones pero no puede usarlos.</li>
 </ul>
 <h4>Reportar avance</h4>
 <ol>
@@ -1075,7 +1064,7 @@ HTML],
 <ul>
 <li><code>/nota</code> seguido del texto lo anota en la bitácora; puedes poner la importancia al inicio: <code>/nota alta: falta concreto</code>.</li>
 </ul>
-<p><strong>Quién puede qué:</strong> ver y consultar, cualquier persona con acceso al proyecto (menos visitantes). Reportar avance, mandar fotos y notas, y usar los botones de acción, solo el administrador o el dueño del proyecto, igual que en la web. Si cambias de teléfono, pulsa <em>Desconectar</em> y vuelve a conectar.</p>
+<p><strong>Quién puede qué:</strong> ver y consultar, cualquier persona con acceso al proyecto (menos visitantes). Reportar avance, mandar fotos y notas, y usar los botones de acción, solo el administrador o quien gestiona el proyecto, igual que en la web. Si cambias de teléfono, pulsa <em>Desconectar</em> y vuelve a conectar.</p>
 <h4>Clima automático</h4>
 <p>En Integraciones, <strong>Clima automático</strong> → <em>Activar</em>. El proyecto necesita su <em>ubicación</em> (ciudad o «lat,lon») en Ajustes del proyecto. Cada tarde (después de las 6 pm) se anota en la bitácora el clima del día (temperaturas, lluvia y viento) y, si mañana habrá lluvia o viento fuerte, el bot avisa con las actividades de exterior que caen ese día para reprogramarlas. <em>Probar ahora</em> lo ejecuta en el momento. Los datos vienen de Open-Meteo (gratis); solo se envía el nombre del lugar.</p>
 <h4>Resumen de la obra cada mañana</h4>
