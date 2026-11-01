@@ -597,6 +597,7 @@ $ok('el Centro de Exportación filtra por herramienta', \Controllers\AjustesCont
     && \Controllers\AjustesController::herramientaExportacion('msr') === 'msr');
 $ok('exportar no está atado a Ajustes y sí es ruta general', herramienta_de_ruta('/exportar') === null && ruta_general('/exportar'));
 $ok('el menú de Ajustes tiene la pestaña de accesos del proyecto', str_contains((string)file_get_contents(__DIR__ . '/../views/ajustes/index.php'), "id=\"accesos\""));
+$ok('la columna «Editar» se oculta de verdad (hidden vence al display:flex)', str_contains((string)file_get_contents(__DIR__ . '/../public/build/css/app.css'), '.herr-grid [hidden]'));
 
 $ok('la contraseña mínima es de 10 y rechaza las comunes', \Model\Usuario::passwordDebil('corta') !== null && \Model\Usuario::passwordDebil('1234567890') !== null && \Model\Usuario::passwordDebil('Obra2026-segura') === null);
 

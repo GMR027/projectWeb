@@ -12,6 +12,11 @@
   padding: 0;
 }
 
+// `hidden` debe ganarle a cualquier display de los componentes (hay bloques con display:flex !important)
+[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: 70%; // Aumentado para letra más grande
   box-sizing: border-box;

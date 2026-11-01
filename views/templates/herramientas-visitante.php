@@ -11,7 +11,7 @@ $todas = $marcadas === null;
 $visibles = $todas ? array_keys(\Model\Usuario::HERRAMIENTAS) : (array)$marcadas;
 $edicion = array_intersect(array_map('strval', (array)($herramientasEdicionMarcadas ?? [])), $visibles);
 $noEditables = \Model\Usuario::HERRAMIENTAS_NO_EDITABLES;
-$esColab = ($tipo ?? '') === 'colaborador' || !empty($edicion);
+$esColab = isset($tipo) ? ($tipo === 'colaborador') : !empty($edicion);
 ?>
 <div class="campo" id="campo-herramientas">
     <label>Herramientas</label>
@@ -28,7 +28,7 @@ $esColab = ($tipo ?? '') === 'colaborador' || !empty($edicion);
         <span class="text-sm text-muted herr-col-editar"<?php echo $esColab ? '' : ' hidden'; ?>>Puede editar</span>
         <?php foreach (\Model\Usuario::HERRAMIENTAS as $clave => [$etq]): $puedeEditar = !in_array($clave, $noEditables, true); ?>
             <label class="herr-item herr-item-nombre"><?php echo s(t($etq)); ?></label>
-            <label class="herr-item"><input type="checkbox" class="herr-ver" name="herr[]" value="<?php echo s($clave); ?>"<?php echo $todas || in_array($clave, $visibles, true) ? ' checked' : ''; ?>> <span class="solo-movil">Ver</span></label>
+            <label class="herr-item herr-col-ver"><input type="checkbox" class="herr-ver" name="herr[]" value="<?php echo s($clave); ?>"<?php echo $todas || in_array($clave, $visibles, true) ? ' checked' : ''; ?>> <span class="solo-movil">Ver</span></label>
             <?php if ($puedeEditar): ?>
                 <label class="herr-item herr-col-editar"<?php echo $esColab ? '' : ' hidden'; ?>><input type="checkbox" class="herr-editar" name="herr_edit[]" value="<?php echo s($clave); ?>"<?php echo in_array($clave, $edicion, true) ? ' checked' : ''; ?>> <span class="solo-movil">Editar</span></label>
             <?php else: ?>

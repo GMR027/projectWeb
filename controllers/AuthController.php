@@ -136,6 +136,7 @@ class AuthController
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
+            'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
         ]);
     }
 
@@ -236,6 +237,7 @@ class AuthController
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
+            'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
         ]);
     }
 
