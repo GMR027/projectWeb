@@ -29,6 +29,8 @@
 .hist-num { display: inline-block; min-width: 2.4rem; margin-left: .3rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-dim); text-align: center; font-weight: 700; font-size: 1.2rem; }
 .centro-ia-tabs__tab.activa .hist-num { background: var(--surface); color: inherit; }
 .hist-desc { display: inline-block; line-height: 1.4; }
+.hist-usuario { white-space: nowrap; font-weight: 600; }
+.hist-usuario .fa-user { color: var(--text-dim); font-size: 1.1rem; margin-right: .3rem; }
 .hist-acciones { white-space: nowrap; }
 .hist-acciones .btn { vertical-align: middle; }
 .hist-estado { display: inline-block; font-size: 1.15rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted);

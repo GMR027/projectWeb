@@ -70,15 +70,16 @@ $vacio = match ($pestana) {
 <?php else: ?>
     <div class="card prg-tabla-wrap">
         <table class="prg-tabla hist-tabla">
-            <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Descripción del cambio')); ?></th><th><?php echo s(t('Herramienta')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
+            <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Usuario')); ?></th><th><?php echo s(t('Descripción del cambio')); ?></th><th><?php echo s(t('Herramienta')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
             <tbody>
             <?php foreach ($filas as $x): $esPendiente = $x['estado'] === 'pendiente'; ?>
                 <tr data-id="<?php echo (int)$x['id']; ?>">
                     <td class="fecha"><?php echo s($fmt($x['creado'])); ?></td>
+                    <td class="hist-usuario"><i class="fa-solid fa-user"></i> <?php echo s($x['usuario'] ?: '—'); ?></td>
                     <td>
                         <strong class="hist-desc"><?php echo s($x['resumen']); ?></strong><br>
                         <?php $elemento = \Classes\CambiosLegibles::elemento($x['entidad_tipo'], (int)$x['entidad_id'], $x['entidad_nombre'], $pid); ?>
-                        <small class="text-muted"><?php echo s($x['usuario'] ?: 'Sin usuario'); ?><?php echo $elemento !== '' ? ' · ' . s($elemento) : ''; ?><?php echo $x['estado'] !== 'pendiente' && $x['estado_por'] !== '' ? ' · ' . s(t(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'])) . ' por ' . s($x['estado_por']) : ''; ?></small>
+                        <small class="text-muted"><?php echo $elemento !== '' ? s($elemento) : ''; ?><?php echo $x['estado'] !== 'pendiente' && $x['estado_por'] !== '' ? ($elemento !== '' ? ' · ' : '') . s(t(HistorialCambios::ESTADOS[$x['estado']] ?? $x['estado'])) . ' por ' . s($x['estado_por']) : ''; ?></small>
                         <?php if ($x['antes'] !== null || $x['despues'] !== null): ?>
                             <details class="hist-det"><summary>Antes / después</summary>
                                 <?php $antes = $x['antes']; $despues = $x['despues']; include __DIR__ . '/../templates/cambios-antes-despues.php'; ?>

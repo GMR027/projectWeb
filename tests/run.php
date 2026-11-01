@@ -569,6 +569,7 @@ $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRA
 })());
 $ok('una herramienta declarada se resuelve por su ruta', herramienta_de_ruta('/punch') === 'punch' && herramienta_de_ruta('/seguridad') === 'seguridad');
 $ok('historial-cambios no se confunde con historial', herramienta_de_ruta('/historial-cambios') === 'centro-ia' && herramienta_de_ruta('/historial') === 'historial');
+$ok('el historial muestra al autor en una columna junto a la fecha', str_contains((string)file_get_contents(__DIR__ . '/../views/historial/index.php'), "<th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Usuario')); ?></th>"));
 $ok('las rutas generales del visitante no son herramientas', ruta_general('/proyectos') && ruta_general('/manual') && ruta_general('/') && !ruta_general('/punch'));
 
 echo "Colaboradores: permisos y borrado\n";

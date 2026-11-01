@@ -15,7 +15,7 @@ return [
     'Contraseña actual' => 'Current password', 'Nueva contraseña' => 'New password', 'Repetir nueva contraseña' => 'Repeat new password', 'Actualizar contraseña' => 'Update password',
     'Tu contraseña se actualizó correctamente.' => 'Your password was updated.', 'Factor de jornada por día. 0 = inhábil, 0.5 = medio turno, 1 = jornada completa.' => 'Workday factor per day. 0 = non-working, 0.5 = half day, 1 = full day.',
     '0 — Inhábil' => '0 — Non-working', '0.5 — Medio turno' => '0.5 — Half day', '1 — Completa' => '1 — Full day', 'Festivos, paros técnicos y suspensiones por clima.' => 'Holidays, technical stoppages and weather suspensions.',
-    'No hay días no laborables registrados.' => 'No non-working days recorded.', 'Fecha' => 'Date', 'Tipo' => 'Type', 'Motivo' => 'Reason', 'Festivo' => 'Holiday', 'Paro Técnico' => 'Technical stoppage', 'Clima' => 'Weather', 'Otro' => 'Other',
+    'No hay días no laborables registrados.' => 'No non-working days recorded.', 'Fecha' => 'Date', 'Tipo' => 'Type', 'Motivo' => 'Reason', 'Festivo' => 'Holiday', 'Paro Técnico' => 'Technical stoppage', 'Clima' => 'Weather', 'Otro' => 'Other', 'Usuario' => 'User',
     'Concepto' => 'Item', 'Ocupado' => 'Used', 'Abrir soporte' => 'Open support', 'Agregar' => 'Add', 'Lunes' => 'Monday', 'Martes' => 'Tuesday', 'Miércoles' => 'Wednesday', 'Jueves' => 'Thursday', 'Viernes' => 'Friday', 'Sábado' => 'Saturday', 'Domingo' => 'Sunday',
     '¿Tienes una duda o necesitas ayuda? Escríbenos desde aquí y el administrador recibirá tu mensaje.' => 'Have a question or need help? Write to us here and the administrator will get your message.',
     // Editor, símbolos, evidencias
