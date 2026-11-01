@@ -39,7 +39,6 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <?php endif; ?>
 </div>
 <?php endif; ?>
-<?php $avisoTexto = 'Las tablas solo se pueden editar en una tablet o en un equipo de escritorio.'; $avisoLectura = true; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
 
 <div class="card rd-datos">
     <label>Nombre <input type="text" id="sf-nombre" maxlength="150" value="<?php echo s($hoja->nombre); ?>"></label>
@@ -49,11 +48,14 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <datalist id="sf-deptos"><?php foreach ($departamentos as $dp): ?><option value="<?php echo s($dp); ?>"><?php endforeach; ?></datalist>
 </div>
 
+<div class="cinta-cab">
 <div class="sf-pestanas" id="sf-pestanas" role="tablist" aria-label="Pestañas de herramientas">
     <button type="button" role="tab" class="activo" data-pest="inicio"><i class="fa-solid fa-house"></i> Inicio</button>
     <button type="button" role="tab" data-pest="insertar"><i class="fa-solid fa-plus"></i> Insertar</button>
     <button type="button" role="tab" data-pest="datos"><i class="fa-solid fa-table-list"></i> Datos</button>
     <button type="button" role="tab" data-pest="vista"><i class="fa-regular fa-eye"></i> Vista</button>
+</div>
+<button type="button" class="cinta-plegar" id="sf-plegar" aria-controls="sf-barra" aria-expanded="true" title="Ocultar la barra de herramientas"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
 </div>
 <div class="sf-barra" id="sf-barra" role="toolbar" aria-label="Herramientas de la tabla">
     <div class="sf-panel" data-panel="inicio">
@@ -197,6 +199,8 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     </ul>
 </div>
 <script>window.SF_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
+<script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
 <script src="/vendor/sheetflow.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/sheetflow.js'); ?>"></script>
 <script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
 <script>

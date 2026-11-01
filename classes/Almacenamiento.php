@@ -68,6 +68,7 @@ class Almacenamiento
         $r['Grabaciones de reuniones'] = Grabaciones::bytes($proyectoId);
         $r['Normativa y especificaciones'] = Normativa::bytes($proyectoId);
         $r['Punch list (fotos)'] = Punch::bytes($proyectoId);
+        $r['Comparador de documentos'] = Comparador::bytes($proyectoId);
         if ($p) {
             foreach ([['logo', 'logos'], ['contratista_logo', 'logos'], ['caratula', 'caratulas']] as [$c, $dir]) {
                 if ($p->$c) $r['Logos y carátula'] += self::tam(self::RAIZ . "/public/build/img/$dir/" . basename($p->$c));

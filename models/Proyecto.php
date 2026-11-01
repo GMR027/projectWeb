@@ -35,6 +35,8 @@ class Proyecto extends ActiveRecord
     public $nombres_herramientas;
     // Apariencia de la barra superior: clasico | panel | pestanas (Ajustes → Apariencia)
     public $menu_superior;
+    // Mostrar los mensajes emergentes de ayuda de la interfaz (Ajustes → Apariencia)
+    public $ayuda_burbujas;
     // Espacio propio del proyecto en MB (lo asigna el admin; NULL = hereda del cliente dueño)
     public $limite_almacenamiento_mb;
 
@@ -58,6 +60,7 @@ class Proyecto extends ActiveRecord
         $this->usuario_id = $args['usuario_id'] ?? null;
         $this->modo_dependencias = $args['modo_dependencias'] ?? 'apagado';
         $this->modo_dependencias_materiales = $args['modo_dependencias_materiales'] ?? 'apagado';
+        $this->ayuda_burbujas = $args['ayuda_burbujas'] ?? 1;
     }
 
     public function validar(): array

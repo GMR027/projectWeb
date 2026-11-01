@@ -8,16 +8,19 @@ $temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
 $temaCssProyecto = '';
 $nombresHerramientas = false;   // barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
 $menuModoProyecto = 'clasico';  // barra superior: clásico, panel (menú lateral fijo) o pestañas
+$ayudaBurbujas = true;          // mensajes emergentes de ayuda (Ajustes → Apariencia)
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
     $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
     $nombresHerramientas = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
     $menuModoProyecto = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
+    $ayudaBurbujas = \Classes\TemaProyecto::ayudasVisibles($proyecto->ayuda_burbujas ?? 1);
 }
 $clasesHtml = [];
 if ($nombresHerramientas) $clasesHtml[] = 'herr-con-nombres';
 if ($menuModoProyecto !== 'clasico') $clasesHtml[] = 'menu-' . $menuModoProyecto;
+if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo idioma_actual(); ?>" data-paleta="<?php echo s($temaPaletaProyecto); ?>"<?php echo $clasesHtml ? ' class="' . s(implode(' ', $clasesHtml)) . '"' : ''; ?><?php if ($temaModoProyecto) echo ' data-tema-fijo="' . s($temaModoProyecto) . '"'; ?>>
@@ -117,6 +120,7 @@ if ($menuModoProyecto !== 'clasico') $clasesHtml[] = 'menu-' . $menuModoProyecto
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
     <?php include __DIR__ . '/templates/pde-modal.php'; ?>
     <script src="/vendor/paletas.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/paletas.js'); ?>"></script>
+    <script src="/vendor/capa-superior.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/capa-superior.js'); ?>"></script>
     <script src="/vendor/divisor.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/divisor.js'); ?>"></script>
     <script src="/vendor/selector-color.js?v=<?php echo filemtime(__DIR__ . '/../public/vendor/selector-color.js'); ?>"></script>
     <script src="/build/js/bundle.min.js?v=<?php echo filemtime(__DIR__ . '/../public/build/js/bundle.min.js'); ?>"></script>

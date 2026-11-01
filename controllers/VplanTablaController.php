@@ -131,7 +131,7 @@ class VplanTablaController
             $titulo = trim((string)($f['descripcion'] ?? ''));
             if ($titulo === '') continue;
             $pct = (int)($f['pct'] ?? 0);
-            [$ok, , $id] = \Classes\Punch::guardar((int)$proyecto->id, ['titulo' => $titulo, 'fecha_limite' => $f['fin'] ?? ''], null, 'manual');
+            [$ok, , $id] = \Classes\Punch::guardar((int)$proyecto->id, ['titulo' => $titulo, 'fecha_emision' => $f['inicio'] ?? '', 'fecha_limite' => $f['fin'] ?? ''], null, 'manual');
             if (!$ok) continue;
             if ($pct >= 100) \Classes\Punch::estado($proyecto, $id, 'cerrado');
             elseif ($pct > 0) \Classes\Punch::estado($proyecto, $id, 'en_proceso');

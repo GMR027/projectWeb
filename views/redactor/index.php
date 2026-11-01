@@ -31,7 +31,7 @@
                     <td class="hide-m"><?php echo s(\Model\RedactorDocumento::PAPELES[$d->papel][0]); ?> · <?php echo s($d->orientacion); ?></td>
                     <td class="acciones">
                         <a href="/redactor/ver?<?php echo $q; ?>" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a>
-                        <?php if ($puedeEditar): ?><a href="/redactor/abrir?<?php echo $q; ?>" class="btn btn-sm btn-primary hide-m"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
+                        <?php if ($puedeEditar): ?><a href="/redactor/abrir?<?php echo $q; ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
                         <?php if ($puedeDescargar): ?>
                             <details class="gr-descargar">
                                 <summary class="btn btn-sm btn-ghost"><i class="fa-solid fa-download"></i> Descargar</summary>

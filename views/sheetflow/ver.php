@@ -5,7 +5,7 @@
         <p class="text-muted"><?php echo s(formatear_fecha($hoja->fecha, 'd/m/Y')); ?><?php echo $hoja->departamento !== '' ? ' · ' . s($hoja->departamento) : ''; ?><?php echo $hoja->descripcion !== '' ? ' · ' . s($hoja->descripcion) : ''; ?></p>
     </div>
     <div class="la-controles">
-        <?php if ($puedeEditar): ?><a href="/sheetflow/abrir?<?php echo $q; ?>" class="btn btn-primary hide-m"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
+        <?php if ($puedeEditar): ?><a href="/sheetflow/abrir?<?php echo $q; ?>" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
         <?php if ($puedeDescargar): ?>
             <details class="gr-descargar">
                 <summary class="btn btn-ghost"><i class="fa-solid fa-download"></i> Descargar</summary>

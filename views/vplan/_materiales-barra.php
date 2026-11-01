@@ -18,7 +18,7 @@ $masFormasMat = [['pentagon', 'Pentágono'], ['hexagon', 'Hexágono'], ['star', 
         </div>
     </div>
 </div>
-<div class="ve-grupo" data-pan="materiales" data-nombre="Tabla de instalación">
-    <button type="button" class="ve-txt" id="mat-crear-barra" title="Crea (o abre) la tabla de instalación de materiales de esta lámina en SheetFlow"><i class="fa-solid fa-table-list"></i> Tabla de materiales</button>
-    <button type="button" id="mat-sincronizar-barra" class="ve-txt" title="Agrega a la tabla las actividades y subactividades nuevas de las marcas"><i class="fa-solid fa-rotate"></i> Sincronizar</button>
+<div class="ve-grupo ve-grupo-tabla" data-pan="materiales" data-nombre="Tabla de instalación">
+    <button type="button" class="ve-txt" id="mat-crear-barra" title="Crea (o abre) la tabla de instalación de materiales de esta lámina en SheetFlow" aria-label="Tabla de materiales: crear o abrir la tabla de instalación"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Tabla de materiales</button>
+    <button type="button" id="mat-sincronizar-barra" class="ve-txt" title="Agrega a la tabla las actividades y subactividades nuevas de las marcas" aria-label="Sincronizar la tabla con las marcas de la lámina"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Sincronizar</button>
 </div>

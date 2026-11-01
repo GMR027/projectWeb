@@ -34,7 +34,8 @@
       b.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".6"/><circle cx="17.5" cy="10.5" r=".6"/><circle cx="8.5" cy="7.5" r=".6"/><circle cx="6.5" cy="12.5" r=".6"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg><span>Paleta</span>';
       const pop = document.createElement('div'); pop.className = 've-paleta'; pop.hidden = true;
       w.appendChild(b);
-      const host = () => inp.closest('dialog') || document.body;   // dentro de un <dialog> modal solo se ve lo que cuelga de él
+      // Dentro de un <dialog> modal —o de una vista a pantalla completa— solo se ve lo que cuelga de él.
+      const host = () => inp.closest('dialog') || (window.CapaSuperior ? CapaSuperior.actual() : document.body);
       const colocar = () => {   // flotante y ajustada a la pantalla: no la recorta ningún overflow ni se sale por los bordes
         const m = 8, vw = document.documentElement.clientWidth, vh = window.innerHeight, r = b.getBoundingClientRect();
         pop.style.maxHeight = ''; pop.style.width = Math.min(360, vw - 2 * m) + 'px';
@@ -48,7 +49,12 @@
         else { const sitioAbajo = abajo >= arriba; const alto = Math.max(160, sitioAbajo ? abajo : arriba); pop.style.maxHeight = alto + 'px'; top = sitioAbajo ? r.bottom + 6 : Math.max(m, r.top - alto - 6); }
         pop.style.left = left + 'px'; pop.style.top = top + 'px';
       };
-      const abrir = () => { host().appendChild(pop); pop.hidden = false; colocar(); };
+      const abrir = () => {
+        const h = host();
+        if (window.CapaSuperior && !inp.closest('dialog')) CapaSuperior.adoptar(pop);   // en pantalla completa cuelga del elemento ampliado
+        else h.appendChild(pop);
+        pop.hidden = false; colocar();
+      };
       pop._cerrar = () => { pop.hidden = true; };
       pop._colocar = colocar; pop._dueno = w;
       let quitar = false, busca = '';

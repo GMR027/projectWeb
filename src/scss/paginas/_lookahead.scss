@@ -359,6 +359,15 @@ $vp-rojo: #dc2626;
     &:active { transform: scale(.94); }
     &.activo { background: #0070c0; color: #fff; box-shadow: 0 .2rem .8rem rgba(0, 112, 192, .45); } }
   #ve-fondo { padding: 0 1rem; gap: .6rem; font-size: 1.2rem; }
+  // Botones con texto de la barra (Tabla de materiales, Sincronizar…): antes no tenían estilo y se veían «básicos».
+  .ve-txt { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; height: 4rem; padding: 0 1.1rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); color: var(--text); font: inherit; font-size: 1.2rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background .15s, border-color .15s, color .15s, transform .1s, box-shadow .15s;
+    i, svg { flex: none; width: 1.6rem; height: 1.6rem; font-size: 1.5rem; text-align: center; }
+    &:hover { background: var(--surface-hover); border-color: var(--vplan-acento-borde, var(--border)); }
+    &:active { transform: scale(.96); }
+    &:focus-visible { outline: 2px solid var(--vplan-acento, var(--primary)); outline-offset: 2px; } }
+  // La acción principal del grupo se distingue del resto.
+  #mat-crear-barra { border-color: var(--vplan-acento-borde, var(--border)); background: var(--vplan-acento-suave, var(--bg-tertiary)); color: var(--vplan-acento, var(--primary));
+    &:hover { background: var(--vplan-acento, var(--primary)); border-color: var(--vplan-acento, var(--primary)); color: #fff; } }
   // Desplegable «Más formas»
   .ve-mas { position: relative; }
   .ve-mas-btn { display: inline-flex; align-items: center; gap: .3rem; height: 4rem; padding: 0 .6rem; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: .8rem; cursor: pointer;
@@ -402,7 +411,7 @@ $vp-rojo: #dc2626;
 .campo .ve-color { display: flex; width: 100%; }
 .ve-par { display: flex; gap: .6rem; align-items: center; input { width: 100%; } }
 #ve-guardar.ve-pend { box-shadow: 0 0 0 3px rgba(255, 90, 31, .5); }
-.ve-area { --ve-alto: 70dvh; position: relative; display: grid; grid-template-columns: 32rem minmax(0, 1fr); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }   // panel lateral a la izquierda
+.ve-area { --ve-alto: 70dvh; position: relative; display: grid; grid-template-columns: var(--ve-panel-w, 32rem) minmax(0, 1fr); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }   // panel lateral a la izquierda
 .ve-area.ve-sin-lateral { grid-template-columns: auto minmax(0, 1fr); }   // panel oculto: solo queda la pestaña para reabrirlo
 .ve-area > .pn-abrir { order: -2; }
 .ve-lateral { order: -1; }
@@ -472,6 +481,13 @@ td.vp-celda-acc { width: 2.4em; }
 .vp-hoja.vp-ampliado { position: fixed; inset: 0; z-index: 1500; max-width: none; margin: 0; background: #fff; overflow: auto;
   .vp-lamina { width: var(--vp-ancho-px, min(100vw, calc(100vh * var(--vp-ratio, 1.5455)))); min-width: 0; margin: 0 auto; border: 0; border-radius: 0; }
   .vp-cerrar-ampliado { display: inline-flex; align-items: center; justify-content: center; position: fixed; left: 1.6rem; bottom: 1.6rem; width: 4.4rem; height: 4.4rem; border-radius: 50%; border: 0; background: #1c2541; color: #fff; font-size: 2rem; cursor: pointer; box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .35); z-index: 1; &:hover { background: $vp-rojo; } } }
+// Ampliar en modo diseño: la barra y el panel se mueven dentro de la lámina (ver ver.php) para que
+// la vista ampliada no los tape. La barra queda pegada arriba y el panel flota a la derecha.
+.vp-hoja.vp-ampliado .vp-dis-barra-amp { position: sticky; top: 0; z-index: 9; margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
+.vp-hoja.vp-ampliado .vp-dis-panel-amp { position: fixed; z-index: 8; top: 7rem; right: 1.2rem; bottom: 1.2rem; width: min(36rem, 42vw); max-height: none; overflow-y: auto; border-radius: .8rem; box-shadow: 0 1rem 3rem rgba(0, 0, 0, .45); }
+// Los modales tienen que quedar por encima de la lámina ampliada (z-index 1500), no detrás.
+body.vp-en-ampliado .modal-overlay,
+body.ve-en-ampliado .modal-overlay { z-index: 1600; }
 body.vp-sin-scroll { overflow: hidden; }
 
 // Acciones y notas
@@ -602,6 +618,8 @@ body.gr-editor-page {
 // Láminas del gráfico
 .ve-laminas { .ve-capas-cab { margin-bottom: 1rem; h4 { margin: 0; small { font-weight: 400; font-size: 1.2rem; } } } .ve-btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; } }
 .ve-lam-lista { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .6rem; max-height: 52vh; overflow-y: auto; }
+// Reordenar láminas con flechas cuando no hay ratón (el arrastre HTML5 no funciona al tacto)
+.ve-lam-acc { display: none; align-items: center; gap: .2rem; }
 .ve-lam { display: grid; grid-template-columns: 2rem 9rem minmax(0, 1fr) auto; align-items: center; gap: .8rem; padding: .5rem .6rem; border: 1px solid var(--border); border-left: 3px solid transparent; border-radius: .6rem; background: var(--bg-tertiary); cursor: pointer;
   &.activa { border-left-color: #0070c0; background: rgba(0, 112, 192, .16); } &.destino { outline: 2px dashed #ff5a1f; }
   .ve-lam-n { font-size: 1.2rem; color: var(--text-muted); text-align: center; }
@@ -952,3 +970,87 @@ body.gr-editor-page {
 // vPlan: indicador condicional del programa en las tablas de tareas
 .vp-ind { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 50%; vertical-align: middle; border: 1px solid rgba(0, 0, 0, .25); }
 .vp-sel-prog { max-width: 100%; margin-top: .6rem; }
+
+// ============================================================
+// Pantallas táctiles (tablet y celular): gestos y objetivos de golpe
+// ============================================================
+// Las asas y anclas de escritorio (10 px) no se aciertan con el dedo. Aquí crecen a ~44 px de área
+// efectiva. El pellizco y el arrastre con dos dedos los resuelve public/vendor/gestos-lienzo.js;
+// estas reglas solo aseguran que el navegador no se quede el gesto para hacer scroll o zoom de página.
+@media (pointer: coarse) {
+  .ve-lienzo, .ve-lienzo #ek-stage, .ve-lienzo canvas { touch-action: none; -webkit-touch-callout: none; user-select: none; }
+  .ve-lienzo { overscroll-behavior: contain; }
+  .ve-lienzo.ve-gesto { cursor: grabbing; }
+
+  .ve-barra-pest button, .ve-barra .ve-grupo > button, .ve-mas-btn { min-width: 4.4rem; min-height: 4.4rem; }
+  .ve-tabs button { min-height: 4.4rem; }
+  .ve-cb { width: 3.4rem; height: 3.4rem; }
+  .ve-capa { min-height: 4.4rem; }
+
+  .ve-lam-acc { display: flex; }
+  .ve-lam-acc .ve-cb { width: 3rem; height: 3rem; }
+  .ve-lam { grid-template-columns: 2rem 9rem minmax(0, 1fr) auto auto; }
+
+  // Asas del modo diseño del vPlan: 2 rem visibles + 0.7 rem de área de golpe por lado.
+  .vp-sheet.vp-diseno .vp-h { width: 2rem; height: 2rem; }  .vp-sheet.vp-diseno .vp-h::after { content: ''; position: absolute; inset: -.7rem; }
+  .vp-sheet.vp-diseno .vp-h-n, .vp-sheet.vp-diseno .vp-h-s { left: calc(50% - 1rem); }
+  .vp-sheet.vp-diseno .vp-h-n { top: -1rem; } .vp-sheet.vp-diseno .vp-h-s { bottom: -1rem; }
+  .vp-sheet.vp-diseno .vp-h-e { right: -1rem; top: calc(50% - 1rem); }
+  .vp-sheet.vp-diseno .vp-h-w { left: -1rem; top: calc(50% - 1rem); }
+  .vp-sheet.vp-diseno .vp-h-ne { right: -1rem; top: -1rem; }
+  .vp-sheet.vp-diseno .vp-h-nw { left: -1rem; top: -1rem; }
+  .vp-sheet.vp-diseno .vp-h-se { right: -1rem; bottom: -1rem; }
+  .vp-sheet.vp-diseno .vp-h-sw { left: -1rem; bottom: -1rem; }
+}
+
+// ============================================================
+// Editor de marcas en táctil: panel en hoja inferior, dock y menú contextual
+// ============================================================
+// El panel lateral movido a la hoja inferior conserva sus listeners; aquí solo se quita el
+// comportamiento de columna pegajosa y se alinea con el padding de la hoja.
+.en-hoja.ve-lateral { max-height: none; height: auto; }
+.en-hoja.ve-lateral > .pn-cab { margin: 0 -1.6rem; border-radius: 0; border-left: 0; border-right: 0; }
+.en-hoja.ve-lateral > .ve-tabs { margin: 0 -1.6rem 1rem; border-radius: 0; border-left: 0; border-right: 0; }
+.en-hoja.ve-lateral > .ve-tab-panel { overflow: visible; }
+// La barra de herramientas movida a su hoja puede volver a envolver sus grupos
+.hi-cuerpo .ve-barra-pest.en-hoja { flex-wrap: wrap; overflow: visible; min-height: 0 !important; }
+.hi-cuerpo .ve-barra-pest.en-hoja > .ve-grupo { flex: 0 1 auto; }
+.hi-cuerpo .ve-pestanas { flex-wrap: wrap; overflow: visible; }
+
+.ve-hoja-campo { width: 100%; min-height: 14rem; padding: .8rem 1rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--bg-secondary); color: var(--text); font-size: 1.6rem; line-height: 1.45; resize: vertical; }
+
+// Menú contextual (pulsación larga con el dedo o clic derecho)
+.ve-menu-ctx { position: fixed; z-index: 2200; display: grid; min-width: 19rem; max-width: calc(100vw - 1.6rem); padding: .4rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: .9rem; box-shadow: var(--shadow-lg);
+  button { display: flex; align-items: center; gap: .9rem; min-height: 4.4rem; padding: .6rem 1rem; border: 0; border-radius: .6rem; background: none; color: var(--text); font: inherit; font-size: 1.25rem; text-align: left; cursor: pointer;
+    i { width: 1.8rem; text-align: center; color: var(--text-muted); }
+    &:hover, &:focus-visible { background: var(--surface-hover); }
+    &.peligro { color: #dc2626; i { color: #dc2626; } &:hover { background: rgba(220, 38, 38, .12); } } }
+}
+
+// Barra inferior del editor en celular: las 4 herramientas que más se usan + guardar, panel y «Más».
+.ve-dock { display: none; }
+@media (pointer: coarse) and (max-width: 64rem) {
+  body.ve-con-dock .ve-dock { position: fixed; z-index: 1700; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem;
+    padding: .4rem .4rem calc(.4rem + env(safe-area-inset-bottom, 0)); background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -.4rem 1.6rem rgba(0, 0, 0, .3); }
+  body.ve-con-dock .ve-dock button { display: grid; justify-items: center; align-content: center; gap: .15rem; min-width: 0; min-height: 5rem; padding: .3rem .1rem; border: 0; border-radius: .7rem; background: none; color: var(--text-muted); font: inherit; font-size: .95rem; font-weight: 600; cursor: pointer; }
+  body.ve-con-dock .ve-dock button i { font-size: 1.8rem; }
+  body.ve-con-dock .ve-dock button.activo { color: var(--vplan-acento, var(--primary)); background: var(--vplan-acento-suave, rgba(0, 112, 192, .16)); }
+  body.ve-con-dock { padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0)); }
+  body.ve-con-dock .btn-menu-movil { bottom: calc(6.8rem + env(safe-area-inset-bottom, 0)); }
+  body.ve-con-dock .ve-lienzo { height: 60dvh; }
+  // En el celular el panel se abre desde el dock: sobra la pestaña lateral flotante.
+  body.ve-con-dock #ve-panel-abrir { display: none !important; }
+}
+
+// ============================================================
+// Divisor del panel del editor (escritorio)
+// ============================================================
+.ve-split { display: none; }
+@media (min-width: 64.0625rem) and (pointer: fine) {
+  .ve-split { display: block; position: absolute; top: 0; bottom: 0; left: calc(var(--ve-panel-w, 32rem) - .5rem); width: 1rem; z-index: 8; cursor: col-resize; touch-action: none; border-radius: .4rem; }
+  .ve-split::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); background: var(--border); border-radius: 1px; }
+  .ve-split:hover::after, .ve-split:focus-visible::after { background: var(--vplan-acento, var(--primary)); }
+  .ve-split:focus-visible { outline: 2px solid var(--vplan-acento, var(--primary)); outline-offset: 2px; }
+  .ve-area.ve-sin-lateral .ve-split { display: none; }
+}

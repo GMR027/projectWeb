@@ -9,6 +9,10 @@
   const CIERRE = 150;        // ms de gracia para pasar del elemento a la burbuja
   let burbuja = null, objetivo = null, tMostrar = 0, tOcultar = 0;
 
+  // El proyecto puede ocultar los mensajes de ayuda (Ajustes → Apariencia del proyecto → «Mensajes de ayuda»).
+  // La clase la pone views/layout.php y la vista previa de Ajustes la cambia al momento: se comprueba en cada aviso.
+  const activas = () => !document.documentElement.classList.contains('sin-ayuda-burbujas');
+
   const crear = () => {
     const b = document.createElement('div');
     b.className = 'burbuja-ayuda';
@@ -41,7 +45,7 @@
   };
 
   const mostrar = el => {
-    if (!document.body.contains(el)) return;
+    if (!activas() || !document.body.contains(el)) return;
     burbuja ||= crear();
     objetivo = el;
     burbuja.textContent = '';
@@ -75,6 +79,7 @@
   const programarOcultar = () => { clearTimeout(tOcultar); tOcultar = setTimeout(ocultar, CIERRE); };
 
   const programar = el => {
+    if (!activas()) { ocultar(); return; }
     clearTimeout(tMostrar); clearTimeout(tOcultar);
     if (objetivo === el && burbuja && !burbuja.hidden) return;
     tMostrar = setTimeout(() => mostrar(el), RETARDO);

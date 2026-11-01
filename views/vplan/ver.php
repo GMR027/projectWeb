@@ -18,6 +18,7 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
 
 <div class="vp-pestanas no-print" id="vp-pestanas" role="tablist" aria-label="Pestañas de herramientas">
     <?php if ($puedeEditar): ?><button type="button" role="tab" class="activo" data-pest="lamina"><i class="fa-solid fa-sheet-plastic"></i> Lámina</button><?php endif; ?>
+    <button type="button" role="tab" data-pest="tareas"><i class="fa-solid fa-list-check"></i> Tareas</button>
     <button type="button" role="tab" data-pest="vista"><i class="fa-regular fa-eye"></i> Vista</button>
     <?php if ($puedeEditar): ?><button type="button" role="tab" data-pest="notas"><i class="fa-solid fa-note-sticky"></i> Notas</button><?php endif; ?>
 </div>
@@ -31,14 +32,22 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
     <?php endif; ?>
     <div class="vp-herr" data-panel="vista"<?php echo $puedeEditar ? ' hidden' : ''; ?>>
         <?php if ($conNav && !$modoDiseno): ?><button type="button" class="btn btn-ghost" data-vp-nav-toggle aria-pressed="true" title="Mostrar u ocultar las láminas para tener más espacio"><i class="fa-solid fa-table-columns"></i> Láminas</button><?php endif; ?>
+        <div class="vp-buscar no-print">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="vp-buscar" placeholder="Buscar tarea, tabla o texto…" aria-label="Buscar en la lámina" autocomplete="off">
+            <div class="vp-buscar-lista" id="vp-buscar-lista" hidden></div>
+        </div>
         <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
         <div class="vp-zoom no-print" role="group" aria-label="Zoom de la lámina">
             <button type="button" class="vp-zb" id="vp-zoom-menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
-            <span class="vp-zoom-val" id="vp-zoom-val" title="Tamaño de la lámina en pantalla (100 % = tamaño real, como en el PDF)">100 %</span>
+            <span class="vp-zoom-val" id="vp-zoom-val" title="Tamaño de la lámina en pantalla (100 % = tamaño real, como en el PDF). En tablet o celular, pellizca con dos dedos">100 %</span>
             <button type="button" class="vp-zb" id="vp-zoom-mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
             <button type="button" class="btn btn-ghost" id="vp-zoom-fit" title="Ajustar la lámina al ancho disponible">Ajustar</button>
             <button type="button" class="btn btn-ghost" id="vp-zoom-real" title="Ver la lámina a su tamaño real (igual que el PDF)">Real</button>
         </div>
+    </div>
+    <div class="vp-herr" data-panel="tareas" hidden>
+        <span class="text-muted text-sm"><i class="fa-solid fa-hand-pointer"></i> Toca una tarea para ver o actualizar sus datos.</span>
     </div>
     <?php if ($puedeEditar): ?>
     <div class="vp-herr" data-panel="notas" hidden>
@@ -46,19 +55,26 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
     </div>
     <?php endif; ?>
 </div>
+<div class="vp-tareas no-print" id="vp-tareas" hidden></div>
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
+    // (Se espera al DOM completo: #vp-shell se dibuja más abajo que esta pestaña.)
     var ls = 'vp-pestana', primera = <?php echo $puedeEditar ? "'lamina'" : "'vista'"; ?>;
     function mostrar(p) {
         document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
         document.querySelectorAll('#vp-barra-pest [data-panel]').forEach(function (x) { x.hidden = x.dataset.panel !== p; });
+        var lista = document.getElementById('vp-tareas'), shell = document.getElementById('vp-shell');
+        if (lista) lista.hidden = p !== 'tareas';
+        if (shell) shell.classList.toggle('vp-oculto-tareas', p === 'tareas');
+        document.body.classList.toggle('vp-ver-tareas', p === 'tareas');
         try { localStorage.setItem(ls, p); } catch (e) { /* sin almacenamiento */ }
+        document.dispatchEvent(new CustomEvent('vp:pestana', { detail: { pest: p } }));
     }
     document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.pest); }); });
     var g = primera; try { g = localStorage.getItem(ls) || primera; } catch (e) { /* idem */ }
     if (!document.querySelector('#vp-pestanas [data-pest="' + g + '"]')) g = primera;
     mostrar(g);
-})();
+});
 </script>
 
 <?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del vPlan.</div><?php endif; ?>
@@ -103,6 +119,14 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
 </div>
 </div><!-- /vp-shell -->
 
+<div class="vp-zoom-flot no-print" role="group" aria-label="Zoom y navegación de la lámina">
+    <button type="button" data-vpz="menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
+    <span id="vp-zoom-flot-val" class="vp-zoom-flot-val">100 %</span>
+    <button type="button" data-vpz="mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
+    <button type="button" data-vpz="fit" title="Ajustar la lámina al ancho" aria-label="Ajustar"><i class="fa-solid fa-arrows-to-dot"></i></button>
+    <button type="button" data-vpz="centro" title="Centrar la lámina" aria-label="Centrar"><i class="fa-solid fa-crosshairs"></i></button>
+</div>
+
 <section class="card vp-acciones no-print" id="vp-acciones">
     <div class="vp-notas">
         <h4><i class="fa-solid fa-note-sticky"></i> Notas</h4>
@@ -122,17 +146,40 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
 
     // ---- Ampliar: la lámina a pantalla completa, con botón de cerrar abajo a la izquierda ----
     const hoja = document.getElementById('vp-hoja');
+    // Se amplía la página (main), no solo la lámina: así siguen viéndose las paletas, los menús,
+    // las hojas inferiores y los modales, que cuelgan fuera de la lámina.
+    const escena = document.getElementById('contenido-principal') || hoja;
+    const enDiseno = <?php echo $modoDiseno ? 'true' : 'false'; ?>;
     const modalConfirm = document.getElementById('modal-confirm');   // se mueve dentro de la lámina para que se vea a pantalla completa
+    let barraAmp = null, panelAmp = null;
     const abrir = () => {
         hoja.classList.add('vp-ampliado');
+        document.body.classList.add('vp-sin-scroll', 'vp-en-ampliado');
         if (modalConfirm) hoja.appendChild(modalConfirm);
-        document.body.classList.add('vp-sin-scroll');
-        if (hoja.requestFullscreen) hoja.requestFullscreen().catch(() => {});   // si el navegador no lo permite, queda a pantalla completa de la página
+        const zoomFlot = document.querySelector('.vp-zoom-flot');
+        if (zoomFlot && window.CapaSuperior) CapaSuperior.adoptar(zoomFlot);
+        // En modo diseño la barra y el panel quedan dentro de la lámina: si no, la vista ampliada los taparía.
+        if (enDiseno) {
+            const barra = document.getElementById('vp-dis-barra');
+            if (barra && !barra.classList.contains('vp-dis-barra-amp')) {
+                barraAmp = { nodo: barra, padre: barra.parentNode, sig: barra.nextSibling };
+                hoja.insertBefore(barra, hoja.firstChild); barra.classList.add('vp-dis-barra-amp');
+            }
+            const panel = document.getElementById('vp-dis-panel');
+            if (panel && !panel.classList.contains('en-hoja') && !panel.classList.contains('vp-dis-panel-amp')) {
+                panelAmp = { nodo: panel, padre: panel.parentNode, sig: panel.nextSibling };
+                hoja.appendChild(panel); panel.classList.add('vp-dis-panel-amp');
+            }
+        }
+        if (escena.requestFullscreen) escena.requestFullscreen().catch(() => {});   // si el navegador no lo permite, queda a pantalla completa de la página
     };
     const cerrar = () => {
+        if (!hoja.classList.contains('vp-ampliado')) return;
         hoja.classList.remove('vp-ampliado');
+        document.body.classList.remove('vp-sin-scroll', 'vp-en-ampliado');
         if (modalConfirm && modalConfirm.parentNode === hoja) document.body.appendChild(modalConfirm);
-        document.body.classList.remove('vp-sin-scroll');
+        if (barraAmp) { barraAmp.nodo.classList.remove('vp-dis-barra-amp'); barraAmp.padre.insertBefore(barraAmp.nodo, barraAmp.sig); barraAmp = null; }
+        if (panelAmp) { panelAmp.nodo.classList.remove('vp-dis-panel-amp'); panelAmp.padre.insertBefore(panelAmp.nodo, panelAmp.sig); panelAmp = null; }
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     };
     document.getElementById('vp-ampliar').addEventListener('click', abrir);
@@ -142,9 +189,254 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
 
     // ---- Notas ----
     window.Notas.iniciar({ campo: 'lamina', id: lamina, puedeEditar, notas, urlGuardar: '/api/vplan/nota/guardar', urlEliminar: '/api/vplan/nota/eliminar' });
+
+    // ---- Buscar dentro de la lámina: lleva la vista al bloque y lo resalta ----
+    const buscar = document.getElementById('vp-buscar'), listaBuscar = document.getElementById('vp-buscar-lista');
+    if (buscar && listaBuscar) {
+        const icoTipo = { tareas: 'fa-list-check', tabla: 'fa-table', titulo: 'fa-heading', texto: 'fa-font', plano: 'fa-map', logo: 'fa-copyright', estampa: 'fa-wand-magic-sparkles', cajetin: 'fa-table-list', imagen: 'fa-shapes', simbologia: 'fa-icons' };
+        let hits = [];
+        const bloques = [...document.querySelectorAll('#vp-sheet .vp-blk')].map(el => ({ el: el, tipo: el.dataset.tipo || '', txt: (el.textContent || '').replace(/\s+/g, ' ').trim() })).filter(x => x.txt);
+        const cerrarBuscar = () => { listaBuscar.hidden = true; listaBuscar.innerHTML = ''; hits = []; };
+        const irA = b => {
+            cerrarBuscar(); buscar.value = '';
+            b.el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            b.el.classList.remove('vp-resaltar'); void b.el.offsetWidth; b.el.classList.add('vp-resaltar');
+            setTimeout(() => b.el.classList.remove('vp-resaltar'), 2200);
+        };
+        buscar.addEventListener('input', () => {
+            const q = buscar.value.trim().toLowerCase();
+            if (q.length < 2) { cerrarBuscar(); return; }
+            hits = bloques.filter(x => x.txt.toLowerCase().includes(q)).slice(0, 8);
+            listaBuscar.innerHTML = hits.length
+                ? hits.map((b, i) => '<button type="button" data-i="' + i + '"><i class="fa-solid ' + (icoTipo[b.tipo] || 'fa-square') + '" aria-hidden="true"></i><span>' + b.txt.slice(0, 90).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span></button>').join('')
+                : '<p class="text-muted">Sin resultados</p>';
+            listaBuscar.hidden = false;
+        });
+        listaBuscar.addEventListener('click', e => { const b = e.target.closest('button'); if (b) irA(hits[+b.dataset.i]); });
+        buscar.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { cerrarBuscar(); buscar.blur(); }
+            if (e.key === 'Enter') { const b = listaBuscar.querySelector('button'); if (b) b.click(); }
+        });
+        document.addEventListener('click', e => { if (!e.target.closest('.vp-buscar')) cerrarBuscar(); });
+    }
 })();
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // (Se espera al DOM completo: gestos-lienzo.js y hoja-inferior.js se cargan al final de la página.)
+    // ---- Ficha de tarea en hoja inferior + vista «Tareas» ----
+    const editable = <?php echo $puedeEditar ? 'true' : 'false'; ?>;
+    const laminaId = <?php echo (int)$lamina->id; ?>;
+    const sheet = document.getElementById('vp-sheet'), lista = document.getElementById('vp-tareas');
+    if (!sheet || !window.HojaInferior) return;
+    const tactil = !!(window.GestosLienzo && GestosLienzo.esTactil());
+    const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const etiqueta = c => {
+        if (c === 'inicio') return 'Inicio';
+        if (c === 'fin') return 'Fin';
+        if (c === 'pct') return 'Avance';
+        const m = /^rec-(\d+)-(inicio|fin)$/.exec(c);
+        if (m) return 'Recovery ' + String(m[1]).padStart(2, '0') + ' · ' + (m[2] === 'inicio' ? 'inicio' : 'fin');
+        return c;
+    };
+
+    function camposDeFila(tr) {
+        const inputs = [...tr.querySelectorAll('input, textarea')];
+        if (inputs.length) return inputs.map(inp => ({
+            inp: inp,
+            etiqueta: inp.dataset.titulo || (inp.classList.contains('vp-fecha-act') ? (inp.dataset.tipo === 'inicio' ? 'Inicio' : 'Fin') : inp.classList.contains('vp-progreso-act') ? 'Avance (%)' : 'Dato'),
+            tipo: inp.type === 'date' ? 'date' : inp.type === 'number' ? 'number' : 'text',
+            valor: inp.value,
+        }));
+        return [...tr.querySelectorAll('td[data-campo]')].filter(td => td.dataset.campo !== 'tarea').map(td => ({
+            etiqueta: etiqueta(td.dataset.campo), tipo: 'texto', valor: td.textContent.trim(), soloLectura: true,
+        }));
+    }
+
+    function tareas() {
+        const vistos = new Set();
+        return [...sheet.querySelectorAll('tr[data-actividad]')].map(tr => ({
+            id: tr.dataset.actividad,
+            nombre: (tr.dataset.tarea || '').trim() || 'Tarea',
+            campos: camposDeFila(tr),
+            fila: tr,
+        })).filter(t => {
+            if (vistos.has(t.id)) return false;   // la misma tarea puede salir en dos bloques
+            vistos.add(t.id);
+            return true;
+        });
+    }
+    let listaTareas = [];
+
+    async function guardar(campo, valor) {
+        const inp = campo.inp;
+        if (!inp || campo.soloLectura) return { success: true };
+        try {
+            let d;
+            if (inp.classList.contains('vp-fecha-act')) {
+                d = await post('/api/actividad/actualizar-fecha', { actividad_id: inp.dataset.actividad, tipo: inp.dataset.tipo, fecha: valor });
+                if (d.success) {
+                    const tr = inp.closest('tr');
+                    const ini = tr.querySelector('[data-tipo=inicio]'), fin = tr.querySelector('[data-tipo=fin]');
+                    if (ini) ini.value = d.fecha_inicio;
+                    if (fin) fin.value = d.fecha_fin;
+                }
+            } else if (inp.classList.contains('vp-progreso-act')) {
+                d = await post('/api/actividad/actualizar-progreso', { actividad_id: inp.dataset.actividad, progreso: valor });
+                if (d.success) {
+                    inp.value = d.progreso;
+                    const td = inp.closest('td');
+                    td.classList.toggle('vp-verde', d.progreso >= 100);
+                    td.classList.toggle('vp-amarillo', d.progreso > 0 && d.progreso < 100);
+                }
+            } else if (inp.classList.contains('vp-col-texto')) {
+                d = await post('/api/vplan/columna-texto', { lamina: laminaId, actividad: inp.dataset.actividad, col: inp.dataset.col, valor: valor });
+            } else if (inp.classList.contains('vp-prg-campo')) {
+                d = await post('/api/programa/campo', { actividad_id: inp.dataset.actividad, campo: inp.dataset.campo, valor: valor });
+            } else if (inp.classList.contains('vp-rec') && inp.dataset.n) {
+                d = await post('/api/vplan/recovery', { lamina: laminaId, actividad: inp.dataset.actividad, n: inp.dataset.n, campo: inp.dataset.campo, valor: valor });
+            } else {
+                d = { success: true };
+            }
+            if (d && d.success) {
+                if (!inp.classList.contains('vp-progreso-act')) inp.value = valor;
+                inp.classList.remove('msr-error');
+            } else if (inp) inp.classList.add('msr-error');
+            return d || { success: false };
+        } catch (_) {
+            if (inp) inp.classList.add('msr-error');
+            return { success: false };
+        }
+    }
+
+    const hoja = HojaInferior.crear('vp-tarea');
+
+    function abrir(id) {
+        const t = listaTareas.find(x => x.id === String(id));
+        if (!t) return;
+        sheet.querySelectorAll('tr.vp-fila-sel').forEach(tr => tr.classList.remove('vp-fila-sel'));
+        t.fila.classList.add('vp-fila-sel');
+
+        const caja = document.createElement('div');
+        caja.className = 'vp-tarea-ficha';
+        const estado = document.createElement('p');
+        estado.className = 'vp-tarea-estado'; estado.setAttribute('role', 'status');
+        estado.textContent = editable ? 'Los cambios se guardan al instante.' : 'Vista de consulta.';
+        const campos = document.createElement('div');
+        campos.className = 'vp-tarea-campos';
+        const controles = {};
+
+        t.campos.forEach(c => {
+            const f = document.createElement('label');
+            f.className = 'vp-tarea-campo';
+            const ttl = document.createElement('span'); ttl.textContent = c.etiqueta;
+            let control;
+            if (c.soloLectura) {
+                control = document.createElement('b'); control.textContent = c.valor || '—';
+            } else {
+                control = document.createElement('input');
+                control.type = c.tipo; control.value = c.valor; control.autocomplete = 'off';
+                control.setAttribute('aria-label', c.etiqueta);
+                if (c.tipo === 'number' && c.etiqueta.indexOf('Avance') === 0) { control.min = '0'; control.max = '100'; control.step = '1'; }
+                control.addEventListener('change', async () => {
+                    estado.textContent = 'Guardando…'; estado.classList.remove('mal');
+                    const d = await guardar(c, control.value);
+                    const bien = !!(d && d.success);
+                    estado.textContent = bien ? 'Guardado' : 'No se pudo guardar';
+                    estado.classList.toggle('mal', !bien);
+                    if (bien) {
+                        c.valor = control.value;
+                        if (d.fecha_inicio !== undefined && controles['Inicio']) controles['Inicio'].value = d.fecha_inicio;
+                        if (d.fecha_fin !== undefined && controles['Fin']) controles['Fin'].value = d.fecha_fin;
+                        pintarLista();
+                    }
+                });
+                controles[c.etiqueta] = control;
+            }
+            f.append(ttl, control);
+            campos.appendChild(f);
+        });
+        if (!t.campos.length) { const p = document.createElement('p'); p.className = 'text-muted'; p.textContent = 'Esta tarea no tiene datos editables en esta lámina.'; campos.appendChild(p); }
+        caja.append(estado, campos);
+
+        const i = listaTareas.indexOf(t), acciones = [];
+        if (i > 0) acciones.push({ texto: 'Anterior', clase: 'btn-ghost', icono: 'fa-chevron-left', alHacer: () => ir(i - 1) });
+        if (i < listaTareas.length - 1) acciones.push({ texto: 'Siguiente', clase: 'btn-ghost', icono: 'fa-chevron-right', alHacer: () => ir(i + 1) });
+
+        hoja.abrir({
+            titulo: t.nombre, nodo: caja, posicion: 'media', enfocar: false, acciones: acciones,
+            alCerrar: () => t.fila.classList.remove('vp-fila-sel'),
+        });
+        t.fila.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    }
+    function ir(i) { const t = listaTareas[i]; if (t) abrir(t.id); }
+
+    function pintarLista() {
+        if (!lista) return;
+        const fecha = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v.split('-').reverse().join('/') : v;
+        lista.innerHTML = listaTareas.length ? listaTareas.map(t => {
+            const d = {};
+            t.campos.forEach(c => { d[c.etiqueta] = c.soloLectura ? c.valor : (c.inp ? c.inp.value : c.valor); });
+            const pct = d['Avance (%)'] || d['Avance'] || '';
+            return '<button type="button" class="vp-tarea-item" data-id="' + esc(t.id) + '">' +
+                '<span class="vp-tarea-item-nombre">' + esc(t.nombre) + '</span>' +
+                '<span class="vp-tarea-item-meta">' + (d['Inicio'] ? esc(fecha(d['Inicio'])) + ' → ' + esc(fecha(d['Fin'] || '')) : '') + '</span>' +
+                '<span class="vp-tarea-item-pct">' + esc(String(pct).replace('%', '').trim() || '0') + '%</span>' +
+                '</button>';
+        }).join('') : '<p class="text-muted" style="padding:1.6rem">Esta lámina no tiene tareas del programa.</p>';
+    }
+
+    // En táctil la tabla del lienzo no se edita dentro: se toca y se abre la ficha con campos de tamaño normal.
+    if (tactil && editable) {
+        sheet.addEventListener('pointerdown', e => {
+            const inp = e.target.closest('tr[data-actividad] input, tr[data-actividad] textarea');
+            if (!inp) return;
+            e.preventDefault(); e.stopPropagation();
+            abrir(inp.closest('tr[data-actividad]').dataset.actividad);
+        }, true);
+        sheet.querySelectorAll('tr[data-actividad] input, tr[data-actividad] textarea').forEach(i => { i.readOnly = true; i.tabIndex = -1; });
+        sheet.classList.add('vp-tactil');
+    }
+    if (tactil) sheet.addEventListener('click', e => {
+        if (e.target.closest('a, button, input, textarea')) return;
+        const tr = e.target.closest('tr[data-actividad]');
+        if (tr) { e.preventDefault(); abrir(tr.dataset.actividad); }
+    });
+    if (lista) lista.addEventListener('click', e => { const b = e.target.closest('.vp-tarea-item'); if (b) abrir(b.dataset.id); });
+
+    listaTareas = tareas();
+    pintarLista();
+    document.addEventListener('vp:pestana', e => { if (e.detail && e.detail.pest === 'tareas') pintarLista(); });
+
+    // ---- Deslizar para cambiar de lámina (solo cuando la hoja cabe a lo ancho) ----
+    const zona = document.getElementById('vp-hoja');
+    if (zona && tactil) {
+        let sw = null;
+        zona.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1) { sw = null; return; }
+            const t = e.touches[0];
+            if (t.clientX < 24) { sw = null; return; }   // no interferir con el gesto «atrás» del navegador
+            sw = { x: t.clientX, y: t.clientY, t: Date.now() };
+        }, { passive: true });
+        zona.addEventListener('touchend', e => {
+            if (!sw) return;
+            const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y;
+            const ajustada = zona.scrollWidth <= zona.clientWidth + 4;
+            const rapido = Date.now() - sw.t < 700 && Math.abs(dx) > 70 && Math.abs(dy) < 50;
+            sw = null;
+            if (!ajustada || !rapido) return;
+            const activa = document.querySelector('.vp-nav-item.activa');
+            if (!activa) return;
+            const items = [...document.querySelectorAll('.vp-nav-item')];
+            const i = items.indexOf(activa) + (dx < 0 ? 1 : -1);
+            if (i >= 0 && i < items.length) location.href = items[i].href;
+        }, { passive: true });
+    }
+});
+</script>
 <?php if ($puedeEditar): ?>
 <script>
 (function () {
@@ -282,6 +574,9 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
 <script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>
 <?php endif; ?>
 <script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
+<script src="/vendor/capa-superior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/capa-superior.js'); ?>"></script>
+<script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
 <script src="/vendor/vplan-zoom.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-zoom.js"); ?>"></script>
 <?php if ($modoDiseno): ?>
 <script>

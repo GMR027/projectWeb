@@ -23,7 +23,7 @@
     let guiaSel = null;        // guía
     let sucio = false;
     let nuevoN = 0;
-    const opts = { rejilla: true, iman: true, guias: true, reglas: true };
+    const opts = { rejilla: true, iman: true, guias: true, reglas: !(window.GestosLienzo && GestosLienzo.esTactil()) };
     try { Object.assign(opts, JSON.parse(guardado('vp-dis-opts', '{}'))); } catch (_) { /* valores por defecto */ }
 
     const marcarSucio = () => { sucio = true; $('vp-dis-guardar').classList.add('vp-pendiente'); $('vp-dis-msg').textContent = 'Cambios sin guardar'; };
@@ -93,24 +93,41 @@
     };
     const aplicarTodos = () => bloques.forEach(aplicar);
 
-    // ---- Imán: guías visibles + bordes y centro de la hoja ----
+    // ---- Imán: guías visibles, bordes/centro de la hoja y de los otros bloques ----
+    let bloqueArrastre = null;
     const candidatos = eje => {
         if (!opts.iman) return [];
         const c = [0, 50, 100].map(p => ({ pos: p }));
         if (opts.guias) guias.filter(g => g.visible && g.eje === (eje === 'x' ? 'v' : 'h')).forEach(g => c.push({ pos: g.pos, guia: g }));
+        bloques.forEach(b => {
+            if (b === bloqueArrastre || b.config.oculto) return;
+            const a = eje === 'x' ? b.x : b.y, d = eje === 'x' ? b.w : b.h;
+            [a, a + d / 2, a + d].forEach(pos => c.push({ pos: pos, bloque: b }));
+        });
         return c;
     };
-    /** El valor (de los que se mueven) que más cerca queda de un candidato dentro del umbral: { d, guia } */
+    /** El valor (de los que se mueven) que más cerca queda de un candidato dentro del umbral: { d, ref } */
     const imantar = (valores, eje, umbral) => {
         let mejor = null;
         const cand = candidatos(eje);
         valores.forEach(v => {
             const m = masCercano(v, cand, umbral);
-            if (m && (!mejor || Math.abs(m.d) < Math.abs(mejor.d))) mejor = { d: m.d, guia: m.ref.guia };
+            if (m && (!mejor || Math.abs(m.d) < Math.abs(mejor.d))) mejor = { d: m.d, ref: m.ref };
         });
         return mejor;
     };
     const resaltarGuias = lista => sheet.querySelectorAll('.vp-guia').forEach(el => el.classList.toggle('vp-guia-iman', lista.some(g => g && g.id === el.dataset.id)));
+    // Línea temporal de alineación con otro bloque (guía inteligente); no se guarda ni se imprime.
+    const limpiarSmart = () => { const c = sheet.querySelector('.vp-smart-capa'); if (c) c.replaceChildren(); };
+    const marcarSmart = (s, eje) => {
+        if (!s || !s.ref || !s.ref.bloque) return;
+        let capa = sheet.querySelector('.vp-smart-capa');
+        if (!capa) { capa = document.createElement('div'); capa.className = 'vp-smart-capa'; sheet.appendChild(capa); }
+        const l = document.createElement('div');
+        l.className = 'vp-smart ' + (eje === 'x' ? 'vp-smart-v' : 'vp-smart-h');
+        if (eje === 'x') l.style.left = s.ref.pos + '%'; else l.style.top = s.ref.pos + '%';
+        capa.appendChild(l);
+    };
     const rejilla = v => opts.rejilla ? Math.round(v / 0.5) * 0.5 : v;
 
     // ---- Arrastrar y redimensionar bloques ----
@@ -122,6 +139,7 @@
         e.preventDefault();
         seleccionar(b, true);
         if (b.config.bloqueado) return;
+        bloqueArrastre = b;
         const asa = e.target.dataset.h || '';
         const r = sheet.getBoundingClientRect();
         const ini = { x: b.x, y: b.y, w: b.w, h: b.h, px: e.clientX, py: e.clientY };
@@ -131,20 +149,21 @@
             const dx = (ev.clientX - ini.px) / r.width * 100, dy = (ev.clientY - ini.py) / r.height * 100;
             let { x, y, w, h } = ini;
             const tocadas = [];
+            limpiarSmart();
             if (!asa) {
                 x = ini.x + dx; y = ini.y + dy;
                 const sx = imantar([x, x + w / 2, x + w], 'x', ux), sy = imantar([y, y + h / 2, y + h], 'y', uy);
-                if (sx) { x += sx.d; tocadas.push(sx.guia); } else x = rejilla(x);
-                if (sy) { y += sy.d; tocadas.push(sy.guia); } else y = rejilla(y);
+                if (sx) { x += sx.d; tocadas.push(sx.ref.guia); marcarSmart(sx, 'x'); } else x = rejilla(x);
+                if (sy) { y += sy.d; tocadas.push(sy.ref.guia); marcarSmart(sy, 'y'); } else y = rejilla(y);
             } else {
-                if (asa.includes('e')) { w = ini.w + dx; const s = imantar([x + w], 'x', ux); if (s) { w += s.d; tocadas.push(s.guia); } else w = rejilla(w); }
-                if (asa.includes('s')) { h = ini.h + dy; const s = imantar([y + h], 'y', uy); if (s) { h += s.d; tocadas.push(s.guia); } else h = rejilla(h); }
+                if (asa.includes('e')) { w = ini.w + dx; const s = imantar([x + w], 'x', ux); if (s) { w += s.d; tocadas.push(s.ref.guia); marcarSmart(s, 'x'); } else w = rejilla(w); }
+                if (asa.includes('s')) { h = ini.h + dy; const s = imantar([y + h], 'y', uy); if (s) { h += s.d; tocadas.push(s.ref.guia); marcarSmart(s, 'y'); } else h = rejilla(h); }
                 if (asa.includes('w')) {
-                    x = ini.x + dx; const s = imantar([x], 'x', ux); if (s) { x += s.d; tocadas.push(s.guia); } else x = rejilla(x);
+                    x = ini.x + dx; const s = imantar([x], 'x', ux); if (s) { x += s.d; tocadas.push(s.ref.guia); marcarSmart(s, 'x'); } else x = rejilla(x);
                     w = ini.x + ini.w - x;
                 }
                 if (asa.includes('n')) {
-                    y = ini.y + dy; const s = imantar([y], 'y', uy); if (s) { y += s.d; tocadas.push(s.guia); } else y = rejilla(y);
+                    y = ini.y + dy; const s = imantar([y], 'y', uy); if (s) { y += s.d; tocadas.push(s.ref.guia); marcarSmart(s, 'y'); } else y = rejilla(y);
                     h = ini.y + ini.h - y;
                 }
                 if (w < 1) { if (asa.includes('w')) x = ini.x + ini.w - 1; w = 1; }
@@ -154,7 +173,7 @@
             Object.assign(b, { x: redond(x), y: redond(y), w: redond(w), h: redond(h) });
             aplicar(b); llenarPosicion(b); marcarSucio(); resaltarGuias(tocadas);
         };
-        const fin = () => { ov.removeEventListener('pointermove', mover); ov.removeEventListener('pointerup', fin); ov.removeEventListener('pointercancel', fin); resaltarGuias([]); };
+        const fin = () => { ov.removeEventListener('pointermove', mover); ov.removeEventListener('pointerup', fin); ov.removeEventListener('pointercancel', fin); resaltarGuias([]); limpiarSmart(); bloqueArrastre = null; };
         ov.addEventListener('pointermove', mover); ov.addEventListener('pointerup', fin); ov.addEventListener('pointercancel', fin);
     });
     sheet.addEventListener('pointerdown', e => { if (e.target === sheet) { seleccionar(null); seleccionarGuia(null); } });
@@ -172,6 +191,8 @@
             e.preventDefault();
             g.pos = redond(Math.max(0, Math.min(100, g.pos + (g.eje === 'v' ? mueve[0] : mueve[1]))));
             posicionarGuia(g); llenarGuia(); pintarGuiasLista(); marcarSucio();
+        } else if ((e.ctrlKey || e.metaKey) && (e.key === ']' || e.key === '[')) {
+            if (b) { e.preventDefault(); mover(b, e.key === ']' ? 1 : -1); }
         } else if (e.key === 'Delete') {
             if (b) { e.preventDefault(); quitar(b); } else if (g) { e.preventDefault(); quitarGuia(g); }
         }
@@ -327,18 +348,79 @@
 
     // ---- Panel: ocultarlo deja la hoja en todo el ancho (se recuerda) ----
     const wrapDis = document.querySelector('.vp-dis-wrap'), panelLado = $('vp-dis-panel'), btnPanel = $('vp-dis-panel-abrir');
+    // En pantallas táctiles el panel va en una hoja inferior: se abre al elegir un bloque y se cierra
+    // con su asa o su botón. Así las propiedades no quedan debajo de la lámina, fuera de la vista.
+    const usarHoja = !!(window.HojaInferior && window.GestosLienzo && GestosLienzo.esTactil()
+        && window.matchMedia('(max-width: 80rem)').matches);
+    let hojaPanel = null;
+    if (usarHoja && panelLado) {
+        hojaPanel = HojaInferior.crear('vp-dis');
+        panelLado.classList.add('en-hoja');
+        hojaPanel.cuerpo.appendChild(panelLado);
+        panelLado.hidden = false;
+        panelLado.querySelector('.pn-cab-acc')?.setAttribute('hidden', '');
+        if (wrapDis) wrapDis.classList.add('vp-dis-hoja');
+    }
     function panelVisible(v) {
         if (!panelLado) return;
+        if (usarHoja && hojaPanel) {
+            if (btnPanel) btnPanel.hidden = false;   // pestaña flotante para reabrirlo sin seleccionar nada
+            if (wrapDis) wrapDis.classList.remove('vp-dis-fuera');
+            v ? hojaPanel.abrir({ posicion: 'media', enfocar: false, modal: false }) : hojaPanel.cerrar();
+            requestAnimationFrame(dibujarReglas);
+            return;
+        }
         panelLado.hidden = !v;
         if (btnPanel) btnPanel.hidden = v;
         if (wrapDis) wrapDis.classList.toggle('vp-dis-fuera', !v);
         guarda('vp-dis-panel', v ? '1' : '0');
         requestAnimationFrame(dibujarReglas);
     }
+    const panelCerrado = () => usarHoja ? (!hojaPanel || !hojaPanel.estaAbierta()) : !!(panelLado && panelLado.hidden);
     const btnOcultar = $('vp-dis-panel-tgl');
     if (btnOcultar) btnOcultar.addEventListener('click', () => panelVisible(false));
     if (btnPanel) btnPanel.addEventListener('click', () => panelVisible(true));
-    panelVisible(guardado('vp-dis-panel', '1') !== '0');
+    panelVisible(usarHoja ? false : guardado('vp-dis-panel', '1') !== '0');
+
+    // ---- Divisor del panel (escritorio): se arrastra y se recuerda ----
+    function iniciarSplit() {
+        if (!wrapDis || usarHoja) return;
+        if (!window.matchMedia('(min-width: 80.0625rem) and (pointer: fine)').matches) return;
+        const h = document.createElement('div');
+        h.className = 'vp-dis-split no-print';
+        h.tabIndex = 0;
+        h.setAttribute('role', 'separator');
+        h.setAttribute('aria-orientation', 'vertical');
+        h.setAttribute('aria-label', 'Ancho del panel de diseño');
+        h.title = 'Arrastra para cambiar el ancho del panel (flechas para ajustarlo)';
+        wrapDis.appendChild(h);
+        const rem = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 11.2;
+        let ancho = parseInt(guardado('vp-panel-w', '36'), 10);
+        if (!isFinite(ancho)) ancho = 36;
+        const poner = v => {
+            ancho = Math.max(28, Math.min(60, Math.round(v * 10) / 10));
+            wrapDis.style.setProperty('--vp-panel-w', ancho + 'rem');
+            guarda('vp-panel-w', String(ancho));
+            if (window.vplanZoom) window.vplanZoom.refrescar();
+            requestAnimationFrame(dibujarReglas);
+        };
+        poner(ancho);
+        h.addEventListener('pointerdown', e => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            h.setPointerCapture(e.pointerId);
+            const r = wrapDis.getBoundingClientRect();
+            const mover = ev => poner((r.right - ev.clientX) / rem());
+            const fin = () => { h.removeEventListener('pointermove', mover); h.removeEventListener('pointerup', fin); h.removeEventListener('pointercancel', fin); };
+            h.addEventListener('pointermove', mover); h.addEventListener('pointerup', fin); h.addEventListener('pointercancel', fin);
+        });
+        h.addEventListener('keydown', e => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            poner(ancho + (e.key === 'ArrowLeft' ? 2 : -2));
+        });
+    }
+    iniciarSplit();
 
     // Alto del bloque pegajoso (cabecera + pestañas): se mide y se publica en --pn-cab-alto para que
     // la barra de búsqueda de «Insertar» se detenga justo debajo y nunca se monte sobre las pestañas.
@@ -485,21 +567,59 @@
     function poneOculto(b, v) {
         if (v) b.config.oculto = true; else delete b.config.oculto;
         const el = elDe(b); if (el) el.classList.toggle('vp-b-oculto', !!v);
-        if (seleccion === b) $('vp-c-oculto').checked = !!v;
+        if (seleccion === b) { $('vp-c-oculto').checked = !!v; pintarCtx(); }
         marcarSucio(); pintarCapas();
     }
     function poneBloqueado(b, v) {
         if (v) b.config.bloqueado = true; else delete b.config.bloqueado;
         const el = elDe(b); if (el) el.classList.toggle('vp-bloq', !!v);
-        if (seleccion === b) { $('vp-c-bloqueado').checked = !!v; bloquearPosicion(b); }
+        if (seleccion === b) { $('vp-c-bloqueado').checked = !!v; bloquearPosicion(b); pintarCtx(); }
         marcarSucio(); pintarCapas();
     }
     $('vp-c-oculto').addEventListener('change', e => { if (seleccion) poneOculto(seleccion, e.target.checked); });
     $('vp-c-bloqueado').addEventListener('change', e => { if (seleccion) poneBloqueado(seleccion, e.target.checked); });
 
+    // ---- Barra contextual del bloque: las acciones de siempre, a un toque y sin abrir el panel ----
+    // (Figma/Canva): aparece al seleccionar y funciona igual con ratón que con dedo. Se oculta sola
+    // cuando no hay bloque elegido o cuando hay una guía.
+    const ctx = document.createElement('div');
+    ctx.className = 'vp-ctx no-print';
+    ctx.hidden = true;
+    ctx.innerHTML = [
+        ['frente', 'fa-arrow-up-from-bracket', 'Al frente'],
+        ['fondo', 'fa-arrow-down-short-wide', 'Al fondo'],
+        ['duplicar', 'fa-copy', 'Duplicar'],
+        ['oculto', 'fa-eye', 'Ocultar'],
+        ['bloqueo', 'fa-lock-open', 'Bloquear'],
+        ['quitar', 'fa-trash-can', 'Quitar'],
+    ].map(([k, ic, t]) => '<button type="button" data-ctx="' + k + '" title="' + t + '" aria-label="' + t + '"><i class="fa-solid ' + ic + '"></i><span>' + t + '</span></button>').join('');
+    if (window.CapaSuperior) CapaSuperior.adoptar(ctx); else document.body.appendChild(ctx);
+
+    function pintarCtx() {
+        const b = seleccion;
+        ctx.hidden = !b || !!guiaSel;
+        if (!b) return;
+        const oc = ctx.querySelector('[data-ctx="oculto"]'), bl = ctx.querySelector('[data-ctx="bloqueo"]');
+        oc.querySelector('i').className = 'fa-solid ' + (b.config.oculto ? 'fa-eye-slash' : 'fa-eye');
+        oc.setAttribute('aria-pressed', b.config.oculto ? 'true' : 'false');
+        bl.querySelector('i').className = 'fa-solid ' + (b.config.bloqueado ? 'fa-lock' : 'fa-lock-open');
+        bl.setAttribute('aria-pressed', b.config.bloqueado ? 'true' : 'false');
+        ctx.querySelector('[data-ctx="duplicar"]').hidden = UNICOS.includes(b.tipo) || b.tipo === 'tabla';
+    }
+    ctx.addEventListener('click', e => {
+        const btn = e.target.closest('[data-ctx]'), b = seleccion;
+        if (!btn || !b) return;
+        if (btn.dataset.ctx === 'frente') mover(b, bloques.length);
+        else if (btn.dataset.ctx === 'fondo') mover(b, -bloques.length);
+        else if (btn.dataset.ctx === 'duplicar') $('vp-dis-duplicar').click();
+        else if (btn.dataset.ctx === 'oculto') poneOculto(b, !b.config.oculto);
+        else if (btn.dataset.ctx === 'bloqueo') poneBloqueado(b, !b.config.bloqueado);
+        else if (btn.dataset.ctx === 'quitar') $('vp-dis-quitar').click();
+    });
+
     // ---- Selección y propiedades ----
     function seleccionar(b, desdeLienzo) {
-        if (b && panelLado && panelLado.hidden) panelVisible(true);   // al elegir un bloque se abre el panel para ver sus propiedades
+        if (b && panelLado && panelCerrado()) panelVisible(true);   // al elegir un bloque se abre el panel
         seleccion = b;
         if (b) guiaSel = null;
         sheet.querySelectorAll('.vp-blk.vp-sel').forEach(x => x.classList.remove('vp-sel'));
@@ -508,7 +628,7 @@
         cuerpo.hidden = !b; vacio.hidden = !!b || !!guiaSel;
         $('vp-dis-guia-cuerpo').hidden = !guiaSel;
         pintarCapas(); pintarGuiasLista();
-        if (!b) return;
+        if (!b) { pintarCtx(); return; }
         if (desdeLienzo && (pestana === 'insertar' || pestana === 'hoja')) irAPestana('props');
         $('vp-c-oculto').checked = !!b.config.oculto;
         $('vp-c-bloqueado').checked = !!b.config.bloqueado;
@@ -520,9 +640,10 @@
         $('vp-dis-duplicar').hidden = UNICOS.includes(b.tipo) || b.tipo === 'tabla';
         llenarPosicion(b); bloquearPosicion(b);
         pintarCampos(b);
+        pintarCtx();
     }
     function seleccionarGuia(g, desdeLienzo) {
-        if (g && panelLado && panelLado.hidden) panelVisible(true);
+        if (g && panelLado && panelCerrado()) panelVisible(true);
         guiaSel = g;
         if (g) seleccion = null;
         sheet.querySelectorAll('.vp-blk.vp-sel').forEach(x => x.classList.remove('vp-sel'));
@@ -538,6 +659,7 @@
             llenarGuia();
         }
         pintarCapas(); pintarGuiasLista();
+        pintarCtx();
     }
     function llenarGuia() {
         if (!guiaSel) return;
@@ -1100,7 +1222,7 @@
                 fantasma.className = 'vp-ins-fantasma';
                 const ico = o.querySelector('i'), txt = o.querySelector('b, span');
                 fantasma.innerHTML = (ico ? ico.outerHTML : '') + '<span>' + esc(txt && txt.textContent ? txt.textContent : 'Elemento') + '</span>';
-                document.body.appendChild(fantasma);
+                if (window.CapaSuperior) CapaSuperior.adoptar(fantasma); else document.body.appendChild(fantasma);
                 marco = document.createElement('div');
                 marco.className = 'vp-ins-drop';
                 sheet.appendChild(marco);

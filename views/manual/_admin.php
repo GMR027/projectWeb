@@ -309,7 +309,7 @@ HTML],
 </ul>
 HTML],
 
-['id' => 'revisiones', 'despues' => 'datos-obra', 'titulo' => 'Revisiones', 'icono' => 'fa-clipboard-check', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+['id' => 'revisiones', 'despues' => 'datos-obra', 'titulo' => 'Revisiones', 'icono' => 'fa-traffic-light', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Lleva el control de qué materiales, actividades y <strong>RFI</strong> ya revisaste y qué herramientas de IA están al día. Está en el menú del proyecto como <strong>Revisiones</strong>; un resumen corto aparece también en Inicio.</p>
 [[fig:revisiones]]
 <h4>Veredictos ①</h4>
@@ -329,14 +329,14 @@ HTML],
 <p class="manual-nota">La IA propone y tú decides: el veredicto de Revisiones es independiente de la verificación automática de Materiales inteligentes.</p>
 HTML],
 
-['id' => 'punch', 'despues' => 'revisiones', 'titulo' => 'Punch list', 'icono' => 'fa-clipboard-check', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+['id' => 'punch', 'despues' => 'revisiones', 'titulo' => 'Punch list', 'icono' => 'fa-screwdriver-wrench', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Lista de pendientes de calidad y cierre: detalles por corregir antes de entregar. Está en el menú del proyecto como <strong>Punch list</strong>.</p>
 [[fig:punch]]
 <ol>
-<li><strong>Registra ①</strong> cada pendiente con ubicación, categoría, severidad, responsable, contratista, fecha límite, actividad relacionada, descripción y una <strong>foto «antes»</strong>.</li>
+<li><strong>Registra ①</strong> cada pendiente con <strong>fecha de emisión</strong> (el día en que se detectó o se emitió; viene puesta a hoy y se puede ajustar), ubicación, categoría, severidad, responsable, contratista, fecha límite, actividad relacionada, descripción y una <strong>foto «antes»</strong>.</li>
 <li>Para recorrer un área, usa <strong>Inspección</strong>: una lista de verificación por ubicación que registra todos los hallazgos de una vez.</li>
 <li>Filtra por estado, ubicación o contratista y descarga el <strong>PDF</strong> (general o por contratista) para repartirlo.</li>
-<li><strong>Úsalo en otros documentos:</strong> el Punch list se puede insertar como tabla en <strong>vPlan</strong> (<em>Tablas adicionales › Nueva tabla › Punch list</em>), en el <strong>Redactor</strong> (<em>Insertar tabla › Punch list</em>) y en el <strong>Editor</strong> (pestaña Símbolos › <em>Punch list</em>). En los tres eliges <strong>qué ver</strong> (columnas, fotos antes/después, estado, severidad, contratista) con el botón «Qué ver», y la tabla se actualiza sola con los pendientes. En vPlan además puedes cambiar estado, severidad, fecha y responsable desde la lámina. En el Editor las fotos (hasta 20 por tabla) se colocan en sus celdas.</li>
+<li><strong>Úsalo en otros documentos:</strong> el Punch list se puede insertar como tabla en <strong>vPlan</strong> (<em>Tablas adicionales › Nueva tabla › Punch list</em>), en el <strong>Redactor</strong> (<em>Insertar tabla › Punch list</em>) y en el <strong>Editor</strong> (pestaña Símbolos › <em>Punch list</em>). En los tres eliges <strong>qué ver</strong> (columnas, fotos antes/después, estado, severidad, contratista) con el botón «Qué ver», y la tabla se actualiza sola con los pendientes. En vPlan además puedes cambiar estado, severidad, fechas y responsable desde la lámina. En el Editor las fotos (hasta 20 por tabla) se colocan en sus celdas.</li>
 <li><strong>Cierra ③:</strong> abre el pendiente, sube la <strong>foto «después»</strong> y cambia su estado.</li>
 </ol>
 HTML],

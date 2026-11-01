@@ -22,7 +22,7 @@ class ListaDiseno
             'fecha' => ['Fecha', false], 'actividades' => ['Actividad del programa', true], 'acciones' => ['Acciones', true]]],
         'punch' => ['Punch list', 'punch', '/punch', true, ['titulo'], [
             'severidad' => ['Severidad', true], 'titulo' => ['Pendiente', true], 'estado' => ['Estado', true], 'categoria' => ['Categoría', true],
-            'ubicacion' => ['Ubicación', true], 'responsable' => ['Responsable', true], 'limite' => ['Fecha límite', true]]],
+            'ubicacion' => ['Ubicación', true], 'responsable' => ['Responsable', true], 'limite' => ['Fecha límite', true], 'emision' => ['Fecha de emisión', true]]],
         'lookahead' => ['Lookahead', 'actividad', '/lookahead', false, ['actividad'], [
             'id' => ['ID (EDT)', true], 'actividad' => ['Actividad', true], 'comp' => ['% Comp', true], 'pta' => ['PTA', false], 'limitaciones' => ['Limitaciones', false]]],
     ];

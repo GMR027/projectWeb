@@ -11,3 +11,19 @@
     &:hover { color: var(--text); background: var(--surface-hover); }
     // La pestaña activa se marca con .activo (o con aria-selected si la vista usa role=tab sin clase)
     &.activo, &.activa, &[aria-selected=true] { background: var(--surface); border-color: var(--border); color: var(--primary); font-weight: 600; } } }
+
+// Cabecera de cinta con pestañas y botón de plegar (patrón OnlyOffice / LibreOffice).
+// La usan el Redactor (.rd-) y SheetFlow (.sf-): una sola fila de pestañas y la barra de
+// herramientas debajo, que se puede ocultar para dejar más sitio al documento o a la tabla.
+.cinta-cab {
+  display: flex; align-items: flex-end; gap: .4rem; margin-top: 1rem; min-width: 0;
+  > :is(.pestanas, .vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas, .sim-tabs) { flex: 1 1 auto; min-width: 0; margin-top: 0; }
+}
+.cinta-plegar {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 3.4rem; height: 3.4rem; margin-bottom: .3rem; padding: 0;
+  border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); color: var(--text-muted);
+  font-size: 1.2rem; cursor: pointer;
+  &:hover { color: var(--text); background: var(--surface-hover); }
+  &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+}

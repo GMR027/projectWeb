@@ -54,7 +54,7 @@
                         <?php if ($t->sheetflow_id): ?>
                             <span class="vp-tabla-ico" title="Creada desde SheetFlow"><i class="fa-solid fa-table-cells"></i></span>
                         <?php elseif ($t->esPunchVista() || $t->tipo === 'punch'): ?>
-                            <span class="vp-tabla-ico" title="Punch list"><i class="fa-solid fa-clipboard-check"></i></span>
+                            <span class="vp-tabla-ico" title="Punch list"><i class="fa-solid fa-screwdriver-wrench"></i></span>
                         <?php endif; ?>
                     </div>
                     <?php if ($clavesP): ?>

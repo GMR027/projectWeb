@@ -38,8 +38,13 @@
 .rd-lista-grande .accesos-lista { max-height: 46rem; font-size: 1.4rem; gap: 1rem; padding: 1.4rem; }
 
 .mi-entrada { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: .8rem; margin-bottom: 1rem;
+  // Tema/compromiso y responsable son texto libre y largo: se ven más altos que el resto de campos del formulario.
+  .mi-tema, .mi-resp { min-height: 5rem; padding-top: 1.1rem; padding-bottom: 1.1rem; }
+  .mi-tema { font-size: 1.45rem; }
+  .mi-depto, .mi-agregar { align-self: center; }
   @media (max-width: 80rem) { grid-template-columns: 1fr 1fr; }
-  @media (max-width: 48rem) { grid-template-columns: 1fr; }
+  @media (max-width: 48rem) { grid-template-columns: 1fr;
+    .mi-depto, .mi-agregar { align-self: stretch; } }
 }
 
 // Selector de materiales de las partidas del MSR: el doble de alto

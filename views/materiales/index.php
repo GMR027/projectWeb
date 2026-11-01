@@ -23,7 +23,7 @@
             </select>
             <?php if ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== ''): ?><a href="/materiales?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">Limpiar</a><?php endif; ?>
         </form>
-        <a href="/materiales/dependencias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-diagram-project"></i> Dependencias</a>
+        <a href="/materiales/dependencias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-link"></i> Dependencias</a>
         <a href="/especialidades?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Especialidades</a>
         <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nuevo material</a>
     </div>

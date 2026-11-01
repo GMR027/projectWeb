@@ -186,3 +186,115 @@ body.rd-brocha .rd-hoja { cursor: copy; }
   .rd-grupo h3 { font-size: 1.6rem; }
   .rd-sellos-ver, .rd-comentarios-ver { padding: 1.2rem; }
 }
+
+// ============================================================
+// Barra de páginas (tablet y celular): sustituye al panel de miniaturas.
+// Flechas para subir y bajar de hoja; se queda pegada abajo mientras se escribe.
+// ============================================================
+.rd-paginas-bar {
+  display: none; position: sticky; bottom: .6rem; z-index: 12;
+  // .rd-area es flex en columna con align-items: flex-start: sin esto la barra se encoge y queda pegada a la izquierda.
+  align-self: stretch; width: 100%; box-sizing: border-box;
+  align-items: center; justify-content: center; gap: 1rem;
+  margin-top: .8rem; padding: .4rem 5.6rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; box-shadow: var(--shadow);
+  .rd-pag-btn { flex: none; min-width: 4.4rem; justify-content: center; font-size: 1.3rem; }
+  .rd-paginas-bar-txt { min-width: 11rem; text-align: center; font-family: 'Fira Code', monospace; font-size: 1.2rem; color: var(--text-muted); }
+  // «Agregar página» va al extremo derecho para que el indicador y las flechas queden centrados.
+  #rd-pag-nueva-barra { position: absolute; right: .8rem; top: 50%; transform: translateY(-50%); }
+}
+// En el celular el dock ocupa el borde inferior: la barra se sube por encima.
+body.rd-movil-dock .rd-paginas-bar { bottom: calc(7rem + env(safe-area-inset-bottom, 0)); }
+// Celulares muy angostos: menos relleno para que el indicador siga centrado sin desbordar.
+@media (max-width: 30rem) {
+  .rd-paginas-bar { padding: .4rem 3.6rem; gap: .4rem;
+    .rd-paginas-bar-txt { min-width: 8.5rem; font-size: 1.1rem; } }
+}
+
+// ============================================================
+// Cinta compacta (tablet y ventanas estrechas), como OnlyOffice / LibreOffice:
+// una sola fila de pestañas y otra de herramientas que se desliza en horizontal.
+// ============================================================
+@media (max-width: 110rem) {
+  .cinta-cab { margin-top: .6rem; }
+  // Sin panel de miniaturas: la navegación entre páginas pasa a una barra con flechas debajo de la hoja.
+  .rd-paginas { display: none; }
+  .rd-paginas-bar { display: flex; }
+  .rd-area { flex-direction: column; }
+  .rd-lateral { flex-basis: auto; width: 100%; position: static; max-height: none; }
+  // Datos del documento: una sola fila compacta (en escritorio ancho se ven como siempre).
+  .rd-datos { gap: .4rem .8rem; margin-bottom: .6rem; padding: .6rem .8rem;
+    label { flex: 1 1 12rem; gap: .2rem; font-size: 1.05rem; }
+    input { height: 3.2rem; padding: .3rem .5rem; font-size: 1.2rem; } }
+
+  .rd-pestanas { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+    button { flex: 0 0 auto; padding: .6rem 1.1rem; white-space: nowrap; } }
+  .rd-barra { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+    gap: .4rem .9rem; padding: .4rem .6rem; align-items: center; }
+  .rd-barra .rd-grupo-b { flex: 0 0 auto; flex-wrap: nowrap; gap: .1rem; padding-right: .9rem; }
+  .rd-barra .rd-b { height: 3.4rem; min-width: 3.4rem; padding: 0 .5rem; font-size: 1.3rem; }
+  .rd-barra select { height: 3.4rem; max-width: 9.5rem; padding: .3rem .4rem; font-size: 1.15rem; }
+  .rd-barra .rd-color { height: 3.4rem; padding: 0 .3rem; gap: .2rem; }
+}
+
+// Plegar la cinta: solo las pestañas, como el botón de OnlyOffice. Se recuerda en el navegador.
+@media (min-width: 44.01rem) {
+  body.rd-cinta-cerrada .rd-barra { display: none; }
+}
+
+// ============================================================
+// Celular: barra inferior + herramientas en hoja inferior
+// (comportamiento en public/vendor/redactor-movil.js). El documento se edita igual que en escritorio.
+// ============================================================
+body.rd-movil-dock {
+  // La barra de pestañas y la de formato viven en la hoja inferior: en la página no ocupan espacio.
+  #rd-pestanas, #rd-barra { display: none; }
+  .cinta-cab { display: none; }
+  .cinta-plegar { display: none; }
+  .hi-cuerpo .rd-hoja-tabs { position: sticky; top: 0; z-index: 4; background: var(--surface); padding-bottom: .4rem; }
+  .hi-cuerpo #rd-pestanas, .hi-cuerpo #rd-barra { display: flex; }
+  .hi-cuerpo #rd-barra { position: static; }
+  .hi-cuerpo .rd-panel { margin: .8rem 0; }
+  .rd-area { padding-bottom: 7rem; }   // deja libre la barra inferior
+  .rd-paginas, .rd-lateral { margin-top: .6rem; }
+}
+body.rd-tactil .rd-fondo { touch-action: pan-x pan-y; }
+
+.rd-dock {
+  position: fixed; z-index: 1500; left: 0; right: 0; bottom: 0;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .4rem;
+  padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom, 0));
+  background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -.6rem 2rem rgba(0, 0, 0, .35);
+  .rd-dock-b { display: inline-flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0;
+    border: 1px solid var(--border); border-radius: .9rem; background: var(--bg-secondary); color: var(--text); font-size: 1.7rem; cursor: pointer;
+    transition: background .15s, transform .1s;
+    &:hover { background: var(--surface-hover); }
+    &:active { transform: scale(.94); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; } }
+  .rd-dock-primario { background: var(--primary); border-color: var(--primary); color: var(--on-primary, #fff);
+    &:hover { background: var(--primary-hover, var(--primary)); } }
+}
+body.rd-hoja-abierta .rd-dock { display: none; }
+
+// ============================================================
+// Modo enfoque: la hoja sola, a pantalla completa
+// ============================================================
+body.rd-en-ampliado { overflow: hidden; }
+body.rd-en-ampliado #contenido-principal { background: var(--bg-primary); overflow-y: auto; overflow-x: hidden; }
+body.rd-enfoque .rd-fondo { max-height: calc(100dvh - 10rem); }
+.rd-salir-enfoque { display: none; }
+body.rd-enfoque .rd-salir-enfoque { display: inline-flex; align-items: center; justify-content: center;
+  position: fixed; z-index: 1700; top: 1.2rem; left: 1.2rem; width: 4.4rem; height: 4.4rem; padding: 0;
+  border: 0; border-radius: 50%; background: #1c2541; color: #fff; font-size: 1.8rem; cursor: pointer;
+  box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .4);
+  &:hover { background: #dc2626; } }
+// Las hojas inferiores y los modales quedan por encima de la vista ampliada.
+body.rd-en-ampliado .modal-overlay { z-index: 1650; }
+
+// La barra inferior convive con el botón del menú (abajo a la izquierda): se le deja su hueco y se sube
+// el botón por encima para poder abrir el menú. Con el menú abierto el dock se esconde.
+body.rd-movil-dock .btn-menu-movil { z-index: 1550; }
+body.menu-abierto .rd-dock { display: none; }
+@media (max-width: 48rem) {
+  body.rd-movil-dock .rd-dock { padding-left: 7rem; }
+}

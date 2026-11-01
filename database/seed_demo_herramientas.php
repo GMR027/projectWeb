@@ -153,8 +153,8 @@ if ($tabla('punch_items')) {
         $a = $actId($cod);
         $fAntes = $antes ? $guardarFoto('punch', ['campo.jpg', 'grua.jpg', 'planos.jpg'][$i % 3]) : null;
         $fDesp = $despues ? $guardarFoto('punch', $i % 2 ? 'campo.jpg' : 'planos.jpg') : null;
-        $sql("INSERT INTO punch_items (proyecto_id, titulo, descripcion, actividad_id, ubicacion, categoria, severidad, responsable, contratista, fecha_limite, estado, foto_antes, foto_despues, origen, creado_por, cerrado_en)
-            VALUES ($pid, {$S($titulo)}, {$S($desc)}, " . ($a ?: 'NULL') . ", {$S($ubic)}, {$S($cat)}, '$sev', {$S($resp)}, {$S($contr)}, '{$dia($limite)}', '$estado',
+        $sql("INSERT INTO punch_items (proyecto_id, titulo, descripcion, actividad_id, ubicacion, categoria, severidad, responsable, contratista, fecha_emision, fecha_limite, estado, foto_antes, foto_despues, origen, creado_por, cerrado_en)
+            VALUES ($pid, {$S($titulo)}, {$S($desc)}, " . ($a ?: 'NULL') . ", {$S($ubic)}, {$S($cat)}, '$sev', {$S($resp)}, {$S($contr)}, DATE_SUB('{$dia($limite)}', INTERVAL 14 DAY), '{$dia($limite)}', '$estado',
             {$S($fAntes)}, {$S($fDesp)}, 'inspeccion', 'Valeria Sotomayor', " . ($estado === 'cerrado' ? "'{$ahora(-2)}'" : 'NULL') . ')');
     }
 }

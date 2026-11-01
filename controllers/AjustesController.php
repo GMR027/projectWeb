@@ -242,9 +242,11 @@ class AjustesController
         $paleta = TemaProyecto::normPaleta($_POST['tema_paleta'] ?? 'naranja');
         $nombres = TemaProyecto::nombresHerramientas($_POST['nombres_herramientas'] ?? 0) ? 1 : 0;   // barra superior: nombre bajo el icono
         $menu = TemaProyecto::normMenu($_POST['menu_superior'] ?? 'clasico');   // clásico, panel o pestañas
+        $ayuda = TemaProyecto::ayudasVisibles($_POST['ayuda_burbujas'] ?? 1) ? 1 : 0;   // burbujas de ayuda de la interfaz
         $color = TemaProyecto::colorCaratula($paleta);   // la carátula del portafolio usa el mismo acento
 
-        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', nombres_herramientas = $nombres, menu_superior = '$menu', color = '$color' WHERE id = " . (int)$proyecto->id);
+        $sqlAyuda = TemaProyecto::disponibleAyuda() ? ", ayuda_burbujas = $ayuda" : '';   // sin la migración se omite
+        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', nombres_herramientas = $nombres, menu_superior = '$menu'$sqlAyuda, color = '$color' WHERE id = " . (int)$proyecto->id);
         header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&tema=ok#tema');
         exit;
     }

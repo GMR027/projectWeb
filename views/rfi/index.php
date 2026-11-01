@@ -6,6 +6,12 @@ use Classes\Revisiones;
 $pid = (int)$proyecto->id;
 $url = fn(array $q = []) => '/rfi?' . http_build_query(['proyecto' => $pid] + $q);
 $e = $editar;
+// Precarga desde el Comparador (una anotación puede abrir un RFI)
+$q = fn($k, $max) => mb_substr(trim(is_string($_GET[$k] ?? null) ? $_GET[$k] : ''), 0, $max);
+$pre = [
+    'asunto' => $q('asunto', 200),
+    'pregunta' => $q('pregunta', 5000),
+];
 ?>
 <div class="page-header">
     <div>
@@ -34,14 +40,14 @@ $e = $editar;
     <h3><?php echo $e ? 'Editar ' . s($e['numero']) : 'Nuevo RFI'; ?></h3>
     <div class="co-campos">
         <?php if (!$e): ?><label>Número<input type="text" name="numero" maxlength="30" value="<?php echo s($numero); ?>"></label><?php endif; ?>
-        <label class="co-ancho">Asunto<input type="text" name="asunto" maxlength="200" value="<?php echo s($e['asunto'] ?? ''); ?>" required></label>
+        <label class="co-ancho">Asunto<input type="text" name="asunto" maxlength="200" value="<?php echo s($e['asunto'] ?? $pre['asunto']); ?>" required></label>
         <label>Responsable de contestar<input type="text" name="responsable" maxlength="150" value="<?php echo s($e['responsable'] ?? ''); ?>" placeholder="Arquitecto, supervisor, cliente…"></label>
         <label>Fecha<input type="date" name="fecha" value="<?php echo s($e['fecha'] ?? date('Y-m-d')); ?>"></label>
         <label>Fecha límite<input type="date" name="fecha_limite" value="<?php echo s($e['fecha_limite'] ?? ''); ?>"></label>
         <label>Prioridad<select name="prioridad"><?php foreach (Rfi::PRIORIDADES as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo ($e['prioridad'] ?? 'media') === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option><?php endforeach; ?></select></label>
         <label>Estado<select name="estado"><?php foreach (Rfi::ESTADOS as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo ($e['estado'] ?? 'abierto') === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option><?php endforeach; ?></select></label>
         <label class="co-ancho">Actividad que bloquea<select name="actividad_id"><option value="0">— Ninguna —</option><?php echo opciones_actividades($actividades, $e['actividad_id'] ?? null); ?></select></label>
-        <label class="co-ancho">Pregunta<textarea name="pregunta" rows="3" maxlength="5000"><?php echo s($e['pregunta'] ?? ''); ?></textarea></label>
+        <label class="co-ancho">Pregunta<textarea name="pregunta" rows="3" maxlength="5000"><?php echo s($e['pregunta'] ?? $pre['pregunta']); ?></textarea></label>
         <label class="co-ancho">Respuesta<textarea name="respuesta" rows="3" maxlength="5000"><?php echo s($e['respuesta'] ?? ''); ?></textarea></label>
         <div class="co-ancho">
             <label for="laminas">Láminas del Editor <span class="text-muted">(opcional)</span></label>

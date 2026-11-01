@@ -164,6 +164,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <button type="button" id="ve-undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><?php echo $svg($ic['undo']); ?></button>
         <button type="button" id="ve-redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><?php echo $svg($ic['redo']); ?></button>
         <button type="button" id="ve-fit" title="Encuadrar plano" aria-label="Encuadrar plano"><?php echo $svg($ic['fit']); ?></button>
+        <button type="button" id="ve-enfocar" title="Enfocar la selección (Mayús + 2); sin selección, encuadra todo" aria-label="Enfocar la selección"><?php echo $svg('<circle cx="12" cy="12" r="5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'); ?></button>
         <label class="ve-mini" title="Guarda solo, unos segundos después de tu último cambio"><input type="checkbox" id="t-auto" checked> Autoguardar</label>
         <span class="text-sm text-muted" id="ve-zoom"></span>
         <span class="text-sm text-muted" id="ve-contador"></span>
@@ -184,17 +185,17 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         bar.querySelectorAll('[data-pan]').forEach(function (g) { g.hidden = g.dataset.pan !== p; });
     }
     // La barra conserva el alto de la pestaña más alta: así el lienzo no salta al cambiar de pestaña.
+    // En pantallas estrechas NO: los grupos se envuelven, el alto máximo se come el lienzo y el
+    // lienzo se quedaba en una franja. Ahí manda solo la pestaña activa.
     function medir() {
         var activo = (document.querySelector('#ve-pestanas [data-pest].activo') || {}).dataset;
         activo = activo && activo.pest ? activo.pest : 'dibujo';
+        aplicar(activo);
         bar.style.minHeight = '0px';
-        var alto = 0;
-        botones.forEach(function (b) {
-            bar.querySelectorAll('[data-pan]').forEach(function (g) { g.hidden = g.dataset.pan !== b.dataset.pest; });
-            alto = Math.max(alto, bar.getBoundingClientRect().height);
-        });
-        aplicar(activo);   // medir no debe dejar visibles los grupos de la última pestaña probada
+        if (window.matchMedia('(max-width: 64rem)').matches) { bar.style.minHeight = ''; return; }
+        var alto = bar.getBoundingClientRect().height;
         bar.style.minHeight = Math.ceil(alto) + 'px';
+        aplicar(activo);
     }
     document.querySelectorAll('#ve-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { aplicar(b.dataset.pest); try { localStorage.setItem(ls, b.dataset.pest); } catch (e) { /* sin almacenamiento */ } }); });
     var g = 'dibujo'; try { g = localStorage.getItem(ls) || 'dibujo'; } catch (e) { /* idem */ }
@@ -226,7 +227,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     <div class="ve-tab-panel" data-panel="props">
     <aside id="ve-props" class="card ve-props">
         <h4>Propiedades</h4>
-        <p class="ve-vacio text-muted text-sm">Selecciona una marca para editarla. Rueda del mouse = zoom; arrastra el fondo para desplazar el plano. Mayús al dibujar líneas = recta. Polilínea: doble clic o Enter para terminar. Las imágenes se redimensionan con las esquinas.</p>
+        <p class="ve-vacio text-muted text-sm">Selecciona una marca para editarla. Rueda del mouse = zoom (en tablet o celular, pellizca con dos dedos y arrastra con dos dedos para desplazarte); arrastra el fondo para desplazar el plano. Mayús al dibujar líneas = recta. Polilínea: doble clic o Enter para terminar. Las imágenes se redimensionan con las esquinas.</p>
         <div class="ve-campos" style="display:none">
             <div class="ve-f"><label>Color de línea</label><input type="color" id="p-stroke"></div>
             <div class="ve-f"><label>Relleno / color</label><input type="color" id="p-fill"></div>
@@ -328,7 +329,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         </div>
         <h4 style="margin-top:1.6rem">Comentarios <small class="text-muted" id="ve-coment-n"></small></h4>
         <ul id="ve-coment-lista" class="ve-coment-lista"></ul>
-        <p class="text-muted text-sm" style="margin-top:1.2rem">Atajos: Supr borrar · Ctrl+C / V copiar y pegar · Ctrl+D duplicar · Ctrl+Z / Y deshacer y rehacer · Ctrl+S guardar · flechas mueven (Mayús = 10 px).</p>
+        <p class="text-muted text-sm" style="margin-top:1.2rem">Atajos: Supr borrar · Ctrl+C / V copiar y pegar · Ctrl+D duplicar · Ctrl+Z / Y deshacer y rehacer · Ctrl+S guardar · flechas mueven (Mayús = 10 px) · <kbd>Espacio</kbd> + arrastrar desplaza · <kbd>Mayús</kbd> + <kbd>2</kbd> enfoca la selección.</p>
     </aside>
     </div>
     <div class="ve-tab-panel" data-panel="alinear" hidden>
@@ -396,7 +397,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         </div>
         <div id="sim-punch-caja">
             <h5>Punch list</h5>
-            <div class="ve-btns" style="margin-bottom:1rem"><button type="button" class="btn btn-sm btn-ghost" id="sim-punch" title="Inserta los pendientes del módulo Punch list como tabla; eliges qué columnas y qué pendientes ver"><i class="fa-solid fa-clipboard-check"></i> Insertar tabla de Punch list…</button></div>
+            <div class="ve-btns" style="margin-bottom:1rem"><button type="button" class="btn btn-sm btn-ghost" id="sim-punch" title="Inserta los pendientes del módulo Punch list como tabla; eliges qué columnas y qué pendientes ver"><i class="fa-solid fa-screwdriver-wrench"></i> Insertar tabla de Punch list…</button></div>
             <div id="sim-punch-cfg" class="ve-f" hidden>
                 <label>Qué ver</label>
                 <div id="sim-punch-cols"></div>

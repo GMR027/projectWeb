@@ -40,3 +40,6 @@ En `/lastplanner` el gestor elige «Plantilla del post-it»: *Clásica* o una es
 ## Experiencia de uso (2026-10-25)
 - **Plantillas con vista previa**: en `views/simbolos/index.php` cada plantilla de `Estampas::plantillas()` se dibuja en el servidor (`Estampas::limpiarConfig` + `render` con un `EstampaContexto` y `unidad('px', 1.3)`) como tarjeta `.est-plantilla`; el clic sigue siendo `data-est="plantilla"`.
 - **«Probar en una lámina»**: cada estampa guardada lleva el botón (solo si hay láminas); el modal lista las del proyecto y abre `/vplan/ver?…&diseno=1&insertar=estampa:ID`. `vplan-diseno.js` lee `insertar`, abre la pestaña Insertar y pulsa la ficha (`[data-estampa]`): se coloca, se selecciona y queda sucio, sin endpoint nuevo.
+
+## Gestos en el lienzo de la estampa (2026-10-31)
+`public/vendor/estampas-editor.js` monta `GestosLienzo` sobre `.est-lz-marco` (una sola vez por marco, con un `WeakSet`): pellizco de dos dedos con `cambiarZoom(z, cx, cy)` —el mismo que la rueda, que ancla el punto bajo los dedos— y doble toque para volver a «ajustar». El zoom sigue viviendo en `zoomL`/`zoomMan` y se aplica con `style.zoom` a `#est-lz`. `views/simbolos/index.php` carga `gestos-lienzo.js` antes del motor y `_simbolos.scss` pone `touch-action: pan-x pan-y` en el marco (un dedo desplaza, dos hacen zoom).

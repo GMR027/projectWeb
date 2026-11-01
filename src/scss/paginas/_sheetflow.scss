@@ -81,3 +81,45 @@
   .sf-area .sf-scroll { max-height: 70vh; }
   .sf-grid { font-size: 1.2rem; th, td { min-width: 8rem; } }
 }
+
+// ============================================================
+// Cinta compacta (tablet y ventanas estrechas), como OnlyOffice / LibreOffice:
+// una fila de pestañas y otra de herramientas que se desliza en horizontal.
+// ============================================================
+@media (max-width: 110rem) {
+  .cinta-cab { margin-top: .6rem; }
+  // Datos de la tabla: una sola fila compacta.
+  .rd-datos { gap: .4rem .8rem; margin-bottom: .6rem; padding: .6rem .8rem;
+    label { flex: 1 1 12rem; gap: .2rem; font-size: 1.05rem; }
+    input { height: 3.2rem; padding: .3rem .5rem; font-size: 1.2rem; } }
+
+  .sf-pestanas { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+    button { flex: 0 0 auto; padding: .6rem 1.1rem; white-space: nowrap; } }
+  .sf-barra { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+    gap: .3rem .8rem; padding: .4rem .6rem; margin: .6rem 0; }
+  .sf-barra .sf-panel { flex: 0 0 auto; flex-wrap: nowrap; width: auto; gap: .3rem .8rem; }
+  .sf-barra .sf-grupo { flex: 0 0 auto; flex-wrap: nowrap; gap: .2rem; padding-right: .9rem; }
+  .sf-barra .sf-b { height: 3.4rem; }
+  .sf-barra input[type=number] { height: 3.4rem; }
+  .sf-barra select { max-width: 11rem; height: 3.4rem; }
+}
+
+// Plegar la cinta: solo las pestañas. Se recuerda en el navegador.
+@media (min-width: 44.01rem) {
+  body.sf-cinta-cerrada .sf-barra { display: none; }
+}
+
+body.sf-tactil {
+  .sf-scroll { touch-action: pan-x pan-y; }   // el pellizco lo maneja gestos-lienzo.js
+  .sf-area .sf-scroll { max-height: calc(100dvh - 28rem); }
+  // Edición en la propia celda (tablet): campo cómodo con el dedo, letra legible y margen
+  // para que el teclado en pantalla no la tape al abrirse.
+  .sf-input { min-height: 3.6rem; font-size: max(1.6rem, 1em); scroll-margin: 30vh 0; }
+}
+
+// Editor de celda en hoja inferior
+.sf-celda-hoja { display: flex; flex-direction: column; gap: .6rem;
+  .sf-celda-ref { margin: 0; font-family: 'Fira Code', monospace; font-size: 1.2rem; color: var(--text-muted); }
+  .sf-celda-input { width: 100%; box-sizing: border-box; padding: 1.2rem 1.4rem; border: 2px solid var(--primary); border-radius: .8rem;
+    background: var(--bg-secondary); color: var(--text); font-family: 'Fira Code', monospace; font-size: 1.8rem; }
+  p { margin: 0; } }

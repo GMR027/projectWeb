@@ -334,7 +334,7 @@ class ApiRest
         $severidad = self::getTexto('severidad');
         if (isset(Punch::SEVERIDADES[$severidad])) $w[] = "severidad = '" . self::esc($severidad) . "'";
         self::lista('punch_items', implode(' AND ', $w), "FIELD(estado,'abierto','en_proceso','corregido','cerrado','rechazado'), FIELD(severidad,'critica','alta','media','baja'), id DESC",
-            'id, titulo, descripcion, ubicacion, categoria, severidad, estado, responsable, contratista, fecha_limite, actividad_id, origen, creado', [], fn($f) => self::enteros($f, ['id', 'actividad_id']));
+            'id, titulo, descripcion, ubicacion, categoria, severidad, estado, responsable, contratista, fecha_emision, fecha_limite, actividad_id, origen, creado', [], fn($f) => self::enteros($f, ['id', 'actividad_id']));
     }
 
     private static function punchCrear(int $id): never

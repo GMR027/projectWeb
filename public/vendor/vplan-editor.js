@@ -24,7 +24,11 @@
   let capaActiva = null;
   let stage, layer, matLayer, trLayer, tr, bg, nodes = {};
   let sw = 4, seq = 1, sucio = false;
+  let suprimirPanel = false;   // el menú contextual elige la marca sin abrir la hoja de propiedades
   const imgCache = {};
+  // En pantallas táctiles las anclas y los objetivos de golpe crecen: con 10 px no se acierta con el dedo.
+  const TACTIL = (navigator.maxTouchPoints || 0) > 0
+    || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
   // Estilo del texto: negrita, cursiva, subrayado y tachado (también en tablas); `neg` fuerza negrita (encabezados)
   const famDe = d => d.fontFamily || 'Arial';
@@ -746,6 +750,9 @@
   // ---------- texto: textarea superpuesto ----------
   function editarTexto(id) {
     const n = nodes[id], d = state.shapes.find(s => s.id === id); if (!n || !d) return;
+    // En táctil, el textarea flotante queda debajo del teclado y con la letra del zoom: se edita en la
+    // hoja inferior, con un campo del tamaño normal.
+    if (TACTIL && window.HojaInferior) { editarTextoEnHoja(id, d); return; }
     const ta = document.createElement('textarea');
     const pos = n.getAbsolutePosition(), box = stage.container().getBoundingClientRect(), sc = stage.scaleX();
     Object.assign(ta.style, { position: 'fixed', left: box.left + pos.x + 'px', top: box.top + pos.y + 'px', fontSize: d.fontSize * sc + 'px', ...cssTexto(d), textAlign: d.align || 'left', lineHeight: 1.2,
@@ -761,8 +768,50 @@
   }
 
   // ---------- tabla: editar el texto de una celda (Tab / Mayús+Tab pasan a la siguiente / anterior) ----------
+  // ---------- texto y celdas: edición en hoja inferior (táctil) ----------
+  function editarTextoEnHoja(id, d) {
+    const hoja = window.HojaInferior.crear('ve-texto');
+    const ta = document.createElement('textarea');
+    ta.className = 've-hoja-campo'; ta.value = d.text || ''; ta.rows = 5; ta.maxLength = 5000; ta.setAttribute('aria-label', 'Texto');
+    const caja = document.createElement('div'); caja.appendChild(ta);
+    hoja.abrir({
+      titulo: 'Editar texto', nodo: caja, posicion: 'media',
+      acciones: [
+        { texto: 'Cancelar', clase: 'btn-ghost', alHacer: (e, i) => i.cerrar() },
+        { texto: 'Aplicar', icono: 'fa-check', alHacer: (e, i) => { const v = ta.value; i.cerrar(); if (v.trim() !== '' && v !== d.text) actualizar(id, { text: v }); } },
+      ],
+    });
+    setTimeout(() => { ta.focus(); ta.select(); }, 140);
+  }
+
+  function editarCeldaEnHoja(id, r, c) {
+    const d = forma(id); if (!d) return;
+    const antes = (d.cells && d.cells[r] && d.cells[r][c]) || '';
+    const hoja = window.HojaInferior.crear('ve-celda');
+    const ta = document.createElement('textarea');
+    ta.className = 've-hoja-campo'; ta.value = antes; ta.rows = 3; ta.maxLength = 2000;
+    ta.setAttribute('aria-label', 'Texto de la celda');
+    const caja = document.createElement('div'); caja.appendChild(ta);
+    hoja.abrir({
+      titulo: 'Fila ' + (r + 1) + ' · columna ' + (c + 1), nodo: caja, posicion: 'peek',
+      acciones: [
+        { texto: 'Cancelar', clase: 'btn-ghost', alHacer: (e, i) => i.cerrar() },
+        { texto: 'Aplicar', icono: 'fa-check', alHacer: (e, i) => {
+          const v = ta.value; i.cerrar();
+          if (v === antes) return;
+          const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === id);
+          if (!t.cells) t.cells = [];
+          if (!t.cells[r]) t.cells[r] = [];
+          t.cells[r][c] = v; ajustarFilas(t); commit(nuevas);
+        } },
+      ],
+    });
+    setTimeout(() => { ta.focus(); ta.select(); }, 140);
+  }
+
   function editarCelda(id, r, c) {
     const n = nodes[id], d = state.shapes.find(s => s.id === id); if (!n || !d || d.type !== 'table') return;
+    if (TACTIL && window.HojaInferior) { editarCeldaEnHoja(id, r, c); return; }
     const g = geomTabla(d), p0 = n.getAbsoluteTransform().point({ x: suma(g.cw, c), y: suma(g.rh, r) });
     const box = stage.container().getBoundingClientRect(), sc = stage.scaleX() * (n.scaleX() || 1), enc = d.header && r === 0;
     const ta = document.createElement('textarea'), antes = (d.cells && d.cells[r] && d.cells[r][c]) || '';
@@ -873,8 +922,7 @@
     $('#p-act').value = d.actividad_id || '';
     const esMat = !!(d.material && Array.isArray(d.material.items));
     mostrar('#p-act', !['restr', 'image', 'table', 'link'].includes(d.type) && !C.modo && !esMat);   // en materiales se usa la lista múltiple
-    document.dispatchEvent(new CustomEvent('vplan:panel', { detail: { id: d.id } }));
-  }
+    if (!suprimirPanel) document.dispatchEvent(new CustomEvent('vplan:panel', { detail: { id: d.id } }));  }
   function enlazarPanel() {
     const cur = () => state.shapes.find(s => s.id === state.selId);
     const num = (v, lo, hi, def) => Math.min(hi, Math.max(lo, Number.isFinite(+v) && v !== '' ? +v : def));
@@ -1098,6 +1146,15 @@
 
   // ---------- herramientas de dibujo ----------
   let dibujando = null, panning = null, poli = null;
+  let espacio = false;   // con la barra espaciadora pulsada, se arrastra para desplazar el lienzo con cualquier herramienta
+  // Un segundo dedo cancela el trazo en curso: a partir de ahí el gesto mueve y acerca el lienzo.
+  function cancelarGesto() {
+    panning = null;
+    if (marco) { marco.r.destroy(); marco = null; trLayer.batchDraw(); }
+    if (poli) { poli.nodo.destroy(); poli = null; }
+    if (dibujando) { dibujando.nodo.destroy(); dibujando = null; }
+    layer.batchDraw();
+  }
   const posRel = (crudo) => { const p = layer.getAbsoluteTransform().copy().invert().point(stage.getPointerPosition()); return crudo ? p : ajustar(p); };   // con el imán activo, a la cuadrícula
   const orto = () => $('#t-orto').checked;
   const ortoDelta = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? [dx, 0] : [0, dy];   // solo horizontal o vertical
@@ -1149,6 +1206,8 @@
 
   function configurarEventos() {
     stage.on('mousedown touchstart', e => {
+      if (e.evt.touches && e.evt.touches.length > 1) { cancelarGesto(); return; }   // dos dedos: navegar, no dibujar
+      if (espacio && e.evt.button === 0) { panning = { x: e.evt.clientX, y: e.evt.clientY, sx: stage.x(), sy: stage.y() }; return; }
       const esFondo = e.target === stage || e.target === bg;
       if (modoSel()) {
         if (!esFondo) return;
@@ -1190,6 +1249,7 @@
       dibujando = { d, p0: p, nodo: crearNodo(d) }; layer.add(dibujando.nodo);
     });
     stage.on('mousemove touchmove', e => {
+      if (e.evt.touches && e.evt.touches.length > 1) { cancelarGesto(); return; }   // en pleno pellizco no se dibuja
       marcarPuntero();
       if (marco) { const p = posRel(true); marco.r.setAttrs({ x: Math.min(marco.x0, p.x), y: Math.min(marco.y0, p.y), width: Math.abs(p.x - marco.x0), height: Math.abs(p.y - marco.y0) }); trLayer.batchDraw(); return; }
       if (panning) { stage.position({ x: panning.sx + e.evt.clientX - panning.x, y: panning.sy + e.evt.clientY - panning.y }); refrescarVista(); return; }
@@ -1216,7 +1276,8 @@
     });
     // Mouse y toque terminan igual el gesto. Antes solo se escuchaba «mouseup»: en el celular
     // el trazo se quedaba a medias y no se guardaba nada.
-    const terminarGesto = () => {
+    const terminarGesto = e => {
+      if (e && e.touches && e.touches.length > 0) return;   // queda otro dedo: el gesto no ha terminado
       panning = null;
       if (marco) {   // elige lo que toca el recuadro
         const { r, base } = marco, a = r.getClientRect({ relativeTo: layer }); marco = null; r.destroy(); trLayer.batchDraw();
@@ -1243,6 +1304,7 @@
     window.addEventListener('touchcancel', terminarGesto);
     stage.on('dblclick dbltap', () => { if (state.tool === 'poly' || state.tool === 'polygon') finalizarPoli(); });
     stage.on('click tap', e => {
+      if (Date.now() - finGesto < 350) return;   // el pellizco acaba en «tap»: no debe poner un texto o un pin
       if (!['text', 'textbox', 'restr', 'pin'].includes(state.tool)) return;
       if (!capaOk()) return;
       const p = posRel();
@@ -1357,6 +1419,166 @@
     refrescarVista();
   }
 
+  // ---------- gestos táctiles: pellizco, dos dedos y doble toque ----------
+  // El punto que queda bajo los dedos se conserva: al empezar se guarda su posición dentro del lienzo
+  // y en cada movimiento se recoloca el stage con la escala nueva.
+  let gestoLienzo = null;
+  let finGesto = 0;   // se usa para no convertir el final de un pellizco en un clic que cree una marca
+
+  function montarGestos() {
+    if (!window.GestosLienzo) return;
+    const caja = stage.container();
+    window.GestosLienzo.montar(caja, {
+      zoomActual: () => stage.scaleX(),
+      min: 0.05, max: 8,
+      alInicio: ({ cx, cy }) => {
+        // Si el primer dedo ya había empezado a mover o estirar una marca, se cancela: manda el gesto.
+        if (stage.isDragging && stage.isDragging()) stage.stopDrag();
+        if (tr && tr.isTransforming && tr.isTransforming()) render();
+        cancelarGesto();
+        finGesto = Date.now();
+        const r = caja.getBoundingClientRect(), z = stage.scaleX(), p = stage.position();
+        gestoLienzo = { x: (cx - r.left - p.x) / z, y: (cy - r.top - p.y) / z };
+        caja.classList.add('ve-gesto');
+      },
+      alMover: ({ z, cx, cy }) => {
+        if (!gestoLienzo) return;
+        const r = caja.getBoundingClientRect();
+        stage.scale({ x: z, y: z });
+        stage.position({ x: cx - r.left - gestoLienzo.x * z, y: cy - r.top - gestoLienzo.y * z });
+        $('#ve-zoom').textContent = Math.round(z * 100) + '%';
+        refrescarVista();
+      },
+      alFin: () => { gestoLienzo = null; finGesto = Date.now(); caja.classList.remove('ve-gesto'); programarOverlays(); },
+      alDobleToque: (cx, cy) => {
+        if (!modoSel()) return;
+        // Sobre una marca el doble toque abre su texto (Konva); el zoom del lienzo es para el fondo.
+        const r = caja.getBoundingClientRect();
+        const n = stage.getIntersection({ x: cx - r.left, y: cy - r.top });
+        if (n && n.id()) return;
+        zoomEnPunto(cx, cy);
+      },
+    });
+  }
+
+  function zoomEnPunto(cx, cy) {
+    const caja = stage.container(), r = caja.getBoundingClientRect();
+    const z0 = stage.scaleX(), p = stage.position();
+    const R = reglasOn() ? REGLA : 0, w = caja.clientWidth, h = caja.clientHeight;
+    const k = Math.min((w - R - 16) / state.W, (h - R - 16) / state.H);
+    if (z0 > k * 1.3) { encuadrar(); return; }   // ya está acercado: el doble toque vuelve a encuadrar
+    const z = Math.min(8, Math.max(z0 * 2, 0.5));
+    const punto = { x: (cx - r.left - p.x) / z0, y: (cy - r.top - p.y) / z0 };
+    stage.scale({ x: z, y: z });
+    stage.position({ x: cx - r.left - punto.x * z, y: cy - r.top - punto.y * z });
+    $('#ve-zoom').textContent = Math.round(z * 100) + '%';
+    refrescarVista(); programarOverlays();
+  }
+
+  // Enfocar la selección (o todo el dibujo si no hay nada elegido), como Shift+2 en Figma
+  function enfocarSeleccion() {
+    const ids = state.sel && state.sel.length ? state.sel : (state.selId ? [state.selId] : []);
+    const caja = stage.container(), R = reglasOn() ? REGLA : 0;
+    const w = caja.clientWidth, h = caja.clientHeight;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    ids.forEach(id => {
+      const n = nodes[id]; if (!n) return;
+      const r = n.getClientRect({ relativeTo: layer });
+      x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.width); y1 = Math.max(y1, r.y + r.height);
+    });
+    if (!isFinite(x0) || x1 - x0 < 1 || y1 - y0 < 1) { encuadrar(); return; }
+    const ancho = x1 - x0, alto = y1 - y0, margen = 40;
+    const k = Math.min(8, Math.max(0.05, Math.min((w - R - margen) / ancho, (h - R - margen) / alto)));
+    stage.scale({ x: k, y: k });
+    stage.position({ x: R + (w - R) / 2 - (x0 + ancho / 2) * k, y: R + (h - R) / 2 - (y0 + alto / 2) * k });
+    $('#ve-zoom').textContent = Math.round(k * 100) + '%';
+    refrescarVista(); programarOverlays();
+  }
+
+  // ---------- menú contextual: pulsación larga (dedo/lápiz) o clic derecho ----------
+  // Da las acciones de la marca elegida sin recorrer el panel; siempre hay además la hoja de
+  // propiedades, así que el gesto no es la única puerta (regla de los menús contextuales).
+  function iniciarMenuContexto() {
+    const caja = stage.container();
+    caja.style.webkitTouchCallout = 'none';
+    let menu = null, temporizador = null, inicio = null, movido = false;
+
+    const cerrar = () => {
+      clearTimeout(temporizador); temporizador = null;
+      if (menu) { menu.remove(); menu = null; }
+    };
+    window.addEventListener('scroll', cerrar, { passive: true });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+    document.addEventListener('pointerdown', e => { if (menu && !menu.contains(e.target)) cerrar(); }, true);
+
+    function abrir(x, y, id) {
+      const d = forma(id); if (!d) return;
+      suprimirPanel = true;
+      select(id);
+      suprimirPanel = false;
+      const items = [
+        ['dup', 'fa-copy', 'Duplicar'],
+        ['frente', 'fa-arrow-up-from-bracket', 'Al frente'],
+        ['fondo', 'fa-arrow-down-short-wide', 'Al fondo'],
+        ['texto', 'fa-font', 'Editar texto'],
+        ['coment', 'fa-comment', 'Comentario'],
+        ['del', 'fa-trash-can', 'Borrar'],
+      ].filter(([k]) => k !== 'texto' || d.type === 'text');
+      menu = document.createElement('div');
+      menu.className = 've-menu-ctx no-print';
+      menu.setAttribute('role', 'menu');
+      menu.innerHTML = items.map(([k, ic, t]) => '<button type="button" role="menuitem" data-m="' + k + '"' + (k === 'del' ? ' class="peligro"' : '') + '><i class="fa-solid ' + ic + '"></i>' + t + '</button>').join('');
+      if (window.CapaSuperior) CapaSuperior.adoptar(menu); else document.body.appendChild(menu);
+      const r = menu.getBoundingClientRect();
+      menu.style.left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8)) + 'px';
+      menu.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
+      menu.addEventListener('click', e => {
+        const b = e.target.closest('[data-m]'); if (!b) return;
+        const k = b.dataset.m; cerrar();
+        if (k === 'dup') $('#b-dup').click();
+        else if (k === 'frente') $('#b-front').click();
+        else if (k === 'fondo') $('#b-back').click();
+        else if (k === 'texto') editarTexto(id);
+        else if (k === 'coment') {
+          document.dispatchEvent(new CustomEvent('vplan:panel', { detail: { id: id } }));
+          const t = $('#p-coment');
+          if (t) setTimeout(() => { t.focus(); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 280);
+        } else if (k === 'del') $('#b-del').click();
+      });
+    }
+
+    const cancelar = () => { clearTimeout(temporizador); temporizador = null; inicio = null; };
+    caja.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || !modoSel()) return;
+      cerrar();
+      if (e.pointerType === 'touch' && !e.isPrimary) { cancelar(); return; }   // dedo 2: es un gesto, no un menú
+      if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+      inicio = { x: e.clientX, y: e.clientY }; movido = false;
+      temporizador = setTimeout(() => {
+        temporizador = null;
+        if (movido || !inicio) return;
+        const r = caja.getBoundingClientRect();
+        const n = stage.getIntersection({ x: inicio.x - r.left, y: inicio.y - r.top });
+        const id = n && n.id();
+        if (id && forma(id)) abrir(inicio.x, inicio.y, id);
+      }, 550);
+    });
+    caja.addEventListener('pointermove', e => {
+      if (!inicio) return;
+      if (Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y) > 10) { movido = true; cancelar(); }
+    });
+    ['pointerup', 'pointercancel'].forEach(ev => caja.addEventListener(ev, cancelar));
+
+    caja.addEventListener('contextmenu', e => {
+      if (!modoSel()) return;
+      e.preventDefault();
+      const r = caja.getBoundingClientRect();
+      const n = stage.getIntersection({ x: e.clientX - r.left, y: e.clientY - r.top });
+      const id = n && n.id();
+      if (id && forma(id)) abrir(e.clientX, e.clientY, id);
+    });
+  }
+
   // ---------- cuadrícula, imán y reglas ----------
   const REGLA = 22;
   let glayer = null, ptr = null;
@@ -1433,6 +1655,26 @@
     $('#t-grid-n').addEventListener('input', refrescarVista);
     $('#t-unidad').addEventListener('change', e => { if (state.escala) commit(undefined, undefined, { ...state.escala, unit: e.target.value }); });
     $('#ve-escala-x').addEventListener('click', () => { if (state.escala) commit(undefined, undefined, null); });
+    const be = $('#ve-enfocar'); if (be) be.addEventListener('click', enfocarSeleccion);
+    // Enfocar la selección con Mayús + 2 (en distribuciones donde 2 con Mayús es «@», también)
+    document.addEventListener('keydown', e => {
+      const t = (document.activeElement || {}).tagName || '';
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
+      if (e.shiftKey && (e.key === '2' || e.key === '@')) { e.preventDefault(); enfocarSeleccion(); }
+    });
+    // Barra espaciadora: pan con el botón izquierdo, aunque haya una herramienta de dibujo activa
+    document.addEventListener('keydown', e => {
+      if (e.code !== 'Space' || e.repeat) return;
+      const t = (document.activeElement || {}).tagName || '';
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
+      if (document.querySelector('.modal-overlay.abierto')) return;
+      e.preventDefault(); espacio = true; stage.container().style.cursor = 'grab';
+    });
+    document.addEventListener('keyup', e => {
+      if (e.code !== 'Space') return;
+      espacio = false; stage.container().style.cursor = modoSel() ? 'default' : 'crosshair';
+    });
+    window.addEventListener('blur', () => { espacio = false; });
     window.addEventListener('mouseleave', () => { ptr = null; dibujarReglas(); });
   }
   // Marcador «Editar gráfico»: aparece al acercar el puntero a la esquina superior izquierda de un gráfico del Editor colocado en el plano
@@ -1779,7 +2021,9 @@
     const ul = $('#ve-lam-lista'); if (!ul || !state.slides) return;
     ul.innerHTML = state.slides.map((sl, i) => '<li class="ve-lam' + (i === state.idx ? ' activa' : '') + '" data-i="' + i + '" draggable="true" title="Clic: abrir · doble clic en el nombre: renombrar · arrastra para reordenar">' +
       '<span class="ve-lam-n">' + (i + 1) + '</span>' + (sl.thumb ? '<img src="' + esc(sl.thumb) + '" alt="">' : '<span class="ve-lam-vacia"></span>') +
-      '<span class="ve-lam-nombre">' + esc(nombreLamina(sl, i)) + '</span>' + (sl.dirty ? '<span class="ve-lam-pend" title="Con cambios sin guardar">●</span>' : '') + '</li>').join('');
+      '<span class="ve-lam-nombre">' + esc(nombreLamina(sl, i)) + '</span>' + (sl.dirty ? '<span class="ve-lam-pend" title="Con cambios sin guardar">●</span>' : '') +
+      '<span class="ve-lam-acc"><button type="button" class="ve-cb" data-op="sube" title="Subir lámina" aria-label="Subir lámina"' + (i === 0 ? ' disabled' : '') + '>' + ico(IC.sube) + '</button>' +
+      '<button type="button" class="ve-cb" data-op="baja" title="Bajar lámina" aria-label="Bajar lámina"' + (i === state.slides.length - 1 ? ' disabled' : '') + '>' + ico(IC.baja) + '</button></span></li>').join('');
     $('#ve-lam-del').disabled = state.slides.length < 2;
     const n = $('#ve-lam-total'); if (n) n.textContent = state.slides.length + ' lámina(s)';
     const ex = $('#ex-alcance-campo'); if (ex) ex.hidden = state.slides.length < 2;
@@ -1822,10 +2066,25 @@
     inp.addEventListener('blur', () => fin(true));
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') fin(true); if (e.key === 'Escape') fin(false); e.stopPropagation(); });
   }
+  async function moverLamina(i, dir) {
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= state.slides.length) return;
+    volcarActiva(); const activa = laminaAct().id;
+    const [x] = state.slides.splice(i, 1); state.slides.splice(j, 0, x);
+    state.idx = state.slides.findIndex(z => z.id === activa); pintarLaminas();
+    const d = await apiLamina({ accion: 'ordenar', orden: state.slides.map(z => z.id).join(',') });
+    if (!d.success) status('Error: ' + (d.error || 'no se pudo reordenar'));
+  }
   function enlazarLaminas() {
     const ul = $('#ve-lam-lista'); if (!ul) return;
     $('#ve-lam-nueva').addEventListener('click', nuevaLamina); $('#ve-lam-dup').addEventListener('click', duplicarLamina); $('#ve-lam-del').addEventListener('click', eliminarLamina);
-    ul.addEventListener('click', e => { const li = e.target.closest('.ve-lam'); if (li && !e.target.closest('input')) irALamina(+li.dataset.i); });
+    ul.addEventListener('click', e => {
+      // En táctil se reordena con las flechas (el arrastre HTML5 no funciona con el dedo).
+      const b = e.target.closest('[data-op]');
+      if (b) { const li = b.closest('.ve-lam'); if (li && !b.disabled) moverLamina(+li.dataset.i, b.dataset.op === 'sube' ? -1 : 1); return; }
+      const li = e.target.closest('.ve-lam');
+      if (li && !e.target.closest('input')) irALamina(+li.dataset.i);
+    });
     ul.addEventListener('dblclick', e => { const sp = e.target.closest('.ve-lam-nombre'); if (sp) renombrarLamina(+sp.closest('.ve-lam').dataset.i); });
     let origen = null;
     ul.addEventListener('dragstart', e => { const li = e.target.closest('.ve-lam'); if (!li) return; origen = +li.dataset.i; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(origen)); } catch (_) {} });
@@ -2174,7 +2433,32 @@
     const area = document.getElementById('ve-area'), lat = document.querySelector('.ve-lateral');
     const tgl = document.getElementById('ve-panel-tgl'), abrir = document.getElementById('ve-panel-abrir');
     if (!area || !lat) return;
+
+    // En táctil el panel va en hoja inferior (y en celular la barra de herramientas también): el lienzo
+    // se queda con toda la pantalla y las propiedades no quedan debajo, fuera de la vista.
+    const tactil = !!(window.GestosLienzo && GestosLienzo.esTactil() && window.HojaInferior);
+    const enHoja = tactil && window.matchMedia('(max-width: 80rem)').matches;
+    const conDock = tactil && window.matchMedia('(max-width: 64rem)').matches
+      && !document.body.classList.contains('gr-editor-page');
+
+    let hoja = null, dockPanel = null;
+    if (enHoja) {
+      hoja = HojaInferior.crear('ve-panel');
+      lat.classList.add('en-hoja');
+      hoja.cuerpo.appendChild(lat);
+      lat.hidden = false;
+      area.classList.add('ve-sin-lateral');
+      if (tgl) tgl.hidden = true;
+      if (abrir) abrir.hidden = false;   // pestaña flotante para reabrir el panel sin tocar una marca
+    }
+
     const ver = v => {
+      if (enHoja) {
+        if (v) hoja.abrir({ posicion: 'media', enfocar: false, modal: false, alCerrar: () => { if (dockPanel) dockPanel.classList.remove('activo'); } });
+        else hoja.cerrar();
+        if (dockPanel) dockPanel.classList.toggle('activo', !!v);
+        return;
+      }
       const y = window.scrollY;   // ocultar el panel no debe mover la vista
       lat.hidden = !v;
       if (tgl) tgl.hidden = !v;
@@ -2188,10 +2472,88 @@
       });
       setTimeout(volver, 80);
     };
+
+    // El lienzo envía `vplan:panel` al elegir una marca: en táctil se abre la hoja con sus propiedades.
+    if (enHoja) document.addEventListener('vplan:panel', e => { if (e.detail && e.detail.id && !hoja.estaAbierta()) ver(true); });
+
+    function crearDock() {
+      document.body.classList.add('ve-con-dock');
+      const pest = document.getElementById('ve-pestanas'), barra = document.querySelector('.ve-barra-pest');
+      const hojaHerramientas = HojaInferior.crear('ve-tools');
+      if (pest && barra) { barra.style.minHeight = ''; barra.classList.add('en-hoja'); hojaHerramientas.cuerpo.append(pest, barra); }
+
+      const dock = document.createElement('nav');
+      dock.className = 've-dock no-print';
+      dock.setAttribute('aria-label', 'Herramientas del editor');
+      dock.innerHTML = [
+        ['select', 'fa-arrow-pointer', 'Seleccionar'],
+        ['line', 'fa-slash', 'Línea'],
+        ['rect', 'fa-square', 'Forma'],
+        ['text', 'fa-font', 'Texto'],
+        ['guardar', 'fa-floppy-disk', 'Guardar'],
+        ['panel', 'fa-sliders', 'Panel'],
+        ['mas', 'fa-bars', 'Más'],
+      ].map(([k, ic, t]) => '<button type="button" data-dock="' + k + '"' +
+        (['select', 'line', 'rect', 'text'].includes(k) ? ' data-tool="' + k + '"' : '') +
+        ' title="' + t + '" aria-label="' + t + '"><i class="fa-solid ' + ic + '"></i><span>' + t + '</span></button>').join('');
+      if (window.CapaSuperior) CapaSuperior.adoptar(dock); else document.body.appendChild(dock);
+      dock.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+      dockPanel = dock.querySelector('[data-dock=panel]');
+      dock.addEventListener('click', e => {
+        const b = e.target.closest('[data-dock]'); if (!b) return;
+        const k = b.dataset.dock;
+        if (k === 'guardar') $('#ve-guardar').click();
+        else if (k === 'panel') ver(!hoja.estaAbierta());
+        else if (k === 'mas') hojaHerramientas.abrir({ titulo: 'Herramientas', posicion: 'completa', enfocar: false });
+        // select/line/rect/text ya recibieron su listener al crearse el dock (arriba).
+      });
+      setTool(state.tool);
+    }
+
     if (tgl) tgl.addEventListener('click', () => ver(false));
     if (abrir) abrir.addEventListener('click', () => ver(true));
+    if (conDock) crearDock();
+
+    // ---- Divisor del panel (escritorio): se arrastra y se recuerda ----
+    function iniciarSplit() {
+      if (enHoja || !window.matchMedia('(min-width: 64.0625rem) and (pointer: fine)').matches) return;
+      const h = document.createElement('div');
+      h.className = 've-split no-print';
+      h.tabIndex = 0;
+      h.setAttribute('role', 'separator');
+      h.setAttribute('aria-orientation', 'vertical');
+      h.setAttribute('aria-label', 'Ancho del panel del editor');
+      h.title = 'Arrastra para cambiar el ancho del panel (flechas para ajustarlo)';
+      area.appendChild(h);
+      const rem = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 11.2;
+      let ancho = parseInt(localStorage.getItem('ve-panel-w') || '32', 10);
+      if (!isFinite(ancho)) ancho = 32;
+      const poner = v => {
+        ancho = Math.max(26, Math.min(48, Math.round(v * 10) / 10));
+        area.style.setProperty('--ve-panel-w', ancho + 'rem');
+        try { localStorage.setItem('ve-panel-w', String(ancho)); } catch (_) { /* sin almacenamiento */ }
+        requestAnimationFrame(() => { if (window.__vplan && window.__vplan.encuadrar) window.__vplan.encuadrar(); });
+      };
+      poner(ancho);
+      h.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        h.setPointerCapture(e.pointerId);
+        const r = area.getBoundingClientRect();
+        const mover = ev => poner((ev.clientX - r.left) / rem());
+        const fin = () => { h.removeEventListener('pointermove', mover); h.removeEventListener('pointerup', fin); h.removeEventListener('pointercancel', fin); };
+        h.addEventListener('pointermove', mover); h.addEventListener('pointerup', fin); h.addEventListener('pointercancel', fin);
+      });
+      h.addEventListener('keydown', e => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        poner(ancho + (e.key === 'ArrowRight' ? 2 : -2));
+      });
+    }
+    iniciarSplit();
+
     let g = null; try { g = localStorage.getItem('ve-panel'); } catch (_) {}
-    ver(g !== '0');
+    ver(enHoja || conDock ? false : g !== '0');
   }
 
   // ---------- gestor de capas ----------
@@ -2402,7 +2764,8 @@
     layer = new Konva.Layer(); stage.add(layer);
     matLayer = new Konva.Layer(); stage.add(matLayer);   // imágenes y botones de materiales (encima de las marcas, debajo del transformer)
     trLayer = new Konva.Layer(); stage.add(trLayer);
-    tr = new Konva.Transformer({ rotateEnabled: true, rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], borderStroke: '#0070c0', anchorStroke: '#0070c0', anchorSize: 10, keepRatio: false });
+    tr = new Konva.Transformer({ rotateEnabled: true, rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], borderStroke: '#0070c0', anchorStroke: '#0070c0', anchorSize: TACTIL ? 22 : 10, anchorStrokeWidth: TACTIL ? 2 : 1, borderStrokeWidth: TACTIL ? 2 : 1, rotateAnchorOffset: TACTIL ? 58 : 50, keepRatio: false });
+    if (TACTIL && tr.anchorStyleFunc) tr.anchorStyleFunc(a => { a.hitStrokeWidth(36); a.strokeWidth(2); });   // el asa se ve de 22 px pero se acierta en 36
     trLayer.add(tr);
     tr.on('transform', programarOverlays);
     tr.on('transformend', aplicarTransformacion);
@@ -2421,7 +2784,7 @@
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
     $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
     asegurarCapas();
-    configurarEventos(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas();
+    configurarEventos(); montarGestos(); iniciarMenuContexto(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) {

@@ -188,6 +188,20 @@
             zoomL = zoomMan === null ? fit : limita(zoomMan, 0.1, 5);
             lz.style.cssText = 'width:' + W + 'px;height:' + H + 'px;zoom:' + zoomL.toFixed(3);
             const t = $('#est-zoom-txt'); if (t) t.textContent = Math.round(zoomL * 100) + '%';
+            montarGestos(marco);
+        }
+
+        // Pellizco y doble toque en tablet y celular (gestos-lienzo.js), igual que en vPlan y el Editor.
+        const marcosConGestos = new WeakSet();
+        function montarGestos(marco) {
+            if (!marco || marcosConGestos.has(marco) || !window.GestosLienzo || !GestosLienzo.esTactil()) return;
+            marcosConGestos.add(marco);
+            GestosLienzo.montar(marco, {
+                zoomActual: () => zoomL || 1,
+                min: 0.1, max: 5,
+                alMover: g => cambiarZoom(g.z, g.cx, g.cy),
+                alDobleToque: () => cambiarZoom(null),   // volver a «ajustar a la ventana»
+            });
         }
 
         function cambiarZoom(nuevo, cx, cy) {

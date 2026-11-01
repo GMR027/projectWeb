@@ -1169,6 +1169,24 @@
     document.querySelectorAll('#rd-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrarPestana(b.dataset.pest); }); });
     (function () { var p = 'inicio'; try { p = localStorage.getItem('rd-pestana') || 'inicio'; } catch (e) { /* sin almacenamiento */ } if (!document.querySelector('#rd-pestanas [data-pest="' + p + '"]')) p = 'inicio'; mostrarPestana(p); })();
 
+    // ---------- Plegar la cinta (como OnlyOffice): deja solo las pestañas ----------
+    (function () {
+        var b = $('rd-plegar'); if (!b) return;
+        function aplicar(cerrada) {
+            document.body.classList.toggle('rd-cinta-cerrada', cerrada);
+            b.setAttribute('aria-expanded', cerrada ? 'false' : 'true');
+            b.setAttribute('title', cerrada ? 'Mostrar la barra de herramientas' : 'Ocultar la barra de herramientas');
+            b.innerHTML = '<i class="fa-solid fa-chevron-' + (cerrada ? 'down' : 'up') + '" aria-hidden="true"></i>';
+        }
+        var cerrada = false; try { cerrada = localStorage.getItem('rd-cinta') === '0'; } catch (e) { /* sin almacenamiento */ }
+        aplicar(cerrada);
+        b.addEventListener('click', function () {
+            cerrada = !document.body.classList.contains('rd-cinta-cerrada');
+            aplicar(cerrada);
+            try { localStorage.setItem('rd-cinta', cerrada ? '0' : '1'); } catch (e) { /* idem */ }
+        });
+    })();
+
     // ---------- Herramientas adicionales ----------
     function textoSeleccion() { var s = seleccion(); return s && !s.isCollapsed ? s.toString() : ''; }
     function mapearSeleccion(fn) {
@@ -1269,8 +1287,27 @@
     });
     $('rd-h-espacio').addEventListener('change', function () { var v = this.value; this.value = ''; if (v === '') return; aplicarBloques(function (b) { b.style.marginBottom = v + 'pt'; }); });
     $('rd-h-sombra').addEventListener('input', function () { var v = this.value; aplicarBloques(function (b) { b.style.backgroundColor = v.toLowerCase() === '#ffffff' ? '' : v; }); });
-    function ponerEnfoque(v) { document.body.classList.toggle('rd-enfoque', v); $('rd-h-enfoque').classList.toggle('activo', v); }
+    // Modo enfoque: la hoja sola, a pantalla completa de verdad. Se amplía la página (main) para que
+    // las hojas inferiores, los menús y los modales sigan viéndose (ver capa-superior.js).
+    function ponerEnfoque(v) {
+        var escena = document.getElementById('contenido-principal') || document.body;
+        var boton = $('rd-h-enfoque');
+        document.body.classList.toggle('rd-enfoque', v);
+        document.body.classList.toggle('rd-en-ampliado', v);
+        if (boton) { boton.classList.toggle('activo', v); boton.setAttribute('aria-pressed', v ? 'true' : 'false'); }
+        if (v) {
+            if (escena.requestFullscreen && !document.fullscreenElement) escena.requestFullscreen().catch(function () {});
+        } else if (document.fullscreenElement) {
+            document.exitFullscreen().catch(function () {});
+        }
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 120);   // el navegador re-mide la hoja
+    }
     $('rd-h-enfoque').addEventListener('click', function () { ponerEnfoque(!document.body.classList.contains('rd-enfoque')); });
+    var salirEnfoque = $('rd-salir-enfoque');
+    if (salirEnfoque) salirEnfoque.addEventListener('click', function () { ponerEnfoque(false); });
+    document.addEventListener('fullscreenchange', function () {
+        if (!document.fullscreenElement && document.body.classList.contains('rd-enfoque')) ponerEnfoque(false);   // salió con Esc o F11
+    });
     $('rd-h-ancho').addEventListener('click', function () {
         if (!medidas) return;
         var z = Math.max(0.3, Math.min(2, (fondo.clientWidth - 40) / medidas.w)), sel = $('rd-zoom'), op = sel.querySelector('option[data-ajuste]');
@@ -1289,9 +1326,23 @@
         Array.prototype.forEach.call(hoja.children, function (el) { g[Math.min(n - 1, Math.max(0, Math.floor(el.offsetTop / medidas.h)))].push(el); });
         return g;
     }
+    /** Barra de páginas de tablet y celular: flechas arriba/abajo debajo de la hoja */
+    function altoPagina() { return medidas ? medidas.h * zoomActual() : 1; }
+    function totalPaginas() { return Math.max(1, Math.round(parseFloat(hoja.style.minHeight) / (medidas ? medidas.h : 1)) || 1); }
+    function paginaVisible() {
+        var n = totalPaginas();
+        return Math.max(0, Math.min(n - 1, Math.round(fondo.scrollTop / altoPagina())));
+    }
+    function pintarBarraPaginas() {
+        var txt = $('rd-paginas-bar-txt'), ant = $('rd-pag-ant'), sig = $('rd-pag-sig');
+        if (!txt || !medidas) return;
+        var n = totalPaginas(), i = paginaVisible();
+        txt.textContent = 'Página ' + (i + 1) + ' de ' + n;
+        if (ant) ant.disabled = i <= 0;
+        if (sig) sig.disabled = i >= n - 1;
+    }
     function pintarPaginas() {
-        var cont = $('rd-pg-lista'); if (!medidas || !cont) return;
-        var g = gruposPaginas(), esc1 = 118 / medidas.w, antes = $('rd-paginas').scrollTop;
+        var cont = $('rd-pg-lista'); if (!medidas || !cont) return;        var g = gruposPaginas(), esc1 = 118 / medidas.w, antes = $('rd-paginas').scrollTop;
         $('rd-pg-n').textContent = g.length;
         cont.innerHTML = '';
         g.forEach(function (els, i) {
@@ -1316,7 +1367,26 @@
             caja.appendChild(barra); cont.appendChild(caja);
         });
         $('rd-paginas').scrollTop = antes;
+        pintarBarraPaginas();
     }
+
+    // ---------- Barra de páginas (tablet y celular): flechas para subir o bajar de hoja ----------
+    (function () {
+        var ant = $('rd-pag-ant'), sig = $('rd-pag-sig'), nueva = $('rd-pag-nueva-barra');
+        if (!ant || !sig) return;
+        function ir(n) {
+            var i = Math.max(0, Math.min(totalPaginas() - 1, n));
+            fondo.scrollTo({ top: i * altoPagina(), behavior: 'smooth' });
+            setTimeout(pintarBarraPaginas, 60);
+        }
+        ant.addEventListener('click', function () { ir(paginaVisible() - 1); });
+        sig.addEventListener('click', function () { ir(paginaVisible() + 1); });
+        if (nueva) nueva.addEventListener('click', function () { $('rd-pg-nueva').click(); });
+        fondo.addEventListener('scroll', pintarBarraPaginas, { passive: true });
+        window.addEventListener('resize', pintarBarraPaginas);
+        hoja.addEventListener('input', pintarBarraPaginas);
+        setTimeout(pintarBarraPaginas, 500);
+    })();
     $('rd-pg-nueva').addEventListener('click', function () {
         hoja.insertAdjacentHTML('beforeend', '<div class="salto-pagina" style="page-break-after:always"></div><p><br></p>');
         marcarSucio(); dibujarGuias();
@@ -1353,7 +1423,7 @@
         exec: exec, insertarHtml: insertarHtml, insertarEnRaiz: insertarEnRaiz, alternar: alternar, paneles: PANELES, bloqueActual: bloqueActual, bloquesDeSeleccion: bloquesDeSeleccion,
         celdaActual: celdaActual, aplicarBloques: aplicarBloques, textoSeleccion: textoSeleccion, dibujarGuias: dibujarGuias, gruposPaginas: gruposPaginas,
         medidas: function () { return medidas; }, zoom: zoomActual, guardar: guardar, sucio: function () { return sucio; }, ponerEtiquetaVersion: function (t) { etiquetaVersion = t; },
-        mostrarPestana: mostrarPestana, subirImagen: subirImagen, ponerImagen: ponerImagen, ahoraIso: ahoraIso
+        ponerEnfoque: ponerEnfoque,        mostrarPestana: mostrarPestana, subirImagen: subirImagen, ponerImagen: ponerImagen, ahoraIso: ahoraIso
     };
     document.dispatchEvent(new Event('rd-listo'));
 

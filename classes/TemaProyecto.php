@@ -37,6 +37,39 @@ class TemaProyecto
     }
 
     /**
+     * Mensajes emergentes de ayuda (burbujas de src/js/ayuda.js) en la interfaz del proyecto:
+     * proyectos.ayuda_burbujas. Se guarda en la BD, así que vale para todos los que abran el proyecto.
+     */
+    public const AYUDAS = [
+        '1' => 'Sí, mostrar los mensajes de ayuda',
+        '0' => 'No, ocultarlos',
+    ];
+
+    /** ¿El proyecto muestra las burbujas de ayuda? (por defecto sí) */
+    public static function ayudasVisibles($valor): bool
+    {
+        return (int)$valor === 1;
+    }
+
+    /**
+     * ¿Existe la columna `ayuda_burbujas`? (migración database/migracion_ayuda_burbujas.sql).
+     * Sin ella la app sigue funcionando: se muestran las ayudas y el control queda desactivado.
+     */
+    public static function disponibleAyuda(): bool
+    {
+        static $hay = null;
+        if ($hay !== null) return $hay;
+        $db = $GLOBALS['db'] ?? null;
+        if (!is_object($db)) return $hay = false;
+        try {
+            $r = $db->query("SHOW COLUMNS FROM proyectos LIKE 'ayuda_burbujas'");
+        } catch (\Throwable $e) {
+            return $hay = false;
+        }
+        return $hay = (bool)($r && $r->num_rows);
+    }
+
+    /**
      * Apariencia de la barra superior de herramientas (proyectos.menu_superior):
      * clásico (iconos por sección), panel (sin barra, menú lateral fijo) o pestañas (una pestaña por sección).
      */

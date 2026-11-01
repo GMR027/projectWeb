@@ -43,7 +43,7 @@ $esSubactividades = $t->sheetflow_id && \Model\SubactividadHoja::deHoja((int)$t-
 <?php if ($puedeEditar): ?>
     <div class="vp-tab-acc no-print">
         <?php if ($t->tipo === 'punchlist'): ?>
-            <a href="/punch?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-clipboard-check"></i> Agregar en Punch list</a>
+            <a href="/punch?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-screwdriver-wrench"></i> Agregar en Punch list</a>
             <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-eye"></i> Qué mostrar</a>
         <?php elseif ($t->esMateriales()): ?>
             <a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$lamina->id; ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-cubes"></i> Marcar materiales</a>

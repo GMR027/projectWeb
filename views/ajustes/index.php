@@ -202,6 +202,8 @@ $temaModo = \Classes\TemaProyecto::normModo($proyecto->tema_modo ?? 'usuario');
 $temaPaleta = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
 $temaNombres = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
 $temaMenu = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
+$temaAyuda = \Classes\TemaProyecto::ayudasVisibles($proyecto->ayuda_burbujas ?? 1);
+$hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
 ?>
 <div class="card" id="tema">
     <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
@@ -258,6 +260,22 @@ $temaMenu = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico
             <p class="text-muted text-sm" id="tema-menu-ayuda" style="margin:.6rem 0 0"><?php echo s(\Classes\TemaProyecto::MENUS_AYUDA[$temaMenu]); ?></p>
         </div>
 
+        <div class="tema-bloque">
+            <span class="tema-etq">Mensajes de ayuda</span>
+            <div class="tema-modos">
+                <?php foreach (\Classes\TemaProyecto::AYUDAS as $k => $etq): ?>
+                    <label class="tema-modo">
+                        <input type="radio" name="ayuda_burbujas" value="<?php echo s($k); ?>"<?php echo $temaAyuda === ((int)$k === 1) ? ' checked' : ''; ?><?php echo $hayAyuda ? '' : ' disabled'; ?>>
+                        <span><?php echo s($etq); ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <p class="text-muted text-sm" style="margin:.6rem 0 0">Son las burbujas que explican qué hace cada herramienta y cada botón, y los avisos de primeros pasos, al pasar el cursor o al enfocar el elemento. Con «No» la aplicación queda sin esos mensajes emergentes; el botón «Ver en el manual» y el manual siguen disponibles desde el menú.</p>
+            <?php if (!$hayAyuda): ?>
+                <p class="text-muted text-sm" style="margin:.6rem 0 0"><i class="fa-solid fa-triangle-exclamation"></i> Falta aplicar <code>database/migracion_ayuda_burbujas.sql</code> para guardar esta preferencia.</p>
+            <?php endif; ?>
+        </div>
+
         <p id="tema-aviso" class="text-muted text-sm" hidden><i class="fa-solid fa-circle-info"></i> Estás viendo una vista previa: pulsa <strong>Guardar apariencia</strong> para dejarla en el proyecto.</p>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
     </form>
@@ -285,6 +303,8 @@ $temaMenu = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico
                     const ayuda = document.getElementById('tema-menu-ayuda');
                     if (ayuda && AYUDA_MENU[menu.value]) ayuda.textContent = AYUDA_MENU[menu.value];
                 }
+                const ayuda = card.querySelector('input[name="ayuda_burbujas"]:checked');
+                if (ayuda) raiz.classList.toggle('sin-ayuda-burbujas', ayuda.value === '0');   // vista previa de las burbujas
                 const p = card.querySelector('input[name="tema_paleta"]:checked');
                 if (!p) return;
                 const claro = raiz.getAttribute('data-theme') === 'light';

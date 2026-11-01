@@ -70,3 +70,13 @@ _Se lee solo al trabajar en este módulo._
 
 ## Experiencia de uso (2026-10-25)
 - Estado vacío con botón, **Guía rápida** en la lista (`sheetflow-lista`) y en el editor (`sheetflow-editor`: pestañas, la barra de fórmulas `#sf-fx`, guardar) y glosario en hoja/A vPlan/departamento.
+
+## Cinta compacta y edición en tablet/celular (2026-10-31)
+SheetFlow **ya no se bloquea en el celular** (se quitó el `aviso-escritorio`). Todo vive en `public/vendor/sheetflow.js`, que ahora recibe `gestos-lienzo.js` y `hoja-inferior.js` desde `views/sheetflow/abrir.php`.
+
+- **Cinta compacta tipo OnlyOffice (≤ 110 rem)**: `.cinta-cab` + `.cinta-plegar` (pieza compartida de `componentes/_tabs.scss`) envuelven `#sf-pestanas` y el botón `#sf-plegar`. La barra queda en **una sola fila** deslizable (`flex-wrap: nowrap` + `overflow-x: auto`), los grupos no envuelven y los controles bajan a 3.4 rem; el botón pliega la barra (`body.sf-cinta-cerrada`, recordado en `localStorage.sf-cinta`) y solo aplica a partir de 44 rem. La tarjeta `.rd-datos` (tabla) va en una fila compacta.
+
+- **Edición táctil**: en **tablet** (`TACTIL` pero > 44 rem) la celda se edita **en la propia cuadrícula**, como OnlyOffice/Excel: el `.sf-input` se inserta en el `td` y al enfocarse se hace `scrollIntoView({block:'center'})` para que el teclado no la tape. En **celular** (`MOVIL_ESTRECHO`, ≤ 44 rem) `empezarEdicion()` no inserta el `.sf-input` en la celda: monta un `.sf-celda-hoja` con la referencia (`nombreCelda`, p. ej. `C5`) y el campo grande en `HojaInferior.crear('sf-celda')` (posición `peek`, no modal). Enter/Tab se comportan como en Excel: guardan, se mueven y **reabren la hoja** en la celda nueva (`terminarEdicion(true, mantener)`), sin cerrarla. Al cerrar la hoja se aplica el valor (`alCerrar`).
+- **Abrir la celda sin doble clic**: `touchstart`/`touchmove`/`touchend` sobre una celda **ya seleccionada** abren el editor si fue un toque corto y sin arrastre (así no se dispara al hacer scroll); la primera pulsación solo selecciona, como en Excel móvil. Un toque también genera `mousedown`/`click` emulados después del `touchend`: `toqueEdito` los ignora durante 700 ms, porque si no el propio clic cerraría el editor recién abierto (`terminarEdicion(true)`).
+- **Pellizco**: `GestosLienzo.montar('.sf-scroll')` mueve el mismo `zoom` del control de *Vista* (`grid.style.zoom`, 50–200 %).
+- **CSS** (`src/scss/paginas/_sheetflow.scss`): el bloque `@media (max-width: 110rem)` deja las pestañas y la barra en una fila deslizable y `body.sf-tactil` pone `touch-action: pan-x pan-y` en `.sf-scroll` para que el pellizco sea nuestro.

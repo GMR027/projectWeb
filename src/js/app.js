@@ -109,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modalCancelar.style.display = opciones.soloAceptar ? 'none' : '';
     focoPrevio = document.activeElement;
     resolverModal = resolve;
+    // En una vista ampliada (pantalla completa) solo se pinta lo que cuelga del elemento ampliado.
+    if (window.CapaSuperior) CapaSuperior.adoptar(modal);
     modal.classList.add('abierto');
     modal.setAttribute('aria-hidden', 'false');
     modalAceptar.focus();

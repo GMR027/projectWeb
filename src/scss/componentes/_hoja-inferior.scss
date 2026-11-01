@@ -1,0 +1,50 @@
+// ============================================================
+// Hoja inferior (bottom sheet) compartida
+// La usan las vistas que necesitan editar/consultar sin tapar el lienzo:
+// vPlan (ficha de tarea y paneles táctiles) y el editor de marcas.
+// Marcado y comportamiento: public/vendor/hoja-inferior.js
+// ============================================================
+
+.hi { position: fixed; inset: 0; z-index: 1600; display: flex; align-items: flex-end; justify-content: center; pointer-events: none;
+  &[hidden] { display: none; } }
+
+.hi-fondo { position: absolute; inset: 0; background: rgba(0, 0, 0, .45); opacity: 0; transition: opacity .2s ease; pointer-events: auto; }
+.hi.abierta .hi-fondo { opacity: 1; }
+
+.hi-caja { position: relative; pointer-events: auto; display: flex; flex-direction: column; width: 100%; max-width: 76rem; max-height: 94dvh;
+  height: var(--hi-alto, 55dvh); padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-bottom: 0;
+  border-radius: 1.6rem 1.6rem 0 0; box-shadow: 0 -1rem 3rem rgba(0, 0, 0, .35);
+  transform: translateY(102%); transition: transform .22s ease, height .22s ease;
+  overscroll-behavior: contain; }
+.hi.abierta .hi-caja { transform: none; }
+.hi.arrastrando .hi-caja { transition: none; }
+
+.hi-asa { flex: none; display: grid; place-items: center; height: 2.4rem; cursor: grab; touch-action: none;
+  &::before { content: ''; width: 4.4rem; height: .5rem; border-radius: 99rem; background: var(--border); } }
+
+.hi-cab { flex: none; display: flex; align-items: center; gap: 1rem; padding: .2rem 1.6rem 1rem;
+  h3 { flex: 1; min-width: 0; margin: 0; font-size: 1.6rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  small { display: block; color: var(--text-muted); font-size: 1.15rem; font-weight: 400; } }
+.hi-cerrar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 4.4rem; height: 4.4rem;
+  border: 1px solid var(--border); border-radius: 50%; background: transparent; color: var(--text-muted); font-size: 1.6rem; cursor: pointer;
+  &:hover { background: var(--surface-hover); color: var(--text); } }
+
+.hi-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 0 1.6rem 1.6rem; }
+.hi-cuerpo .pn-secc:first-child, .hi-cuerpo .campo:first-child { margin-top: .2rem; }
+
+.hi-acc { flex: none; display: flex; flex-wrap: wrap; gap: .8rem; padding: 1rem 1.6rem calc(1.2rem + env(safe-area-inset-bottom, 0)); border-top: 1px solid var(--border); background: var(--surface);
+  .btn { flex: 1 1 auto; justify-content: center; min-height: 4.4rem; }
+  .btn-ghost { flex: 0 0 auto; } }
+
+@media (min-width: 80rem) {
+  .hi { align-items: center; }
+  .hi-caja { border-radius: 1.4rem; border-bottom: 1px solid var(--border); max-height: min(90dvh, 88rem); box-shadow: var(--shadow-lg); }
+}
+
+// El fondo no debe desplazarse mientras la hoja está abierta
+body.hi-abierta { overflow: hidden; }
+
+// Hoja de trabajo (paneles): sin fondo oscurecido y sin bloquear el lienzo de arriba.
+.hi.hi-no-modal .hi-fondo { display: none; }

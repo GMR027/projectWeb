@@ -15,7 +15,7 @@ class CambiosLegibles
 
     private const ETIQUETAS = [
         'fecha_inicio' => 'Inicio', 'fecha_fin' => 'Fin', 'progreso' => 'Avance', 'status' => 'Estado',
-        'descripcion' => 'Descripción', 'fecha_limite' => 'Fecha límite', 'fecha_respuesta' => 'Fecha de respuesta',
+        'descripcion' => 'Descripción', 'fecha_limite' => 'Fecha límite', 'fecha_emision' => 'Fecha de emisión', 'fecha_respuesta' => 'Fecha de respuesta',
         'fecha_compra_prog' => 'Compra programada', 'fecha_entrega_prog' => 'Entrega programada',
         'fecha_instalacion_prog' => 'Instalación programada', 'fecha_compra_real' => 'Compra real',
         'fecha_entrega_real' => 'Entrega real', 'numero_submittal' => 'Número de submittal', 'color_bg' => 'Color',

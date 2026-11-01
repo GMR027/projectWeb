@@ -31,4 +31,4 @@
 
 <div class="card"><?php $saludCompacto = false; include __DIR__ . '/../salud/_semaforo.php'; ?></div>
 
-<div class="card"><h4><i class="fa-solid fa-clipboard-check"></i> Revisiones</h4><?php include __DIR__ . '/../revisiones/_mini.php'; ?></div>
+<div class="card"><h4><i class="fa-solid fa-traffic-light"></i> Revisiones</h4><?php include __DIR__ . '/../revisiones/_mini.php'; ?></div>

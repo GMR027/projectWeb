@@ -1,5 +1,13 @@
 @use '../base/variables' as *;
 
+// Acento de la interfaz de vPlan: sigue la paleta del proyecto (--primary) en vez de un azul fijo.
+// El contenido de la lámina (tablas, colores de estado) no se toca: debe verse igual que el PDF.
+:root {
+  --vplan-acento: var(--primary, #0070c0);
+  --vplan-acento-suave: color-mix(in srgb, var(--primary, #0070c0) 18%, transparent);
+  --vplan-acento-borde: color-mix(in srgb, var(--primary, #0070c0) 60%, transparent);
+}
+
 // ============================================================
 // vPlan · botones de listas, navegador de láminas y modo diseño
 // ============================================================
@@ -14,7 +22,7 @@
   &.vp-ib-peligro { color: $danger; border-color: rgba(239, 68, 68, .35);
     &:hover { background: rgba(239, 68, 68, .85); color: #fff; border-color: transparent; } }
   &.vp-ib-ok { color: #059669; border-color: rgba(5, 150, 105, .45); &:hover { background: #059669; color: #fff; } }
-  &.vp-ib-on { background: rgba(0, 112, 192, .2); color: #38a1f3; border-color: rgba(0, 112, 192, .6); }
+  &.vp-ib-on { background: var(--vplan-acento-suave); color: var(--vplan-acento); border-color: var(--vplan-acento-borde); }
   &.vp-ib-sm { width: 2.6rem; height: 2.6rem; font-size: 1.1rem; }
 }
 .vp-acc { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; form { display: inline-flex; margin: 0; } }
@@ -43,7 +51,7 @@
   &.vp-con-nav { grid-template-columns: 24rem minmax(0, 1fr); }
   &.vp-con-nav.vp-nav-oculta { grid-template-columns: 3.8rem minmax(0, 1fr); .vp-nav { display: none; } } }
 .vp-dis-wrap { min-width: 0; }
-.vp-dis-wrap.vp-dis-on { display: grid; grid-template-columns: minmax(0, 1fr) 36rem; gap: 1.6rem; align-items: start; .vp-hoja { margin: 0; } }
+.vp-dis-wrap.vp-dis-on { display: grid; grid-template-columns: minmax(0, 1fr) var(--vp-panel-w, 36rem); gap: 1.6rem; align-items: start; .vp-hoja { margin: 0; } }
 // Panel oculto: la hoja se queda con todo el ancho y queda una pestaña para volver a abrirlo
 .vp-dis-wrap.vp-dis-on.vp-dis-fuera { grid-template-columns: minmax(0, 1fr) auto; }
 .vp-dis-wrap.vp-dis-on > .pn-abrir { grid-column: 2; grid-row: 1; }
@@ -57,7 +65,7 @@
 .vp-nav-item { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .9rem; align-items: center; padding: .6rem; border: 1px solid transparent; border-radius: .6rem; color: var(--text); text-decoration: none;
   &[hidden] { display: none; }
   &:hover { background: var(--surface-hover); }
-  &.activa { background: rgba(0, 112, 192, .18); border-color: rgba(0, 112, 192, .65); }
+  &.activa { background: var(--vplan-acento-suave); border-color: var(--vplan-acento-borde); }
   &.oculta { opacity: .55; }
   .vp-nav-txt { display: grid; gap: .2rem; min-width: 0; b { font-size: 1.25rem; line-height: 1.25; overflow-wrap: anywhere; } small { color: var(--text-muted); font-size: 1.1rem; } } }
 .vp-nav-nueva { width: 100%; }
@@ -85,7 +93,7 @@
 .vp-tgls { display: inline-flex; gap: .4rem; }
 .vp-tgl { display: inline-flex; align-items: center; gap: .5rem; height: 3.6rem; padding: 0 1.1rem; border: 1px solid var(--border); border-radius: .6rem; background: transparent; color: var(--text-muted); font-size: 1.25rem; font-weight: 600; cursor: pointer;
   &:hover { background: var(--surface-hover); color: var(--text); }
-  &[aria-pressed=true] { background: rgba(0, 112, 192, .2); color: #38a1f3; border-color: rgba(0, 112, 192, .6); } }
+  &[aria-pressed=true] { background: var(--vplan-acento-suave); color: var(--vplan-acento); border-color: var(--vplan-acento-borde); } }
 .vp-dis-barra .vp-ib { height: 3.6rem; width: 3.6rem; font-size: 1.4rem; &:disabled { opacity: .35; } }
 .vp-pendiente { box-shadow: 0 0 0 .3rem rgba(245, 158, 11, .55); }
 
@@ -134,11 +142,11 @@
 .vp-capas-lista { list-style: none; margin: 0 0 .6rem; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .2rem; }
 .vp-capa { display: flex; align-items: center; gap: .3rem; min-height: 3.2rem; padding: 0 .3rem; border: 1px solid transparent; border-radius: .5rem; position: relative;
   &:hover { background: var(--surface-hover); }
-  &.vp-capa-sel { background: rgba(0, 112, 192, .22); border-color: rgba(0, 112, 192, .55); }
+  &.vp-capa-sel { background: color-mix(in srgb, var(--vplan-acento) 22%, transparent); border-color: color-mix(in srgb, var(--vplan-acento) 55%, transparent); }
   &.vp-capa-oculta .vp-capa-nombre, &.vp-capa-oculta .vp-capa-ico { opacity: .45; }
   &.vp-capa-oculta .vp-capa-nombre { text-decoration: line-through; }
   &.vp-arrastrando { opacity: .4; }
-  &.vp-drop-arriba::before, &.vp-drop-abajo::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: #38a1f3; }
+  &.vp-drop-arriba::before, &.vp-drop-abajo::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: var(--vplan-acento); }
   &.vp-drop-arriba::before { top: -2px; } &.vp-drop-abajo::after { bottom: -2px; } }
 .vp-capa-grip { cursor: grab; color: var(--text-muted); width: 1.6rem; text-align: center; font-size: 1.1rem; }
 .vp-capa-ico { width: 2rem; text-align: center; color: var(--text-muted); font-size: 1.3rem; flex: none; }
@@ -148,7 +156,7 @@
 .vp-ib-hueco { width: 2.6rem; flex: none; }
 .vp-capa .vp-ib-sm { border-color: transparent; }
 .vp-capa:hover .vp-ib-sm, .vp-capa .vp-ib-on { border-color: var(--border); }
-.vp-capa .vp-ib-on { border-color: rgba(0, 112, 192, .6); }
+.vp-capa .vp-ib-on { border-color: var(--vplan-acento-borde); }
 .vp-guia-in { width: 7rem !important; height: 2.6rem; flex: none; padding: 0 .4rem; }
 
 // ---------- Insertar (la rejilla .pn-grid, el buscador .pn-busca, los chips y las fichas .pn-ficha son compartidos) ----------
@@ -160,9 +168,9 @@
   &[hidden] { display: none; } }
 // Las fichas de inserción son la pieza compartida .pn-ficha (componentes/_paneles.scss)
 // Arrastre desde Insertar hasta la hoja
-.vp-ins-fantasma { position: fixed; z-index: 6000; top: 0; left: 0; display: flex; align-items: center; gap: .7rem; max-width: 24rem; padding: .7rem 1rem; border: 1px solid #38a1f3; border-radius: .8rem; background: var(--surface); color: var(--text); font-size: 1.2rem; font-weight: 600; box-shadow: var(--shadow-lg); pointer-events: none; opacity: .95; transform: translate(-9999px, -9999px); i { color: #38a1f3; } }
+.vp-ins-fantasma { position: fixed; z-index: 6000; top: 0; left: 0; display: flex; align-items: center; gap: .7rem; max-width: 24rem; padding: .7rem 1rem; border: 1px solid var(--vplan-acento); border-radius: .8rem; background: var(--surface); color: var(--text); font-size: 1.2rem; font-weight: 600; box-shadow: var(--shadow-lg); pointer-events: none; opacity: .95; transform: translate(-9999px, -9999px); i { color: var(--vplan-acento); } }
 body.vp-arrastrando { user-select: none; cursor: grabbing; }
-.vp-sheet.vp-diseno .vp-ins-drop { position: absolute; z-index: 9500; box-sizing: border-box; display: grid; place-items: center; border: 2px dashed #0070c0; border-radius: .3rem; background: rgba(0, 112, 192, .14); color: #0070c0; font-size: 1.05rem; font-weight: 700; pointer-events: none;
+.vp-sheet.vp-diseno .vp-ins-drop { position: absolute; z-index: 9500; box-sizing: border-box; display: grid; place-items: center; border: 2px dashed var(--vplan-acento); border-radius: .3rem; background: color-mix(in srgb, var(--vplan-acento) 14%, transparent); color: var(--vplan-acento); font-size: 1.05rem; font-weight: 700; pointer-events: none;
   &::after { content: 'Soltar aquí'; }
   &[hidden] { display: none; } }
 .vp-ins-tablas { max-height: 34rem; overflow-y: auto; margin: .6rem 0; }
@@ -173,7 +181,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   .btn-sm { height: 3rem; flex: none; } }
 .vp-chip { font-size: 1.05rem; font-weight: 700; padding: .2rem .7rem; border-radius: 1rem; background: rgba(5, 150, 105, .25); color: #34d399; white-space: nowrap; }
 // Etiqueta de la tabla enlazada a una hoja de SheetFlow
-.vp-chip-sf { background: rgba(0, 112, 192, .3); color: #7cc4ff; }
+.vp-chip-sf { background: var(--vplan-acento-suave); color: var(--vplan-acento); }
 .vp-ins-nueva { width: 100%; margin-bottom: .6rem; }
 
 // ---------- Hoja: tamaño y orientación en tarjetas ----------
@@ -182,14 +190,14 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   b { font-size: 1.25rem; line-height: 1.2; }
   small { font-family: $font-mono; font-size: 1.05rem; color: var(--text-muted); }
   &:hover { border-color: var(--border-accent, var(--border)); transform: translateY(-1px); }
-  &.activo { background: rgba(0, 112, 192, .18); border-color: rgba(0, 112, 192, .65); color: #38a1f3; small { color: inherit; } } }
+  &.activo { background: var(--vplan-acento-suave); border-color: var(--vplan-acento-borde); color: var(--vplan-acento); small { color: inherit; } } }
 .vp-hoj-fig { display: grid; place-items: center; width: 100%; height: 2.8rem; margin-bottom: .2rem;
   > i { display: block; width: min(100%, calc(var(--ar) * 2.4rem)); aspect-ratio: var(--ar); border-radius: .2rem; background: currentColor; opacity: .35; }
   > i.vp-hoj-fig-libre { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; aspect-ratio: auto; background: none; opacity: .6; font-size: 1.3rem; } }
 .vp-hoj-ori { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1rem;
   .vp-hoj-orib { display: flex; align-items: center; justify-content: center; gap: .6rem; padding: .8rem .5rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all .15s ease;
     &:hover { color: var(--text); border-color: var(--border-accent, var(--border)); }
-    &.activo { background: rgba(0, 112, 192, .18); border-color: rgba(0, 112, 192, .6); color: #38a1f3; } } }
+    &.activo { background: var(--vplan-acento-suave); border-color: var(--vplan-acento-borde); color: var(--vplan-acento); } } }
 
 @media (max-width: 1200px) {
   .vp-dis-wrap.vp-dis-on { grid-template-columns: minmax(0, 1fr); }
@@ -206,10 +214,10 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 // El estado vacío es la pieza compartida .pn-vacio
 .vp-dis-panel {
   .vp-prop-cab { display: flex; align-items: center; gap: 1.2rem; padding: 1.4rem 0 1.2rem; }
-  .vp-prop-ico { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 4.6rem; height: 4.6rem; border-radius: 1.2rem; font-size: 2rem; color: #38a1f3; background: rgba(0, 112, 192, .18); border: 1px solid rgba(0, 112, 192, .45); }
+  .vp-prop-ico { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 4.6rem; height: 4.6rem; border-radius: 1.2rem; font-size: 2rem; color: var(--vplan-acento); background: var(--vplan-acento-suave); border: 1px solid color-mix(in srgb, var(--vplan-acento) 45%, transparent); }
   .vp-prop-nom { min-width: 0; h3 { margin: 0; font-size: 1.6rem; line-height: 1.25; overflow-wrap: anywhere; } small { color: var(--text-muted); font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; } }
   .vp-prop-sec { padding: 1.2rem 0 .4rem; border-top: 1px solid var(--border); }
-  .vp-prop-tit { display: flex; align-items: center; gap: .7rem; margin: 0 0 1rem; font-size: 1.15rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); i { color: #38a1f3; width: 1.6rem; text-align: center; } }
+  .vp-prop-tit { display: flex; align-items: center; gap: .7rem; margin: 0 0 1rem; font-size: 1.15rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); i { color: var(--vplan-acento); width: 1.6rem; text-align: center; } }
   .campo { margin-bottom: 1rem; label { display: block; margin-bottom: .4rem; font-size: 1.15rem; font-weight: 600; color: var(--text-muted); } }
   .vp-dis-pos { gap: 0 1rem; }
   .vp-num-in { position: relative;
@@ -218,21 +226,21 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   .vp-prop-acc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin-bottom: 1rem; }
   .vp-pb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; min-height: 5.6rem; padding: .6rem .2rem; border: 1px solid var(--border); border-radius: .8rem; background: transparent; color: var(--text); font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all .15s ease;
     i { font-size: 1.6rem; color: var(--text-muted); }
-    &:hover { background: var(--surface-hover); border-color: #38a1f3; i { color: #38a1f3; } }
+    &:hover { background: var(--surface-hover); border-color: var(--vplan-acento); i { color: var(--vplan-acento); } }
     &[hidden] { display: none; }
     &.vp-pb-peligro { color: $danger; i { color: $danger; } &:hover { background: rgba(239, 68, 68, .14); border-color: $danger; } } }
   .vp-sw { display: flex; align-items: center; gap: 1.2rem; margin-bottom: 1rem; cursor: pointer; text-transform: none; letter-spacing: 0;
     input { position: absolute; opacity: 0; pointer-events: none; }
     .vp-sw-pista { position: relative; flex: none; width: 4.2rem; height: 2.4rem; border-radius: 1.2rem; background: var(--bg-tertiary); border: 1px solid var(--border); transition: all .2s ease;
       &::after { content: ''; position: absolute; top: .3rem; left: .3rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--text-muted); transition: all .2s ease; } }
-    input:checked + .vp-sw-pista { background: rgba(0, 112, 192, .35); border-color: #38a1f3; &::after { left: 2.1rem; background: #38a1f3; } }
-    input:focus-visible + .vp-sw-pista { outline: 2px solid #38a1f3; outline-offset: 2px; }
+    input:checked + .vp-sw-pista { background: color-mix(in srgb, var(--vplan-acento) 35%, transparent); border-color: var(--vplan-acento); &::after { left: 2.1rem; background: var(--vplan-acento); } }
+    input:focus-visible + .vp-sw-pista { outline: 2px solid var(--vplan-acento); outline-offset: 2px; }
     .vp-sw-txt { display: grid; min-width: 0; b { font-size: 1.3rem; font-weight: 600; } small { font-size: 1.15rem; color: var(--text-muted); } } }
   #vp-dis-campos { .vp-dis-fila { align-items: flex-end; } input[type=color] { width: 4.4rem; height: 3.6rem; padding: .2rem; border-radius: .6rem; cursor: pointer; } textarea { resize: vertical; } }
 }
 
 // ---------- Botón de láminas (mostrar / ocultar la columna izquierda) ----------
-.btn[data-vp-nav-toggle][aria-pressed=true] { background: rgba(0, 112, 192, .2); color: #38a1f3; border-color: rgba(0, 112, 192, .6); }
+.btn[data-vp-nav-toggle][aria-pressed=true] { background: var(--vplan-acento-suave); color: var(--vplan-acento); border-color: var(--vplan-acento-borde); }
 .vp-nav-abrir { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem; height: auto; min-height: 9rem; padding: 1rem 0; font-size: 1.5rem;
   &::after { content: 'Láminas'; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 1.1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); } }
 
@@ -245,9 +253,9 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
     img { transition: transform .35s ease; } }
   &:hover .vp-paquete-portada img { transform: scale(1.04); }
   .vp-paquete-cuerpo { display: flex; flex-direction: column; gap: 1rem; padding: 1.6rem 1.8rem 1.8rem; flex: 1; }
-  h3 { margin: 0; font-size: 1.9rem; line-height: 1.25; a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; &:hover { color: #38a1f3; } } }
+  h3 { margin: 0; font-size: 1.9rem; line-height: 1.25; a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; &:hover { color: var(--vplan-acento); } } }
   .vp-paquete-meta { display: flex; flex-wrap: wrap; gap: .6rem; }
-  .vp-chip-meta { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem 1rem; border-radius: 2rem; font-size: 1.15rem; font-weight: 600; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted); i { color: #38a1f3; } }
+  .vp-chip-meta { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem 1rem; border-radius: 2rem; font-size: 1.15rem; font-weight: 600; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted); i { color: var(--vplan-acento); } }
   .vp-acc { margin-top: auto; padding-top: .4rem; flex-wrap: nowrap; .btn { flex: 1; justify-content: center; } .vp-ib { flex: none; } }
   .vp-renombrar { margin-top: auto; } }
 
@@ -297,7 +305,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .estado-vacio-hoja { position: absolute; inset: 0; z-index: 6; display: grid; place-content: center; justify-items: center; padding: 2rem; text-align: center;
   background: rgba(248, 250, 252, .82);
   [data-theme="oscuro"] & { background: rgba(15, 23, 42, .82); }
-  > i { display: grid; place-items: center; width: 6.4rem; height: 6.4rem; border-radius: 1.8rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 2.8rem; margin-bottom: .4rem; }
+  > i { display: grid; place-items: center; width: 6.4rem; height: 6.4rem; border-radius: 1.8rem; background: var(--vplan-acento-suave); color: var(--vplan-acento); font-size: 2.8rem; margin-bottom: .4rem; }
   b { font-size: 1.8rem; }
   p { margin: .2rem 0 1rem; max-width: 46rem; font-size: 1.3rem; color: var(--text-muted); }
   .estado-vacio-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; } }
@@ -309,7 +317,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   &:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
   &.vp-oculta { opacity: .55; }
   &.vp-gal-arrastrando { opacity: .4; }
-  &.vp-gal-encima { outline: 2px dashed #38a1f3; outline-offset: 2px; } }
+  &.vp-gal-encima { outline: 2px dashed var(--vplan-acento); outline-offset: 2px; } }
 .vp-galeria-lectura .vp-gal-card { cursor: default; }
 .vp-gal-img { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--bg-tertiary); color: var(--text-muted); text-decoration: none; overflow: hidden;
   img { width: 100%; height: 100%; object-fit: contain; padding: .4rem; }
@@ -317,7 +325,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .vp-gal-oculta { position: absolute; top: .6rem; left: .6rem; display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .7rem; border-radius: 99rem; background: rgba(190, 18, 60, .9); color: #fff; font-size: 1.05rem; font-weight: 600; }
 .vp-gal-cuerpo { display: flex; flex-direction: column; gap: .3rem; padding: .9rem 1rem 1rem; border-top: 1px solid var(--border); }
 .vp-gal-titulo { font-size: 1.35rem; font-weight: 600; color: var(--text); text-decoration: none;
-  &:hover { color: #38a1f3; } }
+  &:hover { color: var(--vplan-acento); } }
 .vp-gal-acc { display: flex; align-items: center; gap: .4rem; margin-top: .5rem;
   .vp-gal-asa { margin-right: auto; color: var(--text-muted); font-size: 1.1rem; cursor: grab; }
   form { display: inline-flex; } }
@@ -334,7 +342,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .gr-gal-n { position: absolute; top: .6rem; right: .6rem; padding: .2rem .7rem; border-radius: 99rem; background: rgba(0, 112, 192, .9); color: #fff; font-size: 1.05rem; font-weight: 600; }
 .gr-gal-cuerpo { display: flex; flex-direction: column; gap: .3rem; padding: .9rem 1rem 1rem; border-top: 1px solid var(--border); }
 .gr-gal-titulo { font-size: 1.35rem; font-weight: 600; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  &:hover { color: #38a1f3; } }
+  &:hover { color: var(--vplan-acento); } }
 .gr-gal-acc { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; }
 .gr-gal-menu { position: relative; margin-left: auto;
   summary { list-style: none; &::-webkit-details-marker { display: none; } }
@@ -350,13 +358,13 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .ve-lienzo-vacio { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; pointer-events: none;
   &[hidden] { display: none; } }
 .ve-lienzo-vacio-caja { display: grid; justify-items: center; gap: .5rem; padding: 2.4rem 2.8rem; text-align: center; border: 1px solid var(--border); border-radius: 1.2rem; background: var(--surface); box-shadow: var(--shadow); pointer-events: auto; max-width: 40rem;
-  > i { display: grid; place-items: center; width: 6rem; height: 6rem; border-radius: 1.6rem; background: rgba(0, 112, 192, .16); color: #38a1f3; font-size: 2.6rem; margin-bottom: .3rem; }
+  > i { display: grid; place-items: center; width: 6rem; height: 6rem; border-radius: 1.6rem; background: var(--vplan-acento-suave); color: var(--vplan-acento); font-size: 2.6rem; margin-bottom: .3rem; }
   b { font-size: 1.7rem; }
   p { margin: 0; font-size: 1.25rem; color: var(--text-muted); } }
 .ve-lienzo-vacio-botones { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: .8rem;
   button { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-tertiary); color: var(--text); font-size: 1.25rem; cursor: pointer; transition: all .15s ease;
-    i { color: #38a1f3; }
-    &:hover { border-color: rgba(0, 112, 192, .6); transform: translateY(-1px); box-shadow: var(--shadow); } } }
+    i { color: var(--vplan-acento); }
+    &:hover { border-color: var(--vplan-acento-borde); transform: translateY(-1px); box-shadow: var(--shadow); } } }
 
 // ---------- Materiales de una lámina de vPlan (editor de marcas) ----------
 .ve-materiales { padding: 1rem; overflow: auto;
@@ -370,7 +378,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   .mat-alerta b { color: #d97706; } }
 .mat-leyenda { display: grid; gap: .45rem; margin: 0 0 1.2rem; padding: 0; list-style: none; }
 .mat-fila { display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); cursor: pointer;
-  &:hover { border-color: rgba(0, 112, 192, .55); background: var(--surface-hover); }
+  &:hover { border-color: color-mix(in srgb, var(--vplan-acento) 55%, transparent); background: var(--surface-hover); }
   &.mat-sin-ubicacion { opacity: .72; border-style: dashed; } }
 .mat-fila-col { display: flex; flex: 0 0 auto; align-items: center; gap: .2rem; min-width: 1.4rem; }
 .mat-fila-txt { display: grid; flex: 1 1 auto; min-width: 0;
@@ -420,3 +428,140 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   &.mat-sub { padding-left: 2.4rem; font-size: 1.06rem; } }
 .mat-subs { margin: .2rem 0 .2rem 2.4rem; border-left: 2px solid var(--border); padding-left: .6rem;
   > summary { cursor: pointer; color: var(--text-muted); font-size: 1.02rem; padding: .25rem 0; } }
+
+// ============================================================
+// Pantallas táctiles: hoja y barras de vPlan
+// ============================================================
+@media (pointer: coarse) {
+  // El pellizco y el paneo de dos dedos los resuelve gestos-lienzo.js: el navegador no debe
+  // quedarse con el gesto para hacer zoom de página. El alto acota el lienzo para poder moverse
+  // dentro de la hoja sin arrastrar toda la página.
+  .vp-hoja { touch-action: pan-x pan-y; overscroll-behavior: contain; }
+  .vp-hoja:not(.vp-ampliado) { max-height: 78dvh; }
+  .vp-pestanas button, .vp-barra-pest .btn { min-height: 4.4rem; }
+  .vp-dis-barra .btn, .vp-dis-barra .vp-tgl { min-height: 4.4rem; }
+  .vp-dis-barra .vp-ib { width: 4.4rem; height: 4.4rem; }
+  .vp-capa { min-height: 4.4rem; }
+}
+
+// ============================================================
+// Panel de diseño dentro de la hoja inferior (táctil)
+// ============================================================
+.en-hoja.vp-dis-panel { position: static; max-height: none; height: auto; overflow: visible; padding: 0; border: 0; background: transparent; }
+.vp-dis-wrap.vp-dis-on.vp-dis-hoja { grid-template-columns: minmax(0, 1fr) auto; }
+.en-hoja.vp-dis-panel .pn-cab { margin: 0 -1.6rem; }
+.en-hoja.vp-dis-panel .pn-tabs { margin: 0 -1.6rem 1rem; }
+.en-hoja.vp-dis-panel .pn-cab-acc { display: none; }
+// La pestaña vertical para reabrir el panel pasa a ser un botón flotante al cerrar la hoja
+@media (pointer: coarse) and (max-width: 80rem) {
+  .vp-dis-wrap.vp-dis-on > .pn-abrir { position: fixed; right: 1rem; bottom: calc(7.4rem + env(safe-area-inset-bottom, 0)); z-index: 1250; width: auto; min-width: 4.8rem; min-height: 4.8rem; padding: 0 1.2rem; border-radius: 99rem; box-shadow: var(--shadow-lg); }
+  .vp-dis-wrap.vp-dis-on.vp-dis-fuera > .pn-abrir { display: flex; }
+}
+
+// ============================================================
+// Barra contextual del bloque seleccionado (modo diseño)
+// ============================================================
+.vp-ctx { position: fixed; z-index: 1700; left: 50%; bottom: calc(1.2rem + env(safe-area-inset-bottom, 0)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: .2rem; padding: .3rem; max-width: calc(100vw - 1.2rem); overflow-x: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 99rem; box-shadow: var(--shadow-lg);
+  &[hidden] { display: none; }
+  button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; flex: none; min-width: 4.4rem; min-height: 4.4rem; padding: .3rem .7rem; border: 0; border-radius: 99rem; background: none; color: var(--text); font-size: 1rem; font-weight: 600; cursor: pointer;
+    &:hover { background: var(--surface-hover); }
+    &[hidden] { display: none; }
+    &[aria-pressed=true] { background: var(--vplan-acento-suave); }
+    i { font-size: 1.5rem; color: var(--vplan-acento); } }
+  [data-ctx=quitar] i { color: $danger; }
+}
+@media (max-width: 48rem) {
+  .vp-ctx button span { display: none; }
+  .vp-ctx button { min-width: 4.8rem; }
+}
+
+// ============================================================
+// Divisor del panel de diseño (escritorio): ancho a gusto y recordado
+// ============================================================
+.vp-dis-split { display: none; }
+@media (min-width: 80.0625rem) and (pointer: fine) {
+  .vp-dis-wrap.vp-dis-on { position: relative; }
+  .vp-dis-split { display: block; position: absolute; top: 0; bottom: 0; right: calc(var(--vp-panel-w, 36rem) - .5rem); width: 1rem; z-index: 35; cursor: col-resize; touch-action: none; border-radius: .4rem; }
+  .vp-dis-split::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); background: var(--border); border-radius: 1px; }
+  .vp-dis-split:hover::after, .vp-dis-split:focus-visible::after { background: var(--vplan-acento); }
+  .vp-dis-split:focus-visible { outline: 2px solid var(--vplan-acento); outline-offset: 2px; }
+  .vp-dis-wrap.vp-dis-on.vp-dis-fuera .vp-dis-split { display: none; }
+}
+
+// Guías inteligentes: línea temporal al alinear con otro bloque durante el arrastre (no se guarda ni se imprime)
+.vp-sheet.vp-diseno .vp-smart-capa { position: absolute; inset: 0; z-index: 9400; pointer-events: none; }
+.vp-sheet.vp-diseno .vp-smart { position: absolute; background: #f472b6; box-shadow: 0 0 0 1px rgba(244, 114, 182, .3); }
+.vp-sheet.vp-diseno .vp-smart-v { top: 0; bottom: 0; width: 1px; }
+.vp-sheet.vp-diseno .vp-smart-h { left: 0; right: 0; height: 1px; }
+
+// ============================================================
+// Buscar dentro de la lámina (visor)
+// ============================================================
+.vp-buscar { position: relative; display: inline-flex; align-items: center; gap: .4rem; height: 3.8rem; padding: 0 .7rem; min-width: 22rem;
+  border: 1px solid var(--border); border-radius: .6rem; background: var(--surface);
+  > i { flex: none; color: var(--text-muted); font-size: 1.2rem; }
+  input[type=search] { flex: 1 1 auto; min-width: 12rem; height: 100%; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 1.2rem; outline: none; } }
+.vp-buscar-lista { position: absolute; z-index: 1200; top: calc(100% + .4rem); left: 0; width: min(44rem, 88vw); padding: .4rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; box-shadow: var(--shadow-lg);
+  &[hidden] { display: none; }
+  button { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .6rem .7rem; border: 0; border-radius: .5rem; background: none; color: var(--text); text-align: left; font: inherit; font-size: 1.2rem; cursor: pointer; }
+  button:hover, button:focus-visible { background: var(--surface-hover); }
+  i { flex: none; width: 1.6rem; text-align: center; color: var(--vplan-acento); }
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  p { margin: .3rem .6rem; font-size: 1.2rem; } }
+@keyframes vp-resaltar {
+  0%, 100% { box-shadow: none; }
+  20%, 80% { box-shadow: 0 0 0 .6rem rgba(244, 114, 182, .6); }
+}
+.vp-resaltar { animation: vp-resaltar 2.2s ease; z-index: 8000 !important; }
+@media (max-width: 48rem) { .vp-buscar { min-width: 0; width: 100%; } .vp-buscar-lista { width: calc(100vw - 3rem); } }
+
+// ============================================================
+// Vista «Tareas» y ficha de tarea en hoja inferior (visor)
+// ============================================================
+.vp-shell.vp-oculto-tareas { display: none; }
+.vp-tareas { display: grid; gap: .6rem; margin: 0 0 2rem;
+  &[hidden] { display: none; } }
+.vp-tarea-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'nombre pct' 'meta pct'; gap: .2rem .8rem; padding: 1rem 1.2rem; text-align: left;
+  border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: border-color .15s ease;
+  &:hover, &:focus-visible { border-color: var(--vplan-acento-borde); }
+  .vp-tarea-item-nombre { grid-area: nombre; font-weight: 600; font-size: 1.35rem; overflow-wrap: anywhere; }
+  .vp-tarea-item-meta { grid-area: meta; color: var(--text-muted); font-family: $font-mono; font-size: 1.15rem; }
+  .vp-tarea-item-pct { grid-area: pct; align-self: center; font-family: $font-mono; font-weight: 700; font-size: 1.4rem; color: var(--vplan-acento); } }
+.vp-tarea-ficha { display: grid; gap: 1rem; }
+.vp-tarea-estado { margin: 0; color: var(--text-muted); font-size: 1.15rem;
+  &.mal { color: #dc2626; } }
+.vp-tarea-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem 1rem; }
+.vp-tarea-campo { display: grid; gap: .3rem; color: var(--text-muted); font-size: 1.15rem; font-weight: 600;
+  input { width: 100%; min-height: 4.4rem; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--bg-secondary); color: var(--text); font: inherit; font-size: 1.6rem; }
+  b { color: var(--text); font-size: 1.5rem; font-weight: 600; } }
+.vp-tactil tr[data-actividad] { cursor: pointer; }
+tr.vp-fila-sel { outline: 2px solid var(--vplan-acento); outline-offset: -2px; }
+
+// ============================================================
+// Visor táctil: franja de láminas y controles flotantes de zoom
+// ============================================================
+@media (pointer: coarse) and (max-width: 80rem) {
+  // La columna de miniaturas pasa a una franja horizontal: se ve la lámina sin bajar 30 rem.
+  .vp-shell.vp-con-nav, .vp-shell.vp-con-nav.vp-nav-oculta { grid-template-columns: minmax(0, 1fr); }
+  .vp-nav { position: sticky; top: 0; z-index: 20; display: block; max-height: none; padding: .6rem; overflow: hidden; }
+  .vp-nav-cab, .vp-nav-nueva, .vp-nav-grupo { display: none; }
+  .vp-nav-lista { display: flex; gap: .5rem; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; padding-bottom: .2rem; -webkit-overflow-scrolling: touch; }
+  .vp-nav-item { flex: 0 0 auto; grid-template-columns: 7rem; gap: 0; padding: .3rem; border-radius: .6rem; scroll-snap-align: start; }
+  .vp-nav-item .vp-nav-txt { display: none; }
+  .vp-nav-abrir { display: none; }
+}
+.vp-zoom-flot { display: none; }
+@media (pointer: coarse) {
+  .vp-zoom-flot { position: fixed; right: 1.2rem; bottom: calc(1.4rem + env(safe-area-inset-bottom, 0)); z-index: 1700;
+    display: flex; align-items: center; gap: .2rem; padding: .3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 99rem; box-shadow: var(--shadow-lg);
+    button { display: inline-flex; align-items: center; justify-content: center; width: 4.4rem; height: 4.4rem; border: 0; border-radius: 50%; background: none; color: var(--text); font-size: 1.5rem; cursor: pointer;
+      &:hover, &:focus-visible { background: var(--vplan-acento-suave); } }
+    .vp-zoom-flot-val { min-width: 4.6rem; text-align: center; font-family: $font-mono; font-size: 1.1rem; color: var(--text-muted); } }
+}
+
+// En táctil, los campos de las tareas no se tocan dentro de la hoja: abren la ficha de la fila.
+.vp-tactil tr[data-actividad] input,
+.vp-tactil tr[data-actividad] textarea { pointer-events: none; }
+body.vp-ver-tareas .vp-zoom-flot { display: none; }

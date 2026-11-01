@@ -319,7 +319,7 @@ HTML],
 <li>Agrega las columnas de <strong>recovery</strong> que necesites (una o más) en el modo diseño, pestaña «Hoja».</li>
 </ol>
 <h4>Modo diseño: poner cada cosa donde quieras</h4>
-<p>En la lámina pulsa <strong>Modo diseño</strong>. Cada elemento es un bloque que arrastras para moverlo y redimensionas con las esquinas o los bordes (flechas para afinar, Supr para quitarlo; «Rejilla» alinea a 0.5 %). Las herramientas están en el panel de la derecha, en cuatro pestañas: <strong>Propiedades</strong>, <strong>Capas</strong>, <strong>Insertar</strong> y <strong>Hoja</strong>; con la flecha de la cabecera ocultas el panel para ver más hoja, y con <strong>↶ ↷</strong> deshaces o rehaces (igual que con Ctrl+Z y Ctrl+Y) y con <strong>?</strong> ves todos los atajos. A la izquierda de la lámina, el panel de <strong>láminas</strong> (con miniaturas, agrupadas) te deja cambiar de área con un clic.</p>
+<p>En la lámina pulsa <strong>Modo diseño</strong>. Cada elemento es un bloque que arrastras para moverlo y redimensionas con las esquinas o los bordes (flechas para afinar, Supr para quitarlo; «Rejilla» alinea a 0.5 %). Las herramientas están en el panel de la derecha, en cuatro pestañas: <strong>Propiedades</strong>, <strong>Capas</strong>, <strong>Insertar</strong> y <strong>Hoja</strong>; con la flecha de la cabecera ocultas el panel para ver más hoja, y con <strong>↶ ↷</strong> deshaces o rehaces (igual que con Ctrl+Z y Ctrl+Y) y con <strong>?</strong> ves todos los atajos. A la izquierda de la lámina, el panel de <strong>láminas</strong> (con miniaturas, agrupadas) te deja cambiar de área con un clic. En tablet o celular el panel se abre como <strong>hoja inferior</strong> al tocar un bloque (con sus pestañas y arrastre para agrandarlo), las asas son más grandes y, al seleccionar, aparece una <strong>barra contextual</strong> con las acciones de siempre: al frente, al fondo, duplicar, ocultar, bloquear y quitar. En escritorio, el <strong>divisor</strong> entre la hoja y el panel se arrastra para dar más espacio a uno u otro (el ancho se recuerda), y al mover o estirar un bloque aparecen <strong>guías inteligentes</strong> rosas cuando queda alineado con otro bloque (bordes o centro); <kbd>Ctrl</kbd> + <kbd>[</kbd> / <kbd>]</kbd> lo envían un paso al fondo o al frente.</p>
 <ul>
 <li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
 <li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
@@ -339,12 +339,16 @@ HTML],
 <li>Las fechas de <strong>recovery</strong> se editan directamente en la tabla (con permiso de edición).</li>
 <li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>vPlan → Tablas</em>.</li>
 <li><strong>Tabla en base a documento:</strong> en <em>vPlan › Tablas adicionales</em>, el botón «Tabla en base a documento» (a la izquierda de «+ Nueva tabla») lee un Excel, CSV, Word o PDF con texto y arma la tabla sola, detectando las columnas. Antes de crearla ves una vista previa que puedes corregir (quitar renglones o columnas, editar celdas). Las imágenes y los PDF escaneados no se pueden leer en la web sin OCR: el administrador los procesa con IA desde la app de escritorio (<em>Herramientas IA › Tabla desde documento</em>), que además puede corregir la lectura de cualquier archivo.</li>
+<li><strong>Buscar en la lámina:</strong> en la pestaña <strong>Vista</strong>, el buscador filtra por el texto de las tareas, tablas y bloques; al elegir un resultado la vista se desplaza hasta ese bloque y lo resalta un momento.</li>
+<li><strong>Pestaña Tareas:</strong> muestra las tareas del programa como una lista legible (nombre, fechas y avance); tocar una abre su ficha. Es la forma más cómoda de consultar en el celular.</li>
+<li><strong>Ficha de tarea (tablet y celular):</strong> toca una fila de la lámina y se abre una hoja inferior con sus datos en tamaño normal (inicio, fin, avance, recovery, responsable, columnas de texto…). Se guardan al instante y puedes pasar a la tarea <em>anterior</em> o <em>siguiente</em>. En el lienzo esos campos ya no se editan directamente en táctil.</li>
+<li><strong>Navegación táctil:</strong> las láminas aparecen en una franja horizontal de miniaturas; con la hoja ajustada, desliza a izquierda o derecha para cambiar de lámina. Los botones flotantes de la esquina permiten alejar, acercar, ajustar y centrar.</li>
 <li><strong>Ampliar</strong> muestra la lámina a pantalla completa; Esc o el botón de cerrar la regresan.</li>
-<li><strong>Zoom de la lámina:</strong> el control junto a «Ampliar» cambia el tamaño en pantalla. <strong>100 %</strong> es el tamaño real de la hoja (1 mm = 1 mm), que es exactamente como se ve en el PDF; <strong>Ajustar</strong> la mete en el ancho disponible y los botones <strong>−</strong> y <strong>+</strong> la acercan o la alejan (también con Ctrl + rueda del mouse sobre la lámina). La letra de las tablas nunca baja de lo que se puede leer: si la tabla tiene mucha información, la lámina se muestra más grande para que el texto se lea igual que en el PDF.</li>
+<li><strong>Zoom de la lámina:</strong> el control junto a «Ampliar» cambia el tamaño en pantalla. <strong>100 %</strong> es el tamaño real de la hoja (1 mm = 1 mm), que es exactamente como se ve en el PDF; <strong>Ajustar</strong> la mete en el ancho disponible y los botones <strong>−</strong> y <strong>+</strong> la acercan o la alejan (también con Ctrl + rueda del mouse sobre la lámina). En tablet y celular, <strong>pellizca con dos dedos</strong> para acercar o alejar, arrastra con dos dedos para moverte por la hoja y <strong>toca dos veces</strong> para acercar o volver a ajustar. La letra de las tablas nunca baja de lo que se puede leer: si la tabla tiene mucha información, la lámina se muestra más grande para que el texto se lea igual que en el PDF.</li>
 <li>Si el avance del programa cambió desde que dibujaste las marcas, aparece un aviso y el botón <strong>Actualizar plano</strong>.</li>
 </ul>
 <h4>Editar las marcas</h4>
-<p>El botón <strong>Dibujar sobre el plano</strong> (antes <em>Editar marcas</em>) abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, <strong>cajas de texto</strong> (el texto baja a la siguiente línea dentro del ancho de la caja, sin desbordarse), tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Alinear</em>, <em>Capas</em>, <em>Láminas</em>, <em>Materiales</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio.</p>
+<p>El botón <strong>Dibujar sobre el plano</strong> (antes <em>Editar marcas</em>) abre el mismo <a href="#editor">editor de canvas</a> que usa la sección Editor: dibujas líneas, formas, texto, <strong>cajas de texto</strong> (el texto baja a la siguiente línea dentro del ancho de la caja, sin desbordarse), tablas, hipervínculos, imágenes, etc. sobre el plano. Pulsa <strong>Guardar</strong> (o Ctrl + S) para generar la imagen final de la lámina. El panel de la izquierda (<em>Propiedades</em>, <em>Alinear</em>, <em>Capas</em>, <em>Láminas</em>, <em>Materiales</em> y <em>Símbolos</em>) se puede ocultar con la flecha de su cabecera para dibujar con más espacio. En tablet y celular, <strong>pellizca con dos dedos</strong> para acercar el plano y <strong>arrastra con dos dedos</strong> para desplazarte sin cambiar de herramienta; el doble toque acerca al punto que tocaste y, si ya estaba cerca, vuelve a encuadrar.</p>
 <h4>Notas de la lámina</h4>
 <p>En <strong>Acciones</strong> pulsa <strong>Crear nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
@@ -549,7 +553,7 @@ HTML],
 <p>Con el botón <strong>Especialidades</strong> administras las categorías técnicas del proyecto (eléctrica, hidráulica, etc.). Son propias de cada proyecto y no las ven otros. Muestra cuántos materiales y submittals usa cada una.</p>
 HTML],
 
-['id' => 'dependencias-materiales', 'titulo' => 'Dependencias de materiales', 'icono' => 'fa-diagram-project', 'roles' => $gestion, 'herr' => 'materiales', 'cuerpo' => <<<'HTML'
+['id' => 'dependencias-materiales', 'titulo' => 'Dependencias de materiales', 'icono' => 'fa-link', 'roles' => $gestion, 'herr' => 'materiales', 'cuerpo' => <<<'HTML'
 <p>Sirve para responder una pregunta de obra: <strong>¿este material puede usarse ya?</strong> Conectas un material con los que necesita y el sistema calcula cuándo está realmente disponible. Un material puede requerir <strong>varios</strong> a la vez: por ejemplo, una cámara bullet puede necesitar caja, base y cámara.</p>
 <h4>Conectar materiales</h4>
 <ol>
@@ -688,6 +692,16 @@ HTML],
 <li><strong>Símbolos:</strong> inserta imágenes de la biblioteca de símbolos y cajetines (cuadros de datos).</li>
 <li><strong>Alinear:</strong> con varias marcas elegidas aparecen los botones para alinearlas y distribuirlas; también puedes <strong>agrupar</strong> (Ctrl + G) y desagrupar.</li>
 <li><strong>Comentarios:</strong> el campo Comentario de una marca crea una insignia amarilla en el editor; no sale en las imágenes exportadas.</li>
+<li><strong>Navegar:</strong> rueda o pellizco para el zoom; <kbd>Espacio</kbd> + arrastrar desplaza el plano con cualquier herramienta activa; <kbd>Mayús</kbd> + <kbd>2</kbd> (o el botón de la diana) enfoca la selección, y sin selección encuadra todo. En escritorio, el divisor entre el lienzo y el panel se arrastra para cambiar su ancho.</li>
+</ul>
+<h4>En tablet y celular</h4>
+<ul>
+<li>El editor ya se puede usar en el teléfono: la barra de herramientas y sus pestañas se abren con el botón <strong>Más</strong> de la barra inferior, y las propiedades con <strong>Panel</strong> (hoja inferior que se arrastra y se cierra con su asa o con ×).</li>
+<li>La barra inferior trae Seleccionar, Línea, Forma, Texto, Guardar, Panel y Más.</li>
+<li><strong>Pellizca con dos dedos</strong> para acercar; <strong>arrastra con dos dedos</strong> para moverte, aunque haya una herramienta activa. El doble toque acerca al punto o vuelve a encuadrar.</li>
+<li>Las asas de las marcas son más grandes. Mantén pulsada una marca para abrir sus <strong>acciones</strong> (duplicar, orden, texto, comentario, borrar); en escritorio es el clic derecho.</li>
+<li>Al editar un texto o una celda de tabla se abre una hoja con un campo de tamaño normal, así el teclado no tapa lo que escribes.</li>
+<li><strong>Ampliar</strong> pone el lienzo a pantalla completa: la barra, el dock, los menús, la paleta de colores y las hojas siguen visibles encima del plano (antes desaparecían). Se sale con Esc o con el botón de cerrar de abajo a la izquierda.</li>
 </ul>
 <h4>Tablas vinculadas y símbolos que se actualizan solos</h4>
 <ul>
@@ -754,6 +768,8 @@ HTML],
 </ul>
 <h4>Ortografía</h4>
 <p>Las palabras mal escritas se subrayan en rojo. <strong>Clic derecho</strong> sobre una de ellas para ver sugerencias, <em>Ignorar</em> o <em>Agregar al diccionario</em> (la palabra queda para todos los documentos del proyecto). Los diccionarios de español (México) e inglés van incluidos y funcionan sin internet.</p>
+<h4>En tablet y celular</h4>
+<p>El documento se edita igual que en escritorio. En <strong>tablet</strong> la barra se ve como una <strong>cinta compacta</strong>: las pestañas y una sola fila de herramientas que se desliza en horizontal (nada de varias filas ocupando media pantalla); el botón <strong>⌃</strong> a la derecha de las pestañas <strong>pliega la cinta</strong> para dejar solo las pestañas y recuperar el espacio, y el navegador recuerda cómo la dejaste. Los datos del documento (nombre, fecha, departamento) también van en una sola fila. El panel de <strong>páginas en miniatura</strong> (que en escritorio está a la izquierda) se sustituye por una <strong>barra debajo de la hoja</strong> con «Página X de Y» y las flechas para subir y bajar de página; se queda a la vista mientras escribes y el botón <strong>+</strong> agrega una página en blanco al final (para mover o eliminar páginas usa el panel de miniaturas en escritorio). En el <strong>celular</strong>, además, aparece abajo una <strong>barra fija</strong> con deshacer, rehacer, negrita, cursiva, viñetas, <em>Herramientas</em> y Guardar; <em>Herramientas</em> abre una <strong>hoja inferior</strong> con las pestañas, la cinta y los paneles, de modo que la hoja sigue a la vista. <strong>Pellizca con dos dedos</strong> sobre el texto para acercar o alejar y <strong>toca dos veces</strong> para ajustar la hoja al ancho. El botón <strong>Enfoque</strong> (pestaña <em>Diseño</em>) deja la hoja sola a pantalla completa; se sale con Esc o con el botón flotante de la esquina.</p>
 <h4>Guardar y exportar</h4>
 <p>Se guarda solo cada 30 segundos y con <kbd>Ctrl</kbd>+<kbd>S</kbd>. <strong>Exportar</strong> descarga Word (.docx), LibreOffice (.odt) o PDF con el nombre <code>Año_mes_día_Nombre</code>, y <strong>Imprimir</strong> abre el PDF listo para imprimir con la hoja, márgenes y numeración elegidos. La línea de corte de página en pantalla es aproximada; el PDF muestra la paginación exacta.</p>
 HTML],
@@ -793,6 +809,8 @@ HTML],
 <li>Además de texto, número, moneda, porcentaje y fecha, una columna puede ser <strong>lista</strong> (menú desplegable con hasta 20 opciones que defines en <em>Datos › Columna</em>), <strong>casilla</strong> (✔ o vacío) o <strong>semáforo</strong> (Verde, Amarillo, Rojo con su color).</li>
 <li>Esos controles funcionan también cuando la tabla se edita desde una lámina del vPlan: la lista solo acepta sus opciones, la casilla se marca con un clic y el semáforo se pinta del color elegido.</li>
 </ul>
+<h4>En tablet y celular</h4>
+<p>La tabla se edita también desde el celular. En <strong>tablet</strong> las pestañas y la barra de herramientas van en una <strong>cinta compacta de una sola fila</strong> que se desliza en horizontal, con el botón <strong>⌃</strong> a la derecha para plegarla y dejar solo las pestañas (se recuerda en el navegador). En <strong>tablet</strong>, toca una celda para elegirla y tócala otra vez para <strong>escribir en ella misma</strong> (como en Excel), con el campo agrandado para el dedo. En <strong>celular</strong>, al tocarla por segunda vez se abre una <strong>hoja inferior</strong> con la referencia (por ejemplo <code>C5</code>) y un campo grande, así el teclado no tapa la tabla; <kbd>Enter</kbd> guarda y baja de renglón. <strong>Pellizca con dos dedos</strong> sobre la tabla para el zoom (el mismo del control de <em>Vista</em>).</p>
 <h4>Que se adapte a cualquier tamaño</h4>
 <ul>
 <li><strong>vPlan:</strong> la letra de la tabla se calcula para llenar el bloque. Si el bloque es pequeño, la letra se reduce hasta que todo quepa; si lo agrandas, <strong>crece</strong> (hasta 48 pt) en lugar de dejar un texto diminuto en un cuadro enorme. Lo mismo ocurre en el PDF de la lámina.</li>
@@ -831,6 +849,7 @@ HTML],
 <li><strong>Tipos de etiqueta:</strong> <em>Campo inteligente</em>, <em>Texto libre</em> (admite campos como <code>{proyecto}</code> o <code>{corte:largo}</code>), <em>Semáforo</em> (verde, amarillo o rojo según dos umbrales que tú eliges) y <em>Actividades del día</em>.</li>
 <li><strong>Actividades del día (post-its):</strong> una tarjeta por cada actividad que cae en la fecha de hoy (o en una fecha fija). Eliges las partidas o el responsable, cuántas tarjetas, cuántas columnas, el color y qué datos muestra cada una. Cambia sola cada día; en fin de semana o festivo muestra el siguiente día hábil.</li>
 <li>La <strong>vista previa</strong> a la derecha usa los datos reales del proyecto y te deja probar con otra actividad o fecha de corte.</li>
+<li>En el <strong>lienzo de la estampa</strong> (estampas hechas con formas y textos) puedes <strong>pellizcar con dos dedos</strong> para acercar o alejar y <strong>tocar dos veces</strong> para volver a ajustar a la ventana; con un dedo arrastras y mueves los elementos como con el ratón.</li>
 <li><strong>En el vPlan:</strong> abre una lámina → <em>Modo diseño</em> → pestaña <em>Insertar</em> → <em>Estampas inteligentes</em>. En <em>Propiedades</em> eliges la estampa, la fecha y la actividad de las etiquetas «de la actividad». También sale en el PDF de la lámina.</li>
 </ul>
 HTML],
@@ -863,19 +882,38 @@ HTML],
 <h4>Elegir los documentos</h4>
 <ul>
 <li><strong>Documento A</strong> es la base (el fondo) y <strong>Documento B</strong> es el que se superpone y se mueve.</li>
-<li>Cada uno puede ser un archivo <strong>del proyecto</strong> (sección <a href="#archivos">Archivo</a>) o uno <strong>externo</strong> de tu equipo; los externos se quedan en tu navegador y no se suben.</li>
-<li>En un PDF elige la <strong>página</strong> que quieres comparar.</li>
+<li>El selector <strong>Del proyecto</strong> reúne lo que ya vive en la obra: archivos de <a href="#archivos">Archivo</a>, <strong>láminas de vPlan</strong>, <strong>gráficos y símbolos del Editor</strong> y <strong>documentos del Redactor</strong> (se convierten a PDF al abrirlos). Así puedes comparar dos revisiones de un plano, una lámina con su versión anterior o dos versiones de un informe.</li>
+<li>También puedes usar un archivo <strong>externo</strong> de tu equipo. Los externos se quedan en tu navegador mientras comparas; solo se suben si guardas la comparación.</li>
+<li>En un PDF elige la <strong>página</strong> que quieres comparar. Las flechas ‹ › cambian de hoja sin perder las anotaciones: cada una pertenece a su página.</li>
+<li>Si el documento A es de <strong>Archivo</strong> y tiene otra revisión, aparece <strong>Usar la revisión anterior en B</strong> para comparar las dos versiones con un clic.</li>
 </ul>
 <h4>Modos de comparación</h4>
 <ul>
 <li><strong>Deslizador:</strong> A a un lado y B al otro de una línea que arrastras (vertical u horizontal).</li>
 <li><strong>Fundido:</strong> mezcla A y B con una barra de porcentaje.</li>
-<li><strong>Diferencias:</strong> lo igual se ve negro y lo distinto se ilumina.</li>
+<li><strong>Diferencias:</strong> lo igual se apaga y lo distinto se ilumina. Ajusta la <strong>tolerancia</strong> para ignorar variaciones de escaneo, mira el <strong>porcentaje de área cambiada</strong> y salta entre zonas con ‹ ›.</li>
 </ul>
 <h4>Emparejar B con A</h4>
-<p>Con <strong>Mover B</strong> arrastras el documento B (flechas del teclado para afinar), <strong>Ajustar B a A</strong> lo escala al tamaño de A, <strong>Restablecer B</strong> quita traslado, escala y giro, y el botón de flechas intercambia A y B. Rueda del ratón = zoom; arrastrar = desplazar.</p>
+<p>Con <strong>Mover B</strong> arrastras el documento B (flechas del teclado para afinar), <strong>Ajustar B a A</strong> lo escala al tamaño de A, <strong>Restablecer B</strong> quita traslado, escala y giro, y el botón de flechas intercambia A y B. Rueda del ratón o pellizco = zoom; arrastrar o dos dedos = desplazar. En tablet y teléfono también funciona el doble toque para acercar.</p>
+<h4>Anotar la comparación</h4>
+<p>Activa <strong>Anotar</strong> y elige una herramienta:</p>
+<ul>
+<li><strong>Globo numerado:</strong> una marca con número y texto, unida al punto observado con una línea guía.</li>
+<li><strong>Texto libre</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>rectángulo</strong>, <strong>elipse</strong> y <strong>nube de revisión</strong>.</li>
+<li><strong>Resaltador</strong> a mano alzada y <strong>rectángulo resaltado</strong> semitransparente.</li>
+<li><strong>Medir</strong> una distancia y <strong>Área</strong> de un rectángulo. Pulsa <strong>Calibrar</strong>, dibuja una cota conocida del plano y escribe cuántos metros mide; desde ahí todas las medidas salen en m/cm y las áreas en m²/cm².</li>
+<li><strong>Mano</strong> para mover la vista sin salir de Anotar.</li>
+</ul>
+<p>Elige color y grosor, activa <strong>Relleno</strong> si lo necesitas y usa <strong>Deshacer</strong>/<strong>Rehacer</strong> (Ctrl+Z / Ctrl+Shift+Z). Con la herramienta de selección puedes mover, redimensionar y borrar (Supr); <strong>Mayús+clic</strong> selecciona varias y se mueven juntas. <strong>Ctrl+C</strong>, <strong>Ctrl+V</strong> y <strong>Ctrl+D</strong> copian, pegan y duplican. Las anotaciones quedan fijas al documento A y a su página, y siguen el zoom.</p>
+<h4>Revisión y seguimiento</h4>
+<p>La <strong>lista</strong> de anotaciones se filtra por todas, abiertas o resueltas y puede mostrar las de todas las páginas. Al seleccionar un globo o texto se abre su <strong>detalle</strong>: autor, fecha, estado, respuestas y botones para <strong>Resolver/Reabrir</strong>, <strong>mover a otra página</strong>, <strong>duplicar</strong>, <strong>crear un pendiente de Punch list</strong> o <strong>abrir un RFI</strong> con el texto ya cargado. El modo <strong>presentación</strong> (icono de pantalla) oculta las barras y salta entre anotaciones con ← →.</p>
+<h4>Páginas e informe</h4>
+<p><strong>Páginas</strong> analiza hasta 80 hojas de A contra la misma hoja de B, marca el porcentaje de cambio de cada una y salta a ella al pulsar. <strong>PDF de cambios</strong> descarga una hoja por cada página que cambió. <strong>Informe</strong> resume los cambios, las anotaciones abiertas/resueltas, las medidas y las páginas analizadas.</p>
+<h4>Guardar, historial y compartir</h4>
+<p>Pulsa <strong>Guardar</strong>, escribe un nombre y una nota opcional. La comparación queda en <strong>Comparaciones guardadas</strong> con una miniatura; desde ahí puedes <strong>Abrirla</strong>, ver su <strong>Historial</strong>, <strong>Duplicarla</strong> o <strong>Eliminarla</strong>. Cada vez que vuelves a guardar se conserva la versión anterior y puedes restaurarla. Si usaste archivos externos de tu equipo, al guardar se sube una copia al proyecto (con revisión de seguridad y consumo de almacenamiento). Ven y edita quien la creó y el administrador; los demás pueden verla, exportarla y duplicarla.</p>
+<p>Con <strong>Compartir</strong> se crea un <strong>enlace de solo lectura</strong> que abre la comparación sin iniciar sesión (con los documentos y las anotaciones, pero sin poder editarla). Puedes copiarlo, revocarlo o enviarlo por <strong>Telegram</strong> junto con el PDF a los destinos del proyecto.</p>
 <h4>Descargar PDF</h4>
-<p>Al final puedes exportar la comparación a PDF eligiendo tamaño de hoja, orientación, qué incluir (A y B como se ven, solo A o solo B) y el área (vista actual o documento A completo).</p>
+<p>Al final puedes exportar la comparación a PDF eligiendo tamaño de hoja, orientación, qué incluir (A y B como se ven, solo A o solo B) y el área (vista actual o documento A completo). Marca <strong>Incluir anotaciones, medidas y leyenda</strong> para que salgan los dibujos, las medidas y el texto/estado de los globos debajo de la imagen.</p>
 HTML],
 
 ['id' => 'traductor', 'titulo' => 'Traductor', 'icono' => 'fa-language', 'roles' => $todos, 'herr' => 'traductor', 'cuerpo' => <<<'HTML'

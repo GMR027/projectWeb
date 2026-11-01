@@ -5,7 +5,7 @@ namespace Classes;
 use Model\Proyecto;
 
 /**
- * Punch list: pendientes de calidad con responsable, fecha límite y fotos antes/después; inspecciones con listas de verificación por sistema que convierten cada
+ * Punch list: pendientes de calidad con fecha de emisión, responsable, fecha límite y fotos antes/después; inspecciones con listas de verificación por sistema que convierten cada
  * falla en un pendiente; y un análisis de causas repetidas (por categoría, contratista y ubicación). Los pendientes los captura una persona; la IA solo ayuda a
  * estructurar lo dictado y a redactar el análisis.
  */
@@ -80,11 +80,14 @@ class Punch
         $titulo = trim(mb_substr((string)($d['titulo'] ?? ''), 0, 200));
         if ($titulo === '') return [false, 'El título es obligatorio.', 0];
         $lim = \DateTime::createFromFormat('Y-m-d', (string)($d['fecha_limite'] ?? ''));
+        // Fecha de emisión: si no se indica, al crear es hoy y al editar se conserva la que ya tenía.
+        $emi = \DateTime::createFromFormat('Y-m-d', (string)($d['fecha_emision'] ?? ''));
+        $emi = $emi && $emi->format('Y-m-d') === $d['fecha_emision'] ? $d['fecha_emision'] : ($existente ? (string)($existente['fecha_emision'] ?? '') : date('Y-m-d'));
         $aid = (int)($d['actividad_id'] ?? 0);
         if ($aid && !self::filas("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $aid AND pa.proyecto_id = $pid")) $aid = 0;
         $sev = isset(self::SEVERIDADES[$d['severidad'] ?? '']) ? $d['severidad'] : 'media';
         $campos = "titulo = '" . self::esc($titulo) . "', descripcion = '" . self::esc(mb_substr((string)($d['descripcion'] ?? ''), 0, 3000)) . "', actividad_id = " . ($aid ?: 'NULL') . ", ubicacion = '" . self::esc(mb_substr((string)($d['ubicacion'] ?? ''), 0, 200)) . "', categoria = '" . self::esc(mb_substr((string)($d['categoria'] ?? ''), 0, 60))
-            . "', severidad = '$sev', responsable = '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', contratista = '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', fecha_limite = " . ($lim && $lim->format('Y-m-d') === $d['fecha_limite'] ? "'{$d['fecha_limite']}'" : 'NULL');
+            . "', severidad = '$sev', responsable = '" . self::esc(mb_substr((string)($d['responsable'] ?? ''), 0, 150)) . "', contratista = '" . self::esc(mb_substr((string)($d['contratista'] ?? ''), 0, 150)) . "', fecha_emision = " . ($emi ? "'$emi'" : 'NULL') . ", fecha_limite = " . ($lim && $lim->format('Y-m-d') === $d['fecha_limite'] ? "'{$d['fecha_limite']}'" : 'NULL');
         $db = self::db();
         if ($existente) {
             $idExp = (int)$existente['id'];
@@ -151,7 +154,7 @@ class Punch
         $hoy = date('Y-m-d');
         $pend = "proyecto_id = $pid AND estado IN ('abierto','en_proceso','corregido')";
         $g = fn(string $col) => self::filas("SELECT COALESCE(NULLIF($col, ''), '(sin dato)') clave, COUNT(*) n, SUM(estado IN ('abierto','en_proceso','corregido')) pendientes, SUM(severidad IN ('alta','critica') AND estado IN ('abierto','en_proceso','corregido')) graves FROM punch_items WHERE proyecto_id = $pid AND estado <> 'rechazado' GROUP BY clave HAVING n >= 1 ORDER BY pendientes DESC, n DESC LIMIT 8");
-        $t = self::filas("SELECT COUNT(*) total, SUM(estado IN ('abierto','en_proceso','corregido')) pendientes, SUM(estado = 'cerrado') cerrados, SUM(estado IN ('abierto','en_proceso') AND fecha_limite < '$hoy') vencidos, AVG(CASE WHEN estado IN ('abierto','en_proceso','corregido') THEN DATEDIFF('$hoy', DATE(creado)) END) edad FROM punch_items WHERE proyecto_id = $pid AND estado <> 'rechazado'")[0] ?? [];
+        $t = self::filas("SELECT COUNT(*) total, SUM(estado IN ('abierto','en_proceso','corregido')) pendientes, SUM(estado = 'cerrado') cerrados, SUM(estado IN ('abierto','en_proceso') AND fecha_limite < '$hoy') vencidos, AVG(CASE WHEN estado IN ('abierto','en_proceso','corregido') THEN DATEDIFF('$hoy', COALESCE(fecha_emision, DATE(creado))) END) edad FROM punch_items WHERE proyecto_id = $pid AND estado <> 'rechazado'")[0] ?? [];
         return ['total' => (int)($t['total'] ?? 0), 'pendientes' => (int)($t['pendientes'] ?? 0), 'cerrados' => (int)($t['cerrados'] ?? 0), 'vencidos' => (int)($t['vencidos'] ?? 0), 'edad' => $t['edad'] !== null ? round((float)$t['edad'], 1) : null,
             'categorias' => $g('categoria'), 'contratistas' => $g('contratista'), 'ubicaciones' => $g('ubicacion')];
     }
@@ -161,9 +164,9 @@ class Punch
         $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         $items = array_values(array_filter(self::listar((int)$p->id, ['estado' => 'pendientes', 'contratista' => $contratista]), fn($x) => true));
         $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
-        $filas = implode('', array_map(fn($x, $i) => '<tr><td>' . ($i + 1) . '</td><td><b>' . $e($x['titulo']) . '</b><br>' . $e(mb_substr((string)$x['descripcion'], 0, 220)) . '</td><td>' . $e($x['ubicacion']) . '</td><td>' . $e($x['categoria']) . '</td><td>' . $e(self::SEVERIDADES[$x['severidad']]) . '</td><td>' . $e($x['responsable'] ?: $x['contratista']) . '</td><td>' . $fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '') . '</td><td>' . $e(self::ESTADOS[$x['estado']]) . '</td></tr>', $items, array_keys($items)));
+        $filas = implode('', array_map(fn($x, $i) => '<tr><td>' . ($i + 1) . '</td><td><b>' . $e($x['titulo']) . '</b><br>' . $e(mb_substr((string)$x['descripcion'], 0, 220)) . '</td><td>' . $e($x['ubicacion']) . '</td><td>' . $e($x['categoria']) . '</td><td>' . $e(self::SEVERIDADES[$x['severidad']]) . '</td><td>' . $e($x['responsable'] ?: $x['contratista']) . '</td><td>' . $fmt($x['fecha_emision']) . '</td><td>' . $fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '') . '</td><td>' . $e(self::ESTADOS[$x['estado']]) . '</td></tr>', $items, array_keys($items)));
         $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans;font-size:9px}h1{font-size:15px;margin:0}h2{font-size:10px;color:#555;margin:2px 0 10px;font-weight:normal}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:3px 5px;vertical-align:top;text-align:left}th{background:#e8ecf1}</style></head><body><h1>Punch list' . ($contratista !== '' ? ' · ' . $e($contratista) : '') . '</h1><h2>' . $e($p->nombre) . ' · ' . count($items) . ' pendiente(s) · generado el ' . date('d/m/Y H:i') . '</h2>'
-            . '<table><thead><tr><th>#</th><th>Pendiente</th><th>Ubicación</th><th>Categoría</th><th>Severidad</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th></tr></thead><tbody>' . $filas . '</tbody></table></body></html>';
+            . '<table><thead><tr><th>#</th><th>Pendiente</th><th>Ubicación</th><th>Categoría</th><th>Severidad</th><th>Responsable</th><th>Emisión</th><th>Fecha límite</th><th>Estado</th></tr></thead><tbody>' . $filas . '</tbody></table></body></html>';
         return Pdf::generar($html, 'letter', 'landscape', ['marca' => $p]);
     }
 }

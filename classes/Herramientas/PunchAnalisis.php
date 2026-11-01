@@ -43,7 +43,7 @@ class PunchAnalisis extends Base
         $secs = [Informes::kpis('Punch list', [['Pendientes', $a['pendientes'], 'de ' . $a['total']], ['Vencidos', $a['vencidos']], ['Cerrados', $a['cerrados']], ['Antigüedad media', $a['edad'] !== null ? $a['edad'] . ' d' : '—']]), Informes::texto('Resumen', $resumen)];
         foreach (['causas' => 'Causas probables', 'acciones' => 'Acciones sugeridas'] as $k => $tit) if ($l = self::textos(self::dato($respuestas, $k), 6, 240)) $secs[] = Informes::lista($tit, $l);
         foreach (['categorias' => 'Por categoría', 'contratistas' => 'Por contratista', 'ubicaciones' => 'Por ubicación'] as $k => $tit) $secs[] = Informes::tabla($tit, ['', 'Total', 'Pendientes', 'Graves'], array_map(fn($r) => [$r['clave'], $r['n'], $r['pendientes'], $r['graves']], $a[$k]));
-        $secs[] = Informes::tabla('Graves o vencidos', ['Pendiente', 'Ubicación', 'Severidad', 'Responsable', 'Límite'], array_map(fn($x) => [self::corto($x['titulo'], 80), $x['ubicacion'], Punch::SEVERIDADES[$x['severidad']], $x['responsable'] ?: $x['contratista'], self::fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '')], $datos['graves']));
+        $secs[] = Informes::tabla('Graves o vencidos', ['Pendiente', 'Ubicación', 'Severidad', 'Responsable', 'Emisión', 'Límite'], array_map(fn($x) => [self::corto($x['titulo'], 80), $x['ubicacion'], Punch::SEVERIDADES[$x['severidad']], $x['responsable'] ?: $x['contratista'], self::fmt($x['fecha_emision']), self::fmt($x['fecha_limite']) . ($x['vencido'] ? ' ⚠' : '')], $datos['graves']));
         return ['secciones' => $secs];
     }
 }

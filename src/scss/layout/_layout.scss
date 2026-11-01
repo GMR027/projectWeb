@@ -553,6 +553,8 @@ body.menu-abierto { overflow: hidden; }
   }
 }
 @keyframes burbuja-entra { from { opacity: 0; transform: translateY(.3rem); } to { opacity: 1; transform: none; } }
+// El proyecto puede apagar los mensajes de ayuda (Ajustes → Apariencia del proyecto → «Mensajes de ayuda»)
+html.sin-ayuda-burbujas .burbuja-ayuda { display: none !important; }
 @media (hover: none) { .burbuja-ayuda { display: none !important; } }
 @media print { .burbuja-ayuda { display: none !important; } }
 

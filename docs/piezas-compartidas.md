@@ -32,6 +32,9 @@ Notas:
 | `desktop/src/api.js` | `json()`, `pagina()`, `leer()` y `enviar()` (POST de formulario con CSRF) para hablar con Project Web con la sesión del admin | 9 copias de `json()` |
 | `desktop/src/lotes.js` → `porLotes({rutaApi, textos, registrar, resultadoSiVacio, ...})` | Recorrido común de las herramientas de IA por lotes (`/contexto` → modelo → `/resultado`). Lo usan `inconsistencias.js`, `analisis-materiales.js` y `materiales-inteligentes.js` | 3 runners clonados |
 | `notas.js` → `window.Notas.iniciar({campo, id, puedeEditar, notas, urlGuardar, urlEliminar})` | Lista de notas y modal; el modal sale de `views/templates/_notas-modal.php`. |
+| `gestos-lienzo.js` → `window.GestosLienzo` | `montar(elemento, {zoomActual, min, max, excepto, alInicio, alMover, alFin, alDobleToque})`: pellizco, arrastre con dos dedos y doble toque para los lienzos que usan zoom de CSS (`vplan-zoom.js`), un stage de Konva (`vplan-editor.js`), la hoja del Redactor y la cuadrícula de SheetFlow. Un solo dedo no se intercepta; los controles (`input`, `button`, `a`…) tampoco. `esTactil()` centraliza `(pointer: coarse)`. |
+| `hoja-inferior.js` → `window.HojaInferior` | `crear(id)` devuelve una hoja inferior reutilizable (`abrir({titulo, html\|nodo, acciones, posicion, alCerrar})`, `cerrar()`), con arrastre entre peek/media/completa, foco atrapado y `Esc`. Estilos en `componentes/_hoja-inferior.scss`. |
+| `capa-superior.js` → `window.CapaSuperior` | `actual()` devuelve `document.fullscreenElement` o `body`; `adoptar(nodo)` marca el flotante con `data-capa-flotante` y lo cuelga de la capa actual, y un `fullscreenchange` lo reubica. Sin él, en «Ampliar» (pantalla completa) las paletas, menús contextuales, hojas inferiores y docks que viven en `body` no se pintan. Lo usan `selector-color.js`, `hoja-inferior.js`, `vplan-editor.js`, `vplan-diseno.js`, el visor de vPlan y `confirmarModal` (`src/js/app.js`, para que el aviso de confirmación se vea en el modo enfoque del Redactor). |
 
 El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (`state.past/future`) porque cada lámina del Editor guarda el suyo.
 
@@ -51,6 +54,7 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 | | `.pn-grid`, `.pn-ficha` | Rejilla de elementos insertables (icono + nombre + para qué sirve); la ficha se pulsa o se arrastra | vPlan |
 | | `.pn-secc`, `.pn-tit` (alias `.vp-cap-tit`), `.pn-vacio` | Sección plegable (`[hidden]`), título de sección y estado vacío | vPlan |
 | | `.pn-abrir` (`data-etq` = rótulo vertical) | Pestaña lateral que reabre un panel oculto | vPlan y Editor de marcas |
+| `_hoja-inferior.scss` | `.hi`, `.hi-fondo`, `.hi-caja`, `.hi-asa`, `.hi-cab`, `.hi-cuerpo`, `.hi-acc` | Hoja inferior compartida (arrastre peek/media/completa, foco atrapado); combina con `.pn-*` dentro | vPlan y editor de marcas (paneles táctiles y ficha de tarea) |
 
 **Patrón de panel ocultable** (vPlan y Editor de marcas): la cabecera lleva un botón que esconde el panel, agrega una clase a la retícula (`vp-dis-fuera` en `.vp-dis-wrap` / `ve-sin-lateral` en `.ve-area`), muestra `.pn-abrir` y guarda la decisión en `localStorage` (`vp-dis-panel` / `ve-panel`); al elegir un elemento en la hoja el panel se reabre solo (`seleccionar()` en `vplan-diseno.js`).
 

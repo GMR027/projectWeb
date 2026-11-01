@@ -31,7 +31,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <a href="/redactor?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Documentos</a>
     </div>
 </div>
-<?php $avisoTexto = 'Los documentos solo se pueden editar en una tablet o en un equipo de escritorio.'; $avisoLectura = true; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
+
 
 <div class="card rd-datos">
     <label>Nombre <input type="text" id="rd-nombre" maxlength="150" value="<?php echo s($documento->nombre); ?>"></label>
@@ -40,12 +40,15 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <datalist id="rd-deptos"><?php foreach ($departamentos as $dp): ?><option value="<?php echo s($dp); ?>"><?php endforeach; ?></datalist>
 </div>
 
+<div class="cinta-cab">
 <div class="rd-pestanas" id="rd-pestanas" role="tablist" aria-label="Pestañas de herramientas">
     <button type="button" role="tab" class="activo" data-pest="inicio"><i class="fa-solid fa-house"></i> Inicio</button>
     <button type="button" role="tab" data-pest="insertar"><i class="fa-solid fa-plus"></i> Insertar</button>
     <button type="button" role="tab" data-pest="diseno"><i class="fa-regular fa-file"></i> Diseño</button>
     <button type="button" role="tab" data-pest="revision"><i class="fa-regular fa-comments"></i> Revisión</button>
     <button type="button" role="tab" data-pest="herramientas"><i class="fa-solid fa-screwdriver-wrench"></i> Herramientas</button>
+</div>
+<button type="button" class="cinta-plegar" id="rd-plegar" aria-controls="rd-barra" aria-expanded="true" title="Ocultar la barra de herramientas"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
 </div>
 <div class="rd-barra" id="rd-barra" role="toolbar" aria-label="Herramientas de redacción">
     <div class="rd-grupo-b" data-pest="inicio">
@@ -109,7 +112,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <div class="rd-grupo-b" data-pest="diseno">
         <button type="button" class="rd-b" id="rd-i-pagina" title="Página, márgenes e idioma"><i class="fa-regular fa-file"></i> Página y márgenes</button>
         <button type="button" class="rd-b" id="rd-h-ancho" title="Ajustar el zoom al ancho de la ventana"><i class="fa-solid fa-left-right"></i> Ajustar al ancho</button>
-        <button type="button" class="rd-b" id="rd-h-enfoque" title="Modo enfoque: oculta todo menos la hoja (Esc para salir)"><i class="fa-solid fa-expand"></i> Enfoque</button>
+        <button type="button" class="rd-b" id="rd-h-enfoque" aria-pressed="false" title="Modo enfoque: la hoja sola, a pantalla completa, con el zoom por pellizco (Esc para salir)"><i class="fa-solid fa-expand"></i> Enfoque</button>
     </div>
     <div class="rd-grupo-b" data-pest="diseno">
         <button type="button" class="rd-b" data-herr="sangria" title="Sangría de primera línea (alterna)"><i class="fa-solid fa-arrow-right-to-bracket"></i> Sangría 1.ª línea</button>
@@ -516,6 +519,12 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
         <div class="rd-guias" id="rd-guias" aria-hidden="true"></div>
     </div>
 </div>
+<div class="rd-paginas-bar no-print" id="rd-paginas-bar" role="group" aria-label="Navegar entre las páginas del documento">
+    <button type="button" class="btn btn-sm btn-ghost rd-pag-btn" id="rd-pag-ant" aria-label="Subir a la página anterior" title="Página anterior"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+    <span class="rd-paginas-bar-txt" id="rd-paginas-bar-txt" aria-live="polite">Página 1 de 1</span>
+    <button type="button" class="btn btn-sm btn-ghost rd-pag-btn" id="rd-pag-sig" aria-label="Bajar a la página siguiente" title="Página siguiente"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+    <button type="button" class="btn btn-sm btn-ghost rd-pag-btn" id="rd-pag-nueva-barra" aria-label="Agregar una página en blanco al final" title="Agregar una página"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+</div>
 <aside class="rd-lateral" id="rd-lateral" aria-label="Comentarios y cambios">
     <header class="pn-cab"><span class="pn-cab-ico"><i class="fa-regular fa-comments"></i></span><div class="pn-cab-txt"><b>Panel</b><small>Comentarios y cambios del documento</small></div></header>
     <div class="rd-tabs"><button type="button" class="activo" data-lat="comentarios">Comentarios</button><button type="button" data-lat="cambios">Cambios</button></div>
@@ -528,12 +537,16 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <span id="rd-e-pagina">Página 1 de 1</span><span id="rd-e-palabras">0 palabras</span><span id="rd-e-corrector">Corrector: cargando…</span>
     <label>Zoom <select id="rd-zoom"><option value="0.6">60%</option><option value="0.8">80%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label>
 </div>
+<button type="button" class="rd-salir-enfoque no-print" id="rd-salir-enfoque" aria-label="Salir del modo enfoque" title="Salir del modo enfoque (Esc)"><i class="fa-solid fa-compress"></i></button>
 <div id="rd-menu-ort" class="rd-menu-ort" hidden></div>
 
 <script>window.RD_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
 <script src="/vendor/redactor/typo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor/typo.js'); ?>"></script>
 <script src="/vendor/redactor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor.js'); ?>"></script>
 <script src="/vendor/redactor-extras.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor-extras.js'); ?>"></script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
+<script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
+<script src="/vendor/redactor-movil.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor-movil.js'); ?>"></script>
 <script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
 <script>
 // Guía rápida del editor del Redactor

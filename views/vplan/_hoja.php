@@ -12,7 +12,7 @@ $planoImg = $lamina->marcas_png ?: $lamina->plano;
 $lkW = $lkH = 0.0;
 $enlaces = $lamina->marcas_png ? \Classes\EnlacesLamina::de($lamina->marcas_json, $lkW, $lkH) : [];
 $editarFila = fn($t, $n, $campo) => $puedeEditar
-    ? '<input type="date" class="vp-rec" data-actividad="' . (int)$t['actividad']->id . '" data-n="' . $n . '" data-campo="' . $campo . '" value="' . s($t['rec'][$n - 1][$campo]) . '">'
+    ? '<input type="date" class="vp-rec" data-actividad="' . (int)$t['actividad']->id . '" data-n="' . $n . '" data-campo="' . $campo . '" data-titulo="' . s(Vplan::etiquetaRecovery($n) . ' · ' . ($campo === 'inicio' ? 'inicio' : 'fin')) . '" value="' . s($t['rec'][$n - 1][$campo]) . '">'
     : s($fd($t['rec'][$n - 1][$campo]));
 $alinear = ['izquierda' => 'flex-start', 'centro' => 'center', 'derecha' => 'flex-end'];
 $tam = function (VplanBloque $b, float $defecto) use ($cq): string {
@@ -120,24 +120,24 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                 <?php foreach ($td['grupos'] as $g): ?>
                     <?php if ($td['subtitulos']): ?><tr class="vp-subtitulo"><td colspan="<?php echo $cols; ?>"><?php echo s(mb_strtoupper($g['partida']->nombre)); ?></td></tr><?php endif; ?>
                     <?php foreach ($g['tareas'] as $t): $a = $t['actividad']; $pg = (int)$a->progreso; ?>
-                    <tr>
+                    <tr data-actividad="<?php echo (int)$a->id; ?>" data-tarea="<?php echo s($a->nombre); ?>">
                         <?php foreach ($orden as $o):
                             switch ($o):
                                 case 'seq': ?><td class="c"><?php echo (int)$t['seq']; ?></td><?php break;
-                                case 'tarea': ?><td><?php echo s($a->nombre); ?></td><?php break;
-                                case 'inicio': ?><td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="inicio" value="' . s($a->fecha_inicio) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_inicio)); ?></td><?php break;
-                                case 'fin': ?><td class="c"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="fin" value="' . s($a->fecha_fin) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_fin)); ?></td><?php break;
-                                case 'rec': for ($r = 1; $r <= $nRec; $r++): ?><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'inicio'); ?></td><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>"><?php echo $editarFila($t, $r, 'fin'); ?></td><?php endfor; break;
-                                case 'pct': ?><td class="c vp-pct-act <?php echo $pg >= 100 ? 'vp-verde' : ($pg > 0 ? 'vp-amarillo' : ''); ?>"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" value="' . $pg . '" title="Mismo avance que el programa de obra">' : $pg . '%'; ?></td><?php break;
+                                case 'tarea': ?><td data-campo="tarea"><?php echo s($a->nombre); ?></td><?php break;
+                                case 'inicio': ?><td class="c" data-campo="inicio"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="inicio" data-titulo="Inicio" value="' . s($a->fecha_inicio) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_inicio)); ?></td><?php break;
+                                case 'fin': ?><td class="c" data-campo="fin"><?php echo $puedeEditar ? '<input type="date" class="vp-rec vp-fecha-act" data-actividad="' . (int)$a->id . '" data-tipo="fin" data-titulo="Fin" value="' . s($a->fecha_fin) . '" title="Misma fecha que el programa de obra">' : s($fd($a->fecha_fin)); ?></td><?php break;
+                                case 'rec': for ($r = 1; $r <= $nRec; $r++): ?><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>" data-campo="rec-<?php echo $r; ?>-inicio"><?php echo $editarFila($t, $r, 'inicio'); ?></td><td class="c<?php echo $r > 1 ? ' vp-rojo-txt' : ''; ?>" data-campo="rec-<?php echo $r; ?>-fin"><?php echo $editarFila($t, $r, 'fin'); ?></td><?php endfor; break;
+                                case 'pct': ?><td class="c vp-pct-act <?php echo $pg >= 100 ? 'vp-verde' : ($pg > 0 ? 'vp-amarillo' : ''); ?>" data-campo="pct"><?php echo $puedeEditar ? '<input type="number" min="0" max="100" step="1" class="vp-rec vp-progreso-act" data-actividad="' . (int)$a->id . '" data-titulo="Avance (%)" value="' . $pg . '" title="Mismo avance que el programa de obra">' : $pg . '%'; ?></td><?php break;
                                 case 'restr': ?><td class="c"><?php if ($t['restricciones']): foreach ($t['restricciones'] as $n): ?><span class="vp-rombo"><b><?php echo (int)$n; ?></b></span><?php endforeach; elseif ($t['estado'] === 'completo'): ?>COMPLETE<?php endif; ?></td><?php break;
                                 case 'responsable': case 'libre_texto': case 'libre_numero': case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'predecesora': case 'sucesora': case 'indicador':
                                     $vp = \Classes\ProgramaColumnas::valorVplan($o, $a, $prg);
                                     $tipoIn = ['responsable' => 'text', 'libre_texto' => 'text', 'libre_numero' => 'number', 'rec_inicio' => 'date', 'rec_fin' => 'date', 'libre_fecha' => 'date'][$o] ?? '';
                                     if ($o === 'indicador'): ?><td class="c"><?php if ($vp['color']): ?><span class="vp-ind" style="background:<?php echo s($vp['color']); ?>" title="<?php echo s($vp['texto']); ?>"></span><?php endif; ?></td><?php
-                                    elseif ($puedeEditar && $tipoIn): ?><td<?php echo $tipoIn === 'text' ? '' : ' class="c"'; ?>><input type="<?php echo $tipoIn; ?>" class="vp-rec vp-prg-campo" data-actividad="<?php echo (int)$a->id; ?>" data-campo="<?php echo s($o); ?>" value="<?php echo s($vp['raw']); ?>"<?php echo $tipoIn === 'number' ? ' step="any"' : ($tipoIn === 'text' ? ' maxlength="255"' : ''); ?>></td><?php
+                                    elseif ($puedeEditar && $tipoIn): ?><td<?php echo $tipoIn === 'text' ? '' : ' class="c"'; ?>><input type="<?php echo $tipoIn; ?>" class="vp-rec vp-prg-campo" data-actividad="<?php echo (int)$a->id; ?>" data-campo="<?php echo s($o); ?>" data-titulo="<?php echo s($ttlPrg[$o] ?? $o); ?>" value="<?php echo s($vp['raw']); ?>"<?php echo $tipoIn === 'number' ? ' step="any"' : ($tipoIn === 'text' ? ' maxlength="255"' : ''); ?>></td><?php
                                     else: ?><td<?php echo $tipoIn === 'text' || $tipoIn === '' && $o !== 'indicador' ? '' : ' class="c"'; ?>><?php echo s($vp['texto']); ?></td><?php endif;
                                     break;
-                                default: $cid = substr($o, 2); $tx = $t['textos'][$cid] ?? ''; ?><td><?php echo $puedeEditar ? '<input type="text" maxlength="500" class="vp-rec vp-col-texto" data-actividad="' . (int)$a->id . '" data-col="' . s($cid) . '" value="' . s($tx) . '">' : s($tx); ?></td><?php
+                                default: $cid = substr($o, 2); $tx = $t['textos'][$cid] ?? ''; ?><td><?php echo $puedeEditar ? '<input type="text" maxlength="500" class="vp-rec vp-col-texto" data-actividad="' . (int)$a->id . '" data-col="' . s($cid) . '" data-titulo="' . s($ctx[$cid] ?? 'Texto') . '" value="' . s($tx) . '">' : s($tx); ?></td><?php
                             endswitch;
                         endforeach; ?>
                     </tr>

@@ -3,11 +3,19 @@ use Classes\Punch;
 $pid = (int)$proyecto->id;
 $fmt = fn($d) => $d ? date('d/m/Y', strtotime($d)) : '—';
 $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' => 'baja'];
+// Precarga desde otra herramienta (por ejemplo, una anotación del Comparador)
+$q = fn($k, $max) => mb_substr(trim(is_string($_GET[$k] ?? null) ? $_GET[$k] : ''), 0, $max);
+$pre = [
+    'titulo' => $q('titulo', 200),
+    'ubicacion' => $q('ubicacion', 200),
+    'descripcion' => $q('descripcion', 3000),
+];
+$desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
 ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-clipboard-check"></i> <?php echo s(t('Punch list')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · pendientes de calidad con responsable, fecha límite y fotos antes/después. Haz una inspección con lista de verificación y cada falla se vuelve un pendiente.</p>
+        <h2><i class="fa-solid fa-screwdriver-wrench"></i> <?php echo s(t('Punch list')); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · pendientes de calidad con fecha de emisión, responsable, fecha límite y fotos antes/después. Haz una inspección con lista de verificación y cada falla se vuelve un pendiente.</p>
     </div>
     <div class="inc-acciones">
         <?php if ($puede): ?><a class="btn btn-primary" href="/punch/inspeccion?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-list-check"></i> Nueva inspección</a><?php endif; ?>
@@ -56,16 +64,18 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
     <form method="post" action="/punch/categorias/sugeridas" style="margin-top:.8rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit">Cargar las categorías de las plantillas de inspección</button></form>
 </details>
 <details class="card prg-seccion"><summary><strong>Registrar un pendiente</strong></summary>
-    <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-        <label style="flex:2">Pendiente <input type="text" name="titulo" required maxlength="200"></label>
-        <label>Ubicación <input type="text" name="ubicacion" maxlength="200"></label>
+    <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"<?php echo $desdeComparador ? ' id="punch-desde-comparador"' : ''; ?>><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+        <?php if ($desdeComparador): ?><p class="text-sm text-muted" style="flex-basis:100%;margin:0"><i class="fa-solid fa-code-compare"></i> Precargado desde una anotación del Comparador. Revisa y completa los datos antes de guardar.</p><?php endif; ?>
+        <label style="flex:2">Pendiente <input type="text" name="titulo" required maxlength="200" value="<?php echo s($pre['titulo']); ?>"></label>
+        <label>Ubicación <input type="text" name="ubicacion" maxlength="200" value="<?php echo s($pre['ubicacion']); ?>"></label>
         <label>Categoría <input type="text" name="categoria" maxlength="60" list="cats"><datalist id="cats"><?php foreach (Punch::categoriasDeProyecto((int)$pid) as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
         <label>Severidad <select name="severidad"><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $k === 'media' ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150" list="ctr"><datalist id="ctr"><?php foreach ($contratistas as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
+        <label>Fecha de emisión <input type="date" name="fecha_emision" value="<?php echo date('Y-m-d'); ?>"></label>
         <label>Fecha límite <input type="date" name="fecha_limite"></label>
         <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades, null, 45); ?></select></label>
-        <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="2" maxlength="3000"></textarea></label>
+        <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="2" maxlength="3000"><?php echo s($pre['descripcion']); ?></textarea></label>
         <label>Foto «antes» <input type="file" name="foto_antes" accept="image/*"></label>
         <button class="btn btn-primary" type="submit">Registrar</button></form></details>
 <?php endif; ?>
@@ -95,6 +105,7 @@ $sevCls = ['critica' => 'critica', 'alta' => 'alta', 'media' => 'media', 'baja' 
                         case 'categoria': if ($x['categoria']) $partes[] = $etq($c, s($x['categoria'])); break;
                         case 'ubicacion': if ($x['ubicacion']) $partes[] = $etq($c, s($x['ubicacion'])); break;
                         case 'responsable': if ($x['responsable'] || $x['contratista']) $partes[] = $etq($c, s($x['responsable'] ?: $x['contratista'])); break;
+                        case 'emision': $partes[] = ($c['propio'] ? s($c['n']) : 'emitido') . ' ' . s($fmt($x['fecha_emision'])); break;
                         case 'limite': $partes[] = ($c['propio'] ? s($c['n']) : 'límite') . ' ' . s($fmt($x['fecha_limite'])) . ($x['vencido'] ? ' <b class="prg-peor">VENCIDO</b>' : ''); break;
                     }
                 }

@@ -20,6 +20,7 @@ class PunchVista
         'severidad' => ['Severidad', 'severidad', true],
         'responsable' => ['Responsable', 'texto', true],
         'contratista' => ['Contratista', 'texto', true],
+        'fecha_emision' => ['Fecha de emisión', 'fecha', true],
         'fecha_limite' => ['Fecha límite', 'fecha', true],
         'estado' => ['Estado', 'estado', true],
         'actividad' => ['Actividad', 'texto', false],
@@ -88,7 +89,7 @@ class PunchVista
                 $fila['c' . $i] = match ($k) {
                     'severidad' => Punch::SEVERIDADES[$crudo] ?? $crudo,
                     'estado' => Punch::ESTADOS[$crudo] ?? $crudo,
-                    'fecha_limite' => $fecha($crudo),
+                    'fecha_limite', 'fecha_emision' => $fecha($crudo),
                     'foto_antes', 'foto_despues' => $crudo !== '' ? 'foto' : '',
                     default => $crudo,
                 };
@@ -132,10 +133,10 @@ class PunchVista
         if ($clave === 'severidad') {
             if (!isset(Punch::SEVERIDADES[$valor])) return 'Severidad no válida';
             $sql = "severidad = '$valor'";
-        } elseif ($clave === 'fecha_limite') {
+        } elseif ($clave === 'fecha_limite' || $clave === 'fecha_emision') {
             $d = \DateTime::createFromFormat('Y-m-d', $valor);
             if ($valor !== '' && !($d && $d->format('Y-m-d') === $valor)) return 'Fecha no válida';
-            $sql = 'fecha_limite = ' . ($valor === '' ? 'NULL' : "'$valor'");
+            $sql = $clave . ' = ' . ($valor === '' ? 'NULL' : "'$valor'");
         } else {
             $max = ['titulo' => 200, 'ubicacion' => 200, 'categoria' => 60, 'responsable' => 150, 'contratista' => 150][$clave];
             if ($clave === 'titulo' && trim($valor) === '') return 'El título es obligatorio';

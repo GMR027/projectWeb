@@ -3,7 +3,7 @@ use Classes\Punch;
 $pid = (int)$proyecto->id;
 $foto = fn($n) => $n ? '/uploads/' . Punch::CARPETA . '/' . basename($n) : null;
 ?>
-<div class="page-header"><div><h2><i class="fa-solid fa-clipboard-check"></i> <?php echo s($x['titulo']); ?></h2><p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s(Punch::ESTADOS[$x['estado']]); ?> · creado por <?php echo s($x['creado_por'] ?: '—'); ?> el <?php echo s(date('d/m/Y', strtotime($x['creado']))); ?><?php echo $x['origen'] !== 'manual' ? ' · origen: ' . s($x['origen']) : ''; ?></p></div>
+<div class="page-header"><div><h2><i class="fa-solid fa-screwdriver-wrench"></i> <?php echo s($x['titulo']); ?></h2><p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s(Punch::ESTADOS[$x['estado']]); ?> · creado por <?php echo s($x['creado_por'] ?: '—'); ?> el <?php echo s(date('d/m/Y', strtotime($x['creado']))); ?><?php echo $x['fecha_emision'] ? ' · emitido el ' . s(date('d/m/Y', strtotime($x['fecha_emision']))) : ''; ?><?php echo $x['origen'] !== 'manual' ? ' · origen: ' . s($x['origen']) : ''; ?></p></div>
     <div class="inc-acciones"><a href="/punch?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">← Punch list</a></div></div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 <div class="card prg-seccion">
@@ -21,6 +21,7 @@ $foto = fn($n) => $n ? '/uploads/' . Punch::CARPETA . '/' . basename($n) : null;
         <label>Severidad <select name="severidad"><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $x['severidad'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
         <label>Responsable <input type="text" name="responsable" value="<?php echo s($x['responsable']); ?>" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" value="<?php echo s($x['contratista']); ?>" maxlength="150"></label>
+        <label>Fecha de emisión <input type="date" name="fecha_emision" value="<?php echo s($x['fecha_emision']); ?>"></label>
         <label>Fecha límite <input type="date" name="fecha_limite" value="<?php echo s($x['fecha_limite']); ?>"></label>
         <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades, $x['actividad_id'], 45); ?></select></label>
         <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="3" maxlength="3000"><?php echo s($x['descripcion']); ?></textarea></label>

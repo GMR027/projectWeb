@@ -3,25 +3,30 @@
 <script src="/vendor/konva.min.js"></script>
 <script src="/vendor/editor-fondos.js"></script>
 <script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
+<script src="/vendor/capa-superior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/capa-superior.js'); ?>"></script>
+<script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
 <script src="/vendor/vplan-editor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/vplan-editor.js'); ?>"></script>
 <?php if (!empty($config['materiales'])): ?><script src="/vendor/materiales-vplan.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/materiales-vplan.js'); ?>"></script><?php endif; ?>
 <script>
 (function () {
     const hoja = document.getElementById('ve-hoja'), modalConfirm = document.getElementById('modal-confirm');
+    // Se amplía la página (main), no solo la hoja: las paletas, menús y modales cuelgan fuera de ella.
+    const escena = document.getElementById('contenido-principal') || hoja;
     const reencuadrar = () => { window.dispatchEvent(new Event('resize')); setTimeout(() => window.dispatchEvent(new Event('resize')), 120); };   // el editor re-encuadra el plano al cambiar el tamaño
     let scrollPrevio = 0;
     const abrir = () => {
         scrollPrevio = window.scrollY;   // al salir se vuelve a donde estaba la página
         hoja.classList.add('ve-ampliado');
-        document.body.classList.add('vp-sin-scroll');
+        document.body.classList.add('vp-sin-scroll', 've-en-ampliado');
         if (modalConfirm) hoja.appendChild(modalConfirm);   // el aviso de confirmación debe verse a pantalla completa
-        if (hoja.requestFullscreen) hoja.requestFullscreen().catch(() => {});
+        if (escena.requestFullscreen) escena.requestFullscreen().catch(() => {});
         reencuadrar();
     };
     const cerrar = () => {
         if (!hoja.classList.contains('ve-ampliado')) return;
         hoja.classList.remove('ve-ampliado');
-        document.body.classList.remove('vp-sin-scroll');
+        document.body.classList.remove('vp-sin-scroll', 've-en-ampliado');
         if (modalConfirm && modalConfirm.parentNode === hoja) document.body.appendChild(modalConfirm);
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
         // Al quitar el position:fixed el navegador recoloca el scroll; se restaura cuando ya hay alto.
@@ -78,7 +83,7 @@ window.Tour.registrar('editor-canvas', {
         { sel: '.ve-grupo[data-nombre="Selección"]', icono: 'fa-hand-pointer', titulo: 'Seleccionar y mover', texto: 'Con la flecha (o <b>Esc</b>) se mueve lo dibujado; <b>Mayús + arrastrar</b> elige varias cosas a la vez. Doble clic en un texto lo edita.' },
         { sel: '.ve-grupo[data-nombre="Trazo"]', icono: 'fa-pen', titulo: 'Trazo y color', texto: 'Elige la herramienta y el color de abajo. <b>F8</b> traza líneas solo horizontales o verticales.' },
         { sel: '#ve-simbolos-btn', icono: 'fa-shapes', titulo: 'Símbolos y cajetines', texto: 'La biblioteca del proyecto: cámaras, extintores, leyendas… un clic los pone en el lienzo. Se administran en la pestaña «Símbolos».' },
-        { sel: '.ve-grupo[data-nombre="Vista"]', icono: 'fa-rotate-left', titulo: 'Deshacer y encuadrar', texto: '<b>Ctrl + Z</b> deshace y <b>Ctrl + Y</b> rehace; el engranaje encuadra todo el dibujo. El «Autoguardar» está activado por defecto.' },
+        { sel: '.ve-grupo[data-nombre="Vista"]', icono: 'fa-rotate-left', titulo: 'Deshacer y encuadrar', texto: '<b>Ctrl + Z</b> deshace y <b>Ctrl + Y</b> rehace; el engranaje encuadra todo el dibujo. En tablet o celular, <b>pellizca con dos dedos</b> para acercar y <b>arrastra con dos dedos</b> para moverte. El «Autoguardar» está activado por defecto.' },
         { icono: 'fa-floppy-disk', titulo: 'Listo para dibujar', texto: 'Recuerda: doble clic edita textos y tablas, y el botón <b>Guardar</b> (arriba a la derecha) deja la imagen lista para exportar.' }
     ]
 });

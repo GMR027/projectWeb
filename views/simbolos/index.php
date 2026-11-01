@@ -327,6 +327,7 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
     'formatosFecha' => $fechasEst, 'partidas' => $partidasEst, 'actividades' => $actsEst, 'personal' => $personalEst, 'estampas' => array_map(fn($x) => $x->aArray(), $estampas)], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
 </script>
 <script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
 <script src="/vendor/estampas-editor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/estampas-editor.js'); ?>"></script>
 <script>
 (function () {

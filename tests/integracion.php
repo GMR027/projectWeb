@@ -99,6 +99,53 @@ $ok('un festivo se salta', (function () use ($proy) {
 })());
 
 
+// ---------- Comparador de documentos: guardar, abrir, duplicar y borrar ----------
+echo "Comparador de documentos\n";
+$ok('la tabla comparador_guardados existe', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'comparador_guardados'")->fetch_row());
+$_SESSION['id'] = (int)$u->id; $_SESSION['rol'] = 'admin'; $_SESSION['nombre'] = 'Admin CI';
+$dirArch = Model\Archivo::carpetaCreada((int)$proy->id);
+$img = imagecreatetruecolor(20, 20); imagepng($img, $dirArch . '/cmp-ci.png'); imagedestroy($img);
+$arch = new Model\Archivo(['proyecto_id' => (int)$proy->id, 'fecha' => '2026-11-02', 'nombre' => 'Plano CI', 'archivo_original' => 'cmp-ci.png', 'archivo_guardado' => 'cmp-ci.png', 'tamano' => (int)filesize($dirArch . '/cmp-ci.png')]);
+$ra = $arch->guardar(); $arch->id = (int)($ra['id'] ?? 0);
+$postCmp = [
+    'nombre' => 'Comparación CI',
+    'a_json' => json_encode(['tipo' => 'archivo', 'id' => (int)$arch->id, 'nombre' => 'Plano CI', 'ext' => 'png', 'pagina' => 1]),
+    'b_json' => json_encode(['tipo' => 'archivo', 'id' => (int)$arch->id, 'nombre' => 'Plano CI', 'ext' => 'png', 'pagina' => 1]),
+    'vista' => json_encode(['x' => 0, 'y' => 0, 'k' => 1]), 'ajuste' => json_encode(['x' => 0, 'y' => 0, 's' => 1, 'rot' => 0]),
+    'modo' => json_encode(['modo' => 'slider', 'pos' => .5, 'dir' => 'v', 'fade' => 50]),
+    'anotaciones' => json_encode(['ancho' => 20, 'alto' => 20, 'shapes' => [['tipo' => 'globo', 'x' => 5, 'y' => 5, 'ax' => 2, 'ay' => 2, 'texto' => 'Revisar', 'numero' => 1]]]),
+];
+[$okG, $msgG, $idG] = Classes\Comparador::guardar($proy, $postCmp);
+$ok('guardar una comparación con archivos del proyecto', $okG && $idG > 0 && Classes\Comparador::obtener((int)$proy->id, $idG) !== null);
+$ok('la comparación guarda sus anotaciones y aparece en la lista', count(Classes\Comparador::listar((int)$proy->id)) === 1 && Classes\Comparador::obtener((int)$proy->id, $idG)->tarjeta()['anotaciones'] === 1);
+$ok('una anotación inválida no se acepta', Classes\Comparador::anotaciones(json_encode(['shapes' => [['tipo' => 'no-existe']]]))['shapes'] === []);
+$anCmp = Classes\Comparador::anotaciones(json_encode(['ancho' => 200, 'alto' => 100, 'escala' => 0.01, 'unidad' => 'm', 'tamanos' => [1 => [200, 100]], 'shapes' => [
+    ['tipo' => 'medir', 'x1' => 1, 'y1' => 2, 'x2' => 30, 'y2' => 2, 'autor' => 'Ana', 'creado' => '2026-11-01T10:00:00Z', 'estado' => 'resuelta', 'notas' => [['texto' => 'Confirmado', 'autor' => 'Luis', 'fecha' => '2026-11-01']]],
+    ['tipo' => 'area', 'x' => 1, 'y' => 1, 'w' => 20, 'h' => 10],
+]]));
+$ok('las medidas, áreas, notas y tamaños por página se guardan', $anCmp['escala'] === 0.01 && $anCmp['tamanos'][1] === [200, 100] && $anCmp['shapes'][0]['estado'] === 'resuelta' && $anCmp['shapes'][0]['notas'][0]['texto'] === 'Confirmado' && $anCmp['shapes'][1]['tipo'] === 'area');
+$postCmp2 = $postCmp; $postCmp2['id'] = $idG;
+$postCmp2['anotaciones'] = json_encode(['ancho' => 20, 'alto' => 20, 'shapes' => [['tipo' => 'globo', 'x' => 5, 'y' => 5, 'ax' => 2, 'ay' => 2, 'texto' => 'Segunda revisión', 'numero' => 1]]]);
+[$okV] = Classes\Comparador::guardar($proy, $postCmp2);
+$versionesCmp = Classes\Comparador::versiones((int)$proy->id, $idG);
+$ok('al actualizar se guarda la versión anterior', $okV && count($versionesCmp) === 1 && $versionesCmp[0]['anotaciones'] === 1);
+$restCmp = $versionesCmp ? Classes\Comparador::restaurarVersion((int)$proy->id, $idG, (int)$versionesCmp[0]['id']) : null;
+$ok('restaurar una versión devuelve sus anotaciones', $restCmp && count($restCmp['anotaciones']['shapes']) === 1);
+$tokCmp = Classes\Comparador::token((int)$proy->id, $idG);
+$pubCmp = $tokCmp ? Classes\Comparador::publicoPorToken($tokCmp) : null;
+$fpubCmp = $pubCmp ? Classes\Comparador::fuentePublica($pubCmp, 'a') : null;
+$ok('el enlace público entrega la comparación sin sesión', strlen((string)$tokCmp) === 48 && $pubCmp && (int)$pubCmp->id === $idG && $fpubCmp && !empty($fpubCmp['ruta']));
+$ok('revocar el enlace lo desactiva', Classes\Comparador::revocarToken((int)$proy->id, $idG) && Classes\Comparador::publicoPorToken((string)$tokCmp) === null);
+$fuenteCmp = Classes\Comparador::fuenteDeProyecto((int)$proy->id, 'archivo', (int)$arch->id);
+$ok('una fuente del proyecto se entrega para comparar', $fuenteCmp && !empty($fuenteCmp['ruta']) && $fuenteCmp['ext'] === 'png');
+$ok('una fuente de otro proyecto se rechaza', Classes\Comparador::fuenteDeProyecto((int)$proy->id + 999999, 'archivo', (int)$arch->id) === null && Classes\Comparador::fuenteDeProyecto((int)$proy->id, 'vplan', 999999) === null);
+$ok('el catálogo de fuentes incluye el Archivo del proyecto', count(array_filter(Classes\Comparador::fuentes((int)$proy->id), fn($g) => $g['grupo'] === 'Archivo del proyecto')) === 1);
+$dupG = Classes\Comparador::duplicar($proy, Classes\Comparador::obtener((int)$proy->id, $idG));
+$ok('duplicar una comparación crea otra', $dupG > 0 && $dupG !== $idG && count(Classes\Comparador::listar((int)$proy->id)) === 2);
+$ok('eliminar borra la comparación', Classes\Comparador::eliminar((int)$proy->id, $idG) && Classes\Comparador::eliminar((int)$proy->id, $dupG) && count(Classes\Comparador::listar((int)$proy->id)) === 0);
+@unlink($dirArch . '/cmp-ci.png');
+$GLOBALS['db']->query("DELETE FROM archivos WHERE id = " . (int)$arch->id);
+
 // ---------- Telegram: vinculación, avance y fotos por chat, avisos y clima automático ----------
 echo "Telegram y clima automático\n";
 putenv('TELEGRAM_BOT_TOKEN=123456:TOKEN-DE-PRUEBA'); $_ENV['TELEGRAM_BOT_TOKEN'] = '123456:TOKEN-DE-PRUEBA';

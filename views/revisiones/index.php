@@ -28,7 +28,7 @@ $tarjeta = function (string $titulo, string $icono, array $c, string $pest) use 
 ?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-clipboard-check"></i> Revisiones</h2>
+        <h2><i class="fa-solid fa-traffic-light"></i> Revisiones</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · cumplimiento de normativa y especificaciones, y uso de las herramientas de IA</p>
     </div>
 </div>

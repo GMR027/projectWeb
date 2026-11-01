@@ -67,6 +67,7 @@ CREATE TABLE proyectos (
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
     nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0,   -- barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
     menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico',   -- barra superior: clásico, panel fijo o pestañas por sección
+    ayuda_burbujas TINYINT(1) NOT NULL DEFAULT 1,   -- mensajes emergentes de ayuda de la interfaz (Ajustes → Apariencia)
     clima_auto TINYINT(1) NOT NULL DEFAULT 0,     -- bitácora de clima automática + aviso del pronóstico (Telegram)
     clima_ultimo DATE NULL,
     clima_aviso DATE NULL,
@@ -1430,6 +1431,7 @@ CREATE TABLE IF NOT EXISTS punch_items (
     severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     responsable VARCHAR(150) NOT NULL DEFAULT '',
     contratista VARCHAR(150) NOT NULL DEFAULT '',
+    fecha_emision DATE NULL,                          -- día en que se emitió el pendiente (punch list)
     fecha_limite DATE NULL,
     estado ENUM('abierto','en_proceso','corregido','cerrado','rechazado') NOT NULL DEFAULT 'abierto',
     foto_antes VARCHAR(100) NULL,
@@ -1441,6 +1443,48 @@ CREATE TABLE IF NOT EXISTS punch_items (
     KEY idx_proy (proyecto_id, estado),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Comparador de documentos: comparaciones guardadas (documentos, vista, alineación y anotaciones).
+-- Las copias de los documentos externos se guardan en public/uploads/comparador y la miniatura en min/.
+CREATE TABLE IF NOT EXISTS comparador_guardados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(500) NOT NULL DEFAULT '',
+    a_json TEXT NOT NULL,                 -- {tipo: archivo|subido, id, archivo, nombre, ext, pagina}
+    b_json TEXT NOT NULL,
+    vista_json TEXT NOT NULL,             -- {x, y, k}
+    ajuste_json TEXT NOT NULL,            -- {x, y, s, rot} del documento B
+    modo_json TEXT NOT NULL,              -- {modo, pos, dir, fade}
+    anotaciones_json MEDIUMTEXT NOT NULL, -- {ancho, alto, shapes: [...]}
+    miniatura VARCHAR(100) NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    usuario_id INT NULL,
+    token CHAR(48) NULL,                  -- enlace público de solo lectura (se crea al compartir)
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_cmp_token (token),
+    KEY idx_proy (proyecto_id, actualizado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Historial de versiones de cada comparación guardada (se crea una al actualizar).
+CREATE TABLE IF NOT EXISTS comparador_versiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    guardado_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    descripcion VARCHAR(500) NOT NULL DEFAULT '',
+    vista_json TEXT NOT NULL,
+    ajuste_json TEXT NOT NULL,
+    modo_json TEXT NOT NULL,
+    anotaciones_json MEDIUMTEXT NOT NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    usuario_id INT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_cmp_ver (guardado_id, creado),
+    FOREIGN KEY (guardado_id) REFERENCES comparador_guardados(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Tipo de obra de cada proyecto (plantilla): da contexto a la IA, reglas de secuencia y una base de partidas/actividades.

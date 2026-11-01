@@ -22,6 +22,14 @@
     var pasado = [], futuro = [];
     var MAX_C = C.max.cols, MAX_F = C.max.filas;
     var zoom = 100;
+    // Pantalla táctil: en el celular la celda se edita en una hoja inferior (con el teclado a la vista) y no
+    // dentro de la cuadrícula, que quedaría tapada por el teclado del sistema. En tablet se edita en la propia
+    // celda, como OnlyOffice/Excel: hay sitio de sobra y el teclado no tapa la tabla.
+    var TACTIL = !!(window.GestosLienzo ? GestosLienzo.esTactil() : (navigator.maxTouchPoints || 0) > 0);
+    var MOVIL_ESTRECHO = window.matchMedia('(max-width: 44rem)');
+    var hojaCelda = null;   // HojaInferior de la celda (solo en el celular)
+    var toqueEdito = 0;     // ms del último toque que abrió el editor: ignora el mousedown/click que el navegador emula después
+    if (TACTIL) document.body.classList.add('sf-tactil');
 
     // Formatos por celda en matriz paralela a rows (sty[r][c]) y al encabezado (hsty[c]); en el JSON viajan como mapa disperso fmt
     var sty = [], hsty = [];
@@ -499,6 +507,24 @@
         mostrar(g);
     })();
 
+    // ================= Plegar la cinta (solo las pestañas) =================
+    (function () {
+        var b = $('sf-plegar'); if (!b) return;
+        function aplicar(cerrada) {
+            document.body.classList.toggle('sf-cinta-cerrada', cerrada);
+            b.setAttribute('aria-expanded', cerrada ? 'false' : 'true');
+            b.setAttribute('title', cerrada ? 'Mostrar la barra de herramientas' : 'Ocultar la barra de herramientas');
+            b.innerHTML = '<i class="fa-solid fa-chevron-' + (cerrada ? 'down' : 'up') + '" aria-hidden="true"></i>';
+        }
+        var cerrada = false; try { cerrada = localStorage.getItem('sf-cinta') === '0'; } catch (e) { /* sin almacenamiento */ }
+        aplicar(cerrada);
+        b.addEventListener('click', function () {
+            cerrada = !document.body.classList.contains('sf-cinta-cerrada');
+            aplicar(cerrada);
+            try { localStorage.setItem('sf-cinta', cerrada ? '0' : '1'); } catch (e) { /* idem */ }
+        });
+    })();
+
     // ================= Edición de celdas =================
     function fijar(r, c, v) {
         if (r < 0) { S.cols[c].n = String(v).replace(/[\r\n]+/g, ' ').slice(0, 60); return; }
@@ -518,25 +544,49 @@
             inp.setAttribute('list', 'sf-dl');
         }
         var im = el.querySelector('.sf-img');
-        el.textContent = ''; if (im) el.appendChild(im); el.appendChild(inp);
+        var enHoja = TACTIL && !!window.HojaInferior && MOVIL_ESTRECHO.matches;
+        if (!enHoja) { el.textContent = ''; if (im) el.appendChild(im); el.appendChild(inp); }
         editor = { r: r, c: c, input: inp, previo: crudo };
-        inp.focus();
-        if (inicial == null) inp.select(); else inp.setSelectionRange(inp.value.length, inp.value.length);
+        if (enHoja) {
+            // En la hoja inferior la celda se edita con el teclado a la vista y la cuadrícula sigue visible.
+            var cont = document.createElement('div'); cont.className = 'sf-celda-hoja';
+            var ref = document.createElement('p'); ref.className = 'sf-celda-ref';
+            ref.textContent = 'Celda ' + nombreCelda(r, c) + (r < 0 ? ' (encabezado de columna)' : '');
+            var tip = document.createElement('p'); tip.className = 'text-sm text-muted';
+            tip.textContent = 'Enter guarda y baja de renglón; Mayús + Enter sube. Cierra la hoja para volver a la tabla.';
+            inp.classList.add('sf-celda-input');
+            cont.appendChild(ref); cont.appendChild(inp); cont.appendChild(tip);
+            hojaCelda = hojaCelda || HojaInferior.crear('sf-celda');
+            hojaCelda.abrir({
+                titulo: 'Editar celda', nodo: cont, posicion: 'peek', modal: false, enfocar: false,
+                alCerrar: function () { if (editor && editor.input === inp) terminarEdicion(true); },
+            });
+            setTimeout(function () {
+                inp.focus();
+                if (inicial == null) inp.select(); else inp.setSelectionRange(inp.value.length, inp.value.length);
+            }, 80);
+        } else {
+            inp.focus();
+            if (inicial == null) inp.select(); else inp.setSelectionRange(inp.value.length, inp.value.length);
+            if (TACTIL) setTimeout(function () { if (editor && editor.input === inp && inp.scrollIntoView) inp.scrollIntoView({ block: 'center', inline: 'nearest' }); }, 250);
+        }
         inp.addEventListener('input', function () { fx.value = inp.value; });
         inp.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true); mover(e.shiftKey ? -1 : 1, 0, false); area.focus(); }
-            else if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true); mover(0, e.shiftKey ? -1 : 1, false); area.focus(); }
+            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true, enHoja); mover(e.shiftKey ? -1 : 1, 0, false); if (enHoja) empezarEdicion(sel.r0, sel.c0); else area.focus(); }
+            else if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true, enHoja); mover(0, e.shiftKey ? -1 : 1, false); if (enHoja) empezarEdicion(sel.r0, sel.c0); else area.focus(); }
             else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); terminarEdicion(false); area.focus(); }
             else e.stopPropagation();
         });
-        inp.addEventListener('blur', function () { if (editor && editor.input === inp) terminarEdicion(true); });
+        inp.addEventListener('blur', function () { if (!enHoja && editor && editor.input === inp) terminarEdicion(true); });
     }
-    function terminarEdicion(aplicar) {
+    // `mantener`: en la hoja inferior se reemplaza la celda sin cerrarla (al bajar de renglón con Enter)
+    function terminarEdicion(aplicar, mantener) {
         if (!editor) return;
         var e = editor; editor = null;
         var nuevo = e.input.value;
         if (aplicar && nuevo !== e.previo) { antes(); fijar(e.r, e.c, nuevo); dibujar(); cambio(); }
         else dibujar();
+        if (!mantener && hojaCelda && hojaCelda.estaAbierta()) hojaCelda.cerrar();
     }
     function mover(dr, dc, extender) {
         var r = (extender ? sel.r1 : sel.r0) + dr, c = (extender ? sel.c1 : sel.c0) + dc;
@@ -555,10 +605,12 @@
     });
 
     // ================= Selección con el ratón =================
-    var arrastrando = false, tirando = null;
-    grid.addEventListener('mousedown', function (e) {
+    var arrastrando = false, tirando = null;    grid.addEventListener('mousedown', function (e) {
         var tir = e.target.closest('.sf-tirador');
         if (tir) { var c0 = +tir.dataset.tir, th = tir.parentNode; tirando = { c: c0, x: e.clientX, w: th.getBoundingClientRect().width / (zoom / 100), antes: copia() }; e.preventDefault(); return; }
+        // Un toque en pantalla táctil también dispara mousedown/click emulados: si acaba de abrirse el editor
+        // (en la celda o en la hoja inferior) hay que ignorarlos, o lo cerrarían en el acto.
+        if (Date.now() - toqueEdito < 700) { e.preventDefault(); return; }
         var t = e.target.closest('td,th'); if (!t || e.target.classList.contains('sf-input')) return;
         if (editor) terminarEdicion(true);
         if (t.classList.contains('sf-letra')) {
@@ -595,6 +647,29 @@
         var t = e.target.closest('td,th.sf-enc'); if (!t || t.dataset.r == null) return;
         empezarEdicion(+t.dataset.r, +t.dataset.c, null);
     });
+    // En pantalla táctil no hay doble clic: tocar (sin arrastrar) la celda ya elegida la abre para editar.
+    // Se espera al touchend y se descarta si hubo desplazamiento, para no abrir el editor al hacer scroll.
+    if (TACTIL) {
+        var toqueCelda = null;
+        grid.addEventListener('touchstart', function (e) {
+            if (editor || e.touches.length !== 1) { toqueCelda = null; return; }
+            var t = e.target.closest('td,th.sf-enc'); if (!t || t.dataset.r == null) { toqueCelda = null; return; }
+            var r = +t.dataset.r, c = +t.dataset.c;
+            toqueCelda = (r === sel.r0 && r === sel.r1 && c === sel.c0 && c === sel.c1)
+                ? { r: r, c: c, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null;
+        }, { passive: true });
+        grid.addEventListener('touchmove', function (e) {
+            if (!toqueCelda) return;
+            var p = e.touches[0];
+            if (Math.hypot(p.clientX - toqueCelda.x, p.clientY - toqueCelda.y) > 10) toqueCelda = null;
+        }, { passive: true });
+        grid.addEventListener('touchend', function () {
+            if (!toqueCelda) return;
+            var r = toqueCelda.r, c = toqueCelda.c, corto = Date.now() - toqueCelda.t < 600;
+            toqueCelda = null;
+            if (corto) { toqueEdito = Date.now(); setTimeout(function () { if (!editor) empezarEdicion(r, c, null); }, 0); }
+        });
+    }
 
     // ================= Teclado, copiar y pegar =================
     area.addEventListener('keydown', function (e) {
@@ -766,6 +841,21 @@
     $('sf-zebra').addEventListener('change', function () { S.estilo.zebra = this.checked; dibujar(); cambio(); });
     $('sf-bordes').addEventListener('change', function () { S.estilo.bordes = this.checked; dibujar(); cambio(); });
     $('sf-zoom').addEventListener('input', function () { zoom = +this.value; $('sf-zoom-v').textContent = zoom + '%'; grid.style.zoom = zoom / 100; });
+
+    // Pellizco de dos dedos sobre la tabla: mismo zoom que el control de «Vista» (gestos-lienzo.js)
+    if (TACTIL && window.GestosLienzo) {
+        var sfScroll = document.querySelector('.sf-scroll');
+        if (sfScroll) GestosLienzo.montar(sfScroll, {
+            zoomActual: function () { return zoom / 100; },
+            min: 0.5, max: 2,
+            alMover: function (g) {
+                zoom = Math.round(g.z * 100);
+                grid.style.zoom = zoom / 100;
+                $('sf-zoom').value = zoom;
+                $('sf-zoom-v').textContent = zoom + '%';
+            },
+        });
+    }
 
     // ================= Formato de celdas: letra, colores, alineación, bordes, imagen =================
     /** Aplica fn(formato) a cada celda elegida (incluye el encabezado si está en la selección) */
