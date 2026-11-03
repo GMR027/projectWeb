@@ -116,7 +116,88 @@ class Sheetflow
             $ids = array_slice(array_pad($ids, $nr, null), 0, $nr);
             $meta['materiales'] = ['ids' => $ids];
         }
-        return ['cols' => $cols, 'rows' => $rows, 'calc' => (object)$calc, 'tot' => (object)$tot, 'estilo' => $estilo, 'fmt' => (object)$fmt, 'meta' => $meta];
+        // Vista: congelar filas/columnas, filtros por columna, formato condicional y gráficos
+        $vista = self::limpiarVista(is_array($d['vista'] ?? null) ? $d['vista'] : [], $nr, $nc);
+        // Celdas combinadas: rectángulos {r0,c0,r1,c1}; la fila -1 es el encabezado y no se mezcla con los datos.
+        $merges = [];
+        foreach (array_slice((array)($d['merges'] ?? []), 0, 500) as $mg) {
+            if (!is_array($mg)) continue;
+            $r0 = (int)($mg['r0'] ?? 0); $c0 = (int)($mg['c0'] ?? 0);
+            $r1 = (int)($mg['r1'] ?? 0); $c1 = (int)($mg['c1'] ?? 0);
+            if ($r0 > $r1) [$r0, $r1] = [$r1, $r0];
+            if ($c0 > $c1) [$c0, $c1] = [$c1, $c0];
+            if ($r0 < -1 || $c0 < 0 || $r1 >= $nr || $c1 >= $nc) continue;
+            if ($r0 === -1 && $r1 > -1) continue;
+            if ($r0 === $r1 && $c0 === $c1) continue;
+            $choca = false;
+            foreach ($merges as $x) if ($x['r0'] <= $r1 && $x['r1'] >= $r0 && $x['c0'] <= $c1 && $x['c1'] >= $c0) { $choca = true; break; }
+            if ($choca) continue;
+            $merges[] = ['r0' => $r0, 'c0' => $c0, 'r1' => $r1, 'c1' => $c1];
+        }
+        return ['cols' => $cols, 'rows' => $rows, 'calc' => (object)$calc, 'tot' => (object)$tot, 'estilo' => $estilo, 'fmt' => (object)$fmt, 'meta' => $meta, 'merges' => $merges, 'vista' => $vista];
+    }
+
+    /** Tipos de formato condicional (el nombre viaja en datos.vista.cond[].tipo) */
+    public const CONDICIONALES = [
+        'mayor' => 'Es mayor que', 'menor' => 'Es menor que', 'igual' => 'Es igual a', 'entre' => 'Está entre',
+        'contiene' => 'El texto contiene', 'duplicados' => 'Valores duplicados', 'escala' => 'Escala de color', 'barra' => 'Barra de datos',
+    ];
+
+    /** Vista de la hoja: congelar, filtros, reglas condicionales y gráficos (todo acotado a la tabla actual) */
+    private static function limpiarVista($v, int $nr, int $nc): array
+    {
+        $v = is_array($v) ? $v : [];
+        $ent = fn($x, $def = 0, $max = 100000) => is_numeric($x) ? (int)max($def, min($max, $x)) : $def;
+        $filtros = [];
+        foreach ((array)($v['filtros'] ?? []) as $c => $f) {
+            if (!is_numeric($c) || (int)$c < 0 || (int)$c >= $nc || !is_array($f)) continue;
+            $vals = [];
+            foreach (array_slice((array)($f['vals'] ?? []), 0, 500) as $x) {
+                $x = mb_substr((string)$x, 0, 200);
+                if (!in_array($x, $vals, true)) $vals[] = $x;   // '' es la marca de «ninguno marcado»
+            }
+            $texto = mb_substr(trim((string)($f['texto'] ?? '')), 0, 60);
+            if ($vals || $texto !== '') $filtros[(int)$c] = ['vals' => $vals, 'texto' => $texto];
+        }
+        $cond = [];
+        foreach (array_slice((array)($v['cond'] ?? []), 0, 40) as $r) {
+            if (!is_array($r)) continue;
+            $tipo = (string)($r['tipo'] ?? '');
+            if (!isset(self::CONDICIONALES[$tipo])) continue;
+            $r0 = $ent($r['r0'] ?? 0, 0, max(0, $nr - 1));
+            $c0 = $ent($r['c0'] ?? 0, 0, max(0, $nc - 1));
+            $r1 = $ent($r['r1'] ?? $r0, 0, max(0, $nr - 1));
+            $c1 = $ent($r['c1'] ?? $c0, 0, max(0, $nc - 1));
+            if ($r0 > $r1) [$r0, $r1] = [$r1, $r0];
+            if ($c0 > $c1) [$c0, $c1] = [$c1, $c0];
+            $cond[] = [
+                'r0' => $r0, 'c0' => $c0, 'r1' => $r1, 'c1' => $c1, 'tipo' => $tipo,
+                'a' => (string)($r['a'] ?? ''), 'b' => (string)($r['b'] ?? ''), 'txt' => mb_substr((string)($r['txt'] ?? ''), 0, 60),
+                'color' => self::hex($r['color'] ?? '', in_array($tipo, ['escala', 'barra'], true) ? '#2563eb' : '#dc2626'),
+                'fondo' => self::hex($r['fondo'] ?? '', $tipo === 'escala' ? '#dcfce7' : '#fee2e2'),
+                'b' => !empty($r['b']) ? 1 : 0,
+            ];
+        }
+        $graficos = [];
+        foreach (array_slice((array)($v['graficos'] ?? []), 0, 6) as $g) {
+            if (!is_array($g)) continue;
+            $tipo = (string)($g['tipo'] ?? 'barra');
+            if (!in_array($tipo, ['barra', 'linea'], true)) continue;
+            $r0 = $ent($g['r0'] ?? 0, 0, max(0, $nr - 1));
+            $c0 = $ent($g['c0'] ?? 0, 0, max(0, $nc - 1));
+            $r1 = $ent($g['r1'] ?? $r0, 0, max(0, $nr - 1));
+            $c1 = $ent($g['c1'] ?? $c0, 0, max(0, $nc - 1));
+            if ($r0 > $r1) [$r0, $r1] = [$r1, $r0];
+            if ($c0 > $c1) [$c0, $c1] = [$c1, $c0];
+            $graficos[] = ['tipo' => $tipo, 'r0' => $r0, 'c0' => $c0, 'r1' => $r1, 'c1' => $c1, 'titulo' => mb_substr(trim((string)($g['titulo'] ?? '')), 0, 80)];
+        }
+        return [
+            'filas' => $ent($v['filas'] ?? 0, 0, $nr),
+            'cols' => $ent($v['cols'] ?? 0, 0, $nc),
+            'filtros' => (object)$filtros,
+            'cond' => $cond,
+            'graficos' => $graficos,
+        ];
     }
 
     public const BORDES = ['bt' => 'top', 'br' => 'right', 'bb' => 'bottom', 'bl' => 'left'];
@@ -137,6 +218,8 @@ class Sheetflow
             elseif (preg_match('/^([1-6])\|(solid|dashed|dotted|double)\|(#[0-9a-fA-F]{6})$/', $v, $m)) $o[$k] = $m[1] . '|' . $m[2] . '|' . strtolower($m[3]);
         }
         if (isset($f['im']) && is_string($f['im']) && preg_match('#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $f['im'])) $o['im'] = $f['im'];
+        $nf = trim((string)($f['nf'] ?? ''));
+        if ($nf !== '' && preg_match('/^[#0.,%$\/\-: A-Za-zÁÉÍÓÚáéíóúñÑ]{1,40}$/u', $nf)) $o['nf'] = $nf;
         return $o;
     }
 
@@ -225,10 +308,11 @@ class Sheetflow
         return str_contains($s, '.') ? rtrim(rtrim($s, '0'), '.') : $s;
     }
 
-    public static function formatear($v, string $tipo): string
+    public static function formatear($v, string $tipo, string $nf = ''): string
     {
         $v = trim((string)$v);
         if ($v === '') return '';
+        if ($nf !== '' && ($x = self::formatoNumero($v, $nf)) !== null) return $x;
         $n = self::numero($v);
         switch ($tipo) {
             case 'numero': return $n === null ? $v : self::decimales($n);
@@ -242,13 +326,59 @@ class Sheetflow
         return $v;
     }
 
+    private const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    /**
+     * Aplica un código de formato de número o fecha (estilo Excel) a un valor.
+     * Devuelve null si el código no se reconoce (se usa entonces el formato del tipo de columna).
+     * Mismos códigos en public/vendor/sheetflow.js (formatoNumero).
+     */
+    public static function formatoNumero(string $v, string $codigo): ?string
+    {
+        $codigo = trim($codigo);
+        if ($codigo === '') return null;
+        // Fechas: cualquier código con d/m/a (día/mes/año)
+        if (preg_match('/[dma]/i', $codigo) && !preg_match('/[#0]/', $codigo)) {
+            if (!preg_match('/^(\d{4})-(\d\d)-(\d\d)/', $v, $f)) return null;
+            $ts = strtotime($f[1] . '-' . $f[2] . '-' . $f[3] . ' 12:00:00');
+            return preg_replace_callback('/mmmm|mmm|aaaa|yyyy|yy|dd|d|mm|m/i', function ($m) use ($ts) {
+                $t = strtolower($m[0]);
+                $mes = self::MESES[(int)date('n', $ts) - 1];
+                return match ($t) {
+                    'mmmm' => mb_convert_case($mes, MB_CASE_TITLE, 'UTF-8'),
+                    'mmm' => mb_substr($mes, 0, 3),
+                    'aaaa', 'yyyy' => date('Y', $ts),
+                    'yy' => date('y', $ts),
+                    'dd' => date('d', $ts),
+                    'd' => (string)(int)date('j', $ts),
+                    'mm' => date('m', $ts),
+                    default => (string)(int)date('n', $ts),
+                };
+            }, $codigo);
+        }
+        $n = self::numero($v);
+        if ($n === null) return null;
+        if (!preg_match('/([#0,]*[#0](?:\.[0#]+)?)/', $codigo, $m, PREG_OFFSET_CAPTURE)) return null;
+        $num = $m[1][0];
+        $ini = $m[1][1];
+        $pref = str_replace(['"', '\\'], '', substr($codigo, 0, $ini));
+        $suf = str_replace(['"', '\\'], '', substr($codigo, $ini + strlen($num)));
+        $pct = str_contains($codigo, '%');
+        if ($pct) { $n *= 100; $suf = str_replace('%', '', $suf); }
+        $dec = str_contains($num, '.') ? strlen(substr($num, strpos($num, '.') + 1)) : 0;
+        $miles = str_contains(explode('.', $num)[0], ',');
+        $neg = $n < 0 ? '-' : '';
+        return $neg . $pref . number_format(abs($n), $dec, '.', $miles ? ',' : '') . $suf . ($pct ? '%' : '');
+    }
+
     /** Valor mostrado de una celda: el resultado si es fórmula, formateado según el tipo de su columna */
     public static function celda(array $d, int $r, int $c): string
     {
         $crudo = (string)($d['rows'][$r][$c] ?? '');
         $calc = (array)$d['calc'];
         $v = str_starts_with(ltrim($crudo), '=') ? (string)($calc["$r,$c"] ?? '') : $crudo;
-        return self::formatear($v, $d['cols'][$c]['t']);
+        $f = (array)($d['fmt'] ?? []);
+        return self::formatear($v, $d['cols'][$c]['t'], (string)($f["$r,$c"]['nf'] ?? ''));
     }
 
     /** Todo lo que necesita quien consume la tabla: nombres, tipos, alineación, renglones ya formateados y fila de totales (o null) */
@@ -272,7 +402,7 @@ class Sheetflow
             foreach ($cols as $c => $col) $totales[] = $col['tot'] !== '' && isset($tot[$c]) ? ($col['tot'] === 'cuenta' ? (string)$tot[$c] : self::formatear($tot[$c], $col['t'])) : '';
             $totales[0] = $totales[0] !== '' ? $totales[0] : 'Total';
         }
-        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w'), 'opciones' => array_map(fn($c) => $c['op'] ?? [], $cols), 'meta' => $d['meta'] ?? []];
+        return ['columnas' => array_column($cols, 'n'), 'tipos' => array_column($cols, 't'), 'alinear' => array_column($cols, 'a'), 'filas' => $filas, 'totales' => $totales, 'estilo' => $d['estilo'], 'fmt' => $fmt, 'anchos' => array_column($cols, 'w'), 'opciones' => array_map(fn($c) => $c['op'] ?? [], $cols), 'meta' => $d['meta'] ?? [], 'merges' => $d['merges'] ?? [], 'vista' => $d['vista'] ?? []];
     }
 
     // ---------- Plantillas ----------
@@ -515,9 +645,16 @@ class Sheetflow
                 $hoja->getStyle($L . '2:' . $L . (count($m['filas']) + 2))->getNumberFormat()->setFormatCode($codigo);
             }
         }
+        $cubierta = [];
+        foreach ($d['merges'] as $mg) {
+            for ($rr = $mg['r0']; $rr <= $mg['r1']; $rr++) for ($cc = $mg['c0']; $cc <= $mg['c1']; $cc++) {
+                if ($rr !== $mg['r0'] || $cc !== $mg['c0']) $cubierta[$rr . ',' . $cc] = true;
+            }
+        }
         foreach ($d['rows'] as $r => $fila) {
             if ($r >= count($m['filas'])) break;
             foreach ($fila as $c => $crudo) {
+                if (isset($cubierta["$r,$c"])) continue;
                 $L = $Coord::stringFromColumnIndex($c + 1) . ($r + 2);
                 $v = str_starts_with(ltrim($crudo), '=') ? (string)(((array)$d['calc'])["$r,$c"] ?? '') : $crudo;
                 if ($v === '') continue;
@@ -533,6 +670,11 @@ class Sheetflow
             }
         }
         $ult = $Coord::stringFromColumnIndex($nc);
+        foreach ($d['merges'] as $mg) {
+            $L0 = $Coord::stringFromColumnIndex($mg['c0'] + 1) . ($mg['r0'] + 2);
+            $L1 = $Coord::stringFromColumnIndex($mg['c1'] + 1) . ($mg['r1'] + 2);
+            $hoja->mergeCells($L0 . ':' . $L1);
+        }
         $est = $hoja->getStyle("A1:{$ult}1");
         $est->getFont()->setBold(true)->getColor()->setARGB($argb($d['estilo']['encTxt']));
         $est->getFill()->setFillType('solid')->getStartColor()->setARGB($argb($d['estilo']['enc']));
@@ -553,7 +695,11 @@ class Sheetflow
         if ($d['estilo']['bordes']) $hoja->getStyle("A1:$ult$fin")->getBorders()->getAllBorders()->setBorderStyle('thin')->getColor()->setARGB('FFBBBBBB');
         if ($d['estilo']['zebra']) for ($r = 3; $r <= $fin - ($m['totales'] ? 1 : 0); $r += 2) $hoja->getStyle("A$r:$ult$r")->getFill()->setFillType('solid')->getStartColor()->setARGB('FFF1F5F9');
         self::formatosXlsx($hoja, $d, $m);
-        $hoja->freezePane('A2');
+        $vista = $d['vista'] ?? [];
+        $fr = (int)($vista['filas'] ?? 0);
+        $fc = (int)($vista['cols'] ?? 0);
+        if ($fr || $fc) $hoja->freezePane($Coord::stringFromColumnIndex(min($nc, $fc + 1)) . (min(count($m['filas']), $fr) + 2));
+        else $hoja->freezePane('A2');
         $tmp = tempnam(sys_get_temp_dir(), 'sf');
         (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($libro))->save($tmp);
         $datos = (string)file_get_contents($tmp);
@@ -580,6 +726,10 @@ class Sheetflow
             if (!empty($f['tc'])) $st->getFont()->getColor()->setARGB($argb($f['tc']));
             elseif (!empty($f['bg'])) $st->getFont()->getColor()->setARGB($argb(self::contraste($f['bg'])));
             if (!empty($f['bg'])) $st->getFill()->setFillType('solid')->getStartColor()->setARGB($argb($f['bg']));
+            if (!empty($f['nf'])) {
+                $codigoNf = str_ireplace(['aaaa', 'aa'], ['yyyy', 'yy'], $f['nf']);   // Excel no entiende los códigos en español
+                $st->getNumberFormat()->setFormatCode($codigoNf);
+            }
             if (!empty($f['al'])) $st->getAlignment()->setHorizontal(['izquierda' => 'left', 'centro' => 'center', 'derecha' => 'right'][$f['al']]);
             foreach (self::BORDES as $kb => $lado) {
                 if (!isset($f[$kb])) continue;
@@ -597,6 +747,17 @@ class Sheetflow
                     $hoja->getRowDimension($r + 2)->setRowHeight(max(15, $alto * 0.75 + 4));
                 }
             }
+        }
+        // Formato condicional: en Excel se aplica como color fijo (la regla vive en SheetFlow)
+        foreach (self::condicional($d, $m) as $k => $cf) {
+            if ($k === '') continue;
+            [$r, $c] = array_map('intval', explode(',', $k));
+            if ($r >= count($m['filas'])) continue;
+            $st = $hoja->getStyle($Coord::stringFromColumnIndex($c + 1) . ($r + 2));
+            if (!empty($cf['bg'])) $st->getFill()->setFillType('solid')->getStartColor()->setARGB($argb($cf['bg']));
+            if (!empty($cf['tc'])) $st->getFont()->getColor()->setARGB($argb($cf['tc']));
+            if (!empty($cf['b'])) $st->getFont()->setBold(true);
+            if (!empty($cf['grad'])) $st->getFill()->setFillType('solid')->getStartColor()->setARGB('FFDBEAFE');
         }
     }
 
@@ -661,10 +822,18 @@ class Sheetflow
         return [self::normalizar(self::sinVinculo(json_decode($json, true))), ['nombre' => (string)($j['nombre'] ?? ''), 'descripcion' => (string)($j['descripcion'] ?? ''), 'departamento' => (string)($j['departamento'] ?? '')]];
     }
 
+    /** Hoja recalculada con el programa del proyecto al día (sin guardar): la usan la vista, el PDF y el Excel */
+    public static function recalcularHoja(SheetflowHoja $h): SheetflowHoja
+    {
+        SheetflowFormulas::setProyecto(self::datosProyecto((int)$h->proyecto_id));
+        $h->datos = json_encode(self::normalizar($h->contenido()), JSON_UNESCAPED_UNICODE);
+        return $h;
+    }
+
     /** HTML de la tabla (PDF y vista de solo lectura). Todo va escapado. $rutas = las imágenes salen como ruta del disco (Dompdf) */
     public static function html(SheetflowHoja $h, string $clase = 'sf-tabla', bool $rutas = false): string
     {
-        return self::tabla($h, ['clase' => $clase, 'rutas' => $rutas]);
+        return self::tabla($h, ['clase' => $clase, 'rutas' => $rutas, 'pdf' => $rutas]) . self::graficosHtml($h, $rutas);
     }
 
     /** Tabla HTML para el Redactor, marcada con data-sf (se refresca sola al abrir, ver y exportar). Bordes en el orden «1px #color solid» que lee PhpWord */
@@ -676,6 +845,8 @@ class Sheetflow
     private static function tabla(SheetflowHoja $h, array $op): string
     {
         $m = self::matriz($h);
+        $d = $h->contenido();
+        $cond = self::condicional($d, $m);
         $e = $m['estilo'];
         $fmt = $m['fmt'];
         $red = !empty($op['redactor']);
@@ -693,19 +864,50 @@ class Sheetflow
         if (array_filter($m['anchos'])) {
             $col = '<colgroup>' . implode('', array_map(fn($w) => '<col' . ($w ? ' style="width:' . round($w * 0.75) . 'pt"' : '') . '>', $m['anchos'])) . '</colgroup>';
         }
+        $cubierta = [];
+        $ancla = [];
+        foreach ($m['merges'] as $mg) {
+            $ancla[$mg['r0'] . ',' . $mg['c0']] = $mg;
+            for ($rr = $mg['r0']; $rr <= $mg['r1']; $rr++) for ($cc = $mg['c0']; $cc <= $mg['c1']; $cc++) {
+                if ($rr !== $mg['r0'] || $cc !== $mg['c0']) $cubierta[$rr . ',' . $cc] = true;
+            }
+        }
         $o = $red ? '<table data-sf="' . (int)$h->id . '" style="width:100%;border-collapse:collapse"><tbody>' . '<tr>'
             : '<table class="' . $esc($op['clase'] ?? 'sf-tabla') . '" style="border-collapse:collapse;width:100%">' . $col . '<thead><tr>';
         foreach ($m['columnas'] as $c => $n) {
+            if (isset($cubierta["-1,$c"])) continue;
             $f = $fmt["-1,$c"] ?? [];
-            $o .= '<th style="' . $borde . 'padding:4pt 6pt;' . $bg . $e['enc'] . ';color:' . $e['encTxt'] . ';text-align:center;' . self::cssFmt($f) . '">' . $img($f) . $esc($n) . '</th>';
+            $mg = $ancla["-1,$c"] ?? null;
+            $span = $mg ? ' colspan="' . ($mg['c1'] - $mg['c0'] + 1) . '"' : '';
+            $o .= '<th' . $span . ' style="' . $borde . 'padding:4pt 6pt;' . $bg . $e['enc'] . ';color:' . $e['encTxt'] . ';text-align:center;' . self::cssFmt($f) . '">' . $img($f) . $esc($n) . '</th>';
         }
         $o .= $red ? '</tr>' : '</tr></thead><tbody>';
         foreach ($m['filas'] as $r => $fila) {
             $o .= '<tr>';
             foreach ($fila as $c => $v) {
+                if (isset($cubierta["$r,$c"])) continue;
                 $f = $fmt["$r,$c"] ?? [];
+                $mg = $ancla["$r,$c"] ?? null;
+                $span = '';
+                if ($mg) {
+                    $cs = $mg['c1'] - $mg['c0'] + 1;
+                    $rs = $mg['r1'] - $mg['r0'] + 1;
+                    if ($cs > 1) $span .= ' colspan="' . $cs . '"';
+                    if ($rs > 1) $span .= ' rowspan="' . $rs . '"';
+                }
                 $cero = $e['zebra'] && $r % 2 && empty($f['bg']) ? ';' . $bg . '#f1f5f9' : '';
-                $o .= '<td style="' . $borde . 'padding:3pt 6pt;text-align:' . $alin[$m['alinear'][$c]] . $cero . ';' . self::cssFmt($f) . '">' . $img($f) . ($v !== '' ? $esc($v) : ($red && !$img($f) ? '<br>' : '')) . '</td>';
+                $cf = $cond["$r,$c"] ?? null;
+                if ($cf) {
+                    if (!empty($cf['bg'])) $f['bg'] = $cf['bg'];
+                    if (!empty($cf['tc'])) $f['tc'] = $cf['tc'];
+                    if (!empty($cf['b'])) $f['b'] = 1;
+                }
+                $extra = $cf && !empty($cf['grad']) ? 'background-image:' . $cf['grad'] . ';' : '';
+                if (!empty($op['pdf']) && $cf && isset($cf['pct'], $cf['color'])) {
+                    // Dompdf no entiende los degradados: la barra de datos se ve como un tinte del color
+                    $f['bg'] = self::mezclar($cf['color'], '#ffffff', 0.78);
+                }
+                $o .= '<td' . $span . ' style="' . $borde . 'padding:3pt 6pt;text-align:' . $alin[$m['alinear'][$c]] . $cero . ';' . self::cssFmt($f) . $extra . '">' . $img($f) . ($v !== '' ? $esc($v) : ($red && !$img($f) ? '<br>' : '')) . '</td>';
             }
             $o .= '</tr>';
         }
@@ -795,6 +997,248 @@ class Sheetflow
         return $h;
     }
 
+    // ---------- Formato condicional ----------
+
+    /** Mezcla dos colores #rrggbb: $k = 0 devuelve $a, 1 devuelve $b */
+    public static function mezclar(string $a, string $b, float $k): string
+    {
+        $k = max(0.0, min(1.0, $k));
+        $x = [];
+        for ($i = 0; $i < 3; $i++) {
+            $x[] = (int)round(hexdec(substr($a, 1 + $i * 2, 2)) * (1 - $k) + hexdec(substr($b, 1 + $i * 2, 2)) * $k);
+        }
+        return sprintf('#%02x%02x%02x', $x[0], $x[1], $x[2]);
+    }
+
+    /**
+     * Estilos que impone el formato condicional: ["r,c" => ['bg'=>?, 'tc'=>?, 'b'=>?, 'grad'=>?]].
+     * `grad` es un CSS de fondo (barra de datos); el resto son relleno, color de letra y negrita.
+     */
+    public static function condicional(array $d, array $m): array
+    {
+        $reglas = (array)($d['vista']['cond'] ?? []);
+        if (!$reglas) return [];
+        $filas = $m['filas'] ?? [];
+        $out = [];
+        foreach ($reglas as $r) {
+            $r0 = (int)$r['r0']; $r1 = (int)$r['r1']; $c0 = (int)$r['c0']; $c1 = (int)$r['c1'];
+            $tipo = (string)$r['tipo'];
+            $num = $txt = [];
+            for ($f = $r0; $f <= $r1; $f++) for ($c = $c0; $c <= $c1; $c++) {
+                $v = (string)($filas[$f][$c] ?? '');
+                $txt[$f . ',' . $c] = trim($v);
+                $n = self::numero($v);
+                if ($n !== null) $num[] = $n;
+            }
+            $min = $num ? min($num) : null;
+            $max = $num ? max($num) : null;
+            $a = self::numero($r['a'] ?? '');
+            $b = self::numero($r['b'] ?? '');
+            $cuenta = [];
+            if ($tipo === 'duplicados') {
+                foreach ($txt as $v) {
+                    $k = mb_strtolower($v);
+                    if ($k !== '') $cuenta[$k] = ($cuenta[$k] ?? 0) + 1;
+                }
+            }
+            $aguja = mb_strtolower(trim((string)(($r['txt'] ?? '') !== '' ? $r['txt'] : ($r['a'] ?? ''))));
+            $base = ['bg' => $r['fondo'], 'tc' => $r['color'], 'b' => $r['b']];
+            for ($f = $r0; $f <= $r1; $f++) for ($c = $c0; $c <= $c1; $c++) {
+                $k = $f . ',' . $c;
+                $v = (string)($filas[$f][$c] ?? '');
+                $n = self::numero($v);
+                $ok = false;
+                switch ($tipo) {
+                    case 'mayor': $ok = $n !== null && $a !== null && $n > $a; break;
+                    case 'menor': $ok = $n !== null && $a !== null && $n < $a; break;
+                    case 'igual':
+                        $ok = ($n !== null && $a !== null) ? $n == $a : mb_strtolower(trim($v)) === mb_strtolower(trim((string)($r['a'] ?? '')));
+                        break;
+                    case 'entre': $ok = $n !== null && $a !== null && $b !== null && $n >= min($a, $b) && $n <= max($a, $b); break;
+                    case 'contiene': $ok = $aguja !== '' && mb_stripos($v, $aguja) !== false; break;
+                    case 'duplicados': $ok = mb_strtolower(trim($v)) !== '' && ($cuenta[mb_strtolower(trim($v))] ?? 0) > 1; break;
+                    case 'escala':
+                        if ($n === null || $min === null || $max === $min) break;
+                        $out[$k] = ['bg' => self::mezclar($r['fondo'], $r['color'], ($n - $min) / ($max - $min)), 'tc' => self::contraste(self::mezclar($r['fondo'], $r['color'], ($n - $min) / ($max - $min)))];
+                        continue 2;
+                    case 'barra':
+                        if ($n === null || $max === null || $max <= 0) break;
+                        $pct = max(2.0, min(100.0, $n / $max * 100));
+                        $hex = $r['color'];
+                        $out[$k] = ['grad' => 'linear-gradient(90deg,' . $hex . ' 0%,' . $hex . ' ' . round($pct, 1) . '%,transparent ' . round($pct, 1) . '%,transparent 100%)', 'pct' => round($pct, 1), 'color' => $hex];
+                        continue 2;
+                }
+                if ($ok) $out[$k] = $base;
+            }
+        }
+        return $out;
+    }
+
+    // ---------- Gráficos sencillos (barras o líneas) ----------
+
+    /** Serie de datos de un gráfico a partir del rectángulo elegido: primera columna = etiquetas, resto = series */
+    public static function graficoDatos(array $m, array $g): array
+    {
+        $filas = $m['filas'] ?? [];
+        $etiquetas = [];
+        $series = [];
+        $cols = range((int)$g['c0'], (int)$g['c1']);
+        $primera = (int)$g['c0'];
+        $soloNumeros = true;
+        for ($f = (int)$g['r0']; $f <= (int)$g['r1']; $f++) {
+            if (self::numero((string)($filas[$f][$primera] ?? '')) === null && trim((string)($filas[$f][$primera] ?? '')) !== '') $soloNumeros = false;
+        }
+        $datos = [];
+        foreach ($cols as $c) {
+            $vals = [];
+            for ($f = (int)$g['r0']; $f <= (int)$g['r1']; $f++) $vals[] = self::numero((string)($filas[$f][$c] ?? ''));
+            if (count(array_filter($vals, fn($x) => $x !== null)) >= 1) $datos[$c] = $vals;
+        }
+        if ($soloNumeros) {   // no hay etiquetas de texto: cada renglón es una categoría
+            for ($f = (int)$g['r0']; $f <= (int)$g['r1']; $f++) $etiquetas[] = 'Fila ' . ($f + 2);
+        } else {
+            for ($f = (int)$g['r0']; $f <= (int)$g['r1']; $f++) {
+                $t = trim((string)($filas[$f][$primera] ?? ''));
+                $etiquetas[] = $t !== '' ? $t : 'Fila ' . ($f + 2);
+            }
+            unset($datos[$primera]);
+        }
+        foreach ($datos as $c => $vals) $series[] = ['nombre' => (string)($m['columnas'][$c] ?? ('Col. ' . ($c + 1))), 'vals' => $vals];
+        return ['tipo' => $g['tipo'], 'titulo' => (string)($g['titulo'] ?? ''), 'etiquetas' => $etiquetas, 'series' => array_slice($series, 0, 6)];
+    }
+
+    /** HTML (SVG) de los gráficos guardados en la hoja; $rutas = colores fijos para PDF */
+    public static function graficosHtml(SheetflowHoja $h, bool $pdf = false): string
+    {
+        $d = $h->contenido();
+        $gs = (array)($d['vista']['graficos'] ?? []);
+        if (!$gs) return '';
+        $m = self::matriz($h);
+        $out = '';
+        foreach ($gs as $g) {
+            $dat = self::graficoDatos($m, $g);
+            if (!$dat['series']) continue;
+            $svg = self::svg($dat, $pdf);
+            if ($pdf) {   // Dompdf dibuja el SVG como imagen, no incrustado en el HTML
+                $out .= '<div style="margin-top:14pt;text-align:center"><img src="data:image/svg+xml;base64,' . base64_encode($svg) . '" width="440" height="280" style="display:block;margin:0 auto"></div>';
+            } else {
+                $out .= '<figure class="sf-grafico">' . $svg . '</figure>';
+            }
+        }
+        return $out ? '<div class="sf-graficos">' . $out . '</div>' : '';
+    }
+
+    private const COLORES_SERIE = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
+
+    /** Dibuja un gráfico de barras o de líneas en SVG (sin dependencias) */
+    private static function svg(array $dat, bool $pdf = false): string
+    {
+        $W = $pdf ? 440 : 720; $H = 280; $ml = 54; $mr = 16; $mt = $dat['titulo'] !== '' ? 34 : 14; $mb = 42;
+        $n = count($dat['etiquetas']);
+        if ($n === 0) return '';
+        $series = $dat['series'];
+        $vals = [];
+        foreach ($series as $s) foreach ($s['vals'] as $v) if ($v !== null) $vals[] = $v;
+        if (!$vals) return '';
+        $max = max($vals); $min = min($vals);
+        if ($max === $min) { $max = $min + 1; }
+        $max = max(0, $max); $min = min(0, $min);
+        $rango = $max - $min ?: 1;
+        $pw = $W - $ml - $mr; $ph = $H - $mt - $mb;
+        $y = fn($v) => $mt + $ph - (($v - $min) / $rango) * $ph;
+        $esc = fn($t) => htmlspecialchars((string)$t, ENT_QUOTES, 'UTF-8');
+        $s = '<svg viewBox="0 0 ' . $W . ' ' . $H . '" width="100%" style="max-width:72rem;height:auto;font-family:sans-serif" role="img" aria-label="' . $esc($dat['titulo'] ?: 'Gráfico') . '">';
+        if ($pdf) $s = str_replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', $s);
+        $s .= '<rect x="0" y="0" width="' . $W . '" height="' . $H . '" fill="#ffffff"/>';
+        if ($dat['titulo'] !== '') $s .= '<text x="' . ($W / 2) . '" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="#111">' . $esc($dat['titulo']) . '</text>';
+        // ejes y guías
+        for ($i = 0; $i <= 4; $i++) {
+            $v = $min + $rango * $i / 4;
+            $yy = $y($v);
+            $s .= '<line x1="' . $ml . '" y1="' . round($yy, 1) . '" x2="' . ($W - $mr) . '" y2="' . round($yy, 1) . '" stroke="#e2e8f0" stroke-width="1"/>';
+            $s .= '<text x="' . ($ml - 6) . '" y="' . round($yy + 3, 1) . '" text-anchor="end" font-size="9" fill="#555">' . $esc(self::decimales($v, 2)) . '</text>';
+        }
+        $s .= '<line x1="' . $ml . '" y1="' . round($y(0), 1) . '" x2="' . ($W - $mr) . '" y2="' . round($y(0), 1) . '" stroke="#94a3b8" stroke-width="1.2"/>';
+        if ($dat['tipo'] === 'barra') {
+            $grupo = $pw / max(1, $n);
+            $ancho = max(3, $grupo * 0.7 / count($series));
+            foreach ($dat['etiquetas'] as $i => $eti) {
+                foreach ($series as $j => $se) {
+                    $v = $se['vals'][$i] ?? null;
+                    if ($v === null) continue;
+                    $x = $ml + $grupo * $i + $grupo * 0.15 + $ancho * $j;
+                    $y0 = $y(0); $y1 = $y($v);
+                    $s .= '<rect x="' . round($x, 1) . '" y="' . round(min($y0, $y1), 1) . '" width="' . round($ancho, 1) . '" height="' . round(abs($y0 - $y1), 1) . '" fill="' . self::COLORES_SERIE[$j % 6] . '" rx="2"/>';
+                }
+            }
+        } else {
+            foreach ($series as $j => $se) {
+                $pts = [];
+                foreach ($se['vals'] as $i => $v) {
+                    if ($v === null) continue;
+                    $pts[] = round($ml + ($pw / max(1, $n - 1)) * $i, 1) . ',' . round($y($v), 1);
+                }
+                if (count($pts) > 1) $s .= '<polyline points="' . implode(' ', $pts) . '" fill="none" stroke="' . self::COLORES_SERIE[$j % 6] . '" stroke-width="2.4" stroke-linejoin="round"/>';
+                foreach ($pts as $p) { [$px, $py] = explode(',', $p); $s .= '<circle cx="' . $px . '" cy="' . $py . '" r="3.2" fill="' . self::COLORES_SERIE[$j % 6] . '"/>'; }
+            }
+        }
+        // etiquetas del eje X (máx. 14, giradas si no caben)
+        $paso = max(1, (int)ceil($n / 14));
+        foreach ($dat['etiquetas'] as $i => $eti) {
+            if ($i % $paso) continue;
+            $x = $dat['tipo'] === 'barra' ? $ml + ($pw / max(1, $n)) * ($i + 0.5) : $ml + ($pw / max(1, $n - 1)) * $i;
+            $t = mb_substr((string)$eti, 0, 18);
+            $s .= '<text x="' . round($x, 1) . '" y="' . ($H - $mb + 16) . '" text-anchor="middle" font-size="9" fill="#334155">' . $esc($t) . '</text>';
+        }
+        // leyenda
+        $lx = $ml;
+        foreach ($series as $j => $se) {
+            if (count($series) < 2 && $dat['titulo'] !== '') continue;
+            $s .= '<rect x="' . $lx . '" y="' . ($H - 16) . '" width="9" height="9" fill="' . self::COLORES_SERIE[$j % 6] . '"/>';
+            $s .= '<text x="' . ($lx + 13) . '" y="' . ($H - 8) . '" font-size="9" fill="#334155">' . $esc(mb_substr((string)$se['nombre'], 0, 22)) . '</text>';
+            $lx += 24 + mb_strlen(mb_substr((string)$se['nombre'], 0, 22)) * 5;
+        }
+        return $s . '</svg>';
+    }
+
+    // ---------- Fórmulas del proyecto (AVANCE, INICIO, FIN…) ----------
+
+    /** Partidas y actividades con su avance y fechas, para las fórmulas =AVANCE("1.2.3"), =FIN(…)… */
+    public static function datosProyecto(int $proyectoId): array
+    {
+        try {
+            $p = \Model\Proyecto::find($proyectoId);
+            if (!$p) return [];
+            $prog = \Model\Partida::progresosDeProyecto($proyectoId);
+            $hoy = new \DateTimeImmutable(date('Y-m-d'));
+            $rest = function (?string $fin) use ($hoy): int {
+                if (!$fin) return 0;
+                try { return (int)$hoy->diff(new \DateTimeImmutable(substr((string)$fin, 0, 10)))->format('%r%a'); } catch (\Throwable $e) { return 0; }
+            };
+            $out = [];
+            foreach ($p->getPartidasConActividades() as $g) {
+                $pt = $g['partida'];
+                $out[] = [
+                    'codigo' => (string)$pt->codigo, 'nombre' => (string)$pt->nombre, 'tipo' => 'partida',
+                    'avance' => round((float)($prog[(int)$pt->id] ?? 0), 1),
+                    'inicio' => (string)($pt->fecha_inicio ?? ''), 'fin' => (string)($pt->fecha_fin ?? ''),
+                    'dias_rest' => $rest($pt->fecha_fin),
+                ];
+                foreach ($g['actividades'] as $a) {
+                    $out[] = [
+                        'codigo' => (string)$a->codigo, 'nombre' => (string)$a->nombre, 'tipo' => 'actividad',
+                        'avance' => round((float)$a->progreso, 1),
+                        'inicio' => (string)($a->fecha_inicio ?? ''), 'fin' => (string)($a->fecha_fin ?? ''),
+                        'dias_rest' => $rest($a->fecha_fin),
+                    ];
+                }
+            }
+            return $out;
+        } catch (\Throwable $e) {   // sin programa o sin migraciones: las fórmulas dan #N/A
+            return [];
+        }
+    }
+
     // ---------- Vínculos vivos ----------
 
     /** Renglones de la hoja como los lee una tabla de vPlan: claves c0..cN, máx. 200 (con la fila de totales al final) */
@@ -820,9 +1264,20 @@ class Sheetflow
         unset($f);
         // formato de SheetFlow (colores, negrita, alineación) para que la lámina y el PDF se vean como la hoja
         $fmt = $m['fmt'];
+        $cnd = self::condicional($d, $m);
         foreach ($out as $r => &$f) {
             if ($r >= count($m['filas'])) break;
-            for ($c = 0; $c < $nc; $c++) $f['s' . $c] = self::cssVplan($fmt["$r,$c"] ?? [], $m['alinear'][$c] ?? 'izquierda');
+            for ($c = 0; $c < $nc; $c++) {
+                $fc = $fmt["$r,$c"] ?? [];
+                $cf = $cnd["$r,$c"] ?? null;
+                if ($cf) {
+                    if (!empty($cf['bg'])) $fc['bg'] = $cf['bg'];
+                    if (!empty($cf['tc'])) $fc['tc'] = $cf['tc'];
+                    if (!empty($cf['b'])) $fc['b'] = 1;
+                    if (!empty($cf['grad']) && empty($fc['bg'])) $fc['bg'] = '#dbeafe';
+                }
+                $f['s' . $c] = self::cssVplan($fc, $m['alinear'][$c] ?? 'izquierda');
+            }
         }
         unset($f);
         return $out;
@@ -875,6 +1330,11 @@ class Sheetflow
         if ($col < 0 || $col >= count($d['cols'])) return 'Columna no válida';
         if ($m['totales'] && $fila === count($m['filas'])) return 'El renglón de totales se calcula en SheetFlow';
         if ($fila < 0 || $fila >= self::MAX_FILAS) return 'Renglón no válido';
+        foreach ((array)($d['merges'] ?? []) as $mg) {
+            if ($fila >= $mg['r0'] && $fila <= $mg['r1'] && $col >= $mg['c0'] && $col <= $mg['c1'] && ($fila !== $mg['r0'] || $col !== $mg['c0'])) {
+                return 'Esa celda está combinada; edita la celda superior izquierda';
+            }
+        }
         while (count($d['rows']) <= $fila) $d['rows'][] = array_fill(0, count($d['cols']), '');
         if (SheetflowFormulas::esFormula($d['rows'][$fila][$col])) return 'Esa celda es una fórmula; edítala en SheetFlow';
         $tipo = $d['cols'][$col]['t'];
@@ -905,6 +1365,7 @@ class Sheetflow
             array_splice($d['meta']['subactividad']['ids'], $fila, 1);
         }
         $d['fmt'] = self::fmtSinFila($d['fmt'] ?? [], $fila);
+        $d['merges'] = self::mergesSinFila($d['merges'] ?? [], $fila);
         if (!$d['rows']) $d['rows'][] = array_fill(0, count($d['cols']), '');
         try {
             self::guardarDatos($h, $d);
@@ -924,6 +1385,29 @@ class Sheetflow
             if ($r === $fila) continue;
             if ($r > $fila) $r--;
             $out[$r . ',' . $m[2]] = $f;
+        }
+        return $out;
+    }
+
+    /** Quita una fila de las celdas combinadas y desplaza las siguientes */
+    public static function mergesSinFila($merges, int $fila): array
+    {
+        $out = [];
+        foreach ((array)$merges as $m) {
+            $a = (int)($m['r0'] ?? 0);
+            $b = (int)($m['r1'] ?? 0);
+            if ($b < $fila || $a > $fila) {
+                if ($a > $fila) { $a--; $b--; }
+            } else {
+                $na = $a < $fila ? $a : $fila;
+                $nb = $b > $fila ? $b - 1 : $fila - 1;
+                if ($nb < $na) continue;
+                $a = $na;
+                $b = $nb;
+            }
+            $m['r0'] = $a;
+            $m['r1'] = $b;
+            $out[] = $m;
         }
         return $out;
     }

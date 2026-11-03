@@ -644,6 +644,19 @@ $ok('desvincular conserva las subactividades', count(Model\Subactividad::deActiv
 $shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
 $ok('la hoja desvinculada ya no tiene ids ni roles', empty($shd['meta']['subactividad']) && empty(array_filter(array_column($shd['cols'], 'rol'))));
 
+// Historial de versiones de la tabla
+$hojaVer = Model\SheetflowHoja::find((int)$sh->id);
+Model\SheetflowVersion::guardarCopia($hojaVer, null, true);
+$vers = Model\SheetflowVersion::deHoja((int)$sh->id);
+$ok('el historial guarda una copia de la tabla', count($vers) >= 1);
+$verd = $hojaVer->contenido();
+$verd['rows'][0][0] = 'Cambio temporal';
+\Classes\Sheetflow::guardarDatos($hojaVer, $verd);
+$v0 = Model\SheetflowVersion::deHojaId((int)$vers[0]['id'], (int)$sh->id);
+\Classes\Sheetflow::guardarDatos(Model\SheetflowHoja::find((int)$sh->id), $v0->contenido());
+$ok('restaurar una versión vuelve al contenido guardado', Model\SheetflowHoja::find((int)$sh->id)->contenido()['rows'][0][0] !== 'Cambio temporal');
+$ok('el historial conserva la versión anterior al restaurar', count(Model\SheetflowVersion::deHoja((int)$sh->id)) >= 1);
+
 $_SESSION = [];
 $ok('sin nadie con sesión no hay usuario que atribuir', !Classes\HistorialCambios::conUsuario());
 $antesH = $cuenta();

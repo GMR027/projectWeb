@@ -1295,6 +1295,18 @@ ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
 ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;
 ALTER TABLE vplan_laminas ADD CONSTRAINT fk_vplan_lamina_materiales FOREIGN KEY (materiales_tabla_id) REFERENCES vplan_tablas(id) ON DELETE SET NULL;
 
+-- Historial de versiones de las tablas de SheetFlow (una copia del JSON por guardado con cambios)
+CREATE TABLE IF NOT EXISTS sheetflow_versiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hoja_id INT NOT NULL,
+    usuario_id INT DEFAULT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    datos LONGTEXT,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_hoja (hoja_id, id),
+    FOREIGN KEY (hoja_id) REFERENCES sheetflow_hojas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Vínculo entre las subactividades de una actividad y su tabla de SheetFlow (sincronización en los dos sentidos)
 CREATE TABLE IF NOT EXISTS subactividad_hojas (
     id INT AUTO_INCREMENT PRIMARY KEY,

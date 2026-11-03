@@ -570,6 +570,8 @@ $router->post('/sheetflow/duplicar', [SheetflowController::class, 'duplicar']);
 $router->post('/sheetflow/eliminar', [SheetflowController::class, 'eliminar']);
 $router->post('/sheetflow/a-vplan', [SheetflowController::class, 'aVplan']);
 $router->post('/api/sheetflow/guardar', [SheetflowController::class, 'guardar']);
+$router->post('/api/sheetflow/versiones', [SheetflowController::class, 'versiones']);
+$router->post('/api/sheetflow/restaurar', [SheetflowController::class, 'restaurar']);
 $router->post('/api/sheetflow/version', [SheetflowController::class, 'version']);
 $router->post('/api/sheetflow/datos', [SheetflowController::class, 'datos']);
 $router->post('/api/sheetflow/imagen', [SheetflowController::class, 'imagen']);

@@ -6,6 +6,7 @@ use MVC\Router;
 use Model\Actividad;
 use Model\Proyecto;
 use Model\SheetflowHoja;
+use Model\SheetflowVersion;
 use Model\SubactividadHoja;
 use Model\VplanTabla;
 use Classes\Sheetflow;
@@ -100,8 +101,9 @@ class SheetflowController
             'config' => [
                 'id' => (int)$h->id, 'proyecto' => (int)$proyecto->id, 'version' => (string)$h->actualizado, 'datos' => $h->contenido(),
                 'max' => ['cols' => Sheetflow::MAX_COLS, 'filas' => Sheetflow::MAX_FILAS],
-                'api' => ['guardar' => '/api/sheetflow/guardar'],
+                'api' => ['guardar' => '/api/sheetflow/guardar', 'versiones' => '/api/sheetflow/versiones', 'restaurar' => '/api/sheetflow/restaurar'],
                 'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id),
+                'programa' => Sheetflow::datosProyecto((int)$proyecto->id),
             ],
         ]);
     }
@@ -114,6 +116,7 @@ class SheetflowController
             header('Location: /sheetflow?proyecto=' . $proyecto->id);
             exit;
         }
+        $h = Sheetflow::recalcularHoja($h);
         $router->render('sheetflow/ver', [
             'titulo' => 'SheetFlow - ' . $h->nombre, 'proyecto' => $proyecto, 'hoja' => $h, 'tabla' => Sheetflow::html($h),
             'puedeEditar' => puede_gestionar_proyecto($proyecto), 'puedeDescargar' => puede_descargar(),
@@ -132,6 +135,7 @@ class SheetflowController
             exit;
         }
         $formato = in_array($_GET['formato'] ?? 'xlsx', ['xlsx', 'csv', 'pdf', 'sheetflow'], true) ? $_GET['formato'] : 'xlsx';
+        $h = Sheetflow::recalcularHoja($h);
         $base = date('Y_m_d') . '_' . slug_archivo($h->nombre);
         @set_time_limit(120);
         try {
@@ -194,6 +198,7 @@ class SheetflowController
         }
         $crudo = (string)($_POST['datos'] ?? '');
         if (strlen($crudo) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla es demasiado grande'], 422);
+        \Classes\SheetflowFormulas::setProyecto(Sheetflow::datosProyecto((int)$h->proyecto_id));   // las fórmulas del proyecto usan el programa actual
         $limpio = Sheetflow::normalizar(json_decode($crudo, true));
         $texto = fn(string $campo, string $defecto): string => is_string($_POST[$campo] ?? null) ? (string)$_POST[$campo] : $defecto;
         $campos = new SheetflowHoja([
@@ -221,7 +226,35 @@ class SheetflowController
         Sheetflow::limpiarImagenes($antes, $h->imagenes(), (int)$h->proyecto_id, (int)$h->id);
         $act = SheetflowHoja::find($h->id);
         if (!$act) json_respuesta(['success' => false, 'error' => 'La tabla ya no existe.'], 404);
+        SheetflowVersion::guardarCopia($act, isset($_SESSION['id']) ? (int)$_SESSION['id'] : null, !empty($_POST['manual']));
         json_respuesta(['success' => true, 'version' => (string)$act->actualizado]);
+    }
+
+    /** Historial de la tabla (JSON: id, fecha, usuario, nombre y tamaño) */
+    public static function versiones()
+    {
+        $h = self::hojaApi(false);
+        json_respuesta(['success' => true, 'versiones' => SheetflowVersion::deHoja((int)$h->id)]);
+    }
+
+    /** Vuelve a una versión anterior de la tabla (antes guarda la actual en el historial) */
+    public static function restaurar()
+    {
+        $h = self::hojaApi(true);
+        $v = SheetflowVersion::deHojaId((int)($_POST['version'] ?? 0), (int)$h->id);
+        if (!$v) json_respuesta(['success' => false, 'error' => 'Esa versión ya no existe'], 404);
+        SheetflowVersion::guardarCopia($h, isset($_SESSION['id']) ? (int)$_SESSION['id'] : null, true);
+        try {
+            $datos = $v->contenido();
+            \Classes\SheetflowFormulas::setProyecto(Sheetflow::datosProyecto((int)$h->proyecto_id));
+            Sheetflow::guardarDatos($h, $datos);
+        } catch (\Throwable $e) {
+            error_log('SheetFlow restaurar: ' . $e->getMessage());
+            json_respuesta(['success' => false, 'error' => 'No se pudo restaurar la versión'], 500);
+        }
+        $act = SheetflowHoja::find($h->id);
+        if (!$act) json_respuesta(['success' => false, 'error' => 'La tabla ya no existe.'], 404);
+        json_respuesta(['success' => true, 'datos' => $act->contenido(), 'version' => (string)$act->actualizado]);
     }
 
     /** Sube una imagen para una celda; devuelve su ruta (se guarda al guardar la tabla) */
@@ -239,7 +272,7 @@ class SheetflowController
     /** Tabla ya formateada (columnas, tipos, renglones, totales) para usarla en el Editor y el Redactor */
     public static function datos()
     {
-        $h = self::hojaApi(false);
+        $h = Sheetflow::recalcularHoja(self::hojaApi(false));
         json_respuesta(['success' => true, 'nombre' => $h->nombre] + Sheetflow::matriz($h));
     }
 
@@ -257,6 +290,7 @@ class SheetflowController
         $h = self::hojaDe($proyecto, $_POST['id'] ?? null);
         $destino = '/sheetflow?proyecto=' . $proyecto->id;
         if ($h) {
+            $h = Sheetflow::recalcularHoja($h);
             $existente = null;
             if (!empty($_POST['tabla'])) {
                 $existente = VplanTabla::find(filter_var($_POST['tabla'], FILTER_VALIDATE_INT));

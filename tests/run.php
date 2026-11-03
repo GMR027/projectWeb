@@ -260,6 +260,100 @@ $ok('rechaza formatos que no son hoja de cálculo', $rechazado);
 array_map('unlink', glob("$dImp/*"));
 rmdir($dImp);
 
+echo "Sheetflow: fórmulas\n";
+$sfF = \Classes\Sheetflow::normalizar([
+    'cols' => [['n' => 'A'], ['n' => 'B'], ['n' => 'C'], ['n' => 'D'], ['n' => 'Importe', 't' => 'moneda'], ['n' => 'Amortización', 't' => 'moneda']],
+    'rows' => [['', '', '', '', '1500', '200'], ['', '', '', '', '=E2-F2', ''], ['', '', '', '', '=SUMA(E2:F2)', ''], ['', 'texto', '3', '', '=B5-C5', ''], ['', '', '', '', '=SI.ERROR(1/0;"sin dato")', '']],
+]);
+$sfCalc = (array)$sfF['calc'];
+$ok('resta y suma de dos campos', ($sfCalc['1,4'] ?? '') === '1300' && ($sfCalc['2,4'] ?? '') === '1700');
+$ok('operar con texto da #VALOR! y SI.ERROR lo atrapa', ($sfCalc['3,4'] ?? '') === '#VALOR!' && ($sfCalc['4,4'] ?? '') === 'sin dato');
+
+$sfNuevas = \Classes\Sheetflow::normalizar([
+    'cols' => [['n' => 'A', 't' => 'numero'], ['n' => 'B', 't' => 'numero'], ['n' => 'C'], ['n' => 'D', 't' => 'fecha'], ['n' => 'E']],
+    'rows' => [
+        ['1', '2', 'Alfa', '2026-01-31', '=SUMAPRODUCTO(A2:A4;B2:B4)'],
+        ['3', '4', 'Beta', '2026-02-28', '=TEXTO(D2;"dd/mm/yyyy")'],
+        ['5', '6', 'Gamma', '2026-03-31', '=BUSCARV(3;A2:B4;2;0)'],
+        ['', '', '', '', '=BUSCARX(3;A2:A4;B2:B4;"no")'],
+        ['', '', '', '', '=DIAS.LAB(D2;5)'],
+        ['', '', '', '', '=PAGO(0.05;10;1000)'],
+        ['', '', '', '', '=INDIRECTO("B3")'],
+        ['', '', '', '', '=DESREF(A2;1;0)'],
+        ['', '', '', '', '=NOMPROPIO("hola mundo")'],
+        ['', '', '', '', '=CONTAR.SI.CONJUNTO(A2:A4;">1";B2:B4;"<9")'],
+        ['', '', '', '', '=MAX.SI(A2:A4;B2:B4;">2")'],
+        ['', '', '', '', '=MEDIANA(A2:A4)'],
+        ['', '', '', '', '=SI.ND(BUSCARV(99;A2:B4;2;0);"no")'],
+        ['', '', '', '', '=AÑO(D2)'],
+    ],
+]);
+$sfN = (array)$sfNuevas['calc'];
+$ok('matemáticas, estadística y condicionales nuevos', ($sfN['0,4'] ?? '') === '44' && ($sfN['9,4'] ?? '') === '2' && ($sfN['10,4'] ?? '') === '5' && ($sfN['11,4'] ?? '') === '3');
+$ok('texto, búsqueda, referencias, fechas y finanzas', ($sfN['1,4'] ?? '') === '31/01/2026' && ($sfN['2,4'] ?? '') === '4' && ($sfN['3,4'] ?? '') === '4' && ($sfN['4,4'] ?? '') === '2026-02-06' && ($sfN['8,4'] ?? '') === 'Hola Mundo' && ($sfN['12,4'] ?? '') === 'no' && ($sfN['13,4'] ?? '') === '2026' && str_starts_with($sfN['5,4'] ?? '', '-129.5') && ($sfN['6,4'] ?? '') === '4' && ($sfN['7,4'] ?? '') === '3');
+
+echo "SheetFlow: celdas combinadas\n";
+$sfMerge = \Classes\Sheetflow::limpiar([
+    'cols' => [['n' => 'A'], ['n' => 'B'], ['n' => 'C'], ['n' => 'D']],
+    'rows' => [['1', '2', '3', '4'], ['5', '6', '7', '8'], ['9', '10', '11', '12']],
+    'merges' => [
+        ['r0' => 0, 'c0' => 0, 'r1' => 0, 'c1' => 1],
+        ['r0' => 1, 'c0' => 2, 'r1' => 2, 'c1' => 3],
+        ['r0' => -1, 'c0' => 0, 'r1' => 0, 'c1' => 1],
+        ['r0' => 0, 'c0' => 1, 'r1' => 1, 'c1' => 2],
+    ],
+]);
+$ok('las combinaciones se validan y no se solapan', count($sfMerge['merges']) === 2 && $sfMerge['merges'][0] === ['r0' => 0, 'c0' => 0, 'r1' => 0, 'c1' => 1]);
+$sfHoja = new \Model\SheetflowHoja(['id' => 1, 'nombre' => 'T', 'fecha' => '2026-01-01', 'departamento' => '', 'datos' => json_encode($sfMerge)]);
+$sfHtml = \Classes\Sheetflow::html($sfHoja);
+$ok('la tabla HTML y su matriz llevan colspan y rowspan', str_contains($sfHtml, 'colspan="2"') && str_contains($sfHtml, 'rowspan="2"') && count(\Classes\Sheetflow::matriz($sfHoja)['merges']) === 2);
+
+echo "SheetFlow: vista, formato y fórmulas del proyecto\n";
+$sfVista = \Classes\Sheetflow::limpiar([
+    'cols' => [['n' => 'Concepto'], ['n' => 'Cantidad', 't' => 'numero'], ['n' => 'Precio', 't' => 'moneda']],
+    'rows' => [['Acero', '10', '150'], ['Cemento', '20', '90'], ['Arena', '5', '200']],
+    'fmt' => ['1,2' => ['nf' => '#,##0.00']],
+    'vista' => [
+        'filas' => 1, 'cols' => 2,
+        'filtros' => ['0' => ['vals' => ['Acero', 'Cemento'], 'texto' => ''], '1' => ['vals' => ['']], '9' => ['vals' => ['x']]],
+        'cond' => [
+            ['r0' => 0, 'c0' => 1, 'r1' => 2, 'c1' => 1, 'tipo' => 'mayor', 'a' => '8', 'color' => '#dc2626', 'fondo' => '#fee2e2'],
+            ['r0' => 0, 'c0' => 2, 'r1' => 2, 'c1' => 2, 'tipo' => 'escala', 'color' => '#16a34a', 'fondo' => '#ffffff'],
+        ],
+        'graficos' => [['tipo' => 'barra', 'r0' => 0, 'c0' => 0, 'r1' => 2, 'c1' => 2, 'titulo' => 'Prueba'], ['tipo' => 'otro']],
+    ],
+]);
+$ok('la vista se acota: congelar, filtros, reglas y gráficos', $sfVista['vista']['filas'] === 1 && $sfVista['vista']['cols'] === 2
+    && count((array)$sfVista['vista']['filtros']) === 2 && count($sfVista['vista']['cond']) === 2 && count($sfVista['vista']['graficos']) === 1);
+$sfHoja2 = new \Model\SheetflowHoja(['id' => 2, 'nombre' => 'Vista', 'fecha' => '2026-01-01', 'departamento' => '', 'datos' => json_encode($sfVista)]);
+$sfM2 = \Classes\Sheetflow::matriz($sfHoja2);
+$ok('el formato de número por celda se aplica al valor mostrado', ($sfM2['filas'][1][2] ?? '') === '90.00');
+$sfCnd = \Classes\Sheetflow::condicional($sfVista, $sfM2);
+$ok('el formato condicional marca las celdas (regla y escala)', ($sfCnd['1,1']['bg'] ?? '') === '#fee2e2' && isset($sfCnd['0,2']));
+$sfHtml2 = \Classes\Sheetflow::html($sfHoja2);
+$ok('el HTML de la tabla incluye el gráfico SVG y los colores condicionales', str_contains($sfHtml2, '<svg') && str_contains($sfHtml2, '#fee2e2'));
+$ok('el formato de número entiende miles, moneda, porcentaje y fechas', \Classes\Sheetflow::formatoNumero('1800', '#,##0.00') === '1,800.00'
+    && \Classes\Sheetflow::formatoNumero('1800', '$#,##0') === '$1,800' && \Classes\Sheetflow::formatoNumero('0.5', '0.0%') === '50.0%'
+    && \Classes\Sheetflow::formatoNumero('2026-01-05', 'dd/mm/aaaa') === '05/01/2026' && \Classes\Sheetflow::formatoNumero('-1800', '$#,##0.00') === '-$1,800.00');
+
+\Classes\SheetflowFormulas::setProyecto([
+    ['codigo' => '1.1', 'nombre' => 'Cimentación', 'tipo' => 'partida', 'avance' => 42.5, 'inicio' => '2026-01-01', 'fin' => '2026-02-15', 'dias_rest' => -3],
+]);
+$sfProy = \Classes\Sheetflow::normalizar([
+    'cols' => [['n' => 'A'], ['n' => 'B'], ['n' => 'C'], ['n' => 'D'], ['n' => 'E']],
+    'rows' => [['', '', '', '=AVANCE("1.1")', '=FIN("1.1")'], ['', '', '', '=PARTIDA("1.1")', '=DIAS.REST("1.1")']],
+]);
+$sfP = (array)$sfProy['calc'];
+$ok('AVANCE/FIN/PARTIDA/DIAS.REST leen el programa del proyecto', ($sfP['0,3'] ?? '') === '42.5' && ($sfP['0,4'] ?? '') === '2026-02-15'
+    && ($sfP['1,3'] ?? '') === 'Cimentación' && ($sfP['1,4'] ?? '') === '-3');
+\Classes\SheetflowFormulas::setProyecto([]);
+$sfCache = \Classes\Sheetflow::normalizar([
+    'cols' => [['n' => 'A'], ['n' => 'B']],
+    'rows' => [['=AVANCE("1.1")', '']],
+    'calc' => ['0,0' => '42.5'],
+]);
+$ok('sin programa cargado se conserva el resultado que calculó el cliente', (((array)$sfCache['calc'])['0,0'] ?? '') === '42.5');
+
 echo "SheetFlow: vínculo con subactividades\n";
 $sfVinculo = \Classes\Sheetflow::limpiar([
     'cols' => [
@@ -663,6 +757,16 @@ $ok('SheetFlow edita la celda en hoja inferior y tiene pellizco', str_contains($
 $ok('las estampas usan los gestos de lienzo', str_contains($asset('public/vendor/estampas-editor.js'), 'GestosLienzo.montar') && str_contains($asset('views/simbolos/index.php'), 'gestos-lienzo.js'));
 $ok('el CSS compilado trae el dock del Redactor y la celda en hoja', str_contains($asset('public/build/css/app.css'), '.rd-dock') && str_contains($asset('public/build/css/app.css'), '.sf-celda-hoja'));
 $ok('SheetFlow edita en la celda en tablet y en hoja solo en el celular', str_contains($asset('public/vendor/sheetflow.js'), 'MOVIL_ESTRECHO.matches'));
+$ok('SheetFlow inserta referencias al hacer clic en celdas mientras se escribe una fórmula', str_contains($asset('public/vendor/sheetflow.js'), 'function entradaFormula') && str_contains($asset('public/vendor/sheetflow.js'), 'function insertarRef') && str_contains($asset('public/vendor/sheetflow.js'), 'function celdaApuntada'));
+$ok('SheetFlow combina y separa celdas (colspan, rowspan y merges en los datos)', str_contains($asset('public/vendor/sheetflow.js'), 'function mergeDe') && str_contains($asset('views/sheetflow/abrir.php'), 'data-acc="combinar"') && str_contains($asset('public/vendor/sheetflow.js'), 'merges: S.merges'));
+$ok('SheetFlow rellena con el asa y ajusta las referencias al copiar', str_contains($asset('public/vendor/sheetflow.js'), 'function ajustarFormula')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'function aplicarRelleno') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-asa"'));
+$ok('SheetFlow busca y reemplaza, filtra, congela y guarda el historial', str_contains($asset('public/vendor/sheetflow.js'), 'function buscarSiguiente')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'function abrirFiltro') && str_contains($asset('public/vendor/sheetflow.js'), 'function aplicarCongelado')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'function abrirHistorial') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-historial"'));
+$ok('SheetFlow tiene formato condicional, gráficos y fórmulas del proyecto', str_contains($asset('public/vendor/sheetflow.js'), 'function condicional')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'function svgGrafico') && str_contains($asset('public/vendor/sheetflow.js'), 'funcionProyecto')
+    && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-cond-aplicar"') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-graf-crear"'));
 $ok('la cinta de Redactor y SheetFlow se pliega como en OnlyOffice', str_contains($asset('public/vendor/redactor.js'), 'rd-cinta-cerrada') && str_contains($asset('public/vendor/sheetflow.js'), 'sf-cinta-cerrada') && str_contains($asset('views/redactor/abrir.php'), 'id="rd-plegar"') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-plegar"'));
 $ok('la cinta compacta y su botón están en el CSS compilado', str_contains($asset('public/build/css/app.css'), '.cinta-plegar') && str_contains($asset('public/build/css/app.css'), '.cinta-cab'));
 $ok('el Redactor navega entre páginas con flechas debajo de la hoja', str_contains($asset('views/redactor/abrir.php'), 'id="rd-paginas-bar"') && str_contains($asset('public/vendor/redactor.js'), 'pintarBarraPaginas') && str_contains($asset('public/build/css/app.css'), '.rd-paginas-bar'));
