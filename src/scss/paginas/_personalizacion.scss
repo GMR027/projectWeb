@@ -1,19 +1,4 @@
 // Fase 4: personalización (diseño de listas, campos personalizados, marca, plantillas, inicio)
-.cp-barra { align-items: flex-end; flex-wrap: wrap; }
-.cp-barra-der { margin-left: auto; display: flex; gap: .6rem; flex-wrap: wrap; }
-.cp-celda { min-width: 9rem; }
-.cp-input {
-  width: 100%; min-width: 8rem; padding: .35rem .6rem; font: inherit; color: inherit;
-  background: transparent; border: 1px solid transparent; border-radius: .6rem;
-  &:hover, &:focus { border-color: var(--border, #475569); background: var(--surface, rgba(148, 163, 184, .08)); }
-  &.cp-guardado { border-color: var(--success); }
-  &.cp-error { border-color: var(--danger); }
-}
-.cp-grupo td {
-  font-weight: 700; padding-top: 1.2rem; background: rgba(148, 163, 184, .1);
-  border-top: 2px solid var(--primary);
-  small { font-weight: 400; margin-left: .6rem; }
-}
 .cp-seccion { margin-bottom: 1.6rem; h3 { margin-bottom: 1rem; } }
 .cp-fila {
   display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-start; margin-bottom: .8rem;
@@ -21,8 +6,6 @@
   textarea { flex: 2 1 20rem; }
   &.cp-nuevo { padding-top: .8rem; border-top: 1px dashed rgba(148, 163, 184, .4); }
 }
-.cp-grupo-li { list-style: none; font-weight: 700; margin: 1.2rem 0 .4rem; padding-bottom: .4rem; border-bottom: 2px solid var(--primary); }
-.cp-chip { display: inline-flex; gap: .4rem; align-items: center; .cp-input { min-width: 8rem; width: auto; } }
 .mc-previa { background: #fff; color: #111; padding: 1.6rem; border-radius: 1rem; max-width: 70rem; }
 .mc-banda { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: .6rem; strong { font-size: 1.6rem; } small { color: #555; } }
 .mc-logo img { max-height: 4.4rem; max-width: 16rem; }

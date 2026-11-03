@@ -874,3 +874,77 @@ function pag_attr($proyecto): string
 {
     return 'data-paginar="' . registros_por_pagina($proyecto) . '"';
 }
+
+/**
+ * Hojas de página que necesita una vista cuando se usa el CSS dividido.
+ * Devuelve los nombres de public/build/css/paginas/<nombre>.css, o null
+ * cuando la vista no está mapeada y debe cargarse app.css completo.
+ */
+function css_paginas_de_vista(?string $vista): ?array
+{
+    if (!$vista) return null;
+    $v = trim(str_replace('\\', '/', $vista), '/');
+    $mapa = [
+        // Herramientas con hoja propia
+        'programa' => ['programa', 'programador'],
+        'lineatiempo' => ['lineatiempo'],
+        'planificador' => ['planificador'],
+        'redactor' => ['redactor'],
+        'sheetflow' => ['redactor', 'sheetflow'],
+        'vplan' => ['vplan'],
+        'graficos' => ['vplan'],
+        'simbolos' => ['simbolos'],
+        'comparador' => ['comparador'],
+        'anotador' => ['anotador'],
+        'traductor' => ['traductor'],
+        'programador' => ['programador'],
+        'mapa-avance' => ['inconsistencias', 'programador'],
+        'calendario' => ['ajustes'],
+        'lineas-base' => ['cambios', 'programa'],
+        'punch' => ['inconsistencias', 'programador'],
+        'costos' => ['fase3', 'cambios'],
+        'recursos' => ['fase3'],
+        'rfi' => ['fase3', 'cambios'],
+        'compartir' => ['fase3'],
+        'cambios' => ['cambios'],
+        'reportes' => ['reportes'],
+        'bitacora' => ['reportes'],
+        'ajustes' => ['ajustes', 'personalizacion', 'dependencias-materiales', 'empezar'],
+        'centro-ia' => ['inconsistencias', 'personalizacion'],
+        'revisiones' => ['inconsistencias'],
+        'seguridad' => ['inconsistencias', 'programador'],
+        'inconsistencias' => ['inconsistencias', 'programador'],
+        'historial' => ['inconsistencias'],
+        'usuarios' => ['personalizacion'],
+        'directorio' => ['personalizacion', 'reportes'],
+        'plantillas' => ['personalizacion'],
+        'campos' => ['personalizacion'],
+        'especialidades' => ['personalizacion'],
+        'auth/listar' => [],
+        'auth/visitantes' => [],
+        'auth/crear' => [],
+        'auth/editar' => [],
+        'auth/password' => [],
+        'materiales/dependencias' => ['dependencias-materiales'],
+        'analisis-materiales' => ['dependencias-materiales', 'inconsistencias', 'programador'],
+        'archivos' => ['archivero'],
+        'visor' => ['visor'],
+        'dashboard' => ['dashboard', 'personalizacion'],
+        'proyectos' => ['dashboard'],
+        'msr' => ['personalizacion', 'reportes'],
+
+        // Vistas que se apoyan en los estilos compartidos de app-base.css
+        'lookahead' => [],
+        'manual' => [],
+        'lastplanner' => [],
+        'dependencias' => [],
+        'curvas' => [],
+        'submittals' => [],
+        'materiales' => [],
+        'novedades' => [],
+        'buscar' => [],
+    ];
+    if (array_key_exists($v, $mapa)) return $mapa[$v];
+    $prefijo = explode('/', $v)[0];
+    return $mapa[$prefijo] ?? null;
+}

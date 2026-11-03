@@ -1,0 +1,3 @@
+// Ajustes de móvil: se cargan DESPUÉS de la hoja de cada herramienta para que
+// sus reglas sigan ganando en pantallas pequeñas (antes iban al final de app.css).
+@use 'layout/movil';

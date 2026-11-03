@@ -1,0 +1,40 @@
+// ============================================================
+// CSS compartido por todas las páginas: base, componentes, layout
+// y los estilos que varias herramientas reutilizan (lookahead).
+// Cada herramienta suma después su propia hoja (build/css/paginas).
+// ============================================================
+
+@use 'base/variables';
+
+// Base
+@use 'base/base';
+
+// Componentes
+@use 'componentes/botones';
+@use 'componentes/tabs';
+@use 'componentes/paneles';
+@use 'componentes/hoja-inferior';
+@use 'componentes/estados';
+@use 'componentes/tour';
+@use 'componentes/asistentes';
+@use 'componentes/formularios';
+@use 'componentes/cards';
+@use 'componentes/tablas';
+@use 'componentes/badges';
+@use 'componentes/revisiones';
+@use 'componentes/salud';
+@use 'componentes/alertas';
+@use 'componentes/modal';
+@use 'componentes/iconos';
+@use 'componentes/fechas';
+@use 'componentes/paginador';
+@use 'componentes/divisor';
+
+// Layout
+@use 'layout/layout';
+@use 'layout/notificaciones';
+
+// Estilos compartidos entre herramientas (menú de descarga, Gantt de
+// dependencias, editor de marcas, last planner, curvas, manual…).
+@use 'paginas/lookahead';
+

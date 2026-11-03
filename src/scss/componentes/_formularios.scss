@@ -100,7 +100,14 @@ label:has(> input[type="checkbox"]),
 label:has(> input[type="radio"]) { cursor: pointer; }
 
 .campo-check {
+  display: flex;
+  gap: .8rem;
+  align-items: center;
   padding: 0.8rem 1.2rem;
+  font-size: 1.3rem;
+  text-transform: none;
+  letter-spacing: 0;
+  input { width: auto; }
   background: var(--bg-secondary);
   border: 1px solid $border;
   border-radius: $radius-sm;
@@ -108,6 +115,9 @@ label:has(> input[type="radio"]) { cursor: pointer; }
   &:hover { border-color: $border-accent; background: var(--surface-hover); }
   &:has(input:checked) { border-color: var(--primary-ink); background: var(--primary-glow); }
 }
+
+// Barra de filtros de las listas (la usan revisión, punch, centro de IA, plantillas…)
+.inc-filtros { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin-bottom: 1.6rem; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
 
 
 // ============================================================

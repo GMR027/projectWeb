@@ -36,7 +36,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | **Exportación** | Nombre `prefijo-nombre-CÓDIGO-EMPRESA-sufijo.ext`: prefijo/sufijo (fecha Y-m-d, d-m-Y, numerador, texto) se eligen una vez en el Centro de Exportación (`/exportar`, guardado en localStorage) y viajan como `nom_*` en cada POST; el servidor los lee con `nomenclatura_desde_post()` y los usa `generar_nombre_archivo()`. Sin `nom_*` queda fecha al inicio. «Exportar todo» filtra con `incluir[]`; curvas, MSR y láminas de vPlan aceptan varios (`curva_ids[]`, `msr_ids[]`, `lamina_ids[]`) y entregan ZIP. PDF tabloide 11x17" landscape; columnas semanales (≤16 sem), quincenales (≤40) o mensuales, máx. 14 columnas por página. XML es MSPDI. POD renombra el XML. |
 | **Almacenamiento** | Límite por proyecto en `proyectos.limite_almacenamiento_mb` (MB, NULL = heredado). Solo el **admin** lo cambia desde Ajustes → Datos → Almacenamiento (`POST /ajustes/almacenamiento`, `Classes\Almacenamiento::fijarLimiteProyecto()`); con 0 vuelve al heredado (el del cliente dueño o 300 MB). `Almacenamiento::limite()` da el valor propio si hay, si no el heredado (`limiteHeredado()`). Los clientes/visitantes no ven el control y el POST se rechaza. |
 | **BD** | Nombre: `project`. ActiveRecord usa string interpolation (sanitiza con `$db->escape_string`). |
-| **Assets** | Compilar con Gulp. SCSS en `src/scss/`, JS en `src/js/`, salida a `public/build/`. |
+| **Assets** | Compilar con Gulp. SCSS en `src/scss/`, JS en `src/js/`, salida a `public/build/`. El CSS se reparte: `app-base.css` (base + componentes + layout + estilos compartidos de `_lookahead.scss`), `paginas/<herramienta>.css` y `app-movil.css` al final; `views/layout.php` elige con `css_paginas_de_vista($__vista)` (`includes/funciones.php`) y deja `app.css` completo como respaldo para vistas no mapeadas. |
 
 ## 🧩 Useful File Map
 
@@ -109,6 +109,8 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 11. **Consultas en bucles:** para listas, Gantt y PDF usa `Proyecto::getPartidasConActividades()` (dos consultas) o `Actividad::deProyecto()`; `Partida::progresosDeProyecto()` y `Restriccion::activasPorProyecto()` evitan una consulta por partida/actividad. No llames `getActividades()` dentro de un `foreach`. Los índices de las consultas frecuentes están en `database/migracion_indices_rendimiento.sql`.
 
 12. **Burbujas de ayuda:** cualquier elemento con `data-ayuda="qué hace"` (+ `data-manual="/manual#seccion"`, `data-ayuda-titulo`) muestra a los 700 ms una burbuja con botón al manual (`src/js/ayuda.js`, estilos `.burbuja-ayuda` en `_layout.scss`). Cada herramienta nueva del menú debe agregarse a `ayudas_herramientas()` en `views/templates/herramientas-proyecto.php` (descripción + id de su sección del manual); `atributos_ayuda()` (`includes/funciones.php`) arma los atributos.
+
+13. **CSS dividido:** al crear una herramienta o cambiar de carpeta una vista, agrégala a `css_paginas_de_vista()` (`includes/funciones.php`); si no, cargará `app.css` completo (funciona, pero pesa más). `app-movil.css` debe seguir cargándose **después** de la hoja de la herramienta para que las reglas móviles ganen. Los estilos compartidos por varias herramientas van a `componentes/` (no a `paginas/`), o la página mapeada se quedará sin ellos.
 
 ## 🔍 Need to Verify?
 

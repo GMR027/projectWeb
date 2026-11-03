@@ -36,7 +36,24 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
     <title><?php echo s($titulo ?? 'Programa de Obra'); ?> | ProjectWeb</title>
     <link rel="stylesheet" href="/vendor/fuentes/fuentes.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fuentes/fuentes.css'); ?>">
     <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css?v=<?php echo filemtime(__DIR__ . '/../public/vendor/fontawesome/css/all.min.css'); ?>">
+    <?php
+    // CSS dividido: las vistas mapeadas cargan app-base + su hoja; el resto, app.css completo.
+    $__cssVista = css_paginas_de_vista($__vista ?? null);
+    $__cssPaginasOk = $__cssVista !== null;
+    foreach (($__cssVista ?? []) as $__css) {
+        if (!is_file(__DIR__ . '/../public/build/css/paginas/' . $__css . '.css')) { $__cssPaginasOk = false; break; }
+    }
+    if (!is_file(__DIR__ . '/../public/build/css/app-movil.css')) $__cssPaginasOk = false;
+    ?>
+    <?php if (!$__cssPaginasOk): ?>
     <link rel="stylesheet" href="/build/css/app.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/app.css'); ?>">
+    <?php else: ?>
+    <link rel="stylesheet" href="/build/css/app-base.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/app-base.css'); ?>">
+    <?php foreach ($__cssVista as $__css): ?>
+    <link rel="stylesheet" href="/build/css/paginas/<?php echo s($__css); ?>.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/paginas/' . $__css . '.css'); ?>">
+    <?php endforeach; ?>
+    <link rel="stylesheet" href="/build/css/app-movil.css?v=<?php echo filemtime(__DIR__ . '/../public/build/css/app-movil.css'); ?>">
+    <?php endif; ?>
     <?php if ($temaCssProyecto): ?><style><?php echo $temaCssProyecto; ?></style><?php endif; ?>
     <script>
         // Tema elegido por el usuario (guardado en localStorage).

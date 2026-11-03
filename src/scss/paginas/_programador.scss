@@ -32,11 +32,6 @@
   .prg-barra-prop { top: 2.4rem; background: var(--secondary); &.crit { background: var(--danger); } }
   .prg-hoy { top: 0; bottom: 0; width: .1rem; background: var(--primary); opacity: .6; } }
 
-// Buscador de palabras que app.js agrega sobre las listas
-.buscador-tabla { display: flex; align-items: center; gap: .8rem; margin: 0 0 1rem; max-width: 46rem;
-  i { color: var(--text-muted); } input[type=search] { flex: 1; min-width: 0; padding: .6rem 1rem; }
-  .conteo { font-size: 1.2rem; color: var(--text-muted); white-space: nowrap; } }
-tr[hidden] { display: none; }
 
 .prg-guardar { display: flex; gap: .8rem; align-items: center; input[type=text] { min-width: 26rem; } }
 .prg-guardada { font-size: 1.3rem; font-weight: 600; color: var(--success); }

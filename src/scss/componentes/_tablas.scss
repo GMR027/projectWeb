@@ -288,3 +288,30 @@
     &.te-comprado.activo { background: var(--success); color: var(--on-success); }
   }
 }
+
+
+// Buscador de palabras que app.js agrega sobre las listas
+.buscador-tabla { display: flex; align-items: center; gap: .8rem; margin: 0 0 1rem; max-width: 46rem;
+  i { color: var(--text-muted); } input[type=search] { flex: 1; min-width: 0; padding: .6rem 1rem; }
+  .conteo { font-size: 1.2rem; color: var(--text-muted); white-space: nowrap; } }
+tr[hidden] { display: none; }
+
+
+// Controles del diseño de listas y de la barra de columnas (los usan todas las listas)
+.cp-barra { align-items: flex-end; flex-wrap: wrap; }
+.cp-barra-der { margin-left: auto; display: flex; gap: .6rem; flex-wrap: wrap; }
+.cp-celda { min-width: 9rem; }
+.cp-input {
+  width: 100%; min-width: 8rem; padding: .35rem .6rem; font: inherit; color: inherit;
+  background: transparent; border: 1px solid transparent; border-radius: .6rem;
+  &:hover, &:focus { border-color: var(--border, #475569); background: var(--surface, rgba(148, 163, 184, .08)); }
+  &.cp-guardado { border-color: var(--success); }
+  &.cp-error { border-color: var(--danger); }
+}
+.cp-grupo td {
+  font-weight: 700; padding-top: 1.2rem; background: rgba(148, 163, 184, .1);
+  border-top: 2px solid var(--primary);
+  small { font-weight: 400; margin-left: .6rem; }
+}
+.cp-grupo-li { list-style: none; font-weight: 700; margin: 1.2rem 0 .4rem; padding-bottom: .4rem; border-bottom: 2px solid var(--primary); }
+.cp-chip { display: inline-flex; gap: .4rem; align-items: center; .cp-input { min-width: 8rem; width: auto; } }

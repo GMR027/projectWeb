@@ -6,7 +6,7 @@
 // ============================================================
 .pestanas, .vp-pestanas, .ve-pestanas, .rd-pestanas, .sf-pestanas, .sim-tabs {
   display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; padding: 0 .4rem; border-bottom: 1px solid var(--border);
-  button, a { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; text-decoration: none;
+  button, a { padding: .7rem 1.6rem; border: 1px solid transparent; border-bottom: 0; border-radius: .6rem .6rem 0 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
     i { margin-right: .5rem; }
     &:hover { color: var(--text); background: var(--surface-hover); }
     // La pestaña activa se marca con .activo (o con aria-selected si la vista usa role=tab sin clase)
@@ -47,3 +47,11 @@
   &.cinta-desborda::after { right: 0; margin-left: -2.8rem; background: linear-gradient(90deg, transparent, var(--surface)); }
   &.cinta-ini::before, &.cinta-fin::after { content: none; }
 }
+
+
+// Pestañas del centro de IA y de las herramientas hermanas (antes en _inconsistencias.scss)
+.centro-ia-tabs { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+  &__titulo { font-weight: 700; font-size: 1.4rem; margin-right: 1.2rem; color: var(--text-muted); }
+  &__tab { padding: .7rem 1.4rem; border-radius: 99rem; font-size: 1.3rem; text-decoration: none; color: var(--text-muted); border: 1px solid transparent;
+    &:hover { background: var(--bg-tertiary); color: inherit; }
+    &.activa { background: var(--surface); border-color: var(--primary-ink); color: var(--primary-ink); font-weight: 600; } } }
