@@ -59,7 +59,7 @@ abstract class HallazgosIAController
     {
         $p = proyecto_api();
         $m = static::MODELO;
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo) || !is_array($cuerpo['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $sistema = $m::detectarSistema($p);
         $ia = $m::normalizarIA($p, $cuerpo['respuestas']);
@@ -85,7 +85,7 @@ abstract class HallazgosIAController
         $p = proyecto_api();
         $m = static::MODELO;
         $id = (int)($_POST['corrida'] ?? 0);
-        $m::marcarCorrida((int)$p->id, $id, empty($_POST['quitar']), (string)($_POST['nombre'] ?? ''));
+        $m::marcarCorrida((int)$p->id, $id, empty($_POST['quitar']), texto_param($_POST['nombre'] ?? ''));
         $_SESSION[static::SESION_MSG] = ['ok' => true, 'texto' => empty($_POST['quitar']) ? 'Análisis guardado: podrás consultarlo y resolver sus inconsistencias cuando quieras.' : 'El análisis ya no está guardado (se conservan los 5 más recientes).'];
         header('Location: /' . static::RUTA . '?proyecto=' . (int)$p->id . '&corrida=' . $id);
         exit;

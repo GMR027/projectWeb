@@ -22,7 +22,7 @@ class ConsultasIAController
         $lista = json_decode((string)($_POST['consultas'] ?? '[]'), true);
         $lista = is_array($lista) ? $lista : [];
         $ruteadas = false;
-        $pregunta = (string)($_POST['pregunta'] ?? '');
+        $pregunta = texto_param($_POST['pregunta'] ?? '');
         if ($pregunta !== '' && (!$lista || !empty($_POST['completar']))) {
             // Sin plan, o completando el del modelo con las consultas que sugieren las palabras clave (hasta 4 en total)
             $lista = array_slice(array_merge($lista, array_filter(array_map(fn($x) => ['nombre' => $x[0], 'params' => $x[1]], Consultas::rutear($pregunta)),

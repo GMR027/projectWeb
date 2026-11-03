@@ -136,7 +136,7 @@ class ProgramaController
                 if (is_array($c) && !empty($c['k'])) $cols[] = ['k' => (string)$c['k'], 'n' => (string)($c['n'] ?? '')];
             }
             $ind = ['campo' => (string)($_POST['indicador_campo'] ?? 'progreso'), 'reglas' => array_values(array_filter((array)($_POST['reglas'] ?? []), 'is_array'))];
-            if (ProgramaColumnas::guardarDiseno((int)$proyecto->id, (string)($_POST['programa_nombre'] ?? ''), $cols, $ind)) {
+            if (ProgramaColumnas::guardarDiseno((int)$proyecto->id, texto_param($_POST['programa_nombre'] ?? ''), $cols, $ind)) {
                 header('Location: /programa?proyecto=' . $proyecto->id . '&diseno=1');
                 exit;
             }
@@ -163,7 +163,7 @@ class ProgramaController
     public static function campoAjax()
     {
         [$actividad, ] = self::actividadGestionable();
-        [$ok, $v] = ProgramaColumnas::guardarCampo((int)$actividad->id, (string)($_POST['campo'] ?? ''), (string)($_POST['valor'] ?? ''));
+        [$ok, $v] = ProgramaColumnas::guardarCampo((int)$actividad->id, texto_param($_POST['campo'] ?? ''), texto_param($_POST['valor'] ?? ''));
         json_respuesta($ok ? ['success' => true, 'valor' => $v] : ['success' => false, 'error' => $v], $ok ? 200 : 422);
     }
 
@@ -183,10 +183,10 @@ class ProgramaController
     public static function columnaAjax()
     {
         $proyecto = proyecto_api('gestionar');
-        $k = (string)($_POST['k'] ?? '');
+        $k = texto_param($_POST['k'] ?? '');
         $cp = ProgramaColumnas::esCp($k) ? (\Classes\CamposPersonalizados::deProyecto((int)$proyecto->id, 'actividad')[(int)substr($k, 3)] ?? null) : null;
         if (!isset(ProgramaColumnas::COLUMNAS[$k]) && !$cp) json_respuesta(['success' => false, 'error' => 'Columna no válida'], 422);
-        $n = mb_substr(trim(strip_tags((string)($_POST['n'] ?? ''))), 0, 60);
+        $n = mb_substr(trim(strip_tags(texto_param($_POST['n'] ?? ''))), 0, 60);
         $ok = ProgramaColumnas::renombrar($proyecto, $k, $n);
         json_respuesta(['success' => $ok, 'nombre' => $n !== '' ? $n : ($cp['nombre'] ?? ProgramaColumnas::COLUMNAS[$k][0])], $ok ? 200 : 500);
     }
@@ -195,7 +195,7 @@ class ProgramaController
     public static function ordenAjax()
     {
         $proyecto = proyecto_api('gestionar');
-        $claves = array_filter(explode(',', (string)($_POST['orden'] ?? '')));
+        $claves = array_filter(explode(',', texto_param($_POST['orden'] ?? '')));
         json_respuesta(['success' => ProgramaColumnas::ordenar($proyecto, $claves)]);
     }
 
@@ -432,7 +432,7 @@ class ProgramaController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $orden = json_decode((string)($_POST['orden'] ?? ''), true);
+        $orden = json_decode(texto_param($_POST['orden'] ?? ''), true);
         $error = is_array($orden) ? \Classes\Renumeracion::validar((int)$proyecto->id, $orden) : 'Orden no válido';
         if ($error !== '') {
             http_response_code(409);
@@ -740,14 +740,14 @@ class ProgramaController
         exigir_gestionar_proyecto($proyecto);
         $volver = '/programa?proyecto=' . $proyectoId;
 
-        $nombre = trim((string)($_POST['nombre'] ?? ''));
+        $nombre = trim(texto_param($_POST['nombre'] ?? ''));
         if ($nombre === '') {
             header('Location: ' . $volver . '&error=' . urlencode('Escribe el nombre de la actividad.'));
             exit;
         }
         $existentes = $partida->getActividades();
         $calendario = new Calendario($proyectoId);
-        $inicio = (string)($_POST['fecha_inicio'] ?? '');
+        $inicio = texto_param($_POST['fecha_inicio'] ?? '');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $inicio)) {
             // Sin fecha: el día hábil siguiente a la última actividad de la partida (o el inicio de la partida / del proyecto)
             $finMax = null;
@@ -924,7 +924,7 @@ class ProgramaController
             'subactividades' => $actividad->getSubactividades(),
             'hojaSubactividades' => SubactividadHoja::hojaDeActividad((int)$id),
             'subEstado' => in_array($_GET['sub'] ?? '', ['creada', 'editada', 'eliminada', 'desvinculada'], true) ? $_GET['sub'] : '',
-            'subError' => trim((string)($_GET['sub_error'] ?? '')),
+            'subError' => trim(texto_param($_GET['sub_error'] ?? '')),
             'catalogo' => self::catalogoMateriales((int)$proyecto->id),
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
             'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : \Model\ActividadMaterial::rolesDeActividad((int)$id),
@@ -1099,7 +1099,7 @@ class ProgramaController
     {
         $hoja = SubactividadHoja::hojaDeActividad((int)$actividad->id);
         if (!$hoja) return;
-        $version = trim((string)($_POST['hoja_version'] ?? ''));
+        $version = trim(texto_param($_POST['hoja_version'] ?? ''));
         if ($version !== '' && $version !== (string)$hoja->actualizado) {
             self::volverSubactividad($actividad, 'error', 'La tabla vinculada cambió desde otra sesión. Recarga la actividad y vuelve a intentarlo.');
         }
@@ -1197,8 +1197,8 @@ class ProgramaController
         $alertas = [];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $restriccion->tipo_id = filter_var($_POST['tipo_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
-            $restriccion->codigo = trim((string)($_POST['codigo'] ?? ''));
-            $restriccion->descripcion = trim((string)($_POST['descripcion'] ?? ''));
+            $restriccion->codigo = trim(texto_param($_POST['codigo'] ?? ''));
+            $restriccion->descripcion = trim(texto_param($_POST['descripcion'] ?? ''));
             $restriccion->fecha = $_POST['fecha'] ?? null;
             if (!in_array($_POST['estado'] ?? '', ['activa', 'resuelta'], true)) {
                 $_POST['estado'] = $restriccion->estado;

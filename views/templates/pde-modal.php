@@ -1,6 +1,6 @@
 <?php
 // Ventana «Por dónde empezar» al crear un proyecto (?inicio=guiado|lista&proyecto=ID). Modo «ninguno» no muestra nada.
-$pdeModo = (string)($_GET['inicio'] ?? '');
+$pdeModo = texto_param($_GET['inicio'] ?? '');
 $pdeProyecto = isset(\Classes\PorDondeEmpezar::MODOS[$pdeModo]) ? \Model\Proyecto::find(filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
 if ($pdeProyecto && is_auth() && puede_gestionar_proyecto($pdeProyecto)): ?>
 <div class="modal-overlay abierto" id="pde-modal" aria-hidden="false">

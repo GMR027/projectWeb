@@ -9,7 +9,7 @@ class CarpetaController
 {
     private static function herramienta(): string
     {
-        $h = (string)($_POST['herramienta'] ?? '');
+        $h = texto_param($_POST['herramienta'] ?? '');
         if (!Carpetas::tabla($h)) json_respuesta(['success' => false, 'error' => 'Herramienta no válida'], 422);
         return $h;
     }
@@ -18,9 +18,9 @@ class CarpetaController
     {
         $proyecto = proyecto_de_peticion(true);
         $h = self::herramienta();
-        $a = trim((string)($_POST['a'] ?? ''));
+        $a = trim(texto_param($_POST['a'] ?? ''));
         if ($a === '') json_respuesta(['success' => false, 'error' => 'El nombre no puede quedar vacío'], 422);
-        json_respuesta(['success' => true, 'afectados' => Carpetas::renombrar($h, (int)$proyecto->id, (string)($_POST['de'] ?? ''), $a)]);
+        json_respuesta(['success' => true, 'afectados' => Carpetas::renombrar($h, (int)$proyecto->id, texto_param($_POST['de'] ?? ''), $a)]);
     }
 
     public static function mover()
@@ -29,6 +29,6 @@ class CarpetaController
         $h = self::herramienta();
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
         if (!$id) json_respuesta(['success' => false, 'error' => 'Documento no válido'], 422);
-        json_respuesta(['success' => Carpetas::mover($h, (int)$proyecto->id, $id, (string)($_POST['a'] ?? ''))]);
+        json_respuesta(['success' => Carpetas::mover($h, (int)$proyecto->id, $id, texto_param($_POST['a'] ?? ''))]);
     }
 }

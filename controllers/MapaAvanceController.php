@@ -42,7 +42,7 @@ class MapaAvanceController
     public static function mapear()
     {
         $p = self::gestion();
-        $ok = MapaAvance::mapear((int)$p->id, (int)($_POST['lamina'] ?? 0), (string)($_POST['capa'] ?? ''), (int)($_POST['actividad'] ?? 0));
+        $ok = MapaAvance::mapear((int)$p->id, (int)($_POST['lamina'] ?? 0), texto_param($_POST['capa'] ?? ''), (int)($_POST['actividad'] ?? 0));
         $_SESSION['mapa_msg'] = ['ok' => $ok, 'texto' => $ok ? 'Asignación guardada.' : 'No se pudo guardar la asignación.'];
         header('Location: /mapa-avance?proyecto=' . (int)$p->id);
         exit;

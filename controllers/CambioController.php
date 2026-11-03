@@ -215,7 +215,7 @@ class CambioController
         $c = self::partidaDe($proyecto);
         $nuevo = $_POST['estado'] ?? '';
         if (!$c || !isset(CambioPartida::ESTADOS[$nuevo])) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
-        $base = trim((string)($_POST['base'] ?? ''));
+        $base = trim(texto_param($_POST['base'] ?? ''));
         if ($base !== '' && empty($_POST['forzar']) && $c->actualizado !== $base && $c->estado !== $nuevo) {
             json_respuesta(['success' => false, 'conflicto' => true, 'actual' => ['estado' => $c->estado, 'actualizado' => $c->actualizado], 'error' => 'El renglón cambió mientras trabajabas sin conexión'], 409);
         }

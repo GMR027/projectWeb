@@ -106,7 +106,7 @@ class Media
     /** ¿La petición puede ver ese proyecto? (sesión con acceso, o token del enlace público del cliente) */
     private static function puedeVerProyecto(int $pid): bool
     {
-        $token = (string)($_GET['t'] ?? '');
+        $token = texto_param($_GET['t'] ?? '');
         if ($token !== '' && Enlaces::proyectoDeToken($token, $pid)) return true;
         if (!is_auth()) return false;
         $p = Proyecto::find($pid);

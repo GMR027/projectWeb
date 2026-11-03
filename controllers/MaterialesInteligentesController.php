@@ -43,7 +43,7 @@ class MaterialesInteligentesController
     {
         $p = proyecto_api();
         if (!MaterialesInteligentes::activo((int)$p->id)) json_respuesta(['success' => false, 'error' => 'Materiales inteligentes no está activo en este proyecto'], 409);
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo) || !is_array($cuerpo['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $r = MaterialesInteligentes::guardar($p, MaterialesInteligentes::normalizarIA($p, $cuerpo['respuestas']), (string)($cuerpo['modelo'] ?? ''));
         json_respuesta(['success' => true] + $r + self::estadoDe($p));

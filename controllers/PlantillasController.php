@@ -29,7 +29,7 @@ class PlantillasController
     {
         $p = self::admin();
         $ident = ($_POST['origen'] ?? '') === 'identificado';
-        $ok = Plantillas::elegir((int)$p->id, (string)($_POST['plantilla'] ?? ''), $ident ? 'identificado' : 'manual', (int)($_POST['confianza'] ?? 0), $ident ? mb_substr((string)($_POST['indicios'] ?? ''), 0, 500) : '');
+        $ok = Plantillas::elegir((int)$p->id, texto_param($_POST['plantilla'] ?? ''), $ident ? 'identificado' : 'manual', (int)($_POST['confianza'] ?? 0), $ident ? mb_substr(texto_param($_POST['indicios'] ?? ''), 0, 500) : '');
         $_SESSION['plantillas_msg'] = ['ok' => $ok, 'texto' => $ok ? 'Tipo de obra guardado. Las herramientas de IA y las reglas de secuencia ya lo usan.' : 'Tipo de obra no válido.'];
         header('Location: /plantillas?proyecto=' . (int)$p->id);
         exit;

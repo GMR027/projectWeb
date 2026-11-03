@@ -31,6 +31,12 @@ class Proyecto extends ActiveRecord
     public $programa_columnas_json;
     public $programa_indicador_json;
     public $tema_paleta;
+    // Fondo del proyecto: textura y halo radial (Ajustes → Apariencia)
+    public $tema_textura;
+    public $tema_textura_intensidad;
+    public $tema_halo_color;
+    public $tema_halo_intensidad;
+    public $tema_halo_expansion;
     // Barra superior de herramientas: escribe el nombre debajo de cada icono (Ajustes → Apariencia)
     public $nombres_herramientas;
     // Apariencia de la barra superior: clasico | panel | pestanas (Ajustes → Apariencia)
@@ -61,6 +67,11 @@ class Proyecto extends ActiveRecord
         $this->modo_dependencias = $args['modo_dependencias'] ?? 'apagado';
         $this->modo_dependencias_materiales = $args['modo_dependencias_materiales'] ?? 'apagado';
         $this->ayuda_burbujas = $args['ayuda_burbujas'] ?? 1;
+        $this->tema_textura = $args['tema_textura'] ?? 'ninguna';
+        $this->tema_textura_intensidad = $args['tema_textura_intensidad'] ?? 35;
+        $this->tema_halo_color = $args['tema_halo_color'] ?? '';
+        $this->tema_halo_intensidad = $args['tema_halo_intensidad'] ?? 45;
+        $this->tema_halo_expansion = $args['tema_halo_expansion'] ?? 100;
     }
 
     public function validar(): array

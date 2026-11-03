@@ -57,6 +57,16 @@ $herramientas = [
     <div class="ant-cab-txt">
         <h2><i class="fa-solid fa-pen-nib"></i> <?php echo s(t('Anotador')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo $abrir ? 'Anota, mide y firma sobre el documento.' : 'Abre un plano o documento PDF y trabaja encima: anota, mide áreas y volúmenes, inserta imágenes, estampas y firmas, y descarga el PDF anotado.'; ?></p>
+        <div class="herr-meta">
+            <?php if ($abrir): ?>
+                <span class="herr-chip"><i class="fa-solid fa-file-pen"></i><?php echo (int)($abrir['paginas'] ?? 1); ?> página(s)</span>
+                <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-lock<?php echo !empty($abrir['bloqueado']) ? '' : '-open'; ?>"></i><?php echo !empty($abrir['bloqueado']) ? 'firmado y bloqueado' : 'editable'; ?></span>
+            <?php else: ?>
+                <span class="herr-chip"><i class="fa-solid fa-folder-open"></i><b><?php echo (int)$totalDocs; ?></b> documentos</span>
+                <span class="herr-chip"><i class="fa-solid fa-ruler-combined"></i> medidas y áreas</span>
+                <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-signature"></i> firmas y estampas</span>
+            <?php endif; ?>
+        </div>
     </div>
     <div class="ant-cab-acc">
         <?php if ($abrir): ?>

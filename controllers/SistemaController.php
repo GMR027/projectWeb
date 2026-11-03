@@ -44,7 +44,7 @@ class SistemaController
     {
         redirigir_si_no_admin();
         try {
-            $f = Respaldo::crear((string)($_POST['nombre'] ?? ''));
+            $f = Respaldo::crear(texto_param($_POST['nombre'] ?? ''));
             self::volver('ok', "Respaldo creado: $f");
         } catch (\Throwable $e) {
             self::volver('error', $e->getMessage());
@@ -62,7 +62,7 @@ class SistemaController
     public static function respaldoDescargar()
     {
         redirigir_si_no_admin();
-        $ruta = Respaldo::ruta((string)($_GET['archivo'] ?? ''));
+        $ruta = Respaldo::ruta(texto_param($_GET['archivo'] ?? ''));
         if (!$ruta) { http_response_code(404); exit; }
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="' . basename($ruta) . '"');
@@ -75,7 +75,7 @@ class SistemaController
     public static function instalador()
     {
         redirigir_si_no_admin();
-        if (!\Classes\Instaladores::entregar((string)($_GET['archivo'] ?? ''))) { http_response_code(404); exit('Archivo no disponible'); }
+        if (!\Classes\Instaladores::entregar(texto_param($_GET['archivo'] ?? ''))) { http_response_code(404); exit('Archivo no disponible'); }
         exit;
     }
 
@@ -96,7 +96,7 @@ class SistemaController
     public static function instaladorEliminar()
     {
         redirigir_si_no_admin();
-        \Classes\Instaladores::eliminar((string)($_POST['archivo'] ?? ''));
+        \Classes\Instaladores::eliminar(texto_param($_POST['archivo'] ?? ''));
         header('Location: /sistema?ok=' . urlencode('Instalador eliminado.') . '#escritorio');
         exit;
     }
@@ -124,7 +124,7 @@ class SistemaController
     public static function respaldoEliminar()
     {
         redirigir_si_no_admin();
-        Respaldo::eliminar((string)($_POST['archivo'] ?? ''));
+        Respaldo::eliminar(texto_param($_POST['archivo'] ?? ''));
         self::volver('ok', 'Respaldo eliminado.');
     }
 

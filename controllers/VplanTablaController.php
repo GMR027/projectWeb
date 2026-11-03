@@ -217,7 +217,7 @@ class VplanTablaController
         }
         $campo = $_POST['campo'] ?? '';
         if ($accion !== 'set' || !isset($campos[$campo])) $fallo('Campo no válido');
-        $valor = self::limpiarCampo($campos[$campo][1], (string)($_POST['valor'] ?? ''));
+        $valor = self::limpiarCampo($campos[$campo][1], texto_param($_POST['valor'] ?? ''));
         if ($t->esPunchVista()) {   // se escribe en el pendiente del Punch list
             $clave = $t->configPunch()['columnas'][(int)substr($campo, 1)] ?? '';
             if ($m = \Classes\PunchVista::cambiar($proyecto, (int)($filas[$i]['_pid'] ?? 0), $clave, $valor)) $fallo($m);
@@ -299,7 +299,7 @@ class VplanTablaController
     public static function apiDocumentoTexto()
     {
         self::proyectoApi();
-        $texto = (string)($_POST['texto'] ?? '');
+        $texto = texto_param($_POST['texto'] ?? '');
         if (trim($texto) === '' || strlen($texto) > 400_000) json_respuesta(['success' => false, 'error' => 'No hay texto que interpretar'], 422);
         $avisos = [];
         $filas = TablaDeDocumento::dePlano($texto, $avisos);
@@ -316,7 +316,7 @@ class VplanTablaController
         $proyecto = self::proyectoApi();
         $metodo = ($_POST['metodo'] ?? '') === 'ia' ? 'ia' : 'motor';
         if ($metodo === 'ia' && !is_admin()) json_respuesta(['success' => false, 'error' => 'La IA es solo para el administrador'], 403);
-        $filas = json_decode((string)($_POST['filas'] ?? ''), true);
+        $filas = json_decode(texto_param($_POST['filas'] ?? ''), true);
         if (!is_array($filas) || strlen((string)$_POST['filas']) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla no es válida'], 422);
         $filas = array_values(array_filter(array_map(fn($f) => is_array($f) ? array_map(fn($v) => is_scalar($v) ? (string)$v : '', array_values($f)) : [], $filas)));
         try {
@@ -324,7 +324,7 @@ class VplanTablaController
         } catch (\RuntimeException $e) {
             json_respuesta(['success' => false, 'error' => 'La tabla está vacía'], 422);
         }
-        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 140) ?: 'Tabla de documento';
+        $nombre = mb_substr(trim(texto_param($_POST['nombre'] ?? '')), 0, 140) ?: 'Tabla de documento';
         $h = new SheetflowHoja(['proyecto_id' => $proyecto->id, 'nombre' => $nombre, 'fecha' => date('Y-m-d'), 'departamento' => '', 'descripcion' => mb_substr('Creada desde ' . trim((string)($_POST['origen'] ?? 'un documento')), 0, 500), 'creado_por' => $_SESSION['id'] ?? null]);
         if ($alertas = $h->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $h->datos = json_encode(Sheetflow::normalizar($datos), JSON_UNESCAPED_UNICODE);
@@ -332,7 +332,7 @@ class VplanTablaController
         $h->id = \Classes\HistorialCambios::silenciar(fn() => $h->guardar()['id']);
         $t = \Classes\HistorialCambios::silenciar(fn() => Sheetflow::aVplan($h));
         if ($metodo === 'ia') {
-            Auditoria::registrar((int)$proyecto->id, 'tabla-documento', 'aplicado', 'tabla_de_documento', 'Tabla «' . $nombre . '» creada con IA a partir de ' . mb_substr((string)($_POST['origen'] ?? 'un documento'), 0, 120), null, ['tabla' => (int)$t->id, 'hoja' => (int)$h->id, 'renglones' => count($datos['rows'])], (int)$t->id, mb_substr((string)($_POST['modelo'] ?? ''), 0, 150), ['vplan_tabla', (int)$t->id, $nombre]);
+            Auditoria::registrar((int)$proyecto->id, 'tabla-documento', 'aplicado', 'tabla_de_documento', 'Tabla «' . $nombre . '» creada con IA a partir de ' . mb_substr((string)($_POST['origen'] ?? 'un documento'), 0, 120), null, ['tabla' => (int)$t->id, 'hoja' => (int)$h->id, 'renglones' => count($datos['rows'])], (int)$t->id, mb_substr(texto_param($_POST['modelo'] ?? ''), 0, 150), ['vplan_tabla', (int)$t->id, $nombre]);
         }
         json_respuesta(['success' => true, 'url' => '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1', 'tabla' => (int)$t->id]);
     }

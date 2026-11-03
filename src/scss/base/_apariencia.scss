@@ -1,0 +1,15 @@
+// ============================================================
+// Fondo del proyecto: halo radial + textura (Ajustes → Apariencia)
+// Las variables las genera Classes\TemaProyecto::cssFondo() en el layout.
+// Sin ellas, el fondo queda como siempre (--pw-fondo: none).
+// ============================================================
+body {
+  background-image: var(--pw-fondo, none);
+  background-size: var(--pw-fondo-size, auto);
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body { background-attachment: scroll; }
+}

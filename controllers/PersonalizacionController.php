@@ -49,14 +49,14 @@ class PersonalizacionController
         $pid = (int)$proyecto->id;
         $router->render('campos/index', [
             'titulo' => 'Campos personalizados - ' . $proyecto->nombre, 'proyecto' => $proyecto,
-            'campos' => CamposPersonalizados::deProyecto($pid), 'error' => (string)($_GET['error'] ?? ''), 'ok' => (string)($_GET['ok'] ?? ''),
+            'campos' => CamposPersonalizados::deProyecto($pid), 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
         ]);
     }
 
     public static function guardarCampo()
     {
         $p = proyecto_de_peticion(true);
-        [$ok, $msg] = CamposPersonalizados::guardar((int)$p->id, (int)($_POST['id'] ?? 0), (string)($_POST['entidad'] ?? ''), (string)($_POST['nombre'] ?? ''), (string)($_POST['tipo'] ?? 'texto'), (string)($_POST['opciones'] ?? ''));
+        [$ok, $msg] = CamposPersonalizados::guardar((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['entidad'] ?? ''), texto_param($_POST['nombre'] ?? ''), (string)($_POST['tipo'] ?? 'texto'), texto_param($_POST['opciones'] ?? ''));
         header('Location: /campos?proyecto=' . $p->id . ($ok ? '&ok=1' : '&error=' . urlencode($msg)));
         exit;
     }
@@ -73,7 +73,7 @@ class PersonalizacionController
     public static function guardarValor()
     {
         $p = proyecto_api('gestionar');
-        [$ok, $v] = CamposPersonalizados::guardarValor((int)$p->id, (int)($_POST['campo'] ?? 0), (int)($_POST['registro'] ?? 0), (string)($_POST['valor'] ?? ''));
+        [$ok, $v] = CamposPersonalizados::guardarValor((int)$p->id, (int)($_POST['campo'] ?? 0), (int)($_POST['registro'] ?? 0), texto_param($_POST['valor'] ?? ''));
         json_respuesta($ok ? ['success' => true, 'valor' => $v] : ['success' => false, 'error' => $v], $ok ? 200 : 422);
     }
 }

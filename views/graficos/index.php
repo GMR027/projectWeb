@@ -3,6 +3,11 @@
     <div>
         <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Editor')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s(t('dibuja croquis, diagramas, leyendas y planos libres')); ?></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-pen-ruler"></i><b><?php echo count($graficos); ?></b> <?php echo count($graficos) === 1 ? 'gráfico' : 'gráficos'; ?></span>
+            <span class="herr-chip"><i class="fa-solid fa-shapes"></i> símbolos y estampas</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-export"></i> PNG · PDF · ODP</span>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> <?php echo s(t('Categorías')); ?></a>

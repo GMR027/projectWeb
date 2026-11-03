@@ -148,7 +148,7 @@ class AjustesController
     public static function respaldoRestaurar()
     {
         $p = self::proyectoRespaldo();
-        $archivo = (string)($_POST['archivo'] ?? '');
+        $archivo = texto_param($_POST['archivo'] ?? '');
         if ($archivo === '') $archivo = \Classes\RespaldoProyecto::anterior((int)$p->id)['archivo'] ?? '';
         try {
             \Classes\RespaldoProyecto::restaurar((int)$p->id, $archivo);
@@ -162,7 +162,7 @@ class AjustesController
     public static function respaldoEliminar()
     {
         $p = self::proyectoRespaldo();
-        \Classes\RespaldoProyecto::eliminar((int)$p->id, (string)($_POST['archivo'] ?? ''));
+        \Classes\RespaldoProyecto::eliminar((int)$p->id, texto_param($_POST['archivo'] ?? ''));
         self::volverRespaldo($p, 'ok', 'Respaldo eliminado.');
     }
 
@@ -176,7 +176,7 @@ class AjustesController
     public static function respaldoDescargar()
     {
         $p = self::proyectoRespaldo();
-        $ruta = \Classes\RespaldoProyecto::ruta((int)$p->id, (string)($_GET['archivo'] ?? ''));
+        $ruta = \Classes\RespaldoProyecto::ruta((int)$p->id, texto_param($_GET['archivo'] ?? ''));
         if (!$ruta) { http_response_code(404); exit; }
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="proyecto' . (int)$p->id . '_' . basename($ruta) . '"');
@@ -270,9 +270,16 @@ class AjustesController
         $menu = TemaProyecto::normMenu($_POST['menu_superior'] ?? 'clasico');   // clásico, panel o pestañas
         $ayuda = TemaProyecto::ayudasVisibles($_POST['ayuda_burbujas'] ?? 1) ? 1 : 0;   // burbujas de ayuda de la interfaz
         $color = TemaProyecto::colorCaratula($paleta);   // la carátula del portafolio usa el mismo acento
+        // Fondo: textura + halo radial. El color del halo vacío significa «usa el acento de la paleta».
+        $textura = TemaProyecto::normTextura($_POST['tema_textura'] ?? 'ninguna');
+        $texturaInt = TemaProyecto::intensidad($_POST['tema_textura_intensidad'] ?? TemaProyecto::TEXTURA_INTENSIDAD_DEFECTO, TemaProyecto::TEXTURA_INTENSIDAD_DEFECTO);
+        $haloColor = !empty($_POST['tema_halo_auto']) ? '' : TemaProyecto::normHex($_POST['tema_halo_color'] ?? '');
+        $haloInt = TemaProyecto::intensidad($_POST['tema_halo_intensidad'] ?? TemaProyecto::HALO_INTENSIDAD_DEFECTO, TemaProyecto::HALO_INTENSIDAD_DEFECTO);
+        $haloExp = TemaProyecto::expansion($_POST['tema_halo_expansion'] ?? TemaProyecto::HALO_EXPANSION_DEFECTO);
 
         $sqlAyuda = TemaProyecto::disponibleAyuda() ? ", ayuda_burbujas = $ayuda" : '';   // sin la migración se omite
-        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', nombres_herramientas = $nombres, menu_superior = '$menu'$sqlAyuda, color = '$color' WHERE id = " . (int)$proyecto->id);
+        $sqlFondo = TemaProyecto::disponibleTexturas() ? ", tema_textura = '$textura', tema_textura_intensidad = $texturaInt, tema_halo_color = '$haloColor', tema_halo_intensidad = $haloInt, tema_halo_expansion = $haloExp" : '';
+        $GLOBALS['db']->query("UPDATE proyectos SET tema_modo = '$modo', tema_paleta = '$paleta', nombres_herramientas = $nombres, menu_superior = '$menu'$sqlAyuda$sqlFondo, color = '$color' WHERE id = " . (int)$proyecto->id);
         header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&tema=ok#tema');
         exit;
     }
@@ -589,7 +596,7 @@ class AjustesController
         }
         exigir_ver_proyecto($proyecto);
         // El formato debe pertenecer a una herramienta que el usuario vea (colaboradores y visitantes)
-        $tool = self::herramientaExportacion((string)$formato, (string)($_POST['tipo'] ?? ''));
+        $tool = self::herramientaExportacion((string)$formato, texto_param($_POST['tipo'] ?? ''));
         if ($tool !== null && !herramienta_permitida($tool)) {
             header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('No tienes acceso a esa herramienta, así que no puedes exportar ese formato'));
             exit;
@@ -623,8 +630,8 @@ class AjustesController
                     $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setOpciones(
                         $_POST['partida_id'] ?? 'todas', (int)($_POST['columnas'] ?? 2)
                     )->setFiltros(
-                        (string)($_POST['periodo'] ?? ''), (string)($_POST['desde'] ?? ''), (string)($_POST['hasta'] ?? ''),
-                        (string)($_POST['mes'] ?? ''), !empty($_POST['restriccion'])
+                        texto_param($_POST['periodo'] ?? ''), texto_param($_POST['desde'] ?? ''), texto_param($_POST['hasta'] ?? ''),
+                        texto_param($_POST['mes'] ?? ''), !empty($_POST['restriccion'])
                     );
                     break;
                 case 'curva':
@@ -710,7 +717,7 @@ class AjustesController
                 case 'reportes':
                     $f = $_POST;
                     $f['submittal_ids'] = (array)($_POST['submittal_ids'] ?? []);
-                    $exporter = (new \Classes\Exportadores\ReportesPdfExporter($proyecto))->setOpciones((string)($_POST['tipo'] ?? ''), $f);
+                    $exporter = (new \Classes\Exportadores\ReportesPdfExporter($proyecto))->setOpciones(texto_param($_POST['tipo'] ?? ''), $f);
                     break;
                 case 'xml':
                     $exporter = new \Classes\Exportadores\MspdiXmlExporter($proyecto);

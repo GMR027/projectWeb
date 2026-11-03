@@ -35,7 +35,7 @@ class EmpezarController
     public static function festivo()
     {
         $p = proyecto_api('gestionar');
-        $fecha = (string)($_POST['fecha'] ?? '');
+        $fecha = texto_param($_POST['fecha'] ?? '');
         $motivo = mb_substr(trim($_POST['motivo'] ?? ''), 0, 150);
         $f = \DateTime::createFromFormat('Y-m-d', $fecha);
         if (!$f || $f->format('Y-m-d') !== $fecha || $motivo === '') self::fallo(['error' => ['Indica una fecha válida y el motivo']]);
@@ -85,7 +85,7 @@ class EmpezarController
     {
         $p = proyecto_api('gestionar');
         $tipo = in_array($_POST['tipo'] ?? '', ['inicio', 'fin', 'hito'], true) ? $_POST['tipo'] : 'hito';
-        $fecha = (string)($_POST['fecha'] ?? '');
+        $fecha = texto_param($_POST['fecha'] ?? '');
         $f = \DateTime::createFromFormat('Y-m-d', $fecha);
         if (!$f || $f->format('Y-m-d') !== $fecha) self::fallo(['error' => ['Indica una fecha válida']]);
         $nombre = mb_substr(trim($_POST['nombre'] ?? ''), 0, 200) ?: ['inicio' => 'Inicio de contrato', 'fin' => 'Fin de contrato', 'hito' => 'Hito'][$tipo];

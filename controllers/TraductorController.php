@@ -11,8 +11,8 @@ class TraductorController
 {
     private static function idiomas(): array
     {
-        $de = (string)($_POST['de'] ?? '');
-        $a = (string)($_POST['a'] ?? '');
+        $de = texto_param($_POST['de'] ?? '');
+        $a = texto_param($_POST['a'] ?? '');
         if (!Traductor::idiomaValido($de) || !Traductor::idiomaValido($a) || $de === $a) json_respuesta(['error' => 'Elige el idioma de origen y el de destino (español e inglés).'], 422);
         return [$de, $a];
     }
@@ -31,7 +31,7 @@ class TraductorController
         $proyecto = proyecto_de_peticion();
         if (!Traductor::configurado()) json_respuesta(['error' => 'El traductor no está disponible en el servidor.'], 503);
         [$de, $a] = self::idiomas();
-        $texto = (string)($_POST['texto'] ?? '');
+        $texto = texto_param($_POST['texto'] ?? '');
         if (trim($texto) === '') json_respuesta(['error' => 'Escribe un texto para traducir.'], 422);
         if (mb_strlen($texto) > Traductor::MAX_TEXTO) json_respuesta(['error' => 'El texto es demasiado largo (máx. ' . number_format(Traductor::MAX_TEXTO) . ' caracteres); usa un documento.'], 422);
         try {
@@ -71,7 +71,7 @@ class TraductorController
     {
         proyecto_de_peticion();
         [, $a] = self::idiomas();
-        $texto = (string)($_POST['texto'] ?? '');
+        $texto = texto_param($_POST['texto'] ?? '');
         if (trim($texto) === '') json_respuesta(['error' => 'Traduce un texto antes de exportarlo.'], 422);
         if (mb_strlen($texto) > Traductor::MAX_TEXTO) json_respuesta(['error' => 'El texto es demasiado largo (máx. ' . number_format(Traductor::MAX_TEXTO) . ' caracteres).'], 422);
         try {

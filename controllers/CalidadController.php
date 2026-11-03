@@ -33,8 +33,8 @@ class CalidadController
             'abrirForm' => isset($_GET['nuevo']) || $editarPlan,
             'actividades' => Calidad::disponible() ? \Classes\Recursos::actividades($pid) : [],
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
-            'ok' => (string)($_GET['ok'] ?? ''),
-            'error' => (string)($_GET['error'] ?? ''),
+            'ok' => texto_param($_GET['ok'] ?? ''),
+            'error' => texto_param($_GET['error'] ?? ''),
         ]);
     }
 
@@ -49,7 +49,7 @@ class CalidadController
     {
         $p = proyecto_de_peticion(true);
         $ok = Calidad::marcarPunto((int)$p->id, (int)($_POST['punto_id'] ?? 0), (string)($_POST['resultado'] ?? 'pendiente'),
-            (string)($_POST['observacion'] ?? ''), (string)($_POST['responsable'] ?? ''), !empty($_POST['resuelto']));
+            texto_param($_POST['observacion'] ?? ''), texto_param($_POST['responsable'] ?? ''), !empty($_POST['resuelto']));
         $plan = (int)($_POST['plan_id'] ?? 0);
         self::volver((int)$p->id, $ok, $ok ? 'Punto actualizado' : 'No se pudo actualizar el punto', $plan ? '&ver=' . $plan : '');
     }
@@ -57,7 +57,7 @@ class CalidadController
     public static function puntoAgregar()
     {
         $p = proyecto_de_peticion(true);
-        $ok = Calidad::agregarPunto((int)$p->id, (int)($_POST['plan_id'] ?? 0), (string)($_POST['descripcion'] ?? ''), (string)($_POST['criterio'] ?? ''));
+        $ok = Calidad::agregarPunto((int)$p->id, (int)($_POST['plan_id'] ?? 0), texto_param($_POST['descripcion'] ?? ''), texto_param($_POST['criterio'] ?? ''));
         $plan = (int)($_POST['plan_id'] ?? 0);
         self::volver((int)$p->id, $ok, $ok ? 'Punto agregado' : 'Escribe la descripción del punto', $plan ? '&ver=' . $plan : '');
     }

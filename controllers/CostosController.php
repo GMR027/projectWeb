@@ -25,7 +25,7 @@ class CostosController
             'movimientos' => $movimientos,
             'cambios' => $disponible && $pestana === 'cambios' ? Costos::cambiosAutorizados($pid) : [],
             'ordenes' => $disponible ? \Model\OrdenCambio::deProyecto($pid) : [],
-            'editar' => $editar, 'error' => (string)($_GET['error'] ?? ''), 'ok' => (string)($_GET['ok'] ?? ''),
+            'editar' => $editar, 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
         ]);
     }
 

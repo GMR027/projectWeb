@@ -36,7 +36,7 @@ class RevisionController
         $revisado = isset($_POST['revisado']) && $_POST['revisado'] !== '' ? $_POST['revisado'] === '1' : null;
         $veredicto = isset($_POST['veredicto']) && $_POST['veredicto'] !== '' ? (string)$_POST['veredicto'] : null;
         $nota = isset($_POST['nota']) ? (string)$_POST['nota'] : null;
-        $e = Revisiones::marcar((int)$p->id, (string)($_POST['tipo'] ?? ''), (string)($_POST['ref'] ?? ''), $veredicto, $revisado, $nota, usuario_actual());
+        $e = Revisiones::marcar((int)$p->id, texto_param($_POST['tipo'] ?? ''), texto_param($_POST['ref'] ?? ''), $veredicto, $revisado, $nota, usuario_actual());
         if (!$e) json_respuesta(['success' => false, 'error' => 'No se pudo guardar (elemento no encontrado)'], 422);
         json_respuesta(['success' => true, 'estado' => $e, 'resumen' => Revisiones::resumen((int)$p->id)]);
     }

@@ -11,7 +11,7 @@ class BuscarController
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
-        $q = trim((string)($_GET['q'] ?? ''));
+        $q = trim(texto_param($_GET['q'] ?? ''));
         $router->render('buscar/index', [
             'titulo' => 'Buscar - ' . $proyecto->nombre,
             'proyecto' => $proyecto,

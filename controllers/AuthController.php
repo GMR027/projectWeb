@@ -286,11 +286,11 @@ class AuthController
             exit;
         }
         $usuario = Usuario::find((int)$_SESSION['id']);
-        $actual = (string)($_POST['password_actual'] ?? '');
-        $nueva = (string)($_POST['password_nueva'] ?? '');
+        $actual = texto_param($_POST['password_actual'] ?? '');
+        $nueva = texto_param($_POST['password_nueva'] ?? '');
         if (!$usuario || !$usuario->comprobarPassword($actual)) $fallo('La contraseña actual no es correcta');
         if ($motivo = Usuario::passwordDebil($nueva)) $fallo($motivo);
-        if ($nueva !== (string)($_POST['password_nueva2'] ?? '')) $fallo('Las contraseñas nuevas no coinciden');
+        if ($nueva !== texto_param($_POST['password_nueva2'] ?? '')) $fallo('Las contraseñas nuevas no coinciden');
         if ($nueva === $actual) $fallo('La nueva contraseña debe ser distinta a la actual');
 
         $usuario->password = $nueva;

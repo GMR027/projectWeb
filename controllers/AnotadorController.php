@@ -51,7 +51,7 @@ class AnotadorController
             $d = Anotador::obtener($pid, $docId);
             $f = $d ? Anotador::fuenteDocumento($d) : null;
         } else {
-            $tipo = (string)($_GET['tipo'] ?? '');
+            $tipo = texto_param($_GET['tipo'] ?? '');
             $id = (int)($_GET['id'] ?? 0);
             if (in_array($tipo, Anotador::FUENTES_PROYECTO, true) && $id > 0) $f = Anotador::fuenteDeProyecto($pid, $tipo, $id);
         }
@@ -140,7 +140,7 @@ class AnotadorController
     {
         $p = proyecto_de_peticion();
         if (!puede_descargar() || !herramienta_permitida('anotador')) { http_response_code(403); exit('No autorizado'); }
-        $n = basename((string)($_GET['archivo'] ?? ''));
+        $n = basename(texto_param($_GET['archivo'] ?? ''));
         if (!preg_match('/^[a-f0-9]{32}\.(?:png|jpg|jpeg|webp|gif)$/i', $n)) { http_response_code(404); exit; }
         $ruta = Anotador::CARPETA . '/' . $n;
         if (!is_file($ruta)) { http_response_code(404); exit; }
@@ -184,7 +184,7 @@ class AnotadorController
     {
         $p = proyecto_api('ver');
         if (!puede_gestionar_proyecto($p)) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
-        $r = Anotador::guardarFirma($p, (string)($_POST['nombre'] ?? ''), (string)($_POST['png'] ?? ''), (int)($_SESSION['id'] ?? 0));
+        $r = Anotador::guardarFirma($p, texto_param($_POST['nombre'] ?? ''), texto_param($_POST['png'] ?? ''), (int)($_SESSION['id'] ?? 0));
         if (is_string($r)) json_respuesta(['success' => false, 'error' => $r], 422);
         if (!empty($r['biblioteca']['id'])) $r['biblioteca']['src'] = '/anotador/firma-ver?proyecto=' . (int)$p->id . '&id=' . (int)$r['biblioteca']['id'];
         json_respuesta(['success' => true] + $r);
@@ -254,7 +254,7 @@ class AnotadorController
         $d = Anotador::obtener((int)$p->id, (int)($_POST['id'] ?? 0));
         if (!$d) json_respuesta(['success' => false, 'error' => 'El documento no existe.'], 404);
         if (!Anotador::puedeEditar(['usuario_id' => $d->usuario_id, 'finalizado' => false])) json_respuesta(['success' => false, 'error' => 'Solo quien lo creó o el administrador pueden firmarlo.'], 403);
-        $r = Anotador::finalizar($p, $d, (string)($_POST['cargo'] ?? ''));
+        $r = Anotador::finalizar($p, $d, texto_param($_POST['cargo'] ?? ''));
         if (!$r['ok']) json_respuesta(['success' => false, 'error' => $r['error']], 422);
         json_respuesta(['success' => true, 'hash' => $r['hash'], 'firmado' => $r['firmado'], 'fecha' => $r['fecha']]);
     }

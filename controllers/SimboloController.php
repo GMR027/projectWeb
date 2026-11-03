@@ -81,7 +81,7 @@ class SimboloController
         $c = $id ? Cajetin::find($id) : null;
         if ($id && (!$c || (int)$c->proyecto_id !== (int)$proyecto->id)) self::volver((int)$proyecto->id);
         $nuevo = new Cajetin(['id' => $c->id ?? null, 'proyecto_id' => $proyecto->id, 'nombre' => $_POST['nombre'] ?? '', 'orientacion' => $_POST['orientacion'] ?? '', 'ancho' => $_POST['ancho'] ?? 28,
-            'filas_json' => Cajetin::filasDeTexto((string)($_POST['filas'] ?? ''))]);
+            'filas_json' => Cajetin::filasDeTexto(texto_param($_POST['filas'] ?? ''))]);
         if ($alertas = $nuevo->validar()) self::volver((int)$proyecto->id, 'error', $alertas['error'][0]);
         $nuevo->guardar();
         self::volver((int)$proyecto->id, 'ok', $c ? 'Cajetín actualizado' : 'Cajetín agregado');

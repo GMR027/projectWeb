@@ -12,7 +12,7 @@ $ayudaBurbujas = true;          // mensajes emergentes de ayuda (Ajustes → Apa
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
-    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
+    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto, \Classes\TemaProyecto::opciones($proyecto));
     $nombresHerramientas = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
     $menuModoProyecto = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
     $ayudaBurbujas = \Classes\TemaProyecto::ayudasVisibles($proyecto->ayuda_burbujas ?? 1);
@@ -66,7 +66,7 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
         })();
     </script>
 </head>
-<body>
+<body data-vista="<?php echo s(str_replace('/', '-', $__vista ?? '')); ?>">
     <div class="barra-progreso" id="pw-progreso" aria-hidden="true"></div>
     <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
     <?php if (es_demo()): ?>

@@ -10,6 +10,12 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
     <div>
         <h2><i class="fa-solid fa-folder-open"></i> Archivo</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($archivos); ?> archivo(s)</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-file-lines"></i><b><?php echo (int)$totalArchivos; ?></b> archivos</span>
+            <span class="herr-chip"><i class="fa-solid fa-folder"></i><b><?php echo count($carpetas); ?></b> carpetas</span>
+            <span class="herr-chip"><i class="fa-solid fa-tags"></i><b><?php echo count($categorias); ?></b> categorías</span>
+            <?php if ($sinCarpeta): ?><span class="herr-chip herr-chip-suave"><i class="fa-regular fa-file"></i><b><?php echo (int)$sinCarpeta; ?></b> sin carpeta</span><?php endif; ?>
+        </div>
     </div>
     <div class="la-controles">
         <form method="GET" class="buscador-inline">

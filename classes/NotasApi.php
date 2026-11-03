@@ -11,7 +11,7 @@ class NotasApi
      */
     public static function guardar(object $dueno, string $nota, string $fk, callable $total, int $max, string $unidad): void
     {
-        $texto = trim((string)($_POST['descripcion'] ?? ''));
+        $texto = trim(texto_param($_POST['descripcion'] ?? ''));
         if ($texto === '') json_respuesta(['success' => false, 'error' => 'La descripción es obligatoria'], 422);
         if (mb_strlen($texto) > $nota::MAX_LARGO) json_respuesta(['success' => false, 'error' => 'Máximo ' . $nota::MAX_LARGO . ' caracteres'], 422);
 

@@ -28,7 +28,7 @@ class EstampaController
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
         $e = $id ? self::propia((int)$proyecto->id) : null;
         if ($id && !$e) json_respuesta(['success' => false, 'error' => 'Estampa no encontrada'], 404);
-        $cfg = json_decode((string)($_POST['config'] ?? ''), true);
+        $cfg = json_decode(texto_param($_POST['config'] ?? ''), true);
         if (!is_array($cfg)) json_respuesta(['success' => false, 'error' => 'Configuración no válida'], 422);
         $nuevo = new Estampa(['id' => $e->id ?? null, 'proyecto_id' => $proyecto->id, 'nombre' => $_POST['nombre'] ?? '',
             'config_json' => json_encode(Estampas::limpiarConfig($cfg, (int)$proyecto->id), JSON_UNESCAPED_UNICODE)]);
@@ -70,7 +70,7 @@ class EstampaController
     {
         $proyecto = proyecto_de_peticion(true);
         self::sinTabla();
-        $p = Estampas::plantillas()[(string)($_POST['clave'] ?? '')] ?? null;
+        $p = Estampas::plantillas()[texto_param($_POST['clave'] ?? '')] ?? null;
         if (!$p) json_respuesta(['success' => false, 'error' => 'Plantilla no encontrada'], 404);
         $e = new Estampa(['proyecto_id' => $proyecto->id, 'nombre' => $p['nombre'], 'config_json' => json_encode(Estampas::limpiarConfig($p['config'], (int)$proyecto->id), JSON_UNESCAPED_UNICODE)]);
         $r = $e->guardar();
@@ -82,7 +82,7 @@ class EstampaController
     {
         $lamina = VplanLamina::find(filter_var($_POST['lamina'] ?? null, FILTER_VALIDATE_INT));
         if ($lamina && (int)$lamina->proyecto_id !== (int)$proyecto->id) $lamina = null;
-        $corte = (string)($_POST['corte'] ?? '');
+        $corte = texto_param($_POST['corte'] ?? '');
         $opts = ['corte' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $corte) ? $corte : '', 'actividad' => (int)($_POST['actividad'] ?? 0)];
         if (!$lamina) $opts += ['lamina_n' => 1, 'lamina_total' => 1];
         return [$lamina, $opts + ($extra ?? [])];

@@ -8,6 +8,7 @@
 
 // Base
 @use 'base/base';
+@use 'base/apariencia';
 
 // Componentes
 @use 'componentes/botones';
@@ -29,6 +30,7 @@
 @use 'componentes/fechas';
 @use 'componentes/paginador';
 @use 'componentes/divisor';
+@use 'componentes/workspace';
 
 // Layout
 @use 'layout/layout';

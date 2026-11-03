@@ -1,8 +1,13 @@
-<?php $id = (int)$proyecto->id; ?>
+<?php $id = (int)$proyecto->id; $totalHojas = 0; foreach ($porDepto as $hh) $totalHojas += count($hh); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-table-cells"></i> SheetFlow</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · tablas del proyecto que se usan en vPlan, Editor y Redactor</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-table-list"></i><b><?php echo $totalHojas; ?></b> <?php echo $totalHojas === 1 ? 'tabla' : 'tablas'; ?></span>
+            <span class="herr-chip"><i class="fa-solid fa-folder-open"></i><b><?php echo count($porDepto); ?></b> <?php echo count($porDepto) === 1 ? 'carpeta' : 'carpetas'; ?></span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-arrows-rotate"></i> se actualizan solas en vPlan</span>
+        </div>
     </div>
     <div class="la-controles">
         <button type="button" class="btn btn-ghost" data-tour="sheetflow-lista" title="Recorrer SheetFlow paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> Guía rápida</button>

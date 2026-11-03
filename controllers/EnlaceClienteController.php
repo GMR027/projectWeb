@@ -27,7 +27,7 @@ class EnlaceClienteController
 
     public static function ver(Router $router)
     {
-        $e = Enlaces::resolver((string)($_GET['t'] ?? ''), 'cliente');
+        $e = Enlaces::resolver(texto_param($_GET['t'] ?? ''), 'cliente');
         $proyecto = $e ? Proyecto::find((int)$e['proyecto_id']) : null;
         if (!$e || !$proyecto) return self::noDisponible($router);
         self::sinCache();
@@ -51,7 +51,7 @@ class EnlaceClienteController
 
     public static function ics(Router $router)
     {
-        $e = Enlaces::resolver((string)($_GET['t'] ?? ''), 'ics');
+        $e = Enlaces::resolver(texto_param($_GET['t'] ?? ''), 'ics');
         $proyecto = $e ? Proyecto::find((int)$e['proyecto_id']) : null;
         if (!$e || !$proyecto) {
             http_response_code(404);

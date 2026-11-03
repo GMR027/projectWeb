@@ -210,6 +210,10 @@ $temaNombres = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_her
 $temaMenu = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
 $temaAyuda = \Classes\TemaProyecto::ayudasVisibles($proyecto->ayuda_burbujas ?? 1);
 $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
+$temaFondo = \Classes\TemaProyecto::opciones($proyecto);
+$hayTexturas = \Classes\TemaProyecto::disponibleTexturas();
+$paletaActual = \Classes\TemaProyecto::PALETAS[$temaPaleta];
+$haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $paletaActual[2];
 ?>
 <div class="card" id="tema">
     <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
@@ -240,6 +244,54 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
                         <span class="tema-nom"><?php echo s($nombre); ?></span>
                     </label>
                 <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="tema-bloque">
+            <span class="tema-etq">Textura del fondo</span>
+            <div class="tema-texturas">
+                <?php foreach (\Classes\TemaProyecto::TEXTURAS as $k => [$nomTex, $descTex]): ?>
+                    <label class="tema-textura" title="<?php echo s($descTex); ?>">
+                        <input type="radio" name="tema_textura" value="<?php echo s($k); ?>"<?php echo $temaFondo['textura'] === $k ? ' checked' : ''; ?><?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                        <span class="tema-textura-muestra" data-textura="<?php echo s($k); ?>" aria-hidden="true"></span>
+                        <span class="tema-textura-txt"><b><?php echo s($nomTex); ?></b><small><?php echo s($descTex); ?></small></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <?php if (!$hayTexturas): ?><p class="text-muted text-sm" style="margin:.2rem 0 0"><i class="fa-solid fa-triangle-exclamation"></i> Falta aplicar <code>database/migracion_tema_texturas.sql</code> para guardar texturas y halo.</p><?php endif; ?>
+            <div class="tema-rangos">
+                <label class="tema-rango" for="tema-tex-int">Intensidad de la textura
+                    <input type="range" id="tema-tex-int" name="tema_textura_intensidad" min="0" max="100" step="5" value="<?php echo (int)$temaFondo['textura_intensidad']; ?>" data-tema-rango="tema-tex-int-v"<?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                    <output id="tema-tex-int-v" for="tema-tex-int"><?php echo (int)$temaFondo['textura_intensidad']; ?>%</output>
+                </label>
+            </div>
+        </div>
+
+        <div class="tema-bloque">
+            <span class="tema-etq">Halo de fondo</span>
+            <p class="text-muted text-sm" style="margin:0">Un lavado de color muy suave en las esquinas, como una luz de estudio. Se combina con el color de acento y con la textura.</p>
+            <div class="tema-halo">
+                <label class="tema-color" for="tema-halo-color">Color
+                    <input type="color" id="tema-halo-color" name="tema_halo_color" value="<?php echo s($haloColorVista); ?>"<?php echo $temaFondo['halo_color'] === '' ? ' disabled' : ''; ?><?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                </label>
+                <label class="tema-modo">
+                    <input type="checkbox" id="tema-halo-auto" name="tema_halo_auto" value="1"<?php echo $temaFondo['halo_color'] === '' ? ' checked' : ''; ?><?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                    <span>Usar el color de acento de la paleta</span>
+                </label>
+            </div>
+            <div class="tema-rangos">
+                <label class="tema-rango" for="tema-halo-int">Intensidad
+                    <input type="range" id="tema-halo-int" name="tema_halo_intensidad" min="0" max="100" step="5" value="<?php echo (int)$temaFondo['halo_intensidad']; ?>" data-tema-rango="tema-halo-int-v"<?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                    <output id="tema-halo-int-v" for="tema-halo-int"><?php echo (int)$temaFondo['halo_intensidad']; ?>%</output>
+                </label>
+                <label class="tema-rango" for="tema-halo-exp">Expansión
+                    <input type="range" id="tema-halo-exp" name="tema_halo_expansion" min="50" max="250" step="10" value="<?php echo (int)$temaFondo['halo_expansion']; ?>" data-tema-rango="tema-halo-exp-v"<?php echo $hayTexturas ? '' : ' disabled'; ?>>
+                    <output id="tema-halo-exp-v" for="tema-halo-exp"><?php echo (int)$temaFondo['halo_expansion']; ?>%</output>
+                </label>
+            </div>
+            <div class="tema-previa" id="tema-previa" aria-label="Vista previa del fondo del proyecto">
+                <span class="tema-previa-etq"><i class="fa-solid fa-eye"></i> Vista previa</span>
+                <span class="tema-previa-tarjeta"></span>
             </div>
         </div>
 
@@ -286,7 +338,7 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
     </form>
     <script>
-        // Vista previa: al elegir modo o color se aplica al momento; «Guardar» lo deja en el proyecto.
+        // Vista previa: al elegir modo, color, textura o halo se aplica al momento; «Guardar» lo deja en el proyecto.
         (function () {
             const card = document.getElementById('tema');
             if (!card) return;
@@ -295,6 +347,69 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
             const AYUDA_MENU = <?php echo json_encode(\Classes\TemaProyecto::MENUS_AYUDA, JSON_UNESCAPED_UNICODE); ?>;
             const rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
             const oscurecer = (h, p) => '#' + rgb(h).map(v => Math.round(v * (1 - p)).toString(16).padStart(2, '0')).join('');
+            const previa = document.getElementById('tema-previa');
+            const colorHalo = document.getElementById('tema-halo-color');
+            const haloAuto = document.getElementById('tema-halo-auto');
+            const val = id => (document.getElementById(id) || {}).value || '0';
+
+            const salida = (input) => {
+                const out = document.getElementById(input.dataset.temaRango || '');
+                if (out) out.textContent = input.value + '%';
+            };
+
+            // Patrones de la vista previa (los mismos dibujos que genera TemaProyecto::texturaCapa).
+            const textura = (tipo, intensidad) => {
+                const a = Math.max(0, Math.min(100, parseInt(intensidad, 10) || 0)) / 100;
+                const ink = raiz.getAttribute('data-theme') === 'light' ? '15,23,42' : '226,232,240';
+                if (tipo === 'grano' || tipo === 'papel') {
+                    const op = (tipo === 'papel' ? .55 : .45) * a;
+                    const f = tipo === 'papel' ? '.95' : '.85';
+                    return {
+                        capa: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='" + f + "' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='" + op.toFixed(3) + "'/%3E%3C/svg%3E\")",
+                        tam: tipo === 'papel' ? '240px 240px' : '180px 180px'
+                    };
+                }
+                if (tipo === 'puntos') return { capa: 'radial-gradient(rgba(' + ink + ',' + (.30 * a).toFixed(3) + ') 1px, transparent 1.35px)', tam: '22px 22px' };
+                if (tipo === 'vetas') return { capa: 'repeating-linear-gradient(115deg, rgba(' + ink + ',' + (.075 * a).toFixed(3) + ') 0 1px, transparent 1px 8px)', tam: 'auto' };
+                if (tipo === 'trama') return { capa: 'repeating-linear-gradient(0deg, rgba(' + ink + ',' + (.055 * a).toFixed(3) + ') 0 1px, transparent 1px 26px), repeating-linear-gradient(90deg, rgba(' + ink + ',' + (.055 * a).toFixed(3) + ') 0 1px, transparent 1px 26px)', tam: 'auto' };
+                if (tipo === 'cuadricula') return { capa: 'linear-gradient(rgba(' + ink + ',' + (.07 * a).toFixed(3) + ') 1px, transparent 1px), linear-gradient(90deg, rgba(' + ink + ',' + (.07 * a).toFixed(3) + ') 1px, transparent 1px)', tam: '32px 32px' };
+                if (tipo === 'diagonal') return { capa: 'repeating-linear-gradient(45deg, rgba(' + ink + ',' + (.07 * a).toFixed(3) + ') 0 1.5px, transparent 1.5px 13px)', tam: 'auto' };
+                return null;
+            };
+
+            const pintarFondo = () => {
+                if (!previa) return;
+                const p = card.querySelector('input[name="tema_paleta"]:checked');
+                const claro = raiz.getAttribute('data-theme') === 'light';
+                let c = p ? (claro ? p.dataset.claro : p.dataset.oscuro) : '#f97316';
+                if (haloAuto && !haloAuto.checked && colorHalo && colorHalo.value) c = colorHalo.value;
+                const [r, g, b] = rgb(c);
+                const f = Math.max(0, Math.min(100, parseInt(val('tema-halo-int'), 10) || 0)) / 100;
+                const exp = Math.max(50, Math.min(250, parseInt(val('tema-halo-exp'), 10) || 100)) / 100;
+                const capas = [
+                    'radial-gradient(calc(170px * ' + exp + ') calc(110px * ' + exp + ') at 8% -12%, rgba(' + r + ',' + g + ',' + b + ',' + (0.13 * f).toFixed(3) + '), transparent 60%)',
+                    'radial-gradient(calc(150px * ' + exp + ') calc(100px * ' + exp + ') at 102% 4%, rgba(' + r + ',' + g + ',' + b + ',' + (0.15 * f).toFixed(3) + '), transparent 58%)',
+                    'radial-gradient(calc(120px * ' + exp + ') calc(80px * ' + exp + ') at 50% 112%, rgba(' + r + ',' + g + ',' + b + ',' + (0.08 * f).toFixed(3) + '), transparent 65%)'
+                ];
+                const tam = ['auto', 'auto', 'auto'];
+                const tipo = card.querySelector('input[name="tema_textura"]:checked')?.value || 'ninguna';
+                const t = textura(tipo, val('tema-tex-int'));
+                if (t) { capas.push(t.capa); tam.push(t.tam); }
+                previa.style.backgroundImage = capas.join(', ');
+                previa.style.backgroundSize = tam.join(', ');
+            };
+
+            const refrescar = () => {
+                if (haloAuto && colorHalo) colorHalo.disabled = haloAuto.checked;
+                pintarFondo();
+            };
+
+            card.addEventListener('input', (e) => {
+                if (e.target.matches('[data-tema-rango]')) salida(e.target);
+                if (e.target.name && e.target.name.indexOf('tema_') === 0) refrescar();
+                if (e.target === colorHalo || e.target === haloAuto) refrescar();
+            });
+
             card.addEventListener('change', () => {
                 const modo = card.querySelector('input[name="tema_modo"]:checked')?.value || 'usuario';
                 raiz.setAttribute('data-theme', TEMA[modo] || localStorage.getItem('theme') || 'dark');
@@ -312,13 +427,18 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
                 const ayuda = card.querySelector('input[name="ayuda_burbujas"]:checked');
                 if (ayuda) raiz.classList.toggle('sin-ayuda-burbujas', ayuda.value === '0');   // vista previa de las burbujas
                 const p = card.querySelector('input[name="tema_paleta"]:checked');
-                if (!p) return;
-                const claro = raiz.getAttribute('data-theme') === 'light';
-                const c = claro ? p.dataset.claro : p.dataset.oscuro;
-                raiz.style.setProperty('--primary', c);
-                raiz.style.setProperty('--primary-hover', oscurecer(c, 0.12));
-                raiz.style.setProperty('--primary-glow', 'rgba(' + rgb(c).join(',') + ',' + (claro ? .15 : .25) + ')');
+                if (p) {
+                    const claro = raiz.getAttribute('data-theme') === 'light';
+                    const c = claro ? p.dataset.claro : p.dataset.oscuro;
+                    raiz.style.setProperty('--primary', c);
+                    raiz.style.setProperty('--primary-hover', oscurecer(c, 0.12));
+                    raiz.style.setProperty('--primary-glow', 'rgba(' + rgb(c).join(',') + ',' + (claro ? .15 : .25) + ')');
+                }
+                refrescar();
             });
+
+            card.querySelectorAll('[data-tema-rango]').forEach(salida);
+            refrescar();
         })();
     </script>
 </div>

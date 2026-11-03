@@ -47,7 +47,7 @@ class IntegracionesController
         $u = self::usuario();
         $pid = (int)($_POST['proyecto_id'] ?? 0);
         if ($pid && !($p = Proyecto::find($pid)) || ($pid && !puede_ver_proyecto($p))) self::volver(null, false, 'Proyecto no válido.');
-        [$ok, $r] = ApiTokens::crear((int)$u['id'], (string)($_POST['nombre'] ?? ''), !empty($_POST['escritura']), $pid, (int)($_POST['dias'] ?? 0));
+        [$ok, $r] = ApiTokens::crear((int)$u['id'], texto_param($_POST['nombre'] ?? ''), !empty($_POST['escritura']), $pid, (int)($_POST['dias'] ?? 0));
         if ($ok) $_SESSION['api_token_nuevo'] = $r;
         self::volver(null, $ok, $ok ? 'Token creado. Cópialo ahora: no se vuelve a mostrar.' : $r, '#tokens');
     }
@@ -153,7 +153,7 @@ class IntegracionesController
         self::usuario();
         $pid = (int)($_POST['proyecto'] ?? 0);
         if (!is_admin()) self::volver($pid, false, 'Solo el administrador puede guardar el token del bot.', '#telegram');
-        $token = trim((string)($_POST['token'] ?? ''));
+        $token = trim(texto_param($_POST['token'] ?? ''));
         if ($token === '') self::volver($pid, false, 'Pega el token que te dio @BotFather.', '#telegram');
         [$ok, $msg] = Telegram::guardarToken($token, (string)(usuario_actual()['nombre'] ?? ''));
         if (!$ok) self::volver($pid, false, $msg, '#telegram');

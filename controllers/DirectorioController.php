@@ -59,8 +59,8 @@ class DirectorioController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $nuevo = Catalogo::limpiar((string)($_POST['nombre'] ?? ''));
-        $anterior = (string)($_POST['anterior'] ?? '');
+        $nuevo = Catalogo::limpiar(texto_param($_POST['nombre'] ?? ''));
+        $anterior = texto_param($_POST['anterior'] ?? '');
         if ($nuevo === '') self::volver($pid, 'departamentos', 'error', 'Escribe el nombre del departamento');
         if ($anterior === '') {
             Catalogo::agregarDepartamento($pid, $nuevo);
@@ -74,7 +74,7 @@ class DirectorioController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $nombre = (string)($_POST['nombre'] ?? '');
+        $nombre = texto_param($_POST['nombre'] ?? '');
         $ok = Catalogo::eliminarDepartamento($pid, $nombre);
         self::volver($pid, 'departamentos', $ok ? 'ok' : 'error', $ok ? 'Departamento eliminado' : "«{$nombre}» está en uso. Cámbialo o renómbralo (al renombrarlo a otro existente se unen).");
     }
@@ -83,10 +83,10 @@ class DirectorioController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $ambito = (string)($_POST['ambito'] ?? '');
+        $ambito = texto_param($_POST['ambito'] ?? '');
         if (!isset(Catalogo::AMBITOS[$ambito])) self::volver($pid, 'categorias', 'error', 'Ámbito de categoría no válido');
-        $nuevo = Catalogo::limpiar((string)($_POST['nombre'] ?? ''));
-        $anterior = (string)($_POST['anterior'] ?? '');
+        $nuevo = Catalogo::limpiar(texto_param($_POST['nombre'] ?? ''));
+        $anterior = texto_param($_POST['anterior'] ?? '');
         if ($nuevo === '') self::volver($pid, 'categorias', 'error', 'Escribe el nombre de la categoría');
         if ($anterior === '') {
             Catalogo::agregarCategoria($pid, $ambito, $nuevo);
@@ -100,8 +100,8 @@ class DirectorioController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $ambito = (string)($_POST['ambito'] ?? '');
-        $nombre = (string)($_POST['nombre'] ?? '');
+        $ambito = texto_param($_POST['ambito'] ?? '');
+        $nombre = texto_param($_POST['nombre'] ?? '');
         $ok = Catalogo::eliminarCategoria($pid, $ambito, $nombre);
         self::volver($pid, 'categorias', $ok ? 'ok' : 'error', $ok ? 'Categoría eliminada' : "«{$nombre}» está en uso. Cámbiala antes de eliminarla.");
     }

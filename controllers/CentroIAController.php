@@ -35,7 +35,7 @@ class CentroIAController
     public static function bandeja(Router $router)
     {
         $proyecto = self::admin();
-        $f = ['herramienta' => (string)($_GET['herramienta'] ?? ''), 'severidad' => (string)($_GET['severidad'] ?? ''), 'origen' => (string)($_GET['origen'] ?? ''), 'riesgo' => (string)($_GET['riesgo'] ?? ''), 'partida' => (string)($_GET['partida'] ?? '')];
+        $f = ['herramienta' => texto_param($_GET['herramienta'] ?? ''), 'severidad' => texto_param($_GET['severidad'] ?? ''), 'origen' => texto_param($_GET['origen'] ?? ''), 'riesgo' => texto_param($_GET['riesgo'] ?? ''), 'partida' => texto_param($_GET['partida'] ?? '')];
         $r = CentroIA::pendientes($proyecto, $f);
         $router->render('centro-ia/bandeja', ['titulo' => 'Propuestas de IA - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'items' => $r['items'], 'conteo' => $r['conteo'], 'partidas' => $r['partidas'], 'bajoRiesgo' => $r['bajo_riesgo'],
             'niveles' => RiesgoIA::niveles((int)$proyecto->id), 'mensaje' => $_SESSION['bandeja_msg'] ?? null]);
@@ -45,14 +45,14 @@ class CentroIAController
     public static function aceptar()
     {
         $p = proyecto_api('admin');
-        [$ok, $msg] = CentroIA::aceptar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
+        [$ok, $msg] = CentroIA::aceptar($p, texto_param($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
 
     public static function rechazar()
     {
         $p = proyecto_api('admin');
-        [$ok, $msg] = CentroIA::rechazar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
+        [$ok, $msg] = CentroIA::rechazar($p, texto_param($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         json_respuesta(['success' => $ok, 'mensaje' => $msg], $ok ? 200 : 422);
     }
 
@@ -84,7 +84,8 @@ class CentroIAController
         $proyecto = self::admin();
         $pid = (int)$proyecto->id;
         VigilanciaServidor::ejecutarPendientes('web', false, $pid);   // sin cron, la primera visita después de vencido el intervalo hace la comprobación
-        $horas = isset(ResumenIA::PERIODOS[(int)($_GET['horas'] ?? 24)]) ? (int)$_GET['horas'] : 24;
+        $horasPedidas = (int)($_GET['horas'] ?? 24);
+        $horas = isset(ResumenIA::PERIODOS[$horasPedidas]) ? $horasPedidas : 24;
         $router->render('centro-ia/resumen', ['titulo' => 'Resumen de IA - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'horas' => $horas, 'r' => ResumenIA::datos($proyecto, $horas), 'mensaje' => $_SESSION['resumen_msg'] ?? null]);
         unset($_SESSION['resumen_msg']);
     }
@@ -115,7 +116,8 @@ class CentroIAController
     public static function uso(Router $router)
     {
         $proyecto = self::admin();
-        $dias = in_array((int)($_GET['dias'] ?? 7), [1, 7, 30, 90], true) ? (int)$_GET['dias'] : 7;
+        $diasPedidos = (int)($_GET['dias'] ?? 7);
+        $dias = in_array($diasPedidos, [1, 7, 30, 90], true) ? $diasPedidos : 7;
         $router->render('centro-ia/uso', ['titulo' => 'Uso de la IA - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'dias' => $dias, 'u' => UsoIA::resumen((int)$proyecto->id, $dias)]);
     }
 
@@ -132,7 +134,7 @@ class CentroIAController
     private static function filtrosHistorial(): array
     {
         $f = [];
-        foreach (['herramienta', 'evento', 'usuario', 'entidad_tipo', 'entidad_id', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim((string)($_GET[$k] ?? ''));
+        foreach (['herramienta', 'evento', 'usuario', 'entidad_tipo', 'entidad_id', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim(texto_param($_GET[$k] ?? ''));
         return $f;
     }
 
@@ -151,7 +153,7 @@ class CentroIAController
     public static function revertirTanda()
     {
         $p = proyecto_api('admin');
-        $desde = TandaIA::fecha((string)($_POST['desde'] ?? ''));
+        $desde = TandaIA::fecha(texto_param($_POST['desde'] ?? ''));
         if (!$desde) json_respuesta(['success' => false, 'error' => 'Indica desde qué fecha y hora revertir'], 422);
         if (($_POST['modo'] ?? 'vista') !== 'aplicar') json_respuesta(['success' => true, 'desde' => $desde, 'items' => TandaIA::candidatos((int)$p->id, $desde)]);
         $ids = isset($_POST['ids']) ? array_map('intval', (array)$_POST['ids']) : null;
@@ -175,7 +177,7 @@ class CentroIAController
         $proyecto = self::admin();
         $f = ['herramienta' => $_GET['herramienta'] ?? '', 'solo_guardadas' => !empty($_GET['guardadas'])];
         $comparacion = null;
-        $h = (string)($_GET['cmp_herramienta'] ?? '');
+        $h = texto_param($_GET['cmp_herramienta'] ?? '');
         $a = (int)($_GET['a'] ?? 0);
         $b = (int)($_GET['b'] ?? 0);
         if ($a && $b && $a !== $b) $comparacion = CentroIA::comparar((int)$proyecto->id, $h, $a, $b);
@@ -187,7 +189,7 @@ class CentroIAController
     public static function guardarAnalisis()
     {
         $p = proyecto_api('admin');
-        CentroIA::marcar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0), empty($_POST['quitar']), (string)($_POST['nombre'] ?? ''));
+        CentroIA::marcar($p, texto_param($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0), empty($_POST['quitar']), texto_param($_POST['nombre'] ?? ''));
         $_SESSION['biblioteca_msg'] = ['ok' => true, 'texto' => empty($_POST['quitar']) ? 'Análisis guardado en la biblioteca.' : 'El análisis ya no está guardado (puede rotar con los más recientes).'];
         header('Location: /biblioteca-ia?proyecto=' . (int)$p->id);
         exit;
@@ -196,7 +198,7 @@ class CentroIAController
     public static function eliminarAnalisis()
     {
         $p = proyecto_api('admin');
-        CentroIA::eliminar($p, (string)($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
+        CentroIA::eliminar($p, texto_param($_POST['herramienta'] ?? ''), (int)($_POST['id'] ?? 0));
         $_SESSION['biblioteca_msg'] = ['ok' => true, 'texto' => 'Análisis eliminado. Los cambios ya aplicados al proyecto se conservan en el historial.'];
         header('Location: /biblioteca-ia?proyecto=' . (int)$p->id);
         exit;

@@ -13,7 +13,7 @@ class MarcaController
         $proyecto = proyecto_de_peticion(true);
         $router->render('marca/index', [
             'titulo' => 'Marca del cliente - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'marca' => Marca::configuracion($proyecto),
-            'ok' => isset($_GET['ok']), 'error' => (string)($_GET['error'] ?? ''),
+            'ok' => isset($_GET['ok']), 'error' => texto_param($_GET['error'] ?? ''),
         ]);
     }
 
@@ -27,7 +27,7 @@ class MarcaController
             header('Location: /marca?proyecto=' . $p->id . '&error=' . urlencode('El logo debe ser una imagen JPG, PNG, WEBP o GIF.'));
             exit;
         }
-        $ok = Marca::guardar((int)$p->id, !empty($_POST['activa']), (string)($_POST['nombre'] ?? ''), (string)($_POST['color'] ?? ''), (string)($_POST['color2'] ?? ''), $logo);
+        $ok = Marca::guardar((int)$p->id, !empty($_POST['activa']), texto_param($_POST['nombre'] ?? ''), texto_param($_POST['color'] ?? ''), texto_param($_POST['color2'] ?? ''), $logo);
         header('Location: /marca?proyecto=' . $p->id . ($ok ? '&ok=1' : '&error=' . urlencode('No se pudo guardar (¿falta aplicar la migración de personalización?)')));
         exit;
     }

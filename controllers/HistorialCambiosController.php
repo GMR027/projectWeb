@@ -24,7 +24,7 @@ class HistorialCambiosController
     private static function filtros(): array
     {
         $f = [];
-        foreach (['herramienta', 'evento', 'usuario', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim((string)($_GET[$k] ?? ''));
+        foreach (['herramienta', 'evento', 'usuario', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim(texto_param($_GET[$k] ?? ''));
         return $f;
     }
 

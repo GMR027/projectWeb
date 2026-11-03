@@ -68,9 +68,9 @@ class SheetflowController
                 } elseif ($subida && ($subida['error'] ?? 0) !== UPLOAD_ERR_NO_FILE) {
                     $alertas['error'][] = 'No se pudo subir el archivo';
                 } elseif (($_POST['plantilla'] ?? '') === 'inteligente') {   // constructor guiado de tabla inteligente
-                    $datos = Sheetflow::inteligente(json_decode((string)($_POST['int_cols'] ?? ''), true), (int)($_POST['int_filas'] ?? 10));
+                    $datos = Sheetflow::inteligente(json_decode(texto_param($_POST['int_cols'] ?? ''), true), (int)($_POST['int_filas'] ?? 10));
                 } else {
-                    $datos = Sheetflow::plantilla((string)($_POST['plantilla'] ?? ''), (int)$proyecto->id) ?? Sheetflow::vacia();
+                    $datos = Sheetflow::plantilla(texto_param($_POST['plantilla'] ?? ''), (int)$proyecto->id) ?? Sheetflow::vacia();
                 }
             }
             if (!$alertas) {
@@ -189,14 +189,14 @@ class SheetflowController
     public static function guardar()
     {
         $h = self::hojaApi(true);
-        $ver = (string)($_POST['version'] ?? '');
+        $ver = texto_param($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$h->actualizado) {
             $mensaje = SubactividadHoja::deHoja((int)$h->id)
                 ? 'Esta tabla está vinculada a las subactividades de una actividad y se guardó desde otra sesión (o desde la actividad). Recarga para no perder cambios.'
                 : 'Esta tabla se guardó desde otra sesión después de que la abrieras.';
             json_respuesta(['success' => false, 'conflicto' => true, 'error' => $mensaje], 409);
         }
-        $crudo = (string)($_POST['datos'] ?? '');
+        $crudo = texto_param($_POST['datos'] ?? '');
         if (strlen($crudo) > Sheetflow::MAX_BYTES) json_respuesta(['success' => false, 'error' => 'La tabla es demasiado grande'], 422);
         \Classes\SheetflowFormulas::setProyecto(Sheetflow::datosProyecto((int)$h->proyecto_id));   // las fórmulas del proyecto usan el programa actual
         $limpio = Sheetflow::normalizar(json_decode($crudo, true));

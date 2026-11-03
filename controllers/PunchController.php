@@ -47,8 +47,8 @@ class PunchController
     {
         $p = self::gestion();
         $pid = (int)$p->id;
-        $nuevo = trim((string)($_POST['nombre'] ?? ''));
-        $anterior = (string)($_POST['anterior'] ?? '');
+        $nuevo = trim(texto_param($_POST['nombre'] ?? ''));
+        $anterior = texto_param($_POST['anterior'] ?? '');
         if ($nuevo === '') self::volver($p, false, 'Escribe el nombre de la categoría.');
         if ($anterior === '') {
             Catalogo::agregarCategoria($pid, 'punch', $nuevo);
@@ -61,7 +61,7 @@ class PunchController
     public static function categoriaEliminar()
     {
         $p = self::gestion();
-        $nombre = (string)($_POST['nombre'] ?? '');
+        $nombre = texto_param($_POST['nombre'] ?? '');
         $ok = Catalogo::eliminarCategoria((int)$p->id, 'punch', $nombre, true);
         self::volver($p, $ok, $ok ? "Categoría «{$nombre}» eliminada (los pendientes que la usaban quedan sin categoría)." : 'No se pudo eliminar la categoría.');
     }
@@ -77,7 +77,7 @@ class PunchController
     {
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
-        $f = ['estado' => $_GET['estado'] ?? 'pendientes', 'severidad' => $_GET['severidad'] ?? '', 'contratista' => $_GET['contratista'] ?? '', 'categoria' => $_GET['categoria'] ?? '', 'q' => trim((string)($_GET['q'] ?? ''))];
+        $f = ['estado' => $_GET['estado'] ?? 'pendientes', 'severidad' => $_GET['severidad'] ?? '', 'contratista' => $_GET['contratista'] ?? '', 'categoria' => $_GET['categoria'] ?? '', 'q' => trim(texto_param($_GET['q'] ?? ''))];
         $cp = \Classes\CamposPersonalizados::aplicar($pid, 'punch', Punch::listar($pid, $f), fn($x) => (int)$x['id']);
         $router->render('punch/index', ['titulo' => 'Punch list - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $f, 'lista' => $cp['items'], 'cp' => $cp, 'diseno' => \Classes\ListaDiseno::para($pid, 'punch'), 'analisis' => Punch::analisis($pid), 'contratistas' => Punch::contratistas($pid),
             'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'mensaje' => $_SESSION['punch_msg'] ?? null]);
@@ -106,7 +106,7 @@ class PunchController
     public static function estado()
     {
         $p = self::gestion();
-        [$ok, $msg] = Punch::estado($p, (int)($_POST['id'] ?? 0), (string)($_POST['estado'] ?? ''));
+        [$ok, $msg] = Punch::estado($p, (int)($_POST['id'] ?? 0), texto_param($_POST['estado'] ?? ''));
         self::volver($p, $ok, $msg, !empty($_POST['volver_ver']) ? '/punch/ver?id=' . (int)$_POST['id'] : '/punch');
     }
 
@@ -129,13 +129,13 @@ class PunchController
         $pl = is_string($_POST['plantilla'] ?? null) && isset(Punch::PLANTILLAS[$_POST['plantilla']]) ? $_POST['plantilla'] : 'general';
         $res = [];
         foreach (Punch::PLANTILLAS[$pl]['items'] as $i => [$texto, $cat]) $res[] = ['texto' => $texto, 'categoria' => $cat, 'estado' => ($_POST['r'][$i] ?? 'na'), 'nota' => (string)($_POST['nota'][$i] ?? '')];
-        $n = Punch::desdeInspeccion((int)$p->id, $pl, (string)($_POST['ubicacion'] ?? ''), (string)($_POST['contratista'] ?? ''), (string)($_POST['responsable'] ?? ''), $res);
+        $n = Punch::desdeInspeccion((int)$p->id, $pl, texto_param($_POST['ubicacion'] ?? ''), texto_param($_POST['contratista'] ?? ''), texto_param($_POST['responsable'] ?? ''), $res);
         self::volver($p, true, $n ? "Inspección registrada: $n falla(s) se convirtieron en pendientes." : 'Inspección registrada: sin fallas.');
     }
 
     public static function pdf()
     {
         $p = proyecto_de_peticion();
-        enviar_descarga(Punch::pdf($p, trim((string)($_GET['contratista'] ?? ''))), 'application/pdf', date('Y_m_d') . '_punch_list.pdf');
+        enviar_descarga(Punch::pdf($p, trim(texto_param($_GET['contratista'] ?? ''))), 'application/pdf', date('Y_m_d') . '_punch_list.pdf');
     }
 }

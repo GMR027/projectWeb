@@ -819,5 +819,16 @@ $ok('el diálogo de guardado se centra en la ventana', str_contains($asset('src/
 $ok('hay presentación, copiar/pegar e informe de revisión', str_contains($cmpJs, 'function entrarPresentacion') && str_contains($cmpJs, "e.key.toLowerCase() === 'c'") && str_contains($cmpJs, 'function abrirInforme'));
 $ok('las anotaciones se pueden agrupar y se exportan las páginas con cambios', str_contains($cmpJs, 'function seleccionar') && str_contains($cmpJs, 'function exportarCambios') && str_contains($asset('views/comparador/index.php'), 'id="cmp-exportar-cambios"') && str_contains($asset('views/comparador/index.php'), 'id="cmp-det-grupo"'));
 
+echo "Apariencia: texturas y halo\n";
+$ok('textura desconocida cae en «ninguna»', \Classes\TemaProyecto::normTextura('inventada') === 'ninguna');
+$ok('los colores se normalizan a #rrggbb', \Classes\TemaProyecto::normHex('#a1b') === '#aa11bb' && \Classes\TemaProyecto::normHex('naranja') === '');
+$ok('las intensidades se acotan a 0-100', \Classes\TemaProyecto::intensidad(-5) === 0 && \Classes\TemaProyecto::intensidad(180) === 100);
+$ok('la expansión se acota a 50-250', \Classes\TemaProyecto::expansion(10) === 50 && \Classes\TemaProyecto::expansion(999) === 250);
+$cssPuntos = \Classes\TemaProyecto::cssFondo('cian', ['textura' => 'puntos', 'textura_intensidad' => 50, 'halo_intensidad' => 60, 'halo_expansion' => 120]);
+$ok('el halo radial y la textura llegan al CSS', str_contains($cssPuntos, '--pw-fondo:') && str_contains($cssPuntos, 'radial-gradient') && str_contains($cssPuntos, '22px 22px') && str_contains($cssPuntos, '--pw-halo-exp:1.2'));
+$cssSinHalo = \Classes\TemaProyecto::cssFondo('cian', ['textura' => 'ninguna', 'halo_intensidad' => 0]);
+$ok('con intensidad 0 no se pinta el halo', !str_contains($cssSinHalo, 'radial-gradient') && str_contains($cssSinHalo, '--pw-fondo:none'));
+$ok('el esquema y su migración tienen las columnas de fondo', str_contains($asset('database/schema.sql'), 'tema_textura') && str_contains($asset('database/migracion_tema_texturas.sql'), 'tema_halo_intensidad'));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

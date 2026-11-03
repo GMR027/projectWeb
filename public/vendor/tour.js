@@ -48,8 +48,13 @@
 
     function teclas(e) {
         if (!overlay) return;
-        if (e.key === 'Escape') terminar();
-        else if (e.key === 'ArrowRight' || e.key === 'Enter') siguiente();
+        if (e.key === 'Escape') { terminar(); e.stopPropagation(); return; }
+        // El velo del tour no bloquea el ratón (pointer-events:none): si la persona está escribiendo
+        // en un campo de la herramienta, el teclado debe llegar al campo, no mover el tour.
+        const t = e.target;
+        const escribiendo = !!(t && t.matches && t.matches('input, textarea, select, [contenteditable="true"], [contenteditable=""]'));
+        if (escribiendo) return;
+        if (e.key === 'ArrowRight' || e.key === 'Enter') siguiente();
         else if (e.key === 'ArrowLeft') anterior();
         e.stopPropagation();   // el tour se queda con el teclado (no dispara atajos de la herramienta)
     }

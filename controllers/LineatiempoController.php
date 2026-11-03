@@ -29,7 +29,7 @@ class LineatiempoController
         // ?mes= solo ancla la vista inicial: el diagrama abarca todos los meses con actividades
         // y se navega dentro de la misma página (botones ‹ › y Hoy), sin filtro de mes.
         $mesAncla = null;
-        $f = \DateTime::createFromFormat('!Y-m', (string)($_GET['mes'] ?? ''));
+        $f = \DateTime::createFromFormat('!Y-m', texto_param($_GET['mes'] ?? ''));
         if ($f) $mesAncla = $f->format('Y-m');
         $d = self::datos($proyecto);
         $d['lt']['mesAncla'] = $mesAncla;   // ancla inicial de la vista (no afecta a la exportación)

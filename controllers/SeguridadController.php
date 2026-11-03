@@ -28,7 +28,7 @@ class SeguridadController
     {
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
-        $estado = (string)($_GET['estado'] ?? '');
+        $estado = texto_param($_GET['estado'] ?? '');
         $router->render('seguridad/index', ['titulo' => 'Seguridad y permisos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'resumen' => Seguridad::resumen($pid), 'requeridos' => Seguridad::requeridos($pid, 14), 'climaPermisos' => \Classes\Salud::climaYPermisos($pid, 7), 'permisos' => Seguridad::listarPermisos($pid, $estado), 'estado' => $estado,
             'incidentes' => Seguridad::incidentes($pid), 'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'admin' => is_admin(), 'mensaje' => $_SESSION['seguridad_msg'] ?? null]);
         unset($_SESSION['seguridad_msg']);
@@ -46,7 +46,7 @@ class SeguridadController
     public static function crearTipo()
     {
         $p = self::gestion();
-        [$ok, $msg] = Seguridad::guardarTipo((int)$p->id, (string)($_POST['nombre'] ?? ''), (string)($_POST['palabras'] ?? ''), (string)($_POST['medidas'] ?? ''));
+        [$ok, $msg] = Seguridad::guardarTipo((int)$p->id, texto_param($_POST['nombre'] ?? ''), texto_param($_POST['palabras'] ?? ''), texto_param($_POST['medidas'] ?? ''));
         self::volver($p, $ok, $msg);
     }
 
@@ -60,7 +60,7 @@ class SeguridadController
     public static function estado()
     {
         $p = self::gestion();
-        [$ok, $msg] = Seguridad::cambiarEstado($p, (int)($_POST['id'] ?? 0), (string)($_POST['estado'] ?? ''), is_admin());
+        [$ok, $msg] = Seguridad::cambiarEstado($p, (int)($_POST['id'] ?? 0), texto_param($_POST['estado'] ?? ''), is_admin());
         self::volver($p, $ok, $msg);
     }
 
@@ -96,7 +96,7 @@ class SeguridadController
     public static function cerrarIncidente()
     {
         $p = self::gestion();
-        Seguridad::cerrarIncidente((int)$p->id, (int)($_POST['id'] ?? 0), (string)($_POST['acciones'] ?? ''));
+        Seguridad::cerrarIncidente((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['acciones'] ?? ''));
         self::volver($p, true, 'Incidente cerrado.');
     }
 }

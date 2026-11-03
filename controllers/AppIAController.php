@@ -68,7 +68,7 @@ class AppIAController
     public static function analisis()
     {
         $p = proyecto_api();
-        $s = \Classes\AnalisisInteligente::seccion($p, (string)($_GET['clave'] ?? ''));
+        $s = \Classes\AnalisisInteligente::seccion($p, texto_param($_GET['clave'] ?? ''));
         if (!$s) json_respuesta(['success' => false, 'error' => 'Tema desconocido'], 404);
         json_respuesta(['success' => true, 'seccion' => $s]);
     }
@@ -77,7 +77,7 @@ class AppIAController
     {
         $p = proyecto_api();
         $f = [];
-        foreach (['herramienta', 'evento', 'usuario', 'entidad_tipo', 'entidad_id', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim((string)($_GET[$k] ?? ''));
+        foreach (['herramienta', 'evento', 'usuario', 'entidad_tipo', 'entidad_id', 'desde', 'hasta', 'q'] as $k) $f[$k] = trim(texto_param($_GET[$k] ?? ''));
         $pid = (int)$p->id;
         $total = Auditoria::contar($pid, $f);
         $paginas = max(1, (int)ceil($total / Auditoria::POR_PAGINA));
@@ -94,12 +94,12 @@ class AppIAController
     public static function biblioteca()
     {
         $p = proyecto_api();
-        $h = (string)($_POST['herramienta'] ?? '');
+        $h = texto_param($_POST['herramienta'] ?? '');
         $id = (int)($_POST['id'] ?? 0);
         if (!isset(CentroIA::HERRAMIENTAS[$h]) || $id <= 0) json_respuesta(['success' => false, 'error' => 'Análisis no válido'], 422);
-        $accion = (string)($_POST['accion'] ?? '');
+        $accion = texto_param($_POST['accion'] ?? '');
         if ($accion === 'eliminar') CentroIA::eliminar($p, $h, $id);
-        elseif ($accion === 'guardar' || $accion === 'quitar') CentroIA::marcar($p, $h, $id, $accion === 'guardar', trim((string)($_POST['nombre'] ?? '')));
+        elseif ($accion === 'guardar' || $accion === 'quitar') CentroIA::marcar($p, $h, $id, $accion === 'guardar', trim(texto_param($_POST['nombre'] ?? '')));
         else json_respuesta(['success' => false, 'error' => 'Acción no válida'], 422);
         json_respuesta(['success' => true]);
     }

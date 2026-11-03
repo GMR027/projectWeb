@@ -49,7 +49,7 @@ class DependenciasController
     public static function modo()
     {
         $p = proyecto_api('gestionar');
-        if (!Dependencias::cambiarModo($p, (string)($_POST['modo'] ?? ''))) json_respuesta(['success' => false, 'error' => 'Modo no válido'], 422);
+        if (!Dependencias::cambiarModo($p, texto_param($_POST['modo'] ?? ''))) json_respuesta(['success' => false, 'error' => 'Modo no válido'], 422);
         json_respuesta(['success' => true, 'datos' => Dependencias::datos($p)]);
     }
 

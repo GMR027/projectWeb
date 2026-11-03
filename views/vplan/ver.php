@@ -10,6 +10,11 @@ $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
     <div>
         <h2><i class="fa-solid fa-sheet-plastic"></i> <?php echo s($lamina->titulo); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?><?php echo $paquete ? ' · ' . s($paquete->nombre) : ''; ?> · Hoja <?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?> mm</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-ruler-combined"></i><b><?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?></b> mm</span>
+            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i><b><?php echo count($navLaminas); ?></b> <?php echo count($navLaminas) === 1 ? 'lámina' : 'láminas'; ?></span>
+            <?php if (!empty($lamina->plano)): ?><span class="herr-chip herr-chip-suave"><i class="fa-regular fa-image"></i> plano de fondo</span><?php endif; ?>
+        </div>
     </div>
     <div class="vp-herr">
         <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>

@@ -16,7 +16,7 @@ class CompartirController
         $router->render('compartir/index', [
             'titulo' => 'Compartir - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'disponible' => $disponible,
             'clientes' => $disponible ? Enlaces::lista($pid, 'cliente') : [], 'calendarios' => $disponible ? Enlaces::lista($pid, 'ics') : [],
-            'error' => (string)($_GET['error'] ?? ''), 'ok' => (string)($_GET['ok'] ?? ''),
+            'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
         ]);
     }
 
@@ -24,7 +24,7 @@ class CompartirController
     {
         $p = proyecto_de_peticion(true);
         $tipo = ($_POST['tipo'] ?? '') === 'ics' ? 'ics' : 'cliente';
-        $error = Enlaces::crear((int)$p->id, $tipo, (string)($_POST['nombre'] ?? ''), (array)($_POST['secciones'] ?? []), (int)($_POST['dias'] ?? 0), (string)($_SESSION['nombre'] ?? ''));
+        $error = Enlaces::crear((int)$p->id, $tipo, texto_param($_POST['nombre'] ?? ''), (array)($_POST['secciones'] ?? []), (int)($_POST['dias'] ?? 0), (string)($_SESSION['nombre'] ?? ''));
         header('Location: /compartir?proyecto=' . $p->id . ($error ? '&error=' . urlencode($error) : '&ok=1'));
         exit;
     }

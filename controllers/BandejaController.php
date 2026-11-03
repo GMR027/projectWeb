@@ -126,8 +126,8 @@ class BandejaController
         if ($id) {
             $r = SoporteRespuesta::find($id);
             if (!$r || (int)$r->soporte_id !== (int)$soporte->id) json_respuesta(['success' => false, 'error' => 'Respuesta no encontrada'], 404);
-            $r->titulo = trim((string)($_POST['titulo'] ?? ''));       // la fecha original se conserva
-            $r->descripcion = trim((string)($_POST['descripcion'] ?? ''));
+            $r->titulo = trim(texto_param($_POST['titulo'] ?? ''));       // la fecha original se conserva
+            $r->descripcion = trim(texto_param($_POST['descripcion'] ?? ''));
             $r->visto = 0;   // cambió: el cliente vuelve a recibir el aviso
         } else {
             $r = new SoporteRespuesta(['soporte_id' => $soporte->id, 'titulo' => $_POST['titulo'] ?? '', 'descripcion' => $_POST['descripcion'] ?? '']);

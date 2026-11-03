@@ -106,7 +106,7 @@ class VplanController
         $proyecto = proyecto_de_peticion(true);
         if ($p = self::paqueteDe($proyecto)) {
             $v = !empty($_POST['visible']) ? 1 : 0;
-            $grupo = trim((string)($_POST['grupo'] ?? ''));
+            $grupo = trim(texto_param($_POST['grupo'] ?? ''));
             VplanLamina::ejecutar("UPDATE vplan_laminas SET visible = $v WHERE paquete_id = " . (int)$p->id . " AND grupo = '" . VplanLamina::escapar($grupo) . "'");
             // Cambio en bloque sobre varias láminas: un solo registro (sin reversión automática)
             \Classes\HistorialCambios::registrar((int)$proyecto->id, 'vplan', 'modificado',
@@ -273,7 +273,7 @@ class VplanController
                 if (is_array($r)) $l->id = $r['id'];
                 if ($esNueva) {
                     $l->guardarSeleccion($seleccion);   // el diseño inicial (bloques) se arma con esto al abrir la lámina
-                    if ($t = self::tablaInicial($proyecto, (string)($_POST['tabla_inicial'] ?? ''), $l->titulo)) $l->agregarTabla((int)$t->id);
+                    if ($t = self::tablaInicial($proyecto, texto_param($_POST['tabla_inicial'] ?? ''), $l->titulo)) $l->agregarTabla((int)$t->id);
                 }
                 Vplan::asegurarRestricciones($l, $proyecto);
                 // Tras crearla se entra directo al modo diseño (con la guía de 3 pasos): el usuario ve
@@ -286,7 +286,7 @@ class VplanController
             'titulo' => $l->id ? 'Editar lámina' : 'Nueva lámina', 'proyecto' => $proyecto, 'lamina' => $l,
             'partidas' => $partidas, 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id), 'alertas' => $alertas, 'actividadesPorPartida' => self::actividadesPorPartida($proyecto, $bloques, $l),
             'hojasSheetflow' => $l->id ? [] : \Model\SheetflowHoja::resumen((int)$proyecto->id),
-            'tablaInicial' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (string)($_POST['tabla_inicial'] ?? '') : (!empty($_GET['sheetflow']) ? 'sf:' . (int)$_GET['sheetflow'] : ''),
+            'tablaInicial' => $_SERVER['REQUEST_METHOD'] === 'POST' ? texto_param($_POST['tabla_inicial'] ?? '') : (!empty($_GET['sheetflow']) ? 'sf:' . (int)$_GET['sheetflow'] : ''),
             'seleccion' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', (array)($_POST['actividades'] ?? [])) : $l->seleccion(),
         ]);
     }
@@ -462,9 +462,9 @@ class VplanController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $json = (string)($_POST['json'] ?? '');
+        $json = texto_param($_POST['json'] ?? '');
         // Las imágenes dentro de las marcas deben ser archivos subidos por el editor
-        $bin = MarcasLienzo::binarioDeDataUrl((string)($_POST['png'] ?? ''), 'png|jpeg');
+        $bin = MarcasLienzo::binarioDeDataUrl(texto_param($_POST['png'] ?? ''), 'png|jpeg');
         if (!MarcasLienzo::leer($json, '#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $bin, 30_000_000)) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
@@ -650,7 +650,7 @@ class VplanController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $datos = json_decode((string)($_POST['diseno'] ?? ''), true);
+        $datos = json_decode(texto_param($_POST['diseno'] ?? ''), true);
         if (!is_array($datos) || !is_array($datos['bloques'] ?? null) || count($datos['bloques']) > 80) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Diseño no válido']);
@@ -733,7 +733,7 @@ class VplanController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $in = json_decode((string)($_POST['bloques'] ?? ''), true);
+        $in = json_decode(texto_param($_POST['bloques'] ?? ''), true);
         if (!is_array($in) || count($in) > 80) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Bloques no válidos']);
@@ -816,7 +816,7 @@ class VplanController
             exit;
         }
         $act = \Model\Actividad::find(filter_var($_POST['actividad'] ?? null, FILTER_VALIDATE_INT));
-        $v = trim((string)($_POST['valor'] ?? ''));
+        $v = trim(texto_param($_POST['valor'] ?? ''));
         $d = $v === '' ? null : \DateTime::createFromFormat('Y-m-d', $v);
         $n = filter_var($_POST['n'] ?? null, FILTER_VALIDATE_INT);
         if (!$act || !$n || $n < 1 || $n > VplanLamina::MAX_RECOVERY || !in_array($_POST['campo'] ?? '', ['inicio', 'fin'], true) || ($v !== '' && (!$d || $d->format('Y-m-d') !== $v))) {
@@ -846,7 +846,7 @@ class VplanController
             exit;
         }
         $act = \Model\Actividad::find(filter_var($_POST['actividad'] ?? null, FILTER_VALIDATE_INT));
-        $col = (string)($_POST['col'] ?? '');
+        $col = texto_param($_POST['col'] ?? '');
         $ids = [];
         foreach ($l->bloques() as $b) if ($b->tipo === 'tareas') foreach (\Classes\VplanDiseno::columnasTexto($b->config()) as $c) $ids[$c['id']] = true;
         if (!$act || !isset($ids[$col]) || !in_array((int)$act->id, array_map(fn($t) => (int)$t['actividad']->id, Vplan::datos($l, $proyecto)['tareas']), true)) {
@@ -854,7 +854,7 @@ class VplanController
             echo json_encode(['success' => false, 'error' => 'Dato no válido']);
             exit;
         }
-        $l->guardarTextoColumna((int)$act->id, $col, str_replace(["\r", "\n"], ' ', trim((string)($_POST['valor'] ?? ''))));
+        $l->guardarTextoColumna((int)$act->id, $col, str_replace(["\r", "\n"], ' ', trim(texto_param($_POST['valor'] ?? ''))));
         echo json_encode(['success' => true]);
         exit;
     }

@@ -73,7 +73,7 @@ class MsrController
             $msr->encabezado_id = $enc > 0 && ($e = \Model\Estampa::find($enc)) && (int)$e->proyecto_id === (int)$proyecto->id ? $enc : null;
             $msr->proyecto_id = $proyecto->id;
             $partidasPost = array_values(array_filter($_POST['partidas'] ?? [], 'is_array'));
-            $msr->columnas_json = Msr::normalizarColumnas((string)($_POST['modo'] ?? ''), array_values(array_filter($_POST['columnas'] ?? [], 'is_array')));
+            $msr->columnas_json = Msr::normalizarColumnas(texto_param($_POST['modo'] ?? ''), array_values(array_filter($_POST['columnas'] ?? [], 'is_array')));
             $alertas = $msr->validar();
             foreach (Msr::validarPartidas($partidasPost) as $e) $alertas['error'][] = $e;
             if (!$alertas) {
@@ -181,13 +181,13 @@ class MsrController
         $item = self::itemEditable();
         $campo = $_POST['campo'] ?? '';
         if (preg_match('/^txt_\d{1,6}$/', $campo)) {   // columna de texto libre del usuario
-            $item->fijarExtra($campo, mb_substr(trim((string)($_POST['valor'] ?? '')), 0, 2000));
+            $item->fijarExtra($campo, mb_substr(trim(texto_param($_POST['valor'] ?? '')), 0, 2000));
             $item->guardar();
             json_respuesta(['success' => true, 'dias' => $item->diasEntrega(), 'critico' => false, 'atrasoCompra' => false, 'atrasoEntrega' => false, 'compartido' => null]);
         }
         $tipo = MsrItem::EDITABLES[$campo] ?? null;
         if (!$tipo) json_respuesta(['success' => false, 'error' => 'Campo no editable'], 422);
-        $valor = trim((string)($_POST['valor'] ?? ''));
+        $valor = trim(texto_param($_POST['valor'] ?? ''));
         if ($tipo === 'fecha') {
             $d = $valor === '' ? null : \DateTime::createFromFormat('Y-m-d', $valor);
             if ($valor !== '' && (!$d || $d->format('Y-m-d') !== $valor)) json_respuesta(['success' => false, 'error' => 'Fecha inválida'], 422);
@@ -231,7 +231,7 @@ class MsrController
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
         if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
-        $claves = array_values(array_filter(explode(',', (string)($_POST['orden'] ?? ''))));
+        $claves = array_values(array_filter(explode(',', texto_param($_POST['orden'] ?? ''))));
         $porClave = [];
         foreach ($msr->disenoExplicito((string)$proyecto->contratista) as $c) $porClave[$c['k']] = $c;
         $nuevo = [];
@@ -248,20 +248,20 @@ class MsrController
         $proyecto = proyecto_de_peticion(true);
         $msr = self::msrDe($proyecto);
         if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
-        $k = (string)($_POST['k'] ?? '');
+        $k = texto_param($_POST['k'] ?? '');
         $diseno = $msr->disenoExplicito((string)$proyecto->contratista);
         $hallada = false;
         foreach ($diseno as &$c) {
             if ($c['k'] !== $k) continue;
             $hallada = true;
-            $c['n'] = mb_substr(trim((string)($_POST['n'] ?? '')), 0, 60);
-            $c['c'] = (string)($_POST['c'] ?? '');
+            $c['n'] = mb_substr(trim(texto_param($_POST['n'] ?? '')), 0, 60);
+            $c['c'] = texto_param($_POST['c'] ?? '');
             if (isset($_POST['g'])) $c['g'] = (string)$_POST['g'];
         }
         unset($c);
         if (!$hallada) json_respuesta(['success' => false, 'error' => 'Columna no encontrada'], 404);
         // Al asignarla a un grupo, la columna se coloca junto a las demás de ese grupo
-        $grupo = trim((string)($_POST['g'] ?? ''));
+        $grupo = trim(texto_param($_POST['g'] ?? ''));
         if ($grupo !== '' && isset($_POST['g'])) {
             $actual = $msr->columnas((string)$proyecto->contratista);
             $gDe = array_column($actual, 'g', 'k');
@@ -316,9 +316,9 @@ class MsrController
         if (!$msr) json_respuesta(['success' => false, 'error' => 'MSR no encontrado'], 404);
         $db = MsrItem::getDB();
         $mid = (int)$msr->id;
-        $viejo = (string)($_POST['viejo'] ?? '');
-        $titulo = mb_substr(trim((string)($_POST['titulo'] ?? '')), 0, 200);
-        $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '';
+        $viejo = texto_param($_POST['viejo'] ?? '');
+        $titulo = mb_substr(trim(texto_param($_POST['titulo'] ?? '')), 0, 200);
+        $color = preg_match('/^#[0-9a-fA-F]{6}$/', texto_param($_POST['color'] ?? '')) ? $_POST['color'] : '';
         if ($titulo === '') json_respuesta(['success' => false, 'error' => 'El título no puede quedar vacío'], 422);
         $v = $db->escape_string($viejo);
         $t = $db->escape_string($titulo);

@@ -31,7 +31,7 @@ class EscritorioApiController
     public static function descargar()
     {
         self::autorizar();
-        if (!Instaladores::entregar((string)($_GET['archivo'] ?? ''))) { http_response_code(404); exit('Archivo no disponible'); }
+        if (!Instaladores::entregar(texto_param($_GET['archivo'] ?? ''))) { http_response_code(404); exit('Archivo no disponible'); }
         exit;
     }
 }

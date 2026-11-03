@@ -72,6 +72,11 @@ CREATE TABLE proyectos (
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
+    tema_textura VARCHAR(20) NOT NULL DEFAULT 'ninguna',   -- textura de fondo (Ajustes → Apariencia)
+    tema_textura_intensidad TINYINT UNSIGNED NOT NULL DEFAULT 35,   -- 0-100
+    tema_halo_color VARCHAR(7) NOT NULL DEFAULT '',   -- vacío = color de acento de la paleta
+    tema_halo_intensidad TINYINT UNSIGNED NOT NULL DEFAULT 45,   -- 0-100
+    tema_halo_expansion SMALLINT UNSIGNED NOT NULL DEFAULT 100,   -- 50-250 (%)
     nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0,   -- barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
     menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico',   -- barra superior: clásico, panel fijo o pestañas por sección
     ayuda_burbujas TINYINT(1) NOT NULL DEFAULT 1,   -- mensajes emergentes de ayuda de la interfaz (Ajustes → Apariencia)

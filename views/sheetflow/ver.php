@@ -3,6 +3,11 @@
     <div>
         <h2><i class="fa-solid fa-table-cells"></i> <?php echo s($hoja->nombre); ?></h2>
         <p class="text-muted"><?php echo s(formatear_fecha($hoja->fecha, 'd/m/Y')); ?><?php echo $hoja->departamento !== '' ? ' · ' . s($hoja->departamento) : ''; ?><?php echo $hoja->descripcion !== '' ? ' · ' . s($hoja->descripcion) : ''; ?></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-regular fa-calendar"></i><?php echo s(formatear_fecha($hoja->fecha, 'd/m/Y')); ?></span>
+            <?php if ($hoja->departamento !== ''): ?><span class="herr-chip"><i class="fa-solid fa-folder-open"></i><?php echo s($hoja->departamento); ?></span><?php endif; ?>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-table-cells"></i><?php echo $puedeEditar ? 'editable' : 'solo lectura'; ?></span>
+        </div>
     </div>
     <div class="la-controles">
         <?php if ($puedeEditar): ?><a href="/sheetflow/abrir?<?php echo $q; ?>" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>

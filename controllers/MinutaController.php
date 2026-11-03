@@ -129,7 +129,7 @@ class MinutaController
             $m->fecha = trim($_POST['fecha'] ?? '');
             $m->nombre = trim($_POST['nombre'] ?? '');
             $m->importancia = $_POST['importancia'] ?? '';
-            $m->departamento = mb_substr(trim((string)($_POST['departamento'] ?? '')), 0, 100);
+            $m->departamento = mb_substr(trim(texto_param($_POST['departamento'] ?? '')), 0, 100);
             $m->setIds('contratista_json', array_filter(array_map('intval', (array)($_POST['contratista'] ?? [])), fn($i) => isset($contratista[$i])));
             $m->setIds('personal_json', array_filter(array_map('intval', (array)($_POST['personal'] ?? [])), fn($i) => isset($personal[$i])));
             $m->setItems('temas_json', self::items('temas'));

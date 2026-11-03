@@ -50,7 +50,7 @@ class InformesIAController
     {
         $p = proyecto_api();
         $c = self::herramienta($_POST);
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $respuestas = array_values(array_filter((array)($cuerpo['respuestas'] ?? []), 'is_array'));
         // El contexto viene de /contexto y ya trae los datos calculados por el servidor; así no se prepara dos veces.
@@ -69,7 +69,7 @@ class InformesIAController
     {
         $p = proyecto_api();
         $tmp = $_FILES['audio']['tmp_name'] ?? '';
-        $nombre = trim((string)($_POST['nombre'] ?? '')) ?: 'Reunión ' . date('d/m/Y H:i');
+        $nombre = trim(texto_param($_POST['nombre'] ?? '')) ?: 'Reunión ' . date('d/m/Y H:i');
         [$id, $error] = Grabaciones::guardar($p, (string)$tmp, $nombre, (int)($_POST['duracion'] ?? 0), isset($_POST['transcripcion']) ? (string)$_POST['transcripcion'] : null);
         if (isset($_POST['volver'])) {   // formulario de la web: vuelve a la lista con el aviso
             $_SESSION['informes_msg'] = ['ok' => (bool)$id, 'texto' => $id ? 'Grabación guardada.' : $error];
@@ -103,7 +103,7 @@ class InformesIAController
     {
         $p = is_auth() ? Proyecto::find(filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT)) : null;
         if (!$p || !puede_gestionar_proyecto($p)) json_respuesta(['success' => false], 403);
-        json_respuesta(['success' => true, 'sugerencia' => \Classes\Inconsistencias::similares($p, mb_substr((string)($_GET['nombre'] ?? ''), 0, 200), (int)($_GET['excluir'] ?? 0))]);
+        json_respuesta(['success' => true, 'sugerencia' => \Classes\Inconsistencias::similares($p, mb_substr(texto_param($_GET['nombre'] ?? ''), 0, 200), (int)($_GET['excluir'] ?? 0))]);
     }
 
     /** Días de un periodo que aún no tienen reporte diario (para generar los atrasados por semana o mes); máx. 93 días */
@@ -256,7 +256,7 @@ class InformesIAController
     {
         $p = proyecto_api();
         $id = (int)($_POST['id'] ?? 0);
-        $ok = Informes::estado((int)$p->id, $id, (string)($_POST['estado'] ?? ''));
+        $ok = Informes::estado((int)$p->id, $id, texto_param($_POST['estado'] ?? ''));
         $_SESSION['informes_msg'] = ['ok' => $ok, 'texto' => $ok ? 'Estado actualizado.' : 'No se pudo actualizar.'];
         header('Location: /informes-ia/ver?proyecto=' . (int)$p->id . '&id=' . $id);
         exit;

@@ -40,8 +40,8 @@ class EvidenciaController
         $fPartida = (int)($_GET['partida'] ?? 0);
         $fDesde = self::fecha($_GET['desde'] ?? '');
         $fHasta = self::fecha($_GET['hasta'] ?? '');
-        $fDepto = trim((string)($_GET['departamento'] ?? ''));
-        $fCat = trim((string)($_GET['categoria'] ?? ''));
+        $fDepto = trim(texto_param($_GET['departamento'] ?? ''));
+        $fCat = trim(texto_param($_GET['categoria'] ?? ''));
         $fOrigen = in_array($_GET['origen'] ?? '', ['reportes', 'subidas'], true) ? $_GET['origen'] : '';
 
         // La actividad o partida elegida define qué actividades cuentan
@@ -101,8 +101,8 @@ class EvidenciaController
         $actId = (int)($_POST['actividad_id'] ?? 0);
         if (!isset($acts[$actId])) self::volver($pid, 'error', 'Elige la actividad a la que pertenece la evidencia');
         $fecha = self::fecha($_POST['fecha'] ?? '') ?: date('Y-m-d');
-        $depto = \Classes\Catalogo::limpiar((string)($_POST['departamento'] ?? ''));
-        $cat = \Classes\Catalogo::limpiar((string)($_POST['categoria'] ?? ''));
+        $depto = \Classes\Catalogo::limpiar(texto_param($_POST['departamento'] ?? ''));
+        $cat = \Classes\Catalogo::limpiar(texto_param($_POST['categoria'] ?? ''));
         $f = $_FILES['fotos'] ?? null;
         $n = $f && is_array($f['name']) ? count($f['name']) : 0;
         if (!$n || $n > self::MAX_FOTOS) self::volver($pid, 'error', 'Elige entre 1 y ' . self::MAX_FOTOS . ' fotos');

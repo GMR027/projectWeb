@@ -163,8 +163,8 @@ class LookaheadController
             exit;
         }
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
-        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 50);
-        $color = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($_POST['color'] ?? '')) ? $_POST['color'] : '#FF5A1F';
+        $nombre = mb_substr(trim(texto_param($_POST['nombre'] ?? '')), 0, 50);
+        $color = preg_match('/^#[0-9a-fA-F]{6}$/', texto_param($_POST['color'] ?? '')) ? $_POST['color'] : '#FF5A1F';
         $t = $id ? TipoRestriccion::find($id) : null;
 
         if (($_POST['accion'] ?? '') === 'eliminar') {

@@ -35,7 +35,7 @@ class MaterialDependenciasController
             (int)($_POST['suc'] ?? 0),
             (string)($_POST['requisito'] ?? 'entrega'),
             (int)($_POST['retraso'] ?? 0),
-            (string)($_POST['nota'] ?? '')
+            texto_param($_POST['nota'] ?? '')
         );
         if (!$ok) json_respuesta(['success' => false, 'error' => $msg], 422);
         json_respuesta(['success' => true, 'datos' => DependenciasMateriales::datos($p)]);
@@ -70,7 +70,7 @@ class MaterialDependenciasController
     public static function modo()
     {
         $p = proyecto_api('gestionar');
-        if (!DependenciasMateriales::cambiarModo($p, (string)($_POST['modo'] ?? ''))) {
+        if (!DependenciasMateriales::cambiarModo($p, texto_param($_POST['modo'] ?? ''))) {
             json_respuesta(['success' => false, 'error' => 'Modo no válido'], 422);
         }
         json_respuesta(['success' => true, 'datos' => DependenciasMateriales::datos($p)]);

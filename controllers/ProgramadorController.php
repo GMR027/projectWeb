@@ -50,7 +50,7 @@ class ProgramadorController
     public static function integracion()
     {
         $p = proyecto_api();
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo) || !is_array($cuerpo['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         json_respuesta(['success' => true, 'lote' => Programador::integracion(Programador::contexto($p), $cuerpo['respuestas'])]);
     }
@@ -59,7 +59,7 @@ class ProgramadorController
     public static function revision()
     {
         $p = proyecto_api();
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo) || !is_array($cuerpo['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         json_respuesta(['success' => true, 'lote' => Programador::revision($p, $cuerpo['respuestas'])]);
     }
@@ -68,7 +68,7 @@ class ProgramadorController
     public static function propuesta()
     {
         $p = proyecto_api();
-        $cuerpo = json_decode((string)($_POST['datos'] ?? ''), true);
+        $cuerpo = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($cuerpo) || !is_array($cuerpo['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         $calculo = Programador::construir($p, $cuerpo['respuestas']);
         $id = Programador::guardar($p, $calculo, (string)($cuerpo['modelo'] ?? ''));
@@ -81,7 +81,7 @@ class ProgramadorController
         $p = proyecto_api();
         $id = (int)($_POST['id'] ?? 0);
         if (!Programador::obtener((int)$p->id, $id)) json_respuesta(['success' => false, 'error' => 'Propuesta no encontrada'], 404);
-        Programador::marcar((int)$p->id, $id, empty($_POST['quitar']), (string)($_POST['nombre'] ?? ''));
+        Programador::marcar((int)$p->id, $id, empty($_POST['quitar']), texto_param($_POST['nombre'] ?? ''));
         header('Location: /programador?proyecto=' . (int)$p->id . '&propuesta=' . $id);
         exit;
     }
@@ -111,7 +111,7 @@ class ProgramadorController
     public static function seguimiento()
     {
         $p = proyecto_api();
-        $ok = ProgramadorAcciones::marcarSeguimiento((int)$p->id, (int)($_POST['id'] ?? 0), (string)($_POST['clave'] ?? ''), (string)($_POST['estado'] ?? ''), (string)($_POST['responsable'] ?? ''));
+        $ok = ProgramadorAcciones::marcarSeguimiento((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['clave'] ?? ''), texto_param($_POST['estado'] ?? ''), texto_param($_POST['responsable'] ?? ''));
         json_respuesta(['success' => $ok], $ok ? 200 : 422);
     }
 

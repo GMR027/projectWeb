@@ -158,7 +158,7 @@ class CurvaController
         }
         $periodo = filter_var($_POST['periodo'] ?? null, FILTER_VALIDATE_INT);
         $n = CurvaProductividad::numPeriodos($curva->fecha_inicio, $curva->fecha_fin);
-        $txt = trim((string)($_POST['valor'] ?? ''));
+        $txt = trim(texto_param($_POST['valor'] ?? ''));
         if ($periodo === false || $periodo === null || $periodo < 0 || $periodo >= $n || ($txt !== '' && (!is_numeric($txt) || (float)$txt < 0 || (float)$txt > 1e9))) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Dato no válido']);

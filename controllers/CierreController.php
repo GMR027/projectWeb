@@ -29,8 +29,8 @@ class CierreController
             'abrirForm' => isset($_GET['nuevo']) || $editar,
             'archivos' => $disponible ? Archivo::deProyecto($pid) : [],
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
-            'ok' => (string)($_GET['ok'] ?? ''),
-            'error' => (string)($_GET['error'] ?? ''),
+            'ok' => texto_param($_GET['ok'] ?? ''),
+            'error' => texto_param($_GET['error'] ?? ''),
         ]);
     }
 

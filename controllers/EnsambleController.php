@@ -42,7 +42,7 @@ class EnsambleController
         $alertas = [];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $e->proyecto_id = $proyecto->id;
-            $e->nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 150);
+            $e->nombre = mb_substr(trim(texto_param($_POST['nombre'] ?? '')), 0, 150);
             $e->fuentes = json_encode((new Ensamble(['fuentes' => (string)($_POST['fuentes'] ?? '[]')]))->listaFuentes());
             if (!$e->id) $e->creado_por = $_SESSION['id'] ?? null;
             $alertas = $e->validar();

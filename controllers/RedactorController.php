@@ -49,7 +49,7 @@ class RedactorController
             ]);
             $alertas = $d->validar();
             if (!$alertas) {
-                if ($pl = RedactorPlantillas::aplicar((string)($_POST['plantilla'] ?? ''), (int)$proyecto->id, (string)$proyecto->nombre, $d, (string)($_SESSION['nombre'] ?? ''))) {
+                if ($pl = RedactorPlantillas::aplicar(texto_param($_POST['plantilla'] ?? ''), (int)$proyecto->id, (string)$proyecto->nombre, $d, (string)($_SESSION['nombre'] ?? ''))) {
                     $d->contenido = $pl['contenido'];
                     if (isset($pl['papel'])) foreach (['papel', 'orientacion', 'margen_sup', 'margen_inf', 'margen_izq', 'margen_der'] as $c) $d->$c = $pl[$c];
                 }
@@ -202,9 +202,9 @@ class RedactorController
     public static function guardar()
     {
         [$d, $p] = self::documentoApi();
-        $html = (string)($_POST['contenido'] ?? '');
+        $html = texto_param($_POST['contenido'] ?? '');
         if (strlen($html) > self::MAX_CONTENIDO) json_respuesta(['success' => false, 'error' => 'El documento es demasiado grande'], 422);
-        $ver = (string)($_POST['version'] ?? '');
+        $ver = texto_param($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$d->actualizado) {
             json_respuesta(['success' => false, 'conflicto' => true, 'error' => 'Este documento se guardó desde otra sesión después de que lo abrieras.'], 409);
         }
@@ -227,7 +227,7 @@ class RedactorController
             if ($ult === null || time() - strtotime($ult) > 600) RedactorDocumento::guardarVersion((int)$d->id, (string)$d->contenido, (string)($_SESSION['nombre'] ?? ''), 'Automática');
         }
         $nuevo->guardar();
-        if (trim((string)($_POST['version_etiqueta'] ?? '')) !== '') RedactorDocumento::guardarVersion((int)$d->id, (string)$nuevo->contenido, (string)($_SESSION['nombre'] ?? ''), trim((string)$_POST['version_etiqueta']));
+        if (trim(texto_param($_POST['version_etiqueta'] ?? '')) !== '') RedactorDocumento::guardarVersion((int)$d->id, (string)$nuevo->contenido, (string)($_SESSION['nombre'] ?? ''), trim((string)$_POST['version_etiqueta']));
         // Imágenes que el documento ya no usa ni usa otro: se borran del disco
         $sobran = array_diff($viejas, RedactorDocumento::imagenesDe($nuevo->contenido));
         if ($sobran) {
@@ -253,7 +253,7 @@ class RedactorController
     public static function firma()
     {
         self::documentoApi();
-        $r = RedactorFirmas::guardar((int)($_SESSION['id'] ?? 0), (string)($_POST['nombre'] ?? ''), (string)($_POST['png'] ?? ''));
+        $r = RedactorFirmas::guardar((int)($_SESSION['id'] ?? 0), texto_param($_POST['nombre'] ?? ''), texto_param($_POST['png'] ?? ''));
         if (is_string($r)) json_respuesta(['success' => false, 'error' => $r], 422);
         json_respuesta(['success' => true, 'firma' => $r]);
     }
@@ -272,7 +272,7 @@ class RedactorController
         $u = Usuario::find((int)($_SESSION['id'] ?? 0));
         if (!$u) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
         if (Redactor::cambiosPendientes((string)$d->contenido)) json_respuesta(['success' => false, 'error' => 'Hay cambios sin aceptar o rechazar. Resuélvelos antes de firmar.'], 422);
-        if ($m = RedactorFirmas::sellar($d, $u, (string)($_POST['cargo'] ?? ''), (string)($_POST['password'] ?? ''))) json_respuesta(['success' => false, 'error' => $m], 422);
+        if ($m = RedactorFirmas::sellar($d, $u, texto_param($_POST['cargo'] ?? ''), texto_param($_POST['password'] ?? ''))) json_respuesta(['success' => false, 'error' => $m], 422);
         json_respuesta(['success' => true, 'sellos' => RedactorFirmas::sellos($d)]);
     }
 
@@ -280,9 +280,9 @@ class RedactorController
     public static function plantilla()
     {
         [$d, $p] = self::documentoApi();
-        $nombre = trim((string)($_POST['nombre'] ?? ''));
+        $nombre = trim(texto_param($_POST['nombre'] ?? ''));
         if ($nombre === '') json_respuesta(['success' => false, 'error' => 'Escribe un nombre para la plantilla'], 422);
-        if (!RedactorPlantillas::guardar((int)$p->id, $nombre, (string)($_POST['descripcion'] ?? ''), $d)) json_respuesta(['success' => false, 'error' => 'No se pudo guardar la plantilla'], 500);
+        if (!RedactorPlantillas::guardar((int)$p->id, $nombre, texto_param($_POST['descripcion'] ?? ''), $d)) json_respuesta(['success' => false, 'error' => 'No se pudo guardar la plantilla'], 500);
         json_respuesta(['success' => true]);
     }
 
@@ -307,9 +307,9 @@ class RedactorController
     public static function programa()
     {
         [, $p] = self::documentoApi();
-        $tipo = (string)($_POST['tabla'] ?? '');
+        $tipo = texto_param($_POST['tabla'] ?? '');
         if ($tipo === 'punchvista') {   // vista configurable del Punch list (columnas, fotos y filtros)
-            $cfg = json_decode((string)($_POST['cfg'] ?? ''), true);
+            $cfg = json_decode(texto_param($_POST['cfg'] ?? ''), true);
             $cfg = \Classes\PunchVista::normalizar(is_array($cfg) ? $cfg : []);
             json_respuesta(['success' => true, 'html' => \Classes\PunchVista::htmlRedactor((int)$p->id, $cfg), 'cfg' => $cfg, 'total' => count(\Classes\PunchVista::items((int)$p->id, $cfg))]);
         }
@@ -328,10 +328,10 @@ class RedactorController
     public static function hoja()
     {
         [$d, $p] = self::documentoApi();
-        $nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 150) ?: mb_substr('Tabla · ' . $d->nombre, 0, 150);
+        $nombre = mb_substr(trim(texto_param($_POST['nombre'] ?? '')), 0, 150) ?: mb_substr('Tabla · ' . $d->nombre, 0, 150);
         $filas = null;
         if (($_POST['accion'] ?? '') === 'convertir') {
-            $x = json_decode((string)($_POST['filas'] ?? ''), true);
+            $x = json_decode(texto_param($_POST['filas'] ?? ''), true);
             if (!is_array($x) || count($x) < 1) json_respuesta(['success' => false, 'error' => 'La tabla no tiene datos'], 422);
             $filas = array_map(fn($f) => is_array($f) ? array_map(fn($v) => is_scalar($v) ? (string)$v : '', $f) : [], array_slice($x, 0, \Classes\Sheetflow::MAX_FILAS + 1));
         } elseif (($_POST['accion'] ?? '') !== 'nueva') {
@@ -350,7 +350,7 @@ class RedactorController
     {
         [$d] = self::documentoApi();
         if (!puede_descargar()) json_respuesta(['success' => false, 'error' => 'No autorizado'], 403);
-        $html = Redactor::limpiar((string)($_POST['html'] ?? ''));
+        $html = Redactor::limpiar(texto_param($_POST['html'] ?? ''));
         if (trim(strip_tags($html)) === '' && !str_contains($html, '<img')) json_respuesta(['success' => false, 'error' => 'La selección está vacía'], 422);
         $formato = in_array($_POST['formato'] ?? 'docx', ['docx', 'odt', 'pdf'], true) ? $_POST['formato'] : 'docx';
         $copia = new RedactorDocumento(get_object_vars($d));
@@ -375,7 +375,7 @@ class RedactorController
     public static function palabra()
     {
         [, $p] = self::documentoApi();
-        if (!RedactorDocumento::agregarPalabra((int)$p->id, (string)($_POST['palabra'] ?? ''))) json_respuesta(['success' => false, 'error' => 'Palabra no válida'], 422);
+        if (!RedactorDocumento::agregarPalabra((int)$p->id, texto_param($_POST['palabra'] ?? ''))) json_respuesta(['success' => false, 'error' => 'Palabra no válida'], 422);
         json_respuesta(['success' => true]);
     }
 }

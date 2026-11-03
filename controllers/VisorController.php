@@ -25,7 +25,7 @@ class VisorController
             if (in_array($c, array_map(fn($x) => (int)$x->id, $carpetas), true)) $carpeta = $c;
         }
 
-        $buscar = trim((string)($_GET['buscar'] ?? ''));
+        $buscar = trim(texto_param($_GET['buscar'] ?? ''));
         $archivos = Archivo::deProyecto($pid, $filtro, $carpeta);
         if ($buscar !== '') {
             $b = mb_strtolower($buscar);

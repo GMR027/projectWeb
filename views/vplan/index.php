@@ -1,8 +1,13 @@
-<?php $tab = 'laminas'; ?>
+<?php $tab = 'laminas'; $totalLaminas = 0; foreach ($paquetes as $px) $totalLaminas += (int)$px->total; ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-sheet-plastic"></i> vPlan · Plan visual</h2><?php // el glosario está en la pestaña y en la ayuda de la herramienta ?>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($paquetes); ?> vPlan</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-folder-tree"></i><b><?php echo count($paquetes); ?></b> vPlan</span>
+            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i><b><?php echo $totalLaminas; ?></b> láminas</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-pdf"></i> plano + tablas + programa</span>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/exportar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</a>

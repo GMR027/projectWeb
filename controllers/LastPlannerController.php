@@ -24,7 +24,7 @@ class LastPlannerController
         $periodo = in_array($_GET['periodo'] ?? '', ['fechas', 'mes'], true) ? $_GET['periodo'] : '';
         $pDesde = self::fechaGet($_GET['desde'] ?? '');
         $pHasta = self::fechaGet($_GET['hasta'] ?? '');
-        $pMes = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['mes'] ?? '')) ? $_GET['mes'] : '';
+        $pMes = preg_match('/^\d{4}-\d{2}$/', texto_param($_GET['mes'] ?? '')) ? $_GET['mes'] : '';
         [$desde, $hasta] = LastPlanner::rangoPeriodo($periodo, $pDesde, $pHasta, $pMes);
 
         $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto, false, $desde, $hasta) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, $desde, $hasta) : []);
@@ -56,7 +56,7 @@ class LastPlannerController
         $ok = false;
 
         if (!empty($_POST['cargar'])) {
-            $p = \Classes\Estampas::plantillas()[(string)($_POST['clave'] ?? '')] ?? null;
+            $p = \Classes\Estampas::plantillas()[texto_param($_POST['clave'] ?? '')] ?? null;
             if ($p && \Model\Estampa::disponible()) {
                 $nombre = 'Plantilla · ' . $p['nombre'];
                 $config = json_encode(\Classes\Estampas::limpiarConfig($p['config'], (int)$proyecto->id), JSON_UNESCAPED_UNICODE);

@@ -8,6 +8,18 @@ function s($html): string
     return htmlspecialchars((string)($html ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Texto de un parámetro de la petición. Un valor manipulado como arreglo
+ * (?q[]=… o un campo[] en un POST) se ignora con el valor por defecto en vez
+ * de provocar «Array to string conversion» en el registro de PHP.
+ */
+function texto_param($valor, string $defecto = ''): string
+{
+    if (is_string($valor)) return $valor;
+    if (is_int($valor) || is_float($valor)) return (string)$valor;
+    return $defecto;
+}
+
 function pagina_actual($path): bool
 {
     return str_contains($_SERVER['REQUEST_URI'] ?? '', $path);

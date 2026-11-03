@@ -54,7 +54,7 @@ class EnsambladorController
     {
         $p = proyecto_api();
         $s = self::sesion($p);
-        $r = Ensamblador::lotes($p, $s, trim(mb_substr((string)($_POST['instruccion'] ?? ''), 0, 1000)), self::modos(), (int)($_POST['submittal_id'] ?? 0));
+        $r = Ensamblador::lotes($p, $s, trim(mb_substr(texto_param($_POST['instruccion'] ?? ''), 0, 1000)), self::modos(), (int)($_POST['submittal_id'] ?? 0));
         json_respuesta(['success' => true, 'csrf' => csrf_token()] + $r);
     }
 
@@ -63,7 +63,7 @@ class EnsambladorController
     {
         $p = proyecto_api();
         $s = self::sesion($p);
-        $c = json_decode((string)($_POST['datos'] ?? ''), true);
+        $c = json_decode(texto_param($_POST['datos'] ?? ''), true);
         if (!is_array($c) || !is_array($c['respuestas'] ?? null)) json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         if (($c['tipo'] ?? '') === 'pregunta') {
             $t = is_array($c['respuestas'][0] ?? null) ? trim((string)($c['respuestas'][0]['respuesta'] ?? '')) : '';
@@ -88,9 +88,9 @@ class EnsambladorController
     public static function guardarPlantilla()
     {
         $p = proyecto_api();
-        $nombre = trim((string)($_POST['nombre'] ?? ''));
-        $descripcion = trim((string)($_POST['descripcion'] ?? ''));
-        $documento = mb_substr(trim((string)($_POST['documento'] ?? '')), 0, 255);
+        $nombre = trim(texto_param($_POST['nombre'] ?? ''));
+        $descripcion = trim(texto_param($_POST['descripcion'] ?? ''));
+        $documento = mb_substr(trim(texto_param($_POST['documento'] ?? '')), 0, 255);
         $meta = ['fuente' => ['tipo' => 'documento', 'nombre' => $documento ?: (string)$p->nombre], 'generado_por' => 'ia'];
         [$ok, $r] = \Classes\HistorialCambios::silenciar(fn() => \Classes\PlantillaProyecto::guardar($p, usuario_actual(), $nombre, $descripcion, !empty($_POST['compartida']), $meta));
         if (!$ok) json_respuesta(['success' => false, 'error' => (string)$r], 422);
@@ -142,7 +142,7 @@ class EnsambladorController
     {
         $p = proyecto_api();
         $sel = json_decode((string)($_POST['seleccion'] ?? '[]'), true);
-        $r = is_array($sel) ? \Classes\Renumeracion::aplicarPorFechas((int)$p->id, (string)($_POST['huella'] ?? ''), $sel) : 'Selección no válida';
+        $r = is_array($sel) ? \Classes\Renumeracion::aplicarPorFechas((int)$p->id, texto_param($_POST['huella'] ?? ''), $sel) : 'Selección no válida';
         if (is_string($r)) json_respuesta(['success' => false, 'error' => $r], 409);
         json_respuesta(['success' => true] + $r);
     }
@@ -150,7 +150,7 @@ class EnsambladorController
     public static function ordenarRechazar()
     {
         $p = proyecto_api();
-        \Classes\Auditoria::registrar((int)$p->id, 'ordenar', 'rechazado', 'ordenar_renumerar', 'Se descartó la propuesta de ordenar y renumerar por fechas (IA)', null, null, null, mb_substr((string)($_POST['modelo'] ?? ''), 0, 150), ['proyecto', (int)$p->id, 'Orden del programa']);
+        \Classes\Auditoria::registrar((int)$p->id, 'ordenar', 'rechazado', 'ordenar_renumerar', 'Se descartó la propuesta de ordenar y renumerar por fechas (IA)', null, null, null, mb_substr(texto_param($_POST['modelo'] ?? ''), 0, 150), ['proyecto', (int)$p->id, 'Orden del programa']);
         json_respuesta(['success' => true]);
     }
 

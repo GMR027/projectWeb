@@ -30,8 +30,8 @@ class EquipoController
             'horas' => $disponible ? Equipo::horas($pid, $verHoras) : [],
             'actividades' => $disponible ? \Classes\Recursos::actividades($pid) : [],
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
-            'ok' => (string)($_GET['ok'] ?? ''),
-            'error' => (string)($_GET['error'] ?? ''),
+            'ok' => texto_param($_GET['ok'] ?? ''),
+            'error' => texto_param($_GET['error'] ?? ''),
         ]);
     }
 

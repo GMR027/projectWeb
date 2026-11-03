@@ -31,7 +31,7 @@ class RfiController
             'lista' => $lista, 'resumen' => $disponible ? Rfi::resumen($pid) : [], 'puedeEditar' => $gestiona, 'editar' => $editar,
             'actividades' => $disponible && $gestiona ? \Classes\Recursos::actividades($pid) : [],
             'revs' => $revs, 'puedeRev' => puede_revisar($proyecto), 'abrirForm' => isset($_GET['nuevo']) || $editar,
-            'numero' => $disponible ? Rfi::siguienteNumero($pid) : '', 'error' => (string)($_GET['error'] ?? ''), 'ok' => (string)($_GET['ok'] ?? ''),
+            'numero' => $disponible ? Rfi::siguienteNumero($pid) : '', 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
             'laminasDisponibles' => $disponible && $gestiona ? Grafico::laminasParaSeleccion($pid) : [],
             'categoriasLamina' => $disponible && $gestiona ? GraficoCategoria::deProyecto($pid) : [],
             'laminasMarcadas' => $editar ? Rfi::idsLaminas((int)$editar['id']) : [],
@@ -57,7 +57,7 @@ class RfiController
     public static function estado()
     {
         $p = proyecto_de_peticion(true);
-        Rfi::cambiarEstado((int)$p->id, (int)($_POST['id'] ?? 0), (string)($_POST['estado'] ?? ''));
+        Rfi::cambiarEstado((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['estado'] ?? ''));
         self::volver((int)$p->id);
     }
 

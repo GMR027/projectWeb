@@ -55,7 +55,7 @@ class PlantillasProyectoController
     {
         redirigir_si_no_auth();
         if (is_visitante()) { header('Location: /proyectos'); exit; }
-        $clave = (string)($_POST['clave'] ?? '');
+        $clave = texto_param($_POST['clave'] ?? '');
         $datos = PlantillaProyecto::desdeTipoObra($clave);
         if (!$datos) self::volver(null, false, 'Ese tipo de obra no existe.');
         self::borrador($datos, (string)$datos['meta']['fuente']['nombre'], (string)(Plantillas::CATALOGO[$clave]['descripcion'] ?? ''));
@@ -99,7 +99,7 @@ class PlantillasProyectoController
         if (is_visitante()) { header('Location: /proyectos'); exit; }
         $b = $_SESSION['pp_borrador'] ?? null;
         $p = isset($_POST['proyecto']) ? Proyecto::find((int)$_POST['proyecto']) : null;
-        if (!$b || !hash_equals((string)$b['token'], (string)($_POST['token'] ?? ''))) self::volver($p, false, 'El borrador expiró o no es válido. Vuelve a analizar el documento.');
+        if (!$b || !hash_equals((string)$b['token'], texto_param($_POST['token'] ?? ''))) self::volver($p, false, 'El borrador expiró o no es válido. Vuelve a analizar el documento.');
         if (($_POST['accion'] ?? 'guardar') === 'descartar') {
             unset($_SESSION['pp_borrador']);
             self::volver($p, true, 'Borrador descartado.');
@@ -129,7 +129,7 @@ class PlantillasProyectoController
     public static function guardar()
     {
         $p = proyecto_de_peticion(true);
-        [$ok, $r] = PlantillaProyecto::guardar($p, usuario_actual(), (string)($_POST['nombre'] ?? ''), (string)($_POST['descripcion'] ?? ''), !empty($_POST['compartida']));
+        [$ok, $r] = PlantillaProyecto::guardar($p, usuario_actual(), texto_param($_POST['nombre'] ?? ''), texto_param($_POST['descripcion'] ?? ''), !empty($_POST['compartida']));
         self::volver($p, $ok, $ok ? 'Plantilla guardada. Ya puedes elegirla al crear un proyecto nuevo.' : (string)$r);
     }
 

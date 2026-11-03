@@ -28,7 +28,7 @@ class NormativaController
     {
         $proyecto = self::soloAdmin();
         $pid = (int)$proyecto->id;
-        $q = trim((string)($_GET['q'] ?? ''));
+        $q = trim(texto_param($_GET['q'] ?? ''));
         $router->render('normativa/index', ['titulo' => 'Normativa y especificaciones - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'documentos' => Normativa::listar($pid), 'pendientes' => Normativa::conteoPendientes($pid),
             'puede' => puede_gestionar_proyecto($proyecto), 'q' => $q, 'resultados' => $q !== '' ? Normativa::buscar($pid, \Classes\Glosario::palabras($q), 15) : [], 'mensaje' => $_SESSION['normativa_msg'] ?? null]);
         unset($_SESSION['normativa_msg']);
@@ -52,7 +52,7 @@ class NormativaController
         $proyecto = self::soloAdmin();
         $d = Normativa::obtener((int)$proyecto->id, (int)($_GET['id'] ?? 0));
         if (!$d) { header('Location: /normativa?proyecto=' . (int)$proyecto->id); exit; }
-        $q = trim((string)($_GET['q'] ?? ''));
+        $q = trim(texto_param($_GET['q'] ?? ''));
         $router->render('normativa/documento', ['titulo' => $d['titulo'] . ' - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'doc' => $d, 'fragmentos' => Normativa::fragmentos((int)$d['id'], $q), 'q' => $q, 'puede' => puede_gestionar_proyecto($proyecto)]);
     }
 
@@ -116,7 +116,7 @@ class NormativaController
     public static function resolver()
     {
         $p = self::gestionApi();
-        [$ok, $msg] = Normativa::resolver($p, (int)($_POST['id'] ?? 0), (string)($_POST['estado'] ?? ''));
+        [$ok, $msg] = Normativa::resolver($p, (int)($_POST['id'] ?? 0), texto_param($_POST['estado'] ?? ''));
         json_respuesta(['success' => $ok, 'mensaje' => $msg, 'pendientes' => Normativa::conteoPendientes((int)$p->id)], $ok ? 200 : 422);
     }
 
@@ -132,7 +132,7 @@ class NormativaController
     {
         $p = self::gestionApi();
         $tipo = in_array($_POST['tipo'] ?? '', ['actividad', 'material'], true) ? $_POST['tipo'] : '';
-        $ok = $tipo && Normativa::agregarManual((int)$p->id, $tipo, (int)($_POST['entidad'] ?? 0), ((int)($_POST['documento'] ?? 0)) ?: null, (string)($_POST['referencia'] ?? ''), (string)($_POST['nota'] ?? ''));
+        $ok = $tipo && Normativa::agregarManual((int)$p->id, $tipo, (int)($_POST['entidad'] ?? 0), ((int)($_POST['documento'] ?? 0)) ?: null, texto_param($_POST['referencia'] ?? ''), texto_param($_POST['nota'] ?? ''));
         json_respuesta(['success' => $ok, 'error' => $ok ? '' : 'Indica la referencia o el documento'], $ok ? 200 : 422);
     }
 

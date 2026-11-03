@@ -24,7 +24,7 @@ class RecursosController
             'asignaciones' => $disponible && $pestana === 'asignaciones' ? Recursos::asignaciones($pid) : [],
             'actividades' => $disponible && $gestiona && $pestana === 'asignaciones' ? Recursos::actividades($pid) : [],
             'personal' => $disponible && $gestiona && $pestana === 'recursos' ? Recursos::personal($pid) : [],
-            'editar' => null, 'error' => (string)($_GET['error'] ?? ''), 'ok' => (string)($_GET['ok'] ?? ''),
+            'editar' => null, 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
         ]);
     }
 

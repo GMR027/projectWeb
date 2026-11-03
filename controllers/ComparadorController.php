@@ -74,7 +74,7 @@ class ComparadorController
     {
         $g = Comparador::publicoPorToken(is_string($_GET['t'] ?? null) ? $_GET['t'] : '');
         if (!$g) { http_response_code(404); exit('Enlace no disponible'); }
-        $f = Comparador::fuentePublica($g, (string)($_GET['slot'] ?? ''));
+        $f = Comparador::fuentePublica($g, texto_param($_GET['slot'] ?? ''));
         if (!$f) { http_response_code(404); exit('Documento no disponible'); }
         if (isset($f['bytes'])) self::entregarDatos($f['bytes'], $f['mime'], $f['nombre'] . '.' . $f['ext']);
         else self::entregar($f['ruta'], $f['mime']);
@@ -109,7 +109,7 @@ class ComparadorController
         if (!$destinos) json_respuesta(['success' => false, 'error' => 'El proyecto no tiene destinos de Telegram.'], 422);
         $t = Comparador::token((int)$p->id, (int)$g->id);
         $url = $t ? Comparador::urlPublica($t) : '';
-        $texto = mb_substr(trim((string)($_POST['mensaje'] ?? '')), 0, 600);
+        $texto = mb_substr(trim(texto_param($_POST['mensaje'] ?? '')), 0, 600);
         $html = '<b>Comparación de documentos</b>' . "\n" . \Classes\Telegram::h($g->nombre) . "\n" . \Classes\Telegram::h((string)$p->nombre)
             . ($texto !== '' ? "\n\n" . \Classes\Telegram::h($texto) : '')
             . ($url !== '' ? "\n\n" . '<a href="' . \Classes\Telegram::h($url) . '">Abrir la comparación</a>' : '');
@@ -118,7 +118,7 @@ class ComparadorController
             [$bien] = \Classes\Telegram::enviar((int)$d['chat_id'], $html);
             if ($bien) $ok++;
         }
-        $pdf = (string)($_POST['pdf'] ?? '');
+        $pdf = texto_param($_POST['pdf'] ?? '');
         if ($pdf !== '' && $ok && preg_match('#^data:application/pdf;base64,#', $pdf)) {
             $bin = base64_decode(substr($pdf, strpos($pdf, ',') + 1), true);
             if ($bin !== false && strlen($bin) <= 14 * 1024 * 1024) {
@@ -161,7 +161,7 @@ class ComparadorController
     {
         $proyecto = proyecto_de_peticion();
         if (!puede_descargar() && !es_demo()) { http_response_code(403); exit('No autorizado'); }
-        $tipo = (string)($_GET['tipo'] ?? '');
+        $tipo = texto_param($_GET['tipo'] ?? '');
         if (!in_array($tipo, Comparador::FUENTES_PROYECTO, true)) { http_response_code(404); exit('Fuente no disponible'); }
         $f = Comparador::fuenteDeProyecto((int)$proyecto->id, $tipo, (int)($_GET['id'] ?? 0));
         if (!$f) { http_response_code(404); exit('Documento no disponible'); }
@@ -190,7 +190,7 @@ class ComparadorController
         $proyecto = proyecto_de_peticion();
         if (!puede_descargar()) { http_response_code(403); exit('No autorizado'); }
         $g = Comparador::obtener((int)$proyecto->id, (int)($_GET['id'] ?? 0));
-        $archivo = $g ? Comparador::archivoSubido($g, (string)($_GET['slot'] ?? '')) : null;
+        $archivo = $g ? Comparador::archivoSubido($g, texto_param($_GET['slot'] ?? '')) : null;
         if (!$archivo) { http_response_code(404); exit('Archivo no disponible'); }
         self::entregar($archivo['ruta'], $archivo['mime']);
     }

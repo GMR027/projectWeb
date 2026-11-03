@@ -7,7 +7,7 @@ $temaCssProyecto = '';
 if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
     $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
-    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto);
+    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto, \Classes\TemaProyecto::opciones($proyecto));
 }
 ?>
 <!DOCTYPE html>

@@ -3,6 +3,11 @@
     <div>
         <h2><?php echo archivo_icono_html('png'); ?> <?php echo s($grafico->nombre); ?></h2>
         <p class="text-muted"><?php echo s(formatear_fecha($grafico->creado, 'd/m/Y H:i')); ?> · <?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?> px</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-regular fa-calendar"></i><?php echo s(formatear_fecha($grafico->creado, 'd/m/Y')); ?></span>
+            <span class="herr-chip"><i class="fa-solid fa-expand"></i><b><?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?></b> px</span>
+            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i><b><?php echo count($laminas); ?></b> <?php echo count($laminas) === 1 ? 'lámina' : 'láminas'; ?></span>
+        </div>
     </div>
     <div class="la-controles">
         <?php if ($puedeEditar): ?><a href="/graficos/abrir?<?php echo $q; ?>" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>

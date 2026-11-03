@@ -425,7 +425,7 @@ class EditorController
     public static function renombrar()
     {
         [$g] = self::graficoApi();
-        $g->nombre = trim((string)($_POST['nombre'] ?? ''));
+        $g->nombre = trim(texto_param($_POST['nombre'] ?? ''));
         if ($alertas = $g->validar()) json_respuesta(['success' => false, 'error' => $alertas['error'][0]], 422);
         $g->guardar();
         json_respuesta(['success' => true, 'nombre' => $g->nombre]);
@@ -446,7 +446,7 @@ class EditorController
     public static function datosPunch()
     {
         [, $p] = self::graficoApi();
-        $cfg = json_decode((string)($_POST['cfg'] ?? ''), true);
+        $cfg = json_decode(texto_param($_POST['cfg'] ?? ''), true);
         $cfg = \Classes\PunchVista::normalizar(is_array($cfg) ? $cfg : []);
         $filas = [];
         $fotos = [];   // [renglón, columna, src, ancho, alto]: miniaturas que el Editor coloca sobre la tabla (máx. 20)
@@ -469,12 +469,12 @@ class EditorController
         [$g, $p] = self::graficoApi();
         $l = self::laminaDe($g, $_POST['hoja'] ?? null);
         if (!$l) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
-        $json = (string)($_POST['json'] ?? '');
-        $bin = \Classes\MarcasLienzo::binarioDeDataUrl((string)($_POST['png'] ?? ''));
+        $json = texto_param($_POST['json'] ?? '');
+        $bin = \Classes\MarcasLienzo::binarioDeDataUrl(texto_param($_POST['png'] ?? ''));
         if (!\Classes\MarcasLienzo::leer($json, '#^/uploads/(?:vplan/[a-f0-9]{32}\.(?:png|jpg)|punch/min/[a-f0-9]{32}\.jpg)$#', $bin, 60_000_000)) {
             json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
-        $ver = (string)($_POST['version'] ?? '');
+        $ver = texto_param($_POST['version'] ?? '');
         if ($ver !== '' && empty($_POST['forzar']) && $ver !== (string)$l->actualizado) {
             json_respuesta(['success' => false, 'conflicto' => true, 'error' => 'Esta lámina se guardó desde otra sesión después de que la abrieras.'], 409);
         }
@@ -497,7 +497,7 @@ class EditorController
     {
         [$g, $p] = self::graficoApi();
         $todas = $g->laminas();
-        $accion = (string)($_POST['accion'] ?? '');
+        $accion = texto_param($_POST['accion'] ?? '');
         $buscar = function ($id) use ($todas): ?GraficoLamina {
             foreach ($todas as $l) if ((int)$l->id === (int)$id) return $l;
             return null;
@@ -536,11 +536,11 @@ class EditorController
             case 'renombrar':
                 $o = $buscar($_POST['hoja'] ?? 0);
                 if (!$o) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
-                $o->nombre = mb_substr(trim((string)($_POST['nombre'] ?? '')), 0, 60);
+                $o->nombre = mb_substr(trim(texto_param($_POST['nombre'] ?? '')), 0, 60);
                 $o->guardar();
                 json_respuesta(['success' => true, 'nombre' => $o->nombre]);
             case 'ordenar':
-                $ids = array_map('intval', array_filter(explode(',', (string)($_POST['orden'] ?? '')), 'strlen'));
+                $ids = array_map('intval', array_filter(explode(',', texto_param($_POST['orden'] ?? '')), 'strlen'));
                 $actuales = array_map(fn($l) => (int)$l->id, $todas);
                 $a = $ids; $b = $actuales; sort($a); sort($b);
                 if ($a !== $b) json_respuesta(['success' => false, 'error' => 'Orden no válido'], 422);
@@ -582,7 +582,7 @@ class EditorController
     {
         $w = (int)($_POST['ancho'] ?? 0);
         $h = (int)($_POST['alto'] ?? 0);
-        $png = (string)($_POST['png'] ?? '');
+        $png = texto_param($_POST['png'] ?? '');
         if ($w < 16 || $h < 16 || $w > 10000 || $h > 10000 || $w * $h > 64_000_000 || !preg_match('#^data:image/png;base64,[A-Za-z0-9+/=]+$#', $png) || strlen($png) > 90_000_000) {
             json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
