@@ -298,13 +298,12 @@ class Usuario extends ActiveRecord
     public function validarLogin(): array
     {
         if (!$this->email) {
-            self::$alertas['error'][] = 'El email es obligatorio';
-        }
-        if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            self::$alertas['error'][] = 'Email no válido';
+            self::setAlertaCampo('email', 'El email es obligatorio');
+        } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            self::setAlertaCampo('email', 'Email no válido');
         }
         if (!$this->password) {
-            self::$alertas['error'][] = 'El password no puede ir vacío';
+            self::setAlertaCampo('password', 'El password no puede ir vacío');
         }
         return self::$alertas;
     }
@@ -312,21 +311,20 @@ class Usuario extends ActiveRecord
     public function validarNuevaCuenta(): array
     {
         if (!$this->nombre) {
-            self::$alertas['error'][] = 'El nombre es obligatorio';
+            self::setAlertaCampo('nombre', 'El nombre es obligatorio');
         }
         if (!$this->email) {
-            self::$alertas['error'][] = 'El email es obligatorio';
-        }
-        if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            self::$alertas['error'][] = 'Email no válido';
+            self::setAlertaCampo('email', 'El email es obligatorio');
+        } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            self::setAlertaCampo('email', 'Email no válido');
         }
         if (!$this->password) {
-            self::$alertas['error'][] = 'El password no puede ir vacío';
+            self::setAlertaCampo('password', 'El password no puede ir vacío');
         } elseif ($motivo = self::passwordDebil((string)$this->password)) {
-            self::$alertas['error'][] = $motivo;
+            self::setAlertaCampo('password', $motivo);
         }
         if ($this->password !== $this->password2) {
-            self::$alertas['error'][] = 'Los passwords son diferentes';
+            self::setAlertaCampo('password2', 'Los passwords son diferentes');
         }
         return self::$alertas;
     }
@@ -336,7 +334,7 @@ class Usuario extends ActiveRecord
     {
         $v = filter_var($this->limite_proyectos, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 999]]);
         if ($v === false) {
-            if ($this->rol === 'cliente') self::$alertas['error'][] = 'El límite de proyectos debe ser un número entero entre 0 y 999';
+            if ($this->rol === 'cliente') self::setAlertaCampo('limite_proyectos', 'El límite de proyectos debe ser un número entero entre 0 y 999');
             $this->limite_proyectos = 1;
         } else {
             $this->limite_proyectos = $v;
@@ -345,7 +343,7 @@ class Usuario extends ActiveRecord
         // Espacio por proyecto (MB): entero entre 1 y 100000
         $mb = filter_var($this->limite_almacenamiento_mb, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 100000]]);
         if ($mb === false) {
-            if ($this->rol === 'cliente') self::$alertas['error'][] = 'El espacio por proyecto debe ser un número entero de MB entre 1 y 100000';
+            if ($this->rol === 'cliente') self::setAlertaCampo('limite_almacenamiento_mb', 'El espacio por proyecto debe ser un número entero de MB entre 1 y 100000');
             $this->limite_almacenamiento_mb = 300;
         } else {
             $this->limite_almacenamiento_mb = $mb;

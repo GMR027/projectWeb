@@ -30,10 +30,10 @@ class Bitacora extends ActiveRecord
     {
         self::$alertas = [];
         $f = \DateTime::createFromFormat('Y-m-d', (string)$this->fecha);
-        if (!$f || $f->format('Y-m-d') !== $this->fecha) self::$alertas['error'][] = 'La fecha no es válida';
-        if (!trim($this->descripcion)) self::$alertas['error'][] = 'La descripción es obligatoria';
-        if (mb_strlen($this->departamento) > 100) self::$alertas['error'][] = 'El departamento es demasiado largo (máx. 100)';
-        if (!isset(self::IMPORTANCIAS[$this->importancia])) self::$alertas['error'][] = 'Nivel de importancia no válido';
+        if (!$f || $f->format('Y-m-d') !== $this->fecha) self::setAlertaCampo('fecha', 'La fecha no es válida');
+        if (!trim($this->descripcion)) self::setAlertaCampo('descripcion', 'La descripción es obligatoria');
+        if (mb_strlen($this->departamento) > 100) self::setAlertaCampo('departamento', 'El departamento es demasiado largo (máx. 100)');
+        if (!isset(self::IMPORTANCIAS[$this->importancia])) self::setAlertaCampo('importancia', 'Nivel de importancia no válido');
         return self::$alertas;
     }
 

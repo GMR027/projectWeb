@@ -9,7 +9,11 @@
 <?php $herramienta = 'submittals'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
 <div class="card">
     <?php if (empty($paquetes)): ?>
-        <p class="text-muted"><?php echo $cp['filtros'] ? 'Ningún paquete coincide con el filtro.' : 'Aún no hay paquetes. Crea uno y elige los materiales del catálogo.'; ?></p>
+        <?php echo estado_vacio('fa-file-circle-check',
+            $cp['filtros'] ? 'Ningún paquete coincide con el filtro' : 'Aún no hay paquetes',
+            $cp['filtros'] ? 'Prueba con otro filtro o quita la búsqueda.' : 'Crea un paquete y elige los materiales del catálogo; su estado se sincroniza con el MSR.',
+            $cp['filtros'] || !$puede ? null : ['texto' => 'Nuevo paquete', 'url' => '/submittals/crear?proyecto=' . $pid, 'icono' => 'fa-plus'],
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla tabla-submittals" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>>
             <thead><tr>

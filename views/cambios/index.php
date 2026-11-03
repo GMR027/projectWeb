@@ -63,7 +63,10 @@
 </div>
 <div class="card">
     <?php if (empty($ordenes)): ?>
-        <p class="text-muted">No hay órdenes de cambio<?php echo $filtro ? ' con ese estado' : ''; ?>. Crea una para registrar instalaciones, retiros, reubicaciones, demoliciones o adiciones.</p>
+        <?php echo estado_vacio('fa-code-branch', $filtro ? 'Ninguna orden coincide con el filtro' : 'Aún no hay órdenes de cambio',
+            $filtro ? 'Prueba con otro estado.' : 'Registra instalaciones, retiros, reubicaciones, demoliciones o adiciones.',
+            $filtro ? null : ['texto' => 'Nueva orden', 'url' => '/cambios/crear?proyecto=' . $pid, 'icono' => 'fa-plus'],
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <table class="tabla">
             <thead><tr><th>Número</th><th>Título</th><th class="hide-m">Fecha</th><th>Estado</th><th class="hide-m">Renglones</th><th class="hide-m">Impacto</th><th>Acciones</th></tr></thead>

@@ -3,9 +3,9 @@
 // Acento de la interfaz de vPlan: sigue la paleta del proyecto (--primary) en vez de un azul fijo.
 // El contenido de la lámina (tablas, colores de estado) no se toca: debe verse igual que el PDF.
 :root {
-  --vplan-acento: var(--primary, #0070c0);
-  --vplan-acento-suave: color-mix(in srgb, var(--primary, #0070c0) 18%, transparent);
-  --vplan-acento-borde: color-mix(in srgb, var(--primary, #0070c0) 60%, transparent);
+  --vplan-acento: var(--primary);
+  --vplan-acento-suave: color-mix(in srgb, var(--primary) 18%, transparent);
+  --vplan-acento-borde: color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 // ============================================================
@@ -21,7 +21,7 @@
   &:disabled { opacity: .4; cursor: default; }
   &.vp-ib-peligro { color: $danger; border-color: rgba(239, 68, 68, .35);
     &:hover { background: rgba(239, 68, 68, .85); color: #fff; border-color: transparent; } }
-  &.vp-ib-ok { color: #059669; border-color: rgba(5, 150, 105, .45); &:hover { background: #059669; color: #fff; } }
+  &.vp-ib-ok { color: var(--success-ink); border-color: rgba(5, 150, 105, .45); &:hover { background: var(--success); color: var(--on-success); } }
   &.vp-ib-on { background: var(--vplan-acento-suave); color: var(--vplan-acento); border-color: var(--vplan-acento-borde); }
   &.vp-ib-sm { width: 2.6rem; height: 2.6rem; font-size: 1.1rem; }
 }
@@ -79,14 +79,14 @@
 .vp-mh-plano { background: #dbeafe; }
 .vp-mh-tareas { background: #93c5fd; }
 .vp-mh-tabla { background: #bbf7d0; }
-.vp-mh-simbologia, .vp-mh-schedule { background: #fde68a; }
+.vp-mh-simbologia, .vp-mh-schedule { background: var(--warning); }
 
 // ---------- Barra del modo diseño ----------
 .vp-dis-barra { position: sticky; top: 0; z-index: 40; display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; padding: .8rem 1.2rem; margin-bottom: 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; box-shadow: var(--shadow);
   .btn { height: 3.6rem; } }
 .vp-barra-sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 .4rem; }
 // Chip de estado: «Cambios sin guardar» / «Guardando…»; vacío, no se ve
-.vp-dis-estado { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; padding: .3rem .9rem; border: 1px solid rgba(245, 158, 11, .5); border-radius: 99rem; background: rgba(245, 158, 11, .12); color: #f59e0b; font-size: 1.15rem; font-weight: 700;
+.vp-dis-estado { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; padding: .3rem .9rem; border: 1px solid rgba(245, 158, 11, .5); border-radius: 99rem; background: rgba(245, 158, 11, .12); color: var(--warning-ink); font-size: 1.15rem; font-weight: 700;
   &::before { content: ''; flex: none; width: .7rem; height: .7rem; border-radius: 50%; background: currentColor; }
   &:empty { display: none; } }
 .vp-ib-ayuda { margin-left: auto; }
@@ -111,11 +111,11 @@
   &::before { content: ''; position: absolute; }
   &.vp-guia-v { top: 0; bottom: 0; width: .9rem; margin-left: -.45rem; cursor: col-resize; &::before { left: 50%; top: 0; bottom: 0; border-left: 1px solid #06b6d4; } }
   &.vp-guia-h { left: 0; right: 0; height: .9rem; margin-top: -.45rem; cursor: row-resize; &::before { top: 50%; left: 0; right: 0; border-top: 1px solid #06b6d4; } }
-  &:hover::before, &.vp-guia-sel::before { border-color: #f59e0b; }
+  &:hover::before, &.vp-guia-sel::before { border-color: var(--warning); }
   &.vp-guia-v:hover::before, &.vp-guia-v.vp-guia-sel::before { border-left-width: 2px; }
   &.vp-guia-h:hover::before, &.vp-guia-h.vp-guia-sel::before { border-top-width: 2px; }
   &.vp-guia-bloq { cursor: not-allowed; &.vp-guia-v::before { border-left-style: dashed; } &.vp-guia-h::before { border-top-style: dashed; } }
-  &.vp-guia-iman::before { border-color: #ef4444; }
+  &.vp-guia-iman::before { border-color: var(--danger); }
   &.vp-guia-fuera { opacity: .35; } }
 .vp-sheet.vp-diseno .vp-blk.vp-bloq { outline-color: rgba(148, 163, 184, .8); .vp-ov { cursor: not-allowed; } .vp-h { display: none !important; } }
 
@@ -179,7 +179,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   &.vp-ya { background: rgba(5, 150, 105, .08); }
   .vp-ins-tabla-txt { flex: 1 1 12rem; min-width: 0; display: grid; b { font-size: 1.25rem; overflow-wrap: anywhere; } small { color: var(--text-muted); font-size: 1.1rem; } }
   .btn-sm { height: 3rem; flex: none; } }
-.vp-chip { font-size: 1.05rem; font-weight: 700; padding: .2rem .7rem; border-radius: 1rem; background: rgba(5, 150, 105, .25); color: #34d399; white-space: nowrap; }
+.vp-chip { font-size: 1.05rem; font-weight: 700; padding: .2rem .7rem; border-radius: 1rem; background: rgba(5, 150, 105, .25); color: var(--success-ink); white-space: nowrap; }
 // Etiqueta de la tabla enlazada a una hoja de SheetFlow
 .vp-chip-sf { background: var(--vplan-acento-suave); color: var(--vplan-acento); }
 .vp-ins-nueva { width: 100%; margin-bottom: .6rem; }
@@ -350,7 +350,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .gr-gal-menu-in { display: none; position: absolute; right: 0; top: calc(100% + .3rem); z-index: 20; min-width: 22rem; padding: .4rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); box-shadow: var(--shadow);
   a, button { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .6rem .8rem; border: 0; border-radius: .5rem; background: none; color: var(--text); font-size: 1.2rem; text-align: left; text-decoration: none; cursor: pointer;
     &:hover { background: var(--surface-hover); }
-    &.peligro { color: #dc2626; &:hover { background: rgba(220, 38, 38, .12); } } }
+    &.peligro { color: var(--danger-ink); &:hover { background: rgba(220, 38, 38, .12); } } }
   form { display: contents; } }
 
 // ---------- «Lienzo en blanco»: arranque rápido del Editor de gráficos (_editor-lienzo.php) ----------
@@ -375,7 +375,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   p { margin: .6rem 0; } }
 .mat-resumen { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: .2rem 0 1rem; font-size: 1.1rem; color: var(--text-muted);
   b { color: var(--text); font-size: 1.3rem; }
-  .mat-alerta b { color: #d97706; } }
+  .mat-alerta b { color: var(--warning-ink); } }
 .mat-leyenda { display: grid; gap: .45rem; margin: 0 0 1.2rem; padding: 0; list-style: none; }
 .mat-fila { display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); cursor: pointer;
   &:hover { border-color: color-mix(in srgb, var(--vplan-acento) 55%, transparent); background: var(--surface-hover); }
@@ -411,7 +411,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .mat-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .5rem; padding: 0; list-style: none; }
 .mat-chip { display: inline-flex; align-items: center; gap: .4rem; max-width: 100%; padding: .3rem .3rem .3rem .7rem; border: 1px solid var(--border); border-radius: 99rem; background: var(--bg-tertiary); font-size: 1.08rem;
   span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  button { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted); cursor: pointer; &:hover { background: rgba(220, 38, 38, .16); color: #dc2626; } }
+  button { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted); cursor: pointer; &:hover { background: rgba(220, 38, 38, .16); color: var(--danger-ink); } }
   &.mat-chip-mal { border-color: rgba(220, 38, 38, .5); } }
 // Selector de actividades
 .ve-mat-modal-card { max-width: 76rem; width: calc(100vw - 3rem); }
@@ -531,7 +531,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   .vp-tarea-item-pct { grid-area: pct; align-self: center; font-family: $font-mono; font-weight: 700; font-size: 1.4rem; color: var(--vplan-acento); } }
 .vp-tarea-ficha { display: grid; gap: 1rem; }
 .vp-tarea-estado { margin: 0; color: var(--text-muted); font-size: 1.15rem;
-  &.mal { color: #dc2626; } }
+  &.mal { color: var(--danger-ink); } }
 .vp-tarea-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem 1rem; }
 .vp-tarea-campo { display: grid; gap: .3rem; color: var(--text-muted); font-size: 1.15rem; font-weight: 600;
   input { width: 100%; min-height: 4.4rem; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--bg-secondary); color: var(--text); font: inherit; font-size: 1.6rem; }

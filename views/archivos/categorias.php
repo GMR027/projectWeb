@@ -11,7 +11,10 @@
 </div>
 <div class="card">
     <?php if (empty($lista)): ?>
-        <p class="text-muted">Aún no hay categorías.<?php echo $puede ? ' Crea la primera con «Nueva categoría».' : ''; ?></p>
+        <?php echo estado_vacio('fa-tags', 'Aún no hay categorías',
+            $puede ? 'Crea la primera para clasificar los documentos del archivo.' : 'Cuando el equipo cree categorías aparecerán aquí.',
+            $puede ? ['texto' => 'Nueva categoría', 'url' => '/archivos/categorias/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null,
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <table class="tabla">
             <thead><tr><th>Categoría</th><th class="hide-m">Archivos</th><?php if ($puede): ?><th>Acciones</th><?php endif; ?></tr></thead>

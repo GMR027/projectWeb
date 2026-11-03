@@ -90,7 +90,10 @@ $e = $editar;
 <?php endif; ?>
 
 <div class="card">
-    <?php if (!$lista): ?><p class="text-muted">Todavía no hay equipo registrado.</p><?php else: ?>
+    <?php if (!$lista): ?><?php echo estado_vacio('fa-truck', 'Todavía no hay equipo registrado',
+        'Agrega maquinaria y equipo para controlar tarifas, horas y servicios preventivos.',
+        !$puedeEditar || !$disponible ? null : ['texto' => 'Nuevo equipo', 'url' => $url(['nuevo' => 1]), 'icono' => 'fa-plus'],
+        null, '', 'estado-vacio-sm'); ?><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla" <?php echo pag_attr($proyecto); ?>>
         <thead><tr><th>Equipo</th><th class="hide-m">Propietario</th><th class="num">Tarifa/h</th><th class="num">Horas</th><th class="num">Costo</th><th>Estado</th><th></th></tr></thead>
         <tbody>

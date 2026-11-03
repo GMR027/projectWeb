@@ -11,7 +11,10 @@
 </div>
 <div class="card">
     <?php if (empty($lista)): ?>
-        <p class="text-muted">Aún no hay departamentos.<?php echo $puede ? ' Crea el primero con «Nuevo departamento».' : ''; ?></p>
+        <?php echo estado_vacio('fa-sitemap', 'Aún no hay departamentos',
+            $puede ? 'Crea el primero para agrupar los registros de la bitácora.' : 'Cuando el equipo cree departamentos aparecerán aquí.',
+            $puede ? ['texto' => 'Nuevo departamento', 'url' => '/bitacora/departamentos/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null,
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <table class="tabla">
             <thead><tr><th>Departamento</th><th class="hide-m">Registros</th><?php if ($puede): ?><th>Acciones</th><?php endif; ?></tr></thead>

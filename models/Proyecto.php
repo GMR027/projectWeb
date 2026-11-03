@@ -66,19 +66,19 @@ class Proyecto extends ActiveRecord
     public function validar(): array
     {
         if (!$this->codigo) {
-            self::$alertas['error'][] = 'El código del proyecto es obligatorio';
+            self::setAlertaCampo('codigo', 'El código del proyecto es obligatorio');
         }
         if (!$this->nombre) {
-            self::$alertas['error'][] = 'El nombre del proyecto es obligatorio';
+            self::setAlertaCampo('nombre', 'El nombre del proyecto es obligatorio');
         }
         if (!$this->fecha_inicio) {
-            self::$alertas['error'][] = 'La fecha de inicio es obligatoria';
+            self::setAlertaCampo('fecha_inicio', 'La fecha de inicio es obligatoria');
         }
         if (!$this->fecha_fin) {
-            self::$alertas['error'][] = 'La fecha de fin es obligatoria';
+            self::setAlertaCampo('fecha_fin', 'La fecha de fin es obligatoria');
         }
         if ($this->fecha_inicio && $this->fecha_fin && strtotime($this->fecha_fin) < strtotime($this->fecha_inicio)) {
-            self::$alertas['error'][] = 'La fecha de fin no puede ser anterior a la de inicio';
+            self::setAlertaCampo('fecha_fin', 'La fecha de fin no puede ser anterior a la de inicio');
         }
         return self::$alertas;
     }

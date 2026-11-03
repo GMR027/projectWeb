@@ -33,10 +33,10 @@ class Partida extends ActiveRecord
     public function validar(): array
     {
         if (!$this->codigo) {
-            self::$alertas['error'][] = 'El código de la partida es obligatorio';
+            self::setAlertaCampo('codigo', 'El código de la partida es obligatorio');
         }
         if (!$this->nombre) {
-            self::$alertas['error'][] = 'El nombre de la partida es obligatorio';
+            self::setAlertaCampo('nombre', 'El nombre de la partida es obligatorio');
         }
         return self::$alertas;
     }

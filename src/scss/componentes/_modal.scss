@@ -80,7 +80,7 @@
 }
 
 // Tonos del modal: peligro (rojo, por defecto), aviso (ámbar) e info (azul)
-.modal-overlay[data-tono='aviso'] .modal-icono { background-color: rgba(245, 158, 11, 0.14); color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); }
+.modal-overlay[data-tono='aviso'] .modal-icono { background-color: rgba(245, 158, 11, 0.14); color: var(--warning-ink); border-color: rgba(245, 158, 11, 0.4); }
 .modal-overlay[data-tono='info'] .modal-icono { background-color: rgba(0, 112, 192, 0.16); color: var(--info-ink); border-color: rgba(0, 112, 192, 0.45); }
 .modal-overlay.abierto .modal-icono { animation: modal-icono-pop .35s ease; }
 @keyframes modal-icono-pop { from { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); } to { transform: scale(1); opacity: 1; } }
@@ -125,7 +125,7 @@
   font-size: 2.2rem;
   cursor: pointer;
 
-  &:hover { background: #dc2626; }
+  &:hover { background: var(--danger); }
 }
 
 // Modal para pedir un dato (sustituye a prompt())

@@ -11,7 +11,7 @@
 .lt-nav { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .4rem; border: 1px solid var(--border); border-radius: .8rem; .btn { min-width: 3.2rem; } }
 
 .lt-aviso { margin: 0 0 1.2rem; padding: .8rem 1.2rem; border-radius: .8rem; font-size: 1.3rem; border: 1px solid var(--border);
-  &-ok { border-color: #22c55e; color: #86efac; } &-error { border-color: #ef4444; color: #fca5a5; } }
+  &-ok { border-color: var(--success); color: var(--success-ink); } &-error { border-color: var(--danger); color: var(--danger-ink); } }
 
 .lt-lienzo { padding: 0; overflow: hidden; }
 // Panel superior de indicadores: cada marca en su píldora (incluidas las miniaturas de los chips de la derecha)
@@ -20,7 +20,7 @@
   span { display: inline-flex; align-items: center; gap: .55rem; padding: .3rem .9rem; border: 1px solid rgba(128, 128, 128, .30); border-radius: 99px;
     background: var(--surface, rgba(255, 255, 255, .04)); }
   .lt-sw { display: inline-block; width: 1.6rem; height: 1.1rem; border-radius: .3rem; border: 1px solid rgba(128, 128, 128, .45);
-    &-nohab { background: rgba(128, 128, 128, .35); } &-hoy { background: #ff5a1f; border-color: #ff5a1f; } } }
+    &-nohab { background: rgba(128, 128, 128, .35); } &-hoy { background: var(--primary); border-color: var(--primary); } } }
 .lt-ayuda { margin: .8rem 0 1.2rem; max-width: 110rem; }
 
 .lt-scroll { display: flex; overflow: auto; max-height: 70vh; background: var(--bg-primary, #0b132b); }
@@ -34,7 +34,7 @@
 @media (max-width: 48rem) { .lt-labels { width: 13rem; } }
 
 .lt-chip { flex: none; display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: .3rem; }
-.lt-warn { color: #fbbf24; font-size: 1.1rem; }
+.lt-warn { color: var(--warning-ink); font-size: 1.1rem; }
 
 // Lienzo: eje de días + filas
 .lt-canvas { flex: none; position: relative; user-select: none; }
@@ -49,7 +49,7 @@
 .lt-ppd-chico .lt-eje-dia span { display: none; }
 
 .lt-nohabil { position: absolute; top: 62px; bottom: 0; background: rgba(128, 128, 128, .10); pointer-events: none; }
-.lt-hoy { position: absolute; top: 62px; bottom: 0; width: 0; border-left: 2px dashed #ff5a1f; pointer-events: none; z-index: 1; }
+.lt-hoy { position: absolute; top: 62px; bottom: 0; width: 0; border-left: 2px dashed var(--primary); pointer-events: none; z-index: 1; }
 
 // «Icono de actividad»: disco circular centrado sobre la barra (la fila crece para que quepa)
 .lt-iconos .lt-barra { top: auto; bottom: 2px; height: 26px; }
@@ -63,10 +63,10 @@
   background: var(--bg-secondary, #1c2541); border: 2px solid; box-shadow: 0 2px 6px rgba(0, 0, 0, .5); pointer-events: none; }
 .lt-chip-est { width: 24px; height: 24px; border-color: #fff;   // disco relleno con glifo blanco
   svg { width: 14px; height: 14px; }
-  &.st-no_iniciada { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, .28), 0 2px 6px rgba(0, 0, 0, .5); }
-  &.st-en_proceso { background: #d97706; box-shadow: 0 0 0 2px rgba(217, 119, 6, .30), 0 2px 6px rgba(0, 0, 0, .5); }
-  &.st-completada { background: #22c55e; box-shadow: 0 0 0 2px rgba(34, 197, 94, .28), 0 2px 6px rgba(0, 0, 0, .5); } }
-.lt-chip-restr { width: 26px; height: 26px; background: #ef4444; border-color: #fff;
+  &.st-no_iniciada { background: var(--danger); box-shadow: 0 0 0 2px rgba(239, 68, 68, .28), 0 2px 6px rgba(0, 0, 0, .5); }
+  &.st-en_proceso { background: var(--warning); box-shadow: 0 0 0 2px rgba(217, 119, 6, .30), 0 2px 6px rgba(0, 0, 0, .5); }
+  &.st-completada { background: var(--success); box-shadow: 0 0 0 2px rgba(34, 197, 94, .28), 0 2px 6px rgba(0, 0, 0, .5); } }
+.lt-chip-restr { width: 26px; height: 26px; background: var(--danger); border-color: #fff;
   pointer-events: auto; cursor: help;   // captura el hover: abre la burbuja con retardo
   svg { width: 15px; height: 15px; } }
 // Los mismos chips en miniatura dentro de la leyenda
@@ -75,7 +75,7 @@
 // Burbuja de la restricción: misma pinta que las de ayuda, con el detalle y el botón «Resolver»
 .lt-restr-pop { max-width: 34rem;
   .lt-pop-item + .lt-pop-item { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--border); }
-  .lt-pop-cab { display: block; font-size: 1.2rem; font-weight: 700; color: #f87171; }
+  .lt-pop-cab { display: block; font-size: 1.2rem; font-weight: 700; color: var(--danger-ink); }
   .lt-pop-item p { margin: .2rem 0 0; }
   .lt-pop-btn { display: inline-flex; align-items: center; gap: .5rem; margin-top: .7rem; padding: .35rem .9rem; border: 0; border-radius: .6rem;
     background: var(--primary-glow); color: var(--primary-ink); font: inherit; font-weight: 600; font-size: 1.2rem; cursor: pointer;

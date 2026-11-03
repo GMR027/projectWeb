@@ -90,7 +90,11 @@ $pre = [
     <a href="<?php echo s($url(['estado' => 'vencidos'])); ?>" class="cb-chip<?php echo $filtro === 'vencidos' ? ' activo' : ''; ?>">Vencidos <b><?php echo (int)$resumen['vencidos']; ?></b></a>
 </div>
 <div class="card">
-    <?php if (!$lista): ?><p class="text-muted">No hay RFI<?php echo $filtro !== '' ? ' con ese filtro' : ' todavía'; ?>.</p><?php else: ?>
+    <?php if (!$lista): ?><?php echo estado_vacio('fa-circle-question',
+        $filtro !== '' ? 'Ningún RFI coincide con el filtro' : 'Aún no hay RFI',
+        $filtro !== '' ? 'Prueba con otro estado o quita el filtro.' : 'Registra las dudas y consultas de la obra; el RFI bloquea la actividad hasta que se responde.',
+        $filtro !== '' || !$puedeEditar || !$disponible ? null : ['texto' => 'Nuevo RFI', 'url' => $url(['nuevo' => 1]), 'icono' => 'fa-plus'],
+        null, '', 'estado-vacio-sm'); ?><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla" data-rev-tabla data-proyecto="<?php echo $pid; ?>" <?php echo pag_attr($proyecto); ?>>
         <thead><tr><?php if (is_admin()): ?><th title="Revisión del RFI">Rev.</th><?php endif; ?><th>RFI</th><th class="hide-m">Responsable</th><th>Fecha límite</th><th class="hide-m">Bloquea</th><th>Estado</th><th></th></tr></thead>
         <tbody>

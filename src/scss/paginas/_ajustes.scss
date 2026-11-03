@@ -394,8 +394,8 @@
 
 .alm-barra { height: 1.4rem; border-radius: 1rem; background: rgba(255,255,255,.08); overflow: hidden; margin: 1.2rem 0;
   span { display: block; height: 100%; background: $secondary; border-radius: 1rem; min-width: .3rem; }
-  .alm-amarillo { background: #f59e0b; }
-  .alm-rojo { background: #ef4444; }
+  .alm-amarillo { background: var(--warning); }
+  .alm-rojo { background: var(--danger); }
 }
 
 // Calendario: formulario de actividad en modal (iframe)

@@ -91,7 +91,11 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
 </div>
 
 <div class="card">
-    <?php if (!$items): ?><p class="text-muted">No hay puntos de entrega<?php echo $filtro !== '' ? ' en esa categoría' : ' todavía'; ?>.</p><?php else: ?>
+    <?php if (!$items): ?><?php echo estado_vacio('fa-door-closed',
+        $filtro !== '' ? 'Ningún punto en esa categoría' : 'Aún no hay puntos de entrega',
+        $filtro !== '' ? 'Prueba con otra categoría.' : 'Registra los puntos de entrega, su responsable y su compromiso.',
+        $filtro !== '' || !$puedeEditar || !$disponible ? null : ['texto' => 'Nuevo punto', 'url' => $url(['nuevo' => 1]), 'icono' => 'fa-plus'],
+        null, '', 'estado-vacio-sm'); ?><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla" <?php echo pag_attr($proyecto); ?>>
         <thead><tr><th>Punto</th><th class="hide-m">Responsable</th><th>Compromiso</th><th>Estado</th><th></th></tr></thead>
         <tbody><?php foreach ($items as $i): ?>

@@ -11,7 +11,10 @@
 </div>
 <div class="card">
     <?php if (empty($personal)): ?>
-        <p class="text-muted">Aún no hay personal registrado.</p>
+        <?php echo estado_vacio('fa-users', 'Aún no hay personal registrado',
+            'Agrega al personal para asignarlo a los reportes diarios y a las actividades.',
+            $puede ? ['texto' => 'Nuevo personal', 'url' => '/reportes/personal/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null,
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <table class="tabla">
             <thead><tr><th class="hide-m">Foto</th><th>Nombre</th><th class="hide-m">Departamento</th><?php if ($puede): ?><th>Acciones</th><?php endif; ?></tr></thead>

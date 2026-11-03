@@ -45,7 +45,10 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
 <?php if ($inteligentes ?? false): ?><p class="text-muted text-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Materiales inteligentes activo: cada material nuevo o modificado se verifica contra las normativas y especificaciones del proyecto desde la app de escritorio.</p><?php endif; ?>
 <div class="card">
     <?php if (empty($materiales)): ?>
-        <p class="text-muted">Aún no hay materiales<?php echo ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== '') ? ' que coincidan con los filtros' : ''; ?>. Agrega uno o impórtalos desde el MSR.</p>
+        <?php $__filtra = $q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== '';
+        echo estado_vacio('fa-boxes-stacked', $__filtra ? 'Ningún material coincide con los filtros' : 'Aún no hay materiales',
+            $__filtra ? 'Prueba con otra especialidad, entrega o compra.' : 'Agrega uno a mano o impórtalos desde el MSR.',
+            null, null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla tabla-materiales" <?php echo pag_attr($proyecto); ?> data-proyecto="<?php echo s($proyecto->id); ?>">
             <thead>

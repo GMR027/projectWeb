@@ -60,7 +60,12 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
         <?php endif; ?>
 <div class="card archivero-lista">
     <?php if (empty($archivos)): ?>
-        <p class="text-muted">No hay archivos<?php echo $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; ?><?php echo $filtro ? ' en esta categoría' : ''; ?>.<?php echo $puede ? ' Sube el primero con «Subir archivo».' : ''; ?></p>
+        <?php $__donde = $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; $__cat = $filtro ? ' en esta categoría' : '';
+        echo estado_vacio('fa-folder-open',
+            'No hay archivos' . $__donde . $__cat,
+            $puede ? 'Sube el primero con «Subir archivo» o crea una carpeta para organizarlos.' : 'Cuando el equipo suba documentos aparecerán aquí.',
+            $puede ? ['texto' => 'Subir archivo', 'url' => '/archivos/crear?proyecto=' . $id . ($carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''), 'icono' => 'fa-upload'] : null,
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla tabla-archivos" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><?php if ($puede): ?><th class="col-sel hide-m"><input type="checkbox" id="arch-todos" aria-label="Seleccionar todos"></th><?php endif; ?><th class="hide-m">Fecha</th><th class="hide-m">Categoría</th><th>Nombre del archivo</th><th class="hide-m">Rev.</th><th>Acciones</th></tr></thead>

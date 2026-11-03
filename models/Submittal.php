@@ -47,10 +47,10 @@ class Submittal extends ActiveRecord
     {
         self::$alertas = [];
         if (!trim($this->numero_submittal)) {
-            self::$alertas['error'][] = 'El número de submittal es obligatorio';
+            self::setAlertaCampo('numero_submittal', 'El número de submittal es obligatorio');
         }
         if (!$this->fecha || !\DateTime::createFromFormat('Y-m-d', $this->fecha)) {
-            self::$alertas['error'][] = 'La fecha no es válida';
+            self::setAlertaCampo('fecha', 'La fecha no es válida');
         }
         return self::$alertas;
     }

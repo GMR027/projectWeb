@@ -69,7 +69,11 @@ $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
 </div>
 
 <div class="card">
-    <?php if (!$lista): ?><p class="text-muted">No hay registros<?php echo $filtro !== '' ? ' con ese filtro' : ' todavía'; ?>.</p><?php else: ?>
+    <?php if (!$lista): ?><?php echo estado_vacio('fa-file-signature',
+        $filtro !== '' ? 'Ningún registro coincide con el filtro' : 'Aún no hay contratos, fianzas ni seguros',
+        $filtro !== '' ? 'Prueba con otro tipo o situación.' : 'Registra los contratos, fianzas, seguros y licencias con sus vencimientos.',
+        $filtro !== '' || !$puedeEditar || !$disponible ? null : ['texto' => 'Nuevo registro', 'url' => $url(['nuevo' => 1]), 'icono' => 'fa-plus'],
+        null, '', 'estado-vacio-sm'); ?><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla" <?php echo pag_attr($proyecto); ?>>
         <thead><tr><th>Tipo / número</th><th>Contraparte</th><th class="hide-m">Objeto</th><th class="num">Monto</th><th>Vencimiento</th><th>Situación</th><th></th></tr></thead>
         <tbody>

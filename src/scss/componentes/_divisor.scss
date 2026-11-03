@@ -10,7 +10,7 @@ html.embebido {
   width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 1px solid var(--border, #334155);
   background: var(--bg-secondary, #1e293b); color: var(--text, #e2e8f0); font-size: 2.4rem; cursor: pointer;
   box-shadow: 0 .4rem 1.4rem rgba(0, 0, 0, .35);
-  &:hover { border-color: var(--primary, #f97316); color: var(--primary, #f97316); }
+  &:hover { border-color: var(--primary); color: var(--primary); }
   &.dv-escritorio { right: 8.4rem; }   // junto al globo del chat (5.6rem a 1.6rem del borde) con 1.2rem de aire
 }
 body.dv-abierto { overflow: hidden; .dv-boton { display: none; } }
@@ -28,13 +28,13 @@ body.dv-abierto { overflow: hidden; .dv-boton { display: none; } }
 .dv-pre {
   padding: .3rem .5rem; background: transparent; border: 1px solid var(--border, #334155); border-radius: .6rem; cursor: pointer; line-height: 0;
   svg rect { fill: none; stroke: currentColor; stroke-width: 1.4; } color: var(--text-muted, #94a3b8);
-  &:hover, &.on { border-color: var(--primary, #f97316); color: var(--primary, #f97316); }
+  &:hover, &.on { border-color: var(--primary); color: var(--primary); }
 }
 .dv-nota { color: var(--text-muted, #94a3b8); font-size: 1.15rem; flex: 1; }
 .dv-salir {
   margin-left: auto; padding: .5rem 1.1rem; border-radius: .6rem; cursor: pointer; font-weight: 600;
   background: transparent; color: inherit; border: 1px solid var(--border, #334155);
-  &:hover { border-color: var(--primary, #f97316); }
+  &:hover { border-color: var(--primary); }
 }
 .dv-lienzo { position: relative; flex: 1; min-height: 0; }
 .dv-panel {
@@ -44,8 +44,8 @@ body.dv-abierto { overflow: hidden; .dv-boton { display: none; } }
 .dv-cab {
   display: flex; align-items: center; gap: .5rem; padding: .3rem .5rem; flex: none;
   background: var(--bg-secondary, #1e293b); border-bottom: 0 !important; border-radius: .6rem .6rem 0 0;
-  button { background: transparent; color: inherit; border: 1px solid var(--border, #334155); border-radius: .4rem; padding: .2rem .6rem; cursor: pointer; font: inherit; &:hover { border-color: var(--primary, #f97316); } }
-  .dv-x:hover { color: #ef4444; border-color: #ef4444; }
+  button { background: transparent; color: inherit; border: 1px solid var(--border, #334155); border-radius: .4rem; padding: .2rem .6rem; cursor: pointer; font: inherit; &:hover { border-color: var(--primary); } }
+  .dv-x:hover { color: var(--danger-ink); border-color: var(--danger); }
 }
 .dv-sel {
   flex: 1; min-width: 0; padding: .3rem .5rem; border-radius: .4rem; font: inherit;
@@ -59,6 +59,6 @@ body.dv-abierto { overflow: hidden; .dv-boton { display: none; } }
   position: absolute; z-index: 2; touch-action: none; background: transparent;
   &.dv-x { width: 1rem; margin-left: -.5rem; cursor: col-resize; }
   &.dv-y { height: 1rem; margin-top: -.5rem; cursor: row-resize; }
-  &:hover, &:active { background: color-mix(in srgb, var(--primary, #f97316) 45%, transparent); }
+  &:hover, &:active { background: color-mix(in srgb, var(--primary) 45%, transparent); }
 }
 @media print { .dv-boton, .dv-raiz { display: none !important; } }

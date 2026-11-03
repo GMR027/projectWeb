@@ -25,7 +25,11 @@
 <?php $herramienta = 'bitacora'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
 <div class="card">
     <?php if (empty($registros)): ?>
-        <p class="text-muted"><?php echo ($filtroDepto !== '' || $filtroImp !== '' || $cp['filtros']) ? 'Ningún registro coincide con el filtro.' : 'Aún no hay registros en la bitácora.'; ?></p>
+        <?php $__filtra = $filtroDepto !== '' || $filtroImp !== '' || $cp['filtros'];
+        echo estado_vacio('fa-book', $__filtra ? 'Ningún registro coincide con el filtro' : 'Aún no hay registros en la bitácora',
+            $__filtra ? 'Prueba con otro departamento, importancia o quita la búsqueda.' : 'Anota el día a día de la obra: visitas, acuerdos, incidencias y clima.',
+            $__filtra || !$puede ? null : ['texto' => 'Nuevo registro', 'url' => '/bitacora/crear?proyecto=' . $id, 'icono' => 'fa-plus'],
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>>
             <thead><tr><?php foreach ($cols as $c): ?><th class="<?php echo $c['movil'] ? '' : 'hide-m'; ?>"><?php echo s($c['n']); ?></th><?php endforeach; ?></tr></thead>

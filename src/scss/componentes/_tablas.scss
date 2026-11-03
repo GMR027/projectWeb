@@ -255,9 +255,9 @@
 }
 
 .btn-entregado.activo {
-  background: #10b981;
-  border-color: #10b981;
-  color: #fff;
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--on-success);
 }
 
 // Toggle de estatus de submittal (enviado / rechazado / aprobado)
@@ -274,15 +274,17 @@
     color: inherit;
     border: 0;
     cursor: pointer;
-    opacity: 0.6;
+    opacity: 0.75;
 
     &:hover { opacity: 1; }
-    &.activo { opacity: 1; font-weight: 700; color: #fff; }
-    &.te-enviado.activo { background: #00b4d8; }
-    &.te-rechazado.activo { background: #dc2626; }
-    &.te-aprobado.activo { background: #10b981; }
-    &.te-aprobado_an.activo { background: #65a30d; }
-    &.te-pendiente.activo { background: #f59e0b; }
-    &.te-comprado.activo { background: #10b981; }
+    &.activo { opacity: 1; font-weight: 700; color: var(--on-primary); }
+    // El texto de cada estado usa la tinta de su propio fondo (el blanco no llega
+    // a 4.5:1 sobre el cian ni sobre el ámbar).
+    &.te-enviado.activo { background: var(--info-ink); color: var(--on-info); }
+    &.te-rechazado.activo { background: var(--danger); color: var(--on-danger); }
+    &.te-aprobado.activo { background: var(--success); color: var(--on-success); }
+    &.te-aprobado_an.activo { background: #65a30d; color: #0f172a; }
+    &.te-pendiente.activo { background: var(--warning); color: var(--on-warning); }
+    &.te-comprado.activo { background: var(--success); color: var(--on-success); }
   }
 }

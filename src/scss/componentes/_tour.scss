@@ -6,7 +6,7 @@
 // ============================================================
 .tour-overlay { position: fixed; inset: 0; z-index: 1300; pointer-events: none; }
 // Recorte del elemento destacado: la sombra gigante hace de «pantalla oscura» con agujero
-.tour-foco { position: absolute; border-radius: .7rem; border: 2px solid #38a1f3; box-shadow: 0 0 0 9999rem rgba(2, 6, 23, .72), 0 0 1.4rem rgba(56, 161, 243, .55); transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease; }
+.tour-foco { position: absolute; border-radius: .7rem; border: 2px solid var(--secondary); box-shadow: 0 0 0 9999rem rgba(2, 6, 23, .72), 0 0 1.4rem rgba(56, 161, 243, .55); transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease; }
 // Burbuja del paso
 // max-height: si la ventana es más baja que la burbuja (pantallas pequeñas), se recorta con scroll
 // interno en vez de dejarla fuera de la vista (falla de 2026-10-25)
@@ -19,7 +19,7 @@
   .tour-pie { display: flex; align-items: center; gap: .5rem;
     .tour-puntos { display: flex; gap: .3rem; margin-right: auto;
       span { width: .6rem; height: .6rem; border-radius: 50%; background: var(--border); transition: background .15s;
-        &.activo { background: #38a1f3; } } }
+        &.activo { background: var(--secondary); } } }
     .tour-saltar { background: none; border: 0; color: var(--text-muted); font-size: 1.15rem; cursor: pointer; padding: .5rem .6rem;
       &:hover { color: var(--text); } } }
   &[hidden] { display: none; } }

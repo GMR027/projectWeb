@@ -13,7 +13,11 @@
 <?php $herramienta = 'reportes'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
 <div class="card">
     <?php if (empty($filas)): ?>
-        <p class="text-muted"><?php echo $cp['filtros'] ? 'Ningún reporte coincide con el filtro.' : 'Aún no hay reportes diarios.'; ?><?php echo !$cp['filtros'] && $puede ? ' Crea el primero con «Nuevo reporte».' : ''; ?></p>
+        <?php echo estado_vacio('fa-clipboard-list',
+            $cp['filtros'] ? 'Ningún reporte coincide con el filtro' : 'Aún no hay reportes diarios',
+            $cp['filtros'] ? 'Prueba con otro filtro o quita la búsqueda.' : 'Registra el avance del día, el personal, las fotos y el clima de la obra.',
+            $cp['filtros'] || !$puede ? null : ['texto' => 'Nuevo reporte', 'url' => '/reportes/crear?proyecto=' . $id, 'icono' => 'fa-plus'],
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>>
             <thead><tr><?php foreach ($cols as $c): ?><th class="<?php echo $c['movil'] ? '' : 'hide-m'; ?>"><?php echo s($c['n']); ?></th><?php endforeach; ?></tr></thead>

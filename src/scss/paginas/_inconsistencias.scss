@@ -77,7 +77,7 @@
 @media (max-width: 48rem) { .norm-fila { grid-template-columns: 1fr; } }
 
 // Mapa de avance
-.mapa-sw { display: inline-block; width: 1.2rem; height: 1.2rem; border-radius: 50%; vertical-align: -.1rem; margin-right: .3rem; &.rojo { background: #dc2626; } &.amarillo { background: #eab308; } &.verde { background: #16a34a; } }
+.mapa-sw { display: inline-block; width: 1.2rem; height: 1.2rem; border-radius: 50%; vertical-align: -.1rem; margin-right: .3rem; &.rojo { background: var(--danger); } &.amarillo { background: var(--warning); } &.verde { background: var(--success); } }
 .mapa-pct { font-size: 1.8rem; margin-left: auto; }
 
 // Centro de IA: pestañas comunes a Propuestas, Informes, Grabaciones, Historial y Biblioteca
@@ -85,7 +85,7 @@
   &__titulo { font-weight: 700; font-size: 1.4rem; margin-right: 1.2rem; color: var(--text-muted); }
   &__tab { padding: .7rem 1.4rem; border-radius: 99rem; font-size: 1.3rem; text-decoration: none; color: var(--text-muted); border: 1px solid transparent;
     &:hover { background: var(--bg-tertiary); color: inherit; }
-    &.activa { background: var(--bg-tertiary); border-color: var(--primary-ink); color: var(--primary-ink); font-weight: 600; } } }
+    &.activa { background: var(--surface); border-color: var(--primary-ink); color: var(--primary-ink); font-weight: 600; } } }
 
 
 // Herramientas de IA, fase 2: aprobación por lotes, niveles de riesgo, revertir por tanda, resumen y medidor

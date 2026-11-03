@@ -74,24 +74,24 @@ class Material extends ActiveRecord
     {
         self::$alertas = [];
         if (!trim($this->nombreBase())) {
-            self::$alertas['error'][] = 'El nombre del material es obligatorio';
+            self::setAlertaCampo('nombre_base', 'El nombre del material es obligatorio');
         }
         if (mb_strlen($this->nombre) > 255) {
-            self::$alertas['error'][] = 'El nombre completo (nombre + marca + modelo + valor extra) supera 255 caracteres';
+            self::setAlertaCampo('nombre_base', 'El nombre completo (nombre + marca + modelo + valor extra) supera 255 caracteres');
         }
         if (mb_strlen((string)$this->certificado_calidad) > 255) {
-            self::$alertas['error'][] = 'El certificado de calidad es demasiado largo (máx. 255 caracteres)';
+            self::setAlertaCampo('certificado_calidad', 'El certificado de calidad es demasiado largo (máx. 255 caracteres)');
         }
         if ($this->cantidad !== null && $this->cantidad !== '' && (!is_numeric($this->cantidad) || $this->cantidad < 0 || $this->cantidad >= 1e10)) {
-            self::$alertas['error'][] = 'La cantidad no es válida';
+            self::setAlertaCampo('cantidad', 'La cantidad no es válida');
         }
         foreach (self::FECHAS as $c => $etq) {
             if ($this->$c && !\DateTime::createFromFormat('Y-m-d', $this->$c)) {
-                self::$alertas['error'][] = "La fecha de $etq no es válida";
+                self::setAlertaCampo($c, "La fecha de $etq no es válida");
             }
         }
         if ($this->link_web && !filter_var($this->link_web, FILTER_VALIDATE_URL)) {
-            self::$alertas['error'][] = 'El link web no es una URL válida (incluye http:// o https://)';
+            self::setAlertaCampo('link_web', 'El link web no es una URL válida (incluye http:// o https://)');
         }
         return self::$alertas;
     }

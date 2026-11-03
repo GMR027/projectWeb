@@ -291,3 +291,16 @@ label:has(> input[type="radio"]) { cursor: pointer; }
 
     .accesos-buscar { flex: 1 1 20rem; }
 }
+
+// Error de un campo (validación del servidor): borde marcado y mensaje junto al control,
+// insertado por src/js/form-errores.js a partir de #errores-campo.
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .15);
+}
+.campo-error {
+  margin: .35rem 0 .6rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--danger-ink);
+}

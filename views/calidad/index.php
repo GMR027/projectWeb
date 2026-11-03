@@ -66,7 +66,11 @@ $e = $editarPlan;
 </div>
 
 <div class="card">
-    <?php if (!$lista): ?><p class="text-muted">No hay planes de inspección<?php echo $filtro !== '' ? ' con ese filtro' : ' todavía'; ?>. Crea el primero con «Nuevo plan».</p><?php else: ?>
+    <?php if (!$lista): ?><?php echo estado_vacio('fa-clipboard-check',
+        $filtro !== '' ? 'Ningún plan coincide con el filtro' : 'Aún no hay planes de inspección',
+        $filtro !== '' ? 'Prueba con otro estado.' : 'Crea el primer plan con sus puntos de inspección, pruebas y no conformidades.',
+        $filtro !== '' || !$puedeEditar || !$disponible ? null : ['texto' => 'Nuevo plan', 'url' => $url(['nuevo' => 1]), 'icono' => 'fa-plus'],
+        null, '', 'estado-vacio-sm'); ?><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla" <?php echo pag_attr($proyecto); ?>>
         <thead><tr><th>Plan</th><th class="hide-m">Actividad</th><th class="hide-m">Tipo</th><th>Fecha</th><th class="num">Puntos</th><th class="num">NC</th><th>Estado</th><th></th></tr></thead>
         <tbody>

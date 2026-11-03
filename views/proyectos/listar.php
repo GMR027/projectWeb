@@ -13,9 +13,12 @@
 
 <div class="grid-proyectos">
     <?php if (empty($proyectos)): ?>
-        <div class="card empty-state">
-            <p><?php echo is_visitante() ? 'Aún no tienes proyectos asignados. Solicita acceso al administrador.' : 'No hay proyectos registrados.'; ?></p>
-        </div>
+        <div class="card"><?php echo estado_vacio(
+            'fa-diagram-project',
+            is_visitante() ? 'Aún no tienes proyectos asignados' : 'Aún no hay proyectos',
+            is_visitante() ? 'Solicita acceso al administrador para consultar el programa, el avance y los documentos.' : 'Crea el primero para empezar a programar partidas, actividades y el Gantt.',
+            !is_visitante() && puede_crear_proyecto() ? ['texto' => 'Crear proyecto', 'url' => '/proyectos/crear', 'icono' => 'fa-plus'] : null
+        ); ?></div>
     <?php else: ?>
         <?php foreach ($proyectos as $proyecto): ?>
             <div class="card proyecto-card">
@@ -62,5 +65,6 @@
                 </div>
             </div>
         <?php endforeach; ?>
+        <?php unset($proyecto); // el layout no debe heredar el último proyecto del listado ?>
     <?php endif; ?>
 </div>

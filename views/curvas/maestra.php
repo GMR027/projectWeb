@@ -10,7 +10,9 @@
     </div>
 </div>
 <?php if (!$series): ?>
-    <div class="card"><p class="text-muted">Aún no hay curvas. Crea al menos una para ver la gráfica maestra.</p></div>
+    <div class="card"><?php echo estado_vacio('fa-chart-area', 'Aún no hay curvas',
+        'Crea al menos una curva para comparar su productividad en la gráfica maestra.',
+        null, null, '', 'estado-vacio-sm'); ?></div>
 <?php else: ?>
 <div class="card curva-grafica">
     <p class="text-muted text-sm">Línea continua = planeado · línea discontinua = real. Haz clic en una leyenda para ocultar o mostrar esa curva.</p>

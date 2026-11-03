@@ -72,8 +72,8 @@
 .est-lz { position: relative; background: #fff; color: #111; box-shadow: 0 .2rem .8rem rgba(0, 0, 0, .25); user-select: none; touch-action: none; }
 .est-lz-bg { position: absolute; inset: 0; pointer-events: none; }
 .est-lz-ov { position: absolute; inset: 0; }
-.est-lz-el { position: absolute; box-sizing: border-box; min-width: 6px; min-height: 6px; outline: 1px dashed rgba(0, 112, 192, .5); cursor: move; transition: outline-color .15s, background .15s; &:hover { outline-color: #0070c0; } &.sel { outline: 2px solid #0070c0; background: rgba(0, 112, 192, .08); } }
-.est-lz-mango { position: absolute; right: -5px; bottom: -5px; width: 12px; height: 12px; border-radius: 50%; background: #0070c0; border: 2px solid #fff; cursor: nwse-resize; box-shadow: 0 0 .4rem rgba(0, 0, 0, .5); }
+.est-lz-el { position: absolute; box-sizing: border-box; min-width: 6px; min-height: 6px; outline: 1px dashed rgba(0, 112, 192, .5); cursor: move; transition: outline-color .15s, background .15s; &:hover { outline-color: var(--primary); } &.sel { outline: 2px solid var(--primary); background: rgba(0, 112, 192, .08); } }
+.est-lz-mango { position: absolute; right: -5px; bottom: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; cursor: nwse-resize; box-shadow: 0 0 .4rem rgba(0, 0, 0, .5); }
 .est-lz-prop { max-height: 80vh; overflow: auto; padding: 1.2rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--bg-tertiary); position: sticky; top: 1rem; }
 .est-lz-lista { padding-left: 2rem; li { margin-bottom: .4rem; } }
 @media (max-width: 62.5rem) { .est-lz-grid { grid-template-columns: 1fr; } }
@@ -83,11 +83,11 @@
 .est-capas-cab { display: flex; align-items: center; justify-content: space-between; gap: .6rem; .est-h5 { margin: 0; } .est-capas-acc { display: flex; gap: .2rem; } }
 .est-capas { list-style: none; margin: .8rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
 .est-cap { display: flex; align-items: center; gap: .3rem; border: 1px solid transparent; border-radius: .6rem; padding: .2rem .4rem; background: rgba(255, 255, 255, .03); position: relative;
-  &:hover { background: rgba(255, 255, 255, .08); } &.sel { border-color: #0070c0; background: rgba(0, 112, 192, .18); } &.oculta .est-cap-nom { opacity: .45; text-decoration: line-through; } &.arrastrada { opacity: .4; }
-  &.sobre-arriba::before, &.sobre-abajo::after { content: ''; position: absolute; left: 0; right: 0; height: .3rem; background: #0070c0; border-radius: .2rem; } &.sobre-arriba::before { top: -.3rem; } &.sobre-abajo::after { bottom: -.3rem; } }
+  &:hover { background: rgba(255, 255, 255, .08); } &.sel { border-color: var(--primary); background: rgba(0, 112, 192, .18); } &.oculta .est-cap-nom { opacity: .45; text-decoration: line-through; } &.arrastrada { opacity: .4; }
+  &.sobre-arriba::before, &.sobre-abajo::after { content: ''; position: absolute; left: 0; right: 0; height: .3rem; background: var(--primary); border-radius: .2rem; } &.sobre-arriba::before { top: -.3rem; } &.sobre-abajo::after { bottom: -.3rem; } }
 .est-cap-asa { color: var(--text-muted); cursor: grab; padding: 0 .4rem; font-size: 1.1rem; }
 .est-cap-nom { flex: 1 1 auto; min-width: 0; text-align: left; background: none; border: 0; color: inherit; font-size: 1.25rem; cursor: pointer; padding: .4rem .2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; span { overflow: hidden; text-overflow: ellipsis; } }
-.est-cap-b { background: none; border: 0; color: var(--text-muted); cursor: pointer; padding: .4rem .5rem; border-radius: .4rem; font-size: 1.2rem; &:hover { color: var(--text-primary, #fff); background: rgba(255, 255, 255, .1); } &.on { color: #f59e0b; } &.est-cap-del:hover { color: #ef4444; } }
+.est-cap-b { background: none; border: 0; color: var(--text-muted); cursor: pointer; padding: .4rem .5rem; border-radius: .4rem; font-size: 1.2rem; &:hover { color: var(--text-primary, #fff); background: rgba(255, 255, 255, .1); } &.on { color: var(--warning-ink); } &.est-cap-del:hover { color: var(--danger-ink); } }
 .est-alin { gap: .3rem; }
 .est-lz-el.bloq { cursor: not-allowed; outline-style: dotted; }
 .est-sep { width: 1px; height: 2rem; background: var(--border); margin: 0 .4rem; }

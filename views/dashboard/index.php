@@ -148,6 +148,7 @@ $fechaCorta = fn($f) => $f ? date('d/m/y', strtotime($f)) : '—';
                 </div>
             </div>
         <?php endforeach; ?>
+        <?php unset($proyecto); // el layout no debe heredar el último proyecto del listado ?>
     <?php endif; ?>
 </div>
 

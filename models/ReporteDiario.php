@@ -32,9 +32,9 @@ class ReporteDiario extends ActiveRecord
     {
         self::$alertas = [];
         $f = \DateTime::createFromFormat('Y-m-d', (string)$this->fecha);
-        if (!$f || $f->format('Y-m-d') !== $this->fecha) self::$alertas['error'][] = 'La fecha no es válida';
-        if (mb_strlen($this->area) > 150) self::$alertas['error'][] = 'El área es demasiado larga (máx. 150)';
-        if (empty($this->getActividades())) self::$alertas['error'][] = 'Selecciona al menos una actividad del programa';
+        if (!$f || $f->format('Y-m-d') !== $this->fecha) self::setAlertaCampo('fecha', 'La fecha no es válida');
+        if (mb_strlen($this->area) > 150) self::setAlertaCampo('area', 'El área es demasiado larga (máx. 150)');
+        if (empty($this->getActividades())) self::setAlertaCampo('actividades', 'Selecciona al menos una actividad del programa');
         return self::$alertas;
     }
 

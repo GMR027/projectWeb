@@ -56,19 +56,19 @@ class Actividad extends ActiveRecord
     public function validar(): array
     {
         if (!$this->codigo) {
-            self::$alertas['error'][] = 'El código de la actividad es obligatorio';
+            self::setAlertaCampo('codigo', 'El código de la actividad es obligatorio');
         }
         if (!$this->nombre) {
-            self::$alertas['error'][] = 'El nombre es obligatorio';
+            self::setAlertaCampo('nombre', 'El nombre es obligatorio');
         }
         if (!$this->fecha_inicio) {
-            self::$alertas['error'][] = 'La fecha de inicio es obligatoria';
+            self::setAlertaCampo('fecha_inicio', 'La fecha de inicio es obligatoria');
         }
         if (!$this->esHito() && (int)$this->duracion_dias < 1) {
-            self::$alertas['error'][] = 'La duración debe ser al menos 1 día hábil (o marca la actividad como hito)';
+            self::setAlertaCampo('duracion_dias', 'La duración debe ser al menos 1 día hábil (o marca la actividad como hito)');
         }
         if ((int)$this->progreso < 0 || (int)$this->progreso > 100) {
-            self::$alertas['error'][] = 'El progreso debe estar entre 0 y 100';
+            self::setAlertaCampo('progreso', 'El progreso debe estar entre 0 y 100');
         }
         return self::$alertas;
     }

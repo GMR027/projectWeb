@@ -19,6 +19,16 @@ class ActiveRecord
         static::$alertas[$tipo][] = $mensaje;
     }
 
+    /**
+     * Error ligado a un campo del formulario: se muestra también junto al campo
+     * (aria-invalid + mensaje) y no se repite en la alerta general.
+     */
+    public static function setAlertaCampo(string $campo, string $mensaje): void
+    {
+        static::$alertas['error'][] = $mensaje;
+        static::$alertas['error_campo'][$campo] = $mensaje;
+    }
+
     public static function getAlertas()
     {
         return static::$alertas;

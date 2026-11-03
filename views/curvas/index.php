@@ -12,7 +12,10 @@
 </div>
 <div class="card">
     <?php if (empty($curvas)): ?>
-        <p class="text-muted">Aún no hay curvas. Crea una para medir, por ejemplo, el cableado o la tubería.</p>
+        <?php echo estado_vacio('fa-chart-line', 'Aún no hay curvas',
+            'Crea una para medir la productividad de una actividad, por ejemplo el cableado o la tubería.',
+            !$puedeEditar ? null : ['texto' => 'Nueva curva', 'url' => '/curvas/crear?proyecto=' . s($proyecto->id), 'icono' => 'fa-plus'],
+            null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Curva</th><th class="hide-m">Material</th><th class="hide-m">Cantidad</th><th class="hide-m">Tipo</th><th class="hide-m">Inicio</th><th class="hide-m">Fin</th><th class="hide-m">Semanas</th><th class="hide-m">Avance real</th><th>Acciones</th></tr></thead>
