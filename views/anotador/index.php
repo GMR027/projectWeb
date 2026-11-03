@@ -139,7 +139,7 @@ $herramientas = [
                         <div class="ant-doc-acc">
                             <a class="btn btn-sm btn-ghost" href="/anotador?proyecto=<?php echo $pid; ?>&amp;id=<?php echo $t['id']; ?>" title="Abrir" aria-label="Abrir <?php echo s($t['nombre']); ?>"><i class="fa-solid fa-folder-open"></i></a>
                             <?php if ($puedeGuardar): ?>
-                            <form method="post" action="/anotador/duplicar" style="margin:0">
+                            <form class="m-0" method="post" action="/anotador/duplicar">
                                 <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo $t['id']; ?>">
                                 <button class="btn btn-sm btn-ghost" type="submit" title="Duplicar documento" aria-label="Duplicar <?php echo s($t['nombre']); ?>"><i class="fa-solid fa-copy"></i></button>
                             </form>

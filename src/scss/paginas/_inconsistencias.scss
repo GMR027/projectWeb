@@ -24,8 +24,8 @@
 // Historial de cambios: lo comparten la pestaña del Centro de IA (solo la IA) y la pantalla de la sección Administración
 .hist-tabla td { font-size: 1.25rem; }
 .hist-ev { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary);
-  &.ev-aplicado { color: var(--success); } &.ev-revertido, &.ev-reabierto { color: var(--warning); } &.ev-rechazado { color: var(--text-muted); }
-  &.ev-creado { color: var(--link); } &.ev-modificado { color: var(--primary-ink); } &.ev-eliminado { color: var(--danger); } }
+  &.ev-aplicado { color: var(--success-ink); } &.ev-revertido, &.ev-reabierto { color: var(--warning-ink); } &.ev-rechazado { color: var(--text-muted); }
+  &.ev-creado { color: var(--link); } &.ev-modificado { color: var(--link); } &.ev-eliminado { color: var(--danger-ink); } }
 .hist-num { display: inline-block; min-width: 2.4rem; margin-left: .3rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-dim); text-align: center; font-weight: 700; font-size: 1.2rem; }
 .centro-ia-tabs__tab.activa .hist-num { background: var(--surface); color: inherit; }
 .hist-desc { display: inline-block; line-height: 1.4; }

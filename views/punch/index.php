@@ -50,7 +50,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
     <ul class="hist-lista" style="margin-top:1rem">
         <?php foreach ($catsUso as $nom => $inf): ?>
             <li style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-                <form method="post" action="/punch/categoria" style="display:flex;gap:.4rem;margin:0"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="anterior" value="<?php echo s($nom); ?>">
+                <form class="m-0" method="post" action="/punch/categoria" style="display:flex; gap:.4rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="anterior" value="<?php echo s($nom); ?>">
                     <input type="text" name="nombre" value="<?php echo s($nom); ?>" maxlength="60" required><button class="btn btn-sm btn-ghost" type="submit">Renombrar</button></form>
                 <small class="text-muted"><?php echo (int)$inf['usos']; ?> pendiente(s)</small>
                 <form method="post" action="/punch/categoria/eliminar" data-confirmar="<?php echo s($inf['usos'] ? '¿Eliminar «' . $nom . '»? Los ' . $inf['usos'] . ' pendiente(s) que la usan quedarán sin categoría.' : '¿Eliminar la categoría «' . $nom . '»?'); ?>" style="margin:0"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="nombre" value="<?php echo s($nom); ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form>
@@ -65,8 +65,8 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
 </details>
 <details class="card prg-seccion"><summary><strong>Registrar un pendiente</strong></summary>
     <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"<?php echo $desdeComparador ? ' id="punch-desde-comparador"' : ''; ?>><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-        <?php if ($desdeComparador): ?><p class="text-sm text-muted" style="flex-basis:100%;margin:0"><i class="fa-solid fa-code-compare"></i> Precargado desde una anotación del Comparador. Revisa y completa los datos antes de guardar.</p><?php endif; ?>
-        <label style="flex:2">Pendiente <input type="text" name="titulo" required maxlength="200" value="<?php echo s($pre['titulo']); ?>"></label>
+        <?php if ($desdeComparador): ?><p class="text-sm text-muted full m-0"><i class="fa-solid fa-code-compare"></i> Precargado desde una anotación del Comparador. Revisa y completa los datos antes de guardar.</p><?php endif; ?>
+        <label class="flex-2">Pendiente <input type="text" name="titulo" required maxlength="200" value="<?php echo s($pre['titulo']); ?>"></label>
         <label>Ubicación <input type="text" name="ubicacion" maxlength="200" value="<?php echo s($pre['ubicacion']); ?>"></label>
         <label>Categoría <input type="text" name="categoria" maxlength="60" list="cats"><datalist id="cats"><?php foreach (Punch::categoriasDeProyecto((int)$pid) as $c): ?><option value="<?php echo s($c); ?>"><?php endforeach; ?></datalist></label>
         <label>Severidad <select name="severidad"><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $k === 'media' ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
@@ -75,7 +75,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
         <label>Fecha de emisión <input type="date" name="fecha_emision" value="<?php echo date('Y-m-d'); ?>"></label>
         <label>Fecha límite <input type="date" name="fecha_limite"></label>
         <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades, null, 45); ?></select></label>
-        <label style="flex-basis:100%">Descripción <textarea name="descripcion" rows="2" maxlength="3000"><?php echo s($pre['descripcion']); ?></textarea></label>
+        <label class="full">Descripción <textarea name="descripcion" rows="2" maxlength="3000"><?php echo s($pre['descripcion']); ?></textarea></label>
         <label>Foto «antes» <input type="file" name="foto_antes" accept="image/*"></label>
         <button class="btn btn-primary" type="submit">Registrar</button></form></details>
 <?php endif; ?>
@@ -84,7 +84,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
     <label>Estado <select name="estado" onchange="this.form.submit()"><option value="pendientes"<?php echo $filtros['estado'] === 'pendientes' ? ' selected' : ''; ?>>Pendientes</option><option value="">Todos</option><?php foreach (Punch::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $filtros['estado'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
     <label>Severidad <select name="severidad" onchange="this.form.submit()"><option value="">Todas</option><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $filtros['severidad'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
     <label>Contratista <select name="contratista" onchange="this.form.submit()"><option value="">Todos</option><?php foreach ($contratistas as $c): ?><option<?php echo $filtros['contratista'] === $c ? ' selected' : ''; ?>><?php echo s($c); ?></option><?php endforeach; ?></select></label>
-    <label style="flex:1">Buscar <input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Título o ubicación"></label><button class="btn btn-ghost" type="submit">Filtrar</button>
+    <label class="flex-1">Buscar <input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Título o ubicación"></label><button class="btn btn-ghost" type="submit">Filtrar</button>
     <?php if ($filtros['contratista'] !== ''): ?><a class="btn btn-sm btn-ghost" href="/punch/pdf?proyecto=<?php echo $pid; ?>&contratista=<?php echo urlencode($filtros['contratista']); ?>">PDF de <?php echo s($filtros['contratista']); ?></a><?php endif; ?></form>
 
 <?php $herramienta = 'punch'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
@@ -117,6 +117,6 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
         </div>
         <?php if ($puede && in_array($x['estado'], ['abierto', 'en_proceso', 'corregido'], true)): ?><div class="inc-botones">
             <?php foreach (['abierto' => [['en_proceso', 'Empezar']], 'en_proceso' => [['corregido', 'Marcar corregido']], 'corregido' => [['cerrado', 'Verificado: cerrar'], ['abierto', 'Reabrir']]][$x['estado']] as [$e, $n]): ?>
-                <form method="post" action="/punch/estado" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $e; ?>"><button class="btn btn-sm <?php echo $e === 'cerrado' ? 'btn-primary' : 'btn-ghost'; ?>" type="submit"><?php echo $n; ?></button></form>
+                <form class="inline" method="post" action="/punch/estado"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $e; ?>"><button class="btn btn-sm <?php echo $e === 'cerrado' ? 'btn-primary' : 'btn-ghost'; ?>" type="submit"><?php echo $n; ?></button></form>
             <?php endforeach; ?></div><?php endif; ?>
     </li><?php endforeach; ?></ul><?php endif; ?>

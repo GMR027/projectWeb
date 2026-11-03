@@ -45,7 +45,7 @@
                 <td class="acciones">
                     <button type="button" class="btn btn-sm btn-success" data-respuesta="<?php echo (int)$m->id; ?>"><i class="fa-solid fa-comment-dots"></i> Respuesta<?php echo !empty($respuestas[$m->id]) ? ' (' . count($respuestas[$m->id]) . ')' : ''; ?></button>
                     <a href="/soporte/editar?id=<?php echo s($m->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Editar')); ?></a>
-                    <form method="POST" action="/soporte/eliminar" style="display:inline" data-confirm="¿Eliminar mensaje?|Se quitará también de la bandeja del administrador.">
+                    <form class="inline" method="POST" action="/soporte/eliminar" data-confirm="¿Eliminar mensaje?|Se quitará también de la bandeja del administrador.">
                         <input type="hidden" name="id" value="<?php echo s($m->id); ?>">
                         <button type="submit" class="btn btn-sm btn-danger"><?php echo s(t('Eliminar')); ?></button>
                     </form>

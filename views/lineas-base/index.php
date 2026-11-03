@@ -37,7 +37,7 @@
                     <td class="acciones">
                         <a href="/lineas-base/comparar?proyecto=<?php echo $pid; ?>&id=<?php echo s($l->id); ?>" class="btn btn-sm btn-primary">Comparar con hoy</a>
                         <?php if ($puede): ?>
-                        <form method="POST" action="/lineas-base/eliminar" style="display:inline" data-confirm="¿Eliminar la línea base?|Se pierde la foto del programa; no se puede recuperar.">
+                        <form class="inline" method="POST" action="/lineas-base/eliminar" data-confirm="¿Eliminar la línea base?|Se pierde la foto del programa; no se puede recuperar.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>

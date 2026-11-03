@@ -8,7 +8,7 @@
 <div class="card">
     <form method="POST" action="/especialidades/guardar" class="la-controles" style="margin-bottom:1.5rem">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-        <input type="text" name="nombre" maxlength="100" placeholder="Nueva especialidad (ej. Estructura)" required>
+        <input type="text" name="nombre" maxlength="100" placeholder="Nueva especialidad (ej. Estructura)" aria-label="Nombre de la nueva especialidad" required>
         <button type="submit" class="btn btn-primary">+ Agregar</button>
     </form>
     <?php if (empty($especialidades)): ?>
@@ -23,14 +23,14 @@
                         <form method="POST" action="/especialidades/guardar" class="la-controles">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($e->id); ?>">
-                            <input type="text" name="nombre" maxlength="100" value="<?php echo s($e->nombre); ?>" required>
+                            <input type="text" name="nombre" maxlength="100" value="<?php echo s($e->nombre); ?>" aria-label="Nombre de la especialidad" required>
                             <button type="submit" class="btn btn-sm btn-ghost">Guardar</button>
                         </form>
                     </td>
                     <td class="mono hide-m"><?php echo (int)$e->n_materiales; ?></td>
                     <td class="mono hide-m"><?php echo (int)$e->n_submittals; ?></td>
                     <td class="acciones">
-                        <form method="POST" action="/especialidades/eliminar" style="display:inline" data-confirm="¿Eliminar especialidad?|Solo se puede si ningún material ni submittal la usa.">
+                        <form class="inline" method="POST" action="/especialidades/eliminar" data-confirm="¿Eliminar especialidad?|Solo se puede si ningún material ni submittal la usa.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($e->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

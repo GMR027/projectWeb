@@ -237,9 +237,9 @@
   background: var(--bg-tertiary);
   border-radius: 2rem;
 
-  &.nov-nuevo { color: $success; background: rgba(16, 185, 129, 0.12); }
-  &.nov-mejora { color: $secondary; background: var(--secondary-glow); }
-  &.nov-arreglo { color: $warning; background: rgba(245, 158, 11, 0.14); }
+  &.nov-nuevo { color: var(--success-ink); background: rgba(16, 185, 129, 0.12); }
+  &.nov-mejora { color: var(--info-ink); background: var(--secondary-glow); }
+  &.nov-arreglo { color: var(--warning-ink); background: rgba(245, 158, 11, 0.14); }
 }
 
 .nov-fecha {

@@ -23,7 +23,7 @@ $estados = \Classes\Rfi::ESTADOS;
 <table class="cab"><tr>
     <td style="width:25%"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:40pt;max-width:120pt"><?php endif; ?></td>
     <td><h1>RFI <?php echo s($rfi['numero']); ?></h1></td>
-    <td style="width:25%;text-align:right"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:40pt;max-width:120pt"><?php endif; ?></td>
+    <td class="text-right" style="width:25%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:40pt;max-width:120pt"><?php endif; ?></td>
 </tr></table>
 <br>
 <table class="datos">

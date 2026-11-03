@@ -36,7 +36,7 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
 
 <div class="card" style="margin-bottom:1.4rem">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem">
-        <h3 style="margin:0">Avance de entrega</h3>
+        <h3 class="m-0">Avance de entrega</h3>
         <strong class="mono text-accent"><?php echo (int)$resumen['pct']; ?>%</strong>
     </div>
     <div class="barra-progreso"><div class="barra-fill" style="width:<?php echo (int)$resumen['pct']; ?>%"></div></div>
@@ -108,7 +108,7 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
                     <?php if ($i['archivo_id']): ?><a class="btn btn-xs btn-ghost" href="/archivos/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$i['archivo_id']; ?>" title="Ver documento"><i class="fa-solid fa-paperclip"></i></a><?php endif; ?>
                     <?php if ($puedeEditar): ?>
                         <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['editar' => $i['id']])); ?>" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                        <form method="POST" action="/cierre/item/eliminar" data-confirm="¿Eliminar el punto?|Esta acción no se puede deshacer.|Eliminar" style="display:inline">
+                        <form class="inline" method="POST" action="/cierre/item/eliminar" data-confirm="¿Eliminar el punto?|Esta acción no se puede deshacer.|Eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$i['id']; ?>">
                             <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>

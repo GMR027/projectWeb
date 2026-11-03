@@ -23,7 +23,7 @@
             <tbody>
             <?php foreach ($lista as $m): ?>
                 <tr>
-                    <td class="mono hide-m" style="white-space:nowrap"><?php echo s(fecha_corta_es($m->fecha)); ?></td>
+                    <td class="mono hide-m nowrap"><?php echo s(fecha_corta_es($m->fecha)); ?></td>
                     <td><?php echo s($m->nombre); ?></td>
                     <td class="hide-m"><span class="badge bit-<?php echo s($m->importancia); ?>"><?php echo s(\Model\Bitacora::IMPORTANCIAS[$m->importancia] ?? $m->importancia); ?></span></td>
                     <td class="mono hide-m"><?php echo count($m->getTemas()); ?></td>

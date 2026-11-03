@@ -34,7 +34,7 @@
                     <a href="/curvas/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-primary">Ver</a>
                     <?php if ($puedeEditar): ?>
                         <a href="/curvas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($c->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
-                        <span class="hide-m"><form method="POST" action="/curvas/eliminar" style="display:inline" data-confirm="¿Eliminar curva?|Se perderán también los datos reales capturados.">
+                        <span class="hide-m"><form class="inline" method="POST" action="/curvas/eliminar" data-confirm="¿Eliminar curva?|Se perderán también los datos reales capturados.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($c->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

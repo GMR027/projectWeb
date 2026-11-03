@@ -16,7 +16,7 @@
 .co-in { width: 14rem; text-align: right; font-family: $font-mono; }
 .co-punto { display: inline-block; width: .9rem; height: .9rem; border-radius: 50%; vertical-align: middle; }
 .co-tabla tfoot th { border-top: 2px solid var(--border); }
-.co-aviso { color: var(--warning); }
+.co-aviso { color: var(--warning-ink); }
 .co-estado select { font-size: 1.2rem; padding: .2rem .4rem; }
 .co-enlace { display: flex; gap: .6rem; align-items: center; input { flex: 1; min-width: 18rem; font-family: $font-mono; font-size: 1.1rem; } }
 
@@ -27,12 +27,12 @@
   th:first-child, td:first-child { text-align: left; white-space: nowrap; }
 }
 .rc-celda { text-align: center; min-width: 5.2rem; font-weight: 600; cursor: help;
-  &.rc-ok { background: rgba(5, 150, 105, .18); color: var(--success); }
-  &.rc-alto { background: rgba(217, 119, 6, .22); color: var(--warning); }
-  &.rc-sobre { background: rgba(220, 38, 38, .25); color: var(--danger); }
+  &.rc-ok { background: rgba(5, 150, 105, .15); color: var(--success-ink); }
+  &.rc-alto { background: rgba(217, 119, 6, .22); color: var(--warning-ink); }
+  &.rc-sobre { background: rgba(220, 38, 38, .15); color: var(--danger-ink); }
   &.rc-vacia { color: var(--text-muted); }
 }
-.rc-alerta { border-color: var(--danger); h3 { color: var(--danger); } ul { margin: 0; padding-left: 1.8rem; } li { margin: .3rem 0; } }
+.rc-alerta { border-color: var(--danger); h3 { color: var(--danger-ink); } ul { margin: 0; padding-left: 1.8rem; } li { margin: .3rem 0; } }
 
 // ---------- página pública de solo lectura ----------
 .publico-body { background: var(--bg, #0f172a); }

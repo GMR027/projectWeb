@@ -27,7 +27,7 @@
                     <?php if ($puede): ?>
                     <td class="acciones">
                         <a href="/reportes/personal/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($p->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/reportes/personal/eliminar" style="display:inline" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de los reportes donde aparece.|Eliminar">
+                        <form class="inline" method="POST" action="/reportes/personal/eliminar" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de los reportes donde aparece.|Eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
                             <input type="hidden" name="id" value="<?php echo s($p->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>

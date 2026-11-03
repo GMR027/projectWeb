@@ -39,7 +39,7 @@
   .la-banner-lim { background: #0a2a6b; font-style: italic; }
 
   .la-semanas th { background: #0b6fc0; color: #fff; font-size: 1.1rem; }
-  .la-semanas th.la-actual { background: #0a8fb0; }
+  .la-semanas th.la-actual { background: #086f88; color: #fff; }
   .la-meses th { font-weight: 500; font-size: 1.1rem; }
 
   .la-id { min-width: 5.4rem; width: 5.4rem; position: sticky; left: 0; z-index: 4; background: var(--bg-tertiary); font-family: $font-mono; font-size: 1.1rem; }
@@ -69,7 +69,7 @@
     .la-nombre { text-align: left; min-width: 36rem; width: 36rem; position: sticky; left: 5.4rem; background: var(--surface); z-index: 2; }
     &:hover td:not(.la-barra) { background-color: var(--surface-hover); }
   }
-  .la-atrasada { color: var(--danger); }
+  .la-atrasada { color: var(--danger-ink); }
   .la-tag { margin-left: 0.6rem; padding: 0 0.5rem; border-radius: 0.4rem; background: var(--danger); color: var(--on-danger); font-size: 1rem; }
 
   .la-barra { font-weight: 800; font-size: 1.3rem; line-height: 1; }

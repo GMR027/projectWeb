@@ -55,7 +55,7 @@ $y0 = (27.94 - $altoGrid) / 2;
                                 <td><span class="rot">FECHA:</span><b style="font-size:10pt"><?php echo date('d/m/Y', $ts); ?></b></td>
                             </tr>
                             <tr><td colspan="2" style="height:3.9cm">
-                                <table><tr><td style="padding:0;border:0"><span class="rot">ACTIVIDAD:</span></td><td style="padding:0;border:0;text-align:right"><span class="rot">DÍAS PARA TERMINAR:</span></td></tr></table>
+                                <table><tr><td style="padding:0;border:0"><span class="rot">ACTIVIDAD:</span></td><td class="text-right" style="padding:0; border:0"><span class="rot">DÍAS PARA TERMINAR:</span></td></tr></table>
                                 <table class="act">
                                 <?php foreach ($t['items'] as $it): ?>
                                     <tr>
@@ -73,7 +73,7 @@ $y0 = (27.94 - $altoGrid) / 2;
                                     <div class="ind"><span class="verde rb">◆</span> Finalizada</div>
                                     <div class="ind"><span class="amarillo rb">◆</span> En proceso</div>
                                     <div class="ind"><span class="rojo rb">◆</span> Con restricción</div>
-                                    <?php if ($t['partes'] > 1): ?><span class="rot" style="text-align:right"><?php echo $t['parte'] . '/' . $t['partes']; ?></span><?php endif; ?>
+                                    <?php if ($t['partes'] > 1): ?><span class="rot text-right"><?php echo $t['parte'] . '/' . $t['partes']; ?></span><?php endif; ?>
                                 </td>
                             </tr>
                         </table>

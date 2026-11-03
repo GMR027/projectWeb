@@ -117,7 +117,7 @@ $u = $r['uso'];
     <p class="text-muted text-sm">
         <?php echo $vs['activa'] ? 'Activa' . ($vs['ultima'] ? ' · última vez ' . s($fmt($vs['ultima'])) . ($vs['origen'] === 'cron' ? ' (tarea programada)' : ' (al abrir esta pantalla)') : '') . ($prox ? ' · próxima: ' . ($prox <= time() ? 'en cuanto corra la tarea o entres aquí' : s(date('d/m/Y H:i', $prox))) : '') : 'Apagada.'; ?>
         Para que corra aunque nadie entre, agrega al cron del servidor:
-        <code style="display:block;margin-top:.5rem;user-select:all">*/15 * * * * php <?php echo s(realpath(__DIR__ . '/../../bin/vigilancia_programada.php') ?: '/ruta/al/proyecto/bin/vigilancia_programada.php'); ?></code>
+        <code class="block" style="margin-top:.5rem; user-select:all">*/15 * * * * php <?php echo s(realpath(__DIR__ . '/../../bin/vigilancia_programada.php') ?: '/ruta/al/proyecto/bin/vigilancia_programada.php'); ?></code>
         Cada proyecto respeta su propio intervalo; sin cron, la comprobación se hace la primera vez que entras aquí después de vencido el intervalo.
     </p>
 </section>

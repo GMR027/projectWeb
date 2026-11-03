@@ -17,7 +17,7 @@ $fechaCorta = fn($f) => $f ? date('d/m/y', strtotime($f)) : '—';
                 <li draggable="true">
                     <span class="col-asa" title="Arrastra para mover">☰</span>
                     <input type="hidden" data-f="k" value="<?php echo s($b['k']); ?>">
-                    <label class="campo-check" style="flex:1"><input type="checkbox" data-f="on" value="1"<?php echo $b['on'] ? ' checked' : ''; ?>> <strong><?php echo s($tit); ?></strong> <small class="text-muted">· <?php echo s($desc); ?></small></label>
+                    <label class="campo-check flex-1"><input type="checkbox" data-f="on" value="1"<?php echo $b['on'] ? ' checked' : ''; ?>> <strong><?php echo s($tit); ?></strong> <small class="text-muted">· <?php echo s($desc); ?></small></label>
                     <button type="button" class="btn btn-sm btn-ghost" data-mover="-1" title="Subir">↑</button>
                     <button type="button" class="btn btn-sm btn-ghost" data-mover="1" title="Bajar">↓</button>
                 </li>

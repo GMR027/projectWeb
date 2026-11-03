@@ -22,7 +22,7 @@ $modos = [
 </div>
 
 <div id="dep-aviso" class="dep-aviso" hidden aria-live="polite"></div>
-<div id="dep-resumen" class="dep-resumen"></div>
+<div id="dep-resumen" class="dep-resumen" tabindex="0" role="region" aria-label="Resumen de dependencias"></div>
 
 <div class="card dep-barra">
     <label>Partida <select id="dep-partida"><option value="">Todas</option></select></label>
@@ -47,7 +47,7 @@ $modos = [
         <div class="dep-leyenda">
             <span><i class="dep-sw" style="background:#3b82f6"></i> Normal (color de su partida)</span><span><i class="dep-sw" style="background:#dc2626"></i> Ruta crítica</span><span><i class="dep-sw dep-sw-conf"></i> Conflicto</span><span><i class="dep-sw dep-sw-fan"></i> Fecha calculada</span><span>📌 Fecha fija</span>
         </div>
-        <div class="dep-scroll" id="dep-scroll"><div class="dep-labels" id="dep-labels"></div><svg id="dep-svg" class="dep-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="dep-scroll" id="dep-scroll" tabindex="0" role="region" aria-label="Diagrama de dependencias"><div class="dep-labels" id="dep-labels"></div><svg id="dep-svg" class="dep-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
     </div>
     <aside class="card dep-panel" id="dep-panel"><p class="text-muted">Elige una actividad para ver sus predecesoras y sucesoras.</p></aside>
 </div>

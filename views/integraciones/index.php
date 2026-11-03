@@ -28,7 +28,7 @@ $pid = $proyecto ? (int)$proyecto->id : 0;
                 <td class="hide-m text-sm"><?php echo (int)$t['escritura'] ? 'Lectura y escritura' : 'Solo lectura'; ?><br><small class="text-muted"><?php echo $t['proyecto'] ? s($t['proyecto']) : 'Todos mis proyectos'; ?></small></td>
                 <td class="mono hide-m"><?php echo $t['expira'] ? formatear_fecha($t['expira']) : 'No vence'; ?></td>
                 <td class="mono hide-m text-sm"><?php echo (int)$t['usos']; ?> peticiones<?php echo $t['ultimo_uso'] ? '<br><small class="text-muted">' . formatear_fecha(substr($t['ultimo_uso'], 0, 10)) . '</small>' : ''; ?></td>
-                <td class="acciones"><?php if ($vivo): ?><form method="POST" action="/integraciones/token/revocar" style="display:inline" data-confirm="¿Revocar este token?|Quien lo use dejará de poder entrar.|Revocar"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-danger" type="submit"><?php echo s(t('Revocar')); ?></button></form><?php endif; ?></td>
+                <td class="acciones"><?php if ($vivo): ?><form class="inline" method="POST" action="/integraciones/token/revocar" data-confirm="¿Revocar este token?|Quien lo use dejará de poder entrar.|Revocar"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-danger" type="submit"><?php echo s(t('Revocar')); ?></button></form><?php endif; ?></td>
             </tr>
         <?php endforeach; ?></tbody>
     </table></div>

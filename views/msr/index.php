@@ -81,7 +81,7 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
     <div class="msr-titulo"><strong>MSR -MATERIAL STATUS REPORT</strong><strong>REPORTE DEL STATUS DE LOS MATERIALES</strong></div>
     <div class="msr-logo msr-logo-caja"><?php if ($logoEmpresa): ?><img src="/build/img/logos/<?php echo s($logoEmpresa); ?>" alt=""><?php endif; ?></div>
     <table class="msr-datos">
-        <tr><td colspan="2" style="text-align:right"><b>FECHA: <?php echo s(fecha_larga_es()); ?></b></td></tr>
+        <tr><td class="text-right" colspan="2"><b>FECHA: <?php echo s(fecha_larga_es()); ?></b></td></tr>
         <tr><td>CLIENTE:</td><td><b><?php echo s($proyecto->contratista); ?></b></td></tr>
         <tr><td>PROYECTO:</td><td><b><?php echo s($proyecto->nombre); ?></b></td></tr>
         <tr><td>JOB No.</td><td><b><?php echo s($proyecto->numero_trabajo); ?></b></td></tr>

@@ -24,7 +24,7 @@
                         <a href="/msr/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($m->id); ?>" class="btn btn-sm btn-primary">Ver</a>
                         <?php if ($puedeEditar): ?>
                             <a href="/msr/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($m->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
-                            <span class="hide-m"><form method="POST" action="/msr/eliminar" style="display:inline" data-confirm="¿Eliminar MSR?|Se borrarán sus renglones. Los paquetes de submittal se conservan pero quedan «Sin MSR».">
+                            <span class="hide-m"><form class="inline" method="POST" action="/msr/eliminar" data-confirm="¿Eliminar MSR?|Se borrarán sus renglones. Los paquetes de submittal se conservan pero quedan «Sin MSR».">
                                 <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                                 <input type="hidden" name="id" value="<?php echo s($m->id); ?>">
                                 <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

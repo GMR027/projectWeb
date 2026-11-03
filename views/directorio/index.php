@@ -33,7 +33,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             <td class="hide-m"><?php echo s($c['cargo'] ?? '') ?: '—'; ?></td><td class="hide-m"><?php echo s($c['telefono'] ?? '') ?: '—'; ?></td>
             <td class="acciones">
                 <a href="/reportes/personal/editar?proyecto=<?php echo $id; ?>&id=<?php echo (int)$p->id; ?>&volver=directorio" class="btn btn-sm btn-ghost">Editar</a>
-                <form method="POST" action="/reportes/personal/eliminar" style="display:inline" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de los reportes donde aparece.|Eliminar">
+                <form class="inline" method="POST" action="/reportes/personal/eliminar" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de los reportes donde aparece.|Eliminar">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$p->id; ?>"><input type="hidden" name="volver" value="directorio">
                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                 </form>
@@ -53,7 +53,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             <td><strong><?php echo s($p->nombre); ?></strong><div class="solo-movil text-sm text-muted"><?php echo s(implode(' · ', array_filter([$p->puesto, $p->empresa]))); ?></div></td><td class="hide-m"><?php echo s($p->puesto) ?: '—'; ?></td><td class="hide-m"><?php echo s($p->empresa) ?: '—'; ?></td>
             <td class="acciones">
                 <a href="/minutas/contratista/editar?proyecto=<?php echo $id; ?>&id=<?php echo (int)$p->id; ?>&volver=directorio" class="btn btn-sm btn-ghost">Editar</a>
-                <form method="POST" action="/minutas/contratista/eliminar" style="display:inline" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de las minutas donde aparece.|Eliminar">
+                <form class="inline" method="POST" action="/minutas/contratista/eliminar" data-confirm="¿Eliminar persona?|Se quitará del catálogo y de las minutas donde aparece.|Eliminar">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$p->id; ?>"><input type="hidden" name="volver" value="directorio">
                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                 </form>
@@ -80,7 +80,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             </form></td>
             <td class="hide-m text-sm"><?php echo $sinUso($d['usos']); ?><?php echo $d['en_catalogo'] ? '' : ' <span class="text-muted">(solo en uso)</span>'; ?></td>
             <td class="acciones">
-                <form method="POST" action="/directorio/departamento/eliminar" style="display:inline" data-confirm="¿Eliminar departamento?|Solo se puede si ninguna herramienta lo usa.">
+                <form class="inline" method="POST" action="/directorio/departamento/eliminar" data-confirm="¿Eliminar departamento?|Solo se puede si ninguna herramienta lo usa.">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="nombre" value="<?php echo s($nombre); ?>">
                     <button type="submit" class="btn btn-sm btn-danger"<?php echo $d['total'] ? ' disabled title="En uso"' : ''; ?>>✕</button>
                 </form>
@@ -109,7 +109,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             <td class="hide-m text-sm"><?php echo (int)$d['usos']; ?><?php echo !empty($d['sugerida']) ? ' <span class="text-muted">(de las plantillas de inspección)</span>' : (!$d['en_catalogo'] ? ' <span class="text-muted">(solo en uso)</span>' : ''); ?></td>
             <td class="acciones">
                 <?php if ($d['en_catalogo']): ?>
-                <form method="POST" action="/directorio/categoria/eliminar" style="display:inline" data-confirm="¿Eliminar categoría?|Solo se puede si nada la usa.">
+                <form class="inline" method="POST" action="/directorio/categoria/eliminar" data-confirm="¿Eliminar categoría?|Solo se puede si nada la usa.">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="ambito" value="<?php echo s($ambito); ?>"><input type="hidden" name="nombre" value="<?php echo s($nombre); ?>">
                     <button type="submit" class="btn btn-sm btn-danger"<?php echo $d['usos'] ? ' disabled title="En uso"' : ''; ?>>✕</button>
                 </form>
@@ -138,7 +138,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
             </form></td>
             <td class="mono hide-m"><?php echo (int)$e->n_materiales; ?></td><td class="mono hide-m"><?php echo (int)$e->n_submittals; ?></td>
             <td class="acciones">
-                <form method="POST" action="/especialidades/eliminar" style="display:inline" data-confirm="¿Eliminar especialidad?|Solo se puede si ningún material ni submittal la usa.">
+                <form class="inline" method="POST" action="/especialidades/eliminar" data-confirm="¿Eliminar especialidad?|Solo se puede si ningún material ni submittal la usa.">
                     <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="volver" value="directorio"><input type="hidden" name="id" value="<?php echo (int)$e->id; ?>">
                     <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                 </form>

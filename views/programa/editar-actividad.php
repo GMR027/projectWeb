@@ -160,13 +160,13 @@
                         <td><span class="badge-status status-<?php echo s($r->estado); ?>"><?php echo s(ucfirst($r->estado)); ?></span></td>
                         <td class="acciones">
                             <?php if ($r->estado === 'activa'): ?>
-                                <form method="POST" action="/programa/restricciones/resolver" style="display:inline">
+                                <form class="inline" method="POST" action="/programa/restricciones/resolver">
                                     <input type="hidden" name="id" value="<?php echo s($r->id); ?>">
                                     <button type="submit" class="btn btn-xs btn-primary">Resolver</button>
                                 </form>
                             <?php endif; ?>
                             <a href="/programa/restricciones/editar?id=<?php echo s($r->id); ?>" class="btn btn-xs btn-secondary">Editar</a>
-                            <form method="POST" action="/programa/restricciones/eliminar" style="display:inline" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
+                            <form class="inline" method="POST" action="/programa/restricciones/eliminar" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
                                 <input type="hidden" name="id" value="<?php echo s($r->id); ?>">
                                 <button type="submit" class="btn btn-xs btn-danger">✕</button>
                             </form>
@@ -205,14 +205,14 @@
             <strong class="text-sm"><?php echo s($hojaSub->nombre); ?></strong>
             <a class="btn btn-secondary btn-sm" href="/sheetflow/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&amp;id=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-up-right-from-square"></i> Abrir tabla</a>
             <a class="btn btn-ghost btn-sm" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Usar en vPlan</a>
-            <form method="POST" action="/programa/subactividades/sheetflow/quitar" style="display:inline" data-confirm="¿Desvincular la tabla?|La tabla se conserva como una tabla normal de SheetFlow, pero dejará de sincronizarse con las subactividades. Las subactividades no se borran.|Desvincular">
+            <form class="inline" method="POST" action="/programa/subactividades/sheetflow/quitar" data-confirm="¿Desvincular la tabla?|La tabla se conserva como una tabla normal de SheetFlow, pero dejará de sincronizarse con las subactividades. Las subactividades no se borran.|Desvincular">
                 <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
                 <input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>">
                 <button type="submit" class="btn btn-ghost btn-sm"><i class="fa-solid fa-link-slash"></i> Desvincular</button>
             </form>
-            <p class="text-muted text-sm" style="flex-basis:100%;margin:.25rem 0 0;">Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos con la tabla. Las columnas extra se quedan en SheetFlow y vPlan. Si eliminas un renglón en la tabla, se elimina su subactividad.</p>
+            <p class="text-muted text-sm full" style="margin:.25rem 0 0">Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos con la tabla. Las columnas extra se quedan en SheetFlow y vPlan. Si eliminas un renglón en la tabla, se elimina su subactividad.</p>
         <?php else: ?>
-            <form method="POST" action="/programa/subactividades/sheetflow" style="display:inline">
+            <form class="inline" method="POST" action="/programa/subactividades/sheetflow">
                 <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
                 <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-table-cells"></i> Generar tabla en SheetFlow</button>
             </form>

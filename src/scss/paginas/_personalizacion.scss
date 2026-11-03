@@ -40,7 +40,7 @@
 .integ-codigo { background: rgba(15, 23, 42, .6); color: #e2e8f0; padding: 1.2rem; border-radius: .8rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 1.2rem; }
 .integ-guia {
   summary { cursor: pointer; font-weight: 600; padding: 1rem 0; border-bottom: 1px solid rgba(148, 163, 184, .25); }
-  details[open] > summary { color: var(--primary); }
+  details[open] > summary { color: var(--primary-ink); }
   details > *:not(summary) { margin-top: 1rem; }
   h4 { margin: 1.4rem 0 .6rem; }
   code { font-family: 'Fira Code', monospace; font-size: .92em; }

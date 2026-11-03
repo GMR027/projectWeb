@@ -33,7 +33,7 @@ $tabla = function (array $lista, string $vacio) use ($pid, $estado) { ?>
                 <td class="mono hide-m"><?php echo (int)$e['accesos']; ?><?php echo $e['ultimo_acceso'] ? '<br><small class="text-muted">' . formatear_fecha(substr($e['ultimo_acceso'], 0, 10)) . '</small>' : ''; ?></td>
                 <td><span class="cb-tag<?php echo $e['activo'] ? '' : ' cb-tag-critica'; ?>"><?php echo $estado($e); ?></span></td>
                 <td class="acciones"><?php if ($e['activo']): ?>
-                    <form method="POST" action="/compartir/revocar" style="display:inline" data-confirm="¿Revocar este enlace?|Quien lo tenga dejará de ver el proyecto.">
+                    <form class="inline" method="POST" action="/compartir/revocar" data-confirm="¿Revocar este enlace?|Quien lo tenga dejará de ver el proyecto.">
                         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$e['id']; ?>"><button type="submit" class="btn btn-sm btn-danger">Revocar</button>
                     </form><?php endif; ?></td>
             </tr>

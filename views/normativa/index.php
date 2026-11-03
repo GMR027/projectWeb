@@ -56,7 +56,7 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
 
 <form method="get" action="/normativa" class="card inc-filtros">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-    <label style="flex:1">Buscar en todos los documentos (cruza español e inglés) <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Ej. cable de cobre categoría 6A, canalización, concreto…"></label>
+    <label class="flex-1">Buscar en todos los documentos (cruza español e inglés) <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Ej. cable de cobre categoría 6A, canalización, concreto…"></label>
     <button class="btn btn-ghost" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
 </form>
 <?php if ($q !== ''): ?>

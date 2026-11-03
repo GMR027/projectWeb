@@ -60,7 +60,7 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
                     <?php if ($editar): ?>
                     <div class="cb-herr">
                         <button type="button" class="btn btn-sm btn-ghost" data-editar="<?php echo s($c->id); ?>">Editar</button>
-                        <form method="POST" action="/cambios/partida/eliminar" style="display:inline" data-confirm="¿Eliminar el renglón?|No se puede deshacer.">
+                        <form class="inline" method="POST" action="/cambios/partida/eliminar" data-confirm="¿Eliminar el renglón?|No se puede deshacer.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo s($c->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>

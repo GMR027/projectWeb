@@ -53,17 +53,17 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Tipo <select name="tipo" id="p-tipo"><?php foreach ($nTipos as $k => $n): ?><option value="<?php echo s($k); ?>"><?php echo s($n); ?></option><?php endforeach; ?></select></label>
         <label>Nombre de permiso <input type="text" name="nombre_permiso" id="p-nombre" maxlength="150" placeholder="Ej. PT-014 Montaje de andamio torre B"></label>
-        <label style="flex:2">Trabajo a realizar <input type="text" name="titulo" id="p-titulo" maxlength="200" required></label>
+        <label class="flex-2">Trabajo a realizar <input type="text" name="titulo" id="p-titulo" maxlength="200" required></label>
         <label>Actividad <select name="actividad_id" id="p-act"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades); ?></select></label>
         <label>Área <input type="text" name="area" maxlength="150"></label>
         <label>Responsable <input type="text" name="responsable" maxlength="150"></label>
         <label>Contratista <input type="text" name="contratista" maxlength="150"></label>
         <label>Desde <input type="date" name="vigente_desde" id="p-desde" value="<?php echo date('Y-m-d'); ?>" required></label>
         <label>Hasta <input type="date" name="vigente_hasta" id="p-hasta" value="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" required></label>
-        <label style="flex-basis:100%">Descripción del trabajo <textarea name="descripcion" rows="2" maxlength="3000"></textarea></label>
-        <label style="flex-basis:100%">Riesgos identificados <textarea name="riesgos" rows="2" maxlength="3000"></textarea></label>
-        <label style="flex-basis:100%">Medidas del tipo elegido <small class="text-muted" id="p-medidas"></small></label>
-        <label style="flex-basis:100%">Medidas adicionales (una por línea) <textarea name="medidas_extra" rows="2"></textarea></label>
+        <label class="full">Descripción del trabajo <textarea name="descripcion" rows="2" maxlength="3000"></textarea></label>
+        <label class="full">Riesgos identificados <textarea name="riesgos" rows="2" maxlength="3000"></textarea></label>
+        <label class="full">Medidas del tipo elegido <small class="text-muted" id="p-medidas"></small></label>
+        <label class="full">Medidas adicionales (una por línea) <textarea name="medidas_extra" rows="2"></textarea></label>
         <button class="btn btn-primary" type="submit">Solicitar permiso</button>
     </form>
 </details>
@@ -83,19 +83,19 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     <summary><strong>Tipos de permiso</strong> <small class="text-muted">· <?php echo count($tipos); ?> disponibles (los fijos no se editan; crea los tuyos)</small></summary>
     <ul class="hist-lista" style="margin-top:1rem">
         <?php foreach ($tipos as $k => $t): ?><li><strong><?php echo s($t['nombre']); ?></strong> <small class="text-muted">· <?php echo empty($t['propio']) ? 'fijo' : 'propio'; ?> · <?php echo count($t['medidas']); ?> medidas<?php echo $t['palabras'] ? ' · detecta: ' . s(implode(', ', array_slice($t['palabras'], 0, 6))) . (count($t['palabras']) > 6 ? '…' : '') : ''; ?></small>
-            <?php if (!empty($t['propio'])): ?><form method="post" action="/seguridad/tipo/eliminar" data-confirmar="¿Eliminar este tipo de permiso?" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></li><?php endforeach; ?>
+            <?php if (!empty($t['propio'])): ?><form class="inline" method="post" action="/seguridad/tipo/eliminar" data-confirmar="¿Eliminar este tipo de permiso?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></li><?php endforeach; ?>
     </ul>
     <form method="post" action="/seguridad/tipo" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Nombre del tipo <input type="text" name="nombre" maxlength="120" required placeholder="Ej. Trabajo sobre cuerpo de agua"></label>
-        <label style="flex-basis:100%">Palabras que lo detectan en las actividades (una por línea, opcional) <textarea name="palabras" rows="2"></textarea></label>
-        <label style="flex-basis:100%">Medidas de seguridad del tipo (una por línea; si queda vacío se usan las generales) <textarea name="medidas" rows="3"></textarea></label>
+        <label class="full">Palabras que lo detectan en las actividades (una por línea, opcional) <textarea name="palabras" rows="2"></textarea></label>
+        <label class="full">Medidas de seguridad del tipo (una por línea; si queda vacío se usan las generales) <textarea name="medidas" rows="3"></textarea></label>
         <button class="btn btn-primary" type="submit">Crear tipo</button></form>
 </details>
 <?php endif; ?>
 
 <div class="card prg-seccion">
     <div class="prg-cab"><h3>Permisos</h3>
-        <form method="get" action="/seguridad" style="margin:0"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><select name="estado" onchange="this.form.submit()"><option value="">Todos</option><?php foreach (Seguridad::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $estado === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></form></div>
+        <form class="m-0" method="get" action="/seguridad"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><select name="estado" aria-label="Filtrar por estado" onchange="this.form.submit()"><option value="">Todos</option><?php foreach (Seguridad::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $estado === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></form></div>
     <?php if (!$permisos): ?><p class="text-muted">No hay permisos con este filtro.</p><?php endif; ?>
     <ul class="inc-lista">
         <?php foreach ($permisos as $x): ?>
@@ -110,10 +110,10 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
                 <div class="inc-botones">
                     <a class="btn btn-sm btn-ghost" href="/seguridad/permiso/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$x['id']; ?>"><i class="fa-solid fa-file-pdf"></i> PDF para firmar</a>
                     <?php foreach (['borrador' => ['solicitado', 'Solicitar'], 'solicitado' => ['aprobado', 'Aprobar'], 'aprobado' => ['cerrado', 'Cerrar (trabajo terminado)']] as $desde => [$a, $n]): if ($x['estado'] !== $desde) continue; if ($a === 'aprobado' && !$admin) continue; if (!$puede) continue; ?>
-                        <form method="post" action="/seguridad/permiso/estado" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $a; ?>"><button class="btn btn-sm btn-primary" type="submit"><?php echo $n; ?></button></form>
+                        <form class="inline" method="post" action="/seguridad/permiso/estado"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $a; ?>"><button class="btn btn-sm btn-primary" type="submit"><?php echo $n; ?></button></form>
                     <?php endforeach; ?>
-                    <?php if ($x['estado'] === 'solicitado' && $admin): ?><form method="post" action="/seguridad/permiso/estado" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="rechazado"><button class="btn btn-sm btn-ghost" type="submit">Rechazar</button></form><?php endif; ?>
-                    <?php if ($puede && in_array($x['estado'], ['borrador', 'solicitado', 'rechazado'], true)): ?><form method="post" action="/seguridad/permiso/eliminar" data-confirmar="¿Eliminar este permiso?" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?>
+                    <?php if ($x['estado'] === 'solicitado' && $admin): ?><form class="inline" method="post" action="/seguridad/permiso/estado"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="rechazado"><button class="btn btn-sm btn-ghost" type="submit">Rechazar</button></form><?php endif; ?>
+                    <?php if ($puede && in_array($x['estado'], ['borrador', 'solicitado', 'rechazado'], true)): ?><form class="inline" method="post" action="/seguridad/permiso/eliminar" data-confirmar="¿Eliminar este permiso?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?>
                     <?php if ($x['resuelto_por']): ?><small class="text-muted"><?php echo s($x['resuelto_por'] . ' · ' . date('d/m/Y H:i', strtotime($x['resuelto_en']))); ?></small><?php endif; ?>
                 </div>
             </li>
@@ -130,8 +130,8 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
             <label>Severidad <select name="severidad"><option value="baja">Baja</option><option value="media" selected>Media</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></label>
             <label>Área <input type="text" name="area" maxlength="150"></label>
             <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades); ?></select></label>
-            <label style="flex-basis:100%">Qué pasó <textarea name="descripcion" rows="2" required maxlength="3000"></textarea></label>
-            <label style="flex-basis:100%">Acciones tomadas <textarea name="acciones" rows="2" maxlength="3000"></textarea></label>
+            <label class="full">Qué pasó <textarea name="descripcion" rows="2" required maxlength="3000"></textarea></label>
+            <label class="full">Acciones tomadas <textarea name="acciones" rows="2" maxlength="3000"></textarea></label>
             <button class="btn btn-primary" type="submit">Registrar</button></form></details><?php endif; ?>
     <?php if (!$incidentes): ?><p class="text-muted">Sin incidentes registrados.</p><?php else: ?><div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Severidad</th><th>Qué pasó</th><th>Estado</th></tr></thead><tbody>
         <?php foreach ($incidentes as $i): ?><tr><td class="fecha"><?php echo s($fmt($i['fecha'])); ?></td><td><?php echo s(Seguridad::INCIDENTES[$i['tipo']]); ?></td><td><?php echo s(ucfirst($i['severidad'])); ?></td>

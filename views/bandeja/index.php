@@ -28,7 +28,7 @@
                     <?php elseif ($it['correo']): ?>
                         <a class="btn btn-sm btn-primary" href="mailto:<?php echo s($it['correo']); ?>?subject=<?php echo rawurlencode('Re: Tu mensaje a ProjectWeb'); ?>"><i class="fa-solid fa-reply"></i> Responder</a>
                     <?php endif; ?>
-                    <form method="POST" action="/bandeja/accion" style="display:inline" data-confirm="¿Eliminar mensaje?|Esta acción no se puede deshacer.">
+                    <form class="inline" method="POST" action="/bandeja/accion" data-confirm="¿Eliminar mensaje?|Esta acción no se puede deshacer.">
                         <input type="hidden" name="tipo" value="<?php echo s($it['tipo']); ?>"><input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
                         <input type="hidden" name="accion" value="eliminar"><input type="hidden" name="volver" value="<?php echo s($filtro); ?>">
                         <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>

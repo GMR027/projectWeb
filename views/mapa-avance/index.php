@@ -39,7 +39,7 @@ $nomAct = fn($id) => isset($actividades[$id]) ? $actividades[$id]['codigo'] . ' 
     <?php foreach ($calc['laminas'] as $l): ?>
         <div class="card prg-seccion">
             <div class="prg-cab">
-                <h3 style="margin:0"><?php echo s($l['titulo']); ?></h3>
+                <h3 class="m-0"><?php echo s($l['titulo']); ?></h3>
                 <span class="text-muted"><?php echo (int)$l['marcas']; ?> marcas con color · <span class="mapa-sw rojo"></span><?php echo (int)$l['rojo']; ?> <span class="mapa-sw amarillo"></span><?php echo (int)$l['amarillo']; ?> <span class="mapa-sw verde"></span><?php echo (int)$l['verde']; ?></span>
                 <strong class="mapa-pct"><?php echo $l['pct'] !== null ? number_format($l['pct'], 1) . ' %' : 'sin marcas de color'; ?></strong>
                 <a class="btn btn-sm btn-ghost" href="/vplan/ver?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$l['id']; ?>">Abrir lámina</a>
@@ -52,7 +52,7 @@ $nomAct = fn($id) => isset($actividades[$id]) ? $actividades[$id]['codigo'] . ' 
                     <tr><td><?php echo s($c['nombre']); ?></td><td class="num"><?php echo (int)$c['rojo']; ?></td><td class="num"><?php echo (int)$c['amarillo']; ?></td><td class="num"><?php echo (int)$c['verde']; ?></td><td class="num"><?php echo $c['pct'] !== null ? number_format($c['pct'], 1) . ' %' : '—'; ?></td>
                         <td><?php if ($puede): ?>
                             <form method="post" action="/mapa-avance/mapear" style="display:flex;gap:.4rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="lamina" value="<?php echo (int)$l['id']; ?>"><input type="hidden" name="capa" value="<?php echo s($c['id']); ?>">
-                                <select name="actividad" onchange="this.form.submit()"><option value="0">(la(s) de la lámina)</option><?php echo opciones_actividades($actividades, $sel, 50); ?></select></form>
+                                <select name="actividad" aria-label="Actividad de la capa" onchange="this.form.submit()"><option value="0">(la(s) de la lámina)</option><?php echo opciones_actividades($actividades, $sel, 50); ?></select></form>
                             <?php else: echo $sel ? s($nomAct($sel)) : '(la(s) de la lámina)'; endif; ?></td></tr>
                 <?php endforeach; ?></tbody></table></div>
             <?php endif; ?>

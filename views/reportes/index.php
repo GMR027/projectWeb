@@ -28,7 +28,7 @@
                 <?php endif; ?>
                 <tr>
                     <?php foreach ($cols as $c): switch ($c['k']): case 'fecha': ?>
-                    <td class="mono hide-m" style="white-space:nowrap"><?php echo s(fecha_corta_es($r->fecha)); ?></td>
+                    <td class="mono hide-m nowrap"><?php echo s(fecha_corta_es($r->fecha)); ?></td>
                     <?php break; case 'actividades': ?>
                     <td>
                         <div class="solo-movil text-sm mono text-muted"><?php echo s(fecha_corta_es($r->fecha)); ?></div>

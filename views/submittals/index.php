@@ -51,7 +51,7 @@
                     <td class="acciones hide-m">
                         <a href="/submittals/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Ver')); ?></a>
                         <a href="/submittals/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($p->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Editar')); ?></a>
-                        <form method="POST" action="/submittals/eliminar" style="display:inline" data-confirm="¿Eliminar paquete?|Se quitarán también sus renglones del MSR.">
+                        <form class="inline" method="POST" action="/submittals/eliminar" data-confirm="¿Eliminar paquete?|Se quitarán también sus renglones del MSR.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($p->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

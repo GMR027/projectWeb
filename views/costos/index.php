@@ -123,7 +123,7 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
                     <td class="mono"><?php echo $m($mv['monto']); ?></td>
                     <td class="acciones">
                         <a href="<?php echo s($url(['pestana' => $pestana, 'editar' => $mv['id']])); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/costos/eliminar" style="display:inline" data-confirm="¿Eliminar este movimiento?|Se quitará del costo del proyecto.">
+                        <form class="inline" method="POST" action="/costos/eliminar" data-confirm="¿Eliminar este movimiento?|Se quitará del costo del proyecto.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$mv['id']; ?>"><input type="hidden" name="tipo" value="<?php echo $tipo; ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>

@@ -228,7 +228,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     <aside id="ve-props" class="card ve-props">
         <h4>Propiedades</h4>
         <p class="ve-vacio text-muted text-sm">Selecciona una marca para editarla. Rueda del mouse = zoom (en tablet o celular, pellizca con dos dedos y arrastra con dos dedos para desplazarte); arrastra el fondo para desplazar el plano. Mayús al dibujar líneas = recta. Polilínea: doble clic o Enter para terminar. Las imágenes se redimensionan con las esquinas.</p>
-        <div class="ve-campos" style="display:none">
+        <div class="ve-campos oculto">
             <div class="ve-f"><label>Color de línea</label><input type="color" id="p-stroke"></div>
             <div class="ve-f"><label>Relleno / color</label><input type="color" id="p-fill"></div>
             <div class="ve-f"><label class="ve-chk"><input type="checkbox" id="p-nofill"> Sin relleno</label></div>
@@ -274,7 +274,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <div class="ve-f"><label>Alto de filas / ancho de columnas</label>
                 <div class="ve-par"><input type="number" id="p-rh" min="8" aria-label="Alto de fila"> <span>×</span> <input type="number" id="p-cw" min="10" aria-label="Ancho de columna"></div>
                 <small class="text-muted">Doble clic en una celda para escribir; Tab pasa a la siguiente.</small></div>
-<div class="ve-f" id="p-punch-f" style="display:none"><label>Punch list</label>
+<div class="ve-f oculto" id="p-punch-f"><label>Punch list</label>
                 <button type="button" class="btn btn-sm btn-ghost" id="b-punch-cfg"><i class="fa-solid fa-eye"></i> Qué ver</button></div>
 <div class="ve-f ve-celdas" id="p-celdas">
                 <label>Celdas seleccionadas: <b id="p-celdas-n">0</b></label>
@@ -296,9 +296,9 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
                 <input type="number" id="p-n" min="1" max="99" list="lista-restr">
                 <datalist id="lista-restr"><?php foreach ($config['restricciones'] as $r): ?><option value="<?php echo (int)$r['n']; ?>"><?php echo s($r['descripcion']); ?></option><?php endforeach; ?></datalist></div>
             <div class="ve-f ve-enlace" id="p-lk-360"><label>Foto 360</label>
-                <img id="p-lk-360-img" alt="Foto 360" style="width:100%;border-radius:.6rem;border:1px solid var(--border);display:block;margin-bottom:.6rem">
+                <img class="block" id="p-lk-360-img" alt="Foto 360" style="width:100%; border-radius:.6rem; border:1px solid var(--border); margin-bottom:.6rem">
                 <button type="button" id="p-lk-360-cambiar" class="btn btn-sm btn-ghost"><i class="fa-solid fa-image"></i> Cambiar foto 360</button>
-                <small class="text-muted" id="p-lk-360-med" style="display:block;margin-top:.4rem"></small></div>
+                <small class="text-muted block" id="p-lk-360-med" style="margin-top:.4rem"></small></div>
             <div class="ve-f ve-enlace" id="p-lk-tipo-f"><label>Tipo de enlace</label>
                 <select id="p-lk-tipo"><option value="ext">Enlace externo (Google Maps, web…)</option><option value="int">Sección del proyecto</option></select></div>
             <div class="ve-f ve-enlace" id="p-lk-ext"><label>Dirección (URL)</label><input type="url" id="p-lk-url" maxlength="500" placeholder="https://maps.app.goo.gl/…" autocomplete="off"></div>

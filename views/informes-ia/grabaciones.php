@@ -14,7 +14,7 @@ $pid = (int)$proyecto->id;
 <div class="card prg-seccion" id="rec">
     <h3>Grabar una reunión nueva</h3>
     <div class="inc-filtros">
-        <label style="flex:1">Nombre <input type="text" id="rec-nombre" maxlength="200" value="<?php echo s('Reunión ' . date('d/m/Y H:i')); ?>"></label>
+        <label class="flex-1">Nombre <input type="text" id="rec-nombre" maxlength="200" value="<?php echo s('Reunión ' . date('d/m/Y H:i')); ?>"></label>
         <button type="button" class="btn btn-primary" id="rec-iniciar"><i class="fa-solid fa-circle"></i> Grabar</button>
         <button type="button" class="btn btn-ghost" id="rec-pausa" hidden><i class="fa-solid fa-pause"></i> Pausar</button>
         <button type="button" class="btn btn-ghost" id="rec-detener" hidden><i class="fa-solid fa-stop"></i> Detener</button>

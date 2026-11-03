@@ -23,7 +23,7 @@ $id = (int)$proyecto->id; ?>
             <tr>
                 <td><?php echo archivo_icono_html('pdf', 'PDF'); ?> <strong><?php echo s($e->nombre); ?></strong></td>
                 <td>
-                    <ol style="margin:0;padding-left:1.8rem">
+                    <ol class="m-0" style="padding-left:1.8rem">
                     <?php foreach ($fuentes as $f): ?>
                         <li>
                             <i class="fa-solid <?php echo $f['t'] === 'redactor' ? 'fa-file-pen' : 'fa-file-pdf'; ?>" aria-hidden="true"></i>

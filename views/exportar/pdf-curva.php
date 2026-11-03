@@ -29,7 +29,7 @@ $muchas = count($d['cols']) > 10;   // la maestra tiene muchas columnas: solo se
 <?php else: ?>
     <h1><?php echo s($proyecto->nombre); ?> · programa del <?php echo s(date('d/m/Y', strtotime($proyecto->fecha_inicio))); ?> al <?php echo s(date('d/m/Y', strtotime($proyecto->fecha_fin))); ?></h1>
 <?php endif; ?>
-<div class="caja" style="text-align:center"><img src="<?php echo $png; ?>" style="width:<?php echo $tablaCorta ? "78%" : "100%"; ?>"></div>
+<div class="caja text-center"><img src="<?php echo $png; ?>" style="width:<?php echo $tablaCorta ? "78%" : "100%"; ?>"></div>
 <?php if ($tablaCorta): ?>
     <table class="<?php echo $muchas ? 'densa' : ''; ?>" style="margin-top:6pt">
         <tr><th class="k"></th><?php foreach ($d['cols'] as $c): ?><th class="f"><?php echo s($c); ?></th><?php endforeach; ?></tr>

@@ -51,10 +51,10 @@ $vols = [
         <?php endif; ?>
     </p>
     <table class="tabla">
-        <thead><tr><th><?php echo $vol['col']; ?></th><th style="text-align:right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
+        <thead><tr><th><?php echo $vol['col']; ?></th><th class="text-right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
         <tbody>
         <?php foreach ($v['desglose'] as $nombre => $bytes): ?>
-            <tr><td><?php echo s($nombre); ?></td><td class="mono" style="text-align:right"><?php echo $fmt($bytes); ?></td></tr>
+            <tr><td><?php echo s($nombre); ?></td><td class="mono text-right"><?php echo $fmt($bytes); ?></td></tr>
         <?php endforeach; ?>
         </tbody>
     </table>
@@ -189,8 +189,8 @@ $vols = [
         <h4 style="margin-bottom:.8rem"><i class="fa-solid fa-clock"></i> <?php echo s(t('Respaldo diario automático')); ?></h4>
         <form method="POST" action="/sistema/respaldo/programar" style="display:flex;gap:1.4rem;align-items:flex-end;flex-wrap:wrap">
             <label class="campo-check"><input type="checkbox" name="activo" value="1" <?php echo $programado['activo'] ? 'checked' : ''; ?>> <?php echo s(t('Activado')); ?></label>
-            <div><label class="text-sm text-muted"><?php echo s(t('Hora')); ?></label><br><input type="time" name="hora" value="<?php echo s($programado['hora']); ?>" required></div>
-            <div><label class="text-sm text-muted">Conservar los últimos</label><br><input type="number" name="conservar" min="1" max="30" value="<?php echo (int)$programado['conservar']; ?>" style="width:8rem"> respaldos</div>
+            <div><label class="text-sm text-muted" for="resp-hora"><?php echo s(t('Hora')); ?></label><br><input type="time" id="resp-hora" name="hora" value="<?php echo s($programado['hora']); ?>" required></div>
+            <div><label class="text-sm text-muted" for="resp-conservar">Conservar los últimos</label><br><input type="number" id="resp-conservar" name="conservar" min="1" max="30" value="<?php echo (int)$programado['conservar']; ?>" style="width:8rem"> respaldos</div>
             <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
         </form>
         <p class="text-sm" style="margin-top:1rem">
@@ -198,7 +198,7 @@ $vols = [
             <?php if ($programado['activo']): ?> · Próximo: <strong><?php echo $proximoAuto <= time() ? 'pendiente (se hará en cuanto el cron corra o tú entres)' : date('d/m/Y H:i', $proximoAuto); ?></strong><?php endif; ?>
         </p>
         <p class="text-muted text-sm">Al hacerse el respaldo número <?php echo (int)$programado['conservar'] + 1; ?> se borra el más antiguo, así que siempre quedan los últimos <?php echo (int)$programado['conservar']; ?> automáticos (los manuales no se tocan). Para que corra a la hora exacta aunque nadie entre, agrega al cron del servidor:
-            <code style="display:block;margin-top:.5rem;user-select:all">0 <?php echo (int)substr($programado['hora'], 0, 2); ?> * * * php <?php echo s(realpath(__DIR__ . '/../../bin/respaldo_programado.php') ?: '/ruta/al/proyecto/bin/respaldo_programado.php'); ?></code>
+            <code class="block" style="margin-top:.5rem; user-select:all">0 <?php echo (int)substr($programado['hora'], 0, 2); ?> * * * php <?php echo s(realpath(__DIR__ . '/../../bin/respaldo_programado.php') ?: '/ruta/al/proyecto/bin/respaldo_programado.php'); ?></code>
             Sin cron, el respaldo se hace la primera vez que el administrador entra después de esa hora.</p>
     </div>
 
@@ -211,13 +211,13 @@ $vols = [
         <form method="POST" action="/sistema/respaldo/restaurar" enctype="multipart/form-data" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap"
               data-confirmar="Se reemplazarán TODA la base de datos y TODOS los archivos por los del respaldo. ¿Continuar?">
             <div><label class="text-sm text-muted">Restaurar desde mi equipo (.zip)</label><br>
-                <input type="file" name="respaldo" accept=".zip" required></div>
+                <input type="file" name="respaldo" accept=".zip" aria-label="Archivo de respaldo (.zip)" required></div>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Subir y restaurar</button>
         </form>
     </div>
 
     <table class="tabla">
-        <thead><tr><th><?php echo s(t('Fecha')); ?></th><th>Nombre del respaldo</th><th style="text-align:right">Almacenamiento ocupado</th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
+        <thead><tr><th><?php echo s(t('Fecha')); ?></th><th>Nombre del respaldo</th><th class="text-right">Almacenamiento ocupado</th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
         <tbody>
         <?php if (!$respaldos): ?>
             <tr><td colspan="4" class="text-muted">Aún no hay respaldos.</td></tr>
@@ -226,14 +226,14 @@ $vols = [
             <tr>
                 <td class="mono"><?php echo date('d/m/Y H:i', $r['fecha']); ?></td>
                 <td><?php echo s($r['nombre']); ?><?php if (\Classes\Respaldo::esAutomatico($r['archivo'])): ?> <span class="badge"><?php echo s(t('Automático')); ?></span><?php endif; ?></td>
-                <td class="mono" style="text-align:right"><?php echo $fmt($r['bytes']); ?></td>
-                <td style="white-space:nowrap">
+                <td class="mono text-right"><?php echo $fmt($r['bytes']); ?></td>
+                <td class="nowrap">
                     <a class="btn btn-sm btn-ghost" href="/sistema/respaldo/descargar?archivo=<?php echo urlencode($r['archivo']); ?>" title="Descargar"><i class="fa-solid fa-download"></i></a>
-                    <form method="POST" action="/sistema/respaldo/restaurar" style="display:inline" data-confirmar="Se reemplazarán TODA la base de datos y TODOS los archivos por los de este respaldo. ¿Restaurar?">
+                    <form class="inline" method="POST" action="/sistema/respaldo/restaurar" data-confirmar="Se reemplazarán TODA la base de datos y TODOS los archivos por los de este respaldo. ¿Restaurar?">
                         <input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-sm btn-ghost" title="Restaurar"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     </form>
-                    <form method="POST" action="/sistema/respaldo/eliminar" style="display:inline" data-confirmar="¿Eliminar este respaldo?">
+                    <form class="inline" method="POST" action="/sistema/respaldo/eliminar" data-confirmar="¿Eliminar este respaldo?">
                         <input type="hidden" name="archivo" value="<?php echo s($r['archivo']); ?>">
                         <button type="submit" class="btn btn-sm btn-ghost" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                     </form>

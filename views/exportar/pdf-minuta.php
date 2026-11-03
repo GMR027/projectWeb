@@ -28,8 +28,8 @@ $tabla = function (string $titulo, string $col1, array $filas) { ?>
 </style></head><body>
 <table class="cab"><tr>
     <td style="width:30%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
-    <td style="text-align:center;font-weight:bold;font-size:11pt">MINUTA DE JUNTA</td>
-    <td style="width:30%;text-align:right"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
+    <td class="text-center" style="font-weight:bold; font-size:11pt">MINUTA DE JUNTA</td>
+    <td class="text-right" style="width:30%"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
 </tr></table>
 <h1><?php echo s($minuta->nombre); ?></h1>
 <table class="d">

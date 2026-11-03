@@ -261,7 +261,8 @@
 
 .calendario-dia-inhabil {
   background-color: rgba(148, 163, 184, 0.1);
-  opacity: 0.6;
+  // Sin opacity: atenuar todo el día bajaba el contraste de las actividades por debajo de 4.5:1.
+  border-color: rgba(148, 163, 184, 0.35);
 }
 
 .calendario-dia-festivo {
@@ -290,8 +291,8 @@
 .dia-badge {
   font-size: 0.95rem;
   padding: 0.3rem 0.5rem;
-  background-color: rgba(220, 38, 38, 0.15);
-  color: var(--danger);
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--danger-ink);
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 0.3rem;
   margin-bottom: 0.4rem;
@@ -343,12 +344,11 @@
     font-family: $font-mono;
     font-size: 0.95rem;
     font-weight: 600;
-    opacity: 0.9;
   }
 
   &.status-completada {
     background-color: rgba(5, 150, 105, 0.12);
-    color: var(--success);
+    color: var(--success-ink);
     border-color: rgba(5, 150, 105, 0.3);
     border-left-width: 3px;
     border-left-color: var(--success);
@@ -356,7 +356,7 @@
 
   &.status-en_proceso {
     background-color: rgba(217, 119, 6, 0.12);
-    color: var(--warning);
+    color: var(--warning-ink);
     border-color: rgba(217, 119, 6, 0.3);
     border-left-width: 3px;
     border-left-color: var(--warning);
@@ -364,7 +364,7 @@
 
   &.status-no_iniciada {
     background-color: rgba(148, 163, 184, 0.12);
-    color: var(--text-muted);
+    color: var(--neutral-ink);
     border-color: rgba(148, 163, 184, 0.3);
     border-left-width: 3px;
     border-left-color: var(--text-muted);

@@ -42,19 +42,19 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
     <form method="GET" action="/evidencias" class="ev-filtros">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div><label class="text-sm text-muted"><?php echo s(t('Partida')); ?></label><br>
-            <select name="partida"><option value=""><?php echo s(t('Todas')); ?></option><?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$filtros['partida'] === (int)$p->id ? ' selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?></select></div>
+            <select name="partida" aria-label="Partida"><option value=""><?php echo s(t('Todas')); ?></option><?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?><option value="<?php echo (int)$p->id; ?>"<?php echo (int)$filtros['partida'] === (int)$p->id ? ' selected' : ''; ?>><?php echo s($p->codigo . ' · ' . $p->nombre); ?></option><?php endforeach; ?></select></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Actividad')); ?></label><br>
-            <select name="actividad"><option value=""><?php echo s(t('Todas')); ?></option>
+            <select name="actividad" aria-label="Actividad"><option value=""><?php echo s(t('Todas')); ?></option>
                 <?php foreach ($bloques as $bloque): $p = $bloque['partida']; ?><optgroup label="● <?php echo s($p->codigo); ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>;color:#fff"><?php foreach ($bloque['actividades'] as $a): ?><option value="<?php echo (int)$a->id; ?>" style="background:<?php echo s($p->color_bg ?: '#64748b'); ?>33;color:inherit"<?php echo (int)$filtros['actividad'] === (int)$a->id ? ' selected' : ''; ?>><?php echo s($a->codigo . ' · ' . mb_strimwidth($a->nombre, 0, 50, '…')); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
             </select></div>
         <?php foreach (['departamento' => ['Departamento', $departamentos], 'categoria' => ['Categoría', $categorias]] as $k => [$et, $op]): if (!$op) continue; ?>
         <div><label class="text-sm text-muted"><?php echo s(t($et)); ?></label><br>
-            <select name="<?php echo $k; ?>"><option value=""><?php echo s(t('Todos')); ?></option><?php foreach ($op as $o): ?><option value="<?php echo s($o); ?>"<?php echo $filtros[$k] === $o ? ' selected' : ''; ?>><?php echo s($o); ?></option><?php endforeach; ?></select></div>
+            <select name="<?php echo $k; ?>" aria-label="<?php echo s(t($et)); ?>"><option value=""><?php echo s(t('Todos')); ?></option><?php foreach ($op as $o): ?><option value="<?php echo s($o); ?>"<?php echo $filtros[$k] === $o ? ' selected' : ''; ?>><?php echo s($o); ?></option><?php endforeach; ?></select></div>
         <?php endforeach; ?>
-        <div><label class="text-sm text-muted"><?php echo s(t('Desde')); ?></label><br><input type="date" name="desde" value="<?php echo s($filtros['desde']); ?>"></div>
-        <div><label class="text-sm text-muted"><?php echo s(t('Hasta')); ?></label><br><input type="date" name="hasta" value="<?php echo s($filtros['hasta']); ?>"></div>
+        <div><label class="text-sm text-muted" for="ev-desde"><?php echo s(t('Desde')); ?></label><br><input type="date" id="ev-desde" name="desde" value="<?php echo s($filtros['desde']); ?>"></div>
+        <div><label class="text-sm text-muted" for="ev-hasta"><?php echo s(t('Hasta')); ?></label><br><input type="date" id="ev-hasta" name="hasta" value="<?php echo s($filtros['hasta']); ?>"></div>
         <div><label class="text-sm text-muted"><?php echo s(t('Origen')); ?></label><br>
-            <select name="origen"><option value=""><?php echo s(t('Todos')); ?></option><option value="reportes"<?php echo $filtros['origen'] === 'reportes' ? ' selected' : ''; ?>><?php echo s(t('Reportes diarios')); ?></option><option value="subidas"<?php echo $filtros['origen'] === 'subidas' ? ' selected' : ''; ?>><?php echo s(t('Subidas a actividades')); ?></option></select></div>
+            <select name="origen" aria-label="Origen"><option value=""><?php echo s(t('Todos')); ?></option><option value="reportes"<?php echo $filtros['origen'] === 'reportes' ? ' selected' : ''; ?>><?php echo s(t('Reportes diarios')); ?></option><option value="subidas"<?php echo $filtros['origen'] === 'subidas' ? ' selected' : ''; ?>><?php echo s(t('Subidas a actividades')); ?></option></select></div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> <?php echo s(t('Filtrar')); ?></button>
         <a href="/evidencias?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><?php echo s(t('Limpiar')); ?></a>
     </form>

@@ -81,7 +81,25 @@ input, select, textarea {
 .text-danger { color: var(--danger-ink); }
 .text-sm { font-size: 1.3rem; }
 .text-center { text-align: center; }
+.text-right { text-align: right; }
 .negrita { font-weight: 700; }
+
+// Utilidades de maquetación (sustituyen estilos en línea sueltos)
+.inline { display: inline; }
+.block { display: block; }
+.oculto { display: none; }
+.nowrap { white-space: nowrap; }
+.full { flex-basis: 100%; }
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.m-0 { margin: 0; }
+
+// Enlaces dentro de texto: el subrayado los distingue aunque el color se parezca
+// al del texto que los rodea (WCAG 1.4.1, link-in-text-block).
+p a, small a, .text-muted a, .text-sm a, .la-leyenda a, .lp-leyenda a {
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
 
 .mt-1 { margin-top: $space-sm; }
 .mt-2 { margin-top: $space-md; }

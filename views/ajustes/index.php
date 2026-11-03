@@ -167,7 +167,7 @@ if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuen
                             <td><?php echo s($f->motivo); ?></td>
                             <?php if (puede_gestionar_proyecto($proyecto)): ?>
                                 <td>
-                                    <form method="POST" action="/ajustes/festivo/eliminar" style="display:inline" data-confirm="¿Eliminar día no laborable?|El día volverá a contarse como hábil en el calendario.">
+                                    <form class="inline" method="POST" action="/ajustes/festivo/eliminar" data-confirm="¿Eliminar día no laborable?|El día volverá a contarse como hábil en el calendario.">
                                         <input type="hidden" name="id" value="<?php echo s($f->id); ?>">
                                         <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                                         <button type="submit" class="btn btn-xs btn-danger">
@@ -387,10 +387,10 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
     <div class="alm-barra" title="<?php echo number_format($pct, 1); ?> %"><span class="<?php echo $pct >= 90 ? 'alm-rojo' : ($pct >= 70 ? 'alm-amarillo' : ''); ?>" style="width: <?php echo number_format($pct, 2, '.', ''); ?>%"></span></div>
     <p><strong><?php echo $fmt($usado); ?></strong> usados de <?php echo $fmt($limite); ?> · <?php echo number_format($pct, 1); ?> % · libres <?php echo $fmt(max(0, $limite - $usado)); ?></p>
     <table class="tabla">
-        <thead><tr><th><?php echo s(t('Concepto')); ?></th><th style="text-align:right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
+        <thead><tr><th><?php echo s(t('Concepto')); ?></th><th class="text-right"><?php echo s(t('Ocupado')); ?></th></tr></thead>
         <tbody>
         <?php foreach ($alm as $nombre => $bytes): ?>
-            <tr><td><?php echo s($nombre); ?></td><td class="mono" style="text-align:right"><?php echo $fmt($bytes); ?></td></tr>
+            <tr><td><?php echo s($nombre); ?></td><td class="mono text-right"><?php echo $fmt($bytes); ?></td></tr>
         <?php endforeach; ?>
         </tbody>
     </table>
@@ -419,13 +419,13 @@ $hayAyuda = \Classes\TemaProyecto::disponibleAyuda();
     </div>
     <?php if ($respaldos): ?>
     <table class="tabla">
-        <thead><tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Tamaño</th><th></th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th class="text-right">Tamaño</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($respaldos as $r): ?>
             <tr>
                 <td class="mono"><?php echo date('d/m/Y H:i', $r['fecha']); ?></td>
                 <td><?php echo s($etiquetaResp[$r['tipo']] ?? $r['tipo']); ?></td>
-                <td class="mono" style="text-align:right"><?php echo $fmt($r['bytes']); ?></td>
+                <td class="mono text-right"><?php echo $fmt($r['bytes']); ?></td>
                 <td style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap">
                     <a class="btn btn-ghost" href="/ajustes/respaldo/descargar?proyecto=<?php echo $pidResp; ?>&archivo=<?php echo urlencode($r['archivo']); ?>"><i class="fa-solid fa-download"></i></a>
                     <form method="POST" action="/ajustes/respaldo/restaurar" data-confirm="Restaurar este respaldo|Se restaurará el proyecto a este respaldo. Antes se guardará una copia del estado actual.|Restaurar">

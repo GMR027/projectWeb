@@ -230,7 +230,7 @@
                                     <a href="/programa/partidas/editar?id=<?php echo s($fila['id']); ?>" class="btn-action btn-action-edit" title="Editar partida">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
-                                    <form method="POST" action="/programa/partidas/eliminar" style="display:inline" data-confirm="¿Eliminar partida?|Se eliminará la partida junto con todas sus actividades. Esta acción no se puede deshacer.">
+                                    <form class="inline" method="POST" action="/programa/partidas/eliminar" data-confirm="¿Eliminar partida?|Se eliminará la partida junto con todas sus actividades. Esta acción no se puede deshacer.">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" class="btn-action btn-action-delete" title="Eliminar partida">
                                             <i class="fa-solid fa-trash-can"></i>
@@ -368,7 +368,7 @@
                                         <i class="fa-solid fa-triangle-exclamation"></i>
                                     </a>
                                     <?php [$posI, $posN] = $posAct[$fila['id']] ?? [0, 1]; ?>
-                                    <form method="POST" action="/programa/actividades/mover" style="display:inline" class="form-mover">
+                                    <form method="POST" action="/programa/actividades/mover" class="form-mover inline">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" name="dir" value="arriba" class="btn-action btn-action-move" title="Subir (renumera la partida)"<?php echo $posI <= 0 ? ' disabled' : ''; ?>><i class="fa-solid fa-arrow-up"></i></button>
                                         <button type="submit" name="dir" value="abajo" class="btn-action btn-action-move" title="Bajar (renumera la partida)"<?php echo $posI >= $posN - 1 ? ' disabled' : ''; ?>><i class="fa-solid fa-arrow-down"></i></button>
@@ -376,7 +376,7 @@
                                     <a href="/programa/actividades/editar?id=<?php echo s($fila['id']); ?>" class="btn-action btn-action-edit" title="Editar actividad">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
-                                    <form method="POST" action="/programa/actividades/eliminar" style="display:inline" data-confirm="¿Eliminar actividad?|Se eliminará la actividad y sus restricciones asociadas. Esta acción no se puede deshacer.">
+                                    <form class="inline" method="POST" action="/programa/actividades/eliminar" data-confirm="¿Eliminar actividad?|Se eliminará la actividad y sus restricciones asociadas. Esta acción no se puede deshacer.">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" class="btn-action btn-action-delete" title="Eliminar actividad">
                                             <i class="fa-solid fa-trash-can"></i>

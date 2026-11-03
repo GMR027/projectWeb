@@ -84,7 +84,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
                 <tr>
                     <td><?php echo s($r['nombre']); ?></td><td><?php echo s(Recursos::TIPOS[$r['tipo']]); ?></td><td class="mono"><?php echo (int)$r['integrantes']; ?></td><td class="mono"><?php echo s($r['horas_dia'] + 0); ?></td><td class="mono"><?php echo (int)$r['asignaciones']; ?></td>
                     <td class="acciones"><?php if ($puedeEditar): ?>
-                        <form method="POST" action="/recursos/eliminar" style="display:inline" data-confirm="¿Eliminar este recurso?|Se quitará de todas las actividades.">
+                        <form class="inline" method="POST" action="/recursos/eliminar" data-confirm="¿Eliminar este recurso?|Se quitará de todas las actividades.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>"><button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form><?php endif; ?></td>
                 </tr>
@@ -121,7 +121,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
                     <td class="mono hide-m"><?php echo formatear_fecha($a['fecha_inicio']); ?> – <?php echo formatear_fecha($a['fecha_fin']); ?></td>
                     <td><?php echo s($a['recurso']); ?></td><td class="mono"><?php echo (int)$a['dedicacion']; ?>%</td>
                     <td class="acciones"><?php if ($puedeEditar): ?>
-                        <form method="POST" action="/recursos/quitar" style="display:inline">
+                        <form class="inline" method="POST" action="/recursos/quitar">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="actividad_id" value="<?php echo (int)$a['actividad_id']; ?>"><input type="hidden" name="recurso_id" value="<?php echo (int)$a['recurso_id']; ?>"><button type="submit" class="btn btn-sm btn-danger" title="Quitar de la actividad">✕</button>
                         </form><?php endif; ?></td>
                 </tr>

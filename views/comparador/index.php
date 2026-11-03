@@ -39,7 +39,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
                     <div class="cmp-guardado-acc">
                         <a class="btn btn-sm btn-ghost" href="/comparador?proyecto=<?php echo $pid; ?>&guardado=<?php echo (int)$g['id']; ?>" title="Abrir"><i class="fa-solid fa-folder-open"></i></a>
                         <a class="btn btn-sm btn-ghost" href="/comparador?proyecto=<?php echo $pid; ?>&guardado=<?php echo (int)$g['id']; ?>&historial=1" title="Historial de versiones"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                        <form method="post" action="/comparador/duplicar" style="margin:0">
+                        <form class="m-0" method="post" action="/comparador/duplicar">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$g['id']; ?>"><input type="hidden" name="volver" value="1">
                             <button class="btn btn-sm btn-ghost" type="submit" title="Duplicar comparación"><i class="fa-solid fa-copy"></i></button>
                         </form>

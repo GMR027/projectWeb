@@ -123,10 +123,10 @@
                             <?php elseif ($k === 'status'): ?><td>
                                 <?php if (!$esPartida): ?><span class="badge badge-<?php echo $fila['status']; ?>"><?php echo ucfirst(str_replace('_', ' ', $fila['status'])); ?></span><?php endif; ?></td>
                             <?php elseif ($k === 'prioridad'): ?><td><?php echo $esPartida ? '—' : ucfirst($fila['prioridad']); ?></td>
-                            <?php elseif ($k === 'restriccion'): ?><td style="text-align:center">
+                            <?php elseif ($k === 'restriccion'): ?><td class="text-center">
                                 <?php if (!$esPartida && $fila['tiene_restriccion']): ?><span class="restriccion-dot">●</span><?php endif; ?></td>
                             <?php elseif ($k === 'responsable' || $k === 'libre_texto'): ?><td><?php echo $esPartida || ($fila[$k] ?? '') === '' ? '—' : htmlspecialchars((string)$fila[$k]); ?></td>
-                            <?php elseif ($k === 'libre_numero'): ?><td class="mono" style="text-align:right"><?php echo $esPartida ? '—' : $fmtN($fila['libre_numero'] ?? null); ?></td>
+                            <?php elseif ($k === 'libre_numero'): ?><td class="mono text-right"><?php echo $esPartida ? '—' : $fmtN($fila['libre_numero'] ?? null); ?></td>
                             <?php elseif ($k === 'rec_inicio' || $k === 'rec_fin' || $k === 'libre_fecha'): ?><td class="mono"><?php echo $esPartida ? '—' : $fmtF($fila[$k] ?? null); ?></td>
                             <?php elseif ($k === 'predecesora' || $k === 'sucesora'): $lista = $esPartida ? [] : ($vecinas[$k === 'predecesora' ? 'pred' : 'suc'][(int)$fila['id']] ?? []); ?>
                                 <td class="mono"><?php echo $lista ? htmlspecialchars(implode(', ', array_map(fn($i) => $codigosAct[$i] ?? '', $lista))) : '—'; ?></td>
@@ -134,7 +134,7 @@
                                 $vi = $campoInd === 'duracion' ? (!$esPartida && empty($fila['hito']) ? $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']) : null)
                                     : ($campoInd === 'libre_numero' ? ($esPartida ? null : ($fila['libre_numero'] ?? null)) : ($fila['progreso'] ?? null));
                                 $colI = \Classes\ProgramaColumnas::colorIndicador($indicador['reglas'], $vi); ?>
-                                <td style="text-align:center"><?php if ($colI): ?><span style="color:<?php echo htmlspecialchars($colI); ?>;font-size:12pt">●</span><?php else: ?>—<?php endif; ?></td>
+                                <td class="text-center"><?php if ($colI): ?><span style="color:<?php echo htmlspecialchars($colI); ?>;font-size:12pt">●</span><?php else: ?>—<?php endif; ?></td>
                             <?php elseif (!empty($c['campo'])): $vcp = $esPartida ? '' : \Classes\CamposPersonalizados::texto($c['campo'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? ''); ?>
                                 <td><?php echo $vcp === '' ? '—' : htmlspecialchars($vcp); ?></td>
                             <?php endif; ?>

@@ -38,7 +38,7 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
         <td style="width:25%" class="caja c"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:36pt;max-width:110pt;margin:2pt"><?php endif; ?></td>
         <td style="width:22%;padding-left:6pt">
             <table class="datos">
-                <tr><td colspan="2" style="text-align:right"><b>FECHA:</b> <b><?php echo s(fecha_larga_es()); ?></b></td></tr>
+                <tr><td class="text-right" colspan="2"><b>FECHA:</b> <b><?php echo s(fecha_larga_es()); ?></b></td></tr>
                 <tr><td style="width:30%">CLIENTE:</td><td><b><?php echo s($proyecto->contratista); ?></b></td></tr>
                 <tr><td>PROYECTO:</td><td><b><?php echo s($proyecto->nombre); ?></b></td></tr>
                 <tr><td>JOB No.</td><td><b><?php echo s($proyecto->numero_trabajo); ?></b></td></tr>

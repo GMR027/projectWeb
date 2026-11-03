@@ -40,7 +40,7 @@
                 <?php endif; ?>
                 <tr>
                     <?php foreach ($cols as $c): switch ($c['k']): case 'fecha': ?>
-                    <td class="mono hide-m" style="white-space:nowrap"><?php echo s(fecha_corta_es($b->fecha)); ?></td>
+                    <td class="mono hide-m nowrap"><?php echo s(fecha_corta_es($b->fecha)); ?></td>
                     <?php break; case 'departamento': ?>
                     <td class="hide-m"><?php echo s($b->departamento ?: '—'); ?></td>
                     <?php break; case 'descripcion': ?>
@@ -50,7 +50,7 @@
                     <?php break; case 'acciones': ?>
                     <td class="acciones">
                         <a href="/bitacora/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($b->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Editar')); ?></a>
-                        <form method="POST" action="/bitacora/eliminar" style="display:inline" data-confirm="¿Eliminar registro?|Se borrará este registro de la bitácora. Esta acción no se puede deshacer.|Eliminar">
+                        <form class="inline" method="POST" action="/bitacora/eliminar" data-confirm="¿Eliminar registro?|Se borrará este registro de la bitácora. Esta acción no se puede deshacer.|Eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
                             <input type="hidden" name="id" value="<?php echo s($b->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger"><?php echo s(t('Eliminar')); ?></button>

@@ -6,8 +6,8 @@ $fmt = fn($f) => $f ? fecha_corta_es($f) : '—';
 $cab = function (string $subtitulo = '') use ($logoE, $logoC, $titulo, $proyecto, $criterios) { ?>
     <table class="cab"><tr>
         <td style="width:28%"><?php if ($logoC): ?><img src="<?php echo $logoC; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
-        <td style="text-align:center;font-weight:bold;font-size:11pt"><?php echo s(mb_strtoupper($titulo)); ?></td>
-        <td style="width:28%;text-align:right"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
+        <td class="text-center" style="font-weight:bold; font-size:11pt"><?php echo s(mb_strtoupper($titulo)); ?></td>
+        <td class="text-right" style="width:28%"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:34pt;max-width:120pt"><?php endif; ?></td>
     </tr></table>
     <h1><?php echo s($subtitulo ?: $proyecto->nombre); ?></h1>
     <div class="peq"><?php echo s($proyecto->nombre . ($proyecto->numero_trabajo ? ' · Trabajo ' . $proyecto->numero_trabajo : '')); ?><?php if ($criterios): ?> · <?php echo s(implode(' · ', $criterios)); ?><?php endif; ?></div>
@@ -103,7 +103,7 @@ case 'submittals':
         <h3>Materiales (<?php echo count($x['materiales']); ?>)</h3>
         <table class="t"><thead><tr><th style="width:70pt">Imagen</th><th>Material</th><th style="width:25%">Especialidad</th></tr></thead><tbody>
         <?php foreach ($x['materiales'] as $m): $im = $img($m->imagen, 'uploads/materiales'); ?><tr>
-            <td style="text-align:center"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:48pt;max-width:60pt"><?php endif; ?></td>
+            <td class="text-center"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:48pt;max-width:60pt"><?php endif; ?></td>
             <td><?php echo s($m->nombre); ?><?php if ($m->referencia): ?><br><span class="peq">Ref. <?php echo s($m->referencia); ?></span><?php endif; ?></td>
             <td><?php echo s($m->especialidad); ?></td></tr><?php endforeach; ?>
         </tbody></table>
@@ -115,7 +115,7 @@ case 'materiales':
     <p class="peq"><?php echo count($registros); ?> material(es)</p>
     <table class="t"><thead><tr><th style="width:44pt">Imagen</th><th>Material</th><th style="width:15%">Especialidad</th><th style="width:9%">Cant.</th><th style="width:10%">Compra</th><th style="width:12%">Entrega prog.</th><th style="width:12%">Entrega real</th></tr></thead><tbody>
     <?php foreach ($registros as $m): $im = $img($m->imagen, 'uploads/materiales'); ?><tr>
-        <td style="text-align:center"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:34pt;max-width:40pt"><?php endif; ?></td>
+        <td class="text-center"><?php if ($im): ?><img src="<?php echo $im; ?>" style="max-height:34pt;max-width:40pt"><?php endif; ?></td>
         <td><?php echo s($m->nombre); ?><?php if ($m->referencia): ?><br><span class="peq">Ref. <?php echo s($m->referencia); ?></span><?php endif; ?></td>
         <td><?php echo s($m->especialidad ?: '—'); ?></td>
         <td><?php echo $m->cantidad !== null && $m->cantidad !== '' ? s(rtrim(rtrim((string)$m->cantidad, '0'), '.') . ' ' . $m->unidad) : '—'; ?></td>

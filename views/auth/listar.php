@@ -45,7 +45,7 @@
                     <td class="acciones">
                         <a href="/usuarios/editar?id=<?php echo s($u->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <?php if ($u->id != $_SESSION['id']): ?>
-                            <form method="POST" action="/usuarios/eliminar" style="display:inline" data-confirm="¿Eliminar usuario?|El usuario perderá el acceso al sistema. Esta acción no se puede deshacer.">
+                            <form class="inline" method="POST" action="/usuarios/eliminar" data-confirm="¿Eliminar usuario?|El usuario perderá el acceso al sistema. Esta acción no se puede deshacer.">
                                 <input type="hidden" name="id" value="<?php echo s($u->id); ?>">
                                 <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                             </form>

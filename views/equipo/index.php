@@ -109,7 +109,7 @@ $e = $editar;
                     <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['horas' => (int)$x['id']])); ?>" title="Ver horas"><i class="fa-solid fa-clock"></i></a>
                     <?php if ($puedeEditar): ?>
                         <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['editar' => $x['id']])); ?>" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                        <form method="POST" action="/equipo/eliminar" data-confirm="¿Eliminar el equipo?|También se eliminarán sus horas registradas.|Eliminar" style="display:inline">
+                        <form class="inline" method="POST" action="/equipo/eliminar" data-confirm="¿Eliminar el equipo?|También se eliminarán sus horas registradas.|Eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>">
                             <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>
@@ -135,7 +135,7 @@ $e = $editar;
                 <td class="num"><?php echo number_format((float)$h['horas'], 1); ?></td>
                 <td class="num mono"><?php echo \Classes\Costos::moneda((float)$h['importe']); ?></td>
                 <td class="hide-m"><?php echo s($h['operador']); ?></td>
-                <td><?php if ($puedeEditar): ?><form method="POST" action="/equipo/horas/eliminar" style="display:inline" data-confirm="¿Eliminar el registro?|Esta acción no se puede deshacer.|Eliminar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="equipo_id" value="<?php echo (int)$h['equipo_id']; ?>"><input type="hidden" name="id" value="<?php echo (int)$h['id']; ?>"><button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></td></tr>
+                <td><?php if ($puedeEditar): ?><form class="inline" method="POST" action="/equipo/horas/eliminar" data-confirm="¿Eliminar el registro?|Esta acción no se puede deshacer.|Eliminar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="equipo_id" value="<?php echo (int)$h['equipo_id']; ?>"><input type="hidden" name="id" value="<?php echo (int)$h['id']; ?>"><button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></td></tr>
         <?php endforeach; ?></tbody>
     </table></div>
 </div>

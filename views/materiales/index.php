@@ -80,7 +80,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
                     <td class="hide-m"><?php echo s($m->certificado_calidad); ?></td>
                     <td class="acciones hide-m">
                         <a href="/materiales/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($m->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/materiales/eliminar" style="display:inline" data-confirm="¿Eliminar material?|Se quitará también de los submittals y del MSR.">
+                        <form class="inline" method="POST" action="/materiales/eliminar" data-confirm="¿Eliminar material?|Se quitará también de los submittals y del MSR.">
                             <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
                             <input type="hidden" name="id" value="<?php echo s($m->id); ?>">
                             <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

@@ -5,7 +5,7 @@
     </div>
     <div class="la-controles">
         <a href="/submittals/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($submittal->id); ?>" class="btn btn-ghost">Editar</a>
-        <form method="POST" action="/exportar/generar" style="display:inline">
+        <form class="inline" method="POST" action="/exportar/generar">
             <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
             <input type="hidden" name="formato" value="submittal">
             <input type="hidden" name="submittal_id" value="<?php echo s($submittal->id); ?>">

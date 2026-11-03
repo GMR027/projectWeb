@@ -23,7 +23,7 @@
 </div>
 <div class="card" id="td-previa" hidden>
     <div class="vp-dis-fila">
-        <label class="campo" style="flex:2"><span>Nombre de la tabla *</span><input type="text" id="td-nombre" maxlength="140"></label>
+        <label class="campo flex-2"><span>Nombre de la tabla *</span><input type="text" id="td-nombre" maxlength="140"></label>
         <span class="text-muted text-sm" id="td-resumen"></span>
     </div>
     <p class="text-muted text-sm">Corrige lo que haga falta: la primera fila es el encabezado. Usa ✕ para quitar un renglón o una columna. La tabla del vPlan toma las primeras 8 columnas y 200 renglones.</p>

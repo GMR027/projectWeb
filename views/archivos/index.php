@@ -73,7 +73,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
             <?php foreach ($archivos as $a): ?>
                 <tr>
                     <?php if ($puede): ?><td class="col-sel hide-m"><input type="checkbox" class="arch-sel" value="<?php echo s($a->id); ?>" aria-label="Seleccionar <?php echo s($a->nombre); ?>"></td><?php endif; ?>
-                    <td class="mono hide-m" style="white-space:nowrap"><?php echo s(fecha_corta_es($a->fecha)); ?></td>
+                    <td class="mono hide-m nowrap"><?php echo s(fecha_corta_es($a->fecha)); ?></td>
                     <td class="hide-m"><?php echo s($a->categoria_nombre ?: '—'); ?></td>
                     <td class="arch-nombre">
                         <?php echo archivo_icono_html($a->extension()); ?> <?php echo s($a->nombre); ?>

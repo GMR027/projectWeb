@@ -87,7 +87,7 @@ $e = $editarPlan;
                     <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['ver' => $c['id']])); ?>" title="Ver puntos"><i class="fa-solid fa-list-check"></i></a>
                     <?php if ($puedeEditar): ?>
                         <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['editar' => $c['id']])); ?>" title="Editar"><i class="fa-solid fa-pen"></i></a>
-                        <form method="POST" action="/calidad/eliminar" data-confirm="¿Eliminar el plan?|Se eliminarán el plan de inspección y todos sus puntos.|Eliminar" style="display:inline">
+                        <form class="inline" method="POST" action="/calidad/eliminar" data-confirm="¿Eliminar el plan?|Se eliminarán el plan de inspección y todos sus puntos.|Eliminar">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
                             <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </form>
@@ -111,8 +111,8 @@ $e = $editarPlan;
     <form method="POST" action="/calidad/punto/agregar" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:end;margin-bottom:1rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <input type="hidden" name="plan_id" value="<?php echo (int)$plan['id']; ?>">
-        <label style="flex:1;min-width:18rem">Nuevo punto<input type="text" name="descripcion" maxlength="500" required placeholder="Qué se inspecciona"></label>
-        <label style="flex:1;min-width:14rem">Criterio<input type="text" name="criterio" maxlength="300" placeholder="Opcional"></label>
+        <label class="flex-1" style="min-width:18rem">Nuevo punto<input type="text" name="descripcion" maxlength="500" required placeholder="Qué se inspecciona"></label>
+        <label class="flex-1" style="min-width:14rem">Criterio<input type="text" name="criterio" maxlength="300" placeholder="Opcional"></label>
         <button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-plus"></i> Agregar punto</button>
     </form>
     <?php endif; ?>

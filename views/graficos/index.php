@@ -86,11 +86,11 @@
                             </details>
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?>
-                            <form method="POST" action="/graficos/duplicar" style="display:inline">
+                            <form class="inline" method="POST" action="/graficos/duplicar">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">
                                 <button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button>
                             </form>
-                            <form method="POST" action="/graficos/tipo" style="display:inline">
+                            <form class="inline" method="POST" action="/graficos/tipo">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia">
                                 <button type="submit" class="btn btn-sm btn-ghost" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"><i class="fa-solid fa-list-check"></i> Guardar como simbología</button>
                             </form>

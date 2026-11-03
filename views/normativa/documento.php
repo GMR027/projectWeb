@@ -14,7 +14,7 @@ $pid = (int)$proyecto->id;
 </div>
 <form method="get" action="/normativa/documento" class="card inc-filtros">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$doc['id']; ?>">
-    <label style="flex:1">Buscar en este documento <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Palabra o frase"></label><button class="btn btn-ghost" type="submit">Buscar</button>
+    <label class="flex-1">Buscar en este documento <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Palabra o frase"></label><button class="btn btn-ghost" type="submit">Buscar</button>
 </form>
 <?php if (!$fragmentos): ?><div class="card prg-vacio"><h3>Sin cláusulas</h3><p class="text-muted"><?php echo s($doc['nota'] ?: 'No hay cláusulas que mostrar.'); ?></p></div>
 <?php else: ?>

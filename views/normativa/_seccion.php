@@ -42,9 +42,9 @@ $propN = count($vinculosN) - $aplN;
                         <?php if ($cN['idioma'] !== ''): ?> · <?php echo strtoupper(s($cN['idioma'])); ?><?php endif; ?>
                         <?php if ($v['referencia'] !== '' && $cN['documento'] !== ''): ?> · <?php echo s($v['referencia']); ?><?php endif; ?>
                         <span class="prg-sev"><?php echo $v['estado'] === 'propuesta' ? 'Propuesta · ' : ''; ?><?php echo s($oriN); ?></span>
-                        <?php if ($v['requisito']): ?><small class="text-muted" style="display:block"><?php echo s($v['requisito']); ?></small>
-                        <?php elseif ($v['ftexto']): ?><small class="text-muted" style="display:block"><?php echo s(mb_substr(trim($v['ftitulo'] . '. ' . $v['ftexto']), 0, 220)); ?>…</small><?php endif; ?>
-                        <?php if ($v['nota'] !== ''): ?><small class="text-muted" style="display:block">Nota: <?php echo s($v['nota']); ?></small><?php endif; ?>
+                        <?php if ($v['requisito']): ?><small class="text-muted block"><?php echo s($v['requisito']); ?></small>
+                        <?php elseif ($v['ftexto']): ?><small class="text-muted block"><?php echo s(mb_substr(trim($v['ftitulo'] . '. ' . $v['ftexto']), 0, 220)); ?>…</small><?php endif; ?>
+                        <?php if ($v['nota'] !== ''): ?><small class="text-muted block">Nota: <?php echo s($v['nota']); ?></small><?php endif; ?>
                         <?php if ($v['documento_id'] && $cN['pagina']): ?><a class="text-sm" href="/normativa/pdf?proyecto=<?php echo $pidN; ?>&id=<?php echo (int)$v['documento_id']; ?>#page=<?php echo (int)$cN['pagina']; ?>" target="_blank" rel="noopener">Ver en el documento (pág. <?php echo (int)$cN['pagina']; ?>)</a><?php endif; ?>
                     </div>
                     <span>

@@ -44,7 +44,7 @@
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?><span class="hide-m"><?php echo \Classes\Carpetas::selector('redactor', (int)$d->id, (string)$d->departamento, $carpetas); ?><?php endif; ?>
                         <?php if ($puedeEditar): ?>
-                            <form method="POST" action="/redactor/duplicar" style="display:inline"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$d->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
+                            <form class="inline" method="POST" action="/redactor/duplicar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$d->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
                             <form method="POST" action="/redactor/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($d->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$d->id; ?>"><button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar</button></form>
                         </span><?php endif; ?>
                     </td>

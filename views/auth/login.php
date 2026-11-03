@@ -29,7 +29,7 @@
         });
     });
     </script>
-    <p class="text-muted text-sm" style="text-align:center; margin-top:1.6rem">
+    <p class="text-muted text-sm text-center" style="margin-top:1.6rem">
         <?php echo s(t('¿Olvidaste tu contraseña?')); ?> <a href="/#contacto"><?php echo s(t('Escríbenos desde Contacto')); ?></a> <?php echo s(t('para restablecerla.')); ?><br>
         <?php echo s(t('Al acceder aceptas los')); ?> <a href="/terminos" target="_blank" rel="noopener"><?php echo s(t('términos y condiciones de uso')); ?></a>.
     </p>

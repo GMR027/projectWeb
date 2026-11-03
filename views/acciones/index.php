@@ -48,13 +48,13 @@
                         <td class="acciones">
                             <a href="<?php echo s($it['url']); ?>" class="btn btn-sm btn-ghost"><?php echo in_array($sec['clave'], ['restr', 'sinmat'], true) ? 'Editar actividad' : 'Abrir'; ?></a>
                             <?php if ($gestiona && $sec['clave'] === 'restr'): ?>
-                                <form method="POST" action="/programa/restricciones/resolver" style="display:inline">
+                                <form class="inline" method="POST" action="/programa/restricciones/resolver">
                                     <input type="hidden" name="id" value="<?php echo (int)$it['rid']; ?>">
                                     <input type="hidden" name="volver" value="/acciones">
                                     <button type="submit" class="btn btn-sm btn-primary">Resolver</button>
                                 </form>
                                 <a href="/programa/restricciones/editar?id=<?php echo (int)$it['rid']; ?>&volver=/acciones" class="btn btn-sm btn-secondary">Editar</a>
-                                <form method="POST" action="/programa/restricciones/eliminar" style="display:inline" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
+                                <form class="inline" method="POST" action="/programa/restricciones/eliminar" data-confirm="¿Eliminar restricción?|La restricción se quitará de la actividad. Esta acción no se puede deshacer.">
                                     <input type="hidden" name="id" value="<?php echo (int)$it['rid']; ?>">
                                     <input type="hidden" name="volver" value="/acciones">
                                     <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

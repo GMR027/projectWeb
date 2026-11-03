@@ -35,7 +35,7 @@
             <input type="number" id="limite_colaboradores" name="limite_colaboradores" min="0" max="999" step="1" value="<?php echo s($usuario->limite_colaboradores ?? \Model\Usuario::MAX_COLABORADORES_CLIENTE); ?>">
             <small class="text-muted">El dueño crea a su equipo desde «Mi equipo» sin pasar del tope. 0 = no puede crear de ese tipo.</small>
         </div>
-        <div class="campo" id="campo-nivel" style="display:none">
+        <div class="campo oculto" id="campo-nivel">
             <label for="nivel_acceso">Tipo de acceso</label>
             <select id="nivel_acceso" name="nivel_acceso">
                 <option value="ver" <?php echo ($usuario->nivel_acceso ?? 'ver') === 'ver' ? 'selected' : ''; ?>>Visitante · solo lectura</option>

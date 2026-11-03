@@ -86,13 +86,13 @@
 .md-thumb-vacio { display: grid; place-items: center; color: var(--text-dim); font-size: 1.3rem; }
 .md-card-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
 .md-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .55rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted); font-size: 1.02rem; font-weight: 600; white-space: nowrap;
-  &.ok { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
-  &.warn { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
-  &.danger { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); } }
+  &.ok { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success-ink); }
+  &.warn { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning-ink); }
+  &.danger { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger-ink); } }
 .md-card-meta { display: flex; flex-wrap: wrap; gap: .4rem .8rem; font-size: 1.05rem; color: var(--text-muted); }
 .md-mini { display: inline-flex; align-items: center; gap: .3rem; }
 .md-mini.req i { color: var(--link); } .md-mini.dep i { color: var(--primary-ink); }
-.md-card-alerta { display: flex; gap: .4rem; align-items: flex-start; padding: .45rem .6rem; border-radius: .5rem; background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); font-size: 1.05rem; line-height: 1.35; }
+.md-card-alerta { display: flex; gap: .4rem; align-items: flex-start; padding: .45rem .6rem; border-radius: .5rem; background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger-ink); font-size: 1.05rem; line-height: 1.35; }
 
 // líneas SVG
 .md-lineas { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; z-index: 0; color: var(--text-dim); }

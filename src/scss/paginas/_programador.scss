@@ -6,7 +6,7 @@
 .prg-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1.2rem; margin-bottom: 1.6rem;
   .card { display: flex; flex-direction: column; gap: .3rem; padding: 1.2rem 1.4rem; }
   small { color: var(--text-muted); font-size: 1.2rem; } strong { font-size: 1.9rem; } span { font-size: 1.2rem; color: var(--text-muted); } }
-.prg-mejor { color: var(--success); } .prg-peor { color: var(--danger); }
+.prg-mejor { color: var(--success-ink); } .prg-peor { color: var(--danger-ink); }
 .prg-aviso { margin: 0 0 1rem; padding: .8rem 1.2rem; border-radius: .8rem; background: rgba(245, 158, 11, .14); border: 1px solid var(--warning); font-size: 1.3rem; }
 .prg-seccion { margin-bottom: 1.6rem; h3 { margin: 0 0 1rem; } }
 .prg-obst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .8rem;

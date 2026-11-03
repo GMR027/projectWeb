@@ -28,7 +28,7 @@ $sinFiltros = ($filtros['tipo'] ?? '') === '' && ($filtros['estado'] ?? '') === 
         <option value="aceptada"<?php echo $filtros['estado'] === 'aceptada' ? ' selected' : ''; ?>>Solo aplicables</option>
         <option value="propuesta"<?php echo $filtros['estado'] === 'propuesta' ? ' selected' : ''; ?>>Solo propuestas</option>
     </select></label>
-    <label style="flex:1">Buscar <input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Material, actividad o partida…"></label>
+    <label class="flex-1">Buscar <input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Material, actividad o partida…"></label>
     <label class="norm-check"><input type="checkbox" name="sin" value="1"<?php echo !empty($filtros['sin']) ? ' checked' : ''; ?> onchange="this.form.submit()"> Solo sin normativa aplicada</label>
     <button class="btn btn-ghost" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
     <?php if (!$sinFiltros): ?><a href="/normativa/por-elemento?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">Limpiar</a><?php endif; ?>
@@ -72,9 +72,9 @@ $sinFiltros = ($filtros['tipo'] ?? '') === '' && ($filtros['estado'] ?? '') === 
                             <?php if ($c['idioma'] !== ''): ?> · <?php echo strtoupper(s($c['idioma'])); ?><?php endif; ?>
                             <?php if ($v['referencia'] !== '' && $c['documento'] !== ''): ?> · <?php echo s($v['referencia']); ?><?php endif; ?>
                             <span class="prg-sev"><?php echo $v['estado'] === 'propuesta' ? 'Propuesta · ' : 'Aplica · '; ?><?php echo s($ori); ?></span>
-                            <?php if ($v['requisito']): ?><small class="text-muted" style="display:block"><?php echo s($v['requisito']); ?></small>
-                            <?php elseif ($v['ftexto']): ?><small class="text-muted" style="display:block"><?php echo s(mb_substr(trim($v['ftitulo'] . '. ' . $v['ftexto']), 0, 260)); ?>…</small><?php endif; ?>
-                            <?php if ($v['nota'] !== ''): ?><small class="text-muted" style="display:block">Nota: <?php echo s($v['nota']); ?></small><?php endif; ?>
+                            <?php if ($v['requisito']): ?><small class="text-muted block"><?php echo s($v['requisito']); ?></small>
+                            <?php elseif ($v['ftexto']): ?><small class="text-muted block"><?php echo s(mb_substr(trim($v['ftitulo'] . '. ' . $v['ftexto']), 0, 260)); ?>…</small><?php endif; ?>
+                            <?php if ($v['nota'] !== ''): ?><small class="text-muted block">Nota: <?php echo s($v['nota']); ?></small><?php endif; ?>
                             <?php if ($v['documento_id'] && $c['pagina']): ?><a class="text-sm" href="/normativa/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$v['documento_id']; ?>#page=<?php echo (int)$c['pagina']; ?>" target="_blank" rel="noopener">Ver en el documento (pág. <?php echo (int)$c['pagina']; ?>)</a><?php endif; ?>
                         </div>
                         <span>

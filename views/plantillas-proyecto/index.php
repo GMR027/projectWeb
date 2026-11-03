@@ -64,7 +64,7 @@ $borrador = $borrador ?? null;
                 <td><strong><?php echo s($t['nombre']); ?></strong><br><small class="text-muted"><?php echo s($t['descripcion']); ?></small></td>
                 <td class="hide-m text-sm"><?php echo count($t['partidas']); ?> partidas · <?php echo (int)$nActs; ?> actividades</td>
                 <td class="acciones">
-                    <form method="POST" action="/plantillas-proyecto/desde-tipo-obra" style="display:inline">
+                    <form class="inline" method="POST" action="/plantillas-proyecto/desde-tipo-obra">
                         <input type="hidden" name="clave" value="<?php echo s($clave); ?>">
                         <?php if ($proyecto): ?><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><?php endif; ?>
                         <button class="btn btn-sm btn-primary" type="submit"><?php echo s(t('Usar como plantilla')); ?></button>
@@ -132,7 +132,7 @@ $borrador = $borrador ?? null;
                             <button class="btn btn-sm btn-primary" type="submit"><?php echo s(t('Aplicar a este proyecto')); ?></button></form>
                     <?php endif; ?>
                     <?php if ($esAdmin || (int)$pl['usuario_id'] === (int)$usuario['id']): ?>
-                        <form method="POST" action="/plantillas-proyecto/eliminar" style="display:inline" data-confirm="¿Eliminar la plantilla?|Los proyectos ya creados con ella no cambian.|Eliminar">
+                        <form class="inline" method="POST" action="/plantillas-proyecto/eliminar" data-confirm="¿Eliminar la plantilla?|Los proyectos ya creados con ella no cambian.|Eliminar">
                             <input type="hidden" name="id" value="<?php echo (int)$pl['id']; ?>"><?php if ($proyecto): ?><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><?php endif; ?>
                             <button class="btn btn-sm btn-danger" type="submit">✕</button></form>
                     <?php endif; ?>

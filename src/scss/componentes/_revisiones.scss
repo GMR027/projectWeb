@@ -9,10 +9,10 @@
   display: inline-flex; align-items: center; gap: .6rem;
   padding: .3rem .9rem; border-radius: 99px; font-size: 1.2rem; font-weight: 600; line-height: 1.4;
   color: var(--rev-color); background: transparent; border: 1px solid var(--rev-color); text-decoration: none;
-  &.rev-correcto { --rev-color: var(--success); }
-  &.rev-revisar { --rev-color: var(--warning); }
-  &.rev-no_cumple { --rev-color: var(--danger); }
-  &.rev-cambio { --rev-color: var(--warning); border-style: dashed; }
+  &.rev-correcto { --rev-color: var(--success-ink); }
+  &.rev-revisar { --rev-color: var(--warning-ink); }
+  &.rev-no_cumple { --rev-color: var(--danger-ink); }
+  &.rev-cambio { --rev-color: var(--warning-ink); border-style: dashed; }
   &.rev-ok { background: var(--bg-hover, rgba(128, 128, 128, .12)); }
   &.rev-no_cumple i:first-child { text-decoration: none; }
   .rev-vistos { opacity: .85; font-size: 1.1rem; }

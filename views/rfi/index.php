@@ -123,7 +123,7 @@ $pre = [
                     <?php if (puede_descargar()): ?><a href="/rfi/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$r['id']; ?>" class="btn btn-sm btn-ghost" title="PDF del RFI con sus láminas"><i class="fa-solid fa-file-pdf"></i> PDF</a><?php endif; ?>
                     <?php if ($puedeEditar): ?>
                         <a href="<?php echo s($url(['editar' => $r['id']])); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form method="POST" action="/rfi/eliminar" style="display:inline" data-confirm="¿Eliminar este RFI?|Se borra también su revisión.">
+                        <form class="inline" method="POST" action="/rfi/eliminar" data-confirm="¿Eliminar este RFI?|Se borra también su revisión.">
                             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>"><button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </form>
                     <?php endif; ?>

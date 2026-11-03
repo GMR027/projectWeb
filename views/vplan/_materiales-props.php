@@ -1,5 +1,5 @@
 <?php // Sección «Materiales» del panel de Propiedades y selector de actividades/subactividades. ?>
-<div class="ve-mat-props" id="p-mat-seccion" style="display:none">
+<div class="ve-mat-props oculto" id="p-mat-seccion">
     <h5><i class="fa-solid fa-cubes"></i> Materiales de esta marca</h5>
     <p class="text-muted text-sm">Se asignan actividades o subactividades; los materiales y sus fotos se toman del catálogo de cada una.</p>
     <ul class="mat-chips" id="p-mat-lista"></ul>

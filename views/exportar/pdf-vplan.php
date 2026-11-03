@@ -137,7 +137,7 @@ foreach ($paginas as $pi => $d):
             if (!empty($d['simb_schedule'])): ?>
                 <div class="blk" style="<?php echo $caja; ?>"><?php echo $ajustar($l->imagenSimbologiaSchedule(), $d['simb_schedule'], $bw, $bh, 1, 1); ?></div>
             <?php else: $fs = 7 * $K; ?>
-                <div class="blk" style="<?php echo $caja; ?>"><table style="width:<?php echo round($bw, 2); ?>pt;height:<?php echo round($bh, 2); ?>pt"><tr><td style="vertical-align:bottom;text-align:right;padding:0"><table class="leg" align="right" style="font-size:<?php echo round($fs, 2); ?>pt;width:<?php echo round(5.6 / 2.54 * 72 * $K, 1); ?>pt">
+                <div class="blk" style="<?php echo $caja; ?>"><table style="width:<?php echo round($bw, 2); ?>pt;height:<?php echo round($bh, 2); ?>pt"><tr><td class="text-right" style="vertical-align:bottom; padding:0"><table class="leg" align="right" style="font-size:<?php echo round($fs, 2); ?>pt;width:<?php echo round(5.6 / 2.54 * 72 * $K, 1); ?>pt">
                     <tr><td colspan="2" class="leg-tit">SYMBOLOGY FOR SCHEDULE</td></tr>
                     <tr><td class="sw verde"></td><td>COMPLETE</td></tr>
                     <tr><td class="sw amarillo"></td><td>IN PROGRESS</td></tr>
