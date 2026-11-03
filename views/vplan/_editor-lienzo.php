@@ -228,7 +228,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
     <aside id="ve-props" class="card ve-props">
         <h4>Propiedades</h4>
         <p class="ve-vacio text-muted text-sm">Selecciona una marca para editarla. Rueda del mouse = zoom (en tablet o celular, pellizca con dos dedos y arrastra con dos dedos para desplazarte); arrastra el fondo para desplazar el plano. Mayús al dibujar líneas = recta. Polilínea: doble clic o Enter para terminar. Las imágenes se redimensionan con las esquinas.</p>
-        <div class="ve-campos oculto">
+        <div class="ve-campos" style="display:none">
             <div class="ve-f"><label>Color de línea</label><input type="color" id="p-stroke"></div>
             <div class="ve-f"><label>Relleno / color</label><input type="color" id="p-fill"></div>
             <div class="ve-f"><label class="ve-chk"><input type="checkbox" id="p-nofill"> Sin relleno</label></div>
@@ -274,7 +274,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <div class="ve-f"><label>Alto de filas / ancho de columnas</label>
                 <div class="ve-par"><input type="number" id="p-rh" min="8" aria-label="Alto de fila"> <span>×</span> <input type="number" id="p-cw" min="10" aria-label="Ancho de columna"></div>
                 <small class="text-muted">Doble clic en una celda para escribir; Tab pasa a la siguiente.</small></div>
-<div class="ve-f oculto" id="p-punch-f"><label>Punch list</label>
+<div class="ve-f" id="p-punch-f" style="display:none"><label>Punch list</label>
                 <button type="button" class="btn btn-sm btn-ghost" id="b-punch-cfg"><i class="fa-solid fa-eye"></i> Qué ver</button></div>
 <div class="ve-f ve-celdas" id="p-celdas">
                 <label>Celdas seleccionadas: <b id="p-celdas-n">0</b></label>
