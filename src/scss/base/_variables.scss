@@ -25,6 +25,10 @@ $font-mono: 'Fira Code', 'Consolas', monospace;
   --primary: #ea580c;
   --primary-hover: #c2410c;
   --primary-glow: rgba(234, 88, 12, 0.15);
+  // Tinte suave y línea del acento: reemplazan los naranjas fijos para que
+  // cualquier paleta del proyecto (Ajustes → Apariencia) se vea coherente.
+  --primary-soft: rgba(234, 88, 12, 0.12);
+  --primary-line: rgba(234, 88, 12, 0.35);
   --secondary: #0284c7;
   --secondary-glow: rgba(2, 132, 199, 0.15);
   --success: #047857;
@@ -68,6 +72,8 @@ $font-mono: 'Fira Code', 'Consolas', monospace;
   --primary: #f97316;
   --primary-hover: #ea580c;
   --primary-glow: rgba(249, 115, 22, 0.25);
+  --primary-soft: rgba(249, 115, 22, 0.16);
+  --primary-line: rgba(249, 115, 22, 0.45);
   --secondary: #0ea5e9;
   --secondary-glow: rgba(14, 165, 233, 0.25);
   --success: #10b981;

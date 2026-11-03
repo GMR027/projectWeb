@@ -1,24 +1,22 @@
 <?php // Variables: $proyecto, $grafico, $config
 use Model\Grafico;
-$q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
-<script>document.body.classList.add('gr-editor-page');</script>
-<div class="page-header">
-    <div>
-        <h2><i class="fa-solid fa-pen-ruler"></i> <span id="gr-titulo"><?php echo s($grafico->nombre); ?></span></h2>
-        <p class="text-muted"><?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?> px · <?php echo s(Grafico::FONDOS[$grafico->fondo] ?? ''); ?></p>
-    </div>
-    <div class="la-controles">
-        <form id="gr-renombrar" class="gr-renombrar" autocomplete="off">
-            <input type="text" id="gr-nombre" value="<?php echo s($grafico->nombre); ?>" maxlength="150" aria-label="Nombre del gráfico">
-            <button type="submit" class="btn btn-ghost" title="Cambiar el nombre"><i class="fa-solid fa-check"></i></button>
-        </form>
-        <span id="ve-estado" class="text-sm text-muted"></span>
-        <button type="button" id="ve-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <?php echo s(t('Guardar')); ?></button>
-        <button type="button" class="btn btn-ghost" data-tour="editor-canvas" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> <?php echo s(t('Guía rápida')); ?></button>
-        <?php if ($grafico->tipo === 'simbologia'): ?><a href="/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>#simbologias" class="btn btn-ghost">← Simbologías</a>
-        <?php else: ?><a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Gráficos</a><?php endif; ?>
-    </div>
-</div>
+$q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id;
+$lz = [
+    'icono' => 'fa-pen-ruler',
+    'titulo_html' => '<span id="gr-titulo">' . s($grafico->nombre) . '</span>',
+    'subtitulo' => (int)$grafico->ancho . ' × ' . (int)$grafico->alto . ' px · ' . (Grafico::FONDOS[$grafico->fondo] ?? ''),
+    'acciones' => [
+        ['tipo' => 'html', 'html' => '<form id="gr-renombrar" class="gr-renombrar" autocomplete="off"><input type="text" id="gr-nombre" value="' . s($grafico->nombre) . '" maxlength="150" aria-label="' . s(t('Nombre del gráfico')) . '"><button type="submit" class="btn btn-ghost" title="' . s(t('Cambiar el nombre')) . '"><i class="fa-solid fa-check"></i></button></form>'],
+        ['tipo' => 'html', 'html' => '<span id="ve-estado" class="text-sm text-muted" aria-live="polite"></span>'],
+        ['tipo' => 'html', 'html' => '<button type="button" id="ve-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> ' . s(t('Guardar')) . '</button>'],
+        ['tipo' => 'html', 'html' => '<button type="button" class="btn btn-ghost" data-tour="editor-canvas" title="' . s(t('Recorrer el editor paso a paso (se muestra solo la primera vez)')) . '"><i class="fa-solid fa-circle-play"></i> ' . s(t('Guía rápida')) . '</button>'],
+        ['url' => '/graficos/ver?' . $q, 'texto' => s(t('Ver')), 'icono' => 'fa-eye'],
+        ['url' => $grafico->tipo === 'simbologia' ? '/simbolos?proyecto=' . (int)$proyecto->id . '#simbologias' : '/graficos?proyecto=' . (int)$proyecto->id, 'texto' => $grafico->tipo === 'simbologia' ? '← ' . s(t('Simbologías')) : '← ' . s(t('Gráficos'))],
+    ],
+];
+include __DIR__ . '/../lienzo/_cabecera.php';
+?>
+<script>document.body.classList.add('gr-editor-page'); document.body.dataset.modoLienzo = 'dibujar';</script>
 <?php include __DIR__ . '/../vplan/_editor-lienzo.php'; ?>
 
 <section class="card vp-acciones" id="vp-acciones">

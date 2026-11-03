@@ -1,25 +1,29 @@
 // ============================================================
-// Espacio de trabajo de las herramientas de documentos
-// vPlan · Editor · SheetFlow · Anotador · Archivo (+ Visor)
-// Capa visual compartida: cabecera, superficies, barras y lienzos.
-// Se scope con body[data-vista] (lo pinta views/layout.php) para no
-// tocar el resto de la aplicación. Usa solo variables del tema.
+// Espacio de trabajo — capa visual compartida de TODA la app
+// Nació en vPlan · Editor · SheetFlow · Anotador · Archivo (+ Visor)
+// y ahora se aplica a todas las herramientas: cabecera, superficies,
+// barras, pestañas y lienzos. Se scope con body[data-vista] (lo pinta
+// views/layout.php), así que las páginas públicas y el login no cambian.
+// Usa solo variables del tema.
 // ============================================================
 
-$herr: ':is(body[data-vista="vplan"], body[data-vista^="vplan-"], body[data-vista="graficos"], body[data-vista^="graficos-"], body[data-vista="sheetflow"], body[data-vista^="sheetflow-"], body[data-vista="anotador"], body[data-vista^="anotador-"], body[data-vista="archivos"], body[data-vista^="archivos-"], body[data-vista="visor"], body[data-vista^="visor-"])';
+$herr: 'body[data-vista]';
 
 #{$herr} {
-  --ws-line: color-mix(in srgb, var(--primary) 18%, var(--border));
-  --ws-line-soft: color-mix(in srgb, var(--primary) 10%, var(--border));
-  --ws-tint: color-mix(in srgb, var(--primary) 9%, transparent);
+  --ws-line: var(--primary-line);
+  --ws-line-soft: color-mix(in srgb, var(--primary-line) 55%, var(--border));
+  --ws-tint: var(--primary-soft);
   --ws-tint-2: color-mix(in srgb, var(--secondary) 7%, transparent);
   --ws-radius: 1.4rem;
   --ws-shadow: 0 18px 45px -24px rgba(2, 6, 23, .55);
 
-  .page-header {
+  // Cabecera de herramienta: solo cuando el título lleva su icono
+  // (las cabeceras simples de formularios siguen ligeras, sin hero).
+  .page-header:has(h2 > i:first-child),
+  .programa-header {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
+    z-index: 6;
     padding: 1.8rem 2rem;
     margin-bottom: 1.4rem;
     border: 1px solid var(--ws-line);
@@ -115,9 +119,81 @@ $herr: ':is(body[data-vista="vplan"], body[data-vista^="vplan-"], body[data-vist
     &.herr-chip-suave { border-style: dashed; background: transparent; }
   }
 
+  // Modos de un lienzo (Ver · Acomodar · Dibujar): una sola barra para
+  // todas las herramientas de planos, con el mismo lenguaje que .pestanas.
+  .lz-modos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem;
+    margin: 0 0 1.2rem;
+    border: 1px solid var(--ws-line-soft);
+    border-radius: .9rem;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    box-shadow: 0 8px 24px -20px rgba(2, 6, 23, .6);
+    backdrop-filter: blur(10px);
+  }
+
+  .lz-modo {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 3.2rem;
+    padding: 0 1.2rem;
+    border: 1px solid transparent;
+    border-radius: .7rem;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+
+    i { color: var(--primary-ink); font-size: 1.15rem; }
+
+    &:hover { background: var(--primary-soft); color: var(--text); }
+
+    &.activo {
+      background: linear-gradient(145deg, var(--primary), color-mix(in srgb, var(--primary) 68%, #000));
+      border-color: color-mix(in srgb, var(--primary) 62%, #000);
+      color: var(--on-primary);
+      box-shadow: 0 6px 16px -10px var(--primary-glow), inset 0 1px 0 rgba(255, 255, 255, .22);
+
+      i { color: var(--on-primary); }
+    }
+
+    &[disabled], &.deshabilitado { opacity: .4; cursor: not-allowed; pointer-events: none; }
+  }
+
+  .lz-modos .lz-sep {
+    align-self: stretch;
+    width: 1px;
+    margin: .2rem .4rem;
+    background: var(--ws-line-soft);
+  }
+
+  .lz-modos .lz-der {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-left: auto;
+  }
+
+  // Contenedores que se alternan sin recargar (modos del lienzo)
+  .lz-panel[hidden] { display: none !important; }
+  .lz-solo-modo { display: none !important; }
+  body[data-modo-lienzo='acomodar'] .lz-solo-acomodar { display: revert !important; }
+  body[data-modo-lienzo='dibujar'] .lz-solo-dibujar { display: revert !important; }
+  body[data-modo-lienzo='dibujar'] #vp-nota-nueva { display: none; }
+  body[data-modo-lienzo='dibujar'] #vp-tareas,
+  body[data-modo-lienzo='dibujar'] #vp-tareas-btn { display: none; }
+
   // Campos de archivo: el botón nativo se pinta como uno de la app
-  input[type='file'] {
-    width: 100%;
+  input[type='file'] {    width: 100%;
     color: var(--text-muted);
     font-size: 1.15rem;
 
@@ -141,7 +217,11 @@ $herr: ':is(body[data-vista="vplan"], body[data-vista^="vplan-"], body[data-vist
   // Acciones de la cabecera: botones con más aire
   .page-header .la-controles,
   .page-header .vp-herr,
-  .page-header .ant-cab-acc {
+  .page-header .ant-cab-acc,
+  .page-header .lt-header-acciones,
+  .page-header .md-cab-acciones,
+  .page-header .cmp-acciones,
+  .programa-header .programa-meta {
     align-items: center;
     gap: .6rem;
   }
@@ -149,6 +229,7 @@ $herr: ':is(body[data-vista="vplan"], body[data-vista^="vplan-"], body[data-vist
   // Superficies: tarjetas del espacio de trabajo
   .card {
     border-color: var(--ws-line-soft);
+    border-radius: var(--ws-radius);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, .035),
       0 10px 30px -22px rgba(2, 6, 23, .5);
@@ -740,16 +821,91 @@ $herr: ':is(body[data-vista="vplan"], body[data-vista^="vplan-"], body[data-vist
   }
 
   // ------------------------------------------------------------
+  // Resto de las herramientas (Programa, Línea de tiempo,
+  // Planificador, Programador, Comparador, Traductor…)
+  // ------------------------------------------------------------
+  // Los títulos de tarjeta con icono siguen el mismo patrón que las
+  // cabeceras de grupo del Redactor/SheetFlow.
+  .card-titulo {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    letter-spacing: -.015em;
+
+    i { color: var(--primary-ink); }
+  }
+
+  // Programa: el Gantt y su tabla cierran el lenguaje de marcos
+  .gantt-grid {
+    border-color: var(--ws-line-soft);
+    border-radius: .9rem;
+    box-shadow: var(--ws-shadow);
+  }
+
+  .gantt-header-cell {
+    background: color-mix(in srgb, var(--surface-raised) 90%, var(--primary) 10%);
+  }
+
+  // Línea de tiempo
+  .lt-nav {
+    border-color: var(--ws-line-soft);
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+
+  .lt-lienzo { overflow: hidden; }
+  .lt-leyenda { border-bottom-color: var(--ws-line-soft); }
+
+  // Planificador (Last Planner)
+  .plan-lane {
+    border-radius: var(--ws-radius);
+    box-shadow: var(--ws-shadow);
+  }
+
+  .plan-card {
+    border-color: var(--ws-line-soft);
+    border-radius: .9rem;
+    background: var(--surface);
+    transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+
+    &:hover {
+      border-color: var(--ws-line);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px -24px rgba(2, 6, 23, .7);
+    }
+  }
+
+  // Programador (IA) y tablas de revisión
+  .prg-tabla-wrap:not(.card) {
+    border: 1px solid var(--ws-line-soft);
+    border-radius: .9rem;
+    background: var(--surface);
+  }
+
+  // Traductor
+  .trd-cajas textarea { border-radius: .9rem; }
+
+  // Comparador: barra de herramientas del lienzo
+  .cmp-barra {
+    padding: .9rem 1.1rem;
+    border: 1px solid var(--ws-line-soft);
+    border-radius: .9rem;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  // ------------------------------------------------------------
   // Ajustes finos y móvil
   // ------------------------------------------------------------
   @media (max-width: 80rem) {
-    .page-header { padding: 1.4rem 1.5rem; }
+    .page-header:has(h2 > i:first-child),
+    .programa-header { padding: 1.4rem 1.5rem; }
     .page-header h2 > i:first-child { width: 3.8rem; height: 3.8rem; font-size: 1.55rem; }
     .archivero-lateral { position: static; }
   }
 
   @media (max-width: 48rem) {
-    .page-header {
+    .page-header:has(h2 > i:first-child),
+    .programa-header {
       padding: 1.2rem 1.2rem 1.2rem 1.5rem;
       border-radius: 1.1rem;
 

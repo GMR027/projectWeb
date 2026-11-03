@@ -10,6 +10,12 @@ return [
     'Proyectos' => 'Projects', 'Planificador' => 'Planner', 'Proyecto actual' => 'Current project', 'Acciones rápidas' => 'Quick actions', 'Ver todas en otra pestaña' => 'View all in a new tab', 'Nada pendiente' => 'Nothing pending',
     'Salir' => 'Log out', 'Salir del demo' => 'Exit demo', 'Cambiar tema' => 'Toggle theme', 'Invitado' => 'Guest', 'Admin' => 'Admin', 'Cliente' => 'Client', 'Visitante' => 'Visitor',
     'Idioma' => 'Language', 'Idioma de la interfaz' => 'Interface language', 'Guardar' => 'Save', 'Cancelar' => 'Cancel', 'Eliminar' => 'Delete', 'Editar' => 'Edit', 'Ver' => 'View', 'Descargar' => 'Download', 'Duplicar' => 'Duplicate',
+    'Modos de la lámina' => 'Sheet modes', 'Acomodar' => 'Arrange', 'Dibujar' => 'Draw', 'Tareas' => 'Tasks', 'Nota' => 'Note', 'Datos' => 'Data',
+    'Ver la lista de tareas de la lámina' => 'View the sheet task list', 'Crear una nota en esta lámina' => 'Create a note on this sheet',
+    'Presentación .odp' => '.odp presentation', 'Todo se envía al final' => 'Everything is sent at the end',
+    'Crear y abrir en el editor' => 'Create and open in the editor', 'Aplicar y volver al editor' => 'Apply and return to the editor',
+    'Otro formato o tamaño' => 'Other format or size', 'Gráficos' => 'Graphics', 'Nombre del gráfico' => 'Graphic name', 'Simbologías' => 'Symbol libraries',
+    'Cambiar el nombre' => 'Rename', 'Recorrer el editor paso a paso (se muestra solo la primera vez)' => 'Walk through the editor step by step (shown only the first time)',
     // Ajustes del proyecto
     'Ajustes del Proyecto' => 'Project settings', 'Jornada Semanal' => 'Weekly workday', 'Días No Laborables' => 'Non-working days', 'Almacenamiento' => 'Storage', 'Cambiar contraseña' => 'Change password',
     'Contraseña actual' => 'Current password', 'Nueva contraseña' => 'New password', 'Repetir nueva contraseña' => 'Repeat new password', 'Actualizar contraseña' => 'Update password',

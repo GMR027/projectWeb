@@ -178,6 +178,14 @@ class Sheetflow
                 'b' => !empty($r['b']) ? 1 : 0,
             ];
         }
+        // Alto de fila en píxeles (0 o ausente = automático). Se aplica en la cuadrícula y en el Excel.
+        $alto = [];
+        foreach ((array)($v['alto'] ?? []) as $r => $px) {
+            if (!is_numeric($r) || (int)$r < 0 || (int)$r >= $nr || !is_numeric($px)) continue;
+            $px = (int)round((float)$px);
+            if ($px < 22 || $px > 400) continue;
+            $alto[(string)(int)$r] = $px;
+        }
         $graficos = [];
         foreach (array_slice((array)($v['graficos'] ?? []), 0, 6) as $g) {
             if (!is_array($g)) continue;
@@ -197,6 +205,7 @@ class Sheetflow
             'filtros' => (object)$filtros,
             'cond' => $cond,
             'graficos' => $graficos,
+            'alto' => (object)$alto,
         ];
     }
 
@@ -209,6 +218,8 @@ class Sheetflow
         $f = is_array($f) ? $f : [];
         $o = [];
         foreach (['b', 'i', 'u'] as $k) if (!empty($f[$k])) $o[$k] = 1;
+        if (!empty($f['wr'])) $o['wr'] = 1;
+        if (in_array($f['va'] ?? '', ['arriba', 'centro', 'abajo'], true)) $o['va'] = $f['va'];
         if (isset($f['fs']) && is_numeric($f['fs'])) $o['fs'] = (int)max(6, min(72, $f['fs']));
         foreach (['tc', 'bg'] as $k) if (isset($f[$k]) && is_string($f[$k]) && preg_match('/^#[0-9a-fA-F]{6}$/', $f[$k])) $o[$k] = strtolower($f[$k]);
         if (in_array($f['al'] ?? '', self::ALINEAR, true)) $o['al'] = $f['al'];
@@ -241,6 +252,8 @@ class Sheetflow
         if (!empty($f['tc'])) $c .= 'color:' . $f['tc'] . ';';
         elseif (!empty($f['bg'])) $c .= 'color:' . self::contraste($f['bg']) . ';';
         if (!empty($f['bg'])) $c .= 'background-color:' . $f['bg'] . ';';
+        if (!empty($f['wr'])) $c .= 'white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;';
+        if (!empty($f['va'])) $c .= 'vertical-align:' . ['arriba' => 'top', 'centro' => 'middle', 'abajo' => 'bottom'][$f['va']] . ';';
         if (!empty($f['al'])) $c .= 'text-align:' . ['izquierda' => 'left', 'centro' => 'center', 'derecha' => 'right'][$f['al']] . ';';
         if (!$sinBordes) foreach (self::BORDES as $k => $lado) {
             if (!isset($f[$k])) continue;
@@ -714,6 +727,11 @@ class Sheetflow
         $argb = fn($hex) => 'FF' . strtoupper(ltrim($hex, '#'));
         $est = ['solid' => 'thin', 'dashed' => 'dashed', 'dotted' => 'dotted', 'double' => 'double'];
         foreach ($d['cols'] as $c => $col) if ($col['w']) $hoja->getColumnDimension($Coord::stringFromColumnIndex($c + 1))->setAutoSize(false)->setWidth(round($col['w'] / 7, 1));
+        // Alto de fila guardado en la vista (px → puntos)
+        foreach ((array)($d['vista']['alto'] ?? []) as $r => $px) {
+            $r = (int)$r;
+            if ($r >= 0 && $r < count($m['filas'])) $hoja->getRowDimension($r + 2)->setRowHeight(max(12, round(((int)$px) * 0.75, 1)));
+        }
         foreach ((array)$d['fmt'] as $k => $f) {
             [$r, $c] = array_map('intval', explode(',', $k));
             if ($r >= count($m['filas'])) continue;
@@ -731,6 +749,8 @@ class Sheetflow
                 $st->getNumberFormat()->setFormatCode($codigoNf);
             }
             if (!empty($f['al'])) $st->getAlignment()->setHorizontal(['izquierda' => 'left', 'centro' => 'center', 'derecha' => 'right'][$f['al']]);
+            if (!empty($f['wr'])) $st->getAlignment()->setWrapText(true);
+            if (!empty($f['va'])) $st->getAlignment()->setVertical(['arriba' => 'top', 'centro' => 'center', 'abajo' => 'bottom'][$f['va']]);
             foreach (self::BORDES as $kb => $lado) {
                 if (!isset($f[$kb])) continue;
                 $b = $st->getBorders()->{'get' . ucfirst($lado)}();
@@ -883,7 +903,8 @@ class Sheetflow
         }
         $o .= $red ? '</tr>' : '</tr></thead><tbody>';
         foreach ($m['filas'] as $r => $fila) {
-            $o .= '<tr>';
+            $altoFila = (int)(((array)($d['vista']['alto'] ?? []))[$r] ?? 0);
+            $o .= '<tr' . ($altoFila > 0 ? ' style="height:' . round($altoFila * 0.75) . 'pt"' : '') . '>';
             foreach ($fila as $c => $v) {
                 if (isset($cubierta["$r,$c"])) continue;
                 $f = $fmt["$r,$c"] ?? [];

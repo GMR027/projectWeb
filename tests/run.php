@@ -292,6 +292,38 @@ $sfN = (array)$sfNuevas['calc'];
 $ok('matemáticas, estadística y condicionales nuevos', ($sfN['0,4'] ?? '') === '44' && ($sfN['9,4'] ?? '') === '2' && ($sfN['10,4'] ?? '') === '5' && ($sfN['11,4'] ?? '') === '3');
 $ok('texto, búsqueda, referencias, fechas y finanzas', ($sfN['1,4'] ?? '') === '31/01/2026' && ($sfN['2,4'] ?? '') === '4' && ($sfN['3,4'] ?? '') === '4' && ($sfN['4,4'] ?? '') === '2026-02-06' && ($sfN['8,4'] ?? '') === 'Hola Mundo' && ($sfN['12,4'] ?? '') === 'no' && ($sfN['13,4'] ?? '') === '2026' && str_starts_with($sfN['5,4'] ?? '', '-129.5') && ($sfN['6,4'] ?? '') === '4' && ($sfN['7,4'] ?? '') === '3');
 
+$sfExtra = \Classes\Sheetflow::normalizar([
+    'cols' => [['n' => 'A'], ['n' => 'B']],
+    'rows' => [
+        ['=PRODUCTO(2;3;4)', ''],
+        ['=SI.CONJUNTO(FALSO;"a";VERDADERO;"b")', ''],
+        ['=REEMPLAZAR("hola mundo";6;5;"a todos")', ''],
+        ['=EXACTO("Hola";"hola")', ''],
+        ['=MONEDA(1234.5;2)', ''],
+        ['=FECHAVALOR("31/12/2026")', ''],
+        ['=HORA("14:35:20")', ''],
+        ['=MINUTO("14:35:20")', ''],
+        ['=SEGUNDO("14:35:20")', ''],
+    ],
+]);
+$sfE = (array)$sfExtra['calc'];
+$ok('PRODUCTO, SI.CONJUNTO, REEMPLAZAR, EXACTO y MONEDA', ($sfE['0,0'] ?? '') === '24' && ($sfE['1,0'] ?? '') === 'b'
+    && ($sfE['2,0'] ?? '') === 'hola a todos' && ($sfE['3,0'] ?? '') === '0' && ($sfE['4,0'] ?? '') === '$1,234.50');
+$ok('FECHAVALOR y HORA/MINUTO/SEGUNDO', ($sfE['5,0'] ?? '') === '2026-12-31' && ($sfE['6,0'] ?? '') === '14'
+    && ($sfE['7,0'] ?? '') === '35' && ($sfE['8,0'] ?? '') === '20');
+
+$sfFmt = \Classes\Sheetflow::limpiar([
+    'cols' => [['n' => 'A']], 'rows' => [['x'], ['y']],
+    'fmt' => ['0,0' => ['wr' => 1, 'va' => 'arriba', 'nf' => '#,##0.00'], '1,0' => ['va' => 'otro']],
+    'vista' => ['alto' => ['0' => 54, '1' => 999, '2' => 30, 'x' => 40]],
+]);
+$sfFmtMap = (array)$sfFmt['fmt'];
+$ok('el ajuste de texto, la alineación vertical y el alto de fila se sanean', ($sfFmtMap['0,0']['wr'] ?? 0) === 1
+    && ($sfFmtMap['0,0']['va'] ?? '') === 'arriba' && !isset($sfFmtMap['1,0']['va'])
+    && (array)$sfFmt['vista']['alto'] === ['0' => 54]
+    && str_contains(\Classes\Sheetflow::cssFmt(['wr' => 1, 'va' => 'arriba']), 'white-space:pre-wrap')
+    && str_contains(\Classes\Sheetflow::cssFmt(['wr' => 1, 'va' => 'arriba']), 'vertical-align:top'));
+
 echo "SheetFlow: celdas combinadas\n";
 $sfMerge = \Classes\Sheetflow::limpiar([
     'cols' => [['n' => 'A'], ['n' => 'B'], ['n' => 'C'], ['n' => 'D']],
@@ -758,6 +790,7 @@ $ok('las estampas usan los gestos de lienzo', str_contains($asset('public/vendor
 $ok('el CSS compilado trae el dock del Redactor y la celda en hoja', str_contains($asset('public/build/css/app.css'), '.rd-dock') && str_contains($asset('public/build/css/app.css'), '.sf-celda-hoja'));
 $ok('SheetFlow edita en la celda en tablet y en hoja solo en el celular', str_contains($asset('public/vendor/sheetflow.js'), 'MOVIL_ESTRECHO.matches'));
 $ok('SheetFlow inserta referencias al hacer clic en celdas mientras se escribe una fórmula', str_contains($asset('public/vendor/sheetflow.js'), 'function entradaFormula') && str_contains($asset('public/vendor/sheetflow.js'), 'function insertarRef') && str_contains($asset('public/vendor/sheetflow.js'), 'function celdaApuntada'));
+$ok('SheetFlow adapta las referencias de «Insertar función» a la columna y el renglón elegidos', str_contains($asset('public/vendor/sheetflow.js'), 'function formulaAdaptada') && str_contains($asset('public/vendor/sheetflow.js'), 'function destinoPlantilla') && str_contains($asset('public/vendor/sheetflow.js'), 'function bloqueDatos') && str_contains($asset('public/vendor/sheetflow.js'), 'REF_PLANTILLA'));
 $ok('SheetFlow combina y separa celdas (colspan, rowspan y merges en los datos)', str_contains($asset('public/vendor/sheetflow.js'), 'function mergeDe') && str_contains($asset('views/sheetflow/abrir.php'), 'data-acc="combinar"') && str_contains($asset('public/vendor/sheetflow.js'), 'merges: S.merges'));
 $ok('SheetFlow rellena con el asa y ajusta las referencias al copiar', str_contains($asset('public/vendor/sheetflow.js'), 'function ajustarFormula')
     && str_contains($asset('public/vendor/sheetflow.js'), 'function aplicarRelleno') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-asa"'));

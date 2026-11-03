@@ -219,8 +219,11 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
     <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
     <?php if (($_GET['tema'] ?? '') === 'ok'): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
     <p class="text-muted text-sm">Se guarda en el proyecto: se mantiene al cambiar de navegador o de equipo y lo ven todos los que abran el proyecto. El color se usa también en la carátula del portafolio. Las exportaciones (PDF, Excel, XML) no cambian.</p>
-    <form method="POST" action="/ajustes/tema" class="tema-form">
+    <form method="POST" action="/ajustes/tema" class="tema-form" id="tema-form">
         <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">
+
+        <div class="tema-lienzo">
+        <div class="tema-campos">
 
         <div class="tema-bloque">
             <span class="tema-etq">Modo</span>
@@ -289,10 +292,6 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
                     <output id="tema-halo-exp-v" for="tema-halo-exp"><?php echo (int)$temaFondo['halo_expansion']; ?>%</output>
                 </label>
             </div>
-            <div class="tema-previa" id="tema-previa" aria-label="Vista previa del fondo del proyecto">
-                <span class="tema-previa-etq"><i class="fa-solid fa-eye"></i> Vista previa</span>
-                <span class="tema-previa-tarjeta"></span>
-            </div>
         </div>
 
         <div class="tema-bloque">
@@ -334,23 +333,108 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
             <?php endif; ?>
         </div>
 
-        <p id="tema-aviso" class="text-muted text-sm" hidden><i class="fa-solid fa-circle-info"></i> Estás viendo una vista previa: pulsa <strong>Guardar apariencia</strong> para dejarla en el proyecto.</p>
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
+        </div><!-- /.tema-campos -->
+
+        <aside class="tema-previa-panel" aria-label="Vista previa de la apariencia del proyecto">
+            <div class="tema-previa-cab">
+                <span class="tema-previa-etq"><i class="fa-solid fa-eye"></i> Vista previa</span>
+                <div class="tema-previa-modo" role="group" aria-label="Ver la vista previa en tema claro u oscuro">
+                    <button type="button" data-previa-tema="light">Claro</button>
+                    <button type="button" data-previa-tema="dark">Oscuro</button>
+                </div>
+            </div>
+            <div class="tema-previa" id="tema-previa">
+                <div class="tema-mock" aria-hidden="true">
+                    <div class="tema-mock-barra">
+                        <span class="tema-mock-logo"></span>
+                        <span class="tema-mock-marca">Proyecto</span>
+                        <span class="tema-mock-nav"></span>
+                        <span class="tema-mock-nav act"></span>
+                        <span class="tema-mock-nav"></span>
+                    </div>
+                    <div class="tema-mock-cuerpo">
+                        <div class="tema-mock-fila">
+                            <span class="tema-mock-chip">En proceso</span>
+                            <span class="tema-mock-chip suave">Terminado</span>
+                        </div>
+                        <span class="tema-mock-titulo"></span>
+                        <span class="tema-mock-linea"></span>
+                        <span class="tema-mock-linea corta"></span>
+                        <div class="tema-mock-acciones">
+                            <span class="tema-mock-btn">Guardar</span>
+                            <span class="tema-mock-btn-sec">Cancelar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="tema-previa-pie text-muted text-sm">Así se verán el acento, el halo y la textura. El texto de los botones se ajusta solo para que se lea. Este conmutador no cambia el modo del proyecto.</p>
+        </aside>
+        </div><!-- /.tema-lienzo -->
+
+        <div class="tema-guardar">
+            <p class="tema-resumen" id="tema-resumen"></p>
+            <div class="tema-guardar-acciones">
+                <button type="button" class="btn btn-secondary" id="tema-restablecer"><i class="fa-solid fa-rotate-left"></i> Restablecer color y fondo</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar apariencia</button>
+            </div>
+        </div>
     </form>
     <script>
-        // Vista previa: al elegir modo, color, textura o halo se aplica al momento; «Guardar» lo deja en el proyecto.
+        // Vista previa en vivo: el panel de la derecha muestra el acento, el halo y la textura.
+        // «Guardar apariencia» los deja en el proyecto (lo ven todos los que lo abran).
         (function () {
             const card = document.getElementById('tema');
-            if (!card) return;
+            const form = document.getElementById('tema-form');
+            if (!card || !form) return;
             const raiz = document.documentElement;
             const TEMA = { usuario: null, claro: 'light', oscuro: 'dark' };
             const AYUDA_MENU = <?php echo json_encode(\Classes\TemaProyecto::MENUS_AYUDA, JSON_UNESCAPED_UNICODE); ?>;
-            const rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
-            const oscurecer = (h, p) => '#' + rgb(h).map(v => Math.round(v * (1 - p)).toString(16).padStart(2, '0')).join('');
+            const DEFECTO = {
+                paleta: <?php echo json_encode(\Classes\TemaProyecto::POR_DEFECTO); ?>,
+                texInt: <?php echo (int)\Classes\TemaProyecto::TEXTURA_INTENSIDAD_DEFECTO; ?>,
+                haloInt: <?php echo (int)\Classes\TemaProyecto::HALO_INTENSIDAD_DEFECTO; ?>,
+                haloExp: <?php echo (int)\Classes\TemaProyecto::HALO_EXPANSION_DEFECTO; ?>
+            };
             const previa = document.getElementById('tema-previa');
             const colorHalo = document.getElementById('tema-halo-color');
             const haloAuto = document.getElementById('tema-halo-auto');
+            const resumen = document.getElementById('tema-resumen');
             const val = id => (document.getElementById(id) || {}).value || '0';
+            const rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+            const oscurecer = (h, p) => '#' + rgb(h).map(v => Math.round(v * (1 - p)).toString(16).padStart(2, '0')).join('');
+            const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
+
+            const lum = v => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+            const luz = ([r, g, b]) => 0.2126 * lum(r) + 0.7152 * lum(g) + 0.0722 * lum(b);
+            const contraste = (a, b) => {
+                const la = luz(a), lb = luz(b);
+                return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+            };
+
+            // Texto que se lee mejor encima del acento (misma regla que TemaProyecto::textoSobre).
+            const textoSobre = (h) => {
+                const L = luz(rgb(h));
+                return 1.05 / (L + 0.05) >= (L + 0.05) / 0.05 ? '#ffffff' : '#0f172a';
+            };
+
+            // Tinta legible del acento sobre la superficie (TemaProyecto::tinta), para que
+            // pestañas y enlaces de acento mantengan 4.5:1 también durante la vista previa.
+            const tinta = (h, fondo) => {
+                let c = rgb(h);
+                const f = rgb(fondo);
+                const hacia = luz(f) > 0.35 ? 0 : 255;
+                for (let i = 0; i < 12 && contraste(c, f) < 4.5; i++) {
+                    c = c.map(v => Math.round(v + (hacia - v) * 0.1));
+                }
+                return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+            };
+
+            const paleta = () => card.querySelector('input[name="tema_paleta"]:checked');
+
+            // El tema de la vista previa es independiente del modo del proyecto:
+            // así se compara la paleta en claro y en oscuro sin cambiarlo.
+            let previaTema = raiz.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            let sucio = false;
 
             const salida = (input) => {
                 const out = document.getElementById(input.dataset.temaRango || '');
@@ -360,7 +444,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
             // Patrones de la vista previa (los mismos dibujos que genera TemaProyecto::texturaCapa).
             const textura = (tipo, intensidad) => {
                 const a = Math.max(0, Math.min(100, parseInt(intensidad, 10) || 0)) / 100;
-                const ink = raiz.getAttribute('data-theme') === 'light' ? '15,23,42' : '226,232,240';
+                const ink = previaTema === 'light' ? '15,23,42' : '226,232,240';
                 if (tipo === 'grano' || tipo === 'papel') {
                     const op = (tipo === 'papel' ? .55 : .45) * a;
                     const f = tipo === 'papel' ? '.95' : '.85';
@@ -379,10 +463,25 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 
             const pintarFondo = () => {
                 if (!previa) return;
-                const p = card.querySelector('input[name="tema_paleta"]:checked');
-                const claro = raiz.getAttribute('data-theme') === 'light';
-                let c = p ? (claro ? p.dataset.claro : p.dataset.oscuro) : '#f97316';
+                const p = paleta();
+                if (!p) return;
+                const claro = previaTema === 'light';
+                const acento = claro ? p.dataset.claro : p.dataset.oscuro;
+
+                // El mock (barra, chip, botón) usa el acento de la paleta y su texto legible.
+                previa.style.setProperty('--pv-primary', acento);
+                previa.style.setProperty('--pv-on', textoSobre(acento));
+                previa.style.setProperty('--pv-soft', rgba(acento, claro ? .12 : .16));
+                previa.style.setProperty('--pv-line', rgba(acento, claro ? .35 : .45));
+                previa.classList.toggle('pv-claro', claro);
+                previa.classList.toggle('pv-oscuro', !claro);
+
+                // El halo usa el acento o un color propio; si es automático, el color
+                // mostrado se mantiene al día con la paleta y el tema de la vista previa.
+                let c = acento;
                 if (haloAuto && !haloAuto.checked && colorHalo && colorHalo.value) c = colorHalo.value;
+                else if (haloAuto && haloAuto.checked && colorHalo) colorHalo.value = acento;
+
                 const [r, g, b] = rgb(c);
                 const f = Math.max(0, Math.min(100, parseInt(val('tema-halo-int'), 10) || 0)) / 100;
                 const exp = Math.max(50, Math.min(250, parseInt(val('tema-halo-exp'), 10) || 100)) / 100;
@@ -392,31 +491,55 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
                     'radial-gradient(calc(120px * ' + exp + ') calc(80px * ' + exp + ') at 50% 112%, rgba(' + r + ',' + g + ',' + b + ',' + (0.08 * f).toFixed(3) + '), transparent 65%)'
                 ];
                 const tam = ['auto', 'auto', 'auto'];
-                const tipo = card.querySelector('input[name="tema_textura"]:checked')?.value || 'ninguna';
+                const tipo = (card.querySelector('input[name="tema_textura"]:checked') || {}).value || 'ninguna';
                 const t = textura(tipo, val('tema-tex-int'));
                 if (t) { capas.push(t.capa); tam.push(t.tam); }
                 previa.style.backgroundImage = capas.join(', ');
                 previa.style.backgroundSize = tam.join(', ');
             };
 
+            // Resumen de lo elegido en la barra de guardado (y aviso si falta guardar).
+            const actualizarResumen = () => {
+                if (!resumen) return;
+                const p = paleta();
+                const nomPaleta = p ? (p.closest('.tema-paleta').querySelector('.tema-nom') || {}).textContent : '';
+                const tex = card.querySelector('input[name="tema_textura"]:checked');
+                const nomTex = tex && tex.value !== 'ninguna'
+                    ? ((tex.closest('.tema-textura').querySelector('b') || {}).textContent || '') + ' ' + val('tema-tex-int') + '%'
+                    : 'Sin textura';
+                const partes = [nomPaleta, nomTex, 'Halo ' + val('tema-halo-int') + '%'].filter(Boolean);
+                resumen.textContent = (sucio ? 'Sin guardar · ' : '') + partes.join(' · ');
+                resumen.classList.toggle('pend', sucio);
+            };
+
             const refrescar = () => {
                 if (haloAuto && colorHalo) colorHalo.disabled = haloAuto.checked;
                 pintarFondo();
+                actualizarResumen();
             };
 
-            card.addEventListener('input', (e) => {
-                if (e.target.matches('[data-tema-rango]')) salida(e.target);
-                if (e.target.name && e.target.name.indexOf('tema_') === 0) refrescar();
-                if (e.target === colorHalo || e.target === haloAuto) refrescar();
-            });
-
-            card.addEventListener('change', () => {
-                const modo = card.querySelector('input[name="tema_modo"]:checked')?.value || 'usuario';
+            // Aplica al momento lo que se ve en la interfaz (modo, acento, barra y burbujas).
+            const aplicar = () => {
+                const modo = (card.querySelector('input[name="tema_modo"]:checked') || {}).value || 'usuario';
                 raiz.setAttribute('data-theme', TEMA[modo] || localStorage.getItem('theme') || 'dark');
-                const aviso = document.getElementById('tema-aviso');
-                if (aviso) aviso.hidden = false;
+
+                const p = paleta();
+                if (p) {
+                    const claro = raiz.getAttribute('data-theme') === 'light';
+                    const c = claro ? p.dataset.claro : p.dataset.oscuro;
+                    raiz.style.setProperty('--primary', c);
+                    raiz.style.setProperty('--primary-hover', oscurecer(c, 0.12));
+                    raiz.style.setProperty('--primary-glow', rgba(c, claro ? .15 : .25));
+                    raiz.style.setProperty('--primary-soft', rgba(c, claro ? .12 : .16));
+                    raiz.style.setProperty('--primary-line', rgba(c, claro ? .35 : .45));
+                    raiz.style.setProperty('--on-primary', textoSobre(c));
+                    raiz.style.setProperty('--on-primary-hover', textoSobre(oscurecer(c, 0.12)));
+                    raiz.style.setProperty('--primary-ink', tinta(c, claro ? '#f5f7fa' : '#1e293b'));
+                }
+
                 const nombres = card.querySelector('input[name="nombres_herramientas"]:checked');
-                if (nombres) raiz.classList.toggle('herr-con-nombres', nombres.value === '1');   // vista previa de la barra de herramientas
+                if (nombres) raiz.classList.toggle('herr-con-nombres', nombres.value === '1');
+
                 const menu = card.querySelector('#tema-menu');
                 if (menu) {   // vista previa de la barra superior (clásico, panel o pestañas)
                     raiz.classList.remove('menu-panel', 'menu-pestanas');
@@ -424,17 +547,66 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
                     const ayuda = document.getElementById('tema-menu-ayuda');
                     if (ayuda && AYUDA_MENU[menu.value]) ayuda.textContent = AYUDA_MENU[menu.value];
                 }
-                const ayuda = card.querySelector('input[name="ayuda_burbujas"]:checked');
-                if (ayuda) raiz.classList.toggle('sin-ayuda-burbujas', ayuda.value === '0');   // vista previa de las burbujas
-                const p = card.querySelector('input[name="tema_paleta"]:checked');
-                if (p) {
-                    const claro = raiz.getAttribute('data-theme') === 'light';
-                    const c = claro ? p.dataset.claro : p.dataset.oscuro;
-                    raiz.style.setProperty('--primary', c);
-                    raiz.style.setProperty('--primary-hover', oscurecer(c, 0.12));
-                    raiz.style.setProperty('--primary-glow', 'rgba(' + rgb(c).join(',') + ',' + (claro ? .15 : .25) + ')');
-                }
+
+                const ayudaChk = card.querySelector('input[name="ayuda_burbujas"]:checked');
+                if (ayudaChk) raiz.classList.toggle('sin-ayuda-burbujas', ayudaChk.value === '0');
+
                 refrescar();
+            };
+
+            // Conmutador claro/oscuro de la vista previa (no toca el modo del proyecto).
+            card.querySelectorAll('[data-previa-tema]').forEach(btn => {
+                const activo = btn.dataset.previaTema === previaTema;
+                btn.classList.toggle('activo', activo);
+                btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
+                btn.addEventListener('click', () => {
+                    previaTema = btn.dataset.previaTema;
+                    card.querySelectorAll('[data-previa-tema]').forEach(b => {
+                        const on = b === btn;
+                        b.classList.toggle('activo', on);
+                        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    });
+                    refrescar();
+                });
+            });
+
+            form.addEventListener('input', (e) => {
+                if (e.target.matches('[data-tema-rango]')) salida(e.target);
+                sucio = true;
+                refrescar();
+            });
+
+            form.addEventListener('change', () => {
+                sucio = true;
+                aplicar();
+            });
+
+            form.addEventListener('submit', () => { sucio = false; });
+
+            // Aviso al salir con cambios sin guardar (el formulario es largo y el guardado va al final).
+            window.addEventListener('beforeunload', (e) => {
+                if (!sucio) return;
+                e.preventDefault();
+                e.returnValue = '';
+            });
+
+            // Restablecer color y fondo a los valores de fábrica (la paleta base, sin textura y halo por defecto).
+            const restablecer = document.getElementById('tema-restablecer');
+            if (restablecer) restablecer.addEventListener('click', () => {
+                const marcar = (name, value) => {
+                    const el = card.querySelector('input[name="' + name + '"][value="' + value + '"]');
+                    if (el) el.checked = true;
+                };
+                const poner = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+                marcar('tema_paleta', DEFECTO.paleta);
+                marcar('tema_textura', 'ninguna');
+                poner('tema-tex-int', DEFECTO.texInt);
+                poner('tema-halo-int', DEFECTO.haloInt);
+                poner('tema-halo-exp', DEFECTO.haloExp);
+                if (haloAuto) haloAuto.checked = true;
+                card.querySelectorAll('[data-tema-rango]').forEach(salida);
+                sucio = true;
+                aplicar();
             });
 
             card.querySelectorAll('[data-tema-rango]').forEach(salida);

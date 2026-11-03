@@ -250,7 +250,7 @@
 
 .calendario-dia-hoy {
   border: 2px solid $primary;
-  background-color: rgba(249, 115, 22, 0.05);
+  background-color: color-mix(in srgb, var(--primary) 5%, transparent);
 
   .dia-numero {
     background-color: $primary;
@@ -426,7 +426,12 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
 .exp-vista { display: block; overflow-wrap: anywhere; font-size: 1.1rem; }
 
 // ---------- Apariencia del proyecto (Ajustes → General) ----------
+// La tarjeta deja de recortar en horizontal para que la barra de guardado pueda
+// pegarse al borde inferior de la ventana mientras se recorre el formulario.
+#tema { overflow: visible; }
 .tema-form { display: flex; flex-direction: column; gap: $space-md; margin-top: $space-md; }
+.tema-lienzo { display: grid; grid-template-columns: minmax(0, 1fr) 34rem; gap: 2.4rem; align-items: start; }
+.tema-campos { display: flex; flex-direction: column; gap: $space-md; min-width: 0; }
 .tema-bloque { display: flex; flex-direction: column; gap: .8rem; }
 .tema-etq { font-size: 1.1rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
 .tema-modos { display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -456,6 +461,12 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
 }
 :root[data-theme="dark"] .tema-chip { background: var(--chip-oscuro); }
 .tema-nom { overflow-wrap: anywhere; }
+
+// Teclado: los radios de paleta y textura van ocultos, así que el anillo de foco
+// se pinta en la tarjeta (sin esto, al tabular no se ve dónde está el foco).
+.tema-modo:has(input:focus-visible),
+.tema-paleta:has(input:focus-visible),
+.tema-textura:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 // Texturas del fondo
 .tema-texturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); gap: .7rem; }
@@ -499,31 +510,80 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
   input[type=color] { width: 4.2rem; height: 3.4rem; padding: .2rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); cursor: pointer; }
   input:disabled { opacity: .45; cursor: not-allowed; }
 }
+// Vista previa: panel fijo a la derecha con un mock real (barra, chip, botón).
+.tema-previa-panel { position: sticky; top: 1.6rem; display: flex; flex-direction: column; gap: .9rem; min-width: 0; }
+.tema-previa-cab { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.tema-previa-etq { display: inline-flex; align-items: center; gap: .5rem; font-size: 1.1rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.tema-previa-modo {
+  display: inline-flex; gap: .2rem; padding: .2rem; border: 1px solid var(--border); border-radius: 99rem; background: var(--bg-secondary);
+  button {
+    border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 1.1rem; font-weight: 600;
+    padding: .35rem .9rem; border-radius: 99rem; cursor: pointer;
+    &.activo { background: var(--primary-soft); color: var(--primary-ink); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  }
+}
 .tema-previa {
-  position: relative; height: 17rem; margin-top: .6rem; border: 1px solid var(--border); border-radius: 1rem; overflow: hidden;
-  background-color: var(--bg-primary); background-repeat: repeat; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
-  display: grid; place-items: center;
-}
-.tema-previa-etq {
-  position: absolute; top: .8rem; left: .9rem; display: inline-flex; align-items: center; gap: .45rem;
-  padding: .25rem .7rem; border: 1px solid var(--border); border-radius: 99rem; background: color-mix(in srgb, var(--surface) 82%, transparent);
-  color: var(--text-muted); font-size: 1.05rem; font-weight: 600; backdrop-filter: blur(6px);
-}
-.tema-previa-tarjeta {
-  width: min(36rem, 72%); height: 8.4rem; border: 1px solid var(--border); border-radius: .9rem;
-  background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: 0 18px 40px -24px rgba(2, 6, 23, .65);
-  backdrop-filter: blur(4px);
+  // Variables locales: la vista previa puede estar en claro u oscuro sin cambiar el proyecto.
+  --pv-bg: #0f172a; --pv-surface: #1e293b; --pv-border: #334155; --pv-text: #f1f5f9;
+  --pv-primary: #f97316; --pv-on: #0f172a; --pv-soft: rgba(249, 115, 22, .16); --pv-line: rgba(249, 115, 22, .45);
+  position: relative; padding: 1.4rem; border: 1px solid var(--border); border-radius: 1rem; overflow: hidden;
+  background-color: var(--pv-bg); background-repeat: repeat; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+  transition: background-color .2s ease;
 
-  &::before, &::after { content: ''; display: block; height: .8rem; border-radius: 99rem; background: var(--border-accent); opacity: .55; }
-  &::before { width: 46%; margin: 1.8rem 1.6rem .7rem; }
-  &::after { width: 68%; margin: 0 1.6rem; }
+  &.pv-claro { --pv-bg: #ffffff; --pv-surface: #f5f7fa; --pv-border: #e2e8f0; --pv-text: #1a202c; }
 }
+.tema-previa-pie { margin: 0; }
+.tema-mock {
+  border: 1px solid var(--pv-border); border-radius: .8rem; overflow: hidden;
+  background: color-mix(in srgb, var(--pv-surface) 92%, transparent);
+  box-shadow: 0 18px 40px -24px rgba(2, 6, 23, .65);
+}
+.tema-mock-barra {
+  display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem;
+  border-bottom: 1px solid var(--pv-border); background: color-mix(in srgb, var(--pv-surface) 78%, transparent);
+}
+.tema-mock-logo { width: 1.2rem; height: 1.2rem; flex: none; border-radius: .3rem; background: var(--pv-primary); }
+.tema-mock-marca { margin-right: auto; font-size: 1.1rem; font-weight: 700; color: var(--pv-text); }
+.tema-mock-nav { width: 2rem; height: .5rem; border-radius: 99rem; background: var(--pv-border); &.act { background: var(--pv-primary); } }
+.tema-mock-cuerpo { display: flex; flex-direction: column; gap: .7rem; padding: 1.1rem; }
+.tema-mock-fila { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tema-mock-chip {
+  padding: .15rem .6rem; border-radius: 99rem; background: var(--pv-primary); color: var(--pv-on);
+  font-size: 1.05rem; font-weight: 700;
+  &.suave { background: var(--pv-soft); border: 1px solid var(--pv-line); color: var(--pv-text); }
+}
+.tema-mock-titulo { width: 58%; height: .9rem; border-radius: 99rem; background: var(--pv-text); opacity: .85; }
+.tema-mock-linea { width: 92%; height: .55rem; border-radius: 99rem; background: var(--pv-border); &.corta { width: 64%; } }
+.tema-mock-acciones { display: flex; gap: .6rem; margin-top: .4rem; }
+.tema-mock-btn { padding: .45rem 1rem; border-radius: .5rem; background: var(--pv-primary); color: var(--pv-on); font-size: 1.1rem; font-weight: 700; box-shadow: 0 .6rem 1.4rem -.6rem var(--pv-primary); }
+.tema-mock-btn-sec { padding: .45rem 1rem; border: 1px solid var(--pv-border); border-radius: .5rem; color: var(--pv-text); font-size: 1.1rem; font-weight: 600; }
 
+// Barra de guardado: resumen de lo elegido y aviso de cambios sin guardar.
+.tema-guardar {
+  position: sticky; bottom: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap;
+  margin-top: .4rem; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: .8rem;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px);
+  box-shadow: 0 -.6rem 1.6rem -1.4rem rgba(2, 6, 23, .6);
+}
+.tema-resumen {
+  margin: 0; min-width: 0; font-size: 1.15rem; color: var(--text-muted); overflow-wrap: anywhere;
+  &::before { content: ''; display: inline-block; width: .6rem; height: .6rem; margin-right: .5rem; border-radius: 50%; background: var(--success); vertical-align: middle; }
+  &.pend { color: var(--warning-ink); &::before { background: var(--warning); } }
+}
+.tema-guardar-acciones { display: flex; gap: .8rem; flex-wrap: wrap; margin-left: auto; }
+
+@media (max-width: 80rem) {
+  .tema-lienzo { grid-template-columns: minmax(0, 1fr); }
+  .tema-previa-panel { position: static; order: -1; }
+  .tema-previa { max-width: 44rem; }
+}
 @media (max-width: 48rem) {
   .tema-texturas { grid-template-columns: 1fr; }
   .tema-rangos { grid-template-columns: 1fr; }
-  .tema-previa { height: 14rem; }
-  .tema-previa-tarjeta { height: 7rem; }
+  .tema-etq { font-size: 1.2rem; }
+  .tema-guardar-acciones { width: 100%; margin-left: 0; .btn { flex: 1; justify-content: center; } }
 }
 
 // Buscador de secciones de ajustes

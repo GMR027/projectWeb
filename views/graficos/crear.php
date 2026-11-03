@@ -11,6 +11,17 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if ($edicion): ?><input type="hidden" name="id" value="<?php echo (int)$grafico->id; ?>"><?php endif; ?>
         <?php if ($esSimb && !$edicion): ?><input type="hidden" name="tipo" value="simbologia"><?php endif; ?>
+        <?php if (!$edicion): ?>
+        <?php // ---- Asistente de 3 pasos: qué es · tamaño · fondo (se envía todo junto) ---- ?>
+        <div class="pasos" role="tablist" aria-label="<?php echo s(t('Pasos de creación')); ?>">
+            <?php foreach ([[1, 'fa-tag', 'Nombre', 'y categoría'], [2, 'fa-expand', 'Tamaño', 'y orientación'], [3, 'fa-fill-drip', 'Fondo', 'y crear']] as [$n, $ic, $tt, $sub]): ?>
+            <button type="button" class="paso-tab<?php echo $n === 1 ? ' activo' : ''; ?>" data-paso="<?php echo $n; ?>" role="tab" aria-selected="<?php echo $n === 1 ? 'true' : 'false'; ?>">
+                <span class="paso-num"><?php echo $n; ?></span><span><b><i class="fa-solid <?php echo $ic; ?>"></i> <?php echo s(t($tt)); ?></b><small><?php echo s($sub); ?></small></span>
+            </button>
+            <?php endforeach; ?>
+        </div>
+        <div class="paso-secc" data-paso="1">
+        <?php endif; ?>
         <?php if (!$edicion): ?><div class="form-grid">
             <div class="campo campo-full">
                 <label for="nombre">Nombre *</label>
@@ -25,7 +36,10 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
                 </select>
                 <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>">Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
             </div>
-        </div><?php endif; ?>
+        </div>
+        </div><!-- /paso 1 -->
+        <div class="paso-secc" data-paso="2" hidden>
+        <?php endif; ?>
         <?php if ($edicion): ?><div class="form-grid">
             <div class="campo campo-full">
                 <label for="categoria_id">Categoría</label>
@@ -87,6 +101,8 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
             </div>
             <?php endif; ?>
         </div>
+        <?php if (!$edicion): ?></div><!-- /paso 2 -->
+        <div class="paso-secc" data-paso="3" hidden><?php endif; ?>
 
         <h4 class="gr-sub">Fondo</h4>
         <div class="gr-fondos" role="radiogroup" aria-label="Fondo de la plantilla">
@@ -151,7 +167,17 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
 
         <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
         <p class="bj-error text-sm" id="gr-error-fondo" hidden></p>
-        <button type="submit" class="btn btn-primary"><?php echo $edicion ? 'Aplicar y volver al editor' : 'Crear y abrir en el editor'; ?></button>
+        <?php if (!$edicion): ?>
+        <div class="paso-nav">
+            <span class="paso-nav-info" id="gr-paso-info">Paso 1 de 3 · <?php echo s(t('Todo se envía al final')); ?></span>
+            <button type="button" class="btn btn-ghost" id="gr-paso-ant" hidden><i class="fa-solid fa-arrow-left"></i> <?php echo s(t('Anterior')); ?></button>
+            <button type="button" class="btn btn-primary" id="gr-paso-sig"><?php echo s(t('Siguiente')); ?> <i class="fa-solid fa-arrow-right"></i></button>
+            <button type="submit" class="btn btn-primary" id="gr-paso-fin" hidden><i class="fa-solid fa-wand-magic-sparkles"></i> <?php echo s(t('Crear y abrir en el editor')); ?></button>
+        </div>
+        </div><!-- /paso 3 -->
+        <?php else: ?>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Aplicar y volver al editor')); ?></button>
+        <?php endif; ?>
     </form>
 </div>
 
@@ -271,3 +297,45 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
     <?php if ($edicion): ?>tam.value = 'custom';<?php endif; ?>
 })();
 </script>
+
+<?php if (!$edicion): ?>
+<script>
+(function () {
+    // Asistente de creación: se ve un paso a la vez y todo se envía junto al final.
+    const form = document.getElementById('gr-form');
+    if (!form) return;
+    const pasos = [...form.querySelectorAll('.paso-secc')];
+    if (!pasos.length) return;
+    const tabs = [...document.querySelectorAll('.paso-tab')];
+    const ant = document.getElementById('gr-paso-ant'), sig = document.getElementById('gr-paso-sig'),
+        fin = document.getElementById('gr-paso-fin'), info = document.getElementById('gr-paso-info');
+    let actual = 1;
+    const ver = n => {
+        actual = n;
+        pasos.forEach(s => { s.hidden = +s.dataset.paso !== n; });
+        tabs.forEach(t => {
+            const k = +t.dataset.paso;
+            t.classList.toggle('activo', k === n);
+            t.classList.toggle('hecho', k < n);
+            t.setAttribute('aria-selected', k === n ? 'true' : 'false');
+            t.disabled = k > n;
+        });
+        ant.hidden = n === 1;
+        sig.hidden = n === pasos.length;
+        fin.hidden = n !== pasos.length;
+        if (info) info.textContent = 'Paso ' + n + ' de ' + pasos.length;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    tabs.forEach(t => t.addEventListener('click', () => { if (+t.dataset.paso <= actual) ver(+t.dataset.paso); }));
+    sig.addEventListener('click', () => {
+        if (actual === 1) {
+            const n = document.getElementById('nombre');
+            if (n && !n.value.trim()) { n.focus(); n.reportValidity(); return; }
+        }
+        ver(Math.min(pasos.length, actual + 1));
+    });
+    ant.addEventListener('click', () => ver(Math.max(1, actual - 1)));
+    ver(1);
+})();
+</script>
+<?php endif; ?>

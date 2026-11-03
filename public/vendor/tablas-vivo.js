@@ -5,6 +5,9 @@
   let version = C.version || null, ocupado = false;
   const escribiendo = () => { const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || document.querySelector('.modal-overlay.abierto, dialog[open]'); };
   async function revisar() {
+    // En la lámina unificada no se refresca mientras se acomoda o se dibuja (recargaría y perdería el trabajo).
+    const modo = document.body.dataset.modoLienzo || '';
+    if (modo && modo !== 'ver') return;
     if (ocupado || document.hidden) return; ocupado = true;
     try {
       const r = await (await fetch(C.url, { method: 'POST', body: new URLSearchParams(C.datos || {}) })).json();

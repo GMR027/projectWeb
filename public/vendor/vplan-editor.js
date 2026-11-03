@@ -7,6 +7,9 @@
   // Mismos colores de estado que el programa de obra
   const COLORES_ESTADO = { completo: '#059669', proceso: '#d97706', espera: '#dc2626' };
   const $ = s => document.querySelector(s);
+  // En la lámina unificada los modos se alternan sin recargar: los atajos del editor solo
+  // responden en «Dibujar». En su página propia no hay data-modo-lienzo y siempre responden.
+  const modoDibujo = () => !document.body.dataset.modoLienzo || document.body.dataset.modoLienzo === 'dibujar';
   const POLI = ['triangle', 'diamond', 'star', 'pentagon', 'hexagon', 'cross', 'xmark', 'check', 'blockarrow', 'chevron', 'trapezoid',
     'octagon', 'parallelogram', 'rtriangle', 'house', 'arrowleft', 'arrowup', 'arrowdown', 'arrowlr', 'homeplate', 'star4', 'star6', 'star8', 'heart', 'moon', 'semicircle', 'bolt', 'drop', 'lshape', 'tshape', 'ushape', 'callout', 'flag'];
   const RECT = ['rect', 'rrect', 'image', 'link'];
@@ -1330,6 +1333,7 @@
       $('#ve-zoom').textContent = Math.round(nuevo * 100) + '%'; refrescarVista();
     });
     document.addEventListener('keydown', e => {
+      if (!modoDibujo()) return;
       if (e.key === 'F8') { e.preventDefault(); const o = $('#t-orto'); o.checked = !o.checked; status('Modo ortogonal ' + (o.checked ? 'activado' : 'desactivado')); return; }
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
       const k = e.key.toLowerCase();
@@ -1658,12 +1662,14 @@
     const be = $('#ve-enfocar'); if (be) be.addEventListener('click', enfocarSeleccion);
     // Enfocar la selección con Mayús + 2 (en distribuciones donde 2 con Mayús es «@», también)
     document.addEventListener('keydown', e => {
+      if (!modoDibujo()) return;
       const t = (document.activeElement || {}).tagName || '';
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
       if (e.shiftKey && (e.key === '2' || e.key === '@')) { e.preventDefault(); enfocarSeleccion(); }
     });
     // Barra espaciadora: pan con el botón izquierdo, aunque haya una herramienta de dibujo activa
     document.addEventListener('keydown', e => {
+      if (!modoDibujo()) return;
       if (e.code !== 'Space' || e.repeat) return;
       const t = (document.activeElement || {}).tagName || '';
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
@@ -2540,7 +2546,12 @@
         e.preventDefault();
         h.setPointerCapture(e.pointerId);
         const r = area.getBoundingClientRect();
-        const mover = ev => poner((ev.clientX - r.left) / rem());
+        // En la lámina de vPlan el panel va a la derecha (order 1): el ancho se mide desde el borde derecho.
+        const aLaDerecha = () => {
+          const lat = document.getElementById('ve-lateral');
+          return !!lat && getComputedStyle(lat).order === '1';
+        };
+        const mover = ev => poner((aLaDerecha() ? (r.right - ev.clientX) : (ev.clientX - r.left)) / rem());
         const fin = () => { h.removeEventListener('pointermove', mover); h.removeEventListener('pointerup', fin); h.removeEventListener('pointercancel', fin); };
         h.addEventListener('pointermove', mover); h.addEventListener('pointerup', fin); h.addEventListener('pointercancel', fin);
       });

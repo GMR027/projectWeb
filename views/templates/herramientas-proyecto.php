@@ -173,6 +173,7 @@ function pestanas_herramienta(string $grupo, string $activa, $proyecto): void
         'archivo' => ['fa-folder-open', 'Archivo', [['/archivos', 'fa-folder-open', 'Archivo'], ['/visor', 'fa-eye', 'Visor']]],
         'revision' => ['fa-magnifying-glass-chart', 'Revisión de datos (IA)', [['/inconsistencias', 'fa-magnifying-glass-chart', 'Inconsistencias'], ['/analisis-materiales', 'fa-boxes-stacked', 'Análisis de materiales']]],
         'editor' => ['fa-pen-ruler', 'Editor', [['/graficos', 'fa-pen-ruler', 'Gráficos'], ['/simbolos', 'fa-shapes', 'Símbolos, estampas y cajetines']]],
+        'planos' => ['fa-sheet-plastic', 'Planos y láminas', [['/vplan', 'fa-sheet-plastic', 'Láminas (vPlan)'], ['/vplan/tablas', 'fa-table', 'Tablas adicionales'], ['/graficos', 'fa-pen-ruler', 'Gráficos'], ['/simbolos', 'fa-shapes', 'Símbolos']]],
         'materiales' => ['fa-cubes', 'Materiales', [['/materiales', 'fa-cubes', 'Catálogo'], ['/materiales/dependencias', 'fa-link', 'Dependencias de materiales']]],
     ];
     if (!isset($grupos[$grupo]) || !$proyecto) return;

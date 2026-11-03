@@ -401,6 +401,12 @@ class SheetflowFormulas
             case 'MIN': $n = $this->lista($a); return ['v' => $n ? (float)min($n) : 0.0];
             case 'MAX': $n = $this->lista($a); return ['v' => $n ? (float)max($n) : 0.0];
             case 'CONTAR': case 'COUNT': return ['v' => (float)count($this->lista($a))];
+            case 'PRODUCTO': case 'PRODUCT':
+                $n = $this->lista($a);
+                if (!$n) return ['v' => 0.0];
+                $p = 1.0;
+                foreach ($n as $x) $p *= $x;
+                return ['v' => $p];
             case 'CONTARA': case 'COUNTA':
                 $n = 0;
                 foreach ($this->celdasDe($a) as $c) {
@@ -559,6 +565,14 @@ class SheetflowFormulas
 
             // ---------- Lógica e información ----------
             case 'SI': case 'IF': return $this->n($a[0] ?? ['v' => 0]) ? ($a[1] ?? ['v' => 0.0]) : ($a[2] ?? ['v' => 0.0]);
+            case 'SI.CONJUNTO': case 'IFS': {
+                $n = count($a);
+                for ($i = 0; $i + 1 < $n; $i += 2) {
+                    if ($this->n($a[$i])) return $a[$i + 1];
+                }
+                if ($n % 2 === 1) return $a[$n - 1];
+                $this->fallo('#N/A');
+            }
             case 'Y': case 'AND':
             case 'O': case 'OR':
                 if (!$a) $this->fallo('#VALOR!');
@@ -632,6 +646,20 @@ class SheetflowFormulas
             case 'NOMPROPIO': case 'PROPER': return ['s' => mb_convert_case($this->texto($a[0] ?? ['s' => '']), MB_CASE_TITLE, 'UTF-8')];
             case 'RECORTAR': case 'ESPACIOS': case 'TRIM': return ['s' => trim(preg_replace('/\s+/u', ' ', $this->texto($a[0] ?? ['s' => ''])))];
             case 'SUSTITUIR': case 'SUBSTITUTE': return ['s' => $this->sustituir($this->texto($a[0] ?? ['s' => '']), $this->texto($a[1] ?? ['s' => '']), $this->texto($a[2] ?? ['s' => '']), isset($a[3]) ? (int)$this->n($a[3]) : 0)];
+            case 'REEMPLAZAR': case 'REPLACE': {
+                $t = $this->texto($a[0] ?? ['s' => '']);
+                $ini = (int)$this->n($a[1] ?? ['v' => 1]);
+                if ($ini < 1) $this->fallo('#VALOR!');
+                $cuenta = $this->enteroNoNeg($a[2] ?? ['v' => 0]);
+                return ['s' => mb_substr($t, 0, $ini - 1) . $this->texto($a[3] ?? ['s' => '']) . mb_substr($t, $ini - 1 + $cuenta)];
+            }
+            case 'EXACTO': case 'EXACT': return ['v' => $this->texto($a[0] ?? ['s' => '']) === $this->texto($a[1] ?? ['s' => '']) ? 1.0 : 0.0];
+            case 'LIMPIA': case 'CLEAN': return ['s' => preg_replace('/[\x00-\x1F\x7F]/u', '', $this->texto($a[0] ?? ['s' => '']))];
+            case 'MONEDA': case 'DOLLAR': {
+                $num = $this->n($a[0] ?? ['v' => 0]);
+                $dec = isset($a[1]) ? max(0, min(10, (int)$this->n($a[1]))) : 2;
+                return ['s' => ($num < 0 ? '-' : '') . '$' . number_format(abs($num), $dec, '.', ',')];
+            }
             case 'ENCONTRAR': case 'FIND': {
                 $pos = mb_strpos($this->texto($a[1] ?? ['s' => '']), $this->texto($a[0] ?? ['s' => '']), isset($a[2]) ? max(0, (int)$this->n($a[2]) - 1) : 0);
                 if ($pos === false) $this->fallo('#VALOR!');
@@ -664,6 +692,20 @@ class SheetflowFormulas
             case 'COINCIDIR': case 'MATCH': return ['v' => (float)$this->coincidir($a)];
             case 'INDICE': case 'INDEX': return $this->indice($a);
             case 'BUSCARX': case 'XLOOKUP': return $this->buscarX($a);
+            case 'BUSCAR': case 'LOOKUP': {
+                $clave = $a[0] ?? ['s' => ''];
+                $r = $this->rangoDe($a[1] ?? []);
+                $destino = isset($a[2]) ? $this->rangoDe($a[2]) : $r;
+                $idx = -1;
+                foreach ($r['vals'] as $i => $c) {
+                    if (isset($c['e'])) continue;
+                    $cmp = $this->comparar($c, $clave);
+                    if ($cmp <= 0) $idx = $i;
+                    if ($cmp > 0) break;
+                }
+                if ($idx < 0) $this->fallo('#N/A');
+                return $destino['vals'][$idx] ?? ['e' => '#N/A'];
+            }
             case 'FILA': case 'ROW':
                 if (!isset($a[0])) { $r = $this->actual['r'] ?? 0; return ['v' => (float)($r + 2)]; }
                 return ['v' => (float)(($a[0]['ref']['r'] ?? $a[0]['r0'] ?? 0) + 2)];
@@ -696,6 +738,22 @@ class SheetflowFormulas
                     return ['s' => date('Y-m-d', $ts)];
                 }
                 return ['s' => sprintf('%04d-%02d-%02d', $y, $m, $d)];
+            case 'FECHAVALOR': case 'DATEVALUE': {
+                $iso = $this->fechaISO($a[0] ?? []);
+                if (!$iso) $this->fallo('#VALOR!');
+                return ['s' => $iso];
+            }
+            case 'HORA': case 'HOUR':
+            case 'MINUTO': case 'MINUTE':
+            case 'SEGUNDO': case 'SECOND': {
+                $t = trim($this->texto($a[0] ?? ['s' => '']));
+                if (!preg_match('/(\d{1,2}):(\d{2})(?::(\d{2}))?/', $t, $m)) $this->fallo('#VALOR!');
+                $h = (int)$m[1]; $mi = (int)$m[2]; $se = isset($m[3]) ? (int)$m[3] : 0;
+                if ($h > 23 || $mi > 59 || $se > 59) $this->fallo('#NUM!');
+                if ($f === 'HORA' || $f === 'HOUR') return ['v' => (float)$h];
+                if ($f === 'MINUTO' || $f === 'MINUTE') return ['v' => (float)$mi];
+                return ['v' => (float)$se];
+            }
             case 'AÑO': case 'ANO': case 'YEAR': return ['v' => (float)$this->fechaParte($a[0] ?? [], 'Y')];
             case 'MES': case 'MONTH': return ['v' => (float)$this->fechaParte($a[0] ?? [], 'n')];
             case 'DIA': case 'DAY': return ['v' => (float)$this->fechaParte($a[0] ?? [], 'j')];

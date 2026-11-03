@@ -20,6 +20,7 @@
         S.vista.filtros = S.vista.filtros && typeof S.vista.filtros === 'object' && !Array.isArray(S.vista.filtros) ? S.vista.filtros : {};
         S.vista.cond = Array.isArray(S.vista.cond) ? S.vista.cond : [];
         S.vista.graficos = Array.isArray(S.vista.graficos) ? S.vista.graficos : [];
+        S.vista.alto = S.vista.alto && typeof S.vista.alto === 'object' && !Array.isArray(S.vista.alto) ? S.vista.alto : {};
     }
     normalizarVista();
     // IDs de subactividad por renglón (solo en tablas vinculadas; no se ven en la cuadrícula)
@@ -90,6 +91,8 @@
     function mergeEsSeleccion(m) { return !!m && sel.r0 === m.r0 && sel.c0 === m.c0 && sel.r1 === m.r1 && sel.c1 === m.c1; }
     function mergeToca(m, n) { return m.r0 <= n.r1 && m.r1 >= n.r0 && m.c0 <= n.c1 && m.c1 >= n.c0; }
     var NUM = ['numero', 'moneda', 'porcentaje'];
+    /** Alto de fila guardado (px); 0 = automático */
+    function altoDe(r) { var v = +(S.vista.alto || {})[r]; return isFinite(v) && v >= 22 && v <= 400 ? Math.round(v) : 0; }
 
     // ================= Valores y formato (igual que Classes\Sheetflow::formatear) =================
     function numero(v) {
@@ -183,6 +186,16 @@
     // ================= Fórmulas =================
     // Errores de valor (#DIV/0!, #VALOR!…) viajan como valor ({e}); los de sintaxis cortan el análisis. Debe dar lo mismo que Classes\SheetflowFormulas.
     var errores = { ref: '#REF!', div: '#DIV/0!', val: '#VALOR!', ciclo: '#CICLO!', nom: '#NOMBRE?', na: '#N/A', num: '#NUM!' };
+    var ERRORES_TXT = {
+        '#REF!': 'La fórmula apunta a una celda que ya no existe (¿borraste la fila o la columna?).',
+        '#DIV/0!': 'División entre cero: revisa el divisor o envuélvelo en SI.ERROR.',
+        '#VALOR!': 'Hay un valor con el tipo equivocado (texto donde va un número) o la fórmula está incompleta.',
+        '#CICLO!': 'La fórmula se llama a sí misma (referencia circular).',
+        '#NOMBRE?': 'El nombre de la función no existe. Revisa cómo se escribe.',
+        '#N/A': 'No se encontró el valor buscado.',
+        '#NUM!': 'El resultado no es un número válido para esa operación.',
+    };
+    function descError(e) { return ERRORES_TXT[e] || ''; }
     function valorCelda(r, c, visitando) {
         if (r < -1 || c < 0) return { e: errores.ref };
         if (r === -1) return c < S.cols.length ? { s: S.cols[c].n } : { v: 0, vacio: true };   // A1 = encabezado
@@ -746,6 +759,11 @@
                 case 'MIN': n = lista(a); return { v: n.length ? Math.min.apply(null, n) : 0 };
                 case 'MAX': n = lista(a); return { v: n.length ? Math.max.apply(null, n) : 0 };
                 case 'CONTAR': case 'COUNT': return { v: lista(a).length };
+                case 'PRODUCTO': case 'PRODUCT': {
+                    n = lista(a);
+                    if (!n.length) return { v: 0 };
+                    return { v: n.reduce(function (p, q) { return p * q; }, 1) };
+                }
                 case 'CONTARA': case 'COUNTA':
                     n = 0;
                     celdasDe(a).forEach(function (c) { if (c.e || c.vacio) return; if (c.s !== undefined && c.s === '') return; n++; });
@@ -861,6 +879,11 @@
 
                 // ---------- Lógica e información ----------
                 case 'SI': case 'IF': return num1(a[0] || { v: 0 }) ? (a[1] || { v: 0 }) : (a[2] || { v: 0 });
+                case 'SI.CONJUNTO': case 'IFS': {
+                    for (i = 0; i + 1 < a.length; i += 2) if (num1(a[i])) return a[i + 1];
+                    if (a.length % 2 === 1) return a[a.length - 1];
+                    fallo(errores.na);
+                }
                 case 'Y': case 'AND': case 'O': case 'OR': {
                     if (!a.length) fallo(errores.val);
                     var y = f === 'Y' || f === 'AND';
@@ -919,6 +942,18 @@
                 case 'NOMPROPIO': case 'PROPER': return { s: txt(a[0] || { s: '' }).toLowerCase().replace(/(^|[\s\-])([a-záéíóúñü])/g, function (m, a1, a2) { return a1 + a2.toUpperCase(); }) };
                 case 'RECORTAR': case 'ESPACIOS': case 'TRIM': return { s: txt(a[0] || { s: '' }).replace(/\s+/g, ' ').trim() };
                 case 'SUSTITUIR': case 'SUBSTITUTE': return { s: sustituir(txt(a[0] || { s: '' }), txt(a[1] || { s: '' }), txt(a[2] || { s: '' }), a[3] !== undefined ? Math.trunc(num1(a[3])) : 0) };
+                case 'REEMPLAZAR': case 'REPLACE': {
+                    var tr = txt(a[0] || { s: '' }), ri = Math.trunc(num1(a[1] || { v: 1 }));
+                    if (ri < 1) fallo(errores.val);
+                    var rc = enteroNoNeg(a[2] || { v: 0 }), rn = txt(a[3] || { s: '' });
+                    return { s: tr.slice(0, ri - 1) + rn + tr.slice(ri - 1 + rc) };
+                }
+                case 'EXACTO': case 'EXACT': return { v: txt(a[0] || { s: '' }) === txt(a[1] || { s: '' }) ? 1 : 0 };
+                case 'LIMPIA': case 'CLEAN': return { s: txt(a[0] || { s: '' }).replace(/[\x00-\x1F\x7F]/g, '') };
+                case 'MONEDA': case 'DOLLAR': {
+                    var mn = num1(a[0] || { v: 0 }), md = a[1] !== undefined ? Math.max(0, Math.min(10, Math.trunc(num1(a[1])))) : 2;
+                    return { s: (mn < 0 ? '-' : '') + '$' + Math.abs(mn).toLocaleString('en-US', { minimumFractionDigits: md, maximumFractionDigits: md }) };
+                }
                 case 'ENCONTRAR': case 'FIND': {
                     var pos = txt(a[1] || { s: '' }).indexOf(txt(a[0] || { s: '' }), a[2] !== undefined ? Math.max(0, Math.trunc(num1(a[2])) - 1) : 0);
                     if (pos < 0) fallo(errores.val);
@@ -943,6 +978,19 @@
                 case 'COINCIDIR': case 'MATCH': return { v: coincidir(a) };
                 case 'INDICE': case 'INDEX': return indice(a);
                 case 'BUSCARX': case 'XLOOKUP': return buscarX(a);
+                case 'BUSCAR': case 'LOOKUP': {
+                    var lr = rangoDe(a[1] || {}), lk = a[0] || { s: '' };
+                    var ld = a[2] !== undefined ? rangoDe(a[2]) : lr, li = -1;
+                    for (var lz = 0; lz < lr.vals.length; lz++) {
+                        var lc = lr.vals[lz];
+                        if (!lc || lc.e) continue;
+                        var lcmp = comparar(lc, lk);
+                        if (lcmp <= 0) li = lz;
+                        if (lcmp > 0) break;
+                    }
+                    if (li < 0) fallo(errores.na);
+                    return ld.vals[li] || { e: errores.na };
+                }
                 case 'FILA': case 'ROW':
                     if (a[0] === undefined) return { v: ((actual ? actual.r : 0) + 2) };
                     return { v: ((a[0].ref ? a[0].ref.r : a[0].r0 !== undefined ? a[0].r0 : 0) + 2) };
@@ -979,6 +1027,22 @@
                         return { s: isoDe(ft.getUTCFullYear(), ft.getUTCMonth() + 1, ft.getUTCDate()) };
                     }
                     return { s: isoDe(fy, fm, fd) };
+                }
+                case 'FECHAVALOR': case 'DATEVALUE': {
+                    var dv = fechaISO(a[0] || {});
+                    if (!dv) fallo(errores.val);
+                    return { s: dv };
+                }
+                case 'HORA': case 'HOUR':
+                case 'MINUTO': case 'MINUTE':
+                case 'SEGUNDO': case 'SECOND': {
+                    var ht = txt(a[0] || { s: '' }).trim(), hm = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(ht);
+                    if (!hm) fallo(errores.val);
+                    var hh = +hm[1], hmi = +hm[2], hse = hm[3] ? +hm[3] : 0;
+                    if (hh > 23 || hmi > 59 || hse > 59) fallo(errores.num);
+                    if (f === 'HORA' || f === 'HOUR') return { v: hh };
+                    if (f === 'MINUTO' || f === 'MINUTE') return { v: hmi };
+                    return { v: hse };
                 }
                 case 'AÑO': case 'ANO': case 'YEAR': return { v: fechaParte(a[0] || {}, 'Y') };
                 case 'MES': case 'MONTH': return { v: fechaParte(a[0] || {}, 'n') };
@@ -1168,6 +1232,8 @@
         if (f.tc) c += 'color:' + f.tc + ';';
         else if (f.bg) c += 'color:' + contraste(f.bg) + ';';   // con relleno y sin color de letra, la letra se ajusta para que se lea
         if (f.bg) c += 'background-color:' + f.bg + ';';
+        if (f.wr) c += 'white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;';
+        if (f.va) c += 'vertical-align:' + ({ arriba: 'top', centro: 'middle', abajo: 'bottom' }[f.va] || 'middle') + ';';
         if (f.al) c += 'text-align:' + ALIN[f.al] + ';';
         Object.keys(LADOS).forEach(function (k) {
             if (!f[k]) return;
@@ -1206,7 +1272,8 @@
         S.rows.forEach(function (fila, r) {
             var cl = (e.zebra && r % 2 ? 'sf-alt' : '');
             if (conFiltro && !filaVisible(r)) cl += (cl ? ' ' : '') + 'sf-oculta';
-            h += '<tr data-r="' + r + '"' + (cl ? ' class="' + cl + '"' : '') + '><th class="sf-num" data-fila="' + r + '">' + (r + 2) + '</th>';
+            var alto = altoDe(r);
+            h += '<tr data-r="' + r + '"' + (cl ? ' class="' + cl + '"' : '') + (alto ? ' style="height:' + alto + 'px"' : '') + '><th class="sf-num" data-fila="' + r + '">' + (r + 2) + '<i class="sf-alto" data-alto="' + r + '" title="Arrastra para cambiar el alto de la fila · doble clic: automático"></i></th>';
             S.cols.forEach(function (col, c) {
                 if (cubierta[r + ',' + c]) return;
                 var mg = ancla[r + ',' + c], span = '';
@@ -1216,6 +1283,7 @@
                     if (rs > 1) span += ' rowspan="' + rs + '"';
                 }
                 var v = mostrado(r, c), err = /^#[A-Z/0?!]+$/.test(v), f = sty[r][c], cf = cnd[r + ',' + c];
+                var titulo = err ? ' title="' + esc(descError(v)) + '"' : '';
                 if (cf) {
                     f = Object.assign({}, f || {});
                     if (cf.bg) f.bg = cf.bg;
@@ -1223,7 +1291,7 @@
                     if (cf.b) f.b = 1;
                 }
                 var extra = cf && cf.grad ? 'background-image:' + cf.grad + ';' : '';
-                h += '<td data-r="' + r + '" data-c="' + c + '"' + span + ' style="text-align:' + ALIN[col.a] + ';' + cssFmt(f) + extra + '"' + (esFormula(fila[c]) ? ' class="sf-f' + (err ? ' sf-err' : '') + '"' : '') + '>' + imgHtml(sty[r][c]) + esc(v) + '</td>';
+                h += '<td data-r="' + r + '" data-c="' + c + '"' + span + ' style="text-align:' + ALIN[col.a] + ';' + cssFmt(f) + extra + '"' + titulo + (esFormula(fila[c]) ? ' class="sf-f' + (err ? ' sf-err' : '') + '"' : '') + '>' + imgHtml(sty[r][c]) + esc(v) + '</td>';
             });
             h += '</tr>';
         });
@@ -1325,6 +1393,7 @@
             tr.querySelectorAll('td').forEach(function (td) {
                 td.classList.add(+td.dataset.c < fc ? 'sf-cong-rc' : 'sf-cong-r');
                 td.style.top = tops[r] + 'px';
+                if (r === fr - 1) td.classList.add('sf-cong-fin-r');
             });
         }
         for (c = 0; c < fc; c++) {
@@ -1335,6 +1404,7 @@
             grid.querySelectorAll('td[data-c="' + c + '"]').forEach(function (td) {
                 td.classList.add(td.classList.contains('sf-cong-r') ? 'sf-cong-rc' : 'sf-cong-c');
                 td.style.left = lefts[c] + 'px';
+                if (c === fc - 1) td.classList.add('sf-cong-fin-c');
             });
         }
     }
@@ -1460,13 +1530,27 @@
             if (el) el.classList.add('sf-relleno');
         }
     }
+    /** Doble clic en el asa: rellena hacia abajo hasta donde llegan los datos contiguos (como Excel) */
+    function rellenarHastaAbajo() {
+        var base = rangoNorm();
+        if (base.r1 < 0) return;
+        var col = base.c0 > 0 ? base.c0 - 1 : base.c0, last = base.r1;
+        for (var r = base.r1 + 1; r < S.rows.length; r++) {
+            var v = S.rows[r][col];
+            if (v === '' || v == null) break;
+            last = r;
+        }
+        if (last <= base.r1) { estado('No hay datos contiguos hacia abajo para rellenar', true); return; }
+        aplicarRelleno(base, { r0: base.r0, c0: base.c0, r1: last, c1: base.c1 });
+    }
     (function () {
         var asa = $('sf-asa');
         if (asa) asa.addEventListener('mousedown', function (e) {
             e.preventDefault(); e.stopPropagation();
             rellenando = { base: rangoNorm(), destino: null };
-            estado('Arrastra para rellenar y suelta');
+            estado('Arrastra para rellenar y suelta · doble clic: hasta el final de los datos');
         });
+        if (asa) asa.addEventListener('dblclick', function (e) { e.preventDefault(); e.stopPropagation(); rellenarHastaAbajo(); });
         var scroller = area.querySelector('.sf-scroll');
         if (scroller) scroller.addEventListener('scroll', function () { colocarAsa(); });
     })();
@@ -1590,17 +1674,47 @@
         for (var rr = n.r0; rr <= n.r1; rr++) { var f = grid.querySelector('th.sf-num[data-fila="' + rr + '"]'); if (f) f.classList.add('sf-num-sel'); }
         var refTxt = nombreCelda(sel.r0, sel.c0) + (n.r0 !== n.r1 || n.c0 !== n.c1 ? ':' + nombreCelda(n.r1, n.c1) : '');
         if (selExtra.length) refTxt += ' +' + selExtra.length;
-        $('sf-ref').textContent = refTxt;
+        var refInp = $('sf-ref');
+        if (refInp && document.activeElement !== refInp) refInp.value = refTxt;
+        // Encabezados activos de la celda (como Excel): letra de la columna y número del renglón
+        grid.querySelectorAll('.sf-cab-activa').forEach(function (x) { x.classList.remove('sf-cab-activa'); });
+        if (!selExtra.length) {
+            var lc = grid.querySelector('th.sf-letra[data-letra="' + sel.c0 + '"]');
+            var ln = grid.querySelector('th.sf-num[data-fila="' + sel.r0 + '"]');
+            if (lc) lc.classList.add('sf-cab-activa');
+            if (ln) ln.classList.add('sf-cab-activa');
+        }
         var enFormula = entradaFormula();
         if (enFormula) fx.value = enFormula.value;   // no pisar la fórmula mientras se eligen celdas
         else fx.value = sel.r0 < 0 ? S.cols[sel.c0].n : S.rows[sel.r0][sel.c0];
+        var resSel = $('sf-fx-res');
+        if (resSel && !enFormula) {
+            if (sel.r0 >= 0 && esFormula(S.rows[sel.r0][sel.c0])) {
+                var vSel = S.calc[sel.r0 + ',' + sel.c0] || '';
+                if (/^#[A-Z/0?!]+$/.test(vSel)) { resSel.textContent = vSel + ' · ' + descError(vSel); resSel.className = 'sf-fx-res sf-fx-res-err'; }
+                else { resSel.textContent = '= ' + (formatear(vSel, S.cols[sel.c0].t) || '0'); resSel.className = 'sf-fx-res'; }
+            } else { resSel.textContent = ''; resSel.className = 'sf-fx-res'; }
+        }
         sincronizarBarra();
         estadistica();
     }
     /** Resumen de las celdas elegidas (como la barra de estado de Excel) */
     function estadistica() {
+        var cont = $('sf-estadistica');
+        if (!cont) return;
         var celdas = celdasElegidas(), vals = [], llenas = 0;
-        if (celdas.length < 2) { $('sf-estadistica').textContent = ''; return; }
+        if (celdas.length === 1) {
+            var r0 = celdas[0][0], c0 = celdas[0][1];
+            if (r0 >= 0 && S.rows[r0] && esFormula(S.rows[r0][c0])) {
+                var v0 = S.calc[r0 + ',' + c0] || '';
+                if (/^#[A-Z/0?!]+$/.test(v0)) {
+                    cont.innerHTML = '<span class="sf-stat sf-stat-err"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> <strong>' + esc(v0) + '</strong> ' + esc(descError(v0)) + '</span>';
+                    return;
+                }
+            }
+            cont.innerHTML = '';
+            return;
+        }
         celdas.forEach(function (p) {
             var r = p[0], c = p[1];
             if (r < 0 || r >= S.rows.length || c < 0 || c >= S.cols.length) return;
@@ -1608,15 +1722,16 @@
             if (v !== '' && v != null) llenas++;
             var x = numero(v); if (x !== null) vals.push(x);
         });
-        var s;
         if (vals.length) {
             var suma = vals.reduce(function (p, q) { return p + q; }, 0);
-            s = 'Suma: ' + miles(suma, 4) + ' · Promedio: ' + miles(suma / vals.length, 4) + ' · Cuenta: ' + llenas +
-                ' · Mín: ' + miles(Math.min.apply(null, vals), 4) + ' · Máx: ' + miles(Math.max.apply(null, vals), 4);
+            cont.innerHTML = '<span class="sf-stat"><b>Σ</b> ' + miles(suma, 4) + '</span>' +
+                '<span class="sf-stat"><b>Prom</b> ' + miles(suma / vals.length, 4) + '</span>' +
+                '<span class="sf-stat"><b>Cuenta</b> ' + llenas + '</span>' +
+                '<span class="sf-stat"><b>Mín</b> ' + miles(Math.min.apply(null, vals), 4) + '</span>' +
+                '<span class="sf-stat"><b>Máx</b> ' + miles(Math.max.apply(null, vals), 4) + '</span>';
         } else {
-            s = 'Cuenta: ' + llenas + (llenas ? ' · sin números que sumar' : '');
+            cont.innerHTML = '<span class="sf-stat"><b>Cuenta</b> ' + llenas + '</span>' + (llenas ? '<span class="sf-stat">sin números que sumar</span>' : '');
         }
-        $('sf-estadistica').textContent = s;
     }
     function sincronizarBarra() {
         var cc = Math.min(sel.c0, S.cols.length - 1), col = S.cols[cc] || S.cols[0], f = getSt(sel.r0, cc) || {};
@@ -1624,6 +1739,9 @@
         $('sf-opciones').hidden = col.t !== 'lista'; $('sf-opciones').value = (col.op || []).join(', ');
         $('sf-total').value = col.tot || '';
         var nfs = $('sf-nf'); if (nfs) nfs.value = f.nf || '';
+        var nfc = $('sf-nf-custom'); if (nfc && document.activeElement !== nfc) nfc.value = f.nf || '';
+        var va = $('sf-va'); if (va) va.value = f.va || '';
+        var wr = $('sf-wrap'); if (wr) wr.classList.toggle('activo', !!f.wr);
         $('sf-c-enc').value = S.estilo.enc; $('sf-c-txt').value = S.estilo.encTxt;
         $('sf-zebra').checked = !!S.estilo.zebra; $('sf-bordes').checked = !!S.estilo.bordes;
         document.querySelectorAll('[data-alin]').forEach(function (b) { b.classList.toggle('activo', b.dataset.alin === (f.al || col.a)); });
@@ -1799,8 +1917,8 @@
         terminarEdicion(true);
         var mg = mergeDe(r, c); if (mg) { r = mg.r0; c = mg.c0; }
         var el = celdaEl(r, c); if (!el) return;
-        var inp = document.createElement('input');
-        inp.className = 'sf-input'; inp.type = 'text'; inp.spellcheck = false; inp.autocomplete = 'off';
+        var inp = document.createElement('textarea');
+        inp.className = 'sf-input'; inp.rows = 1; inp.spellcheck = false; inp.autocomplete = 'off';
         var crudo = r < 0 ? S.cols[c].n : S.rows[r][c];
         inp.value = inicial != null ? inicial : (r >= 0 && S.cols[c].t === 'semaforo' && SEMAFORO[crudo] ? SEMAFORO[crudo] : (r >= 0 && S.cols[c].t === 'casilla' && crudo === '1' ? 'si' : crudo));
         var tc = r >= 0 ? S.cols[c].t : '';
@@ -1829,15 +1947,31 @@
             });
             setTimeout(function () {
                 inp.focus();
+                ajustarAltoEditor(inp);
                 if (inicial == null) inp.select(); else inp.setSelectionRange(inp.value.length, inp.value.length);
             }, 80);
         } else {
             inp.focus();
+            ajustarAltoEditor(inp);
             if (inicial == null) inp.select(); else inp.setSelectionRange(inp.value.length, inp.value.length);
             if (TACTIL) setTimeout(function () { if (editor && editor.input === inp && inp.scrollIntoView) inp.scrollIntoView({ block: 'center', inline: 'nearest' }); }, 250);
         }
-        inp.addEventListener('input', function () { fx.value = inp.value; });
+        inp.addEventListener('input', function () {
+            fx.value = inp.value;
+            ajustarAltoEditor(inp);
+            programarPrevisualizacion();
+            setTimeout(function () { actualizarSugerencias(inp); }, 0);
+        });
         inp.addEventListener('keydown', function (e) {
+            if (sugerenciaTecla(e, inp)) return;
+            if (e.key === 'F4') { e.preventDefault(); e.stopPropagation(); alternarAbsoluta(inp); fx.value = inp.value; programarPrevisualizacion(); return; }
+            if (e.key === 'Enter' && e.altKey) {
+                e.preventDefault(); e.stopPropagation();
+                var a = inp.selectionStart == null ? inp.value.length : inp.selectionStart, b = inp.selectionEnd == null ? a : inp.selectionEnd;
+                inp.value = inp.value.slice(0, a) + '\n' + inp.value.slice(b);
+                try { inp.setSelectionRange(a + 1, a + 1); } catch (err) { /* idem */ }
+                fx.value = inp.value; ajustarAltoEditor(inp); programarPrevisualizacion(); return;
+            }
             if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true, enHoja); mover(e.shiftKey ? -1 : 1, 0, false); if (enHoja) empezarEdicion(sel.r0, sel.c0); else area.focus(); }
             else if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); terminarEdicion(true, enHoja); mover(0, e.shiftKey ? -1 : 1, false); if (enHoja) empezarEdicion(sel.r0, sel.c0); else area.focus(); }
             else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); terminarEdicion(false); area.focus(); }
@@ -1852,9 +1986,45 @@
         sel.r0 = sel.r1 = e.r; sel.c0 = sel.c1 = e.c;   // al apuntar celdas, la selección vuelve a la celda que se edita
         var nuevo = e.input.value;
         if (aplicar && nuevo.trim() === '=') nuevo = '';   // fórmula a medias: no dejar un #VALOR! en la celda
-        if (aplicar && nuevo !== e.previo) { antes(); fijar(e.r, e.c, nuevo); dibujar(); cambio(); }
-        else dibujar();
+        if (aplicar && nuevo !== e.previo) {
+            antes(); fijar(e.r, e.c, nuevo);
+            if (/\n/.test(nuevo) && e.r >= 0) {   // Alt+Enter: la celda se ajusta sola
+                var fa = Object.assign({}, getSt(e.r, e.c) || {}); fa.wr = 1; setSt(e.r, e.c, fa);
+                delete S.vista.alto[e.r];
+            }
+            dibujar(); cambio();
+        } else dibujar();
+        ocultarSugerencias();
+        var resFx = $('sf-fx-res'); if (resFx) { resFx.textContent = ''; resFx.className = 'sf-fx-res'; }
         if (!mantener && hojaCelda && hojaCelda.estaAbierta()) hojaCelda.cerrar();
+    }
+    /** ¿La celda está vacía? (para Ctrl+flechas y End) */
+    function celdaVacia(r, c) {
+        if (r < 0) return !(S.cols[c] && String(S.cols[c].n).trim() !== '');
+        return !S.rows[r] || String(S.rows[r][c] == null ? '' : S.rows[r][c]).trim() === '';
+    }
+    /** Ctrl+flechas: salta al borde del bloque de datos (como Excel) */
+    function salto(dr, dc, extender) {
+        var r = extender ? sel.r1 : sel.r0, c = extender ? sel.c1 : sel.c0;
+        if (r < -1) r = 0;
+        var avanzar = !celdaVacia(r, c), guarda = 0;
+        while (guarda++ < 5000) {
+            var nr = r + dr, nc = c + dc;
+            if (nr < -1 || nr >= S.rows.length || nc < 0 || nc >= S.cols.length) break;
+            var vacia = celdaVacia(nr, nc);
+            if (avanzar && vacia) break;
+            if (!avanzar && !vacia) { r = nr; c = nc; break; }
+            r = nr; c = nc;
+        }
+        var mg = mergeDe(r, c);
+        if (!extender) {
+            if (mg) { sel.r0 = mg.r0; sel.c0 = mg.c0; sel.r1 = mg.r1; sel.c1 = mg.c1; }
+            else { sel.r0 = sel.r1 = r; sel.c0 = sel.c1 = c; }
+            limpiarExtras();
+        } else {
+            sel.r1 = mg ? mg.r1 : r; sel.c1 = mg ? mg.c1 : c;
+        }
+        pintarSeleccion(); visible(r, c);
     }
     function mover(dr, dc, extender) {
         var r = (extender ? sel.r1 : sel.r0) + dr, c = (extender ? sel.c1 : sel.c0) + dc;
@@ -1880,33 +2050,290 @@
         pintarSeleccion(); visible(r, c);
     }
     fx.addEventListener('focus', function () { fxOrigen = { r: sel.r0, c: sel.c0 }; });
+    fx.addEventListener('input', function () { programarPrevisualizacion(); setTimeout(function () { actualizarSugerencias(fx); }, 0); });
+    fx.addEventListener('blur', function () {
+        setTimeout(function () {
+            if (document.activeElement !== fx) {
+                ocultarSugerencias();
+                var res = $('sf-fx-res');
+                if (res && !editor) { res.textContent = ''; res.className = 'sf-fx-res'; }
+            }
+        }, 160);
+    });
     fx.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
+        if (sugerenciaTecla(e, fx)) return;
+        if (e.key === 'F4') { e.preventDefault(); alternarAbsoluta(fx); programarPrevisualizacion(); return; }
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             var destino = fxOrigen || { r: sel.r0, c: sel.c0 };
             var v = fx.value.trim() === '=' ? '' : fx.value;   // fórmula a medias: no dejar un #VALOR! en la celda
             sel.r0 = sel.r1 = destino.r; sel.c0 = sel.c1 = destino.c;
             antes(); fijar(destino.r, destino.c, v); fx.value = v; dibujar(); cambio(); fxOrigen = null; area.focus();
+            ocultarSugerencias(); previsualizar();
         } else if (e.key === 'Escape') {
-            var destino = fxOrigen || { r: sel.r0, c: sel.c0 };
-            sel.r0 = sel.r1 = destino.r; sel.c0 = sel.c1 = destino.c; fxOrigen = null;
-            area.focus(); pintarSeleccion();
+            var destino2 = fxOrigen || { r: sel.r0, c: sel.c0 };
+            sel.r0 = sel.r1 = destino2.r; sel.c0 = sel.c1 = destino2.c; fxOrigen = null;
+            area.focus(); pintarSeleccion(); ocultarSugerencias();
         }
     });
-    // Insertar una función de la lista en la celda elegida (queda en la barra de fórmulas para ajustar los rangos)
+    // Ampliar la barra de fórmulas para fórmulas largas (como el botón de Excel)
+    var fxAbrir = $('sf-fx-abrir');
+    if (fxAbrir) fxAbrir.addEventListener('click', function () {
+        var f = $('sf-formula'), abierta = f.classList.toggle('sf-formula-abierta');
+        fx.rows = abierta ? 6 : 1;
+        this.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+        this.innerHTML = '<i class="fa-solid fa-' + (abierta ? 'compress' : 'expand') + '"></i>';
+        if (abierta) fx.focus();
+    });
+    // Elegir una sugerencia con el ratón (sin perder el foco del campo)
+    (function () {
+        var p = $('sf-sug'); if (!p) return;
+        p.addEventListener('mousedown', function (e) {
+            var b = e.target.closest('[data-sug]'); if (!b) return;
+            e.preventDefault();
+            var inp = sug.inp; if (!inp) return;
+            sug.idx = +b.dataset.sug;
+            aceptarSugerencia(inp);
+        });
+    })();
+    // ================= Plantillas de función adaptadas a la celda elegida =================
+    // Las opciones de «Insertar función» se escribieron con referencias a A2 (A2:A10). Al insertarlas
+    // en otra columna o renglón hay que trasladarlas: si no, SUMA en la columna B sumaría la A.
+    var REF_PLANTILLA = /(\$?)([A-Za-z]{1,2})(\$?)(\d+)(?::(\$?)([A-Za-z]{1,2})(\$?)(\d+))?(?![A-Za-z(])/g;
+    /** Referencias A1 de una plantilla, en orden y sin tocar los textos entre comillas */
+    function refsPlantilla(t) {
+        var out = [];
+        fueraDeTexto(t, function (trozo) {
+            var re = new RegExp(REF_PLANTILLA.source, 'g'), m;
+            while ((m = re.exec(trozo)) !== null) {
+                out.push({
+                    col: indiceLetra(m[2].toUpperCase()), fila: parseInt(m[4], 10) - 2,
+                    col2: m[6] ? indiceLetra(m[6].toUpperCase()) : null,
+                    fila2: m[8] ? parseInt(m[8], 10) - 2 : null,
+                    absCol: !!m[1], absFila: !!m[3], absCol2: !!m[5], absFila2: !!m[7],
+                });
+            }
+            return trozo;
+        });
+        return out;
+    }
+    /** Bloque de datos contiguo de una columna alrededor de (r,c), sin incluir la propia celda si hay más datos */
+    function bloqueDatos(c, r) {
+        var u = -1, i;
+        for (i = r - 1; i >= 0; i--) { if (celdaVacia(i, c)) break; u = i; }
+        if (u >= 0) return { r0: u, r1: r - 1 };
+        var d = -1;
+        for (i = r + 1; i < S.rows.length; i++) { if (celdaVacia(i, c)) break; d = i; }
+        if (d >= 0) return { r0: r + 1, r1: d };
+        var prim = -1, ult = -1;
+        for (i = 0; i < S.rows.length; i++) if (!celdaVacia(i, c)) { if (prim < 0) prim = i; ult = i; }
+        if (prim < 0) return null;
+        if (prim === r && ult === r) return null;          // solo está la propia celda: no hay nada que sumar
+        if (prim === r) return { r0: r + 1, r1: ult };
+        if (ult === r) return { r0: prim, r1: r - 1 };
+        return (r - prim >= ult - r) ? { r0: prim, r1: r - 1 } : { r0: r + 1, r1: ult };
+    }
+    /** Primera y última fila con datos de una columna (para tablas y rangos que deben abarcar todo) */
+    function extensionColumna(c) {
+        var prim = -1, ult = -1;
+        for (var r = 0; r < S.rows.length; r++) if (!celdaVacia(r, c)) { if (prim < 0) prim = r; ult = r; }
+        return prim < 0 ? { r0: 0, r1: Math.max(0, S.rows.length - 1) } : { r0: prim, r1: ult };
+    }
+    function limitarFila(r) { return Math.max(0, Math.min(S.rows.length - 1, r)); }
+    function limitarCol(c) { return Math.max(0, Math.min(S.cols.length - 1, c)); }
+    /** Traslada las referencias de una plantilla a la columna/renglón elegidos (y al rango, si hay varios) */
+    function formulaAdaptada(tpl, usarSeleccion) {
+        var refs = refsPlantilla(tpl);
+        if (!refs.length) return tpl;
+        var n = rangoNorm();
+        if (n.r0 < 0) return tpl;
+        var p = refs[0], pRango = p.col2 !== null, pMultiFila = pRango && p.fila2 > p.fila;
+        var pSingle = !pRango, pFilaUnica = pRango && !pMultiFila;
+        var multi = !!usarSeleccion && pRango && (n.r1 > n.r0 || n.c1 > n.c0);
+        var pFilas = { r0: p.fila, r1: pMultiFila ? p.fila2 : p.fila };
+        // Las fórmulas de una fila (ABS, SI, DIAS, BUSCARV…) se alinean a la izquierda de la celda
+        // y no pueden apuntar a sí mismas: van al renglón anterior (o el siguiente si están en el primero).
+        var filaPlantilla = pSingle || pFilaUnica;
+        var pMaxCol = p.col;
+        if (filaPlantilla) refs.forEach(function (r) {
+            if (r.col > pMaxCol) pMaxCol = r.col;
+            if (r.col2 !== null && r.col2 > pMaxCol) pMaxCol = r.col2;
+        });
+        var dc = multi ? (n.c0 - p.col) : (filaPlantilla ? (n.c0 - 1 - pMaxCol) : (n.c0 - p.col));
+        var cBase = p.col + dc;
+        var filaBase = filaPlantilla ? (n.r0 > 0 ? n.r0 - 1 : Math.min(S.rows.length - 1, n.r0 + 1)) : n.r0;
+        var bloque;
+        if (multi) bloque = { r0: n.r0, r1: n.r1 };
+        else if (pMultiFila) {
+            bloque = bloqueDatos(n.c0, n.r0);
+            if (!bloque) {   // columna vacía: usar el renglón siguiente para no referirse a la propia celda
+                var rr = Math.min(S.rows.length - 1, n.r0 + 1);
+                bloque = { r0: rr, r1: rr };
+            }
+        } else bloque = { r0: filaBase, r1: filaBase };
+        var idx = 0;
+        return fueraDeTexto(tpl, function (trozo) {
+            return trozo.replace(REF_PLANTILLA, function (m, d1, l1, d2, n1, d3, l2, d4, n2) {
+                var ref = refs[idx], principal = idx === 0;
+                idx++;
+                var c0, c1 = null, r0, r1 = null;
+                if (principal) {
+                    c0 = multi ? n.c0 : cBase;
+                    c1 = multi ? n.c1 : (ref.col2 !== null ? cBase + (ref.col2 - ref.col) : null);
+                    r0 = bloque.r0;
+                    r1 = ref.fila2 !== null ? bloque.r1 : null;
+                } else {
+                    c0 = ref.col + dc;
+                    c1 = ref.col2 !== null ? ref.col2 + dc : null;
+                    if (pMultiFila) {
+                        if (ref.fila2 !== null && ref.fila2 > ref.fila) {
+                            r0 = ref.fila === pFilas.r0 ? bloque.r0 : bloque.r0 + (ref.fila - pFilas.r0);
+                            r1 = ref.fila2 === pFilas.r1 ? bloque.r1 : bloque.r0 + (ref.fila2 - pFilas.r0);
+                        } else {
+                            r0 = bloque.r0 + (ref.fila - pFilas.r0);
+                            r1 = ref.fila2 !== null ? r0 + (ref.fila2 - ref.fila) : null;
+                        }
+                    } else if (ref.fila2 !== null && ref.fila2 > ref.fila) {
+                        // Tablas y rangos completos: los datos de la columna a la izquierda, sin la celda de la fórmula
+                        var ext = n.c0 > 0 ? extensionColumna(n.c0 - 1) : (bloqueDatos(0, n.r0) || { r0: filaBase, r1: filaBase });
+                        r0 = ext.r0; r1 = ext.r1;
+                    } else {
+                        r0 = filaBase + (ref.fila - p.fila);
+                        r1 = ref.fila2 !== null ? r0 + (ref.fila2 - ref.fila) : null;
+                    }
+                }
+                c0 = ref.absCol ? ref.col : limitarCol(c0);
+                if (c1 !== null) c1 = ref.absCol2 ? ref.col2 : limitarCol(c1);
+                r0 = ref.absFila ? ref.fila : limitarFila(r0);
+                if (r1 !== null) r1 = ref.absFila2 ? ref.fila2 : limitarFila(r1);
+                var out = d1 + letra(c0) + d2 + (r0 + 2);
+                if (l2) out += ':' + d3 + letra(c1) + d4 + (r1 + 2);
+                return out;
+            });
+        });
+    }
+    /** Celda donde va la fórmula: si el rango elegido se resume a sí mismo, justo debajo (como el total de Excel) */
+    function destinoPlantilla(tpl) {
+        var n = rangoNorm(), refs = refsPlantilla(tpl);
+        if (n.r0 < 0) return { r: n.r0, c: n.c0, fuera: false, agregar: false };
+        var multi = n.r1 > n.r0 || n.c1 > n.c0;
+        if (multi && refs.length && refs[0].col2 !== null) {
+            var r = n.r1 + 1, c = n.c0;
+            if (r < S.rows.length && celdaVacia(r, c)) return { r: r, c: c, fuera: true, agregar: false };
+            // El rango llega al final de la tabla: se agrega el renglón del total (sin mover datos existentes)
+            if (r === S.rows.length && S.rows.length < MAX_F) return { r: r, c: c, fuera: true, agregar: true };
+        }
+        return { r: n.r0, c: n.c0, fuera: false, agregar: false };
+    }
+    // Insertar una función de la lista en la celda elegida (las referencias se ajustan a su columna y renglón)
     $('sf-fn').addEventListener('change', function () {
-        var f = this.value; this.value = ''; if (!f || sel.r0 < 0) return;
-        antes(); S.rows[sel.r0][sel.c0] = f; dibujar(); cambio(); fx.focus();
+        var tpl = this.value; this.value = ''; if (!tpl || sel.r0 < 0) return;
+        var dest = destinoPlantilla(tpl), f = formulaAdaptada(tpl, dest.fuera);
+        antes();
+        if (dest.agregar) insertar('r', dest.r, 1);
+        fijar(dest.r, dest.c, f);
+        sel.r0 = sel.r1 = dest.r; sel.c0 = sel.c1 = dest.c;
+        dibujar(); cambio(); fx.focus();
         var m = /\$?[A-Za-z]{1,2}\$?\d+(?::\$?[A-Za-z]{1,2}\$?\d+)?/.exec(f);   // deja elegida la primera referencia
         if (m) fx.setSelectionRange(m.index, m.index + m[0].length); else fx.select();
+        estado('Fórmula insertada en ' + nombreCelda(dest.r, dest.c) + ': ' + f);
     });
+
+    // ---- Panel «Funciones»: buscar por nombre o descripción e insertar en el cursor ----
+    function insertarTexto(inp, txt) {
+        var a = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+        var b = inp.selectionEnd == null ? a : inp.selectionEnd;
+        inp.value = inp.value.slice(0, a) + txt + inp.value.slice(b);
+        var pos = a + txt.length;
+        try { inp.setSelectionRange(pos, pos); } catch (e) { /* idem */ }
+        if (inp !== fx) fx.value = inp.value;
+        programarPrevisualizacion();
+    }
+    function insertarFuncion(nombre) {
+        var inp = entradaFormula();
+        if (!inp && document.activeElement === fx) inp = fx;
+        if (!inp && editor) inp = editor.input;
+        if (inp) {
+            if (!esFormulaTexto(inp.value)) {
+                inp.value = '=' + inp.value;
+                try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) { /* idem */ }
+            }
+            insertarTexto(inp, nombre + '(');
+            inp.focus();
+        } else if (sel.r0 >= 0) {
+            antes(); fijar(sel.r0, sel.c0, '=' + nombre + '('); dibujar(); cambio();
+            fx.focus(); fx.setSelectionRange(fx.value.length, fx.value.length);
+        } else estado('Elige una celda de datos (el encabezado no lleva fórmulas)', true);
+        cerrarFunciones();
+    }
+    function pintarFunciones(filtro) {
+        var lista = $('sf-fn-lista'); if (!lista) return;
+        var q = String(filtro || '').trim().toUpperCase();
+        var grupos = {}, orden = [];
+        CATALOGO.forEach(function (f) {
+            if (q && f[0].indexOf(q) < 0 && f[2].toUpperCase().indexOf(q) < 0 && f[3].toUpperCase().indexOf(q) < 0) return;
+            if (!grupos[f[3]]) { grupos[f[3]] = []; orden.push(f[3]); }
+            grupos[f[3]].push(f);
+        });
+        if (!orden.length) { lista.innerHTML = '<p class="sf-fn-vacio">No hay funciones que coincidan. Prueba con «suma», «fecha» o «buscar».</p>'; return; }
+        lista.innerHTML = orden.map(function (g) {
+            return '<div class="sf-fn-grupo"><p>' + esc(g) + '</p>' + grupos[g].map(function (f) {
+                return '<button type="button" class="sf-fn-item" data-fn="' + esc(f[0]) + '" title="' + esc(f[2]) + '">' +
+                    '<span class="sf-fn-nom">' + esc(f[0]) + '<span class="sf-fn-args">' + esc(f[1]) + '</span></span>' +
+                    '<span class="sf-fn-desc">' + esc(f[2]) + '</span></button>';
+            }).join('') + '</div>';
+        }).join('');
+    }
+    function abrirFunciones() {
+        var p = $('sf-fn-panel'); if (!p) return;
+        p.hidden = false; pintarFunciones('');
+        var b = $('sf-fn-busca'); if (b) { b.value = ''; b.focus(); }
+    }
+    function cerrarFunciones() { var p = $('sf-fn-panel'); if (p) p.hidden = true; }
+    (function () {
+        var abrir = $('sf-fn-abrir'), p = $('sf-fn-panel'), busca = $('sf-fn-busca'), lista = $('sf-fn-lista');
+        if (abrir) abrir.addEventListener('click', abrirFunciones);
+        if ($('sf-fn-cerrar')) $('sf-fn-cerrar').addEventListener('click', function () { cerrarFunciones(); area.focus(); });
+        if (busca) {
+            busca.addEventListener('input', function () { pintarFunciones(this.value); });
+            busca.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { e.preventDefault(); cerrarFunciones(); area.focus(); }
+                if (e.key === 'Enter') { var b = lista && lista.querySelector('.sf-fn-item'); if (b) { e.preventDefault(); insertarFuncion(b.dataset.fn); } }
+            });
+        }
+        if (lista) lista.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-fn]'); if (b) insertarFuncion(b.dataset.fn);
+        });
+        document.addEventListener('click', function (e) {
+            if (p && !p.hidden && !e.target.closest('#sf-fn-panel') && !e.target.closest('#sf-fn-abrir')) p.hidden = true;
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && p && !p.hidden) { p.hidden = true; }
+        });
+    })();
 
     // ================= Selección con el ratón =================
     var arrastrando = false, tirando = null;    grid.addEventListener('mousedown', function (e) {
         var fil = e.target.closest && e.target.closest('.sf-filtro');
         if (fil) { e.preventDefault(); e.stopPropagation(); abrirFiltro(+fil.dataset.fil, e.clientX, e.clientY); return; }
         var tir = e.target.closest('.sf-tirador');
-        if (tir) { var c0 = +tir.dataset.tir, th = tir.parentNode; tirando = { c: c0, x: e.clientX, w: th.getBoundingClientRect().width / (zoom / 100), antes: copia() }; e.preventDefault(); return; }
+        if (tir) { var c0 = +tir.dataset.tir, th = tir.parentNode; tirando = { tipo: 'col', c: c0, x: e.clientX, w: th.getBoundingClientRect().width / (zoom / 100), antes: copia() }; e.preventDefault(); return; }
+        var alt = e.target.closest('.sf-alto');
+        if (alt) {
+            var rrA = +alt.dataset.alto, trA = grid.querySelector('tr[data-r="' + rrA + '"]');
+            tirando = { tipo: 'fila', r: rrA, y: e.clientY, h: trA ? trA.getBoundingClientRect().height / (zoom / 100) : 26, antes: copia() };
+            e.preventDefault(); e.stopPropagation(); return;
+        }
+        if (e.button === 2 && !e.target.closest('th.sf-letra,th.sf-num')) {   // clic derecho: conserva la selección si la celda ya está dentro
+            var tD = e.target.closest('td[data-r],th.sf-enc');
+            if (tD && tD.dataset.r != null) {
+                var rrD = +tD.dataset.r, ccD = +tD.dataset.c, nD = rangoNorm();
+                if (!(rrD >= nD.r0 && rrD <= nD.r1 && ccD >= nD.c0 && ccD <= nD.c1)) {
+                    limpiarExtras(); sel.r0 = sel.r1 = rrD; sel.c0 = sel.c1 = ccD; pintarSeleccion();
+                }
+            }
+            return;
+        }
         if (e.target.classList.contains('sf-input')) return;   // clic dentro del campo en edición: mover el cursor, no apuntar
         // Escribiendo una fórmula: el clic elige la celda que se inserta como referencia, no cierra el editor.
         if (entradaFormula() && e.button === 0 && !MOVIL_ESTRECHO.matches) {
@@ -1981,10 +2408,19 @@
     });
     document.addEventListener('mousemove', function (e) {
         if (!tirando) return;
+        if (tirando.tipo === 'fila') {
+            var h = Math.max(22, Math.min(400, Math.round(tirando.h + (e.clientY - tirando.y) / (zoom / 100))));
+            var tr = grid.querySelector('tr[data-r="' + tirando.r + '"]');
+            if (tr) tr.style.height = h + 'px';
+            tirando.nuevo = h;
+            estado('Alto de fila: ' + h + ' px');
+            return;
+        }
         var w = Math.max(40, Math.min(800, Math.round(tirando.w + (e.clientX - tirando.x) / (zoom / 100))));
         var col = grid.querySelectorAll('colgroup col')[tirando.c + 1];
         if (col) { col.style.width = w + 'px'; col.style.minWidth = w + 'px'; }
         tirando.nuevo = w;
+        estado('Ancho de columna: ' + w + ' px');
     });
     document.addEventListener('mouseup', function () {
         if (rellenando) {
@@ -1995,10 +2431,18 @@
         }
         arrastrando = false;
         apuntando = null;
-        if (tirando && tirando.nuevo) { pasado.push(tirando.antes); futuro = []; S.cols[tirando.c].w = tirando.nuevo; cambio(); dibujar(); }
+        if (tirando && tirando.nuevo) {
+            pasado.push(tirando.antes); futuro = [];
+            if (tirando.tipo === 'fila') S.vista.alto[tirando.r] = tirando.nuevo;
+            else S.cols[tirando.c].w = tirando.nuevo;
+            estado('');
+            cambio(); dibujar();
+        }
         tirando = null;
     });
     grid.addEventListener('dblclick', function (e) {
+        var alt = e.target.closest('.sf-alto');
+        if (alt) { antes(); delete S.vista.alto[+alt.dataset.alto]; dibujar(); cambio(); return; }
         var tir = e.target.closest('.sf-tirador');
         if (tir) { antes(); S.cols[+tir.dataset.tir].w = 0; dibujar(); cambio(); return; }
         if (entradaFormula()) return;   // apuntando: el doble clic solo elige la referencia, no abre otra celda
@@ -2085,6 +2529,23 @@
         if (ctrl && (k === 'f' || k === 'F')) { e.preventDefault(); panelBusca(true); return; }
         if (ctrl && (k === 'd' || k === 'D')) { e.preventDefault(); rellenarDireccion('abajo'); return; }
         if (ctrl && (k === 'r' || k === 'R')) { e.preventDefault(); rellenarDireccion('derecha'); return; }
+        if (ctrl && (k === 'ArrowDown' || k === 'ArrowUp' || k === 'ArrowLeft' || k === 'ArrowRight')) {
+            e.preventDefault();
+            salto(k === 'ArrowDown' ? 1 : k === 'ArrowUp' ? -1 : 0, k === 'ArrowRight' ? 1 : k === 'ArrowLeft' ? -1 : 0, e.shiftKey);
+            return;
+        }
+        if (ctrl && k === 'Home') { e.preventDefault(); limpiarExtras(); sel.r0 = sel.r1 = 0; sel.c0 = sel.c1 = 0; pintarSeleccion(); visible(0, 0); return; }
+        if (ctrl && (k === ' ' || k === 'Spacebar')) {
+            e.preventDefault(); limpiarExtras();
+            sel.r0 = 0; sel.r1 = S.rows.length - 1; sel.c0 = sel.c1 = sel.c0;
+            pintarSeleccion(); return;
+        }
+        if (k === ' ' && e.shiftKey) {
+            e.preventDefault(); limpiarExtras();
+            var rrS = Math.max(0, sel.r0);
+            sel.r0 = sel.r1 = rrS; sel.c0 = 0; sel.c1 = S.cols.length - 1;
+            pintarSeleccion(); return;
+        }
         if (k === 'Escape') {
             panelBusca(false);
             var pf = $('sf-filtro'); if (pf) pf.hidden = true;
@@ -2095,6 +2556,16 @@
         else if (k === 'ArrowUp') { e.preventDefault(); mover(-1, 0, e.shiftKey); }
         else if (k === 'ArrowLeft') { e.preventDefault(); mover(0, -1, e.shiftKey); }
         else if (k === 'ArrowRight') { e.preventDefault(); mover(0, 1, e.shiftKey); }
+        else if (k === 'Home') { e.preventDefault(); mover(0, -sel.c0, false); }
+        else if (k === 'End') {
+            e.preventDefault();
+            var rE = Math.max(0, sel.r0), cE = -1;
+            for (var cB = S.cols.length - 1; cB >= 0; cB--) if (S.rows[rE] && String(S.rows[rE][cB]).trim() !== '') { cE = cB; break; }
+            if (cE < 0) cE = S.cols.length - 1;
+            limpiarExtras(); sel.r0 = sel.r1 = rE; sel.c0 = sel.c1 = cE; pintarSeleccion(); visible(rE, cE);
+        }
+        else if (k === 'PageDown') { e.preventDefault(); mover(18, 0, e.shiftKey); }
+        else if (k === 'PageUp') { e.preventDefault(); mover(-18, 0, e.shiftKey); }
         else if (k === 'Tab') { e.preventDefault(); mover(0, e.shiftKey ? -1 : 1, false); }
         else if (k === 'Enter' || k === 'F2') { e.preventDefault(); empezarEdicion(sel.r0, sel.c0, null); }
         else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); vaciar(); }
@@ -2232,11 +2703,31 @@
         });
         S.merges = out;
     }
+    /** Mueve los altos de fila guardados al insertar/eliminar renglones */
+    function moverAltosInsertar(en, k) {
+        if (!S.vista.alto) return;
+        var o = {};
+        Object.keys(S.vista.alto).forEach(function (kk) {
+            var r = +kk, v = S.vista.alto[kk];
+            o[r >= en ? r + k : r] = v;
+        });
+        S.vista.alto = o;
+    }
+    function moverAltosEliminar(desde, hasta) {
+        if (!S.vista.alto) return;
+        var k = hasta - desde + 1, o = {};
+        Object.keys(S.vista.alto).forEach(function (kk) {
+            var r = +kk;
+            if (r < desde) o[r] = S.vista.alto[kk];
+            else if (r > hasta) o[r - k] = S.vista.alto[kk];
+        });
+        S.vista.alto = o;
+    }
     function insertar(eje, en, k) {
         limpiarExtras();
         insertarMerges(eje, en, k);
         reescribir(eje, function (v) { return v >= en ? v + k : v; });
-        if (eje === 'r') for (var i = 0; i < k; i++) { S.rows.splice(en, 0, S.cols.map(function () { return ''; })); sty.splice(en, 0, S.cols.map(function () { return null; })); ids.splice(en, 0, null); }
+        if (eje === 'r') { moverAltosInsertar(en, k); for (var i = 0; i < k; i++) { S.rows.splice(en, 0, S.cols.map(function () { return ''; })); sty.splice(en, 0, S.cols.map(function () { return null; })); ids.splice(en, 0, null); } }
         else for (var j = 0; j < k; j++) { S.cols.splice(en, 0, { n: 'Columna ' + (S.cols.length + 1), t: 'texto', a: 'izquierda', tot: '', w: 0 }); hsty.splice(en, 0, null); S.rows.forEach(function (f, r) { f.splice(en, 0, ''); sty[r].splice(en, 0, null); }); }
     }
     function eliminar(eje, desde, hasta) {
@@ -2249,12 +2740,11 @@
             // dentro de lo borrado: un rango se acorta, una celda suelta se pierde
             return modo === 'solo' ? -1 : modo === 'fin' ? (desde - 1 >= 0 ? desde - 1 : -1) : desde;
         });
-        if (eje === 'r') { S.rows.splice(desde, k); sty.splice(desde, k); ids.splice(desde, k); }
+        if (eje === 'r') { moverAltosEliminar(desde, hasta); S.rows.splice(desde, k); sty.splice(desde, k); ids.splice(desde, k); }
         else { S.cols.splice(desde, k); hsty.splice(desde, k); S.rows.forEach(function (f, r) { f.splice(desde, k); sty[r].splice(desde, k); }); }
     }
-    document.querySelectorAll('[data-acc]').forEach(function (b) {
-        b.addEventListener('click', async function () {
-            var a = b.dataset.acc, n = rangoNorm(), k;
+    async function ejecutarAccion(a) {
+            var n = rangoNorm(), k;
             if (a === 'fila-arriba' || a === 'fila-abajo') {
                 k = Math.max(1, n.r1 - Math.max(0, n.r0) + 1);
                 if (S.rows.length + k > MAX_F) { estado('Máximo ' + MAX_F + ' renglones', true); return; }
@@ -2277,6 +2767,11 @@
                 if (n.c1 - n.c0 + 1 >= S.cols.length) { estado('La tabla necesita al menos una columna', true); return; }
                 for (var cc = n.c0; cc <= n.c1; cc++) if (S.cols[cc] && S.cols[cc].fija) { estado('Las columnas Nombre, Inicio, Fin y Avance están vinculadas a las subactividades y no se pueden eliminar.', true); return; }
                 antes(); eliminar('c', n.c0, n.c1); sel.c0 = sel.c1 = Math.min(n.c0, S.cols.length - 1);
+            } else if (a === 'alto-auto') {
+                antes();
+                var rA = Math.max(0, n.r0);
+                for (var rAlt = rA; rAlt <= n.r1; rAlt++) delete S.vista.alto[rAlt];
+                estado('Alto automático restablecido');
             } else if (a === 'congelar') {
                 var frC = Math.min(80, Math.max(0, sel.r0));
                 var fcC = Math.min(10, Math.max(0, sel.c0));
@@ -2290,7 +2785,7 @@
                 if (S.merges.length) { estado('No se puede ordenar una tabla con celdas combinadas', true); return; }
                 var col = sel.c0, tipo = S.cols[col].t, dir = a === 'orden-asc' ? 1 : -1;
                 antes();
-                var pares = S.rows.map(function (f, r) { return { f: f, s: sty[r], i: ids[r] || null }; });
+                var pares = S.rows.map(function (f, r) { return { f: f, s: sty[r], i: ids[r] || null, a: altoDe(r) }; });
                 var vacio = function (p) { return !p.f.some(function (x) { return x !== ''; }); };
                 var llenas = pares.filter(function (p) { return !vacio(p); }), vacias = pares.filter(vacio);
                 llenas.sort(function (x, y) {
@@ -2302,6 +2797,9 @@
                 });
                 var todas = llenas.concat(vacias);
                 S.rows = todas.map(function (p) { return p.f; }); sty = todas.map(function (p) { return p.s; }); ids = todas.map(function (p) { return p.i; });
+                var altos = {};
+                todas.forEach(function (p, i) { if (p.a) altos[i] = p.a; });
+                S.vista.alto = altos;
                 limpiarExtras();
             } else if (a === 'combinar') {
                 var nC = rangoNorm();
@@ -2326,8 +2824,70 @@
                 S.merges = S.merges.filter(function (x) { return !mergeToca(x, nS); });
             }
             dibujar(); cambio(); area.focus();
-        });
+    }
+    document.querySelectorAll('[data-acc]').forEach(function (b) {
+        b.addEventListener('click', function () { ejecutarAccion(b.dataset.acc); });
     });
+
+    // ================= Menú contextual (clic derecho) =================
+    function cerrarMenu() { var m = $('sf-menu'); if (m) m.hidden = true; }
+    function abrirMenu(x, y) {
+        var m = $('sf-menu'); if (!m) return;
+        var n = rangoNorm(), enFila = n.r0 >= 0;
+        function it(acc, txt, icon, extra) { return '<button type="button" role="menuitem" data-m="' + acc + '"' + (extra || '') + '><i class="fa-solid fa-' + icon + '"></i><span>' + txt + '</span></button>'; }
+        function sep() { return '<div class="sf-menu-sep" role="separator"></div>'; }
+        m.innerHTML =
+            it('cortar', 'Cortar', 'scissors') + it('copiar', 'Copiar', 'copy') + it('pegar', 'Pegar', 'paste') + it('peg-valores', 'Pegar solo valores', 'clipboard-check') + sep() +
+            it('fila-arriba', 'Insertar fila arriba', 'arrow-up') + it('fila-abajo', 'Insertar fila abajo', 'arrow-down') + it('fila-borrar', 'Eliminar fila(s)', 'trash-can') + sep() +
+            it('col-izq', 'Insertar columna a la izquierda', 'arrow-left') + it('col-der', 'Insertar columna a la derecha', 'arrow-right') + it('col-borrar', 'Eliminar columna(s)', 'trash-can') + sep() +
+            it('combinar', 'Combinar celdas', 'object-group') + it('separar', 'Separar celdas', 'object-ungroup') + sep() +
+            it('wrap', 'Ajustar texto', 'text-width') + it('alto-auto', 'Alto de fila automático', 'arrows-up-down') + it('ancho-auto', 'Ancho de columna automático', 'arrows-left-right') + sep() +
+            (enFila ? it('congelar', 'Inmovilizar hasta aquí', 'thumbtack') : '') +
+            it('borrar-contenido', 'Borrar contenido', 'eraser') + it('borrar-formato', 'Borrar formato', 'broom');
+        m.hidden = false;
+        m.style.left = '0px'; m.style.top = '0px';
+        var w = m.offsetWidth, h = m.offsetHeight;
+        m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x)) + 'px';
+        m.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y)) + 'px';
+    }
+    if ($('sf-menu')) {
+        $('sf-menu').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-m]'); if (!b) return;
+            var a = b.dataset.m; cerrarMenu();
+            if (a === 'copiar' || a === 'cortar') {
+                capturarCopia();
+                try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(copiado.texto).catch(function () {}); } catch (err) { /* sin portapapeles */ }
+                if (a === 'cortar') vaciar(); else estado('Copiado: pega con Ctrl+V o con «Pegar»');
+            } else if (a === 'pegar') {
+                if (!copiado) { estado('Copia primero una celda o un rango (Ctrl + C)', true); return; }
+                pegarInterno(rangoNorm(), false, false);
+            } else if (a === 'peg-valores') {
+                if (!copiado) { estado('Copia primero una celda o un rango (Ctrl + C)', true); return; }
+                pegarInterno(rangoNorm(), true, false);
+            } else if (a === 'wrap') {
+                var on = !(getSt(sel.r0, sel.c0) || {}).wr;
+                antes();
+                if (on) { var nW = rangoNorm(); for (var rW = Math.max(0, nW.r0); rW <= nW.r1; rW++) delete S.vista.alto[rW]; }
+                aplicar(function (f) { if (on) f.wr = 1; else delete f.wr; }, true);
+            } else if (a === 'ancho-auto') {
+                antes(); columnasElegidas().forEach(function (c) { S.cols[c].w = 0; }); dibujar(); cambio();
+            } else if (a === 'borrar-contenido') {
+                vaciar();
+            } else if (a === 'borrar-formato') {
+                aplicar(function (f) { Object.keys(f).forEach(function (k) { if (k !== 'im') delete f[k]; }); });
+            } else {
+                ejecutarAccion(a);
+            }
+        });
+    }
+    grid.addEventListener('contextmenu', function (e) {
+        var t = e.target.closest('td,th'); if (!t) return;
+        e.preventDefault();
+        abrirMenu(e.clientX, e.clientY);
+    });
+    document.addEventListener('click', function (e) { var m = $('sf-menu'); if (m && !m.hidden && !e.target.closest('#sf-menu')) cerrarMenu(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarMenu(); });
+    window.addEventListener('resize', cerrarMenu);
 
     // ================= Propiedades de columna y estilo de la tabla =================
     function columnasElegidas() {
@@ -2658,6 +3218,43 @@
             var v = this.value;
             aplicar(function (f) { if (v === '') delete f.nf; else f.nf = v; });
         });
+        var nfc = $('sf-nf-custom');
+        if (nfc) {
+            var aplicarNf = function () { var v = this.value.trim(); aplicar(function (f) { if (v === '') delete f.nf; else f.nf = v; }); };
+            nfc.addEventListener('change', aplicarNf);
+            nfc.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); aplicarNf.call(this); } });
+        }
+        function cambiarDecimales(delta) {
+            aplicar(function (f) {
+                var code = f.nf || '0';
+                var m = /([#0,]*[#0])(?:\.([0#]+))?/.exec(code);
+                if (!m) code = '0';
+                var base = m ? m[1] : '0', d = m && m[2] ? m[2].length : 0;
+                d = Math.max(0, Math.min(6, d + delta));
+                var nuevo = base + (d ? '.' + new Array(d + 1).join('0') : '');
+                f.nf = m ? code.replace(/([#0,]*[#0])(?:\.([0#]+))?/, nuevo) : nuevo;
+            });
+        }
+        document.querySelectorAll('[data-num]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.dataset.num;
+                if (v === 'dec-mas') cambiarDecimales(1);
+                else if (v === 'dec-menos') cambiarDecimales(-1);
+                else aplicar(function (f) { f.nf = v === 'moneda' ? '$#,##0.00' : '0.00%'; });
+            });
+        });
+        var wrapB = $('sf-wrap');
+        if (wrapB) wrapB.addEventListener('click', function () {
+            var on = !(getSt(sel.r0, sel.c0) || {}).wr;
+            antes();
+            if (on) { var nW = rangoNorm(); for (var rW = Math.max(0, nW.r0); rW <= nW.r1; rW++) delete S.vista.alto[rW]; }
+            aplicar(function (f) { if (on) f.wr = 1; else delete f.wr; }, true);
+        });
+        var va = $('sf-va');
+        if (va) va.addEventListener('change', function () {
+            var v = this.value;
+            aplicar(function (f) { if (v === '') delete f.va; else f.va = v; });
+        });
         document.querySelectorAll('[data-peg]').forEach(function (b) {
             b.addEventListener('click', function () {
                 if (!copiado) { estado('Copia primero una celda o un rango (Ctrl + C)', true); return; }
@@ -2745,6 +3342,148 @@
         }
     }
 
+    // ================= Ayudas de edición: tamaño, referencias, sugerencias y resultado =================
+    /** Ajusta el alto del campo de edición al contenido (Alt+Enter crea varias líneas) */
+    function ajustarAltoEditor(inp) {
+        if (!inp || !inp.style) return;
+        inp.style.height = 'auto';
+        inp.style.height = Math.max(34, Math.min(220, inp.scrollHeight + 2)) + 'px';
+    }
+    /** F4: A1 → $A$1 → A$1 → $A1 → A1 en la referencia que toca el cursor */
+    function alternarAbsoluta(inp) {
+        if (!inp || inp.selectionStart == null) return;
+        var a = inp.selectionStart, b = inp.selectionEnd, s = inp.value, re = /\$?[A-Za-z]{1,3}\$?\d+/g, m, tok = null;
+        while ((m = re.exec(s))) {
+            if (m.index <= a && m.index + m[0].length >= a) { tok = m; break; }
+            if (m.index > a) break;
+        }
+        if (!tok) return;
+        var p = /^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$/.exec(tok[0]);
+        if (!p) return;
+        var col = p[1], row = p[3], nuevo;
+        if (!col && !row) nuevo = '$' + p[2] + '$' + p[4];
+        else if (col && row) nuevo = p[2] + '$' + p[4];
+        else if (row) nuevo = '$' + p[2] + p[4];
+        else nuevo = p[2] + p[4];
+        inp.value = s.slice(0, tok.index) + nuevo + s.slice(tok.index + tok[0].length);
+        var fin = tok.index + nuevo.length;
+        try { inp.setSelectionRange(fin, fin); } catch (e) { /* el campo no admite selección */ }
+    }
+
+    // ---- Autocompletado de funciones ----
+    var sug = { lista: [], idx: 0, inp: null, ini: 0, fin: 0 };
+    function ocultarSugerencias() {
+        var p = $('sf-sug');
+        if (p) p.hidden = true;
+        sug.lista = []; sug.inp = null;
+    }
+    /** Texto de función que se está escribiendo antes del cursor (null si no aplica) */
+    function tokenFuncion(inp) {
+        if (!inp || inp.selectionStart == null) return null;
+        var a = inp.selectionStart, antes = inp.value.slice(0, a);
+        var m = /([A-Za-zÁÉÍÓÚÜÑáéíóúüñ.]+)$/.exec(antes);
+        if (!m) return null;
+        var tok = m[1];
+        if (/^[A-Za-z]{1,3}\d+$/.test(tok)) return null;   // parece una celda
+        if (inp.value.charAt(a) === '(') return null;      // ya está completa
+        if (antes.indexOf('=') < 0) return null;           // solo dentro de una fórmula
+        if ((antes.split('"').length - 1) % 2 === 1) return null;   // dentro de un texto
+        return { tok: tok, ini: a - tok.length, fin: a };
+    }
+    function actualizarSugerencias(inp) {
+        var p = $('sf-sug'); if (!p) return;
+        var ctx = tokenFuncion(inp);
+        if (!ctx) { ocultarSugerencias(); return; }
+        var q = ctx.tok.toUpperCase();
+        var lista = CATALOGO.filter(function (f) { return f[0].indexOf(q) === 0; });
+        if (!lista.length && q.length >= 2) lista = CATALOGO.filter(function (f) { return f[0].indexOf(q) >= 0 || f[2].toUpperCase().indexOf(q) >= 0; });
+        lista = lista.slice(0, 8);
+        if (!lista.length) { ocultarSugerencias(); return; }
+        sug.lista = lista; sug.idx = 0; sug.inp = inp; sug.ini = ctx.ini; sug.fin = ctx.fin;
+        p.innerHTML = lista.map(function (f, i) {
+            return '<button type="button" role="option" data-sug="' + i + '"' + (i === 0 ? ' class="activo" aria-selected="true"' : ' aria-selected="false"') + '>' +
+                '<span class="sf-sug-nom">' + esc(f[0]) + '</span><span class="sf-sug-args">' + esc(f[1]) + '</span>' +
+                '<span class="sf-sug-desc">' + esc(f[2]) + '</span></button>';
+        }).join('');
+        var r = inp.getBoundingClientRect();
+        p.hidden = false;
+        var alto = Math.min(320, 54 * lista.length + 8);
+        p.style.width = Math.max(300, Math.min(520, r.width || 360)) + 'px';
+        p.style.left = Math.max(8, Math.min(window.innerWidth - p.offsetWidth - 8, r.left)) + 'px';
+        p.style.top = (r.bottom + 6 + alto < window.innerHeight ? r.bottom + 6 : Math.max(8, r.top - alto - 6)) + 'px';
+    }
+    function aceptarSugerencia(inp) {
+        var p = $('sf-sug');
+        if (!p || p.hidden || sug.inp !== inp || !sug.lista.length) return false;
+        var f = sug.lista[sug.idx];
+        inp.value = inp.value.slice(0, sug.ini) + f[0] + '(' + inp.value.slice(sug.fin);
+        var pos = sug.ini + f[0].length + 1;
+        try { inp.setSelectionRange(pos, pos); } catch (e) { /* idem */ }
+        if (inp !== fx) fx.value = inp.value;
+        ocultarSugerencias();
+        programarPrevisualizacion();
+        inp.focus();
+        return true;
+    }
+    /** Teclado del autocompletado: devuelve true si ya se atendió la tecla */
+    function sugerenciaTecla(e, inp) {
+        var p = $('sf-sug');
+        if (!p || p.hidden || sug.inp !== inp) return false;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation();
+            sug.idx = (sug.idx + (e.key === 'ArrowDown' ? 1 : -1) + sug.lista.length) % sug.lista.length;
+            p.querySelectorAll('[data-sug]').forEach(function (b, i) { b.classList.toggle('activo', i === sug.idx); b.setAttribute('aria-selected', i === sug.idx ? 'true' : 'false'); });
+            return true;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); return aceptarSugerencia(inp); }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); ocultarSugerencias(); return true; }
+        return false;
+    }
+    var prevTimer = null;
+    function programarPrevisualizacion() { clearTimeout(prevTimer); prevTimer = setTimeout(previsualizar, 150); }
+    /** Resultado de la fórmula que se está escribiendo (chip junto a la barra) */
+    function previsualizar() {
+        var res = $('sf-fx-res'); if (!res) return;
+        var inp = entradaFormula(), dest = editor ? { r: editor.r, c: editor.c } : fxOrigen;
+        if (!inp || !dest || dest.r < 0 || !esFormulaTexto(inp.value) || inp.value.trim() === '=') {
+            res.textContent = ''; res.className = 'sf-fx-res'; return;
+        }
+        var prev = S.rows[dest.r][dest.c], r;
+        S.rows[dest.r][dest.c] = inp.value;
+        try { r = valorCelda(dest.r, dest.c, {}); } catch (e) { r = { e: errores.val }; }
+        S.rows[dest.r][dest.c] = prev;
+        if (r.e) { res.textContent = r.e + ' · ' + descError(r.e); res.className = 'sf-fx-res sf-fx-res-err'; return; }
+        var crudo = texto(r), f = getSt(dest.r, dest.c) || {}, mostrar;
+        var x = f.nf ? formatoNumero(crudo, f.nf) : null;
+        mostrar = x !== null ? x : formatear(crudo, S.cols[dest.c].t);
+        res.textContent = '= ' + (mostrar === '' ? '0' : mostrar);
+        res.className = 'sf-fx-res';
+    }
+
+    // ---- Caja de nombre: escribir C5 o A1:C10 y saltar ----
+    function irA(txt) {
+        var t = String(txt || '').trim().replace(/\s+/g, '');
+        var m = /^\$?([A-Za-z]{1,3})?\$?(\d+)?(?::\$?([A-Za-z]{1,3})?\$?(\d+)?)?$/.exec(t);
+        if (!m || (!m[1] && !m[2] && !m[3] && !m[4])) { estado('Escribe una celda (C5) o un rango (A1:C10)', true); return false; }
+        var c0 = m[1] ? indiceLetra(m[1].toUpperCase()) : 0, r0 = m[2] ? parseInt(m[2], 10) - 2 : -1;
+        var c1 = m[3] ? indiceLetra(m[3].toUpperCase()) : c0, r1 = m[4] ? parseInt(m[4], 10) - 2 : r0;
+        if (m[1] && !m[2]) { r0 = -1; r1 = S.rows.length - 1; }        // solo columna: B
+        if (!m[1] && m[2]) { c0 = 0; c1 = S.cols.length - 1; }         // solo fila: 3
+        c0 = Math.max(0, Math.min(S.cols.length - 1, c0)); c1 = Math.max(0, Math.min(S.cols.length - 1, c1));
+        r0 = Math.max(-1, Math.min(S.rows.length - 1, r0)); r1 = Math.max(-1, Math.min(S.rows.length - 1, r1));
+        limpiarExtras();
+        sel.r0 = Math.min(r0, r1); sel.r1 = Math.max(r0, r1); sel.c0 = Math.min(c0, c1); sel.c1 = Math.max(c0, c1);
+        pintarSeleccion(); visible(sel.r0, sel.c0);
+        return true;
+    }
+    if ($('sf-ref')) {
+        $('sf-ref').addEventListener('focus', function () { this.select(); });
+        $('sf-ref').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); if (irA(this.value)) area.focus(); else pintarSeleccion(); }
+            else if (e.key === 'Escape') { e.preventDefault(); pintarSeleccion(); area.focus(); }
+        });
+    }
+
     // Ctrl+F desde cualquier parte de la página (salvo mientras se escribe en un campo)
     document.addEventListener('keydown', function (e) {
         if (!(e.ctrlKey || e.metaKey) || (e.key !== 'f' && e.key !== 'F')) return;
@@ -2753,6 +3492,151 @@
         e.preventDefault();
         panelBusca(true);
     });
+
+    // ================= Catálogo de funciones (autocompletado y panel «Funciones») =================
+    var CATALOGO = [
+        // Matemáticas
+        ['SUMA', '(rango1; rango2; …)', 'Suma todos los números del rango.', 'Matemáticas'],
+        ['PROMEDIO', '(rango1; rango2; …)', 'Media aritmética de los números.', 'Matemáticas'],
+        ['MIN', '(rango1; …)', 'Valor mínimo de los números.', 'Matemáticas'],
+        ['MAX', '(rango1; …)', 'Valor máximo de los números.', 'Matemáticas'],
+        ['CONTAR', '(rango1; …)', 'Cuenta las celdas que tienen números.', 'Matemáticas'],
+        ['CONTARA', '(rango1; …)', 'Cuenta las celdas que no están vacías.', 'Matemáticas'],
+        ['CONTAR.BLANCO', '(rango1; …)', 'Cuenta las celdas vacías.', 'Matemáticas'],
+        ['PRODUCTO', '(rango1; …)', 'Multiplica todos los números.', 'Matemáticas'],
+        ['SUMAPRODUCTO', '(rango1; rango2; …)', 'Suma los productos de los rangos.', 'Matemáticas'],
+        ['SUMA.CUADRADOS', '(rango1; …)', 'Suma los cuadrados de los números.', 'Matemáticas'],
+        ['ABS', '(número)', 'Valor absoluto, sin signo.', 'Matemáticas'],
+        ['ENTERO', '(número)', 'Parte entera redondeando hacia abajo.', 'Matemáticas'],
+        ['TRUNCAR', '(número; decimales)', 'Corta los decimales sin redondear.', 'Matemáticas'],
+        ['RESIDUO', '(número; divisor)', 'Resto de la división.', 'Matemáticas'],
+        ['POTENCIA', '(base; exponente)', 'Eleva un número a una potencia.', 'Matemáticas'],
+        ['RAIZ', '(número)', 'Raíz cuadrada.', 'Matemáticas'],
+        ['EXP', '(número)', 'e elevado al número.', 'Matemáticas'],
+        ['LN', '(número)', 'Logaritmo natural.', 'Matemáticas'],
+        ['LOG', '(número; base)', 'Logaritmo en la base indicada.', 'Matemáticas'],
+        ['LOG10', '(número)', 'Logaritmo en base 10.', 'Matemáticas'],
+        ['PI', '()', 'Devuelve 3,141592…', 'Matemáticas'],
+        ['SIGNO', '(número)', '1, -1 o 0 según el signo.', 'Matemáticas'],
+        ['COCIENTE', '(dividendo; divisor)', 'Parte entera de la división.', 'Matemáticas'],
+        ['REDONDEAR', '(número; decimales)', 'Redondea al número de decimales.', 'Matemáticas'],
+        ['REDONDEAR.MAS', '(número; decimales)', 'Redondea siempre hacia arriba.', 'Matemáticas'],
+        ['REDONDEAR.MENOS', '(número; decimales)', 'Redondea siempre hacia abajo.', 'Matemáticas'],
+        ['REDONDEAR.MULT', '(número; múltiplo)', 'Redondea al múltiplo indicado.', 'Matemáticas'],
+        ['MULTIPLO.SUPERIOR', '(número; múltiplo)', 'Múltiplo inmediatamente superior.', 'Matemáticas'],
+        ['MULTIPLO.INFERIOR', '(número; múltiplo)', 'Múltiplo inmediatamente inferior.', 'Matemáticas'],
+        ['M.C.D.', '(número1; número2)', 'Máximo común divisor.', 'Matemáticas'],
+        ['M.C.M.', '(número1; número2)', 'Mínimo común múltiplo.', 'Matemáticas'],
+        ['SUBTOTALES', '(código; rango)', 'Suma, promedio, cuenta, máx. o mín.', 'Matemáticas'],
+        // Estadística
+        ['MEDIANA', '(rango)', 'Valor central de los números.', 'Estadística'],
+        ['MODA', '(rango)', 'Valor que más se repite.', 'Estadística'],
+        ['DESVEST', '(rango)', 'Desviación estándar de una muestra.', 'Estadística'],
+        ['DESVEST.P', '(rango)', 'Desviación estándar de la población.', 'Estadística'],
+        ['VAR', '(rango)', 'Varianza de una muestra.', 'Estadística'],
+        ['VAR.P', '(rango)', 'Varianza de la población.', 'Estadística'],
+        ['K.ESIMO.MAYOR', '(rango; k)', 'El k-ésimo número más grande.', 'Estadística'],
+        ['K.ESIMO.MENOR', '(rango; k)', 'El k-ésimo número más pequeño.', 'Estadística'],
+        ['JERARQUIA', '(número; rango; orden)', 'Posición del número dentro del rango.', 'Estadística'],
+        ['PERCENTIL', '(rango; k)', 'Valor del percentil k (0 a 1).', 'Estadística'],
+        ['CUARTIL', '(rango; cuartil)', 'Valor del cuartil 0 a 4.', 'Estadística'],
+        // Lógica y condicionales
+        ['SI', '(prueba; si_verdadero; si_falso)', 'Elige un valor según la prueba.', 'Lógica'],
+        ['SI.CONJUNTO', '(prueba1; valor1; prueba2; valor2; …)', 'Varias pruebas seguidas, como SI anidados.', 'Lógica'],
+        ['Y', '(prueba1; prueba2; …)', 'Verdadero si se cumplen todas.', 'Lógica'],
+        ['O', '(prueba1; prueba2; …)', 'Verdadero si se cumple alguna.', 'Lógica'],
+        ['NO', '(prueba)', 'Invierte verdadero/falso.', 'Lógica'],
+        ['SI.ERROR', '(valor; si_hay_error)', 'Devuelve otra cosa si la fórmula falla.', 'Lógica'],
+        ['SI.ND', '(valor; si_no_disponible)', 'Solo sustituye el error #N/A.', 'Lógica'],
+        ['CAMBIAR', '(valor; criterio1; resultado1; …; defecto)', 'Compara y devuelve el primer resultado.', 'Lógica'],
+        ['ELEGIR', '(índice; valor1; valor2; …)', 'Devuelve el valor de la posición.', 'Lógica'],
+        ['SUMAR.SI', '(rango; criterio; [rango_suma])', 'Suma las celdas que cumplen el criterio.', 'Lógica'],
+        ['CONTAR.SI', '(rango; criterio)', 'Cuenta las celdas que cumplen el criterio.', 'Lógica'],
+        ['PROMEDIO.SI', '(rango; criterio; [rango_promedio])', 'Promedia las que cumplen el criterio.', 'Lógica'],
+        ['SUMAR.SI.CONJUNTO', '(rango_suma; rango1; criterio1; …)', 'Suma con varios criterios a la vez.', 'Lógica'],
+        ['CONTAR.SI.CONJUNTO', '(rango1; criterio1; rango2; criterio2; …)', 'Cuenta con varios criterios.', 'Lógica'],
+        ['PROMEDIO.SI.CONJUNTO', '(rango_promedio; rango1; criterio1; …)', 'Promedia con varios criterios.', 'Lógica'],
+        ['MAX.SI', '(rango; criterio; [rango_valores])', 'Máximo de las celdas que cumplen.', 'Lógica'],
+        ['MIN.SI', '(rango; criterio; [rango_valores])', 'Mínimo de las celdas que cumplen.', 'Lógica'],
+        // Texto
+        ['IZQUIERDA', '(texto; caracteres)', 'Los primeros caracteres.', 'Texto'],
+        ['DERECHA', '(texto; caracteres)', 'Los últimos caracteres.', 'Texto'],
+        ['EXTRAE', '(texto; inicio; caracteres)', 'Un trozo de texto desde la posición.', 'Texto'],
+        ['LARGO', '(texto)', 'Número de caracteres.', 'Texto'],
+        ['MAYUSC', '(texto)', 'Convierte a mayúsculas.', 'Texto'],
+        ['MINUSC', '(texto)', 'Convierte a minúsculas.', 'Texto'],
+        ['NOMPROPIO', '(texto)', 'Primera letra de cada palabra en mayúscula.', 'Texto'],
+        ['ESPACIOS', '(texto)', 'Quita espacios sobrantes.', 'Texto'],
+        ['SUSTITUIR', '(texto; buscar; nuevo; [n])', 'Cambia un texto por otro.', 'Texto'],
+        ['REEMPLAZAR', '(texto; inicio; caracteres; nuevo)', 'Sustituye un trozo por su posición.', 'Texto'],
+        ['ENCONTRAR', '(buscado; texto; [inicio])', 'Posición exacta, distingue mayúsculas.', 'Texto'],
+        ['HALLAR', '(buscado; texto; [inicio])', 'Posición sin distinguir mayúsculas.', 'Texto'],
+        ['REPETIR', '(texto; veces)', 'Repite el texto.', 'Texto'],
+        ['CONCATENAR', '(texto1; texto2; …)', 'Une los textos.', 'Texto'],
+        ['UNIRCADENAS', '(separador; ignorar_vacías; rango)', 'Une un rango con separador.', 'Texto'],
+        ['TEXTO', '(valor; formato)', 'Convierte un número en texto con formato.', 'Texto'],
+        ['VALOR', '(texto)', 'Convierte texto en número.', 'Texto'],
+        ['EXACTO', '(texto1; texto2)', 'Compara distinguiendo mayúsculas.', 'Texto'],
+        ['LIMPIA', '(texto)', 'Quita caracteres de control.', 'Texto'],
+        ['MONEDA', '(número; [decimales])', 'Número con formato de moneda.', 'Texto'],
+        ['T', '(valor)', 'Devuelve el texto del valor.', 'Texto'],
+        // Búsqueda y referencias
+        ['BUSCARV', '(valor; rango; columna; [aproximado])', 'Busca en la primera columna y devuelve otra.', 'Búsqueda'],
+        ['BUSCARH', '(valor; rango; fila; [aproximado])', 'Busca en la primera fila y devuelve otra.', 'Búsqueda'],
+        ['BUSCAR', '(valor; rango; [rango_resultado])', 'Busca en una lista ordenada.', 'Búsqueda'],
+        ['COINCIDIR', '(valor; rango; [tipo])', 'Posición del valor dentro del rango.', 'Búsqueda'],
+        ['INDICE', '(rango; fila; [columna])', 'Valor de una posición del rango.', 'Búsqueda'],
+        ['BUSCARX', '(valor; rango_busca; rango_resultado; [si_no])', 'Búsqueda moderna en cualquier dirección.', 'Búsqueda'],
+        ['FILA', '([referencia])', 'Número de fila.', 'Búsqueda'],
+        ['COLUMNA', '([referencia])', 'Número de columna.', 'Búsqueda'],
+        ['DIRECCION', '(fila; columna; [tipo])', 'Texto con la referencia (B3).', 'Búsqueda'],
+        ['DESREF', '(referencia; filas; columnas; [alto]; [ancho])', 'Rango desplazado desde otra celda.', 'Búsqueda'],
+        ['INDIRECTO', '(texto_ref)', 'Convierte un texto en referencia.', 'Búsqueda'],
+        // Fechas
+        ['HOY', '()', 'Fecha de hoy (cambia al recalcular).', 'Fechas'],
+        ['AHORA', '()', 'Fecha y hora actuales.', 'Fechas'],
+        ['FECHA', '(año; mes; día)', 'Construye una fecha.', 'Fechas'],
+        ['FECHAVALOR', '(texto)', 'Convierte un texto en fecha.', 'Fechas'],
+        ['AÑO', '(fecha)', 'Año de la fecha.', 'Fechas'],
+        ['MES', '(fecha)', 'Mes de la fecha (1 a 12).', 'Fechas'],
+        ['DIA', '(fecha)', 'Día del mes.', 'Fechas'],
+        ['HORA', '(hora)', 'Hora (0 a 23) de un texto de hora.', 'Fechas'],
+        ['MINUTO', '(hora)', 'Minutos de un texto de hora.', 'Fechas'],
+        ['SEGUNDO', '(hora)', 'Segundos de un texto de hora.', 'Fechas'],
+        ['DIAS', '(fecha_fin; fecha_inicio)', 'Días entre dos fechas.', 'Fechas'],
+        ['FECHA.MES', '(fecha; meses)', 'Suma meses a una fecha.', 'Fechas'],
+        ['FIN.MES', '(fecha; meses)', 'Último día del mes desplazado.', 'Fechas'],
+        ['SIFECHA', '(inicio; fin; unidad)', 'Diferencia en días, meses o años.', 'Fechas'],
+        ['NUM.DE.SEMANA', '(fecha; [tipo])', 'Día de la semana.', 'Fechas'],
+        ['DIAS.LAB', '(inicio; días; [festivos])', 'Avanza días laborables.', 'Fechas'],
+        ['DIAS.LAB.INTL', '(inicio; días; [fin de semana]; [festivos])', 'Días laborables con otro fin de semana.', 'Fechas'],
+        // Información
+        ['ES.ERROR', '(valor)', 'Verdadero si hay cualquier error.', 'Información'],
+        ['ES.NUMERO', '(valor)', 'Verdadero si es un número.', 'Información'],
+        ['ES.TEXTO', '(valor)', 'Verdadero si es texto.', 'Información'],
+        ['ES.BLANCO', '(valor)', 'Verdadero si está vacío.', 'Información'],
+        ['ES.PAR', '(número)', 'Verdadero si es par.', 'Información'],
+        ['ES.IMPAR', '(número)', 'Verdadero si es impar.', 'Información'],
+        ['ESLOGICO', '(valor)', 'Verdadero si es verdadero/falso.', 'Información'],
+        // Finanzas
+        ['PAGO', '(tasa; periodos; valor_actual)', 'Cuota de un préstamo.', 'Finanzas'],
+        ['PAGOINT', '(tasa; periodo; periodos; valor_actual)', 'Interés de una cuota.', 'Finanzas'],
+        ['PAGOPRIN', '(tasa; periodo; periodos; valor_actual)', 'Capital amortizado en una cuota.', 'Finanzas'],
+        ['VA', '(tasa; periodos; pago)', 'Valor actual de una inversión.', 'Finanzas'],
+        ['VF', '(tasa; periodos; pago; [valor_actual])', 'Valor futuro de una inversión.', 'Finanzas'],
+        ['TASA', '(periodos; pago; valor_actual)', 'Tipo de interés estimado.', 'Finanzas'],
+        ['NPER', '(tasa; pago; valor_actual)', 'Número de periodos.', 'Finanzas'],
+        ['VNA', '(tasa; flujo1; flujo2; …)', 'Valor neto actual de los flujos.', 'Finanzas'],
+        ['TIR', '(flujo1; flujo2; …)', 'Tasa interna de retorno.', 'Finanzas'],
+        // Proyecto
+        ['AVANCE', '("código")', 'Avance de la partida o actividad del programa.', 'Proyecto'],
+        ['INICIO', '("código")', 'Fecha de inicio en el programa.', 'Proyecto'],
+        ['FIN', '("código")', 'Fecha de fin en el programa.', 'Proyecto'],
+        ['DIAS.REST', '("código")', 'Días que faltan según el programa.', 'Proyecto'],
+        ['PARTIDA', '("código")', 'Nombre de la partida o actividad.', 'Proyecto'],
+        ['NOMBRE.PARTIDA', '("código")', 'Partida a la que pertenece.', 'Proyecto'],
+        ['TIPO', '("código")', 'Indica si es partida o actividad.', 'Proyecto'],
+    ];
 
     dibujar();
     area.focus();

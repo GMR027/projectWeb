@@ -11,6 +11,7 @@
 <script>
 (function () {
     const hoja = document.getElementById('ve-hoja'), modalConfirm = document.getElementById('modal-confirm');
+    if (!hoja) return;
     // Se amplía la página (main), no solo la hoja: las paletas, menús y modales cuelgan fuera de ella.
     const escena = document.getElementById('contenido-principal') || hoja;
     const reencuadrar = () => { window.dispatchEvent(new Event('resize')); setTimeout(() => window.dispatchEvent(new Event('resize')), 120); };   // el editor re-encuadra el plano al cambiar el tamaño
@@ -34,9 +35,12 @@
         volver(); requestAnimationFrame(volver); setTimeout(volver, 150); setTimeout(volver, 400);
         reencuadrar();
     };
-    document.getElementById('ve-ampliar').addEventListener('click', abrir);
+    const ba = document.getElementById('ve-ampliar');
+    if (ba) ba.addEventListener('click', abrir);
     document.getElementById('ve-cerrar-ampliado').addEventListener('click', cerrar);
     document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) cerrar(); else reencuadrar(); });   // Esc del navegador
+    // En la lámina unificada, el lienzo se muestra al entrar en «Dibujar»: hasta entonces mide 0.
+    document.addEventListener('vp:modo', e => { if (e.detail && e.detail.modo === 'dibujar') setTimeout(reencuadrar, 60); });
 
     // Guardar y estado también dentro de la vista ampliada
     const est = document.getElementById('ve-estado'), estA = document.getElementById('ve-estado-amp');
@@ -72,11 +76,12 @@
     if (hoja) hoja.addEventListener('pointerdown', e => { if (!ov.contains(e.target)) ov.hidden = true; }, { once: true, capture: true });
 })();
 </script>
-<script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
+<?php // En la lámina unificada tour.js ya se cargó antes de registrar la guía del modo diseño ?>
+<?php if (($config['modo'] ?? '') !== 'vplan'): ?><script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script><?php endif; ?>
 <script>
 // Guía rápida del lienzo (Editor de gráficos y editor de marcas del vPlan comparten la barra)
-window.Tour.registrar('editor-canvas', {
-    auto: true,
+if (window.Tour) window.Tour.registrar('editor-canvas', {
+    auto: <?php echo (($config['modo'] ?? '') === 'vplan') ? 'false' : 'true'; ?>,
     pasos: [
         { icono: 'fa-pen-ruler', titulo: 'El lienzo', texto: 'Todo lo que dibujes aquí (formas, líneas, textos, símbolos) se guarda como una imagen y se puede exportar a PNG, PDF o presentación. Los cambios se autoguardan unos segundos después de soltar el ratón.' },
         { sel: '#ve-pestanas', icono: 'fa-table-columns', titulo: 'Tres pestañas', texto: '<b>Dibujo</b> trae formas y líneas, <b>Insertar</b> lo que va de fuera (texto, tablas, símbolos, imágenes, enlaces) y <b>Medir y cuadrícula</b> la escala y las guías.' },

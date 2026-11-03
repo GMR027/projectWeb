@@ -295,7 +295,7 @@
 }
 
 @keyframes fila-foco {
-  0%, 60% { background-color: rgba(249, 115, 22, 0.35); }
+  0%, 60% { background-color: var(--primary-line); }
   100% { background-color: transparent; }
 }
 

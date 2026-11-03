@@ -1,31 +1,28 @@
-<?php $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id; ?>
-<div class="page-header">
-    <div>
-        <h2><?php echo archivo_icono_html('png'); ?> <?php echo s($grafico->nombre); ?></h2>
-        <p class="text-muted"><?php echo s(formatear_fecha($grafico->creado, 'd/m/Y H:i')); ?> · <?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?> px</p>
-        <div class="herr-meta">
-            <span class="herr-chip"><i class="fa-regular fa-calendar"></i><?php echo s(formatear_fecha($grafico->creado, 'd/m/Y')); ?></span>
-            <span class="herr-chip"><i class="fa-solid fa-expand"></i><b><?php echo (int)$grafico->ancho; ?> × <?php echo (int)$grafico->alto; ?></b> px</span>
-            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i><b><?php echo count($laminas); ?></b> <?php echo count($laminas) === 1 ? 'lámina' : 'láminas'; ?></span>
-        </div>
-    </div>
-    <div class="la-controles">
-        <?php if ($puedeEditar): ?><a href="/graficos/abrir?<?php echo $q; ?>" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Editar</a><?php endif; ?>
-        <?php $hayPng = array_filter($laminas, fn($l) => $l->marcas_png); ?>
-        <?php if ($puedeDescargar && $hayPng): ?>
-            <details class="gr-descargar">
-                <summary class="btn btn-ghost"><i class="fa-solid fa-download"></i> Descargar</summary>
-                <div class="gr-descargar-menu">
-                    <a href="/graficos/descargar?<?php echo $q; ?>&formato=png"><i class="fa-regular fa-image"></i> <?php echo count($laminas) > 1 ? 'PNG (ZIP con todas las láminas)' : 'PNG'; ?></a>
-                    <a href="/graficos/descargar?<?php echo $q; ?>&formato=pdf"><i class="fa-regular fa-file-pdf"></i> PDF</a>
-                    <a href="/graficos/descargar?<?php echo $q; ?>&formato=odp"><i class="fa-regular fa-file-powerpoint"></i> Presentación .odp</a>
-                </div>
-            </details>
-        <?php endif; ?>
-        <?php if ($puedeEditar && $hayPng): ?><a href="/graficos/abrir?<?php echo $q; ?>#exportar" class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Otro formato o tamaño</a><?php endif; ?>
-        <a href="/graficos?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Gráficos</a>
-    </div>
-</div>
+<?php $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$grafico->id;
+$hayPng = array_filter($laminas, fn($l) => $l->marcas_png);
+$lzAcciones = [];
+if ($puedeEditar) $lzAcciones[] = ['url' => '/graficos/abrir?' . $q, 'texto' => s(t('Editar')), 'icono' => 'fa-pen', 'clase' => 'btn btn-primary'];
+if ($puedeDescargar && $hayPng) {
+    $lzAcciones[] = ['tipo' => 'html', 'html' => '<details class="gr-descargar"><summary class="btn btn-ghost"><i class="fa-solid fa-download"></i> ' . s(t('Descargar')) . '</summary><div class="gr-descargar-menu">'
+        . '<a href="/graficos/descargar?' . $q . '&formato=png"><i class="fa-regular fa-image"></i> ' . (count($laminas) > 1 ? 'PNG (ZIP con todas las láminas)' : 'PNG') . '</a>'
+        . '<a href="/graficos/descargar?' . $q . '&formato=pdf"><i class="fa-regular fa-file-pdf"></i> PDF</a>'
+        . '<a href="/graficos/descargar?' . $q . '&formato=odp"><i class="fa-regular fa-file-powerpoint"></i> ' . s(t('Presentación .odp')) . '</a>'
+        . '</div></details>'];
+}
+if ($puedeEditar && $hayPng) $lzAcciones[] = ['url' => '/graficos/abrir?' . $q . '#exportar', 'texto' => s(t('Otro formato o tamaño')), 'icono' => 'fa-file-export'];
+$lz = [
+    'icono' => 'fa-pen-ruler',
+    'titulo' => $grafico->nombre,
+    'subtitulo' => formatear_fecha($grafico->creado, 'd/m/Y H:i') . ' · ' . (int)$grafico->ancho . ' × ' . (int)$grafico->alto . ' px',
+    'chips' => [
+        ['icono' => 'fa-calendar', 'texto' => s(formatear_fecha($grafico->creado, 'd/m/Y'))],
+        ['icono' => 'fa-expand', 'texto' => '<b>' . (int)$grafico->ancho . ' × ' . (int)$grafico->alto . '</b> px'],
+        ['icono' => 'fa-layer-group', 'texto' => '<b>' . count($laminas) . '</b> ' . (count($laminas) === 1 ? 'lámina' : 'láminas')],
+    ],
+    'acciones' => array_merge($lzAcciones, [['url' => '/graficos?proyecto=' . (int)$proyecto->id, 'texto' => '← ' . s(t('Gráficos'))]]),
+];
+include __DIR__ . '/../lienzo/_cabecera.php';
+?>
 <div class="card gr-vista">
     <?php if ($hayPng): ?>
         <div class="gr-laminas-galeria" style="<?php echo count($hayPng) === 1 ? 'display:block' : ''; ?>">

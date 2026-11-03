@@ -357,9 +357,16 @@ class VplanController
         $hermanas = $paquete ? $paquete->laminas(!puede_gestionar_proyecto($proyecto)) : [];
         $datos = Vplan::datos($l, $proyecto);
         $enLamina = array_map(fn($t) => (int)$t['tabla']->id, $datos['tablas']);
+        $edita = puede_gestionar_proyecto($proyecto);
+        $modo = (string)($_GET['modo'] ?? '');
+        if (!in_array($modo, ['ver', 'acomodar', 'dibujar'], true)) $modo = !empty($_GET['diseno']) ? 'acomodar' : 'ver';
+        if (!$edita && $modo !== 'ver') $modo = 'ver';
+        if ($modo === 'dibujar' && !$l->plano) $modo = 'ver';
         $router->render('vplan/ver', $datos + [
             'titulo' => 'vPlan - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l, 'paquete' => $paquete, 'hermanas' => $hermanas,
-            'puedeEditar' => puede_gestionar_proyecto($proyecto),
+            'puedeEditar' => $edita,
+            'modoInicial' => $modo,
+            'config' => $edita && $l->plano ? self::configMarcas($proyecto, $l, $datos, '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id . '&modo=' . (!empty($_GET['auto']) ? 'ver' : 'dibujar'), !empty($_GET['auto'])) : null,
             'notas' => array_map(fn($n) => $n->aArray(), \Model\VplanNota::deLamina((int)$l->id)),
             'catalogo' => array_values(array_filter(VplanTabla::deProyecto((int)$proyecto->id), fn($t) => !in_array((int)$t->id, $enLamina, true))),
             'catalogoTablas' => puede_gestionar_proyecto($proyecto) ? self::catalogoTablas($proyecto, $enLamina) : [],
@@ -404,7 +411,28 @@ class VplanController
         return $out;
     }
 
-    /** Editor de marcas (Konva) sobre el plano */
+    /** Configuración del editor de marcas (Konva): la comparten el editor del vPlan y la lámina unificada */
+    private static function configMarcas(\Model\Proyecto $proyecto, VplanLamina $l, array $datos, string $volver, bool $auto = false): array
+    {
+        return [
+            'modo' => 'vplan',
+            'lamina' => (int)$l->id, 'proyecto' => (int)$proyecto->id,
+            'plano' => '/uploads/vplan/' . $l->plano, 'nombre' => $l->titulo,
+            'marcas' => $l->marcas_json ? json_decode($l->marcas_json, true) : null,
+            'actividades' => array_map(fn($t) => ['id' => (int)$t['actividad']->id, 'seq' => $t['seq'], 'nombre' => $t['actividad']->nombre, 'estado' => $t['estado']], $datos['tareas']),
+            'restricciones' => $datos['restricciones'],
+            'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id), 'graficos' => \Model\Grafico::paraInsertar((int)$proyecto->id),
+            'urlSimbolos' => '/simbolos?proyecto=' . $proyecto->id,
+            'cajetines' => \Model\Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
+            'destinos' => \Classes\EnlacesLamina::destinos((int)$proyecto->id),
+            'materiales' => \Classes\MaterialesLamina::config($proyecto, $l),
+            'hash' => $datos['hash'],
+            'auto' => $auto,
+            'volver' => $volver,
+        ];
+    }
+
+    /** Editor de marcas (Konva): desde la lámina unificada es el modo «Dibujar». Se conserva la URL por compatibilidad. */
     public static function editor(Router $router)
     {
         $proyecto = proyecto_de_peticion(true);
@@ -413,25 +441,8 @@ class VplanController
             header('Location: /vplan' . ($l ? '/ver?proyecto=' . $proyecto->id . '&id=' . $l->id : '?proyecto=' . $proyecto->id) . '&error=' . urlencode('Sube primero la imagen del plano'));
             exit;
         }
-        $datos = Vplan::datos($l, $proyecto);
-        $router->render('vplan/editor', [
-            'titulo' => 'Marcas - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l,
-            'config' => [
-                'lamina' => (int)$l->id, 'proyecto' => (int)$proyecto->id,
-                'plano' => '/uploads/vplan/' . $l->plano, 'nombre' => $l->titulo,
-                'marcas' => $l->marcas_json ? json_decode($l->marcas_json, true) : null,
-                'actividades' => array_map(fn($t) => ['id' => (int)$t['actividad']->id, 'seq' => $t['seq'], 'nombre' => $t['actividad']->nombre, 'estado' => $t['estado']], $datos['tareas']),
-                'restricciones' => $datos['restricciones'],
-                'simbolos' => \Model\Simbolo::paraEditor((int)$proyecto->id), 'graficos' => \Model\Grafico::paraInsertar((int)$proyecto->id),
-                'urlSimbolos' => '/simbolos?proyecto=' . $proyecto->id,
-                'cajetines' => \Model\Cajetin::paraEditor((int)$proyecto->id), 'proyectoNombre' => $proyecto->nombre, 'usuario' => (string)($_SESSION['nombre'] ?? ''),
-                'destinos' => \Classes\EnlacesLamina::destinos((int)$proyecto->id),
-                'materiales' => \Classes\MaterialesLamina::config($proyecto, $l),
-                'hash' => $datos['hash'],
-                'auto' => !empty($_GET['auto']),
-                'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id,
-            ],
-        ]);
+        header('Location: /vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id . '&modo=dibujar' . (!empty($_GET['auto']) ? '&auto=1' : ''));
+        exit;
     }
 
     /** Huella de las tablas de la lámina (datos de SheetFlow incluidos): la página la consulta para refrescarse sola */

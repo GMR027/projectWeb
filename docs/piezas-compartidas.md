@@ -49,6 +49,7 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 | Pieza | Clases | Para qué | Quién la usa |
 |---|---|---|---|
 | `_tabs.scss` | `.pestanas` (alias `.vp-pestanas`, `.ve-pestanas`, `.rd-pestanas`, `.sf-pestanas`) | Barra de pestañas de página; la activa se marca con `.activo`/`.activa` o `aria-selected` | vPlan, Editor de marcas, Redactor, SheetFlow |
+| `_workspace.scss` | `.page-header`, `.programa-header`, `.card`, `.card-titulo`, `.pestanas`, `.btn-primary`, `.herr-meta`/`.herr-chip` (+ acentos de cada herramienta) | Capa visual del «espacio de trabajo»: cabecera con icono y halo, superficies, pestañas y barras. Se activa con `body[data-vista]`, así que la usan **todas las herramientas** (las cabeceras de formulario, sin icono en el `h2`, quedan ligeras). Nació en vPlan, Editor, SheetFlow, Anotador y Archivo | Todas las herramientas de la app |
 | `_paneles.scss` | `.pn-cab`, `.pn-cab-ico`, `.pn-cab-txt`, `.pn-cab-acc` | Cabecera de panel lateral (icono + título + acciones) | vPlan (modo diseño), Editor de marcas, Redactor («Páginas» y «Panel») |
 | | `.pn-tabs` (alias `.ve-tabs`, `.rd-tabs`), `.pn-cont` | Pestañas del panel: píldoras de 2×2 con contador | ídem |
 | | `.pn-busca` | Buscador con lupa (envuelve `input[type=search]` o `type=text`) | vPlan, Editor de marcas, Símbolos |
@@ -63,6 +64,13 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 **Panel con cabecera y pestañas pegajosas** (vPlan): cabecera + pestañas van dentro de `.pn-cab-bloque`, que es lo pegajoso; su **alto se mide con JS** y se publica en la variable `--pn-cab-alto` del panel, para que lo que va debajo (p. ej. la barra de búsqueda de «Insertar», `top: var(--pn-cab-alto)`) se detenga justo debajo y nunca se monte encima. **Las pestañas no llevan alto fijo**: si ocupan dos filas, la caja crece (con altura fija la segunda fila se salía y se montaba sobre el contenido).
 
 `public/vendor/selector-color.js` → `window.VPColor.iniciar(raiz?)`: la **paleta de colores de la plataforma** para todos los `input[type=color]` (básicos, maestra Pantone, mis colores, gotero). Los paneles que se re-dibujan la llaman con su raíz (p. ej. `VPColor.iniciar(document.getElementById('vp-dis-campos'))`); los listeners globales se registran una sola vez.
+
+## Espacio de trabajo de láminas (`vPlan` y `Editor`)
+
+- **`views/lienzo/_cabecera.php`** (`$lz`): cabecera común de un lienzo — icono, título, subtítulo, chips (`herr-chip`) y acciones. Admite `titulo_html` (título con marcado, p. ej. el nombre editable del Editor) y acciones `['tipo' => 'html']` para formularios/botones propios. La usan `vplan/ver`, `graficos/ver` y `graficos/abrir`.
+- **`public/vendor/lienzo-modos.js`** (`window.LienzoModos`): cambia **Ver · Acomodar · Dibujar** sin recargar. Los botones llevan `data-lz-modo`, los contenedores `data-lz-panel="ver acomodar"` (varios modos separados por espacio) y el `<body>` recibe `data-modo-lienzo`. Emite `vp:modo` para que cada motor re-mida su lienzo; `data-lz-url` actualiza la URL con `history.replaceState`. El servidor pinta el modo inicial (enlaces `?modo=` y sin JS siguen funcionando).
+- **Regla de los motores:** los atajos globales del modo diseño y del editor Konva solo responden en su modo (`data-modo-lienzo`). Así los dos motores conviven en la misma página sin pisarse el `Ctrl+Z`, `Supr` ni las flechas. Las capas `.vp-ov` del modo diseño se ocultan fuera de `.vp-diseno`.
+- **Rebanada «Planos y láminas»:** `pestanas_herramienta('planos', …)` reúne vPlan · Tablas adicionales · Gráficos · Símbolos en una sola barra (`views/vplan/_tabs.php`); el Editor y Símbolos la usan como cabecera cruzada.
 
 ## Estado vacío ilustrado y tour de guía rápida (2026-10-25)
 

@@ -1,5 +1,14 @@
 # vPlan — vPlans (paquetes) de láminas libres de bloques (2026-10-18)
 
+## Espacio de trabajo unificado (2026-11-03)
+`/vplan/ver` es **una sola página con tres modos**: **Ver** (zoom, buscar, tareas, notas), **Acomodar** (bloques del modo diseño) y **Dibujar** (editor Konva sobre el plano). Se cambian sin recargar con `public/vendor/lienzo-modos.js`, que pone `data-modo-lienzo` en el `<body>` y emite `vp:modo`; el servidor pinta el modo inicial con `?modo=ver|acomodar|dibujar` (los enlaces siguen funcionando sin JS). El antiguo `/vplan/editor` **redirige** a `?modo=dibujar` (y conserva `?auto=1`). `?diseno=1` se acepta como alias de `?modo=acomodar`.
+- La cabecera es la pieza compartida `views/lienzo/_cabecera.php` (título, chips y modos). El botón «Abrir» del gestor entra en Ver; «Editar datos» sigue en `/vplan/editar`.
+- El chrome del diseño (barra, panel, reglas) se renderiza siempre para editores, pero **solo se ve en Acomodar**: el CSS lo oculta con `body:not([data-modo-lienzo="acomodar"])` y `.vp-dis-wrap:not(.vp-dis-on)`. Las capas `.vp-ov` se ocultan fuera de `.vp-sheet.vp-diseno`.
+- **Los dos motores conviven**: los atajos globales de `vplan-diseno.js` y `vplan-editor.js` se guardan con `data-modo-lienzo`, y `tablas-vivo.js` no refresca fuera de Ver. Al entrar en Dibujar se encuadra Konva (`__vplan.encuadrar()`); al entrar en Acomodar se redibujan reglas y escala (`__vpDiseno.activar()`).
+- **Dibujar sin saltos**: al entrar en Dibujar se oculta `#vp-shell` (lámina y navegador de miniaturas, que empujaban el editor hacia abajo) y el editor ocupa el espacio de trabajo con su panel a la **derecha**, en el mismo lado que el panel de Acomodar; el divisor también se mueve a la derecha. La página sube a la barra de modos y el botón **Láminas** vuelve a Ver para cambiar de lámina.
+- Las guías rápidas se disparan al entrar en su modo (no al cargar la página en Ver).
+- **Planos y láminas:** la barra `pestanas_herramienta('planos', …)` reúne vPlan · Tablas adicionales · Gráficos · Símbolos; es la misma en `/graficos` y `/simbolos`.
+
 Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm`, `preset`) con **bloques** posicionables.
 
 ## vPlans (paquetes) — varios por proyecto

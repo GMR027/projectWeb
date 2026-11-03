@@ -69,12 +69,17 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
                             <form method="POST" action="/vplan/lamina/mover"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><input type="hidden" name="dir" value="<?php echo $dir; ?>"><button type="submit" class="vp-ib" title="<?php echo $tt; ?>" aria-label="<?php echo $tt; ?>"><i class="fa-solid <?php echo $ico; ?>"></i></button></form>
                         <?php endforeach; ?>
                         </span>
-                        <a href="/vplan/editar?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" class="vp-ib" title="Editar lámina (título, imágenes, supervisor)" aria-label="Editar"><i class="fa-solid fa-pen"></i><span class="solo-movil">Editar</span></a>
-                        <form method="POST" action="/vplan/lamina/duplicar" title="Copia el diseño, las tablas y la simbología; el plano se sube aparte"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><button type="submit" class="vp-ib" aria-label="Duplicar"><i class="fa-regular fa-copy"></i></button></form>
-                        <form method="POST" action="/vplan/eliminar" data-confirm="¿Eliminar lámina?|Se borrarán sus imágenes y las marcas dibujadas.|Sí, eliminar">
-                            <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>">
-                            <button type="submit" class="vp-ib vp-ib-peligro" title="Eliminar lámina" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                        </form>
+                        <details class="gr-gal-menu">
+                            <summary class="vp-ib" title="Más acciones (editar datos, duplicar, eliminar)" aria-label="Más acciones"><i class="fa-solid fa-ellipsis-vertical"></i></summary>
+                            <div class="gr-gal-menu-in">
+                                <a href="/vplan/editar?<?php echo $q; ?>&id=<?php echo s($l->id); ?>"><i class="fa-solid fa-pen"></i> Editar datos de la lámina</a>
+                                <form method="POST" action="/vplan/lamina/duplicar" title="Copia el diseño, las tablas y la simbología; el plano se sube aparte"><input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>"><button type="submit"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
+                                <form method="POST" action="/vplan/eliminar" data-confirm="¿Eliminar lámina?|Se borrarán sus imágenes y las marcas dibujadas.|Sí, eliminar">
+                                    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($l->id); ?>">
+                                    <button type="submit" class="peligro"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+                                </form>
+                            </div>
+                        </details>
                     <?php endif; ?>
                     </div>
                 </td>

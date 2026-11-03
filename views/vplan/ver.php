@@ -1,104 +1,167 @@
 <?php
 use Model\VplanTabla;
 $fd = fn($f) => $f ? formatear_fecha($f) : '';
-$modoDiseno = $puedeEditar && !empty($_GET['diseno']);
 $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$lamina->id;
 $volver = $paquete ? '/vplan/paquete?proyecto=' . (int)$proyecto->id . '&id=' . (int)$paquete->id : '/vplan?proyecto=' . (int)$proyecto->id;
 $conNav = count($navLaminas) > 1 || ($paquete && $puedeEditar);
+// Un solo espacio de trabajo con tres modos: Ver · Acomodar bloques · Dibujar sobre el plano.
+// El servidor pinta el modo inicial (enlaces directos y sin JS) y lienzo-modos.js cambia sin recargar.
+$modoInicial = $modoInicial ?? 'ver';
+$puedeDibujar = $puedeEditar && !empty($lamina->plano) && !empty($config);
+if ($modoInicial === 'dibujar' && !$puedeDibujar) $modoInicial = 'ver';
+if ($modoInicial === 'acomodar' && !$puedeEditar) $modoInicial = 'ver';
+$modoDiseno = $modoInicial === 'acomodar';
+$urlModo = fn(string $m) => '/vplan/ver?' . $q . ($m === 'ver' ? '' : '&modo=' . $m);
+$lzModos = [['id' => 'ver', 'texto' => t('Ver'), 'icono' => 'fa-eye', 'url' => $urlModo('ver'), 'activo' => $modoInicial === 'ver']];
+if ($puedeEditar) {
+    $lzModos[] = ['id' => 'acomodar', 'texto' => t('Acomodar'), 'icono' => 'fa-vector-square', 'url' => $urlModo('acomodar'), 'activo' => $modoInicial === 'acomodar'];
+}
+if ($puedeDibujar) {
+    $lzModos[] = ['id' => 'dibujar', 'texto' => t('Dibujar'), 'icono' => 'fa-pen-ruler', 'url' => $urlModo('dibujar'), 'activo' => $modoInicial === 'dibujar'];
+}
+$lzExtra = '<button type="button" class="lz-modo" id="vp-tareas-btn" aria-expanded="false" title="' . s(t('Ver la lista de tareas de la lámina')) . '"><i class="fa-solid fa-list-check"></i> ' . s(t('Tareas')) . '</button>';
+if ($puedeEditar) {
+    $lzExtra .= '<button type="button" class="lz-modo" id="vp-nota-nueva" title="' . s(t('Crear una nota en esta lámina')) . '"><i class="fa-solid fa-note-sticky"></i> ' . s(t('Nota')) . '</button>';
+    $lzExtra .= '<a class="lz-modo" href="/vplan/editar?' . $q . '"' . glosario('lamina') . '><i class="fa-solid fa-sliders"></i> ' . s(t('Datos')) . '</a>';
+}
+$lz = [
+    'icono' => 'fa-sheet-plastic',
+    'titulo' => $lamina->titulo,
+    'subtitulo' => $proyecto->nombre . ($paquete ? ' · ' . $paquete->nombre : '') . ' · ' . (int)$lamina->ancho_mm . ' × ' . (int)$lamina->alto_mm . ' mm',
+    'chips' => array_merge(
+        [['icono' => 'fa-ruler-combined', 'texto' => '<b>' . (int)$lamina->ancho_mm . ' × ' . (int)$lamina->alto_mm . '</b> mm']],
+        [['icono' => 'fa-layer-group', 'texto' => '<b>' . count($navLaminas) . '</b> ' . (count($navLaminas) === 1 ? 'lámina' : 'láminas')]],
+        !empty($lamina->plano) ? [['icono' => 'fa-image', 'texto' => 'plano de fondo', 'suave' => true]] : []
+    ),
+    'volver' => ['url' => $volver, 'texto' => $paquete ? $paquete->nombre : 'Láminas'],
+    'modos' => $lzModos,
+    'modo_bar_extra' => $lzExtra,
+];
+include __DIR__ . '/../lienzo/_cabecera.php';
 ?>
-<div class="page-header no-print">
-    <div>
-        <h2><i class="fa-solid fa-sheet-plastic"></i> <?php echo s($lamina->titulo); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?><?php echo $paquete ? ' · ' . s($paquete->nombre) : ''; ?> · Hoja <?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?> mm</p>
-        <div class="herr-meta">
-            <span class="herr-chip"><i class="fa-solid fa-ruler-combined"></i><b><?php echo (int)$lamina->ancho_mm; ?> × <?php echo (int)$lamina->alto_mm; ?></b> mm</span>
-            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i><b><?php echo count($navLaminas); ?></b> <?php echo count($navLaminas) === 1 ? 'lámina' : 'láminas'; ?></span>
-            <?php if (!empty($lamina->plano)): ?><span class="herr-chip herr-chip-suave"><i class="fa-regular fa-image"></i> plano de fondo</span><?php endif; ?>
-        </div>
+
+<div class="vp-barra-pest no-print" data-lz-panel="ver"<?php echo $modoInicial !== 'ver' ? ' hidden' : ''; ?>>
+    <?php if ($conNav): ?><button type="button" class="btn btn-ghost" data-vp-nav-toggle aria-pressed="true" title="Mostrar u ocultar las láminas para tener más espacio"><i class="fa-solid fa-table-columns"></i> Láminas</button><?php endif; ?>
+    <div class="vp-buscar no-print">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="vp-buscar" placeholder="Buscar tarea, tabla o texto…" aria-label="Buscar en la lámina" autocomplete="off">
+        <div class="vp-buscar-lista" id="vp-buscar-lista" hidden></div>
     </div>
-    <div class="vp-herr">
-        <a href="<?php echo $volver; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo $paquete ? s($paquete->nombre) : 'Láminas'; ?></a>
+    <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
+    <div class="vp-zoom no-print" role="group" aria-label="Zoom de la lámina">
+        <button type="button" class="vp-zb" id="vp-zoom-menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
+        <span class="vp-zoom-val" id="vp-zoom-val" title="Tamaño de la lámina en pantalla (100 % = tamaño real, como en el PDF). En tablet o celular, pellizca con dos dedos">100 %</span>
+        <button type="button" class="vp-zb" id="vp-zoom-mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
+        <button type="button" class="btn btn-ghost" id="vp-zoom-fit" title="Ajustar la lámina al ancho disponible">Ajustar</button>
+        <button type="button" class="btn btn-ghost" id="vp-zoom-real" title="Ver la lámina a su tamaño real (igual que el PDF)">Real</button>
     </div>
 </div>
 
-<div class="vp-pestanas no-print" id="vp-pestanas" role="tablist" aria-label="Pestañas de herramientas">
-    <?php if ($puedeEditar): ?><button type="button" role="tab" class="activo" data-pest="lamina"><i class="fa-solid fa-sheet-plastic"></i> Lámina</button><?php endif; ?>
-    <button type="button" role="tab" data-pest="tareas"><i class="fa-solid fa-list-check"></i> Tareas</button>
-    <button type="button" role="tab" data-pest="vista"><i class="fa-regular fa-eye"></i> Vista</button>
-    <?php if ($puedeEditar): ?><button type="button" role="tab" data-pest="notas"><i class="fa-solid fa-note-sticky"></i> Notas</button><?php endif; ?>
+<?php if ($puedeDibujar): ?>
+<div class="vp-barra-pest no-print lz-panel" data-lz-panel="dibujar"<?php echo $modoInicial !== 'dibujar' ? ' hidden' : ''; ?>>
+    <span id="ve-estado" class="text-sm text-muted" aria-live="polite"></span>
+    <button type="button" id="ve-guardar" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <?php echo s(t('Guardar')); ?></button>
+    <button type="button" class="btn btn-ghost" data-tour="editor-canvas" title="Recorrer el editor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> <?php echo s(t('Guía rápida')); ?></button>
+    <button type="button" class="btn btn-ghost" id="ve-ampliar"><i class="fa-solid fa-expand"></i> <?php echo s(t('Ampliar')); ?></button>
+    <?php if ($conNav): ?><a class="btn btn-ghost" href="<?php echo $urlModo('ver'); ?>" data-lz-modo="ver" data-lz-url="<?php echo $urlModo('ver'); ?>"><i class="fa-solid fa-table-columns"></i> <?php echo s(t('Láminas')); ?></a><?php endif; ?>
 </div>
-<div class="vp-barra-pest no-print" id="vp-barra-pest">
-    <?php if ($puedeEditar): ?>
-    <div class="vp-herr" data-panel="lamina">
-        <?php if (!$modoDiseno): ?><a href="/vplan/ver?<?php echo $q; ?>&diseno=1" class="btn btn-primary" data-ayuda="Acomodar bloques (modo diseño): mueve y redimensiona lo que hay en la hoja e inserta tablas, estampas, símbolos y títulos" data-ayuda-titulo="Acomodar bloques"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a><?php endif; ?>
-        <?php if ($lamina->plano && !$modoDiseno): ?><a href="/vplan/editor?<?php echo $q; ?>" class="btn btn-ghost" data-ayuda="Dibuja sobre el plano: líneas, formas, textos, símbolos y enlaces" data-ayuda-titulo="Dibujar sobre el plano"><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Dibujar sobre el plano')); ?></a><?php endif; ?>
-        <a href="/vplan/editar?<?php echo $q; ?>" class="btn btn-ghost"<?php echo glosario('lamina'); ?>><i class="fa-solid fa-sliders"></i> <?php echo s(t('Datos de la lámina')); ?></a>
-    </div>
-    <?php endif; ?>
-    <div class="vp-herr" data-panel="vista"<?php echo $puedeEditar ? ' hidden' : ''; ?>>
-        <?php if ($conNav && !$modoDiseno): ?><button type="button" class="btn btn-ghost" data-vp-nav-toggle aria-pressed="true" title="Mostrar u ocultar las láminas para tener más espacio"><i class="fa-solid fa-table-columns"></i> Láminas</button><?php endif; ?>
-        <div class="vp-buscar no-print">
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input type="search" id="vp-buscar" placeholder="Buscar tarea, tabla o texto…" aria-label="Buscar en la lámina" autocomplete="off">
-            <div class="vp-buscar-lista" id="vp-buscar-lista" hidden></div>
-        </div>
-        <button type="button" class="btn btn-ghost" id="vp-ampliar"><i class="fa-solid fa-expand"></i> Ampliar</button>
-        <div class="vp-zoom no-print" role="group" aria-label="Zoom de la lámina">
-            <button type="button" class="vp-zb" id="vp-zoom-menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
-            <span class="vp-zoom-val" id="vp-zoom-val" title="Tamaño de la lámina en pantalla (100 % = tamaño real, como en el PDF). En tablet o celular, pellizca con dos dedos">100 %</span>
-            <button type="button" class="vp-zb" id="vp-zoom-mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
-            <button type="button" class="btn btn-ghost" id="vp-zoom-fit" title="Ajustar la lámina al ancho disponible">Ajustar</button>
-            <button type="button" class="btn btn-ghost" id="vp-zoom-real" title="Ver la lámina a su tamaño real (igual que el PDF)">Real</button>
-        </div>
-    </div>
-    <div class="vp-herr" data-panel="tareas" hidden>
-        <span class="text-muted text-sm"><i class="fa-solid fa-hand-pointer"></i> Toca una tarea para ver o actualizar sus datos.</span>
-    </div>
-    <?php if ($puedeEditar): ?>
-    <div class="vp-herr" data-panel="notas" hidden>
-        <button type="button" class="btn btn-ghost" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button>
-    </div>
-    <?php endif; ?>
-</div>
+<?php endif; ?>
+
 <div class="vp-tareas no-print" id="vp-tareas" hidden></div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // (Se espera al DOM completo: #vp-shell se dibuja más abajo que esta pestaña.)
-    var ls = 'vp-pestana', primera = <?php echo $puedeEditar ? "'lamina'" : "'vista'"; ?>;
-    function mostrar(p) {
-        document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.classList.toggle('activo', b.dataset.pest === p); });
-        document.querySelectorAll('#vp-barra-pest [data-panel]').forEach(function (x) { x.hidden = x.dataset.panel !== p; });
-        var lista = document.getElementById('vp-tareas'), shell = document.getElementById('vp-shell');
-        if (lista) lista.hidden = p !== 'tareas';
-        if (shell) shell.classList.toggle('vp-oculto-tareas', p === 'tareas');
-        document.body.classList.toggle('vp-ver-tareas', p === 'tareas');
-        try { localStorage.setItem(ls, p); } catch (e) { /* sin almacenamiento */ }
-        document.dispatchEvent(new CustomEvent('vp:pestana', { detail: { pest: p } }));
+(function () {
+    // Modo inicial pintado por el servidor: el CSS y los motores lo leen del body.
+    document.body.dataset.modoLienzo = <?php echo json_encode($modoInicial, JSON_HEX_TAG); ?>;
+    // El motor de «Acomodar» se carga la primera vez que se entra (en Ver no hace falta y ahorra trabajo).
+    var disenoSrc = <?php echo json_encode('/vendor/vplan-diseno.js?v=' . filemtime(__DIR__ . '/../../public/vendor/vplan-diseno.js'), JSON_HEX_TAG); ?>;
+    var disenoCargando = false;
+    function cargarDiseno(alCargar) {
+        if (window.__vpDiseno) { window.__vpDiseno.activar(); if (alCargar) alCargar(); return; }
+        if (!window.VP_DISENO) { document.addEventListener('DOMContentLoaded', function () { cargarDiseno(alCargar); }, { once: true }); return; }
+        if (disenoCargando) return;
+        disenoCargando = true;
+        var s = document.createElement('script');
+        s.src = disenoSrc;
+        s.onload = function () {
+            disenoCargando = false;
+            if (window.__vpDiseno) { window.__vpDiseno.activar(); if (alCargar) alCargar(); }
+        };
+        s.onerror = function () { disenoCargando = false; };
+        document.head.appendChild(s);
     }
-    document.querySelectorAll('#vp-pestanas [data-pest]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.pest); }); });
-    var g = primera; try { g = localStorage.getItem(ls) || primera; } catch (e) { /* idem */ }
-    if (!document.querySelector('#vp-pestanas [data-pest="' + g + '"]')) g = primera;
-    mostrar(g);
-});
+
+    // Lista de tareas: se abre debajo de la hoja (en móvil reemplaza la vista si no cabe).
+    var bt = document.getElementById('vp-tareas-btn'), lista = document.getElementById('vp-tareas');
+    if (bt && lista) bt.addEventListener('click', function () {
+        lista.hidden = !lista.hidden;
+        bt.setAttribute('aria-expanded', lista.hidden ? 'false' : 'true');
+        bt.classList.toggle('activo', !lista.hidden);
+        if (!lista.hidden) {
+            document.dispatchEvent(new CustomEvent('vp:pestana', { detail: { pest: 'tareas' } }));
+            lista.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+
+    // Al cambiar de modo, acomodar el motor que entra (reglas, escala del lienzo, Konva).
+    document.addEventListener('vp:modo', function (e) {
+        var m = e.detail && e.detail.modo, shell = document.getElementById('vp-shell'), sheet = document.getElementById('vp-sheet'), wrap = document.querySelector('.vp-dis-wrap');
+        if (sheet) sheet.classList.toggle('vp-diseno', m === 'acomodar');
+        if (shell) {
+            shell.classList.toggle('vp-shell-diseno', m === 'acomodar');
+            if (m === 'acomodar') shell.classList.remove('vp-sin-reglas');
+        }
+        if (wrap) wrap.classList.toggle('vp-dis-on', m === 'acomodar');
+        document.querySelectorAll('.estado-vacio-hoja').forEach(function (x) { x.hidden = m === 'acomodar'; });
+        if (m === 'acomodar') {
+            cargarDiseno(function () {
+                if (window.Tour && !window.Tour.yaVisto('vplan-diseno')) setTimeout(function () { window.Tour.iniciar('vplan-diseno'); }, 260);
+            });
+        }
+        if (m === 'dibujar') {
+            requestAnimationFrame(function () {
+                if (window.__vplan) window.__vplan.encuadrar();
+                window.dispatchEvent(new Event('resize'));
+                // La hoja y el navegador se ocultan; subir a la barra de modos para no quedarse «abajo».
+                var barra = document.querySelector('.lz-modos');
+                if (barra) {
+                    var offset = window.matchMedia('(max-width: 48rem)').matches ? 72 : 8;   // barra superior fija en móvil
+                    window.scrollTo({ top: Math.max(0, barra.getBoundingClientRect().top + window.scrollY - offset), behavior: 'auto' });
+                }
+            });
+            if (window.Tour && !window.Tour.yaVisto('editor-canvas')) setTimeout(function () { window.Tour.iniciar('editor-canvas'); }, 420);
+        }
+        if (m === 'ver') requestAnimationFrame(function () { window.dispatchEvent(new Event('resize')); });
+        // La hoja pudo estar oculta (Dibujar): al mostrarla se vuelve a ajustar la letra de las tablas.
+        setTimeout(function () {
+            if (window.vplanAjustar) window.vplanAjustar();
+            if (window.vplanAjustar) window.dispatchEvent(new Event('resize'));
+        }, 90);
+    });
+
+    // Si la página abre directamente en «Dibujar», el editor termina de montar y se encuadra.
+    document.addEventListener('vplan:listo', function () {
+        if (document.body.dataset.modoLienzo === 'dibujar' && window.__vplan) window.__vplan.encuadrar();
+    });
+})();
 </script>
+<script src="/vendor/lienzo-modos.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/lienzo-modos.js'); ?>"></script>
 
 <?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del vPlan.</div><?php endif; ?>
 <?php if ($puedeEditar && $desactualizada): ?>
 <div class="alerta alerta-error no-print">El avance del programa cambió desde que se dibujaron las marcas: el plano está desactualizado.
-    <a href="/vplan/editor?<?php echo $q; ?>&auto=1" class="btn btn-sm btn-primary" style="margin-left:1rem">Actualizar plano</a></div>
+    <a href="/vplan/ver?<?php echo $q; ?>&modo=dibujar&auto=1" class="btn btn-sm btn-primary" style="margin-left:1rem">Actualizar plano</a></div>
 <?php endif; ?>
 
-<?php if ($modoDiseno) include __DIR__ . '/_diseno-barra.php'; ?>
-<div class="vp-shell<?php echo $conNav ? ' vp-con-nav' : ''; ?><?php echo $modoDiseno ? ' vp-shell-diseno' : ''; ?>" id="vp-shell">
+<?php if ($puedeEditar) include __DIR__ . '/_diseno-barra.php'; ?>
+<div class="vp-shell<?php echo $conNav ? ' vp-con-nav' : ''; ?><?php echo $modoDiseno ? ' vp-shell-diseno' : ' vp-sin-reglas'; ?>" id="vp-shell">
 <?php if ($conNav) include __DIR__ . '/_nav-laminas.php'; ?>
-<div class="vp-dis-wrap<?php echo $modoDiseno ? ' vp-dis-on' : ''; ?>">
-<?php if ($modoDiseno): ?>
+<div class="vp-dis-wrap<?php echo $modoDiseno ? ' vp-dis-on' : ''; ?>" data-lz-panel="ver acomodar"<?php echo $modoInicial === 'dibujar' ? ' hidden' : ''; ?>>
 <div class="vp-reglas" id="vp-reglas">
     <div class="vp-regla-esq"></div>
     <div class="vp-regla-celda vp-regla-celda-x"><canvas class="vp-regla" id="vp-regla-x" title="Arrastra hacia la hoja para crear una guía horizontal"></canvas></div>
     <div class="vp-regla-celda vp-regla-celda-y"><canvas class="vp-regla" id="vp-regla-y" title="Arrastra hacia la hoja para crear una guía vertical"></canvas></div>
     <div class="vp-reglas-hoja">
-<?php endif; ?>
 <div class="vp-hoja" id="vp-hoja">
 <button type="button" class="vp-cerrar-ampliado no-print" id="vp-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 <?php include __DIR__ . '/_hoja.php'; ?>
@@ -109,22 +172,26 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
     <b><?php echo s(t('Esta hoja está vacía')); ?></b>
     <p><?php echo s(t('Acomoda los bloques (tablas del programa, estampas, símbolos…) y sube el plano de fondo. Se hace en dos minutos.')); ?></p>
     <div class="estado-vacio-acciones">
-        <a class="btn btn-primary" href="/vplan/ver?<?php echo $q; ?>&diseno=1&amp;tour=1"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a>
+        <a class="btn btn-primary" href="<?php echo $urlModo('acomodar'); ?>&amp;tour=1"><i class="fa-solid fa-vector-square"></i> <?php echo s(t('Acomodar bloques')); ?></a>
         <a class="btn btn-ghost" href="/vplan/editar?<?php echo $q; ?>"><i class="fa-regular fa-image"></i> <?php echo s(t('Subir el plano')); ?></a>
         <a class="btn btn-ghost" href="/manual<?php echo $proyecto ? '?proyecto=' . (int)$proyecto->id : ''; ?>#vplan"><i class="fa-regular fa-circle-question"></i> <?php echo s(t('Guía de 1 minuto')); ?></a>
     </div>
 </div>
 <?php endif; ?>
 </div><!-- /vp-hoja -->
-<?php if ($modoDiseno): ?>
     </div>
 </div>
-<?php endif; ?>
-<?php if ($modoDiseno) include __DIR__ . '/_diseno-panel.php'; ?>
+<?php if ($puedeEditar) include __DIR__ . '/_diseno-panel.php'; ?>
 </div>
 </div><!-- /vp-shell -->
 
-<div class="vp-zoom-flot no-print" role="group" aria-label="Zoom y navegación de la lámina">
+<?php if ($puedeDibujar): ?>
+<div class="lz-panel" id="vp-modo-dibujar" data-lz-panel="dibujar"<?php echo $modoInicial !== 'dibujar' ? ' hidden' : ''; ?>>
+    <?php include __DIR__ . '/_editor-lienzo.php'; ?>
+</div>
+<?php endif; ?>
+
+<div class="vp-zoom-flot no-print" data-lz-panel="ver acomodar" role="group" aria-label="Zoom y navegación de la lámina"<?php echo $modoInicial === 'dibujar' ? ' hidden' : ''; ?>>
     <button type="button" data-vpz="menos" title="Alejar" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
     <span id="vp-zoom-flot-val" class="vp-zoom-flot-val">100 %</span>
     <button type="button" data-vpz="mas" title="Acercar" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
@@ -132,7 +199,7 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
     <button type="button" data-vpz="centro" title="Centrar la lámina" aria-label="Centrar"><i class="fa-solid fa-crosshairs"></i></button>
 </div>
 
-<section class="card vp-acciones no-print" id="vp-acciones">
+<section class="card vp-acciones no-print" id="vp-acciones" data-lz-panel="ver acomodar"<?php echo $modoInicial === 'dibujar' ? ' hidden' : ''; ?>>
     <div class="vp-notas">
         <h4><i class="fa-solid fa-note-sticky"></i> Notas</h4>
         <p class="text-muted" id="vp-notas-vacio" hidden>Aún no hay notas en esta lámina.</p>
@@ -154,7 +221,7 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
     // Se amplía la página (main), no solo la lámina: así siguen viéndose las paletas, los menús,
     // las hojas inferiores y los modales, que cuelgan fuera de la lámina.
     const escena = document.getElementById('contenido-principal') || hoja;
-    const enDiseno = <?php echo $modoDiseno ? 'true' : 'false'; ?>;
+    const enDiseno = () => document.body.dataset.modoLienzo === 'acomodar';
     const modalConfirm = document.getElementById('modal-confirm');   // se mueve dentro de la lámina para que se vea a pantalla completa
     let barraAmp = null, panelAmp = null;
     const abrir = () => {
@@ -164,7 +231,7 @@ if ($puedeEditar && !$modoDiseno && empty($bloques)): ?>
         const zoomFlot = document.querySelector('.vp-zoom-flot');
         if (zoomFlot && window.CapaSuperior) CapaSuperior.adoptar(zoomFlot);
         // En modo diseño la barra y el panel quedan dentro de la lámina: si no, la vista ampliada los taparía.
-        if (enDiseno) {
+        if (enDiseno()) {
             const barra = document.getElementById('vp-dis-barra');
             if (barra && !barra.classList.contains('vp-dis-barra-amp')) {
                 barraAmp = { nodo: barra, padre: barra.parentNode, sig: barra.nextSibling };
@@ -574,16 +641,18 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <?php endif; ?>
 
-<?php if (!$modoDiseno): ?>
+<?php // La actualización en vivo de tablas se salta sola cuando el lienzo no está en modo Ver ?>
 <script>window.TABLAS_VIVO = { url: '/api/vplan/tablas-version', datos: { lamina: <?php echo (int)$lamina->id; ?> } };</script>
 <script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>
-<?php endif; ?>
 <script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
+<?php // gestos-lienzo, capa-superior y hoja-inferior también los carga el editor de marcas; no se repiten ?>
+<?php if (!$puedeDibujar): ?>
 <script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
 <script src="/vendor/capa-superior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/capa-superior.js'); ?>"></script>
 <script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
+<?php endif; ?>
 <script src="/vendor/vplan-zoom.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-zoom.js"); ?>"></script>
-<?php if ($modoDiseno): ?>
+<?php if ($puedeEditar): ?>
 <script>
 window.VP_DISENO = <?php echo json_encode([
     'lamina' => (int)$lamina->id, 'proyecto' => (int)$proyecto->id, 'volver' => '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $lamina->id,
@@ -602,14 +671,16 @@ window.VP_DISENO = <?php echo json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
 <script src="/vendor/kit-edicion.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/kit-edicion.js'); ?>"></script>
+<?php if ($modoDiseno): ?>
 <script src="/vendor/vplan-diseno.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-diseno.js"); ?>"></script>
+<?php endif; ?>
 <?php endif; ?>
 <script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
 <script>
 // Guía rápida del «Acomodar bloques»: se muestra sola la primera vez (y con el botón de la barra o ?tour=1).
 // Los pasos que destacan una pestaña del panel la abren antes con alEntrar.
 window.Tour.registrar('vplan-diseno', {
-    auto: true,
+    auto: <?php echo $modoDiseno ? 'true' : 'false'; ?>,
     pasos: [
         { icono: 'fa-vector-square', titulo: 'Acomodar bloques', texto: 'Aquí se arma la lámina: cada bloque (tablas del programa, estampas, títulos…) se <b>arrastra</b> para moverlo y se estira por sus <b>esquinas</b>. Nada se guarda hasta que pulsas «Guardar diseño».' },
         { sel: '#vp-dis-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar diseño', texto: 'Guarda la posición y el tamaño de todos los bloques. También con <b>Ctrl + S</b>. Antes de salirte te avisa si algo quedó sin guardar.' },
@@ -620,3 +691,4 @@ window.Tour.registrar('vplan-diseno', {
     ]
 });
 </script>
+<?php if ($puedeDibujar) include __DIR__ . '/_editor-scripts.php'; ?>

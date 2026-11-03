@@ -105,7 +105,7 @@ class TemaProyecto
 
     /** id => [nombre, tono para tema claro, tono para tema oscuro] */
     public const PALETAS = [
-        'naranja'   => ['Naranja CivilTech', '#ea580c', '#f97316'],
+        'naranja'   => ['Naranja Base',      '#ea580c', '#f97316'],
         'teja'      => ['Teja',              '#c2410c', '#ea580c'],
         'ambar'     => ['Ámbar',             '#d97706', '#f59e0b'],
         'oro'       => ['Oro',               '#ca8a04', '#eab308'],
@@ -213,24 +213,33 @@ class TemaProyecto
             $inkClaro = self::tinta($claro, '#f5f7fa');
             $inkOscuro = self::tinta($oscuro, '#1e293b');
 
+            // --primary-soft / --primary-line son el tinte y la línea derivados del acento:
+            // las herramientas los usan en hover, pestañas activas y avisos en vez de
+            // naranjas fijos, así cualquier paleta se ve coherente.
             $css .= ':root{--primary:' . $oscuro
                 . ';--primary-ink:' . $inkOscuro
                 . ';--on-primary:' . $onOscuro
                 . ';--on-primary-hover:' . $onOscuroHover
                 . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
-                . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}'
+                . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)'
+                . ';--primary-soft:rgba(' . implode(',', $ro) . ',.16)'
+                . ';--primary-line:rgba(' . implode(',', $ro) . ',.45)}'
                 . ':root[data-theme="light"]{--primary:' . $claro
                 . ';--primary-ink:' . $inkClaro
                 . ';--on-primary:' . $onClaro
                 . ';--on-primary-hover:' . $onClaroHover
                 . ';--primary-hover:' . self::oscurecer($claro, 0.12)
-                . ';--primary-glow:rgba(' . implode(',', $rc) . ',.15)}'
+                . ';--primary-glow:rgba(' . implode(',', $rc) . ',.15)'
+                . ';--primary-soft:rgba(' . implode(',', $rc) . ',.12)'
+                . ';--primary-line:rgba(' . implode(',', $rc) . ',.35)}'
                 . ':root[data-theme="dark"]{--primary:' . $oscuro
                 . ';--primary-ink:' . $inkOscuro
                 . ';--on-primary:' . $onOscuro
                 . ';--on-primary-hover:' . $onOscuroHover
                 . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
-                . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}';
+                . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)'
+                . ';--primary-soft:rgba(' . implode(',', $ro) . ',.16)'
+                . ';--primary-line:rgba(' . implode(',', $ro) . ',.45)}';
         }
 
         return $css . self::cssFondo($id, $apariencia);

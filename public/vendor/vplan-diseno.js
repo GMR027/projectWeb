@@ -179,6 +179,7 @@
     sheet.addEventListener('pointerdown', e => { if (e.target === sheet) { seleccionar(null); seleccionarGuia(null); } });
 
     document.addEventListener('keydown', e => {
+        if (document.body.dataset.modoLienzo && document.body.dataset.modoLienzo !== 'acomodar') return;
         if (/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) return;
         const paso = e.shiftKey ? 1 : 0.2;
         const mueve = { ArrowLeft: [-paso, 0], ArrowRight: [paso, 0], ArrowUp: [0, -paso], ArrowDown: [0, paso] }[e.key];
@@ -1192,7 +1193,7 @@
             if (sucio && !(await guardarDiseno())) throw new Error('guardar');
             const d = await post(url, datos);
             if (!d.success) throw new Error('servidor');
-            location.href = D.volver + '&diseno=1';
+            location.href = D.volver + '&modo=acomodar';
         } catch (_) {
             if (!msg.textContent || msg.textContent === 'Guardando…') msg.textContent = errorMsg;
             pintarTablas(); pintarRecovery();
@@ -1336,7 +1337,7 @@
             return true;
         } catch (_) { msg.textContent = 'Error de conexión'; btn.disabled = false; return false; }
     }
-    $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&diseno=1'; });
+    $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&modo=acomodar'; });
     // ---- Deshacer / rehacer (Ctrl+Z, Ctrl+Y o Ctrl+Mayús+Z): foto de bloques y guías tras cada cambio ----
     const hist = window.KitEdicion.historial({
         foto: () => { const b = JSON.stringify(bloques), g = JSON.stringify(guias); return { k: b + '|' + g, b, g, els: Object.fromEntries(bloques.map(x => [x.clave, elDe(x)])) }; },
@@ -1366,6 +1367,7 @@
     pintarHist();
     window.KitEdicion.atajos({
         deshacer: hist.deshacer, rehacer: hist.rehacer,
+        activo: () => !document.body.dataset.modoLienzo || document.body.dataset.modoLienzo === 'acomodar',
         antes: (e, k) => { if (k !== 's') return false; e.preventDefault(); $('vp-dis-guardar').click(); return true; },
     });
     // Ayuda de la barra: atajos y trucos del modo diseño
@@ -1410,10 +1412,23 @@
         const p = new URLSearchParams(location.search).get('insertar') || '';
         if (!p.startsWith('estampa:')) return;
         const id = p.slice(8);
-        history.replaceState(null, '', location.pathname + '?proyecto=' + D.proyecto + '&id=' + D.lamina + '&diseno=1');
+        history.replaceState(null, '', location.pathname + '?proyecto=' + D.proyecto + '&id=' + D.lamina + '&modo=acomodar');
         irAPestana('insertar');
         const ficha = document.querySelector('[data-estampa="' + (+id) + '"]');
         if (ficha) { ficha.click(); $('vp-dis-msg').textContent = 'Estampa insertada: colócala y guarda el diseño'; }
         else window.avisoModal('Estampa no encontrada', 'Esa estampa ya no está en la biblioteca. Selecciona otra desde el panel «Insertar».');
     })();
+
+    // ---- API para el cambio de modo sin recargar (Ver · Acomodar · Dibujar) ----
+    // El panel y las reglas se miden cuando están visibles; al entrar en «Acomodar» se redibujan.
+    window.__vpDiseno = {
+        activar: function () {
+            requestAnimationFrame(function () {
+                try { dibujarReglas(); } catch (_) { /* canvas aún oculto */ }
+                try { pedirEscala(); } catch (_) { /* sin cambios de tamaño */ }
+                pintarGuias(); pintarCapas();
+            });
+        },
+        guardar: guardarDiseno,
+    };
 })();

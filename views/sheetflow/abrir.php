@@ -81,6 +81,13 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
             <button type="button" class="sf-b" data-alin="izquierda" title="Alinear a la izquierda"><i class="fa-solid fa-align-left"></i></button>
             <button type="button" class="sf-b" data-alin="centro" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
             <button type="button" class="sf-b" data-alin="derecha" title="Alinear a la derecha"><i class="fa-solid fa-align-right"></i></button>
+            <button type="button" class="sf-b" id="sf-wrap" title="Ajustar el texto a la celda (Alt + Enter inserta un salto de línea)"><i class="fa-solid fa-text-width"></i></button>
+            <select id="sf-va" title="Alineación vertical de las celdas">
+                <option value="">Vertical…</option>
+                <option value="arriba">Arriba</option>
+                <option value="centro">Centro</option>
+                <option value="abajo">Abajo</option>
+            </select>
         </div>
         <div class="sf-grupo">
             <span class="sf-etq">Combinar</span>
@@ -104,6 +111,11 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
                 <option value="d/m/aaaa">d/m/aaaa</option>
                 <option value="dd/mm/aa">dd/mm/aa</option>
             </select>
+            <input type="text" id="sf-nf-custom" class="sf-nf-custom" maxlength="40" placeholder="Personalizado" title="Código de formato personalizado, p. ej. #,##0.00 o $#,##0.00 (Enter para aplicar)">
+            <button type="button" class="sf-b" data-num="dec-menos" title="Quitar un decimal"><i class="fa-solid fa-arrow-left"></i><span class="sf-mini">.0</span></button>
+            <button type="button" class="sf-b" data-num="dec-mas" title="Añadir un decimal"><i class="fa-solid fa-arrow-right"></i><span class="sf-mini">.0</span></button>
+            <button type="button" class="sf-b sf-b-txt" data-num="moneda" title="Formato de moneda ($#,##0.00)"><i class="fa-solid fa-dollar-sign"></i></button>
+            <button type="button" class="sf-b sf-b-txt" data-num="pct" title="Formato de porcentaje (0.00%)"><i class="fa-solid fa-percent"></i></button>
         </div>
         <div class="sf-grupo">
             <span class="sf-etq">Pegar</span>
@@ -197,7 +209,8 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
         </div>
         <div class="sf-grupo">
             <span class="sf-etq">Fórmulas</span>
-            <select id="sf-fn" title="Inserta una función en la celda elegida">
+            <?php // Los ejemplos usan A2 como referencia base; sheetflow.js (formulaAdaptada) la traslada a la celda elegida. ?>
+            <select id="sf-fn" title="Inserta una función en la celda elegida; las referencias se adaptan a su columna y renglón">
                 <option value="">Insertar función…</option>
                 <optgroup label="Condicionales">
                     <option value="=SI(A2>0;&quot;Sí&quot;;&quot;No&quot;)">SI (prueba; si es verdad; si no)</option>
@@ -267,6 +280,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
                     <option value="=TIPO(&quot;1.2.3&quot;)">TIPO (partida o actividad)</option>
                 </optgroup>
             </select>
+            <button type="button" class="sf-b sf-b-txt" id="sf-fn-abrir" title="Buscar una función por nombre y ver su sintaxis"><i class="fa-solid fa-book-open"></i> Funciones…</button>
         </div>
     </div>
     <div class="sf-panel" data-panel="vista" hidden>
@@ -284,6 +298,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
             <span class="sf-etq">Tabla</span>
             <label class="sf-chk"><input type="checkbox" id="sf-zebra"> Renglones alternos</label>
             <label class="sf-chk"><input type="checkbox" id="sf-bordes"> Líneas de cuadrícula</label>
+            <button type="button" class="sf-b sf-b-txt" data-acc="alto-auto" title="Devuelve el alto automático a las filas elegidas"><i class="fa-solid fa-arrows-up-down"></i> Alto auto</button>
         </div>
         <div class="sf-grupo">
             <span class="sf-etq">Zoom</span>
@@ -292,11 +307,14 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     </div>
 </div>
 
-<div class="sf-formula">
-    <span class="sf-ref" id="sf-ref">A2</span>
-    <span class="sf-fx">fx</span>
-    <input type="text" id="sf-fx" autocomplete="off" spellcheck="false" placeholder="Contenido de la celda; empieza con = para una fórmula, p. ej. =C2*D2. Con la fórmula abierta, haz clic en las celdas para insertar sus referencias.">
+<div class="sf-formula" id="sf-formula">
+    <input type="text" class="sf-ref" id="sf-ref" value="A2" autocomplete="off" spellcheck="false" aria-label="Referencia de la celda" title="Escribe una celda o rango (C5, A1:C10) y pulsa Enter">
+    <span class="sf-fx" aria-hidden="true">fx</span>
+    <textarea id="sf-fx" rows="1" autocomplete="off" spellcheck="false" aria-label="Contenido de la celda" placeholder="Contenido de la celda; empieza con = para una fórmula, p. ej. =C2*D2. Mientras escribes aparecen sugerencias de funciones y verás el resultado."></textarea>
+    <span class="sf-fx-res" id="sf-fx-res" aria-live="polite"></span>
+    <button type="button" class="sf-b sf-fx-abrir" id="sf-fx-abrir" title="Ampliar la barra de fórmulas" aria-label="Ampliar la barra de fórmulas" aria-expanded="false"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
 </div>
+<div class="sf-sug" id="sf-sug" hidden role="listbox" aria-label="Sugerencias de funciones"></div>
 
 <div class="sf-busca" id="sf-busca" hidden>
     <input type="text" id="sf-busca-txt" placeholder="Buscar…" autocomplete="off" aria-label="Buscar">
@@ -310,6 +328,15 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <button type="button" id="sf-busca-cerrar" class="sf-panel-x" title="Cerrar (Esc)" aria-label="Cerrar la búsqueda"><i class="fa-solid fa-xmark"></i></button>
 </div>
 
+<div class="sf-fn-panel" id="sf-fn-panel" role="dialog" aria-label="Funciones de SheetFlow" hidden>
+    <div class="sf-fn-cab">
+        <strong><i class="fa-solid fa-square-root-variable"></i> Funciones</strong>
+        <button type="button" id="sf-fn-cerrar" class="sf-panel-x" title="Cerrar" aria-label="Cerrar el panel de funciones"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <input type="search" id="sf-fn-busca" placeholder="Busca por nombre o para qué sirve…" autocomplete="off" aria-label="Buscar función">
+    <div class="sf-fn-lista" id="sf-fn-lista"></div>
+</div>
+
 <div class="sf-versiones" id="sf-versiones" hidden>
     <div class="sf-versiones-cab">
         <strong><i class="fa-solid fa-clock-rotate-left"></i> Historial de versiones</strong>
@@ -320,6 +347,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 </div>
 
 <div class="sf-filtro" id="sf-filtro" hidden></div>
+<div class="sf-menu" id="sf-menu" role="menu" hidden></div>
 
 <div class="sf-area" id="sf-area" tabindex="0" aria-label="Tabla editable">
     <div class="sf-scroll"><table class="sf-grid" id="sf-grid"></table><div class="sf-asa" id="sf-asa" hidden title="Arrastra para rellenar (series de números o fechas)"></div></div>
@@ -327,7 +355,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 <div class="sf-filtro-estado" id="sf-filtro-estado" role="status" hidden></div>
 <div class="sf-graficos" id="sf-graficos" hidden></div>
 <div class="sf-estadistica" id="sf-estadistica" aria-live="polite"></div>
-<p class="text-muted text-sm sf-ayuda">Clic para elegir · arrastra, Mayús+clic o Mayús+flechas para varias celdas · <strong>Ctrl/⌘+clic</strong> añade celdas sueltas (la barra de abajo muestra la <strong>suma</strong> de lo elegido) · en pantalla táctil, <strong>mantén pulsada una celda y arrastra</strong> para elegir el rango · Enter o doble clic para editar · Supr borra · Ctrl+C / Ctrl+V copian y pegan desde Excel (las fórmulas ajustan sus referencias; el asa de la esquina rellena series) · Ctrl+F busca y reemplaza · Fórmulas: empieza con <code>=</code> y <strong>haz clic en las celdas</strong> (o arrastra) para insertar sus referencias; hay funciones de matemáticas, estadística, texto, búsqueda, fechas, finanzas y del proyecto (<code>AVANCE("1.2.3")</code>, <code>FIN(…)</code>). <strong>Combinar</strong>/<strong>Separar</strong>, el formato condicional y los gráficos están en la cinta; el embudo de cada columna filtra. El encabezado es la fila 1.</p>
+<p class="text-muted text-sm sf-ayuda">Clic para elegir · arrastra, Mayús+clic o Mayús+flechas para varias celdas · <strong>Ctrl/⌘+clic</strong> añade celdas sueltas (la barra de abajo muestra la <strong>suma</strong> de lo elegido) · en pantalla táctil, <strong>mantén pulsada una celda y arrastra</strong> para elegir el rango · Enter o doble clic para editar · <strong>Alt+Enter</strong> parte el texto en varias líneas · Supr borra · Ctrl+C / Ctrl+V copian y pegan desde Excel (las fórmulas ajustan sus referencias; el asa de la esquina rellena series y con <strong>doble clic</strong> baja hasta el final de los datos) · <strong>Ctrl+flechas</strong> salta al borde de los datos, <strong>Mayús+Espacio</strong> elige el renglón y <strong>Ctrl+Espacio</strong> la columna · <strong>clic derecho</strong> abre el menú de insertar, eliminar, combinar y formato · arrastra el borde del <strong>número de fila</strong> para cambiar el alto (doble clic: automático; escribe en el cuadro de la izquierda <code>C5</code> o <code>A1:C10</code> para saltar) · Ctrl+F busca y reemplaza · Fórmulas: empieza con <code>=</code> y aparecen <strong>sugerencias</strong>; <strong>F4</strong> fija la referencia; el resultado se ve junto a la barra; «Funciones…» abre el catálogo con sintaxis. Al insertar una función de la lista, sus referencias se adaptan a la columna y el renglón elegidos. Hay funciones de matemáticas, estadística, texto, búsqueda, fechas, finanzas y del proyecto (<code>AVANCE("1.2.3")</code>, <code>FIN(…)</code>). <strong>Combinar</strong>/<strong>Separar</strong>, el formato condicional y los gráficos están en la cinta; el embudo de cada columna filtra. El encabezado es la fila 1.</p>
 
 <div class="card sf-usos">
     <h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla</h3>
@@ -355,7 +383,7 @@ window.Tour.registrar('sheetflow-editor', {
     pasos: [
         { icono: 'fa-table-cells', titulo: 'La hoja', texto: 'Escribe y navega con las flechas como en Excel. Los cambios se <b>autoguardan</b> unos segundos después de editar. Arrastra para elegir varias celdas (o <b>Ctrl/⌘+clic</b> para celdas sueltas): abajo verás la <b>suma</b>. El <b>cuadradito de la esquina</b> rellena series y el <b>embudo</b> del encabezado filtra.' },
         { sel: '#sf-pestanas', icono: 'fa-table-columns', titulo: 'Cuatro pestañas', texto: '<b>Inicio</b> (formato, número, combinar, condicional), <b>Insertar</b> (renglones, columnas, imágenes, gráficos), <b>Datos</b> (tipos, totales, ordenar, fórmulas) y <b>Vista</b> (inmovilizar, zebra, zoom).' },
-        { sel: '#sf-fx', icono: 'fa-square-root-variable', titulo: 'Fórmulas', texto: 'En la barra de abajo: empieza con <b>=</b> y usa SUMA, SI, SUMAR.SI… Las referencias son como en Excel (B3, C2:C10) y se ajustan solas al copiar o mover renglones. Con la fórmula abierta, haz <b>clic en las celdas</b> (o arrastra) para insertar sus referencias.' },
+        { sel: '#sf-fx', icono: 'fa-square-root-variable', titulo: 'Fórmulas', texto: 'En la barra de abajo: empieza con <b>=</b> y usa SUMA, SI, SUMAR.SI… Mientras escribes aparecen <b>sugerencias de funciones</b> (Enter o Tab para aceptarlas) y a la derecha se ve el <b>resultado</b>. <b>F4</b> fija la referencia ($A$1) y «Funciones…» abre el catálogo con la sintaxis. Con la fórmula abierta, haz <b>clic en las celdas</b> (o arrastra) para insertar sus referencias.' },
         { sel: '#sf-historial', icono: 'fa-clock-rotate-left', titulo: 'Historial y búsqueda', texto: '«Historial» guarda una copia al editar y permite volver atrás. Con <b>Ctrl + F</b> buscas y reemplazas en toda la tabla.' },
         { sel: '#sf-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar y exportar', texto: 'Guarda la hoja (también con <b>Ctrl + S</b>). «Exportar» entrega el Excel, el CSV o el PDF con los formatos.' },
         { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Recuerda: la tabla puede irse a una lámina del vPlan con «A vPlan», y las enlazadas se actualizan solas cuando cambia la hoja.' }

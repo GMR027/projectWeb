@@ -297,6 +297,9 @@ $vp-rojo: var(--danger);
 .vp-pendiente { box-shadow: 0 0 0 .3rem rgba(245, 158, 11, .55); }
 .vp-fuentes { max-height: 36rem; overflow-y: auto; border: 1px solid var(--border); border-radius: .6rem; padding: .4rem .8rem;
   .vp-fuente { border-bottom: 1px solid var(--border); padding: .3rem 0; summary { cursor: pointer; } .vp-acts-item { padding-left: 2.4rem; font-size: 1.25rem; } } }
+// El modo diseño monta una capa .vp-ov sobre cada bloque para arrastrarlo.
+// Esa capa solo existe visualmente con .vp-diseno (Ver y PDF no la muestran).
+.vp-sheet:not(.vp-diseno) .vp-ov { display: none !important; }
 .vp-sheet.vp-diseno {
   .vp-blk { outline: 1px dashed rgba(0, 112, 192, .55); outline-offset: -1px; }
   .vp-blk > *:not(.vp-ov) { pointer-events: none; }
@@ -410,7 +413,7 @@ $vp-rojo: var(--danger);
 .ve-f .ve-color input[type=color], .campo .ve-color input[type=color] { width: auto; min-width: 0; }
 .campo .ve-color { display: flex; width: 100%; }
 .ve-par { display: flex; gap: .6rem; align-items: center; input { width: 100%; } }
-#ve-guardar.ve-pend { box-shadow: 0 0 0 3px rgba(255, 90, 31, .5); }
+#ve-guardar.ve-pend { box-shadow: 0 0 0 3px var(--primary-line); }
 .ve-area { --ve-alto: 70dvh; position: relative; display: grid; grid-template-columns: var(--ve-panel-w, 32rem) minmax(0, 1fr); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }   // panel lateral a la izquierda
 .ve-area.ve-sin-lateral { grid-template-columns: auto minmax(0, 1fr); }   // panel oculto: solo queda la pestaña para reabrirlo
 .ve-area > .pn-abrir { order: -2; }
@@ -507,7 +510,7 @@ body.vp-sin-scroll { overflow: hidden; }
 
 // Editor de marcas: vista ampliada (plano y herramientas a pantalla completa)
 .ve-cerrar-ampliado, .ve-solo-ampliado { display: none !important; }
-#ve-guardar-amp.ve-pend { box-shadow: 0 0 0 3px rgba(255, 90, 31, .5); }
+#ve-guardar-amp.ve-pend { box-shadow: 0 0 0 3px var(--primary-line); }
 .ve-hoja.ve-ampliado { position: fixed; inset: 0; z-index: 1500; background: var(--bg-primary, #0f172a); padding: 1rem; display: flex; flex-direction: column; overflow: auto;
   .ve-barra { flex: none; }
   .ve-solo-ampliado { display: flex !important; margin-left: auto; gap: 1rem; }
@@ -743,7 +746,7 @@ body.gr-editor-page {
 .dep-modo { text-align: left; display: flex; flex-direction: column; gap: .5rem; padding: 1.2rem 1.6rem; border: 2px solid var(--border); border-radius: 1rem; background: var(--bg-secondary, #1c2541); color: var(--text); font: inherit; cursor: pointer;
   i { font-size: 2rem; color: var(--text-muted); } strong { font-size: 1.6rem; } span { font-size: 1.25rem; color: var(--text-muted); line-height: 1.4; }
   &:hover:not(:disabled) { border-color: var(--text-muted); } &:disabled { cursor: default; opacity: .75; }
-  &.activo { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255, 90, 31, .25); i { color: var(--primary-ink); } } }
+  &.activo { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); i { color: var(--primary-ink); } } }
 .dep-aviso { padding: 1rem 1.4rem; border-radius: .8rem; margin-bottom: 1.2rem; font-size: 1.4rem; &[hidden] { display: none; }
   &.dep-aviso-ok { background: rgba(16, 185, 129, .15); border: 1px solid var(--success); } &.dep-aviso-info { background: rgba(0, 180, 216, .12); border: 1px solid var(--secondary); }
   &.dep-aviso-warn { background: rgba(245, 158, 11, .14); border: 1px solid var(--warning); } &.dep-aviso-error { background: rgba(220, 38, 38, .15); border: 1px solid var(--danger); } }
@@ -763,7 +766,7 @@ body.gr-editor-page {
   .dep-lab-cab { display: flex; align-items: flex-end; padding: 0 1rem .6rem; font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: inherit; }
   .dep-lab-grp { display: flex; align-items: center; padding: 0 1rem; font-size: 1.1rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dep-lab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border-bottom: 1px solid rgba(128, 128, 128, .12); b { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
-    &:hover { background: rgba(255, 255, 255, .05); } &.sel { background: rgba(0, 112, 192, .25); } &.origen { background: rgba(255, 90, 31, .3); } }
+    &:hover { background: rgba(255, 255, 255, .05); } &.sel { background: color-mix(in srgb, var(--secondary) 25%, transparent); } &.origen { background: color-mix(in srgb, var(--primary) 30%, transparent); } }
   .dep-pt { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; &.crit { background: var(--danger); } &.warn { background: var(--warning); } } }
 .dep-svg { flex: none; display: block; user-select: none;
   .dep-grid { stroke: rgba(128, 128, 128, .18); stroke-width: 1; } .dep-mes { stroke: rgba(128, 128, 128, .45); }
