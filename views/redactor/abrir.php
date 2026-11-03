@@ -546,6 +546,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 <script src="/vendor/redactor-extras.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor-extras.js'); ?>"></script>
 <script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
 <script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
+<script src="/vendor/cinta-scroll.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/cinta-scroll.js'); ?>"></script>
 <script src="/vendor/redactor-movil.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/redactor-movil.js'); ?>"></script>
 <script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
 <script>

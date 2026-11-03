@@ -345,6 +345,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 <script>window.SF_CONFIG = <?php echo json_encode($config, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
 <script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
 <script src="/vendor/hoja-inferior.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/hoja-inferior.js'); ?>"></script>
+<script src="/vendor/cinta-scroll.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/cinta-scroll.js'); ?>"></script>
 <script src="/vendor/sheetflow.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/sheetflow.js'); ?>"></script>
 <script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script>
 <script>

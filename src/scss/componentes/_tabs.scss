@@ -27,3 +27,23 @@
   &:hover { color: var(--text); background: var(--surface-hover); }
   &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 }
+
+// Cinta de herramientas (Redactor y SheetFlow): siempre una sola fila, con la misma
+// altura en todas las pestañas. La barra de desplazamiento nativa se oculta (era la que
+// agrandaba la cinta al cambiar de pestaña) y unos degradados avisan de que hay más
+// herramientas a los lados. La clase la pone public/vendor/cinta-scroll.js.
+:is(.rd-barra, .sf-barra) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  &::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+  &.cinta-desborda::before,
+  &.cinta-desborda::after {
+    content: ''; position: sticky; z-index: 6; flex: 0 0 2.8rem; align-self: stretch;
+    pointer-events: none;
+  }
+  &.cinta-desborda::before { left: 0; margin-right: -2.8rem; background: linear-gradient(270deg, transparent, var(--surface)); }
+  &.cinta-desborda::after { right: 0; margin-left: -2.8rem; background: linear-gradient(90deg, transparent, var(--surface)); }
+  &.cinta-ini::before, &.cinta-fin::after { content: none; }
+}
