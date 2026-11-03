@@ -29,6 +29,7 @@
     var grid = $('sf-grid'), area = $('sf-area'), fx = $('sf-fx');
     var version = C.version, sucio = false, guardando = false, temporizador = null;
     var sel = { r0: 0, c0: 0, r1: 0, c1: 0 };   // rango elegido; (r0,c0) es el ancla. r = -1 es el encabezado
+    var selExtra = [];                           // celdas sueltas añadidas con Ctrl/⌘+clic (claves «r,c»)
     var editor = null;                           // {r,c,input,previo} mientras se edita una celda
     var apuntando = null;                        // {inp,ini,fin,a} mientras se arrastra una referencia con el ratón
     var fxOrigen = null;                         // celda desde la que se escribe en la barra de fórmulas
@@ -1115,6 +1116,40 @@
 
     // ================= Dibujo =================
     function rangoNorm() { return { r0: Math.min(sel.r0, sel.r1), r1: Math.max(sel.r0, sel.r1), c0: Math.min(sel.c0, sel.c1), c1: Math.max(sel.c0, sel.c1) }; }
+    /** Celdas elegidas: el rango más las celdas sueltas de Ctrl/⌘+clic, sin repetir */
+    function celdasElegidas() {
+        var n = rangoNorm(), o = [], visto = {};
+        for (var r = n.r0; r <= n.r1; r++) for (var c = n.c0; c <= n.c1; c++) {
+            o.push([r, c]);
+            visto[r + ',' + c] = true;
+        }
+        selExtra.forEach(function (k) {
+            if (visto[k]) return;
+            visto[k] = true;
+            var p = k.split(',');
+            o.push([+p[0], +p[1]]);
+        });
+        return o;
+    }
+    function limpiarExtras() { selExtra = []; }
+    /** Ctrl/⌘+clic: añade o quita una celda de la selección sin perder el resto */
+    function alternarCeldaSuelta(r, c) {
+        var actuales = celdasElegidas();
+        var estaba = actuales.some(function (p) { return p[0] === r && p[1] === c; });
+        if (!estaba) {   // añadir: todo lo anterior queda como celdas sueltas y esta pasa a ser el ancla
+            var tope = 4000;
+            selExtra = actuales.slice(-tope).map(function (p) { return p[0] + ',' + p[1]; });
+            sel.r0 = sel.r1 = r; sel.c0 = sel.c1 = c;
+            return;
+        }
+        var resto = actuales.filter(function (p) { return !(p[0] === r && p[1] === c); });
+        if (!resto.length) {   // era la única celda: se queda elegida
+            sel.r0 = sel.r1 = r; sel.c0 = sel.c1 = c; limpiarExtras(); return;
+        }
+        var primera = resto[0];
+        sel.r0 = sel.r1 = primera[0]; sel.c0 = sel.c1 = primera[1];
+        selExtra = resto.slice(1).map(function (p) { return p[0] + ',' + p[1]; });
+    }
     var ALIN = { izquierda: 'left', centro: 'center', derecha: 'right' };
     var LADOS = { bt: 'top', br: 'right', bb: 'bottom', bl: 'left' };
     /** Letra negra o blanca según la luminosidad del relleno (igual que Classes\Sheetflow::contraste) */
@@ -1402,6 +1437,7 @@
             fijar(r, c, nuevo);
             if (sty[sr] && sty[sr][sc]) setSt(r, c, Object.assign({}, sty[sr][sc]));
         }
+        limpiarExtras();
         sel.r0 = dest.r0; sel.c0 = dest.c0; sel.r1 = dest.r1; sel.c1 = dest.c1;
         dibujar(); cambio(); area.focus();
     }
@@ -1548,10 +1584,13 @@
         grid.querySelectorAll('.sf-letra-sel,.sf-num-sel').forEach(function (x) { x.classList.remove('sf-letra-sel', 'sf-num-sel'); });
         var n = rangoNorm();
         for (var r = n.r0; r <= n.r1; r++) for (var c = n.c0; c <= n.c1; c++) { var el = celdaEl(r, c); if (el) el.classList.add('sf-sel'); }
+        selExtra.forEach(function (k) { var p = k.split(','), el = celdaEl(+p[0], +p[1]); if (el) el.classList.add('sf-sel'); });
         var an = celdaEl(sel.r0, sel.c0); if (an) an.classList.add('sf-ancla');
         for (var cc = n.c0; cc <= n.c1; cc++) { var l = grid.querySelector('th.sf-letra[data-letra="' + cc + '"]'); if (l) l.classList.add('sf-letra-sel'); }
         for (var rr = n.r0; rr <= n.r1; rr++) { var f = grid.querySelector('th.sf-num[data-fila="' + rr + '"]'); if (f) f.classList.add('sf-num-sel'); }
-        $('sf-ref').textContent = nombreCelda(sel.r0, sel.c0) + (n.r0 !== n.r1 || n.c0 !== n.c1 ? ':' + nombreCelda(n.r1, n.c1) : '');
+        var refTxt = nombreCelda(sel.r0, sel.c0) + (n.r0 !== n.r1 || n.c0 !== n.c1 ? ':' + nombreCelda(n.r1, n.c1) : '');
+        if (selExtra.length) refTxt += ' +' + selExtra.length;
+        $('sf-ref').textContent = refTxt;
         var enFormula = entradaFormula();
         if (enFormula) fx.value = enFormula.value;   // no pisar la fórmula mientras se eligen celdas
         else fx.value = sel.r0 < 0 ? S.cols[sel.c0].n : S.rows[sel.r0][sel.c0];
@@ -1560,17 +1599,22 @@
     }
     /** Resumen de las celdas elegidas (como la barra de estado de Excel) */
     function estadistica() {
-        var n = rangoNorm(), vals = [], llenas = 0;
-        if (n.r0 === n.r1 && n.c0 === n.c1) { $('sf-estadistica').textContent = ''; return; }
-        for (var r = Math.max(0, n.r0); r <= n.r1; r++) for (var c = n.c0; c <= n.c1; c++) {
+        var celdas = celdasElegidas(), vals = [], llenas = 0;
+        if (celdas.length < 2) { $('sf-estadistica').textContent = ''; return; }
+        celdas.forEach(function (p) {
+            var r = p[0], c = p[1];
+            if (r < 0 || r >= S.rows.length || c < 0 || c >= S.cols.length) return;
             var t = S.rows[r][c], v = esFormula(t) ? S.calc[r + ',' + c] : t;
             if (v !== '' && v != null) llenas++;
             var x = numero(v); if (x !== null) vals.push(x);
-        }
-        var s = 'Cuenta: ' + llenas;
+        });
+        var s;
         if (vals.length) {
             var suma = vals.reduce(function (p, q) { return p + q; }, 0);
-            s += ' · Suma: ' + miles(suma, 4) + ' · Promedio: ' + miles(suma / vals.length, 4) + ' · Mín: ' + miles(Math.min.apply(null, vals), 4) + ' · Máx: ' + miles(Math.max.apply(null, vals), 4);
+            s = 'Suma: ' + miles(suma, 4) + ' · Promedio: ' + miles(suma / vals.length, 4) + ' · Cuenta: ' + llenas +
+                ' · Mín: ' + miles(Math.min.apply(null, vals), 4) + ' · Máx: ' + miles(Math.max.apply(null, vals), 4);
+        } else {
+            s = 'Cuenta: ' + llenas + (llenas ? ' · sin números que sumar' : '');
         }
         $('sf-estadistica').textContent = s;
     }
@@ -1609,6 +1653,7 @@
         ids = Array.isArray(d.ids) ? d.ids.slice() : S.rows.map(function () { return null; });
         while (ids.length < S.rows.length) ids.push(null);
         ids = ids.slice(0, S.rows.length);
+        limpiarExtras();
         sel.r0 = Math.min(sel.r0, S.rows.length - 1); sel.r1 = Math.min(sel.r1, S.rows.length - 1); sel.c0 = Math.min(sel.c0, S.cols.length - 1); sel.c1 = Math.min(sel.c1, S.cols.length - 1);
         dibujar(); cambio();
     }
@@ -1831,6 +1876,7 @@
         if (mg && !extender) { sel.r0 = mg.r0; sel.c0 = mg.c0; sel.r1 = mg.r1; sel.c1 = mg.c1; }
         else if (extender) { sel.r1 = mg ? mg.r1 : r; sel.c1 = mg ? mg.c1 : c; }
         else { sel.r0 = sel.r1 = r; sel.c0 = sel.c1 = c; }
+        if (!extender) limpiarExtras();
         pintarSeleccion(); visible(r, c);
     }
     fx.addEventListener('focus', function () { fxOrigen = { r: sel.r0, c: sel.c0 }; });
@@ -1885,12 +1931,18 @@
         if (editor) terminarEdicion(true);
         if (t.classList.contains('sf-letra')) {
             var c = +t.dataset.letra;
+            limpiarExtras();
             if (e.shiftKey) sel.c1 = c; else { sel.c0 = sel.c1 = c; sel.r0 = -1; }
             sel.r1 = S.rows.length - 1; pintarSeleccion(); e.preventDefault(); area.focus(); return;
         }
-        if (t.classList.contains('sf-num')) { if (t.dataset.fila == null) return; var r = +t.dataset.fila; if (e.shiftKey) sel.r1 = r; else { sel.r0 = sel.r1 = r; } sel.c0 = 0; sel.c1 = S.cols.length - 1; pintarSeleccion(); e.preventDefault(); area.focus(); return; }
+        if (t.classList.contains('sf-num')) { if (t.dataset.fila == null) return; var r = +t.dataset.fila; limpiarExtras(); if (e.shiftKey) sel.r1 = r; else { sel.r0 = sel.r1 = r; } sel.c0 = 0; sel.c1 = S.cols.length - 1; pintarSeleccion(); e.preventDefault(); area.focus(); return; }
         if (t.dataset.r == null) return;
         var rr = +t.dataset.r, cc = +t.dataset.c, mgSel = mergeDe(rr, cc);
+        if ((e.ctrlKey || e.metaKey) && !mgSel) {   // Ctrl/⌘+clic: suma celdas sueltas a la selección
+            alternarCeldaSuelta(rr, cc);
+            arrastrando = false; pintarSeleccion(); e.preventDefault(); area.focus(); return;
+        }
+        limpiarExtras();
         if (mgSel) { sel.r0 = mgSel.r0; sel.c0 = mgSel.c0; sel.r1 = mgSel.r1; sel.c1 = mgSel.c1; }
         else if (e.shiftKey) { sel.r1 = rr; sel.c1 = cc; } else { sel.r0 = sel.r1 = rr; sel.c0 = sel.c1 = cc; }
         arrastrando = true; pintarSeleccion(); e.preventDefault(); area.focus();
@@ -1958,24 +2010,65 @@
     // Se espera al touchend y se descarta si hubo desplazamiento, para no abrir el editor al hacer scroll.
     if (TACTIL) {
         var toqueCelda = null;
+        // Mantener pulsada una celda y arrastrar para elegir un rango (como en Excel del celular)
+        var toqueRango = null;
+        var LARGO_TOQUE = 380;
+        function finToqueRango() {
+            if (!toqueRango) return false;
+            clearTimeout(toqueRango.temporizador);
+            var activo = toqueRango.activo;
+            toqueRango = null;
+            document.body.classList.remove('sf-eleccion-tactil');
+            if (activo) { toqueEdito = Date.now(); toqueCelda = null; colocarAsa(); return true; }
+            return false;
+        }
         grid.addEventListener('touchstart', function (e) {
-            if (editor || e.touches.length !== 1) { toqueCelda = null; return; }
-            var t = e.target.closest('td,th.sf-enc'); if (!t || t.dataset.r == null) { toqueCelda = null; return; }
-            var r = +t.dataset.r, c = +t.dataset.c;
+            if (editor || e.touches.length !== 1) { toqueCelda = null; finToqueRango(); return; }
+            var t = e.target.closest('td,th.sf-enc'); if (!t || t.dataset.r == null) { toqueCelda = null; finToqueRango(); return; }
+            var r = +t.dataset.r, c = +t.dataset.c, p = e.touches[0];
             toqueCelda = (r === sel.r0 && r === sel.r1 && c === sel.c0 && c === sel.c1)
-                ? { r: r, c: c, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null;
+                ? { r: r, c: c, x: p.clientX, y: p.clientY, t: Date.now() } : null;
+            toqueRango = { r: r, c: c, x: p.clientX, y: p.clientY, activo: false, temporizador: 0 };
+            if (!entradaFormula()) toqueRango.temporizador = setTimeout(function () {
+                if (!toqueRango) return;
+                toqueRango.activo = true;
+                if (navigator.vibrate) { try { navigator.vibrate(20); } catch (err) { } }
+                sel.r0 = sel.r1 = toqueRango.r; sel.c0 = sel.c1 = toqueRango.c;
+                limpiarExtras(); pintarSeleccion();
+                var asa = $('sf-asa'); if (asa) asa.hidden = true;
+                document.body.classList.add('sf-eleccion-tactil');
+                estado('Arrastra para elegir varias celdas');
+            }, LARGO_TOQUE);
         }, { passive: true });
         grid.addEventListener('touchmove', function (e) {
+            if (toqueRango && toqueRango.activo) {
+                e.preventDefault();
+                var p = e.touches[0];
+                var el = document.elementFromPoint(p.clientX, p.clientY);
+                var t = el && el.closest ? el.closest('td[data-r]') : null;
+                if (t && +t.dataset.r >= 0) {
+                    sel.r1 = +t.dataset.r; sel.c1 = +t.dataset.c;
+                    var mm = mergeDe(+t.dataset.r, +t.dataset.c);
+                    if (mm) { sel.r1 = mm.r1; sel.c1 = mm.c1; }
+                    pintarSeleccion();
+                }
+                return;
+            }
             if (!toqueCelda) return;
-            var p = e.touches[0];
-            if (Math.hypot(p.clientX - toqueCelda.x, p.clientY - toqueCelda.y) > 10) toqueCelda = null;
-        }, { passive: true });
+            var p2 = e.touches[0];
+            if (Math.hypot(p2.clientX - toqueCelda.x, p2.clientY - toqueCelda.y) > 10) {
+                toqueCelda = null;
+                if (toqueRango) { clearTimeout(toqueRango.temporizador); toqueRango = null; }
+            }
+        }, { passive: false });
         grid.addEventListener('touchend', function () {
+            if (finToqueRango()) return;
             if (!toqueCelda) return;
             var r = toqueCelda.r, c = toqueCelda.c, corto = Date.now() - toqueCelda.t < 600;
             toqueCelda = null;
             if (corto) { toqueEdito = Date.now(); setTimeout(function () { if (!editor) empezarEdicion(r, c, null); }, 0); }
         });
+        grid.addEventListener('touchcancel', finToqueRango);
     }
 
     // ================= Teclado, copiar y pegar =================
@@ -1988,7 +2081,7 @@
         if (ctrl && (k === 'b' || k === 'B')) { e.preventDefault(); alternar('b'); return; }
         if (ctrl && (k === 'i' || k === 'I')) { e.preventDefault(); alternar('i'); return; }
         if (ctrl && (k === 'u' || k === 'U')) { e.preventDefault(); alternar('u'); return; }
-        if (ctrl && (k === 'a' || k === 'A')) { e.preventDefault(); sel.r0 = -1; sel.c0 = 0; sel.r1 = S.rows.length - 1; sel.c1 = S.cols.length - 1; pintarSeleccion(); return; }
+        if (ctrl && (k === 'a' || k === 'A')) { e.preventDefault(); limpiarExtras(); sel.r0 = -1; sel.c0 = 0; sel.r1 = S.rows.length - 1; sel.c1 = S.cols.length - 1; pintarSeleccion(); return; }
         if (ctrl && (k === 'f' || k === 'F')) { e.preventDefault(); panelBusca(true); return; }
         if (ctrl && (k === 'd' || k === 'D')) { e.preventDefault(); rellenarDireccion('abajo'); return; }
         if (ctrl && (k === 'r' || k === 'R')) { e.preventDefault(); rellenarDireccion('derecha'); return; }
@@ -2008,8 +2101,8 @@
         else if (k.length === 1 && !e.altKey) { e.preventDefault(); empezarEdicion(sel.r0, sel.c0, k); }
     });
     function vaciar() {
-        var n = rangoNorm(); antes();
-        for (var r = n.r0; r <= n.r1; r++) for (var c = n.c0; c <= n.c1; c++) { if (r >= 0) S.rows[r][c] = ''; }
+        var celdas = celdasElegidas(); antes();
+        celdas.forEach(function (p) { if (p[0] >= 0 && p[0] < S.rows.length && p[1] < S.cols.length) S.rows[p[0]][p[1]] = ''; });
         dibujar(); cambio();
     }
     function textoRango() {
@@ -2060,6 +2153,7 @@
             var st = copiado.fmt[si][sj];
             setSt(r, c, st ? Object.assign({}, st) : null);
         }
+        limpiarExtras();
         sel.r0 = r0; sel.c0 = c0; sel.r1 = Math.min(S.rows.length - 1, r0 + nf - 1); sel.c1 = Math.min(S.cols.length - 1, c0 + nc - 1);
         dibujar(); cambio(); area.focus();
     }
@@ -2083,6 +2177,7 @@
             if (r >= MAX_F || c >= MAX_C) { cortado = true; continue; }
             fijar(r, c, uno ? filas[0][0] : (filas[i][j] || ''));
         }
+        limpiarExtras();
         sel.r0 = r0; sel.c0 = c0; sel.r1 = Math.min(S.rows.length - 1, r0 + nf - 1); sel.c1 = Math.min(S.cols.length - 1, c0 + nc - 1);
         dibujar(); cambio();
         if (cortado) estado('Se pegó solo lo que cabe (máx. ' + MAX_C + ' columnas y ' + MAX_F + ' renglones)', true);
@@ -2138,12 +2233,14 @@
         S.merges = out;
     }
     function insertar(eje, en, k) {
+        limpiarExtras();
         insertarMerges(eje, en, k);
         reescribir(eje, function (v) { return v >= en ? v + k : v; });
         if (eje === 'r') for (var i = 0; i < k; i++) { S.rows.splice(en, 0, S.cols.map(function () { return ''; })); sty.splice(en, 0, S.cols.map(function () { return null; })); ids.splice(en, 0, null); }
         else for (var j = 0; j < k; j++) { S.cols.splice(en, 0, { n: 'Columna ' + (S.cols.length + 1), t: 'texto', a: 'izquierda', tot: '', w: 0 }); hsty.splice(en, 0, null); S.rows.forEach(function (f, r) { f.splice(en, 0, ''); sty[r].splice(en, 0, null); }); }
     }
     function eliminar(eje, desde, hasta) {
+        limpiarExtras();
         var k = hasta - desde + 1;
         eliminarMerges(eje, desde, hasta);
         reescribir(eje, function (v, modo) {
@@ -2205,6 +2302,7 @@
                 });
                 var todas = llenas.concat(vacias);
                 S.rows = todas.map(function (p) { return p.f; }); sty = todas.map(function (p) { return p.s; }); ids = todas.map(function (p) { return p.i; });
+                limpiarExtras();
             } else if (a === 'combinar') {
                 var nC = rangoNorm();
                 if (nC.r0 < 0 && nC.r1 >= 0) { estado('No se pueden combinar el encabezado con los renglones de datos', true); return; }
@@ -2232,7 +2330,11 @@
     });
 
     // ================= Propiedades de columna y estilo de la tabla =================
-    function columnasElegidas() { var n = rangoNorm(), o = []; for (var c = n.c0; c <= n.c1; c++) o.push(c); return o; }
+    function columnasElegidas() {
+        var o = [];
+        celdasElegidas().forEach(function (p) { if (p[1] >= 0 && o.indexOf(p[1]) < 0) o.push(p[1]); });
+        return o.sort(function (a, b) { return a - b; });
+    }
     $('sf-tipo').addEventListener('change', function () {
         antes(); var t = this.value;
         columnasElegidas().forEach(function (c) {
@@ -2281,13 +2383,13 @@
     // ================= Formato de celdas: letra, colores, alineación, bordes, imagen =================
     /** Aplica fn(formato) a cada celda elegida (incluye el encabezado si está en la selección) */
     function aplicar(fn, sinAntes) {
-        var n = rangoNorm();
+        var celdas = celdasElegidas();
         if (!sinAntes) antes();
-        for (var r = n.r0; r <= n.r1; r++) for (var c = n.c0; c <= n.c1; c++) {
-            var f = Object.assign({}, getSt(r, c) || {});
-            fn(f, r, c);
-            setSt(r, c, f);
-        }
+        celdas.forEach(function (p) {
+            var f = Object.assign({}, getSt(p[0], p[1]) || {});
+            fn(f, p[0], p[1]);
+            setSt(p[0], p[1], f);
+        });
         dibujar(); cambio(); area.focus();
     }
     function alternar(k) {
@@ -2502,6 +2604,7 @@
         S.estilo = d.estilo; S.fmt = d.fmt || {}; S.meta = d.meta || {}; S.merges = d.merges || []; S.vista = d.vista || {};
         normalizarVista(); cargarEstilos();
         ids = idsDeMeta();
+        limpiarExtras();
         sel = { r0: 0, c0: 0, r1: 0, c1: 0 };
         pasado = []; futuro = [];
         dibujar();

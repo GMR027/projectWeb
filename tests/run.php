@@ -767,6 +767,10 @@ $ok('SheetFlow busca y reemplaza, filtra, congela y guarda el historial', str_co
 $ok('SheetFlow tiene formato condicional, gráficos y fórmulas del proyecto', str_contains($asset('public/vendor/sheetflow.js'), 'function condicional')
     && str_contains($asset('public/vendor/sheetflow.js'), 'function svgGrafico') && str_contains($asset('public/vendor/sheetflow.js'), 'funcionProyecto')
     && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-cond-aplicar"') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-graf-crear"'));
+$ok('SheetFlow suma la selección, con Ctrl+clic y con el dedo en pantalla táctil', str_contains($asset('public/vendor/sheetflow.js'), 'function celdasElegidas')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'function alternarCeldaSuelta') && str_contains($asset('public/vendor/sheetflow.js'), 'function estadistica')
+    && str_contains($asset('public/vendor/sheetflow.js'), 'sf-eleccion-tactil') && str_contains($asset('public/vendor/sheetflow.js'), 'LARGO_TOQUE')
+    && str_contains($asset('public/build/css/app.css'), 'sf-eleccion-tactil') && str_contains($asset('views/sheetflow/abrir.php'), 'Ctrl/⌘+clic'));
 $ok('la cinta de Redactor y SheetFlow se pliega como en OnlyOffice', str_contains($asset('public/vendor/redactor.js'), 'rd-cinta-cerrada') && str_contains($asset('public/vendor/sheetflow.js'), 'sf-cinta-cerrada') && str_contains($asset('views/redactor/abrir.php'), 'id="rd-plegar"') && str_contains($asset('views/sheetflow/abrir.php'), 'id="sf-plegar"'));
 $ok('la cinta compacta y su botón están en el CSS compilado', str_contains($asset('public/build/css/app.css'), '.cinta-plegar') && str_contains($asset('public/build/css/app.css'), '.cinta-cab'));
 $ok('el Redactor navega entre páginas con flechas debajo de la hoja', str_contains($asset('views/redactor/abrir.php'), 'id="rd-paginas-bar"') && str_contains($asset('public/vendor/redactor.js'), 'pintarBarraPaginas') && str_contains($asset('public/build/css/app.css'), '.rd-paginas-bar'));
