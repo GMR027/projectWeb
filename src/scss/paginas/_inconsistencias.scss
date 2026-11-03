@@ -6,7 +6,7 @@
 .inc-filtros { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin-bottom: 1.6rem; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
 .inc-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.2rem; }
 .inc-item { border-left: .4rem solid var(--border); transition: opacity .3s; p { margin: .5rem 0; font-size: 1.35rem; }
-  &.sev-critica { border-left-color: var(--danger); } &.sev-alta { border-left-color: var(--primary); } &.sev-media { border-left-color: var(--warning); } &.sev-baja { border-left-color: var(--secondary); }
+  &.sev-critica { border-left-color: var(--danger); } &.sev-alta { border-left-color: var(--primary-ink); } &.sev-media { border-left-color: var(--warning); } &.sev-baja { border-left-color: var(--link); }
   &.hecha { opacity: .35; } &.est-rechazada { opacity: .75; } }
 .inc-cab { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline; strong { font-size: 1.5rem; } }
 .inc-acts a { font-family: 'Fira Code', monospace; margin-right: .8rem; }
@@ -25,7 +25,7 @@
 .hist-tabla td { font-size: 1.25rem; }
 .hist-ev { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary);
   &.ev-aplicado { color: var(--success); } &.ev-revertido, &.ev-reabierto { color: var(--warning); } &.ev-rechazado { color: var(--text-muted); }
-  &.ev-creado { color: var(--secondary); } &.ev-modificado { color: var(--primary); } &.ev-eliminado { color: var(--danger); } }
+  &.ev-creado { color: var(--link); } &.ev-modificado { color: var(--primary-ink); } &.ev-eliminado { color: var(--danger); } }
 .hist-num { display: inline-block; min-width: 2.4rem; margin-left: .3rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-dim); text-align: center; font-weight: 700; font-size: 1.2rem; }
 .centro-ia-tabs__tab.activa .hist-num { background: var(--surface); color: inherit; }
 .hist-desc { display: inline-block; line-height: 1.4; }
@@ -34,7 +34,7 @@
 .hist-acciones { white-space: nowrap; }
 .hist-acciones .btn { vertical-align: middle; }
 .hist-estado { display: inline-block; font-size: 1.15rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-muted);
-  &.est-aceptado { color: var(--success); } &.est-revertido { color: var(--warning); } &.est-pendiente { color: var(--primary); } }
+  &.est-aceptado { color: var(--success); } &.est-revertido { color: var(--warning); } &.est-pendiente { color: var(--primary-ink); } }
 .hist-det { margin-top: .4rem; }
 .hist-cmp { width: 100%; margin-top: .6rem; font-size: 1.25rem; border-collapse: collapse;
   th, td { padding: .5rem .8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
@@ -43,15 +43,15 @@
   td { word-break: break-word; white-space: pre-wrap; } }
 .hist-pag { display: flex; gap: 1.2rem; align-items: center; justify-content: center; margin: 1.6rem 0; }
 .hist-lista { list-style: none; margin: .8rem 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; font-size: 1.3rem; }
-.bib-intro { margin-bottom: 1.6rem; border-left: .4rem solid var(--secondary); h3 { margin: 0 0 .8rem; display: flex; gap: .8rem; align-items: center; i { color: var(--secondary); } } p { margin: 0 0 1rem; font-size: 1.35rem; } }
+.bib-intro { margin-bottom: 1.6rem; border-left: .4rem solid var(--secondary); h3 { margin: 0 0 .8rem; display: flex; gap: .8rem; align-items: center; i { color: var(--link); } } p { margin: 0 0 1rem; font-size: 1.35rem; } }
 .bib-pasos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr)); gap: 1rem;
   li { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem 1.2rem; background: var(--bg-tertiary); border-radius: .8rem; font-size: 1.3rem; line-height: 1.4; }
-  i { flex: none; width: 3.2rem; height: 3.2rem; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--primary); } }
+  i { flex: none; width: 3.2rem; height: 3.2rem; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--primary-ink); } }
 .bib-resumen { margin-bottom: 1.6rem; }
-.bib-filtros { .bib-titulo { flex-basis: 100%; font-size: 1.3rem; i { color: var(--primary); margin-right: .4rem; } } select { min-width: 20rem; } }
+.bib-filtros { .bib-titulo { flex-basis: 100%; font-size: 1.3rem; i { color: var(--primary-ink); margin-right: .4rem; } } select { min-width: 20rem; } }
 .bib-herr { display: inline-block; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); font-size: 1.2rem; font-weight: 600; white-space: nowrap; }
 .bib-chip { display: inline-block; min-width: 2.8rem; padding: .1rem .7rem; border-radius: 99rem; text-align: center; font-weight: 700; font-size: 1.2rem; background: var(--bg-tertiary); color: var(--text-dim);
-  &.pend { background: var(--primary); color: #fff; } &.ok { color: var(--success); } &.no { color: var(--danger); } }
+  &.pend { background: var(--primary); color: var(--on-primary); } &.ok { color: var(--success); } &.no { color: var(--danger); } }
 .prg-tabla tr.bib-fav td:first-child { box-shadow: inset .3rem 0 0 var(--success); }
 .bib-form { display: inline-flex; gap: .4rem; align-items: center; input[type=text] { width: 17rem; font-size: 1.2rem; padding: .3rem .6rem; } }
 
@@ -85,14 +85,14 @@
   &__titulo { font-weight: 700; font-size: 1.4rem; margin-right: 1.2rem; color: var(--text-muted); }
   &__tab { padding: .7rem 1.4rem; border-radius: 99rem; font-size: 1.3rem; text-decoration: none; color: var(--text-muted); border: 1px solid transparent;
     &:hover { background: var(--bg-tertiary); color: inherit; }
-    &.activa { background: var(--bg-tertiary); border-color: var(--primary); color: var(--primary); font-weight: 600; } } }
+    &.activa { background: var(--bg-tertiary); border-color: var(--primary-ink); color: var(--primary-ink); font-weight: 600; } } }
 
 
 // Herramientas de IA, fase 2: aprobación por lotes, niveles de riesgo, revertir por tanda, resumen y medidor
 .ia-aviso { margin-bottom: 1.6rem; padding: 1.2rem 1.6rem; border-left: .4rem solid var(--primary); }
 .ia-lote { display: flex; flex-wrap: wrap; gap: 1.2rem 2rem; align-items: center; justify-content: space-between; margin-bottom: 1.6rem; p { margin: .4rem 0 0; } }
 .ia-riesgo { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary); white-space: nowrap;
-    &.ia-riesgo-permiso { color: var(--primary); border: 1px solid var(--primary); }
+    &.ia-riesgo-permiso { color: var(--primary-ink); border: 1px solid var(--primary); }
     &.ia-riesgo-simple { color: var(--text-muted); } }
 .ia-riesgos, .ia-tanda { margin: 1.6rem 0; summary { cursor: pointer; } form, > p, .ia-tanda__form, #tanda-res { margin-top: 1.2rem; } }
 .ia-riesgos__lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr)); gap: .8rem 2rem; margin: 1.2rem 0 1.6rem; }

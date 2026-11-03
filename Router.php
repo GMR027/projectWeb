@@ -39,13 +39,16 @@ class Router
         }
     }
 
-    public function render($view, $datos = [])
+    public function render($view, $__variables = [])
     {
         // Las variables de la vista no pueden sobrescribir las internas del renderizador
-        // (antes un $datos con la clave «view» o «contenido» las pisaba).
+        // (antes un $datos con la clave «view» o «contenido» las pisaba). El parámetro se
+        // llama $__variables y no $datos: con EXTR_SKIP una clave «datos» quedaba sin extraer
+        // y las vistas de Dependencias, Inicio, Curvas o Directorio recibían el arreglo entero.
         $__vista = $view;
         unset($view);
-        extract($datos, EXTR_SKIP);
+        extract($__variables, EXTR_SKIP);
+        unset($__variables);
 
         ob_start();
         include __DIR__ . "/views/{$__vista}.php";

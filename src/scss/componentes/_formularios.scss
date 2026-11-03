@@ -46,12 +46,12 @@
 :where(input[type="checkbox"], input[type="radio"]) {
   width: 1.8rem;
   height: 1.8rem;
-  accent-color: var(--primary);
+  accent-color: var(--primary-ink);
   cursor: pointer;
   flex-shrink: 0;
 }
 
-:where(input[type="range"]) { accent-color: var(--primary); cursor: pointer; }
+:where(input[type="range"]) { accent-color: var(--primary-ink); cursor: pointer; }
 
 :where(input[type="color"]) {
   padding: 0.3rem;
@@ -106,7 +106,7 @@ label:has(> input[type="radio"]) { cursor: pointer; }
   border-radius: $radius-sm;
   transition: border-color 0.2s ease, background-color 0.2s ease;
   &:hover { border-color: $border-accent; background: var(--surface-hover); }
-  &:has(input:checked) { border-color: var(--primary); background: var(--primary-glow); }
+  &:has(input:checked) { border-color: var(--primary-ink); background: var(--primary-glow); }
 }
 
 

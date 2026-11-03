@@ -50,15 +50,33 @@
     });
   };
 
+  // Las zonas con desplazamiento (tablas anchas, lienzos) deben poder recorrerse con el teclado.
+  const regionesDesplazables = (raiz) => {
+    raiz.querySelectorAll('.tabla-wrapper, .manual-tabla, .msr-wrap, .la-wrap, .rd-fondo, .lt-scroll, .sf-scroll').forEach((el) => {
+      const desborda = el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2;
+      if (!desborda || el.dataset.regionAccesible) return;
+      el.dataset.regionAccesible = '1';
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+      // En una tabla no se cambia el rol: se perdería la semántica de tabla.
+      if (el.tagName !== 'TABLE' && !el.hasAttribute('role')) el.setAttribute('role', 'region');
+      if (!el.hasAttribute('aria-label') && !el.hasAttribute('aria-labelledby')) {
+        const titulo = el.parentElement && el.parentElement.querySelector('h2, h3, h4, .card-titulo');
+        el.setAttribute('aria-label', (titulo && titulo.textContent.trim()) || 'Contenido desplazable');
+      }
+      el.classList.add('region-desplazable');
+    });
+  };
+
   const iniciar = () => {
     if (!document.body) return;
     etiquetar(document.body);
+    regionesDesplazables(document.body);
     // Contenido que llega por fetch/AJAX (tablas, paneles, modales…)
     let pendiente = false;
     new MutationObserver(() => {
       if (pendiente) return;
       pendiente = true;
-      requestAnimationFrame(() => { pendiente = false; etiquetar(document.body); });
+      requestAnimationFrame(() => { pendiente = false; etiquetar(document.body); regionesDesplazables(document.body); });
     }).observe(document.body, { childList: true, subtree: true });
   };
 

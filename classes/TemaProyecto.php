@@ -190,22 +190,56 @@ class TemaProyecto
         $onOscuro = self::textoSobre($oscuro);
         $onClaroHover = self::textoSobre(self::oscurecer($claro, 0.12));
         $onOscuroHover = self::textoSobre(self::oscurecer($oscuro, 0.12));
+        // Tinta del acento para TEXTO (pestañas activas, enlaces de acento): el color de la
+        // paleta no siempre llega a 4.5:1 sobre la superficie, así que se ajusta hasta lograrlo.
+        $inkClaro = self::tinta($claro, '#f5f7fa');
+        $inkOscuro = self::tinta($oscuro, '#1e293b');
 
         return ':root{--primary:' . $oscuro
+            . ';--primary-ink:' . $inkOscuro
             . ';--on-primary:' . $onOscuro
             . ';--on-primary-hover:' . $onOscuroHover
             . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}'
             . ':root[data-theme="light"]{--primary:' . $claro
+            . ';--primary-ink:' . $inkClaro
             . ';--on-primary:' . $onClaro
             . ';--on-primary-hover:' . $onClaroHover
             . ';--primary-hover:' . self::oscurecer($claro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $rc) . ',.15)}'
             . ':root[data-theme="dark"]{--primary:' . $oscuro
+            . ';--primary-ink:' . $inkOscuro
             . ';--on-primary:' . $onOscuro
             . ';--on-primary-hover:' . $onOscuroHover
             . ';--primary-hover:' . self::oscurecer($oscuro, 0.12)
             . ';--primary-glow:rgba(' . implode(',', $ro) . ',.25)}';
+    }
+
+    /**
+     * Tinta legible del acento: devuelve un tono de la misma familia que llega a 4.5:1
+     * sobre la superficie indicada (oscurece sobre fondos claros, aclara sobre oscuros).
+     */
+    private static function tinta(string $hex, string $fondo): string
+    {
+        $rgb = self::rgb($hex);
+        $fondoRgb = self::rgb($fondo);
+        $luz = static function (array $c): float {
+            $lin = static function (int $v): float {
+                $v /= 255;
+                return $v <= 0.03928 ? $v / 12.92 : pow(($v + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * $lin($c[0]) + 0.7152 * $lin($c[1]) + 0.0722 * $lin($c[2]);
+        };
+        $contraste = static function (array $a, array $b) use ($luz): float {
+            $la = $luz($a);
+            $lb = $luz($b);
+            return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
+        };
+        $hacia = $luz($fondoRgb) > 0.35 ? 0 : 255;   // fondo claro → oscurecer; oscuro → aclarar
+        for ($i = 0; $i < 12 && $contraste($rgb, $fondoRgb) < 4.5; $i++) {
+            $rgb = array_map(static fn ($v) => (int)round($v + ($hacia - $v) * 0.1), $rgb);
+        }
+        return sprintf('#%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
     }
 
     /** @return int[] [r, g, b] */

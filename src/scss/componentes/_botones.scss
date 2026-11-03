@@ -37,13 +37,14 @@
 }
 
 .btn-secondary {
-  background-color: var(--surface-hover);
-  color: $secondary;
+  background-color: var(--surface);
+  color: var(--link);
   border: 1px solid $border-accent;
 
   &:hover {
-    background-color: var(--bg-tertiary);
-    border-color: $secondary;
+    background-color: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--link);
     box-shadow: 0 0 1.6rem -0.4rem var(--secondary-glow);
   }
 }
@@ -61,25 +62,25 @@
 }
 
 .btn-success {
-  background-color: #059669;
-  color: #fff;
-  border: 1px solid #059669;
+  background-color: var(--success);
+  color: var(--on-success);
+  border: 1px solid var(--success);
 
   &:hover {
-    background-color: #047857;
-    border-color: #047857;
-    color: #fff;
+    background-color: var(--success-ink);
+    border-color: var(--success-ink);
+    color: var(--on-success);
   }
 }
 
 .btn-danger {
   background-color: rgba(239, 68, 68, 0.15);
-  color: $danger;
+  color: var(--danger-ink);
   border: 1px solid rgba(239, 68, 68, 0.4);
 
   &:hover {
     background-color: rgba(239, 68, 68, 0.3);
-    color: #fff;
+    color: var(--danger-ink);
   }
 }
 

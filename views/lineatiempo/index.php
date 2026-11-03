@@ -64,7 +64,7 @@ $qLT = http_build_query(array_filter([
         <span><i class="lt-chip-restr lt-ley-ico"><svg viewBox="0 0 16 16"><path d="M8 2.4 14.6 13.6H1.4z" fill="#fff"/><rect x="7.2" y="6" width="1.6" height="4.4" rx=".8" fill="#ef4444"/><circle cx="8" cy="12.2" r="1" fill="#ef4444"/></svg></i><?php echo s(t('Con restricción')); ?></span>
         <span>◆ <?php echo s(t('Hito (solo se mueve completo)')); ?></span>
     </div>
-    <div class="lt-scroll" id="lt-scroll"><div class="lt-labels" id="lt-labels"></div><div class="lt-canvas" id="lt-canvas"></div></div>
+    <div class="lt-scroll" id="lt-scroll" tabindex="0" role="region" aria-label="Línea de tiempo: usa las flechas o la rueda para recorrer las fechas"><div class="lt-labels" id="lt-labels"></div><div class="lt-canvas" id="lt-canvas"></div></div>
 </div>
 
 <p class="text-muted text-sm lt-ayuda"><?php echo $puedeEditar

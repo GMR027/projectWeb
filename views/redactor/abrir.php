@@ -513,7 +513,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
     <div id="rd-pg-lista" class="rd-pg-lista"></div>
     <p class="text-sm text-muted">Mover o eliminar una página afecta a los bloques que empiezan en ella.</p>
 </aside>
-<div class="rd-fondo" id="rd-fondo">
+<div class="rd-fondo" id="rd-fondo" tabindex="0" role="region" aria-label="Hoja del documento: desplázate para ver más páginas">
     <div class="rd-pagina" id="rd-pagina">
         <div class="rd-hoja" id="rd-hoja" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Contenido del documento" spellcheck="false"><?php echo $documento->contenido !== '' ? $documento->contenido : '<p><br></p>'; ?></div>
         <div class="rd-guias" id="rd-guias" aria-hidden="true"></div>

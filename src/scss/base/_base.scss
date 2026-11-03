@@ -46,7 +46,7 @@ h3 { font-size: 2.4rem; } // Aumentado
 h4 { font-size: 2rem; }   // Aumentado
 
 a {
-  color: $secondary;
+  color: var(--link);
   text-decoration: none;
   transition: color 0.2s ease;
 
@@ -77,7 +77,7 @@ input, select, textarea {
 
 .text-muted { color: $text-muted; }
 .text-dim { color: $text-dim; }
-.text-accent { color: $secondary; }
+.text-accent { color: var(--link); }
 .text-danger { color: $danger; }
 .text-sm { font-size: 1.3rem; }
 .text-center { text-align: center; }
@@ -98,4 +98,10 @@ input, select, textarea {
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+// Zonas con desplazamiento marcadas por src/js/accesibilidad.js
+.region-desplazable:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
 }

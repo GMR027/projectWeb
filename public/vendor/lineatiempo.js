@@ -66,10 +66,46 @@
   }
 
   // ---------- pintado ----------
+  /** Color de texto legible sobre el color de la partida: gana el de mayor contraste. */
+  function rgbDe(hex) {
+    const h = String(hex || '').replace('#', '');
+    const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    if (!/^[0-9a-f]{6}$/i.test(n)) return [59, 130, 246];
+    return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+  }
+  function lumDe(rgb) {
+    const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
+  }
+  function contraste(a, b) {
+    const A = lumDe(a), B = lumDe(b);
+    return (Math.max(A, B) + 0.05) / (Math.min(A, B) + 0.05);
+  }
+  /**
+   * Fondo + tinta de la barra. Si ni el blanco ni la tinta oscura llegan a 4.5:1
+   * (tonos medios como el índigo), el fondo se oscurece o aclara un poco hasta lograrlo.
+   */
+  function coloresBarra(hex) {
+    const blanco = [255, 255, 255], oscuro = [15, 23, 42];
+    let rgb = rgbDe(hex);
+    const tinta = contraste(rgb, blanco) >= contraste(rgb, oscuro) ? blanco : oscuro;
+    const hacia = tinta === blanco ? 0 : 255;   // blanco → fondo más oscuro; oscuro → fondo más claro
+    for (let i = 0; i < 8 && contraste(rgb, tinta) < 4.6; i++) {
+      rgb = rgb.map(v => Math.round(v + (hacia - v) * 0.08));
+    }
+    return {
+      fondo: 'rgb(' + rgb.join(',') + ')',
+      tinta: tinta === blanco ? '#ffffff' : '#0f172a',
+      clara: tinta === oscuro,
+    };
+  }
+
   function barra(a, top, alto) {
     const p = partidas.get(a.partida_id) || {};
+    const col = coloresBarra(p.color || '#3b82f6');
+    const tinta = col.tinta;
     const [i0, i1] = barraI(a);
-    const cls = 'lt-barra st-' + esc(a.status) + (a.hito ? ' lt-hito' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
+    const cls = 'lt-barra st-' + esc(a.status) + (a.hito ? ' lt-hito' : '') + (col.clara ? ' lt-barra-clara' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
     const titulo = a.codigo + ' — ' + a.nombre + ' | ' + fmt(a.fecha_inicio) + ' → ' + fmt(a.fecha_fin) + ' | ' + a.progreso + '%';
     const x0 = i0 * ppd, ancho = (i1 - i0 + 1) * ppd, x1 = x0 + ancho;
     const centro = alto - 15;   // centro vertical de la barra (fila normal y fila con iconos)
@@ -97,7 +133,7 @@
       ? '<img class="lt-icono" src="' + esc(a.icono) + '" alt="" draggable="false" style="left:' + (x0 + ancho / 2 - 24) + 'px" onerror="this.remove()">'
       : '';
     return '<div class="lt-fila" style="top:' + top + 'px;height:' + alto + 'px">' +
-      '<div class="' + cls + '" data-id="' + a.id + '" style="left:' + x0 + 'px;width:' + ancho + 'px;background:' + esc(p.color || '#3b82f6') + '" title="' + esc(titulo) + '">' +
+      '<div class="' + cls + '" data-id="' + a.id + '" style="left:' + x0 + 'px;width:' + ancho + 'px;background:' + col.fondo + ';color:' + tinta + '" title="' + esc(titulo) + '">' +
       '<span class="lt-barra-fill" style="width:' + (a.progreso || 0) + '%"></span>' + manos + texto + '</div>' + chipEst + chipRest + icono + '</div>';
   }
 

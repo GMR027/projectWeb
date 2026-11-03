@@ -40,7 +40,7 @@
     span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     em { font-style: normal; font-size: 1.2rem; opacity: .7; }
     &:hover { background: rgba(128, 128, 128, .12); }
-    &.activa { background: rgba(249, 115, 22, .15); color: var(--primary); font-weight: 600; }
+    &.activa { background: rgba(249, 115, 22, .15); color: var(--primary-ink); font-weight: 600; }
   }
   .btn-icono {
     background: none;

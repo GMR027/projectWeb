@@ -70,7 +70,7 @@
     &:hover td:not(.la-barra) { background-color: var(--surface-hover); }
   }
   .la-atrasada { color: var(--danger); }
-  .la-tag { margin-left: 0.6rem; padding: 0 0.5rem; border-radius: 0.4rem; background: var(--danger); color: #fff; font-size: 1rem; }
+  .la-tag { margin-left: 0.6rem; padding: 0 0.5rem; border-radius: 0.4rem; background: var(--danger); color: var(--on-danger); font-size: 1rem; }
 
   .la-barra { font-weight: 800; font-size: 1.3rem; line-height: 1; }
 
@@ -184,7 +184,7 @@ td.msr-atraso, b.msr-atraso { background: rgba(220, 38, 38, .35); color: #fff; p
 // Last Planner (post-it 7 x 7 cm)
 // ============================================================
 .lp-filtros { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-end; .campo { margin: 0; } }
-.lp-plantillas { h3 { margin: 0 0 1rem; font-size: 1.5rem; display: flex; gap: .8rem; align-items: center; i { color: var(--primary); } }
+.lp-plantillas { h3 { margin: 0 0 1rem; font-size: 1.5rem; display: flex; gap: .8rem; align-items: center; i { color: var(--primary-ink); } }
   .lp-plantillas-form { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-end; margin-bottom: 1rem; .campo { margin: 0; } } }
 .lp-check { display: flex; gap: .6rem; align-items: center; font-size: 1.3rem; }
 .lp-leyenda { margin: 1rem 0; }
@@ -685,7 +685,7 @@ body.gr-editor-page {
     .text-muted { font-size: 1.2rem; line-height: 1.45; } }
   .herr-resumen { display: flex; flex-wrap: wrap; gap: .5rem; }
   .herr-chip { display: inline-flex; align-items: center; padding: .3rem 1rem; border-radius: 99rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-muted); font-size: 1.15rem; font-weight: 700; white-space: nowrap;
-    &.herr-chip-editar { color: var(--primary); border-color: var(--primary); background: var(--primary-glow); } }
+    &.herr-chip-editar { color: var(--primary-ink); border-color: var(--primary-ink); background: var(--primary-glow); } }
 }
 .herr-barra { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem .8rem; margin: 1.2rem 0 .8rem; }
 .herr-busca { display: flex; flex: 1 1 26rem; align-items: center; gap: .7rem; min-width: 16rem; padding: 0 1rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--bg-secondary);
@@ -824,11 +824,11 @@ body.gr-editor-page {
   h4 { font-size: 1.7rem; margin: 2.2rem 0 .8rem; small { font-weight: 400; color: var(--text-muted); font-size: 1.3rem; } }
   p { margin: 0 0 1.1rem; } ul, ol { margin: 0 0 1.2rem 2.2rem; padding: 0; } li { margin-bottom: .5rem; }
   code { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; padding: .1rem .5rem; border-radius: .4rem; background: var(--bg-tertiary, rgba(255, 255, 255, .08)); }
-  a { color: #00b4d8; } }
+  a { color: var(--link); text-decoration: underline; text-underline-offset: .15em; } }
 .manual-tabla { margin: 0 0 1.4rem; td, th { vertical-align: top; } td:first-child { white-space: nowrap; } }
-.manual-nota { padding: 1rem 1.4rem; border-left: 4px solid #00b4d8; border-radius: .6rem; background: rgba(0, 180, 216, .1); }
+.manual-nota { padding: 1rem 1.4rem; border-left: 4px solid var(--secondary); border-radius: .6rem; background: var(--secondary-glow); }
 .manual-roles { margin: 1.6rem 0 0; padding-top: 1rem; border-top: 1px dashed var(--border); display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; }
-.manual-subir { color: #00b4d8; text-decoration: none; white-space: nowrap; }
+.manual-subir { color: var(--link); text-decoration: underline; text-underline-offset: .15em; white-space: nowrap; }
 // Ilustraciones del manual (SVG esquemáticos; los colores siguen el tema)
 .manual-fig { margin: 1.6rem 0 2rem; padding: 1.2rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--bg-secondary);
   figcaption { margin-top: .8rem; font-size: 1.3rem; color: var(--text-muted); text-align: center; } }
@@ -906,7 +906,7 @@ body.gr-editor-page {
 
 .msr-seccion { cursor: pointer; }
 .msr-mover { white-space: nowrap; text-align: center; width: 6rem; }
-.msr-ord { background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: .3rem; width: 2.4rem; height: 2.4rem; cursor: pointer; font-size: 1rem; padding: 0; margin: 0 .1rem; &:hover { background: var(--primary); color: #fff; } &:disabled { opacity: .4; } }
+.msr-ord { background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: .3rem; width: 2.4rem; height: 2.4rem; cursor: pointer; font-size: 1rem; padding: 0; margin: 0 .1rem; &:hover { background: var(--primary); color: var(--on-primary); } &:disabled { opacity: .4; } }
 .carpeta-mover { max-width: 14rem; font-size: 1.2rem; padding: .3rem .5rem; }
 
 // Ajustes del Lookahead (no se imprimen ni van al PDF)

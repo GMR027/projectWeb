@@ -12,38 +12,45 @@
   border-left: 3px solid;
   animation: slideDown 0.3s ease;
   border: 1px solid;
+  color: var(--text);   // el texto se lee; el color de estado va en el borde y el icono
+
+  a {
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: .15em;
+  }
 }
 
 .alerta-error {
   background-color: rgba(220, 38, 38, 0.1);
-  color: var(--danger);
   border-color: rgba(220, 38, 38, 0.3);
   border-left-color: var(--danger);
   border-left-width: 4px;
+  > i { color: var(--danger); }
 }
 
 .alerta-exito {
   background-color: rgba(5, 150, 105, 0.1);
-  color: var(--success);
   border-color: rgba(5, 150, 105, 0.3);
   border-left-color: var(--success);
   border-left-width: 4px;
+  > i { color: var(--success); }
 }
 
 .alerta-aviso {
   background-color: rgba(217, 119, 6, 0.1);
-  color: var(--warning);
   border-color: rgba(217, 119, 6, 0.3);
   border-left-color: var(--warning);
   border-left-width: 4px;
+  > i { color: var(--warning); }
 }
 
 .alerta-info {
   background-color: rgba(2, 132, 199, 0.1);
-  color: var(--secondary);
   border-color: rgba(2, 132, 199, 0.3);
-  border-left-color: var(--secondary);
+  border-left-color: var(--link);
   border-left-width: 4px;
+  > i { color: var(--link); }
 }
 
 @keyframes slideDown {

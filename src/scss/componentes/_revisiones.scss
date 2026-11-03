@@ -40,4 +40,4 @@ button.rev-chip { cursor: pointer; font-family: inherit; &:disabled { cursor: de
 .rev-pie { display: inline-flex; gap: .4rem; font-size: 1.2rem; color: var(--text-muted); }
 
 .rev-mini-caja { display: grid; gap: .6rem; padding: 0 1.6rem 1.2rem; }
-.rev-mini { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; color: inherit; text-decoration: none; > .text-sm { min-width: 9rem; } &:hover .text-sm { color: var(--primary); } .rev-chip { padding: .1rem .7rem; font-size: 1.1rem; } }
+.rev-mini { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; color: inherit; text-decoration: none; > .text-sm { min-width: 9rem; } &:hover .text-sm { color: var(--primary-ink); } .rev-chip { padding: .1rem .7rem; font-size: 1.1rem; } }

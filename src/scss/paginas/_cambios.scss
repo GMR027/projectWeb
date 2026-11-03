@@ -19,19 +19,19 @@
 .cb-chip {
   padding: .4rem 1.1rem; border-radius: 99px; border: 1px solid var(--border); color: var(--text-muted); font-size: 1.2rem; text-decoration: none;
   b { margin-left: .3rem; font-family: $font-mono; }
-  &.activo { background: var(--primary); border-color: var(--primary); color: #fff; }
+  &.activo { background: var(--primary); border-color: var(--primary-ink); color: var(--on-primary); }
 }
 
 .cb-tag {
   display: inline-block; padding: .1rem .7rem; border-radius: 99px; font-size: 1.05rem; font-weight: 600; border: 1px solid var(--border); color: var(--text-muted);
   &.cb-tag-critica { background: rgba(220, 38, 38, .15); color: var(--danger); border-color: rgba(220, 38, 38, .35); }
   &.cb-tag-alta { background: rgba(217, 119, 6, .15); color: var(--warning); border-color: rgba(217, 119, 6, .35); }
-  &.cb-tag-media { background: rgba(2, 132, 199, .12); color: var(--secondary); border-color: rgba(2, 132, 199, .3); }
+  &.cb-tag-media { background: rgba(2, 132, 199, .12); color: var(--link); border-color: rgba(2, 132, 199, .3); }
   &.cb-tag-ok { background: rgba(5, 150, 105, .15); color: var(--success); border-color: rgba(5, 150, 105, .35); }
 }
 
 .cb-estado-oc { display: inline-block; padding: .2rem .9rem; border-radius: 99px; font-size: 1.15rem; font-weight: 600; background: rgba(148, 163, 184, .15); color: var(--text-muted); }
-.cb-oc-solicitada { background: rgba(2, 132, 199, .15); color: var(--secondary); }
+.cb-oc-solicitada { background: rgba(2, 132, 199, .15); color: var(--link); }
 .cb-oc-aprobada { background: rgba(5, 150, 105, .15); color: var(--success); }
 .cb-oc-ejecutada { background: rgba(139, 92, 246, .15); color: #a78bfa; }
 .cb-oc-cerrada { background: rgba(5, 150, 105, .25); color: var(--success); }
@@ -41,7 +41,7 @@
 .cb-paso {
   padding: .4rem 1.1rem; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;
   &:disabled { cursor: default; opacity: .8; }
-  &.activo { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+  &.activo { background: var(--primary); border-color: var(--primary-ink); color: var(--on-primary); font-weight: 700; }
 }
 .cb-desc { margin-top: 1.2rem; color: var(--text); }
 

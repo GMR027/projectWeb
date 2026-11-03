@@ -22,7 +22,7 @@
       font-weight: 600;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: $text-muted;
+      color: var(--text-muted);
       border-bottom: 2px solid $border-accent;
       white-space: nowrap;
       background-color: var(--bg-tertiary);

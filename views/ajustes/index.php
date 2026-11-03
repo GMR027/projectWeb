@@ -56,13 +56,13 @@ if ($esCliente) $secNav[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra
 if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Contraseña y soporte'];
 ?>
 <div class="ajustes-layout">
-<nav class="ajustes-nav" role="tablist" aria-label="Secciones de ajustes">
+<nav class="ajustes-nav" aria-label="Secciones de ajustes">
 <div class="ajustes-busca">
     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
     <input type="search" id="ajustes-busca" placeholder="<?php echo s(t('Buscar en los ajustes…')); ?>" aria-label="<?php echo s(t('Buscar en los ajustes')); ?>" autocomplete="off">
 </div>
 <?php foreach ($secNav as [$sid, $ico, $tit, $sub]): ?>
-    <a href="#<?php echo $sid; ?>" role="tab" data-sec="<?php echo $sid; ?>"><i class="fa-solid <?php echo $ico; ?>"></i><span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span></a>
+    <a href="#<?php echo $sid; ?>" data-sec="<?php echo $sid; ?>"><i class="fa-solid <?php echo $ico; ?>"></i><span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span></a>
 <?php endforeach; ?>
 <p class="ajustes-busca-vacio" id="ajustes-busca-vacio" hidden><?php echo s(t('Ninguna sección coincide.')); ?></p>
 </nav>
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
     const mostrar = id => {
         if (!ids.includes(id)) id = ids[0];
         secs.forEach(x => { x.hidden = x.id !== id; });
-        links.forEach(a => { const on = a.dataset.sec === id; a.classList.toggle('activo', on); a.setAttribute('aria-selected', on); });
+        links.forEach(a => { const on = a.dataset.sec === id; a.classList.toggle('activo', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
         try { sessionStorage.setItem('ajustes-tab', id); } catch (e) {}
     };
     const desdeHash = () => {

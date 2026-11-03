@@ -264,14 +264,14 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .vp-sim { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .6rem .4rem; border: 1px solid var(--border); border-radius: .6rem; background: #fff; color: #334155; font-size: 1rem; cursor: pointer;
   img { width: 4.4rem; height: 4.4rem; object-fit: contain; }
   span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  &:hover { border-color: var(--primary); } }
+  &:hover { border-color: var(--primary-ink); } }
 .vp-cajetin { margin: 0; th { text-align: left; background: #dbe5f1; color: #000; } }
 .vp-b-cajetin .vp-tab { height: auto; }
 .vp-sim-lam { i { font-size: 2.4rem; height: 4.4rem; display: flex; align-items: center; color: #64748b; } }
 
 // ---------- Catálogo de tablas: nombre con icono y vista previa pequeña ----------
 .vp-tabla-nombre { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.vp-tabla-ico { display: inline-flex; color: var(--secondary); font-size: 1.3rem; }
+.vp-tabla-ico { display: inline-flex; color: var(--link); font-size: 1.3rem; }
 .vp-tabla-prev {
   margin-top: .8rem;
   max-width: 52rem;

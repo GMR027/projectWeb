@@ -51,7 +51,7 @@
     img { width: 100%; height: 100%; object-fit: cover; display: block; } }
   .cmp-guardado-sin { width: 100%; height: 100%; display: grid; place-items: center; color: #cbd5e1; font-size: 1.6rem; }
   .cmp-guardado-info { min-width: 0; display: flex; flex-direction: column; gap: .1rem;
-    a { color: var(--text); text-decoration: none; } a:hover strong { color: var(--primary); }
+    a { color: var(--text); text-decoration: none; } a:hover strong { color: var(--primary-ink); }
     strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.3rem; }
     small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.1rem; } }
   .cmp-abiertas { color: #f59e0b; font-weight: 600; }
@@ -85,7 +85,7 @@
 .cmp-anot-lista-cab { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
 .cmp-anot-filtros { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: center; }
 .cmp-chip { border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); border-radius: 99rem; padding: .25rem .8rem; font-size: 1.1rem; cursor: pointer;
-  &.activo { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 700; } }
+  &.activo { background: var(--primary); border-color: var(--primary-ink); color: var(--on-primary); font-weight: 700; } }
 .cmp-anot-lista ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; }
 .cmp-anot-lista li { display: flex; align-items: center; gap: .2rem; border-radius: .5rem; padding: .1rem .2rem; }
 .cmp-anot-lista li.sel { background: rgba(37,99,235,.18); outline: 1px solid rgba(37,99,235,.45); }

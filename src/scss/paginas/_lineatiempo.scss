@@ -28,8 +28,8 @@
 // Columna de etiquetas (partida + actividad), fija a la izquierda
 .lt-labels { flex: none; position: sticky; left: 0; z-index: 3; width: 24rem; background: var(--bg-secondary, #1c2541); border-right: 1px solid var(--border);
   .lt-lab-cab { display: flex; align-items: flex-end; padding: 0 1rem .6rem; font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
-  .lt-lab-grp { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; }
-  .lt-lab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid rgba(128, 128, 128, .12);
+  .lt-lab-grp { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; }
+  .lt-lab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid rgba(128, 128, 128, .12); background: var(--bg-secondary, #1c2541);
     b { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 500; } } }
 @media (max-width: 48rem) { .lt-labels { width: 13rem; } }
 
@@ -45,7 +45,7 @@
 .lt-eje-dia { position: absolute; top: 22px; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; border-left: 1px solid rgba(128, 128, 128, .18); color: var(--text-muted);
   b { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 500; color: var(--text); }
   span { font-size: .95rem; text-transform: uppercase; }
-  &.nohabil { background: rgba(128, 128, 128, .16); b { color: var(--text-muted); } } }
+  &.nohabil { background: rgba(128, 128, 128, .16); } }   // el número conserva la tinta de texto
 .lt-ppd-chico .lt-eje-dia span { display: none; }
 
 .lt-nohabil { position: absolute; top: 62px; bottom: 0; background: rgba(128, 128, 128, .10); pointer-events: none; }
@@ -78,22 +78,29 @@
   .lt-pop-cab { display: block; font-size: 1.2rem; font-weight: 700; color: #f87171; }
   .lt-pop-item p { margin: .2rem 0 0; }
   .lt-pop-btn { display: inline-flex; align-items: center; gap: .5rem; margin-top: .7rem; padding: .35rem .9rem; border: 0; border-radius: .6rem;
-    background: var(--primary-glow); color: var(--primary); font: inherit; font-weight: 600; font-size: 1.2rem; cursor: pointer;
-    &:hover, &:focus-visible { background: var(--primary); color: #fff; } } }
+    background: var(--primary-glow); color: var(--primary-ink); font: inherit; font-weight: 600; font-size: 1.2rem; cursor: pointer;
+    &:hover, &:focus-visible { background: var(--primary); color: var(--on-primary); } } }
 
-.lt-grp { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; pointer-events: none; }
+.lt-grp { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.15rem; font-weight: 700; color: var(--text); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; pointer-events: none; }
 .lt-fila { position: absolute; left: 0; right: 0; border-bottom: 1px solid rgba(128, 128, 128, .12); }
 
 // Barras: el color siempre es el de la partida donde vive la actividad; el número y los días quedan centrados
 .lt-barra { position: absolute; top: 3px; bottom: 3px; display: flex; align-items: center; justify-content: center; gap: .4rem; padding: 0 .4rem; border-radius: .4rem; overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .35); color: #fff; font-size: 1.15rem; cursor: default;
-  .lt-barra-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255, 255, 255, .85); pointer-events: none; }
-  .lt-barra-texto { position: relative; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
-  &.st-no_iniciada { opacity: .62; }
+  // El avance va como franja inferior: si cubriera la barra, el número quedaría sobre blanco
+  .lt-barra-fill { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 0 0 .4rem .4rem; background: rgba(255, 255, 255, .9); pointer-events: none; }
+  .lt-barra-texto { position: relative; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } // la tinta ya se calcula por contraste en lineatiempo.js
+  &.st-no_iniciada { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45); }
   &.corta-ini { border-top-left-radius: 0; border-bottom-left-radius: 0; }
   &.corta-fin { border-top-right-radius: 0; border-bottom-right-radius: 0; }
   &.lt-arrastre { z-index: 5; box-shadow: 0 4px 14px rgba(0, 0, 0, .5); cursor: grabbing; }
   &.lt-cambio { outline: 2px solid #fff; } }
+// Barras de color claro (amarillo, lima…): tinta oscura
+.lt-barra.lt-barra-clara {
+  .lt-barra-fill { background: rgba(15, 23, 42, .55); }
+  .lt-mano { color: rgba(15, 23, 42, .75); text-shadow: none; }
+  &.st-no_iniciada { box-shadow: inset 0 0 0 2px rgba(15, 23, 42, .45); }
+  &.lt-cambio { outline-color: #0f172a; } }
 
 // Manijas con flechas en las esquinas de la barra: ◀ pegada al extremo izquierdo, ▶ al extremo derecho
 .lt-mano { position: absolute; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: center; width: 1.2rem; font-size: .85rem; line-height: 1;
