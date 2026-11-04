@@ -200,6 +200,8 @@ abstract class HallazgosIA
             'modelo' => $h['origen'] === 'ia' ? $modelo : '',
             'evidencia_json' => !empty($h['evidencia']) ? json_encode($h['evidencia'], JSON_UNESCAPED_UNICODE) : null,
             'vigente_hasta' => self::vigenciaPara($accion),
+            // Al volver a detectarlo se refresca la fecha: la antigüedad mide lo que sigue sin resolverse desde la última revisión.
+            'detectado' => date('Y-m-d H:i:s'),
         ];
         foreach ($entidades as $k => $v) $campos[$k] = json_encode($v, JSON_UNESCAPED_UNICODE);
         $partes = [];
