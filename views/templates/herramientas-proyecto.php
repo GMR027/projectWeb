@@ -176,7 +176,7 @@ function pestanas_herramienta(string $grupo, string $activa, $proyecto): void
 {
     $grupos = [
         'lookahead' => ['fa-binoculars', 'Lookahead y planificador', [['/lookahead', 'fa-binoculars', 'Lookahead'], ['/planificador', 'fa-diagram-next', 'Planificador']]],
-        'archivo' => ['fa-folder-open', 'Archivo', [['/archivos', 'fa-folder-open', 'Archivo'], ['/visor', 'fa-eye', 'Visor']]],
+        'archivo' => ['fa-folder-open', 'Archivo', [['/archivos', 'fa-folder-open', 'Archivo'], ['/visor', 'fa-eye', 'Visor'], ['/transmittals', 'fa-paper-plane', 'Envíos']]],
         'revision' => ['fa-magnifying-glass-chart', 'Revisión de datos (IA)', [['/inconsistencias', 'fa-magnifying-glass-chart', 'Inconsistencias'], ['/analisis-materiales', 'fa-boxes-stacked', 'Análisis de materiales']]],
         'editor' => ['fa-pen-ruler', 'Editor', [['/graficos', 'fa-pen-ruler', 'Gráficos'], ['/simbolos', 'fa-shapes', 'Símbolos, estampas y cajetines']]],
         'planos' => ['fa-sheet-plastic', 'Planos y láminas', [['/vplan', 'fa-sheet-plastic', 'Láminas (vPlan)'], ['/vplan/tablas', 'fa-table', 'Tablas adicionales'], ['/graficos', 'fa-pen-ruler', 'Gráficos'], ['/simbolos', 'fa-shapes', 'Símbolos']]],

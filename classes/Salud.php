@@ -268,6 +268,16 @@ class Salud
                     : ($rs['por_vencer'] ? $rs['por_vencer'] . ' subcontrato(s) con documento por vencer.' : 'Documentos de subcontratos al corriente.')];
         }
 
+        // Envíos de documentos sin acuse o con acuse vencido
+        if (Transmittals::disponible()) {
+            $tr = Transmittals::resumen($pid);
+            if ($tr['total'] > 0) {
+                $ind[] = ['clave' => 'envios', 'titulo' => 'Envíos sin acuse', 'valor' => $tr['sin_acuse'], 'icono' => 'fa-paper-plane', 'url' => "/transmittals?proyecto=$pid",
+                    'nivel' => $tr['vencidos'] ? 'critico' : ($tr['sin_acuse'] || $tr['observados'] ? 'aviso' : 'ok'),
+                    'detalle' => $tr['sin_acuse'] ? $tr['sin_acuse'] . ' destinatario(s) sin acuse · ' . $tr['vencidos'] . ' vencido(s) · ' . $tr['observados'] . ' con observaciones.' : 'Todos los envíos tienen acuse.'];
+            }
+        }
+
         return ['nivel' => self::nivelMax(...array_column($ind, 'nivel')), 'indicadores' => $ind];
     }
 }

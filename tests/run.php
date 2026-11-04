@@ -860,6 +860,33 @@ $ok('Costos tiene la pestaña de flujo con tabla, gráfica y recurrentes', (func
     return str_contains($i, "'flujo' =>") && str_contains($v, 'flujo-chart')
         && str_contains($v, 'Costo final estimado') && str_contains($v, '/costos/flujo/concepto');
 })());
+echo "Envíos y acuses\n";
+$ok('los catálogos de envíos están completos', count(\Classes\Transmittals::MEDIOS) === 4
+    && count(\Classes\Transmittals::ESTADOS) === 3 && count(\Classes\Transmittals::ACUSES) === 3);
+$ok('las tablas de envíos están en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_transmittals.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS transmittals') && str_contains($m, 'transmittal_documentos')
+        && str_contains($m, 'transmittal_destinatarios') && str_contains($s, 'CREATE TABLE IF NOT EXISTS transmittals');
+})());
+$ok('las rutas de envíos y acuse público están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/transmittals'") && str_contains($t, "'/transmittals/guardar'")
+        && str_contains($t, "'/transmittals/pdf'") && str_contains($t, "'/transmittals/acuse'");
+})());
+$ok('Archivo incluye la pestaña de envíos y la herramienta los reconoce', str_contains((string)@file_get_contents(__DIR__ . '/../models/Usuario.php'), "'/transmittals'")
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/templates/herramientas-proyecto.php'), "'/transmittals'"));
+$ok('el acuse es público, por token y guarda evidencia', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Transmittals.php');
+    return str_contains($c, 'function porToken(') && str_contains($c, "acuse_ip") && str_contains($c, 'random_bytes(20)');
+})());
+$ok('la vista de envíos tiene formulario, enlaces de acuse y PDF', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/transmittals/index.php');
+    $a = (string)@file_get_contents(__DIR__ . '/../views/transmittals/acuse.php');
+    return str_contains($v, '/transmittals/guardar') && str_contains($v, '/transmittals/acuse?t=') && str_contains($v, '/transmittals/pdf')
+        && str_contains($a, 'Firmar acuse');
+})());
+$ok('Salud avisa de los envíos sin acuse', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Salud.php'), 'Transmittals::resumen('));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

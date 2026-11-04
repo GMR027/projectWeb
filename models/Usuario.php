@@ -43,7 +43,7 @@ class Usuario extends ActiveRecord
         'bitacora' => ['Bitácora de obra', ['/bitacora']],
         'minutas' => ['Minutas', ['/minutas']],
         'evidencias' => ['Evidencias', ['/evidencias']],
-        'archivos' => ['Archivo', ['/archivos']],
+        'archivos' => ['Archivo', ['/archivos', '/transmittals']],
         'visor' => ['Visor', ['/visor']],
         'curvas' => ['Curvas de productividad', ['/curvas', '/api/curvas']],
         'msr' => ['MSR · Materiales', ['/msr', '/api/msr']],

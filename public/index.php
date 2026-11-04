@@ -75,6 +75,7 @@ use Controllers\CostosController;
 use Controllers\EstimacionesController;
 use Controllers\AlmacenController;
 use Controllers\SubcontratoController;
+use Controllers\TransmittalController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
 use Controllers\CalidadController;
@@ -416,6 +417,12 @@ $router->post('/subcontratos/guardar', [SubcontratoController::class, 'guardar']
 $router->post('/subcontratos/documento', [SubcontratoController::class, 'documento']);
 $router->post('/subcontratos/estimacion', [SubcontratoController::class, 'estimacion']);
 $router->get('/subcontratos/pdf', [SubcontratoController::class, 'pdf']);
+// Envíos de documentos y acuses
+$router->get('/transmittals', [TransmittalController::class, 'index']);
+$router->post('/transmittals/guardar', [TransmittalController::class, 'guardar']);
+$router->get('/transmittals/pdf', [TransmittalController::class, 'pdf']);
+$router->get('/transmittals/acuse', [TransmittalController::class, 'acusePublico']);
+$router->post('/transmittals/acuse', [TransmittalController::class, 'acusePublico']);
 $router->post('/costos/movimiento', [CostosController::class, 'movimiento']);
 $router->post('/costos/eliminar', [CostosController::class, 'eliminar']);
 $router->get('/recursos', [RecursosController::class, 'index']);

@@ -448,6 +448,14 @@ HTML],
 <h4>La compuerta de pago</h4>
 <p>Si falta un documento obligatorio, está vencido o no está validado, <strong>no se puede aprobar ni pagar</strong>. Solo el <strong>administrador</strong> puede autorizarlo escribiendo un <strong>motivo</strong> (mínimo 10 caracteres); queda firmado con su nombre y visible en la estimación.</p>
 <p>El botón <strong>PDF</strong> genera la ficha del subcontrato con alcance, documentos, estimaciones y firmas.</p>
+['id' => 'envios', 'despues' => 'archivos', 'titulo' => 'Envíos y acuses de plano', 'icono' => 'fa-paper-plane', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Registra a quién se le envió cada documento y con qué revisión, y recoge el acuse de recibo. Está en <strong>Archivo → Envíos</strong>.</p>
+<ol>
+<li><strong>Nuevo envío:</strong> número, fecha, asunto, medio y los documentos del Archivo. Al guardarlo se congela la revisión de cada documento.</li>
+<li><strong>Destinatarios:</strong> agrega nombre y correo. Cada uno recibe un <strong>enlace individual de acuse</strong>; puedes copiarlo desde el detalle.</li>
+<li><strong>Acuse:</strong> el destinatario abre el enlace sin crear usuario y marca <em>recibido conforme</em>, <em>con observaciones</em> o <em>no recibido</em>. Queda su nombre, fecha, hora e IP.</li>
+</ol>
+<p>Si un envío no tiene acuse o se pasó la fecha límite, aparece en <strong>Salud del proyecto</strong>, pero <strong>no bloquea</strong> la obra. El botón <strong>PDF</strong> genera la hoja formal con documentos, revisión y acuses.</p>
 HTML],
 
 ];

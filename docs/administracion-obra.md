@@ -95,3 +95,13 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - **Compuerta de pago:** `puedePagar()` bloquea aprobar/pagar una estimación si falta o venció un documento. Solo el admin puede autorizarla con `motivo_autorizacion` (≥10 caracteres); queda `autorizado_por`.
 - `subcontrato_estimaciones`: subtotal, IVA, retención, amortización del anticipo, ajuste, bruto y neto, calculados con `Estimaciones::calcular()`. La amortización se topa al anticipo pendiente. Al aprobar/pagar se aplica el **neto** al compromiso (`Compromisos::aplicar`) y se registra como costo real; al editar se revierte el movimiento anterior.
 - PDF en `/subcontratos/pdf?id=`. Permiso de visitante: solo lectura. Migración `database/migracion_subcontratos.sql`.
+
+## Envíos y acuses (`Classes\Transmittals`)
+
+- `transmittals`: número, fecha, de, asunto, mensaje, medio, fecha límite y estado (borrador/enviado/cerrado).
+- `transmittal_documentos`: snapshot del archivo (`archivo_id`, nombre y `revision` al momento de enviar); si el archivo cambia después, el envío conserva la revisión enviada.
+- `transmittal_destinatarios`: nombre, correo, token único de 40 hex y acuse (`pendiente/recibido/observado/rechazado`) con nombre, comentario, fecha e IP.
+- `Transmittals::guardar()` solo permite editar en borrador; al pasar a enviado genera los tokens. `acuse()` valida token, impide doble acuse y cierra el envío cuando todos contestaron.
+- Enlace público `/transmittals/acuse?t=TOKEN` (sin sesión, `publicoLayout`, noindex). El acuse no bloquea la obra; `Salud` avisa de envíos sin acuse o vencidos.
+- UI en **Archivo → Envíos** (`/transmittals`), dentro del grupo de pestañas de Archivo. PDF en `/transmittals/pdf`.
+- Migración `database/migracion_transmittals.sql`.
