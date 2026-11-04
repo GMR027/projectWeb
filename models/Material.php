@@ -5,7 +5,7 @@ namespace Model;
 class Material extends ActiveRecord
 {
     protected static $tabla = 'materiales';
-    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre_base', 'marca', 'modelo', 'valor_extra', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'cantidad', 'costo_unitario', 'unidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'referencia', 'nombre_base', 'marca', 'modelo', 'valor_extra', 'nombre', 'especialidad', 'link_web', 'imagen', 'ficha_tecnica', 'certificado_calidad', 'cantidad', 'stock_minimo', 'costo_unitario', 'unidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
     public const COMPRA = ['pendiente' => 'Pendiente', 'comprado' => 'Comprado'];
     private const FECHAS = ['fecha_compra_prog' => 'compra programada', 'fecha_compra_real' => 'compra real', 'fecha_entrega_prog' => 'entrega programada', 'fecha_entrega_real' => 'entrega real'];
 
@@ -23,6 +23,7 @@ class Material extends ActiveRecord
     public $ficha_tecnica;
     public $certificado_calidad;
     public $cantidad;
+    public $stock_minimo;
     public $costo_unitario;
     public $unidad;
     public $compra;
@@ -47,6 +48,7 @@ class Material extends ActiveRecord
         $this->ficha_tecnica = $args['ficha_tecnica'] ?? null;
         $this->certificado_calidad = $args['certificado_calidad'] ?? null;
         $this->cantidad = $args['cantidad'] ?? null;
+        $this->stock_minimo = $args['stock_minimo'] ?? 0;
         $this->costo_unitario = $args['costo_unitario'] ?? null;
         $this->unidad = $args['unidad'] ?? '';
         $this->compra = $args['compra'] ?? 'pendiente';

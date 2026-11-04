@@ -72,6 +72,7 @@ class Usuario extends ActiveRecord
         'mapa-avance' => ['Mapa de avance', ['/mapa-avance']],
         'submittals' => ['Submittals', ['/submittals', '/api/submittals']],
         'materiales' => ['Catálogo de materiales', ['/materiales', '/api/materiales']],
+        'almacen' => ['Almacén', ['/almacen']],
         'plantillas' => ['Tipo de obra', ['/plantillas']],
         'datos-obra' => ['Datos de obra', ['/datos-obra']],
         'normativa' => ['Normativa y especificaciones', ['/normativa']],
@@ -99,7 +100,7 @@ class Usuario extends ActiveRecord
         'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'riesgos', 'programador', 'calendario', 'curvas'],
         'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
-        'Materiales y costos' => ['msr', 'materiales', 'costos', 'recursos', 'cambios'],
+        'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'recursos', 'cambios'],
         'Administración del proyecto' => ['equipo', 'contratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
         'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones'],
     ];

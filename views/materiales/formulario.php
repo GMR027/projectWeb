@@ -85,6 +85,10 @@ if (is_admin() && ($verif || ($inteligentes ?? false))):
                 <input type="number" id="cantidad" name="cantidad" min="0" step="0.01" value="<?php echo $material->cantidad !== null && $material->cantidad !== '' ? s(rtrim(rtrim((string)$material->cantidad, '0'), '.')) : ''; ?>" placeholder="Opcional">
             </div>
             <div class="campo">
+                <label for="stock_minimo">Existencia mínima (almacén)</label>
+                <input type="number" id="stock_minimo" name="stock_minimo" min="0" step="0.001" value="<?php echo s($material->stock_minimo ?? 0); ?>" placeholder="Aviso cuando baje de aquí">
+            </div>
+            <div class="campo">
                 <label for="unidad">Unidad</label>
                 <input type="text" id="unidad" name="unidad" maxlength="30" value="<?php echo s($material->unidad); ?>" placeholder="pza, m, kg…">
             </div>

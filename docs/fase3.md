@@ -5,6 +5,7 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 | Módulo | Ruta | Código | Quién |
 |---|---|---|---|
 | Costos y presupuesto | `/costos` | `classes/Costos.php`, `CostosController`, `views/costos/` | Solo quien gestiona el proyecto (admin / cliente propietario o asignado). Clave de visitante `costos` |
+| Almacén | `/almacen` | `classes/Almacen.php`, `AlmacenController`, `views/almacen/` | Ve todos; edita quien gestiona o el colaborador con `almacen`. Clave `almacen` |
 | Recursos y cuadrillas | `/recursos` | `classes/Recursos.php`, `RecursosController`, `views/recursos/` | Ve todos; edita quien gestiona. Clave `recursos` |
 | RFI | `/rfi` | `classes/Rfi.php`, `RfiController`, `views/rfi/` | Ve todos; edita quien gestiona. Clave `rfi` |
 | Compartir (enlaces) | `/compartir` | `classes/Enlaces.php`, `CompartirController`, `views/compartir/` | Solo quien gestiona |
@@ -37,6 +38,15 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 - **Cliente:** `layout-publico.php` (`'publicoLayout' => true` en `Router::render`; `noindex`, `no-store`). Secciones `avance` (Curva S, partidas, próximas 3 semanas e hitos), `fotos` (evidencias + fotos de reportes) y `reportes` (sin nombres de personal). Nunca muestra costos, personal ni documentos.
 - **.ics:** `CalendarioIcs::generar()`: actividades pendientes de la semana pasada a las próximas 4, todos los hitos y la fecha límite de RFI abiertos; eventos de día completo con UID estable (`act-ID`, `hito-ID`, `rfi-ID`) y `REFRESH-INTERVAL` de 6 h. La ruta no lleva extensión (`/calendario/ics`) porque `php -S` devuelve 404 a URLs con extensión que no existen.
 - `enlaces_proyecto` está en `RespaldoProyecto::EXCLUIDAS`: los enlaces no se respaldan ni se restauran.
+
+## 3.6 Almacén
+- `almacenes` (uno principal por proyecto, se crea solo), `compra_lineas` (material, cantidad, precio, importe y `recibido`), `recepciones`, `salidas` y `almacen_movimientos` (entrada, salida, ajuste_entrada, ajuste_salida). `materiales.stock_minimo` dispara el aviso de bajo mínimo.
+- **La orden de compra es un compromiso** (`compromisos.tipo = orden_compra`) con líneas de material. `Almacen::guardarOrden()` llama a `Compromisos::guardar()` con el total y guarda las líneas; el dinero se reserva igual que en el paso 5.
+- **Recepción** (`Almacen::recibir()`): cantidades parciales o totales, valida contra `compra_lineas.recibido` y crea movimientos de entrada. Si se escribe factura, aplica el total al compromiso (`Compromisos::aplicar()`) dentro de la misma transacción: el costo real se reconoce al recibir. Sin factura, solo entra al almacén.
+- **Salida** (`Almacen::salida()`): vale por actividad; valida existencia por material y usa el costo promedio de las entradas (o el `costo_unitario` del material) para valorizar el consumo. No crea costo real: es consumo interno.
+- **Ajuste** (`Almacen::ajuste()`): entrada o salida manual con motivo obligatorio; una salida no puede dejar existencia negativa.
+- **Existencia** = Σ entradas + ajustes de entrada − salidas − ajustes de salida. Se calcula en `Almacen::stock()`; no se guarda a mano.
+- Permisos: la clave `almacen` está en `Model\Usuario::HERRAMIENTAS` y en el menú; el visitante solo consulta. Migración `database/migracion_almacen.sql`.
 
 ## Pruebas
 Con copia de BD (AGENTS.md, punto 8). Se probó: captura de presupuesto/costos/estimaciones, órdenes de cambio, sobrecarga con dos actividades al 70 %, RFI vencido, token inválido/caducado (404) y `.ics` (líneas ≤ 75 octetos).

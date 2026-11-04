@@ -784,6 +784,30 @@ $ok('la hoja de estimación tiene deducciones y firmas', (function () {
     return str_contains($v, 'Retención') && str_contains($v, 'Amortización del anticipo')
         && str_contains($v, 'Neto a cobrar') && str_contains($v, 'firmas');
 })());
+echo "Almacén y órdenes de compra\n";
+$ok('los tipos de movimiento del almacén están completos', count(\Classes\Almacen::TIPOS_MOV) === 4
+    && isset(\Classes\Almacen::TIPOS_MOV['entrada'], \Classes\Almacen::TIPOS_MOV['salida'], \Classes\Almacen::TIPOS_MOV['ajuste_entrada'], \Classes\Almacen::TIPOS_MOV['ajuste_salida']));
+$ok('las tablas de almacén están en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_almacen.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS almacenes') && str_contains($m, 'compra_lineas')
+        && str_contains($m, 'almacen_movimientos') && str_contains($s, 'stock_minimo')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS almacen_movimientos');
+})());
+$ok('las rutas del almacén están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/almacen'") && str_contains($t, "'/almacen/orden'")
+        && str_contains($t, "'/almacen/recibir'") && str_contains($t, "'/almacen/salida'") && str_contains($t, "'/almacen/ajuste'");
+})());
+$ok('el material guarda su existencia mínima', str_contains((string)@file_get_contents(__DIR__ . '/../models/Material.php'), 'stock_minimo')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/materiales/formulario.php'), 'name="stock_minimo"'));
+$ok('la existencia se calcula con entradas menos salidas y ajustes', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Almacen.php'), "tipo IN ('entrada','ajuste_entrada')")
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Almacen.php'), 'stockMaterial('));
+$ok('la página de almacén tiene orden, recepción, salida y ajuste', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/almacen/index.php');
+    return str_contains($v, '/almacen/orden') && str_contains($v, '/almacen/recibir')
+        && str_contains($v, '/almacen/salida') && str_contains($v, '/almacen/ajuste');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

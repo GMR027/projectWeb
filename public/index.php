@@ -73,6 +73,7 @@ use Controllers\VisorController;
 use Controllers\MinutaController;
 use Controllers\CostosController;
 use Controllers\EstimacionesController;
+use Controllers\AlmacenController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
 use Controllers\CalidadController;
@@ -400,6 +401,12 @@ $router->post('/estimaciones/contrato', [EstimacionesController::class, 'contrat
 $router->post('/estimaciones/guardar', [EstimacionesController::class, 'guardar']);
 $router->post('/estimaciones/eliminar', [EstimacionesController::class, 'eliminar']);
 $router->get('/estimaciones/pdf', [EstimacionesController::class, 'pdf']);
+// Almacén
+$router->get('/almacen', [AlmacenController::class, 'index']);
+$router->post('/almacen/orden', [AlmacenController::class, 'orden']);
+$router->post('/almacen/recibir', [AlmacenController::class, 'recibir']);
+$router->post('/almacen/salida', [AlmacenController::class, 'salida']);
+$router->post('/almacen/ajuste', [AlmacenController::class, 'ajuste']);
 $router->post('/costos/movimiento', [CostosController::class, 'movimiento']);
 $router->post('/costos/eliminar', [CostosController::class, 'eliminar']);
 $router->get('/recursos', [RecursosController::class, 'index']);

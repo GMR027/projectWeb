@@ -429,6 +429,15 @@ HTML],
 <h4>Cuando el riesgo ocurre</h4>
 <p>Pulsa <strong>Materializar</strong>: se crea una <strong>restricción activa</strong> en la actividad ligada (con su tipo según la categoría) y el riesgo pasa a <em>materializado</em>. No se captura dos veces. Los riesgos que no ocurrieron se cierran al final de la obra y quedan como lección aprendida.</p>
 <p>El botón <strong>PDF</strong> genera la matriz y la lista para la junta semanal. Solo el dueño del proyecto o el administrador pueden eliminar un riesgo; el visitante solo consulta.</p>
+['id' => 'almacen', 'despues' => 'msr', 'titulo' => 'Almacén y órdenes de compra', 'icono' => 'fa-warehouse', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Sigue el material desde que lo pides hasta que se instala. Está en <strong>Materiales y cambios → Almacén</strong>.</p>
+<ol>
+<li><strong>Orden de compra:</strong> proveedor, partida, fecha y líneas de material con cantidad y precio. El total se reserva como <strong>compromiso</strong> en Costos.</li>
+<li><strong>Recepción:</strong> captura lo que llegó, aunque sea parcial. Entra al almacén y suma a la existencia. Si escribes la factura, se aplica al compromiso y se registra como costo real.</li>
+<li><strong>Salida a actividad:</strong> el material sale del almacén y queda cargado a la actividad; no deja sacar más de lo que hay.</li>
+<li><strong>Ajuste:</strong> corrige una diferencia física con un motivo obligatorio. Queda en el historial.</li>
+</ol>
+<p>La existencia se calcula sumando entradas y restando salidas y ajustes; no se escribe a mano. El <strong>mínimo</strong> se configura en el material y la fila se marca cuando baja de ahí.</p>
 HTML],
 
 ];

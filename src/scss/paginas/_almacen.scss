@@ -1,0 +1,26 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Almacén: existencias, órdenes y movimientos
+// ============================================================
+
+.al-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
+.al-kpi {
+  padding: 1.2rem 1.4rem; border: 1px solid var(--border); border-left: 4px solid var(--border);
+  border-radius: .8rem; background: var(--surface);
+  small { display: block; color: var(--text-muted); font-size: 1.1rem; text-transform: uppercase; letter-spacing: .05em; }
+  strong { display: block; font-size: 2.4rem; line-height: 1.2; font-family: $font-mono; }
+  span { color: var(--text-muted); font-size: 1.1rem; }
+  &.al-kpi-alerta { border-left-color: #d97706; strong { color: var(--warning-ink); } }
+}
+
+.al-tabla tr.al-bajo td { background: rgba(217, 119, 6, .07); }
+.al-badge {
+  display: inline-block; padding: .2rem .7rem; border-radius: 2rem; border: 1px solid var(--border);
+  font-size: 1.05rem; white-space: nowrap;
+  &.al-badge-bajo { color: var(--warning-ink); border-color: rgba(217, 119, 6, .45); background: rgba(217, 119, 6, .1); }
+  &.al-badge-ok { color: var(--success-ink); border-color: rgba(5, 150, 105, .4); background: rgba(5, 150, 105, .08); }
+  &.al-tipo-entrada { color: var(--success-ink); border-color: rgba(5, 150, 105, .4); }
+  &.al-tipo-salida { color: var(--danger-ink); border-color: rgba(220, 38, 38, .4); }
+  &.al-tipo-ajuste_entrada, &.al-tipo-ajuste_salida { color: var(--warning-ink); border-color: rgba(217, 119, 6, .4); }
+}
