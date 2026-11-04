@@ -1335,6 +1335,7 @@ $ok('el tablero de portafolio carga solo el CSS compartido', str_contains($asset
 $ok('calidad libera el avance con un formulario plegable', str_contains($asset('views/calidad/index.php'), '<details class="cal-liberar">') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.cal-liberar'));
 $ok('los filtros del portafolio usan la barra compartida', str_contains($asset('views/portafolio/index.php'), 'class="card inc-filtros"') && str_contains($asset('views/portafolio/index.php'), 'tabla-ancha-xl'));
 $ok('la tabla de tipos de frente conserva el ancho del nombre', str_contains($asset('views/balance/index.php'), 'tabla-ancha bal-tipos') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.bal-tipos'));
+$ok('los botones flotantes se apartan al bajar y vuelven al subir', str_contains($asset('src/js/app.js'), "CLASE = 'flotantes-ocultas'") && str_contains($asset('src/scss/layout/_layout.scss'), 'body.flotantes-ocultas .btn-menu-movil') && str_contains($asset('src/scss/layout/_layout.scss'), 'body.flotantes-ocultas .dv-boton'));
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

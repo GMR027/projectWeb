@@ -41,8 +41,29 @@ body.menu-abierto { overflow: hidden; }
   position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
   width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 0; cursor: pointer;
   background: $primary; color: $on-primary; font-size: 2.4rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
+  transition: transform .24s ease, opacity .2s ease, box-shadow .2s ease;
 }
 @media print { .btn-menu-movil, .sidebar-fondo { display: none !important; } }
+
+// Los botones flotantes (menú y divisor de ventanas) se apartan al bajar por la
+// página para no tapar tablas ni campos, y vuelven al subir o al llegar al final.
+// Se controla con la clase del body que pone src/js/app.js.
+body.flotantes-ocultas .btn-menu-movil,
+body.flotantes-ocultas .dv-boton {
+  transform: translateY(calc(100% + 3rem));
+  opacity: 0;
+  pointer-events: none;
+}
+body.flotantes-ocultas .btn-menu-movil:focus-visible,
+body.flotantes-ocultas .dv-boton:focus-visible,
+body.menu-abierto .btn-menu-movil {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-menu-movil, .dv-boton { transition: none; }
+}
 
 .sidebar-header {
   margin-bottom: $space-lg;

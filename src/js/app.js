@@ -739,3 +739,43 @@ document.addEventListener('click', (e) => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
   else iniciar();
 })();
+
+// ============ BOTONES FLOTANTES QUE NO TAPAN EL CONTENIDO ============
+// El menú y el divisor de ventanas se apartan al bajar por la página y vuelven
+// al subir, al llegar arriba o al acercarse al final. Así no cubren tablas largas.
+(() => {
+  const CLASE = 'flotantes-ocultas';
+  const UMBRAL = 180;   // px de recorrido antes de apartarlos
+  let ultimo = window.scrollY;
+  let ocultos = false;
+  let espera = null;
+
+  const fijar = (ocultar) => {
+    if (ocultar === ocultos) return;
+    ocultos = ocultar;
+    document.body.classList.toggle(CLASE, ocultar);
+  };
+
+  const alScroll = () => {
+    const y = window.scrollY;
+    const dy = y - ultimo;
+    if (Math.abs(dy) < 8) return;   // ignora el temblor del scroll
+    const alFinal = window.innerHeight + y >= document.documentElement.scrollHeight - 80;
+    if (dy > 0 && y > UMBRAL && !alFinal) fijar(true);
+    else if (dy < 0 || y <= UMBRAL || alFinal) fijar(false);
+    ultimo = y;
+    clearTimeout(espera);
+    espera = setTimeout(() => { if (window.scrollY <= UMBRAL) fijar(false); }, 250);
+  };
+  window.addEventListener('scroll', alScroll, { passive: true });
+
+  // Con el menú abierto su botón (la X) siempre debe verse y poder pulsarse.
+  const menu = document.getElementById('btn-menu');
+  if (menu) {
+    menu.addEventListener('focus', () => fijar(false));
+    menu.addEventListener('click', () => {
+      if (document.body.classList.contains('menu-abierto')) setTimeout(() => fijar(false), 0);
+    });
+  }
+  window.addEventListener('beforeprint', () => fijar(false));
+})();

@@ -10,6 +10,7 @@ html.embebido {
   width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 1px solid var(--border, #334155);
   background: var(--bg-secondary, #1e293b); color: var(--text, #e2e8f0); font-size: 2.4rem; cursor: pointer;
   box-shadow: 0 .4rem 1.4rem rgba(0, 0, 0, .35);
+  transition: transform .24s ease, opacity .2s ease, border-color .2s ease, color .2s ease;
   &:hover { border-color: var(--primary); color: var(--primary); }
   &.dv-escritorio { right: 8.4rem; }   // junto al globo del chat (5.6rem a 1.6rem del borde) con 1.2rem de aire
 }
