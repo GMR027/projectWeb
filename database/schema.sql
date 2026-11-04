@@ -126,6 +126,7 @@ CREATE TABLE actividades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     partida_id INT NOT NULL,
     calendario_id INT NULL,
+    frente_id INT NULL,
     codigo VARCHAR(50) NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
@@ -2960,4 +2961,17 @@ CREATE TABLE IF NOT EXISTS calendarios_festivos (
     tipo ENUM('festivo','paro_tecnico','clima','otro') NOT NULL DEFAULT 'festivo',
     UNIQUE KEY uq_cal_festivo (calendario_id, fecha),
     FOREIGN KEY (calendario_id) REFERENCES calendarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS frentes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    tipo ENUM('piso','tramo','tunel','anillo','otro') NOT NULL DEFAULT 'piso',
+    orden INT NOT NULL DEFAULT 0,
+    color VARCHAR(7) NOT NULL DEFAULT '#00b4d8',
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_frentes_proyecto (proyecto_id, activo, orden),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

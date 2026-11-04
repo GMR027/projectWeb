@@ -686,6 +686,7 @@ class ProgramaController
             $actividad->id = null;
             self::normalizarFechasActividad($actividad);
             $actividad->calendario_id = self::calendarioValido($proyectoId, (int)($actividad->calendario_id ?? 0));
+            $actividad->frente_id = self::frenteValido($proyectoId, (int)($actividad->frente_id ?? 0));
             $calendario = new Calendario($proyectoId, (int)($actividad->calendario_id ?? 0));
             $alertas = $actividad->validar();
             // La partida elegida debe pertenecer a este proyecto
@@ -756,6 +757,7 @@ class ProgramaController
             'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : [],
             'gestionarMateriales' => !empty($_POST['gestionar_materiales']),
             'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyectoId) : [],
+            'frentes' => \Classes\LineaBalance::disponible() ? \Classes\LineaBalance::frentes((int)$proyectoId) : [],
         ]);
     }
 
@@ -770,6 +772,12 @@ class ProgramaController
     {
         if (!$calendarioId) return null;
         return \Classes\Calendarios::disponible() && \Classes\Calendarios::calendario($pid, $calendarioId) ? $calendarioId : null;
+    }
+
+    private static function frenteValido(int $pid, int $frenteId): ?int
+    {
+        if (!$frenteId) return null;
+        return \Classes\LineaBalance::disponible() && \Classes\LineaBalance::frentes($pid) && in_array($frenteId, array_map(fn($f) => (int)$f['id'], \Classes\LineaBalance::frentes($pid)), true) ? $frenteId : null;
     }
 
     /** Primera y última fecha con parte diario para una actividad (sugerencia de fechas reales) */
@@ -946,6 +954,7 @@ class ProgramaController
             $actividad->id = $id;
             self::normalizarFechasActividad($actividad);
             $actividad->calendario_id = self::calendarioValido((int)$proyecto->id, (int)($actividad->calendario_id ?? 0));
+            $actividad->frente_id = self::frenteValido((int)$proyecto->id, (int)($actividad->frente_id ?? 0));
             $calendario = new Calendario((int)$proyecto->id, (int)($actividad->calendario_id ?? 0));
             // Solo se puede mover a una partida del mismo proyecto
             $destino = Partida::find($actividad->partida_id);
@@ -1004,6 +1013,7 @@ class ProgramaController
                 ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false],
             'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyecto->id) : [],
             'fechasSugeridas' => self::fechasRealesSugeridas((int)$proyecto->id, (int)$id),
+            'frentes' => \Classes\LineaBalance::disponible() ? \Classes\LineaBalance::frentes((int)$proyecto->id) : [],
         ]);
     }
 

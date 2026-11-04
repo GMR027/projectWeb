@@ -71,6 +71,7 @@ class Usuario extends ActiveRecord
         'subcontratos' => ['Subcontratos', ['/subcontratos']],
         'cierre' => ['Cierre de obra', ['/cierre']],
         'mapa-avance' => ['Mapa de avance', ['/mapa-avance']],
+        'balance' => ['Línea de balance', ['/balance']],
         'submittals' => ['Submittals', ['/submittals', '/api/submittals']],
         'materiales' => ['Catálogo de materiales', ['/materiales', '/api/materiales']],
         'almacen' => ['Almacén', ['/almacen']],
@@ -98,7 +99,7 @@ class Usuario extends ActiveRecord
      * automáticamente en «Otras herramientas» (ver `gruposHerramientas()`).
      */
     public const HERRAMIENTAS_GRUPOS = [
-        'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'riesgos', 'programador', 'calendario', 'curvas'],
+        'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'balance', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'riesgos', 'programador', 'calendario', 'curvas'],
         'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
         'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'recursos', 'cambios'],

@@ -468,6 +468,15 @@ HTML],
 <li><strong>Acuse:</strong> el destinatario abre el enlace sin crear usuario y marca <em>recibido conforme</em>, <em>con observaciones</em> o <em>no recibido</em>. Queda su nombre, fecha, hora e IP.</li>
 </ol>
 <p>Si un envío no tiene acuse o se pasó la fecha límite, aparece en <strong>Salud del proyecto</strong>, pero <strong>no bloquea</strong> la obra. El botón <strong>PDF</strong> genera la hoja formal con documentos, revisión y acuses.</p>
+['id' => 'balance', 'despues' => 'lineatiempo', 'titulo' => 'Línea de balance (takt)', 'icono' => 'fa-chart-column', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Vista para obra repetitiva (pisos, túneles, tramos): muestra cómo avanza cada oficio por los frentes. Está en <strong>Planeación → Línea de balance</strong>.</p>
+<ol>
+<li><strong>Frentes:</strong> crea los pisos, tramos o anillos con su orden y color. El orden manda en el diagrama.</li>
+<li><strong>Generar:</strong> elige la partida (oficio), el nombre, la duración por frente, el <strong>takt</strong> y la fecha de inicio. Crea una actividad por frente, espaciada por el takt.</li>
+<li><strong>Diagrama:</strong> cada línea es un oficio y cada punto un frente. El <strong>takt</strong> es la pendiente entre frentes.</li>
+<li><strong>Cruces:</strong> si un oficio posterior empieza antes de que termine el anterior en el mismo frente, aparece una alerta. No bloquea: revisa si es una decisión consciente.</li>
+</ol>
+<p>También puedes asignar un frente a una actividad existente en <em>Editar actividad</em>. Los frentes sin actividad aparecen como huecos.</p>
 HTML],
 
 ];

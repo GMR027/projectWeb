@@ -1005,6 +1005,39 @@ $ok('Recursos muestra propuestas, simulación y aplicación', (function () {
     return str_contains($v, '/recursos/nivelar') && str_contains($v, 'Propuestas para nivelar')
         && str_contains($v, 'Nueva carga') && str_contains($v, 'Aplicar seleccionadas');
 })());
+echo "Línea de balance (takt)\n";
+$ok('la migración y el esquema traen frentes y frente_id', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_linea_balance.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS frentes') && str_contains($m, 'frente_id')
+        && str_contains($s, 'frente_id INT NULL') && str_contains($s, 'CREATE TABLE IF NOT EXISTS frentes');
+})());
+$ok('la línea de balance agrupa oficios, calcula takt y detecta cruces', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
+    return str_contains($c, 'function datos(') && str_contains($c, "'lineas'")
+        && str_contains($c, "'takt'") && str_contains($c, "'conflictos'");
+})());
+$ok('el generador crea una actividad por frente con takt', str_contains((string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php'), 'function generar(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php'), 'sumarHabiles(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php'), "'frente_id' =>"));
+$ok('las rutas y el menú de línea de balance están registrados', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    $u = (string)@file_get_contents(__DIR__ . '/../models/Usuario.php');
+    return str_contains($t, "'/balance'") && str_contains($t, "'/balance/generar'") && str_contains($u, "'balance' =>");
+})());
+$ok('la vista de balance tiene frentes, generador y diagrama', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/balance/index.php');
+    return str_contains($v, '/balance/frente') && str_contains($v, '/balance/generar') && str_contains($v, '<svg');
+})());
+$ok('el takt se mide entre inicios y no cuenta el día anterior', str_contains((string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php'), "' +1 day'"));
+$ok('una actividad nueva nace con restricción «ninguna» (no NULL)', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../models/Actividad.php');
+    return str_contains($m, "restriccion_tipo = \$args['restriccion_tipo'] ?? 'ninguna'");
+})());
+$ok('el generador solo cuenta la actividad si la inserción tuvo resultado', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
+    return str_contains($c, "!empty(\$res['resultado'])");
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

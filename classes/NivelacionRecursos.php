@@ -63,7 +63,7 @@ class NivelacionRecursos
     }
 
     /** Aplica propuestas seleccionadas: [['actividad_id'=>, 'shift'=>], …]. */
-    public static function aplicar(Proyecto $proyecto, array $seleccion): array
+    public static function aplicar(Proyecto $proyecto, array $seleccion): int
     {
         $pid = (int)$proyecto->id;
         $n = 0;
@@ -86,7 +86,7 @@ class NivelacionRecursos
         if ($n) {
             Dependencias::propagar($proyecto);
             try {
-                Auditoria::registrar($pid, 'recursos', 'nivelar', 'editar', 'Aplicó ' . $n . ' movimiento(s) para nivelar recursos.', null, null, null, 'Recurso');
+                Auditoria::registrar($pid, 'recursos', 'modificado', 'nivelar', 'Aplicó ' . $n . ' movimiento(s) para nivelar recursos.', null, null, null, 'Recurso');
             } catch (\Throwable $e) {
             }
         }

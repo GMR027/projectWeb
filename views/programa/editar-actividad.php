@@ -54,6 +54,10 @@
                 <select id="calendario_id" name="calendario_id"><option value="">General del proyecto</option><?php foreach ($calendarios as $cal): ?><option value="<?php echo (int)$cal['id']; ?>"<?php echo (int)$actividad->calendario_id === (int)$cal['id'] ? ' selected' : ''; ?>><?php echo s($cal['nombre']); ?></option><?php endforeach; ?></select>
             </div>
             <div class="campo">
+                <label for="frente_id">Frente (línea de balance)</label>
+                <select id="frente_id" name="frente_id"><option value="">— Sin frente —</option><?php foreach ($frentes as $fr): ?><option value="<?php echo (int)$fr['id']; ?>"<?php echo (int)$actividad->frente_id === (int)$fr['id'] ? ' selected' : ''; ?>><?php echo s($fr['nombre']); ?></option><?php endforeach; ?></select>
+            </div>
+            <div class="campo">
                 <label for="codigo">Código *</label>
                 <input type="text" id="codigo" name="codigo" value="<?php echo s($actividad->codigo); ?>" required>
             </div>

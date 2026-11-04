@@ -5,11 +5,12 @@ namespace Model;
 class Actividad extends ActiveRecord
 {
     protected static $tabla = 'actividades';
-    protected static $columnasDB = ['id', 'partida_id', 'calendario_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'fecha_inicio_real', 'fecha_fin_real', 'duracion_restante', 'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'fecha_fija', 'orden'];
+    protected static $columnasDB = ['id', 'partida_id', 'calendario_id', 'frente_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'fecha_inicio_real', 'fecha_fin_real', 'duracion_restante', 'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'fecha_fija', 'orden'];
 
     public $id;
     public $partida_id;
     public $calendario_id;
+    public $frente_id;
     public $codigo;
     public $nombre;
     public $descripcion;
@@ -49,12 +50,19 @@ class Actividad extends ActiveRecord
         $this->id = $args['id'] ?? null;
         $this->partida_id = $args['partida_id'] ?? null;
         $this->calendario_id = $args['calendario_id'] ?? null;
+        $this->frente_id = $args['frente_id'] ?? null;
         $this->codigo = $args['codigo'] ?? '';
         $this->nombre = $args['nombre'] ?? '';
         $this->descripcion = $args['descripcion'] ?? '';
         $this->fecha_inicio = $args['fecha_inicio'] ?? '';
         $this->duracion_dias = $args['duracion_dias'] ?? 1;
         $this->fecha_fin = $args['fecha_fin'] ?? '';
+        $this->fecha_inicio_real = $args['fecha_inicio_real'] ?? null;
+        $this->fecha_fin_real = $args['fecha_fin_real'] ?? null;
+        $this->duracion_restante = $args['duracion_restante'] ?? null;
+        $this->restriccion_tipo = $args['restriccion_tipo'] ?? 'ninguna';
+        $this->restriccion_fecha = $args['restriccion_fecha'] ?? null;
+        $this->restriccion_motivo = $args['restriccion_motivo'] ?? '';
         $this->progreso = $args['progreso'] ?? 0;
         $this->prioridad = $args['prioridad'] ?? 'media';
         $this->status = $args['status'] ?? 'no_iniciada';

@@ -76,6 +76,7 @@ use Controllers\EstimacionesController;
 use Controllers\AlmacenController;
 use Controllers\SubcontratoController;
 use Controllers\TransmittalController;
+use Controllers\BalanceController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
 use Controllers\CalidadController;
@@ -426,6 +427,11 @@ $router->post('/transmittals/guardar', [TransmittalController::class, 'guardar']
 $router->get('/transmittals/pdf', [TransmittalController::class, 'pdf']);
 $router->get('/transmittals/acuse', [TransmittalController::class, 'acusePublico']);
 $router->post('/transmittals/acuse', [TransmittalController::class, 'acusePublico']);
+// Línea de balance
+$router->get('/balance', [BalanceController::class, 'index']);
+$router->post('/balance/frente', [BalanceController::class, 'frente']);
+$router->post('/balance/frente/eliminar', [BalanceController::class, 'frenteEliminar']);
+$router->post('/balance/generar', [BalanceController::class, 'generar']);
 $router->post('/costos/movimiento', [CostosController::class, 'movimiento']);
 $router->post('/costos/eliminar', [CostosController::class, 'eliminar']);
 $router->get('/recursos', [RecursosController::class, 'index']);
