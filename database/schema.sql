@@ -976,21 +976,27 @@ CREATE TABLE IF NOT EXISTS inconsistencias (
     proyecto_id INT NOT NULL,
     corrida_id INT NOT NULL,
     huella CHAR(40) NOT NULL,                     -- identifica el hallazgo para no repetir lo ya resuelto o rechazado
+    grupo VARCHAR(60) NOT NULL DEFAULT '',       -- problema (regla) para agrupar y reportar
     categoria VARCHAR(30) NOT NULL,
     severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     origen ENUM('sistema','ia') NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
+    evidencia_json TEXT NULL,                     -- de dónde sale el hallazgo: {fuente, cita, entidad_id}
     actividades_json TEXT NULL,                   -- ids de actividades implicadas
-    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado}
-    estado ENUM('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'pendiente',
+    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado, evidencia}
+    estado ENUM('pendiente','aceptada','rechazada','obsoleta') NOT NULL DEFAULT 'pendiente',
+    motivo_rechazo VARCHAR(60) NOT NULL DEFAULT '',-- por qué se rechazó (para medir precisión por regla)
     antes_json TEXT NULL,                         -- valores previos a aplicar la solución (para revertir)
     modelo VARCHAR(150) NOT NULL DEFAULT '',
     detectado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    vigente_hasta DATETIME NULL,                  -- pasado este momento el hallazgo deja de aplicarse
     resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
     resuelto_en DATETIME NULL,
     UNIQUE KEY uq_corrida_huella (corrida_id, huella),
     KEY idx_estado (proyecto_id, estado),
+    KEY idx_grupo (proyecto_id, grupo, estado),
+    KEY idx_vigencia (proyecto_id, estado, vigente_hasta),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (corrida_id) REFERENCES inconsistencias_corridas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -1031,22 +1037,28 @@ CREATE TABLE IF NOT EXISTS analisis_materiales_hallazgos (
     proyecto_id INT NOT NULL,
     corrida_id INT NOT NULL,
     huella CHAR(40) NOT NULL,
+    grupo VARCHAR(60) NOT NULL DEFAULT '',
     categoria VARCHAR(30) NOT NULL,
     severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     origen ENUM('sistema','ia') NOT NULL,
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT NOT NULL,
+    evidencia_json TEXT NULL,                     -- de dónde sale el hallazgo: {fuente, cita, entidad_id}
     materiales_json TEXT NULL,                    -- ids de materiales implicados
     submittals_json TEXT NULL,                    -- ids de submittals implicados
-    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado}
-    estado ENUM('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'pendiente',
+    solucion_json TEXT NOT NULL,                  -- {texto, accion, params, esperado, evidencia}
+    estado ENUM('pendiente','aceptada','rechazada','obsoleta') NOT NULL DEFAULT 'pendiente',
+    motivo_rechazo VARCHAR(60) NOT NULL DEFAULT '',-- por qué se rechazó (para medir precisión por regla)
     antes_json TEXT NULL,                         -- valores previos a aplicar la solución (para revertir)
     modelo VARCHAR(150) NOT NULL DEFAULT '',
     detectado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    vigente_hasta DATETIME NULL,                  -- pasado este momento el hallazgo deja de aplicarse
     resuelto_por VARCHAR(150) NOT NULL DEFAULT '',
     resuelto_en DATETIME NULL,
     UNIQUE KEY uq_corrida_huella (corrida_id, huella),
     KEY idx_estado (proyecto_id, estado),
+    KEY idx_grupo (proyecto_id, grupo, estado),
+    KEY idx_vigencia (proyecto_id, estado, vigente_hasta),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (corrida_id) REFERENCES analisis_materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

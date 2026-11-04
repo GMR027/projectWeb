@@ -13,7 +13,7 @@ class Auditoria
     use AccesoDb;
 
     public const HERRAMIENTAS = ['programador' => 'Programador de actividades', 'inconsistencias' => 'Inconsistencias de proyecto', 'materiales' => 'Análisis de materiales', 'informes' => 'Informes de IA', 'normativa' => 'Normativa y especificaciones', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list', 'plantillas' => 'Plantillas por tipo de obra', 'ensamblador' => 'Ensamblador de documentos', 'ordenar' => 'Ordenar y renumerar', 'tabla-documento' => 'Tabla desde documento'];
-    public const EVENTOS = ['aplicado' => 'Aplicado', 'revertido' => 'Revertido', 'rechazado' => 'Rechazado', 'reabierto' => 'Reabierto'];
+    public const EVENTOS = ['aplicado' => 'Aplicado', 'corregido' => 'Corregido a mano', 'revertido' => 'Revertido', 'rechazado' => 'Rechazado', 'reabierto' => 'Reabierto'];
     public const POR_PAGINA = 50;
 
     /** Qué entidad toca una acción: [tipo, id, nombre] */
@@ -27,6 +27,10 @@ class Auditoria
             case 'ajustar_duracion':
             case 'renombrar_actividad':
             case 'editar_descripcion':
+            case 'fijar_status':
+            case 'marcar_sin_material':
+            case 'vincular_material':
+            case 'desvincular_material':
                 $id = (int)($p['actividad_id'] ?? 0);
                 $a = $uno("SELECT a.codigo, a.nombre FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $id AND pa.proyecto_id = $pid");
                 return ['actividad', $id, $a ? $a['codigo'] . ' ' . $a['nombre'] : ''];
@@ -37,6 +41,11 @@ class Auditoria
                 return ['partida', $id, $a ? $a['codigo'] . ' ' . $a['nombre'] : ''];
             case 'marcar_comprado':
             case 'renombrar_material':
+            case 'editar_material':
+            case 'vincular_actividad':
+            case 'desvincular_actividad':
+            case 'vincular_submittal':
+            case 'desvincular_submittal':
             case 'sincronizar_msr_material':
                 $id = (int)($p['material_id'] ?? 0);
                 $a = $uno("SELECT nombre FROM materiales WHERE id = $id AND proyecto_id = $pid");

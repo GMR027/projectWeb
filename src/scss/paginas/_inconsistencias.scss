@@ -8,12 +8,56 @@
   &.sev-critica { border-left-color: var(--danger); } &.sev-alta { border-left-color: var(--primary-ink); } &.sev-media { border-left-color: var(--warning); } &.sev-baja { border-left-color: var(--link); }
   &.hecha { opacity: .35; } &.est-rechazada { opacity: .75; } }
 .inc-cab { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline; strong { font-size: 1.5rem; } }
-.inc-acts a { font-family: 'Fira Code', monospace; margin-right: .8rem; }
+.inc-acts { list-style: none; margin: .5rem 0; padding: 0; display: flex; flex-direction: column; gap: .35rem;
+  li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; font-size: 1.3rem; }
+  a { font-family: 'Fira Code', monospace; font-weight: 600; } }
+.inc-act-nombre { color: var(--text); }
+.inc-chip-restriccion { font-size: 1.1rem; font-weight: 700; padding: .15rem .7rem; border-radius: 99rem; background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger-ink); white-space: nowrap; }
 .inc-solucion { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: baseline; padding: .9rem 1.2rem; border-radius: .8rem; background: var(--bg-tertiary); font-size: 1.3rem; }
 .inc-tag { flex: none; font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--surface); border: 1px solid var(--border); }
 .inc-botones { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-top: 1rem; }
 .inc-estado { font-size: 1.3rem; font-weight: 600; }
 .inc-msg { font-size: 1.2rem; color: var(--text-muted); }
+.inc-nota { flex-basis: 100%; margin: 0; font-size: 1.2rem; color: var(--text-muted); }
+
+// Selector Lista / Por problema y reportes
+.inc-vistas { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: center; margin: 1rem 0 1.4rem; }
+.inc-grupos { display: flex; flex-direction: column; gap: 1.2rem; }
+.inc-grupo { padding: 0; overflow: hidden;
+  > summary { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.2rem; padding: 1.1rem 1.4rem; cursor: pointer; background: var(--bg-tertiary);
+    strong { font-size: 1.45rem; } }
+  > p { padding: 0 1.4rem; }
+  .inc-grupo-aplicar { margin-left: auto; }
+  .inc-grupo-msg { display: block; padding: 0 1.4rem; }
+  > .inc-botones { padding: 0 1.4rem 1.2rem; margin-top: .4rem; } }
+.inc-grupo-n { font-size: 1.2rem; font-weight: 700; padding: .15rem .8rem; border-radius: 99rem; background: var(--surface); border: 1px solid var(--border); }
+.inc-gtabla { width: 100%; border-collapse: collapse; font-size: 1.25rem; margin: .6rem 0 1rem;
+  th, td { padding: .6rem 1.4rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+  th { font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  tr.est-aceptada, tr.est-rechazada { opacity: .7; } }
+.inc-gtabla a { font-family: 'Fira Code', monospace; font-weight: 600; }
+
+// Editor en línea de un hallazgo: corregir sin salir de la página
+.inc-editor { margin-top: .9rem; border: 1px dashed var(--border); border-radius: .8rem; background: var(--surface);
+  > summary { padding: .7rem 1.1rem; cursor: pointer; font-size: 1.25rem; font-weight: 600; color: var(--primary-ink); }
+  &[open] > summary { border-bottom: 1px solid var(--border); } }
+.inc-form { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: flex-end; padding: 1.1rem 1.2rem 1.4rem; }
+.inc-campo { display: flex; flex-direction: column; gap: .3rem; font-size: 1.15rem; color: var(--text-muted); min-width: 16rem; flex: 1 1 16rem;
+  input, select, textarea { width: 100%; } }
+.inc-campo-accion { flex-basis: 100%; max-width: 46rem; }
+.inc-ancho { flex-basis: 100%; max-width: 100%; }
+.ed-panel { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: flex-end; }
+.ed-panel[hidden] { display: none; }
+.inc-bloqueo { flex-basis: 100%; }
+.ed-restricciones { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .7rem .9rem; border-radius: .8rem; background: var(--bg-tertiary); font-size: 1.2rem; }
+.ed-calcular { align-self: flex-end; }
+.hecha { opacity: .35; }
+
+@media (max-width: 48rem) {
+  .inc-campo { flex-basis: 100%; min-width: 0; }
+  .inc-gtabla th, .inc-gtabla td { padding: .5rem .7rem; }
+  .inc-grupo .inc-grupo-aplicar { margin-left: 0; }
+}
 
 .inc-masivo { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: center; margin-bottom: 1.2rem; }
 .inc-estructura { flex-basis: 100%; font-size: 1.25rem; color: var(--text-muted); b { color: var(--text); } }
@@ -23,7 +67,7 @@
 // Historial de cambios: lo comparten la pestaña del Centro de IA (solo la IA) y la pantalla de la sección Administración
 .hist-tabla td { font-size: 1.25rem; }
 .hist-ev { font-size: 1.1rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99rem; background: var(--bg-tertiary);
-  &.ev-aplicado { color: var(--success-ink); } &.ev-revertido, &.ev-reabierto { color: var(--warning-ink); } &.ev-rechazado { color: var(--text-muted); }
+  &.ev-aplicado { color: var(--success-ink); } &.ev-corregido { color: var(--primary-ink); } &.ev-revertido, &.ev-reabierto { color: var(--warning-ink); } &.ev-rechazado { color: var(--text-muted); }
   &.ev-creado { color: var(--link); } &.ev-modificado { color: var(--link); } &.ev-eliminado { color: var(--danger-ink); } }
 .hist-num { display: inline-block; min-width: 2.4rem; margin-left: .3rem; padding: .1rem .7rem; border-radius: 99rem; background: var(--bg-tertiary); color: var(--text-dim); text-align: center; font-weight: 700; font-size: 1.2rem; }
 .centro-ia-tabs__tab.activa .hist-num { background: var(--surface); color: inherit; }
@@ -95,3 +139,23 @@
 .ia-bloque { margin-bottom: 1.6rem; h3 { display: flex; gap: .8rem; align-items: center; margin-bottom: 1rem; } }
 .ia-lista { list-style: none; padding: 0; margin: 0 0 1rem; li { padding: .6rem 0; border-bottom: 1px solid var(--border); } }
 .ia-vig { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin: 1.2rem 0; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } .ia-vig__activa { flex-direction: row; align-items: center; } }
+
+// Salud de la revisión y auditoría de hallazgos (frescura, precisión, motivos de rechazo)
+.inc-salud {
+  summary { cursor: pointer; }
+  .inc-salud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1.2rem 0; }
+  .inc-salud-grid > div { border: 1px solid var(--border); border-radius: .8rem; padding: .8rem 1rem; display: flex; flex-direction: column; gap: .2rem;
+    small { color: var(--text-muted); font-size: 1.1rem; } strong { font-size: 1.9rem; } }
+  .inc-gtabla { margin-top: 1rem; }
+}
+.inc-evidencia { border-left: .3rem solid var(--primary); background: var(--primary-soft); padding: .5rem .9rem; border-radius: .4rem; font-size: 1.2rem; color: var(--text-muted); }
+.inc-vencido { color: var(--danger); font-size: 1.2rem; font-weight: 600; }
+.inc-check { display: flex; align-items: flex-start; gap: .6rem; font-size: 1.2rem; color: var(--text-muted); margin: .4rem 0; }
+.inc-editor-dialog, .inc-rechazo-dialog {
+  width: min(76rem, 94vw); max-height: 88vh; overflow: auto; border: 1px solid var(--border); border-radius: 1.2rem;
+  background: var(--bg-secondary, var(--panel)); color: var(--text); padding: 0;
+  &::backdrop { background: rgba(0, 0, 0, .55); }
+}
+.inc-editor-cab { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: inherit; z-index: 2; }
+.inc-editor-host { padding: 1.2rem 1.4rem 1.6rem; .inc-editor > summary { display: none; } }
+.inc-rechazo-dialog { padding: 1.6rem; h3 { margin-top: 0; } }

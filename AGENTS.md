@@ -66,7 +66,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 |---|---|
 | `docs/ia-programador.md` | Programador (IA) — cuando se toque classes/Programador*.php, /programador |
 | `docs/dependencias-materiales.md` | **Dependencias de materiales** (muchos a muchos): disponibilidad efectiva, bloqueos, reprogramación y sugerencias de actividades |
-| `docs/ia-calidad-datos.md` | Inconsistencias, Análisis de materiales y Materiales inteligentes (IA) |
+| `docs/ia-calidad-datos.md` | Inconsistencias, Análisis de materiales y Materiales inteligentes (IA); **editor diferido** y corrección manual (fechas, avance, estatus, nombre, materiales, restricciones), bloqueo de avance por restricción activa, **vista «Por problema»**, lote solo de acciones seguras, simulación de impacto, fechas relativas, salud/precisión, rechazo con motivo y reporte PDF/ODS (`migracion_hallazgos_grupo.sql`, `migracion_hallazgos_auditoria.sql`) |
 | `docs/ia-centro-herramientas.md` | Centro de IA e Herramientas de IA fases 3-10 (informes, voz, chat, normativa, seguridad, punch…) y **Revisiones** (✅⚠❌ por proyecto, estado de uso de las herramientas) |
 | `docs/redactor.md` | Redactor (documentos de texto, exportación DOCX/ODT/PDF) |
 | `docs/sheetflow.md` | **SheetFlow**: tablas (celdas, fórmulas, importar/exportar XLSX/CSV/PDF) reutilizables en vPlan, Editor y Redactor |

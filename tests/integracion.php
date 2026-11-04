@@ -657,6 +657,40 @@ $v0 = Model\SheetflowVersion::deHojaId((int)$vers[0]['id'], (int)$sh->id);
 $ok('restaurar una versión vuelve al contenido guardado', Model\SheetflowHoja::find((int)$sh->id)->contenido()['rows'][0][0] !== 'Cambio temporal');
 $ok('el historial conserva la versión anterior al restaurar', count(Model\SheetflowVersion::deHoja((int)$sh->id)) >= 1);
 
+// ---- Hallazgos de IA: fechas relativas, deduplicación, rechazo con motivo y salud ----
+echo "Hallazgos de IA (frescura y precisión)\n";
+$pi = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'IA.1', 'nombre' => 'Partida de auditoría IA', 'orden' => 910]);
+$pi->id = $pi->guardar()['id'];
+$ai = new Model\Actividad(['partida_id' => $pi->id, 'codigo' => 'IA.1.1', 'nombre' => 'Actividad vencida sin avance',
+    'fecha_inicio' => '2026-01-02', 'fecha_fin' => '2026-01-02', 'duracion_dias' => 1, 'progreso' => 0, 'status' => 'no_iniciada', 'hito' => 0, 'fecha_fija' => 0]);
+$ai->id = (int)($ai->guardar()['id'] ?? 0);
+$sistemaIA = Classes\Inconsistencias::detectarSistema($proy);
+$vencida = null;
+foreach ($sistemaIA as $h) if (($h['grupo'] ?? '') === 'vencida' && in_array((int)$ai->id, array_map('intval', $h['actividades']), true)) { $vencida = $h; break; }
+$ok('la regla «vencida» propone reprogramar desde hoy (no una fecha fija que envejece)', $vencida && ($vencida['solucion']['params']['modo'] ?? '') === 'desde_hoy');
+$r1 = Classes\Inconsistencias::guardar($proy, $sistemaIA);
+$r2 = Classes\Inconsistencias::guardar($proy, $sistemaIA);
+$ok('volver a analizar actualiza el pendiente en vez de duplicarlo', ($r2['actualizados'] ?? 0) > 0 && (int)$r2['nuevos'] === 0);
+$filaIA = $db->query("SELECT id, estado FROM inconsistencias WHERE proyecto_id = $pidH AND estado = 'pendiente' AND grupo = 'vencida'
+    AND FIND_IN_SET({$ai->id}, REPLACE(REPLACE(actividades_json, '[', ''), ']', '')) ORDER BY id DESC LIMIT 1")->fetch_assoc();
+$ok('el hallazgo de la actividad existe y sigue pendiente', (bool)$filaIA && $filaIA['estado'] === 'pendiente');
+if ($filaIA) {
+    [$okA, $msgA] = Classes\Inconsistencias::aceptar($proy, (int)$filaIA['id']);
+    $fechas = $db->query("SELECT fecha_inicio, fecha_fin FROM actividades WHERE id = {$ai->id}")->fetch_assoc();
+    $ok('aceptar una fecha relativa la recalcula al día de hoy', $okA && $fechas['fecha_inicio'] >= date('Y-m-d'));
+    $ok('el hallazgo aceptado guarda su valor anterior para revertir', (bool)$db->query("SELECT antes_json FROM inconsistencias WHERE id = " . (int)$filaIA['id'])->fetch_row()[0]);
+}
+$filaIA2 = $db->query("SELECT id FROM inconsistencias WHERE proyecto_id = $pidH AND estado = 'pendiente' ORDER BY id LIMIT 1")->fetch_assoc();
+if ($filaIA2) {
+    [$okR] = Classes\Inconsistencias::rechazar($pidH, (int)$filaIA2['id'], 'dato_correcto', 'prueba de integración');
+    $mot = (string)$db->query("SELECT motivo_rechazo FROM inconsistencias WHERE id = " . (int)$filaIA2['id'])->fetch_row()[0];
+    $ok('rechazar exige y guarda el motivo', $okR && $mot === 'dato_correcto');
+}
+$saludIA = Classes\Inconsistencias::salud($pidH);
+$ok('la salud de la revisión calcula precisión y separa accionables de observaciones', isset($saludIA['precision'], $saludIA['accionables'], $saludIA['observaciones']));
+$db->query("DELETE FROM actividades WHERE partida_id = {$pi->id}");
+$db->query("DELETE FROM partidas WHERE id = {$pi->id}");
+
 $_SESSION = [];
 $ok('sin nadie con sesión no hay usuario que atribuir', !Classes\HistorialCambios::conUsuario());
 $antesH = $cuenta();

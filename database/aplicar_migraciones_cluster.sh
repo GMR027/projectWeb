@@ -83,6 +83,20 @@ if [ "$nk" = "0" ]; then echo ">> auditoria_cambios.idx_proyecto_estado"; echo "
 echo "ALTER TABLE auditoria_cambios MODIFY COLUMN evento ENUM('aplicado','revertido','rechazado','reabierto','creado','modificado','eliminado') NOT NULL;" | sql   # idempotente
 echo "UPDATE auditoria_cambios SET estado='aceptado', estado_en=creado, estado_por=usuario WHERE origen='ia' AND estado='pendiente';" | sql   # idempotente
 
+# Hallazgos de IA: agrupación por problema y auditoría (frescura, motivo de rechazo, evidencia)
+for t in inconsistencias analisis_materiales_hallazgos; do
+  col "$t" grupo "ALTER TABLE $t ADD COLUMN grupo VARCHAR(60) NOT NULL DEFAULT '' AFTER categoria;"
+  col "$t" motivo_rechazo "ALTER TABLE $t ADD COLUMN motivo_rechazo VARCHAR(60) NOT NULL DEFAULT '' AFTER estado;"
+  col "$t" evidencia_json "ALTER TABLE $t ADD COLUMN evidencia_json TEXT NULL AFTER descripcion;"
+  col "$t" vigente_hasta "ALTER TABLE $t ADD COLUMN vigente_hasta DATETIME NULL AFTER detectado;"
+  echo "ALTER TABLE $t MODIFY COLUMN estado ENUM('pendiente','aceptada','rechazada','obsoleta') NOT NULL DEFAULT 'pendiente';" | sql
+  nk=$(echo "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='project' AND table_name='$t' AND index_name='idx_grupo';" | sql | tail -1)
+  if [ "$nk" = "0" ]; then echo ">> $t.idx_grupo"; echo "ALTER TABLE $t ADD KEY idx_grupo (proyecto_id, grupo, estado);" | sql; else echo "ok  $t.idx_grupo ya existe"; fi
+  nk=$(echo "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='project' AND table_name='$t' AND index_name='idx_vigencia';" | sql | tail -1)
+  if [ "$nk" = "0" ]; then echo ">> $t.idx_vigencia"; echo "ALTER TABLE $t ADD KEY idx_vigencia (proyecto_id, estado, vigente_hasta);" | sql; else echo "ok  $t.idx_vigencia ya existe"; fi
+  echo "UPDATE $t SET grupo = categoria WHERE grupo = '';" | sql
+done
+
 # Instaladores de la app de escritorio (Ajustes → App de escritorio)
 R=../desktop/release
 POD=$(kubectl -n $NS get pod -o name | grep 'pod/projectweb-' | head -1 | sed 's#pod/##')

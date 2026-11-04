@@ -202,8 +202,10 @@ HTML],
 <h4>Atender un hallazgo ②③</h4>
 <ol>
 <li>Filtra por estado, severidad, categoría o quién lo detectó.</li>
-<li>Cada hallazgo trae una <strong>solución propuesta</strong> de una lista cerrada: nota, ajustar fechas, sincronizar estatus, ajustar progreso, recalcular partida, marcar comprado, resolver restricción o quitar dependencia.</li>
-<li><strong>Aceptar</strong> aplica la solución (se guarda el valor anterior y se puede revertir). <strong>Rechazar</strong> lo descarta. <em>Ver actividad →</em> te lleva al dato para decidir.</li>
+<li>Cada hallazgo trae una <strong>solución propuesta</strong> y, debajo, el bloque <strong>«Corregir aquí»</strong>: puedes cambiar las fechas (con cálculo del fin por el calendario), el avance, el estatus, la duración, el nombre o la descripción, <strong>asignar o quitar materiales</strong>, marcar si requiere material y <strong>resolver las restricciones activas</strong> sin salir de la página. Las actividades se muestran con su código y su nombre.</li>
+<li>Si una actividad tiene una restricción activa, <strong>no se puede cambiar su avance ni su estatus</strong> hasta resolverla (el aviso ofrece el botón para resolverla).</li>
+<li><strong>Aceptar</strong> aplica la solución (se guarda el valor anterior y se puede revertir). <strong>Rechazar</strong> lo descarta.</li>
+<li>La pestaña <strong>«Por problema»</strong> junta todas las actividades con la misma falla, permite <strong>corregirlas todas</strong> de una vez y descargar el <strong>reporte en PDF u ODS</strong> agrupado.</li>
 </ol>
 <p>Cada análisis se guarda como una <strong>corrida</strong>. Si no la guardas con nombre, solo se conservan las últimas 5.</p>
 HTML],
@@ -215,7 +217,7 @@ HTML],
 <ul>
 <li>El resumen superior cuenta los materiales por estado: <strong>compra vencida</strong>, <strong>sin fecha</strong>, <strong>tarde</strong>, con <strong>submittal</strong> pendiente, <strong>a tiempo</strong> o <strong>en sitio</strong>.</li>
 <li>La lista muestra cada material, cuándo se necesita (inicio de la actividad) y su estado. A la derecha ves la <strong>acción sugerida</strong>, como <em>Marcar comprado</em> o dejar una nota.</li>
-<li>Aplica lo mismo que en inconsistencias: aceptas o rechazas; lo aceptado se puede revertir. Hay un enlace directo al <strong>MSR</strong> para ir a corregir la compra.</li>
+<li>Aplica lo mismo que en inconsistencias: aceptas o rechazas; lo aceptado se puede revertir. Además, <strong>«Corregir el material aquí»</strong> te deja editar sus datos (nombre base, marca, modelo, extra, especialidad, cantidad, unidad, compra, fechas), marcarlo comprado, vincularlo a actividades o submittals y sincronizar el MSR. La pestaña <strong>«Por problema»</strong> agrupa los materiales con la misma falla, permite corregirlos todos y descargar el reporte PDF/ODS. Hay un enlace directo al <strong>MSR</strong> para ir a corregir la compra.</li>
 </ul>
 <h4>Materiales inteligentes</h4>
 <p>Dentro de <em>Calidad de datos</em> en la app de escritorio, esta pestaña <strong>verifica cada material contra la normativa</strong> que cargaste (por ejemplo, que la resistencia o la marca cumplan la especificación) y deja un veredicto sugerido. Tú confirmas el resultado final en <em>Revisiones</em>.</p>

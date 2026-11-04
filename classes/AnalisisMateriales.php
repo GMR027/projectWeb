@@ -28,7 +28,20 @@ class AnalisisMateriales extends HallazgosIA
     public const CATEGORIAS = ['nombre' => 'Nombre del material', 'msr' => 'Material vs. MSR', 'submittals' => 'Submittals', 'incompleto' => 'Información incompleta', 'fechas' => 'Fechas',
         'duplicados' => 'Duplicados', 'vinculos' => 'Vínculos', 'otro' => 'Otro'];
     public const SEVERIDADES = ['baja' => 1, 'media' => 2, 'alta' => 3, 'critica' => 4];
-    public const ACCIONES = ['nota' => [], 'renombrar_material' => ['material_id', 'nombre_base'], 'sincronizar_msr_material' => ['material_id'], 'sincronizar_msr_submittal' => ['submittal_id'], 'sincronizar_instalacion' => []];
+    public const ACCIONES = ['nota' => [], 'renombrar_material' => ['material_id', 'nombre_base'], 'sincronizar_msr_material' => ['material_id'], 'sincronizar_msr_submittal' => ['submittal_id'], 'sincronizar_instalacion' => [],
+        // Correcciones manuales desde el aviso (editor en línea)
+        'editar_material' => ['material_id', 'nombre_base'], 'vincular_actividad' => ['material_id', 'actividad_id'], 'desvincular_actividad' => ['material_id', 'actividad_id'],
+        'vincular_submittal' => ['material_id', 'submittal_id'], 'desvincular_submittal' => ['material_id', 'submittal_id'], 'marcar_comprado' => ['material_id']];
+    public const GRUPOS = [
+        'nombre_desactualizado' => 'Nombre completo no coincide con sus partes', 'sin_msr' => 'Material fuera del MSR', 'msr_fechas' => 'Fechas del MSR distintas al material',
+        'msr_status' => 'Estatus del MSR distinto al submittal', 'msr_instalacion' => 'Instalación del MSR desfasada', 'entrega_tarde' => 'Llega después de que se necesita',
+        'comprado_sin_aprobar' => 'Comprado sin submittal aprobado', 'sub_pendiente' => 'Submittal sin respuesta', 'sub_rechazado' => 'Submittal rechazado',
+        'sub_vacio' => 'Submittal sin materiales', 'envio_vencido' => 'Envío de submittal vencido', 'dup_material' => 'Material repetido', 'nombres_sin_estructura' => 'Material sin marca ni modelo separados',
+        'incompleto' => 'Información incompleta', 'incompleto:especialidad' => 'Materiales sin especialidad', 'incompleto:cantidad' => 'Materiales sin cantidad',
+        'incompleto:unidad' => 'Materiales sin unidad', 'incompleto:ficha técnica (PDF)' => 'Materiales sin ficha técnica', 'incompleto:fechas programadas de compra/entrega' => 'Materiales sin fechas de compra/entrega',
+        'incompleto:proveedor en el MSR' => 'Materiales sin proveedor en el MSR', 'incompleto:una actividad que lo use' => 'Materiales sin actividad que los use', 'incompleto:submittal' => 'Materiales sin submittal',
+        'renombrar_material' => 'Nombre del material', 'editar_material' => 'Datos del material',
+    ];
     public const LOTE = 25;
     public const CORRIDAS_SIN_GUARDAR = 5;
     private const DIAS_SUBMITTAL = 14;   // un submittal enviado sin respuesta pasado este tiempo se señala
@@ -36,7 +49,10 @@ class AnalisisMateriales extends HallazgosIA
 
     private static function hallazgo(string $regla, string $cat, string $sev, string $titulo, string $desc, array $mats, array $subs, string $texto, string $accion = 'nota', array $params = []): array
     {
-        return ['huella' => sha1('s:' . $regla), 'categoria' => $cat, 'severidad' => $sev, 'origen' => 'sistema', 'titulo' => self::corto($titulo, 250), 'descripcion' => $desc,
+        $corte = strpos($regla, ':');
+        $grupo = $corte === false ? $regla : substr($regla, 0, $corte);
+        if (str_starts_with($regla, 'incompleto:')) $grupo = 'incompleto:' . (explode(':', $regla)[1] ?? 'otro');   // cada dato faltante es un problema distinto
+        return ['huella' => sha1('s:' . $regla), 'grupo' => $grupo, 'categoria' => $cat, 'severidad' => $sev, 'origen' => 'sistema', 'titulo' => self::corto($titulo, 250), 'descripcion' => $desc,
             'materiales' => array_values(array_unique($mats)), 'submittals' => array_values(array_unique($subs)), 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
     }
 
@@ -220,13 +236,14 @@ Eres un especialista en control de materiales de obra (MSR, submittals y catálo
 2) DETECTAR INCONSISTENCIAS Y DATOS INCOMPLETOS entre el material, su submittal y su renglón del MSR que NO sean cálculos simples (esos ya los detectó el sistema): materiales parecidos con nombres distintos, mismo modelo con marca distinta, especialidad que no corresponde al tipo de material, proveedor que no corresponde a la marca, cantidad/unidad absurdas, submittal que agrupa materiales que no tienen relación, etc. Usa accion "nota" para esto.
 
 Reglas estrictas:
-- Usa SOLO ids de la lista (en "materiales" y "submittals"). Todo hallazgo debe nombrar al menos un material. Máximo 30 hallazgos, los más importantes primero (los renombrados cuentan).
+- Usa SOLO ids de la lista (en "materiales" y "submittals"). Todo hallazgo debe nombrar al menos un material. Máximo 20 hallazgos, los más importantes primero (los renombrados cuentan).
 - "titulo" breve (máx. 100 caracteres; para renombrar: «Renombrar: <nombre actual corto>»); "descripcion" cita el dato que lo sustenta (máx. 300 caracteres; para renombrar: «Nuevo: <nombre completo propuesto>»).
-- "categoria": nombre, msr, submittals, incompleto, fechas, duplicados, vinculos u otro. "severidad": baja, media, alta o critica (los renombrados son «baja»).
+- "evidencia" es OBLIGATORIA para severidad alta: una frase textual del catálogo, el MSR o el submittal que sustente el hallazgo (máx. 200 caracteres). Sin cita, usa severidad «media» o «baja».
+- "categoria": nombre, msr, submittals, incompleto, fechas, duplicados, vinculos u otro. "severidad": baja, media o alta (los renombrados son «baja»). La IA no puede marcar «critica».
 - "solucion": {"texto": qué propones (máx. 200 caracteres), "accion": "renombrar_material" o "nota", "params": {...}}.
 
 Formato (JSON estricto):
-{"hallazgos":[{"categoria":"nombre","severidad":"baja","titulo":"","descripcion":"","materiales":[0],"submittals":[],"solucion":{"texto":"","accion":"renombrar_material","params":{"material_id":0,"nombre_base":"","marca":"","modelo":"","valor_extra":""}}}]}
+{"hallazgos":[{"categoria":"nombre","severidad":"baja","titulo":"","descripcion":"","evidencia":"","materiales":[0],"submittals":[],"solucion":{"texto":"","accion":"renombrar_material","params":{"material_id":0,"nombre_base":"","marca":"","modelo":"","valor_extra":""}}}]}
 TXT;
     }
 
@@ -291,6 +308,10 @@ TXT;
                 if ($titulo === '' || $desc === '' || !$mids) continue;
                 $cat = isset(self::CATEGORIAS[$h['categoria'] ?? '']) ? $h['categoria'] : 'otro';
                 $sev = isset(self::SEVERIDADES[$h['severidad'] ?? '']) ? $h['severidad'] : 'media';
+                // La IA no puede marcar «crítica»; una «alta» sin cita textual baja a media.
+                $ev = self::corto(is_scalar($h['evidencia'] ?? '') ? (string)$h['evidencia'] : '', 200);
+                if ($sev === 'critica') $sev = 'alta';
+                if ($sev === 'alta' && $ev === '') $sev = 'media';
                 $s = is_array($h['solucion'] ?? null) ? $h['solucion'] : [];
                 $accion = ($s['accion'] ?? '') === 'renombrar_material' ? 'renombrar_material' : 'nota';   // la IA solo puede renombrar o dejar notas
                 $texto = self::corto($s['texto'] ?? '', 300) ?: 'Revisar y corregir a mano.';
@@ -311,11 +332,35 @@ TXT;
                         $desc = 'Nuevo nombre completo: «' . $compuesto . '». Actual: «' . self::corto($mats[$mid]['nombre'], 120) . '».';
                     }
                 }
-                $out[] = ['huella' => sha1('i:' . $cat . '|' . implode(',', $mids) . '|' . $accion . '|' . json_encode($params) . ($accion === 'nota' ? '|' . mb_strtolower(preg_replace('/\W+/u', '', $titulo)) : '')), 'categoria' => $accion === 'renombrar_material' ? 'nombre' : $cat, 'severidad' => $sev,
-                    'origen' => 'ia', 'titulo' => $titulo, 'descripcion' => $desc, 'materiales' => $mids, 'submittals' => $sids, 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
+                $out[] = ['huella' => sha1('i:' . $cat . '|' . implode(',', $mids) . '|' . $accion . '|' . json_encode($params) . ($accion === 'nota' ? '|' . mb_strtolower(preg_replace('/\W+/u', '', $titulo)) : '')), 'grupo' => $accion !== 'nota' ? $accion : $cat, 'categoria' => $accion === 'renombrar_material' ? 'nombre' : $cat, 'severidad' => $sev,
+                    'origen' => 'ia', 'titulo' => $titulo, 'descripcion' => $desc, 'evidencia' => $ev !== '' ? ['fuente' => 'ia', 'cita' => $ev] : [],
+                    'materiales' => $mids, 'submittals' => $sids, 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
             }
         }
         return $out;
+    }
+
+    /** Campos editables de un material ya saneados (null si algo no es válido) */
+    private static function camposMaterial(array $p): ?array
+    {
+        $t = fn($v) => trim((string)($v ?? ''));
+        $f = ['nombre_base' => self::corto($p['nombre_base'] ?? '', 200), 'marca' => self::corto($p['marca'] ?? '', 100), 'modelo' => self::corto($p['modelo'] ?? '', 100),
+            'valor_extra' => self::corto($p['valor_extra'] ?? '', 150), 'especialidad' => self::corto($p['especialidad'] ?? '', 100), 'unidad' => self::corto($p['unidad'] ?? '', 30),
+            'referencia' => self::corto($p['referencia'] ?? '', 100), 'link_web' => $t($p['link_web'])];
+        if ($f['nombre_base'] === '' || mb_strlen(Material::componerNombre($f['nombre_base'], $f['marca'], $f['modelo'], $f['valor_extra'])) > 255) return null;
+        if ($f['link_web'] !== '' && !filter_var($f['link_web'], FILTER_VALIDATE_URL)) return null;
+        $cant = $p['cantidad'] ?? null;
+        if ($cant !== null && $cant !== '' && (!is_numeric($cant) || $cant < 0 || $cant >= 1e10)) return null;
+        $f['cantidad'] = ($cant === null || $cant === '') ? null : (float)$cant;
+        $f['compra'] = ($p['compra'] ?? 'pendiente') === 'comprado' ? 'comprado' : 'pendiente';
+        foreach (['fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'] as $c) {
+            $v = $t($p[$c] ?? '');
+            if ($v === '') { $f[$c] = null; continue; }
+            $d = \DateTime::createFromFormat('Y-m-d', $v);
+            if (!$d || $d->format('Y-m-d') !== $v) return null;
+            $f[$c] = $v;
+        }
+        return $f;
     }
 
     /** Parámetros de una acción saneados, o null si no son válidos / no son del proyecto */
@@ -331,6 +376,30 @@ TXT;
                 $n = ['nombre_base' => self::corto($p['nombre_base'] ?? '', 200), 'marca' => self::corto($p['marca'] ?? '', 100), 'modelo' => self::corto($p['modelo'] ?? '', 100), 'valor_extra' => self::corto($p['valor_extra'] ?? '', 150)];
                 if ($n['nombre_base'] === '' || mb_strlen(Material::componerNombre(...array_values($n))) > 255 || !$en("SELECT 1 FROM materiales WHERE id = $id AND proyecto_id = $pid")) return null;
                 return ['material_id' => $id] + $n;
+            case 'editar_material':
+                $id = (int)($p['material_id'] ?? 0);
+                $campos = self::camposMaterial($p);
+                if ($campos === null || !$en("SELECT 1 FROM materiales WHERE id = $id AND proyecto_id = $pid")) return null;
+                return ['material_id' => $id] + $campos;
+            case 'marcar_comprado':
+                $id = (int)($p['material_id'] ?? 0);
+                return $en("SELECT 1 FROM materiales WHERE id = $id AND proyecto_id = $pid") ? ['material_id' => $id] : null;
+            case 'vincular_actividad':
+                $m = (int)($p['material_id'] ?? 0);
+                $a = (int)($p['actividad_id'] ?? 0);
+                return $en("SELECT 1 FROM materiales WHERE id = $m AND proyecto_id = $pid") && $en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid") ? ['material_id' => $m, 'actividad_id' => $a] : null;
+            case 'desvincular_actividad':
+                $m = (int)($p['material_id'] ?? 0);
+                $a = (int)($p['actividad_id'] ?? 0);
+                return $en("SELECT 1 FROM actividad_materiales am JOIN actividades a ON a.id = am.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE am.material_id = $m AND am.actividad_id = $a AND pa.proyecto_id = $pid") ? ['material_id' => $m, 'actividad_id' => $a] : null;
+            case 'vincular_submittal':
+                $m = (int)($p['material_id'] ?? 0);
+                $s = (int)($p['submittal_id'] ?? 0);
+                return $en("SELECT 1 FROM materiales WHERE id = $m AND proyecto_id = $pid") && $en("SELECT 1 FROM submittals WHERE id = $s AND proyecto_id = $pid") ? ['material_id' => $m, 'submittal_id' => $s] : null;
+            case 'desvincular_submittal':
+                $m = (int)($p['material_id'] ?? 0);
+                $s = (int)($p['submittal_id'] ?? 0);
+                return $en("SELECT 1 FROM submittal_materiales sm JOIN submittals s ON s.id = sm.submittal_id WHERE sm.material_id = $m AND sm.submittal_id = $s AND s.proyecto_id = $pid") ? ['material_id' => $m, 'submittal_id' => $s] : null;
             case 'sincronizar_msr_material':
                 $id = (int)($p['material_id'] ?? 0);
                 return $en("SELECT 1 FROM materiales WHERE id = $id AND proyecto_id = $pid") ? ['material_id' => $id] : null;
@@ -354,19 +423,19 @@ TXT;
         \Classes\Revisiones::registrarEjecucion($pid, 'materiales');
         $resueltas = [];
         foreach (self::filas("SELECT huella FROM analisis_materiales_hallazgos WHERE proyecto_id = $pid AND estado <> 'pendiente'") as $f) $resueltas[$f['huella']] = true;
-        $nuevos = $ya = 0;
+        $nuevos = $actualizados = $ya = 0;
         $vistos = [];
         foreach ($hallazgos as $h) {
             if (isset($vistos[$h['huella']])) continue;
             $vistos[$h['huella']] = true;
             if (isset($resueltas[$h['huella']])) { $ya++; continue; }
             $h['solucion']['esperado'] = self::esperado($pid, $h['solucion']['accion'], $h['solucion']['params']);
-            $db->query("INSERT INTO analisis_materiales_hallazgos (proyecto_id, corrida_id, huella, categoria, severidad, origen, titulo, descripcion, materiales_json, submittals_json, solucion_json, modelo) VALUES ($pid, $corrida, '{$esc($h['huella'])}', '{$esc($h['categoria'])}', '{$esc($h['severidad'])}', '{$esc($h['origen'])}', '{$esc($h['titulo'])}', '{$esc($h['descripcion'])}', '"
-                . $esc(json_encode($h['materiales'])) . "', '" . $esc(json_encode($h['submittals'])) . "', '" . $esc(json_encode($h['solucion'], JSON_UNESCAPED_UNICODE)) . "', '" . $esc(self::corto($h['origen'] === 'ia' ? $modelo : '', 150)) . "')");
-            $nuevos++;
+            // Si ya hay un pendiente con la misma huella se actualiza (no se duplica entre corridas).
+            $r = self::upsertHallazgo($pid, $corrida, $h, $modelo, ['materiales_json' => $h['materiales'], 'submittals_json' => $h['submittals']]);
+            if ($r === 'nuevo') $nuevos++; else $actualizados++;
         }
         $db->query("DELETE FROM analisis_materiales WHERE proyecto_id = $pid AND guardada = 0 AND id NOT IN (SELECT id FROM (SELECT id FROM analisis_materiales WHERE proyecto_id = $pid AND guardada = 0 ORDER BY id DESC LIMIT " . self::CORRIDAS_SIN_GUARDAR . ') t)');
-        return ['corrida' => $corrida, 'nuevos' => $nuevos, 'ya_resueltos' => $ya];
+        return ['corrida' => $corrida, 'nuevos' => $nuevos, 'actualizados' => $actualizados, 'ya_resueltos' => $ya];
     }
 
     /** Estado de lo que la solución toca al detectar: si cambia antes de aceptar, la solución ya no se aplica */
@@ -423,16 +492,31 @@ TXT;
         return self::restaurar((int)$p->id, $antes);
     }
 
-    /** Materiales y submittals implicados ya resueltos a nombre, y la solución decodificada */
+    /** Materiales y submittals implicados ya resueltos, su contexto editable y la solución decodificada */
     protected static function enriquecer(int $pid, array $filas): array
     {
-        $mats = array_column(self::filas("SELECT id, nombre FROM materiales WHERE proyecto_id = $pid"), 'nombre', 'id');
-        $subs = array_column(self::filas("SELECT id, COALESCE(NULLIF(numero_submittal,''), CONCAT('#', id)) n FROM submittals WHERE proyecto_id = $pid"), 'n', 'id');
+        $mats = [];
+        foreach (self::filas("SELECT * FROM materiales WHERE proyecto_id = $pid") as $m) $mats[(int)$m['id']] = $m;
+        $subs = [];
+        foreach (self::filas("SELECT id, COALESCE(NULLIF(numero_submittal,''), CONCAT('#', id)) n, estatus FROM submittals WHERE proyecto_id = $pid") as $s) $subs[(int)$s['id']] = $s;
+        $acts = [];
+        foreach (self::filas("SELECT a.id, a.codigo, a.nombre, a.fecha_inicio FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid ORDER BY pa.orden, a.orden") as $a) $acts[(int)$a['id']] = $a;
+        $vinculadas = $enSub = [];
+        foreach (self::filas("SELECT am.material_id, am.actividad_id FROM actividad_materiales am JOIN actividades a ON a.id = am.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid") as $f) $vinculadas[(int)$f['material_id']][] = (int)$f['actividad_id'];
+        foreach (self::filas("SELECT sm.material_id, sm.submittal_id FROM submittal_materiales sm JOIN submittals s ON s.id = sm.submittal_id WHERE s.proyecto_id = $pid") as $f) $enSub[(int)$f['material_id']][] = (int)$f['submittal_id'];
         foreach ($filas as &$x) {
             $x['id'] = (int)$x['id'];
-            $x['materiales'] = array_values(array_filter(array_map(fn($i) => isset($mats[$i]) ? ['id' => $i, 'nombre' => $mats[$i]] : null, (array)json_decode((string)$x['materiales_json'], true))));
-            $x['submittals'] = array_values(array_filter(array_map(fn($i) => isset($subs[$i]) ? ['id' => $i, 'numero' => $subs[$i]] : null, (array)json_decode((string)$x['submittals_json'], true))));
+            $x['grupo'] = (string)($x['grupo'] ?? '') !== '' ? (string)$x['grupo'] : (string)$x['categoria'];
+            $x['materiales'] = array_values(array_filter(array_map(fn($i) => isset($mats[$i]) ? ['id' => $i, 'nombre' => $mats[$i]['nombre']] : null, (array)json_decode((string)$x['materiales_json'], true))));
+            $x['submittals'] = array_values(array_filter(array_map(fn($i) => isset($subs[$i]) ? ['id' => $i, 'numero' => $subs[$i]['n']] : null, (array)json_decode((string)$x['submittals_json'], true))));
+            $x['contexto'] = array_values(array_filter(array_map(function ($m) use ($acts, $subs, $vinculadas, $enSub) {
+                $id = (int)$m['id'];
+                return $m + ['actividades' => array_values(array_map(fn($a) => ['id' => $a, 'codigo' => $acts[$a]['codigo'], 'nombre' => $acts[$a]['nombre'], 'inicio' => $acts[$a]['fecha_inicio']], array_filter($vinculadas[$id] ?? [], fn($a) => isset($acts[$a])))),
+                    'submittals' => array_values(array_map(fn($s) => ['id' => $s, 'numero' => $subs[$s]['n'], 'estatus' => $subs[$s]['estatus']], array_filter($enSub[$id] ?? [], fn($s) => isset($subs[$s]))))];
+            }, array_map(fn($i) => $mats[$i] ?? null, (array)json_decode((string)$x['materiales_json'], true)))));
             $x['solucion'] = json_decode($x['solucion_json'], true) ?: ['texto' => '', 'accion' => 'nota', 'params' => []];
+            $x['evidencia'] = json_decode((string)($x['evidencia_json'] ?? ''), true) ?: [];
+            $x['vencido'] = $x['estado'] === 'pendiente' && !empty($x['vigente_hasta']) && strtotime((string)$x['vigente_hasta']) < time();
             $x['revertible'] = $x['estado'] === 'aceptada' && $x['antes_json'] !== null;
         }
         return $filas;
@@ -456,6 +540,37 @@ TXT;
                 $m->armarNombre();
                 $m->guardar();
                 return [true, 'Material renombrado: «' . $m->nombre . '»', $antes];
+            case 'editar_material':
+                $m = Material::find($x['material_id']);
+                if (!$m || (int)$m->proyecto_id !== $pid) return [false, 'Material no encontrado', null];
+                $campos = ['nombre_base', 'marca', 'modelo', 'valor_extra', 'especialidad', 'unidad', 'referencia', 'link_web', 'cantidad', 'compra', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'];
+                $antes = ['accion' => $accion, 'material_id' => (int)$m->id, 'nombre' => $m->nombre];
+                foreach ($campos as $c) $antes[$c] = $m->$c;
+                foreach ($campos as $c) $m->$c = $x[$c];
+                $m->armarNombre();
+                $m->guardar();
+                return [true, 'Material actualizado: «' . $m->nombre . '»', $antes];
+            case 'marcar_comprado':
+                $m = Material::find($x['material_id']);
+                if (!$m || (int)$m->proyecto_id !== $pid) return [false, 'Material no encontrado', null];
+                $antes = ['accion' => $accion, 'material_id' => (int)$m->id, 'compra' => $m->compra, 'fecha_compra_real' => $m->fecha_compra_real];
+                $m->fijarCompra('comprado');
+                $m->guardar();
+                return [true, 'Material marcado como comprado', $antes];
+            case 'vincular_actividad':
+                $db->query('INSERT IGNORE INTO actividad_materiales (actividad_id, material_id, rol) VALUES (' . (int)$x['actividad_id'] . ', ' . (int)$x['material_id'] . ", 'instala')");
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
+                return [true, 'Material vinculado a la actividad', ['accion' => $accion, 'material_id' => (int)$x['material_id'], 'actividad_id' => (int)$x['actividad_id']]];
+            case 'desvincular_actividad':
+                $db->query('DELETE FROM actividad_materiales WHERE actividad_id = ' . (int)$x['actividad_id'] . ' AND material_id = ' . (int)$x['material_id']);
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
+                return [true, 'Material desvinculado de la actividad', ['accion' => $accion, 'material_id' => (int)$x['material_id'], 'actividad_id' => (int)$x['actividad_id']]];
+            case 'vincular_submittal':
+                $db->query('INSERT IGNORE INTO submittal_materiales (submittal_id, material_id) VALUES (' . (int)$x['submittal_id'] . ', ' . (int)$x['material_id'] . ')');
+                return [true, 'Material agregado al submittal', ['accion' => $accion, 'material_id' => (int)$x['material_id'], 'submittal_id' => (int)$x['submittal_id']]];
+            case 'desvincular_submittal':
+                $db->query('DELETE FROM submittal_materiales WHERE submittal_id = ' . (int)$x['submittal_id'] . ' AND material_id = ' . (int)$x['material_id']);
+                return [true, 'Material quitado del submittal', ['accion' => $accion, 'material_id' => (int)$x['material_id'], 'submittal_id' => (int)$x['submittal_id']]];
             case 'sincronizar_msr_material':
                 $m = Material::find($x['material_id']);
                 if (!$m || (int)$m->proyecto_id !== $pid) return [false, 'Material no encontrado', null];
@@ -484,6 +599,28 @@ TXT;
         switch ($a['accion'] ?? '') {
             case 'renombrar_material':
                 $db->query("UPDATE materiales SET nombre = {$f($a['nombre'])}, nombre_base = {$f($a['nombre_base'])}, marca = '" . $db->real_escape_string((string)$a['marca']) . "', modelo = '" . $db->real_escape_string((string)$a['modelo']) . "', valor_extra = '" . $db->real_escape_string((string)$a['valor_extra']) . "' WHERE id = " . (int)$a['material_id'] . " AND proyecto_id = $pid");
+                return [true, ''];
+            case 'editar_material':
+                $sets = [];
+                foreach (['nombre', 'nombre_base', 'marca', 'modelo', 'valor_extra', 'especialidad', 'unidad', 'referencia', 'link_web', 'fecha_compra_prog', 'fecha_compra_real', 'fecha_entrega_prog', 'fecha_entrega_real'] as $c) $sets[] = "$c = {$f($a[$c] ?? null)}";
+                $sets[] = 'cantidad = ' . ($a['cantidad'] === null || $a['cantidad'] === '' ? 'NULL' : (float)$a['cantidad']);
+                $sets[] = "compra = '" . $db->real_escape_string((string)$a['compra']) . "'";
+                $db->query('UPDATE materiales SET ' . implode(', ', $sets) . ' WHERE id = ' . (int)$a['material_id'] . " AND proyecto_id = $pid");
+                return [true, ''];
+            case 'marcar_comprado':
+                $db->query("UPDATE materiales SET compra = '" . $db->real_escape_string((string)$a['compra']) . "', fecha_compra_real = {$f($a['fecha_compra_real'])} WHERE id = " . (int)$a['material_id'] . " AND proyecto_id = $pid");
+                return [true, ''];
+            case 'vincular_actividad':
+                $db->query('DELETE FROM actividad_materiales WHERE actividad_id = ' . (int)$a['actividad_id'] . ' AND material_id = ' . (int)$a['material_id']);
+                return [true, ''];
+            case 'desvincular_actividad':
+                $db->query('INSERT IGNORE INTO actividad_materiales (actividad_id, material_id, rol) VALUES (' . (int)$a['actividad_id'] . ', ' . (int)$a['material_id'] . ", 'instala')");
+                return [true, ''];
+            case 'vincular_submittal':
+                $db->query('DELETE FROM submittal_materiales WHERE submittal_id = ' . (int)$a['submittal_id'] . ' AND material_id = ' . (int)$a['material_id']);
+                return [true, ''];
+            case 'desvincular_submittal':
+                $db->query('INSERT IGNORE INTO submittal_materiales (submittal_id, material_id) VALUES (' . (int)$a['submittal_id'] . ', ' . (int)$a['material_id'] . ')');
                 return [true, ''];
             case 'sincronizar_msr_material':
                 foreach ($a['renglones'] as $r) $db->query("UPDATE msr_items SET fecha_compra_prog = {$f($r['fecha_compra_prog'])}, fecha_compra_real = {$f($r['fecha_compra_real'])}, fecha_entrega_prog = {$f($r['fecha_entrega_prog'])}, fecha_entrega_real = {$f($r['fecha_entrega_real'])} WHERE id = " . (int)$r['id'] . " AND proyecto_id = $pid");

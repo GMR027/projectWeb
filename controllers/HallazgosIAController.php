@@ -33,13 +33,20 @@ abstract class HallazgosIAController
         $m = static::MODELO;
         $pid = (int)$proyecto->id;
         $corridas = $m::corridas($pid);
+        $todas = ($_GET['corrida'] ?? '') === 'todas';
         $pedida = filter_var($_GET['corrida'] ?? null, FILTER_VALIDATE_INT);
         $corrida = null;
-        foreach ($corridas as $c) if ((int)$c['id'] === $pedida || ($corrida === null && !$pedida)) { $corrida = $c; if ((int)$c['id'] === $pedida) break; }
-        $filtros = ['estado' => $_GET['estado'] ?? 'pendiente', 'severidad' => $_GET['severidad'] ?? '', 'categoria' => $_GET['categoria'] ?? '', 'origen' => $_GET['origen'] ?? '', 'corrida' => $corrida ? (int)$corrida['id'] : 0];
+        if (!$todas) foreach ($corridas as $c) if ((int)$c['id'] === $pedida || ($corrida === null && !$pedida)) { $corrida = $c; if ((int)$c['id'] === $pedida) break; }
+        $filtros = ['estado' => $_GET['estado'] ?? 'pendiente', 'severidad' => $_GET['severidad'] ?? '', 'categoria' => $_GET['categoria'] ?? '',
+            'origen' => $_GET['origen'] ?? '', 'tipo' => $_GET['tipo'] ?? '', 'grupo' => $_GET['grupo'] ?? '', 'corrida' => $corrida ? (int)$corrida['id'] : 0];
+        // «Todas» = backlog completo, sin importar en qué análisis se detectó.
+        $lista = ($corrida || $todas) ? $m::listar($pid, $filtros) : [];
+        $vista = ($_GET['vista'] ?? '') === 'grupos' ? 'grupos' : 'lista';
         $router->render(static::RUTA . '/index', [
-            'titulo' => static::TITULO . ' - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $filtros, 'corridas' => $corridas, 'corrida' => $corrida,
-            'lista' => $corrida ? $m::listar($pid, $filtros) : [], 'lotes' => $corrida ? $m::lotesDeCorrida($pid, (int)$corrida['id']) : [], 'conteos' => $m::conteos($pid, $corrida ? (int)$corrida['id'] : 0),
+            'titulo' => static::TITULO . ' - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'filtros' => $filtros, 'corridas' => $corridas, 'corrida' => $corrida, 'todas' => $todas,
+            'lista' => $lista, 'vista' => $vista, 'grupos' => $vista === 'grupos' ? $m::agrupar($lista) : [],
+            'lotes' => $corrida ? $m::lotesDeCorrida($pid, (int)$corrida['id']) : [], 'conteos' => $m::conteos($pid, $corrida ? (int)$corrida['id'] : 0),
+            'conteosGlobales' => $m::conteos($pid), 'metricas' => $m::salud($pid, $corrida ? (int)$corrida['id'] : 0),
             'mensaje' => $_SESSION[static::SESION_MSG] ?? null,
         ] + static::datosVista($pid));
         unset($_SESSION[static::SESION_MSG]);
@@ -113,8 +120,32 @@ abstract class HallazgosIAController
     {
         $p = proyecto_api();
         $m = static::MODELO;
-        [$ok, $msg] = $m::rechazar((int)$p->id, (int)($_POST['id'] ?? 0));
+        [$ok, $msg] = $m::rechazar((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['motivo'] ?? 'no_aplica'), texto_param($_POST['nota'] ?? ''));
         json_respuesta(['success' => $ok, 'mensaje' => $msg, 'conteos' => $m::conteos((int)$p->id, (int)($_POST['corrida'] ?? 0))], $ok ? 200 : 422);
+    }
+
+    /** Editor en línea de UN hallazgo: se pide al abrir el aviso, no se manda dentro de la lista (páginas de 12 MB). */
+    public static function editor()
+    {
+        $p = proyecto_de_peticion();
+        if (!is_admin()) { http_response_code(403); exit(static::TXT_SOLO_ADMIN); }
+        $m = static::MODELO;
+        $pid = (int)$p->id;
+        $x = $m::paraEditor($pid, (int)($_GET['id'] ?? 0));
+        if (!$x) { http_response_code(404); exit('El hallazgo ya no está disponible.'); }
+        $herramienta = static::RUTA;
+        extract(static::datosVista($pid));
+        require __DIR__ . '/../views/templates/hallazgo-editor.php';
+    }
+
+    /** Impacto de mover una actividad: sucesoras, fin de obra y actividades críticas (simulación sin guardar). */
+    public static function impacto()
+    {
+        $p = proyecto_api();
+        $m = static::MODELO;
+        if (!method_exists($m, 'simularFechas')) json_respuesta(['success' => false, 'error' => 'Esta herramienta no simula fechas'], 422);
+        $r = $m::simularFechas($p, (int)($_POST['actividad_id'] ?? 0), texto_param($_POST['inicio'] ?? ''), texto_param($_POST['fin'] ?? ''));
+        json_respuesta($r, !empty($r['success']) ? 200 : 422);
     }
 
     public static function reabrir()
@@ -123,5 +154,58 @@ abstract class HallazgosIAController
         $m = static::MODELO;
         [$ok, $msg] = $m::reabrir($p, (int)($_POST['id'] ?? 0));
         json_respuesta(['success' => $ok, 'mensaje' => $msg, 'conteos' => $m::conteos((int)$p->id, (int)($_POST['corrida'] ?? 0))], $ok ? 200 : 422);
+    }
+
+    /** Corrección a mano desde el editor en línea del aviso: acción + valores escritos por el admin */
+    public static function corregir()
+    {
+        $p = proyecto_api();
+        $m = static::MODELO;
+        $params = $_POST['params'] ?? [];
+        if (!is_array($params)) $params = json_decode((string)$params, true) ?: [];
+        [$ok, $msg] = $m::corregir($p, (int)($_POST['id'] ?? 0), texto_param($_POST['accion'] ?? 'nota'), $params);
+        json_respuesta(['success' => $ok, 'mensaje' => $msg, 'conteos' => $m::conteos((int)$p->id, (int)($_POST['corrida'] ?? 0))], $ok ? 200 : 422);
+    }
+
+    /** «Corregir todas» de un grupo: aplica la propuesta de cada hallazgo pendiente, sin abortar por un fallo */
+    public static function grupo()
+    {
+        $p = proyecto_api();
+        $m = static::MODELO;
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        $r = $m::aplicarLote($p, $ids);
+        $omitidos = count($r['omitidos'] ?? []);
+        json_respuesta(['success' => true, 'ok' => $r['ok'], 'fallos' => $r['fallos'], 'omitidos' => $r['omitidos'] ?? [],
+            'mensaje' => $r['ok'] . ' aplicada(s)' . ($omitidos ? ', ' . $omitidos . ' requiere(n) revisión individual porque mueven el programa' : '') . ($r['fallos'] ? ', ' . count($r['fallos']) . ' no se pudo(ieron) aplicar' : '') . '.',
+            'conteos' => $m::conteos((int)$p->id, (int)($_POST['corrida'] ?? 0))]);
+    }
+
+    /** Reporte de los hallazgos agrupados por problema, en PDF o en hoja de cálculo (.ods) */
+    public static function exportar()
+    {
+        $p = proyecto_de_peticion();
+        if (!is_admin()) { http_response_code(403); exit(static::TXT_SOLO_ADMIN); }
+        $m = static::MODELO;
+        $pid = (int)$p->id;
+        $filtros = ['estado' => $_GET['estado'] ?? '', 'severidad' => $_GET['severidad'] ?? '', 'categoria' => $_GET['categoria'] ?? '', 'origen' => $_GET['origen'] ?? '', 'corrida' => (int)($_GET['corrida'] ?? 0)];
+        $lista = $m::listar($pid, $filtros);
+        $corrida = null;
+        if ($filtros['corrida']) foreach ($m::corridas($pid) as $c) if ((int)$c['id'] === $filtros['corrida']) $corrida = $c;
+        $datos = ['lista' => $lista, 'grupos' => $m::agrupar($lista), 'filtros' => $filtros, 'corrida' => $corrida,
+            'titulo' => static::TITULO, 'herramienta' => static::RUTA, 'categorias' => $m::CATEGORIAS, 'gruposNombres' => $m::GRUPOS,
+            'generado' => date('d/m/Y H:i')];
+        $formato = ($_GET['formato'] ?? '') === 'ods' ? 'ods' : 'pdf';
+        try {
+            $exporter = $formato === 'ods' ? new \Classes\Exportadores\HallazgosSheetExporter($p) : new \Classes\Exportadores\HallazgosPdfExporter($p);
+            $ruta = $exporter->setDatos($datos)->generar(static::TITULO);
+            $mime = $formato === 'ods' ? 'application/vnd.oasis.opendocument.spreadsheet' : 'application/pdf';
+            $bytes = (string)file_get_contents($ruta);
+            $nombre = basename($ruta);
+            @unlink($ruta);
+            enviar_descarga($bytes, $mime, $nombre);
+        } catch (\Throwable $e) {
+            header('Location: /' . static::RUTA . '?proyecto=' . $pid . '&error=' . urlencode($e->getMessage()));
+            exit;
+        }
     }
 }

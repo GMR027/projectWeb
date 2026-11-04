@@ -32,6 +32,23 @@ class Inconsistencias extends HallazgosIA
         'nota' => [], 'ajustar_fechas' => ['actividad_id', 'inicio', 'fin'], 'sincronizar_status' => ['actividad_id'], 'ajustar_progreso' => ['actividad_id', 'progreso'],
         'recalcular_partida' => ['partida_id'], 'marcar_comprado' => ['material_id'], 'resolver_restriccion' => ['restriccion_id'], 'quitar_dependencia' => ['pred', 'suc'],
         'ajustar_duracion' => ['actividad_id', 'dur'], 'renombrar_actividad' => ['actividad_id', 'nombre'], 'editar_descripcion' => ['actividad_id', 'descripcion'], 'agregar_dia_no_habil' => ['fecha', 'motivo'], 'agregar_dependencia' => ['pred', 'suc', 'tipo', 'retraso'],
+        // Correcciones que el admin puede hacer desde el aviso (editor en línea), no solo aceptar lo que propuso la IA
+        'vincular_material' => ['actividad_id', 'material_id', 'rol'], 'desvincular_material' => ['actividad_id', 'material_id'],
+        'marcar_sin_material' => ['actividad_id', 'sin_material'], 'fijar_status' => ['actividad_id', 'status'],
+    ];
+    /** Nombre legible de cada grupo de problema (regla del sistema); la IA usa «categoria» o «accion» */
+    public const GRUPOS = [
+        'fin_antes_inicio' => 'Fin anterior al inicio', 'status' => 'Estatus no corresponde al avance', 'hito' => 'Hito con duración',
+        'fuera_proyecto' => 'Actividad fuera de las fechas del proyecto', 'duracion' => 'Duración distinta a las fechas', 'no_habil' => 'Inicia en día no hábil',
+        'avance_futuro' => 'Avance con inicio futuro', 'completa_futuro' => 'Completada con fin futuro', 'vencida' => 'Vencida sin avance',
+        'partida_fechas' => 'Fechas de partida desactualizadas', 'dep_conflicto' => 'Dependencia incumplida', 'mat_entregado_sin_compra' => 'Material entregado sin compra',
+        'mat_entrega_antes_compra' => 'Entrega programada antes de la compra', 'mat_real_invertida' => 'Entrega real antes de la compra real',
+        'avance_sin_material' => 'Avance sin material entregado', 'mat_requisito_sin_fecha' => 'Actividad bloqueada por materiales',
+        'mat_requisito_tarde' => 'Actividad antes de sus materiales', 'rest_activa' => 'Restricciones activas', 'rest_activa_completa' => 'Restricción activa en actividad terminada',
+        'sub_enviado_con_respuesta' => 'Submittal enviado con respuesta', 'sub_sin_respuesta' => 'Submittal sin fecha de respuesta', 'sub_resp_invertida' => 'Submittal respondido antes de enviarse',
+        'reporte_sin_avance' => 'Reportada en obra pero sin avance', 'reporte_antes_inicio' => 'Reportada antes de su inicio', 'dup_nombre' => 'Actividades con el mismo nombre',
+        'dup_codigo' => 'Código repetido', 'nomenclatura' => 'Nombre por ordenar', 'duracion_atipica' => 'Duración atípica', 'secuencia' => 'Secuencia lógica del programa',
+        'ajustar_progreso' => 'Avance corregido a mano', 'fijar_status' => 'Estatus corregido a mano',
     ];
     public const PAQUETE_MAX = 22;
 
@@ -42,10 +59,11 @@ class Inconsistencias extends HallazgosIA
         return $d && $d->format('Y-m-d') === $v ? $v : null;
     }
 
-    private static function hallazgo(string $regla, string $cat, string $sev, string $titulo, string $desc, array $acts, string $texto, string $accion = 'nota', array $params = []): array
+    private static function hallazgo(string $regla, string $cat, string $sev, string $titulo, string $desc, array $acts, string $texto, string $accion = 'nota', array $params = [], array $evidencia = []): array
     {
-        return ['huella' => sha1('s:' . $regla), 'categoria' => $cat, 'severidad' => $sev, 'origen' => 'sistema', 'titulo' => self::corto($titulo, 200), 'descripcion' => $desc,
-            'actividades' => array_values($acts), 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
+        $corte = strpos($regla, ':');
+        return ['huella' => sha1('s:' . $regla), 'grupo' => $corte === false ? $regla : substr($regla, 0, $corte), 'categoria' => $cat, 'severidad' => $sev, 'origen' => 'sistema', 'titulo' => self::corto($titulo, 200), 'descripcion' => $desc,
+            'actividades' => array_values($acts), 'evidencia' => $evidencia, 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
     }
 
     // ---------- fase 1: reglas del sistema ----------
@@ -120,7 +138,8 @@ class Inconsistencias extends HallazgosIA
                 $ini = $motor->sig($hoy);
                 $fin = $cal->calcularFechaFin($ini, max(1, $dur));
                 $out[] = self::hallazgo("vencida:$id:{$a['fecha_fin']}", 'avance', 'media', 'Vencida sin avance: ' . $nom($a), "Debió terminar el {$a['fecha_fin']} y no tiene avance.",
-                    [$id], "Reprogramar desde hoy conservando su duración ($dur d): $ini → $fin.", 'ajustar_fechas', ['actividad_id' => $id, 'inicio' => $ini, 'fin' => $fin]);
+                    [$id], "Reprogramar desde hoy conservando su duración ($dur d): $ini → $fin (se recalcula al aceptar).", 'ajustar_fechas',
+                    ['actividad_id' => $id, 'modo' => 'desde_hoy'], ['fuente' => 'programa', 'cita' => "Fin programado {$a['fecha_fin']} sin avance"]);
             }
         }
 
@@ -196,10 +215,11 @@ class Inconsistencias extends HallazgosIA
         } catch (\Throwable $e) {
         }
 
-        // restricciones activas en actividades terminadas
-        foreach (self::filas("SELECT r.id, r.descripcion, a.id AS aid, a.codigo, a.nombre FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND r.estado = 'activa' AND a.progreso >= 100") as $f) {
-            $out[] = self::hallazgo("rest_activa_completa:{$f['id']}", 'restricciones', 'media', "Restricción activa en actividad terminada: {$f['codigo']}", "«{$f['nombre']}» está al 100% y aún tiene la restricción activa: " . self::corto($f['descripcion'], 140), [(int)$f['aid']],
-                'Marcar la restricción como resuelta.', 'resolver_restriccion', ['restriccion_id' => (int)$f['id']]);
+        // restricciones activas: una por restricción (grupo «rest_activa») para poder resolverlas desde el aviso
+        foreach (self::filas("SELECT r.id, r.descripcion, r.tipo_id, a.id AS aid, a.codigo, a.nombre, a.progreso FROM restricciones r JOIN actividades a ON a.id = r.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND r.estado = 'activa'") as $f) {
+            $out[] = self::hallazgo('rest_activa:' . $f['id'], 'restricciones', (int)$f['progreso'] >= 100 ? 'media' : 'alta', 'Restricción activa: ' . $f['codigo'] . ' ' . self::corto($f['nombre'], 60),
+                "«{$f['nombre']}» tiene una restricción sin resolver: " . self::corto($f['descripcion'], 140) . ((int)$f['progreso'] >= 100 ? ' (y ya está al 100 %)' : '') . '. Mientras siga activa no se puede cambiar su avance.', [(int)$f['aid']],
+                'Marcar la restricción como resuelta (después podrás corregir el avance).', 'resolver_restriccion', ['restriccion_id' => (int)$f['id']]);
         }
 
         // submittals
@@ -401,15 +421,18 @@ Eres un auditor de datos de proyectos de construcción. Revisa CADA ACTIVIDAD de
 
 Reglas estrictas:
 - Reporta SOLO inconsistencias reales sustentadas en los datos de abajo; si no hay, devuelve la lista vacía. No inventes ni repitas lo que ya detectó el sistema.
-- Cada hallazgo debe ser sobre una o más ACTIVIDADES concretas (la partida es solo el agrupador): usa SOLO ids de las actividades de la lista en "actividades"; sin al menos un id válido el hallazgo se descarta. Máximo 10 hallazgos, los más importantes primero.
+- Cada hallazgo debe ser sobre una o más ACTIVIDADES concretas (la partida es solo el agrupador): usa SOLO ids de las actividades de la lista en "actividades"; sin al menos un id válido el hallazgo se descarta. Máximo 8 hallazgos, los más importantes primero.
 - "titulo" breve (máx. 100 caracteres); "descripcion" cita el dato que lo sustenta (máx. 300 caracteres).
-- "categoria": fechas, avance, calendario, dependencias, materiales, restricciones, submittals, reportes, duplicados, estructura u otro. "severidad": baja, media, alta o critica.
-- "solucion": {"texto": qué propones hacer (máx. 200 caracteres), "accion": una de las siguientes, "params": sus parámetros}. Si no hay una acción segura, usa "nota" (el usuario lo resolverá a mano).
+- "evidencia" es OBLIGATORIA para severidad alta o crítica: una frase textual de la bitácora, del reporte o del campo que sustente el hallazgo (máx. 200 caracteres). Si no puedes citarla, usa severidad «media» o «baja».
+- "categoria": fechas, avance, calendario, dependencias, materiales, restricciones, submittals, reportes, duplicados, estructura u otro.
+- "severidad": baja, media o alta. Reserva «critica» para riesgo de seguridad o de ruta crítica; la IA no puede marcarla.
+- Coherencia acción↔categoría: una restricción sin fecha NO se corrige poniendo fechas; una duda de materiales no se corrige moviendo el programa. Si no hay una acción segura y sustentada, usa "nota".
+- "solucion": {"texto": qué propones hacer (máx. 200 caracteres), "accion": una de las siguientes, "params": sus parámetros}.
   Acciones: nota {} · ajustar_fechas {actividad_id, inicio, fin} (YYYY-MM-DD) · ajustar_progreso {actividad_id, progreso 0-100} · sincronizar_status {actividad_id} · resolver_restriccion {restriccion_id} · marcar_comprado {material_id} · quitar_dependencia {pred, suc} · renombrar_actividad {actividad_id, nombre} · editar_descripcion {actividad_id, descripcion}.
   Usa una acción distinta de "nota" solo cuando los datos la respalden claramente.
 
 Formato (JSON estricto):
-{"hallazgos":[{"categoria":"avance","severidad":"media","titulo":"","descripcion":"","actividades":[0],"solucion":{"texto":"","accion":"nota","params":{}}}]}
+{"hallazgos":[{"categoria":"avance","severidad":"media","titulo":"","descripcion":"","evidencia":"","actividades":[0],"solucion":{"texto":"","accion":"nota","params":{}}}]}
 TXT;
     }
 
@@ -491,13 +514,21 @@ TXT;
                 if (!$ids) continue;   // la revisión es por actividad: un hallazgo sin actividad del proyecto no se puede ubicar
                 $cat = isset(self::CATEGORIAS[$h['categoria'] ?? '']) ? $h['categoria'] : 'otro';
                 $sev = isset(self::SEVERIDADES[$h['severidad'] ?? '']) ? $h['severidad'] : 'media';
+                // La severidad la decide el servidor: la IA no puede marcar «crítica» y una «alta» sin cita baja a media.
+                $ev = self::corto(is_scalar($h['evidencia'] ?? '') ? (string)$h['evidencia'] : '', 200);
+                if ($sev === 'critica') $sev = 'alta';
+                if ($sev === 'alta' && $ev === '') $sev = 'media';
                 $s = is_array($h['solucion'] ?? null) ? $h['solucion'] : [];
                 $accion = isset(self::ACCIONES[$s['accion'] ?? '']) && !in_array($s['accion'], ['ajustar_duracion', 'agregar_dia_no_habil', 'agregar_dependencia'], true) ? $s['accion'] : 'nota';   // duración y días no hábiles los proponen solo las reglas del sistema
+                // Coherencia acción↔categoría: no se mueve el programa para resolver una restricción o un material.
+                $incoherente = in_array($cat, ['restricciones', 'materiales'], true) && in_array($accion, ['ajustar_fechas', 'ajustar_progreso', 'ajustar_duracion', 'agregar_dependencia'], true);
                 $params = self::paramsValidos($pid, $accion, is_array($s['params'] ?? null) ? $s['params'] : []);
                 $texto = self::corto($s['texto'] ?? '', 300) ?: 'Revisar y corregir a mano.';
+                if ($incoherente) { $accion = 'nota'; $params = []; $texto .= ' (la acción propuesta no corresponde al tipo de hallazgo; se resuelve a mano)'; }
                 if ($params === null) { $accion = 'nota'; $params = []; $texto .= ' (el sistema no pudo validar la acción propuesta: se resuelve a mano)'; }
-                $out[] = ['huella' => sha1('i:' . $cat . '|' . implode(',', $ids) . '|' . $accion . '|' . json_encode($params) . '|' . mb_strtolower(preg_replace('/\W+/u', '', $titulo))), 'categoria' => $cat, 'severidad' => $sev,
-                    'origen' => 'ia', 'titulo' => $titulo, 'descripcion' => $desc, 'actividades' => $ids, 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
+                $out[] = ['huella' => sha1('i:' . $cat . '|' . implode(',', $ids) . '|' . $accion . '|' . json_encode($params) . '|' . mb_strtolower(preg_replace('/\W+/u', '', $titulo))), 'grupo' => $accion !== 'nota' ? $accion : $cat, 'categoria' => $cat, 'severidad' => $sev,
+                    'origen' => 'ia', 'titulo' => $titulo, 'descripcion' => $desc, 'evidencia' => $ev !== '' ? ['fuente' => 'ia', 'cita' => $ev] : [],
+                    'actividades' => $ids, 'solucion' => ['texto' => $texto, 'accion' => $accion, 'params' => $params]];
             }
         }
         return $out;
@@ -512,10 +543,25 @@ TXT;
             case 'nota': return [];
             case 'ajustar_fechas':
                 $a = (int)($p['actividad_id'] ?? 0);
+                $act = self::filas("SELECT a.fecha_inicio, a.fecha_fin, a.duracion_dias, a.progreso, a.hito, a.fecha_fija
+                    FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")[0] ?? null;
+                if (!$act) return null;
+                // «desde_hoy» se resuelve al aceptar: la propuesta nunca envejece ni cae en una fecha pasada.
+                if (($p['modo'] ?? '') === 'desde_hoy') {
+                    $cal = new Calendario($pid);
+                    $ini = (new RutaCritica($cal))->sig(date('Y-m-d'));
+                    $fin = (int)$act['hito'] ? $ini : $cal->calcularFechaFin($ini, max(1, (int)$act['duracion_dias']));
+                    return ['actividad_id' => $a, 'inicio' => $ini, 'fin' => $fin, 'modo' => 'desde_hoy'];
+                }
                 $i = self::fecha($p['inicio'] ?? null);
                 $f = self::fecha($p['fin'] ?? null);
-                if (!$i || !$f || $f < $i || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
-                return ['actividad_id' => $a, 'inicio' => $i, 'fin' => $f];
+                if (!$i || !$f || $f < $i) return null;
+                // Una actividad sin avance no se puede reprogramar al pasado por accidente (propuesta vieja).
+                if ((int)$act['progreso'] === 0 && $f < date('Y-m-d') && empty($p['permitir_pasado'])) return null;
+                // Corregir el histórico de una actividad ya iniciada/terminada exige confirmación explícita.
+                if ((int)$act['progreso'] > 0 && empty($p['confirmar_historico'])) return null;
+                return ['actividad_id' => $a, 'inicio' => $i, 'fin' => $f,
+                    'confirmar_historico' => (int)$act['progreso'] > 0 ? 1 : 0, 'permitir_pasado' => !empty($p['permitir_pasado']) ? 1 : 0];
             case 'sincronizar_status':
                 $a = (int)($p['actividad_id'] ?? 0);
                 return $en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid") ? ['actividad_id' => $a] : null;
@@ -523,7 +569,7 @@ TXT;
                 $a = (int)($p['actividad_id'] ?? 0);
                 $v = $p['progreso'] ?? null;
                 if (!is_numeric($v) || $v < 0 || $v > 100 || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
-                return ['actividad_id' => $a, 'progreso' => (int)$v];
+                return ['actividad_id' => $a, 'progreso' => (int)$v, 'confirmar_compuerta' => !empty($p['confirmar_compuerta']) ? 1 : 0];
             case 'recalcular_partida':
                 $x = (int)($p['partida_id'] ?? 0);
                 return $en("SELECT 1 FROM partidas WHERE id = $x AND proyecto_id = $pid") ? ['partida_id' => $x] : null;
@@ -536,8 +582,10 @@ TXT;
             case 'ajustar_duracion':
                 $a = (int)($p['actividad_id'] ?? 0);
                 $d = (int)($p['dur'] ?? 0);
-                if ($d < 1 || $d > 3650 || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
-                return ['actividad_id' => $a, 'dur' => $d];
+                $act = self::filas("SELECT a.progreso FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")[0] ?? null;
+                if ($d < 1 || $d > 3650 || !$act) return null;
+                if ((int)$act['progreso'] > 0 && empty($p['confirmar_historico'])) return null;
+                return ['actividad_id' => $a, 'dur' => $d, 'confirmar_historico' => (int)$act['progreso'] > 0 ? 1 : 0];
             case 'renombrar_actividad':
                 $a = (int)($p['actividad_id'] ?? 0);
                 $n = self::corto($p['nombre'] ?? '', 200);
@@ -548,6 +596,26 @@ TXT;
                 $t = trim((string)($p['descripcion'] ?? ''));
                 if (mb_strlen($t) > 2000 || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
                 return ['actividad_id' => $a, 'descripcion' => $t];
+            case 'fijar_status':
+                $a = (int)($p['actividad_id'] ?? 0);
+                $st = (string)($p['status'] ?? '');
+                if (!in_array($st, ['no_iniciada', 'en_proceso', 'completada'], true) || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
+                return ['actividad_id' => $a, 'status' => $st];
+            case 'marcar_sin_material':
+                $a = (int)($p['actividad_id'] ?? 0);
+                if (!isset($p['sin_material']) || !$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid")) return null;
+                return ['actividad_id' => $a, 'sin_material' => empty($p['sin_material']) ? 0 : 1];
+            case 'vincular_material':
+                $a = (int)($p['actividad_id'] ?? 0);
+                $m = (int)($p['material_id'] ?? 0);
+                $rol = (string)($p['rol'] ?? 'instala');
+                if (!isset(\Model\ActividadMaterial::ROLES[$rol])) $rol = 'instala';
+                if (!$en("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $a AND pa.proyecto_id = $pid") || !$en("SELECT 1 FROM materiales WHERE id = $m AND proyecto_id = $pid")) return null;
+                return ['actividad_id' => $a, 'material_id' => $m, 'rol' => $rol];
+            case 'desvincular_material':
+                $a = (int)($p['actividad_id'] ?? 0);
+                $m = (int)($p['material_id'] ?? 0);
+                return $en("SELECT 1 FROM actividad_materiales am JOIN actividades a ON a.id = am.actividad_id JOIN partidas pa ON pa.id = a.partida_id WHERE am.actividad_id = $a AND am.material_id = $m AND pa.proyecto_id = $pid") ? ['actividad_id' => $a, 'material_id' => $m] : null;
             case 'agregar_dia_no_habil':
                 $f = self::fecha($p['fecha'] ?? null);
                 if (!$f) return null;
@@ -586,19 +654,19 @@ TXT;
         \Classes\Revisiones::registrarEjecucion($pid, 'inconsistencias');
         $resueltas = [];
         foreach (self::filas("SELECT huella FROM inconsistencias WHERE proyecto_id = $pid AND estado <> 'pendiente'") as $f) $resueltas[$f['huella']] = true;
-        $nuevos = $ya = 0;
+        $nuevos = $actualizados = $ya = 0;
         $vistos = [];
         foreach ($hallazgos as $h) {
             if (isset($vistos[$h['huella']])) continue;
             $vistos[$h['huella']] = true;
             if (isset($resueltas[$h['huella']])) { $ya++; continue; }
             $h['solucion']['esperado'] = self::esperado($h['solucion']['accion'], $h['solucion']['params']);
-            $db->query("INSERT INTO inconsistencias (proyecto_id, corrida_id, huella, categoria, severidad, origen, titulo, descripcion, actividades_json, solucion_json, modelo) VALUES ($pid, $corrida, '{$esc($h['huella'])}', '{$esc($h['categoria'])}', '{$esc($h['severidad'])}', '{$esc($h['origen'])}', '{$esc($h['titulo'])}', '{$esc($h['descripcion'])}', '"
-                . $esc(json_encode($h['actividades'])) . "', '" . $esc(json_encode($h['solucion'], JSON_UNESCAPED_UNICODE)) . "', '" . $esc(self::corto($h['origen'] === 'ia' ? $modelo : '', 150)) . "')");
-            $nuevos++;
+            // Si ya hay un pendiente con la misma huella se actualiza (no se duplica entre corridas).
+            $r = self::upsertHallazgo($pid, $corrida, $h, $modelo, ['actividades_json' => $h['actividades']]);
+            if ($r === 'nuevo') $nuevos++; else $actualizados++;
         }
         $db->query("DELETE FROM inconsistencias_corridas WHERE proyecto_id = $pid AND guardada = 0 AND id NOT IN (SELECT id FROM (SELECT id FROM inconsistencias_corridas WHERE proyecto_id = $pid AND guardada = 0 ORDER BY id DESC LIMIT " . self::CORRIDAS_SIN_GUARDAR . ') t)');
-        return ['corrida' => $corrida, 'nuevos' => $nuevos, 'ya_resueltos' => $ya];
+        return ['corrida' => $corrida, 'nuevos' => $nuevos, 'actualizados' => $actualizados, 'ya_resueltos' => $ya];
     }
 
     /**
@@ -662,20 +730,87 @@ TXT;
         return self::restaurar($p, $antes);
     }
 
-    /** Actividades implicadas ya resueltas a código y nombre, y la solución decodificada */
+    /** Actividades implicadas ya resueltas a código y nombre, su contexto actual (para el editor en línea) y la solución decodificada */
     protected static function enriquecer(int $pid, array $filas): array
     {
         $acts = Dependencias::actividades($pid);
+        $ids = [];
+        foreach ($filas as $x) foreach ((array)json_decode((string)$x['actividades_json'], true) as $i) $ids[(int)$i] = true;
+        $extra = $rest = $mats = [];
+        if ($ids) {
+            $lista = implode(',', array_keys($ids));
+            foreach (self::filas("SELECT id, descripcion, sin_material FROM actividades WHERE id IN ($lista)") as $f) $extra[(int)$f['id']] = $f;
+            foreach (self::filas("SELECT id, actividad_id, descripcion FROM restricciones WHERE actividad_id IN ($lista) AND estado = 'activa' ORDER BY id") as $r) {
+                $rest[(int)$r['actividad_id']][] = ['id' => (int)$r['id'], 'descripcion' => (string)$r['descripcion']];
+            }
+            foreach (self::filas("SELECT am.actividad_id, am.material_id, am.rol, m.nombre FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE am.actividad_id IN ($lista) ORDER BY m.nombre") as $m) {
+                $mats[(int)$m['actividad_id']][] = ['id' => (int)$m['material_id'], 'nombre' => (string)$m['nombre'], 'rol' => (string)($m['rol'] ?: 'instala')];
+            }
+        }
         foreach ($filas as &$x) {
             $x['id'] = (int)$x['id'];
+            $x['grupo'] = (string)($x['grupo'] ?? '') !== '' ? (string)$x['grupo'] : (string)$x['categoria'];
             $x['actividades'] = array_values(array_filter(array_map(fn($i) => isset($acts[$i]) ? ['id' => $i, 'codigo' => $acts[$i]['codigo'], 'nombre' => $acts[$i]['nombre']] : null, (array)json_decode((string)$x['actividades_json'], true))));
+            $x['contexto'] = array_values(array_map(function ($a) use ($acts, $extra, $rest, $mats) {
+                $id = (int)$a['id'];
+                $f = $acts[$id];   // fila completa de la actividad (la de $x['actividades'] solo trae código y nombre)
+                return ['id' => $id, 'codigo' => $f['codigo'], 'nombre' => $f['nombre'], 'partida_id' => (int)$f['partida_id'], 'partida' => $f['partida_codigo'] . ' · ' . $f['partida'],
+                    'inicio' => $f['fecha_inicio'], 'fin' => $f['fecha_fin'], 'dur' => (int)$f['duracion_dias'], 'hito' => (int)$f['hito'], 'fija' => (int)$f['fecha_fija'],
+                    'progreso' => (int)$f['progreso'], 'status' => (string)$f['status'], 'descripcion' => (string)($extra[$id]['descripcion'] ?? ''),
+                    'sin_material' => (int)($extra[$id]['sin_material'] ?? 0), 'restricciones' => $rest[$id] ?? [], 'materiales' => $mats[$id] ?? []];
+            }, $x['actividades']));
             $x['solucion'] = json_decode($x['solucion_json'], true) ?: ['texto' => '', 'accion' => 'nota', 'params' => []];
+            $x['evidencia'] = json_decode((string)($x['evidencia_json'] ?? ''), true) ?: [];
+            $x['vencido'] = $x['estado'] === 'pendiente' && !empty($x['vigente_hasta']) && strtotime((string)$x['vigente_hasta']) < time();
             $x['revertible'] = $x['estado'] === 'aceptada' && $x['antes_json'] !== null;
         }
         return $filas;
     }
 
     // ---------- aplicar / revertir ----------
+
+    /**
+     * Simula mover una actividad SIN guardar: cuántas sucesoras se mueven, cuánto se corre el fin de obra
+     * y cuántas actividades críticas hay. Se usa en «Ver impacto» antes de aceptar una fecha.
+     */
+    public static function simularFechas(Proyecto $p, int $aid, string $inicio, string $fin): array
+    {
+        $pid = (int)$p->id;
+        $i = self::fecha($inicio);
+        $f = self::fecha($fin);
+        if (!$i || !$f || $f < $i) return ['success' => false, 'error' => 'Fechas no válidas'];
+        $a = Actividad::find($aid);
+        if (!$a) return ['success' => false, 'error' => 'La actividad no existe'];
+        $ok = self::filas("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $aid AND pa.proyecto_id = $pid");
+        if (!$ok) return ['success' => false, 'error' => 'La actividad no pertenece al proyecto'];
+        if ((int)$a->fecha_fija) return ['success' => false, 'error' => 'La actividad tiene fecha fija: quita el candado primero'];
+        $finAntes = (string)(self::filas("SELECT MAX(a.fecha_fin) f FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid")[0]['f'] ?? '');
+        $db = self::db();
+        $db->begin_transaction();
+        try {
+            $a->fecha_inicio = $i;
+            $a->fecha_fin = $f;
+            if (!(int)$a->hito) $a->duracion_dias = max(1, (int)round((new Calendario($pid))->calcularDuracion($i, $f)));
+            $a->guardar();
+            if ($pa = Partida::find((int)$a->partida_id)) $pa->recalcularFechas();
+            $movidas = \Classes\Dependencias::aplicar($p, false);
+            $finDespues = (string)(self::filas("SELECT MAX(a.fecha_fin) f FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid")[0]['f'] ?? '');
+            $datos = \Classes\Dependencias::datos($p);
+            $criticas = (int)($datos['resumen']['criticas'] ?? 0);
+            $db->rollback();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            return ['success' => false, 'error' => 'No se pudo simular: ' . $e->getMessage()];
+        }
+        $dias = ($finAntes && $finDespues) ? (int)round((strtotime($finDespues) - strtotime($finAntes)) / 86400) : 0;
+        $partes = [];
+        $partes[] = $movidas ? "$movidas sucesora(s) se moverían" : 'no hay sucesoras que mover';
+        if ($dias) $partes[] = 'el fin de obra se corre ' . ($dias > 0 ? '+' : '') . $dias . ' día(s)';
+        else $partes[] = 'el fin de obra no cambia';
+        $partes[] = "$criticas actividad(es) en ruta crítica";
+        return ['success' => true, 'movidas' => $movidas, 'fin_antes' => $finAntes, 'fin_despues' => $finDespues, 'dias' => $dias, 'criticas' => $criticas,
+            'mensaje' => ucfirst(implode('; ', $partes)) . '.'];
+    }
 
     private static function refrescar(int $pid, array $partidas): void
     {
@@ -684,6 +819,12 @@ TXT;
             \Model\ActividadMaterial::sincronizarInstalacion($pid);
         } catch (\Throwable $e) {
         }
+    }
+
+    /** Restricciones activas de una actividad (bloquean el cambio de avance) */
+    private static function restriccionesActivas(int $actividadId): int
+    {
+        return (int)(self::filas("SELECT COUNT(*) n FROM restricciones WHERE actividad_id = $actividadId AND estado = 'activa'")[0]['n'] ?? 0);
     }
 
     /** @return array{0: bool, 1: string, 2: ?array} resultado, mensaje y valores previos (null si la acción no cambia datos) */
@@ -703,12 +844,32 @@ TXT;
                 if (!(int)$a->hito) $a->duracion_dias = max(1, (int)round((new Calendario($pid))->calcularDuracion($x['inicio'], $x['fin'])));
                 $a->guardar();
                 self::refrescar($pid, [$a->partida_id]);
-                return [true, "«{$a->codigo}» ahora va del {$x['inicio']} al {$x['fin']}", $antes];
+                // Si el proyecto tiene dependencias automáticas, las sucesoras se mueven con ella.
+                $movidas = \Classes\Dependencias::propagar($p);
+                return [true, "«{$a->codigo}» ahora va del {$x['inicio']} al {$x['fin']}" . ($movidas ? " · {$movidas} sucesora(s) reprogramada(s)" : ''), $antes];
             case 'sincronizar_status':
+                $a = Actividad::find($x['actividad_id']);
+                if (!$a) return [false, 'La actividad ya no existe', null];
+                $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'progreso' => (int)$a->progreso, 'status' => $a->status];
+                $a->sincronizarStatus();
+                Actividad::omitirCompuertaCalidad(true);
+                try { $a->guardar(); } finally { Actividad::omitirCompuertaCalidad(false); }
+                return [true, "«{$a->codigo}»: avance {$a->progreso}%, estatus {$a->status}", $antes];
             case 'ajustar_progreso':
                 $a = Actividad::find($x['actividad_id']);
+                if (!$a) return [false, 'La actividad ya no existe', null];
+                $n = self::restriccionesActivas((int)$a->id);
+                if ($n > 0) return [false, "La actividad tiene $n restricción(es) activa(s): resuélvelas antes de cambiar el avance.", null];
+                // Compuerta de calidad: si el avance pasa el tope del ITP/NC, solo se aplica con confirmación explícita.
+                try {
+                    $bloqueo = \Classes\Calidad::bloqueo($pid, (int)$a->id, (int)$a->progreso);
+                    if ($bloqueo && (int)$x['progreso'] > (int)$bloqueo['tope'] && empty($x['confirmar_compuerta'])) {
+                        return [false, 'La compuerta de calidad topa el avance en ' . (int)$bloqueo['tope'] . ' % (' . ($bloqueo['motivo'] ?? 'ITP o no conformidad') . '). Marca «omitir compuerta» si el admin decide corregirlo igual.', null];
+                    }
+                } catch (\Throwable $e) {
+                }
                 $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'progreso' => (int)$a->progreso, 'status' => $a->status];
-                if ($accion === 'ajustar_progreso') $a->progreso = $x['progreso'];
+                $a->progreso = $x['progreso'];
                 $a->sincronizarStatus();
                 // Corrección de datos aprobada por el admin: no la detiene la compuerta de calidad
                 Actividad::omitirCompuertaCalidad(true);
@@ -737,7 +898,8 @@ TXT;
                 $a->fecha_fin = (int)$a->hito ? $a->fecha_inicio : (new Calendario($pid))->calcularFechaFin($a->fecha_inicio, $x['dur']);
                 $a->guardar();
                 self::refrescar($pid, [$a->partida_id]);
-                return [true, "«{$a->codigo}» ahora dura {$x['dur']} d hábiles y termina el {$a->fecha_fin}", $antes];
+                $movidas = \Classes\Dependencias::propagar($p);
+                return [true, "«{$a->codigo}» ahora dura {$x['dur']} d hábiles y termina el {$a->fecha_fin}" . ($movidas ? " · {$movidas} sucesora(s) reprogramada(s)" : ''), $antes];
             case 'renombrar_actividad':
                 $a = Actividad::find($x['actividad_id']);
                 $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'nombre' => $a->nombre];
@@ -750,6 +912,33 @@ TXT;
                 $a->descripcion = $x['descripcion'];
                 $a->guardar();
                 return [true, "Descripción de «{$a->codigo}» actualizada", $antes];
+            case 'fijar_status':
+                $a = Actividad::find($x['actividad_id']);
+                if (!$a) return [false, 'La actividad ya no existe', null];
+                $n = self::restriccionesActivas((int)$a->id);
+                if ($n > 0) return [false, "La actividad tiene $n restricción(es) activa(s): resuélvelas antes de cambiar el estatus.", null];
+                $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'status' => $a->status];
+                $db->query("UPDATE actividades SET status = '" . $db->real_escape_string($x['status']) . "' WHERE id = " . (int)$a->id);
+                return [true, "Estatus de «{$a->codigo}» puesto en «{$x['status']}»", $antes];
+            case 'marcar_sin_material':
+                $a = Actividad::find($x['actividad_id']);
+                if (!$a) return [false, 'La actividad ya no existe', null];
+                $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'sin_material' => (int)$a->sin_material];
+                $db->query('UPDATE actividades SET sin_material = ' . (int)$x['sin_material'] . ' WHERE id = ' . (int)$a->id);
+                return [true, $x['sin_material'] ? 'Actividad marcada como «sin material»' : 'Actividad marcada como que sí requiere material', $antes];
+            case 'vincular_material':
+                $ya = self::filas('SELECT rol FROM actividad_materiales WHERE actividad_id = ' . (int)$x['actividad_id'] . ' AND material_id = ' . (int)$x['material_id'])[0] ?? null;
+                $antes = ['accion' => $accion, 'actividad_id' => (int)$x['actividad_id'], 'material_id' => (int)$x['material_id'], 'rol' => $ya['rol'] ?? null];
+                $db->query('INSERT INTO actividad_materiales (actividad_id, material_id, rol) VALUES (' . (int)$x['actividad_id'] . ', ' . (int)$x['material_id'] . ", '" . $db->real_escape_string($x['rol']) . "') ON DUPLICATE KEY UPDATE rol = VALUES(rol)");
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
+                $mn = self::filas('SELECT nombre FROM materiales WHERE id = ' . (int)$x['material_id'])[0]['nombre'] ?? '';
+                return [true, 'Material «' . self::corto($mn, 60) . "» vinculado a la actividad ({$x['rol']})", $antes];
+            case 'desvincular_material':
+                $f = self::filas('SELECT rol FROM actividad_materiales WHERE actividad_id = ' . (int)$x['actividad_id'] . ' AND material_id = ' . (int)$x['material_id'])[0] ?? null;
+                if (!$f) return [false, 'El material ya no está vinculado a la actividad', null];
+                $db->query('DELETE FROM actividad_materiales WHERE actividad_id = ' . (int)$x['actividad_id'] . ' AND material_id = ' . (int)$x['material_id']);
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
+                return [true, 'Material desvinculado de la actividad', ['accion' => $accion, 'actividad_id' => (int)$x['actividad_id'], 'material_id' => (int)$x['material_id'], 'rol' => $f['rol']]];
             case 'agregar_dia_no_habil':
                 $ya = self::filas("SELECT id FROM calendario_festivos WHERE proyecto_id = $pid AND fecha = '" . $db->real_escape_string($x['fecha']) . "'")[0] ?? null;
                 if ($ya) return [false, 'Ese día ya está marcado como no hábil', null];
@@ -814,6 +1003,21 @@ TXT;
                 if (!$x) return [false, 'La actividad ya no existe'];
                 $x->descripcion = $a['descripcion'];
                 $x->guardar();
+                return [true, ''];
+            case 'fijar_status':
+                $db->query("UPDATE actividades SET status = '" . $db->real_escape_string($a['status']) . "' WHERE id = " . (int)$a['actividad_id']);
+                return [true, ''];
+            case 'marcar_sin_material':
+                $db->query('UPDATE actividades SET sin_material = ' . (int)$a['sin_material'] . ' WHERE id = ' . (int)$a['actividad_id']);
+                return [true, ''];
+            case 'vincular_material':
+                if ($a['rol'] === null) $db->query('DELETE FROM actividad_materiales WHERE actividad_id = ' . (int)$a['actividad_id'] . ' AND material_id = ' . (int)$a['material_id']);
+                else $db->query("UPDATE actividad_materiales SET rol = '" . $db->real_escape_string($a['rol']) . "' WHERE actividad_id = " . (int)$a['actividad_id'] . ' AND material_id = ' . (int)$a['material_id']);
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
+                return [true, ''];
+            case 'desvincular_material':
+                $db->query("INSERT IGNORE INTO actividad_materiales (actividad_id, material_id, rol) VALUES (" . (int)$a['actividad_id'] . ', ' . (int)$a['material_id'] . ", '" . $db->real_escape_string((string)$a['rol']) . "')");
+                \Model\ActividadMaterial::sincronizarInstalacion($pid);
                 return [true, ''];
             case 'agregar_dia_no_habil':
                 $db->query('DELETE FROM calendario_festivos WHERE id = ' . (int)$a['festivo_id'] . " AND proyecto_id = $pid");
