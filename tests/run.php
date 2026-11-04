@@ -808,6 +808,34 @@ $ok('la página de almacén tiene orden, recepción, salida y ajuste', (function
     return str_contains($v, '/almacen/orden') && str_contains($v, '/almacen/recibir')
         && str_contains($v, '/almacen/salida') && str_contains($v, '/almacen/ajuste');
 })());
+echo "Subcontratos\n";
+$ok('los estados y documentos obligatorios del subcontrato están completos', count(\Classes\Subcontratos::ESTADOS) === 4
+    && count(\Classes\Subcontratos::DOCS) === 5 && count(\Classes\Subcontratos::DOCS_OBLIGATORIOS) === 4);
+$ok('las tablas de subcontratos están en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_subcontratos.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS subcontratos') && str_contains($m, 'subcontrato_documentos')
+        && str_contains($m, 'subcontrato_estimaciones') && str_contains($s, 'CREATE TABLE IF NOT EXISTS subcontratos');
+})());
+$ok('las rutas de subcontratos están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/subcontratos'") && str_contains($t, "'/subcontratos/guardar'")
+        && str_contains($t, "'/subcontratos/documento'") && str_contains($t, "'/subcontratos/estimacion'")
+        && str_contains($t, "'/subcontratos/pdf'");
+})());
+$ok('la compuerta exige archivo, validación y vigencia', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Subcontratos.php');
+    return str_contains($c, 'function puedePagar(') && str_contains($c, "!\$d || !(int)\$d['validado'] || empty(\$d['archivo_id'])")
+        && str_contains($c, "d['vencimiento'] < \$hoy");
+})());
+$ok('la estimación del subcontrato descuenta el compromiso por el neto', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Subcontratos.php'), 'Compromisos::aplicar(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Subcontratos.php'), "monto' => \$calc['neto']"));
+$ok('la página de subcontratos tiene documentos, estimaciones y PDF', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/subcontratos/index.php');
+    return str_contains($v, '/subcontratos/documento') && str_contains($v, '/subcontratos/estimacion')
+        && str_contains($v, 'Documentos obligatorios') && str_contains($v, '/subcontratos/pdf');
+})());
+$ok('Salud avisa de los documentos de subcontrato pendientes', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Salud.php'), 'Subcontratos::resumen('));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

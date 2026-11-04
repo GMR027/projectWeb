@@ -438,6 +438,16 @@ HTML],
 <li><strong>Ajuste:</strong> corrige una diferencia física con un motivo obligatorio. Queda en el historial.</li>
 </ol>
 <p>La existencia se calcula sumando entradas y restando salidas y ajustes; no se escribe a mano. El <strong>mínimo</strong> se configura en el material y la fila se marca cuando baja de ahí.</p>
+['id' => 'subcontratos', 'despues' => 'contratos', 'titulo' => 'Subcontratos', 'icono' => 'fa-handshake', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Un subcontrato tiene alcance, monto, retención, anticipo, documentos obligatorios y estimaciones propias. Está en <strong>Administración → Subcontratos</strong>.</p>
+<ol>
+<li><strong>Nuevo subcontrato:</strong> subcontratista, partida, alcance, monto, retención, anticipo y fechas. Al guardarlo, su monto se reserva como <strong>compromiso</strong> en Costos.</li>
+<li><strong>Documentos obligatorios:</strong> fianza de cumplimiento, seguro de responsabilidad civil, permisos de trabajo y alta de personal. Elige el archivo del Archivo, su vencimiento y marca <em>Validado</em>.</li>
+<li><strong>Estimaciones:</strong> subtotal, IVA, retención y amortización del anticipo; el neto se calcula solo. Al aprobarla o pagarla se registra el costo real por el neto y baja el compromiso.</li>
+</ol>
+<h4>La compuerta de pago</h4>
+<p>Si falta un documento obligatorio, está vencido o no está validado, <strong>no se puede aprobar ni pagar</strong>. Solo el <strong>administrador</strong> puede autorizarlo escribiendo un <strong>motivo</strong> (mínimo 10 caracteres); queda firmado con su nombre y visible en la estimación.</p>
+<p>El botón <strong>PDF</strong> genera la ficha del subcontrato con alcance, documentos, estimaciones y firmas.</p>
 HTML],
 
 ];

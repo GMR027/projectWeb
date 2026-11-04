@@ -1,0 +1,18 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Subcontratos: documentos obligatorios y compuerta de pago
+// ============================================================
+.sc-docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr)); gap: .8rem; margin-top: .8rem; }
+.sc-doc {
+  border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: .7rem; padding: .8rem 1rem; background: var(--surface);
+  &.sc-doc-ok { border-left-color: #059669; }
+  &.sc-doc-aviso { border-left-color: #d97706; }
+  &.sc-doc-falta { border-left-color: #dc2626; background: rgba(220, 38, 38, .04); }
+}
+.sc-doc-cab { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: .3rem; }
+.sc-doc-form { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-top: .5rem;
+  select { min-width: 12rem; font-size: 1.1rem; padding: .25rem .4rem; }
+  input[type="date"] { width: auto; font-size: 1.1rem; padding: .25rem .4rem; }
+  .co-check { font-size: 1.1rem !important; gap: .3rem !important; }
+}

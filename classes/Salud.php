@@ -258,6 +258,16 @@ class Salud
                     : 'Sin riesgos abiertos en el registro.'];
         }
 
+        // Subcontratos con documentos obligatorios faltantes o vencidos
+        if (Subcontratos::disponible()) {
+            $rs = Subcontratos::resumen($pid);
+            $ind[] = ['clave' => 'subcontratos', 'titulo' => 'Subcontratos con documentos pendientes', 'valor' => $rs['con_faltantes'], 'icono' => 'fa-user-tie', 'url' => "/subcontratos?proyecto=$pid",
+                'nivel' => $rs['con_faltantes'] ? 'critico' : ($rs['por_vencer'] ? 'aviso' : 'ok'),
+                'detalle' => $rs['con_faltantes']
+                    ? $rs['con_faltantes'] . ' subcontrato(s) con fianza, seguro, permisos o alta pendientes.' . ($rs['por_vencer'] ? ' ' . $rs['por_vencer'] . ' con documento por vencer.' : '')
+                    : ($rs['por_vencer'] ? $rs['por_vencer'] . ' subcontrato(s) con documento por vencer.' : 'Documentos de subcontratos al corriente.')];
+        }
+
         return ['nivel' => self::nivelMax(...array_column($ind, 'nivel')), 'indicadores' => $ind];
     }
 }

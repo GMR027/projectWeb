@@ -916,6 +916,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'punch' => ['inconsistencias', 'programador'],
         'riesgos' => ['fase3', 'riesgos'],
         'almacen' => ['fase3', 'almacen'],
+        'subcontratos' => ['fase3', 'subcontratos'],
         'costos' => ['fase3', 'cambios'],
         'recursos' => ['fase3'],
         'rfi' => ['fase3', 'cambios'],

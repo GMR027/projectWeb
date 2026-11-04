@@ -87,3 +87,11 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - Las escrituras usan `proyecto_de_peticion(true)` (admin o cliente propietario o con el proyecto asignado).
 - Las cuatro claves están en `Model\Usuario::HERRAMIENTAS` y en el menú (`views/templates/herramientas-proyecto.php`), así que el visitante solo las ve si se le habilitan.
 - **Resumen matutino:** si el proyecto tiene activado el resumen de la obra (Integraciones → Telegram), `Classes\ResumenObra` incluye los contratos/fianzas por vencer, los equipos con servicio próximo y los riesgos altos abiertos. Dentro de cada herramienta también se ven siempre.
+
+## Subcontratos (`Classes\Subcontratos`)
+
+- `subcontratos`: subcontratista, partida, alcance, monto, retención %, anticipo %, fechas, estado y `compromiso_id`. Al guardar se crea/actualiza un compromiso (`compromisos.tipo = subcontrato`) con el monto; cerrar/cancelar libera el saldo.
+- `subcontrato_documentos`: fianza, seguro de responsabilidad civil, permisos y alta de personal (obligatorios) más `otro`. Cada uno con archivo del Archivo, vencimiento y validación. `documentosEstado()` exige archivo, `validado = 1` y fecha no vencida.
+- **Compuerta de pago:** `puedePagar()` bloquea aprobar/pagar una estimación si falta o venció un documento. Solo el admin puede autorizarla con `motivo_autorizacion` (≥10 caracteres); queda `autorizado_por`.
+- `subcontrato_estimaciones`: subtotal, IVA, retención, amortización del anticipo, ajuste, bruto y neto, calculados con `Estimaciones::calcular()`. La amortización se topa al anticipo pendiente. Al aprobar/pagar se aplica el **neto** al compromiso (`Compromisos::aplicar`) y se registra como costo real; al editar se revierte el movimiento anterior.
+- PDF en `/subcontratos/pdf?id=`. Permiso de visitante: solo lectura. Migración `database/migracion_subcontratos.sql`.

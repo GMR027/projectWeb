@@ -68,6 +68,7 @@ class Usuario extends ActiveRecord
         'riesgos' => ['Riesgos', ['/riesgos']],
         'equipo' => ['Equipo y maquinaria', ['/equipo']],
         'contratos' => ['Contratos, fianzas y seguros', ['/contratos']],
+        'subcontratos' => ['Subcontratos', ['/subcontratos']],
         'cierre' => ['Cierre de obra', ['/cierre']],
         'mapa-avance' => ['Mapa de avance', ['/mapa-avance']],
         'submittals' => ['Submittals', ['/submittals', '/api/submittals']],
@@ -101,7 +102,7 @@ class Usuario extends ActiveRecord
         'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
         'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'recursos', 'cambios'],
-        'Administración del proyecto' => ['equipo', 'contratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
+        'Administración del proyecto' => ['equipo', 'contratos', 'subcontratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
         'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones'],
     ];
 
