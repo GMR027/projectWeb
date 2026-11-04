@@ -65,6 +65,26 @@ HTML],
 <p class="manual-nota"><strong>Respaldo de proyecto.</strong> En <em>Ajustes del proyecto</em>, debajo de Almacenamiento, puedes pulsar <em>Respaldar ahora</em> o dejar activo el respaldo automático de las 23:30 (se conserva uno diario, uno semanal y uno mensual, para que elijas a qué momento volver; más los últimos 5 manuales). <em>Restaurar desde el respaldo anterior</em> devuelve el proyecto a como estaba en el último respaldo (por ejemplo, para recuperar los cambios de ayer); antes se guarda una copia del estado actual por si quieres deshacer. Solo lo usan el administrador y el cliente dueño del proyecto.</p>
 HTML],
 
+
+['id' => 'portafolio', 'titulo' => 'Tablero de portafolio', 'icono' => 'fa-table-columns', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Compara todas tus obras en una sola pantalla. Está en el menú lateral como <strong>Tablero de portafolio</strong> y también en el listado de proyectos con un botón del mismo nombre. El administrador ve todas las obras; el cliente, las suyas y las que le asignaron. El visitante no entra: es una vista de dirección.</p>
+<h4>Qué muestra</h4>
+<ul>
+<li><strong>Avance real y planificado</strong>, tomados de la Curva S.</li>
+<li><strong>SPI</strong> (avance real ÷ planificado) y <strong>CPI</strong> (valor ganado ÷ costo real, cuando hay presupuesto y costo capturados).</li>
+<li><strong>PPC</strong>: de las actividades que debían terminar la última semana completa, cuántas terminaron.</li>
+<li><strong>Actividades atrasadas</strong>, <strong>pendientes graves del punch</strong> y el <strong>semáforo de salud</strong> de cada obra.</li>
+<li><strong>Alertas por tendencia</strong>: si el SPI, el CPI o el PPC empeoraron frente a hace 4 semanas (o a las 3 semanas anteriores), aparecen arriba y en la campana de notificaciones.</li>
+</ul>
+<h4>Cómo se usa</h4>
+<ol>
+<li>Filtra por texto, cliente (administrador), «solo con alertas» y elige el orden: más alertas, PPC, CPI, SPI, avance o nombre.</li>
+<li>Pulsa una obra para abrir su Programa y resolver lo que esté en rojo.</li>
+<li>Exporta a <strong>PDF</strong> o <strong>Excel</strong> con los filtros aplicados para la reunión de dirección.</li>
+</ol>
+<p class="manual-nota">Las alertas se recalculan al abrir el tablero y también con <code>php bin/portafolio_alertas.php</code> (por ejemplo, cada mañana desde una tarea programada). No cambia datos de las obras: solo lee y compara.</p>
+HTML],
+
 ['id' => 'usuarios', 'titulo' => 'Usuarios y accesos', 'icono' => 'fa-users-gear', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Solo el administrador gestiona las cuentas. El listado permite <strong>buscar</strong>, <strong>editar</strong> y <strong>eliminar</strong> usuarios, y muestra cuántos proyectos tiene cada uno y su espacio por proyecto.</p>
 [[fig:usuarios]]

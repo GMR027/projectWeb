@@ -12,7 +12,12 @@ if ($notifProyectoId) {
     try { $notifHoy = \Classes\AccionesRapidas::seccionHoy($notifProyectoId); } catch (\Throwable $e) { $notifHoy = null; }
 }
 $notifAcciones = [];
-$notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
+// Alertas por tendencia del tablero de portafolio (la tabla se llena al abrir /portafolio o con bin/portafolio_alertas.php)
+$notifPortafolio = [];
+if (in_array($notifRol, ['admin', 'cliente'], true)) {
+    try { $notifPortafolio = \Classes\Portafolio::alertasRecientes(['id' => (int)($_SESSION['id'] ?? 0), 'rol' => $notifRol], 3); } catch (\Throwable $e) { $notifPortafolio = []; }
+}
+$notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0) + count($notifPortafolio);
 ?>
     <div class="topbar-left">
         <h1 class="page-title"><?php echo s(t($titulo ?? '')); ?></h1>
@@ -89,6 +94,24 @@ $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
                         </section>
                     <?php endif; ?>
 
+                    <?php if ($notifPortafolio): ?>
+                        <section class="notif-sec">
+                            <h4><i class="fa-solid fa-table-columns"></i> <?php echo s(t('Alertas de portafolio')); ?> <b class="notif-chip"><?php echo count($notifPortafolio); ?></b></h4>
+                            <ul class="notif-lista">
+                                <?php foreach ($notifPortafolio as $al): ?>
+                                    <li><a href="/portafolio">
+                                        <i class="fa-solid <?php echo $al['nivel'] === 'critico' ? 'fa-triangle-exclamation' : 'fa-arrow-trend-down'; ?>"></i>
+                                        <span class="notif-txt">
+                                            <strong><?php echo s($al['proyecto']); ?></strong>
+                                            <small><?php echo s($al['mensaje']); ?></small>
+                                        </span>
+                                    </a></li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <a class="notif-ver" href="/portafolio"><?php echo s(t('Ver el tablero')); ?> →</a>
+                        </section>
+                    <?php endif; ?>
+
                     <?php if ($notifHoy): ?>
                         <section class="notif-sec">
                             <h4><i class="fa-solid fa-sun"></i> <?php echo s(t('Actividades de hoy')); ?> <b class="notif-chip"><?php echo (int)$notifHoy['total']; ?></b></h4>
@@ -127,7 +150,7 @@ $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0);
                         </section>
                     <?php endif; ?>
 
-                    <?php if (!$notifNovedades && !$notifHoy && !$notifAcciones): ?>
+                    <?php if (!$notifNovedades && !$notifHoy && !$notifAcciones && !$notifPortafolio): ?>
                         <p class="notif-vacio"><?php echo s(t('Sin notificaciones por ahora.')); ?></p>
                     <?php endif; ?>
                 </div>

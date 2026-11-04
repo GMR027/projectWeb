@@ -8,11 +8,13 @@ $menu = [
 ];
 if ($rol === 'admin') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Portafolio de Proyectos', 'match' => '/proyectos'];
+    $menu[] = ['url' => '/portafolio', 'icon' => 'fa-table-columns', 'label' => 'Tablero de portafolio', 'match' => '/portafolio'];
     $menu[] = ['url' => '/usuarios', 'icon' => 'fa-users-gear', 'label' => 'Usuarios y Accesos', 'match' => '/usuarios'];
     $menu[] = ['url' => '/bandeja', 'icon' => 'fa-inbox', 'label' => 'Bandeja de entrada', 'match' => '/bandeja', 'badge' => bandeja_sin_leer()];
     $menu[] = ['url' => '/sistema', 'icon' => 'fa-gear', 'label' => 'Ajustes de app', 'match' => '/sistema'];
 } elseif ($rol === 'cliente') {
     $menu[] = ['url' => '/proyectos', 'icon' => 'fa-building', 'label' => 'Mis Proyectos', 'match' => '/proyectos'];
+    $menu[] = ['url' => '/portafolio', 'icon' => 'fa-table-columns', 'label' => 'Tablero de portafolio', 'match' => '/portafolio'];
     if (puede_crear_proyecto()) $menu[] = ['url' => '/proyectos/crear', 'icon' => 'fa-plus', 'label' => 'Nuevo Proyecto', 'match' => '/proyectos/crear'];
     $menu[] = ['url' => '/usuarios', 'icon' => 'fa-user-group', 'label' => 'Mi equipo', 'match' => '/usuarios'];
     $menu[] = ['url' => '/soporte', 'icon' => 'fa-headset', 'label' => 'Soporte', 'match' => '/soporte', 'badge' => soporte_respuestas_nuevas()];

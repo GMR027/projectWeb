@@ -77,6 +77,7 @@ use Controllers\AlmacenController;
 use Controllers\SubcontratoController;
 use Controllers\TransmittalController;
 use Controllers\BalanceController;
+use Controllers\PortafolioController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
 use Controllers\CalidadController;
@@ -139,6 +140,8 @@ $router->post('/inicio/guardar', [DashboardController::class, 'guardarInicio']);
 
 // ========== PROYECTOS ==========
 $router->get('/proyectos', [ProyectoController::class, 'listar']);
+$router->get('/portafolio', [PortafolioController::class, 'index']);
+$router->get('/portafolio/exportar', [PortafolioController::class, 'exportar']);
 $router->get('/proyectos/crear', [ProyectoController::class, 'crear']);
 $router->post('/proyectos/crear', [ProyectoController::class, 'crear']);
 $router->get('/proyectos/editar', [ProyectoController::class, 'editar']);

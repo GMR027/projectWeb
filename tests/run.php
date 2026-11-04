@@ -1091,6 +1091,50 @@ $ok('el importador crea/actualiza actividades y guarda dependencias', (function 
     return str_contains($c, 'function aplicar(') && str_contains($c, 'INSERT IGNORE INTO actividad_dependencias')
         && str_contains($c, "in_array(\$opciones['duplicados']") && str_contains($c, 'begin_transaction');
 })());
+echo "Tablero de portafolio\n";
+$ok('la migración y el esquema traen las alertas de portafolio', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_portafolio.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS portafolio_alertas') && str_contains($m, 'uq_portafolio_alerta')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS portafolio_alertas');
+})());
+$ok('el portafolio compara obras y calcula tendencias de SPI, CPI y PPC', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Portafolio.php');
+    return str_contains($c, 'function filas(') && str_contains($c, 'function metricas(')
+        && str_contains($c, 'CurvaS::calcular') && str_contains($c, 'Costos::resumen')
+        && str_contains($c, 'function ppc(') && str_contains($c, "<= -0.05") && str_contains($c, "<= -10");
+})());
+$ok('las alertas se guardan para la campana y se filtran por usuario', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Portafolio.php');
+    return str_contains($c, 'function guardarAlertas(') && str_contains($c, 'function alertasRecientes(')
+        && str_contains($c, 'proyecto_accesos');
+})());
+$ok('el resumen promedia solo los indicadores con dato', (function () {
+    $r = \Classes\Portafolio::resumen([
+        ['alertas' => [], 'ppc' => 80, 'cpi' => 1.1, 'spi' => 0.9, 'real' => 50.0],
+        ['alertas' => [['clave' => 'spi']], 'ppc' => null, 'cpi' => 0.9, 'spi' => null, 'real' => 30.0],
+    ]);
+    return $r['total'] === 2 && $r['con_alertas'] === 1 && $r['ppc'] === 80.0 && $r['cpi'] === 1.0 && $r['spi'] === 0.9 && $r['real'] === 40.0;
+})());
+$ok('las rutas, el menú y la vista del portafolio están registradas', (function () {
+    $r = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    $v = (string)@file_get_contents(__DIR__ . '/../views/portafolio/index.php');
+    $u = (string)@file_get_contents(__DIR__ . '/../models/Usuario.php');
+    $s = (string)@file_get_contents(__DIR__ . '/../views/templates/sidebar.php');
+    return str_contains($r, "'/portafolio'") && str_contains($r, "'/portafolio/exportar'")
+        && str_contains($u, "'/portafolio'") && str_contains($s, "'/portafolio'")
+        && str_contains($v, 'Comparativa de obras') && str_contains($v, 'portafolio/exportar');
+})());
+$ok('la campana muestra las alertas de portafolio', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../views/templates/topbar.php');
+    return str_contains($t, 'alertasRecientes') && str_contains($t, 'Alertas de portafolio');
+})());
+$ok('el tablero exporta PDF y hoja de cálculo', (function () {
+    return is_file(__DIR__ . '/../classes/Exportadores/PortafolioPdfExporter.php')
+        && is_file(__DIR__ . '/../classes/Exportadores/PortafolioSheetExporter.php')
+        && str_contains((string)@file_get_contents(__DIR__ . '/../controllers/PortafolioController.php'), 'PortafolioSheetExporter');
+})());
+$ok('hay un script para refrescar las alertas sin abrir el tablero', is_file(__DIR__ . '/../bin/portafolio_alertas.php'));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

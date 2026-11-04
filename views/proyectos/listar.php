@@ -3,6 +3,9 @@
         <h2><?php echo s(t(is_admin() ? 'Portafolio de Proyectos' : (is_visitante() ? 'Proyectos Asignados' : 'Mis Proyectos'))); ?></h2>
         <p class="text-muted"><?php echo s(t('{n} proyecto(s) registrado(s)', ['n' => count($proyectos)])); ?></p>
     </div>
+    <?php if (!is_visitante()): ?>
+        <a href="/portafolio" class="btn btn-ghost"><i class="fa-solid fa-table-columns"></i> Tablero de portafolio</a>
+    <?php endif; ?>
     <?php if (puede_crear_proyecto()): ?>
         <a href="/plantillas-proyecto" class="btn btn-ghost"><i class="fa-solid fa-copy"></i> <?php echo s(t('Plantillas')); ?></a>
         <a href="/proyectos/crear" class="btn btn-primary"><?php echo s(t('+ Nuevo Proyecto')); ?></a>

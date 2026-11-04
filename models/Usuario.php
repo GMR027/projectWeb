@@ -133,7 +133,7 @@ class Usuario extends ActiveRecord
      * enlaces públicos, media autenticada y landing). Todo lo demás se le niega si no está en su lista.
      */
     public const RUTAS_GENERALES = [
-        '/', '/proyectos', '/dashboard', '/inicio', '/manual', '/novedades', '/buscar', '/idioma',
+        '/', '/proyectos', '/dashboard', '/inicio', '/portafolio', '/manual', '/novedades', '/buscar', '/idioma',
         '/soporte', '/api/soporte', '/api/empezar', '/api/acciones', '/cliente', '/calendario/ics', '/media',
         '/login', '/logout', '/contacto', '/terminos', '/servicios', '/demo',
         '/exportar',   // el Centro de Exportación filtra cada formato por la herramienta que el usuario ve
