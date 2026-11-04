@@ -417,6 +417,18 @@ HTML],
 <li>Agrega o edita puntos con categoría, responsable, fecha compromiso, estado y documento del Archivo. El avance se calcula solo.</li>
 <li>Completa los <strong>datos del acta</strong> (fecha, responsable y notas) y descarga el <strong>Acta PDF</strong> con la tabla por categoría y las firmas.</li>
 </ol>
+['id' => 'riesgos', 'despues' => 'lastplanner', 'titulo' => 'Registro de riesgos', 'icono' => 'fa-triangle-exclamation', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>Lista de lo que <strong>puede pasar</strong> en la obra, con quién responde y qué se va a hacer. Está en <strong>Planeación → Riesgos</strong>.</p>
+<ol>
+<li><strong>Nuevo riesgo:</strong> una frase clara («lluvia en la temporada de colados»), categoría, <strong>probabilidad</strong> (baja, media, alta) e <strong>impacto</strong> (bajo, medio, alto). Verás la severidad calculada al instante.</li>
+<li>Completa el <strong>responsable</strong> (una persona, no un departamento), la <strong>estrategia</strong> (mitigar, transferir, aceptar o evitar), el <strong>plan de acción</strong> y la <strong>fecha compromiso</strong>.</li>
+<li>Si el riesgo es de una actividad concreta, lígalo; si es de toda la obra (lluvia, permisos, acceso), déjalo sin actividad.</li>
+</ol>
+<h4>Cómo se lee</h4>
+<p>La severidad es <strong>probabilidad × impacto</strong> en una matriz de 3 × 3: verde (1-3) se acepta o se vigila, amarillo (4-6) requiere plan, y rojo (7-9) se atiende esta semana. Los riesgos altos abiertos con compromiso vencido o de esta semana ponen el <strong>semáforo del proyecto en rojo</strong>, y si están ligados a una actividad, esta se marca <strong>«En riesgo»</strong> en el Programa y el Lookahead.</p>
+<h4>Cuando el riesgo ocurre</h4>
+<p>Pulsa <strong>Materializar</strong>: se crea una <strong>restricción activa</strong> en la actividad ligada (con su tipo según la categoría) y el riesgo pasa a <em>materializado</em>. No se captura dos veces. Los riesgos que no ocurrieron se cierran al final de la obra y quedan como lección aprendida.</p>
+<p>El botón <strong>PDF</strong> genera la matriz y la lista para la junta semanal. Solo el dueño del proyecto o el administrador pueden eliminar un riesgo; el visitante solo consulta.</p>
 HTML],
 
 ];

@@ -75,6 +75,7 @@ use Controllers\CostosController;
 use Controllers\RecursosController;
 use Controllers\RfiController;
 use Controllers\CalidadController;
+use Controllers\RiesgoController;
 use Controllers\EquipoController;
 use Controllers\ContratosController;
 use Controllers\CierreController;
@@ -409,6 +410,12 @@ $router->post('/calidad/punto/agregar', [CalidadController::class, 'puntoAgregar
 $router->post('/calidad/liberar', [CalidadController::class, 'liberar']);
 $router->post('/calidad/liberar/revocar', [CalidadController::class, 'revocar']);
 $router->post('/calidad/eliminar', [CalidadController::class, 'eliminar']);
+// Registro de riesgos
+$router->get('/riesgos', [RiesgoController::class, 'index']);
+$router->post('/riesgos/guardar', [RiesgoController::class, 'guardar']);
+$router->post('/riesgos/eliminar', [RiesgoController::class, 'eliminar']);
+$router->post('/riesgos/materializar', [RiesgoController::class, 'materializar']);
+$router->get('/riesgos/pdf', [RiesgoController::class, 'pdf']);
 // Equipo y maquinaria
 $router->get('/equipo', [EquipoController::class, 'index']);
 $router->post('/equipo/guardar', [EquipoController::class, 'guardar']);

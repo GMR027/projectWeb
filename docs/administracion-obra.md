@@ -69,8 +69,21 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - **Agregar la lista estándar** crea 10 puntos típicos si el proyecto aún no tiene.
 - **Acta PDF** (`/cierre/pdf`) genera el acta de entrega-recepción con el avance, la tabla por categoría y las firmas.
 
+## Riesgos (`Classes\Riesgos`)
+
+- `riesgos`: título, descripción, categoría (técnico, clima, suministro, seguridad, financiero, permisos, mano de obra, calidad, otro), `probabilidad` (1-3), `impacto` (1-3), responsable, estrategia, plan de acción, fecha compromiso, estado (identificado, en tratamiento, materializado, cerrado) y `actividad_id` opcional.
+- **La severidad no se guarda:** `Riesgos::severidad()` la calcula (probabilidad × impacto, 1-9) y `::nivel()` la pinta: verde ≤3, amarillo 4-6, rojo ≥7. Cambiar la escala en el futuro no requiere migrar datos.
+- **Matriz 3×3** (`Riesgos::matriz()`) cuenta los riesgos abiertos por casilla; la vista permite filtrar por severidad, estado, categoría y texto.
+- **Materializar** (`Riesgos::materializar()`): convierte el riesgo en una restricción activa de su actividad, con el tipo de restricción que corresponde a la categoría; guarda `restriccion_id` y cambia el estado a `materializado`. Si el riesgo no tiene actividad, pide ligarla.
+- **Salud del proyecto** (`Salud::semaforo()`): indicador «Riesgos altos abiertos». Un rojo con compromiso vencido o de esta semana pone el semáforo en rojo.
+- **Programa y Lookahead:** `Salud::riesgosActividades()` suma los riesgos rojos ligados a la actividad a la etiqueta «En riesgo» que ya usan material, punch, RFI y permisos.
+- **Resumen matutino de Telegram:** incluye los riesgos altos abiertos (máximo 3 en el texto).
+- **PDF** (`/riesgos/pdf`): matriz 3×3, resumen y lista con responsable, compromiso y plan, con la marca del cliente.
+- Permisos: admin y dueño escriben y eliminan; el colaborador con la herramienta edita; el visitante solo lee. La clave `riesgos` debe estar en `Model\Usuario::HERRAMIENTAS` (lo comprueba `tests/run.php`).
+- Migración: `database/migracion_riesgos.sql`.
+
 ## Permisos y eventos
 
 - Las escrituras usan `proyecto_de_peticion(true)` (admin o cliente propietario o con el proyecto asignado).
 - Las cuatro claves están en `Model\Usuario::HERRAMIENTAS` y en el menú (`views/templates/herramientas-proyecto.php`), así que el visitante solo las ve si se le habilitan.
-- **Resumen matutino:** si el proyecto tiene activado el resumen de la obra (Integraciones → Telegram), `Classes\ResumenObra` incluye los contratos/fianzas por vencer y los equipos con servicio próximo. Dentro de cada herramienta también se ven siempre.
+- **Resumen matutino:** si el proyecto tiene activado el resumen de la obra (Integraciones → Telegram), `Classes\ResumenObra` incluye los contratos/fianzas por vencer, los equipos con servicio próximo y los riesgos altos abiertos. Dentro de cada herramienta también se ven siempre.

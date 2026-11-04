@@ -693,6 +693,27 @@ $ok('las rutas de liberar y revocar están registradas', (function () {
 })());
 $ok('el parte diario avisa cuando calidad recorta el avance', method_exists(\Classes\ParteDiario::class, 'avisos'));
 $ok('el avance del programa pasa por la compuerta', str_contains((string)@file_get_contents(__DIR__ . '/../controllers/ProgramaController.php'), 'Calidad::bloqueo('));
+echo "Registro de riesgos\n";
+$ok('la severidad multiplica probabilidad por impacto y respeta los topes', \Classes\Riesgos::severidad(3, 3) === 9 && \Classes\Riesgos::severidad(1, 1) === 1 && \Classes\Riesgos::severidad(9, 0) === 3);
+$ok('la matriz 3×3 pinta verde, amarillo y rojo en sus rangos', \Classes\Riesgos::nivel(3) === 'verde' && \Classes\Riesgos::nivel(4) === 'amarillo' && \Classes\Riesgos::nivel(6) === 'amarillo' && \Classes\Riesgos::nivel(7) === 'rojo');
+$ok('los catálogos del registro están completos', count(\Classes\Riesgos::PROBABILIDADES) === 3 && count(\Classes\Riesgos::IMPACTOS) === 3
+    && count(\Classes\Riesgos::CATEGORIAS) === 9 && count(\Classes\Riesgos::ESTRATEGIAS) === 4 && count(\Classes\Riesgos::ESTADOS) === 4);
+$ok('un riesgo materializado o cerrado no cuenta como abierto', !\Classes\Riesgos::abierto(['estado' => 'materializado']) && !\Classes\Riesgos::abierto(['estado' => 'cerrado'])
+    && \Classes\Riesgos::abierto(['estado' => 'identificado']) && \Classes\Riesgos::abierto(['estado' => 'en_tratamiento']));
+$ok('la tabla de riesgos está en el esquema y en su migración', str_contains((string)@file_get_contents(__DIR__ . '/../database/schema.sql'), 'CREATE TABLE IF NOT EXISTS riesgos')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../database/migracion_riesgos.sql'), 'CREATE TABLE IF NOT EXISTS riesgos'));
+$ok('las rutas del registro están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/riesgos'") && str_contains($t, "'/riesgos/guardar'") && str_contains($t, "'/riesgos/materializar'") && str_contains($t, "'/riesgos/pdf'");
+})());
+$ok('la herramienta riesgos está declarada y agrupada para el visitante', isset(\Model\Usuario::HERRAMIENTAS['riesgos'])
+    && in_array('riesgos', \Model\Usuario::HERRAMIENTAS_GRUPOS['Planeación'], true));
+$ok('la salud y el resumen matutino leen el registro de riesgos', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Salud.php'), 'Riesgos::resumen(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/ResumenObra.php'), 'Riesgos::rojosAbiertos('));
+$ok('la página de riesgos tiene matriz, formulario y conversión a restricción', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/riesgos/index.php');
+    return str_contains($v, 'rg-matriz') && str_contains($v, '/riesgos/materializar') && str_contains($v, 'rg-sev-resultado');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

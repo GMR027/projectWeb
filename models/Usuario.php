@@ -65,6 +65,7 @@ class Usuario extends ActiveRecord
         'seguridad' => ['Seguridad y permisos', ['/seguridad']],
         'punch' => ['Punch list', ['/punch']],
         'calidad' => ['Calidad e inspecciones', ['/calidad']],
+        'riesgos' => ['Riesgos', ['/riesgos']],
         'equipo' => ['Equipo y maquinaria', ['/equipo']],
         'contratos' => ['Contratos, fianzas y seguros', ['/contratos']],
         'cierre' => ['Cierre de obra', ['/cierre']],
@@ -95,7 +96,7 @@ class Usuario extends ActiveRecord
      * automáticamente en «Otras herramientas» (ver `gruposHerramientas()`).
      */
     public const HERRAMIENTAS_GRUPOS = [
-        'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'programador', 'calendario', 'curvas'],
+        'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'riesgos', 'programador', 'calendario', 'curvas'],
         'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
         'Materiales y costos' => ['msr', 'materiales', 'costos', 'recursos', 'cambios'],

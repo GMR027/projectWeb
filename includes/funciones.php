@@ -914,6 +914,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'calendario' => ['ajustes'],
         'lineas-base' => ['cambios', 'programa'],
         'punch' => ['inconsistencias', 'programador'],
+        'riesgos' => ['fase3', 'riesgos'],
         'costos' => ['fase3', 'cambios'],
         'recursos' => ['fase3'],
         'rfi' => ['fase3', 'cambios'],

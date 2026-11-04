@@ -130,8 +130,9 @@ class ResumenObra
         $rfi = Rfi::disponible() ? Rfi::resumen($pid) : ['abierto' => 0, 'vencidos' => 0, 'bloqueando' => 0];
         $contratos = Contratos::disponible() ? Contratos::porVencer($pid) : [];
         $servicios = Equipo::disponible() ? Equipo::serviciosProximos($pid) : [];
+        $riesgosAltos = Riesgos::disponible() ? Riesgos::rojosAbiertos($pid) : [];
 
-        if (!$hoyN && !$atrN && !$restUrg && !$punchN && !($rfi['abierto'] ?? 0) && !$contratos && !$servicios) return '';
+        if (!$hoyN && !$atrN && !$restUrg && !$punchN && !($rfi['abierto'] ?? 0) && !$contratos && !$servicios && !$riesgosAltos) return '';
 
         $t = '🌅 <b>Resumen de la mañana · ' . ClimaAuto::fechaLarga($hoy) . "</b>\n";
 
@@ -158,6 +159,13 @@ class ResumenObra
         }
         if ($restUrg) $t .= "\n\n🚧 <b>$restUrg restricción(es)</b> afectan actividades que inician en 7 días o ya están en curso.";
         if ($punchN) $t .= "\n🔧 <b>$punchN pendiente(s) grave(s)</b> del punch list.";
+        if ($riesgosAltos) {
+            $t .= "\n\n⚠️ <b>" . count($riesgosAltos) . " riesgo(s) alto(s)</b> en el registro";
+            foreach (array_slice($riesgosAltos, 0, 3) as $r) {
+                $t .= "\n• " . $h((string)$r['titulo']) . ($r['fecha_compromiso'] ? ' — ' . date('d/m', strtotime((string)$r['fecha_compromiso'])) : '');
+            }
+            if (count($riesgosAltos) > 3) $t .= "\n… y " . (count($riesgosAltos) - 3) . ' más';
+        }
         if ($rfi['abierto'] ?? 0) $t .= "\n❓ <b>{$rfi['abierto']} RFI abierto(s)</b>" . ($rfi['vencidos'] ? " · {$rfi['vencidos']} vencido(s)" : '') . '.';
         if ($contratos) {
             $t .= "\n\n📄 <b>" . count($contratos) . " contrato(s), fianza(s) o seguro(s) por vencer</b>";

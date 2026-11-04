@@ -94,6 +94,12 @@ class Salud
             $a = (int)$r['actividad']['id'];
             if (isset($ids[$a])) $out[$a][] = ['tipo' => 'permiso', 'texto' => 'Falta el permiso de trabajo (' . $r['tipo'] . ')', 'url' => "/seguridad?proyecto=$pid"];
         }
+
+        // Riesgos altos del registro manual ligados a la actividad
+        foreach (Riesgos::disponible() ? Riesgos::riesgosDeActividades($pid) : [] as $aid => $lista) {
+            if (!isset($ids[$aid])) continue;
+            foreach ($lista as $r) $out[$aid][] = $r;
+        }
         return self::$cacheRiesgos[$pid] = $out;
     }
 
@@ -240,6 +246,17 @@ class Salud
         $riesgos = count(self::riesgosActividades($pid));
         $ind[] = ['clave' => 'riesgo', 'titulo' => 'Actividades en riesgo (30 días)', 'valor' => $riesgos, 'icono' => 'fa-triangle-exclamation', 'url' => "/programa?proyecto=$pid&riesgo=1",
             'nivel' => !$riesgos ? 'ok' : 'aviso', 'detalle' => $riesgos ? 'Material sin submittal aprobado, pendientes graves o permisos que faltan.' : 'Ninguna actividad próxima en riesgo.'];
+
+        // Registro de riesgos (manual): los altos abiertos ponen el semáforo en rojo si su compromiso está vencido o vence esta semana
+        if (Riesgos::disponible()) {
+            $rr = Riesgos::resumen($pid);
+            $urgentes = $rr['rojos'] && ($rr['vencidos'] || $rr['semana']);
+            $ind[] = ['clave' => 'registro_riesgos', 'titulo' => 'Riesgos altos abiertos', 'valor' => $rr['rojos'], 'icono' => 'fa-triangle-exclamation', 'url' => "/riesgos?proyecto=$pid&sev=rojo",
+                'nivel' => $urgentes ? 'critico' : (($rr['rojos'] || $rr['amarillos']) ? 'aviso' : 'ok'),
+                'detalle' => $rr['abiertos']
+                    ? $rr['rojos'] . ' alto(s) · ' . $rr['amarillos'] . ' medio(s) abiertos' . ($rr['vencidos'] ? ' · ' . $rr['vencidos'] . ' compromiso(s) vencido(s)' : '') . '.'
+                    : 'Sin riesgos abiertos en el registro.'];
+        }
 
         return ['nivel' => self::nivelMax(...array_column($ind, 'nivel')), 'indicadores' => $ind];
     }
