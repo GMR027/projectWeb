@@ -672,6 +672,27 @@ $ok('el ITP con IA se aplica a Calidad y pide actividad/máximo', \Classes\Herra
 $ok('Compras y suministros está en el grupo compras y no cambia datos solo', \Classes\Herramientas\ComprasMateriales::ficha()['grupo'] === 'compras'
     && \Classes\Herramientas\ComprasMateriales::ficha()['aplicable'] === false);
 $ok('el registro descubre las dos herramientas nuevas', isset(\Classes\Herramientas\Registro::todas()['itp_calidad'], \Classes\Herramientas\Registro::todas()['compras']));
+
+echo "Compuerta de calidad\n";
+$ok('un punto pendiente topa el avance en 99 %', \Classes\Calidad::tope(['nivel' => 'pendiente'], 40) === 99);
+$ok('una no conformidad abierta congela el avance en el valor actual', \Classes\Calidad::tope(['nivel' => 'nc'], 40) === 40 && \Classes\Calidad::tope(['nivel' => 'nc'], 100) === 100);
+$ok('una liberación fija su propio tope', \Classes\Calidad::tope(['nivel' => 'liberada', 'tope' => 80], 10) === 80);
+$ok('la compuerta se puede omitir para corregir datos y se restaura', (function () {
+    \Model\Actividad::omitirCompuertaCalidad(true);
+    $r = \Model\Actividad::bloqueoCalidad();
+    \Model\Actividad::omitirCompuertaCalidad(false);
+    return $r === null;
+})());
+$ok('la migración y el esquema traen la columna y la tabla de liberaciones',
+    str_contains((string)@file_get_contents(__DIR__ . '/../database/migracion_calidad_bloquea.sql'), 'calidad_liberaciones')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../database/schema.sql'), 'CREATE TABLE IF NOT EXISTS calidad_liberaciones')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../database/schema.sql'), 'bloquea TINYINT(1) NOT NULL DEFAULT 1'));
+$ok('las rutas de liberar y revocar están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "/calidad/liberar'") && str_contains($t, "/calidad/liberar/revocar'");
+})());
+$ok('el parte diario avisa cuando calidad recorta el avance', method_exists(\Classes\ParteDiario::class, 'avisos'));
+$ok('el avance del programa pasa por la compuerta', str_contains((string)@file_get_contents(__DIR__ . '/../controllers/ProgramaController.php'), 'Calidad::bloqueo('));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

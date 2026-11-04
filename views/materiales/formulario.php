@@ -89,6 +89,10 @@ if (is_admin() && ($verif || ($inteligentes ?? false))):
                 <input type="text" id="unidad" name="unidad" maxlength="30" value="<?php echo s($material->unidad); ?>" placeholder="pza, m, kg…">
             </div>
             <div class="campo">
+                <label for="costo_unitario">Costo unitario</label>
+                <input type="number" id="costo_unitario" name="costo_unitario" min="0" step="0.01" value="<?php echo $material->costo_unitario !== null && $material->costo_unitario !== '' ? s($material->costo_unitario) : ''; ?>" placeholder="Para el costo del parte diario">
+            </div>
+            <div class="campo">
                 <label for="imagen">Imagen (se guarda en miniatura)</label>
                 <input type="file" id="imagen" name="imagen" accept="image/*">
                 <?php if ($material->imagen): ?>

@@ -5,12 +5,13 @@ namespace Model;
 class Personal extends ActiveRecord
 {
     protected static $tabla = 'personal';
-    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'departamento', 'imagen'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'departamento', 'tarifa_hora', 'imagen'];
 
     public $id;
     public $proyecto_id;
     public $nombre;
     public $departamento;
+    public $tarifa_hora;
     public $imagen;
 
     public const TIPOS = ['directivo' => 'Directivo', 'administrativo' => 'Administrativo', 'operativo' => 'Operativo'];
@@ -23,6 +24,7 @@ class Personal extends ActiveRecord
         $this->proyecto_id = $args['proyecto_id'] ?? null;
         $this->nombre = $args['nombre'] ?? '';
         $this->departamento = $args['departamento'] ?? '';
+        $this->tarifa_hora = $args['tarifa_hora'] ?? 0;
         $this->imagen = $args['imagen'] ?? null;
     }
 
@@ -31,6 +33,7 @@ class Personal extends ActiveRecord
         self::$alertas = [];
         if (!trim($this->nombre)) self::$alertas['error'][] = 'El nombre es obligatorio';
         if (mb_strlen($this->nombre) > 150) self::$alertas['error'][] = 'El nombre es demasiado largo';
+        if (!is_numeric($this->tarifa_hora) || (float)$this->tarifa_hora < 0) self::$alertas['error'][] = 'La tarifa por hora debe ser un número igual o mayor que cero';
         return self::$alertas;
     }
 

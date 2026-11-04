@@ -280,6 +280,7 @@ CREATE TABLE materiales (
     ficha_tecnica VARCHAR(200) DEFAULT NULL,
     certificado_calidad VARCHAR(255) DEFAULT NULL,
     cantidad DECIMAL(12,2) DEFAULT NULL,
+    costo_unitario DECIMAL(14,2) DEFAULT NULL,
     unidad VARCHAR(30) NOT NULL DEFAULT '',
     compra ENUM('pendiente','comprado') NOT NULL DEFAULT 'pendiente',
     fecha_compra_prog DATE DEFAULT NULL,
@@ -627,6 +628,7 @@ CREATE TABLE personal (
     proyecto_id INT NOT NULL,
     nombre VARCHAR(150) NOT NULL,
     departamento VARCHAR(100) NOT NULL DEFAULT '',
+    tarifa_hora DECIMAL(12,2) NOT NULL DEFAULT 0,   -- costo por hora para el parte diario
     imagen VARCHAR(100) DEFAULT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
@@ -637,24 +639,40 @@ CREATE TABLE reportes_diarios (
     proyecto_id INT NOT NULL,
     fecha DATE NOT NULL,
     area VARCHAR(150) NOT NULL DEFAULT '',
+    turno ENUM('dia','noche') NOT NULL DEFAULT 'dia',
+    supervisor VARCHAR(150) NOT NULL DEFAULT '',
     comentarios TEXT,
+    estado ENUM('borrador','cerrado') NOT NULL DEFAULT 'borrador',
+    clima_precip_mm DECIMAL(6,1) NULL,
+    clima_viento_kmh DECIMAL(5,1) NULL,
+    clima_tmax DECIMAL(4,1) NULL,
+    clima_tmin DECIMAL(4,1) NULL,
+    visitas VARCHAR(500) NOT NULL DEFAULT '',
+    firma_nombre VARCHAR(150) NOT NULL DEFAULT '',
+    firma_imagen VARCHAR(255) NULL,
+    offline_uuid VARCHAR(64) NULL,
+    creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    cerrado_en DATETIME NULL,
     personal_json LONGTEXT,      -- [id de personal, ...]
     actividades_json LONGTEXT,   -- [id de actividad del programa, ...]
     fotos_json LONGTEXT,         -- [nombre de archivo, ...]
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    KEY idx_reporte_proyecto_fecha (proyecto_id, fecha)
+    KEY idx_reporte_proyecto_fecha (proyecto_id, fecha),
+    UNIQUE KEY uq_reporte_offline (offline_uuid)
 ) ENGINE=InnoDB;
 
 CREATE TABLE bitacora (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
     fecha DATE NOT NULL,
+    reporte_id INT NULL,
     departamento VARCHAR(100) NOT NULL DEFAULT '',
     descripcion TEXT NOT NULL,
     importancia ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE SET NULL,
     KEY idx_bitacora_proyecto_fecha (proyecto_id, fecha)
 ) ENGINE=InnoDB;
 
@@ -1437,6 +1455,7 @@ CREATE TABLE IF NOT EXISTS seguridad_incidentes (
     severidad ENUM('baja','media','alta','critica') NOT NULL DEFAULT 'media',
     area VARCHAR(150) NOT NULL DEFAULT '',
     actividad_id INT NULL,
+    reporte_id INT NULL,
     descripcion TEXT NOT NULL,
     acciones TEXT NULL,
     estado ENUM('abierto','cerrado') NOT NULL DEFAULT 'abierto',
@@ -1444,7 +1463,8 @@ CREATE TABLE IF NOT EXISTS seguridad_incidentes (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_proy (proyecto_id, fecha),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS punch_items (
@@ -2138,6 +2158,7 @@ CREATE TABLE IF NOT EXISTS calidad_planes (
     responsable VARCHAR(150) NOT NULL DEFAULT '',
     fecha DATE NULL,
     estado ENUM('pendiente','en_proceso','conforme','no_conforme','cerrado') NOT NULL DEFAULT 'pendiente',
+    bloquea TINYINT(1) NOT NULL DEFAULT 1,   -- el plan detiene el avance de su actividad
     notas TEXT,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_calidad_proyecto (proyecto_id, estado, fecha),
@@ -2158,6 +2179,22 @@ CREATE TABLE IF NOT EXISTS calidad_puntos (
     resuelto TINYINT(1) NOT NULL DEFAULT 0,
     KEY idx_calidad_puntos_plan (plan_id, orden),
     FOREIGN KEY (plan_id) REFERENCES calidad_planes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS calidad_liberaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    plan_id INT NULL,
+    progreso_autorizado INT NOT NULL DEFAULT 100,
+    nc_snapshot INT NOT NULL DEFAULT 0,   -- no conformidades abiertas al liberar: si aparece una nueva, la liberación caduca
+    motivo VARCHAR(500) NOT NULL DEFAULT '',
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_clib_actividad (proyecto_id, actividad_id, id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES calidad_planes(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -2188,6 +2225,7 @@ CREATE TABLE IF NOT EXISTS equipo_horas (
     proyecto_id INT NOT NULL,
     equipo_id INT NOT NULL,
     actividad_id INT NULL,
+    reporte_id INT NULL,
     fecha DATE NOT NULL,
     horas DECIMAL(6,2) NOT NULL DEFAULT 0,
     operador VARCHAR(150) NOT NULL DEFAULT '',
@@ -2198,7 +2236,8 @@ CREATE TABLE IF NOT EXISTS equipo_horas (
     KEY idx_equipo_horas_equipo (equipo_id, fecha),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (equipo_id) REFERENCES equipo(id) ON DELETE CASCADE,
-    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -2307,4 +2346,96 @@ CREATE TABLE IF NOT EXISTS anotador_firmas_aplicadas (
     KEY idx_ant_firma (documento_id, id),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (documento_id) REFERENCES anotador_documentos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+
+-- ============================================================
+-- PARTE DIARIO ÚNICO DE CAMPO (tablas hijas de reportes_diarios)
+-- Se crean al final para que existan personal, equipo, materiales
+-- y seguridad_incidentes, a las que hacen referencia.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS reporte_personal (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    personal_id INT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    actividad_id INT NULL,
+    horas_normal DECIMAL(5,2) NOT NULL DEFAULT 0,
+    horas_extra DECIMAL(5,2) NOT NULL DEFAULT 0,
+    cuadrilla VARCHAR(100) NOT NULL DEFAULT '',
+    observacion VARCHAR(500) NOT NULL DEFAULT '',
+    KEY idx_rp_reporte (reporte_id),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (personal_id) REFERENCES personal(id) ON DELETE SET NULL,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reporte_equipo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    equipo_id INT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    actividad_id INT NULL,
+    horas DECIMAL(5,2) NOT NULL DEFAULT 0,
+    operador VARCHAR(150) NOT NULL DEFAULT '',
+    importe DECIMAL(12,2) NOT NULL DEFAULT 0,
+    KEY idx_re_reporte (reporte_id),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id) REFERENCES equipo(id) ON DELETE SET NULL,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reporte_materiales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    material_id INT NULL,
+    nombre VARCHAR(255) NOT NULL DEFAULT '',
+    actividad_id INT NULL,
+    cantidad DECIMAL(14,3) NOT NULL DEFAULT 0,
+    unidad VARCHAR(30) NOT NULL DEFAULT '',
+    tipo ENUM('recibido','consumido','devuelto') NOT NULL DEFAULT 'consumido',
+    proveedor VARCHAR(150) NOT NULL DEFAULT '',
+    remision VARCHAR(80) NOT NULL DEFAULT '',
+    KEY idx_rm_reporte (reporte_id),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE SET NULL,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reporte_tiempos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    actividad_id INT NULL,
+    horas DECIMAL(5,2) NOT NULL DEFAULT 0,
+    causa ENUM('lluvia','falta_material','espera','falla_equipo','seguridad','otra') NOT NULL DEFAULT 'otra',
+    nota VARCHAR(500) NOT NULL DEFAULT '',
+    KEY idx_rt_reporte (reporte_id),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reporte_seguridad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL UNIQUE,
+    charla_tema VARCHAR(255) NOT NULL DEFAULT '',
+    asistentes SMALLINT NOT NULL DEFAULT 0,
+    epp_ok TINYINT(1) NOT NULL DEFAULT 0,
+    incidente_id INT NULL,
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (incidente_id) REFERENCES seguridad_incidentes(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reporte_fotos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    archivo VARCHAR(255) NOT NULL,
+    actividad_id INT NULL,
+    leyenda VARCHAR(255) NOT NULL DEFAULT '',
+    lat DECIMAL(10,7) NULL,
+    lng DECIMAL(10,7) NULL,
+    tomada_en DATETIME NULL,
+    KEY idx_rf_reporte (reporte_id),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

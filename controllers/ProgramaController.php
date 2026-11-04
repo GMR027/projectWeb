@@ -49,6 +49,7 @@ class ProgramaController
             'riesgo' => ($_GET['riesgo'] ?? '') === '1' ? '1' : '',
         ];
         $riesgos = \Classes\Salud::riesgosActividades($proyectoId);
+        $bloqueosCalidad = \Classes\Calidad::disponible() ? \Classes\Calidad::bloqueosProyecto($proyectoId) : [];
         // Campos personalizados de las actividades (Nivel, Frente…): filtran igual que los demás
         $camposCp = \Classes\CamposPersonalizados::deProyecto($proyectoId, 'actividad');
         $filtrosCp = \Classes\CamposPersonalizados::filtrosDePeticion($proyectoId, 'actividad');
@@ -112,6 +113,7 @@ class ProgramaController
             'partidasFiltro' => array_values(array_filter($todas, fn($f) => $f['tipo'] === 'partida')),
             'filtros' => $filtros,
             'riesgos' => $riesgos,
+            'bloqueosCalidad' => $bloqueosCalidad,
             'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp,
             'camposCp' => $camposCp, 'filtrosCp' => $filtrosCp, 'valoresCp' => $valoresCp,
             'titulo' => 'Programa de Obra - ' . ProgramaColumnas::nombrePrograma($proyecto),
@@ -315,7 +317,20 @@ class ProgramaController
             echo json_encode(['success' => false, 'error' => 'El avance se calcula a partir de sus subactividades. Edítalas en la actividad.']);
             exit;
         }
-        $actividad->progreso = max(0, min(100, (int)round((float)$valor)));
+        $nuevo = max(0, min(100, (int)round((float)$valor)));
+        // Compuerta de calidad: la inspección pendiente topa el avance y la no conformidad lo congela
+        $bloqueo = \Classes\Calidad::disponible() ? \Classes\Calidad::bloqueo((int)$proyecto->id, (int)$actividad->id, (int)$actividad->progreso) : null;
+        if ($bloqueo && $nuevo > (int)$bloqueo['tope']) {
+            http_response_code(422);
+            echo json_encode([
+                'success' => false,
+                'error' => $bloqueo['motivo'] . ' El máximo permitido ahora es ' . (int)$bloqueo['tope'] . ' %.',
+                'tope' => (int)$bloqueo['tope'],
+                'url' => '/calidad?proyecto=' . (int)$proyecto->id . ($bloqueo['plan_id'] ? '&ver=' . (int)$bloqueo['plan_id'] : ''),
+            ]);
+            exit;
+        }
+        $actividad->progreso = $nuevo;
         $actividad->sincronizarStatus();
         if (!$actividad->guardar()) {
             http_response_code(500);

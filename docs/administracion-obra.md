@@ -30,6 +30,25 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - Resumen: planes, puntos revisados y no conformidades abiertas.
 - **Plan de inspección con IA:** en Herramientas IA → «Plan de inspección (ITP) con IA» (`Classes\Herramientas\ItpCalidad`) se eligen las actividades pendientes; la herramienta cruza la normativa ya vinculada y propone los puntos. Al aprobar el informe se crean el plan y sus puntos aquí, listos para marcar en campo. No crea nada mientras es borrador.
 
+### La inspección detiene el avance (compuerta de calidad)
+
+`calidad_planes.bloquea` (1 por defecto) convierte el plan en un **punto de retención** de su actividad:
+
+| Estado del plan | Efecto sobre `actividades.progreso` |
+|---|---|
+| Puntos pendientes | tope **99 %**: se puede trabajar, no cerrar |
+| No conformidad abierta (`no_cumple` sin resolver) | **congelado** en el avance actual |
+| Puntos todos en cumple/NA, o plan `cerrado` | libre |
+| `bloquea = 0` | el plan es solo informativo |
+
+- La regla vive en `Classes\Calidad::bloqueo()` y `::tope()`; `bloqueosProyecto()` la calcula para una lista completa en dos consultas.
+- Se aplica en **un solo punto**: `Model\Actividad::guardar()` recorta el avance, así que cubre programa, edición inline, parte diario, bot de Telegram, API REST y cualquier herramienta futura. `Actividad::omitirCompuertaCalidad(true)` da el escape controlado a las correcciones de datos (Inconsistencias) y se restaura con `finally`.
+- El controlador del programa (`ProgramaController::actualizarProgresoAjax`) hace una comprobación previa para devolver el motivo y el enlace al plan en vez de un recorte silencioso.
+- El parte diario **no se pierde**: `ParteDiario::aplicarAvance()` guarda el tope y devuelve el aviso (`ParteDiario::avisos()`), que el controlador muestra al abrir el detalle.
+- **Liberaciones** (`calidad_liberaciones`): solo admin o dueño (`Calidad::puedeLiberar()`), con motivo obligatorio (≥10 caracteres) y un tope autorizado. Guardan `nc_snapshot` = no conformidades abiertas al firmar; si aparece una nueva, la liberación **caduca sola** (se marca «Caducada» en la lista). Se pueden revocar. Todo queda en `Auditoria`.
+- UI: candado junto al % en el Programa, chip «Calidad» en el parte diario, KPI y tarjeta **Actividades detenidas** con el formulario de liberación en `/calidad`, y la lista de liberaciones firmadas.
+- Migración: `database/migracion_calidad_bloquea.sql`.
+
 ## Equipo (`Classes\Equipo`)
 
 - `equipo`: nombre, tipo, marca/modelo, serie, propietario, tarifa por hora, estado y próximo servicio (por fecha o por horas).

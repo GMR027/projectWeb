@@ -33,9 +33,33 @@ class CalidadController
             'abrirForm' => isset($_GET['nuevo']) || $editarPlan,
             'actividades' => Calidad::disponible() ? \Classes\Recursos::actividades($pid) : [],
             'puedeEditar' => puede_gestionar_proyecto($proyecto),
+            'puedeLiberar' => Calidad::disponible() && Calidad::puedeLiberar($proyecto),
+            'detenidas' => $disponible ? Calidad::detenidas($pid) : [],
+            'liberaciones' => $disponible ? Calidad::liberaciones($pid) : [],
             'ok' => texto_param($_GET['ok'] ?? ''),
             'error' => texto_param($_GET['error'] ?? ''),
         ]);
+    }
+
+    /** Libera el avance de una actividad detenida por calidad (solo dueño del proyecto o admin) */
+    public static function liberar()
+    {
+        $p = proyecto_de_peticion(true);
+        if (!Calidad::puedeLiberar($p)) {
+            self::volver((int)$p->id, false, 'Solo el dueño del proyecto o el administrador pueden liberar un avance');
+        }
+        [$ok, $msg] = Calidad::liberar((int)$p->id, (int)($_POST['actividad_id'] ?? 0), (int)($_POST['progreso_autorizado'] ?? 100), texto_param($_POST['motivo'] ?? ''));
+        self::volver((int)$p->id, $ok, $msg, '&detenidas=1');
+    }
+
+    public static function revocar()
+    {
+        $p = proyecto_de_peticion(true);
+        if (!Calidad::puedeLiberar($p)) {
+            self::volver((int)$p->id, false, 'Solo el dueño del proyecto o el administrador pueden revocar una liberación');
+        }
+        $ok = Calidad::revocarLiberacion((int)$p->id, (int)($_POST['id'] ?? 0));
+        self::volver((int)$p->id, $ok, $ok ? 'Liberación revocada' : 'La liberación no existe', '&detenidas=1');
     }
 
     public static function guardar()

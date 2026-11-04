@@ -33,6 +33,10 @@ class Actividad extends ActiveRecord
     // Icono de la actividad: nombre del archivo en public/build/img/actividades-iconos/ (se sube con subirIcono(), no con guardar())
     public $icono;
 
+    /** Compuerta de calidad activa en los guardados de avance (ver Classes\Calidad) */
+    protected static bool $compuertaCalidad = true;
+    protected static ?array $bloqueoCalidad = null;
+
     public function __construct($args = [])
     {
         $this->id = $args['id'] ?? null;
@@ -90,21 +94,23 @@ class Actividad extends ActiveRecord
     /**
      * Si la actividad tiene subactividades, su avance es el promedio de ellas:
      * cualquier guardado (edición, reporte diario, Telegram, API…) respeta ese cálculo.
+     * Además pasa por la compuerta de calidad: una inspección pendiente topa el avance en 99 %
+     * y una no conformidad abierta lo congela (ver Classes\Calidad::bloqueo()).
      */
     public function guardar()
     {
+        self::$bloqueoCalidad = null;
+        $antes = null;
         if (!is_null($this->id)) {
             $promedio = $this->progresoDesdeSubactividades();
             if ($promedio !== null) {
                 $this->progreso = $promedio;
                 $this->sincronizarStatus();
             }
-        }
-        $antes = null;
-        if (!is_null($this->id)) {
             $r = self::$db->query('SELECT progreso FROM actividades WHERE id = ' . (int)$this->id);
             $f = $r ? $r->fetch_row() : null;
             $antes = $f ? (int)$f[0] : null;
+            if (self::$compuertaCalidad) $this->aplicarCompuertaCalidad($antes ?? (int)$this->progreso);
         }
         $res = parent::guardar();
         $id = is_array($res) ? ($res['id'] ?? $this->id) : $this->id;
@@ -117,8 +123,40 @@ class Actividad extends ActiveRecord
         return $res;
     }
 
-    /** Sincroniza status según progreso */
-    public function sincronizarStatus(): void
+    /**
+     * Compuerta de calidad: si el nuevo avance pasa el tope que fija la inspección, se recorta y
+     * se deja el detalle en self::$bloqueoCalidad para que el controlador avise al usuario.
+     */
+    private function aplicarCompuertaCalidad(int $actual): void
+    {
+        $nuevo = (int)$this->progreso;
+        if ($nuevo <= $actual) return;   // bajar el avance nunca se bloquea
+        $pid = (int)(self::$db->query('SELECT p.proyecto_id FROM partidas p WHERE p.id = ' . (int)$this->partida_id)->fetch_row()[0] ?? 0);
+        if (!$pid) return;
+        try {
+            $bloqueo = \Classes\Calidad::bloqueo($pid, (int)$this->id, $actual);
+        } catch (\Throwable $e) {
+            return;   // sin la tabla de calidad (migración pendiente) el avance sigue libre
+        }
+        if (!$bloqueo || $nuevo <= (int)$bloqueo['tope']) return;
+        $this->progreso = max($actual, (int)$bloqueo['tope']);
+        $this->sincronizarStatus();
+        self::$bloqueoCalidad = $bloqueo + ['pedido' => $nuevo, 'aplicado' => (int)$this->progreso];
+    }
+
+    /** Último bloqueo de calidad aplicado en este guardado (null si el avance pasó completo) */
+    public static function bloqueoCalidad(): ?array
+    {
+        return self::$bloqueoCalidad;
+    }
+
+    /** Escape controlado para herramientas que corrigen datos con aprobación del admin (Inconsistencias, IA) */
+    public static function omitirCompuertaCalidad(bool $omitir = true): void
+    {
+        self::$compuertaCalidad = !$omitir;
+    }
+
+    /** Sincroniza status según progreso */    public function sincronizarStatus(): void
     {
         $p = (int)$this->progreso;
         if ($p === 0) {

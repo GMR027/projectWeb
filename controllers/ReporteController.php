@@ -8,6 +8,7 @@ use Model\Personal;
 use Model\ReporteDiario;
 use Model\Subactividad;
 use Classes\Imagenes;
+use Classes\ParteDiario;
 
 /** Reporte diario de obra y catálogo de personal del proyecto */
 class ReporteController
@@ -50,37 +51,130 @@ class ReporteController
     public static function ver(Router $router)
     {
         $proyecto = proyecto_de_peticion();
-        $r = ReporteDiario::find(filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT));
-        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) {
+        $id = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
+        $parte = $id ? ParteDiario::detalle($proyecto, (int)$id) : null;
+        if (!$parte) {
             header('Location: /reportes?proyecto=' . $proyecto->id);
             exit;
         }
-        $acts = self::actividades($proyecto);
-        $personal = Personal::indexado((int)$proyecto->id);
+        $alertas = (array)($_SESSION['parte_alertas'] ?? []);
+        unset($_SESSION['parte_alertas']);
         $router->render('reportes/ver', [
-            'titulo' => 'Reporte del ' . fecha_corta_es($r->fecha) . ' - ' . $proyecto->nombre,
-            'proyecto' => $proyecto, 'reporte' => $r,
-            'actividades' => array_values(array_filter(array_map(fn($id) => $acts[$id] ?? null, $r->getActividades()))),
+            'titulo' => 'Reporte del ' . fecha_corta_es($parte['reporte']->fecha) . ' - ' . $proyecto->nombre,
+            'proyecto' => $proyecto, 'reporte' => $parte['reporte'], 'parte' => $parte,
             'subactividades' => Subactividad::conteoPorProyecto((int)$proyecto->id),
-            'personal' => array_values(array_filter(array_map(fn($id) => $personal[$id] ?? null, $r->getPersonal()))),
+            'puede_cerrar' => ParteDiario::puedeCerrar($proyecto),
+            'alertas' => $alertas,
         ]);
     }
 
     public static function crear(Router $router)
     {
-        self::formulario($router, new ReporteDiario());
+        header('Location: /reportes/parte?proyecto=' . (int)($_GET['proyecto'] ?? $_POST['proyecto'] ?? 0));
+        exit;
     }
 
     public static function editar(Router $router)
     {
+        $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+        header('Location: /reportes/parte?proyecto=' . (int)($_GET['proyecto'] ?? $_POST['proyecto'] ?? 0) . ($id ? '&id=' . $id : ''));
+        exit;
+    }
+
+    /** Pantalla única del parte diario de campo */
+    public static function parte(Router $router)
+    {
         $proyecto = proyecto_de_peticion(true);
-        $fuente = self::esPost() ? $_POST : $_GET;
-        $r = ReporteDiario::find(filter_var($fuente['id'] ?? null, FILTER_VALIDATE_INT));
-        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) {
-            header('Location: /reportes?proyecto=' . $proyecto->id);
+        $pid = (int)$proyecto->id;
+        $id = (int)($_GET['id'] ?? 0);
+        $post = null;
+        if (!empty($_SESSION['parte_post'])) {
+            $post = (array)$_SESSION['parte_post'];
+            unset($_SESSION['parte_post']);
+            if (!empty($post['id'])) $id = (int)$post['id'];
+        }
+        if (!$post && $id) {
+            $detalle = ParteDiario::detalle($proyecto, $id);
+            if (!$detalle) { header('Location: /reportes?proyecto=' . $pid); exit; }
+            if ($detalle['reporte']->estaCerrado()) { header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $id); exit; }
+        }
+        $vista = ParteDiario::vista($proyecto, $id, $post);
+        $alertas = (array)($_SESSION['parte_alertas'] ?? []);
+        unset($_SESSION['parte_alertas']);
+        $router->render('reportes/parte', [
+            'titulo' => ($id ? 'Editar' : 'Nuevo') . ' parte diario - ' . $proyecto->nombre,
+            'proyecto' => $proyecto, 'vista' => $vista, 'alertas' => $alertas,
+            'puede_cerrar' => ParteDiario::puedeCerrar($proyecto),
+            'puede_borrar' => puede_eliminar_contenido($proyecto),
+        ]);
+    }
+
+    public static function guardarParte(Router $router)
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $pid = (int)$proyecto->id;
+        $json = str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') || !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
+        $res = ParteDiario::guardar($proyecto, $_POST, $_FILES);
+        if (!$res['ok']) {
+            if ($json) json_respuesta(['success' => false, 'error' => implode(' · ', $res['errores'] ?: ['No se pudo guardar el parte'])], 422);
+            $_SESSION['parte_post'] = $_POST;
+            $_SESSION['parte_alertas'] = ['error' => $res['errores'] ?: ['No se pudo guardar el parte']];
+            $id = (int)($res['id'] ?: ($_POST['id'] ?? 0));
+            header('Location: /reportes/parte?proyecto=' . $pid . ($id ? '&id=' . $id : ''));
             exit;
         }
-        self::formulario($router, $r);
+        if (($_POST['accion'] ?? '') === 'cerrar' && ParteDiario::puedeCerrar($proyecto)) {
+            ParteDiario::cerrar($proyecto, (int)$res['id']);
+        }
+        $avisos = array_values(array_filter((array)($res['avisos'] ?? [])));
+        if ($avisos) $_SESSION['parte_alertas'] = ['exito' => $avisos];
+        if ($json) json_respuesta(['success' => true, 'id' => (int)$res['id'], 'avisos' => $avisos]);
+        header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $res['id'] . '&ok=1');
+        exit;
+    }
+
+    public static function cerrarParte()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $pid = (int)$proyecto->id;
+        $id = (int)($_POST['id'] ?? 0);
+        if (!ParteDiario::puedeCerrar($proyecto)) {
+            http_response_code(403);
+            exit('Solo el dueño del proyecto o el administrador pueden cerrar el parte.');
+        }
+        [$ok, $msg] = ParteDiario::cerrar($proyecto, $id);
+        $_SESSION['parte_alertas'] = [($ok ? 'exito' : 'error') => [$msg]];
+        header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $id);
+        exit;
+    }
+
+    public static function reabrirParte()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $pid = (int)$proyecto->id;
+        $id = (int)($_POST['id'] ?? 0);
+        if (!ParteDiario::puedeCerrar($proyecto)) {
+            http_response_code(403);
+            exit('Solo el dueño del proyecto o el administrador pueden reabrir el parte.');
+        }
+        [$ok, $msg] = ParteDiario::reabrir($proyecto, $id);
+        $_SESSION['parte_alertas'] = [($ok ? 'exito' : 'error') => [$msg]];
+        header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $id);
+        exit;
+    }
+
+    /** PDF de un solo parte (lo que firma el residente al cerrar) */
+    public static function partePdf()
+    {
+        $proyecto = proyecto_de_peticion();
+        $id = (int)($_GET['id'] ?? 0);
+        $parte = ParteDiario::detalle($proyecto, $id);
+        if (!$parte) { http_response_code(404); exit('Parte no encontrado'); }
+        ob_start();
+        include __DIR__ . '/../views/exportar/pdf-parte.php';
+        $html = ob_get_clean();
+        $pdf = \Classes\Pdf::generar($html, 'letter', 'portrait', ['isHtml5ParserEnabled' => true, 'marca' => $proyecto]);
+        enviar_descarga($pdf, 'application/pdf', 'parte-diario-' . $parte['reporte']->fecha . '.pdf', true);
     }
 
     private static function formulario(Router $router, ReporteDiario $r)
@@ -141,6 +235,7 @@ class ReporteController
         $r = ReporteDiario::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
         if ($r && (int)$r->proyecto_id === (int)$proyecto->id) {
             foreach ($r->getFotos() as $f) Imagenes::eliminarEn('reportes', $f);
+            if ($r->firma_imagen) Imagenes::eliminarEn('reportes', $r->firma_imagen);
             $r->eliminar();
         }
         header('Location: /reportes?proyecto=' . $proyecto->id);
@@ -175,7 +270,7 @@ class ReporteController
             if (!$a->guardar()) continue;
             $cambios++;
             if ($r->fecha !== date('Y-m-d')) {   // Actividad::guardar anotó hoy; el avance pertenece a la fecha del reporte
-                $db->query("INSERT INTO actividad_avance (actividad_id, fecha, progreso) VALUES ($actId, '$fecha', $nuevo) ON DUPLICATE KEY UPDATE progreso = VALUES(progreso)");
+                $db->query("INSERT INTO actividad_avance (actividad_id, fecha, progreso) VALUES ($actId, '$fecha', " . (int)$a->progreso . ") ON DUPLICATE KEY UPDATE progreso = VALUES(progreso)");
                 $db->query($previoHoy === null ? "DELETE FROM actividad_avance WHERE actividad_id = $actId AND fecha = CURDATE()" : "UPDATE actividad_avance SET progreso = $previoHoy WHERE actividad_id = $actId AND fecha = CURDATE()");
             }
         }
@@ -221,6 +316,7 @@ class ReporteController
             $p->proyecto_id = $proyecto->id;
             $p->nombre = trim($_POST['nombre'] ?? '');
             $p->departamento = mb_substr(trim($_POST['departamento'] ?? ''), 0, 100);
+            $p->tarifa_hora = max(0, round((float)($_POST['tarifa_hora'] ?? 0), 2));
             $alertas = $p->validar();
             $contacto = [];
             foreach (array_keys(Personal::CONTACTO) as $c) $contacto[$c] = $c === 'notas' ? trim((string)($_POST[$c] ?? '')) : trim(preg_replace('/\s+/u', ' ', (string)($_POST[$c] ?? '')));

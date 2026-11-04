@@ -22,7 +22,7 @@ function ayudas_herramientas(): array
         '/costos' => ['Presupuesto por partida, costo real, estimaciones y valor ganado (CPI/SPI), ligados a la Curva S y a las órdenes de cambio.', 'costos'],
         '/compartir' => ['Enlaces de solo lectura sin crear usuario: una página temporal para el cliente y la suscripción de calendario .ics para el celular.', 'compartir'],
         '/calendario' => ['Calendario del proyecto: actividades por día, jornada semanal y festivos.', 'calendario'],
-        '/reportes' => ['Reporte diario de obra: personal, equipo, clima, avances e incidencias.', 'reportes'],
+        '/reportes' => ['Parte diario de campo: personal y horas, equipo, materiales, avance, tiempos muertos, seguridad, fotos y firma en una sola pantalla; funciona en el celular y sin conexión.', 'reportes'],
         '/bitacora' => ['Registro cronológico de eventos, acuerdos y compromisos de la obra.', 'bitacora'],
         '/minutas' => ['Minutas de reunión con asistentes, acuerdos y responsables.', 'minutas'],
         '/evidencias' => ['Fotos de avance ligadas a cada actividad.', 'evidencias'],

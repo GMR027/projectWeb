@@ -32,6 +32,7 @@ $e = $editarPlan;
     <div class="cb-kpi"><small>Planes</small><strong><?php echo (int)$resumen['planes']; ?></strong><span><?php echo (int)$resumen['pendiente']; ?> pendiente(s) · <?php echo (int)$resumen['en_proceso']; ?> en proceso</span></div>
     <div class="cb-kpi"><small>Puntos de inspección</small><strong><?php echo (int)$resumen['puntos']; ?></strong><span><?php echo (int)$resumen['puntos_cumplen']; ?> cumplen · <?php echo (int)$resumen['puntos_pendientes']; ?> sin revisar</span></div>
     <div class="cb-kpi <?php echo $resumen['nc'] ? 'cb-kpi-alerta' : ''; ?>"><small>No conformidades abiertas</small><strong><?php echo (int)$resumen['nc']; ?></strong><span>Puntos marcados «no cumple» sin resolver</span></div>
+    <div class="cb-kpi <?php echo $detenidas ? 'cb-kpi-alerta' : ''; ?>"><small>Actividades detenidas</small><strong><?php echo count($detenidas); ?></strong><span>El avance está topado por su inspección</span></div>
 </div>
 
 <?php if ($puedeEditar && $abrirForm): ?>
@@ -48,6 +49,9 @@ $e = $editarPlan;
         <label>Responsable<input type="text" name="responsable" maxlength="150" value="<?php echo s($e['responsable'] ?? ''); ?>"></label>
         <label>Fecha<input type="date" name="fecha" value="<?php echo s($e['fecha'] ?? date('Y-m-d')); ?>"></label>
         <label>Estado<select name="estado"><?php foreach (Calidad::ESTADOS as $k => $t): ?><option value="<?php echo $k; ?>"<?php echo ($e['estado'] ?? 'pendiente') === $k ? ' selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?></select></label>
+        <label class="co-check" title="Mientras tenga puntos pendientes o una no conformidad abierta, la actividad no podrá cerrarse">
+            <input type="checkbox" name="bloquea" value="1"<?php echo (int)($e['bloquea'] ?? 1) ? ' checked' : ''; ?>> Detiene el avance de la actividad
+        </label>
         <label class="co-ancho">Notas<textarea name="notas" rows="2" maxlength="5000"><?php echo s($e['notas'] ?? ''); ?></textarea></label>
         <?php if (!$e): ?>
         <label class="co-ancho">Puntos de inspección <span class="text-muted">(uno por línea; opcional: descripción | criterio)</span>
@@ -104,7 +108,8 @@ $e = $editarPlan;
 <div class="card" id="plan-<?php echo (int)$plan['id']; ?>">
     <div class="page-header" style="margin-bottom:1rem">
         <div><h3><?php echo s(trim(($plan['codigo'] ? $plan['codigo'] . ' · ' : '') . $plan['titulo'])); ?></h3>
-            <p class="text-muted"><?php echo $plan['act_codigo'] ? s($plan['act_codigo'] . ' · ' . $plan['act_nombre']) . ' · ' : ''; ?><?php echo s(Calidad::TIPOS[$plan['tipo']] ?? $plan['tipo']); ?><?php echo $plan['norma'] ? ' · ' . s($plan['norma']) : ''; ?></p></div>
+            <p class="text-muted"><?php echo $plan['act_codigo'] ? s($plan['act_codigo'] . ' · ' . $plan['act_nombre']) . ' · ' : ''; ?><?php echo s(Calidad::TIPOS[$plan['tipo']] ?? $plan['tipo']); ?><?php echo $plan['norma'] ? ' · ' . s($plan['norma']) : ''; ?></p>
+            <?php if ((int)$plan['bloquea']): ?><span class="badge badge-visitante"><i class="fa-solid fa-lock"></i> Detiene el avance de la actividad</span><?php else: ?><span class="badge badge-cliente"><i class="fa-solid fa-lock-open"></i> Solo informativo</span><?php endif; ?></div>
         <a href="<?php echo s($url()); ?>" class="btn btn-ghost btn-sm">Cerrar</a>
     </div>
     <?php if ($puedeEditar): ?>
@@ -145,6 +150,76 @@ $e = $editarPlan;
         </tbody>
     </table></div>
     <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if ($detenidas): ?>
+<div class="card" id="detenidas">
+    <h3><i class="fa-solid fa-lock text-warning"></i> Actividades detenidas por calidad</h3>
+    <p class="text-muted text-sm">Mientras su inspección tenga puntos pendientes, la actividad no pasa de 99 %. Con una no conformidad abierta, el avance se congela. Al marcar los puntos como «cumple» el candado se abre solo.</p>
+    <div class="tabla-wrapper"><table class="tabla">
+        <thead><tr><th>Actividad</th><th>Por qué está detenida</th><th class="num">Avance</th><?php if ($puedeLiberar): ?><th>Liberar avance</th><?php endif; ?></tr></thead>
+        <tbody>
+        <?php foreach ($detenidas as $d): $a = $d['actividad']; ?>
+            <tr>
+                <td><strong><?php echo s($a['codigo'] . ' · ' . $a['nombre']); ?></strong><br><small class="text-muted"><?php echo s($a['partida']); ?></small></td>
+                <td class="text-sm">
+                    <?php echo s($d['motivo']); ?>
+                    <?php if ($d['nivel'] === 'liberada'): ?><br><span class="badge badge-cliente"><i class="fa-solid fa-lock-open"></i> Liberada por <?php echo s($d['liberada_por']); ?></span><?php endif; ?>
+                    <?php if ($d['plan_id']): ?><br><a class="text-sm" href="<?php echo s($url(['ver' => $d['plan_id']])); ?>">Ver plan de inspección</a><?php endif; ?>
+                </td>
+                <td class="num"><b><?php echo (int)$a['progreso']; ?> %</b><br><small class="text-muted">tope <?php echo (int)$d['tope']; ?> %</small></td>
+                <?php if ($puedeLiberar): ?>
+                <td>
+                    <?php if ($d['nivel'] === 'liberada'): ?>
+                        <span class="text-sm text-muted"><i class="fa-solid fa-lock-open"></i> Avance liberado</span>
+                    <?php else: ?>
+                    <form method="POST" action="/calidad/liberar" class="co-form" style="min-width:24rem">
+                        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                        <input type="hidden" name="actividad_id" value="<?php echo (int)$a['id']; ?>">
+                        <label>Autorizar hasta (%)
+                            <input type="number" name="progreso_autorizado" min="<?php echo max(1, (int)$d['tope']); ?>" max="100" value="100" required style="width:9rem">
+                        </label>
+                        <label>Motivo (obligatorio)
+                            <input type="text" name="motivo" minlength="10" maxlength="500" required placeholder="Ej.: el cliente autorizó continuar; el ensayo llega el viernes">
+                        </label>
+                        <button class="btn btn-xs btn-primary" type="submit"><i class="fa-solid fa-lock-open"></i> Liberar</button>
+                    </form>
+                    <?php endif; ?>
+                </td>
+                <?php endif; ?>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table></div>
+</div>
+<?php endif; ?>
+
+<?php if ($liberaciones && $puedeLiberar): ?>
+<div class="card">
+    <h3><i class="fa-solid fa-lock-open"></i> Liberaciones firmadas</h3>
+    <p class="text-muted text-sm">Una liberación caduca sola si aparece una no conformidad nueva en esa actividad.</p>
+    <div class="tabla-wrapper"><table class="tabla">
+        <thead><tr><th>Actividad</th><th class="num">Hasta</th><th>Motivo</th><th>Quién y cuándo</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($liberaciones as $l): ?>
+            <tr>
+                <td><?php echo $l['act_codigo'] ? s($l['act_codigo'] . ' · ' . $l['act_nombre']) : 'Actividad ' . (int)$l['actividad_id']; ?></td>
+                <td class="num"><?php echo (int)$l['progreso_autorizado']; ?> %</td>
+                <td class="text-sm"><?php echo s($l['motivo']); ?></td>
+                <td class="text-sm"><?php echo s($l['usuario']); ?><br><small class="text-muted"><?php echo s(formatear_fecha(substr((string)$l['creado'], 0, 10), 'd/m/Y')); ?></small></td>
+                <td><?php if ($l['vigente']): ?><span class="badge badge-cliente">Vigente</span><?php else: ?><span class="badge badge-admin" title="Apareció una no conformidad nueva: el candado volvió">Caducada</span><?php endif; ?></td>
+                <td>
+                    <form class="inline" method="POST" action="/calidad/liberar/revocar" data-confirm="Revocar liberación|El candado de calidad volverá a aplicar en el siguiente cambio de avance.|Revocar">
+                        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                        <input type="hidden" name="id" value="<?php echo (int)$l['id']; ?>">
+                        <button class="btn btn-xs btn-ghost" type="submit" title="Revocar"><i class="fa-solid fa-rotate-left"></i></button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table></div>
 </div>
 <?php endif; ?>
 

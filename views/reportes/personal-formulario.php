@@ -16,6 +16,10 @@
                 <datalist id="lista-deptos"><?php foreach ($departamentos as $d): ?><option value="<?php echo s($d); ?>"><?php endforeach; ?></datalist>
             </div>
             <div class="campo">
+                <label for="tarifa_hora">Tarifa por hora</label>
+                <input type="number" id="tarifa_hora" name="tarifa_hora" min="0" step="0.01" value="<?php echo s($persona->tarifa_hora); ?>" placeholder="Costo por hora para el parte diario">
+            </div>
+            <div class="campo">
                 <label for="tipo">Tipo de personal</label>
                 <select id="tipo" name="tipo"><option value="">— Sin definir —</option>
                     <?php foreach (\Model\Personal::TIPOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $contacto['tipo'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?>

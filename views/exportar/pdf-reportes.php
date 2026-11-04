@@ -46,11 +46,39 @@ case 'reporte':
         <table class="t"><thead><tr><th style="width:11%">Código</th><th>Actividad</th><th style="width:22%">Partida</th><th style="width:20%">Fechas</th><th style="width:9%">Avance</th></tr></thead><tbody>
         <?php foreach ($x['actividades'] as [$a, $p]): ?><tr><td><?php echo s($a->codigo); ?></td><td><?php echo s($a->nombre); ?></td><td><?php echo s($p->nombre); ?></td><td><?php echo s($fmt($a->fecha_inicio) . ' → ' . $fmt($a->fecha_fin)); ?></td><td><?php echo $a->esHito() ? 'Hito' : (int)$a->progreso . ' %'; ?></td></tr><?php endforeach; ?>
         </tbody></table><?php endif; ?>
-        <h3>Personal (<?php echo count($x['personal']); ?>)</h3>
-        <?php if (!$x['personal']): ?><div class="peq">Sin personal registrado.</div><?php else: ?>
+        <?php $det = $x['parte'] ?? null; $nomAct = function (int $idA) use ($det): string { foreach (($det['actividades'] ?? []) as [$a]) if ((int)$a->id === $idA) return $a->codigo . ' · ' . $a->nombre; return '—'; }; ?>
+        <h3>Personal (<?php echo $det ? count($det['personal']) : count($x['personal']); ?>)</h3>
+        <?php if ($det && $det['personal']): ?>
+        <table class="t"><thead><tr><th>Persona</th><th style="width:24%">Actividad</th><th style="width:8%">Horas</th><th style="width:7%">Extra</th><th style="width:16%">Cuadrilla</th><th>Observación</th></tr></thead><tbody>
+        <?php foreach ($det['personal'] as $p): ?><tr><td><?php echo s($p->nombre ?: '—'); ?></td><td><?php echo s($nomAct((int)$p->actividad_id)); ?></td><td><?php echo s($p->horas_normal); ?></td><td><?php echo s($p->horas_extra); ?></td><td><?php echo s($p->cuadrilla ?: '—'); ?></td><td><?php echo s($p->observacion ?: '—'); ?></td></tr><?php endforeach; ?>
+        </tbody></table>
+        <?php elseif (!$x['personal']): ?><div class="peq">Sin personal registrado.</div><?php else: ?>
         <table class="t"><thead><tr><th>Nombre</th><th style="width:40%">Departamento</th></tr></thead><tbody>
         <?php foreach ($x['personal'] as $p): ?><tr><td><?php echo s($p->nombre); ?></td><td><?php echo s($p->departamento ?: '—'); ?></td></tr><?php endforeach; ?>
         </tbody></table><?php endif; ?>
+        <?php if ($det && $det['equipo']): ?>
+        <h3>Equipo</h3>
+        <table class="t"><thead><tr><th>Equipo</th><th style="width:24%">Actividad</th><th style="width:8%">Horas</th><th style="width:20%">Operador</th><th style="width:12%">Importe</th></tr></thead><tbody>
+        <?php foreach ($det['equipo'] as $e): ?><tr><td><?php echo s($e->nombre); ?></td><td><?php echo s($nomAct((int)$e->actividad_id)); ?></td><td><?php echo s($e->horas); ?></td><td><?php echo s($e->operador ?: '—'); ?></td><td>$<?php echo number_format((float)$e->importe, 2); ?></td></tr><?php endforeach; ?>
+        </tbody></table><?php endif; ?>
+        <?php if ($det && $det['materiales']): ?>
+        <h3>Materiales</h3>
+        <table class="t"><thead><tr><th>Material</th><th style="width:12%">Movimiento</th><th style="width:12%">Cantidad</th><th style="width:22%">Actividad</th><th style="width:18%">Proveedor</th><th style="width:12%">Remisión</th></tr></thead><tbody>
+        <?php foreach ($det['materiales'] as $m): ?><tr><td><?php echo s($m->nombre); ?></td><td><?php echo s(\Model\ReporteMaterial::TIPOS[$m->tipo] ?? $m->tipo); ?></td><td><?php echo s($m->cantidad) . ' ' . s($m->unidad); ?></td><td><?php echo s($nomAct((int)$m->actividad_id)); ?></td><td><?php echo s($m->proveedor ?: '—'); ?></td><td><?php echo s($m->remision ?: '—'); ?></td></tr><?php endforeach; ?>
+        </tbody></table><?php endif; ?>
+        <?php if ($det && $det['tiempos']): ?>
+        <h3>Tiempos muertos</h3>
+        <table class="t"><thead><tr><th style="width:26%">Actividad</th><th style="width:8%">Horas</th><th style="width:20%">Causa</th><th>Nota</th></tr></thead><tbody>
+        <?php foreach ($det['tiempos'] as $t): ?><tr><td><?php echo s($nomAct((int)$t->actividad_id)); ?></td><td><?php echo s($t->horas); ?></td><td><?php echo s(\Model\ReporteTiempo::CAUSAS[$t->causa] ?? $t->causa); ?></td><td><?php echo s($t->nota ?: '—'); ?></td></tr><?php endforeach; ?>
+        </tbody></table><?php endif; ?>
+        <?php if ($det): ?>
+        <h3>Seguridad y costo del día</h3>
+        <table class="d"><tr>
+            <td class="k">Charla</td><td><?php echo s(($det['seguridad'] && $det['seguridad']->charla_tema !== '') ? $det['seguridad']->charla_tema : '—'); ?></td>
+            <td class="k">Asistentes</td><td><?php echo (int)($det['seguridad']->asistentes ?? 0); ?></td>
+            <td class="k">Costo</td><td>$<?php echo number_format($det['costos']['total'], 2); ?></td>
+        </tr></table>
+        <?php endif; ?>
         <h3>Comentarios</h3>
         <div><?php echo trim((string)$r->comentarios) !== '' ? nl2br(s($r->comentarios)) : '—'; ?></div>
         <?php if ($x['fotos']): ?><h3>Fotos (<?php echo count($x['fotos']); ?>)</h3>

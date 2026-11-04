@@ -183,6 +183,23 @@
   .barra-progreso { flex: 1; }
 }
 
+// Candado de calidad junto al avance: un punto de inspección pendiente o una no conformidad abierta
+.cal-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  color: var(--warning-ink);
+  background: rgba(217, 119, 6, 0.15);
+  text-decoration: none;
+  flex: none;
+  &:hover { background: rgba(217, 119, 6, 0.28); }
+  &.cal-lock-nc { color: var(--danger-ink); background: rgba(220, 38, 38, 0.16); }
+  &.cal-lock-nc:hover { background: rgba(220, 38, 38, 0.3); }
+}
+
 .progreso-row {
   display: flex;
   justify-content: space-between;

@@ -150,6 +150,7 @@ class ReportesPdfExporter extends BaseExporter
                 'actividades' => array_values(array_filter(array_map(fn($id) => $acts[$id] ?? null, $r->getActividades()))),
                 'personal' => array_values(array_filter(array_map(fn($id) => $personal[$id] ?? null, $r->getPersonal()))),
                 'fotos' => array_values(array_filter(array_map(fn($f) => self::foto('reportes', $f), $r->getFotos()))),
+                'parte' => \Classes\ParteDiario::detalle($this->proyecto, (int)$r->id),
             ];
         }
         $d['registros'] = $reg;

@@ -710,7 +710,9 @@ TXT;
                 $antes = ['accion' => $accion, 'actividad_id' => (int)$a->id, 'progreso' => (int)$a->progreso, 'status' => $a->status];
                 if ($accion === 'ajustar_progreso') $a->progreso = $x['progreso'];
                 $a->sincronizarStatus();
-                $a->guardar();
+                // Corrección de datos aprobada por el admin: no la detiene la compuerta de calidad
+                Actividad::omitirCompuertaCalidad(true);
+                try { $a->guardar(); } finally { Actividad::omitirCompuertaCalidad(false); }
                 return [true, "«{$a->codigo}»: avance {$a->progreso}%, estatus {$a->status}", $antes];
             case 'recalcular_partida':
                 $pa = Partida::find($x['partida_id']);

@@ -175,6 +175,8 @@ class MaterialController
         $cant = str_replace(',', '.', trim($_POST['cantidad'] ?? ''));
         $material->cantidad = $cant === '' ? null : (is_numeric($cant) ? $cant : 'x');
         $material->unidad = mb_substr(trim($_POST['unidad'] ?? ''), 0, 30);
+        $costo = str_replace(',', '.', trim($_POST['costo_unitario'] ?? ''));
+        $material->costo_unitario = $costo === '' || !is_numeric($costo) ? null : max(0, (float)$costo);
         $compraAnterior = $material->compra;
         foreach (['fecha_compra_prog', 'fecha_entrega_prog', 'fecha_entrega_real'] as $f) {
             $material->$f = trim($_POST[$f] ?? '') ?: null;

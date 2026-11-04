@@ -380,6 +380,16 @@ HTML],
 <li><strong>Marca cada punto:</strong> cumple, no cumple, no aplica o pendiente, con observación. Las no conformidades abiertas aparecen aparte y el estado del plan se actualiza solo.</li>
 <li>El resumen superior muestra planes, puntos revisados y no conformidades abiertas. El cliente y el visitante pueden consultar; solo quien gestiona el proyecto captura.</li>
 </ol>
+<h4>El plan detiene el avance</h4>
+<p>Cada plan trae marcada la casilla <strong>«Detiene el avance de la actividad»</strong>. Mientras la tenga:</p>
+<ul>
+<li>Con <strong>puntos pendientes</strong>, la actividad no pasa de <strong>99 %</strong>: se puede trabajar, pero no cerrarla.</li>
+<li>Con una <strong>no conformidad abierta</strong>, el avance se <strong>congela</strong> hasta resolverla.</li>
+<li>Al marcar los puntos como <em>cumple</em> (o al cerrar el plan) el candado se abre solo.</li>
+</ul>
+<p>El candado se ve junto al porcentaje en el <a href="#programa">Programa</a> y en el parte diario de campo, y el sistema rechaza el avance venga de donde venga (programa, parte, API o Telegram). Desmarca la casilla si el plan es solo informativo.</p>
+<h4>Liberar un avance</h4>
+<p>Cuando el cliente autoriza seguir aunque el papel venga en camino, el <strong>dueño del proyecto o el administrador</strong> puede pulsar <strong>Liberar</strong> en la tarjeta <em>Actividades detenidas</em>: se indica <strong>hasta qué porcentaje</strong> y el <strong>motivo</strong> (obligatorio). La liberación queda firmada con nombre y fecha, se puede revocar, y caduca sola si aparece una no conformidad nueva en esa actividad.</p>
 HTML],
 
 ['id' => 'equipo', 'despues' => 'calidad', 'titulo' => 'Equipo y maquinaria', 'icono' => 'fa-truck', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'

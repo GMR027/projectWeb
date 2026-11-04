@@ -285,15 +285,23 @@
                                         <div class="barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
                                     </div>
                                     <?php $conSubactividades = !empty($fila['subactividades_total']); ?>
+                                    <?php $bloq = $bloqueosCalidad[(int)$fila['id']] ?? null; $topeCal = $bloq ? \Classes\Calidad::tope($bloq, (int)$fila['progreso']) : 100; $maxCal = max($topeCal, (int)$fila['progreso']); $congelado = $bloq && $bloq['nivel'] === 'nc' && (int)$fila['progreso'] < 100;
+                                    if ($bloq && $topeCal >= 100) $bloq = null;   // ya está cerrada: no hay nada que detener ?>
                                     <?php if ($puedeGestionar && !$conSubactividades): ?>
-                                        <input type="number" class="input-avance input-progreso" min="0" max="100" step="1"
+                                        <input type="number" class="input-avance input-progreso" min="0" max="<?php echo $maxCal; ?>" step="1"
                                                value="<?php echo (int)$fila['progreso']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>"
-                                               aria-label="Avance (%)" title="Avance (%)">%
+                                               aria-label="Avance (%)" title="<?php echo s($bloq ? $bloq['motivo'] : 'Avance (%)'); ?>"<?php echo $congelado ? ' disabled' : ''; ?>>%
                                     <?php else: ?>
                                         <span class="mono text-sm"><?php echo s($fila['progreso']); ?>%</span>
                                         <?php if ($conSubactividades): ?>
                                             <i class="fa-solid fa-lock text-muted" data-ayuda="El avance es el promedio de <?php echo (int)$fila['subactividades_total']; ?> subactividad(es). Se editan dentro de la actividad." data-manual="/manual#programa" title="Promedio de <?php echo (int)$fila['subactividades_total']; ?> subactividad(es)"></i>
                                         <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if ($bloq): ?>
+                                        <a class="cal-lock<?php echo $congelado ? ' cal-lock-nc' : ''; ?>" href="/calidad?proyecto=<?php echo s($proyecto->id); ?><?php echo $bloq['plan_id'] ? '&ver=' . (int)$bloq['plan_id'] : ''; ?>"
+                                           title="<?php echo s($bloq['motivo']); ?>" aria-label="<?php echo s($bloq['motivo']); ?>" data-ayuda="<?php echo s($bloq['motivo']); ?>" data-manual="/manual#calidad">
+                                            <i class="fa-solid <?php echo $bloq['nivel'] === 'liberada' ? 'fa-lock-open' : 'fa-lock'; ?>"></i>
+                                        </a>
                                     <?php endif; ?>
                                 </div>
                             </td>

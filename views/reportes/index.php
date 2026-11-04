@@ -6,7 +6,7 @@
     </div>
     <div class="la-controles">
         <a href="/reportes/personal?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-users"></i> <?php echo s(t('Personal')); ?></a>
-        <?php if ($puede): ?><a href="/reportes/crear?proyecto=<?php echo $id; ?>" class="btn btn-primary"><?php echo s(t('+ Nuevo reporte')); ?></a><?php endif; ?>
+        <?php if ($puede): ?><a href="/reportes/parte?proyecto=<?php echo $id; ?>" class="btn btn-primary"><?php echo s(t('+ Nuevo reporte')); ?></a><?php endif; ?>
     </div>
 </div>
 
@@ -16,7 +16,7 @@
         <?php echo estado_vacio('fa-clipboard-list',
             $cp['filtros'] ? 'Ningún reporte coincide con el filtro' : 'Aún no hay reportes diarios',
             $cp['filtros'] ? 'Prueba con otro filtro o quita la búsqueda.' : 'Registra el avance del día, el personal, las fotos y el clima de la obra.',
-            $cp['filtros'] || !$puede ? null : ['texto' => 'Nuevo reporte', 'url' => '/reportes/crear?proyecto=' . $id, 'icono' => 'fa-plus'],
+            $cp['filtros'] || !$puede ? null : ['texto' => 'Nuevo reporte', 'url' => '/reportes/parte?proyecto=' . $id, 'icono' => 'fa-plus'],
             null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="tabla-wrapper"><table class="tabla" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>>

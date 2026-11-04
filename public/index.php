@@ -349,6 +349,11 @@ $router->post('/lastplanner/plantilla', [LastPlannerController::class, 'plantill
 // ========== REPORTE DIARIO Y PERSONAL ==========
 $router->get('/reportes', [ReporteController::class, 'index']);
 $router->get('/reportes/ver', [ReporteController::class, 'ver']);
+$router->get('/reportes/parte', [ReporteController::class, 'parte']);
+$router->post('/reportes/parte', [ReporteController::class, 'guardarParte']);
+$router->post('/reportes/parte/cerrar', [ReporteController::class, 'cerrarParte']);
+$router->post('/reportes/parte/reabrir', [ReporteController::class, 'reabrirParte']);
+$router->get('/reportes/parte/pdf', [ReporteController::class, 'partePdf']);
 $router->get('/reportes/crear', [ReporteController::class, 'crear']);
 $router->post('/reportes/crear', [ReporteController::class, 'crear']);
 $router->get('/reportes/editar', [ReporteController::class, 'editar']);
@@ -401,6 +406,8 @@ $router->get('/calidad', [CalidadController::class, 'index']);
 $router->post('/calidad/guardar', [CalidadController::class, 'guardar']);
 $router->post('/calidad/punto', [CalidadController::class, 'punto']);
 $router->post('/calidad/punto/agregar', [CalidadController::class, 'puntoAgregar']);
+$router->post('/calidad/liberar', [CalidadController::class, 'liberar']);
+$router->post('/calidad/liberar/revocar', [CalidadController::class, 'revocar']);
 $router->post('/calidad/eliminar', [CalidadController::class, 'eliminar']);
 // Equipo y maquinaria
 $router->get('/equipo', [EquipoController::class, 'index']);

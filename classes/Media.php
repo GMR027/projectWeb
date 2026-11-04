@@ -90,7 +90,7 @@ class Media
             'materiales' => "SELECT proyecto_id FROM materiales WHERE imagen = '$a' LIMIT 1",
             'personal' => "SELECT proyecto_id FROM personal WHERE imagen = '$a' LIMIT 1",
             'simbolos' => "SELECT proyecto_id FROM simbolos WHERE archivo = '$a' LIMIT 1",
-            'reportes' => "SELECT proyecto_id FROM reportes_diarios WHERE fotos_json LIKE '%\"$a\"%' LIMIT 1",
+            'reportes' => "SELECT proyecto_id FROM reportes_diarios WHERE fotos_json LIKE '%\"$a\"%' OR firma_imagen = '$a' LIMIT 1",
             'punch' => "SELECT proyecto_id FROM punch_items WHERE foto_antes = '$a' OR foto_despues = '$a' LIMIT 1",
             'anotador' => "SELECT proyecto_id FROM anotador_documentos WHERE archivo = '$a' OR nombre_archivo = '$a' OR anotaciones_json LIKE '%$a%' LIMIT 1",
             'vplan' => "SELECT proyecto_id FROM vplan_laminas WHERE plano = '$a' OR simbologia = '$a' OR marcas_png = '$a' OR marcas_json LIKE '%$a%'"

@@ -404,24 +404,38 @@ HTML],
 <p>Para imprimirlos usa <em>Exportar → Last Planner</em>: tarjetas de 7×7 cm en hojas carta con marcas de corte; puedes elegir la partida, el filtro, el período y cuántas tarjetas van por fila.</p>
 HTML],
 
-['id' => 'reportes', 'titulo' => 'Reporte diario', 'icono' => 'fa-clipboard-list', 'roles' => $todos, 'herr' => 'reportes', 'cuerpo' => <<<'HTML'
-<p>El registro del día en obra: qué se trabajó, quién estuvo y fotos.</p>
-<h4>Crear un reporte</h4>
+['id' => 'reportes', 'titulo' => 'Reporte diario (parte de campo)', 'icono' => 'fa-clipboard-list', 'roles' => $todos, 'herr' => 'reportes', 'cuerpo' => <<<'HTML'
+<p>El parte diario reúne <strong>todo lo del día en una sola pantalla</strong>: personal y horas, equipo, materiales, actividades con su avance, tiempos muertos, seguridad, fotos y firma. Está pensado para el celular y funciona sin conexión.</p>
+<h4>Capturar el parte</h4>
 <ol>
 <li>Pulsa <strong>+ Nuevo reporte</strong>.</li>
-<li>Elige la <strong>fecha*</strong>, escribe el área y el número de trabajo.</li>
-<li>Marca las <strong>actividades del programa*</strong> trabajadas (una o varias).</li>
-<li>Marca el <strong>personal</strong> que participó. Si falta alguien, agrégalo en <em>Personal</em>.</li>
-<li>Escribe los <strong>comentarios</strong> y sube <strong>fotos</strong> (hasta 20 por guardado; jpg, png, webp o gif de hasta 15 MB cada una).</li>
-<li>Pulsa <strong>Guardar</strong>.</li>
+<li>En <strong>Resumen</strong> elige fecha y turno, escribe área, supervisor y visitas. El clima se precarga solo; corrígelo si hace falta.</li>
+<li>En <strong>Personal y horas</strong> agrega a cada persona con sus horas normales y extra, la actividad a la que se imputa y su cuadrilla.</li>
+<li>En <strong>Equipo</strong> registra las horas de cada máquina y su operador.</li>
+<li>En <strong>Materiales</strong> anota lo recibido, consumido o devuelto, con proveedor y remisión. Al marcar <em>Recibido</em> se actualiza la fecha de entrega real del material.</li>
+<li>En <strong>Actividades</strong> marca las que se trabajaron y ajusta su <em>% de avance</em>. Los hitos y las actividades con subactividades se calculan solos.</li>
+<li>En <strong>Tiempos muertos</strong> registra las horas perdidas y su causa (lluvia, falta de material, espera, falla de equipo…).</li>
+<li>En <strong>Seguridad</strong> anota la charla de 5 minutos, los asistentes y el EPP. Si hubo un incidente, ábrelo y descríbelo: queda ligado al parte.</li>
+<li>En <strong>Fotos</strong> agrega las imágenes con su leyenda y actividad; en <strong>Firma</strong> firma con el dedo o el ratón.</li>
+<li>Pulsa <strong>Guardar borrador</strong> o <strong>Guardar y cerrar</strong>.</li>
 </ol>
-<p>En el listado puedes <strong>Ver</strong> el reporte (se abre en otra pestaña), <strong>Editar</strong> o <strong>Eliminar</strong>. Al editar, las fotos pueden quitarse con <em>Quitar</em>.</p>
-<p>Haz clic en cualquier foto del reporte para verla en grande en una ventana modal; ciérrala con el botón <strong>X</strong> o la tecla <strong>Esc</strong>.</p>
+<h4>Qué pasa al cerrar</h4>
+<ul>
+<li>Se actualiza el avance de las actividades <strong>con la fecha del parte</strong> (Curva S real).</li>
+<li>Se registran las horas de equipo en <a href="#equipo">Equipo</a>.</li>
+<li>Se agrega un resumen a la <a href="#bitacora">Bitácora</a>.</li>
+<li>El parte queda <strong>bloqueado</strong>; solo el dueño del proyecto o el administrador pueden reabrirlo.</li>
+<li>El botón <strong>PDF</strong> genera el parte completo con firma para imprimir o enviar.</li>
+</ul>
+<h4>Sin conexión</h4>
+<p>Con el modo sin conexión activo en Ajustes, el parte se guarda en el teléfono y se sube solo al recuperar la red. Las fotos requieren conexión: agrégalas al volver.</p>
+<h4>Avance detenido por calidad</h4>
+<p>Si una actividad tiene su plan de inspección pendiente o una no conformidad abierta, su campo de avance aparece con un candado: los puntos pendientes la topan en <strong>99 %</strong> y la no conformidad la congela. El parte <strong>sí se guarda</strong>; solo se recorta el avance y se avisa en el detalle. Se libera desde <a href="#calidad">Calidad e inspecciones</a>.</p>
+<h4>Costo del día</h4>
+<p>El pie muestra el costo de personal (horas × tarifa), equipo (horas × tarifa) y material consumido (cantidad × costo unitario). La tarifa se captura en <em>Personal</em> y el costo unitario en <em>Materiales</em>.</p>
 <h4>Personal</h4>
-<p>Es el catálogo de personas del proyecto: <strong>nombre*</strong>, departamento y una imagen opcional. Se administra desde el botón <em>Personal</em> y alimenta los reportes diarios y las minutas.</p>
-<p class="manual-nota">Las fotos de cada reporte aparecen solas en <a href="#evidencias">Evidencias</a>.</p>
-<h4>Actualizar el avance desde el reporte</h4>
-<p>Al <strong>Ver</strong> un reporte, junto a cada actividad aparece su <em>Avance real</em>. Corrige los porcentajes y pulsa <strong>Actualizar avance de las actividades</strong>: solo cambian las que modificaste y el valor queda anotado con la <em>fecha del reporte</em> (así la Curva S real refleja el día en que ocurrió, no el día en que lo capturaste).</p>
+<p>Es el catálogo de personas del proyecto: <strong>nombre*</strong>, departamento, <strong>tarifa por hora</strong> y una imagen opcional. Se administra desde el botón <em>Personal</em> y alimenta los reportes diarios y las minutas.</p>
+<p class="manual-nota">Las fotos de cada parte aparecen solas en <a href="#evidencias">Evidencias</a>.</p>
 HTML],
 
 ['id' => 'bitacora', 'titulo' => 'Bitácora de obra', 'icono' => 'fa-book', 'roles' => $todos, 'herr' => 'bitacora', 'cuerpo' => <<<'HTML'
