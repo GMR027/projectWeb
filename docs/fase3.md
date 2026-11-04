@@ -1,6 +1,6 @@
 # Fase 3: costos, recursos, RFI y enlaces de solo lectura (2026-10-21)
 
-_Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql` (también en `schema.sql`; **aplicar en el clúster**, ya está en `aplicar_migraciones_cluster.sh`). Añade 7 tablas y el valor `rfi` a `revisiones.tipo`/`revisiones_historial.tipo`.
+_Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql` (también en `schema.sql`; **aplicar en el clúster**, ya está en `aplicar_migraciones_cluster.sh`). Añade 7 tablas y el valor `rfi` a `revisiones.tipo`/`revisiones_historial.tipo`. Para cantidades con precio unitario: `database/migracion_cantidades_precio.sql`.
 
 | Módulo | Ruta | Código | Quién |
 |---|---|---|---|
@@ -11,8 +11,10 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 | Página del cliente / `.ics` | `/cliente?t=`, `/calendario/ics?t=` | `EnlaceClienteController`, `views/cliente/`, `classes/CalendarioIcs.php`, `views/layout-publico.php` | Públicas (sin sesión), por token |
 
 ## 3.1 Costos
-- `costos_partidas(partida_id, presupuesto)` y `costos_movimientos(tipo real|estimacion, fecha, concepto, monto, partida_id?, orden_cambio_id?, estado borrador|aprobada|pagada)`. El estado solo importa en estimaciones (las `borrador` no cuentan).
-- **Presupuesto vigente (BAC)** = presupuesto de la partida + `impacto_costo` de las órdenes de cambio **autorizadas** (`OrdenCambio::AUTORIZADAS`) cuya actividad cae en la partida; las que no tienen actividad suman al total del proyecto. Es la conexión con las órdenes de cambio.
+- `costos_partidas(partida_id, presupuesto, presupuesto_manual, origen manual|cantidades)` y `costos_movimientos(tipo real|estimacion, fecha, concepto, monto, partida_id?, orden_cambio_id?, estado borrador|aprobada|pagada)`. El estado solo importa en estimaciones (las `borrador` no cuentan).
+- **Cantidades con precio unitario** (`Classes\Cantidades`): `actividad_cantidades` guarda clave, concepto, cantidad, unidad, `precio_unitario` e `importe` (= cantidad × precio). Una fila por actividad. Se captura en **Editar actividad → Concepto de obra** (`POST /programa/actividades/cantidad`).
+- **Presupuesto automático:** `Cantidades::resumenPartidas()` dice, por partida, cuántas actividades con duración están valuadas (cantidad > 0 y precio no nulo). Si están **todas**, el presupuesto es la suma de importes (`origen = cantidades`); si falta alguna, se conserva `costos_partidas.presupuesto` manual y `Costos::resumen()` expone `faltantes` y `suma_parcial` para avisar. `guardarPresupuesto()` guarda siempre el valor manual y no pisa una partida calculada. `recalcularProyecto()` (botón «Recalcular desde cantidades») sincroniza datos anteriores.
+- **Presupuesto vigente (BAC)** = presupuesto de la partida (manual o calculado) + `impacto_costo` de las órdenes de cambio **autorizadas** (`OrdenCambio::AUTORIZADAS`) cuya actividad cae en la partida; las que no tienen actividad suman al total del proyecto. Es la conexión con las órdenes de cambio.
 - **Valor ganado** (`Costos::resumen`): PV = BAC × avance programado a hoy, EV = BAC × avance real; ambos pesan cada actividad por su duración (hitos pesan 0), igual que `CurvaS`. CPI = EV/AC, SPI = EV/PV, EAC = BAC/CPI. Los costos y estimaciones sin partida cuentan en los totales.
 - **Conexión con la Curva S:** `Costos::curva()` toma `CurvaS::calcular()` y multiplica plan % y real % por el BAC; AC y estimado salen acumulados de los movimientos. Se dibuja en la pestaña Resumen (Chart.js) y `curvas/s` tiene un botón a Costos.
 - Salud: indicador «Índice de costo (CPI)» (solo para quien gestiona y si hay presupuesto y costo real): < 1 aviso, < 0.9 crítico.

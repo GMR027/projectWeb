@@ -126,6 +126,71 @@
 })();
 </script>
 
+<?php
+$cant = $cantidad ?? [];
+$cantImporte = \Classes\Cantidades::importe($cant['cantidad'] ?? null, $cant['precio_unitario'] ?? null);
+$cr = $cantidadResumen ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
+?>
+<div class="ce-cantidad">
+    <h4><i class="fa-solid fa-ruler-combined"></i> Concepto de obra</h4>
+    <p class="text-muted text-sm">Cantidad × precio unitario = importe. Cuando todas las actividades con duración de la partida están valuadas, su presupuesto en <a href="/costos?proyecto=<?php echo (int)$proyecto->id; ?>" target="_top">Costos</a> se calcula solo con esta suma; si falta alguna, se conserva el presupuesto manual.</p>
+    <?php if (isset($_GET['cant']) || isset($_GET['cant_error'])): ?>
+        <div class="alerta <?php echo isset($_GET['cant']) ? 'alerta-exito' : 'alerta-error'; ?>" role="status"><?php echo isset($_GET['cant']) ? 'Concepto de obra guardado.' : s(texto_param($_GET['cant_error'] ?? 'No se pudo guardar el concepto')); ?></div>
+    <?php endif; ?>
+    <p class="text-sm <?php echo $cr['completo'] ? 'text-success' : 'text-muted'; ?>">
+        <?php if ($cr['total'] === 0): ?>
+            La partida aún no tiene actividades con duración.
+        <?php elseif ($cr['completo']): ?>
+            <i class="fa-solid fa-circle-check"></i> Partida valuada por completo (<?php echo (int)$cr['valuadas']; ?> de <?php echo (int)$cr['total']; ?> actividades) · suma $<?php echo number_format((float)$cr['suma'], 2); ?>.
+        <?php else: ?>
+            <i class="fa-solid fa-circle-info"></i> <?php echo (int)$cr['valuadas']; ?> de <?php echo (int)$cr['total']; ?> actividades valuadas · faltan <?php echo (int)$cr['faltantes']; ?>. Mientras falten, el presupuesto de la partida sigue siendo el manual.
+        <?php endif; ?>
+    </p>
+    <form method="POST" action="/programa/actividades/cantidad" class="form-grid" style="margin-top:1rem">
+        <input type="hidden" name="id" value="<?php echo (int)$actividad->id; ?>">
+        <div class="campo">
+            <label for="cant-clave">Clave</label>
+            <input type="text" id="cant-clave" name="clave" maxlength="60" value="<?php echo s($cant['clave'] ?? ''); ?>" placeholder="Ej.: CIT-04">
+        </div>
+        <div class="campo">
+            <label for="cant-unidad">Unidad</label>
+            <input type="text" id="cant-unidad" name="unidad" maxlength="30" value="<?php echo s($cant['unidad'] ?? ''); ?>" placeholder="m³, m², kg, ml…">
+        </div>
+        <div class="campo campo-full">
+            <label for="cant-concepto">Concepto</label>
+            <input type="text" id="cant-concepto" name="concepto" maxlength="255" value="<?php echo s($cant['concepto'] ?? ''); ?>" placeholder="Ej.: Losa de cimentación de sala blanca">
+        </div>
+        <div class="campo">
+            <label for="cant-cantidad">Cantidad</label>
+            <input type="number" id="cant-cantidad" name="cantidad" min="0" step="0.001" value="<?php echo ($cant['cantidad'] ?? null) !== null && $cant['cantidad'] !== '' ? s($cant['cantidad']) : ''; ?>">
+        </div>
+        <div class="campo">
+            <label for="cant-precio">Precio unitario</label>
+            <input type="number" id="cant-precio" name="precio_unitario" min="0" step="0.01" value="<?php echo ($cant['precio_unitario'] ?? null) !== null && $cant['precio_unitario'] !== '' ? s($cant['precio_unitario']) : ''; ?>">
+        </div>
+        <div class="campo">
+            <label>Importe</label>
+            <output id="cant-importe" class="mono ce-importe" for="cant-cantidad cant-precio"><?php echo $cantImporte === null ? '—' : '$' . number_format($cantImporte, 2); ?></output>
+            <small class="text-muted">Se calcula: cantidad × precio unitario</small>
+        </div>
+        <div class="campo campo-full">
+            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Guardar concepto</button>
+            <?php if (!empty($cant)): ?><small class="text-muted">Deja todos los campos vacíos y guarda para quitar el concepto.</small><?php endif; ?>
+        </div>
+    </form>
+</div>
+<script>
+(function () {
+    const c = document.getElementById('cant-cantidad'), p = document.getElementById('cant-precio'), out = document.getElementById('cant-importe');
+    if (!c || !p || !out) return;
+    const pintar = () => {
+        const n = Number(c.value), u = Number(p.value);
+        out.textContent = (c.value === '' || p.value === '' || !isFinite(n) || !isFinite(u)) ? '—' : '$' + (n * u).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+    c.addEventListener('input', pintar); p.addEventListener('input', pintar);
+})();
+</script>
+
     <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
 
     <?php if (es_modal()): ?>

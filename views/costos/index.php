@@ -55,12 +55,22 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <h3><i class="fa-solid fa-list-check"></i> Por partida</h3>
         <?php if (!$resumen['partidas']): ?><p class="text-muted">Aún no hay partidas. Créalas en <a href="/programa?proyecto=<?php echo $pid; ?>">Programa</a>.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla co-tabla">
-            <thead><tr><th>Partida</th><th title="Captura el presupuesto de la partida">Presupuesto</th><th class="hide-m">Cambios</th><th class="hide-m">Vigente</th><th class="hide-m">Prog. / real</th><th>PV</th><th>EV</th><th>AC</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
+            <thead><tr><th>Partida</th><th title="Se calcula con las cantidades cuando la partida está completa; si no, se captura a mano">Presupuesto</th><th class="hide-m">Cambios</th><th class="hide-m">Vigente</th><th class="hide-m">Prog. / real</th><th>PV</th><th>EV</th><th>AC</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
             <tbody>
             <?php foreach ($resumen['partidas'] as $p): ?>
                 <tr>
                     <td><span class="co-punto" style="background:<?php echo s($p['color'] ?: '#64748b'); ?>"></span> <span class="mono"><?php echo s($p['codigo']); ?></span> <?php echo s($p['nombre']); ?></td>
-                    <td><input type="text" inputmode="decimal" class="co-in" name="presupuesto[<?php echo (int)$p['id']; ?>]" value="<?php echo $p['presupuesto'] ? s(number_format($p['presupuesto'], 2, '.', '')) : ''; ?>" placeholder="0.00" aria-label="Presupuesto de <?php echo s($p['nombre']); ?>"></td>
+                    <td>
+                        <?php if ($p['calculado']): ?>
+                            <span class="mono"><?php echo $m($p['presupuesto']); ?></span>
+                            <small class="text-muted" title="Suma de cantidad × precio unitario de las actividades de la partida"><i class="fa-solid fa-calculator"></i> <?php echo (int)$p['valuadas']; ?>/<?php echo (int)$p['actividades']; ?> conceptos</small>
+                        <?php else: ?>
+                            <input type="text" inputmode="decimal" class="co-in" name="presupuesto[<?php echo (int)$p['id']; ?>]" value="<?php echo $p['presupuesto'] ? s(number_format($p['presupuesto'], 2, '.', '')) : ''; ?>" placeholder="0.00" aria-label="Presupuesto de <?php echo s($p['nombre']); ?>">
+                            <?php if ((int)$p['faltantes'] > 0): ?>
+                                <small class="co-aviso" title="Mientras falten actividades por valuar se conserva el presupuesto manual"><i class="fa-solid fa-triangle-exclamation"></i> faltan <?php echo (int)$p['faltantes']; ?> por valuar<?php if ($p['suma_parcial'] > 0): ?> · parcial <?php echo $m($p['suma_parcial']); ?><?php endif; ?></small>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </td>
                     <td class="mono hide-m <?php echo $clsVar($p['cambios']); ?>"><?php echo $p['cambios'] ? $m($p['cambios']) : '—'; ?></td>
                     <td class="mono hide-m"><?php echo $m($p['bac']); ?></td>
                     <td class="mono hide-m"><?php echo number_format($p['plan_pct'], 0); ?>% / <?php echo number_format($p['real_pct'], 0); ?>%</td>
@@ -78,8 +88,10 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
             <p class="text-muted text-sm">Sin partida (cuenta en el total): cambios <?php echo $m($sp['cambios']); ?> · costo real <?php echo $m($sp['real']); ?> · estimado <?php echo $m($sp['estimado']); ?>.</p>
         <?php endif; ?>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar presupuesto</button>
+        <button type="submit" formaction="/costos/recalcular" class="btn btn-ghost" formnovalidate title="Vuelve a sumar las cantidades de todas las partidas (útil para datos anteriores a esta función)"><i class="fa-solid fa-calculator"></i> Recalcular desde cantidades</button>
         <?php endif; ?>
     </form>
+    <p class="text-muted text-sm">Cuando todas las actividades con duración de una partida tienen cantidad y precio unitario, el presupuesto se calcula solo y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto manual y se muestra cuántas faltan. El <strong>importe</strong> se captura en la actividad (<em>Editar actividad → Concepto de obra</em>).</p>
     <p class="text-muted text-sm">PV = presupuesto vigente × avance programado a hoy · EV = presupuesto vigente × avance real (ambos pesados por la duración de las actividades, como la Curva S) · AC = costo real capturado · CPI = EV ÷ AC · SPI = EV ÷ PV.</p>
 
 <?php elseif ($pestana === 'real' || $pestana === 'estimaciones'): $tipo = $pestana === 'real' ? 'real' : 'estimacion'; $e = $editar; ?>

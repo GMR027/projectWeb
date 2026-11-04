@@ -49,13 +49,15 @@ $tipos = ['inicio' => 'Inicio', 'fin' => 'Término', 'hito' => 'Hito'];
 
 <div class="card">
     <h3>Cantidades de obra<?php if ($total > 0): ?> <small class="text-muted">· importe total $<?php echo $n($total); ?></small><?php endif; ?></h3>
+    <p class="text-muted text-sm">El importe se calcula como cantidad × precio unitario. Puedes ajustarlo en la actividad (concepto de obra); si todas las actividades de una partida están valuadas, su presupuesto en Costos se actualiza solo.</p>
     <?php if (!$cantidades): ?><p class="text-muted">Sin catálogo de conceptos cargado.</p>
     <?php else: ?>
         <table class="tabla">
-            <thead><tr><th>Clave</th><th>Concepto</th><th class="hide-m">Actividad</th><th>Cantidad</th><th class="hide-m">Importe</th></tr></thead>
+            <thead><tr><th>Clave</th><th>Concepto</th><th class="hide-m">Actividad</th><th>Cantidad</th><th>Precio unit.</th><th class="hide-m">Importe</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($cantidades as $c): ?>
-                <tr><td class="mono"><?php echo s($c['clave'] ?: '—'); ?></td><td><?php echo s($c['concepto']); ?></td><td class="hide-m"><span class="mono"><?php echo s($c['codigo']); ?></span> <?php echo s($c['actividad']); ?></td><td class="mono"><?php echo $n($c['cantidad'], 3) . ' ' . s($c['unidad']); ?></td><td class="mono hide-m"><?php echo $c['importe'] === null ? '—' : '$' . $n($c['importe']); ?></td></tr>
+                <tr><td class="mono"><?php echo s($c['clave'] ?: '—'); ?></td><td><?php echo s($c['concepto']); ?></td><td class="hide-m"><span class="mono"><?php echo s($c['codigo']); ?></span> <?php echo s($c['actividad']); ?></td><td class="mono"><?php echo $n($c['cantidad'], 3) . ' ' . s($c['unidad']); ?></td><td class="mono"><?php echo $c['precio_unitario'] === null ? '—' : '$' . $n($c['precio_unitario']); ?></td><td class="mono hide-m"><?php echo $c['importe'] === null ? '—' : '$' . $n($c['importe']); ?></td>
+                    <td><?php if (puede_gestionar_proyecto($proyecto)): ?><a class="btn btn-xs btn-ghost" href="/programa/actividades/editar?id=<?php echo (int)$c['actividad_id']; ?>" target="_top" title="Editar concepto de obra" aria-label="Editar concepto de obra"><i class="fa-solid fa-pen"></i></a><?php endif; ?></td></tr>
             <?php endforeach; ?>
             </tbody>
         </table>

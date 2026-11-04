@@ -537,7 +537,7 @@ foreach ($resp as $cod => $n) if (($a = $act($cod)) && ($pe = $persona($n))) $q(
 $cant = [['3.3', 'EST-3.3', 'Concreto en columnas y losa de sala blanca', 1850, 'm³', 5272500], ['3.4', 'EST-3.4', 'Concreto en losa de cubierta técnica', 1910, 'm³', 5443500], ['4.3', 'ALB-4.3', 'Cancelería y puertas de acceso', 7600, 'm²', 3040000],
     ['4.4', 'FAC-4.4', 'Fachada de cristal templado y sellos', 4300, 'm²', 12470000], ['5.3', 'ELE-5.3', 'Cableado de fuerza y tableros', 18500, 'm', 1850000], ['6.4', 'HID-6.4', 'Red de rociadores y agente limpio', 3200, 'm', 2880000],
     ['7.1', 'HVA-7.1', 'Ductería de lámina galvanizada Nave A', 5200, 'kg', 1196000], ['8.2', 'VOZ-8.2', 'Cableado estructurado Cat 6A', 96000, 'm', 1440000], ['9.2', 'ACA-9.2', 'Piso técnico modular 60x60', 21500, 'm²', 6665000]];
-foreach ($cant as [$cod, $clave, $concepto, $cantidad, $uni, $imp]) if ($a = $act($cod)) $q("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, importe, origen) VALUES ($a, $pid, {$str($clave)}, {$str($concepto)}, $cantidad, {$str($uni)}, $imp, 'Catálogo de conceptos del contrato')");
+foreach ($cant as [$cod, $clave, $concepto, $cantidad, $uni, $imp]) if ($a = $act($cod)) $q("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, precio_unitario, importe, origen) VALUES ($a, $pid, {$str($clave)}, {$str($concepto)}, $cantidad, {$str($uni)}, " . round($imp / max(0.001, $cantidad), 2) . ", $imp, 'Catálogo de conceptos del contrato')");
 
 // ---------------------------------------------------------------- Símbolos propios del proyecto (se suman a los de seed_demo_extras) y cajetines
 echo "Símbolos y cajetines...\n";

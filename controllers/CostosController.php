@@ -4,6 +4,7 @@ namespace Controllers;
 
 use MVC\Router;
 use Classes\Costos;
+use Classes\Cantidades;
 
 /** Costos y presupuesto: presupuesto por partida, costo real, estimaciones y valor ganado (ver Classes\Costos). Solo quien gestiona el proyecto */
 class CostosController
@@ -44,6 +45,14 @@ class CostosController
             Costos::guardarPresupuesto((int)$proyecto->id, (int)$partidaId, (float)$monto);
         }
         self::volver((int)$proyecto->id, 'resumen', '&ok=presupuesto');
+    }
+
+    /** Recalcula el presupuesto de todas las partidas desde sus cantidades (para datos anteriores a la migración) */
+    public static function recalcular()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $n = Cantidades::recalcularProyecto((int)$proyecto->id);
+        self::volver((int)$proyecto->id, 'resumen', '&ok=' . urlencode("Presupuestos recalculados en $n partida(s)"));
     }
 
     public static function movimiento()

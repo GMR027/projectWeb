@@ -34,8 +34,14 @@ class Costos
     {
         if (!self::filas("SELECT id FROM partidas WHERE id = $partidaId AND proyecto_id = $pid")) return false;
         $monto = max(0, round($monto, 2));
+        $info = Cantidades::resumenPartidas($pid, $partidaId)[$partidaId] ?? null;
+        $calculado = !empty($info['completo']);
+        $valor = $calculado ? round((float)$info['suma'], 2) : $monto;
+        $origen = $calculado ? 'cantidades' : 'manual';
         $antes = self::presupuestoDe($partidaId);
-        self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto) VALUES ($partidaId, $pid, $monto) ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto)");
+        self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto, presupuesto_manual, origen)
+            VALUES ($partidaId, $pid, $valor, $monto, '$origen')
+            ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto), presupuesto_manual = VALUES(presupuesto_manual), origen = VALUES(origen)");
         HistorialCambios::desdeImagen('costos_partidas', $antes ? 'modificado' : 'creado', $antes, self::presupuestoDe($partidaId));
         return true;
     }
@@ -43,7 +49,7 @@ class Costos
     /** Presupuesto de una partida (la tabla no tiene `id`, se localiza por `partida_id`) */
     private static function presupuestoDe(int $partidaId): ?array
     {
-        return self::filas("SELECT partida_id, proyecto_id, presupuesto FROM costos_partidas WHERE partida_id = $partidaId")[0] ?? null;
+        return self::filas("SELECT partida_id, proyecto_id, presupuesto, presupuesto_manual, origen FROM costos_partidas WHERE partida_id = $partidaId")[0] ?? null;
     }
 
     /** @return string|null mensaje de error */
@@ -134,7 +140,8 @@ class Costos
         $pid = (int)$proyecto->id;
         $fecha ??= date('Y-m-d');
         $av = self::avancePartidas($proyecto, $fecha);
-        $pres = array_column(self::filas("SELECT partida_id, presupuesto FROM costos_partidas WHERE proyecto_id = $pid"), 'presupuesto', 'partida_id');
+        $pres = array_column(self::filas("SELECT partida_id, presupuesto, presupuesto_manual, origen FROM costos_partidas WHERE proyecto_id = $pid"), null, 'partida_id');
+        $calc = Cantidades::resumenPartidas($pid);
         $cambios = [];
         $cambiosGenerales = 0.0;
         foreach (self::cambiosAutorizados($pid) as $c) {
@@ -152,11 +159,19 @@ class Costos
         $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0];
         foreach (self::filas("SELECT id, codigo, nombre, color_bg FROM partidas WHERE proyecto_id = $pid ORDER BY orden, codigo") as $p) {
             $id = (int)$p['id'];
-            $presupuesto = (float)($pres[$id] ?? 0);
+            $info = $calc[$id] ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
+            $calculado = !empty($info['completo']);
+            $origenGuardado = (string)($pres[$id]['origen'] ?? 'manual');
+            // Si estaba calculada y dejó de estar completa (p. ej. se agregó una actividad sin valuar), vuelve al manual
+            $presupuesto = $calculado ? (float)$info['suma']
+                : (float)($origenGuardado === 'cantidades' ? ($pres[$id]['presupuesto_manual'] ?? 0) : ($pres[$id]['presupuesto'] ?? 0));
+            $manual = (float)($pres[$id]['presupuesto_manual'] ?? $pres[$id]['presupuesto'] ?? 0);
             $camb = (float)($cambios[$id] ?? 0);
             $bac = $presupuesto + $camb;
             $a = $av[$id] ?? ['plan' => 0.0, 'real' => 0.0];
             $f = ['id' => $id, 'codigo' => $p['codigo'], 'nombre' => $p['nombre'], 'color' => $p['color_bg'], 'presupuesto' => $presupuesto, 'cambios' => $camb, 'bac' => $bac,
+                'presupuesto_manual' => $manual, 'calculado' => $calculado, 'origen' => $calculado ? 'cantidades' : 'manual',
+                'actividades' => (int)$info['total'], 'valuadas' => (int)$info['valuadas'], 'faltantes' => (int)$info['faltantes'], 'suma_parcial' => round((float)$info['suma'], 2),
                 'plan_pct' => round($a['plan'] * 100, 1), 'real_pct' => round($a['real'] * 100, 1),
                 'pv' => round($bac * $a['plan'], 2), 'ev' => round($bac * $a['real'], 2), 'ac' => round((float)($ac[$id] ?? 0), 2), 'estimado' => round((float)($es[$id] ?? 0), 2)];
             $partidas[] = $f;

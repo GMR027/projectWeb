@@ -714,6 +714,25 @@ $ok('la página de riesgos tiene matriz, formulario y conversión a restricción
     $v = (string)@file_get_contents(__DIR__ . '/../views/riesgos/index.php');
     return str_contains($v, 'rg-matriz') && str_contains($v, '/riesgos/materializar') && str_contains($v, 'rg-sev-resultado');
 })());
+echo "Cantidades y precio unitario\n";
+$ok('el importe es cantidad por precio y queda vacío si falta uno', \Classes\Cantidades::importe(240, 2000) === 480000.0
+    && \Classes\Cantidades::importe('2.5', '100.50') === 251.25
+    && \Classes\Cantidades::importe(null, 10) === null && \Classes\Cantidades::importe(10, '') === null);
+$ok('la migración y el esquema traen precio unitario y el respaldo del presupuesto manual', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_cantidades_precio.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'precio_unitario') && str_contains($m, 'presupuesto_manual')
+        && str_contains($s, 'precio_unitario DECIMAL(14,2)') && str_contains($s, 'origen ENUM(\'manual\',\'cantidades\')');
+})());
+$ok('la ruta para guardar el concepto de obra está registrada', str_contains((string)@file_get_contents(__DIR__ . '/../public/index.php'), "'/programa/actividades/cantidad'"));
+$ok('la actividad tiene el formulario de concepto de obra', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/programa/editar-actividad.php');
+    return str_contains($v, '/programa/actividades/cantidad') && str_contains($v, 'cant-precio') && str_contains($v, 'cant-importe');
+})());
+$ok('Costos calcula el presupuesto desde las cantidades y conserva el manual', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'Cantidades::resumenPartidas(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'presupuesto_manual'));
+$ok('Datos de obra muestra el precio unitario', str_contains((string)@file_get_contents(__DIR__ . '/../classes/DatosObra.php'), 'precio_unitario'));
+$ok('el Ensamblador deduce el precio unitario al importar cantidades', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Ensamblador.php'), 'precio_unitario, importe, origen'));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

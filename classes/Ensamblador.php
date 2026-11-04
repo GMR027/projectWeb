@@ -711,7 +711,7 @@ TXT;
                 $vistas[$aid] = true;
                 $unidad = self::texto($x['unidad'] ?? '', 30);
                 $importe = self::numero($x['importe'] ?? null);
-                $previa = self::filas("SELECT clave, concepto, cantidad, unidad, importe FROM actividad_cantidades WHERE actividad_id = $aid")[0] ?? null;
+                $previa = self::filas("SELECT clave, concepto, cantidad, unidad, precio_unitario, importe FROM actividad_cantidades WHERE actividad_id = $aid")[0] ?? null;
                 if ($previa && (float)$previa['cantidad'] === (float)$cant && $previa['unidad'] === $unidad && ($importe === null || (float)$previa['importe'] === (float)$importe)) continue;
                 $conf = $sim >= 0.9 ? 'alta' : 'dudosa';
                 $items[] = ['id' => $nuevoId('q'), 'tipo' => 'cantidad_obra', 'titulo' => trim(self::texto($x['clave'] ?? '', 60) . ' ' . $concepto) . ' → ' . $et($aid), 'confianza' => $conf, 'marcado' => $conf === 'alta',
@@ -1045,9 +1045,11 @@ TXT;
             case 'cantidad_obra': {
                 $act = Actividad::find((int)$d['actividad_id']);
                 if (!$act) throw new \RuntimeException('La actividad ya no existe');
-                $previa = self::filas('SELECT clave, concepto, cantidad, unidad, importe, origen FROM actividad_cantidades WHERE actividad_id = ' . (int)$act->id)[0] ?? null;
-                self::db()->query(sprintf("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, importe, origen) VALUES (%d, %d, '%s', '%s', %s, '%s', %s, '%s')",
-                    (int)$act->id, $pid, self::esc($d['clave']), self::esc($d['concepto']), (float)$d['cantidad'], self::esc($d['unidad']), $d['importe'] === null ? 'NULL' : (float)$d['importe'], self::esc($d['origen'])));
+                $previa = self::filas('SELECT clave, concepto, cantidad, unidad, precio_unitario, importe, origen FROM actividad_cantidades WHERE actividad_id = ' . (int)$act->id)[0] ?? null;
+                $precio = ($d['importe'] !== null && (float)$d['cantidad'] > 0) ? round((float)$d['importe'] / (float)$d['cantidad'], 2) : 'NULL';
+                self::db()->query(sprintf("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, precio_unitario, importe, origen) VALUES (%d, %d, '%s', '%s', %s, '%s', %s, %s, '%s')",
+                    (int)$act->id, $pid, self::esc($d['clave']), self::esc($d['concepto']), (float)$d['cantidad'], self::esc($d['unidad']), $precio, $d['importe'] === null ? 'NULL' : (float)$d['importe'], self::esc($d['origen'])));
+                \Classes\Cantidades::recalcularPartida($pid, (int)$act->partida_id);
                 return ['actividad_id' => (int)$act->id, 'previa' => $previa];
             }
             case 'compromiso': {
@@ -1255,12 +1257,15 @@ TXT;
             }
             case 'cantidad_obra': {
                 $aid = (int)$a['actividad_id'];
+                $partidaId = (int)(self::filas("SELECT partida_id FROM actividades WHERE id = $aid")[0]['partida_id'] ?? 0);
                 if (!empty($a['previa'])) {
                     $v = $a['previa'];
-                    $db->query(sprintf("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, importe, origen) VALUES (%d, %d, '%s', '%s', %s, '%s', %s, '%s')", $aid, $pid, self::esc($v['clave']), self::esc($v['concepto']), $v['cantidad'] === null ? 'NULL' : (float)$v['cantidad'], self::esc($v['unidad']), $v['importe'] === null ? 'NULL' : (float)$v['importe'], self::esc($v['origen'])));
+                    $db->query(sprintf("REPLACE INTO actividad_cantidades (actividad_id, proyecto_id, clave, concepto, cantidad, unidad, precio_unitario, importe, origen) VALUES (%d, %d, '%s', '%s', %s, '%s', %s, %s, '%s')", $aid, $pid, self::esc($v['clave']), self::esc($v['concepto']), $v['cantidad'] === null ? 'NULL' : (float)$v['cantidad'], self::esc($v['unidad']), empty($v['precio_unitario']) ? 'NULL' : (float)$v['precio_unitario'], $v['importe'] === null ? 'NULL' : (float)$v['importe'], self::esc($v['origen'])));
+                    if ($partidaId) \Classes\Cantidades::recalcularPartida($pid, $partidaId);
                     return 'Cantidad anterior restaurada';
                 }
                 $db->query("DELETE FROM actividad_cantidades WHERE actividad_id = $aid");
+                if ($partidaId) \Classes\Cantidades::recalcularPartida($pid, $partidaId);
                 return 'Cantidad de obra eliminada';
             }
             case 'compromiso':

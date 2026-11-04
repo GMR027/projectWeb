@@ -25,7 +25,7 @@ class DatosObra
 
     public static function cantidades(int $pid): array
     {
-        return self::filas("SELECT c.clave, c.concepto, c.cantidad, c.unidad, c.importe, a.codigo, a.nombre actividad
+        return self::filas("SELECT c.clave, c.concepto, c.cantidad, c.unidad, c.precio_unitario, c.importe, a.id actividad_id, a.codigo, a.nombre actividad
             FROM actividad_cantidades c JOIN actividades a ON a.id = c.actividad_id JOIN partidas pa ON pa.id = a.partida_id
             WHERE c.proyecto_id = $pid ORDER BY pa.orden, a.orden");
     }

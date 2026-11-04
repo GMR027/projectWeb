@@ -15,6 +15,7 @@ use Classes\Calendario;
 use Classes\GanttRenderer;
 use Classes\Dependencias;
 use Classes\ProgramaColumnas;
+use Classes\Cantidades;
 
 class ProgramaController
 {
@@ -685,6 +686,7 @@ class ProgramaController
                     // Recalcular fechas de partida
                     $partida = Partida::find($actividad->partida_id);
                     $partida->recalcularFechas();
+                    Cantidades::recalcularPartida((int)$proyectoId, (int)$partida->id);   // una actividad nueva sin valuar puede volver manual la partida
                     self::guardarMaterialesActividad((int)$resultado['id'], (int)$proyectoId);
                     \Classes\DependenciasMateriales::propagar($proyecto);
                     terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=actividad&foco=a' . (int)$resultado['id']);
@@ -913,6 +915,8 @@ class ProgramaController
                 $actividad->sincronizarStatus();
                 if ($actividad->guardar()) {
                     $partida->recalcularFechas();
+                    Cantidades::recalcularPartida((int)$proyecto->id, (int)$partida->id);
+                    if ((int)$actividad->partida_id !== (int)$partida->id) Cantidades::recalcularPartida((int)$proyecto->id, (int)$actividad->partida_id);
                     // Icono: imagen nueva (reemplaza la anterior) o casilla «Quitar el icono actual»
                     $iconoAnterior = (string)($actividad->icono ?? '');
                     if (!empty($_POST['quitar_icono'])) {
@@ -944,7 +948,28 @@ class ProgramaController
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
             'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : \Model\ActividadMaterial::rolesDeActividad((int)$id),
             'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
+            'cantidad' => Cantidades::deActividad((int)$id),
+            'cantidadResumen' => Cantidades::resumenPartidas((int)$proyecto->id, (int)$partida->id)[(int)$partida->id]
+                ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false],
         ]);
+    }
+
+    /** Guarda el concepto de obra de una actividad (cantidad × precio unitario) y recalcula el presupuesto de su partida */
+    public static function guardarCantidad()
+    {
+        redirigir_si_no_auth();
+        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $actividad = Actividad::find($id);
+        if (!$actividad) {
+            header('Location: /proyectos');
+            exit;
+        }
+        $partida = Partida::find($actividad->partida_id);
+        $proyecto = Proyecto::find($partida->proyecto_id);
+        exigir_gestionar_proyecto($proyecto);
+        [$ok, $msg] = Cantidades::guardar((int)$proyecto->id, (int)$id, $_POST);
+        header('Location: /programa/actividades/editar?id=' . (int)$id . ($ok ? '&cant=1' : '&cant_error=' . urlencode($msg)));
+        exit;
     }
 
     public static function eliminarActividad()
@@ -961,6 +986,7 @@ class ProgramaController
                 try { SubactividadHoja::desvincular($actividad); } catch (\Throwable $e) { error_log('Subactividades al eliminar actividad: ' . $e->getMessage()); }
                 $actividad->eliminar();
                 $partida->recalcularFechas();
+                Cantidades::recalcularPartida((int)$proyectoId, (int)$partida->id);   // la partida pudo quedar incompleta
                 \Model\ActividadMaterial::sincronizarInstalacion((int)$proyectoId);
                 $proy = Proyecto::find($proyectoId);
                 if ($proy) \Classes\DependenciasMateriales::propagar($proy);

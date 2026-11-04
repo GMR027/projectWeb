@@ -1791,6 +1791,7 @@ CREATE TABLE IF NOT EXISTS actividad_cantidades (
     clave VARCHAR(60) NOT NULL DEFAULT '',
     concepto VARCHAR(255) NOT NULL DEFAULT '',
     cantidad DECIMAL(14,3) NULL,
+    precio_unitario DECIMAL(14,2) NULL,
     unidad VARCHAR(30) NOT NULL DEFAULT '',
     importe DECIMAL(14,2) NULL,
     origen VARCHAR(255) NOT NULL DEFAULT '',
@@ -1871,6 +1872,8 @@ CREATE TABLE IF NOT EXISTS costos_partidas (
     partida_id INT NOT NULL PRIMARY KEY,
     proyecto_id INT NOT NULL,
     presupuesto DECIMAL(16,2) NOT NULL DEFAULT 0,
+    presupuesto_manual DECIMAL(16,2) NULL,
+    origen ENUM('manual','cantidades') NOT NULL DEFAULT 'manual',
     KEY idx_cp_proyecto (proyecto_id),
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE

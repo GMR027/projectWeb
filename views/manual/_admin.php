@@ -304,7 +304,7 @@ HTML],
 <li><strong>Alertas ①.</strong> Un banner marca como <em>crítico</em> si el programa termina después de la fecha del contrato, si el contrato ya venció sin terminar o si faltan 7 días o menos; como <em>aviso</em> si faltan 30 o menos. Las primeras alertas también salen en la parte superior del Programa.</li>
 <li><strong>Fechas contractuales ②.</strong> Inicio, fin e hitos con su penalización y el texto de origen, comparados con el programa.</li>
 <li><strong>Responsables por actividad ③.</strong> Una persona responsable por actividad.</li>
-<li><strong>Cantidades de obra ④.</strong> Clave, concepto, cantidad, unidad e importe, con total. Si <em>todas</em> las actividades con duración tienen importe, la Curva S pesa el avance por importe.</li>
+<li><strong>Cantidades de obra ④.</strong> Clave, concepto, cantidad, unidad, precio unitario e importe, con total. El importe se calcula como cantidad × precio unitario y se captura en la actividad (<em>Editar actividad → Concepto de obra</em>); desde aquí el botón de lápiz abre esa actividad. Si <em>todas</em> las actividades con duración tienen cantidad y precio, la Curva S pesa el avance por importe y el presupuesto de la partida se calcula solo.</li>
 <li><strong>Directorio de contactos.</strong> Cargo, empresa, teléfono y correo (solo lo ve quien gestiona el proyecto).</li>
 </ul>
 HTML],

@@ -643,10 +643,14 @@ HTML],
 <p>Compara <strong>lo presupuestado, lo avanzado y lo gastado</strong>. Lo ven el administrador y el cliente que gestiona el proyecto (los visitantes no).</p>
 <h4>Qué capturas</h4>
 <ul>
-<li><strong>Presupuesto por partida:</strong> en la pestaña <em>Resumen</em>, un monto por partida y <em>Guardar presupuesto</em>.</li>
+<li><strong>Presupuesto por partida:</strong> en la pestaña <em>Resumen</em>, un monto por partida y <em>Guardar presupuesto</em>. Si la partida está valuada por completo (todas sus actividades con cantidad y precio unitario), el campo se calcula solo y no se edita a mano.</li>
+<li><strong>Concepto de obra:</strong> en <em>Editar actividad → Concepto de obra</em> capturas clave, concepto, cantidad, unidad y precio unitario; el importe se calcula. Al guardarlo se actualiza el presupuesto de la partida.</li>
 <li><strong>Costo real:</strong> cada gasto (factura, nómina, renta…) con fecha, monto y, si quieres, su partida y la orden de cambio que lo originó.</li>
 <li><strong>Estimaciones:</strong> lo que cobras al cliente. Las de estado <em>borrador</em> no cuentan hasta aprobarse.</li>
 </ul>
+<h4>Presupuesto desde cantidades</h4>
+<p>Cada actividad puede tener su <strong>concepto de obra</strong>: cantidad × precio unitario = importe. Cuando <strong>todas</strong> las actividades con duración de una partida están valuadas, su presupuesto pasa a ser la suma de esos importes y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto escrito a mano y la tabla avisa cuántas faltan y cuánto suman las que ya están.</p>
+<p>El botón <strong>Recalcular desde cantidades</strong> vuelve a sumar todas las partidas (útil para datos que ya existían). El precio es costo directo: no incluye IVA ni indirectos.</p>
 <h4>Qué calcula</h4>
 <table class="tabla manual-tabla">
 <thead><tr><th>Sigla</th><th>Significa</th></tr></thead>

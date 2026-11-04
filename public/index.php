@@ -186,6 +186,7 @@ $router->get('/programa/actividades/crear', [ProgramaController::class, 'crearAc
 $router->post('/programa/actividades/crear', [ProgramaController::class, 'crearActividad']);
 $router->get('/programa/actividades/editar', [ProgramaController::class, 'editarActividad']);
 $router->post('/programa/actividades/editar', [ProgramaController::class, 'editarActividad']);
+$router->post('/programa/actividades/cantidad', [ProgramaController::class, 'guardarCantidad']);
 $router->post('/programa/actividades/eliminar', [ProgramaController::class, 'eliminarActividad']);
 $router->post('/programa/actividades/rapida', [ProgramaController::class, 'actividadRapida']);
 $router->post('/programa/actividades/mover', [ProgramaController::class, 'moverActividad']);
@@ -389,6 +390,7 @@ $router->post('/carpetas/mover', [CarpetaController::class, 'mover']);
 // Fase 3: costos, recursos, RFI y enlaces de solo lectura
 $router->get('/costos', [CostosController::class, 'index']);
 $router->post('/costos/presupuesto', [CostosController::class, 'presupuesto']);
+$router->post('/costos/recalcular', [CostosController::class, 'recalcular']);
 $router->post('/costos/movimiento', [CostosController::class, 'movimiento']);
 $router->post('/costos/eliminar', [CostosController::class, 'eliminar']);
 $router->get('/recursos', [RecursosController::class, 'index']);
