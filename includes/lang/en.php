@@ -156,7 +156,7 @@ return [
     '+ Nueva Actividad' => '+ New activity',
     'Diseñar programa' => 'Design schedule',
     'Ordenar y renumerar' => 'Sort and renumber',
-    'Importar XML / POD' => 'Import XML / POD',
+    'Importar XML / POD' => 'Import XML / POD', 'Importar P6' => 'Import P6',
     '⚙ Ajustes & Exportar' => '⚙ Settings & Export',
     '← Portafolio' => '← Portfolio',
     'Aún no hay propuestas guardadas. Al analizar el proyecto con la IA, guarda la que te interese desde el Programador.' => 'There are no saved proposals yet. When you analyze the project with AI, save the one you like from the Scheduler.',

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<APIBusinessObjects xmlns="http://xmlns.oracle.com/Primavera/P6/V19.12/API/BusinessObjects">
+  <Project>
+    <ObjectId>1</ObjectId>
+    <Id>DEMO</Id>
+    <Name>Obra demo</Name>
+    <Calendar>
+      <ObjectId>10</ObjectId>
+      <Name>Standard</Name>
+      <HoursPerDay>8</HoursPerDay>
+    </Calendar>
+    <WBS><ObjectId>100</ObjectId><Code>1.0</Code><Name>Preliminares</Name></WBS>
+    <WBS><ObjectId>101</ObjectId><Code>2.0</Code><Name>Estructura</Name></WBS>
+    <Activity>
+      <ObjectId>1000</ObjectId><Id>A1000</Id><Name>Excavación</Name><WBSObjectId>100</WBSObjectId>
+      <Type>Task Dependent</Type><StartDate>2026-11-02T08:00:00</StartDate><FinishDate>2026-11-05T17:00:00</FinishDate>
+      <PlannedDuration>32</PlannedDuration><PercentComplete>0</PercentComplete><Priority>500</Priority>
+    </Activity>
+    <Activity>
+      <ObjectId>1001</ObjectId><Id>A1001</Id><Name>Cimentación</Name><WBSObjectId>101</WBSObjectId>
+      <Type>Task Dependent</Type><StartDate>2026-11-06T08:00:00</StartDate><FinishDate>2026-11-12T17:00:00</FinishDate>
+      <PlannedDuration>40</PlannedDuration><PercentComplete>35</PercentComplete><Priority>700</Priority>
+    </Activity>
+    <Activity>
+      <ObjectId>1002</ObjectId><Id>A1002</Id><Name>Inicio obra</Name><WBSObjectId>100</WBSObjectId>
+      <Type>Start Milestone</Type><StartDate>2026-11-02T08:00:00</StartDate><FinishDate>2026-11-02T08:00:00</FinishDate>
+      <PlannedDuration>0</PlannedDuration><PercentComplete>100</PercentComplete>
+    </Activity>
+    <Activity>
+      <ObjectId>1003</ObjectId><Id>A1003</Id><Name>Resumen estructura</Name><WBSObjectId>101</WBSObjectId>
+      <Type>WBS Summary</Type><StartDate>2026-11-06T08:00:00</StartDate><FinishDate>2026-11-12T17:00:00</FinishDate>
+    </Activity>
+    <Relationship>
+      <ObjectId>5000</ObjectId><PredecessorActivityObjectId>1000</PredecessorActivityObjectId>
+      <SuccessorActivityObjectId>1001</SuccessorActivityObjectId><Type>Finish to Start</Type><Lag>8</Lag>
+    </Relationship>
+    <Relationship>
+      <ObjectId>5001</ObjectId><PredecessorActivityObjectId>1002</PredecessorActivityObjectId>
+      <SuccessorActivityObjectId>1000</SuccessorActivityObjectId><Type>Start to Start</Type><Lag>0</Lag>
+    </Relationship>
+    <Relationship>
+      <ObjectId>5002</ObjectId><PredecessorActivityObjectId>9999</PredecessorActivityObjectId>
+      <SuccessorActivityObjectId>1001</SuccessorActivityObjectId><Type>Finish to Start</Type><Lag>0</Lag>
+    </Relationship>
+  </Project>
+</APIBusinessObjects>

@@ -45,6 +45,7 @@
             <a href="/campos?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-tags"></i> <?php echo s(t('Campos')); ?></a>
             <a href="/programa/ordenar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-arrow-down-1-9"></i> <?php echo s(t('Ordenar y renumerar')); ?></a>
             <a href="/programa/importar?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-file-import"></i> <?php echo s(t('Importar XML / POD')); ?></a>
+            <a href="/programa/importar/p6?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost hide-m"><i class="fa-solid fa-file-import"></i> <?php echo s(t('Importar P6')); ?></a>
         <?php endif; ?>
     </div>
     <div class="hide-m">

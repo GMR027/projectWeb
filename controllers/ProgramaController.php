@@ -408,6 +408,49 @@ class ProgramaController
         exit;
     }
 
+    // ==================== IMPORTAR PRIMAVERA P6 ====================
+    public static function importarP6(Router $router)
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $vista = ['titulo' => 'Importar Primavera P6 - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'previa' => null];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $f = $_FILES['archivo'] ?? null;
+            $ext = $f ? strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)) : '';
+            if (!$f || empty($f['tmp_name']) || !is_uploaded_file($f['tmp_name']) || !in_array($ext, ['xml', 'xer'], true) || $f['size'] > \Classes\P6Importador::MAX_BYTES) {
+                Proyecto::setAlerta('error', 'Sube un archivo .xml o .xer de Primavera P6 de máximo 30 MB');
+            } else {
+                try {
+                    @set_time_limit(150);
+                    $vista['previa'] = \Classes\P6Importador::analizar($f['tmp_name'], (int)$proyecto->id, $_POST);
+                } catch (\Throwable $e) {
+                    Proyecto::setAlerta('error', 'No se pudo leer el archivo: ' . $e->getMessage());
+                }
+            }
+        }
+        $vista['alertas'] = Proyecto::getAlertas();
+        $router->render('programa/importar-p6', $vista);
+    }
+
+    public static function confirmarImportacionP6()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        try {
+            $r = \Classes\HistorialCambios::silenciar(fn() => \Classes\P6Importador::aplicar($_POST['token'] ?? '', $proyecto));
+            header('Location: /programa?proyecto=' . $proyecto->id . '&importado=' . $r['actividades'] . '&partidas=' . $r['partidas'] . '&dependencias=' . $r['dependencias']);
+        } catch (\Throwable $e) {
+            header('Location: /programa/importar/p6?proyecto=' . $proyecto->id . '&error=' . urlencode($e->getMessage()));
+        }
+        exit;
+    }
+
+    public static function cancelarImportacionP6()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        \Classes\P6Importador::limpiar($_POST['token'] ?? '');
+        header('Location: /programa/importar/p6?proyecto=' . $proyecto->id);
+        exit;
+    }
+
     // ==================== PARTIDAS ====================
     /** Reordenar y renumerar partidas y actividades (web y app de escritorio) */
     public static function ordenar(Router $router)

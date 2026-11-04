@@ -15,6 +15,7 @@ _Movido de `AGENTS.md`. Se lee solo al trabajar en este módulo._
 - Formulario de contacto de la landing → `POST /contacto` (`ContactoController`, tabla `contactos`; trampas anti-spam y 5 mensajes/hora por IP). El admin los ve en `/bandeja` junto con los mensajes de soporte (tabla `soportes`); el menú muestra el número de sin leer.
 - Rol cliente: `/soporte` (CRUD de sus propios mensajes) y `/usuarios` como «Mi equipo» (visitantes de solo lectura y colaboradores que editan; los topes por cliente son `limite_visitantes`=2 y `limite_colaboradores`=3, `creado_por` = el cliente). El cliente puede asignar los proyectos que creó **y los que el admin le asignó** (`Proyecto::gestionablesDe`). Nunca se toma rol/límites del formulario.
 - `/programa/importar`: importa XML MSPDI o .pod en XML (`classes/ProgramaImportador.php`, sin IA). Solo trae nombre, fechas, avance, hitos, prioridad, notas y niveles; predecesoras/recursos/calendarios no.
+- `/programa/importar/p6`: importa **Primavera P6** (XML o XER) con `classes/P6Importador.php`; trae WBS→partidas, actividades, relaciones FS/SS/FF/SF con espera y avance, con vista previa y actualización por código. Ver `docs/importar-p6.md`.
 - Capturas del recorrido de la landing: `public/build/img/landing/tour-*.jpg` (tomadas del demo: 8 pestañas del recorrido; hay que regenerarlas si cambia mucho la UI).
 
 ## 🔎 Buscador de listas

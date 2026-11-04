@@ -3,7 +3,10 @@
         <h2><i class="fa-solid fa-file-import"></i> Importar programa desde XML / POD</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?></p>
     </div>
-    <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Programa</a>
+    <div style="display:flex;gap:.5rem">
+        <a href="/programa/importar/p6?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">Primavera P6</a>
+        <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Programa</a>
+    </div>
 </div>
 
 <?php if (!empty($_GET['error'])): ?><div class="alerta alerta-error"><?php echo s($_GET['error']); ?></div><?php endif; ?>

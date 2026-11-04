@@ -70,6 +70,7 @@ PHP 8 MVC project para gestión de programas de obra con Gantt, calendario opera
 | `docs/ia-centro-herramientas.md` | Centro de IA e Herramientas de IA fases 3-10 (informes, voz, chat, normativa, seguridad, punch…) y **Revisiones** (✅⚠❌ por proyecto, estado de uso de las herramientas) |
 | `docs/redactor.md` | Redactor (documentos de texto, exportación DOCX/ODT/PDF) |
 | `docs/sheetflow.md` | **SheetFlow**: tablas (celdas, fórmulas, importar/exportar XLSX/CSV/PDF) reutilizables en vPlan, Editor y Redactor |
+| `docs/importar-p6.md` | **Importar Primavera P6** (XML y XER): WBS→partidas, actividades, relaciones FS/SS/FF/SF, avance, previsualización y actualización por código (`classes/P6Importador.php`, `/programa/importar/p6`) |
 | `docs/web-extras.md` | Landing/Demo, Bandeja/soporte/visitantes/importación y Buscador de listas |
 | `docs/cambios-lineas-base.md` | Órdenes de cambio (instalación/retiro, reubicación…), líneas base y comparación, cruce de materiales, resumen ejecutivo diario y modo sin conexión |
 | `docs/vplan.md` | **vPlan** libre: láminas de bloques posicionables, navegador de láminas, modo diseño (capas, guías, insertar tablas), recovery dinámico, tamaño de hoja, tareas multipartida y PDF por lámina |

@@ -1061,6 +1061,36 @@ $ok('el generador solo cuenta la actividad si la inserción tuvo resultado', (fu
     $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
     return str_contains($c, "!empty(\$res['resultado'])");
 })());
+echo "Importar Primavera P6\n";
+$p6xml = \Classes\P6Importador::leer(__DIR__ . '/fixtures/p6-demo.xml');
+$p6xer = \Classes\P6Importador::leer(__DIR__ . '/fixtures/p6-demo.xer');
+$ok('lee el XML de P6 con actividades, hitos y relaciones', $p6xml['formato'] === 'XML de P6'
+    && count($p6xml['actividades']) === 3 && count($p6xml['dependencias']) === 3
+    && $p6xml['actividades'][2]['hito'] === true);
+$ok('lee el XER de P6 con la misma estructura', $p6xer['formato'] === 'XER de P6'
+    && count($p6xer['actividades']) === 3 && count($p6xer['dependencias']) === 3
+    && $p6xer['horas_dia'] === 8.0);
+$ok('mapea los tipos de relación y convierte la espera a días', $p6xml['dependencias'][0]['tipo'] === 'FS'
+    && $p6xml['dependencias'][1]['tipo'] === 'SS' && $p6xml['dependencias'][0]['retraso'] === 1);
+$ok('la prioridad del P6 se traduce a la escala del programa', (function () use ($p6xml, $p6xer) {
+    $prio = fn($d, $cod) => \Classes\P6Importador::prioridad(array_values(array_filter($d['actividades'], fn($a) => $a['codigo'] === $cod))[0]['prioridad'] ?? '');
+    return $prio($p6xml, 'A1001') === 'alta' && $prio($p6xer, 'A1001') === 'alta'
+        && $prio($p6xml, 'A1000') === 'media' && $prio($p6xer, 'A1000') === 'media';
+})());
+$ok('un archivo que no es P6 se rechaza con un mensaje claro', (function () {
+    try { \Classes\P6Importador::leer(__DIR__ . '/../README.md'); return false; } catch (\Throwable $e) { return true; }
+})());
+$ok('las rutas y la vista de importación P6 están registradas', (function () {
+    $r = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    $v = (string)@file_get_contents(__DIR__ . '/../views/programa/importar-p6.php');
+    return str_contains($r, "'/programa/importar/p6'") && str_contains($r, "'/programa/importar/p6/confirmar'")
+        && str_contains($v, 'Confirmar importación') && str_contains($v, 'name="duplicados"');
+})());
+$ok('el importador crea/actualiza actividades y guarda dependencias', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/P6Importador.php');
+    return str_contains($c, 'function aplicar(') && str_contains($c, 'INSERT IGNORE INTO actividad_dependencias')
+        && str_contains($c, "in_array(\$opciones['duplicados']") && str_contains($c, 'begin_transaction');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

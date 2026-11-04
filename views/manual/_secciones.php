@@ -202,6 +202,13 @@ HTML],
 <li>Si es lo que esperabas, <strong>Confirmar importación</strong>; si no, <em>Cancelar</em>.</li>
 </ol>
 <p class="manual-nota">Solo se importan nombres, fechas, avance, hitos, prioridad, notas y niveles. <strong>No</strong> se traen predecesoras, recursos ni calendarios.</p>
+<h4>Importar desde Primavera P6</h4>
+<ol>
+<li>Pulsa <strong>Importar P6</strong> (o entra a <em>Programa → Importar → Primavera P6</em>).</li>
+<li>Sube el <strong>XML de P6</strong> o el <strong>XER</strong> y elige si las fechas se recalculan con el calendario del proyecto o se conservan, y qué hacer si un código ya existe (actualizar, saltar o crear otro).</li>
+<li>Revisa la vista previa: partidas (WBS), actividades, dependencias, hitos y avisos.</li>
+<li>Confirma. Se importan también las <strong>relaciones</strong> (FS, SS, FF, SF con su espera) y el <strong>% de avance</strong>. Las tareas de resumen WBS se omiten.</li>
+</ol>
 <h4>Diagrama de Gantt por semanas</h4>
 <p>Debajo de la tabla, cada fila tiene su barra distribuida por semana: color según el estatus y relleno según el avance; un punto marca las actividades con restricción. Si activaste las <strong>Dependencias de obra</strong> en modo Informativo o Automático, aparece la casilla <em>Dependencias</em> en la leyenda para mostrar u ocultar las flechas entre actividades (rojas en la ruta crítica, naranjas con conflicto). El Gantt no se muestra en pantallas de celular.</p>
 <h4>Fechas reales, calendarios y restricciones</h4>
