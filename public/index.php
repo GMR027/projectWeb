@@ -429,6 +429,9 @@ $router->get('/transmittals/acuse', [TransmittalController::class, 'acusePublico
 $router->post('/transmittals/acuse', [TransmittalController::class, 'acusePublico']);
 // Línea de balance
 $router->get('/balance', [BalanceController::class, 'index']);
+$router->post('/balance/tipo', [BalanceController::class, 'tipo']);
+$router->post('/balance/tipo/editar', [BalanceController::class, 'tipoEditar']);
+$router->post('/balance/tipo/eliminar', [BalanceController::class, 'tipoEliminar']);
 $router->post('/balance/frente', [BalanceController::class, 'frente']);
 $router->post('/balance/frente/eliminar', [BalanceController::class, 'frenteEliminar']);
 $router->post('/balance/generar', [BalanceController::class, 'generar']);

@@ -14,31 +14,90 @@ class LineaBalance
 {
     use AccesoDb;
 
+    /** Tipos base con los que arranca cada proyecto (después se pueden crear, editar y borrar) */
     public const TIPOS = ['piso' => 'Piso', 'tramo' => 'Tramo', 'tunel' => 'Túnel', 'anillo' => 'Anillo', 'otro' => 'Otro'];
 
     public static function disponible(): bool
     {
         try {
-            return (bool)self::db()->query('SELECT 1 FROM frentes LIMIT 1');
+            return (bool)self::db()->query('SELECT 1 FROM frentes LIMIT 1')
+                && (bool)self::db()->query('SELECT 1 FROM frentes_tipos LIMIT 1');
         } catch (\Throwable $e) {
             return false;
         }
     }
 
+    /** Catálogo de tipos de frente del proyecto; si está vacío siembra los base */
+    public static function tipos(int $pid): array
+    {
+        $filas = self::filas("SELECT * FROM frentes_tipos WHERE proyecto_id = $pid AND activo = 1 ORDER BY orden, id");
+        if ($filas) return $filas;
+        $orden = 0;
+        foreach (self::TIPOS as $nombre) {
+            $orden++;
+            self::db()->query("INSERT IGNORE INTO frentes_tipos (proyecto_id, nombre, orden) VALUES ($pid, '" . self::esc($nombre) . "', $orden)");
+        }
+        return self::filas("SELECT * FROM frentes_tipos WHERE proyecto_id = $pid AND activo = 1 ORDER BY orden, id");
+    }
+
+    private static function tipoValido(int $pid, int $id): ?array
+    {
+        foreach (self::tipos($pid) as $t) if ((int)$t['id'] === $id) return $t;
+        return null;
+    }
+
+    public static function guardarTipo(int $pid, array $d): array
+    {
+        $nombre = mb_substr(trim((string)($d['nombre'] ?? '')), 0, 60);
+        if ($nombre === '') return [false, 'Escribe el nombre del tipo de frente'];
+        if (self::filas("SELECT 1 FROM frentes_tipos WHERE proyecto_id = $pid AND nombre = '" . self::esc($nombre) . "' LIMIT 1"))
+            return [false, 'Ya existe un tipo con ese nombre'];
+        $orden = (int)($d['orden'] ?? 0);
+        $color = preg_match('/^#[0-9a-f]{6}$/i', (string)($d['color'] ?? '')) ? $d['color'] : '#00b4d8';
+        self::db()->query("INSERT INTO frentes_tipos (proyecto_id, nombre, orden, color) VALUES ($pid, '" . self::esc($nombre) . "', $orden, '$color')");
+        return [true, 'Tipo creado'];
+    }
+
+    public static function editarTipo(int $pid, int $id, array $d): array
+    {
+        $tipo = self::tipoValido($pid, $id);
+        if (!$tipo) return [false, 'Tipo no encontrado'];
+        $nombre = mb_substr(trim((string)($d['nombre'] ?? '')), 0, 60);
+        if ($nombre === '') return [false, 'Escribe el nombre del tipo de frente'];
+        if (self::filas("SELECT 1 FROM frentes_tipos WHERE proyecto_id = $pid AND nombre = '" . self::esc($nombre) . "' AND id <> $id LIMIT 1"))
+            return [false, 'Ya existe un tipo con ese nombre'];
+        $orden = (int)($d['orden'] ?? 0);
+        $color = preg_match('/^#[0-9a-f]{6}$/i', (string)($d['color'] ?? '')) ? $d['color'] : '#00b4d8';
+        self::db()->query("UPDATE frentes_tipos SET nombre = '" . self::esc($nombre) . "', orden = $orden, color = '$color' WHERE id = $id AND proyecto_id = $pid");
+        return [true, 'Tipo actualizado'];
+    }
+
+    public static function eliminarTipo(int $pid, int $id): array
+    {
+        if (!self::tipoValido($pid, $id)) return [false, 'Tipo no encontrado'];
+        if (self::filas("SELECT 1 FROM frentes WHERE proyecto_id = $pid AND tipo_id = $id LIMIT 1"))
+            return [false, 'Ese tipo tiene frentes: cambia su tipo o bórralos primero'];
+        self::db()->query("DELETE FROM frentes_tipos WHERE id = $id AND proyecto_id = $pid");
+        return [true, 'Tipo eliminado'];
+    }
+
     public static function frentes(int $pid): array
     {
-        return self::filas("SELECT f.*, (SELECT COUNT(*) FROM actividades a WHERE a.frente_id = f.id) actividades
-            FROM frentes f WHERE f.proyecto_id = $pid AND f.activo = 1 ORDER BY f.orden, f.id");
+        return self::filas("SELECT f.*, t.nombre tipo_nombre, t.color tipo_color,
+                (SELECT COUNT(*) FROM actividades a WHERE a.frente_id = f.id) actividades
+            FROM frentes f LEFT JOIN frentes_tipos t ON t.id = f.tipo_id
+            WHERE f.proyecto_id = $pid AND f.activo = 1 ORDER BY f.orden, f.id");
     }
 
     public static function guardarFrente(int $pid, array $d): array
     {
         $nombre = mb_substr(trim((string)($d['nombre'] ?? '')), 0, 150);
         if ($nombre === '') return [false, 'Escribe el nombre del frente'];
-        $tipo = isset(self::TIPOS[$d['tipo'] ?? '']) ? $d['tipo'] : 'piso';
+        $tipo = self::tipoValido($pid, (int)($d['tipo_id'] ?? 0)) ?? (self::tipos($pid)[0] ?? null);
+        if (!$tipo) return [false, 'Crea un tipo de frente antes de agregar frentes'];
         $orden = (int)($d['orden'] ?? 0);
         $color = preg_match('/^#[0-9a-f]{6}$/i', (string)($d['color'] ?? '')) ? $d['color'] : '#00b4d8';
-        self::db()->query("INSERT INTO frentes (proyecto_id, nombre, tipo, orden, color) VALUES ($pid, '" . self::esc($nombre) . "', '$tipo', $orden, '$color')");
+        self::db()->query("INSERT INTO frentes (proyecto_id, nombre, tipo, tipo_id, orden, color) VALUES ($pid, '" . self::esc($nombre) . "', 'otro', " . (int)$tipo['id'] . ", $orden, '$color')");
         return [true, 'Frente creado'];
     }
 

@@ -471,7 +471,8 @@ HTML],
 ['id' => 'balance', 'despues' => 'lineatiempo', 'titulo' => 'Línea de balance (takt)', 'icono' => 'fa-chart-column', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Vista para obra repetitiva (pisos, túneles, tramos): muestra cómo avanza cada oficio por los frentes. Está en <strong>Planeación → Línea de balance</strong>.</p>
 <ol>
-<li><strong>Frentes:</strong> crea los pisos, tramos o anillos con su orden y color. El orden manda en el diagrama.</li>
+<li><strong>Tipos de frente:</strong> los base son piso, tramo, túnel, anillo y otro, pero puedes crear los tuyos (manzana, bloque, eje, cámara, nivel…) en <em>Tipos de frente</em>, con su orden y color. Un tipo con frentes no se puede borrar hasta reasignarlos.</li>
+<li><strong>Frentes:</strong> crea los pisos, tramos o anillos con su tipo, orden y color. El orden manda en el diagrama.</li>
 <li><strong>Generar:</strong> elige la partida (oficio), el nombre, la duración por frente, el <strong>takt</strong> y la fecha de inicio. Crea una actividad por frente, espaciada por el takt.</li>
 <li><strong>Diagrama:</strong> cada línea es un oficio y cada punto un frente. El <strong>takt</strong> es la pendiente entre frentes.</li>
 <li><strong>Cruces:</strong> si un oficio posterior empieza antes de que termine el anterior en el mismo frente, aparece una alerta. No bloquea: revisa si es una decisión consciente.</li>

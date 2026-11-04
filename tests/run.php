@@ -1012,6 +1012,29 @@ $ok('la migración y el esquema traen frentes y frente_id', (function () {
     return str_contains($m, 'CREATE TABLE IF NOT EXISTS frentes') && str_contains($m, 'frente_id')
         && str_contains($s, 'frente_id INT NULL') && str_contains($s, 'CREATE TABLE IF NOT EXISTS frentes');
 })());
+$ok('los tipos de frente viven en su propio catálogo con migración y esquema', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_frentes_tipos.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS frentes_tipos') && str_contains($m, 'ADD COLUMN tipo_id')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS frentes_tipos') && str_contains($s, 'tipo_id INT NULL');
+})());
+$ok('el catálogo de tipos siembra los base y permite crear, editar y eliminar', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
+    return str_contains($c, 'function tipos(') && str_contains($c, 'function guardarTipo(')
+        && str_contains($c, 'function editarTipo(') && str_contains($c, 'function eliminarTipo(')
+        && str_contains($c, 'INSERT IGNORE INTO frentes_tipos');
+})());
+$ok('el frente se guarda por tipo_id y no por el enum fijo', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
+    return str_contains($c, "\$d['tipo_id']") && str_contains($c, 'tipo_id, orden, color');
+})());
+$ok('las rutas y la vista del CRUD de tipos están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    $v = (string)@file_get_contents(__DIR__ . '/../views/balance/index.php');
+    return str_contains($t, "'/balance/tipo'") && str_contains($t, "'/balance/tipo/editar'")
+        && str_contains($t, "'/balance/tipo/eliminar'") && str_contains($v, '/balance/tipo/editar')
+        && str_contains($v, 'Tipos de frente');
+})());
 $ok('la línea de balance agrupa oficios, calcula takt y detecta cruces', (function () {
     $c = (string)@file_get_contents(__DIR__ . '/../classes/LineaBalance.php');
     return str_contains($c, 'function datos(') && str_contains($c, "'lineas'")
