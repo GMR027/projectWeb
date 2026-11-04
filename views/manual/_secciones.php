@@ -629,6 +629,8 @@ HTML],
 <li>En <strong>Asignaciones</strong> elige la actividad, el recurso y su <strong>dedicación (%)</strong>: qué parte de su jornada dedica a esa actividad mientras dure. Si lo asignas de nuevo, se actualiza el porcentaje.</li>
 <li>En <strong>Carga semanal</strong> ves una tabla de calor: verde (hasta 85 %), amarillo (85–100 %) y rojo (más de 100 %, sobrecarga). Pasa el cursor sobre una celda para ver las actividades y las horas. Los botones de arriba mueven la ventana de 4 en 4 semanas.</li>
 </ol>
+<h4>Nivelar sobrecargas</h4>
+<p>Cuando hay una sobrecarga, la pestaña <strong>Carga semanal</strong> muestra <strong>Propuestas para nivelar</strong>: actividades no críticas con holgura, cuántos días moverlas y la carga estimada después del movimiento. Revisa la simulación, marca las que quieras y pulsa <strong>Aplicar seleccionadas</strong>. Si no hay holgura suficiente, el sistema avisa y sugiere reforzar la cuadrilla o mover manualmente.</p>
 <p>La carga de una semana es la suma de las dedicaciones de las actividades que caen en ella, ponderadas por sus <strong>días hábiles</strong> (con el calendario y los festivos del proyecto). Las actividades al 100 % de avance ya no cargan al recurso. Una sobrecarga en las próximas 4 semanas aparece en la <a href="#inicio">Salud del proyecto</a>.</p>
 <p class="manual-nota">Solo el administrador y el cliente que gestiona el proyecto crean recursos y asignaciones; los visitantes solo consultan.</p>
 HTML],

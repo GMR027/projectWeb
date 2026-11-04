@@ -18,7 +18,7 @@ class Dependencias
     public static function actividades(int $proyectoId): array
     {
         $r = self::db()->query(
-            "SELECT a.id, a.codigo, a.nombre, a.fecha_inicio, a.fecha_fin, a.duracion_dias, a.hito, a.fecha_fija, a.progreso, a.status, p.id AS partida_id, p.codigo AS partida_codigo, p.nombre AS partida, p.color_bg AS color
+            "SELECT a.id, a.codigo, a.nombre, a.fecha_inicio, a.fecha_fin, a.duracion_dias, a.hito, a.fecha_fija, a.progreso, a.status, a.calendario_id, p.id AS partida_id, p.codigo AS partida_codigo, p.nombre AS partida, p.color_bg AS color
              FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = $proyectoId ORDER BY p.orden, p.codigo, a.orden, a.codigo"
         );
         $out = [];

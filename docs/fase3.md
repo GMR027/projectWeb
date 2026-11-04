@@ -27,6 +27,7 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 - `recursos(tipo persona|cuadrilla, personal_id?, integrantes, horas_dia)` y `actividad_recursos(actividad_id, recurso_id, dedicacion %)`.
 - Carga semanal = Σ dedicación × días hábiles de la actividad dentro de la semana ÷ días hábiles de la semana (`Calendario`). Las actividades al 100 % no cargan. > 100 % = sobrecarga (rojo), ≥ 85 % alto (amarillo). Las horas (para cuadrillas) = dedicación × días × horas_dia × integrantes.
 - Salud: indicador «Recursos sobrecargados» (próximas 4 semanas, `Recursos::sobrecargasProximas`).
+- **Nivelación** (`Classes\NivelacionRecursos`): con `Recursos::carga()` y `Dependencias::datos()` propone mover actividades **no críticas** dentro de su holgura para bajar una sobrecarga; simula la nueva carga y el nuevo fin. `aplicar()` mueve días hábiles con el calendario de la actividad, recalcula la partida y propaga dependencias. Sin holgura, solo muestra alternativas.
 
 ## 3.3 RFI
 - `rfis` (número RFI-001…, asunto, pregunta, respuesta, responsable, prioridad, estado abierto/respondido/cerrado, fecha, fecha_limite, fecha_respuesta, `actividad_id` = la que bloquea).

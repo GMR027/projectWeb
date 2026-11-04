@@ -128,6 +128,20 @@ class Calendario
         }
     }
 
+    /** Suma (o resta) días hábiles a una fecha */
+    public function sumarHabiles(string $fecha, int $dias): string
+    {
+        $d = new \DateTime($fecha);
+        $paso = $dias >= 0 ? 1 : -1;
+        $n = abs($dias);
+        $c = 0;
+        while ($c < $n) {
+            $d->modify(($paso > 0 ? '+' : '-') . '1 day');
+            if ($this->esHabil($d->format('Y-m-d'))) $c++;
+        }
+        return $d->format('Y-m-d');
+    }
+
     /** Fecha fin proyectada con la duración restante desde una fecha base (por defecto hoy) */
     public function proyectarFin(?float $duracionRestante, ?string $desde = null): ?string
     {

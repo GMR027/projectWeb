@@ -4,6 +4,7 @@ namespace Controllers;
 
 use MVC\Router;
 use Classes\Recursos;
+use Classes\NivelacionRecursos;
 
 /** Recursos y cuadrillas: carga por semana con alerta de sobrecarga (ver Classes\Recursos) */
 class RecursosController
@@ -25,6 +26,7 @@ class RecursosController
             'actividades' => $disponible && $gestiona && $pestana === 'asignaciones' ? Recursos::actividades($pid) : [],
             'personal' => $disponible && $gestiona && $pestana === 'recursos' ? Recursos::personal($pid) : [],
             'editar' => null, 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
+            'propuestas' => $disponible && $gestiona && $pestana === 'carga' ? NivelacionRecursos::propuestas($proyecto, $semanas) : [],
         ]);
     }
 
@@ -51,6 +53,19 @@ class RecursosController
     {
         $p = proyecto_de_peticion(true);
         self::volver((int)$p->id, 'asignaciones', Recursos::asignar((int)$p->id, (int)($_POST['actividad_id'] ?? 0), (int)($_POST['recurso_id'] ?? 0), (int)($_POST['dedicacion'] ?? 100)));
+    }
+
+    public static function nivelar()
+    {
+        $p = proyecto_de_peticion(true);
+        $sel = [];
+        foreach ((array)($_POST['actividad_id'] ?? []) as $i => $aid) {
+            if (empty($_POST['aplicar'][$i])) continue;
+            $sel[] = ['actividad_id' => (int)$aid, 'shift' => (int)($_POST['shift'][$i] ?? 0)];
+        }
+        $n = NivelacionRecursos::aplicar($p, $sel);
+        header('Location: /recursos?proyecto=' . (int)$p->id . '&pestana=carga&' . ($n ? 'ok=' . urlencode($n . ' actividad(es) movida(s)') : 'error=' . urlencode('No se aplicó ningún movimiento')));
+        exit;
     }
 
     public static function quitar()

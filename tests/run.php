@@ -987,6 +987,24 @@ $ok('la actividad tiene los campos de fecha real, calendario y restricción', (f
 })());
 $ok('el Programa proyecta el fin y avisa si llega tarde o incumple la restricción', str_contains((string)@file_get_contents(__DIR__ . '/../controllers/ProgramaController.php'), 'proyectarFin(')
     && str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'proyecciones'));
+echo "Nivelación de recursos\n";
+$ok('la nivelación solo propone actividades no críticas con holgura', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/NivelacionRecursos.php');
+    return str_contains($c, 'function propuestas(') && str_contains($c, "\$a['critica']")
+        && str_contains($c, "\$holgura") && str_contains($c, 'sumarHabiles(');
+})());
+$ok('la nivelación aplica fechas y recalcula la partida', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/NivelacionRecursos.php');
+    return str_contains($c, 'function aplicar(') && str_contains($c, 'recalcularFechas()')
+        && str_contains($c, 'Dependencias::propagar(');
+})());
+$ok('el calendario suma días hábiles para mover una actividad', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Calendario.php'), 'function sumarHabiles('));
+$ok('la ruta de nivelación está registrada', str_contains((string)@file_get_contents(__DIR__ . '/../public/index.php'), "'/recursos/nivelar'"));
+$ok('Recursos muestra propuestas, simulación y aplicación', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/recursos/index.php');
+    return str_contains($v, '/recursos/nivelar') && str_contains($v, 'Propuestas para nivelar')
+        && str_contains($v, 'Nueva carga') && str_contains($v, 'Aplicar seleccionadas');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

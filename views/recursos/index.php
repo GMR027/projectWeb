@@ -36,6 +36,36 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
             </ul>
         </div>
     <?php endif; ?>
+    <?php if ($sob): ?>
+        <?php if ($propuestas): ?>
+        <form method="POST" action="/recursos/nivelar" class="card" style="margin-bottom:1.2rem">
+            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Propuestas para nivelar</h3>
+            <p class="text-muted text-sm">Solo se mueven actividades no críticas dentro de su holgura. Revisa la simulación y aplica las que quieras.</p>
+            <div class="tabla-wrapper"><table class="tabla">
+                <thead><tr><th></th><th>Recurso / semana</th><th>Actividad</th><th class="num">Carga</th><th class="num">Mover</th><th class="num">Nueva carga</th><th>Nuevo fin</th><th class="num">Holgura</th></tr></thead>
+                <tbody>
+                <?php foreach ($propuestas as $i => $x): ?>
+                    <tr><td><input type="checkbox" name="aplicar[<?php echo $i; ?>]" value="1"></td>
+                        <td><strong><?php echo s($x['recurso']); ?></strong><br><small class="text-muted">Semana del <?php echo s(formatear_fecha($x['semana_inicio'], 'd/m/Y')); ?></small></td>
+                        <td><span class="mono"><?php echo s($x['codigo']); ?></span> <?php echo s($x['actividad']); ?><br><small class="text-muted"><?php echo (int)$x['dedicacion']; ?> % · fin actual <?php echo s(formatear_fecha($x['fin'], 'd/m/Y')); ?></small></td>
+                        <td class="num mono text-danger"><?php echo (int)$x['carga']; ?> %</td>
+                        <td class="num mono"><?php echo (int)$x['shift']; ?> d</td>
+                        <td class="num mono text-success"><?php echo (int)$x['nueva']; ?> %</td>
+                        <td class="mono"><?php echo s(formatear_fecha($x['nuevo_fin'], 'd/m/Y')); ?></td>
+                        <td class="num mono"><?php echo (int)$x['holgura']; ?> d</td>
+                        <input type="hidden" name="actividad_id[<?php echo $i; ?>]" value="<?php echo (int)$x['actividad_id']; ?>">
+                        <input type="hidden" name="shift[<?php echo $i; ?>]" value="<?php echo (int)$x['shift']; ?>">
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table></div>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> Aplicar seleccionadas</button>
+        </form>
+        <?php else: ?>
+        <div class="alerta alerta-aviso"><strong>Sin propuestas automáticas.</strong> No hay actividades no críticas con holgura suficiente. Alternativas: reforzar la cuadrilla, trabajar un sábado o mover manualmente una actividad revisando dependencias.</div>
+        <?php endif; ?>
+    <?php endif; ?>
     <div class="rc-nav">
         <a class="btn btn-sm btn-ghost" href="<?php echo s($url(['desde' => $desde - 4, 'semanas' => $nSemanas])); ?>">← 4 semanas</a>
         <a class="btn btn-sm btn-ghost" href="<?php echo s($url(['semanas' => $nSemanas])); ?>">Hoy</a>

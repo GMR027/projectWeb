@@ -433,6 +433,7 @@ $router->post('/recursos/guardar', [RecursosController::class, 'guardar']);
 $router->post('/recursos/eliminar', [RecursosController::class, 'eliminar']);
 $router->post('/recursos/asignar', [RecursosController::class, 'asignar']);
 $router->post('/recursos/quitar', [RecursosController::class, 'quitar']);
+$router->post('/recursos/nivelar', [RecursosController::class, 'nivelar']);
 $router->get('/rfi', [RfiController::class, 'index']);
 $router->get('/rfi/pdf', [RfiController::class, 'pdf']);
 $router->post('/rfi/guardar', [RfiController::class, 'guardar']);
