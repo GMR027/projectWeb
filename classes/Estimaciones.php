@@ -32,6 +32,7 @@ class Estimaciones
             'anticipo_monto' => (float)($c['anticipo_monto'] ?? 0),
             'retencion_pct' => (float)($c['retencion_pct'] ?? 5),
             'iva_pct' => (float)($c['iva_pct'] ?? 16),
+            'dias_cobro' => (int)($c['dias_cobro'] ?? 30),
             'notas' => (string)($c['notas'] ?? ''),
         ];
     }
@@ -42,15 +43,16 @@ class Estimaciones
         $anticipo = self::numero($d['anticipo_monto'] ?? null) ?? 0;
         $ret = self::numero($d['retencion_pct'] ?? null) ?? 5;
         $iva = self::numero($d['iva_pct'] ?? null) ?? 16;
+        $dias = max(0, min(365, (int)($d['dias_cobro'] ?? 30)));
         if ($monto < 0 || $anticipo < 0) return [false, 'Los montos no pueden ser negativos'];
         if ($anticipo > $monto + 0.005) return [false, 'El anticipo no puede ser mayor que el monto del contrato'];
         if ($ret < 0 || $ret > 100 || $iva < 0 || $iva > 100) return [false, 'Los porcentajes deben estar entre 0 y 100'];
         $notas = mb_substr(trim((string)($d['notas'] ?? '')), 0, 5000);
         $v = fn($x) => "'" . self::esc($x) . "'";
-        self::db()->query("INSERT INTO costos_contrato (proyecto_id, monto_contrato, anticipo_monto, retencion_pct, iva_pct, notas)
-            VALUES ($pid, " . round($monto, 2) . ", " . round($anticipo, 2) . ", " . round($ret, 2) . ", " . round($iva, 2) . ", {$v($notas)})
+        self::db()->query("INSERT INTO costos_contrato (proyecto_id, monto_contrato, anticipo_monto, retencion_pct, iva_pct, dias_cobro, notas)
+            VALUES ($pid, " . round($monto, 2) . ", " . round($anticipo, 2) . ", " . round($ret, 2) . ", " . round($iva, 2) . ", $dias, {$v($notas)})
             ON DUPLICATE KEY UPDATE monto_contrato = VALUES(monto_contrato), anticipo_monto = VALUES(anticipo_monto),
-                retencion_pct = VALUES(retencion_pct), iva_pct = VALUES(iva_pct), notas = VALUES(notas)");
+                retencion_pct = VALUES(retencion_pct), iva_pct = VALUES(iva_pct), dias_cobro = VALUES(dias_cobro), notas = VALUES(notas)");
         self::auditar($pid, 'guardar_contrato', 'editar', 'Actualizó los datos del contrato: ' . Costos::moneda($monto) . ', anticipo ' . Costos::moneda($anticipo), 0);
         return [true, 'Datos del contrato guardados'];
     }
@@ -112,6 +114,8 @@ class Estimaciones
         $retPct = max(0, min(100, self::numero($d['retencion_pct'] ?? null) ?? 5));
         $antPct = max(0, min(100, self::numero($d['anticipo_pct'] ?? null) ?? 0));
         $ajuste = self::numero($d['ajuste'] ?? null) ?? 0;
+        $cobroEst = self::fecha($d['fecha_cobro_estimada'] ?? '');
+        $cobroReal = self::fecha($d['fecha_cobro_real'] ?? '');
         $notas = mb_substr(trim((string)($d['notas'] ?? '')), 0, 5000);
 
         $lineas = [];
@@ -151,7 +155,9 @@ class Estimaciones
         $campos = "numero = {$v($numero)}, fecha = '$fecha', periodo_desde = " . ($desde ? "'$desde'" : 'NULL') . ", periodo_hasta = " . ($hasta ? "'$hasta'" : 'NULL') . ",
             subtotal = $subtotal, iva_pct = " . round($ivaPct, 2) . ", iva = $iva, retencion_pct = " . round($retPct, 2) . ", retencion = $retencion,
             anticipo_pct = " . round($antPct, 2) . ", amortizacion = $amortizacion, ajuste = " . round($ajuste, 2) . ",
-            total_bruto = $bruto, neto = $neto, estado = '$estado', notas = {$v($notas)}";
+            total_bruto = $bruto, neto = $neto, estado = '$estado',
+            fecha_cobro_estimada = " . ($cobroEst ? "'$cobroEst'" : 'NULL') . ", fecha_cobro_real = " . ($cobroReal ? "'$cobroReal'" : 'NULL') . ",
+            notas = {$v($notas)}";
 
         $db = self::db();
         $nuevo = !$id;

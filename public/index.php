@@ -394,6 +394,8 @@ $router->post('/carpetas/mover', [CarpetaController::class, 'mover']);
 $router->get('/costos', [CostosController::class, 'index']);
 $router->post('/costos/presupuesto', [CostosController::class, 'presupuesto']);
 $router->post('/costos/recalcular', [CostosController::class, 'recalcular']);
+$router->post('/costos/flujo/concepto', [CostosController::class, 'conceptoFlujo']);
+$router->post('/costos/flujo/concepto/eliminar', [CostosController::class, 'eliminarConceptoFlujo']);
 $router->post('/costos/compromiso', [CostosController::class, 'compromiso']);
 $router->post('/costos/compromiso/aplicar', [CostosController::class, 'aplicarFactura']);
 $router->post('/costos/compromiso/cerrar', [CostosController::class, 'cerrarCompromiso']);

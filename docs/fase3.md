@@ -6,6 +6,7 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 |---|---|---|---|
 | Costos y presupuesto | `/costos` | `classes/Costos.php`, `CostosController`, `views/costos/` | Solo quien gestiona el proyecto (admin / cliente propietario o asignado). Clave de visitante `costos` |
 | Almacén | `/almacen` | `classes/Almacen.php`, `AlmacenController`, `views/almacen/` | Ve todos; edita quien gestiona o el colaborador con `almacen`. Clave `almacen` |
+| Flujo de caja | `/costos?pestana=flujo` | `classes/FlujoCaja.php`, `views/costos/_flujo.php` | Solo quien gestiona el proyecto |
 | Recursos y cuadrillas | `/recursos` | `classes/Recursos.php`, `RecursosController`, `views/recursos/` | Ve todos; edita quien gestiona. Clave `recursos` |
 | RFI | `/rfi` | `classes/Rfi.php`, `RfiController`, `views/rfi/` | Ve todos; edita quien gestiona. Clave `rfi` |
 | Compartir (enlaces) | `/compartir` | `classes/Enlaces.php`, `CompartirController`, `views/compartir/` | Solo quien gestiona |
@@ -47,6 +48,13 @@ _Se lee solo al tocar estos módulos._ Migración: `database/migracion_fase3.sql
 - **Ajuste** (`Almacen::ajuste()`): entrada o salida manual con motivo obligatorio; una salida no puede dejar existencia negativa.
 - **Existencia** = Σ entradas + ajustes de entrada − salidas − ajustes de salida. Se calcula en `Almacen::stock()`; no se guarda a mano.
 - Permisos: la clave `almacen` está en `Model\Usuario::HERRAMIENTAS` y en el menú; el visitante solo consulta. Migración `database/migracion_almacen.sql`.
+
+## 3.7 Flujo de caja
+- `costos_contrato.dias_cobro` (30 por defecto), `estimaciones.fecha_cobro_estimada`/`fecha_cobro_real`, `compromisos.fecha_pago_programada` y `flujo_conceptos` (nombre, tipo ingreso/egreso, monto, frecuencia semanal/quincenal/mensual, inicio, fin).
+- `FlujoCaja::proyectar()` agrupa por semana desde el lunes de la fecha elegida: cobros de estimaciones (real → estimada → fecha + días), saldo de compromisos abiertos, costo real y conceptos recurrentes; calcula neto y acumulado. No es saldo bancario: es una proyección.
+- `FlujoCaja::costoFinal()` = AC + comprometido + `max(0, BAC − EV − comprometido)`; compara contra BAC y muestra la variación.
+- La pestaña incluye tabla semanal, gráfica de flujo acumulado, próximos movimientos y captura de recurrentes.
+- Migración: `database/migracion_flujo_caja.sql`.
 
 ## Pruebas
 Con copia de BD (AGENTS.md, punto 8). Se probó: captura de presupuesto/costos/estimaciones, órdenes de cambio, sobrecarga con dos actividades al 70 %, RFI vencido, token inválido/caducado (404) y `.ics` (líneas ≤ 75 octetos).

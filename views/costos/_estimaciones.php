@@ -44,6 +44,7 @@ $antPct = (float)($est['anticipo_pct'] ?? $antPctDefault);
                 <label>Anticipo recibido<input type="text" inputmode="decimal" name="anticipo_monto" value="<?php echo s(number_format((float)$c['anticipo_monto'], 2, '.', '')); ?>" placeholder="0.00"></label>
                 <label>Retención (%)<input type="number" name="retencion_pct" min="0" max="100" step="0.01" value="<?php echo s($c['retencion_pct']); ?>"></label>
                 <label>IVA (%)<input type="number" name="iva_pct" min="0" max="100" step="0.01" value="<?php echo s($c['iva_pct']); ?>"></label>
+                <label>Días de cobro<input type="number" name="dias_cobro" min="0" max="365" value="<?php echo (int)($c['dias_cobro'] ?? 30); ?>"><small class="text-muted">Para proyectar el cobro de las estimaciones</small></label>
                 <label class="co-ancho">Notas<textarea name="notas" rows="2" maxlength="5000"><?php echo s($c['notas']); ?></textarea></label>
             </div>
             <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar datos del contrato</button>
@@ -71,6 +72,8 @@ $antPct = (float)($est['anticipo_pct'] ?? $antPctDefault);
         <label>Retención (%)<input type="number" name="retencion_pct" min="0" max="100" step="0.01" value="<?php echo s($retPct); ?>" data-est-pct></label>
         <label>Amortización anticipo (%)<input type="number" name="anticipo_pct" min="0" max="100" step="0.01" value="<?php echo s($antPct); ?>" data-est-pct></label>
         <label>Ajuste de precios (+/−)<input type="text" inputmode="decimal" name="ajuste" value="<?php echo s(number_format((float)($est['ajuste'] ?? 0), 2, '.', '')); ?>" data-est-ajuste></label>
+        <label>Cobro estimado<input type="date" name="fecha_cobro_estimada" value="<?php echo s($est['fecha_cobro_estimada'] ?? ''); ?>"></label>
+        <label>Cobro real<input type="date" name="fecha_cobro_real" value="<?php echo s($est['fecha_cobro_real'] ?? ''); ?>"></label>
         <label class="co-ancho">Notas<textarea name="notas" rows="2" maxlength="5000"><?php echo s($est['notas'] ?? ''); ?></textarea></label>
     </div>
 

@@ -4,7 +4,7 @@ use Classes\Costos;
 
 $pid = (int)$proyecto->id;
 $url = fn(array $q = []) => '/costos?' . http_build_query(['proyecto' => $pid] + $q);
-$tabs = ['resumen' => ['fa-gauge-high', 'Resumen y valor ganado'], 'real' => ['fa-receipt', 'Costo real'], 'estimaciones' => ['fa-file-invoice-dollar', 'Estimaciones'], 'compromisos' => ['fa-file-signature', 'Compromisos'], 'cambios' => ['fa-file-circle-exclamation', 'Órdenes de cambio']];
+$tabs = ['resumen' => ['fa-gauge-high', 'Resumen y valor ganado'], 'real' => ['fa-receipt', 'Costo real'], 'estimaciones' => ['fa-file-invoice-dollar', 'Estimaciones'], 'compromisos' => ['fa-file-signature', 'Compromisos'], 'flujo' => ['fa-money-bill-trend-up', 'Flujo de caja'], 'cambios' => ['fa-file-circle-exclamation', 'Órdenes de cambio']];
 $m = fn($x) => Costos::moneda((float)$x);
 $ind = fn($v, $bueno = 1.0) => $v === null ? '—' : number_format($v, 2);
 $clsIdx = fn($v) => $v === null ? '' : ($v < 0.9 ? 'cs-mal' : ($v < 1 ? 'co-aviso' : 'cs-bien'));
@@ -98,6 +98,9 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
     <p class="text-muted text-sm">Cuando todas las actividades con duración de una partida tienen cantidad y precio unitario, el presupuesto se calcula solo y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto manual y se muestra cuántas faltan. El <strong>importe</strong> se captura en la actividad (<em>Editar actividad → Concepto de obra</em>).</p>
     <p class="text-muted text-sm">PV = presupuesto vigente × avance programado a hoy · EV = presupuesto vigente × avance real (ambos pesados por la duración de las actividades, como la Curva S) · AC = costo real capturado · CPI = EV ÷ AC · SPI = EV ÷ PV.</p>
 
+<?php elseif ($pestana === 'flujo'): ?>
+    <?php include __DIR__ . '/_flujo.php'; ?>
+
 <?php elseif ($pestana === 'real'): $tipo = 'real'; $e = $editar; include __DIR__ . '/_movimientos.php'; ?>
 
 <?php elseif ($pestana === 'estimaciones'): ?>
@@ -132,6 +135,7 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
                 <label>Monto *<input type="text" inputmode="decimal" name="monto" required value="<?php echo $ce ? s(number_format((float)$ce['monto'], 2, '.', '')) : ''; ?>" placeholder="0.00"></label>
                 <label>Fecha de emisión<input type="date" name="fecha" value="<?php echo s($ce['fecha'] ?? date('Y-m-d')); ?>"></label>
                 <label>Entrega / vigencia<input type="date" name="entrega" value="<?php echo s($ce['entrega'] ?? ''); ?>"></label>
+                <label>Pago programado<input type="date" name="fecha_pago_programada" value="<?php echo s($ce['fecha_pago_programada'] ?? ''); ?>"></label>
                 <label>Partida *<select name="partida_id" required>
                     <option value="">— Elige —</option>
                     <?php foreach ($resumen['partidas'] as $p): ?><option value="<?php echo (int)$p['id']; ?>"<?php echo (int)($ce['partida_id'] ?? 0) === (int)$p['id'] ? ' selected' : ''; ?>><?php echo s($p['codigo'] . ' ' . $p['nombre']); ?> · disp. <?php echo $m($p['disponible']); ?></option><?php endforeach; ?>

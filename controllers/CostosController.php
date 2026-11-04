@@ -7,6 +7,7 @@ use Classes\Costos;
 use Classes\Cantidades;
 use Classes\Compromisos;
 use Classes\Estimaciones;
+use Classes\FlujoCaja;
 use Model\Archivo;
 
 /** Costos y presupuesto: presupuesto por partida, costo real, estimaciones y valor ganado (ver Classes\Costos). Solo quien gestiona el proyecto */
@@ -16,7 +17,7 @@ class CostosController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'real', 'estimaciones', 'compromisos', 'cambios'], true) ? $_GET['pestana'] : 'resumen';
+        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'real', 'estimaciones', 'compromisos', 'flujo', 'cambios'], true) ? $_GET['pestana'] : 'resumen';
         $disponible = Costos::disponible();
         $resumen = $disponible ? Costos::resumen($proyecto) : null;
         $movimientos = $disponible && in_array($pestana, ['real', 'estimaciones'], true) ? Costos::movimientos($pid, $pestana === 'real' ? 'real' : 'estimacion') : [];
@@ -29,6 +30,11 @@ class CostosController
         $estimacionEditar = $disponible && $pestana === 'estimaciones' && !empty($_GET['editar_estimacion']) ? Estimaciones::estimacion($pid, (int)$_GET['editar_estimacion']) : null;
         $contrato = $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::contrato($pid) : [];
         $resumenContrato = $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::resumenContrato($pid) : [];
+        $desdeFlujo = texto_param($_GET['desde'] ?? '') ?: date('Y-m-d');
+        $semanasFlujo = max(1, min(52, (int)($_GET['semanas'] ?? 12)));
+        $flujo = $disponible && $pestana === 'flujo' && FlujoCaja::disponible() ? FlujoCaja::proyectar($proyecto, $desdeFlujo, $semanasFlujo) : [];
+        $costoFinal = $disponible && $pestana === 'flujo' ? FlujoCaja::costoFinal($proyecto) : [];
+        $conceptosFlujo = $disponible && $pestana === 'flujo' && FlujoCaja::disponible() ? FlujoCaja::conceptos($pid) : [];
         $router->render('costos/index', [
             'titulo' => 'Costos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'pestana' => $pestana, 'disponible' => $disponible,
             'resumen' => $resumen,
@@ -43,6 +49,8 @@ class CostosController
             'estimaciones' => $estimaciones, 'estimacionEditar' => $estimacionEditar, 'contrato' => $contrato,
             'resumenContrato' => $resumenContrato,
             'siguienteNumero' => $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::siguienteNumero($pid) : '',
+            'flujo' => $flujo, 'costoFinal' => $costoFinal, 'conceptosFlujo' => $conceptosFlujo,
+            'desdeFlujo' => $desdeFlujo, 'semanasFlujo' => $semanasFlujo,
         ]);
     }
 
@@ -61,6 +69,20 @@ class CostosController
             Costos::guardarPresupuesto((int)$proyecto->id, (int)$partidaId, (float)$monto);
         }
         self::volver((int)$proyecto->id, 'resumen', '&ok=presupuesto');
+    }
+
+    public static function conceptoFlujo()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        [$ok, $msg] = FlujoCaja::guardarConcepto((int)$proyecto->id, $_POST);
+        self::volver((int)$proyecto->id, 'flujo', ($ok ? '&ok=' : '&error=') . urlencode($msg));
+    }
+
+    public static function eliminarConceptoFlujo()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        FlujoCaja::eliminarConcepto((int)$proyecto->id, (int)($_POST['id'] ?? 0));
+        self::volver((int)$proyecto->id, 'flujo', '&ok=' . urlencode('Concepto eliminado'));
     }
 
     public static function compromiso()

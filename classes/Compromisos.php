@@ -124,6 +124,7 @@ class Compromisos
         $concepto = mb_substr(trim((string)($d['concepto'] ?? '')), 0, 255);
         $fecha = self::fecha($d['fecha'] ?? '') ?: date('Y-m-d');
         $entrega = self::fecha($d['entrega'] ?? '');
+        $pago = self::fecha($d['fecha_pago_programada'] ?? '');
         $archivo = (int)($d['archivo_id'] ?? 0);
         if ($archivo && !self::filas("SELECT id FROM archivos WHERE id = $archivo AND proyecto_id = $pid")) $archivo = 0;
         $notas = mb_substr(trim((string)($d['notas'] ?? '')), 0, 5000);
@@ -151,7 +152,7 @@ class Compromisos
         $v = fn($x) => "'" . self::esc($x) . "'";
         $campos = "partida_id = $partida, actividad_id = " . ($actividad ?: 'NULL') . ", tipo = '$tipo', estado = '$estado',
             proveedor = {$v($proveedor)}, numero = {$v($numero)}, concepto = {$v($concepto)}, monto = " . round($monto, 2) . ",
-            fecha = '$fecha', entrega = " . ($entrega ? "'$entrega'" : 'NULL') . ", archivo_id = " . ($archivo ?: 'NULL') . ",
+            fecha = '$fecha', entrega = " . ($entrega ? "'$entrega'" : 'NULL') . ", fecha_pago_programada = " . ($pago ? "'$pago'" : 'NULL') . ", archivo_id = " . ($archivo ?: 'NULL') . ",
             notas = {$v($notas)}, motivo_sobregiro = {$v($motivo)}";
         if ($id) {
             self::db()->query("UPDATE compromisos SET $campos WHERE id = $id AND proyecto_id = $pid");

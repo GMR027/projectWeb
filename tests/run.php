@@ -836,6 +836,30 @@ $ok('la página de subcontratos tiene documentos, estimaciones y PDF', (function
         && str_contains($v, 'Documentos obligatorios') && str_contains($v, '/subcontratos/pdf');
 })());
 $ok('Salud avisa de los documentos de subcontrato pendientes', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Salud.php'), 'Subcontratos::resumen('));
+echo "Flujo de caja y costo final\n";
+$ok('las frecuencias y tipos del flujo están completos', count(\Classes\FlujoCaja::FRECUENCIAS) === 3
+    && count(\Classes\FlujoCaja::TIPOS) === 2);
+$ok('la migración y el esquema traen fechas de cobro, pago y conceptos recurrentes', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_flujo_caja.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'fecha_cobro_estimada') && str_contains($m, 'fecha_pago_programada')
+        && str_contains($m, 'dias_cobro') && str_contains($m, 'flujo_conceptos')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS flujo_conceptos');
+})());
+$ok('las rutas del flujo están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/costos/flujo/concepto'") && str_contains($t, "'/costos/flujo/concepto/eliminar'");
+})());
+$ok('el costo final suma real, comprometido y trabajo restante', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/FlujoCaja.php');
+    return str_contains($c, 'function costoFinal(') && str_contains($c, '$ac + $comp + $restante');
+})());
+$ok('Costos tiene la pestaña de flujo con tabla, gráfica y recurrentes', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/costos/_flujo.php');
+    $i = (string)@file_get_contents(__DIR__ . '/../views/costos/index.php');
+    return str_contains($i, "'flujo' =>") && str_contains($v, 'flujo-chart')
+        && str_contains($v, 'Costo final estimado') && str_contains($v, '/costos/flujo/concepto');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

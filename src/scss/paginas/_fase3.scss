@@ -66,3 +66,12 @@
   > div { display: flex; justify-content: space-between; gap: 2rem; font-size: 1.25rem; }
   .est-neto { margin-top: .4rem; padding-top: .5rem; border-top: 2px solid var(--border); font-size: 1.5rem; color: var(--primary-ink); }
 }
+
+// Flujo de caja
+.flujo-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 80rem) { .flujo-grid { grid-template-columns: 1fr; } }
+.flujo-caja { border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: .8rem; padding: 1rem; background: var(--surface); }
+.flujo-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem 1.2rem; }
+.flujo-datos small { display: block; color: var(--text-muted); font-size: 1.05rem; text-transform: uppercase; letter-spacing: .04em; }
+.flujo-datos b { font-size: 1.3rem; }
+.flujo-negativo td { background: rgba(220, 38, 38, .06); }

@@ -2481,6 +2481,7 @@ CREATE TABLE IF NOT EXISTS compromisos (
     monto DECIMAL(16,2) NOT NULL DEFAULT 0,
     fecha DATE NOT NULL,
     entrega DATE NULL,
+    fecha_pago_programada DATE NULL,
     archivo_id INT NULL,
     notas TEXT,
     motivo_sobregiro VARCHAR(500) NOT NULL DEFAULT '',
@@ -2516,6 +2517,7 @@ CREATE TABLE IF NOT EXISTS costos_contrato (
     anticipo_monto DECIMAL(16,2) NOT NULL DEFAULT 0,
     retencion_pct DECIMAL(5,2) NOT NULL DEFAULT 5,
     iva_pct DECIMAL(5,2) NOT NULL DEFAULT 16,
+    dias_cobro INT NOT NULL DEFAULT 30,
     notas TEXT,
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
@@ -2540,6 +2542,8 @@ CREATE TABLE IF NOT EXISTS estimaciones (
     neto DECIMAL(16,2) NOT NULL DEFAULT 0,
     estado ENUM('borrador','aprobada','pagada') NOT NULL DEFAULT 'borrador',
     movimiento_id INT NULL,
+    fecha_cobro_estimada DATE NULL,
+    fecha_cobro_real DATE NULL,
     notas TEXT,
     usuario VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -2719,4 +2723,20 @@ CREATE TABLE IF NOT EXISTS subcontrato_estimaciones (
     FOREIGN KEY (subcontrato_id) REFERENCES subcontratos(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (movimiento_id) REFERENCES costos_movimientos(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS flujo_conceptos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL DEFAULT '',
+    tipo ENUM('ingreso','egreso') NOT NULL DEFAULT 'egreso',
+    monto DECIMAL(16,2) NOT NULL DEFAULT 0,
+    frecuencia ENUM('semanal','quincenal','mensual') NOT NULL DEFAULT 'mensual',
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    notas VARCHAR(500) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_flujo_proyecto (proyecto_id, activo),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

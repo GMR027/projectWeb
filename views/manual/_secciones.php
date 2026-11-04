@@ -669,6 +669,14 @@ HTML],
 <li><strong>Neto a cobrar</strong> = base + IVA − retención − amortización.</li>
 </ul>
 <p>Al aprobar la estimación se descuenta el <strong>saldo del contrato</strong>, se acumula el <strong>fondo retenido</strong> y baja el <strong>anticipo pendiente</strong>. El borrador no descuenta nada. El botón <strong>PDF</strong> genera la hoja para presentarla al cliente, con deducciones, acumulados y firmas. La <em>captura rápida</em> queda plegada para registros antiguos o cobros sueltos.</p>
+<h4>Flujo de caja y costo final</h4>
+<p>La pestaña <strong>Flujo de caja</strong> proyecta 12 semanas (puedes cambiar el inicio y el número de semanas):</p>
+<ul>
+<li><strong>Cobros:</strong> neto de las estimaciones, en su fecha real, estimada o fecha + días de cobro del contrato.</li>
+<li><strong>Pagos:</strong> saldo pendiente de compromisos y costo real ya registrado.</li>
+<li><strong>Recurrentes:</strong> nómina, renta, seguros y servicios; se capturan una vez con su frecuencia.</li>
+</ul>
+<p>La tabla muestra el neto y el <strong>acumulado</strong> por semana; si baja de cero se pinta en rojo y aparece un aviso de hueco de caja. El <strong>costo final estimado</strong> suma costo real + comprometido + trabajo restante no cubierto, y lo compara con el presupuesto vigente.</p>
 <h4>Qué calcula</h4>
 <table class="tabla manual-tabla">
 <thead><tr><th>Sigla</th><th>Significa</th></tr></thead>
