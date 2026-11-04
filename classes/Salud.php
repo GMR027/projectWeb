@@ -264,6 +264,13 @@ class Salud
                     : 'Sin riesgos abiertos en el registro.'];
         }
 
+        // Actividades con una restricción de fecha vencida y sin terminar
+        $rf = (int)(self::filas("SELECT COUNT(*) n FROM actividades a JOIN partidas p ON p.id = a.partida_id
+            WHERE p.proyecto_id = $pid AND a.progreso < 100 AND a.restriccion_fecha IS NOT NULL
+              AND a.restriccion_tipo IN ('no_despues','terminar_antes') AND a.restriccion_fecha < CURDATE()")[0]['n'] ?? 0);
+        if ($rf) $ind[] = ['clave' => 'fechas_limite', 'titulo' => 'Actividades fuera de fecha límite', 'valor' => $rf, 'icono' => 'fa-calendar-xmark', 'url' => "/programa?proyecto=$pid",
+            'nivel' => 'critico', 'detalle' => $rf . ' actividad(es) sin terminar ya pasaron su fecha límite.'];
+
         // Subcontratos con documentos obligatorios faltantes o vencidos
         if (Subcontratos::disponible()) {
             $rs = Subcontratos::resumen($pid);

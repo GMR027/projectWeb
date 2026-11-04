@@ -132,3 +132,11 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - `Seguridad::indicadores()` calcula horas-hombre con `reporte_personal` del parte diario, frecuencia y gravedad (base 200,000) y días sin accidente; meses sin horas muestran «—».
 - UI con pestañas **Permisos**, **ATS**, **Incidentes** e **Indicadores**; `resumen()` incluye `ats_pendientes` y Salud lo usa en el semáforo.
 - Migración `database/migracion_seguridad_sistema.sql`.
+
+## Fechas reales y calendarios (`Classes\Calendario`, `Classes\Calendarios`)
+
+- `actividades` gana `calendario_id`, `fecha_inicio_real`, `fecha_fin_real`, `duracion_restante`, `restriccion_tipo` (`ninguna/no_antes/no_despues/terminar_antes`), `restriccion_fecha` y `restriccion_motivo`.
+- `calendarios` + `calendarios_jornada` + `calendarios_festivos`: calendarios propios por cuadrilla/subcontratista; al crearse copian la jornada base del proyecto y luego se editan sus factores y días no laborables. `Calendario($pid, $calendarioId)` usa el propio si existe; si no, el general.
+- `Calendario::proyectarFin($duracionRestante, $desde)` calcula el fin con el calendario. `ProgramaController` proyecta cada actividad, muestra «Tarde» si el fin proyectado pasa el planeado y avisa si incumple una restricción.
+- UI: campos en editar/crear actividad, sugerencias de fechas reales desde `reporte_personal`, selector de calendario, y calendarios propios en Ajustes. Salud cuenta actividades con fecha límite vencida.
+- Migración `database/migracion_fechas_reales_calendarios.sql`.

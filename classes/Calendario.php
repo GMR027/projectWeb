@@ -16,15 +16,30 @@ class Calendario
     private array $jornada = [];  // [dia_semana(1-7) => factor]
     private array $festivos = []; // [Y-m-d => true]
     private int $proyectoId;
+    private int $calendarioId;
 
-    public function __construct(int $proyectoId)
+    public function __construct(int $proyectoId, int $calendarioId = 0)
     {
         $this->proyectoId = $proyectoId;
+        $this->calendarioId = $calendarioId;
         $this->cargar();
+    }
+
+    public function getCalendarioId(): int
+    {
+        return $this->calendarioId;
     }
 
     private function cargar(): void
     {
+        if ($this->calendarioId > 0) {
+            $jornada = $this->filas("SELECT * FROM calendarios_jornada WHERE calendario_id = {$this->calendarioId} ORDER BY dia_semana");
+            foreach ($jornada as $j) $this->jornada[(int)$j['dia_semana']] = (float)$j['factor'];
+            if (!empty($this->jornada)) {
+                foreach ($this->filas("SELECT * FROM calendarios_festivos WHERE calendario_id = {$this->calendarioId}") as $f) $this->festivos[$f['fecha']] = true;
+                return;
+            }
+        }
         $jornada = CalendarioJornada::whereAll('proyecto_id', $this->proyectoId, 'dia_semana ASC');
         foreach ($jornada as $j) {
             $this->jornada[(int)$j->dia_semana] = (float)$j->factor;
@@ -101,6 +116,23 @@ class Calendario
             $curr->modify('+1 day');
         }
         return $total;
+    }
+
+    private function filas(string $sql): array
+    {
+        try {
+            $r = $GLOBALS['db']->query($sql);
+            return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /** Fecha fin proyectada con la duración restante desde una fecha base (por defecto hoy) */
+    public function proyectarFin(?float $duracionRestante, ?string $desde = null): ?string
+    {
+        if ($duracionRestante === null || $duracionRestante <= 0) return null;
+        return $this->calcularFechaFin($desde ?: date('Y-m-d'), (int)ceil($duracionRestante));
     }
 
     /** Genera un array de semanas entre dos fechas: cada semana tiene su número ISO y rango */

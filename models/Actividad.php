@@ -5,16 +5,23 @@ namespace Model;
 class Actividad extends ActiveRecord
 {
     protected static $tabla = 'actividades';
-    protected static $columnasDB = ['id', 'partida_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'fecha_fija', 'orden'];
+    protected static $columnasDB = ['id', 'partida_id', 'calendario_id', 'codigo', 'nombre', 'descripcion', 'fecha_inicio', 'duracion_dias', 'fecha_fin', 'fecha_inicio_real', 'fecha_fin_real', 'duracion_restante', 'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo', 'progreso', 'prioridad', 'status', 'pta', 'hito', 'sin_material', 'fecha_fija', 'orden'];
 
     public $id;
     public $partida_id;
+    public $calendario_id;
     public $codigo;
     public $nombre;
     public $descripcion;
     public $fecha_inicio;
     public $duracion_dias;
     public $fecha_fin;
+    public $fecha_inicio_real;
+    public $fecha_fin_real;
+    public $duracion_restante;
+    public $restriccion_tipo;
+    public $restriccion_fecha;
+    public $restriccion_motivo;
     public $progreso;
     public $prioridad;
     public $status;
@@ -41,6 +48,7 @@ class Actividad extends ActiveRecord
     {
         $this->id = $args['id'] ?? null;
         $this->partida_id = $args['partida_id'] ?? null;
+        $this->calendario_id = $args['calendario_id'] ?? null;
         $this->codigo = $args['codigo'] ?? '';
         $this->nombre = $args['nombre'] ?? '';
         $this->descripcion = $args['descripcion'] ?? '';

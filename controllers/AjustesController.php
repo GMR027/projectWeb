@@ -11,6 +11,7 @@ use Model\CalendarioFestivo;
 use Model\Exportacion;
 use Classes\Calendario;
 use Classes\TemaProyecto;
+use Classes\Calendarios;
 
 class AjustesController
 {
@@ -41,6 +42,8 @@ class AjustesController
         $calendario = new Calendario($proyectoId);
         $actividades = self::obtenerActividadesDelMes($proyecto, $mesActual);
 
+        $calendarios = [];
+        if (Calendarios::disponible()) foreach (Calendarios::lista($proyectoId) as $c) $calendarios[] = Calendarios::calendario($proyectoId, (int)$c['id']);
         $router->render('ajustes/index', [
             'almacenamiento' => ['desglose' => \Classes\Almacenamiento::desglose((int)$proyecto->id)],
             'titulo' => 'Ajustes - ' . $proyecto->nombre,
@@ -52,7 +55,40 @@ class AjustesController
             'calendario' => $calendario,
             'equipoDisponible' => $equipoDisponible,
             'equipoProyecto' => $equipoProyecto,
+            'calendarios' => $calendarios,
         ]);
+    }
+
+    public static function calendarioGuardar()
+    {
+        $p = proyecto_de_peticion(true);
+        [$ok, $msg] = Calendarios::crear((int)$p->id, texto_param($_POST['nombre'] ?? ''));
+        header('Location: /ajustes?proyecto=' . (int)$p->id . '&' . ($ok ? 'ok=' : 'error=') . urlencode($msg) . '#calendarios');
+        exit;
+    }
+
+    public static function calendarioJornada()
+    {
+        $p = proyecto_de_peticion(true);
+        Calendarios::guardarJornada((int)$p->id, (int)($_POST['id'] ?? 0), (array)($_POST['factor'] ?? []));
+        header('Location: /ajustes?proyecto=' . (int)$p->id . '&ok=' . urlencode('Jornada del calendario guardada') . '#calendarios');
+        exit;
+    }
+
+    public static function calendarioFestivo()
+    {
+        $p = proyecto_de_peticion(true);
+        [$ok, $msg] = Calendarios::agregarFestivo((int)$p->id, (int)($_POST['id'] ?? 0), $_POST);
+        header('Location: /ajustes?proyecto=' . (int)$p->id . '&' . ($ok ? 'ok=' : 'error=') . urlencode($msg) . '#calendarios');
+        exit;
+    }
+
+    public static function calendarioFestivoEliminar()
+    {
+        $p = proyecto_de_peticion(true);
+        Calendarios::eliminarFestivo((int)$p->id, (int)($_POST['id'] ?? 0), (int)($_POST['festivo_id'] ?? 0));
+        header('Location: /ajustes?proyecto=' . (int)$p->id . '&ok=' . urlencode('Día no laborable eliminado') . '#calendarios');
+        exit;
     }
 
     /** El dueño marca qué miembros de su equipo entran a este proyecto (Ajustes → Accesos) */

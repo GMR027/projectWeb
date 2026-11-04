@@ -49,6 +49,26 @@ class ProgramaController
             'restriccion' => in_array($_GET['restriccion'] ?? '', ['con', 'sin'], true) ? $_GET['restriccion'] : '',
             'riesgo' => ($_GET['riesgo'] ?? '') === '1' ? '1' : '',
         ];
+        $proyecciones = [];
+        $cals = [];
+        foreach ($todas as $f) {
+            if ($f['tipo'] !== 'actividad') continue;
+            $cid = (int)($f['calendario_id'] ?? 0);
+            $cal = $cals[$cid] ??= new Calendario($proyectoId, $cid);
+            $rest = $f['duracion_restante'] !== null ? (float)$f['duracion_restante'] : max(0, (int)$f['duracion_dias'] * (100 - (int)$f['progreso']) / 100);
+            $base = $f['fecha_inicio_real'] ?: $f['fecha_inicio'];
+            $desde = max($base, date('Y-m-d'));
+            $finProy = $cal->proyectarFin($rest, $desde);
+            $aviso = '';
+            $tipo = (string)($f['restriccion_tipo'] ?? 'ninguna');
+            $limite = $f['restriccion_fecha'] ?: null;
+            if ($limite) {
+                if ($tipo === 'no_antes' && $base < $limite) $aviso = 'No puede iniciar antes del ' . formatear_fecha($limite, 'd/m/Y');
+                elseif (in_array($tipo, ['no_despues', 'terminar_antes'], true) && $finProy && $finProy > $limite) $aviso = 'No llega a la fecha límite del ' . formatear_fecha($limite, 'd/m/Y');
+            }
+            $tarde = $finProy && $f['fecha_fin'] && $finProy > $f['fecha_fin'];
+            $proyecciones[(int)$f['id']] = ['fin' => $finProy, 'tarde' => $tarde, 'aviso' => $aviso];
+        }
         $riesgos = \Classes\Salud::riesgosActividades($proyectoId);
         $bloqueosCalidad = \Classes\Calidad::disponible() ? \Classes\Calidad::bloqueosProyecto($proyectoId) : [];
         // Campos personalizados de las actividades (Nivel, Frente…): filtran igual que los demás
@@ -116,6 +136,7 @@ class ProgramaController
             'riesgos' => $riesgos,
             'bloqueosCalidad' => $bloqueosCalidad,
             'punchBloqueos' => \Classes\Punch::partidasBloqueadas($proyectoId),
+            'proyecciones' => $proyecciones,
             'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp,
             'camposCp' => $camposCp, 'filtrosCp' => $filtrosCp, 'valoresCp' => $valoresCp,
             'titulo' => 'Programa de Obra - ' . ProgramaColumnas::nombrePrograma($proyecto),
@@ -663,6 +684,9 @@ class ProgramaController
             $actividad->hito = !empty($_POST['hito']) ? 1 : 0;   // casilla: sin marcar no viaja en el POST
             $actividad->sin_material = !empty($_POST['sin_material']) ? 1 : 0;
             $actividad->id = null;
+            self::normalizarFechasActividad($actividad);
+            $actividad->calendario_id = self::calendarioValido($proyectoId, (int)($actividad->calendario_id ?? 0));
+            $calendario = new Calendario($proyectoId, (int)($actividad->calendario_id ?? 0));
             $alertas = $actividad->validar();
             // La partida elegida debe pertenecer a este proyecto
             $partidaElegida = Partida::find($actividad->partida_id);
@@ -731,7 +755,30 @@ class ProgramaController
                 ? array_map('intval', (array)($_POST['materiales'] ?? [])) : [],
             'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : [],
             'gestionarMateriales' => !empty($_POST['gestionar_materiales']),
+            'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyectoId) : [],
         ]);
+    }
+
+    private static function normalizarFechasActividad(Actividad $a): void
+    {
+        foreach (['fecha_inicio_real', 'fecha_fin_real', 'restriccion_fecha'] as $c) if ((string)$a->$c === '') $a->$c = null;
+        if ((string)$a->duracion_restante === '') $a->duracion_restante = null;
+        if (!isset(['ninguna' => 1, 'no_antes' => 1, 'no_despues' => 1, 'terminar_antes' => 1][$a->restriccion_tipo ?? ''])) $a->restriccion_tipo = 'ninguna';
+    }
+
+    private static function calendarioValido(int $pid, int $calendarioId): ?int
+    {
+        if (!$calendarioId) return null;
+        return \Classes\Calendarios::disponible() && \Classes\Calendarios::calendario($pid, $calendarioId) ? $calendarioId : null;
+    }
+
+    /** Primera y última fecha con parte diario para una actividad (sugerencia de fechas reales) */
+    private static function fechasRealesSugeridas(int $pid, int $actividadId): array
+    {
+        $r = $GLOBALS['db']->query("SELECT MIN(rd.fecha) ini, MAX(rd.fecha) fin
+            FROM reporte_personal rp JOIN reportes_diarios rd ON rd.id = rp.reporte_id
+            WHERE rd.proyecto_id = $pid AND rp.actividad_id = $actividadId")->fetch_assoc();
+        return ['inicio' => $r['ini'] ?? null, 'fin' => $r['fin'] ?? null];
     }
 
     /** Prefijo de los códigos de las actividades de una partida: «3.0» → «3» */
@@ -897,6 +944,9 @@ class ProgramaController
             $actividad->hito = !empty($_POST['hito']) ? 1 : 0;
             $actividad->sin_material = !empty($_POST['sin_material']) ? 1 : 0;
             $actividad->id = $id;
+            self::normalizarFechasActividad($actividad);
+            $actividad->calendario_id = self::calendarioValido((int)$proyecto->id, (int)($actividad->calendario_id ?? 0));
+            $calendario = new Calendario((int)$proyecto->id, (int)($actividad->calendario_id ?? 0));
             // Solo se puede mover a una partida del mismo proyecto
             $destino = Partida::find($actividad->partida_id);
             if (!$destino || (int)$destino->proyecto_id !== (int)$proyecto->id) {
@@ -952,6 +1002,8 @@ class ProgramaController
             'cantidad' => Cantidades::deActividad((int)$id),
             'cantidadResumen' => Cantidades::resumenPartidas((int)$proyecto->id, (int)$partida->id)[(int)$partida->id]
                 ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false],
+            'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyecto->id) : [],
+            'fechasSugeridas' => self::fechasRealesSugeridas((int)$proyecto->id, (int)$id),
         ]);
     }
 

@@ -24,6 +24,10 @@
                     </select>
                 </div>
                 <div class="campo">
+                    <label for="calendario_id">Calendario</label>
+                    <select id="calendario_id" name="calendario_id"><option value="">General del proyecto</option><?php foreach ($calendarios as $cal): ?><option value="<?php echo (int)$cal['id']; ?>"><?php echo s($cal['nombre']); ?></option><?php endforeach; ?></select>
+                </div>
+                <div class="campo">
                     <label for="codigo">Código *</label>
                     <input type="text" id="codigo" name="codigo" value="<?php echo s($actividad->codigo); ?>" placeholder="ACT-01.1" required>
                 </div>
@@ -46,8 +50,26 @@
 <div class="campo">
                     <label for="duracion_dias">Duración (días hábiles) *</label>
                     <input type="number" id="duracion_dias" name="duracion_dias" value="<?php echo s($actividad->duracion_dias); ?>" min="1" required data-min="1">
-                    <small class="text-muted">La fecha de fin se calculará automáticamente con el calendario del proyecto.</small>
+                    <small class="text-muted">La fecha de fin se calculará automáticamente con el calendario elegido.</small>
                 </div>
+                <div class="campo">
+                    <label for="fecha_inicio_real">Inicio real</label>
+                    <input type="date" id="fecha_inicio_real" name="fecha_inicio_real" value="<?php echo s($actividad->fecha_inicio_real ?? ''); ?>">
+                </div>
+                <div class="campo">
+                    <label for="fecha_fin_real">Fin real</label>
+                    <input type="date" id="fecha_fin_real" name="fecha_fin_real" value="<?php echo s($actividad->fecha_fin_real ?? ''); ?>">
+                </div>
+                <div class="campo">
+                    <label for="duracion_restante">Duración restante (días hábiles)</label>
+                    <input type="number" id="duracion_restante" name="duracion_restante" min="0" step="0.5" value="<?php echo s($actividad->duracion_restante ?? ''); ?>">
+                </div>
+                <div class="campo">
+                    <label for="restriccion_tipo">Restricción de fecha</label>
+                    <select id="restriccion_tipo" name="restriccion_tipo"><option value="ninguna">Ninguna</option><option value="no_antes">No antes de</option><option value="no_despues">No después de</option><option value="terminar_antes">Debe terminar antes de</option></select>
+                </div>
+                <div class="campo"><label for="restriccion_fecha">Fecha de la restricción</label><input type="date" id="restriccion_fecha" name="restriccion_fecha" value="<?php echo s($actividad->restriccion_fecha ?? ''); ?>"></div>
+                <div class="campo campo-full"><label for="restriccion_motivo">Motivo de la restricción</label><input type="text" id="restriccion_motivo" name="restriccion_motivo" maxlength="500" value="<?php echo s($actividad->restriccion_motivo ?? ''); ?>"></div>
                 <div class="campo">
                     <label for="progreso">Progreso (%) *</label>
                     <input type="number" id="progreso" name="progreso" value="<?php echo s($actividad->progreso); ?>" min="0" max="100" required>

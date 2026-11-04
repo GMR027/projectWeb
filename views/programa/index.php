@@ -255,7 +255,7 @@
                             <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
                             <?php break; case 'nombre': ?>
-                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?><?php echo \Classes\Salud::insignia($riesgos, (int)$fila['id']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
+                            <td class="indent"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?><?php $py = $proyecciones[(int)$fila['id']] ?? null; ?><?php if ($py && $py['aviso']): ?><span class="badge badge-pdf" title="<?php echo s($py['aviso']); ?>"><i class="fa-solid fa-triangle-exclamation"></i> Fecha</span><?php elseif ($py && $py['tarde']): ?><span class="badge badge-visitante" title="Fin proyectado: <?php echo s(formatear_fecha($py['fin'], 'd/m/Y')); ?>"><i class="fa-solid fa-clock"></i> Tarde</span><?php endif; ?><?php echo \Classes\Salud::insignia($riesgos, (int)$fila['id']); ?> <?php if (isset($revAct[(string)$fila['id']])) echo \Classes\Revisiones::chip('actividad', (string)$fila['id'], $revAct[(string)$fila['id']], $puedeRev, 'Cumplimiento'); ?></td>
                             <?php break; case 'fecha_inicio': ?>
                             <td class="fecha-editable">
                                 <?php if ($puedeGestionar): ?>

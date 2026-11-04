@@ -962,6 +962,31 @@ $ok('Seguridad tiene pestañas de permisos, ATS, incidentes e indicadores', (fun
     return str_contains($v, "'ats'") && str_contains($v, "'incidentes'") && str_contains($v, "'indicadores'")
         && str_contains($v, '_ats.php') && str_contains($v, '_indicadores.php');
 })());
+echo "Fechas reales y calendarios\n";
+$ok('la migración y el esquema traen fechas reales, restricciones y calendarios', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_fechas_reales_calendarios.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'fecha_inicio_real') && str_contains($m, 'duracion_restante')
+        && str_contains($m, 'restriccion_tipo') && str_contains($m, 'calendarios_jornada')
+        && str_contains($s, 'calendario_id INT NULL') && str_contains($s, 'CREATE TABLE IF NOT EXISTS calendarios');
+})());
+$ok('la actividad guarda calendario, fechas reales y restricción', str_contains((string)@file_get_contents(__DIR__ . '/../models/Actividad.php'), 'fecha_inicio_real')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../models/Actividad.php'), 'restriccion_tipo')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../models/Actividad.php'), 'calendario_id'));
+$ok('el calendario acepta uno propio y proyecta el fin', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Calendario.php'), '__construct(int $proyectoId, int $calendarioId = 0)')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Calendario.php'), 'function proyectarFin('));
+$ok('las rutas de calendarios propios están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/ajustes/calendario'") && str_contains($t, "'/ajustes/calendario/jornada'")
+        && str_contains($t, "'/ajustes/calendario/festivo'");
+})());
+$ok('la actividad tiene los campos de fecha real, calendario y restricción', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/programa/editar-actividad.php');
+    return str_contains($v, 'name="fecha_inicio_real"') && str_contains($v, 'name="calendario_id"')
+        && str_contains($v, 'name="restriccion_tipo"') && str_contains($v, 'name="duracion_restante"');
+})());
+$ok('el Programa proyecta el fin y avisa si llega tarde o incumple la restricción', str_contains((string)@file_get_contents(__DIR__ . '/../controllers/ProgramaController.php'), 'proyectarFin(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'proyecciones'));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

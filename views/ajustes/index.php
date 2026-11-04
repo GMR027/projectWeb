@@ -182,6 +182,45 @@ if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuen
             </tbody>
         </table>
     </div>
+
+    <div class="card" id="calendarios">
+        <h3 class="card-titulo"><i class="fa-solid fa-calendar-days"></i> Calendarios por cuadrilla o subcontratista</h3>
+        <p class="text-muted text-sm">El calendario general es el de arriba. Crea calendarios propios cuando una cuadrilla o subcontratista trabaje otros días o tenga otros festivos; luego se asignan en la actividad.</p>
+        <?php if (puede_gestionar_proyecto($proyecto)): ?>
+        <form method="POST" action="/ajustes/calendario" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem">
+            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+            <label style="min-width:20rem">Nombre del calendario<input type="text" name="nombre" maxlength="120" required placeholder="Ej.: Estructura, Eléctrica, Cliente"></label>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Crear calendario</button>
+        </form>
+        <?php endif; ?>
+        <?php if (empty($calendarios)): ?><p class="text-muted">No hay calendarios propios; todas las actividades usan el general.</p><?php else: ?>
+        <?php foreach ($calendarios as $c): ?>
+            <details class="card" style="margin-bottom:.8rem">
+                <summary><strong><?php echo s($c['nombre']); ?></strong> <small class="text-muted">· <?php echo count($c['festivos']); ?> día(s) no laborable(s)</small></summary>
+                <form method="POST" action="/ajustes/calendario/jornada" style="margin-top:1rem">
+                    <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
+                    <div class="jornada-grid">
+                        <?php foreach ([1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'] as $num => $dia): ?>
+                            <div class="jornada-dia"><label><?php echo $dia; ?></label><input type="number" name="factor[<?php echo $num; ?>]" min="0" max="1" step="0.5" value="<?php echo s($c['jornada'][$num] ?? 0); ?>"></div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" type="submit">Guardar jornada</button>
+                </form>
+                <p class="text-muted text-sm" style="margin-top:1rem">Días no laborables propios:</p>
+                <form method="POST" action="/ajustes/calendario/festivo" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap">
+                    <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
+                    <label>Fecha<input type="date" name="fecha" required></label>
+                    <label>Tipo<select name="tipo"><option value="festivo">Festivo</option><option value="paro_tecnico">Paro técnico</option><option value="clima">Clima</option><option value="otro">Otro</option></select></label>
+                    <label>Motivo<input type="text" name="motivo" maxlength="200"></label>
+                    <button class="btn btn-sm btn-ghost" type="submit">Agregar</button>
+                </form>
+                <?php if ($c['festivos']): ?><table class="tabla" style="margin-top:.8rem"><thead><tr><th>Fecha</th><th>Motivo</th><th>Tipo</th><th></th></tr></thead><tbody>
+                    <?php foreach ($c['festivos'] as $f): ?><tr><td class="mono"><?php echo s(formatear_fecha($f['fecha'], 'd/m/Y')); ?></td><td><?php echo s($f['motivo']); ?></td><td><?php echo s($f['tipo']); ?></td><td><form class="inline" method="POST" action="/ajustes/calendario/festivo/eliminar" data-confirm="Eliminar día|Volverá a contar como hábil en este calendario.|Eliminar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>"><input type="hidden" name="festivo_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-xs btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form></td></tr><?php endforeach; ?>
+                </tbody></table><?php endif; ?>
+            </details>
+        <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
     </div>
 <div class="card" id="registros">
     <h3 class="card-titulo"><i class="fa-solid fa-list-ol"></i> Registros por página</h3>

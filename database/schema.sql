@@ -125,12 +125,19 @@ CREATE TABLE partidas (
 CREATE TABLE actividades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     partida_id INT NOT NULL,
+    calendario_id INT NULL,
     codigo VARCHAR(50) NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha_inicio DATE NOT NULL,
     duracion_dias INT NOT NULL DEFAULT 1,
     fecha_fin DATE NOT NULL,
+    fecha_inicio_real DATE NULL,
+    fecha_fin_real DATE NULL,
+    duracion_restante DECIMAL(6,2) NULL,
+    restriccion_tipo ENUM('ninguna','no_antes','no_despues','terminar_antes') NOT NULL DEFAULT 'ninguna',
+    restriccion_fecha DATE NULL,
+    restriccion_motivo VARCHAR(500) NOT NULL DEFAULT '',
     progreso TINYINT UNSIGNED DEFAULT 0,
     prioridad ENUM('baja', 'media', 'alta', 'critica') DEFAULT 'media',
     status ENUM('no_iniciada', 'en_proceso', 'completada') DEFAULT 'no_iniciada',
@@ -2924,4 +2931,33 @@ CREATE TABLE IF NOT EXISTS seguridad_acciones (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_sa_incidente (incidente_id),
     FOREIGN KEY (incidente_id) REFERENCES seguridad_incidentes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS calendarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    nombre VARCHAR(120) NOT NULL DEFAULT '',
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_cal_proyecto (proyecto_id, activo),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS calendarios_jornada (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    calendario_id INT NOT NULL,
+    dia_semana TINYINT NOT NULL,
+    factor DECIMAL(3,2) NOT NULL DEFAULT 1.00,
+    UNIQUE KEY uq_cal_jornada (calendario_id, dia_semana),
+    FOREIGN KEY (calendario_id) REFERENCES calendarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS calendarios_festivos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    calendario_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    motivo VARCHAR(200) NOT NULL DEFAULT '',
+    tipo ENUM('festivo','paro_tecnico','clima','otro') NOT NULL DEFAULT 'festivo',
+    UNIQUE KEY uq_cal_festivo (calendario_id, fecha),
+    FOREIGN KEY (calendario_id) REFERENCES calendarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

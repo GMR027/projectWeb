@@ -50,6 +50,10 @@
                 </select>
             </div>
             <div class="campo">
+                <label for="calendario_id">Calendario</label>
+                <select id="calendario_id" name="calendario_id"><option value="">General del proyecto</option><?php foreach ($calendarios as $cal): ?><option value="<?php echo (int)$cal['id']; ?>"<?php echo (int)$actividad->calendario_id === (int)$cal['id'] ? ' selected' : ''; ?>><?php echo s($cal['nombre']); ?></option><?php endforeach; ?></select>
+            </div>
+            <div class="campo">
                 <label for="codigo">Código *</label>
                 <input type="text" id="codigo" name="codigo" value="<?php echo s($actividad->codigo); ?>" required>
             </div>
@@ -73,6 +77,13 @@
                 <input type="number" id="duracion_dias" name="duracion_dias" value="<?php echo s($actividad->duracion_dias); ?>" min="1" required data-min="1">
                 <small class="text-muted">Fecha fin actual: <strong><?php echo formatear_fecha($actividad->fecha_fin); ?></strong> (se recalculará al guardar)</small>
             </div>
+            <?php $sug = $fechasSugeridas ?? ['inicio' => null, 'fin' => null]; ?>
+            <div class="campo"><label for="fecha_inicio_real">Inicio real</label><input type="date" id="fecha_inicio_real" name="fecha_inicio_real" value="<?php echo s($actividad->fecha_inicio_real ?: ($sug['inicio'] ?? '')); ?>"><?php if (!$actividad->fecha_inicio_real && !empty($sug['inicio'])): ?><small class="text-muted">Sugerido por el parte diario.</small><?php endif; ?></div>
+            <div class="campo"><label for="fecha_fin_real">Fin real</label><input type="date" id="fecha_fin_real" name="fecha_fin_real" value="<?php echo s($actividad->fecha_fin_real ?: ($sug['fin'] ?? '')); ?>"><?php if (!$actividad->fecha_fin_real && !empty($sug['fin'])): ?><small class="text-muted">Sugerido por el parte diario.</small><?php endif; ?></div>
+            <div class="campo"><label for="duracion_restante">Duración restante (días hábiles)</label><input type="number" id="duracion_restante" name="duracion_restante" min="0" step="0.5" value="<?php echo s($actividad->duracion_restante ?? ''); ?>"></div>
+            <div class="campo"><label for="restriccion_tipo">Restricción de fecha</label><select id="restriccion_tipo" name="restriccion_tipo"><?php foreach (['ninguna' => 'Ninguna', 'no_antes' => 'No antes de', 'no_despues' => 'No después de', 'terminar_antes' => 'Debe terminar antes de'] as $k => $t): ?><option value="<?php echo $k; ?>"<?php echo ($actividad->restriccion_tipo ?? 'ninguna') === $k ? ' selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?></select></div>
+            <div class="campo"><label for="restriccion_fecha">Fecha de la restricción</label><input type="date" id="restriccion_fecha" name="restriccion_fecha" value="<?php echo s($actividad->restriccion_fecha ?? ''); ?>"></div>
+            <div class="campo campo-full"><label for="restriccion_motivo">Motivo de la restricción</label><input type="text" id="restriccion_motivo" name="restriccion_motivo" maxlength="500" value="<?php echo s($actividad->restriccion_motivo ?? ''); ?>"></div>
             <div class="campo">
                 <label for="progreso">Progreso (%) *</label>
                 <?php $tieneSubactividades = !empty($subactividades ?? []); ?>
