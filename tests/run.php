@@ -874,6 +874,12 @@ $ok('las rutas de envíos y acuse público están registradas', (function () {
     return str_contains($t, "'/transmittals'") && str_contains($t, "'/transmittals/guardar'")
         && str_contains($t, "'/transmittals/pdf'") && str_contains($t, "'/transmittals/acuse'");
 })());
+$ok('Archivo permite subir varios archivos con fecha, categoría, carpeta, nombre y revisión comunes', (function () {
+    $r = fn($p) => (string)@file_get_contents(__DIR__ . '/../' . $p);
+    return str_contains($r('public/index.php'), "/archivos/lote") && str_contains($r('controllers/ArchivoController.php'), 'function guardarLote')
+        && str_contains($r('views/archivos/index.php'), 'Subir varios') && str_contains($r('views/archivos/lote.php'), 'arch-lote-form')
+        && str_contains($r('public/vendor/archivo-lote.js'), 'DataTransfer') && str_contains($r('public/build/css/paginas/archivero.css'), '.arch-lote-tabla');
+})());
 $ok('Archivo incluye la pestaña de envíos y la herramienta los reconoce', str_contains((string)@file_get_contents(__DIR__ . '/../models/Usuario.php'), "'/transmittals'")
     && str_contains((string)@file_get_contents(__DIR__ . '/../views/templates/herramientas-proyecto.php'), "'/transmittals'"));
 $ok('el acuse es público, por token y guarda evidencia', (function () {

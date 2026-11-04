@@ -550,6 +550,8 @@ $router->post('/minutas/contratista/eliminar', [MinutaController::class, 'contra
 $router->get('/archivos', [ArchivoController::class, 'index']);
 $router->get('/archivos/crear', [ArchivoController::class, 'crear']);
 $router->post('/archivos/crear', [ArchivoController::class, 'crear']);
+$router->get('/archivos/lote', [ArchivoController::class, 'lote']);
+$router->post('/archivos/lote', [ArchivoController::class, 'lote']);
 $router->get('/archivos/editar', [ArchivoController::class, 'editar']);
 $router->post('/archivos/editar', [ArchivoController::class, 'editar']);
 $router->post('/archivos/eliminar', [ArchivoController::class, 'eliminar']);

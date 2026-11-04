@@ -33,11 +33,14 @@ class ArchivoController
         elseif ($c = filter_var($_GET['carpeta'] ?? null, FILTER_VALIDATE_INT)) {
             if (in_array($c, array_map(fn($x) => (int)$x->id, $carpetas), true)) $carpeta = $c;
         }
+        $mensaje = $_SESSION['archivo_msg'] ?? null;
+        unset($_SESSION['archivo_msg']);
         $router->render('archivos/index', [
             'titulo' => 'Archivo - ' . $proyecto->nombre, 'proyecto' => $proyecto,
             'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => Archivo::deProyecto((int)$proyecto->id, $filtro, $carpeta),
             'carpetas' => $carpetas, 'carpeta' => $carpeta, 'sinCarpeta' => ArchivoCarpeta::sinCarpeta((int)$proyecto->id),
             'totalArchivos' => count(Archivo::deProyecto((int)$proyecto->id)), 'ensamblados' => \Model\Ensamble::archivosVivos((int)$proyecto->id),
+            'mensaje' => $mensaje,
         ]);
     }
 
@@ -55,6 +58,188 @@ class ArchivoController
             exit;
         }
         self::formulario($router, $a);
+    }
+
+    private const MAX_LOTE = 20;
+    private const MAX_LOTE_BYTES = 200 * 1024 * 1024;
+
+    /** Subir varios archivos a la vez, con fecha, categoría, carpeta, nombre y revisión comunes o por archivo */
+    public static function lote(Router $router)
+    {
+        // Si PHP descarta el POST por superar post_max_size no llega «proyecto»: se avisa y se vuelve a Archivo
+        if (self::esPost() && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            $pid = filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT) ?: 0;
+            if ($pid) {
+                self::responderLote(false, 'El lote es demasiado grande para el servidor. Reduce el número o el tamaño de los archivos o pide al administrador que aumente los límites de subida.');
+                header('Location: /archivos?proyecto=' . $pid);
+                exit;
+            }
+        }
+        $proyecto = proyecto_de_peticion(true);
+        $pid = (int)$proyecto->id;
+        $categorias = ArchivoCategoria::deProyecto($pid);
+        $carpetas = ArchivoCarpeta::deProyecto($pid);
+        if (self::esPost()) self::guardarLote($proyecto, $categorias, $carpetas);
+        $carpeta = filter_var($_GET['carpeta'] ?? null, FILTER_VALIDATE_INT) ?: null;
+        if ($carpeta && !in_array($carpeta, array_map(fn($c) => (int)$c->id, $carpetas), true)) $carpeta = null;
+        $router->render('archivos/lote', [
+            'titulo' => 'Subir varios archivos - ' . $proyecto->nombre,
+            'proyecto' => $proyecto,
+            'categorias' => $categorias,
+            'carpetas' => $carpetas,
+            'extensiones' => Archivo::EXTENSIONES,
+            'maxLote' => self::MAX_LOTE,
+            'maxBytes' => Archivo::MAX_BYTES,
+            'maxLoteBytes' => self::MAX_LOTE_BYTES,
+            'fechaHoy' => date('Y-m-d'),
+            'carpetaInicial' => $carpeta,
+        ]);
+    }
+
+    /** Id de una categoría o carpeta solo si pertenece al proyecto */
+    private static function idEnLista($valor, array $lista): ?int
+    {
+        $id = filter_var($valor, FILTER_VALIDATE_INT);
+        if (!$id) return null;
+        foreach ($lista as $x) if ((int)$x->id === (int)$id) return (int)$id;
+        return null;
+    }
+
+    private static function fechaISO($valor): ?string
+    {
+        if (!is_string($valor)) return null;
+        $v = trim($valor);
+        $f = \DateTime::createFromFormat('Y-m-d', $v);
+        return $f && $f->format('Y-m-d') === $v ? $v : null;
+    }
+
+    /** Nombre visible a partir del nombre original (sin la extensión) */
+    private static function nombreDesdeArchivo(string $archivo): string
+    {
+        $base = basename($archivo);
+        $nombre = pathinfo($base, PATHINFO_FILENAME);
+        return mb_substr($nombre !== '' ? $nombre : $base, 0, 200);
+    }
+
+    private static function responderLote(bool $ok, string $texto, array $detalles = []): void
+    {
+        $_SESSION['archivo_msg'] = ['ok' => $ok, 'texto' => $texto, 'detalles' => $detalles];
+    }
+
+    private static function guardarLote($proyecto, array $categorias, array $carpetas): void
+    {
+        $pid = (int)$proyecto->id;
+        $f = $_FILES['archivos'] ?? null;
+        if (!$f || !is_array($f['name'] ?? null) || !count($f['name'])) {
+            self::responderLote(false, 'No llegó ningún archivo. Selecciona al menos uno.');
+            header('Location: /archivos/lote?proyecto=' . $pid);
+            exit;
+        }
+        $total = count($f['name']);
+        if ($total > self::MAX_LOTE) {
+            self::responderLote(false, 'Puedes subir como máximo ' . self::MAX_LOTE . ' archivos por lote.');
+            header('Location: /archivos/lote?proyecto=' . $pid);
+            exit;
+        }
+        $bytes = 0;
+        foreach ((array)$f['size'] as $b) $bytes += (int)$b;
+        if ($bytes > self::MAX_LOTE_BYTES) {
+            self::responderLote(false, 'El lote supera el máximo de ' . \Classes\Almacenamiento::formato(self::MAX_LOTE_BYTES) . '.');
+            header('Location: /archivos/lote?proyecto=' . $pid);
+            exit;
+        }
+        $disponible = \Classes\Almacenamiento::disponible($pid);
+        if ($bytes > $disponible) {
+            self::responderLote(false, 'No hay espacio suficiente: el lote ocupa ' . \Classes\Almacenamiento::formato($bytes) . ' y quedan ' . \Classes\Almacenamiento::formato($disponible) . '.');
+            header('Location: /archivos/lote?proyecto=' . $pid);
+            exit;
+        }
+
+        $nombres = (array)($_POST['nombre'] ?? []);
+        $fechas = (array)($_POST['fecha'] ?? []);
+        $cats = (array)($_POST['categoria_id'] ?? []);
+        $cars = (array)($_POST['carpeta_id'] ?? []);
+        $revs = (array)($_POST['numero_revision'] ?? []);
+        $aplicarFecha = isset($_POST['aplicar_fecha']);
+        $aplicarCategoria = isset($_POST['aplicar_categoria']);
+        $aplicarCarpeta = isset($_POST['aplicar_carpeta']);
+        $aplicarRevision = isset($_POST['aplicar_revision']);
+        $nombreOriginal = isset($_POST['nombre_original']);
+        $fechaComun = self::fechaISO($_POST['fecha_comun'] ?? '') ?: date('Y-m-d');
+        $categoriaComun = self::idEnLista($_POST['categoria_comun'] ?? null, $categorias);
+        $carpetaComun = self::idEnLista($_POST['carpeta_comun'] ?? null, $carpetas);
+        $revisionComun = mb_substr(trim(is_string($_POST['revision_comun'] ?? null) ? $_POST['revision_comun'] : ''), 0, 30);
+        $fallos = [];
+        $subidos = 0;
+
+        for ($i = 0; $i < $total; $i++) {
+            $original = is_string($f['name'][$i] ?? null) ? $f['name'][$i] : '';
+            if ($original === '') continue;
+            $error = (int)($f['error'][$i] ?? UPLOAD_ERR_NO_FILE);
+            if ($error === UPLOAD_ERR_NO_FILE) continue;
+            $motivos = [];
+            if ($error !== UPLOAD_ERR_OK) {
+                $motivos[] = in_array($error, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true) ? 'supera el límite del servidor' : 'no se pudo recibir';
+            }
+            $tmp = is_string($f['tmp_name'][$i] ?? null) ? $f['tmp_name'][$i] : '';
+            $size = (int)($f['size'][$i] ?? 0);
+            $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+            if (!$motivos && !is_uploaded_file($tmp)) $motivos[] = 'no llegó al servidor';
+            if (!$motivos && !in_array($ext, Archivo::EXTENSIONES, true)) $motivos[] = 'tipo no permitido (.' . $ext . ')';
+            if (!$motivos && $size <= 0) $motivos[] = 'archivo vacío';
+            if (!$motivos && $size > Archivo::MAX_BYTES) $motivos[] = 'supera ' . \Classes\Almacenamiento::formato(Archivo::MAX_BYTES);
+            if (!$motivos && $size > $disponible) $motivos[] = 'no hay espacio suficiente en el proyecto';
+
+            $fecha = $aplicarFecha ? $fechaComun : (is_string($fechas[$i] ?? null) ? trim($fechas[$i]) : '');
+            if ($fecha === '') $fecha = date('Y-m-d');
+            elseif (!self::fechaISO($fecha)) $motivos[] = 'la fecha no es válida';
+
+            $nombre = $nombreOriginal ? self::nombreDesdeArchivo($original) : trim(is_string($nombres[$i] ?? null) ? $nombres[$i] : '');
+            if ($nombre === '') $nombre = self::nombreDesdeArchivo($original);
+            if (mb_strlen($nombre) > 200) $motivos[] = 'el nombre supera 200 caracteres';
+
+            $cat = $aplicarCategoria ? $categoriaComun : self::idEnLista($cats[$i] ?? null, $categorias);
+            $car = $aplicarCarpeta ? $carpetaComun : self::idEnLista($cars[$i] ?? null, $carpetas);
+            $rev = $aplicarRevision ? $revisionComun : mb_substr(trim(is_string($revs[$i] ?? null) ? $revs[$i] : ''), 0, 30);
+
+            if (!$motivos) foreach (\Classes\EscanerArchivos::revisar($tmp, $original) as $m) $motivos[] = $m;
+            if ($motivos) { $fallos[] = $original . ': ' . implode(' ', $motivos); continue; }
+
+            $guardado = Archivo::guardarArchivoSubido($pid, $tmp, $ext);
+            if (!$guardado) { $fallos[] = $original . ': no se pudo guardar en el servidor'; continue; }
+            $a = new Archivo([
+                'proyecto_id' => $pid,
+                'subido_por' => (int)$_SESSION['id'],
+                'categoria_id' => $cat,
+                'carpeta_id' => $car,
+                'fecha' => $fecha,
+                'nombre' => $nombre,
+                'numero_revision' => $rev,
+                'archivo_original' => mb_substr(basename($original), 0, 255),
+                'archivo_guardado' => $guardado,
+                'tamano' => $size,
+            ]);
+            $alertas = $a->validar();
+            if ($alertas) {
+                @unlink(Archivo::carpeta($pid) . '/' . $guardado);
+                $fallos[] = $original . ': ' . implode(' ', $alertas['error'] ?? ['datos no válidos']);
+                continue;
+            }
+            $r = $a->guardar();
+            if (empty($r['resultado'])) {
+                @unlink(Archivo::carpeta($pid) . '/' . $guardado);
+                $fallos[] = $original . ': no se pudo registrar en la base de datos';
+                continue;
+            }
+            $subidos++;
+            $disponible -= $size;
+        }
+
+        $texto = $subidos > 0 ? 'Se subieron ' . $subidos . ' archivo' . ($subidos === 1 ? '' : 's') . '.' : 'No se pudo subir ningún archivo.';
+        if ($fallos) $texto .= ' ' . count($fallos) . ' no se pudo subir' . (count($fallos) === 1 ? '' : 'n') . '.';
+        self::responderLote($subidos > 0 && !$fallos, $texto, $fallos);
+        header('Location: /archivos?proyecto=' . $pid . ($subidos ? '&ok=1' : ''));
+        exit;
     }
 
     private static function formulario(Router $router, Archivo $a)

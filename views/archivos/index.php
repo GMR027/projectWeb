@@ -27,9 +27,20 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
             </select>
         </form>
         <a href="/archivos/categorias?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Categorías</a>
-        <?php if ($puede): ?><a href="/archivos/crear?proyecto=<?php echo $id; ?><?php echo $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''; ?>" class="btn btn-primary">+ Subir archivo</a><?php endif; ?>
+        <?php if ($puede): ?>
+            <a href="/archivos/lote?proyecto=<?php echo $id; ?><?php echo $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''; ?>" class="btn btn-ghost"><i class="fa-solid fa-layer-group"></i> Subir varios</a>
+            <a href="/archivos/crear?proyecto=<?php echo $id; ?><?php echo $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''; ?>" class="btn btn-primary">+ Subir archivo</a>
+        <?php endif; ?>
     </div>
 </div>
+<?php if (!empty($mensaje)): ?>
+<div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>" role="status">
+    <p><?php echo s($mensaje['texto']); ?></p>
+    <?php if (!empty($mensaje['detalles'])): ?>
+        <ul class="text-sm"><?php foreach ($mensaje['detalles'] as $detalle): ?><li><?php echo s($detalle); ?></li><?php endforeach; ?></ul>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 <?php $nombresCarpeta = []; foreach ($carpetas as $k) $nombresCarpeta[(int)$k->id] = $k->nombre; ?>
 <div class="archivero">
     <aside class="archivero-lateral card">

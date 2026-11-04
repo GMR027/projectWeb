@@ -1,7 +1,10 @@
 <?php $esNuevo = !$archivo->id; $id = s($proyecto->id); ?>
 <div class="page-header">
     <h2><?php echo $esNuevo ? 'Subir archivo' : 'Editar archivo'; ?></h2>
-    <a href="/archivos?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Volver</a>
+    <div class="la-controles">
+        <?php if ($esNuevo): ?><a href="/archivos/lote?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-layer-group"></i> Subir varios</a><?php endif; ?>
+        <a href="/archivos?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Volver</a>
+    </div>
 </div>
 <div class="card">
     <form method="POST" action="/archivos/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">

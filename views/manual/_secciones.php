@@ -527,7 +527,15 @@ HTML],
 <li><strong>Descargar</strong> está disponible para administradores y clientes; los visitantes solo ven el listado.</li>
 <li><strong>Categorías:</strong> el botón <em>Categorías</em> permite crear, renombrar y eliminar categorías. Una categoría en uso no se puede eliminar.</li>
 </ul>
-<p class="manual-nota">Si al subir un archivo grande el servidor lo rechaza, el administrador debe aumentar los límites de subida de PHP (<code>upload_max_filesize</code> y <code>post_max_size</code>).</p>
+<h4>Subir varios archivos a la vez</h4>
+<ol>
+<li>Pulsa <strong>Subir varios</strong> (también aparece en la pantalla de <em>+ Subir archivo</em>).</li>
+<li>Elige varios archivos. Aparecen en una tabla con un renglón por archivo; puedes quitar los que no quieras con la <strong>×</strong>.</li>
+<li>En <strong>Aplicar a todos</strong> marca <em>Misma fecha</em>, <em>Misma categoría</em>, <em>Misma carpeta</em> y <em>Mismo número de revisión</em> para usar el mismo valor en todo el lote. Desmarca una casilla si prefieres ajustar ese dato en cada renglón.</li>
+<li><strong>Nombrar como el archivo original</strong> usa el nombre de cada archivo sin la extensión. Si lo desmarcas, escribe un nombre por archivo.</li>
+<li>Pulsa <strong>Subir N archivos</strong>. El sistema sube todo de una vez y te dice cuántos entraron y cuáles fallaron (por tipo, tamaño, espacio o revisión de seguridad).</li>
+</ol>
+<p class="manual-nota">Máximo <strong>20 archivos</strong> por lote, <strong>100 MB</strong> por archivo y <strong>200 MB</strong> en total. Si al subir un lote grande el servidor lo rechaza, el administrador debe aumentar <code>upload_max_filesize</code> y <code>post_max_size</code>.</p>
 HTML],
 
 ['id' => 'visor', 'titulo' => 'Visor', 'icono' => 'fa-eye', 'roles' => $todos, 'herr' => 'visor', 'cuerpo' => <<<'HTML'
