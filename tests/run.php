@@ -912,6 +912,30 @@ $ok('el Cierre topa en 99 y bloquea el punto de punch', (function () {
 })());
 $ok('el Programa y el Cierre muestran el candado de punch', str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'punchBloqueos')
     && str_contains((string)@file_get_contents(__DIR__ . '/../views/cierre/index.php'), 'Entrega detenida por punch'));
+echo "Calidad completa\n";
+$ok('los catálogos de ensayos y NC están completos', count(\Classes\CalidadCompleta::VEREDICTOS) === 3
+    && count(\Classes\CalidadCompleta::NC_ESTADOS) === 3);
+$ok('las tablas de calidad completa están en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_calidad_completa.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'calidad_ensayos') && str_contains($m, 'calidad_nc') && str_contains($m, 'calidad_nc_acciones')
+        && str_contains($m, 'calidad_expedientes') && str_contains($s, 'CREATE TABLE IF NOT EXISTS calidad_ensayos');
+})());
+$ok('las rutas de calidad completa están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/calidad/ensayo'") && str_contains($t, "'/calidad/nc'")
+        && str_contains($t, "'/calidad/nc/costo'") && str_contains($t, "'/calidad/expediente/pdf'");
+})());
+$ok('una NC formal abierta alimenta la compuerta de avance', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Calidad.php'), 'FROM calidad_nc')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Calidad.php'), "estado IN ('abierta','en_correccion')"));
+$ok('la NC puede enviar su costo a Costos y el expediente se cierra en PDF', str_contains((string)@file_get_contents(__DIR__ . '/../classes/CalidadCompleta.php'), 'function enviarCosto(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/CalidadExpediente.php'), 'function cerrar(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/CalidadExpediente.php'), 'Pdf::generar('));
+$ok('Calidad tiene pestañas de planes, ensayos, NC y expedientes', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/calidad/index.php');
+    return str_contains($v, "'ensayos'") && str_contains($v, "'nc'") && str_contains($v, "'expedientes'")
+        && str_contains($v, '_ensayos.php') && str_contains($v, '_expedientes.php');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

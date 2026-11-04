@@ -447,6 +447,15 @@ $router->post('/calidad/punto/agregar', [CalidadController::class, 'puntoAgregar
 $router->post('/calidad/liberar', [CalidadController::class, 'liberar']);
 $router->post('/calidad/liberar/revocar', [CalidadController::class, 'revocar']);
 $router->post('/calidad/eliminar', [CalidadController::class, 'eliminar']);
+$router->post('/calidad/ensayo', [CalidadController::class, 'ensayo']);
+$router->post('/calidad/ensayo/eliminar', [CalidadController::class, 'ensayoEliminar']);
+$router->post('/calidad/nc', [CalidadController::class, 'ncGuardar']);
+$router->post('/calidad/nc/accion', [CalidadController::class, 'ncAccion']);
+$router->post('/calidad/nc/cerrar', [CalidadController::class, 'ncCerrar']);
+$router->post('/calidad/nc/costo', [CalidadController::class, 'ncCosto']);
+$router->get('/calidad/expediente/pdf', [CalidadController::class, 'expedientePdf']);
+$router->post('/calidad/expediente/cerrar', [CalidadController::class, 'expedienteCerrar']);
+$router->post('/calidad/expediente/reabrir', [CalidadController::class, 'expedienteReabrir']);
 // Registro de riesgos
 $router->get('/riesgos', [RiesgoController::class, 'index']);
 $router->post('/riesgos/guardar', [RiesgoController::class, 'guardar']);

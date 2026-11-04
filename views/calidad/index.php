@@ -33,8 +33,19 @@ $e = $editarPlan;
     <div class="cb-kpi"><small>Puntos de inspección</small><strong><?php echo (int)$resumen['puntos']; ?></strong><span><?php echo (int)$resumen['puntos_cumplen']; ?> cumplen · <?php echo (int)$resumen['puntos_pendientes']; ?> sin revisar</span></div>
     <div class="cb-kpi <?php echo $resumen['nc'] ? 'cb-kpi-alerta' : ''; ?>"><small>No conformidades abiertas</small><strong><?php echo (int)$resumen['nc']; ?></strong><span>Puntos marcados «no cumple» sin resolver</span></div>
     <div class="cb-kpi <?php echo $detenidas ? 'cb-kpi-alerta' : ''; ?>"><small>Actividades detenidas</small><strong><?php echo count($detenidas); ?></strong><span>El avance está topado por su inspección</span></div>
+    <?php if (!empty($completa)): ?>
+    <div class="cb-kpi <?php echo $completa['rechazados'] ? 'cb-kpi-alerta' : ''; ?>"><small>Ensayos rechazados</small><strong><?php echo (int)$completa['rechazados']; ?></strong><span>De <?php echo (int)$completa['ensayos']; ?> ensayo(s)</span></div>
+    <div class="cb-kpi <?php echo $completa['nc_abiertas'] ? 'cb-kpi-alerta' : ''; ?>"><small>NC formales abiertas</small><strong><?php echo (int)$completa['nc_abiertas']; ?></strong><span>Costo abierto <?php echo '$' . number_format((float)$completa['costo_nc'], 2); ?></span></div>
+    <?php endif; ?>
 </div>
 
+<nav class="centro-ia-tabs" aria-label="Calidad">
+    <?php foreach (['planes' => ['fa-clipboard-check', 'Planes ITP'], 'ensayos' => ['fa-flask', 'Ensayos'], 'nc' => ['fa-triangle-exclamation', 'No conformidades'], 'expedientes' => ['fa-folder-open', 'Expedientes']] as $k => [$ic, $nom]): ?>
+        <a href="<?php echo s($url(['tab' => $k])); ?>" class="centro-ia-tabs__tab<?php echo $tab === $k ? ' activa' : ''; ?>"<?php echo $tab === $k ? ' aria-current="page"' : ''; ?>><i class="fa-solid <?php echo $ic; ?>"></i> <?php echo s($nom); ?></a>
+    <?php endforeach; ?>
+</nav>
+
+<?php if ($tab === 'planes'): ?>
 <?php if ($puedeEditar && $abrirForm): ?>
 <form method="POST" action="/calidad/guardar" class="card co-form">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
@@ -236,4 +247,11 @@ $e = $editarPlan;
         <?php endforeach; ?></tbody>
     </table></div>
 </div>
+<?php endif; ?>
+<?php elseif ($tab === 'ensayos'): ?>
+    <?php include __DIR__ . '/_ensayos.php'; ?>
+<?php elseif ($tab === 'nc'): ?>
+    <?php include __DIR__ . '/_nc.php'; ?>
+<?php else: ?>
+    <?php include __DIR__ . '/_expedientes.php'; ?>
 <?php endif; ?>

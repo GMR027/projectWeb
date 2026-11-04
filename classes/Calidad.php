@@ -234,6 +234,23 @@ class Calidad
                 'motivo' => self::motivoBloqueo($nivel, $p, $pend, $nc),
             ];
         }
+        // No conformidades formales abiertas (calidad_nc) congelan igual que un punto no cumple
+        foreach (self::filas("SELECT actividad_id, COUNT(*) n, MIN(codigo) codigo FROM calidad_nc
+            WHERE proyecto_id = $pid AND estado IN ('abierta','en_correccion') AND actividad_id IS NOT NULL
+            GROUP BY actividad_id") as $f) {
+            $aid = (int)$f['actividad_id'];
+            $n = (int)$f['n'];
+            if (!$n) continue;
+            if (isset($out[$aid])) {
+                $out[$aid]['nc'] += $n;
+                $out[$aid]['nivel'] = 'nc';
+                $out[$aid]['motivo'] = 'Calidad detuvo el avance: ' . $n . ' no conformidad(es) formal(es) abierta(s).';
+            } else {
+                $out[$aid] = ['nivel' => 'nc', 'puntos' => 0, 'nc' => $n, 'plan_id' => 0, 'plan_codigo' => '',
+                    'motivo' => 'Calidad detuvo el avance: ' . $n . ' no conformidad(es) formal(es) abierta(s).'];
+            }
+        }
+
         // La liberación caduca si apareció una no conformidad nueva desde que se firmó
         foreach ($liberadas as $aid => $l) {
             if (!isset($out[$aid])) continue;

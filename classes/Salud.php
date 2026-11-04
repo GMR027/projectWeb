@@ -274,6 +274,16 @@ class Salud
                     : ($rs['por_vencer'] ? $rs['por_vencer'] . ' subcontrato(s) con documento por vencer.' : 'Documentos de subcontratos al corriente.')];
         }
 
+        // Calidad completa: ensayos rechazados y no conformidades formales abiertas
+        if (CalidadCompleta::disponible()) {
+            $cq = CalidadCompleta::resumen($pid);
+            if ($cq['ensayos'] || $cq['nc_abiertas']) {
+                $ind[] = ['clave' => 'calidad_completa', 'titulo' => 'Calidad: ensayos y NC', 'valor' => $cq['nc_abiertas'], 'icono' => 'fa-flask', 'url' => "/calidad?proyecto=$pid&tab=nc",
+                    'nivel' => $cq['rechazados'] || $cq['nc_abiertas'] ? 'critico' : 'ok',
+                    'detalle' => $cq['rechazados'] . ' ensayo(s) rechazado(s) · ' . $cq['nc_abiertas'] . ' NC formal(es) abiertas · costo ' . Costos::moneda((float)$cq['costo_nc']) . '.'];
+            }
+        }
+
         // Envíos de documentos sin acuse o con acuse vencido
         if (Transmittals::disponible()) {
             $tr = Transmittals::resumen($pid);

@@ -391,6 +391,12 @@ HTML],
 <p>El candado se ve junto al porcentaje en el <a href="#programa">Programa</a> y en el parte diario de campo, y el sistema rechaza el avance venga de donde venga (programa, parte, API o Telegram). Desmarca la casilla si el plan es solo informativo.</p>
 <h4>Liberar un avance</h4>
 <p>Cuando el cliente autoriza seguir aunque el papel venga en camino, el <strong>dueño del proyecto o el administrador</strong> puede pulsar <strong>Liberar</strong> en la tarjeta <em>Actividades detenidas</em>: se indica <strong>hasta qué porcentaje</strong> y el <strong>motivo</strong> (obligatorio). La liberación queda firmada con nombre y fecha, se puede revocar, y caduca sola si aparece una no conformidad nueva en esa actividad.</p>
+<h4>Ensayos, no conformidades y expediente</h4>
+<ul>
+<li><strong>Ensayos:</strong> tipo, muestra, fechas, laboratorio, norma, resultado, veredicto y certificado del Archivo. Un ensayo rechazado queda marcado y avisa en Salud.</li>
+<li><strong>No conformidades formales:</strong> hallazgo, causa, acción correctiva, responsable, compromiso, costo, evidencias y seguimiento de acciones. Mientras esté abierta o en corrección, <strong>congela el avance</strong> de su actividad. El botón <strong>Enviar costo a Costos</strong> crea el costo real una sola vez.</li>
+<li><strong>Expedientes por partida:</strong> reúnen ITP, puntos, ensayos y NC. Se consultan vivos o se <strong>cierran y firman</strong> en un PDF congelado; solo el admin o el dueño pueden reabrirlo.</li>
+</ul>
 HTML],
 
 ['id' => 'equipo', 'despues' => 'calidad', 'titulo' => 'Equipo y maquinaria', 'icono' => 'fa-truck', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'

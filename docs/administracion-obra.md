@@ -113,3 +113,13 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - `Classes\Cierre::guardarItem()` rechaza marcar como **completado** un punto de categoría `punch` mientras haya partidas bloqueadas. `Cierre::resumen()` topa el avance en **99 %** y devuelve `punch_bloqueos`, `punch_partidas` y `bloqueado`.
 - UI: candado en la fila de la partida en Programa, pantalla `/programa/partidas/cerrar`, aviso en Cierre y en el acta PDF, e indicador en Salud.
 - Migración `database/migracion_punch_cierre.sql`.
+
+## Calidad completa (`Classes\CalidadCompleta`, `Classes\CalidadExpediente`)
+
+- `calidad_ensayos`: tipo, muestra, ubicación, fechas, laboratorio, norma, resultado, veredicto (`pendiente/aprobado/rechazado`), certificado del Archivo y actividad/plan opcionales.
+- `calidad_nc`: código, hallazgo, causa, acción, responsable, compromiso, costo, estado (`abierta/en_correccion/cerrada`), evidencias, `movimiento_id`, cierre. `calidad_nc_acciones` guarda el seguimiento verificado.
+- La NC formal abierta/en corrección se suma a `Calidad::bloqueosProyecto()`: congela el avance de su actividad igual que un punto no cumple.
+- `CalidadCompleta::enviarCosto()` crea un `costos_movimientos` real por el costo y guarda `movimiento_id` (una sola vez).
+- `CalidadExpediente::datos()` reúne ITP, puntos, ensayos y NC de la partida; `pdf()` genera el expediente y `cerrar()` lo guarda en `storage/calidad/<proyecto>/` con huella MD5. Un expediente cerrado se descarga congelado; `reabrir()` lo vuelve a borrador (solo admin/dueño).
+- UI: pestañas **Planes ITP**, **Ensayos**, **No conformidades** y **Expedientes** en `/calidad`; ruta PDF `/calidad/expediente/pdf?partida=`.
+- Migración `database/migracion_calidad_completa.sql`.
