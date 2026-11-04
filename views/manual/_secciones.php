@@ -651,6 +651,14 @@ HTML],
 <h4>Presupuesto desde cantidades</h4>
 <p>Cada actividad puede tener su <strong>concepto de obra</strong>: cantidad × precio unitario = importe. Cuando <strong>todas</strong> las actividades con duración de una partida están valuadas, su presupuesto pasa a ser la suma de esos importes y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto escrito a mano y la tabla avisa cuántas faltan y cuánto suman las que ya están.</p>
 <p>El botón <strong>Recalcular desde cantidades</strong> vuelve a sumar todas las partidas (útil para datos que ya existían). El precio es costo directo: no incluye IVA ni indirectos.</p>
+<h4>Dinero comprometido</h4>
+<p>La pestaña <strong>Compromisos</strong> guarda lo que ya prometiste pagar aunque la factura no haya llegado: órdenes de compra, subcontratos y órdenes de servicio. Al guardarlos como <em>vigentes</em> reservan presupuesto y el <strong>Disponible</strong> de la partida baja en ese momento.</p>
+<ol>
+<li><strong>Nuevo compromiso:</strong> tipo, proveedor, número, concepto, monto, partida, actividad opcional, fecha de entrega y documento del Archivo.</li>
+<li><strong>Aplicar factura:</strong> cuando llega, se indica el número y el monto. Se crea el costo real y el saldo comprometido baja; el disponible no cambia porque el dinero pasa de «comprometido» a «gastado». Se puede aplicar en varias facturas.</li>
+<li><strong>Cerrar:</strong> libera el saldo que ya no se va a facturar. Si no tenía facturas queda <em>cancelado</em>; si tenía, queda <em>cerrado</em>.</li>
+</ol>
+<p>Si un compromiso supera el disponible de su partida, el sistema <strong>avisa</strong> y pide un <strong>motivo</strong> (mínimo 10 caracteres); no lo bloquea. La fila queda marcada <em>Sobregiro autorizado</em> y la partida se pinta en rojo. El <strong>borrador</strong> no reserva dinero hasta que pasa a vigente.</p>
 <h4>Qué calcula</h4>
 <table class="tabla manual-tabla">
 <thead><tr><th>Sigla</th><th>Significa</th></tr></thead>

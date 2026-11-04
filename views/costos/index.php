@@ -4,7 +4,7 @@ use Classes\Costos;
 
 $pid = (int)$proyecto->id;
 $url = fn(array $q = []) => '/costos?' . http_build_query(['proyecto' => $pid] + $q);
-$tabs = ['resumen' => ['fa-gauge-high', 'Resumen y valor ganado'], 'real' => ['fa-receipt', 'Costo real'], 'estimaciones' => ['fa-file-invoice-dollar', 'Estimaciones'], 'cambios' => ['fa-file-circle-exclamation', 'Órdenes de cambio']];
+$tabs = ['resumen' => ['fa-gauge-high', 'Resumen y valor ganado'], 'real' => ['fa-receipt', 'Costo real'], 'estimaciones' => ['fa-file-invoice-dollar', 'Estimaciones'], 'compromisos' => ['fa-file-signature', 'Compromisos'], 'cambios' => ['fa-file-circle-exclamation', 'Órdenes de cambio']];
 $m = fn($x) => Costos::moneda((float)$x);
 $ind = fn($v, $bueno = 1.0) => $v === null ? '—' : number_format($v, 2);
 $clsIdx = fn($v) => $v === null ? '' : ($v < 0.9 ? 'cs-mal' : ($v < 1 ? 'co-aviso' : 'cs-bien'));
@@ -37,6 +37,8 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <div class="cb-kpi"><small>Presupuesto vigente</small><strong><?php echo $m($t['bac']); ?></strong><span><?php echo $m($t['presupuesto']); ?> original<?php echo $t['cambios'] ? ' ' . ($t['cambios'] > 0 ? '+' : '−') . ' ' . $m(abs($t['cambios'])) . ' en cambios' : ''; ?></span></div>
         <div class="cb-kpi"><small>Valor ganado (EV)</small><strong><?php echo $m($t['ev']); ?></strong><span>Programado a hoy (PV): <?php echo $m($t['pv']); ?></span></div>
         <div class="cb-kpi"><small>Costo real (AC)</small><strong><?php echo $m($t['ac']); ?></strong><span class="<?php echo $clsVar($t['cv']); ?>">Variación de costo: <?php echo $m($t['cv']); ?></span></div>
+        <div class="cb-kpi"><small title="Órdenes de compra, subcontratos y servicios vigentes que aún no se facturan">Comprometido</small><strong><?php echo $m($t['comprometido']); ?></strong><span>Prometido, aún sin factura</span></div>
+        <div class="cb-kpi <?php echo $t['disponible'] < 0 ? 'cb-kpi-alerta' : ''; ?>"><small title="Presupuesto vigente − costo real − comprometido">Disponible</small><strong class="<?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></strong><span><?php echo $t['disponible'] < 0 ? 'La obra ya debe más de lo presupuestado' : 'Lo que queda por gastar o comprometer'; ?></span></div>
         <div class="cb-kpi"><small title="Valor ganado ÷ costo real. Menor a 1 = se gasta más de lo avanzado">CPI · costo</small><strong class="<?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></strong><span>SPI · tiempo: <b class="<?php echo $clsIdx($t['spi']); ?>"><?php echo $ind($t['spi']); ?></b></span></div>
         <div class="cb-kpi"><small title="Presupuesto ÷ CPI">Costo final estimado (EAC)</small><strong><?php echo $t['eac'] !== null ? $m($t['eac']) : '—'; ?></strong><span class="<?php echo $clsVar($t['vac']); ?>"><?php echo $t['vac'] !== null ? 'Variación al final: ' . $m($t['vac']) : 'Se calcula con el primer costo real'; ?></span></div>
         <div class="cb-kpi"><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Por estimar (EV − estimado): <?php echo $m($t['por_cobrar']); ?></span></div>
@@ -55,7 +57,7 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <h3><i class="fa-solid fa-list-check"></i> Por partida</h3>
         <?php if (!$resumen['partidas']): ?><p class="text-muted">Aún no hay partidas. Créalas en <a href="/programa?proyecto=<?php echo $pid; ?>">Programa</a>.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla co-tabla">
-            <thead><tr><th>Partida</th><th title="Se calcula con las cantidades cuando la partida está completa; si no, se captura a mano">Presupuesto</th><th class="hide-m">Cambios</th><th class="hide-m">Vigente</th><th class="hide-m">Prog. / real</th><th>PV</th><th>EV</th><th>AC</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
+            <thead><tr><th>Partida</th><th title="Se calcula con las cantidades cuando la partida está completa; si no, se captura a mano">Presupuesto</th><th class="hide-m">Cambios</th><th class="hide-m">Vigente</th><th class="hide-m">Prog. / real</th><th>PV</th><th>EV</th><th>AC</th><th>Comprometido</th><th>Disponible</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
             <tbody>
             <?php foreach ($resumen['partidas'] as $p): ?>
                 <tr>
@@ -77,12 +79,14 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
                     <td class="mono"><?php echo $m($p['pv']); ?></td>
                     <td class="mono"><?php echo $m($p['ev']); ?></td>
                     <td class="mono"><?php echo $m($p['ac']); ?></td>
+                    <td class="mono <?php echo $p['comprometido'] > 0 ? 'co-aviso' : ''; ?>"><?php echo $m($p['comprometido']); ?></td>
+                    <td class="mono <?php echo $p['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($p['disponible']); ?></td>
                     <td class="mono hide-m <?php echo $clsIdx($p['cpi']); ?>"><?php echo $ind($p['cpi']); ?></td>
                     <td class="mono hide-m"><?php echo $m($p['estimado']); ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
-            <tfoot><tr><th>Total</th><th class="mono"><?php echo $m($t['presupuesto']); ?></th><th class="mono hide-m"><?php echo $m($t['cambios']); ?></th><th class="mono hide-m"><?php echo $m($t['bac']); ?></th><th class="hide-m"></th><th class="mono"><?php echo $m($t['pv']); ?></th><th class="mono"><?php echo $m($t['ev']); ?></th><th class="mono"><?php echo $m($t['ac']); ?></th><th class="mono hide-m <?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></th><th class="mono hide-m"><?php echo $m($t['estimado']); ?></th></tr></tfoot>
+            <tfoot><tr><th>Total</th><th class="mono"><?php echo $m($t['presupuesto']); ?></th><th class="mono hide-m"><?php echo $m($t['cambios']); ?></th><th class="mono hide-m"><?php echo $m($t['bac']); ?></th><th class="hide-m"></th><th class="mono"><?php echo $m($t['pv']); ?></th><th class="mono"><?php echo $m($t['ev']); ?></th><th class="mono"><?php echo $m($t['ac']); ?></th><th class="mono"><?php echo $m($t['comprometido']); ?></th><th class="mono <?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></th><th class="mono hide-m <?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></th><th class="mono hide-m"><?php echo $m($t['estimado']); ?></th></tr></tfoot>
         </table></div>
         <?php $sp = $resumen['sinPartida']; if ($sp['cambios'] || $sp['real'] || $sp['estimado']): ?>
             <p class="text-muted text-sm">Sin partida (cuenta en el total): cambios <?php echo $m($sp['cambios']); ?> · costo real <?php echo $m($sp['real']); ?> · estimado <?php echo $m($sp['estimado']); ?>.</p>
@@ -144,6 +148,107 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
             <?php endforeach; ?>
             </tbody>
             <tfoot><tr><th colspan="<?php echo $tipo === 'estimacion' ? 6 : 5; ?>">Total<?php echo $tipo === 'estimacion' ? ' (sin borradores)' : ''; ?></th><th class="mono"><?php echo $m($suma); ?></th><th></th></tr></tfoot>
+        </table></div>
+        <?php endif; ?>
+    </div>
+
+<?php elseif ($pestana === 'compromisos'): $ce = $compromisoEditar; $ap = $aplicar; ?>
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem">
+            <div>
+                <h3 class="m-0"><i class="fa-solid fa-file-signature"></i> Dinero comprometido</h3>
+                <p class="text-muted text-sm m-0">Órdenes de compra, subcontratos y servicios que ya prometiste pagar. Reservan presupuesto desde que se emiten; al aplicar la factura pasan a costo real sin contarse dos veces.</p>
+            </div>
+            <?php if (!$ce): ?><a class="btn btn-primary" href="<?php echo s($url(['pestana' => 'compromisos', 'nuevo_compromiso' => 1])); ?>">+ Nuevo compromiso</a><?php endif; ?>
+        </div>
+        <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
+
+        <?php if ($ce || isset($_GET['nuevo_compromiso'])): ?>
+        <form method="POST" action="/costos/compromiso" class="co-form" style="margin-top:1rem">
+            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+            <input type="hidden" name="id" value="<?php echo $ce ? (int)$ce['id'] : 0; ?>">
+            <h4><?php echo $ce ? 'Editar compromiso' : 'Nuevo compromiso'; ?></h4>
+            <div class="co-campos">
+                <label>Tipo<select name="tipo"><?php foreach (\Classes\Compromisos::TIPOS as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo ($ce['tipo'] ?? 'orden_compra') === $k ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?></select></label>
+                <label>Estado<select name="estado"><?php foreach (\Classes\Compromisos::ESTADOS as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo ($ce['estado'] ?? 'vigente') === $k ? ' selected' : ''; ?>><?php echo s($etq); ?></option><?php endforeach; ?></select></label>
+                <label>Proveedor o contratista *<input type="text" name="proveedor" maxlength="200" required value="<?php echo s($ce['proveedor'] ?? ''); ?>" placeholder="Ej.: Aceros del Norte"></label>
+                <label>Número / referencia<input type="text" name="numero" maxlength="80" value="<?php echo s($ce['numero'] ?? ''); ?>" placeholder="OC-2026-014"></label>
+                <label class="co-ancho">Concepto<input type="text" name="concepto" maxlength="255" value="<?php echo s($ce['concepto'] ?? ''); ?>" placeholder="Ej.: Suministro y montaje de estructura metálica"></label>
+                <label>Monto *<input type="text" inputmode="decimal" name="monto" required value="<?php echo $ce ? s(number_format((float)$ce['monto'], 2, '.', '')) : ''; ?>" placeholder="0.00"></label>
+                <label>Fecha de emisión<input type="date" name="fecha" value="<?php echo s($ce['fecha'] ?? date('Y-m-d')); ?>"></label>
+                <label>Entrega / vigencia<input type="date" name="entrega" value="<?php echo s($ce['entrega'] ?? ''); ?>"></label>
+                <label>Partida *<select name="partida_id" required>
+                    <option value="">— Elige —</option>
+                    <?php foreach ($resumen['partidas'] as $p): ?><option value="<?php echo (int)$p['id']; ?>"<?php echo (int)($ce['partida_id'] ?? 0) === (int)$p['id'] ? ' selected' : ''; ?>><?php echo s($p['codigo'] . ' ' . $p['nombre']); ?> · disp. <?php echo $m($p['disponible']); ?></option><?php endforeach; ?>
+                </select></label>
+                <label>Actividad (opcional)<select name="actividad_id"><option value="0">— Toda la partida —</option>
+                    <?php $porPartida = []; foreach ($actividades as $a) $porPartida[$a['partida_codigo'] . ' · ' . $a['partida']][] = $a; ?>
+                    <?php foreach ($porPartida as $nom => $acts): ?><optgroup label="<?php echo s($nom); ?>"><?php foreach ($acts as $a): ?><option value="<?php echo (int)$a['id']; ?>"<?php echo (int)($ce['actividad_id'] ?? 0) === (int)$a['id'] ? ' selected' : ''; ?>><?php echo s($a['codigo'] . ' · ' . $a['nombre']); ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
+                </select></label>
+                <label>Documento del Archivo<select name="archivo_id"><option value="0">— Sin documento —</option><?php foreach ($archivos as $ar): ?><option value="<?php echo (int)$ar->id; ?>"<?php echo (int)($ce['archivo_id'] ?? 0) === (int)$ar->id ? ' selected' : ''; ?>><?php echo s($ar->nombre); ?></option><?php endforeach; ?></select></label>
+                <label class="co-ancho">Notas<textarea name="notas" rows="2" maxlength="5000"><?php echo s($ce['notas'] ?? ''); ?></textarea></label>
+                <label class="co-ancho">Motivo del sobregiro (obligatorio si el monto supera el disponible)
+                    <input type="text" name="motivo_sobregiro" maxlength="500" value="<?php echo s($ce['motivo_sobregiro'] ?? ''); ?>" placeholder="Ej.: el precio del acero subió y la orden de cambio va en trámite">
+                </label>
+            </div>
+            <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar compromiso</button>
+                <a class="btn btn-ghost" href="<?php echo s($url(['pestana' => 'compromisos'])); ?>">Cancelar</a>
+                <span class="text-muted text-sm">El borrador no reserva dinero; al pasar a <em>vigente</em> sí.</span>
+            </div>
+        </form>
+        <?php endif; ?>
+
+        <?php if ($ap): ?>
+        <form method="POST" action="/costos/compromiso/aplicar" class="co-form" style="margin-top:1rem;border-left:3px solid var(--primary);padding-left:1rem">
+            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+            <input type="hidden" name="id" value="<?php echo (int)$ap['id']; ?>">
+            <h4>Aplicar factura al compromiso <?php echo s($ap['numero'] ?: '#' . $ap['id']); ?></h4>
+            <p class="text-sm text-muted"><?php echo s($ap['proveedor']); ?> · saldo comprometido <b class="mono"><?php echo $m($ap['saldo']); ?></b>. Al aplicar, se crea el costo real y el saldo comprometido baja.</p>
+            <div class="co-campos">
+                <label>Factura / referencia *<input type="text" name="factura" maxlength="100" required placeholder="F-8891"></label>
+                <label>Monto *<input type="text" inputmode="decimal" name="monto" required value="<?php echo s(number_format((float)$ap['saldo'], 2, '.', '')); ?>"></label>
+                <label>Fecha<input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>"></label>
+            </div>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-receipt"></i> Aplicar factura</button>
+            <a class="btn btn-ghost" href="<?php echo s($url(['pestana' => 'compromisos'])); ?>">Cancelar</a>
+        </form>
+        <?php endif; ?>
+
+        <?php if (!$compromisos): ?>
+            <p class="text-muted" style="margin-top:1rem">Todavía no hay compromisos. Empieza con las órdenes de compra abiertas y los subcontratos firmados.</p>
+        <?php else: ?>
+        <div class="tabla-wrapper" style="margin-top:1rem"><table class="tabla">
+            <thead><tr><th>Compromiso</th><th>Partida / actividad</th><th class="num">Monto</th><th class="num">Aplicado</th><th class="num">Saldo</th><th>Entrega</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($compromisos as $c): ?>
+                <tr>
+                    <td><strong class="mono"><?php echo s($c['numero'] ?: '#' . $c['id']); ?></strong> · <?php echo s(\Classes\Compromisos::TIPOS[$c['tipo']] ?? $c['tipo']); ?><br><small class="text-muted"><?php echo s($c['proveedor']); ?><?php echo trim((string)$c['concepto']) !== '' ? ' · ' . s($c['concepto']) : ''; ?></small><?php if ($c['motivo_sobregiro'] !== ''): ?><br><span class="badge badge-pdf" title="<?php echo s($c['motivo_sobregiro']); ?>"><i class="fa-solid fa-triangle-exclamation"></i> Sobregiro autorizado</span><?php endif; ?></td>
+                    <td><span class="mono"><?php echo s($c['partida_codigo']); ?></span> <?php echo s($c['partida']); ?><?php if ($c['act_codigo']): ?><br><small class="text-muted"><?php echo s($c['act_codigo'] . ' · ' . $c['act_nombre']); ?></small><?php endif; ?></td>
+                    <td class="num mono"><?php echo $m($c['monto']); ?></td>
+                    <td class="num mono"><?php echo $m($c['aplicado']); ?></td>
+                    <td class="num mono"><?php echo $m($c['saldo']); ?></td>
+                    <td class="mono text-sm"><?php echo $c['entrega'] ? s(formatear_fecha($c['entrega'], 'd/m/Y')) : '—'; ?></td>
+                    <td><span class="cb-tag"><?php echo s(\Classes\Compromisos::ESTADOS[$c['estado']] ?? $c['estado']); ?></span></td>
+                    <td class="acciones" style="white-space:nowrap">
+                        <?php if ($c['abierto'] && $c['saldo'] > 0): ?><a class="btn btn-xs btn-primary" href="<?php echo s($url(['pestana' => 'compromisos', 'aplicar' => $c['id']])); ?>" title="Aplicar factura"><i class="fa-solid fa-receipt"></i></a><?php endif; ?>
+                        <a class="btn btn-xs btn-ghost" href="<?php echo s($url(['pestana' => 'compromisos', 'editar_compromiso' => $c['id']])); ?>" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen"></i></a>
+                        <?php if (!in_array($c['estado'], ['cerrado', 'cancelado'], true)): ?>
+                            <form class="inline" method="POST" action="/costos/compromiso/cerrar" data-confirm="Cerrar compromiso|Se liberará el saldo de <?php echo s($m($c['saldo'])); ?> y ya no reservará presupuesto.|Cerrar">
+                                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
+                                <button class="btn btn-xs btn-ghost" type="submit" title="Cerrar y liberar saldo" aria-label="Cerrar"><i class="fa-solid fa-lock"></i></button>
+                            </form>
+                        <?php endif; ?>
+                        <?php if ($c['aplicado'] <= 0): ?>
+                            <form class="inline" method="POST" action="/costos/compromiso/eliminar" data-confirm="Eliminar compromiso|Se borrará el registro. Solo se puede si no tiene facturas aplicadas.|Eliminar">
+                                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
+                                <button class="btn btn-xs btn-ghost text-danger" type="submit" title="Eliminar" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
         </table></div>
         <?php endif; ?>
     </div>

@@ -78,6 +78,7 @@ class Costos
 
     public static function eliminarMovimiento(int $pid, int $id): void
     {
+        Compromisos::quitarAplicacionesDeMovimiento($id);   // si era una factura de un compromiso, recupera el saldo
         HistorialCambios::escribir('costos_movimientos', 'eliminado', $id,
             fn() => self::db()->query("DELETE FROM costos_movimientos WHERE id = $id AND proyecto_id = $pid"));
     }
@@ -142,6 +143,7 @@ class Costos
         $av = self::avancePartidas($proyecto, $fecha);
         $pres = array_column(self::filas("SELECT partida_id, presupuesto, presupuesto_manual, origen FROM costos_partidas WHERE proyecto_id = $pid"), null, 'partida_id');
         $calc = Cantidades::resumenPartidas($pid);
+        $comp = Compromisos::disponible() ? Compromisos::resumenProyecto($pid) : [];
         $cambios = [];
         $cambiosGenerales = 0.0;
         foreach (self::cambiosAutorizados($pid) as $c) {
@@ -156,7 +158,7 @@ class Costos
             elseif ($m['estado'] !== 'borrador') { $p ? $es[$p] = ($es[$p] ?? 0) + (float)$m['m'] : $sinEst += (float)$m['m']; }
         }
         $partidas = [];
-        $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0];
+        $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0, 'comprometido' => 0.0, 'disponible' => 0.0];
         foreach (self::filas("SELECT id, codigo, nombre, color_bg FROM partidas WHERE proyecto_id = $pid ORDER BY orden, codigo") as $p) {
             $id = (int)$p['id'];
             $info = $calc[$id] ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
@@ -168,14 +170,17 @@ class Costos
             $manual = (float)($pres[$id]['presupuesto_manual'] ?? $pres[$id]['presupuesto'] ?? 0);
             $camb = (float)($cambios[$id] ?? 0);
             $bac = $presupuesto + $camb;
+            $acPartida = round((float)($ac[$id] ?? 0), 2);
+            $compr = round((float)($comp[$id]['comprometido'] ?? 0), 2);
             $a = $av[$id] ?? ['plan' => 0.0, 'real' => 0.0];
             $f = ['id' => $id, 'codigo' => $p['codigo'], 'nombre' => $p['nombre'], 'color' => $p['color_bg'], 'presupuesto' => $presupuesto, 'cambios' => $camb, 'bac' => $bac,
                 'presupuesto_manual' => $manual, 'calculado' => $calculado, 'origen' => $calculado ? 'cantidades' : 'manual',
                 'actividades' => (int)$info['total'], 'valuadas' => (int)$info['valuadas'], 'faltantes' => (int)$info['faltantes'], 'suma_parcial' => round((float)$info['suma'], 2),
                 'plan_pct' => round($a['plan'] * 100, 1), 'real_pct' => round($a['real'] * 100, 1),
-                'pv' => round($bac * $a['plan'], 2), 'ev' => round($bac * $a['real'], 2), 'ac' => round((float)($ac[$id] ?? 0), 2), 'estimado' => round((float)($es[$id] ?? 0), 2)];
+                'pv' => round($bac * $a['plan'], 2), 'ev' => round($bac * $a['real'], 2), 'ac' => $acPartida,
+                'comprometido' => $compr, 'disponible' => round($bac - $acPartida - $compr, 2), 'estimado' => round((float)($es[$id] ?? 0), 2)];
             $partidas[] = $f;
-            foreach (['presupuesto', 'cambios', 'bac', 'pv', 'ev', 'ac', 'estimado'] as $k) $t[$k] += $f[$k];
+            foreach (['presupuesto', 'cambios', 'bac', 'pv', 'ev', 'ac', 'estimado', 'comprometido'] as $k) $t[$k] += $f[$k];
         }
         // Lo que no se asignó a una partida cuenta en los totales: costo real, estimaciones y cambios sin partida
         $t['cambios'] += $cambiosGenerales;
@@ -183,6 +188,7 @@ class Costos
         $t['ac'] += $sinReal;
         $t['estimado'] += $sinEst;
         $t = array_map(fn($x) => round($x, 2), $t);
+        $t['disponible'] = round($t['bac'] - $t['ac'] - $t['comprometido'], 2);
         $t += self::indices($t['pv'], $t['ev'], $t['ac'], $t['bac']);
         $t['por_cobrar'] = round($t['ev'] - $t['estimado'], 2);
         foreach ($partidas as &$f) $f += self::indices($f['pv'], $f['ev'], $f['ac'], $f['bac']);

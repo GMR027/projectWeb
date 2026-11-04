@@ -733,6 +733,29 @@ $ok('Costos calcula el presupuesto desde las cantidades y conserva el manual', s
     && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'presupuesto_manual'));
 $ok('Datos de obra muestra el precio unitario', str_contains((string)@file_get_contents(__DIR__ . '/../classes/DatosObra.php'), 'precio_unitario'));
 $ok('el Ensamblador deduce el precio unitario al importar cantidades', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Ensamblador.php'), 'precio_unitario, importe, origen'));
+echo "Compromisos y disponible\n";
+$ok('los catálogos de compromisos están completos', count(\Classes\Compromisos::TIPOS) === 3
+    && count(\Classes\Compromisos::ESTADOS) === 5 && \Classes\Compromisos::ABIERTOS === ['vigente', 'parcial']);
+$ok('la tabla de compromisos está en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_compromisos.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS compromisos') && str_contains($m, 'compromiso_aplicaciones')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS compromisos') && str_contains($s, 'CREATE TABLE IF NOT EXISTS compromiso_aplicaciones');
+})());
+$ok('las rutas de compromisos están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/costos/compromiso'") && str_contains($t, "'/costos/compromiso/aplicar'")
+        && str_contains($t, "'/costos/compromiso/cerrar'") && str_contains($t, "'/costos/compromiso/eliminar'");
+})());
+$ok('Costos descuenta lo comprometido y calcula el disponible', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'Compromisos::resumenProyecto(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), "'disponible'"));
+$ok('la factura aplicada se descuenta del compromiso y se puede revertir al borrar el movimiento', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Compromisos.php'), 'compromiso_aplicaciones')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'quitarAplicacionesDeMovimiento'));
+$ok('la pestaña de compromisos tiene alta, aplicación de factura y sobregiro firmado', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/costos/index.php');
+    return str_contains($v, "pestana' => 'compromisos'") && str_contains($v, '/costos/compromiso/aplicar')
+        && str_contains($v, 'motivo_sobregiro') && str_contains($v, 'Sobregiro autorizado');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

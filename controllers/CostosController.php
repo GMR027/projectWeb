@@ -5,6 +5,8 @@ namespace Controllers;
 use MVC\Router;
 use Classes\Costos;
 use Classes\Cantidades;
+use Classes\Compromisos;
+use Model\Archivo;
 
 /** Costos y presupuesto: presupuesto por partida, costo real, estimaciones y valor ganado (ver Classes\Costos). Solo quien gestiona el proyecto */
 class CostosController
@@ -13,12 +15,15 @@ class CostosController
     {
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
-        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'real', 'estimaciones', 'cambios'], true) ? $_GET['pestana'] : 'resumen';
+        $pestana = in_array($_GET['pestana'] ?? '', ['resumen', 'real', 'estimaciones', 'compromisos', 'cambios'], true) ? $_GET['pestana'] : 'resumen';
         $disponible = Costos::disponible();
         $resumen = $disponible ? Costos::resumen($proyecto) : null;
         $movimientos = $disponible && in_array($pestana, ['real', 'estimaciones'], true) ? Costos::movimientos($pid, $pestana === 'real' ? 'real' : 'estimacion') : [];
         $editar = null;
         foreach ($movimientos as $m) if ((int)$m['id'] === (int)($_GET['editar'] ?? 0)) $editar = $m;
+        $compromisos = $disponible && $pestana === 'compromisos' ? Compromisos::lista($pid) : [];
+        $compromisoEditar = $disponible && $pestana === 'compromisos' && !empty($_GET['editar_compromiso']) ? Compromisos::compromiso($pid, (int)$_GET['editar_compromiso']) : null;
+        $aplicar = $disponible && $pestana === 'compromisos' && !empty($_GET['aplicar']) ? Compromisos::compromiso($pid, (int)$_GET['aplicar']) : null;
         $router->render('costos/index', [
             'titulo' => 'Costos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'pestana' => $pestana, 'disponible' => $disponible,
             'resumen' => $resumen,
@@ -27,6 +32,9 @@ class CostosController
             'cambios' => $disponible && $pestana === 'cambios' ? Costos::cambiosAutorizados($pid) : [],
             'ordenes' => $disponible ? \Model\OrdenCambio::deProyecto($pid) : [],
             'editar' => $editar, 'error' => texto_param($_GET['error'] ?? ''), 'ok' => texto_param($_GET['ok'] ?? ''),
+            'compromisos' => $compromisos, 'compromisoEditar' => $compromisoEditar, 'aplicar' => $aplicar,
+            'archivos' => $disponible && $pestana === 'compromisos' ? Archivo::deProyecto($pid) : [],
+            'actividades' => $disponible && $pestana === 'compromisos' ? \Classes\Recursos::actividades($pid) : [],
         ]);
     }
 
@@ -45,6 +53,34 @@ class CostosController
             Costos::guardarPresupuesto((int)$proyecto->id, (int)$partidaId, (float)$monto);
         }
         self::volver((int)$proyecto->id, 'resumen', '&ok=presupuesto');
+    }
+
+    public static function compromiso()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        [$ok, $msg] = Compromisos::guardar((int)$proyecto->id, $_POST);
+        self::volver((int)$proyecto->id, 'compromisos', ($ok ? '&ok=' : '&error=') . urlencode($msg));
+    }
+
+    public static function aplicarFactura()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        [$ok, $msg] = Compromisos::aplicar((int)$proyecto->id, (int)($_POST['id'] ?? 0), $_POST);
+        self::volver((int)$proyecto->id, 'compromisos', ($ok ? '&ok=' : '&error=') . urlencode($msg));
+    }
+
+    public static function cerrarCompromiso()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        [$ok, $msg] = Compromisos::cerrar((int)$proyecto->id, (int)($_POST['id'] ?? 0));
+        self::volver((int)$proyecto->id, 'compromisos', ($ok ? '&ok=' : '&error=') . urlencode($msg));
+    }
+
+    public static function eliminarCompromiso()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $ok = Compromisos::eliminar((int)$proyecto->id, (int)($_POST['id'] ?? 0));
+        self::volver((int)$proyecto->id, 'compromisos', $ok ? '&ok=' . urlencode('Compromiso eliminado') : '&error=' . urlencode('Solo se pueden eliminar compromisos sin facturas aplicadas'));
     }
 
     /** Recalcula el presupuesto de todas las partidas desde sus cantidades (para datos anteriores a la migración) */
