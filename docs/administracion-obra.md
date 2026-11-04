@@ -105,3 +105,11 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - Enlace público `/transmittals/acuse?t=TOKEN` (sin sesión, `publicoLayout`, noindex). El acuse no bloquea la obra; `Salud` avisa de envíos sin acuse o vencidos.
 - UI en **Archivo → Envíos** (`/transmittals`), dentro del grupo de pestañas de Archivo. PDF en `/transmittals/pdf`.
 - Migración `database/migracion_transmittals.sql`.
+
+## Punch y cierre (`Classes\Punch`, `Model\Partida`)
+
+- `Punch::partidasBloqueadas($pid)` cuenta pendientes con severidad **alta/crítica** y estado **abierto/en_proceso/corregido** por partida. Los menores y los cerrados/rechazados no cuentan.
+- `Model\Partida::cerrar($pid,$id,$motivo)` cierra la partida (`partidas.cerrada`, `cerrada_por`, `cerrada_en`, `cierre_motivo`). Si hay pendientes graves exige un motivo de **≥10 caracteres**; el controlador solo permite la excepción a admin o dueño. `reabrir()` limpia el cierre.
+- `Classes\Cierre::guardarItem()` rechaza marcar como **completado** un punto de categoría `punch` mientras haya partidas bloqueadas. `Cierre::resumen()` topa el avance en **99 %** y devuelve `punch_bloqueos`, `punch_partidas` y `bloqueado`.
+- UI: candado en la fila de la partida en Programa, pantalla `/programa/partidas/cerrar`, aviso en Cierre y en el acta PDF, e indicador en Salud.
+- Migración `database/migracion_punch_cierre.sql`.

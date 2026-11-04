@@ -887,6 +887,31 @@ $ok('la vista de envíos tiene formulario, enlaces de acuse y PDF', (function ()
         && str_contains($a, 'Firmar acuse');
 })());
 $ok('Salud avisa de los envíos sin acuse', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Salud.php'), 'Transmittals::resumen('));
+echo "Punch bloquea el cierre\n";
+$ok('las severidades y estados que bloquean el cierre están definidos', \Classes\Punch::SEVERIDADES_BLOQUEO === ['alta', 'critica']
+    && \Classes\Punch::ESTADOS_BLOQUEO === ['abierto', 'en_proceso', 'corregido']);
+$ok('la migración y el esquema traen el cierre de partida', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_punch_cierre.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'cerrada TINYINT') && str_contains($m, 'cierre_motivo')
+        && str_contains($s, 'cierre_motivo') && str_contains($s, 'cerrada_por');
+})());
+$ok('las rutas de cerrar y reabrir partida están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/programa/partidas/cerrar'") && str_contains($t, "'/programa/partidas/reabrir'");
+})());
+$ok('el cierre de partida consulta el punch y permite excepción firmada', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../models/Partida.php');
+    return str_contains($c, 'function cerrar(') && str_contains($c, 'Punch::partidasBloqueadas(')
+        && str_contains($c, 'cierre_motivo');
+})());
+$ok('el Cierre topa en 99 y bloquea el punto de punch', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Cierre.php');
+    return str_contains($c, "if (\$cat === 'punch' && \$estado === 'completado')")
+        && str_contains($c, 'punch_bloqueos') && str_contains($c, 'min(99, $pct)');
+})());
+$ok('el Programa y el Cierre muestran el candado de punch', str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'punchBloqueos')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/cierre/index.php'), 'Entrega detenida por punch'));
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

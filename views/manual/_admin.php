@@ -336,6 +336,7 @@ HTML],
 <li><strong>Registra ①</strong> cada pendiente con <strong>fecha de emisión</strong> (el día en que se detectó o se emitió; viene puesta a hoy y se puede ajustar), ubicación, categoría, severidad, responsable, contratista, fecha límite, actividad relacionada, descripción y una <strong>foto «antes»</strong>.</li>
 <li>Para recorrer un área, usa <strong>Inspección</strong>: una lista de verificación por ubicación que registra todos los hallazgos de una vez.</li>
 <li>Filtra por estado, ubicación o contratista y descarga el <strong>PDF</strong> (general o por contratista) para repartirlo.</li>
+<li><strong>Bloquea el cierre:</strong> los pendientes de severidad <strong>alta o crítica</strong> que sigan abiertos, en proceso o corregidos sin verificar impiden cerrar su partida y completar la entrega. El candado se abre al cerrarlos.</li>
 <li><strong>Úsalo en otros documentos:</strong> el Punch list se puede insertar como tabla en <strong>vPlan</strong> (<em>Tablas adicionales › Nueva tabla › Punch list</em>), en el <strong>Redactor</strong> (<em>Insertar tabla › Punch list</em>) y en el <strong>Editor</strong> (pestaña Símbolos › <em>Punch list</em>). En los tres eliges <strong>qué ver</strong> (columnas, fotos antes/después, estado, severidad, contratista) con el botón «Qué ver», y la tabla se actualiza sola con los pendientes. En vPlan además puedes cambiar estado, severidad, fechas y responsable desde la lámina. En el Editor las fotos (hasta 20 por tabla) se colocan en sus celdas.</li>
 <li><strong>Cierra ③:</strong> abre el pendiente, sube la <strong>foto «después»</strong> y cambia su estado.</li>
 </ol>
@@ -412,6 +413,7 @@ HTML],
 
 ['id' => 'cierre', 'despues' => 'contratos', 'titulo' => 'Cierre de obra', 'icono' => 'fa-flag-checkered', 'roles' => ['admin', 'cliente'], 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Lista de entrega-recepción del proyecto y acta en PDF. Está en <strong>Administración → Cierre de obra</strong>.</p>
+<p class="manual-nota"><strong>Compuerta de punch:</strong> si alguna partida tiene pendientes altos o críticos abiertos, el avance de entrega se topa en <strong>99 %</strong> y el punto de categoría <em>Punch list</em> no se puede marcar como completado. Resuelve y cierra esos pendientes para liberar la entrega.</p>
 <ol>
 <li>Si el proyecto está vacío, pulsa <strong>Agregar la lista estándar</strong>: as-builts, garantías, manuales, punch, actas y permisos.</li>
 <li>Agrega o edita puntos con categoría, responsable, fecha compromiso, estado y documento del Archivo. El avance se calcula solo.</li>

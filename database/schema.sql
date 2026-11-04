@@ -111,6 +111,10 @@ CREATE TABLE partidas (
     orden INT DEFAULT 0,
     fecha_inicio DATE DEFAULT NULL,
     fecha_fin DATE DEFAULT NULL,
+    cerrada TINYINT(1) NOT NULL DEFAULT 0,
+    cerrada_por VARCHAR(150) NOT NULL DEFAULT '',
+    cerrada_en DATETIME NULL,
+    cierre_motivo VARCHAR(500) NOT NULL DEFAULT '',
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     UNIQUE KEY uq_partida_codigo (proyecto_id, codigo)
 ) ENGINE=InnoDB;

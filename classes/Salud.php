@@ -208,6 +208,12 @@ class Salud
             'nivel' => $crit ? 'critico' : ($graves || $vencP ? 'aviso' : 'ok'),
             'detalle' => ($graves || $vencP) ? "$graves de severidad alta o crítica ($crit crítico) · $vencP con fecha límite vencida." : 'Sin pendientes graves abiertos.'];
 
+        $pb = Punch::partidasBloqueadas($pid);
+        if ($pb) {
+            $ind[] = ['clave' => 'punch_partidas', 'titulo' => 'Partidas bloqueadas por punch', 'valor' => count($pb), 'icono' => 'fa-lock', 'url' => "/programa?proyecto=$pid",
+                'nivel' => 'critico', 'detalle' => array_sum($pb) . ' pendiente(s) alto(s) o crítico(s) impiden cerrar ' . count($pb) . ' partida(s).'];
+        }
+
         // Órdenes de cambio por aprobar
         $ind[] = ['clave' => 'cambios', 'titulo' => 'Órdenes de cambio por aprobar', 'valor' => $oc, 'icono' => 'fa-file-signature', 'url' => "/cambios?proyecto=$pid",
             'nivel' => $oc ? 'aviso' : 'ok', 'detalle' => $oc ? 'Esperan una decisión del administrador.' : 'Nada pendiente de aprobar.'];

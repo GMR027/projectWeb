@@ -184,6 +184,9 @@ $router->post('/programa/partidas/crear', [ProgramaController::class, 'crearPart
 $router->get('/programa/partidas/editar', [ProgramaController::class, 'editarPartida']);
 $router->post('/programa/partidas/editar', [ProgramaController::class, 'editarPartida']);
 $router->post('/programa/partidas/eliminar', [ProgramaController::class, 'eliminarPartida']);
+$router->get('/programa/partidas/cerrar', [ProgramaController::class, 'cerrarPartida']);
+$router->post('/programa/partidas/cerrar', [ProgramaController::class, 'cerrarPartida']);
+$router->post('/programa/partidas/reabrir', [ProgramaController::class, 'reabrirPartida']);
 $router->post('/programa/eliminar-varias', [ProgramaController::class, 'eliminarVarias']);
 // Actividades
 $router->get('/programa/actividades/crear', [ProgramaController::class, 'crearActividad']);

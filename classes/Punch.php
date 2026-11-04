@@ -159,6 +159,32 @@ class Punch
             'categorias' => $g('categoria'), 'contratistas' => $g('contratista'), 'ubicaciones' => $g('ubicacion')];
     }
 
+    /** Pendientes que impiden cerrar una partida: severidad alta/crítica aún sin cerrar */
+    public const SEVERIDADES_BLOQUEO = ['alta', 'critica'];
+    public const ESTADOS_BLOQUEO = ['abierto', 'en_proceso', 'corregido'];
+
+    /** @return array<int,int> partida_id => cantidad de pendientes graves abiertos */
+    public static function partidasBloqueadas(int $pid): array
+    {
+        $sev = "'" . implode("','", self::SEVERIDADES_BLOQUEO) . "'";
+        $est = "'" . implode("','", self::ESTADOS_BLOQUEO) . "'";
+        $out = [];
+        foreach (self::filas("SELECT a.partida_id, COUNT(*) n FROM punch_items i
+            JOIN actividades a ON a.id = i.actividad_id
+            JOIN partidas p ON p.id = a.partida_id
+            WHERE i.proyecto_id = $pid AND p.proyecto_id = $pid
+              AND i.severidad IN ($sev) AND i.estado IN ($est)
+            GROUP BY a.partida_id") as $f) $out[(int)$f['partida_id']] = (int)$f['n'];
+        return $out;
+    }
+
+    /** @return array{0:bool,1:string} */
+    public static function puedeCerrarPartida(int $pid, int $partidaId): array
+    {
+        $n = self::partidasBloqueadas($pid)[$partidaId] ?? 0;
+        return $n ? [false, 'No se puede cerrar la partida: tiene ' . $n . ' pendiente(s) alto(s) o crítico(s) sin resolver en el punch.'] : [true, ''];
+    }
+
     public static function pdf(Proyecto $p, string $contratista = ''): string
     {
         $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');

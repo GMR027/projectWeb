@@ -205,8 +205,11 @@
                             <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
                             <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
-                            <?php break; case 'nombre': ?>
-                            <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?></td>
+                            <?php break; case 'nombre': $pb = (int)($punchBloqueos[(int)$fila['id']] ?? 0); ?>
+                            <td class="negrita"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span> <?php echo s($fila['nombre']); ?>
+                                <?php if (!empty($fila['cerrada'])): ?><span class="badge badge-cliente" title="Partida cerrada"><i class="fa-solid fa-lock"></i> Cerrada</span>
+                                <?php elseif ($pb): ?><a class="badge badge-pdf" href="/punch?proyecto=<?php echo (int)$proyecto->id; ?>&estado=pendientes" title="No se puede cerrar: <?php echo $pb; ?> pendiente(s) grave(s) de punch"><i class="fa-solid fa-lock"></i> <?php echo $pb; ?> punch</a><?php endif; ?>
+                            </td>
                             <?php break; case 'fecha_inicio': ?>
                             <td class="mono col-fecha"><span class="hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span></td>
                             <?php break; case 'fecha_fin': ?>
@@ -230,6 +233,11 @@
                                     <a href="/programa/partidas/editar?id=<?php echo s($fila['id']); ?>" class="btn-action btn-action-edit" title="Editar partida">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
+                                    <?php if (!empty($fila['cerrada'])): ?>
+                                        <?php if (is_admin() || es_propietario($proyecto)): ?><form class="inline" method="POST" action="/programa/partidas/reabrir" data-confirm="Reabrir partida|Volverá a quedar abierta para cierre.|Reabrir"><input type="hidden" name="id" value="<?php echo s($fila['id']); ?>"><button type="submit" class="btn-action" title="Reabrir partida"><i class="fa-solid fa-lock-open"></i></button></form><?php endif; ?>
+                                    <?php else: ?>
+                                        <a href="/programa/partidas/cerrar?id=<?php echo s($fila['id']); ?>" class="btn-action" title="Cerrar partida"><i class="fa-solid fa-lock"></i></a>
+                                    <?php endif; ?>
                                     <form class="inline" method="POST" action="/programa/partidas/eliminar" data-confirm="¿Eliminar partida?|Se eliminará la partida junto con todas sus actividades. Esta acción no se puede deshacer.">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" class="btn-action btn-action-delete" title="Eliminar partida">

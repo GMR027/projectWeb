@@ -115,6 +115,7 @@ class ProgramaController
             'filtros' => $filtros,
             'riesgos' => $riesgos,
             'bloqueosCalidad' => $bloqueosCalidad,
+            'punchBloqueos' => \Classes\Punch::partidasBloqueadas($proyectoId),
             'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp,
             'camposCp' => $camposCp, 'filtrosCp' => $filtrosCp, 'valoresCp' => $valoresCp,
             'titulo' => 'Programa de Obra - ' . ProgramaColumnas::nombrePrograma($proyecto),
@@ -969,6 +970,52 @@ class ProgramaController
         exigir_gestionar_proyecto($proyecto);
         [$ok, $msg] = Cantidades::guardar((int)$proyecto->id, (int)$id, $_POST);
         header('Location: /programa/actividades/editar?id=' . (int)$id . ($ok ? '&cant=1' : '&cant_error=' . urlencode($msg)));
+        exit;
+    }
+
+    /** Cerrar una partida: la compuerta de punch se muestra en su propia pantalla */
+    public static function cerrarPartida(Router $router)
+    {
+        redirigir_si_no_auth();
+        $id = filter_var($_GET['id'] ?? $_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $partida = Partida::find($id);
+        if (!$partida) { header('Location: /proyectos'); exit; }
+        $proyecto = Proyecto::find($partida->proyecto_id);
+        exigir_gestionar_proyecto($proyecto);
+        $bloqueos = \Classes\Punch::partidasBloqueadas((int)$proyecto->id)[(int)$id] ?? 0;
+        $puedeExcepcion = is_admin() || es_propietario($proyecto);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($bloqueos && !$puedeExcepcion) {
+                header('Location: /programa?proyecto=' . $proyecto->id . '&error=' . urlencode('Solo el dueño del proyecto o el administrador pueden cerrar una partida con pendientes graves de punch.'));
+                exit;
+            }
+            [$ok, $msg] = Partida::cerrar((int)$proyecto->id, (int)$id, texto_param($_POST['motivo'] ?? ''));
+            header('Location: /programa?proyecto=' . $proyecto->id . ($ok ? '&cerrada=1' : '&error=' . urlencode($msg)));
+            exit;
+        }
+        $router->render('programa/cerrar-partida', [
+            'titulo' => 'Cerrar partida - ' . $proyecto->nombre,
+            'proyecto' => $proyecto,
+            'partida' => $partida,
+            'bloqueos' => $bloqueos,
+            'puedeExcepcion' => $puedeExcepcion,
+        ]);
+    }
+
+    public static function reabrirPartida()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: /proyectos'); exit; }
+        $partida = Partida::find(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        if (!$partida) { header('Location: /proyectos'); exit; }
+        $proyecto = Proyecto::find($partida->proyecto_id);
+        exigir_gestionar_proyecto($proyecto);
+        if (!is_admin() && !es_propietario($proyecto)) {
+            header('Location: /programa?proyecto=' . $proyecto->id . '&error=' . urlencode('Solo el dueño del proyecto o el administrador pueden reabrir una partida.'));
+            exit;
+        }
+        Partida::reabrir((int)$proyecto->id, (int)$partida->id);
+        header('Location: /programa?proyecto=' . $proyecto->id . '&reabierta=1');
         exit;
     }
 

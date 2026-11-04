@@ -41,6 +41,7 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
     </div>
     <div class="barra-progreso"><div class="barra-fill" style="width:<?php echo (int)$resumen['pct']; ?>%"></div></div>
     <p class="text-sm text-muted" style="margin-top:.6rem"><?php echo (int)$resumen['completados']; ?> completado(s) · <?php echo (int)$resumen['en_proceso']; ?> en proceso · <?php echo (int)$resumen['pendientes']; ?> pendiente(s)<?php echo (int)$resumen['na'] ? ' · ' . (int)$resumen['na'] . ' no aplica' : ''; ?></p>
+    <?php if (!empty($resumen['bloqueado'])): ?><div class="alerta alerta-error" role="alert"><i class="fa-solid fa-lock"></i> <strong>Entrega detenida por punch:</strong> <?php echo (int)$resumen['punch_bloqueos']; ?> pendiente(s) graves en <?php echo (int)$resumen['punch_partidas']; ?> partida(s). El avance se topa en 99 % y el punto «Punch list» no se puede completar. <a href="/punch?proyecto=<?php echo $pid; ?>&estado=pendientes">Ver punch list</a>.</div><?php endif; ?>
     <?php if (!$resumen['total'] && $puedeEditar): ?>
         <form method="POST" action="/cierre/sugeridos" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
             <button class="btn btn-ghost btn-sm" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Agregar la lista estándar de entrega</button>

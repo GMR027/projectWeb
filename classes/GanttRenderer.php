@@ -76,6 +76,7 @@ class GanttRenderer
                 'color_bg' => $partida->color_bg,
                 'fecha_inicio' => $partida->fecha_inicio,
                 'fecha_fin' => $partida->fecha_fin,
+                'cerrada' => (int)($partida->cerrada ?? 0),
                 'progreso' => $progresos[(int)$partida->id] ?? 0.0,
                 'pos' => $partida->fecha_inicio && $partida->fecha_fin
                     ? $this->calcularPosicion($partida->fecha_inicio, $partida->fecha_fin)

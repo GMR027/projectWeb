@@ -67,6 +67,10 @@ class Cierre
         if ($titulo === '') return [false, 'El título es obligatorio', 0];
         $cat = isset(self::CATEGORIAS[$d['categoria'] ?? '']) ? $d['categoria'] : 'documento';
         $estado = isset(self::ESTADOS[$d['estado'] ?? '']) ? $d['estado'] : 'pendiente';
+        if ($cat === 'punch' && $estado === 'completado') {
+            $bloq = Punch::partidasBloqueadas($pid);
+            if ($bloq) return [false, 'No se puede completar el punto de punch: hay ' . array_sum($bloq) . ' pendiente(s) grave(s) abiertos en ' . count($bloq) . ' partida(s).', 0];
+        }
         $fecha = self::fecha($d['fecha_compromiso'] ?? '');
         $archivoId = (int)($d['archivo_id'] ?? 0);
         if ($archivoId) {
@@ -135,9 +139,14 @@ class Cierre
         foreach (self::filas("SELECT categoria, COUNT(*) total, SUM(estado = 'completado') completados FROM cierre_items WHERE proyecto_id = $pid GROUP BY categoria") as $c) {
             $porCat[$c['categoria']] = ['total' => (int)$c['total'], 'completados' => (int)$c['completados']];
         }
+        $bloq = Punch::partidasBloqueadas($pid);
+        $punchN = array_sum($bloq);
+        $pct = $total > 0 ? round($hechos / $total * 100) : 0;
+        if ($punchN > 0) $pct = min(99, $pct);
         return ['total' => $total, 'completados' => (int)($r['completados'] ?? 0), 'en_proceso' => (int)($r['en_proceso'] ?? 0),
             'pendientes' => (int)($r['pendientes'] ?? 0), 'na' => (int)($r['na'] ?? 0),
-            'pct' => $total > 0 ? round($hechos / $total * 100) : 0, 'por_categoria' => $porCat];
+            'pct' => $pct, 'por_categoria' => $porCat,
+            'punch_bloqueos' => $punchN, 'punch_partidas' => count($bloq), 'bloqueado' => $punchN > 0];
     }
 
     private static function fecha($v): ?string

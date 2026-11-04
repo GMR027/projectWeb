@@ -5,7 +5,7 @@ namespace Model;
 class Partida extends ActiveRecord
 {
     protected static $tabla = 'partidas';
-    protected static $columnasDB = ['id', 'proyecto_id', 'codigo', 'nombre', 'descripcion', 'color_bg', 'orden', 'fecha_inicio', 'fecha_fin'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'codigo', 'nombre', 'descripcion', 'color_bg', 'orden', 'fecha_inicio', 'fecha_fin', 'cerrada', 'cerrada_por', 'cerrada_en', 'cierre_motivo'];
 
     public $id;
     public $proyecto_id;
@@ -16,6 +16,10 @@ class Partida extends ActiveRecord
     public $orden;
     public $fecha_inicio;
     public $fecha_fin;
+    public $cerrada;
+    public $cerrada_por;
+    public $cerrada_en;
+    public $cierre_motivo;
 
     public function __construct($args = [])
     {
@@ -28,6 +32,10 @@ class Partida extends ActiveRecord
         $this->orden = $args['orden'] ?? 0;
         $this->fecha_inicio = $args['fecha_inicio'] ?? null;
         $this->fecha_fin = $args['fecha_fin'] ?? null;
+        $this->cerrada = $args['cerrada'] ?? 0;
+        $this->cerrada_por = $args['cerrada_por'] ?? '';
+        $this->cerrada_en = $args['cerrada_en'] ?? null;
+        $this->cierre_motivo = $args['cierre_motivo'] ?? '';
     }
 
     public function validar(): array
@@ -39,6 +47,41 @@ class Partida extends ActiveRecord
             self::setAlertaCampo('nombre', 'El nombre de la partida es obligatorio');
         }
         return self::$alertas;
+    }
+
+    /**
+     * Cierra la partida si no tiene pendientes graves del punch. El admin/dueño puede
+     * cerrarla igual con un motivo firmado (la autorización se valida en el controlador).
+     * @return array{0:bool,1:string}
+     */
+    public static function cerrar(int $pid, int $id, string $motivo = ''): array
+    {
+        $p = self::find($id);
+        if (!$p || (int)$p->proyecto_id !== $pid) return [false, 'La partida no pertenece al proyecto'];
+        $n = \Classes\Punch::partidasBloqueadas($pid)[$id] ?? 0;
+        $motivo = trim(preg_replace('/\s+/u', ' ', $motivo));
+        if ($n && mb_strlen($motivo) < 10) return [false, 'No se puede cerrar: hay ' . $n . ' pendiente(s) grave(s) de punch. Escribe el motivo de la excepción (mínimo 10 caracteres).'];
+        $usuario = self::$db->escape_string(mb_substr((string)(usuario_actual()['nombre'] ?? ''), 0, 150));
+        $mot = self::$db->escape_string(mb_substr($n ? $motivo : '', 0, 500));
+        self::$db->query("UPDATE partidas SET cerrada = 1, cerrada_por = '$usuario', cerrada_en = NOW(), cierre_motivo = '$mot' WHERE id = $id AND proyecto_id = $pid");
+        try {
+            \Classes\Auditoria::registrar($pid, 'programa', 'cerrar_partida', 'editar',
+                'Cerró la partida ' . $p->codigo . ($n ? ' con excepción: ' . mb_substr($motivo, 0, 160) : ''), null, null, $id, 'Partida');
+        } catch (\Throwable $e) {
+        }
+        return [true, $n ? 'Partida cerrada con excepción firmada' : 'Partida cerrada'];
+    }
+
+    public static function reabrir(int $pid, int $id): bool
+    {
+        $p = self::find($id);
+        if (!$p || (int)$p->proyecto_id !== $pid) return false;
+        self::$db->query("UPDATE partidas SET cerrada = 0, cerrada_por = '', cerrada_en = NULL, cierre_motivo = '' WHERE id = $id AND proyecto_id = $pid");
+        try {
+            \Classes\Auditoria::registrar($pid, 'programa', 'reabrir_partida', 'editar', 'Reabrió la partida ' . $p->codigo, null, null, $id, 'Partida');
+        } catch (\Throwable $e) {
+        }
+        return true;
     }
 
     public function getActividades(): array

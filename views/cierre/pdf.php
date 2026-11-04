@@ -26,6 +26,7 @@ $fecha = $config['fecha_entrega'] ? formatear_fecha($config['fecha_entrega'], 'd
     <h1>Acta de entrega-recepción</h1>
     <p class="muted"><?php echo s($proyecto->nombre); ?><?php echo $proyecto->codigo ? ' · ' . s($proyecto->codigo) : ''; ?><?php echo $proyecto->ubicacion ? ' · ' . s($proyecto->ubicacion) : ''; ?></p>
     <p><strong>Fecha de entrega:</strong> <?php echo s($fecha); ?> &nbsp; · &nbsp; <strong>Responsable:</strong> <?php echo s($config['responsable'] ?: '—'); ?> &nbsp; · &nbsp; <strong>Avance:</strong> <?php echo (int)$resumen['pct']; ?>%</p>
+    <?php if (!empty($resumen['bloqueado'])): ?><p class="no"><strong>Entrega detenida por punch:</strong> <?php echo (int)$resumen['punch_bloqueos']; ?> pendiente(s) graves abiertos en <?php echo (int)$resumen['punch_partidas']; ?> partida(s).</p><?php endif; ?>
     <?php if (!empty($config['notas'])): ?><p class="muted"><?php echo nl2br(s($config['notas'])); ?></p><?php endif; ?>
 
     <?php if (!$items): ?>

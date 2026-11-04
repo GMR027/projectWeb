@@ -204,6 +204,8 @@ HTML],
 <p class="manual-nota">Solo se importan nombres, fechas, avance, hitos, prioridad, notas y niveles. <strong>No</strong> se traen predecesoras, recursos ni calendarios.</p>
 <h4>Diagrama de Gantt por semanas</h4>
 <p>Debajo de la tabla, cada fila tiene su barra distribuida por semana: color según el estatus y relleno según el avance; un punto marca las actividades con restricción. Si activaste las <strong>Dependencias de obra</strong> en modo Informativo o Automático, aparece la casilla <em>Dependencias</em> en la leyenda para mostrar u ocultar las flechas entre actividades (rojas en la ruta crítica, naranjas con conflicto). El Gantt no se muestra en pantallas de celular.</p>
+<h4>Cerrar una partida</h4>
+<p>El botón del candado en cada partida la marca como <strong>cerrada</strong>. Si tiene pendientes de severidad <strong>alta o crítica</strong> en el Punch list, el cierre se bloquea: primero hay que resolverlos. El <strong>administrador o el dueño</strong> pueden cerrarla con una <strong>excepción firmada</strong> (motivo obligatorio). Desde la misma fila se puede <strong>reabrir</strong>.</p>
 HTML],
 
 ['id' => 'dependencias', 'titulo' => 'Dependencias de obra', 'icono' => 'fa-diagram-project', 'roles' => $todos, 'herr' => 'dependencias', 'cuerpo' => <<<'HTML'
