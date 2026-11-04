@@ -37,52 +37,57 @@ foreach ($f as $i => $fr) $idxF[(int)$fr['id']] = $i;
     <div style="display:flex;gap:.6rem;flex-wrap:wrap"><?php foreach ($f as $fr): ?><span class="badge badge-cliente" style="border-left:4px solid <?php echo s($fr['color']); ?>" title="Tipo: <?php echo s($fr['tipo_nombre'] ?? '—'); ?>"><?php echo s($fr['nombre']); ?><?php if (!empty($fr['tipo_nombre'])): ?> <small class="text-muted">(<?php echo s($fr['tipo_nombre']); ?>)</small><?php endif; ?> · <?php echo (int)$fr['actividades']; ?> act.<?php if ($puedeEditar && (int)$fr['actividades'] === 0): ?><form class="inline" method="POST" action="/balance/frente/eliminar" data-confirm="Eliminar frente|No tiene actividades; se quitará de la línea de balance.|Eliminar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$fr['id']; ?>"><button class="btn btn-xs btn-ghost" type="submit" title="Eliminar" aria-label="Eliminar"><i class="fa-solid fa-xmark"></i></button></form><?php endif; ?></span><?php endforeach; ?></div>
     <?php endif; ?>
 
-    <?php if ($puedeEditar): ?>
-    <details style="margin-top:1rem">
-        <summary class="text-sm"><i class="fa-solid fa-tags"></i> Tipos de frente<?php echo $tipos ? ' (' . count($tipos) . ')' : ''; ?></summary>
-        <p class="text-muted text-sm" style="margin-top:.6rem">Puedes crear tus propios tipos (manzana, bloque, eje, cámara, nivel…), no solo los base. El orden decide cómo se listan al crear un frente.</p>
-        <form method="POST" action="/balance/tipo" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin:.8rem 0">
-            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-            <label>Nombre *<input type="text" name="nombre" maxlength="60" required placeholder="Manzana, Bloque, Eje…"></label>
-            <label>Orden<input type="number" name="orden" min="0" value="<?php echo count($tipos) + 1; ?>"></label>
-            <label>Color<input type="color" name="color" value="#00b4d8"></label>
-            <button class="btn btn-secondary btn-sm" type="submit">+ Agregar tipo</button>
-        </form>
-        <?php if ($tipos): ?>
-        <div class="tabla-wrapper"><table class="tabla">
-            <thead><tr><th>Nombre</th><th class="num">Orden</th><th>Color</th><th class="num">Frentes</th><th></th></tr></thead>
-            <tbody>
-            <?php $conteo = []; foreach ($f as $fr) if (!empty($fr['tipo_id'])) $conteo[(int)$fr['tipo_id']] = ($conteo[(int)$fr['tipo_id']] ?? 0) + 1; ?>
-            <?php foreach ($tipos as $t): $idT = (int)$t['id']; ?>
-                <tr>
-                    <td colspan="5">
-                        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-                            <form class="inline" method="POST" action="/balance/tipo/editar" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-                                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-                                <input type="hidden" name="id" value="<?php echo $idT; ?>">
-                                <input type="text" name="nombre" maxlength="60" required value="<?php echo s($t['nombre']); ?>" aria-label="Nombre del tipo" style="min-width:10rem">
-                                <label class="text-sm">Orden <input type="number" name="orden" min="0" value="<?php echo (int)$t['orden']; ?>" style="width:5rem"></label>
-                                <input type="color" name="color" value="<?php echo s($t['color']); ?>" aria-label="Color del tipo">
-                                <span class="badge badge-cliente"><?php echo (int)($conteo[$idT] ?? 0); ?> frente(s)</span>
-                                <button class="btn btn-xs btn-primary" type="submit" title="Guardar cambios" aria-label="Guardar cambios"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-                            </form>
-                            <?php if ((int)($conteo[$idT] ?? 0) === 0): ?>
-                            <form class="inline" method="POST" action="/balance/tipo/eliminar" data-confirm="Eliminar tipo|Ningún frente lo usa; se quitará del catálogo.|Eliminar">
-                                <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-                                <input type="hidden" name="id" value="<?php echo $idT; ?>">
-                                <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar tipo" aria-label="Eliminar tipo"><i class="fa-solid fa-trash-can"></i></button>
-                            </form>
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table></div>
-        <?php endif; ?>
-    </details>
-    <?php endif; ?>
 </div>
+
+<?php if ($puedeEditar): ?>
+<div class="card" style="margin-bottom:1.2rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap">
+        <div><h3 style="margin:0"><i class="fa-solid fa-tags"></i> Tipos de frente</h3>
+        <p class="text-muted text-sm" style="margin:.2rem 0 0">Crea tus propios tipos (manzana, bloque, eje, cámara, nivel…), no solo los base. El orden decide cómo se listan al crear un frente.</p></div>
+        <span class="badge badge-cliente"><?php echo count($tipos); ?> tipo(s)</span>
+    </div>
+    <form method="POST" action="/balance/tipo" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin:1rem 0">
+        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+        <label>Nombre *<input type="text" name="nombre" maxlength="60" required placeholder="Manzana, Bloque, Eje…"></label>
+        <label>Orden<input type="number" name="orden" min="0" value="<?php echo count($tipos) + 1; ?>"></label>
+        <label>Color<input type="color" name="color" value="#00b4d8"></label>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-plus"></i> Agregar tipo</button>
+    </form>
+    <?php if ($tipos): ?>
+    <?php $conteo = []; foreach ($f as $fr) if (!empty($fr['tipo_id'])) $conteo[(int)$fr['tipo_id']] = ($conteo[(int)$fr['tipo_id']] ?? 0) + 1; ?>
+    <div class="tabla-wrapper"><table class="tabla">
+        <thead><tr><th>Tipo</th><th>Editar</th><th class="num">Frentes</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($tipos as $t): $idT = (int)$t['id']; ?>
+            <tr>
+                <td><span style="display:inline-block;width:.7rem;height:.7rem;border-radius:50%;background:<?php echo s($t['color']); ?>;margin-right:.4rem"></span><strong><?php echo s($t['nombre']); ?></strong></td>
+                <td>
+                    <form class="inline" method="POST" action="/balance/tipo/editar" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+                        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                        <input type="hidden" name="id" value="<?php echo $idT; ?>">
+                        <input type="text" name="nombre" maxlength="60" required value="<?php echo s($t['nombre']); ?>" aria-label="Nombre del tipo" style="min-width:9rem">
+                        <label class="text-sm">Orden <input type="number" name="orden" min="0" value="<?php echo (int)$t['orden']; ?>" style="width:4.5rem"></label>
+                        <input type="color" name="color" value="<?php echo s($t['color']); ?>" aria-label="Color del tipo">
+                        <button class="btn btn-xs btn-primary" type="submit" title="Guardar cambios" aria-label="Guardar cambios"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                    </form>
+                </td>
+                <td class="num mono"><?php echo (int)($conteo[$idT] ?? 0); ?></td>
+                <td>
+                    <?php if ((int)($conteo[$idT] ?? 0) === 0): ?>
+                    <form class="inline" method="POST" action="/balance/tipo/eliminar" data-confirm="Eliminar tipo|Ningún frente lo usa; se quitará del catálogo.|Eliminar">
+                        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                        <input type="hidden" name="id" value="<?php echo $idT; ?>">
+                        <button class="btn btn-xs btn-ghost" type="submit" title="Eliminar tipo" aria-label="Eliminar tipo"><i class="fa-solid fa-trash-can"></i></button>
+                    </form>
+                    <?php else: ?><span class="text-muted text-sm">en uso</span><?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table></div>
+    <?php else: ?><p class="text-muted">Aún no hay tipos. Crea el primero para poder agregar frentes.</p><?php endif; ?>
+</div>
+<?php endif; ?>
 
 <?php if ($puedeEditar && $f): ?>
 <form method="POST" action="/balance/generar" class="card co-form" style="margin-bottom:1.2rem">
