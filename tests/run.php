@@ -1326,5 +1326,15 @@ $cssSinHalo = \Classes\TemaProyecto::cssFondo('cian', ['textura' => 'ninguna', '
 $ok('con intensidad 0 no se pinta el halo', !str_contains($cssSinHalo, 'radial-gradient') && str_contains($cssSinHalo, '--pw-fondo:none'));
 $ok('el esquema y su migración tienen las columnas de fondo', str_contains($asset('database/schema.sql'), 'tema_textura') && str_contains($asset('database/migracion_tema_texturas.sql'), 'tema_halo_intensidad'));
 
+echo "Interfaz de las herramientas de obra\n";
+$ok('las tarjetas de indicadores viven en el CSS compartido', str_contains($asset('src/scss/componentes/_cards.scss'), '.cb-kpi {') && !str_contains($asset('src/scss/paginas/_cambios.scss'), '.cb-kpi {'));
+$ok('los semáforos de texto existen para todas las páginas', str_contains($asset('src/scss/base/_base.scss'), '.text-success {') && str_contains($asset('src/scss/base/_base.scss'), '.text-warning {'));
+$ok('las tablas anchas se desplazan en pantallas angostas', str_contains($asset('src/scss/componentes/_tablas.scss'), '.tabla-ancha {') && str_contains($asset('src/scss/componentes/_tablas.scss'), '.tabla-ancha-xl {'));
+$ok('la pestaña de documentos no repite su título', str_contains($asset('views/templates/herramientas-proyecto.php'), "'fa-folder-open', 'Documentos'"));
+$ok('el tablero de portafolio carga solo el CSS compartido', str_contains($asset('includes/funciones.php'), "'portafolio' => []"));
+$ok('calidad libera el avance con un formulario plegable', str_contains($asset('views/calidad/index.php'), '<details class="cal-liberar">') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.cal-liberar'));
+$ok('los filtros del portafolio usan la barra compartida', str_contains($asset('views/portafolio/index.php'), 'class="card inc-filtros"') && str_contains($asset('views/portafolio/index.php'), 'tabla-ancha-xl'));
+$ok('la tabla de tipos de frente conserva el ancho del nombre', str_contains($asset('views/balance/index.php'), 'tabla-ancha bal-tipos') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.bal-tipos'));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

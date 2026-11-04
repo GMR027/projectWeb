@@ -6,7 +6,14 @@
 
 .tabla-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
+// Tablas con muchas columnas: en pantallas angostas se desplazan en lugar de
+// aplastar el texto en una letra por renglón. El !important gana a la regla
+// genérica de móvil que fija un mínimo menor para cualquier tabla de 4+ columnas.
+.tabla-ancha { min-width: 76rem !important; }
+.tabla-ancha-xl { min-width: 96rem !important; }
 
 .tabla {
   width: 100%;

@@ -948,6 +948,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'visor' => ['visor'],
         'dashboard' => ['dashboard', 'personalizacion'],
         'proyectos' => ['dashboard'],
+        'portafolio' => [],
         'msr' => ['personalizacion', 'reportes'],
 
         // Vistas que se apoyan en los estilos compartidos de app-base.css

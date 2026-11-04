@@ -117,7 +117,13 @@ label:has(> input[type="radio"]) { cursor: pointer; }
 }
 
 // Barra de filtros de las listas (la usan revisión, punch, centro de IA, plantillas…)
-.inc-filtros { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin-bottom: 1.6rem; label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; } }
+.inc-filtros {
+  display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: end; margin-bottom: 1.6rem;
+  label { display: flex; flex-direction: column; gap: .4rem; font-size: 1.3rem; }
+  // Casilla suelta (p. ej. «solo con alertas») alineada con los campos de la barra
+  .inc-check { flex-direction: row; align-items: center; gap: .5rem; padding-bottom: 1rem; cursor: pointer; white-space: nowrap; }
+  .inc-acciones { display: flex; gap: .6rem; align-items: end; padding-bottom: .1rem; }
+}
 
 
 // ============================================================

@@ -30,9 +30,9 @@ usort($alertasTodas, fn($a, $b) => ($b['nivel'] === 'critico') <=> ($a['nivel'] 
 <div class="grid-stats">
     <div class="stat-card"><div class="stat-label">Obras</div><div class="stat-valor"><?php echo (int)$resumen['total']; ?></div></div>
     <div class="stat-card"><div class="stat-label">Con alertas</div><div class="stat-valor<?php echo $resumen['con_alertas'] ? ' stat-danger' : ''; ?>"><?php echo (int)$resumen['con_alertas']; ?></div></div>
-    <div class="stat-card"><div class="stat-label">PPC medio</div><div class="stat-valor"><?php echo s($pct($resumen['ppc'])); ?></div></div>
-    <div class="stat-card"><div class="stat-label">CPI medio</div><div class="stat-valor"><?php echo s($num($resumen['cpi'])); ?></div></div>
-    <div class="stat-card"><div class="stat-label">SPI medio</div><div class="stat-valor"><?php echo s($num($resumen['spi'])); ?></div></div>
+    <div class="stat-card"><div class="stat-label">PPC medio</div><div class="stat-valor<?php echo $resumen['ppc'] === null ? '' : ($resumen['ppc'] < 70 ? ' text-danger' : ($resumen['ppc'] >= 85 ? ' text-success' : '')); ?>"><?php echo s($pct($resumen['ppc'])); ?></div></div>
+    <div class="stat-card"><div class="stat-label">CPI medio</div><div class="stat-valor<?php echo $resumen['cpi'] === null ? '' : ($resumen['cpi'] < 1 ? ' text-danger' : ' text-success'); ?>"><?php echo s($num($resumen['cpi'])); ?></div></div>
+    <div class="stat-card"><div class="stat-label">SPI medio</div><div class="stat-valor<?php echo $resumen['spi'] === null ? '' : ($resumen['spi'] < 0.95 ? ' text-danger' : ($resumen['spi'] >= 1 ? ' text-success' : '')); ?>"><?php echo s($num($resumen['spi'])); ?></div></div>
 </div>
 
 <?php if ($alertasTodas): ?>
@@ -50,16 +50,18 @@ usort($alertasTodas, fn($a, $b) => ($b['nivel'] === 'critico') <=> ($a['nivel'] 
 </div>
 <?php endif; ?>
 
-<form method="GET" action="/portafolio" class="card" style="margin-bottom:1.2rem;display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap">
+<form method="GET" action="/portafolio" class="card inc-filtros">
     <label>Buscar<input type="search" name="q" value="<?php echo s($filtros['q']); ?>" placeholder="Código, obra o cliente…"></label>
     <?php if ($esAdmin && $clientes): ?>
     <label>Cliente<select name="cliente"><option value="">Todos</option><?php foreach ($clientes as $id => $nombre): ?><option value="<?php echo (int)$id; ?>"<?php echo (int)$filtros['cliente'] === (int)$id ? ' selected' : ''; ?>><?php echo s($nombre); ?></option><?php endforeach; ?></select></label>
     <?php endif; ?>
     <label>Ordenar por<select name="orden"><?php foreach (\Classes\Portafolio::ORDENES as $k => $t): ?><option value="<?php echo s($k); ?>"<?php echo $filtros['orden'] === $k ? ' selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?></select></label>
     <label>Sentido<select name="dir"><option value="desc"<?php echo $filtros['dir'] === 'desc' ? ' selected' : ''; ?>>Mayor a menor</option><option value="asc"<?php echo $filtros['dir'] === 'asc' ? ' selected' : ''; ?>>Menor a mayor</option></select></label>
-    <label class="co-check" style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" name="alertas" value="1"<?php echo $filtros['alertas'] ? ' checked' : ''; ?>> Solo con alertas</label>
-    <button class="btn btn-primary btn-sm" type="submit">Filtrar</button>
-    <a class="btn btn-ghost btn-sm" href="/portafolio">Limpiar</a>
+    <label class="inc-check"><input type="checkbox" name="alertas" value="1"<?php echo $filtros['alertas'] ? ' checked' : ''; ?>> Solo con alertas</label>
+    <div class="inc-acciones">
+        <button class="btn btn-primary btn-sm" type="submit">Filtrar</button>
+        <a class="btn btn-ghost btn-sm" href="/portafolio">Limpiar</a>
+    </div>
 </form>
 
 <?php if (!$filas): ?>
@@ -67,8 +69,8 @@ usort($alertasTodas, fn($a, $b) => ($b['nivel'] === 'critico') <=> ($a['nivel'] 
 <?php else: ?>
 <div class="card">
     <h3><i class="fa-solid fa-list"></i> Comparativa de obras</h3>
-    <div class="tabla-wrapper"><table class="tabla">
-        <thead><tr><th>Obra</th><th class="num">Avance real</th><th class="num">Plan</th><th class="num">SPI</th><th class="num">CPI</th><th class="num">PPC</th><th class="num">Atrasadas</th><th class="num">Punch</th><th>Salud</th><th class="num">Alertas</th><th></th></tr></thead>
+    <div class="tabla-wrapper"><table class="tabla tabla-ancha-xl">
+        <thead><tr><th>Obra</th><th class="num">Avance real</th><th class="num hide-m">Plan</th><th class="num">SPI</th><th class="num">CPI</th><th class="num hide-m">PPC</th><th class="num">Atrasadas</th><th class="num hide-m">Punch</th><th>Salud</th><th class="num">Alertas</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($filas as $f): ?>
             <tr>
@@ -77,12 +79,12 @@ usort($alertasTodas, fn($a, $b) => ($b['nivel'] === 'critico') <=> ($a['nivel'] 
                     <small class="text-muted"><span class="mono"><?php echo s($f['codigo']); ?></span><?php if ($f['cliente']): ?> · <?php echo s($f['cliente']); ?><?php endif; ?></small>
                 </td>
                 <td class="num mono"><?php echo s($pct($f['real'])); ?></td>
-                <td class="num mono text-muted"><?php echo s($pct($f['plan'])); ?></td>
+                <td class="num mono text-muted hide-m"><?php echo s($pct($f['plan'])); ?></td>
                 <td class="num mono" style="color:<?php echo $f['spi'] !== null && $f['spi'] < 0.95 ? 'var(--danger,#ef4444)' : 'inherit'; ?>"><?php echo s($num($f['spi'])); ?></td>
                 <td class="num mono" style="color:<?php echo $f['cpi'] !== null && $f['cpi'] < 1 ? 'var(--danger,#ef4444)' : 'inherit'; ?>"><?php echo s($num($f['cpi'])); ?></td>
-                <td class="num mono" style="color:<?php echo $f['ppc'] !== null && $f['ppc'] < 70 ? 'var(--danger,#ef4444)' : 'inherit'; ?>"><?php echo s($pct($f['ppc'])); ?></td>
+                <td class="num mono hide-m" style="color:<?php echo $f['ppc'] !== null && $f['ppc'] < 70 ? 'var(--danger,#ef4444)' : 'inherit'; ?>"><?php echo s($pct($f['ppc'])); ?></td>
                 <td class="num mono"><?php echo (int)$f['atrasadas']; ?></td>
-                <td class="num mono"><?php echo (int)$f['punch']; ?><?php if ($f['punch_critico']): ?> <span class="text-danger" title="Críticos">!</span><?php endif; ?></td>
+                <td class="num mono hide-m"><?php echo (int)$f['punch']; ?><?php if ($f['punch_critico']): ?> <span class="text-danger" title="Críticos">!</span><?php endif; ?></td>
                 <td><span style="color:<?php echo $colSalud[$f['salud']] ?? 'inherit'; ?>;font-weight:600"><?php echo s($rotSalud[$f['salud']] ?? $f['salud']); ?></span></td>
                 <td class="num mono"><?php echo count($f['alertas']); ?></td>
                 <td><a class="btn btn-xs btn-ghost" href="/programa?proyecto=<?php echo (int)$f['id']; ?>" title="Abrir el programa" aria-label="Abrir el programa"><i class="fa-solid fa-arrow-right"></i></a></td>
@@ -90,6 +92,7 @@ usort($alertasTodas, fn($a, $b) => ($b['nivel'] === 'critico') <=> ($a['nivel'] 
         <?php endforeach; ?>
         </tbody>
     </table></div>
+    <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para ver el resto de columnas.</p>
     <p class="text-muted text-sm" style="margin-top:.8rem">SPI = avance real ÷ planificado · CPI = valor ganado ÷ costo real · PPC = actividades terminadas ÷ las que debían terminar en la última semana completa. Las alertas comparan el indicador con hace 4 semanas (o con las 3 semanas anteriores en el PPC).</p>
 </div>
 <?php endif; ?>

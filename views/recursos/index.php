@@ -22,7 +22,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
         <a href="<?php echo s($url(['pestana' => $k])); ?>" class="centro-ia-tabs__tab<?php echo $k === $pestana ? ' activa' : ''; ?>"<?php echo $k === $pestana ? ' aria-current="page"' : ''; ?>><i class="fa-solid <?php echo $icono; ?>"></i> <?php echo s($nombre); ?></a>
     <?php endforeach; ?>
 </nav>
-<?php if ($error !== ''): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
+<?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok === '1' ? 'Guardado.' : $ok); ?></div><?php endif; ?>
 
 <?php if ($pestana === 'carga'): $sem = $carga['semanas']; $rec = $carga['recursos']; $sob = $carga['sobrecargas']; ?>
     <?php if ($sob): ?>
@@ -42,7 +42,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
             <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
             <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Propuestas para nivelar</h3>
             <p class="text-muted text-sm">Solo se mueven actividades no críticas dentro de su holgura. Revisa la simulación y aplica las que quieras.</p>
-            <div class="tabla-wrapper"><table class="tabla">
+            <div class="tabla-wrapper"><table class="tabla tabla-ancha">
                 <thead><tr><th></th><th>Recurso / semana</th><th>Actividad</th><th class="num">Carga</th><th class="num">Mover</th><th class="num">Nueva carga</th><th>Nuevo fin</th><th class="num">Holgura</th></tr></thead>
                 <tbody>
                 <?php foreach ($propuestas as $i => $x): ?>
@@ -60,6 +60,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
                 <?php endforeach; ?>
                 </tbody>
             </table></div>
+            <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para ver carga, holgura y nuevo fin.</p>
             <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> Aplicar seleccionadas</button>
         </form>
         <?php else: ?>
@@ -70,7 +71,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
         <a class="btn btn-sm btn-ghost" href="<?php echo s($url(['desde' => $desde - 4, 'semanas' => $nSemanas])); ?>">← 4 semanas</a>
         <a class="btn btn-sm btn-ghost" href="<?php echo s($url(['semanas' => $nSemanas])); ?>">Hoy</a>
         <a class="btn btn-sm btn-ghost" href="<?php echo s($url(['desde' => $desde + 4, 'semanas' => $nSemanas])); ?>">4 semanas →</a>
-        <span class="text-muted text-sm">100 % = la jornada completa del recurso (sin cuenta de actividades al 100 % de avance)</span>
+        <span class="text-muted text-sm">100 % = la jornada completa del recurso (sin contar actividades al 100 % de avance)</span>
     </div>
     <?php if (!$rec): ?>
         <div class="card"><p class="text-muted">Aún no hay recursos. Crea personas o cuadrillas en la pestaña «Personas y cuadrillas» y asígnalas a actividades.</p></div>
@@ -87,18 +88,19 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
             </tr>
         <?php endforeach; ?>
         </tbody>
-    </table></div></div>
+    </table></div>
+    <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para ver las semanas siguientes.</p></div>
     <?php endif; ?>
 
 <?php elseif ($pestana === 'recursos'): ?>
     <?php if ($puedeEditar): ?>
     <form method="POST" action="/recursos/guardar" class="card co-form">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-        <h3>Nuevo recurso</h3>
+        <h3><i class="fa-solid fa-user-plus"></i> Nuevo recurso</h3>
         <div class="co-campos">
             <label>Tipo<select name="tipo"><?php foreach (Recursos::TIPOS as $k => $etq): ?><option value="<?php echo $k; ?>"><?php echo $etq; ?></option><?php endforeach; ?></select></label>
             <label>Persona del directorio<select name="personal_id"><option value="0">— Ninguna (escribir nombre) —</option><?php foreach ($personal as $p): ?><option value="<?php echo (int)$p['id']; ?>"><?php echo s($p['nombre'] . ($p['departamento'] ? ' · ' . $p['departamento'] : '')); ?></option><?php endforeach; ?></select></label>
-            <label>Nombre<input type="text" name="nombre" maxlength="150" placeholder="Cuadrilla de albañilería, Ing. Pérez…"></label>
+            <label>Nombre<input type="text" name="nombre" maxlength="150" placeholder="Vacío = usar el nombre del directorio"></label>
             <label>Integrantes (cuadrilla)<input type="number" name="integrantes" min="1" max="500" value="1"></label>
             <label>Horas por día<input type="number" name="horas_dia" min="1" max="24" step="0.5" value="8"></label>
         </div>
@@ -107,7 +109,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
     <?php endif; ?>
     <div class="card">
         <?php if (!$carga['recursos']): ?><p class="text-muted">Aún no hay recursos.</p><?php else: ?>
-        <table class="tabla">
+        <div class="tabla-wrapper"><table class="tabla">
             <thead><tr><th>Nombre</th><th>Tipo</th><th>Integrantes</th><th>Horas/día</th><th>Actividades</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($carga['recursos'] as $r): ?>
@@ -120,7 +122,7 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+        </table></div>
         <?php endif; ?>
     </div>
 

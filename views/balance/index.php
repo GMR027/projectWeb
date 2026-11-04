@@ -2,7 +2,6 @@
 /** Línea de balance. Variables: $proyecto, $disponible, $frentes, $tipos, $datos, $partidas, $puedeEditar, $ok, $error */
 use Classes\LineaBalance;
 $pid = (int)$proyecto->id;
-$url = fn(array $q = []) => '/balance?' . http_build_query(['proyecto' => $pid] + $q);
 $f = $datos['frentes'] ?? [];
 $lineas = $datos['lineas'] ?? [];
 $rango = $datos['rango'] ?? null;
@@ -55,7 +54,7 @@ foreach ($f as $i => $fr) $idxF[(int)$fr['id']] = $i;
     </form>
     <?php if ($tipos): ?>
     <?php $conteo = []; foreach ($f as $fr) if (!empty($fr['tipo_id'])) $conteo[(int)$fr['tipo_id']] = ($conteo[(int)$fr['tipo_id']] ?? 0) + 1; ?>
-    <div class="tabla-wrapper"><table class="tabla">
+    <div class="tabla-wrapper"><table class="tabla tabla-ancha bal-tipos">
         <thead><tr><th>Tipo</th><th>Editar</th><th class="num">Frentes</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($tipos as $t): $idT = (int)$t['id']; ?>
@@ -85,6 +84,7 @@ foreach ($f as $i => $fr) $idxF[(int)$fr['id']] = $i;
         <?php endforeach; ?>
         </tbody>
     </table></div>
+    <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para editar nombre, orden y color.</p>
     <?php else: ?><p class="text-muted">Aún no hay tipos. Crea el primero para poder agregar frentes.</p><?php endif; ?>
 </div>
 <?php endif; ?>
@@ -134,7 +134,7 @@ foreach ($f as $i => $fr) $idxF[(int)$fr['id']] = $i;
 <?php if (!empty($datos['conflictos'])): ?>
 <div class="card" style="margin-bottom:1.2rem">
     <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Cruces entre oficios</h3>
-    <div class="tabla-wrapper"><table class="tabla"><thead><tr><th>Frente</th><th>Oficio anterior</th><th>Termina</th><th>Oficio posterior</th><th>Empieza</th></tr></thead><tbody>
+    <div class="tabla-wrapper"><table class="tabla tabla-ancha"><thead><tr><th>Frente</th><th>Oficio anterior</th><th>Termina</th><th>Oficio posterior</th><th>Empieza</th></tr></thead><tbody>
         <?php foreach ($datos['conflictos'] as $c): ?><tr><td><?php echo s($c['frente']); ?></td><td><?php echo s($c['antes']); ?></td><td class="mono"><?php echo s(formatear_fecha($c['fin_antes'], 'd/m/Y')); ?></td><td><?php echo s($c['despues']); ?></td><td class="mono text-danger"><?php echo s(formatear_fecha($c['inicio_despues'], 'd/m/Y')); ?></td></tr><?php endforeach; ?>
     </tbody></table></div>
     <p class="text-muted text-sm">El sistema solo avisa; puede ser una decisión consciente de trabajar en paralelo. Revisa la secuencia antes de mover fechas.</p>

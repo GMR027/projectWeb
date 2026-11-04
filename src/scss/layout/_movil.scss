@@ -49,6 +49,8 @@
   .idioma-sel { flex: 0 0 auto; margin-right: 0; button { padding: .5rem .9rem; } }
   .topbar-right .btn { flex: 0 0 auto; }
   .topbar-right .topbar-salir { width: 3.6rem; padding: 0; }
+  .topbar-buscar { flex: 1 1 100%; order: -1; }
+  .topbar-buscar input { width: 100%; }
   .programa-filtros .form-grid-inline { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
   .programa-filtros .form-grid-inline .campo { min-width: 0; }
   .programa-filtros .form-grid-inline .campo:last-child, .programa-filtros .form-grid-inline > :not(.campo) { grid-column: 1 / -1; }
@@ -72,6 +74,8 @@
   .card { padding: 1.4rem; }
 
   // ---------- Tablas resumidas ----------
+  .grid-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+
   .tabla { font-size: 1.3rem; }
   .tabla thead th { padding: .8rem .8rem; }
   .tabla tbody td { padding: .9rem .8rem; }

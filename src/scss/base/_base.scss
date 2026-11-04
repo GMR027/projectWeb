@@ -79,6 +79,8 @@ input, select, textarea {
 .text-dim { color: $text-dim; }
 .text-accent { color: var(--link); }
 .text-danger { color: var(--danger-ink); }
+.text-warning { color: var(--warning-ink); }
+.text-success { color: var(--success-ink); }
 .text-sm { font-size: 1.3rem; }
 .text-center { text-align: center; }
 .text-right { text-align: right; }

@@ -22,19 +22,21 @@
     </ul>
     <form method="POST" action="/programa/importar/p6?proyecto=<?php echo s($proyecto->id); ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-        <div class="campo"><label for="archivo">Archivo .xml o .xer</label><input type="file" id="archivo" name="archivo" accept=".xml,.xer" required></div>
-        <div class="campo"><label for="recalcular">Fechas</label>
-            <select id="recalcular" name="recalcular">
-                <option value="1" selected>Recalcular con el calendario del proyecto (recomendado)</option>
-                <option value="0">Conservar las fechas del archivo tal cual</option>
-            </select>
-        </div>
-        <div class="campo"><label for="duplicados">Si el código ya existe</label>
-            <select id="duplicados" name="duplicados">
-                <option value="actualizar" selected>Actualizar la actividad existente</option>
-                <option value="saltar">Saltarla</option>
-                <option value="crear">Crear otra con código nuevo</option>
-            </select>
+        <div class="form-grid">
+            <div class="campo campo-full"><label for="archivo">Archivo .xml o .xer</label><input type="file" id="archivo" name="archivo" accept=".xml,.xer" required></div>
+            <div class="campo"><label for="recalcular">Fechas</label>
+                <select id="recalcular" name="recalcular">
+                    <option value="1" selected>Recalcular con el calendario del proyecto (recomendado)</option>
+                    <option value="0">Conservar las fechas del archivo tal cual</option>
+                </select>
+            </div>
+            <div class="campo"><label for="duplicados">Si el código ya existe</label>
+                <select id="duplicados" name="duplicados">
+                    <option value="actualizar" selected>Actualizar la actividad existente</option>
+                    <option value="saltar">Saltarla</option>
+                    <option value="crear">Crear otra con código nuevo</option>
+                </select>
+            </div>
         </div>
         <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
         <button type="submit" class="btn btn-primary">Analizar archivo</button>

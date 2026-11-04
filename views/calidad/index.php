@@ -168,7 +168,7 @@ $e = $editarPlan;
 <div class="card" id="detenidas">
     <h3><i class="fa-solid fa-lock text-warning"></i> Actividades detenidas por calidad</h3>
     <p class="text-muted text-sm">Mientras su inspección tenga puntos pendientes, la actividad no pasa de 99 %. Con una no conformidad abierta, el avance se congela. Al marcar los puntos como «cumple» el candado se abre solo.</p>
-    <div class="tabla-wrapper"><table class="tabla">
+    <div class="tabla-wrapper"><table class="tabla tabla-ancha">
         <thead><tr><th>Actividad</th><th>Por qué está detenida</th><th class="num">Avance</th><?php if ($puedeLiberar): ?><th>Liberar avance</th><?php endif; ?></tr></thead>
         <tbody>
         <?php foreach ($detenidas as $d): $a = $d['actividad']; ?>
@@ -179,23 +179,26 @@ $e = $editarPlan;
                     <?php if ($d['nivel'] === 'liberada'): ?><br><span class="badge badge-cliente"><i class="fa-solid fa-lock-open"></i> Liberada por <?php echo s($d['liberada_por']); ?></span><?php endif; ?>
                     <?php if ($d['plan_id']): ?><br><a class="text-sm" href="<?php echo s($url(['ver' => $d['plan_id']])); ?>">Ver plan de inspección</a><?php endif; ?>
                 </td>
-                <td class="num"><b><?php echo (int)$a['progreso']; ?> %</b><br><small class="text-muted">tope <?php echo (int)$d['tope']; ?> %</small></td>
+                <td class="num nowrap"><b><?php echo (int)$a['progreso']; ?> %</b><br><small class="text-muted">tope <?php echo (int)$d['tope']; ?> %</small></td>
                 <?php if ($puedeLiberar): ?>
                 <td>
                     <?php if ($d['nivel'] === 'liberada'): ?>
                         <span class="text-sm text-muted"><i class="fa-solid fa-lock-open"></i> Avance liberado</span>
                     <?php else: ?>
-                    <form method="POST" action="/calidad/liberar" class="co-form" style="min-width:24rem">
-                        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-                        <input type="hidden" name="actividad_id" value="<?php echo (int)$a['id']; ?>">
-                        <label>Autorizar hasta (%)
-                            <input type="number" name="progreso_autorizado" min="<?php echo max(1, (int)$d['tope']); ?>" max="100" value="100" required style="width:9rem">
-                        </label>
-                        <label>Motivo (obligatorio)
-                            <input type="text" name="motivo" minlength="10" maxlength="500" required placeholder="Ej.: el cliente autorizó continuar; el ensayo llega el viernes">
-                        </label>
-                        <button class="btn btn-xs btn-primary" type="submit"><i class="fa-solid fa-lock-open"></i> Liberar</button>
-                    </form>
+                    <details class="cal-liberar">
+                        <summary class="btn btn-xs btn-ghost"><i class="fa-solid fa-lock-open"></i> Liberar avance</summary>
+                        <form method="POST" action="/calidad/liberar" class="cal-liberar-form">
+                            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+                            <input type="hidden" name="actividad_id" value="<?php echo (int)$a['id']; ?>">
+                            <label>Autorizar hasta (%)
+                                <input type="number" name="progreso_autorizado" min="<?php echo max(1, (int)$d['tope']); ?>" max="100" value="100" required>
+                            </label>
+                            <label>Motivo (obligatorio)
+                                <input type="text" name="motivo" minlength="10" maxlength="500" required placeholder="Ej.: el cliente autorizó continuar; el ensayo llega el viernes">
+                            </label>
+                            <button class="btn btn-xs btn-primary" type="submit"><i class="fa-solid fa-lock-open"></i> Liberar</button>
+                        </form>
+                    </details>
                     <?php endif; ?>
                 </td>
                 <?php endif; ?>
@@ -203,6 +206,7 @@ $e = $editarPlan;
         <?php endforeach; ?>
         </tbody>
     </table></div>
+    <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para ver el avance y las acciones.</p>
 </div>
 <?php endif; ?>
 
