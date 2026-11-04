@@ -756,6 +756,34 @@ $ok('la pestaña de compromisos tiene alta, aplicación de factura y sobregiro f
     return str_contains($v, "pestana' => 'compromisos'") && str_contains($v, '/costos/compromiso/aplicar')
         && str_contains($v, 'motivo_sobregiro') && str_contains($v, 'Sobregiro autorizado');
 })());
+echo "Estimaciones completas\n";
+$ok('el cálculo aplica IVA, retención y amortización sobre el subtotal', (function () {
+    $c = \Classes\Estimaciones::calcular(2000000, 0, 16, 5, 10);
+    return $c['base'] === 2000000.0 && $c['iva'] === 320000.0 && $c['retencion'] === 100000.0
+        && $c['amortizacion'] === 200000.0 && $c['total_bruto'] === 2320000.0 && $c['neto'] === 2020000.0;
+})());
+$ok('el ajuste de precios entra en la base antes de IVA y retención', (function () {
+    $c = \Classes\Estimaciones::calcular(1000, 100, 16, 5, 0);
+    return $c['base'] === 1100.0 && $c['iva'] === 176.0 && $c['retencion'] === 55.0 && $c['neto'] === 1221.0;
+})());
+$ok('las tablas de estimaciones y contrato están en el esquema y en su migración', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_estimaciones.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS estimaciones') && str_contains($m, 'costos_contrato')
+        && str_contains($m, 'estimacion_partidas') && str_contains($s, 'CREATE TABLE IF NOT EXISTS estimaciones');
+})());
+$ok('las rutas de estimaciones están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/estimaciones/contrato'") && str_contains($t, "'/estimaciones/guardar'")
+        && str_contains($t, "'/estimaciones/eliminar'") && str_contains($t, "'/estimaciones/pdf'");
+})());
+$ok('Costos muestra el bruto y el neto de las estimaciones', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'estimado_neto')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/costos/index.php'), 'Neto a cobrar'));
+$ok('la hoja de estimación tiene deducciones y firmas', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/estimaciones/pdf.php');
+    return str_contains($v, 'Retención') && str_contains($v, 'Amortización del anticipo')
+        && str_contains($v, 'Neto a cobrar') && str_contains($v, 'firmas');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

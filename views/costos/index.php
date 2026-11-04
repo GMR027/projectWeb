@@ -41,7 +41,7 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <div class="cb-kpi <?php echo $t['disponible'] < 0 ? 'cb-kpi-alerta' : ''; ?>"><small title="Presupuesto vigente − costo real − comprometido">Disponible</small><strong class="<?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></strong><span><?php echo $t['disponible'] < 0 ? 'La obra ya debe más de lo presupuestado' : 'Lo que queda por gastar o comprometer'; ?></span></div>
         <div class="cb-kpi"><small title="Valor ganado ÷ costo real. Menor a 1 = se gasta más de lo avanzado">CPI · costo</small><strong class="<?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></strong><span>SPI · tiempo: <b class="<?php echo $clsIdx($t['spi']); ?>"><?php echo $ind($t['spi']); ?></b></span></div>
         <div class="cb-kpi"><small title="Presupuesto ÷ CPI">Costo final estimado (EAC)</small><strong><?php echo $t['eac'] !== null ? $m($t['eac']) : '—'; ?></strong><span class="<?php echo $clsVar($t['vac']); ?>"><?php echo $t['vac'] !== null ? 'Variación al final: ' . $m($t['vac']) : 'Se calcula con el primer costo real'; ?></span></div>
-        <div class="cb-kpi"><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Por estimar (EV − estimado): <?php echo $m($t['por_cobrar']); ?></span></div>
+        <div class="cb-kpi"><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Neto a cobrar: <?php echo $m($t['estimado_neto']); ?></span></div>
     </div>
 
     <?php if ($curva): ?>
@@ -98,59 +98,14 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
     <p class="text-muted text-sm">Cuando todas las actividades con duración de una partida tienen cantidad y precio unitario, el presupuesto se calcula solo y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto manual y se muestra cuántas faltan. El <strong>importe</strong> se captura en la actividad (<em>Editar actividad → Concepto de obra</em>).</p>
     <p class="text-muted text-sm">PV = presupuesto vigente × avance programado a hoy · EV = presupuesto vigente × avance real (ambos pesados por la duración de las actividades, como la Curva S) · AC = costo real capturado · CPI = EV ÷ AC · SPI = EV ÷ PV.</p>
 
-<?php elseif ($pestana === 'real' || $pestana === 'estimaciones'): $tipo = $pestana === 'real' ? 'real' : 'estimacion'; $e = $editar; ?>
-    <form method="POST" action="/costos/movimiento" class="card co-form">
-        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-        <input type="hidden" name="tipo" value="<?php echo $tipo; ?>">
-        <input type="hidden" name="id" value="<?php echo $e ? (int)$e['id'] : 0; ?>">
-        <h3><?php echo $e ? 'Editar' : 'Nuevo'; ?> <?php echo $tipo === 'real' ? 'costo real' : 'estimación'; ?></h3>
-        <div class="co-campos">
-            <label>Fecha<input type="date" name="fecha" value="<?php echo s($e['fecha'] ?? date('Y-m-d')); ?>" required></label>
-            <label>Concepto<input type="text" name="concepto" maxlength="255" value="<?php echo s($e['concepto'] ?? ''); ?>" placeholder="<?php echo $tipo === 'real' ? 'Factura, nómina, renta de equipo…' : 'Estimación No. 3, anticipo…'; ?>" required></label>
-            <label>Monto<input type="text" inputmode="decimal" name="monto" value="<?php echo $e ? s(number_format((float)$e['monto'], 2, '.', '')) : ''; ?>" placeholder="0.00" required></label>
-            <label>Partida<select name="partida_id"><option value="0">— Sin partida —</option>
-                <?php foreach ($resumen['partidas'] as $p): ?><option value="<?php echo (int)$p['id']; ?>"<?php echo (int)($e['partida_id'] ?? 0) === (int)$p['id'] ? ' selected' : ''; ?>><?php echo s($p['codigo'] . ' ' . $p['nombre']); ?></option><?php endforeach; ?>
-            </select></label>
-            <label><?php echo $tipo === 'real' ? 'Factura / referencia' : 'Número'; ?><input type="text" name="referencia" maxlength="100" value="<?php echo s($e['referencia'] ?? ''); ?>"></label>
-            <label>Orden de cambio<select name="orden_cambio_id"><option value="0">— Ninguna —</option>
-                <?php foreach ($ordenes as $o): ?><option value="<?php echo (int)$o->id; ?>"<?php echo (int)($e['orden_cambio_id'] ?? 0) === (int)$o->id ? ' selected' : ''; ?>><?php echo s($o->numero . ' · ' . mb_substr($o->titulo, 0, 40)); ?></option><?php endforeach; ?>
-            </select></label>
-            <?php if ($tipo === 'estimacion'): ?>
-            <label>Estado<select name="estado"><?php foreach (Costos::ESTADOS_ESTIMACION as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo ($e['estado'] ?? 'aprobada') === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option><?php endforeach; ?></select></label>
-            <?php endif; ?>
-        </div>
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-        <?php if ($e): ?><a href="<?php echo s($url(['pestana' => $pestana])); ?>" class="btn btn-ghost">Cancelar</a><?php endif; ?>
-        <?php if ($tipo === 'estimacion'): ?><span class="text-muted text-sm">Las estimaciones en borrador no cuentan en lo estimado.</span><?php endif; ?>
-    </form>
-    <div class="card">
-        <?php if (!$movimientos): ?><p class="text-muted">Aún no hay <?php echo $tipo === 'real' ? 'costos capturados' : 'estimaciones'; ?>.</p><?php else: ?>
-        <div class="tabla-wrapper"><table class="tabla" <?php echo pag_attr($proyecto); ?>>
-            <thead><tr><th>Fecha</th><th>Concepto</th><th class="hide-m">Partida</th><th class="hide-m">Ref.</th><th class="hide-m">Cambio</th><?php if ($tipo === 'estimacion'): ?><th>Estado</th><?php endif; ?><th>Monto</th><th></th></tr></thead>
-            <tbody>
-            <?php $suma = 0; foreach ($movimientos as $mv): if ($tipo === 'real' || $mv['estado'] !== 'borrador') $suma += (float)$mv['monto']; ?>
-                <tr>
-                    <td class="mono"><?php echo formatear_fecha($mv['fecha']); ?></td>
-                    <td><?php echo s($mv['concepto']); ?></td>
-                    <td class="hide-m"><?php echo $mv['partida'] ? s($mv['partida_codigo'] . ' ' . $mv['partida']) : '<span class="text-muted">—</span>'; ?></td>
-                    <td class="hide-m mono"><?php echo s($mv['referencia']); ?></td>
-                    <td class="hide-m mono"><?php echo s($mv['oc_numero'] ?? ''); ?></td>
-                    <?php if ($tipo === 'estimacion'): ?><td><span class="cb-tag"><?php echo s(Costos::ESTADOS_ESTIMACION[$mv['estado']] ?? $mv['estado']); ?></span></td><?php endif; ?>
-                    <td class="mono"><?php echo $m($mv['monto']); ?></td>
-                    <td class="acciones">
-                        <a href="<?php echo s($url(['pestana' => $pestana, 'editar' => $mv['id']])); ?>" class="btn btn-sm btn-ghost">Editar</a>
-                        <form class="inline" method="POST" action="/costos/eliminar" data-confirm="¿Eliminar este movimiento?|Se quitará del costo del proyecto.">
-                            <input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$mv['id']; ?>"><input type="hidden" name="tipo" value="<?php echo $tipo; ?>">
-                            <button type="submit" class="btn btn-sm btn-danger" title="Quitar" aria-label="Quitar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-                        </form>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-            <tfoot><tr><th colspan="<?php echo $tipo === 'estimacion' ? 6 : 5; ?>">Total<?php echo $tipo === 'estimacion' ? ' (sin borradores)' : ''; ?></th><th class="mono"><?php echo $m($suma); ?></th><th></th></tr></tfoot>
-        </table></div>
-        <?php endif; ?>
-    </div>
+<?php elseif ($pestana === 'real'): $tipo = 'real'; $e = $editar; include __DIR__ . '/_movimientos.php'; ?>
+
+<?php elseif ($pestana === 'estimaciones'): ?>
+    <?php include __DIR__ . '/_estimaciones.php'; ?>
+    <details style="margin-top:1.5rem">
+        <summary><strong>Captura rápida</strong> <small class="text-muted">· estimaciones simples sin deducciones, para registros antiguos o cobros sueltos</small></summary>
+        <?php $tipo = 'estimacion'; $e = $editar; include __DIR__ . '/_movimientos.php'; ?>
+    </details>
 
 <?php elseif ($pestana === 'compromisos'): $ce = $compromisoEditar; $ap = $aplicar; ?>
     <div class="card">

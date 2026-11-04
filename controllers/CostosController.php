@@ -6,6 +6,7 @@ use MVC\Router;
 use Classes\Costos;
 use Classes\Cantidades;
 use Classes\Compromisos;
+use Classes\Estimaciones;
 use Model\Archivo;
 
 /** Costos y presupuesto: presupuesto por partida, costo real, estimaciones y valor ganado (ver Classes\Costos). Solo quien gestiona el proyecto */
@@ -24,6 +25,10 @@ class CostosController
         $compromisos = $disponible && $pestana === 'compromisos' ? Compromisos::lista($pid) : [];
         $compromisoEditar = $disponible && $pestana === 'compromisos' && !empty($_GET['editar_compromiso']) ? Compromisos::compromiso($pid, (int)$_GET['editar_compromiso']) : null;
         $aplicar = $disponible && $pestana === 'compromisos' && !empty($_GET['aplicar']) ? Compromisos::compromiso($pid, (int)$_GET['aplicar']) : null;
+        $estimaciones = $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::lista($pid) : [];
+        $estimacionEditar = $disponible && $pestana === 'estimaciones' && !empty($_GET['editar_estimacion']) ? Estimaciones::estimacion($pid, (int)$_GET['editar_estimacion']) : null;
+        $contrato = $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::contrato($pid) : [];
+        $resumenContrato = $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::resumenContrato($pid) : [];
         $router->render('costos/index', [
             'titulo' => 'Costos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'pestana' => $pestana, 'disponible' => $disponible,
             'resumen' => $resumen,
@@ -35,6 +40,9 @@ class CostosController
             'compromisos' => $compromisos, 'compromisoEditar' => $compromisoEditar, 'aplicar' => $aplicar,
             'archivos' => $disponible && $pestana === 'compromisos' ? Archivo::deProyecto($pid) : [],
             'actividades' => $disponible && $pestana === 'compromisos' ? \Classes\Recursos::actividades($pid) : [],
+            'estimaciones' => $estimaciones, 'estimacionEditar' => $estimacionEditar, 'contrato' => $contrato,
+            'resumenContrato' => $resumenContrato,
+            'siguienteNumero' => $disponible && $pestana === 'estimaciones' && Estimaciones::disponible() ? Estimaciones::siguienteNumero($pid) : '',
         ]);
     }
 

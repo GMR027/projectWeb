@@ -659,6 +659,16 @@ HTML],
 <li><strong>Cerrar:</strong> libera el saldo que ya no se va a facturar. Si no tenía facturas queda <em>cancelado</em>; si tenía, queda <em>cerrado</em>.</li>
 </ol>
 <p>Si un compromiso supera el disponible de su partida, el sistema <strong>avisa</strong> y pide un <strong>motivo</strong> (mínimo 10 caracteres); no lo bloquea. La fila queda marcada <em>Sobregiro autorizado</em> y la partida se pinta en rojo. El <strong>borrador</strong> no reserva dinero hasta que pasa a vigente.</p>
+<h4>Estimaciones completas</h4>
+<p>En la pestaña <strong>Estimaciones</strong> se captura primero el <strong>contrato</strong>: monto, anticipo recibido, retención e IVA. Después, cada estimación lleva el <strong>detalle por partida</strong> (importe anterior, de esta estimación y acumulado).</p>
+<p>El sistema calcula:</p>
+<ul>
+<li><strong>Subtotal</strong> = suma de las partidas de esta estimación.</li>
+<li><strong>Base</strong> = subtotal + ajuste de precios.</li>
+<li><strong>IVA</strong> sobre la base; <strong>retención</strong> sobre la base; <strong>amortización del anticipo</strong> sobre la base.</li>
+<li><strong>Neto a cobrar</strong> = base + IVA − retención − amortización.</li>
+</ul>
+<p>Al aprobar la estimación se descuenta el <strong>saldo del contrato</strong>, se acumula el <strong>fondo retenido</strong> y baja el <strong>anticipo pendiente</strong>. El borrador no descuenta nada. El botón <strong>PDF</strong> genera la hoja para presentarla al cliente, con deducciones, acumulados y firmas. La <em>captura rápida</em> queda plegada para registros antiguos o cobros sueltos.</p>
 <h4>Qué calcula</h4>
 <table class="tabla manual-tabla">
 <thead><tr><th>Sigla</th><th>Significa</th></tr></thead>

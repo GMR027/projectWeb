@@ -88,6 +88,8 @@ class Costos
     public static function movimientos(int $pid, string $tipo = ''): array
     {
         $w = isset(self::TIPOS[$tipo]) ? " AND m.tipo = '$tipo'" : '';
+        // Las estimaciones formales se ven en su propia pestaña, no en la captura rápida
+        if ($tipo === 'estimacion' && Estimaciones::disponible()) $w .= ' AND NOT EXISTS (SELECT 1 FROM estimaciones e WHERE e.movimiento_id = m.id)';
         return self::filas("SELECT m.*, p.codigo partida_codigo, p.nombre partida, oc.numero oc_numero FROM costos_movimientos m
             LEFT JOIN partidas p ON p.id = m.partida_id LEFT JOIN ordenes_cambio oc ON oc.id = m.orden_cambio_id
             WHERE m.proyecto_id = $pid$w ORDER BY m.fecha DESC, m.id DESC");
@@ -158,7 +160,7 @@ class Costos
             elseif ($m['estado'] !== 'borrador') { $p ? $es[$p] = ($es[$p] ?? 0) + (float)$m['m'] : $sinEst += (float)$m['m']; }
         }
         $partidas = [];
-        $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0, 'comprometido' => 0.0, 'disponible' => 0.0];
+        $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0, 'estimado_neto' => 0.0, 'comprometido' => 0.0, 'disponible' => 0.0];
         foreach (self::filas("SELECT id, codigo, nombre, color_bg FROM partidas WHERE proyecto_id = $pid ORDER BY orden, codigo") as $p) {
             $id = (int)$p['id'];
             $info = $calc[$id] ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
@@ -187,6 +189,16 @@ class Costos
         $t['bac'] += $cambiosGenerales;
         $t['ac'] += $sinReal;
         $t['estimado'] += $sinEst;
+        // Neto a cobrar: estimaciones formales (neto) + estimaciones simples antiguas (su monto)
+        if (Estimaciones::disponible()) {
+            $t['estimado_neto'] = (float)(self::filas("SELECT COALESCE(SUM(neto), 0) n FROM estimaciones
+                WHERE proyecto_id = $pid AND estado IN ('aprobada','pagada')")[0]['n'] ?? 0);
+            $t['estimado_neto'] += (float)(self::filas("SELECT COALESCE(SUM(m.monto), 0) n FROM costos_movimientos m
+                WHERE m.proyecto_id = $pid AND m.tipo = 'estimacion' AND m.estado <> 'borrador'
+                  AND NOT EXISTS (SELECT 1 FROM estimaciones e WHERE e.movimiento_id = m.id)")[0]['n'] ?? 0);
+        } else {
+            $t['estimado_neto'] = $t['estimado'];
+        }
         $t = array_map(fn($x) => round($x, 2), $t);
         $t['disponible'] = round($t['bac'] - $t['ac'] - $t['comprometido'], 2);
         $t += self::indices($t['pv'], $t['ev'], $t['ac'], $t['bac']);
