@@ -717,6 +717,9 @@ $router->post('/seguridad/permiso/eliminar', [SeguridadController::class, 'elimi
 $router->get('/seguridad/permiso/pdf', [SeguridadController::class, 'pdf']);
 $router->post('/seguridad/incidente', [SeguridadController::class, 'incidente']);
 $router->post('/seguridad/incidente/cerrar', [SeguridadController::class, 'cerrarIncidente']);
+$router->post('/seguridad/ats', [SeguridadController::class, 'atsGuardar']);
+$router->post('/seguridad/ats/firma', [SeguridadController::class, 'atsFirma']);
+$router->post('/seguridad/incidente/accion', [SeguridadController::class, 'incidenteAccion']);
 $router->get('/punch', [PunchController::class, 'index']);
 $router->get('/punch/ver', [PunchController::class, 'ver']);
 $router->post('/punch/guardar', [PunchController::class, 'guardar']);

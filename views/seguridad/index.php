@@ -21,8 +21,16 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     <div class="card"><small>Vencidos sin cerrar</small><strong class="<?php echo $resumen['vencidos'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['vencidos']; ?></strong></div>
     <div class="card"><small>Actividades (7 días) sin permiso</small><strong class="<?php echo $resumen['faltan'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['faltan']; ?></strong></div>
     <div class="card"><small>Incidentes abiertos</small><strong><?php echo (int)$resumen['incidentes_abiertos']; ?></strong></div>
+    <div class="card"><small>ATS pendientes (7 días)</small><strong class="<?php echo $resumen['ats_pendientes'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['ats_pendientes']; ?></strong></div>
 </div>
 
+<nav class="centro-ia-tabs" aria-label="Seguridad">
+    <?php foreach (['permisos' => ['fa-id-card', 'Permisos'], 'ats' => ['fa-clipboard-list', 'ATS'], 'incidentes' => ['fa-triangle-exclamation', 'Incidentes'], 'indicadores' => ['fa-chart-line', 'Indicadores']] as $k => [$ic, $nom]): ?>
+        <a href="/seguridad?proyecto=<?php echo $pid; ?>&tab=<?php echo $k; ?>" class="centro-ia-tabs__tab<?php echo $tab === $k ? ' activa' : ''; ?>"<?php echo $tab === $k ? ' aria-current="page"' : ''; ?>><i class="fa-solid <?php echo $ic; ?>"></i> <?php echo s($nom); ?></a>
+    <?php endforeach; ?>
+</nav>
+
+<?php if ($tab === 'permisos'): ?>
 <?php if (!empty($climaPermisos)): ?>
 <div class="card prg-seccion">
     <h3><i class="fa-solid fa-cloud-showers-heavy"></i> Permisos en días de lluvia o viento (próximos 7 días)</h3>
@@ -121,20 +129,10 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     </ul>
 </div>
 
-<div class="card prg-seccion">
-    <h3>Incidentes y condiciones inseguras</h3>
-    <?php if ($puede): ?><details><summary>Registrar un incidente</summary>
-        <form method="post" action="/seguridad/incidente" class="inc-filtros" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-            <label>Fecha <input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required></label>
-            <label>Tipo <select name="tipo"><?php foreach (Seguridad::INCIDENTES as $k => $n): ?><option value="<?php echo $k; ?>"><?php echo s($n); ?></option><?php endforeach; ?></select></label>
-            <label>Severidad <select name="severidad"><option value="baja">Baja</option><option value="media" selected>Media</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></label>
-            <label>Área <input type="text" name="area" maxlength="150"></label>
-            <label>Actividad <select name="actividad_id"><option value="0">(ninguna)</option><?php echo opciones_actividades($actividades); ?></select></label>
-            <label class="full">Qué pasó <textarea name="descripcion" rows="2" required maxlength="3000"></textarea></label>
-            <label class="full">Acciones tomadas <textarea name="acciones" rows="2" maxlength="3000"></textarea></label>
-            <button class="btn btn-primary" type="submit">Registrar</button></form></details><?php endif; ?>
-    <?php if (!$incidentes): ?><p class="text-muted">Sin incidentes registrados.</p><?php else: ?><div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Severidad</th><th>Qué pasó</th><th>Estado</th></tr></thead><tbody>
-        <?php foreach ($incidentes as $i): ?><tr><td class="fecha"><?php echo s($fmt($i['fecha'])); ?></td><td><?php echo s(Seguridad::INCIDENTES[$i['tipo']]); ?></td><td><?php echo s(ucfirst($i['severidad'])); ?></td>
-            <td><?php echo s(mb_substr($i['descripcion'], 0, 200)); ?><?php echo $i['area'] ? '<br><small class="text-muted">' . s($i['area']) . '</small>' : ''; ?><?php echo $i['acciones'] ? '<br><small class="text-muted">→ ' . s(mb_substr($i['acciones'], 0, 160)) . '</small>' : ''; ?></td>
-            <td><?php if ($i['estado'] === 'abierto' && $puede): ?><form method="post" action="/seguridad/incidente/cerrar" style="display:flex;gap:.4rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$i['id']; ?>"><input type="text" name="acciones" placeholder="Acción de cierre" maxlength="500"><button class="btn btn-sm btn-ghost" type="submit">Cerrar</button></form><?php else: echo s(ucfirst($i['estado'])); endif; ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
-</div>
+<?php elseif ($tab === 'ats'): ?>
+    <?php include __DIR__ . '/_ats.php'; ?>
+<?php elseif ($tab === 'incidentes'): ?>
+    <?php include __DIR__ . '/_incidentes.php'; ?>
+<?php else: ?>
+    <?php include __DIR__ . '/_indicadores.php'; ?>
+<?php endif; ?>

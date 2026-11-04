@@ -936,6 +936,32 @@ $ok('Calidad tiene pestañas de planes, ensayos, NC y expedientes', (function ()
     return str_contains($v, "'ensayos'") && str_contains($v, "'nc'") && str_contains($v, "'expedientes'")
         && str_contains($v, '_ensayos.php') && str_contains($v, '_expedientes.php');
 })());
+echo "Seguridad como sistema\n";
+$ok('los tipos de alto riesgo y estados del ATS están definidos', \Classes\Seguridad::ATS_TIPOS === ['altura', 'caliente', 'espacio_confinado', 'excavacion', 'electrico', 'izaje']
+    && count(\Classes\Seguridad::ATS_ESTADOS) === 3);
+$ok('la migración y el esquema traen ATS, firmas, acciones e investigación', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_seguridad_sistema.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'seguridad_ats') && str_contains($m, 'seguridad_ats_firmas') && str_contains($m, 'seguridad_acciones')
+        && str_contains($m, 'causa_raiz') && str_contains($s, 'CREATE TABLE IF NOT EXISTS seguridad_ats');
+})());
+$ok('las rutas de ATS y acciones de incidente están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/seguridad/ats'") && str_contains($t, "'/seguridad/ats/firma'")
+        && str_contains($t, "'/seguridad/incidente/accion'");
+})());
+$ok('un permiso de alto riesgo exige ATS firmado antes de aprobarse', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Seguridad.php'), 'atsFirmado(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Seguridad.php'), 'Falta el ATS firmado'));
+$ok('los indicadores usan las horas del parte diario y calculan frecuencia y gravedad', (function () {
+    $c = (string)@file_get_contents(__DIR__ . '/../classes/Seguridad.php');
+    return str_contains($c, 'function indicadores(') && str_contains($c, 'reporte_personal')
+        && str_contains($c, '* 200000 /') && str_contains($c, "'dias_sin'");
+})());
+$ok('Seguridad tiene pestañas de permisos, ATS, incidentes e indicadores', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/seguridad/index.php');
+    return str_contains($v, "'ats'") && str_contains($v, "'incidentes'") && str_contains($v, "'indicadores'")
+        && str_contains($v, '_ats.php') && str_contains($v, '_indicadores.php');
+})());
 echo "Contexto de IA\n";
 $ctx = \Classes\ContextoIA::guardar(99, 'prueba', ['x' => 1], ['dato' => 'valor'], []);
 $leido = \Classes\ContextoIA::leer($ctx, 99, 'prueba');

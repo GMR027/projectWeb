@@ -1463,6 +1463,13 @@ CREATE TABLE IF NOT EXISTS seguridad_incidentes (
     reporte_id INT NULL,
     descripcion TEXT NOT NULL,
     acciones TEXT NULL,
+    causa_inmediata TEXT NULL,
+    causa_raiz TEXT NULL,
+    acciones_correctivas TEXT NULL,
+    dias_perdidos INT NOT NULL DEFAULT 0,
+    costo DECIMAL(14,2) NOT NULL DEFAULT 0,
+    investigado_por VARCHAR(150) NOT NULL DEFAULT '',
+    cerrado_en DATETIME NULL,
     estado ENUM('abierto','cerrado') NOT NULL DEFAULT 'abierto',
     reportado_por VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -2873,4 +2880,48 @@ CREATE TABLE IF NOT EXISTS calidad_expedientes (
     UNIQUE KEY uq_exp_partida (proyecto_id, partida_id),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS seguridad_ats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    actividad_id INT NULL,
+    fecha DATE NOT NULL,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    trabajo TEXT,
+    peligros TEXT,
+    controles TEXT,
+    epp TEXT,
+    participantes INT NOT NULL DEFAULT 0,
+    estado ENUM('borrador','firmado','cerrado') NOT NULL DEFAULT 'borrador',
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_ats_proyecto (proyecto_id, fecha, estado),
+    KEY idx_ats_actividad (actividad_id, fecha),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS seguridad_ats_firmas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ats_id INT NOT NULL,
+    nombre VARCHAR(150) NOT NULL DEFAULT '',
+    puesto VARCHAR(100) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_atsf_ats (ats_id),
+    FOREIGN KEY (ats_id) REFERENCES seguridad_ats(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS seguridad_acciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    incidente_id INT NOT NULL,
+    fecha DATE NULL,
+    accion TEXT,
+    responsable VARCHAR(150) NOT NULL DEFAULT '',
+    verificada TINYINT(1) NOT NULL DEFAULT 0,
+    notas VARCHAR(500) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_sa_incidente (incidente_id),
+    FOREIGN KEY (incidente_id) REFERENCES seguridad_incidentes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

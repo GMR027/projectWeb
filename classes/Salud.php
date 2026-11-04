@@ -242,11 +242,11 @@ class Salud
         // Seguridad
         $seg = Seguridad::resumen($pid);
         $climaPerm = self::climaYPermisos($pid, 7);
-        $ind[] = ['clave' => 'seguridad', 'titulo' => 'Permisos de trabajo', 'valor' => $seg['faltan'] + $seg['vencidos'] + count($climaPerm), 'icono' => 'fa-helmet-safety', 'url' => "/seguridad?proyecto=$pid",
-            'nivel' => $seg['faltan'] ? 'critico' : (($seg['vencidos'] || $seg['por_aprobar'] || $climaPerm) ? 'aviso' : 'ok'),
-            'detalle' => ($seg['faltan'] || $seg['vencidos'] || $seg['por_aprobar'] || $climaPerm)
-                ? $seg['faltan'] . ' actividad(es) de la semana sin permiso · ' . $seg['vencidos'] . ' vencido(s) sin cerrar · ' . $seg['por_aprobar'] . ' por aprobar' . ($climaPerm ? ' · ' . count($climaPerm) . ' día(s) de lluvia o viento con permisos vigentes' : '') . '.'
-                : 'Permisos al corriente.'];
+        $ind[] = ['clave' => 'seguridad', 'titulo' => 'Permisos de trabajo y ATS', 'valor' => $seg['faltan'] + $seg['vencidos'] + count($climaPerm) + $seg['ats_pendientes'], 'icono' => 'fa-helmet-safety', 'url' => "/seguridad?proyecto=$pid",
+            'nivel' => ($seg['faltan'] || $seg['ats_pendientes']) ? 'critico' : (($seg['vencidos'] || $seg['por_aprobar'] || $climaPerm) ? 'aviso' : 'ok'),
+            'detalle' => ($seg['faltan'] || $seg['vencidos'] || $seg['por_aprobar'] || $climaPerm || $seg['ats_pendientes'])
+                ? $seg['faltan'] . ' actividad(es) de la semana sin permiso · ' . $seg['ats_pendientes'] . ' sin ATS firmado · ' . $seg['vencidos'] . ' vencido(s) sin cerrar · ' . $seg['por_aprobar'] . ' por aprobar' . ($climaPerm ? ' · ' . count($climaPerm) . ' día(s) de lluvia o viento con permisos vigentes' : '') . '.'
+                : 'Permisos y ATS al corriente.'];
 
         // Actividades en riesgo (materiales/punch/permisos)
         $riesgos = count(self::riesgosActividades($pid));

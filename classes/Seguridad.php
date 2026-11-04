@@ -30,6 +30,8 @@ class Seguridad
     ];
     public const ESTADOS = ['borrador' => 'Borrador', 'solicitado' => 'Solicitado', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado', 'cerrado' => 'Cerrado'];
     public const INCIDENTES = ['incidente' => 'Incidente', 'casi_accidente' => 'Casi accidente', 'acto_inseguro' => 'Acto inseguro', 'condicion_insegura' => 'Condición insegura'];
+    public const ATS_TIPOS = ['altura', 'caliente', 'espacio_confinado', 'excavacion', 'electrico', 'izaje'];
+    public const ATS_ESTADOS = ['borrador' => 'Borrador', 'firmado' => 'Firmado', 'cerrado' => 'Cerrado'];
 
     /** Tipos fijos + los creados en el proyecto (clave `t<id>`). Sin proyecto, solo los fijos. */
     public static function tipos(int $pid = 0): array
@@ -128,6 +130,11 @@ class Seguridad
         $x = self::obtenerPermiso($pid, $id);
         if (!$x || !isset(self::ESTADOS[$estado])) return [false, 'Permiso no encontrado'];
         if (in_array($estado, ['aprobado', 'rechazado'], true) && !$esAdmin) return [false, 'Solo el administrador aprueba o rechaza permisos'];
+        if ($estado === 'aprobado' && in_array($x['tipo'], self::ATS_TIPOS, true)) {
+            $aid = (int)($x['actividad_id'] ?? 0);
+            if (!$aid) return [false, 'Un permiso de alto riesgo debe estar ligado a una actividad con ATS firmado.'];
+            if (!self::atsFirmado($pid, $aid, (string)$x['vigente_desde'])) return [false, 'Falta el ATS firmado para esa actividad y fecha. Llénalo y fírmalo antes de aprobar el permiso.'];
+        }
         if ($estado === 'aprobado') {
             $pend = array_filter($x['medidas'], fn($m) => empty($m['ok']));
             if ($pend && empty($_POST['forzar'])) return [false, 'Faltan ' . count($pend) . ' medida(s) de seguridad por marcar como verificadas. Márcalas antes de aprobar.'];
@@ -194,9 +201,14 @@ class Seguridad
         return self::filas("SELECT i.*, a.codigo act_codigo FROM seguridad_incidentes i LEFT JOIN actividades a ON a.id = i.actividad_id WHERE i.proyecto_id = $pid ORDER BY i.estado = 'cerrado', i.fecha DESC, i.id DESC LIMIT $limite");
     }
 
-    public static function cerrarIncidente(int $pid, int $id, string $acciones): bool
+    public static function cerrarIncidente(int $pid, int $id, array|string $d): bool
     {
-        self::db()->query("UPDATE seguridad_incidentes SET estado = 'cerrado', acciones = CONCAT(COALESCE(acciones, ''), IF(acciones IS NULL OR acciones = '', '', '\n'), '" . self::esc(mb_substr($acciones, 0, 1000)) . "') WHERE id = $id AND proyecto_id = $pid");
+        $acciones = is_array($d) ? (string)($d['acciones'] ?? '') : $d;
+        $dias = is_array($d) ? max(0, (int)($d['dias_perdidos'] ?? 0)) : 0;
+        $costo = is_array($d) ? max(0, (float)str_replace([',', '$', ' '], '', (string)($d['costo'] ?? 0))) : 0;
+        $u = self::esc(mb_substr((string)(usuario_actual()['nombre'] ?? ''), 0, 150));
+        $extra = is_array($d) ? ", dias_perdidos = $dias, costo = $costo, investigado_por = '$u'" : '';
+        self::db()->query("UPDATE seguridad_incidentes SET estado = 'cerrado', cerrado_en = NOW(), acciones = CONCAT(COALESCE(acciones, ''), IF(acciones IS NULL OR acciones = '', '', '\n'), '" . self::esc(mb_substr($acciones, 0, 1000)) . "')$extra WHERE id = $id AND proyecto_id = $pid");
         return true;
     }
 
@@ -207,6 +219,140 @@ class Seguridad
         return ['vigentes' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta >= '$hoy'"), 'por_aprobar' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'solicitado'"),
             'vencidos' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta < '$hoy'"), 'incidentes_abiertos' => $c("SELECT COUNT(*) n FROM seguridad_incidentes WHERE proyecto_id = $pid AND estado = 'abierto'"),
             'faltan' => count(array_filter(self::requeridos($pid, 7), fn($x) => $x['estado'] === 'falta'))];
+    }
+
+
+    // ---------- ATS ----------
+
+    public static function ats(int $pid): array
+    {
+        return self::filas("SELECT a.*, act.codigo act_codigo, act.nombre act_nombre,
+                (SELECT COUNT(*) FROM seguridad_ats_firmas f WHERE f.ats_id = a.id) firmas
+            FROM seguridad_ats a LEFT JOIN actividades act ON act.id = a.actividad_id
+            WHERE a.proyecto_id = $pid ORDER BY a.fecha DESC, a.id DESC LIMIT 200");
+    }
+
+    public static function atsItem(int $pid, int $id): ?array
+    {
+        $a = self::filas("SELECT a.*, act.codigo act_codigo, act.nombre act_nombre FROM seguridad_ats a
+            LEFT JOIN actividades act ON act.id = a.actividad_id WHERE a.id = $id AND a.proyecto_id = $pid")[0] ?? null;
+        if ($a) $a['firmas_lista'] = self::filas("SELECT * FROM seguridad_ats_firmas WHERE ats_id = $id ORDER BY id");
+        return $a;
+    }
+
+    public static function guardarAts(int $pid, array $d): array
+    {
+        $id = (int)($d['id'] ?? 0);
+        $fecha = \DateTime::createFromFormat('Y-m-d', (string)($d['fecha'] ?? ''));
+        $trabajo = trim((string)($d['trabajo'] ?? ''));
+        if (!$fecha || $trabajo === '') return [false, 'La fecha y el trabajo son obligatorios', $id];
+        $aid = (int)($d['actividad_id'] ?? 0);
+        if ($aid && !self::filas("SELECT 1 FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE a.id = $aid AND p.proyecto_id = $pid")) $aid = 0;
+        $estado = isset(self::ATS_ESTADOS[$d['estado'] ?? '']) ? $d['estado'] : 'borrador';
+        $part = max(1, (int)($d['participantes'] ?? 1));
+        $v = fn($x) => "'" . self::esc($x) . "'";
+        $campos = "actividad_id = " . ($aid ?: 'NULL') . ", fecha = '{$fecha->format('Y-m-d')}',
+            responsable = {$v(mb_substr((string)($d['responsable'] ?? ''), 0, 150))},
+            trabajo = {$v(mb_substr($trabajo, 0, 5000))}, peligros = {$v(mb_substr((string)($d['peligros'] ?? ''), 0, 5000))},
+            controles = {$v(mb_substr((string)($d['controles'] ?? ''), 0, 5000))}, epp = {$v(mb_substr((string)($d['epp'] ?? ''), 0, 3000))},
+            participantes = $part, estado = '$estado'";
+        if ($id) {
+            if (!self::filas("SELECT id FROM seguridad_ats WHERE id = $id AND proyecto_id = $pid")) return [false, 'El ATS no existe', $id];
+            self::db()->query("UPDATE seguridad_ats SET $campos WHERE id = $id AND proyecto_id = $pid");
+        } else {
+            $u = self::esc(mb_substr((string)(usuario_actual()['nombre'] ?? ''), 0, 150));
+            self::db()->query("INSERT INTO seguridad_ats SET proyecto_id = $pid, usuario = '$u', $campos");
+            $id = (int)self::db()->insert_id;
+        }
+        return [true, 'ATS guardado', $id];
+    }
+
+    public static function firmarAts(int $pid, int $id, array $d): array
+    {
+        $a = self::atsItem($pid, $id);
+        if (!$a) return [false, 'El ATS no existe'];
+        $nombre = mb_substr(trim((string)($d['nombre'] ?? '')), 0, 150);
+        if ($nombre === '') return [false, 'Escribe el nombre de quien firma'];
+        self::db()->query("INSERT INTO seguridad_ats_firmas (ats_id, nombre, puesto) VALUES ($id, '" . self::esc($nombre) . "', '" . self::esc(mb_substr((string)($d['puesto'] ?? ''), 0, 100)) . "')");
+        $n = (int)(self::filas("SELECT COUNT(*) n FROM seguridad_ats_firmas WHERE ats_id = $id")[0]['n'] ?? 0);
+        if ($n >= (int)$a['participantes']) self::db()->query("UPDATE seguridad_ats SET estado = 'firmado' WHERE id = $id AND proyecto_id = $pid");
+        return [true, 'Firma registrada (' . $n . '/' . (int)$a['participantes'] . ')'];
+    }
+
+    public static function atsFirmado(int $pid, int $actividadId, string $fecha): bool
+    {
+        return (bool)self::filas("SELECT 1 FROM seguridad_ats WHERE proyecto_id = $pid AND actividad_id = $actividadId
+            AND fecha = '" . self::esc($fecha) . "' AND estado IN ('firmado','cerrado') LIMIT 1");
+    }
+
+    /** Actividades de alto riesgo próximas sin ATS firmado para su fecha de inicio */
+    public static function atsPendientes(int $pid, int $dias = 7): array
+    {
+        $hoy = date('Y-m-d');
+        $hasta = date('Y-m-d', strtotime("+$dias days"));
+        $out = [];
+        foreach (Dependencias::actividades($pid) as $id => $a) {
+            if ((int)$a['hito'] || (int)$a['progreso'] >= 100 || $a['fecha_fin'] < $hoy || $a['fecha_inicio'] > $hasta) continue;
+            $tipos = array_values(array_intersect(self::tiposRequeridos($a['nombre'], '', $pid), self::ATS_TIPOS));
+            if (!$tipos) continue;
+            if (!self::atsFirmado($pid, (int)$id, (string)$a['fecha_inicio'])) {
+                $out[] = ['actividad' => $a, 'tipos' => $tipos];
+            }
+        }
+        return $out;
+    }
+
+    // ---------- acciones de incidentes ----------
+
+    public static function accionesIncidente(int $id): array
+    {
+        return self::filas("SELECT * FROM seguridad_acciones WHERE incidente_id = $id ORDER BY fecha, id");
+    }
+
+    public static function accionIncidente(int $pid, int $id, array $d): array
+    {
+        if (!self::filas("SELECT id FROM seguridad_incidentes WHERE id = $id AND proyecto_id = $pid")) return [false, 'El incidente no existe'];
+        $accion = trim((string)($d['accion'] ?? ''));
+        if ($accion === '') return [false, 'Describe la acción'];
+        $fecha = $d['fecha'] ?? date('Y-m-d');
+        $v = fn($x) => "'" . self::esc($x) . "'";
+        self::db()->query("INSERT INTO seguridad_acciones (incidente_id, fecha, accion, responsable, verificada, notas)
+            VALUES ($id, " . ($fecha ? "'" . self::esc($fecha) . "'" : 'NULL') . ", {$v(mb_substr($accion, 0, 5000))}, {$v(mb_substr((string)($d['responsable'] ?? ''), 0, 150))}, " . (!empty($d['verificada']) ? 1 : 0) . ", {$v(mb_substr((string)($d['notas'] ?? ''), 0, 500))})");
+        return [true, 'Acción registrada'];
+    }
+
+    /** Indicadores de seguridad con horas-hombre reales del parte diario */
+    public static function indicadores(int $pid, int $meses = 6): array
+    {
+        $mensual = [];
+        $hoy = new \DateTime('first day of this month');
+        for ($i = $meses - 1; $i >= 0; $i--) {
+            $ini = (clone $hoy)->modify("-$i month");
+            $fin = (clone $ini)->modify('last day of this month');
+            $a = $ini->format('Y-m-d'); $b = $fin->format('Y-m-d');
+            $horas = (float)(self::filas("SELECT COALESCE(SUM(rp.horas_normal + rp.horas_extra), 0) n
+                FROM reporte_personal rp JOIN reportes_diarios r ON r.id = rp.reporte_id
+                WHERE r.proyecto_id = $pid AND r.fecha BETWEEN '$a' AND '$b'")[0]['n'] ?? 0);
+            $inc = self::filas("SELECT COUNT(*) n, COALESCE(SUM(dias_perdidos), 0) d FROM seguridad_incidentes
+                WHERE proyecto_id = $pid AND tipo = 'incidente' AND fecha BETWEEN '$a' AND '$b'")[0] ?? ['n' => 0, 'd' => 0];
+            $acc = (int)$inc['n']; $dias = (int)$inc['d'];
+            $mensual[] = ['mes' => $ini->format('Y-m'), 'etiqueta' => $ini->format('m/Y'), 'horas' => round($horas, 1),
+                'accidentes' => $acc, 'dias_perdidos' => $dias,
+                'frecuencia' => $horas > 0 ? round($acc * 200000 / $horas, 2) : null,
+                'gravedad' => $horas > 0 ? round($dias * 200000 / $horas, 2) : null];
+        }
+        $desde = (clone $hoy)->modify('-11 month')->format('Y-m-d');
+        $tot = self::filas("SELECT COUNT(*) n, COALESCE(SUM(dias_perdidos),0) d FROM seguridad_incidentes
+            WHERE proyecto_id = $pid AND tipo = 'incidente' AND fecha >= '$desde'")[0] ?? ['n' => 0, 'd' => 0];
+        $horas12 = (float)(self::filas("SELECT COALESCE(SUM(rp.horas_normal + rp.horas_extra), 0) n
+            FROM reporte_personal rp JOIN reportes_diarios r ON r.id = rp.reporte_id
+            WHERE r.proyecto_id = $pid AND r.fecha >= '$desde'")[0]['n'] ?? 0);
+        $ultimo = self::filas("SELECT MAX(fecha) f FROM seguridad_incidentes WHERE proyecto_id = $pid AND tipo = 'incidente' AND dias_perdidos > 0")[0]['f'] ?? null;
+        $diasSin = $ultimo ? max(0, (int)floor((strtotime(date('Y-m-d')) - strtotime($ultimo)) / 86400)) : null;
+        return ['mensual' => $mensual, 'horas' => round($horas12, 1), 'accidentes' => (int)$tot['n'], 'dias_perdidos' => (int)$tot['d'],
+            'frecuencia' => $horas12 > 0 ? round((int)$tot['n'] * 200000 / $horas12, 2) : null,
+            'gravedad' => $horas12 > 0 ? round((int)$tot['d'] * 200000 / $horas12, 2) : null,
+            'dias_sin' => $diasSin];
     }
 
     public static function pdfPermiso(Proyecto $p, array $x): string

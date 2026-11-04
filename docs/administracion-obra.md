@@ -123,3 +123,12 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 - `CalidadExpediente::datos()` reúne ITP, puntos, ensayos y NC de la partida; `pdf()` genera el expediente y `cerrar()` lo guarda en `storage/calidad/<proyecto>/` con huella MD5. Un expediente cerrado se descarga congelado; `reabrir()` lo vuelve a borrador (solo admin/dueño).
 - UI: pestañas **Planes ITP**, **Ensayos**, **No conformidades** y **Expedientes** en `/calidad`; ruta PDF `/calidad/expediente/pdf?partida=`.
 - Migración `database/migracion_calidad_completa.sql`.
+
+## Seguridad como sistema (`Classes\Seguridad`)
+
+- `seguridad_ats`: actividad, fecha, responsable, trabajo, peligros, controles, EPP, participantes y estado; `seguridad_ats_firmas` guarda nombre/puesto. `atsFirmado()` exige un ATS `firmado` o `cerrado` para la actividad y fecha.
+- Permisos de alto riesgo (`ATS_TIPOS`: altura, caliente, espacio confinado, excavación, eléctrico, izaje): `cambiarEstado()` no aprueba si no existe ATS firmado para la actividad y `vigente_desde`.
+- `seguridad_incidentes` se amplía con causa inmediata, causa raíz, acciones correctivas, días perdidos, costo, investigado por y cierre; `seguridad_acciones` guarda el seguimiento verificado.
+- `Seguridad::indicadores()` calcula horas-hombre con `reporte_personal` del parte diario, frecuencia y gravedad (base 200,000) y días sin accidente; meses sin horas muestran «—».
+- UI con pestañas **Permisos**, **ATS**, **Incidentes** e **Indicadores**; `resumen()` incluye `ats_pendientes` y Salud lo usa en el semáforo.
+- Migración `database/migracion_seguridad_sistema.sql`.

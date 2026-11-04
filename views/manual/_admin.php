@@ -348,8 +348,12 @@ HTML],
 <ul>
 <li><strong>Permisos exigidos ①.</strong> La pantalla lista los permisos que piden las actividades de los <strong>próximos 14 días</strong> (altura, trabajo en caliente, espacios confinados…).</li>
 <li><strong>Solicitar un permiso ②.</strong> Elige el tipo, la actividad, área, responsable, contratista, desde y hasta, descripción del trabajo y riesgos; el sistema propone las <em>medidas del tipo elegido</em> y puedes añadir otras, una por línea. Se descarga en <strong>PDF</strong>. Quien gestiona el proyecto puede verificarlo o rechazarlo.</li>
-<li><strong>Incidentes ③.</strong> Registra fecha, severidad, qué pasó y acciones tomadas; ciérralo cuando se resuelva.</li>
+<li><strong>Incidentes ③.</strong> Registra fecha, severidad, qué pasó, causa inmediata, causa raíz, acciones correctivas, días perdidos y costo; agrega acciones de seguimiento y ciérralo cuando se resuelva.</li>
 </ul>
+<h4>ATS: análisis de riesgo de la tarea</h4>
+<p>La pestaña <strong>ATS</strong> guarda el análisis previo de cada actividad y día: trabajo, peligros, controles, EPP, participantes y firmas. Un permiso de <strong>alto riesgo</strong> (altura, caliente, espacio confinado, excavación, eléctrico o izaje) <strong>no se aprueba sin un ATS firmado</strong> para esa actividad y fecha. La lista de ATS pendientes de los próximos 7 días aparece arriba.</p>
+<h4>Indicadores</h4>
+<p>La pestaña <strong>Indicadores</strong> calcula con las horas-hombre reales del parte diario: <strong>frecuencia</strong> (accidentes × 200,000 ÷ horas), <strong>gravedad</strong> (días perdidos × 200,000 ÷ horas) y <strong>días sin accidente</strong>. Si un mes no tiene horas capturadas, muestra «—» y no inventa un cero.</p>
 <h4>Permisos y clima</h4>
 <p>Si el pronóstico del proyecto marca lluvia o viento fuerte en los próximos 7 días y hay permisos de trabajo vigentes (aprobados o por aprobar) de altura, izaje, excavación, eléctrico o en caliente, aparece la tabla <em>Permisos en días de lluvia o viento</em> para que decidas si reprogramas o suspendes. La propuesta de «día no hábil por clima» también menciona cuántos permisos caen ese día.</p>
 HTML],

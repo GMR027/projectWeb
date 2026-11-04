@@ -17,10 +17,10 @@ class SeguridadController
         return $p;
     }
 
-    private static function volver(Proyecto $p, bool $ok, string $msg): void
+    private static function volver(Proyecto $p, bool $ok, string $msg, string $extra = ''): void
     {
         $_SESSION['seguridad_msg'] = ['ok' => $ok, 'texto' => $msg];
-        header('Location: /seguridad?proyecto=' . (int)$p->id);
+        header('Location: /seguridad?proyecto=' . (int)$p->id . $extra);
         exit;
     }
 
@@ -29,8 +29,12 @@ class SeguridadController
         $proyecto = proyecto_de_peticion();
         $pid = (int)$proyecto->id;
         $estado = texto_param($_GET['estado'] ?? '');
+        $tab = in_array($_GET['tab'] ?? '', ['permisos', 'ats', 'incidentes', 'indicadores'], true) ? $_GET['tab'] : 'permisos';
+        $atsVer = $tab === 'ats' && !empty($_GET['ats']) ? Seguridad::atsItem($pid, (int)$_GET['ats']) : null;
         $router->render('seguridad/index', ['titulo' => 'Seguridad y permisos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'resumen' => Seguridad::resumen($pid), 'requeridos' => Seguridad::requeridos($pid, 14), 'climaPermisos' => \Classes\Salud::climaYPermisos($pid, 7), 'permisos' => Seguridad::listarPermisos($pid, $estado), 'estado' => $estado,
-            'incidentes' => Seguridad::incidentes($pid), 'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'admin' => is_admin(), 'mensaje' => $_SESSION['seguridad_msg'] ?? null]);
+            'incidentes' => Seguridad::incidentes($pid), 'actividades' => Dependencias::actividades($pid), 'puede' => puede_gestionar_proyecto($proyecto), 'admin' => is_admin(), 'mensaje' => $_SESSION['seguridad_msg'] ?? null,
+            'tab' => $tab, 'ats' => $tab === 'ats' ? Seguridad::ats($pid) : [], 'atsVer' => $atsVer,
+            'indicadores' => $tab === 'indicadores' ? Seguridad::indicadores($pid) : [], 'atsPendientes' => $tab === 'ats' ? Seguridad::atsPendientes($pid, 7) : []]);
         unset($_SESSION['seguridad_msg']);
     }
 
@@ -96,7 +100,28 @@ class SeguridadController
     public static function cerrarIncidente()
     {
         $p = self::gestion();
-        Seguridad::cerrarIncidente((int)$p->id, (int)($_POST['id'] ?? 0), texto_param($_POST['acciones'] ?? ''));
+        Seguridad::cerrarIncidente((int)$p->id, (int)($_POST['id'] ?? 0), $_POST);
         self::volver($p, true, 'Incidente cerrado.');
+    }
+
+    public static function atsGuardar()
+    {
+        $p = self::gestion();
+        [$ok, $msg, $id] = Seguridad::guardarAts((int)$p->id, $_POST);
+        self::volver($p, $ok, $msg, $ok && $id ? '&tab=ats&ats=' . $id : '&tab=ats');
+    }
+
+    public static function atsFirma()
+    {
+        $p = self::gestion();
+        [$ok, $msg] = Seguridad::firmarAts((int)$p->id, (int)($_POST['id'] ?? 0), $_POST);
+        self::volver($p, $ok, $msg, '&tab=ats&ats=' . (int)($_POST['id'] ?? 0));
+    }
+
+    public static function incidenteAccion()
+    {
+        $p = self::gestion();
+        [$ok, $msg] = Seguridad::accionIncidente((int)$p->id, (int)($_POST['id'] ?? 0), $_POST);
+        self::volver($p, $ok, $msg, '&tab=incidentes');
     }
 }
