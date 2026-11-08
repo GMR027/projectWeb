@@ -75,10 +75,16 @@ $etiquetasRol = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante'
         <?php endif; ?>
     </nav>
     <div class="sidebar-footer">
-        <a href="/manual<?php echo $proyectoCtx ? '?proyecto=' . (int)$proyectoCtx : ''; ?>" class="nav-link manual-link <?php echo pagina_actual('/manual') ? 'active' : ''; ?>">
+        <a href="/manual<?php echo $proyectoCtx ? '?proyecto=' . (int)$proyectoCtx : ''; ?>" class="nav-link manual-link <?php echo (pagina_actual('/manual') && !str_contains($_SERVER['REQUEST_URI'] ?? '', '/manual/curso')) ? 'active' : ''; ?>">
             <i class="fa-solid fa-book-open nav-icon"></i>
             <span><?php echo s(t('Manual de usuario')); ?></span>
         </a>
+        <?php if (is_admin()): ?>
+        <a href="/manual/curso" class="nav-link manual-link <?php echo (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) === '/manual/curso') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-graduation-cap nav-icon"></i>
+            <span><?php echo s(t('Curso del administrador')); ?></span>
+        </a>
+        <?php endif; ?>
         <div class="version-tag"><?php echo s($etiquetasRol[$rol] ?? 'Visitante'); ?> · v1.0.0</div>
     </div>
 </aside>

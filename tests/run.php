@@ -59,6 +59,14 @@ $ok('legacy no tiene tope total de almacenamiento', Classes\Plan::limites('legac
 $ok('precio por obra de Pro', Classes\Plan::precioPorObra('pro') === '$124');
 $ok('plan inválido cae al plan por defecto', Classes\Plan::normalizar('no-existe') === Classes\Plan::POR_DEFECTO);
 
+echo "Curso del administrador\n";
+$curso = require __DIR__ . '/../views/manual/_curso.php';
+$totalCurso = array_sum(array_map(fn($m) => count($m['lecciones']), $curso));
+$ok('el curso tiene al menos 9 módulos y 40 lecciones', count($curso) >= 9 && $totalCurso >= 40);
+$ok('cada lección trae ejercicio y cómo enseñarla', !array_filter($curso, fn($m) => array_filter($m['lecciones'], fn($l) => empty($l['ejercicio']) || empty($l['ensenar']))));
+$ok('el curso tiene guiones de video y figuras del manual', str_contains(file_get_contents(__DIR__ . '/../views/manual/_curso.php'), '[[fig:') && str_contains(file_get_contents(__DIR__ . '/../views/manual/_curso.php'), "'video'"));
+$ok('el progreso del curso se guarda en el navegador', is_file(__DIR__ . '/../public/vendor/curso-admin.js') && str_contains(file_get_contents(__DIR__ . '/../public/vendor/curso-admin.js'), 'pw-curso-admin'));
+
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
 $ok('textos sin letras no llaman al motor', !Classes\Traductor::configurado() || Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-']);

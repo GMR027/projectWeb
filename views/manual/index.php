@@ -31,6 +31,20 @@ $etiquetas = ['admin' => 'Administrador', 'cliente' => 'Cliente', 'visitante' =>
     </div>
 </div>
 
+<?php if (is_admin()): ?>
+<section class="card curso-cta">
+    <div>
+        <span class="curso-cta-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Solo para el administrador</span>
+        <h3>Curso completo: de cero a capacitar a tus clientes</h3>
+        <p>Un recorrido por todos los módulos de la plataforma, con ejercicios, guiones de video y la forma de explicarle cada herramienta a un cliente. Incluye mapa de todas las herramientas, checklist de onboarding y examen práctico.</p>
+    </div>
+    <div class="curso-cta-acciones">
+        <a href="/manual/curso" class="btn btn-primary"><i class="fa-solid fa-play"></i> Abrir el curso</a>
+        <a href="#primeros-pasos" class="btn btn-ghost">Repasar el manual</a>
+    </div>
+</section>
+<?php endif; ?>
+
 <script>
 (function () {
     // Buscador: oculta las secciones (y sus enlaces del índice) que no contienen el texto

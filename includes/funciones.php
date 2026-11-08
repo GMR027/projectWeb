@@ -1043,7 +1043,8 @@ function css_paginas_de_vista(?string $vista): ?array
 
         // Vistas que se apoyan en los estilos compartidos de app-base.css
         'lookahead' => [],
-        'manual' => [],
+        'manual' => ['curso-admin'],
+        'manual/curso' => ['curso-admin'],
         'lastplanner' => [],
         'dependencias' => [],
         'curvas' => [],

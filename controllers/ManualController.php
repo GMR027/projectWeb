@@ -30,6 +30,25 @@ class ManualController
         $router->render('manual/index', ['titulo' => 'Manual de usuario', 'secciones' => $secciones, 'rol' => $rol]);
     }
 
+    /** Curso completo del administrador: módulos, lecciones, ejercicios y guiones de capacitación */
+    public static function curso(Router $router)
+    {
+        redirigir_si_no_admin();
+        $modulos = require __DIR__ . '/../views/manual/_curso.php';
+        $figuras = require __DIR__ . '/../views/manual/_ilustraciones.php';
+        foreach ($modulos as &$m) {
+            foreach ($m['lecciones'] as &$l) {
+                $l['cuerpo'] = self::figuras($l['cuerpo'], $figuras);
+            }
+            unset($l);
+        }
+        unset($m);
+        $router->render('manual/curso', [
+            'titulo' => 'Curso del administrador',
+            'modulos' => $modulos,
+        ]);
+    }
+
     /** Secciones extra que van justo después de $id; las encadenadas (despues = una extra) también */
     private static function tras(array $extra, string $id): array
     {
@@ -43,7 +62,7 @@ class ManualController
     }
 
     /** Sustituye [[fig:nombre]] por la ilustración con su leyenda (el SVG es fijo, sin datos de usuario) */
-    private static function figuras(string $html, array $figuras): string
+    public static function figuras(string $html, array $figuras): string
     {
         return preg_replace_callback('/\[\[fig:([a-z0-9-]+)\]\]/', function ($m) use ($figuras) {
             if (!isset($figuras[$m[1]])) return '';
