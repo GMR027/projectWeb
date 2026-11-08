@@ -6,8 +6,10 @@ use MVC\Router;
 use Model\Usuario;
 use Model\Proyecto;
 use Model\ProyectoAcceso;
+use Model\Organizacion;
 use Classes\Email;
 use Classes\LoginLimite;
+use Classes\Plan;
 
 class AuthController
 {
@@ -107,6 +109,40 @@ class AuthController
                 ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
             $usuario->puede_archivos_ajenos = $esVis && $usuario->nivel_acceso === 'editar' && !empty($_POST['archivos_ajenos']) ? 1 : 0;
             $usuario->logo = guardar_imagen_subida('logo', 'logos');
+
+            // Organización y rol interno
+            $usuario->organizacion_id = null;
+            if ($usuario->rol === 'cliente') {
+                $rolOrg = (string)($_POST['rol_org'] ?? 'propietario') === 'gestor' ? 'gestor' : 'propietario';
+                $usuario->rol_org = $rolOrg;
+                $usuario->puede_crear_proyectos = 1;
+                if ($rolOrg === 'gestor') {
+                    $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
+                    $orgGestor = $orgPost ? Organizacion::find($orgPost) : null;
+                    if (!$orgGestor || !$orgGestor->permiteGestores()) {
+                        Usuario::setAlerta('error', 'Para crear un gestor elige una organización con plan Pro o superior.');
+                    } else {
+                        $usuario->organizacion_id = (int)$orgGestor->id;
+                    }
+                    $plan = $orgGestor ? $orgGestor->plan() : Plan::de(Plan::POR_DEFECTO);
+                } else {
+                    $plan = Plan::de((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO));
+                }
+                // Los campos legacy se siembran desde el plan para que nada quede en 0 por descuido.
+                $usuario->limite_proyectos = $plan['obras'] ?? 999;
+                $usuario->limite_almacenamiento_mb = (int)$plan['almacenamiento_por_obra_mb'];
+                $usuario->limite_colaboradores = $plan['usuarios'] === null ? 999 : max(0, (int)$plan['usuarios'] - 1);
+                $usuario->limite_visitantes = $plan['visitantes'] === null ? 999 : (int)$plan['visitantes'];
+            } elseif ($usuario->rol === 'admin') {
+                $usuario->rol_org = 'propietario';
+                $usuario->puede_crear_proyectos = 1;
+            } else {
+                $usuario->rol_org = $usuario->nivel_acceso === 'editar' ? 'colaborador' : 'visitante';
+                $usuario->puede_crear_proyectos = 0;
+                $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
+                if ($orgPost && Organizacion::find($orgPost)) $usuario->organizacion_id = $orgPost;
+            }
+
             $alertas = $usuario->validarNuevaCuenta();
             $usuario->validarLimiteProyectos();
             $usuario->validarLimitesEquipo();
@@ -123,10 +159,25 @@ class AuthController
                     $usuario->crearToken();
                     $resultado = $usuario->guardar();
                     if ($resultado['resultado']) {
+                        $nuevoId = (int)$resultado['id'];
+                        $usuario->id = $nuevoId;   // para crear la organización con el propietario correcto
                         // La contraseña la eligió quien creó la cuenta: se pide cambiarla al entrar
-                        Usuario::marcarPasswordTemporal((int)$resultado['id']);
+                        Usuario::marcarPasswordTemporal($nuevoId);
+                        if ($usuario->rol === 'cliente' && $usuario->rol_org === 'propietario') {
+                            $org = Organizacion::crearPara($usuario, (string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $_POST);
+                            if ($org) {
+                                $usuario->organizacion_id = (int)$org->id;
+                                $usuario->guardar();
+                            }
+                        } elseif ($usuario->rol === 'admin') {
+                            $interna = Organizacion::interna();
+                            if ($interna) {
+                                $usuario->organizacion_id = (int)$interna->id;
+                                $usuario->guardar();
+                            }
+                        }
                         if ($usuario->rol !== 'admin') {
-                            ProyectoAcceso::sincronizarUsuario((int)$resultado['id'], $_POST['proyectos'] ?? []);
+                            ProyectoAcceso::sincronizarUsuario($nuevoId, $_POST['proyectos'] ?? []);
                         }
                         header('Location: /usuarios?creado=1');
                         exit;
@@ -146,6 +197,8 @@ class AuthController
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
             'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
+            'planes' => Plan::comerciales(),
+            'organizaciones' => Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
         ]);
     }
 
@@ -191,6 +244,7 @@ class AuthController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logoActual = $usuario->logo;
+            $orgActual = $usuario->organizacion_id;
             $usuario->sincronizar($_POST);
             $usuario->id = $id;
             $esVis = $usuario->rol === 'visitante';
@@ -200,6 +254,40 @@ class AuthController
                 ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
             $usuario->puede_archivos_ajenos = $esVis && $usuario->nivel_acceso === 'editar' && !empty($_POST['archivos_ajenos']) ? 1 : 0;
             $usuario->logo = guardar_imagen_subida('logo', 'logos') ?? $logoActual;
+
+            if ($usuario->rol === 'cliente') {
+                $rolOrg = (string)($_POST['rol_org'] ?? 'propietario') === 'gestor' ? 'gestor' : 'propietario';
+                $usuario->rol_org = $rolOrg;
+                $usuario->puede_crear_proyectos = 1;
+                if ($rolOrg === 'gestor') {
+                    $orgProp = $orgActual ? Organizacion::find((int)$orgActual) : null;
+                    if ($orgProp && $orgProp->esPropietario((int)$id)) {
+                        Usuario::setAlerta('error', 'El propietario de una organización no puede convertirse en gestor. Transfiere la propiedad primero.');
+                        $usuario->organizacion_id = $orgActual;
+                    } else {
+                        $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
+                        $orgGestor = $orgPost ? Organizacion::find($orgPost) : null;
+                        if (!$orgGestor || !$orgGestor->permiteGestores()) {
+                            Usuario::setAlerta('error', 'Para asignar un gestor elige una organización con plan Pro o superior.');
+                            $usuario->organizacion_id = $orgActual;
+                        } else {
+                            $usuario->organizacion_id = (int)$orgGestor->id;
+                        }
+                    }
+                } else {
+                    $usuario->organizacion_id = $orgActual ?: $usuario->organizacion_id;
+                }
+            } elseif ($usuario->rol === 'admin') {
+                $usuario->rol_org = 'propietario';
+                $usuario->puede_crear_proyectos = 1;
+                $usuario->organizacion_id = $orgActual ?: $usuario->organizacion_id;
+            } else {
+                $usuario->rol_org = $usuario->nivel_acceso === 'editar' ? 'colaborador' : 'visitante';
+                $usuario->puede_crear_proyectos = 0;
+                $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
+                if ($orgPost && Organizacion::find($orgPost)) $usuario->organizacion_id = $orgPost;
+            }
+
             $usuario->validarLimiteProyectos();
             $usuario->validarLimitesEquipo();
             if (!in_array($usuario->rol, ['admin', 'cliente', 'visitante'], true)) {
@@ -227,6 +315,36 @@ class AuthController
             if (empty($alertas)) {
                 $resultado = $usuario->guardar();
                 if ($resultado) {
+                    // Organización: crear si el cliente no tenía (migración) y actualizar plan/datos
+                    if ($usuario->rol === 'cliente' && $usuario->rol_org === 'propietario') {
+                        $org = Organizacion::deUsuario((int)$id);
+                        if (!$org) {
+                            $org = Organizacion::crearPara($usuario, (string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $_POST);
+                            if ($org) {
+                                $usuario->organizacion_id = (int)$org->id;
+                                $usuario->guardar();
+                            }
+                        } elseif ($org->esPropietario((int)$id)) {
+                            $org->nombre = trim((string)($_POST['organizacion_nombre'] ?? '')) ?: $org->nombre;
+                            $org->razon_social = trim((string)($_POST['razon_social'] ?? '')) ?: $org->razon_social;
+                            $org->rfc = strtoupper(trim((string)($_POST['rfc'] ?? ''))) ?: $org->rfc;
+                            $org->correo_facturacion = trim((string)($_POST['correo_facturacion'] ?? '')) ?: $org->correo_facturacion;
+                            $org->telefono = trim((string)($_POST['telefono'] ?? '')) ?: $org->telefono;
+                            $org->guardar();
+                            if (!empty($_POST['plan_id'])) {
+                                $precioLegado = isset($_POST['precio_legado']) && $_POST['precio_legado'] !== ''
+                                    ? (float)$_POST['precio_legado'] : $org->precio_legado;
+                                $org->fijarPlan(
+                                    (string)$_POST['plan_id'],
+                                    (string)($_POST['estado_plan'] ?? $org->estado_plan),
+                                    $_POST['plan_inicio'] ?? $org->plan_inicio,
+                                    $_POST['plan_fin'] ?? $org->plan_fin,
+                                    $_POST['gracia_hasta'] ?? $org->gracia_hasta,
+                                    $precioLegado
+                                );
+                            }
+                        }
+                    }
                     // Admin no necesita asignaciones; para los demás se reemplazan con las marcadas
                     ProyectoAcceso::sincronizarUsuario((int)$id, $usuario->rol === 'admin' ? [] : ($_POST['proyectos'] ?? []));
                     header('Location: /usuarios?editado=1');
@@ -247,6 +365,9 @@ class AuthController
             'herramientasEdicionMarcadas' => $usuario->herramientasEdicionPermitidas(),
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
             'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
+            'planes' => Plan::comerciales(),
+            'organizaciones' => Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
+            'organizacion' => Organizacion::deUsuario((int)$id),
         ]);
     }
 
@@ -262,7 +383,9 @@ class AuthController
             if ($id && $id != $_SESSION['id']) {
                 $usuario = Usuario::find($id);
                 if ($usuario) {
+                    $org = Organizacion::deUsuario((int)$id);
                     $usuario->eliminar();
+                    if ($org && $org->esPropietario((int)$id)) $org->eliminar();
                 }
             }
             header('Location: /usuarios');
@@ -345,15 +468,23 @@ class AuthController
 
     private static function listarVisitantes(Router $router)
     {
+        if (!puede_administrar_equipo()) {
+            header('Location: /dashboard');
+            exit;
+        }
         $yo = Usuario::find((int)$_SESSION['id']);
         $visitantes = Usuario::equipoDe((int)$_SESSION['id'], 'visitante');
         $colaboradores = Usuario::equipoDe((int)$_SESSION['id'], 'colaborador');
+        $limV = $yo ? $yo->limiteEquipo('visitante') : Usuario::MAX_VISITANTES_CLIENTE;
+        $limC = $yo ? $yo->limiteEquipo('colaborador') : Usuario::MAX_COLABORADORES_CLIENTE;
         $router->render('auth/visitantes', [
             'titulo' => 'Mi equipo',
             'visitantes' => $visitantes,
             'colaboradores' => $colaboradores,
-            'limiteVisitantes' => $yo ? $yo->limiteEquipo('visitante') : Usuario::MAX_VISITANTES_CLIENTE,
-            'limiteColaboradores' => $yo ? $yo->limiteEquipo('colaborador') : Usuario::MAX_COLABORADORES_CLIENTE,
+            'limiteVisitantes' => $limV,
+            'limiteColaboradores' => $limC,
+            'ilimitadoVisitantes' => $limV === null,
+            'ilimitadoColaboradores' => $limC === null,
         ]);
     }
 
@@ -365,12 +496,17 @@ class AuthController
 
     private static function crearVisitante(Router $router)
     {
+        if (!puede_administrar_equipo()) {
+            header('Location: /dashboard');
+            exit;
+        }
         $yo = (int)$_SESSION['id'];
         $cuenta = Usuario::find($yo);
         $tipo = self::tipoEquipo($_POST['tipo'] ?? ($_GET['tipo'] ?? 'visitante'));
         $usar = Usuario::equipoDe($yo, $tipo);
         $limite = $cuenta ? $cuenta->limiteEquipo($tipo) : ($tipo === 'colaborador' ? Usuario::MAX_COLABORADORES_CLIENTE : Usuario::MAX_VISITANTES_CLIENTE);
-        $lleno = count($usar) >= $limite;
+        $ilimitado = $limite === null;
+        $lleno = !$ilimitado && count($usar) >= $limite;
         $usuario = new Usuario(['nivel_acceso' => $tipo === 'colaborador' ? 'editar' : 'ver']);
         if ($lleno) Usuario::setAlerta('error', 'Ya tienes el máximo de ' . $limite . ' ' . ($tipo === 'colaborador' ? 'colaboradores' : 'visitantes') . '. Elimina uno para crear otro.');
 
@@ -384,6 +520,9 @@ class AuthController
                 'herramientas' => $visibles,
                 'herramientas_edicion' => null,
                 'puede_archivos_ajenos' => $tipo === 'colaborador' && !empty($_POST['archivos_ajenos']) ? 1 : 0,
+                'organizacion_id' => $cuenta->organizacion_id ?? null,
+                'rol_org' => $tipo === 'colaborador' ? 'colaborador' : 'visitante',
+                'puede_crear_proyectos' => 0,
             ]);
             // La lista de edición nunca puede incluir herramientas que no ve
             $usuario->herramientas_edicion = $tipo === 'colaborador'
@@ -406,7 +545,7 @@ class AuthController
         $router->render('auth/visitante-form', [
             'titulo' => $tipo === 'colaborador' ? 'Nuevo colaborador' : 'Nuevo visitante',
             'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => $lleno, 'tipo' => $tipo,
-            'limite' => $limite, 'usados' => count($usar),
+            'limite' => $limite, 'usados' => count($usar), 'ilimitado' => $ilimitado,
             'proyectos' => self::proyectosDeGestion(),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
@@ -417,6 +556,10 @@ class AuthController
 
     private static function editarVisitante(Router $router)
     {
+        if (!puede_administrar_equipo()) {
+            header('Location: /dashboard');
+            exit;
+        }
         $usuario = self::visitantePropio(filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT));
         if (!$usuario) {
             header('Location: /usuarios');
@@ -426,10 +569,11 @@ class AuthController
         $cuenta = Usuario::find($yo);
         $tipo = self::tipoEquipo($_POST['tipo'] ?? ($usuario->esColaborador() ? 'colaborador' : 'visitante'));
         $limite = $cuenta ? $cuenta->limiteEquipo($tipo) : Usuario::MAX_VISITANTES_CLIENTE;
+        $ilimitado = $limite === null;
         $usar = Usuario::equipoDe($yo, $tipo);
         // Cambiar de visitante a colaborador (o al revés) consume del tope del tipo nuevo
         $cambiaTipo = ($tipo === 'colaborador') !== $usuario->esColaborador();
-        $lleno = $cambiaTipo && count($usar) >= $limite;
+        $lleno = !$ilimitado && $cambiaTipo && count($usar) >= $limite;
 
         $gestionables = self::proyectosGestionables();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -439,6 +583,7 @@ class AuthController
                 $usuario->nombre = trim($_POST['nombre'] ?? '');
                 $usuario->email = trim($_POST['email'] ?? '');
                 $usuario->nivel_acceso = $tipo === 'colaborador' ? 'editar' : 'ver';
+                $usuario->rol_org = $tipo === 'colaborador' ? 'colaborador' : 'visitante';
                 $usuario->herramientas = Usuario::herramientasDePost($_POST['herr'] ?? []);
                 $usuario->herramientas_edicion = $tipo === 'colaborador'
                     ? Usuario::herramientasEdicionDePost($_POST['herr_edit'] ?? [], $usuario->herramientasPermitidas()) : null;
@@ -467,7 +612,7 @@ class AuthController
             'titulo' => 'Editar ' . ($usuario->esColaborador() ? 'colaborador' : 'visitante'),
             'alertas' => Usuario::getAlertas(), 'usuario' => $usuario, 'lleno' => false,
             'tipo' => $tipo,
-            'limite' => $limite, 'usados' => count($usar),
+            'limite' => $limite, 'usados' => count($usar), 'ilimitado' => $ilimitado,
             'proyectos' => self::proyectosDeGestion(),
             'asignados' => $_SERVER['REQUEST_METHOD'] === 'POST' ? array_map('intval', $_POST['proyectos'] ?? [])
                 : array_values(array_intersect(ProyectoAcceso::proyectosDe((int)$usuario->id), $gestionables)),
@@ -479,6 +624,10 @@ class AuthController
 
     private static function eliminarVisitante()
     {
+        if (!puede_administrar_equipo()) {
+            header('Location: /dashboard');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($u = self::visitantePropio(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT)))) {
             $u->eliminar();
         }

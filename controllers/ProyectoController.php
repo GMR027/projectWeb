@@ -7,6 +7,7 @@ use Model\Proyecto;
 use Model\Partida;
 use Model\Usuario;
 use Model\ProyectoAcceso;
+use Model\Organizacion;
 
 class ProyectoController
 {
@@ -23,9 +24,19 @@ class ProyectoController
     public static function crear(Router $router)
     {
         redirigir_si_no_auth();
+        if (org_solo_lectura()) {
+            header('Location: /proyectos?error=' . urlencode('Tu organización está en solo lectura. Reactiva el plan para crear obras.'));
+            exit;
+        }
         if (!puede_crear_proyecto()) {
             $cupo = cupo_proyectos();
-            $msg = $cupo ? "Alcanzaste tu límite de {$cupo['limite']} proyecto(s). Solicita al administrador ampliarlo." : '';
+            if (!$cupo || $cupo['limite'] === null) {
+                $msg = 'Tu plan no permite crear obras o no tienes permiso para hacerlo.';
+            } elseif ($cupo['usados'] >= (int)$cupo['limite']) {
+                $msg = "Alcanzaste tu límite de {$cupo['limite']} obra(s) activa(s). Archiva una o amplía el plan.";
+            } else {
+                $msg = 'Tu plan no permite crear obras o no tienes permiso para hacerlo.';
+            }
             header('Location: /proyectos' . ($msg ? '?error=' . urlencode($msg) : ''));
             exit;
         }
@@ -35,11 +46,27 @@ class ProyectoController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $proyecto->sincronizar($_POST);
             $proyecto->id = null;
+            $proyecto->archivado = 0;
             // El admin puede asignar un propietario; los demás siempre son dueños
             $proyecto->usuario_id = $_SESSION['id'];
             if (is_admin() && ($dueno = Usuario::find(filter_var($_POST['usuario_id'] ?? null, FILTER_VALIDATE_INT)))) {
                 $proyecto->usuario_id = $dueno->id;
             }
+            // Organización dueña: la elegida por el admin, la del propietario o la de la sesión
+            $orgId = is_admin() ? (int)($_POST['organizacion_id'] ?? 0) : 0;
+            if (!$orgId && $proyecto->usuario_id) {
+                $orgDueno = Organizacion::deUsuario((int)$proyecto->usuario_id);
+                if ($orgDueno) $orgId = (int)$orgDueno->id;
+            }
+            if (!$orgId) {
+                $orgSesion = organizacion_actual();
+                if ($orgSesion) $orgId = (int)$orgSesion->id;
+            }
+            if (!$orgId && is_admin()) {
+                $interna = Organizacion::interna();
+                if ($interna) $orgId = (int)$interna->id;
+            }
+            $proyecto->organizacion_id = $orgId ?: null;
 
             $proyecto->contratista_logo = guardar_imagen_subida('contratista_logo', 'logos');
 
@@ -75,7 +102,8 @@ class ProyectoController
             'titulo' => 'Nuevo Proyecto',
             'plantillas' => \Classes\PlantillaProyecto::disponible() ? \Classes\PlantillaProyecto::visibles(usuario_actual()) : [],
             'alertas' => $alertas,
-            'proyecto' => $proyecto
+            'proyecto' => $proyecto,
+            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
         ]);
     }
 
@@ -97,6 +125,7 @@ class ProyectoController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $duenoActual = $proyecto->usuario_id;
+            $orgActual = $proyecto->organizacion_id;
             $logoActual = $proyecto->logo;
             $caratulaActual = $proyecto->caratula;
             $contratistaLogoActual = $proyecto->contratista_logo;
@@ -106,6 +135,10 @@ class ProyectoController
             if (is_admin() && ($dueno = Usuario::find(filter_var($_POST['usuario_id'] ?? null, FILTER_VALIDATE_INT)))) {
                 $proyecto->usuario_id = $dueno->id;
             }
+            // La organización solo la cambia el admin; el resto conserva la dueña.
+            $proyecto->organizacion_id = is_admin() && isset($_POST['organizacion_id'])
+                ? ((int)$_POST['organizacion_id'] ?: $orgActual)
+                : $orgActual;
 
             $proyecto->contratista_logo = guardar_imagen_subida('contratista_logo', 'logos') ?? $contratistaLogoActual;
 
@@ -130,7 +163,8 @@ class ProyectoController
                 : ProyectoAcceso::usuariosDe((int)$id),
             'titulo' => 'Editar Proyecto',
             'alertas' => $alertas,
-            'proyecto' => $proyecto
+            'proyecto' => $proyecto,
+            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
         ]);
     }
 
@@ -174,5 +208,48 @@ class ProyectoController
             header('Location: /proyectos');
             exit;
         }
+    }
+
+    /** Archiva una obra: libera cupo de obras activas, conserva datos y almacenamiento */
+    public static function archivar()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $id ? Proyecto::find($id) : null;
+        if (!$proyecto || !puede_archivar_proyecto($proyecto)) {
+            header('Location: /proyectos?error=' . urlencode('No puedes archivar esa obra'));
+            exit;
+        }
+        $proyecto->archivar((int)$_SESSION['id']);
+        header('Location: /proyectos?archivado=1');
+        exit;
+    }
+
+    /** Desarchiva una obra si aún hay cupo de obras activas */
+    public static function desarchivar()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $id ? Proyecto::find($id) : null;
+        if (!$proyecto || !puede_archivar_proyecto($proyecto)) {
+            header('Location: /proyectos?error=' . urlencode('No puedes desarchivar esa obra'));
+            exit;
+        }
+        $cupo = cupo_proyectos();
+        if ($cupo && $cupo['limite'] !== null && $cupo['usados'] >= (int)$cupo['limite']) {
+            header('Location: /proyectos?error=' . urlencode('No hay cupo de obras activas. Archiva otra o amplía el plan.'));
+            exit;
+        }
+        $proyecto->desarchivar();
+        header('Location: /proyectos?desarchivado=1');
+        exit;
     }
 }

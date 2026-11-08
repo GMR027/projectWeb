@@ -9,8 +9,10 @@
     <?php if (puede_crear_proyecto()): ?>
         <a href="/plantillas-proyecto" class="btn btn-ghost"><i class="fa-solid fa-copy"></i> <?php echo s(t('Plantillas')); ?></a>
         <a href="/proyectos/crear" class="btn btn-primary"><?php echo s(t('+ Nuevo Proyecto')); ?></a>
+    <?php elseif (($cupo = cupo_proyectos()) !== null && $cupo['limite'] !== null && $cupo['usados'] >= (int)$cupo['limite']): ?>
+        <span class="text-muted text-sm" title="Archiva una obra o amplía el plan"><i class="fa-solid fa-lock"></i> Límite de obras activas alcanzado (<?php echo (int)$cupo['usados']; ?>/<?php echo (int)$cupo['limite']; ?>)</span>
     <?php elseif (($cupo = cupo_proyectos()) !== null): ?>
-        <span class="text-muted text-sm" title="Solicita al administrador ampliar tu límite"><i class="fa-solid fa-lock"></i> Límite de proyectos alcanzado (<?php echo (int)$cupo['usados']; ?>/<?php echo (int)$cupo['limite']; ?>)</span>
+        <span class="text-muted text-sm"><i class="fa-solid fa-lock"></i> Tu plan no permite crear obras o no tienes permiso para hacerlo.</span>
     <?php endif; ?>
 </div>
 
@@ -42,6 +44,9 @@
                     </div>
                 <?php endif; ?>
                 <div class="proyecto-body">
+                    <?php if ($proyecto->estaArchivado()): ?>
+                        <span class="badge badge-warn" title="Archivada: no cuenta para el cupo de obras activas, pero conserva su almacenamiento">Archivada</span>
+                    <?php endif; ?>
                     <p class="text-muted text-sm"><?php echo s($proyecto->ubicacion); ?></p>
                     <div class="progreso-row">
                         <span class="text-sm"><?php echo s(t('Avance')); ?></span>
@@ -58,6 +63,19 @@
                     <a href="<?php echo s(url_inicio_proyecto((int)$proyecto->id)); ?>" class="btn btn-sm btn-primary"><?php echo s(t('Ver Proyecto')); ?></a>
                     <?php if (puede_gestionar_proyecto($proyecto)): ?>
                         <a href="/proyectos/editar?id=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost"><?php echo s(t('Editar')); ?></a>
+                        <?php if (puede_archivar_proyecto($proyecto)): ?>
+                            <?php if ($proyecto->estaArchivado()): ?>
+                                <form class="inline" method="POST" action="/proyectos/desarchivar">
+                                    <input type="hidden" name="id" value="<?php echo s($proyecto->id); ?>">
+                                    <button type="submit" class="btn btn-sm btn-ghost" title="Volver a contar como obra activa">Desarchivar</button>
+                                </form>
+                            <?php else: ?>
+                                <form class="inline" method="POST" action="/proyectos/archivar" data-confirm="¿Archivar obra?|Dejará de contar para el cupo de obras activas, pero conservará todos sus datos y almacenamiento. Puedes desarchivarla si hay cupo.">
+                                    <input type="hidden" name="id" value="<?php echo s($proyecto->id); ?>">
+                                    <button type="submit" class="btn btn-sm btn-ghost" title="Liberar un lugar sin borrar la obra">Archivar</button>
+                                </form>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <?php if (puede_eliminar_proyecto($proyecto)): ?>
                         <form class="inline" method="POST" action="/proyectos/eliminar" data-confirm="¿Eliminar proyecto?|Se eliminarán todas sus partidas, actividades, restricciones y calendario. Esta acción no se puede deshacer.">
                             <input type="hidden" name="id" value="<?php echo s($proyecto->id); ?>">

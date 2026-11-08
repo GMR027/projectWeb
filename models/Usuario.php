@@ -5,7 +5,7 @@ namespace Model;
 class Usuario extends ActiveRecord
 {
     protected static $tabla = 'usuarios';
-    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'nivel_acceso', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'limite_visitantes', 'limite_colaboradores', 'herramientas', 'herramientas_edicion', 'puede_archivos_ajenos', 'token', 'confirmado'];
+    protected static $columnasDB = ['id', 'nombre', 'email', 'password', 'rol', 'nivel_acceso', 'logo', 'limite_proyectos', 'limite_almacenamiento_mb', 'creado_por', 'limite_visitantes', 'limite_colaboradores', 'herramientas', 'herramientas_edicion', 'puede_archivos_ajenos', 'token', 'confirmado', 'organizacion_id', 'rol_org', 'puede_crear_proyectos'];
 
     public $id;
     public $nombre;
@@ -25,6 +25,12 @@ class Usuario extends ActiveRecord
     public $herramientas;
     public $herramientas_edicion;
     public $puede_archivos_ajenos;
+    /** Organización a la que pertenece (NULL en admin/visitantes externos sin org) */
+    public $organizacion_id;
+    /** Rol dentro de la organización: propietario, gestor, colaborador o visitante */
+    public $rol_org;
+    /** Permiso explícito para crear proyectos (gestor) */
+    public $puede_crear_proyectos;
 
     /**
      * Herramientas del proyecto que se pueden mostrar u ocultar a un visitante: clave => [etiqueta, prefijos de ruta].
@@ -184,6 +190,45 @@ class Usuario extends ActiveRecord
         return $this->rol === 'visitante' && (string)$this->nivel_acceso === 'editar';
     }
 
+    /** ¿Es el propietario de su organización? */
+    public function esPropietarioOrg(): bool
+    {
+        return (string)($this->rol_org ?? '') === 'propietario' && !empty($this->organizacion_id);
+    }
+
+    /** ¿Es gestor de su organización (puede crear obras si el plan lo permite)? */
+    public function esGestorOrg(): bool
+    {
+        return (string)($this->rol_org ?? '') === 'gestor' && !empty($this->organizacion_id);
+    }
+
+    /** ¿Puede crear proyectos? Admin, propietario y gestores autorizados. */
+    public function puedeCrearProyectos(): bool
+    {
+        if ($this->rol === 'admin') return true;
+        if ($this->esPropietarioOrg()) return true;
+        if ($this->esGestorOrg() && (int)$this->puede_crear_proyectos === 1) {
+            $org = $this->organizacion();
+            return $org ? $org->permiteGestores() : false;
+        }
+        // Compatibilidad con el modelo anterior: un cliente sin organización.
+        return $this->rol === 'cliente' && empty($this->organizacion_id);
+    }
+
+    /** Organización del usuario (null si no tiene o no hay migración) */
+    public function organizacion(): ?Organizacion
+    {
+        if (!$this->organizacion_id) return null;
+        return Organizacion::find((int)$this->organizacion_id);
+    }
+
+    /** Asientos de edición que consume (propietario, gestor y colaborador) */
+    public function consumeAsiento(): bool
+    {
+        return in_array((string)($this->rol_org ?? ''), ['propietario', 'gestor', 'colaborador'], true)
+            || $this->esColaborador();
+    }
+
     /** Valida los topes de equipo que fija el admin en una cuenta cliente */
     public function validarLimitesEquipo(): void
     {
@@ -295,6 +340,9 @@ class Usuario extends ActiveRecord
         $this->herramientas = $args['herramientas'] ?? null;
         $this->herramientas_edicion = $args['herramientas_edicion'] ?? null;
         $this->puede_archivos_ajenos = $args['puede_archivos_ajenos'] ?? 0;
+        $this->organizacion_id = $args['organizacion_id'] ?? null;
+        $this->rol_org = $args['rol_org'] ?? (($args['rol'] ?? 'visitante') === 'cliente' ? 'propietario' : 'visitante');
+        $this->puede_crear_proyectos = $args['puede_crear_proyectos'] ?? 0;
         $this->token = $args['token'] ?? '';
         $this->confirmado = $args['confirmado'] ?? 0;
     }
@@ -384,9 +432,21 @@ class Usuario extends ActiveRecord
         return array_values(array_filter(self::visitantesDe($clienteId), fn($u) => $tipo === 'colaborador' ? $u->esColaborador() : !$u->esColaborador()));
     }
 
-    /** Tope de equipo de esta cuenta para el tipo dado */
-    public function limiteEquipo(string $tipo): int
+    /**
+     * Tope de equipo de esta cuenta para el tipo dado. `null` = ilimitado.
+     * Con organización manda el plan; sin ella se conservan los campos históricos.
+     */
+    public function limiteEquipo(string $tipo): ?int
     {
+        $org = $this->organizacion();
+        if ($org) {
+            $lim = $org->limites();
+            if ($tipo === 'colaborador') {
+                // El propietario ocupa un asiento; los colaboradores son el resto.
+                return $lim['usuarios'] === null ? null : max(0, (int)$lim['usuarios'] - 1);
+            }
+            return $lim['visitantes'] === null ? null : (int)$lim['visitantes'];
+        }
         return $tipo === 'colaborador' ? (int)$this->limite_colaboradores : (int)$this->limite_visitantes;
     }
 

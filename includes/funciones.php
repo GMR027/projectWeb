@@ -177,34 +177,93 @@ function proyectos_creados_por(int $usuarioId): int
     return \Model\Proyecto::total('usuario_id = ' . $usuarioId);
 }
 
+/** Organización de la sesión (null si no hay migración o el usuario no tiene) */
+function organizacion_actual(): ?\Model\Organizacion
+{
+    static $org = false;
+    if ($org !== false) return $org;
+    if (!is_auth()) return $org = null;
+    return $org = \Model\Organizacion::deUsuario((int)$_SESSION['id']);
+}
+
+/** Límites del plan de la organización en sesión (o legacy del usuario) */
+function plan_actual(): array
+{
+    $org = organizacion_actual();
+    if ($org) return $org->limites();
+    $u = usuario_sesion();
+    return \Classes\Plan::limites(\Classes\Plan::LEGACY, [
+        'obras' => (int)($u->limite_proyectos ?? 0),
+        'usuarios' => 1 + (int)($u->limite_colaboradores ?? 0),
+        'visitantes' => (int)($u->limite_visitantes ?? 0),
+        'almacenamiento_por_obra_mb' => (int)($u->limite_almacenamiento_mb ?? 300),
+    ]);
+}
+
+/** ¿La organización está en solo lectura (trial vencido, suspendida o fin de plan + gracia)? */
+function org_solo_lectura(? \Model\Organizacion $org = null): bool
+{
+    $org = $org ?: organizacion_actual();
+    return $org ? $org->soloLectura() : false;
+}
+
 /**
- * Cupo de proyectos de un cliente: ['usados' => n, 'limite' => n]. null si no aplica (admin: sin límite).
+ * Cupo de obras de la organización (o del cliente legacy): ['usados' => n, 'limite' => n|null].
+ * null si no aplica (admin: sin límite).
  */
 function cupo_proyectos(): ?array
 {
-    if (!is_auth() || ($_SESSION['rol'] ?? '') !== 'cliente') return null;
-    $u = \Model\Usuario::find((int)$_SESSION['id']);
-    return ['usados' => proyectos_creados_por((int)$_SESSION['id']), 'limite' => (int)($u->limite_proyectos ?? 0)];
+    if (!is_auth() || is_admin()) return null;
+    $org = organizacion_actual();
+    if ($org) {
+        return [
+            'usados' => \Model\Proyecto::totalActivosDeOrganizacion((int)$org->id),
+            'limite' => $org->limites()['obras'],
+        ];
+    }
+    $u = usuario_sesion();
+    if (!$u || $u->rol !== 'cliente') return null;
+    return [
+        'usados' => \Model\Proyecto::total('usuario_id = ' . (int)$u->id . ' AND archivado = 0'),
+        'limite' => (int)($u->limite_proyectos ?? 0),
+    ];
 }
 
-/** Admin: siempre. Cliente: mientras no alcance su límite de proyectos. Visitante: nunca. */
+/** Admin: siempre. Propietario/gestor: mientras no alcance el cupo de su organización. Visitante: nunca. */
 function puede_crear_proyecto(): bool
 {
     if (is_admin()) return true;
+    $u = usuario_sesion();
+    if (!$u) return false;
+    $org = organizacion_actual();
+    if ($org) {
+        if (!$u->puedeCrearProyectos()) return false;
+        $cupo = cupo_proyectos();
+        return $cupo !== null && ($cupo['limite'] === null || $cupo['usados'] < (int)$cupo['limite']);
+    }
     $cupo = cupo_proyectos();
-    return $cupo !== null && $cupo['usados'] < $cupo['limite'];
+    return $cupo !== null && $cupo['usados'] < (int)$cupo['limite'];
 }
 
+/** Admin: todos. Propietario/gestor: los de su organización. Resto: propios o asignados. */
 function es_propietario($proyecto): bool
 {
-    return is_auth() && (int)$proyecto->usuario_id === (int)$_SESSION['id'];
+    if (!is_auth() || !$proyecto) return false;
+    if ((int)($proyecto->usuario_id ?? 0) === (int)$_SESSION['id']) return true;
+    $org = organizacion_actual();
+    return $org && (int)($proyecto->organizacion_id ?? 0) === (int)$org->id && $org->esPropietario((int)$_SESSION['id']);
 }
 
-/** Admin: todos. Cliente: los suyos y los que el admin le asigna. Colaborador: solo en las herramientas marcadas. */
+/** Admin: todos. Propietario/gestor: los de su organización. Cliente asignado: los suyos. Colaborador: solo herramientas marcadas. */
 function puede_gestionar_proyecto($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
     if (is_admin()) return true;
+    $u = usuario_sesion();
+    $org = organizacion_actual();
+    if ($org && (int)($proyecto->organizacion_id ?? 0) === (int)$org->id) {
+        if ($u && ($u->esPropietarioOrg() || $u->esGestorOrg())) return true;
+    }
     if (($_SESSION['rol'] ?? '') === 'cliente') {
         if (es_propietario($proyecto)) return true;
         // Proyecto asignado por el admin: el cliente lo gestiona igual que los que creó
@@ -221,19 +280,50 @@ function puede_gestionar_proyecto($proyecto): bool
     return in_array($herr, herramientas_edicion_permitidas(), true);
 }
 
-/** Borrar (crear no: eliminar) es siempre del dueño o del admin; el colaborador no borra nada */
+/** Borrar (crear no: eliminar) es siempre del propietario o del admin; el gestor y el colaborador no borran nada */
 function puede_eliminar_proyecto($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
     if (is_admin()) return true;
-    return ($_SESSION['rol'] ?? '') === 'cliente' && es_propietario($proyecto);
+    return es_propietario($proyecto);
 }
 
-/** Borrar contenido dentro de un proyecto (archivos, registros): admin y cliente que lo gestiona; el colaborador no */
+/** Borrar contenido dentro de un proyecto (archivos, registros): admin y propietario; el gestor y el colaborador no */
 function puede_eliminar_contenido($proyecto): bool
 {
     if (!$proyecto || !is_auth()) return false;
-    return is_admin() || (($_SESSION['rol'] ?? '') === 'cliente' && puede_gestionar_proyecto($proyecto));
+    return is_admin() || es_propietario($proyecto);
+}
+
+/** Archivar: admin, propietario o gestor de la organización dueña. */
+function puede_archivar_proyecto($proyecto): bool
+{
+    if (!$proyecto || !is_auth()) return false;
+    if (is_admin()) return true;
+    $u = usuario_sesion();
+    $org = organizacion_actual();
+    if ($org && (int)($proyecto->organizacion_id ?? 0) === (int)$org->id && $u && ($u->esPropietarioOrg() || $u->esGestorOrg())) return true;
+    return es_propietario($proyecto);
+}
+
+/** Administrar equipo: admin o propietario de la organización (cliente legacy sin organización también). */
+function puede_administrar_equipo(): bool
+{
+    if (is_admin()) return true;
+    $u = usuario_sesion();
+    if (!$u) return false;
+    if ($u->esPropietarioOrg()) return true;
+    return $u->rol === 'cliente' && empty($u->organizacion_id);
+}
+
+/** Ver plan y facturación: admin o propietario de la organización. */
+function puede_ver_facturacion(): bool
+{
+    if (is_admin()) return true;
+    $u = usuario_sesion();
+    if (!$u) return false;
+    if ($u->esPropietarioOrg()) return true;
+    return $u->rol === 'cliente' && empty($u->organizacion_id);
 }
 
 /**

@@ -48,6 +48,18 @@ $ok('tabla material_dependencias_cambios', (bool)$GLOBALS['db']->query("SHOW TAB
 $ok('columna rol en actividad_materiales', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM actividad_materiales LIKE 'rol'")->fetch_row());
 $ok('columna modo_dependencias_materiales en proyectos', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM proyectos LIKE 'modo_dependencias_materiales'")->fetch_row());
 
+// ---------- planes y organizaciones ----------
+echo "Planes y organizaciones (esquema)\n";
+$ok('tabla planes', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'planes'")->fetch_row());
+$ok('tabla organizaciones', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'organizaciones'")->fetch_row());
+$ok('tabla organizacion_pagos', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'organizacion_pagos'")->fetch_row());
+$ok('columna organizacion_id en usuarios', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM usuarios LIKE 'organizacion_id'")->fetch_row());
+$ok('columna rol_org en usuarios', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM usuarios LIKE 'rol_org'")->fetch_row());
+$ok('columna puede_crear_proyectos en usuarios', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM usuarios LIKE 'puede_crear_proyectos'")->fetch_row());
+$ok('columna organizacion_id en proyectos', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM proyectos LIKE 'organizacion_id'")->fetch_row());
+$ok('columna archivado en proyectos', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM proyectos LIKE 'archivado'")->fetch_row());
+$ok('los 4 planes comerciales están sembrados', (int)$GLOBALS['db']->query("SELECT COUNT(*) FROM planes WHERE clave IN ('obra','pro','constructora','corporativo')")->fetch_row()[0] === 4);
+
 // ---------- seed del administrador ----------
 echo "Seed del administrador\n";
 $u = Usuario::where('email', 'admin@po.local');

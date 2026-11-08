@@ -5,7 +5,7 @@ namespace Model;
 class Proyecto extends ActiveRecord
 {
     protected static $tabla = 'proyectos';
-    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias', 'modo_dependencias_materiales'];
+    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias', 'modo_dependencias_materiales', 'organizacion_id', 'archivado', 'archivado_en', 'archivado_por'];
 
     public $id;
     public $codigo;
@@ -45,6 +45,12 @@ class Proyecto extends ActiveRecord
     public $ayuda_burbujas;
     // Espacio propio del proyecto en MB (lo asigna el admin; NULL = hereda del cliente dueño)
     public $limite_almacenamiento_mb;
+    // Organización dueña del proyecto (NULL en proyectos antiguos sin migrar)
+    public $organizacion_id;
+    // Archivar libera cupo de obras activas, pero no el almacenamiento
+    public $archivado;
+    public $archivado_en;
+    public $archivado_por;
 
     public function __construct($args = [])
     {
@@ -72,6 +78,8 @@ class Proyecto extends ActiveRecord
         $this->tema_halo_color = $args['tema_halo_color'] ?? '';
         $this->tema_halo_intensidad = $args['tema_halo_intensidad'] ?? 45;
         $this->tema_halo_expansion = $args['tema_halo_expansion'] ?? 100;
+        $this->organizacion_id = $args['organizacion_id'] ?? null;
+        $this->archivado = $args['archivado'] ?? 0;
     }
 
     public function validar(): array
@@ -94,27 +102,67 @@ class Proyecto extends ActiveRecord
         return self::$alertas;
     }
 
-    /** Proyectos que el usuario puede ver: admin todos; resto propios + asignados */
+    /** Proyectos que el usuario puede ver: admin todos; propietario/gestor los de su organización; resto propios + asignados */
     public static function visiblesPara(array $usuario): array
     {
         if ($usuario['rol'] === 'admin') {
             return self::all('creado DESC');
         }
         $uid = (int)$usuario['id'];
+        $u = Usuario::find($uid);
+        $orgId = $u && !empty($u->organizacion_id) ? (int)$u->organizacion_id : 0;
+        $porOrg = $orgId > 0 && in_array((string)($u->rol_org ?? ''), ['propietario', 'gestor'], true)
+            ? " OR organizacion_id = $orgId" : '';
         return self::consultarSQL(
             "SELECT * FROM proyectos WHERE usuario_id = $uid
+             $porOrg
              OR id IN (SELECT proyecto_id FROM proyecto_accesos WHERE usuario_id = $uid)
              ORDER BY creado DESC"
         );
     }
 
-    /** Proyectos que un cliente puede gestionar: los que creó + los que el administrador le asignó */
+    /** Proyectos que un cliente puede gestionar: los de su organización + los que el administrador le asignó */
     public static function gestionablesDe(int $usuarioId): array
     {
+        $u = Usuario::find($usuarioId);
+        $orgId = $u && !empty($u->organizacion_id) ? (int)$u->organizacion_id : 0;
+        $ids = [];
+        if ($orgId > 0 && in_array((string)($u->rol_org ?? ''), ['propietario', 'gestor'], true)) {
+            $r = self::consultarSQL("SELECT id FROM proyectos WHERE organizacion_id = $orgId");
+            $ids = array_map(fn($p) => (int)$p->id, $r);
+        }
         $propios = array_map(fn($p) => (int)$p->id, self::whereAll('usuario_id', (string)$usuarioId));
-        $ids = array_values(array_unique(array_merge($propios, ProyectoAcceso::proyectosDe($usuarioId))));
+        $ids = array_values(array_unique(array_merge($ids, $propios, ProyectoAcceso::proyectosDe($usuarioId))));
         if (!$ids) return [];
         return self::consultarSQL('SELECT * FROM proyectos WHERE id IN (' . implode(',', $ids) . ') ORDER BY nombre ASC');
+    }
+
+    /** Obras activas de una organización (las archivadas no cuentan para el cupo) */
+    public static function totalActivosDeOrganizacion(int $orgId): int
+    {
+        return self::total('organizacion_id = ' . $orgId . ' AND archivado = 0');
+    }
+
+    public function estaArchivado(): bool
+    {
+        return (int)($this->archivado ?? 0) === 1;
+    }
+
+    /** Archiva la obra: deja de contar para el cupo, pero conserva datos y almacenamiento */
+    public function archivar(int $porUsuario = 0): bool
+    {
+        $this->archivado = 1;
+        $this->archivado_en = date('Y-m-d H:i:s');
+        $this->archivado_por = $porUsuario ?: null;
+        return (bool)$this->guardar();
+    }
+
+    public function desarchivar(): bool
+    {
+        $this->archivado = 0;
+        $this->archivado_en = null;
+        $this->archivado_por = null;
+        return (bool)$this->guardar();
     }
 
     /** Logo de la empresa: el del usuario dueño (rol cliente) o, si no tiene, el del proyecto */

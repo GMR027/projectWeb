@@ -7,6 +7,26 @@ CREATE DATABASE IF NOT EXISTS project CHARACTER SET utf8mb4 COLLATE utf8mb4_unic
 USE project;
 
 -- ============================================================
+-- PLANES COMERCIALES
+-- ============================================================
+CREATE TABLE planes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(30) NOT NULL UNIQUE,
+    nombre VARCHAR(80) NOT NULL,
+    precio_mensual DECIMAL(10,2) NOT NULL DEFAULT 0,
+    precio_anual DECIMAL(10,2) NOT NULL DEFAULT 0,
+    limite_obras INT NULL,                    -- NULL = ilimitado
+    usuarios_edicion INT NULL,                -- incluye al propietario; NULL = ilimitado
+    limite_visitantes INT NULL,               -- NULL = ilimitado
+    almacenamiento_gb INT NULL,               -- NULL = sin tope total (legacy)
+    almacenamiento_por_obra_mb INT NOT NULL DEFAULT 300,
+    permite_gestores TINYINT(1) NOT NULL DEFAULT 0,
+    features_json TEXT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    orden SMALLINT NOT NULL DEFAULT 0
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- USUARIOS Y AUTENTICACIÓN
 -- ============================================================
 CREATE TABLE usuarios (
@@ -17,11 +37,14 @@ CREATE TABLE usuarios (
     rol ENUM('admin', 'cliente', 'visitante') NOT NULL DEFAULT 'visitante',
     nivel_acceso ENUM('ver', 'editar') NOT NULL DEFAULT 'ver',   -- visitante de solo lectura o colaborador que edita
     logo VARCHAR(100) DEFAULT NULL,
-    limite_proyectos INT NOT NULL DEFAULT 1,   -- proyectos que puede crear un cliente
-    limite_almacenamiento_mb INT NOT NULL DEFAULT 300,   -- MB por proyecto de un cliente
+    organizacion_id INT NULL,   -- organización a la que pertenece (NULL en admin/visitantes externos)
+    rol_org ENUM('propietario', 'gestor', 'colaborador', 'visitante') NOT NULL DEFAULT 'visitante',
+    puede_crear_proyectos TINYINT(1) NOT NULL DEFAULT 0,   -- gestor autorizado a crear obras
+    limite_proyectos INT NOT NULL DEFAULT 1,   -- legacy: proyectos que puede crear un cliente
+    limite_almacenamiento_mb INT NOT NULL DEFAULT 300,   -- legacy: MB por proyecto de un cliente
     creado_por INT DEFAULT NULL,   -- cliente que creó a este visitante/colaborador
-    limite_visitantes INT NOT NULL DEFAULT 2,        -- cuántos visitantes puede crear un cliente
-    limite_colaboradores INT NOT NULL DEFAULT 3,     -- cuántos colaboradores puede crear un cliente
+    limite_visitantes INT NOT NULL DEFAULT 2,        -- legacy: cuántos visitantes puede crear un cliente
+    limite_colaboradores INT NOT NULL DEFAULT 3,     -- legacy: cuántos colaboradores puede crear un cliente
     herramientas TEXT NULL,        -- visitante: claves de las herramientas que ve (JSON); NULL = todas
     herramientas_edicion TEXT NULL,   -- colaborador: claves de las que además puede editar (JSON)
     puede_archivos_ajenos TINYINT(1) NOT NULL DEFAULT 0,   -- colaborador: editar archivos subidos por el dueño
@@ -32,7 +55,56 @@ CREATE TABLE usuarios (
     novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
     inicio_json TEXT NULL,            -- Inicio personalizado (bloques y orden), Fase 4.5
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_usuarios_org (organizacion_id),
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- ORGANIZACIONES (empresa que contrata el plan)
+-- ============================================================
+CREATE TABLE organizaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    razon_social VARCHAR(200) NULL,
+    rfc VARCHAR(20) NULL,
+    correo_facturacion VARCHAR(150) NULL,
+    telefono VARCHAR(30) NULL,
+    logo VARCHAR(100) NULL,
+    propietario_id INT NULL,                  -- usuario propietario (uno por organización)
+    plan_id VARCHAR(30) NOT NULL DEFAULT 'obra',
+    estado_plan ENUM('trial','activo','suspendido','cancelado') NOT NULL DEFAULT 'trial',
+    trial_hasta DATE NULL,
+    plan_inicio DATE NULL,
+    plan_fin DATE NULL,
+    gracia_hasta DATE NULL,
+    precio_legado DECIMAL(10,2) NULL,
+    limites_json TEXT NULL,                   -- overrides de límites (legacy o acuerdos)
+    almacenamiento_bytes BIGINT NOT NULL DEFAULT 0,
+    marca_activa TINYINT(1) NOT NULL DEFAULT 0,
+    marca_nombre VARCHAR(150) NULL,
+    marca_logo VARCHAR(100) NULL,
+    marca_color VARCHAR(7) NULL,
+    marca_color2 VARCHAR(7) NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_org_propietario (propietario_id),
+    KEY idx_org_plan (plan_id)
+) ENGINE=InnoDB;
+
+-- Pagos manuales de la organización (facturación sin pasarela)
+CREATE TABLE organizacion_pagos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organizacion_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    monto DECIMAL(12,2) NOT NULL DEFAULT 0,
+    periodo_inicio DATE NULL,
+    periodo_fin DATE NULL,
+    metodo VARCHAR(40) NOT NULL DEFAULT '',
+    referencia VARCHAR(100) NOT NULL DEFAULT '',
+    cfdi_uuid VARCHAR(50) NOT NULL DEFAULT '',
+    notas VARCHAR(255) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_pagos_org (organizacion_id, fecha),
+    FOREIGN KEY (organizacion_id) REFERENCES organizaciones(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Intentos de acceso fallidos (protección contra fuerza bruta): 5 fallos por IP + correo bloquean 15 minutos
@@ -94,7 +166,12 @@ CREATE TABLE proyectos (
     marca_color VARCHAR(7) NULL,
     marca_color2 VARCHAR(7) NULL,
     limite_almacenamiento_mb INT NULL,   -- MB asignados por el admin a este proyecto (NULL = hereda del cliente o 300 MB)
+    organizacion_id INT NULL,             -- organización dueña del proyecto
+    archivado TINYINT(1) NOT NULL DEFAULT 0,   -- archivar libera cupo de obras activas, no almacenamiento
+    archivado_en DATETIME NULL,
+    archivado_por INT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_proyectos_org (organizacion_id, archivado),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -265,6 +342,21 @@ CREATE TABLE IF NOT EXISTS proyecto_accesos (
 -- Usuario admin por defecto (password: admin123 - CAMBIAR EN PRODUCCIÓN; se pide cambiarla al entrar)
 INSERT INTO usuarios (nombre, email, password, rol, confirmado, debe_cambiar_password) VALUES
 ('Administrador', 'admin@po.local', '$2y$12$n6xOV.ytNTY7dysHh66yeuxncU33gwjWbEWX2q6T9XIRYiqzoXX72', 'admin', 1, 1);
+
+-- Planes comerciales (la app también los define en Classes\Plan; esta tabla permite ajustarlos sin desplegar)
+INSERT INTO planes (clave, nombre, precio_mensual, precio_anual, limite_obras, usuarios_edicion, limite_visitantes, almacenamiento_gb, almacenamiento_por_obra_mb, permite_gestores, features_json, activo, orden) VALUES
+('obra', 'Obra', 390, 3900, 2, 2, NULL, 5, 2048, 0, '[]', 1, 10),
+('pro', 'Pro', 990, 9900, 8, 6, NULL, 30, 6144, 1, '["gestores","ia","api"]', 1, 20),
+('constructora', 'Constructora', 2490, 24900, 25, 15, NULL, 100, 10240, 1, '["gestores","ia","api","sso","marca"]', 1, 30),
+('corporativo', 'Corporativo', 5900, 59000, NULL, NULL, NULL, 300, 25600, 1, '["gestores","ia","api","sso","marca","multiempresa"]', 1, 40),
+('legacy', 'Legacy', 0, 0, NULL, NULL, NULL, NULL, 300, 0, '["ia","api","sso","marca","multiempresa"]', 1, 90);
+
+-- Organización interna de ProjectWeb (admin, demo y proyectos de ejemplo)
+INSERT INTO organizaciones (nombre, plan_id, estado_plan, propietario_id, plan_inicio)
+SELECT 'ProjectWeb', 'legacy', 'activo', id, CURDATE() FROM usuarios WHERE email = 'admin@po.local' LIMIT 1;
+UPDATE usuarios SET organizacion_id = (SELECT id FROM organizaciones WHERE nombre = 'ProjectWeb' LIMIT 1),
+    rol_org = 'propietario', puede_crear_proyectos = 1
+WHERE email = 'admin@po.local';
 
 -- ============================================================
 -- MSR (materiales, submittals, reporte de estatus)

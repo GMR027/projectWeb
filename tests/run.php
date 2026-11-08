@@ -45,9 +45,19 @@ $ok('una subactividad válida no tiene errores y acota el avance', empty($alerta
 
 echo "Contacto\n";
 $ok('el interés agrupa plataforma, servicio y ambos', in_array('Plan Pro', \Model\Contacto::planesValidos(), true)
-    && in_array('Acompañamiento continuo', \Model\Contacto::planesValidos(), true)
-    && in_array('Plataforma + acompañamiento continuo', \Model\Contacto::planesValidos(), true)
+    && in_array('Piloto de 30 días', \Model\Contacto::planesValidos(), true)
+    && in_array('Seguimiento quincenal', \Model\Contacto::planesValidos(), true)
+    && in_array('Plataforma + seguimiento quincenal', \Model\Contacto::planesValidos(), true)
     && !in_array('Servicio de seguimiento', \Model\Contacto::planesValidos(), true));
+
+echo "Planes\n";
+$ok('hay 4 planes comerciales y un legacy', count(Classes\Plan::comerciales()) === 4 && Classes\Plan::de('legacy')['clave'] === 'legacy');
+$ok('Pro permite gestores, IA y API; Obra no', Classes\Plan::permite('pro', 'gestores') && Classes\Plan::permite('pro', 'ia') && !Classes\Plan::permite('obra', 'gestores'));
+$ok('Constructora añade SSO y marca', Classes\Plan::permite('constructora', 'sso') && Classes\Plan::permite('constructora', 'marca'));
+$ok('Corporativo es ilimitado en obras y usuarios', Classes\Plan::limites('corporativo')['obras'] === null && Classes\Plan::limites('corporativo')['usuarios'] === null);
+$ok('legacy no tiene tope total de almacenamiento', Classes\Plan::limites('legacy')['almacenamiento_gb'] === null);
+$ok('precio por obra de Pro', Classes\Plan::precioPorObra('pro') === '$124');
+$ok('plan inválido cae al plan por defecto', Classes\Plan::normalizar('no-existe') === Classes\Plan::POR_DEFECTO);
 
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));

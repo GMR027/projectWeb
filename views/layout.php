@@ -78,6 +78,43 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
             </span>
         </div>
     <?php endif; ?>
+    <?php
+    // Aviso de plan: trial, solo lectura o almacenamiento al 80 %/100 %.
+    $orgBanner = is_auth() ? organizacion_actual() : null;
+    if ($orgBanner):
+        $soloBanner = $orgBanner->soloLectura();
+        $trialBanner = ($orgBanner->estado_plan ?? '') === 'trial';
+        $diasBanner = $orgBanner->diasTrial();
+        $limBanner = $orgBanner->limites();
+        $almTotalBanner = \Classes\Almacenamiento::limiteCuenta((int)$orgBanner->id);
+        $almUsadoBanner = (int)($orgBanner->almacenamiento_bytes ?? 0);
+        if ($almTotalBanner !== null && $almUsadoBanner <= 0) {
+            $almUsadoBanner = \Classes\Almacenamiento::usadoCuenta((int)$orgBanner->id);
+        }
+        $almPctBanner = $almTotalBanner ? min(100, $almUsadoBanner / $almTotalBanner * 100) : 0;
+    ?>
+    <?php if ($soloBanner || $trialBanner || $almPctBanner >= 80): ?>
+        <div class="demo-banner" role="status">
+            <span>
+                <i class="fa-solid <?php echo $soloBanner ? 'fa-lock' : ($trialBanner ? 'fa-hourglass-half' : 'fa-hard-drive'); ?>"></i>
+                <?php if ($soloBanner): ?>
+                    Tu organización está en <strong>solo lectura</strong>. Consulta y exporta, pero no se pueden hacer cambios.
+                <?php elseif ($trialBanner): ?>
+                    Plan <strong><?php echo s($orgBanner->plan()['nombre']); ?></strong> en prueba<?php echo $diasBanner !== null ? ' · quedan ' . max(0, (int)$diasBanner) . ' día(s)' : ''; ?>.
+                <?php else: ?>
+                    Almacenamiento de la organización al <strong><?php echo number_format($almPctBanner, 0); ?> %</strong> (<?php echo \Classes\Almacenamiento::formato($almUsadoBanner); ?> de <?php echo \Classes\Almacenamiento::formato((int)$almTotalBanner); ?>).
+                <?php endif; ?>
+            </span>
+            <span class="demo-banner-acciones">
+                <?php if (is_admin()): ?>
+                    <a href="/organizaciones/editar?id=<?php echo (int)$orgBanner->id; ?>">Gestionar plan</a>
+                <?php else: ?>
+                    <a href="/soporte">Solicitar ampliación</a>
+                <?php endif; ?>
+            </span>
+        </div>
+    <?php endif; ?>
+    <?php endif; ?>
     <div class="app-container">
         <?php include_once __DIR__ . '/templates/sidebar.php'; ?>
         <main class="main-content" id="contenido-principal">

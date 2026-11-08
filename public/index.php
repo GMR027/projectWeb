@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/app.php';
 
 use MVC\Router;
 use Controllers\AuthController;
+use Controllers\OrganizacionController;
 use Controllers\BuscarController;
 use Controllers\CarpetaController;
 use Controllers\EstampaController;
@@ -108,6 +109,11 @@ $router->post('/usuarios/crear', [AuthController::class, 'crear']);
 $router->get('/usuarios/editar', [AuthController::class, 'editar']);
 $router->post('/usuarios/editar', [AuthController::class, 'editar']);
 $router->post('/usuarios/eliminar', [AuthController::class, 'eliminar']);
+$router->get('/organizaciones', [OrganizacionController::class, 'index']);
+$router->get('/organizaciones/editar', [OrganizacionController::class, 'editar']);
+$router->post('/organizaciones/editar', [OrganizacionController::class, 'editar']);
+$router->post('/organizaciones/transferir', [OrganizacionController::class, 'transferir']);
+$router->post('/organizaciones/recalcular', [OrganizacionController::class, 'recalcular']);
 $router->get('/cuenta/password', [AuthController::class, 'cambiarPasswordForm']);
 $router->post('/cuenta/password', [AuthController::class, 'cambiarPassword']);
 
@@ -148,6 +154,8 @@ $router->get('/proyectos/editar', [ProyectoController::class, 'editar']);
 $router->post('/proyectos/editar', [ProyectoController::class, 'editar']);
 $router->get('/proyectos/ver', [ProyectoController::class, 'ver']);
 $router->post('/proyectos/eliminar', [ProyectoController::class, 'eliminar']);
+$router->post('/proyectos/archivar', [ProyectoController::class, 'archivar']);
+$router->post('/proyectos/desarchivar', [ProyectoController::class, 'desarchivar']);
 
 // ========== PROGRAMA DE OBRA ==========
 $router->get('/buscar', [BuscarController::class, 'index']);
@@ -952,6 +960,52 @@ if (is_auth() && es_demo() && !in_array(strtoupper($_SERVER['REQUEST_METHOD'] ??
             echo json_encode(['success' => false, 'error' => 'El demo es de solo lectura']);
         } else {
             header('Location: /proyectos?error=' . urlencode('El demo es de solo lectura'));
+        }
+        exit;
+    }
+}
+
+// Organización en solo lectura (trial vencido, suspendida, cancelada o fin de plan + gracia):
+// se permite consultar, exportar y eliminar; se bloquean altas, ediciones y subidas.
+if (is_auth() && !is_admin() && org_solo_lectura()) {
+    $metodoOrg = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+    if (!in_array($metodoOrg, ['GET', 'HEAD', 'OPTIONS'], true)) {
+        $rutaOrg = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $permitidasOrg = ['/logout', '/login', '/idioma', '/contacto', '/cuenta/password'];
+        if (!in_array($rutaOrg, $permitidasOrg, true) && !str_contains($rutaOrg, '/eliminar')) {
+            if (str_starts_with($rutaOrg, '/api/')) {
+                http_response_code(403);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Tu organización está en solo lectura. Reactiva el plan para hacer cambios.']);
+            } else {
+                header('Location: /proyectos?error=' . urlencode('Tu organización está en solo lectura. Reactiva el plan para hacer cambios.'));
+            }
+            exit;
+        }
+    }
+}
+
+// Funciones que dependen del plan (IA y marca): se validan en el servidor, no solo en el menú.
+if (is_auth() && !is_admin() && ($orgPlan = organizacion_actual())) {
+    $rutaPlan = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $prefijosIA = ['/propuestas-ia', '/resumen-ia', '/uso-ia', '/calidad-ia', '/api/ia', '/biblioteca-ia', '/informes-ia', '/programador', '/api/programador'];
+    $tocaIA = false;
+    foreach ($prefijosIA as $pref) {
+        if (str_starts_with($rutaPlan, $pref)) { $tocaIA = true; break; }
+    }
+    $sinIA = $tocaIA && !$orgPlan->permite('ia');
+    $sinMarca = str_starts_with($rutaPlan, '/marca') && !$orgPlan->permite('marca');
+    $sinAPI = str_starts_with($rutaPlan, '/integraciones') && !$orgPlan->permite('api');
+    if ($sinIA || $sinMarca || $sinAPI) {
+        $msgPlan = $sinIA ? 'El plan de tu organización no incluye las herramientas de IA.'
+            : ($sinMarca ? 'El plan de tu organización no incluye la marca del cliente.'
+            : 'El plan de tu organización no incluye integraciones ni API. Amplía el plan para usarlas.');
+        if (str_starts_with($rutaPlan, '/api/')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $msgPlan]);
+        } else {
+            header('Location: /proyectos?error=' . urlencode($msgPlan));
         }
         exit;
     }

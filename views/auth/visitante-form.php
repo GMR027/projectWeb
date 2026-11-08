@@ -10,7 +10,7 @@ $esColab = $tipo === 'colaborador';
 
 <div class="card">
     <?php if (!empty($lleno)): ?>
-        <p class="text-muted">Ya tienes el máximo de <?php echo (int)($limite ?? 0); ?> <?php echo $esColab ? 'colaboradores' : 'visitantes'; ?> permitido. Elimina uno para poder crear otro.</p>
+        <p class="text-muted">Ya tienes el máximo de <?php echo ($ilimitado ?? false) ? 'sin límite' : (int)($limite ?? 0); ?> <?php echo $esColab ? 'colaboradores' : 'visitantes'; ?> permitido. Elimina uno para poder crear otro.</p>
     <?php else: ?>
     <form method="POST" class="formulario">
         <div class="campo">
@@ -19,7 +19,7 @@ $esColab = $tipo === 'colaborador';
                 <option value="visitante"<?php echo !$esColab ? ' selected' : ''; ?>>Visitante · solo lectura</option>
                 <option value="colaborador"<?php echo $esColab ? ' selected' : ''; ?>>Colaborador · puede editar</option>
             </select>
-            <small class="text-muted"><?php echo $esColab ? 'Colaboradores' : 'Visitantes'; ?>: <?php echo (int)($usados ?? 0); ?> de <?php echo (int)($limite ?? 0); ?> en este tipo. El administrador fija los topes de cada tipo.</small>
+            <small class="text-muted"><?php echo $esColab ? 'Colaboradores' : 'Visitantes'; ?>: <?php echo (int)($usados ?? 0); ?> <?php echo (($ilimitado ?? false) ? '(sin límite)' : 'de ' . (int)($limite ?? 0)); ?> en este tipo. El plan de tu organización fija los topes.</small>
         </div>
         <div class="campo">
             <label for="nombre">Nombre completo</label>

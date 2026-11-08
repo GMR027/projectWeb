@@ -10,9 +10,9 @@ class Contacto extends ActiveRecord
 
     /** Agrupados para el selector: plataforma, servicio de seguimiento o ambos. */
     public const PLANES = [
-        'Plataforma' => ['Plan Pro', 'Plan Gold', 'Plan Corporativo'],
-        'Servicio de seguimiento' => ['Seguimiento puntual', 'Acompañamiento continuo', 'Oficina de control de proyecto'],
-        'Plataforma + servicio' => ['Plataforma + seguimiento puntual', 'Plataforma + acompañamiento continuo', 'Plataforma + oficina de control'],
+        'Plataforma' => ['Plan Obra', 'Plan Pro', 'Plan Constructora', 'Plan Corporativo'],
+        'Servicio de seguimiento' => ['Piloto de 30 días', 'Diagnóstico de obra', 'Seguimiento quincenal', 'Seguimiento semanal', 'Oficina de control'],
+        'Plataforma + servicio' => ['Plataforma + piloto de 30 días', 'Plataforma + diagnóstico', 'Plataforma + seguimiento quincenal', 'Plataforma + seguimiento semanal', 'Plataforma + oficina de control'],
         'Aún no lo sé' => ['Aún no lo sé'],
     ];
     public const PROYECTOS = ['1 a 10', '11 a 70', '71 a 500', 'Más de 500'];

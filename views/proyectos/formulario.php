@@ -48,6 +48,20 @@
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php if (!empty($organizaciones)): ?>
+        <div class="campo">
+            <label for="organizacion_id"><?php echo s(t('Organización dueña')); ?></label>
+            <select id="organizacion_id" name="organizacion_id">
+                <option value="0">— La del propietario —</option>
+                <?php foreach ($organizaciones as $org): ?>
+                    <option value="<?php echo (int)$org->id; ?>" <?php echo (int)($proyecto->organizacion_id ?? 0) === (int)$org->id ? 'selected' : ''; ?>>
+                        <?php echo s($org->nombre); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <small class="text-muted">La organización define el plan, el cupo y el almacenamiento.</small>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
     <?php if (is_admin()): ?>
         <div class="campo campo-full">

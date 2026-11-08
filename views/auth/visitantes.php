@@ -1,8 +1,10 @@
 <?php
 $limiteVisitantes = $limiteVisitantes ?? \Model\Usuario::MAX_VISITANTES_CLIENTE;
 $limiteColaboradores = $limiteColaboradores ?? \Model\Usuario::MAX_COLABORADORES_CLIENTE;
-$llenoV = count($visitantes) >= $limiteVisitantes;
-$llenoC = count($colaboradores) >= $limiteColaboradores;
+$ilimitadoV = $ilimitadoVisitantes ?? ($limiteVisitantes === null);
+$ilimitadoC = $ilimitadoColaboradores ?? ($limiteColaboradores === null);
+$llenoV = !$ilimitadoV && count($visitantes) >= (int)$limiteVisitantes;
+$llenoC = !$ilimitadoC && count($colaboradores) >= (int)$limiteColaboradores;
 $total = count($visitantes) + count($colaboradores);
 ?>
 <div class="page-header">
@@ -22,21 +24,21 @@ $total = count($visitantes) + count($colaboradores);
     </p>
 
     <div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-bottom:1.6rem">
-        <span class="badge">Visitantes: <?php echo count($visitantes); ?> de <?php echo (int)$limiteVisitantes; ?></span>
-        <span class="badge">Colaboradores: <?php echo count($colaboradores); ?> de <?php echo (int)$limiteColaboradores; ?></span>
+        <span class="badge">Visitantes: <?php echo count($visitantes); ?> <?php echo $ilimitadoV ? '(ilimitados)' : 'de ' . (int)$limiteVisitantes; ?></span>
+        <span class="badge">Colaboradores: <?php echo count($colaboradores); ?> <?php echo $ilimitadoC ? '(ilimitados)' : 'de ' . (int)$limiteColaboradores; ?></span>
     </div>
 
     <?php
     $secciones = [
-        ['visitante', $visitantes, $llenoV, (int)$limiteVisitantes, 'Visitantes', 'Solo lectura: ven los proyectos que les asignes, no editan ni borran.'],
-        ['colaborador', $colaboradores, $llenoC, (int)$limiteColaboradores, 'Colaboradores', 'Editan en las herramientas que les marques; el borrado sigue siendo tuyo.'],
+        ['visitante', $visitantes, $llenoV, $limiteVisitantes, $ilimitadoV, 'Visitantes', 'Solo lectura: ven los proyectos que les asignes, no editan ni borran.'],
+        ['colaborador', $colaboradores, $llenoC, $limiteColaboradores, $ilimitadoC, 'Colaboradores', 'Editan en las herramientas que les marques; el borrado sigue siendo tuyo.'],
     ];
-    foreach ($secciones as [$clave, $lista, $lleno, $limite, $nombre, $ayuda]):
+    foreach ($secciones as [$clave, $lista, $lleno, $limite, $ilimitado, $nombre, $ayuda]):
         $ir = $clave === 'colaborador' ? '+ Nuevo colaborador' : '+ Nuevo visitante';
     ?>
     <div style="margin-bottom:2rem">
         <h3 class="card-titulo" style="margin-bottom:.6rem"><i class="fa-solid <?php echo $clave === 'colaborador' ? 'fa-user-pen' : 'fa-eye'; ?>"></i> <?php echo s($nombre); ?></h3>
-        <p class="text-muted text-sm" style="margin-bottom:1rem"><?php echo s($ayuda); ?> · <?php echo count($lista); ?> de <?php echo $limite; ?></p>
+        <p class="text-muted text-sm" style="margin-bottom:1rem"><?php echo s($ayuda); ?> · <?php echo count($lista); ?> <?php echo $ilimitado ? '(sin límite)' : 'de ' . (int)$limite; ?></p>
         <table class="tabla">
             <thead><tr><th>Nombre</th><th class="hide-m">Email</th><th class="hide-m">Proyectos</th><th class="hide-m">Herramientas</th><th>Acciones</th></tr></thead>
             <tbody>

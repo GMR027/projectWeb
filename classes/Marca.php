@@ -23,15 +23,33 @@ class Marca
         return $c !== null && preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? strtolower($c) : null;
     }
 
-    /** Marca vigente del proyecto o null si está apagada o sin migración */
+    /** Marca vigente del proyecto (o de su organización) o null si está apagada o sin migración */
     public static function de(Proyecto $p): ?array
     {
         if (!(int)($p->marca_activa ?? 0)) {
             $f = self::filas('SELECT marca_activa, marca_nombre, marca_logo, marca_color, marca_color2 FROM proyectos WHERE id = ' . (int)$p->id)[0] ?? null;
-            if (!$f || !(int)$f['marca_activa']) return null;
-        } else {
-            $f = ['marca_nombre' => $p->marca_nombre ?? '', 'marca_logo' => $p->marca_logo ?? '', 'marca_color' => $p->marca_color ?? '', 'marca_color2' => $p->marca_color2 ?? ''];
+            if ($f && (int)$f['marca_activa']) {
+                return [
+                    'nombre' => (string)$f['marca_nombre'], 'logo' => (string)$f['marca_logo'],
+                    'color' => self::colorValido($f['marca_color']) ?? self::COLOR_DEFECTO,
+                    'color2' => self::colorValido($f['marca_color2']) ?? self::COLOR2_DEFECTO,
+                ];
+            }
+            // Sin marca propia activa: se hereda la de la organización.
+            try {
+                $org = \Model\Organizacion::deUsuario((int)$p->usuario_id);
+                if ($org && (int)$org->marca_activa) {
+                    return [
+                        'nombre' => (string)$org->marca_nombre, 'logo' => (string)$org->marca_logo,
+                        'color' => self::colorValido($org->marca_color) ?? self::COLOR_DEFECTO,
+                        'color2' => self::colorValido($org->marca_color2) ?? self::COLOR2_DEFECTO,
+                    ];
+                }
+            } catch (\Throwable $e) {
+            }
+            return null;
         }
+        $f = ['marca_nombre' => $p->marca_nombre ?? '', 'marca_logo' => $p->marca_logo ?? '', 'marca_color' => $p->marca_color ?? '', 'marca_color2' => $p->marca_color2 ?? ''];
         return [
             'nombre' => (string)$f['marca_nombre'], 'logo' => (string)$f['marca_logo'],
             'color' => self::colorValido($f['marca_color']) ?? self::COLOR_DEFECTO, 'color2' => self::colorValido($f['marca_color2']) ?? self::COLOR2_DEFECTO,

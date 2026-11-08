@@ -24,10 +24,10 @@
                 <th>Nombre</th>
                 <th class="hide-m">Email</th>
                 <th class="hide-m">Último acceso</th>
-                <th>Rol</th>
-                <th class="hide-m">Proyectos</th>
-                <th class="hide-m">Equipo (vis. / colab.)</th>
-                <th class="hide-m">Espacio / proyecto</th>
+                <th class="hide-m">Rol</th>
+                <th class="hide-m">Organización</th>
+                <th class="hide-m">Plan</th>
+                <th class="hide-m">Uso</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -38,10 +38,11 @@
                     <td><?php echo s($u->nombre); ?></td>
                     <td class="hide-m"><?php echo s($u->email); ?></td>
                     <td class="hide-m mono text-sm"><?php echo !empty($u->ultimo_acceso) ? s(date('d/m/Y H:i', strtotime($u->ultimo_acceso))) : '—'; ?></td>
-                    <td><span class="badge badge-<?php echo s($u->rol); ?>"><?php echo s(ucfirst($u->rol)); ?></span><?php if ($u->rol === 'visitante' && ($u->nivel_acceso ?? 'ver') === 'editar'): ?> <span class="badge">Colaborador</span><?php endif; ?></td>
-                    <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? proyectos_creados_por((int)$u->id) . ' / ' . (int)$u->limite_proyectos : '—'; ?></td>
-                    <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? count(\Model\Usuario::equipoDe((int)$u->id, 'visitante')) . ' / ' . (int)($u->limite_visitantes ?? 2) . ' · ' . count(\Model\Usuario::equipoDe((int)$u->id, 'colaborador')) . ' / ' . (int)($u->limite_colaboradores ?? 3) : '—'; ?></td>
-                    <td class="mono hide-m"><?php echo $u->rol === 'cliente' ? \Classes\Almacenamiento::formato((int)$u->limite_almacenamiento_mb * 1048576) : '—'; ?></td>
+                    <td><span class="badge badge-<?php echo s($u->rol); ?>"><?php echo s(ucfirst($u->rol)); ?></span><?php if (!empty($u->rol_org) && $u->rol_org !== 'visitante'): ?> <span class="badge"><?php echo s(ucfirst($u->rol_org)); ?></span><?php elseif ($u->rol === 'visitante' && ($u->nivel_acceso ?? 'ver') === 'editar'): ?> <span class="badge">Colaborador</span><?php endif; ?></td>
+                    <?php $org = \Model\Organizacion::deUsuario((int)$u->id); ?>
+                    <td class="hide-m"><?php echo $org ? s($org->nombre) : '—'; ?></td>
+                    <td class="hide-m"><?php if ($org): ?><span class="badge"><?php echo s($org->plan()['nombre']); ?></span> <span class="badge <?php echo s($org->estadoBadge()); ?>"><?php echo s($org->estadoEtiqueta()); ?></span><?php else: ?>—<?php endif; ?></td>
+                    <td class="mono hide-m"><?php if ($org): $lim = $org->limites(); ?><?php echo (int)$org->contarObrasActivas(); ?>/<?php echo $lim['obras'] === null ? '∞' : (int)$lim['obras']; ?> obras · <?php echo (int)$org->contarAsientos(); ?>/<?php echo $lim['usuarios'] === null ? '∞' : (int)$lim['usuarios']; ?> usuarios<br><span class="text-sm"><?php echo \Classes\Almacenamiento::formato(\Classes\Almacenamiento::usadoCuenta((int)$org->id)); ?></span><?php else: ?>—<?php endif; ?></td>
                     <td class="acciones">
                         <a href="/usuarios/editar?id=<?php echo s($u->id); ?>" class="btn btn-sm btn-ghost">Editar</a>
                         <?php if ($u->id != $_SESSION['id']): ?>

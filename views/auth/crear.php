@@ -22,10 +22,11 @@
                 <option value="visitante" <?php echo ($usuario->rol ?? '') === 'visitante' ? 'selected' : ''; ?>>Visitante</option>
             </select>
         </div>
+        <?php include __DIR__ . '/_organizacion-campos.php'; ?>
         <div class="campo" id="campo-limite">
             <label for="limite_proyectos">Límite de proyectos (rol cliente)</label>
             <input type="number" id="limite_proyectos" name="limite_proyectos" min="0" max="999" step="1" value="<?php echo s($usuario->limite_proyectos ?? 1); ?>">
-            <small class="text-muted">Número máximo de proyectos que este cliente puede crear. 0 = no puede crear proyectos. Los asignados por el administrador no cuentan.</small>
+            <small class="text-muted">Solo se usa en cuentas legacy sin organización; con plan, los límites se toman del plan. 0 = no puede crear proyectos.</small>
             <label for="limite_almacenamiento_mb" style="margin-top:1.2rem">Espacio por proyecto en MB (rol cliente)</label>
             <input type="number" id="limite_almacenamiento_mb" name="limite_almacenamiento_mb" min="1" max="100000" step="1" value="<?php echo s($usuario->limite_almacenamiento_mb ?? 300); ?>">
             <small class="text-muted">Almacenamiento que puede ocupar cada proyecto de este cliente (archivos, fotos, planos, fichas y logos). 1024 MB = 1 GB.</small>
@@ -65,13 +66,26 @@
             (function () {
                 const rol = document.getElementById('rol'), caja = document.getElementById('campo-accesos'), lim = document.getElementById('campo-limite');
                 const herr = document.getElementById('campo-herramientas'), niv = document.getElementById('campo-nivel');
+                const plan = document.getElementById('campo-plan'), org = document.getElementById('campo-org'), orgVis = document.getElementById('campo-org-vis');
+                const rolOrg = document.getElementById('rol_org'), cajaRolOrg = document.getElementById('campo-rol-org');
+                const toggleOrg = () => {
+                    const esCliente = rol.value === 'cliente';
+                    const esGestor = esCliente && rolOrg && rolOrg.value === 'gestor';
+                    if (cajaRolOrg) cajaRolOrg.style.display = esCliente ? '' : 'none';
+                    if (plan) plan.style.display = esCliente && !esGestor ? '' : 'none';
+                    if (org) org.style.display = esCliente && !esGestor ? '' : 'none';
+                    if (orgVis) orgVis.style.display = esGestor || rol.value === 'visitante' ? '' : 'none';
+                };
                 const toggle = () => {
                     caja.style.display = rol.value === 'admin' ? 'none' : '';
                     lim.style.display = rol.value === 'cliente' ? '' : 'none';
                     herr.style.display = rol.value === 'visitante' ? '' : 'none';
                     niv.style.display = rol.value === 'visitante' ? '' : 'none';
+                    toggleOrg();
                 };
-                rol.addEventListener('change', toggle); toggle();
+                rol.addEventListener('change', toggle);
+                if (rolOrg) rolOrg.addEventListener('change', toggleOrg);
+                toggle();
             })();
         </script>
         <div class="campo">

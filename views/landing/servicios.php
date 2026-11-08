@@ -48,9 +48,11 @@ $formatos = [
     ['Integración', ['JSON (API)', 'ICS (calendario)']],
 ];
 $modalidades = [
-    ['fa-bullseye', 'Seguimiento puntual', 'Para obras pequeñas, una etapa o un frente concreto.', ['Informe ejecutivo y reporte periódico', 'Control de materiales clave', 'Minutas y acuerdos de cada junta', 'Cierre de etapa con punch list'], false, 'Esencial'],
-    ['fa-people-group', 'Acompañamiento continuo', 'Para obras en marcha que necesitan seguimiento semanal.', ['Todo lo del seguimiento puntual', 'Lookahead, Last Planner y restricciones', 'Tablero de materiales y cambios', 'Láminas vPlan para tus juntas', 'Acceso de solo lectura para tu cliente'], true, 'Completo'],
-    ['fa-building-circle-check', 'Oficina de control de proyecto', 'Para varias obras o grupos constructores.', ['Todo lo anterior, para varias obras', 'Informes consolidados para dirección', 'Curva S y valor ganado por proyecto', 'Capacitación a tu equipo en la plataforma'], false, 'Consolidado'],
+    ['fa-rocket', 'Piloto de 30 días', 'Una obra real, tu equipo y acompañamiento para probar sin comprar a ciegas.', ['1 obra y 3 usuarios de edición', 'Implementación y capacitación', '4 juntas semanales de 30 min', 'Reporte semanal e informe final', 'Se acredita al plan anual'], true, 'Entrada', '$3,900 acreditable'],
+    ['fa-stethoscope', 'Diagnóstico de obra', 'Para saber qué corregir antes de contratar seguimiento.', ['Revisión de programa y calendario', 'Riesgos de atraso y quick wins', 'Plan de 90 días en PDF', 'Se acredita al primer mes de seguimiento'], false, 'Entrada', '$4,900 una vez'],
+    ['fa-bullseye', 'Seguimiento quincenal', 'Para obras pequeñas o frentes que necesitan orden sin un equipo completo.', ['2 juntas al mes', 'Programa actualizado', 'Reporte quincenal e informe mensual', 'Acceso de solo lectura para tu cliente'], false, 'Esencial', '$3,900 / mes'],
+    ['fa-people-group', 'Seguimiento semanal', 'Para obras en marcha que necesitan control semanal y decisiones a tiempo.', ['Todo lo del seguimiento quincenal', '1 junta semanal', 'Restricciones y materiales básicos', 'Alertas de atraso y cambios'], false, 'Completo', '$6,900 / mes'],
+    ['fa-building-circle-check', 'Oficina de control de proyecto', 'Para varias obras o grupos constructores.', ['Todo lo anterior, para varias obras', 'Informes consolidados para dirección', 'Valor ganado y curva S por proyecto', 'Comité mensual y analista con más dedicación'], false, 'Consolidado', 'desde $14,900 / mes'],
 ];
 $deteccion = [
     ['fa-magnifying-glass-chart', 'Fechas que no cuadran', 'Compras, entregas y arranques que se contradicen entre sí o con el programa.'],
@@ -67,6 +69,8 @@ $pasos = [
     ['Informes y decisiones', 'Te entregamos un panorama claro y alertas a tiempo para decidir mejor, sin dejar la obra.'],
 ];
 $faq = [
+    ['¿Qué incluye el piloto de 30 días?', 'Una obra real, 3 usuarios de edición, implementación, capacitación, 4 juntas semanales de 30 minutos, reporte semanal e informe final. Cuesta $3,900 y se acredita al plan anual si continúas.'],
+    ['¿Qué pasa si no continúo después del piloto?', 'No tienes obligación de seguir. Te quedas con tu información y el informe del piloto; no se renueva nada automáticamente.'],
     ['¿Tengo que dejar mis herramientas actuales?', 'No. Nos adaptamos a tu forma de trabajar: podemos importar tu programa (XML de MS Project, ProjectLibre) y entregarte todo en los formatos que ya usas.'],
     ['¿Ustedes aportan la experiencia técnica de la especialidad?', 'No. Nosotros administramos y damos seguimiento a la información; la experiencia y el criterio de cada disciplina los aporta tu empresa, supervisor o residente. Trabajamos con los datos que ellos comparten y validan las decisiones.'],
     ['¿Puedo pedir más o menos información?', 'Sí. El alcance es a la medida: defines con nosotros qué entregables necesitas, con qué frecuencia y en qué formato, según tu presupuesto.'],
@@ -87,8 +91,9 @@ $faq = [
             <span class="lp-pill"><i class="fa-solid fa-handshake-angle"></i> Servicios administrativos de obra</span>
             <h1>Tú construyes.<br><span class="lp-grad">Nosotros damos seguimiento.</span></h1>
             <p class="lp-lead">Nos encargamos de la administración y el seguimiento de tu obra sobre una plataforma propia. La experiencia técnica de cada disciplina la aporta tu equipo —residente, supervisor o empresa—; nosotros mantenemos la información al día, ordenada y lista para decidir.</p>
+            <p class="lp-lead" style="margin-top:1rem"><strong>¿Quieres probar primero?</strong> El piloto de 30 días incluye una obra real, implementación y acompañamiento por $3,900, acreditable a tu plan anual.</p>
             <div class="lp-cta">
-                <a href="/#contacto" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-paper-plane"></i> Cuéntanos de tu obra</a>
+                <a href="/?plan=Piloto%20de%2030%20d%C3%ADas#contacto" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-rocket"></i> Agendar piloto de 30 días</a>
                 <a href="#que-hacemos" class="lp-btn lp-btn-ghost lp-btn-lg">Ver qué ofrecemos</a>
             </div>
             <ul class="lp-check">
@@ -244,16 +249,17 @@ $faq = [
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Modalidades</span>
             <h2>Elige cuánto quieres delegar</h2>
-            <p>No son paquetes cerrados: cada esquema se cotiza según el tamaño de la obra, el alcance y la frecuencia. Podemos empezar con una parte y ampliarla cuando la obra lo pida.</p>
+            <p>Precios de entrada por obra. El alcance, la frecuencia y los entregables se ajustan a tu presupuesto; el diagnóstico se acredita al primer mes de seguimiento.</p>
         </div>
         <div class="lp-mods">
-            <?php foreach ($modalidades as $i => $m): [$ico, $t, $lema, $items, $dest, $nivel] = $m; ?>
+            <?php foreach ($modalidades as $i => $m): [$ico, $t, $lema, $items, $dest, $nivel, $precio] = $m; ?>
                 <article class="lp-mod lp-rev<?php echo $dest ? ' lp-mod-top' : ''; ?>" style="--d:<?php echo $i * 80; ?>ms">
                     <?php if ($dest): ?><span class="lp-badge">Más elegida</span><?php endif; ?>
                     <span class="lp-ico"><i class="fa-solid <?php echo $ico; ?>"></i></span>
                     <span class="lp-mod-nivel"><?php echo s($nivel); ?></span>
                     <h3><?php echo s($t); ?></h3>
                     <p class="lp-mod-lema"><?php echo s($lema); ?></p>
+                    <p class="lp-precio" style="margin:.4rem 0 1rem"><b><?php echo s($precio); ?></b><span> MXN</span></p>
                     <ul class="lp-list"><?php foreach ($items as $it): ?><li><i class="fa-solid fa-check"></i> <?php echo s($it); ?></li><?php endforeach; ?></ul>
                     <a href="/?plan=<?php echo urlencode($t); ?>#contacto" class="lp-btn <?php echo $dest ? 'lp-btn-primary' : 'lp-btn-ghost'; ?>">Cotizar esta modalidad</a>
                 </article>

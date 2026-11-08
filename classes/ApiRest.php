@@ -140,6 +140,11 @@ class ApiRest
         }
         self::$token = $r['token'];
         self::$usuario = $r['usuario'];
+        // La API es una función de los planes Pro en adelante (legacy incluido).
+        $orgApi = \Model\Organizacion::deUsuario((int)self::$usuario['id']);
+        if ($orgApi && !$orgApi->permite('api')) {
+            self::error(403, 'plan_sin_api', 'El plan de tu organización no incluye la API. Amplía el plan para usarla.');
+        }
         if ($manejador[1] && (!(int)self::$token['escritura'] || self::$usuario['rol'] === 'visitante')) {
             self::error(403, 'solo_lectura', 'Este token es de solo lectura (o tu rol no puede modificar datos).');
         }

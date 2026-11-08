@@ -125,6 +125,7 @@ return [
     'Número de trabajo (Job No.)' => 'Job number (Job No.)',
     'Logo del Contratista' => 'Contractor logo',
     'Propietario' => 'Owner',
+    'Organización dueña' => 'Owning organization',
     'Usuarios con acceso a este proyecto' => 'Users with access to this project',
     'Clientes y visitantes marcados podrán ver este proyecto (el propietario siempre lo ve).' => 'Checked clients and visitors will be able to see this project (the owner always can).',
     'Los clientes marcados podrán gestionar este proyecto y los visitantes verlo (el propietario siempre lo ve).' => 'Checked clients will be able to manage this project and visitors to see it (the owner always can).',

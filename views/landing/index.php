@@ -1,21 +1,22 @@
 <?php
-$planes = [
-    [
-        'id' => 'pro', 'nombre' => 'Plan Pro', 'precio' => '$500', 'destacado' => false,
-        'lema' => 'Para contratistas que arrancan su control digital.',
-        'items' => ['Hasta <strong>10 proyectos</strong>', '<strong>1 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
-    ],
-    [
-        'id' => 'gold', 'nombre' => 'Plan Gold', 'precio' => '$1,500', 'destacado' => true,
-        'lema' => 'Para empresas con varias obras en paralelo.',
-        'items' => ['Hasta <strong>70 proyectos</strong>', '<strong>4 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
-    ],
-    [
-        'id' => 'corporativo', 'nombre' => 'Plan Corporativo', 'precio' => '$2,500', 'destacado' => false,
-        'lema' => 'Para grupos constructores y grandes portafolios.',
-        'items' => ['De <strong>50 a 500 proyectos</strong>', '<strong>10 GB</strong> de almacenamiento por proyecto', 'Todas las funciones de la plataforma', 'Exportación a PDF, Excel y MS Project'],
-    ],
-];
+$planes = [];
+foreach (\Classes\Plan::comerciales() as $p) {
+    $planes[] = [
+        'id' => $p['clave'],
+        'nombre' => 'Plan ' . $p['nombre'],
+        'precio' => \Classes\Plan::precio($p['clave']),
+        'precio_anual' => \Classes\Plan::precio($p['clave'], true),
+        'destacado' => !empty($p['destacado']),
+        'lema' => $p['lema'],
+        'items' => [
+            ($p['obras'] === null ? 'Obras <strong>ilimitadas</strong>' : 'Hasta <strong>' . (int)$p['obras'] . ' obras activas</strong>'),
+            ($p['usuarios'] === null ? '<strong>Usuarios ilimitados</strong>' : '<strong>' . (int)$p['usuarios'] . ' usuarios</strong> de edición'),
+            ($p['almacenamiento_gb'] === null ? 'Almacenamiento sin tope total' : '<strong>' . (int)$p['almacenamiento_gb'] . ' GB</strong> de almacenamiento'),
+            'Todas las herramientas de obra',
+            'Exportación a PDF, Excel y MS Project',
+        ],
+    ];
+}
 // Solo las vistas que mejor explican el producto; el resto vive en Funciones.
 $tour = [
     ['programa', 'Programa y Gantt', 'fa-chart-gantt', 'Partidas por disciplina, actividades e hitos con avance, prioridad y restricciones. Las fechas respetan el calendario real de la obra.'],
@@ -84,7 +85,7 @@ $comparativa = [
     ['Exporta a MS Project y Excel', ['si', 'PDF, Excel, ODS, XML, POD'], ['si', 'Sí'], ['si', 'Nativo'], ['parcial', 'Solo CSV o Excel']],
 ];
 $licenciaEquipo = 20000;                       // licencias de los programas que ProjectWeb reemplaza, por equipo (pago inicial)
-$planProAnual = 500 * 12;
+$planProAnual = 990 * 10;                      // Plan Pro anual: 10 meses (2 gratis)
 $ahorro = [];
 foreach ([1, 2, 3, 5] as $n) {
     $trad = $licenciaEquipo * $n;
@@ -320,7 +321,7 @@ $ventajas = [
             <li><i class="fa-solid fa-shield-halved"></i><span><strong>Menos riesgo de perder información.</strong> Respaldos y cuota por proyecto: los planos y reportes no dependen de la laptop de nadie.</span></li>
             <li><i class="fa-solid fa-graduation-cap"></i><span><strong>Menos costo de capacitación.</strong> Una sola forma de trabajar para toda la obra, en lugar de enseñar cuatro programas distintos.</span></li>
         </ul>
-        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones, actualizaciones ni horas de soporte, que harían mayor el ahorro. El Plan Pro es de $500 MXN al mes (1 año = $<?php echo number_format($planProAnual); ?>).</p>
+        <p class="lp-cmp-nota lp-rev"><i class="fa-solid fa-circle-info"></i> Cifras en pesos mexicanos. El costo de licencias es un promedio de referencia por equipo; sin contar renovaciones, actualizaciones ni horas de soporte, que harían mayor el ahorro. El Plan Pro es de $990 MXN al mes; el anual cuesta $<?php echo number_format($planProAnual); ?> (2 meses gratis).</p>
     </div>
 </section>
 
@@ -467,12 +468,49 @@ $ventajas = [
     </div>
 </section>
 
+<section class="lp-sec lp-alt" id="piloto">
+    <div class="lp-wrap">
+        <div class="lp-srv-teaser lp-rev">
+            <div>
+                <span class="lp-eyebrow">Piloto de 30 días</span>
+                <h2>Pruébalo con tu obra,<br>no con un demo</h2>
+                <p>Elige una obra real, sube a tu equipo y usa ProjectWeb durante 30 días con acompañamiento. Al final decides con números sobre la mesa: si te sirve, sigues con el plan anual; si no, te quedas con tu información y tu informe.</p>
+                <ul class="lp-list">
+                    <li><i class="fa-solid fa-check"></i> 1 obra real y 3 usuarios de edición</li>
+                    <li><i class="fa-solid fa-check"></i> Implementación, carga del programa y capacitación</li>
+                    <li><i class="fa-solid fa-check"></i> 4 juntas semanales de 30 minutos</li>
+                    <li><i class="fa-solid fa-check"></i> Reporte semanal y informe final con números</li>
+                    <li><i class="fa-solid fa-check"></i> Si continúas, el piloto se descuenta del plan anual</li>
+                </ul>
+                <div class="lp-cta">
+                    <a href="#contacto" data-plan="Piloto de 30 días" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-paper-plane"></i> Agendar mi piloto</a>
+                    <a href="/servicios" class="lp-btn lp-btn-ghost lp-btn-lg">Ver los servicios</a>
+                </div>
+            </div>
+            <div class="lp-plan lp-plan-top" style="transform:none">
+                <span class="lp-badge">Acreditable</span>
+                <h3>Piloto de 30 días</h3>
+                <p class="lp-plan-lema">Una obra real, con acompañamiento.</p>
+                <p class="lp-precio"><b>$3,900</b><span> MXN / mes</span></p>
+                <p class="text-muted text-sm">Se descuenta del primer pago si firmas el plan anual antes del día 30.</p>
+                <ul>
+                    <li><i class="fa-solid fa-circle-check"></i> <span>Plan Pro durante el piloto</span></li>
+                    <li><i class="fa-solid fa-circle-check"></i> <span>Implementación incluida</span></li>
+                    <li><i class="fa-solid fa-circle-check"></i> <span>Junta semanal y reporte</span></li>
+                    <li><i class="fa-solid fa-circle-check"></i> <span>Garantía de 30 días</span></li>
+                </ul>
+                <a href="#contacto" data-plan="Piloto de 30 días" class="lp-btn lp-btn-primary lp-btn-block">Quiero mi piloto</a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="lp-sec" id="planes">
     <div class="lp-wrap">
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Planes</span>
             <h2>Elige el plan que crece contigo</h2>
-            <p>Precios mensuales en pesos mexicanos (MXN). Todos los planes incluyen todas las funciones.</p>
+            <p>Precios mensuales en pesos mexicanos (MXN). Todas las herramientas de obra están en todos los planes; los planes crecen en capacidad, usuarios y gobierno. El anual equivale a 10 meses.</p>
         </div>
         <div class="lp-plans">
             <?php foreach ($planes as $i => $pl): ?>
@@ -481,6 +519,7 @@ $ventajas = [
                     <h3><?php echo s($pl['nombre']); ?></h3>
                     <p class="lp-plan-lema"><?php echo s($pl['lema']); ?></p>
                     <p class="lp-precio"><b><?php echo s($pl['precio']); ?></b><span> MXN / mes</span></p>
+                    <p class="text-muted text-sm">o <strong><?php echo s($pl['precio_anual']); ?> MXN al año</strong> (2 meses gratis)</p>
                     <a href="#contacto" data-plan="<?php echo s($pl['nombre']); ?>" class="lp-btn <?php echo $pl['destacado'] ? 'lp-btn-primary' : 'lp-btn-ghost'; ?> lp-btn-block">Quiero el <?php echo s($pl['nombre']); ?></a>
                     <ul>
                         <?php foreach ($pl['items'] as $it): ?><li><i class="fa-solid fa-circle-check"></i> <span><?php echo $it; ?></span></li><?php endforeach; ?>
@@ -495,6 +534,7 @@ $ventajas = [
     <div class="lp-wrap lp-narrow">
         <div class="lp-head lp-rev"><span class="lp-eyebrow">Preguntas frecuentes</span><h2>Lo que suelen preguntarnos</h2></div>
         <div class="lp-faq lp-rev">
+            <details><summary>¿Qué es el piloto de 30 días?</summary><p>Es una prueba con una obra real: cargamos tu programa, capacitamos a 3 usuarios y te acompañamos 4 semanas. Cuesta $3,900 y se descuenta del plan anual si decides continuar. Si no, no tienes obligación de seguir.</p></details>
             <details><summary>¿Puedo exportar mi programa a MS Project?</summary><p>Sí. Se exporta en XML (MSPDI) y lo abres en MS Project para guardarlo como .mpp. También en ProjectLibre, Excel, LibreOffice y PDF tabloide.</p></details>
             <details><summary>¿Qué formatos de entrega tienen?</summary><p>PDF, Word (DOCX), ODT, Excel (XLSX), ODS, CSV, XML de MS Project, POD de ProjectLibre, PNG, ZIP, JSON para integraciones y calendario ICS. Si tu cliente pide otro, lo revisamos contigo.</p></details>
             <details><summary>¿Puedo importar el programa que ya tengo?</summary><p>Sí. Importamos XML de MS Project o ProjectLibre y conservamos partidas, actividades y fechas. Después ajustamos el calendario y las dependencias para que el Gantt y la ruta crítica queden completos.</p></details>
@@ -504,8 +544,8 @@ $ventajas = [
             <details><summary>¿Quién es dueño de la información y qué pasa si me voy?</summary><p>La información es tuya. Puedes descargarla en cualquier momento en PDF, Excel, XML o los formatos disponibles, y llevarte los archivos originales. No queda retenida en la plataforma.</p></details>
             <details><summary>¿Incluye capacitación y soporte?</summary><p>Sí. La puesta en marcha incluye la configuración inicial, el manual de usuario dentro de la plataforma y soporte para dudas. En el servicio de seguimiento también capacitamos a tu equipo.</p></details>
             <details><summary>¿Cuánto tarda la puesta en marcha?</summary><p>Un proyecto nuevo puede quedar listo el mismo día: se crea, se define la jornada y se capturan o importan las partidas. Si vienes de otro sistema, coordinamos la migración y la validación de fechas.</p></details>
-            <details><summary>¿Qué pasa si llego al límite de almacenamiento?</summary><p>Cada proyecto tiene su cuota según el plan. Al llegar al límite no se pueden subir más archivos hasta liberar espacio; lo ya guardado no se pierde.</p></details>
-            <details><summary>¿En qué se diferencian los planes?</summary><p>En la cantidad de proyectos que puedes crear y el almacenamiento por proyecto. Todas las funciones están incluidas en cada plan.</p></details>
+            <details><summary>¿Qué pasa si llego al límite de almacenamiento?</summary><p>Cada organización tiene un tope total según el plan y cada obra un máximo de espacio. Al llegar al límite no se pueden subir más archivos hasta liberar espacio o ampliar el plan; lo ya guardado no se pierde.</p></details>
+            <details><summary>¿En qué se diferencian los planes?</summary><p>En obras activas, usuarios de edición, almacenamiento total y funciones de gobierno (IA, API, SSO y marca). Todas las herramientas de obra están incluidas en todos los planes.</p></details>
             <details><summary>¿Pueden encargarse del seguimiento de mi obra?</summary><p>Sí. Además de la plataforma ofrecemos servicios administrativos de seguimiento de obra para que tu equipo se concentre en construir. La experiencia técnica de cada disciplina sigue siendo de tu equipo, supervisor o residente. Conoce el detalle en <a href="/servicios" class="lp-foot-link">Servicios</a>.</p></details>
             <details><summary>¿Puedo contratar solo el servicio, sin usar la plataforma?</summary><p>El servicio se apoya en la plataforma para que veas en vivo lo que actualizamos y conserves la información. Puedes contratar solo la plataforma, o combinar plataforma y servicio según tu alcance y presupuesto.</p></details>
             <details><summary>¿Puedo redactar actas o llevar tablas dentro de la plataforma?</summary><p>Sí. El Redactor exporta a Word, ODT y PDF, y SheetFlow maneja tablas con fórmulas que se importan y exportan a Excel, CSV y PDF.</p></details>

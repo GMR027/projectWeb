@@ -29,6 +29,9 @@ $pct = min(100, $usado / $limite * 100);
 $fmt = fn($b) => \Classes\Almacenamiento::formato((int)$b);
 $limiteMb = \Classes\Almacenamiento::limiteMb((int)$proyecto->id);
 $limiteHeredado = \Classes\Almacenamiento::limiteHeredado((int)$proyecto->id);
+$orgAlm = \Model\Organizacion::deUsuario((int)$proyecto->usuario_id) ?: organizacion_actual();
+$limiteCuenta = $orgAlm ? \Classes\Almacenamiento::limiteCuenta((int)$orgAlm->id) : null;
+$usadoCuenta = $orgAlm ? \Classes\Almacenamiento::usadoCuenta((int)$orgAlm->id) : null;
 $puedeAjustarAlmacenamiento = is_admin() && \Classes\Almacenamiento::hayColumnaProyecto();
 ?>
 <?php
@@ -684,6 +687,14 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 <div class="card" id="almacenamiento">
     <h3 class="card-titulo"><i class="fa-solid fa-database"></i> <?php echo s(t('Almacenamiento')); ?></h3>
     <p class="text-muted text-sm">Cada proyecto dispone de <?php echo $fmt($limite); ?> para sus archivos, fotos, planos, fichas y logos. No cuenta lo generado al exportar.</p>
+    <?php if ($orgAlm && $limiteCuenta !== null): ?>
+        <p class="text-muted text-sm">
+            <i class="fa-solid fa-building"></i> <strong><?php echo s($orgAlm->nombre); ?></strong> usa
+            <strong><?php echo $fmt((int)$usadoCuenta); ?></strong> de <?php echo $fmt($limiteCuenta); ?>
+            (<?php echo number_format(min(100, $limiteCuenta > 0 ? $usadoCuenta / $limiteCuenta * 100 : 0), 1); ?> %).
+            Las obras archivadas también ocupan espacio.
+        </p>
+    <?php endif; ?>
     <?php if ($puedeAjustarAlmacenamiento): ?>
         <form method="POST" action="/ajustes/almacenamiento">
             <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">

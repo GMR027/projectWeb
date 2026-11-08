@@ -11,6 +11,7 @@ $activa = $activa ?? '';
         <nav class="lp-links">
             <a href="<?php echo $base; ?>#funciones">Funciones</a>
             <a href="/servicios"<?php echo $activa === 'servicios' ? ' class="on" aria-current="page"' : ''; ?>>Servicios</a>
+            <a href="<?php echo $base; ?>#piloto">Piloto</a>
             <a href="<?php echo $base; ?>#planes">Planes</a>
             <a href="<?php echo $base; ?>#contacto">Contacto</a>
             <?php if (!empty($demoDisponible)): ?><a href="/demo" class="lp-btn lp-btn-ghost lp-btn-sm"><i class="fa-solid fa-play"></i> Demo</a><?php endif; ?>

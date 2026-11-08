@@ -90,6 +90,9 @@ function herramientas_proyecto($proyecto): array
     $id = (int)$proyecto->id;
     $gestiona = puede_gestionar_proyecto($proyecto);
     $admin = is_admin();
+    $orgPlanH = organizacion_actual();
+    $permiteMarca = !$orgPlanH || $orgPlanH->permite('marca');
+    $permiteAPI = !$orgPlanH || $orgPlanH->permite('api');
     // [categoría, ruta, icono, etiqueta, visible, extras]
     $defs = [
         ['Planeación', '/programa', 'fa-list-check', 'Programa'],
@@ -146,8 +149,8 @@ function herramientas_proyecto($proyecto): array
         ['Proyecto', '/proyectos/ver', 'fa-heart-pulse', 'Salud del proyecto'],
         ['Proyecto', '/campos', 'fa-tags', 'Campos personalizados', $gestiona && !is_visitante()],
         ['Proyecto', '/plantillas-proyecto', 'fa-copy', 'Plantillas de proyecto', $gestiona && !is_visitante()],
-        ['Proyecto', '/marca', 'fa-palette', 'Marca del cliente', $gestiona && !is_visitante()],
-        ['Proyecto', '/integraciones', 'fa-plug', 'Integraciones (API, webhooks y Telegram)', $gestiona && !is_visitante()],
+        ['Proyecto', '/marca', 'fa-palette', 'Marca del cliente', $gestiona && !is_visitante() && $permiteMarca],
+        ['Proyecto', '/integraciones', 'fa-plug', 'Integraciones (API, webhooks y Telegram)', $gestiona && !is_visitante() && $permiteAPI],
         ['Proyecto', '/compartir', 'fa-share-nodes', 'Compartir en solo lectura', $gestiona && !is_visitante()],
         ['Proyecto', '/ajustes', 'fa-gear', 'Ajustes de proyecto', !is_visitante()],
         ['Proyecto', '/exportar', 'fa-file-export', 'Exportar', !is_visitante() || (function_exists('es_colaborador') && es_colaborador())],

@@ -4,6 +4,7 @@ namespace Classes;
 
 use Model\Archivo;
 use Model\Material;
+use Model\Organizacion;
 use Model\Personal;
 use Model\Proyecto;
 use Model\ReporteDiario;
@@ -81,23 +82,86 @@ class Almacenamiento
         return $r;
     }
 
-    /** Límite en bytes del proyecto: el propio que le fijó el admin; si no, el del cliente dueño; si no, el predeterminado */
+    /** Límite en bytes del proyecto: el propio que le fijó el admin; si no, el de su organización; si no, el del cliente dueño; si no, el predeterminado */
     public static function limite(int $proyectoId): int
     {
         $p = Proyecto::find($proyectoId);
         if ($p && (int)($p->limite_almacenamiento_mb ?? 0) > 0) {
             return (int)$p->limite_almacenamiento_mb * 1048576;
         }
-        $u = $p && $p->usuario_id ? \Model\Usuario::find($p->usuario_id) : null;
-        return $u && $u->rol === 'cliente' && (int)$u->limite_almacenamiento_mb > 0 ? (int)$u->limite_almacenamiento_mb * 1048576 : self::LIMITE;
+        return self::limiteHeredado($proyectoId);
     }
 
-    /** Límite en bytes sin el ajuste propio del proyecto (el heredado del cliente o el predeterminado) */
+    /** Límite en bytes sin el ajuste propio del proyecto (el de su organización o el heredado del cliente) */
     public static function limiteHeredado(int $proyectoId): int
     {
         $p = Proyecto::find($proyectoId);
-        $u = $p && $p->usuario_id ? \Model\Usuario::find($p->usuario_id) : null;
+        if (!$p) return self::LIMITE;
+        $org = self::organizacionDeProyecto($p);
+        if ($org) {
+            $lim = $org->limites();
+            $mb = (int)($lim['almacenamiento_por_obra_mb'] ?? 0);
+            return $mb > 0 ? $mb * 1048576 : self::LIMITE;
+        }
+        $u = $p->usuario_id ? \Model\Usuario::find((int)$p->usuario_id) : null;
         return $u && $u->rol === 'cliente' && (int)$u->limite_almacenamiento_mb > 0 ? (int)$u->limite_almacenamiento_mb * 1048576 : self::LIMITE;
+    }
+
+    /** Organización dueña del proyecto (por su columna o por el usuario dueño) */
+    public static function organizacionDeProyecto(Proyecto $p): ?Organizacion
+    {
+        try {
+            if (!empty($p->organizacion_id)) {
+                $org = Organizacion::find((int)$p->organizacion_id);
+                if ($org) return $org;
+            }
+            return $p->usuario_id ? Organizacion::deUsuario((int)$p->usuario_id) : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /** Límite total de la organización en bytes; null = sin tope total (legacy) */
+    public static function limiteCuenta(?int $orgId): ?int
+    {
+        if (!$orgId) return null;
+        try {
+            $org = Organizacion::find($orgId);
+            if (!$org) return null;
+            $gb = $org->limites()['almacenamiento_gb'];
+            return $gb === null ? null : (int)$gb * 1073741824;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /** Espacio usado por TODAS las obras de la organización (incluidas las archivadas) */
+    public static function usadoCuenta(int $orgId): int
+    {
+        static $cache = [];
+        if (array_key_exists($orgId, $cache)) return $cache[$orgId];
+        $total = 0;
+        try {
+            foreach (Proyecto::whereAll('organizacion_id', (string)$orgId, 'id ASC') as $p) {
+                $total += self::usado((int)$p->id);
+            }
+        } catch (\Throwable $e) {
+        }
+        return $cache[$orgId] = $total;
+    }
+
+    /** Recalcula y guarda el contador de la organización (para el panel admin) */
+    public static function recalcularCuenta(int $orgId): int
+    {
+        $total = 0;
+        foreach (Proyecto::whereAll('organizacion_id', (string)$orgId, 'id ASC') as $p) {
+            $total += self::usado((int)$p->id);
+        }
+        try {
+            self::db()->query('UPDATE organizaciones SET almacenamiento_bytes = ' . (int)$total . ' WHERE id = ' . (int)$orgId);
+        } catch (\Throwable $e) {
+        }
+        return $total;
     }
 
     /** MB asignados a un proyecto por el admin (0 si no tiene límite propio) */
@@ -153,14 +217,30 @@ class Almacenamiento
         return max(0, self::limite($proyectoId) - self::usado($proyectoId));
     }
 
-    /** ¿Caben $bytes más sin pasar del límite? */
+    /** ¿Caben $bytes más sin pasar del límite del proyecto ni del total de la organización? */
     public static function cabe(int $proyectoId, int $bytes): bool
     {
-        return $bytes <= self::disponible($proyectoId);
+        if ($bytes > self::disponible($proyectoId)) return false;
+        $p = Proyecto::find($proyectoId);
+        $org = $p ? self::organizacionDeProyecto($p) : null;
+        if ($org) {
+            $total = self::limiteCuenta((int)$org->id);
+            if ($total !== null && $bytes > max(0, $total - self::usadoCuenta((int)$org->id))) return false;
+        }
+        return true;
     }
 
     public static function mensajeLleno(int $proyectoId): string
     {
+        $p = Proyecto::find($proyectoId);
+        $org = $p ? self::organizacionDeProyecto($p) : null;
+        if ($org) {
+            $total = self::limiteCuenta((int)$org->id);
+            $usadoCuenta = self::usadoCuenta((int)$org->id);
+            if ($total !== null && $usadoCuenta >= $total) {
+                return 'La organización alcanzó su límite de almacenamiento (' . self::formato($total) . '). Quedan ' . self::formato(max(0, $total - $usadoCuenta)) . ' libres; elimina archivos o amplía el plan para continuar.';
+            }
+        }
         return 'El proyecto alcanzó su límite de almacenamiento (' . self::formato(self::limite($proyectoId)) . '). Quedan ' . self::formato(self::disponible($proyectoId)) . ' libres; elimina archivos para continuar.';
     }
 
