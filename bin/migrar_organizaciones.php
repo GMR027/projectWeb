@@ -43,10 +43,16 @@ foreach (['organizacion_id', 'archivado'] as $c) {
 $interna = Organizacion::interna();
 if (!$interna) {
     $admin = Usuario::where('email', 'admin@po.local');
+    if (!$admin) {
+        // En el clúster el admin puede tener otro correo: se toma el primer administrador.
+        $ra = $db->query("SELECT id FROM usuarios WHERE rol = 'admin' ORDER BY id ASC LIMIT 1");
+        if ($ra && ($fa = $ra->fetch_assoc())) $admin = Usuario::find((int)$fa['id']);
+    }
     if ($admin) {
         $r = (new Organizacion([
             'nombre' => 'ProjectWeb', 'plan_id' => 'legacy', 'estado_plan' => 'activo',
             'propietario_id' => (int)$admin->id, 'plan_inicio' => date('Y-m-d'),
+            'plan_fin' => date('Y-m-d', strtotime('+12 months')),
         ]))->guardar();
         if (!empty($r['resultado'])) {
             $interna = Organizacion::find((int)$r['id']);
@@ -56,6 +62,13 @@ if (!$interna) {
     }
 }
 $internaId = $interna ? (int)$interna->id : 0;
+
+// Admin y demo a la organización interna (antes de asignar proyectos)
+if ($internaId > 0) {
+    $db->query("UPDATE usuarios SET organizacion_id = $internaId, rol_org = 'propietario', puede_crear_proyectos = 1 WHERE rol = 'admin' AND (organizacion_id IS NULL OR organizacion_id = 0)");
+    $db->query("UPDATE usuarios SET organizacion_id = $internaId, rol_org = 'visitante' WHERE email = '" . DEMO_EMAIL . "' AND (organizacion_id IS NULL OR organizacion_id = 0)");
+    $ok('admin y demo en la organización interna');
+}
 
 // 1) Un cliente = una organización (legacy con sus límites actuales)
 $clientes = $db->query("SELECT * FROM usuarios WHERE rol = 'cliente' AND (organizacion_id IS NULL OR organizacion_id = 0) ORDER BY id ASC");
@@ -111,14 +124,7 @@ while ($p = $proyectos->fetch_assoc()) {
 }
 $ok("proyectos vinculados a una organización: $proyN");
 
-// 4) Admin y demo a la organización interna
-if ($internaId > 0) {
-    $db->query("UPDATE usuarios SET organizacion_id = $internaId WHERE rol = 'admin' AND (organizacion_id IS NULL OR organizacion_id = 0)");
-    $db->query("UPDATE usuarios SET organizacion_id = $internaId, rol_org = 'visitante' WHERE email = '" . DEMO_EMAIL . "' AND (organizacion_id IS NULL OR organizacion_id = 0)");
-    $ok('admin y demo en la organización interna');
-}
-
-// 5) Contador de almacenamiento por organización
+// 4) Contador de almacenamiento por organización
 $orgs = $db->query('SELECT id FROM organizaciones');
 $almN = 0;
 while ($o = $orgs->fetch_assoc()) {
