@@ -176,9 +176,9 @@ class OrganizacionController
         $estado = in_array($estado, ['trial', 'activo', 'suspendido', 'cancelado'], true) ? $estado : 'trial';
         $org->estado_plan = $estado;
         $org->plan_id = Plan::normalizar((string)($post['plan_id'] ?? Plan::POR_DEFECTO));
-        $org->plan_inicio = ($post['plan_inicio'] ?? '') ?: ($org->plan_inicio ?: date('Y-m-d'));
-        $org->plan_fin = ($post['plan_fin'] ?? '') ?: null;
-        $org->gracia_hasta = ($post['gracia_hasta'] ?? '') ?: null;
+        $org->plan_inicio = Organizacion::fechaONull($post['plan_inicio'] ?? '') ?: ($org->plan_inicio ?: date('Y-m-d'));
+        $org->plan_fin = Organizacion::fechaONull($post['plan_fin'] ?? '');
+        $org->gracia_hasta = Organizacion::fechaONull($post['gracia_hasta'] ?? '');
         $org->precio_legado = isset($post['precio_legado']) && $post['precio_legado'] !== '' ? (float)$post['precio_legado'] : null;
         if ($estado === 'trial' && empty($org->trial_hasta)) {
             $org->trial_hasta = date('Y-m-d', strtotime('+14 days'));

@@ -1390,6 +1390,7 @@ $ok('la ficha agrega clientes, equipo y obras de la organización', is_file(__DI
 $ok('el alta de cliente y equipo queda atada a la organización', str_contains($asset('controllers/AuthController.php'), '$contextoEquipo') && str_contains($asset('views/auth/_organizacion-campos.php'), 'name="organizacion_id" value="<?php echo (int)$orgFija->id; ?>') && str_contains($asset('views/auth/crear.php'), 'name="org" value='));
 $ok('una organización solo tiene un propietario', str_contains($asset('controllers/AuthController.php'), 'Esa organización ya tiene propietario') && str_contains($orgCtrl, 'function transferir('));
 $ok('editar usuario convierte la organización vacía en NULL', str_contains($asset('controllers/AuthController.php'), 'filter_var($usuario->organizacion_id ?? null, FILTER_VALIDATE_INT) ?: null'));
+$ok('las fechas vacías o inválidas del plan se guardan como NULL', \Model\Organizacion::fechaONull('') === null && \Model\Organizacion::fechaONull('2026-11-10') === '2026-11-10' && \Model\Organizacion::fechaONull('2026-02-30') === null && \Model\Organizacion::fechaONull('  2026-12-01 ') === '2026-12-01' && str_contains($asset('models/Organizacion.php'), 'self::fechaONull($gracia)'));
 $ok('sacar a un miembro limpia su acceso a las obras de la empresa', str_contains($asset('models/ProyectoAcceso.php'), 'function quitarEnOrganizacion') && str_contains($orgCtrl, 'quitarEnOrganizacion'));
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";

@@ -352,16 +352,30 @@ class Organizacion extends ActiveRecord
     }
 
     /** Cambia plan y estado (admin). */
+    /** Fecha Y-m-d válida o NULL. Los formularios mandan '' cuando el campo se deja vacío. */
+    public static function fechaONull($valor): ?string
+    {
+        $valor = trim((string)$valor);
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $m)) return null;
+        return checkdate((int)$m[2], (int)$m[3], (int)$m[1]) ? $valor : null;
+    }
+
     public function fijarPlan(string $planClave, string $estado, ?string $inicio = null, ?string $fin = null, ?string $gracia = null, ?float $precio = null): bool
     {
         $planClave = Plan::normalizar($planClave);
         $estado = in_array($estado, ['trial', 'activo', 'suspendido', 'cancelado'], true) ? $estado : 'activo';
         $this->plan_id = $planClave;
         $this->estado_plan = $estado;
-        $this->plan_inicio = $inicio ?: $this->plan_inicio;
-        $this->plan_fin = $fin;
-        $this->gracia_hasta = $gracia;
+        // Normalizar fechas: '' rompe las columnas DATE con MySQL en modo estricto
+        $this->plan_inicio = self::fechaONull($inicio) ?: $this->plan_inicio;
+        $this->plan_fin = self::fechaONull($fin);
+        $this->gracia_hasta = self::fechaONull($gracia);
         $this->precio_legado = $precio;
+        if ($estado === 'trial' && empty($this->trial_hasta)) {
+            $this->trial_hasta = date('Y-m-d', strtotime('+14 days'));
+        } elseif ($estado !== 'trial') {
+            $this->trial_hasta = null;
+        }
         return (bool)$this->guardar();
     }
 
