@@ -1,10 +1,16 @@
+<?php $contextoOrganizacion = $contextoOrganizacion ?? false; ?>
 <div class="page-header">
-    <h2>Crear Usuario</h2>
-    <a href="/usuarios" class="btn btn-ghost">← Volver</a>
+    <h2><?php echo $contextoOrganizacion ? 'Nueva organización' : 'Crear Usuario'; ?></h2>
+    <a href="<?php echo $contextoOrganizacion ? '/organizaciones' : '/usuarios'; ?>" class="btn btn-ghost">← Volver</a>
 </div>
+
+<?php if ($contextoOrganizacion): ?>
+    <p class="text-muted text-sm">La organización se crea junto con su usuario propietario: él administra el equipo, las obras y la facturación. Podrás cambiar el plan y el estado después en Organizaciones.</p>
+<?php endif; ?>
 
 <div class="card">
     <form method="POST" class="formulario" enctype="multipart/form-data">
+        <?php if ($contextoOrganizacion): ?><input type="hidden" name="contexto" value="organizacion"><?php endif; ?>
         <div class="campo">
             <label for="nombre">Nombre Completo</label>
             <input type="text" id="nombre" name="nombre" value="<?php echo s($usuario->nombre ?? ''); ?>" required>
@@ -13,7 +19,7 @@
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="<?php echo s($usuario->email ?? ''); ?>" required>
         </div>
-        <div class="campo">
+        <div class="campo" id="campo-rol" <?php echo $contextoOrganizacion ? 'style="display:none"' : ''; ?>>
             <label for="rol">Rol</label>
             <select id="rol" name="rol" required>
                 <option value="">-- Selecciona --</option>
@@ -64,6 +70,7 @@
         <?php $marcadas = $herramientasMarcadas ?? null; include __DIR__ . '/../templates/herramientas-visitante.php'; ?>
         <script>
             (function () {
+                const contextoOrg = <?php echo $contextoOrganizacion ? 'true' : 'false'; ?>;
                 const rol = document.getElementById('rol'), caja = document.getElementById('campo-accesos'), lim = document.getElementById('campo-limite');
                 const herr = document.getElementById('campo-herramientas'), niv = document.getElementById('campo-nivel');
                 const plan = document.getElementById('campo-plan'), org = document.getElementById('campo-org'), orgVis = document.getElementById('campo-org-vis');
@@ -77,6 +84,18 @@
                     if (orgVis) orgVis.style.display = esGestor || rol.value === 'visitante' ? '' : 'none';
                 };
                 const toggle = () => {
+                    if (contextoOrg) {
+                        // Alta de organización: solo datos de la organización, su plan y el propietario
+                        if (caja) caja.style.display = 'none';
+                        if (lim) lim.style.display = 'none';
+                        if (herr) herr.style.display = 'none';
+                        if (niv) niv.style.display = 'none';
+                        if (cajaRolOrg) cajaRolOrg.style.display = 'none';
+                        if (plan) plan.style.display = '';
+                        if (org) org.style.display = '';
+                        if (orgVis) orgVis.style.display = 'none';
+                        return;
+                    }
                     caja.style.display = rol.value === 'admin' ? 'none' : '';
                     lim.style.display = rol.value === 'cliente' ? '' : 'none';
                     herr.style.display = rol.value === 'visitante' ? '' : 'none';
@@ -96,6 +115,6 @@
             <label for="password2">Repetir Password</label>
             <input type="password" id="password2" name="password2" required>
         </div>
-        <button type="submit" class="btn btn-primary">Crear Usuario</button>
+        <button type="submit" class="btn btn-primary"><?php echo $contextoOrganizacion ? 'Crear organización' : 'Crear Usuario'; ?></button>
     </form>
 </div>

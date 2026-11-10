@@ -11,9 +11,21 @@ use Classes\Plan;
 /** Administración de organizaciones, planes y facturación manual (solo admin). */
 class OrganizacionController
 {
+    /**
+     * Sin la migración de planes la tabla no existe: se avisa en vez de dejar un 500
+     * («Table 'project.organizaciones' doesn't exist») en la cara del usuario.
+     */
+    private static function faltaMigracion(Router $router): bool
+    {
+        if (Organizacion::disponible()) return false;
+        $router->render('organizaciones/falta-migracion', ['titulo' => 'Organizaciones']);
+        return true;
+    }
+
     public static function index(Router $router)
     {
         redirigir_si_no_admin();
+        if (self::faltaMigracion($router)) return;
         $filas = [];
         foreach (Organizacion::all('nombre ASC') as $org) {
             $prop = $org->propietario();
@@ -39,6 +51,7 @@ class OrganizacionController
     public static function editar(Router $router)
     {
         redirigir_si_no_admin();
+        if (self::faltaMigracion($router)) return;
         $id = filter_var($_GET['id'] ?? $_POST['id'] ?? null, FILTER_VALIDATE_INT);
         $org = $id ? Organizacion::find($id) : null;
         if (!$org) {
@@ -92,6 +105,10 @@ class OrganizacionController
     public static function transferir()
     {
         redirigir_si_no_admin();
+        if (!Organizacion::disponible()) {
+            header('Location: /organizaciones');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /organizaciones');
             exit;
@@ -110,6 +127,10 @@ class OrganizacionController
     public static function recalcular()
     {
         redirigir_si_no_admin();
+        if (!Organizacion::disponible()) {
+            header('Location: /organizaciones');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /organizaciones');
             exit;

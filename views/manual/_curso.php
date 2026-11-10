@@ -86,6 +86,7 @@ HTML,
             'titulo' => 'Organización, plan, límites y almacenamiento',
             'cuerpo' => <<<'HTML'
 <p>La <strong>organización</strong> es la empresa que contrata. Ahí viven el plan, el trial, los usuarios, el almacenamiento y la facturación.</p>
+<p>Para dar de alta una empresa nueva usa <strong>Nueva organización / cliente</strong> dentro de Organizaciones: se crea la organización y su usuario propietario en un solo paso. El propietario administra después a su equipo y sus obras.</p>
 <h4>Qué revisar</h4>
 <ol>
 <li>Entra a <strong>Organizaciones y planes</strong> en el menú lateral (solo admin).</li>

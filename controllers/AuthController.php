@@ -98,6 +98,15 @@ class AuthController
         redirigir_si_no_admin();
         $alertas = [];
         $usuario = new Usuario();
+        // Alta llegada desde «Organizaciones»: la organización nace con su usuario propietario,
+        // así que se fija cliente/propietario y se ocultan los campos que no aplican.
+        $contextoOrganizacion = (string)($_GET['contexto'] ?? $_POST['contexto'] ?? '') === 'organizacion';
+        if ($contextoOrganizacion) {
+            $_POST['rol'] = 'cliente';
+            $_POST['rol_org'] = 'propietario';
+            $usuario->rol = 'cliente';
+            $usuario->rol_org = 'propietario';
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->sincronizar($_POST);
@@ -158,6 +167,7 @@ class AuthController
                     $usuario->confirmado = 1; // admin crea usuarios ya confirmados
                     $usuario->crearToken();
                     $resultado = $usuario->guardar();
+                    $orgFallida = false;
                     if ($resultado['resultado']) {
                         $nuevoId = (int)$resultado['id'];
                         $usuario->id = $nuevoId;   // para crear la organización con el propietario correcto
@@ -168,6 +178,9 @@ class AuthController
                             if ($org) {
                                 $usuario->organizacion_id = (int)$org->id;
                                 $usuario->guardar();
+                            } else {
+                                // No se pudo crear (migración sin aplicar o error de BD): que se entere
+                                $orgFallida = true;
                             }
                         } elseif ($usuario->rol === 'admin') {
                             $interna = Organizacion::interna();
@@ -179,7 +192,14 @@ class AuthController
                         if ($usuario->rol !== 'admin') {
                             ProyectoAcceso::sincronizarUsuario($nuevoId, $_POST['proyectos'] ?? []);
                         }
-                        header('Location: /usuarios?creado=1');
+                        if ($orgFallida) {
+                            $destino = $contextoOrganizacion
+                                ? '/organizaciones?error=org'
+                                : '/usuarios?creado=1&organizacion=error';
+                        } else {
+                            $destino = $contextoOrganizacion ? '/organizaciones?creada=1' : '/usuarios?creado=1';
+                        }
+                        header('Location: ' . $destino);
                         exit;
                     }
                 }
@@ -188,9 +208,10 @@ class AuthController
 
         $alertas = Usuario::getAlertas();
         $router->render('auth/crear', [
-            'titulo' => 'Crear Usuario',
+            'titulo' => $contextoOrganizacion ? 'Nueva organización' : 'Crear Usuario',
             'alertas' => $alertas,
             'usuario' => $usuario,
+            'contextoOrganizacion' => $contextoOrganizacion,
             'proyectos' => Proyecto::all('nombre ASC'),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
@@ -318,11 +339,14 @@ class AuthController
                     // Organización: crear si el cliente no tenía (migración) y actualizar plan/datos
                     if ($usuario->rol === 'cliente' && $usuario->rol_org === 'propietario') {
                         $org = Organizacion::deUsuario((int)$id);
+                        $orgFallida = false;
                         if (!$org) {
                             $org = Organizacion::crearPara($usuario, (string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $_POST);
                             if ($org) {
                                 $usuario->organizacion_id = (int)$org->id;
                                 $usuario->guardar();
+                            } else {
+                                $orgFallida = true;
                             }
                         } elseif ($org->esPropietario((int)$id)) {
                             $org->nombre = trim((string)($_POST['organizacion_nombre'] ?? '')) ?: $org->nombre;
@@ -347,7 +371,7 @@ class AuthController
                     }
                     // Admin no necesita asignaciones; para los demás se reemplazan con las marcadas
                     ProyectoAcceso::sincronizarUsuario((int)$id, $usuario->rol === 'admin' ? [] : ($_POST['proyectos'] ?? []));
-                    header('Location: /usuarios?editado=1');
+                    header('Location: /usuarios?editado=1' . (!empty($orgFallida) ? '&organizacion=error' : ''));
                     exit;
                 }
             }

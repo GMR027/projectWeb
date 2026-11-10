@@ -6,9 +6,11 @@
         <h2><i class="fa-solid fa-building"></i> Organizaciones</h2>
         <p class="text-muted">Empresas que contratan el plan. Aquí se asigna el plan, el estado y la facturación manual.</p>
     </div>
-    <a href="/usuarios/crear" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva organización / cliente</a>
+    <a href="/usuarios/crear?contexto=organizacion" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva organización / cliente</a>
 </div>
 
+<?php if (!empty($_GET['creada'])): ?><p class="text-sm" style="color:var(--primary)">Organización creada con su usuario propietario.</p><?php endif; ?>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'org'): ?><p class="text-sm" role="alert" style="color:var(--danger, #ef4444)">El usuario se creó, pero la organización no. Revisa la migración y vuelve a intentarlo desde «Mi equipo» o el alta de usuarios.</p><?php endif; ?>
 <?php if (!empty($_GET['editado'])): ?><p class="text-sm" style="color:var(--primary)">Organización actualizada.</p><?php endif; ?>
 <?php if (!empty($_GET['recalculado'])): ?><p class="text-sm" style="color:var(--primary)">Almacenamiento recalculado.</p><?php endif; ?>
 

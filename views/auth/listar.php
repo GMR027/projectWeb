@@ -6,6 +6,13 @@
     <a href="/usuarios/crear" class="btn btn-primary">+ Nuevo Usuario</a>
 </div>
 
+<?php if (!empty($_GET['organizacion']) && $_GET['organizacion'] === 'error'): ?>
+    <div class="card" style="border-left:3px solid var(--danger, #ef4444)">
+        <p class="text-sm" role="alert"><strong>El usuario se creó, pero su organización no.</strong>
+            Revisa que la migración de planes esté aplicada (<code class="mono">database/migracion_planes_organizaciones.sql</code> y <code class="mono">php bin/migrar_organizaciones.php</code>) y vuelve a crear la organización desde <a href="/organizaciones">Organizaciones</a>.</p>
+    </div>
+<?php endif; ?>
+
 <form method="GET" action="/usuarios" class="usuarios-buscar" role="search">
     <div class="usuarios-buscar-caja">
         <i class="fa-solid fa-magnifying-glass"></i>
