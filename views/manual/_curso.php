@@ -86,15 +86,22 @@ HTML,
             'titulo' => 'Organización, plan, límites y almacenamiento',
             'cuerpo' => <<<'HTML'
 <p>La <strong>organización</strong> es la empresa que contrata. Ahí viven el plan, el trial, los usuarios, el almacenamiento y la facturación.</p>
-<p>Para dar de alta una empresa nueva usa <strong>Nueva organización / cliente</strong> dentro de Organizaciones: se crea la organización y su usuario propietario en un solo paso. El propietario administra después a su equipo y sus obras.</p>
+<h4>Alta de una empresa</h4>
+<ol>
+<li>Entra a <strong>Organizaciones y planes</strong> (solo admin) y pulsa <em>Nueva organización</em>.</li>
+<li>Captura nombre, razón social, RFC, correo de facturación y plan. La organización se crea vacía.</li>
+<li>Abre su ficha y en <em>Clientes</em> pulsa <strong>Agregar cliente propietario</strong>: se crea el usuario dueño, que administrará su equipo y sus obras.</li>
+<li>En <em>Visitantes y colaboradores</em> agrega al equipo de la empresa. El visitante solo ve las obras y herramientas asignadas; el colaborador edita en las herramientas marcadas y nunca borra.</li>
+</ol>
+<p>Un cliente pertenece a una sola empresa y una empresa tiene un solo propietario (para cambiarlo se usa <em>Transferir propiedad</em>). El tope de clientes, visitantes y almacenamiento sale del plan.</p>
 <h4>Qué revisar</h4>
 <ol>
-<li>Entra a <strong>Organizaciones y planes</strong> en el menú lateral (solo admin).</li>
 <li>Confirma el plan: Obra, Pro, Constructora, Corporativo o Legacy.</li>
 <li>Revisa el estado: prueba, activo, suspendido o cancelado.</li>
 <li>Revisa las fechas: inicio, fin, trial y gracia.</li>
-<li>Mira el uso: obras activas, asientos, visitantes y almacenamiento total.</li>
-<li>Si hay un pago, regístralo en <em>Pagos manuales</em> con monto, periodo, método, referencia y UUID del CFDI.</li>
+<li>Mira el uso: obras activas, asientos, visitantes y almacenamiento total en la ficha.</li>
+<li>Si hay un pago, regístralo en <em>Pagos</em> con monto, periodo, método, referencia y UUID del CFDI.</li>
+<li>Para dar de baja una empresa sin perder nada, usa <strong>Archivar</strong> (solo si no tiene obras activas). El borrado definitivo solo se permite si está vacía.</li>
 </ol>
 <p>El plan define cuántas obras activas, cuántos usuarios de edición y cuánto almacenamiento total tiene la organización. Las obras archivadas liberan cupo, pero siguen ocupando disco.</p>
 HTML,

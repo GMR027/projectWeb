@@ -30,6 +30,16 @@ class ProyectoAcceso extends ActiveRecord
         return array_map(fn($a) => (int)$a->proyecto_id, self::whereAll('usuario_id', $usuarioId));
     }
 
+    /** Quita al usuario de las obras de una organización (al sacarlo de la empresa) */
+    public static function quitarEnOrganizacion(int $usuarioId, int $organizacionId): void
+    {
+        if ($usuarioId <= 0 || $organizacionId <= 0) return;
+        self::$db->query(
+            "DELETE FROM proyecto_accesos WHERE usuario_id = $usuarioId AND proyecto_id IN "
+            . "(SELECT id FROM proyectos WHERE organizacion_id = $organizacionId)"
+        );
+    }
+
     /** Reemplaza las asignaciones del usuario por la lista dada */
     public static function sincronizarUsuario(int $usuarioId, array $proyectoIds): void
     {

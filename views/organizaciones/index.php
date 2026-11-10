@@ -4,15 +4,23 @@
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-building"></i> Organizaciones</h2>
-        <p class="text-muted">Empresas que contratan el plan. Aquí se asigna el plan, el estado y la facturación manual.</p>
+        <p class="text-muted">Empresas que contratan el plan. Aquí se crean, se les asignan clientes y se administra su facturación.</p>
     </div>
-    <a href="/usuarios/crear?contexto=organizacion" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva organización / cliente</a>
+    <a href="/organizaciones/crear" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva organización</a>
 </div>
 
-<?php if (!empty($_GET['creada'])): ?><p class="text-sm" style="color:var(--primary)">Organización creada con su usuario propietario.</p><?php endif; ?>
-<?php if (!empty($_GET['error']) && $_GET['error'] === 'org'): ?><p class="text-sm" role="alert" style="color:var(--danger, #ef4444)">El usuario se creó, pero la organización no. Revisa la migración y vuelve a intentarlo desde «Mi equipo» o el alta de usuarios.</p><?php endif; ?>
-<?php if (!empty($_GET['editado'])): ?><p class="text-sm" style="color:var(--primary)">Organización actualizada.</p><?php endif; ?>
+<?php if (!empty($_GET['creada'])): ?><p class="text-sm" style="color:var(--primary)">Organización creada. Agrega su cliente propietario en la ficha.</p><?php endif; ?>
+<?php if (!empty($_GET['eliminada'])): ?><p class="text-sm" style="color:var(--primary)">Organización eliminada.</p><?php endif; ?>
 <?php if (!empty($_GET['recalculado'])): ?><p class="text-sm" style="color:var(--primary)">Almacenamiento recalculado.</p><?php endif; ?>
+
+<div class="card" style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-bottom:1.2rem">
+    <span class="text-sm"><?php echo count($filas); ?> organización(es)</span>
+    <?php if ($verArchivadas): ?>
+        <a href="/organizaciones" class="btn btn-sm btn-ghost"><i class="fa-solid fa-eye"></i> Ver solo activas</a>
+    <?php else: ?>
+        <a href="/organizaciones?archivadas=1" class="btn btn-sm btn-ghost"><i class="fa-solid fa-box-archive"></i> Ver archivadas</a>
+    <?php endif; ?>
+</div>
 
 <div class="card">
     <table class="tabla">
@@ -31,10 +39,11 @@
         <?php foreach ($filas as $f): $org = $f['org']; $lim = $f['limites']; ?>
             <tr>
                 <td>
-                    <strong><?php echo s($org->nombre); ?></strong>
+                    <a href="/organizaciones/ver?id=<?php echo (int)$org->id; ?>"><strong><?php echo s($org->nombre); ?></strong></a>
+                    <?php if ($org->estaArchivada()): ?> <span class="badge">Archivada</span><?php endif; ?>
                     <?php if ($org->rfc): ?><br><span class="text-muted text-sm mono"><?php echo s($org->rfc); ?></span><?php endif; ?>
                 </td>
-                <td class="hide-m"><?php echo $f['propietario'] ? s($f['propietario']->nombre) . '<br><span class="text-muted text-sm">' . s($f['propietario']->email) . '</span>' : '—'; ?></td>
+                <td class="hide-m"><?php echo $f['propietario'] ? s($f['propietario']->nombre) . '<br><span class="text-muted text-sm">' . s($f['propietario']->email) . '</span>' : '<span class="text-muted text-sm">Sin propietario</span>'; ?></td>
                 <td>
                     <span class="badge"><?php echo s($f['plan']['nombre']); ?></span>
                     <span class="badge <?php echo s($org->estadoBadge()); ?>"><?php echo s($org->estadoEtiqueta()); ?></span>
@@ -46,6 +55,7 @@
                 <td class="mono hide-m"><?php echo (int)$f['asientos']; ?> / <?php echo $lim['usuarios'] === null ? '∞' : (int)$lim['usuarios']; ?><br><span class="text-muted text-sm"><?php echo (int)$f['visitantes']; ?> visitantes</span></td>
                 <td class="mono hide-m"><?php echo \Classes\Almacenamiento::formato((int)$f['almacenamiento']); ?> / <?php echo $f['limite_almacenamiento'] === null ? 'sin tope' : \Classes\Almacenamiento::formato((int)$f['limite_almacenamiento']); ?></td>
                 <td class="acciones">
+                    <a href="/organizaciones/ver?id=<?php echo (int)$org->id; ?>" class="btn btn-sm btn-ghost">Ver</a>
                     <a href="/organizaciones/editar?id=<?php echo (int)$org->id; ?>" class="btn btn-sm btn-ghost">Editar</a>
                     <form class="inline" method="POST" action="/organizaciones/recalcular">
                         <input type="hidden" name="id" value="<?php echo (int)$org->id; ?>">
@@ -54,7 +64,7 @@
                 </td>
             </tr>
         <?php endforeach; ?>
-        <?php if (!$filas): ?><tr><td colspan="7" class="text-muted">Aún no hay organizaciones. Crea un cliente para que se cree la primera.</td></tr><?php endif; ?>
+        <?php if (!$filas): ?><tr><td colspan="7" class="text-muted"><?php echo $verArchivadas ? 'No hay organizaciones archivadas.' : 'Aún no hay organizaciones. Crea la primera con «Nueva organización».'; ?></td></tr><?php endif; ?>
         </tbody>
     </table>
 </div>

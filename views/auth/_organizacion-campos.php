@@ -1,12 +1,38 @@
 <?php
-/** Campos de organización y plan para el alta/edición de usuarios (admin). */
+/**
+ * Campos de organización y plan para el alta/edición de usuarios (admin).
+ * Con $orgFija (alta desde la ficha de una organización) solo se muestra el papel
+ * dentro de la empresa: la organización ya está decidida y no se puede cambiar aquí.
+ */
 $planes = $planes ?? [];
 $organizaciones = $organizaciones ?? [];
 $organizacion = $organizacion ?? null;
+$orgFija = $orgFija ?? null;
 $planSel = $organizacion ? $organizacion->planClave() : \Classes\Plan::POR_DEFECTO;
-?>
-<?php
 $rolOrgSel = in_array((string)($usuario->rol_org ?? ''), ['propietario', 'gestor'], true) ? (string)$usuario->rol_org : 'propietario';
+
+if ($orgFija):
+    $esEquipo = (string)($usuario->rol ?? '') === 'visitante';
+    $papel = $esEquipo
+        ? (($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'Colaborador' : 'Visitante')
+        : ($rolOrgSel === 'gestor' ? 'Gestor' : 'Propietario');
+    $valorRol = $esEquipo
+        ? (($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante')
+        : $rolOrgSel;
+    ?>
+    <div class="campo" id="campo-rol-org">
+        <label>Organización y papel</label>
+        <p class="text-sm" style="margin:.2rem 0 0">
+            <span class="badge"><?php echo s($papel); ?></span>
+            en <strong><?php echo s($orgFija->nombre); ?></strong>
+        </p>
+        <small class="text-muted">Para cambiar la empresa, edita el usuario desde Usuarios. Un cliente que no tenga empresa puede asignarse aquí desde su ficha.</small>
+        <input type="hidden" name="rol_org" id="rol_org" value="<?php echo s($valorRol); ?>">
+        <input type="hidden" name="organizacion_id" value="<?php echo (int)$orgFija->id; ?>">
+    </div>
+    <?php
+    return;
+endif;
 ?>
 <div class="campo" id="campo-rol-org">
     <label for="rol_org">Tipo de cuenta</label>

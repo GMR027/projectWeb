@@ -85,9 +85,12 @@ CREATE TABLE organizaciones (
     marca_logo VARCHAR(100) NULL,
     marca_color VARCHAR(7) NULL,
     marca_color2 VARCHAR(7) NULL,
+    archivada TINYINT(1) NOT NULL DEFAULT 0,
+    archivada_en DATETIME NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_org_propietario (propietario_id),
-    KEY idx_org_plan (plan_id)
+    KEY idx_org_plan (plan_id),
+    KEY idx_org_archivada (archivada)
 ) ENGINE=InnoDB;
 
 -- Pagos manuales de la organización (facturación sin pasarela)

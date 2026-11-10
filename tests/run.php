@@ -1379,5 +1379,18 @@ $ok('una restricción activa bloquea el cambio de avance', str_contains($incPhp,
 $ok('el reporte agrupado tiene exportadores PDF y ODS', is_file(__DIR__ . '/../classes/Exportadores/HallazgosPdfExporter.php') && is_file(__DIR__ . '/../classes/Exportadores/HallazgosSheetExporter.php') && is_file(__DIR__ . '/../views/exportar/pdf-hallazgos.php'));
 $ok('el editor envía la corrección al servidor y agrupa los problemas', is_file(__DIR__ . '/../public/vendor/hallazgos-editor.js') && str_contains($asset('public/vendor/hallazgos-editor.js'), '/corregir') && str_contains($asset('public/vendor/hallazgos-editor.js'), 'inc-grupo-aplicar'));
 
+echo "Organizaciones: CRUD, miembros y archivado\n";
+$orgCtrl = $asset('controllers/OrganizacionController.php');
+$orgModel = $asset('models/Organizacion.php');
+$ok('el esquema y su migración agregan el archivado', str_contains($asset('database/schema.sql'), 'archivada TINYINT(1) NOT NULL DEFAULT 0') && str_contains($asset('database/migracion_organizaciones_archivada.sql'), 'ADD COLUMN archivada'));
+$ok('las rutas del CRUD y de miembros están registradas', str_contains($asset('public/index.php'), "/organizaciones/crear") && str_contains($asset('public/index.php'), "/organizaciones/ver") && str_contains($asset('public/index.php'), "/organizaciones/archivar") && str_contains($asset('public/index.php'), "/organizaciones/desarchivar") && str_contains($asset('public/index.php'), "/organizaciones/eliminar") && str_contains($asset('public/index.php'), "/organizaciones/quitar-miembro"));
+$ok('archivar conserva datos y borrar exige una organización vacía', str_contains($orgModel, 'function archivar(') && str_contains($orgModel, 'function desarchivar(') && str_contains($orgModel, 'function puedeEliminarse(') && str_contains($orgModel, 'archivada = 0') && str_contains($orgCtrl, 'contarObrasActivas() > 0'));
+$ok('los selectores solo ofrecen organizaciones activas', str_contains($orgModel, 'function activas(') && str_contains($asset('controllers/ProyectoController.php'), 'Organizacion::activas()') && str_contains($asset('controllers/AuthController.php'), 'Organizacion::activas()'));
+$ok('la ficha agrega clientes, equipo y obras de la organización', is_file(__DIR__ . '/../views/organizaciones/ver.php') && str_contains($asset('views/organizaciones/ver.php'), 'contexto=organizacion&amp;org=') && str_contains($asset('views/organizaciones/ver.php'), 'contexto=equipo&amp;org=') && str_contains($asset('views/organizaciones/ver.php'), 'id="clientes"'));
+$ok('el alta de cliente y equipo queda atada a la organización', str_contains($asset('controllers/AuthController.php'), '$contextoEquipo') && str_contains($asset('views/auth/_organizacion-campos.php'), 'name="organizacion_id" value="<?php echo (int)$orgFija->id; ?>') && str_contains($asset('views/auth/crear.php'), 'name="org" value='));
+$ok('una organización solo tiene un propietario', str_contains($asset('controllers/AuthController.php'), 'Esa organización ya tiene propietario') && str_contains($orgCtrl, 'function transferir('));
+$ok('editar usuario convierte la organización vacía en NULL', str_contains($asset('controllers/AuthController.php'), 'filter_var($usuario->organizacion_id ?? null, FILTER_VALIDATE_INT) ?: null'));
+$ok('sacar a un miembro limpia su acceso a las obras de la empresa', str_contains($asset('models/ProyectoAcceso.php'), 'function quitarEnOrganizacion') && str_contains($orgCtrl, 'quitarEnOrganizacion'));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

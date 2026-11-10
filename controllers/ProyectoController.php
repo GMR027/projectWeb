@@ -103,7 +103,7 @@ class ProyectoController
             'plantillas' => \Classes\PlantillaProyecto::disponible() ? \Classes\PlantillaProyecto::visibles(usuario_actual()) : [],
             'alertas' => $alertas,
             'proyecto' => $proyecto,
-            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
+            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::activas() : [],
         ]);
     }
 
@@ -164,7 +164,7 @@ class ProyectoController
             'titulo' => 'Editar Proyecto',
             'alertas' => $alertas,
             'proyecto' => $proyecto,
-            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
+            'organizaciones' => is_admin() && Organizacion::disponible() ? Organizacion::activas() : [],
         ]);
     }
 

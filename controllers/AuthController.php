@@ -98,14 +98,43 @@ class AuthController
         redirigir_si_no_admin();
         $alertas = [];
         $usuario = new Usuario();
-        // Alta llegada desde «Organizaciones»: la organización nace con su usuario propietario,
-        // así que se fija cliente/propietario y se ocultan los campos que no aplican.
-        $contextoOrganizacion = (string)($_GET['contexto'] ?? $_POST['contexto'] ?? '') === 'organizacion';
-        if ($contextoOrganizacion) {
+        // Alta dentro de una organización ya existente (ficha de Organizaciones):
+        //   ?contexto=organizacion&org=ID  → cliente propietario o gestor
+        //   ?contexto=equipo&org=ID&tipo=  → visitante o colaborador
+        // Sin «org» el contexto organizacion conserva el alta rápida de empresa + propietario.
+        $contexto = (string)($_GET['contexto'] ?? $_POST['contexto'] ?? '');
+        $contextoOrganizacion = $contexto === 'organizacion';
+        $contextoEquipo = $contexto === 'equipo';
+        $orgFija = filter_var($_GET['org'] ?? $_POST['org'] ?? null, FILTER_VALIDATE_INT);
+        $orgFijaObj = $orgFija ? Organizacion::find($orgFija) : null;
+        if (($contextoOrganizacion || $contextoEquipo) && !$orgFijaObj) {
+            header('Location: /organizaciones');
+            exit;
+        }
+        $tipoEquipo = (string)($_GET['tipo'] ?? $_POST['tipo'] ?? 'visitante') === 'colaborador' ? 'colaborador' : 'visitante';
+
+        if ($contextoOrganizacion && $orgFijaObj) {
+            $rolFijo = $orgFijaObj->propietario_id ? 'gestor' : 'propietario';
+            $_POST['rol'] = 'cliente';
+            $_POST['rol_org'] = $rolFijo;
+            $_POST['organizacion_id'] = (string)$orgFijaObj->id;
+            $usuario->rol = 'cliente';
+            $usuario->rol_org = $rolFijo;
+            $usuario->organizacion_id = (string)$orgFijaObj->id;
+        } elseif ($contextoOrganizacion) {
+            // Alta rápida: la organización nace con su usuario propietario
             $_POST['rol'] = 'cliente';
             $_POST['rol_org'] = 'propietario';
             $usuario->rol = 'cliente';
             $usuario->rol_org = 'propietario';
+        } elseif ($contextoEquipo) {
+            $_POST['rol'] = 'visitante';
+            $_POST['nivel_acceso'] = $tipoEquipo === 'colaborador' ? 'editar' : 'ver';
+            $_POST['organizacion_id'] = (string)$orgFijaObj->id;
+            $usuario->rol = 'visitante';
+            $usuario->nivel_acceso = $_POST['nivel_acceso'];
+            $usuario->rol_org = $tipoEquipo === 'colaborador' ? 'colaborador' : 'visitante';
+            $usuario->organizacion_id = (string)$orgFijaObj->id;
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -135,26 +164,45 @@ class AuthController
                     }
                     $plan = $orgGestor ? $orgGestor->plan() : Plan::de(Plan::POR_DEFECTO);
                 } else {
-                    $plan = Plan::de((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO));
+                    // En una organización existente manda su plan, no el del formulario
+                    $plan = $contextoOrganizacion && $orgFijaObj ? $orgFijaObj->plan() : Plan::de((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO));
                 }
                 // Los campos legacy se siembran desde el plan para que nada quede en 0 por descuido.
                 $usuario->limite_proyectos = $plan['obras'] ?? 999;
                 $usuario->limite_almacenamiento_mb = (int)$plan['almacenamiento_por_obra_mb'];
                 $usuario->limite_colaboradores = $plan['usuarios'] === null ? 999 : max(0, (int)$plan['usuarios'] - 1);
                 $usuario->limite_visitantes = $plan['visitantes'] === null ? 999 : (int)$plan['visitantes'];
+                if ($contextoOrganizacion && $orgFijaObj) {
+                    $usuario->organizacion_id = (int)$orgFijaObj->id;
+                }
             } elseif ($usuario->rol === 'admin') {
                 $usuario->rol_org = 'propietario';
                 $usuario->puede_crear_proyectos = 1;
             } else {
                 $usuario->rol_org = $usuario->nivel_acceso === 'editar' ? 'colaborador' : 'visitante';
                 $usuario->puede_crear_proyectos = 0;
-                $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
-                if ($orgPost && Organizacion::find($orgPost)) $usuario->organizacion_id = $orgPost;
+                $orgPostRaw = $_POST['organizacion_id'] ?? null;
+                $orgPost = filter_var($orgPostRaw, FILTER_VALIDATE_INT);
+                if ($orgPost && Organizacion::find($orgPost)) {
+                    $usuario->organizacion_id = $orgPost;
+                } elseif ($orgPostRaw === '') {
+                    $usuario->organizacion_id = null;   // visitante externo (sin empresa)
+                }
             }
 
             $alertas = $usuario->validarNuevaCuenta();
             $usuario->validarLimiteProyectos();
             $usuario->validarLimitesEquipo();
+            // Topes del plan de la organización donde se está dando de alta
+            if ($orgFijaObj && ($contextoOrganizacion || $contextoEquipo)) {
+                $lim = $orgFijaObj->limites();
+                if ($contextoOrganizacion && $lim['usuarios'] !== null && $orgFijaObj->contarAsientos() >= (int)$lim['usuarios']) {
+                    Usuario::setAlerta('error', 'La organización ya usó sus ' . (int)$lim['usuarios'] . ' asientos del plan. Sube de plan o libera un usuario.');
+                }
+                if ($contextoEquipo && $lim['visitantes'] !== null && $orgFijaObj->contarVisitantes() >= (int)$lim['visitantes']) {
+                    Usuario::setAlerta('error', 'La organización ya tiene sus ' . (int)$lim['visitantes'] . ' visitantes del plan.');
+                }
+            }
             $alertas = Usuario::getAlertas();
 
             if (empty($alertas)) {
@@ -174,13 +222,22 @@ class AuthController
                         // La contraseña la eligió quien creó la cuenta: se pide cambiarla al entrar
                         Usuario::marcarPasswordTemporal($nuevoId);
                         if ($usuario->rol === 'cliente' && $usuario->rol_org === 'propietario') {
-                            $org = Organizacion::crearPara($usuario, (string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $_POST);
-                            if ($org) {
-                                $usuario->organizacion_id = (int)$org->id;
+                            if ($contextoOrganizacion && $orgFijaObj && !$orgFijaObj->propietario_id) {
+                                // El propietario se suma a la organización que ya existía (no se crea otra)
+                                $orgFijaObj->propietario_id = $nuevoId;
+                                $orgFijaObj->guardar();
+                                $usuario->organizacion_id = (int)$orgFijaObj->id;
                                 $usuario->guardar();
+                                $org = $orgFijaObj;
                             } else {
-                                // No se pudo crear (migración sin aplicar o error de BD): que se entere
-                                $orgFallida = true;
+                                $org = Organizacion::crearPara($usuario, (string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $_POST);
+                                if ($org) {
+                                    $usuario->organizacion_id = (int)$org->id;
+                                    $usuario->guardar();
+                                } else {
+                                    // No se pudo crear (migración sin aplicar o error de BD): que se entere
+                                    $orgFallida = true;
+                                }
                             }
                         } elseif ($usuario->rol === 'admin') {
                             $interna = Organizacion::interna();
@@ -196,6 +253,10 @@ class AuthController
                             $destino = $contextoOrganizacion
                                 ? '/organizaciones?error=org'
                                 : '/usuarios?creado=1&organizacion=error';
+                        } elseif ($contextoEquipo && $orgFijaObj) {
+                            $destino = '/organizaciones/ver?id=' . (int)$orgFijaObj->id . '&creado=1#equipo';
+                        } elseif ($contextoOrganizacion && $orgFijaObj) {
+                            $destino = '/organizaciones/ver?id=' . (int)$orgFijaObj->id . '&creado=1#clientes';
                         } else {
                             $destino = $contextoOrganizacion ? '/organizaciones?creada=1' : '/usuarios?creado=1';
                         }
@@ -207,11 +268,21 @@ class AuthController
         }
 
         $alertas = Usuario::getAlertas();
+        if ($contextoEquipo) {
+            $titulo = $tipoEquipo === 'colaborador' ? 'Nuevo colaborador' : 'Nuevo visitante';
+        } elseif ($contextoOrganizacion) {
+            $titulo = $orgFijaObj ? 'Nuevo cliente' : 'Nueva organización y cliente';
+        } else {
+            $titulo = 'Crear Usuario';
+        }
         $router->render('auth/crear', [
-            'titulo' => $contextoOrganizacion ? 'Nueva organización' : 'Crear Usuario',
+            'titulo' => $titulo,
             'alertas' => $alertas,
             'usuario' => $usuario,
             'contextoOrganizacion' => $contextoOrganizacion,
+            'contextoEquipo' => $contextoEquipo,
+            'orgFija' => $orgFijaObj,
+            'tipoEquipo' => $tipoEquipo,
             'proyectos' => Proyecto::all('nombre ASC'),
             'asignados' => array_map('intval', $_POST['proyectos'] ?? []),
             'herramientasMarcadas' => $usuario->herramientasPermitidas(),
@@ -219,7 +290,7 @@ class AuthController
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
             'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
             'planes' => Plan::comerciales(),
-            'organizaciones' => Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
+            'organizaciones' => Organizacion::disponible() ? Organizacion::activas() : [],
         ]);
     }
 
@@ -268,6 +339,8 @@ class AuthController
             $orgActual = $usuario->organizacion_id;
             $usuario->sincronizar($_POST);
             $usuario->id = $id;
+            // El select «Sin organización» manda '' y organizacion_id es INT: MySQL estricto lo rechaza
+            $usuario->organizacion_id = filter_var($usuario->organizacion_id ?? null, FILTER_VALIDATE_INT) ?: null;
             $esVis = $usuario->rol === 'visitante';
             $usuario->nivel_acceso = $esVis && ($_POST['nivel_acceso'] ?? '') === 'editar' ? 'editar' : 'ver';
             $usuario->herramientas = $esVis ? Usuario::herramientasDePost($_POST['herr'] ?? []) : null;
@@ -297,6 +370,11 @@ class AuthController
                     }
                 } else {
                     $usuario->organizacion_id = $orgActual ?: $usuario->organizacion_id;
+                    // Una organización solo tiene un propietario: se cambia con «Transferir propiedad»
+                    $orgNueva = $usuario->organizacion_id ? Organizacion::find((int)$usuario->organizacion_id) : null;
+                    if ($orgNueva && $orgNueva->propietario_id && (int)$orgNueva->propietario_id !== (int)$id) {
+                        Usuario::setAlerta('error', 'Esa organización ya tiene propietario. Usa «Transferir propiedad» en su ficha.');
+                    }
                 }
             } elseif ($usuario->rol === 'admin') {
                 $usuario->rol_org = 'propietario';
@@ -305,8 +383,13 @@ class AuthController
             } else {
                 $usuario->rol_org = $usuario->nivel_acceso === 'editar' ? 'colaborador' : 'visitante';
                 $usuario->puede_crear_proyectos = 0;
-                $orgPost = filter_var($_POST['organizacion_id'] ?? null, FILTER_VALIDATE_INT);
-                if ($orgPost && Organizacion::find($orgPost)) $usuario->organizacion_id = $orgPost;
+                $orgPostRaw = $_POST['organizacion_id'] ?? null;
+                $orgPost = filter_var($orgPostRaw, FILTER_VALIDATE_INT);
+                if ($orgPost && Organizacion::find($orgPost)) {
+                    $usuario->organizacion_id = $orgPost;
+                } elseif ($orgPostRaw === '') {
+                    $usuario->organizacion_id = null;   // visitante externo (sin empresa)
+                }
             }
 
             $usuario->validarLimiteProyectos();
@@ -390,7 +473,7 @@ class AuthController
             'archivosAjenos' => (int)$usuario->puede_archivos_ajenos,
             'tipo' => ($usuario->nivel_acceso ?? 'ver') === 'editar' ? 'colaborador' : 'visitante',
             'planes' => Plan::comerciales(),
-            'organizaciones' => Organizacion::disponible() ? Organizacion::all('nombre ASC') : [],
+            'organizaciones' => Organizacion::disponible() ? Organizacion::activas() : [],
             'organizacion' => Organizacion::deUsuario((int)$id),
         ]);
     }

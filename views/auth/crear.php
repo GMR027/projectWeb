@@ -1,16 +1,37 @@
-<?php $contextoOrganizacion = $contextoOrganizacion ?? false; ?>
+<?php
+/**
+ * Alta de usuario (admin). Tres modos:
+ *  - normal: cualquier rol.
+ *  - ?contexto=organizacion&org=ID: cliente propietario/gestor de una organización existente.
+ *  - ?contexto=organizacion (sin org): empresa + su primer cliente propietario.
+ *  - ?contexto=equipo&org=ID&tipo=visitante|colaborador: equipo de una organización.
+ */
+$contextoOrganizacion = $contextoOrganizacion ?? false;
+$contextoEquipo = $contextoEquipo ?? false;
+$orgFija = $orgFija ?? null;
+$tipoEquipo = $tipoEquipo ?? 'visitante';
+$esContexto = $contextoOrganizacion || $contextoEquipo;
+$volver = $orgFija ? '/organizaciones/ver?id=' . (int)$orgFija->id : ($contextoOrganizacion ? '/organizaciones' : '/usuarios');
+$boton = $titulo ?? 'Crear Usuario';
+?>
 <div class="page-header">
-    <h2><?php echo $contextoOrganizacion ? 'Nueva organización' : 'Crear Usuario'; ?></h2>
-    <a href="<?php echo $contextoOrganizacion ? '/organizaciones' : '/usuarios'; ?>" class="btn btn-ghost">← Volver</a>
+    <h2><?php echo s($boton); ?></h2>
+    <a href="<?php echo s($volver); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 
-<?php if ($contextoOrganizacion): ?>
+<?php if ($contextoEquipo && $orgFija): ?>
+    <p class="text-muted text-sm">Se agregará a <strong><?php echo s($orgFija->nombre); ?></strong> como <?php echo $tipoEquipo === 'colaborador' ? 'colaborador (edita en las herramientas marcadas, nunca borra)' : 'visitante (solo ve las obras y herramientas asignadas)'; ?>.</p>
+<?php elseif ($contextoOrganizacion && $orgFija): ?>
+    <p class="text-muted text-sm">Se agregará a <strong><?php echo s($orgFija->nombre); ?></strong> como <?php echo $orgFija->propietario_id ? 'gestor (crea y edita obras, no administra equipo ni facturación)' : 'propietario (administra la empresa, su equipo y la facturación)'; ?>.</p>
+<?php elseif ($contextoOrganizacion): ?>
     <p class="text-muted text-sm">La organización se crea junto con su usuario propietario: él administra el equipo, las obras y la facturación. Podrás cambiar el plan y el estado después en Organizaciones.</p>
 <?php endif; ?>
 
 <div class="card">
     <form method="POST" class="formulario" enctype="multipart/form-data">
         <?php if ($contextoOrganizacion): ?><input type="hidden" name="contexto" value="organizacion"><?php endif; ?>
+        <?php if ($contextoEquipo): ?><input type="hidden" name="contexto" value="equipo"><input type="hidden" name="tipo" value="<?php echo s($tipoEquipo); ?>"><?php endif; ?>
+        <?php if ($orgFija): ?><input type="hidden" name="org" value="<?php echo (int)$orgFija->id; ?>"><?php endif; ?>
         <div class="campo">
             <label for="nombre">Nombre Completo</label>
             <input type="text" id="nombre" name="nombre" value="<?php echo s($usuario->nombre ?? ''); ?>" required>
@@ -19,7 +40,7 @@
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="<?php echo s($usuario->email ?? ''); ?>" required>
         </div>
-        <div class="campo" id="campo-rol" <?php echo $contextoOrganizacion ? 'style="display:none"' : ''; ?>>
+        <div class="campo" id="campo-rol" <?php echo $esContexto ? 'style="display:none"' : ''; ?>>
             <label for="rol">Rol</label>
             <select id="rol" name="rol" required>
                 <option value="">-- Selecciona --</option>
@@ -71,10 +92,14 @@
         <script>
             (function () {
                 const contextoOrg = <?php echo $contextoOrganizacion ? 'true' : 'false'; ?>;
+                const contextoEquipo = <?php echo $contextoEquipo ? 'true' : 'false'; ?>;
+                const orgFija = <?php echo $orgFija ? 'true' : 'false'; ?>;
                 const rol = document.getElementById('rol'), caja = document.getElementById('campo-accesos'), lim = document.getElementById('campo-limite');
-                const herr = document.getElementById('campo-herramientas'), niv = document.getElementById('campo-nivel');
+                const herr = document.getElementById('campo-herramientas'), niv = document.getElementById('campo-nivel'), logo = document.getElementById('campo-logo');
                 const plan = document.getElementById('campo-plan'), org = document.getElementById('campo-org'), orgVis = document.getElementById('campo-org-vis');
                 const rolOrg = document.getElementById('rol_org'), cajaRolOrg = document.getElementById('campo-rol-org');
+                const ocultar = (el) => { if (el) el.style.display = 'none'; };
+                const mostrar = (el) => { if (el) el.style.display = ''; };
                 const toggleOrg = () => {
                     const esCliente = rol.value === 'cliente';
                     const esGestor = esCliente && rolOrg && rolOrg.value === 'gestor';
@@ -84,16 +109,18 @@
                     if (orgVis) orgVis.style.display = esGestor || rol.value === 'visitante' ? '' : 'none';
                 };
                 const toggle = () => {
+                    if (contextoEquipo) {
+                        // Equipo de una organización: nombre, acceso a obras, herramientas y contraseña
+                        mostrar(caja); ocultar(lim); mostrar(herr); ocultar(niv); ocultar(logo);
+                        ocultar(cajaRolOrg); ocultar(plan); ocultar(org); ocultar(orgVis);
+                        return;
+                    }
                     if (contextoOrg) {
-                        // Alta de organización: solo datos de la organización, su plan y el propietario
-                        if (caja) caja.style.display = 'none';
-                        if (lim) lim.style.display = 'none';
-                        if (herr) herr.style.display = 'none';
-                        if (niv) niv.style.display = 'none';
-                        if (cajaRolOrg) cajaRolOrg.style.display = 'none';
-                        if (plan) plan.style.display = '';
-                        if (org) org.style.display = '';
-                        if (orgVis) orgVis.style.display = 'none';
+                        // Cliente de una organización: solo sus datos, su papel y a qué obras entra
+                        mostrar(caja); ocultar(lim); ocultar(herr); ocultar(niv);
+                        ocultar(cajaRolOrg);
+                        if (orgFija) { ocultar(plan); ocultar(org); ocultar(logo); } else { mostrar(plan); mostrar(org); mostrar(logo); }
+                        ocultar(orgVis);
                         return;
                     }
                     caja.style.display = rol.value === 'admin' ? 'none' : '';
@@ -115,6 +142,6 @@
             <label for="password2">Repetir Password</label>
             <input type="password" id="password2" name="password2" required>
         </div>
-        <button type="submit" class="btn btn-primary"><?php echo $contextoOrganizacion ? 'Crear organización' : 'Crear Usuario'; ?></button>
+        <button type="submit" class="btn btn-primary"><?php echo s($boton); ?></button>
     </form>
 </div>

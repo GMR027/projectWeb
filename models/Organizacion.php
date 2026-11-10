@@ -17,6 +17,7 @@ class Organizacion extends ActiveRecord
         'propietario_id', 'plan_id', 'estado_plan', 'trial_hasta', 'plan_inicio', 'plan_fin',
         'gracia_hasta', 'precio_legado', 'limites_json', 'almacenamiento_bytes',
         'marca_activa', 'marca_nombre', 'marca_logo', 'marca_color', 'marca_color2',
+        'archivada', 'archivada_en',
     ];
 
     public $id;
@@ -41,6 +42,8 @@ class Organizacion extends ActiveRecord
     public $marca_logo;
     public $marca_color;
     public $marca_color2;
+    public $archivada;
+    public $archivada_en;
 
     private static ?bool $disponible = null;
     private static array $cacheUsuario = [];
@@ -69,6 +72,60 @@ class Organizacion extends ActiveRecord
         $this->marca_logo = $args['marca_logo'] ?? null;
         $this->marca_color = $args['marca_color'] ?? '';
         $this->marca_color2 = $args['marca_color2'] ?? '';
+        $this->archivada = $args['archivada'] ?? 0;
+        $this->archivada_en = $args['archivada_en'] ?? null;
+    }
+
+    /**
+     * Organizaciones para listas y selectores. Por defecto oculta las archivadas
+     * (archivar no borra obras ni usuarios, solo deja de ofrecerse la empresa).
+     */
+    public static function listado(bool $incluirArchivadas = false): array
+    {
+        if (!self::disponible()) return [];
+        $where = $incluirArchivadas ? '' : ' WHERE archivada = 0';
+        return self::consultarSQL('SELECT * FROM organizaciones' . $where . ' ORDER BY nombre ASC');
+    }
+
+    /** Solo las activas: para selectores de alta de clientes, proyectos y equipo */
+    public static function activas(): array
+    {
+        return self::listado(false);
+    }
+
+    public function estaArchivada(): bool
+    {
+        return (int)($this->archivada ?? 0) === 1;
+    }
+
+    /** Archivar: deja de listarse pero conserva obras, usuarios y pagos */
+    public function archivar(): bool
+    {
+        if (!$this->id || $this->estaArchivada()) return false;
+        $this->archivada = 1;
+        $this->archivada_en = date('Y-m-d H:i:s');
+        return (bool)$this->guardar();
+    }
+
+    public function desarchivar(): bool
+    {
+        if (!$this->id || !$this->estaArchivada()) return false;
+        $this->archivada = 0;
+        $this->archivada_en = null;
+        return (bool)$this->guardar();
+    }
+
+    /** Solo se puede borrar de verdad una organización vacía (sin obras, usuarios ni pagos) */
+    public function puedeEliminarse(): bool
+    {
+        if (!$this->id) return false;
+        try {
+            $obras = Proyecto::total('organizacion_id = ' . (int)$this->id);
+            $pagos = (int)(self::$db->query('SELECT COUNT(*) FROM organizacion_pagos WHERE organizacion_id = ' . (int)$this->id)->fetch_row()[0] ?? 0);
+            return $obras === 0 && $this->contarAsientos() === 0 && $this->contarVisitantes() === 0 && $pagos === 0;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /** ¿Existe la tabla? (migración aplicada) */
