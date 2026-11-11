@@ -80,7 +80,8 @@
     async function comprimirImagen(file, maxLado = 2000, calidad = 0.85) {
         if (!file || !/^image\//i.test(file.type || '')) return file;
         if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;   // animación/SVG: no se tocan
-        const yaEsPequena = file.size <= 400 * 1024;
+        // WebP se re-codifica siempre: hay servidores PHP sin soporte WebP en GD.
+        const yaEsPequena = file.size <= 400 * 1024 && file.type !== 'image/webp';
         let bitmap = null;
         try {
             if (window.createImageBitmap) {

@@ -67,16 +67,20 @@ class SimboloController
         if ($hay) {
             $crudo = (string)file_get_contents($f['tmp_name'], false, null, 0, 4096);
             $esSvg = preg_match('/<svg\b/i', $crudo) === 1;
+            $mime = $esSvg ? 'image/svg+xml' : Imagenes::tipoImagen($f['tmp_name']);
             if ($f['size'] > 8 * 1024 * 1024) {
                 self::volver((int)$proyecto->id, 'error', 'La imagen no es válida (png, jpg, webp, gif o svg de hasta 8 MB)', 'proyecto');
             }
-            if (!$esSvg && Imagenes::tipoImagen($f['tmp_name']) === null) {
+            if (!$esSvg && $mime === null) {
                 self::volver((int)$proyecto->id, 'error', 'La imagen no es válida (png, jpg, webp, gif o svg de hasta 8 MB)', 'proyecto');
             }
             if (!Almacenamiento::cabe((int)$proyecto->id, (int)$f['size'])) self::volver((int)$proyecto->id, 'error', Almacenamiento::mensajeLleno((int)$proyecto->id), 'proyecto');
             $archivo = Simbolo::guardarArchivo($f['tmp_name']);
             if (!$archivo && $esSvg) self::volver((int)$proyecto->id, 'error', 'El SVG no es válido o contiene elementos no permitidos', 'proyecto');
-            if (!$archivo) self::volver((int)$proyecto->id, 'error', 'No se pudo procesar la imagen. Revisa que no esté dañada y que el servidor pueda escribir en uploads/simbolos.', 'proyecto');
+            if (!$archivo) {
+                $extra = ($mime === 'image/webp' && !function_exists('imagecreatefromwebp')) ? ' La imagen es WebP y este servidor no tiene soporte WebP; guárdala como PNG o JPG.' : '';
+                self::volver((int)$proyecto->id, 'error', 'No se pudo procesar la imagen. Revisa que no esté dañada y que el servidor pueda escribir en uploads/simbolos.' . $extra, 'proyecto');
+            }
             if ($s) Imagenes::eliminarEn(Simbolo::CARPETA, $s->archivo);
             $nuevo->archivo = $archivo;
         }

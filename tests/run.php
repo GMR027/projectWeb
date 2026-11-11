@@ -1231,6 +1231,8 @@ if (function_exists('imagecreatetruecolor')) {
 @unlink($tmpImg);
 $ok('la subida de símbolos usa el detector robusto y muestra los errores', str_contains($asset('controllers/SimboloController.php'), 'Imagenes::tipoImagen') && str_contains($asset('views/templates/alertas.php'), "\$_GET['error']"));
 $ok('la importación de símbolos explica los omitidos', str_contains($asset('controllers/SimboloController.php'), "'motivos' => \$motivos") && str_contains($asset('views/simbolos/index.php'), 'd.motivos'));
+$ok('el servidor de despliegue compila GD con soporte WebP', str_contains($asset('Dockerfile'), '--with-webp') && str_contains($asset('Dockerfile'), 'libwebp-dev'));
+$ok('el navegador re-codifica WebP aunque sea pequeño', str_contains($asset('public/vendor/kit-edicion.js'), "file.type !== 'image/webp'"));
 $ok('la vista del Anotador tiene estilos, capas y símbolos', str_contains($asset('views/anotador/index.php'), 'id="ant-estilo"') && str_contains($asset('views/anotador/index.php'), 'data-ptab="capas"') && str_contains($asset('views/anotador/index.php'), 'id="ant-simbolos-lista"') && str_contains($asset('public/vendor/anotador.js'), 'function pintarCapas') && str_contains($asset('public/vendor/anotador.js'), 'function colocarSimbolo') && str_contains($asset('public/vendor/anotaciones.js'), "case 'polilinea'"));
 $ok('el Anotador pide los símbolos con permiso del proyecto', str_contains($asset('public/index.php'), "/anotador/simbolos") && str_contains($asset('controllers/AnotadorController.php'), 'function simbolos'));
 $menuHerramientas = $asset('views/templates/herramientas-proyecto.php');
