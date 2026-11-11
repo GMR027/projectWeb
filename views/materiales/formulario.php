@@ -1,4 +1,4 @@
-<?php $esNuevo = !$material->id; ?>
+<?php $esNuevo = !$material->id; $atributos = $atributos ?? []; ?>
 <div class="page-header">
     <h2><?php echo $esNuevo ? 'Nuevo material' : 'Editar material'; ?></h2>
     <div>
@@ -140,6 +140,39 @@ if (is_admin() && ($verif || ($inteligentes ?? false))):
                 <small class="text-muted">También se llena con el botón «Entregado» del listado.</small>
             </div>
         </div>
+            <h3 class="mt-2">Normas, certificaciones y especificaciones</h3>
+            <p class="text-sm text-muted">La búsqueda de normativa usa estos datos, la marca, el modelo, la referencia y el certificado para encontrar las cláusulas que de verdad aplican al material.</p>
+            <div class="tabla-wrapper">
+                <table class="tabla tabla-atributos" id="mat-atributos">
+                    <thead><tr><th>Tipo</th><th>Código</th><th>Nombre / descripción</th><th>Valor</th><th>Unidad</th><th>Emisor</th><th>Fuente</th><th>Notas</th><th>Quitar</th></tr></thead>
+                    <tbody>
+                    <?php
+                    $fila = function ($a = null) {
+                        $id = $a ? (int)$a->id : '';
+                        $tipo = $a ? $a->tipo : 'norma';
+                        ob_start(); ?>
+                        <tr>
+                            <td><input type="hidden" name="atributo_id[]" value="<?php echo $id; ?>">
+                                <select name="atributo_tipo[]" aria-label="Tipo">
+                                    <?php foreach (\Model\MaterialAtributo::TIPOS as $k => $t): ?><option value="<?php echo $k; ?>"<?php echo $tipo === $k ? ' selected' : ''; ?>><?php echo s($t); ?></option><?php endforeach; ?>
+                                </select></td>
+                            <td><input type="text" name="atributo_codigo[]" maxlength="80" value="<?php echo s($a->codigo ?? ''); ?>" placeholder="NOM-063"></td>
+                            <td><input type="text" name="atributo_titulo[]" maxlength="200" value="<?php echo s($a->titulo ?? ''); ?>" placeholder="Nombre o descripción"></td>
+                            <td><input type="text" name="atributo_valor[]" maxlength="200" value="<?php echo s($a->valor ?? ''); ?>" placeholder="600"></td>
+                            <td><input type="text" name="atributo_unidad[]" maxlength="30" value="<?php echo s($a->unidad ?? ''); ?>" placeholder="V"></td>
+                            <td><input type="text" name="atributo_emisor[]" maxlength="120" value="<?php echo s($a->emisor ?? ''); ?>" placeholder="NOM, UL…"></td>
+                            <td><input type="text" name="atributo_fuente[]" maxlength="500" value="<?php echo s($a->fuente_url ?? ''); ?>" placeholder="https://…"></td>
+                            <td><input type="text" name="atributo_notas[]" maxlength="500" value="<?php echo s($a->notas ?? ''); ?>" placeholder="Opcional"></td>
+                            <td class="centro"><?php if ($a): ?><label title="Quitar"><input type="checkbox" name="atributo_quitar[]" value="<?php echo $id; ?>" aria-label="Quitar atributo"></label><?php endif; ?></td>
+                        </tr>
+                        <?php return ob_get_clean();
+                    };
+                    foreach ($atributos as $a) echo $fila($a);
+                    echo $fila(); echo $fila(); echo $fila();
+                    ?>
+                    </tbody>
+                </table>
+            </div>
             <?php $tipoEntidad = 'material'; $entidadId = $esNuevo ? null : $material->id; include __DIR__ . '/../normativa/_seccion.php'; ?>
         <button type="submit" class="btn btn-primary">Guardar</button>
     </form>

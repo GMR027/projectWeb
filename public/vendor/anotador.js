@@ -14,8 +14,9 @@
 
   const ant = {
     docId: 0, nombre: '', descripcion: '', fuenteTipo: '', fuenteId: null, fuenteNombre: '', ext: '',
-    pdf: null, img: null, pagina: 1, paginas: 1, sizes: {}, cfg: { escalas: {}, unidad: 'm' }, shapes: [],
-    sel: -1, multi: [], herramienta: 'seleccion', color: '#e11d48', grosor: 5, relleno: false, opacidad: 1,
+    pdf: null, img: null, pagina: 1, paginas: 1, sizes: {}, cfg: { escalas: {}, unidad: 'm', capas: [] }, shapes: [],
+    sel: -1, multi: [], herramienta: 'seleccion', color: '#e11d48', grosor: 5, relleno: false, opacidad: 1, estilo: 'solida',
+    capas: [], capa: 'c1', simbolos: [],
     activo: true, ver: true, undo: [], redo: [], drag: null, editando: -1, k: 1, x: 0, y: 0,
     dirty: false, finalizado: false, soloLectura: false, imagenes: {}, portapapeles: [], filtro: 'todas', todasPaginas: false,
     polygon: null, pendiente: null, firmas: [], estampas: [], insertadas: [], miniaturaAnterior: '', cargando: false,
@@ -35,8 +36,25 @@
   const tamPagina = n => ant.sizes[n] || ant.sizes[1] || { w: 1200, h: 800 };
   const cfgBase = () => {
     const w = tamPagina(paginaActual()).w || 1200;
-    return { base: Math.max(.75, Math.min(3, w / 1200)), k: ant.k, mPorPx: ant.cfg.escalas[paginaActual()] || 0, imagenes: ant.imagenes };
+    return { base: Math.max(.75, Math.min(3, w / 1200)), k: ant.k, mPorPx: ant.cfg.escalas[paginaActual()] || 0, imagenes: ant.imagenes, capas: ant.capas };
   };
+  const capaDe = id => ant.capas.find(c => c.id === id) || null;
+  const capaActiva = () => capaDe(ant.capa) || ant.capas[0] || null;
+  const capaIndex = sh => Math.max(0, ant.capas.findIndex(c => c.id === (sh && (sh.capa || ant.capa))));
+  const shapesOrdenados = n => ant.shapes.map((sh, i) => ({ sh, i })).filter(x => !n || paginaDe(x.sh) === n).sort((a, b) => capaIndex(a.sh) - capaIndex(b.sh) || a.i - b.i);
+  function asegurarCapas() {
+    if (!Array.isArray(ant.capas) || !ant.capas.length) ant.capas = [{ id: 'c1', nombre: 'Anotaciones', visible: true, bloqueada: false, opacidad: 100 }];
+    ant.capas.forEach((c, i) => {
+      if (!c.id) c.id = 'c' + (i + 1);
+      if (!c.nombre) c.nombre = 'Capa ' + (i + 1);
+      if (c.visible === undefined) c.visible = true;
+      if (c.bloqueada === undefined) c.bloqueada = false;
+      if (c.opacidad === undefined) c.opacidad = 100;
+    });
+    const primero = ant.capas[0].id;
+    ant.shapes.forEach(sh => { if (!sh.capa || !capaDe(sh.capa)) sh.capa = primero; });
+    if (!capaDe(ant.capa)) ant.capa = ant.capas[ant.capas.length - 1].id;
+  }
   const aviso = (txt, tipo = 'error') => {
     const e = $('#ant-error'); if (!e) return;
     e.textContent = txt; e.hidden = !txt;
@@ -56,7 +74,8 @@
   // ============================================================== fuente / documento
   function limpiarEstado() {
     ant.pdf = null; ant.img = null; ant.shapes = []; ant.sel = -1; ant.multi = []; ant.undo = []; ant.redo = [];
-    ant.pagina = 1; ant.sizes = {}; ant.imagenes = {}; ant.cfg = { escalas: {}, unidad: 'm' };
+    ant.pagina = 1; ant.sizes = {}; ant.imagenes = {}; ant.cfg = { escalas: {}, unidad: 'm', capas: [] };
+    ant.capas = [{ id: 'c1', nombre: 'Anotaciones', visible: true, bloqueada: false, opacidad: 100 }]; ant.capa = 'c1';
     ant.polygon = null; ant.pendiente = null; ant.finalizado = false; ant.soloLectura = false; ant.dirty = true;
     ant.insertadas = []; ant.firmas = []; ant.estampas = []; ant.draftFile = null; ant.miniaturaAnterior = '';
   }
@@ -99,8 +118,10 @@
     if (!r.ok) throw new Error('No se pudo abrir el documento base.');
     await cargarBlob(await r.blob(), d.ext, d.nombre_archivo || d.nombre, { nombre: d.nombre, descripcion: d.descripcion, docId: d.id });
     ant.fuenteTipo = d.fuente_tipo; ant.fuenteId = d.fuente_id; ant.fuenteNombre = d.nombre_archivo;
-    ant.cfg = d.config && d.config.escalas ? { escalas: d.config.escalas || {}, unidad: d.config.unidad || 'm' } : { escalas: {}, unidad: 'm' };
+    ant.cfg = d.config && d.config.escalas ? { escalas: d.config.escalas || {}, unidad: d.config.unidad || 'm', capas: d.config.capas || [] } : { escalas: {}, unidad: 'm', capas: [] };
+    ant.capas = Array.isArray(d.config?.capas) ? d.config.capas : [];
     ant.shapes = (d.anotaciones && d.anotaciones.shapes) || [];
+    asegurarCapas();
     const vistas = new Set();
     ant.shapes.forEach(sh => {
       if (sh.tipo === 'imagen' && sh.imagen && !vistas.has(sh.imagen)) {
@@ -262,9 +283,8 @@
     if (!ant.ver) return;
     anotCtx.setTransform(CALIDAD, 0, 0, CALIDAD, 0, 0);
     const cfg = cfgBase();
-    ant.shapes.forEach((sh, i) => {
-      if (!enPagina(sh)) return;
-      if (['imagen', 'estampa', 'firma'].includes(sh.tipo)) cargarImagenShape(sh);
+    shapesOrdenados(paginaActual()).forEach(({ sh, i }) => {
+      if (['imagen', 'simbolo', 'estampa', 'firma'].includes(sh.tipo)) cargarImagenShape(sh);
       A.dibujar(anotCtx, sh, seleccionada(i), cfg);
     });
     if (ant.polygon && ant.polygon.pts.length) {
@@ -301,6 +321,8 @@
   function seleccionar(i, shift) {
     if (i < 0) { ant.sel = -1; ant.multi = []; pintarDetalle(); pintarProps(); redibujar(); return; }
     const sh = ant.shapes[i];
+    const capa = sh ? capaDe(sh.capa) : null;
+    if (capa && (capa.visible === false || capa.bloqueada || +capa.opacidad === 0)) { aviso('La capa de esta anotación está oculta, bloqueada o transparente.', 'ok'); return; }
     if (shift) {
       if (!ant.multi.includes(i)) ant.multi.push(i); else ant.multi = ant.multi.filter(x => x !== i);
       ant.sel = i;
@@ -312,7 +334,12 @@
   }
   function hitIndex(p) {
     const cfg = cfgBase();
-    for (let i = ant.shapes.length - 1; i >= 0; i--) if (enPagina(ant.shapes[i]) && A.hit(ant.shapes[i], p, cfg)) return i;
+    const lista = shapesOrdenados(paginaActual()).slice().reverse();
+    for (const { sh, i } of lista) {
+      const c = capaDe(sh.capa);
+      if (c && (c.visible === false || c.bloqueada || +c.opacidad === 0)) continue;
+      if (A.hit(sh, p, cfg)) return i;
+    }
     return -1;
   }
   function hitHandle(p) {
@@ -332,6 +359,10 @@
   if (anotEl) {
     anotEl.addEventListener('pointerdown', e => {
       if (ant.soloLectura) { aviso('El documento está firmado y bloqueado.'); return; }
+      if (!['seleccion', 'mano'].includes(ant.herramienta)) {
+        const ca = capaActiva();
+        if (ca && (ca.visible === false || ca.bloqueada || +ca.opacidad === 0)) { aviso('La capa activa está oculta, bloqueada o transparente.'); return; }
+      }
       if (e.button === 1 || ant.herramienta === 'mano') return;   // el paneo lo maneja la vista
       if (e.button !== 0) return;
       if (gestos && gestos.activo && gestos.activo()) return;
@@ -351,14 +382,14 @@
         }
         return;
       }
-      if (ant.herramienta === 'poligono' || ant.herramienta === 'volumen') { clicPoligono(p, e); return; }
-      if (['imagen', 'estampa', 'firma'].includes(ant.herramienta)) { colocarPendiente(p); return; }
+      if (ant.herramienta === 'poligono' || ant.herramienta === 'volumen' || ant.herramienta === 'polilinea') { clicPoligono(p, e); return; }
+      if (['imagen', 'simbolo', 'estampa', 'firma'].includes(ant.herramienta)) { colocarPendiente(p); return; }
       if (ant.herramienta === 'resaltado_texto' || ant.herramienta === 'subrayado' || ant.herramienta === 'tachado') {
         aviso('Selecciona texto en el documento; si el PDF no tiene texto, usa el resaltador rectangular.', 'ok'); return;
       }
 
       snapshot();
-      const comun = { color: ant.color, grosor: ant.grosor, relleno: ant.relleno, texto: '', autor: C.usuario || '', creado: fechaISO(), estado: 'abierta', notas: [], grupo: 0, pagina: paginaActual() };
+      const comun = { color: ant.color, grosor: ant.grosor, estilo: ant.estilo, opacidad: ant.opacidad, capa: ant.capa, relleno: ant.relleno, texto: '', autor: C.usuario || '', creado: fechaISO(), estado: 'abierta', notas: [], grupo: 0, pagina: paginaActual() };
       let sh;
       if (ant.herramienta === 'texto') sh = Object.assign(comun, { tipo: 'texto', x: p.x, y: p.y, fuente: 16 });
       else if (ant.herramienta === 'globo') sh = Object.assign(comun, { tipo: 'globo', x: p.x + 40, y: Math.max(20, p.y - 40), ax: p.x, ay: p.y, numero: siguienteNumero(), radio: 28 });
@@ -466,14 +497,16 @@
   // ============================================================== polígonos
   function clicPoligono(p, e) {
     if (!ant.polygon) {
-      if (!ant.cfg.escalas[paginaActual()]) aviso('Calibra la página para que el área y el volumen salgan en unidades reales.', 'ok');
+      const esLinea = ant.herramienta === 'polilinea';
+      if (!esLinea && !ant.cfg.escalas[paginaActual()]) aviso('Calibra la página para que el área y el volumen salgan en unidades reales.', 'ok');
       snapshot();
       ant.polygon = {
-        tipo: ant.herramienta, color: ant.color, grosor: ant.grosor, relleno: true, pagina: paginaActual(),
+        tipo: ant.herramienta, color: ant.color, grosor: ant.grosor, estilo: ant.estilo, opacidad: ant.opacidad, capa: ant.capa,
+        relleno: !esLinea, pagina: paginaActual(),
         pts: [{ x: p.x, y: p.y }], mouse: { x: p.x, y: p.y }, autor: C.usuario || '', creado: fechaISO(),
-        estado: 'abierta', notas: [], grupo: 0, cerrado: true, profundidad: 0, etiqueta: 'area',
+        estado: 'abierta', notas: [], grupo: 0, cerrado: !esLinea, profundidad: 0, etiqueta: 'area',
       };
-      aviso('Haz clic para agregar vértices; doble clic o Enter para cerrar.', 'ok');
+      aviso(esLinea ? 'Haz clic para agregar vértices; doble clic o Enter para terminar.' : 'Haz clic para agregar vértices; doble clic o Enter para cerrar.', 'ok');
       redibujar(); return;
     }
     const ult = ant.polygon.pts[ant.polygon.pts.length - 1];
@@ -485,11 +518,13 @@
     const poly = ant.polygon;
     if (!poly) return;
     ant.polygon = null;
-    if (poly.pts.length < 3) { redibujar(); return; }
+    const esLinea = poly.tipo === 'polilinea';
+    if (poly.pts.length < (esLinea ? 2 : 3)) { redibujar(); return; }
     const sh = {
-      tipo: poly.tipo, color: poly.color, grosor: poly.grosor, relleno: true, pagina: poly.pagina,
+      tipo: poly.tipo, color: poly.color, grosor: poly.grosor, estilo: poly.estilo || 'solida', opacidad: poly.opacidad == null ? 1 : poly.opacidad,
+      capa: poly.capa || ant.capa, relleno: !esLinea, pagina: poly.pagina,
       pts: poly.pts.map(p => [puntos(p.x), puntos(p.y)]), autor: poly.autor, creado: poly.creado,
-      estado: 'abierta', notas: [], grupo: 0, cerrado: true, profundidad: 0, etiqueta: 'area',
+      estado: 'abierta', notas: [], grupo: 0, cerrado: !esLinea, profundidad: 0, etiqueta: 'area',
     };
     if (sh.tipo === 'volumen') {
       const prof = await pedirProfundidad();
@@ -529,12 +564,13 @@
     if (pend.w && pend.h) h = w * pend.h / pend.w;
     else h = w * .5;
     const sh = {
-      tipo: pend.tipo, color: ant.color, grosor: 2, relleno: false, texto: '', autor: C.usuario || '', creado: fechaISO(),
+      tipo: pend.tipo, color: ant.color, grosor: 2, estilo: 'solida', opacidad: ant.opacidad, capa: ant.capa, relleno: false, texto: '', autor: C.usuario || '', creado: fechaISO(),
       estado: 'abierta', notas: [], grupo: 0, pagina: paginaActual(),
-      x: p.x - w / 2, y: p.y - h / 2, w, h, rot: 0, opacidad: ant.opacidad, imagen: pend.imagen,
+      x: p.x - w / 2, y: p.y - h / 2, w, h, rot: 0, imagen: pend.imagen,
     };
     if (pend.tipo === 'firma') Object.assign(sh, { nombre: pend.nombre || C.usuario || '', cargo: pend.cargo || '', fecha: new Date().toLocaleDateString('es-MX'), bloqueada: false, firma_id: pend.firma_id || 0 });
     if (pend.tipo === 'estampa') sh.estampa_id = pend.estampa_id || 0;
+    if (pend.tipo === 'simbolo') Object.assign(sh, { simbolo_id: pend.simbolo_id || 0, nombre: pend.nombre || '' });
     snapshot(); ant.shapes.push(sh); ant.sel = ant.shapes.length - 1; ant.multi = [ant.sel];
     ant.pendiente = null; ant.herramienta = 'seleccion';
     marcarSucio(); pintarHerramientas(); redibujar(); pintarLista(); pintarDetalle(); pintarProps();
@@ -546,6 +582,40 @@
     }).catch(() => { });
     cargarEstampas();
     pintarImagenes();
+    cargarSimbolos();
+  }
+
+  async function cargarSimbolos() {
+    try {
+      const r = await fetch('/anotador/simbolos?proyecto=' + encodeURIComponent(C.proyecto), { credentials: 'same-origin' });
+      const d = await r.json();
+      ant.simbolos = d.success ? (d.simbolos || []) : [];
+    } catch (e) { ant.simbolos = []; }
+    pintarSimbolos();
+  }
+  function pintarSimbolos() {
+    const l = $('#ant-simbolos-lista'); if (!l) return;
+    const q = ($('#ant-sim-buscar')?.value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const lista = (ant.simbolos || []).filter(s => !q || norm(s.nombre + ' ' + s.cat).includes(q));
+    l.innerHTML = '';
+    if (!lista.length) { l.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ningún símbolo coincide.' : 'Aún no hay símbolos en la biblioteca del proyecto.') + '</p>'; return; }
+    const grupos = {};
+    lista.forEach(s => { (grupos[s.cat || 'Símbolos'] = grupos[s.cat || 'Símbolos'] || []).push(s); });
+    Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'es')).forEach(cat => {
+      const h = document.createElement('h5'); h.className = 'ant-sim-grupo'; h.textContent = cat;
+      l.appendChild(h);
+      const g = document.createElement('div'); g.className = 'ant-sim-grid';
+      grupos[cat].forEach(s => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'ant-sim-item'; b.title = 'Colocar ' + s.nombre;
+        const img = document.createElement('img'); img.src = s.src; img.alt = '';
+        const t = document.createElement('span'); t.textContent = s.nombre;
+        b.append(img, t);
+        b.addEventListener('click', () => colocarSimbolo(s));
+        g.appendChild(b);
+      });
+      l.appendChild(g);
+    });
   }
 
   function pintarImagenes() {
@@ -662,7 +732,7 @@
     });
     $$('.ant-panel-cont').forEach(p => { p.hidden = p.dataset.panel !== t; });
     const cont = $('.ant-panel-cont[data-panel="' + t + '"]'); if (cont) cont.scrollTop = 0;
-    const sub = $('#ant-panel-sub'); if (sub) sub.textContent = { lista: 'Anotaciones', props: 'Propiedades', medidas: 'Medidas', insertar: 'Insertar' }[t] || '';
+    const sub = $('#ant-panel-sub'); if (sub) sub.textContent = { lista: 'Anotaciones', props: 'Propiedades', capas: 'Capas', medidas: 'Medidas', insertar: 'Insertar' }[t] || '';
   }
   function pintarHerramientas() {
     $$('[data-tool]').forEach(b => {
@@ -676,7 +746,7 @@
     });
   }
   function icono(sh) {
-    return { globo: 'fa-comment-dots', texto: 'fa-font', resaltador: 'fa-highlighter', resaltado: 'fa-fill-drip', flecha: 'fa-arrow-right', linea: 'fa-minus', rect: 'fa-square', elipse: 'fa-circle', nube: 'fa-cloud', mano: 'fa-pen', medir: 'fa-ruler', area: 'fa-vector-square', poligono: 'fa-draw-polygon', volumen: 'fa-cube', imagen: 'fa-image', estampa: 'fa-stamp', firma: 'fa-signature', resaltado_texto: 'fa-text-height', subrayado: 'fa-underline', tachado: 'fa-strikethrough' }[sh.tipo] || 'fa-pen';
+    return { globo: 'fa-comment-dots', texto: 'fa-font', resaltador: 'fa-highlighter', resaltado: 'fa-fill-drip', flecha: 'fa-arrow-right', linea: 'fa-minus', polilinea: 'fa-bezier-curve', rect: 'fa-square', elipse: 'fa-circle', nube: 'fa-cloud', mano: 'fa-pen', medir: 'fa-ruler', area: 'fa-vector-square', poligono: 'fa-draw-polygon', volumen: 'fa-cube', imagen: 'fa-image', simbolo: 'fa-shapes', estampa: 'fa-stamp', firma: 'fa-signature', resaltado_texto: 'fa-text-height', subrayado: 'fa-underline', tachado: 'fa-strikethrough' }[sh.tipo] || 'fa-pen';
   }
   function pintarLista() {
     const ol = $('#ant-lista-anot'); if (!ol) return;
@@ -762,6 +832,13 @@
     $('#ant-prop-color').value = /^#[0-9a-f]{6}$/i.test(sh.color || '') ? sh.color : '#e11d48';
     $('#ant-prop-grosor').value = sh.grosor || 5;
     $('#ant-prop-relleno').checked = !!sh.relleno;
+    $('#ant-prop-estilo').value = sh.estilo || 'solida';
+    $('#ant-prop-opacidad').value = Math.round((sh.opacidad == null ? 1 : sh.opacidad) * 100);
+    const selCapa = $('#ant-prop-capa');
+    if (selCapa) {
+      selCapa.replaceChildren(...ant.capas.map(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre; return o; }));
+      selCapa.value = sh.capa || ant.capa;
+    }
     $('#ant-prop-profundidad-campo').hidden = sh.tipo !== 'volumen';
     $('#ant-prop-profundidad').value = sh.profundidad || 0;
     $('#ant-prop-etiqueta-campo').hidden = sh.tipo !== 'poligono';
@@ -769,17 +846,55 @@
     const esFirma = sh.tipo === 'firma';
     $('#ant-prop-firma-campos').hidden = !esFirma;
     if (esFirma) { $('#ant-prop-nombre').value = sh.nombre || ''; $('#ant-prop-cargo').value = sh.cargo || ''; }
-    const esImg = ['imagen', 'estampa', 'firma'].includes(sh.tipo);
+    const esImg = ['imagen', 'simbolo', 'estampa', 'firma'].includes(sh.tipo);
     $('#ant-prop-imagen-campos').hidden = !esImg;
-    if (esImg) { $('#ant-prop-rot').value = sh.rot || 0; $('#ant-prop-opacidad').value = Math.round((sh.opacidad == null ? 1 : sh.opacidad) * 100); }
+    if (esImg) $('#ant-prop-rot').value = sh.rot || 0;
     $$('#ant-props-form input, #ant-props-form textarea, #ant-props-form select, #ant-prop-aplicar').forEach(el => { el.disabled = ant.soloLectura; });
   }
+  function pintarCapas() {
+    const lista = $('#ant-capas-lista'); if (!lista) return;
+    lista.innerHTML = '';
+    ant.capas.forEach((c, i) => {
+      const fila = document.createElement('div');
+      fila.className = 'ant-capa' + (c.id === ant.capa ? ' on' : '') + (c.visible === false ? ' oculta' : '') + (c.bloqueada ? ' bloqueada' : '');
+      fila.dataset.id = c.id;
+      const n = ant.shapes.filter(sh => (sh.capa || ant.capas[0].id) === c.id).length;
+      const ojo = document.createElement('button'); ojo.type = 'button'; ojo.className = 'btn btn-xs btn-ghost'; ojo.dataset.op = 'ver'; ojo.disabled = ant.soloLectura; ojo.title = c.visible === false ? 'Mostrar capa' : 'Ocultar capa'; ojo.innerHTML = '<i class="fa-solid ' + (c.visible === false ? 'fa-eye-slash' : 'fa-eye') + '"></i>';
+      const candado = document.createElement('button'); candado.type = 'button'; candado.className = 'btn btn-xs btn-ghost'; candado.dataset.op = 'bloq'; candado.disabled = ant.soloLectura; candado.title = c.bloqueada ? 'Desbloquear capa' : 'Bloquear capa'; candado.innerHTML = '<i class="fa-solid ' + (c.bloqueada ? 'fa-lock' : 'fa-lock-open') + '"></i>';
+      const nombre = document.createElement('input'); nombre.type = 'text'; nombre.className = 'ant-capa-nombre'; nombre.value = c.nombre; nombre.maxLength = 60; nombre.dataset.op = 'nombre'; nombre.disabled = ant.soloLectura; nombre.setAttribute('aria-label', 'Nombre de la capa');
+      const meta = document.createElement('small'); meta.className = 'text-muted'; meta.textContent = n + ' anot.';
+      const op = document.createElement('input'); op.type = 'range'; op.min = 0; op.max = 100; op.value = c.opacidad == null ? 100 : c.opacidad; op.className = 'ant-capa-op'; op.dataset.op = 'opacidad'; op.disabled = ant.soloLectura; op.title = 'Opacidad de la capa'; op.setAttribute('aria-label', 'Opacidad de la capa');
+      const subir = document.createElement('button'); subir.type = 'button'; subir.className = 'btn btn-xs btn-ghost'; subir.dataset.op = 'subir'; subir.title = 'Subir'; subir.innerHTML = '<i class="fa-solid fa-chevron-up"></i>'; subir.disabled = ant.soloLectura || i === 0;
+      const bajar = document.createElement('button'); bajar.type = 'button'; bajar.className = 'btn btn-xs btn-ghost'; bajar.dataset.op = 'bajar'; bajar.title = 'Bajar'; bajar.innerHTML = '<i class="fa-solid fa-chevron-down"></i>'; bajar.disabled = ant.soloLectura || i === ant.capas.length - 1;
+      const borrar = document.createElement('button'); borrar.type = 'button'; borrar.className = 'btn btn-xs btn-ghost'; borrar.dataset.op = 'borrar'; borrar.title = 'Eliminar capa (mueve sus anotaciones a la primera)'; borrar.innerHTML = '<i class="fa-solid fa-trash"></i>'; borrar.disabled = ant.soloLectura || ant.capas.length < 2;
+      const acc = document.createElement('span'); acc.className = 'ant-capa-acc'; acc.append(ojo, candado, subir, bajar, borrar);
+      fila.append(acc, nombre, op, meta);
+      lista.appendChild(fila);
+    });
+    const cuenta = $('#ant-capas-cuenta'); if (cuenta) cuenta.textContent = ant.capas.length;
+    const sel = $('#ant-capa-activa');
+    if (sel) {
+      sel.replaceChildren(...ant.capas.map(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre; return o; }));
+      sel.value = ant.capa;
+    }
+  }
+
+  function nuevaCapa() {
+    snapshot();
+    const id = 'c' + Date.now().toString(36);
+    ant.capas.push({ id, nombre: 'Capa ' + (ant.capas.length + 1), visible: true, bloqueada: false, opacidad: 100 });
+    ant.capa = id;
+    marcarSucio(); pintarCapas(); pintarProps();
+  }
+
   function pintarMedidas() {
     const tbody = $('#ant-medidas-tabla tbody'); if (!tbody) return;
     tbody.innerHTML = '';
     let areaTotal = 0, volTotal = 0, hay = false;
     ant.shapes.forEach(sh => {
       if (!TIPOS_MEDIDA.includes(sh.tipo)) return;
+      const capa = capaDe(sh.capa);
+      if (capa && (capa.visible === false || +capa.opacidad === 0)) return;
       hay = true;
       const tr = document.createElement('tr');
       const c = v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); };
@@ -806,7 +921,7 @@
     const m = $('#ant-medidas-vacio'); if (m && e > 0) m.textContent = 'La página está calibrada. Dibuja líneas, áreas o polígonos para medir.';
   }
   function actualizarTodo() {
-    pintarHerramientas(); pintarLista(); pintarDetalle(); pintarProps(); pintarMedidas(); pintarPaginasActiva(); actualizarEscalaInfo(); aplicar();
+    asegurarCapas(); pintarHerramientas(); pintarLista(); pintarDetalle(); pintarProps(); pintarCapas(); pintarMedidas(); pintarPaginasActiva(); actualizarEscalaInfo(); aplicar();
     $('#ant-panel-sub').textContent = 'Anotaciones';
   }
   function pintarPaginasActiva() {
@@ -824,8 +939,8 @@
     g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
     g.drawImage(hojaEl, 0, 0, c.width, c.height);
     g.save(); g.scale(c.width / t.w, c.height / t.h);
-    const cfg = { base: Math.max(.75, Math.min(3, t.w / 1200)), k: 1, mPorPx: 0, imagenes: ant.imagenes };
-    ant.shapes.forEach(sh => { if (enPagina(sh)) A.dibujar(g, sh, false, cfg); });
+    const cfg = { base: Math.max(.75, Math.min(3, t.w / 1200)), k: 1, mPorPx: 0, imagenes: ant.imagenes, capas: ant.capas };
+    shapesOrdenados(paginaActual()).forEach(({ sh }) => A.dibujar(g, sh, false, cfg));
     g.restore();
     return c.toDataURL('image/jpeg', .8);
   }
@@ -840,7 +955,7 @@
     if (!C.puedeGuardar) { aviso('No tienes permiso para guardar.'); return false; }
     const nombre = ($('#ant-g-nombre').value || ant.nombre || ant.fuenteNombre || '').trim();
     if (!nombre) { aviso('Escribe un nombre para el documento.'); return false; }
-    const cfg = { escalas: ant.cfg.escalas || {}, unidad: ant.cfg.unidad || 'm' };
+    const cfg = { escalas: ant.cfg.escalas || {}, unidad: ant.cfg.unidad || 'm', capas: ant.capas };
     const an = { version: 2, ancho: tamPagina(paginaActual()).w, alto: tamPagina(paginaActual()).h, escalas: cfg.escalas, unidad: cfg.unidad, shapes: ant.shapes };
     const fd = new FormData();
     fd.set('proyecto', C.proyecto); if (ant.docId) fd.set('id', ant.docId);
@@ -896,19 +1011,53 @@
   }
 
   // ============================================================== inserción de imágenes y firmas
-  async function subirImagen(file) {
-    if (!file) return;
+  async function subirImagen(file, tipo = 'imagen', extra = {}) {
+    if (!file) return null;
     const fd = new FormData(); fd.set('proyecto', C.proyecto); fd.append('imagen', file, file.name);
     estado('Subiendo imagen…');
     try {
       const r = await fetch(C.urls.imagen, { method: 'POST', body: fd, credentials: 'same-origin' });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || 'No se pudo subir la imagen.');
-      ant.insertadas.unshift({ archivo: d.archivo, url: d.url || ('/anotador/imagen?proyecto=' + C.proyecto + '&archivo=' + d.archivo), w: d.w, h: d.h });
-      ant.pendiente = { tipo: 'imagen', imagen: d.archivo, w: d.w, h: d.h };
-      ant.herramienta = 'imagen'; pintarHerramientas(); pintarImagenes(); cerrarPanelMovil();
-      aviso('Haz clic en la página para colocar la imagen.', 'ok'); estado('Imagen lista para colocar'); const inp = $('#ant-imagen-file'); if (inp) inp.value = '';
-    } catch (e) { aviso(e.message || 'No se pudo subir la imagen.'); }
+      const item = { archivo: d.archivo, url: d.url || ('/anotador/imagen?proyecto=' + C.proyecto + '&archivo=' + d.archivo), w: d.w, h: d.h };
+      if (tipo === 'imagen') ant.insertadas.unshift(item);
+      ant.pendiente = Object.assign({ tipo, imagen: d.archivo, w: d.w, h: d.h }, extra);
+      ant.herramienta = tipo; pintarHerramientas(); pintarImagenes(); cerrarPanelMovil();
+      aviso(tipo === 'simbolo' ? 'Haz clic en la página para colocar el símbolo.' : 'Haz clic en la página para colocar la imagen.', 'ok');
+      estado(tipo === 'simbolo' ? 'Símbolo listo para colocar' : 'Imagen lista para colocar');
+      const inp = $('#ant-imagen-file'); if (inp) inp.value = '';
+      return item;
+    } catch (e) { aviso(e.message || 'No se pudo subir la imagen.'); return null; }
+  }
+
+  /** Convierte un símbolo (incluido SVG) en PNG para copiarlo al documento del Anotador */
+  async function simboloAPng(url) {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('No se pudo leer el símbolo.');
+    const blob = await r.blob();
+    if (!/svg/i.test(blob.type)) return blob;
+    const txt = await blob.text();
+    const img = new Image();
+    await new Promise((ok, mal) => {
+      img.onload = ok; img.onerror = mal;
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(txt);
+    });
+    const w = img.naturalWidth || 512, h = img.naturalHeight || 512;
+    const lado = Math.min(1024, Math.max(w, h));
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(w * lado / Math.max(w, h)));
+    cv.height = Math.max(1, Math.round(h * lado / Math.max(w, h)));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    return await new Promise((ok, mal) => cv.toBlob(b => b ? ok(b) : mal(new Error('No se pudo convertir el símbolo.')), 'image/png'));
+  }
+  async function colocarSimbolo(sim) {
+    try {
+      estado('Preparando símbolo…');
+      const blob = await simboloAPng(sim.src);
+      const f = new File([blob], 'simbolo.png', { type: blob.type || 'image/png' });
+      const sid = sim.material_id || (sim.ref && /^s:\d+$/.test(sim.ref) ? +sim.ref.slice(2) : (Number.isFinite(+sim.id) ? +sim.id : 0));
+      await subirImagen(f, 'simbolo', { simbolo_id: sid, nombre: sim.nombre || '' });
+    } catch (e) { aviso(e.message || 'No se pudo preparar el símbolo.'); }
   }
 
   // firma: lienzo
@@ -1087,7 +1236,7 @@
   }
   function aplicarBloqueo() {
     const bloqueado = ant.soloLectura;
-    $$('[data-tool], #ant-undo, #ant-redo, #ant-borrar, #ant-prop-aplicar, #ant-guardar, #ant-firmar-btn, #ant-imagen-subir, #ant-imagen-file, #ant-firma-nueva, #ant-calibrar, #ant-medidas-csv').forEach(b => { b.disabled = bloqueado; });
+    $$('[data-tool], #ant-undo, #ant-redo, #ant-borrar, #ant-prop-aplicar, #ant-guardar, #ant-firmar-btn, #ant-imagen-subir, #ant-imagen-file, #ant-firma-nueva, #ant-calibrar, #ant-medidas-csv, #ant-estilo, #ant-opacidad, #ant-capa-activa, #ant-capa-nueva, #ant-capas-lista input, #ant-capas-lista button').forEach(b => { b.disabled = bloqueado; });
     $('#ant-finalizado').hidden = !ant.finalizado;
     $('#ant-reabrir').hidden = !(ant.finalizado && C.admin);
     document.body.classList.toggle('ant-solo-lectura', bloqueado);
@@ -1121,8 +1270,8 @@
       const g = page.canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, t.w, t.h); g.drawImage(ant.img, 0, 0, t.w, t.h);
     }
     const g = page.canvas.getContext('2d');
-    const cfg = { base: Math.max(.75, Math.min(3, page.canvas.width / 1200)), k: 1, mPorPx: ant.cfg.escalas[n] || 0, imagenes: ant.imagenes };
-    ant.shapes.forEach(sh => { if (paginaDe(sh) === n) { cargarImagenShape(sh); A.dibujar(g, sh, false, cfg); } });
+    const cfg = { base: Math.max(.75, Math.min(3, page.canvas.width / 1200)), k: 1, mPorPx: ant.cfg.escalas[n] || 0, imagenes: ant.imagenes, capas: ant.capas };
+    shapesOrdenados(n).forEach(({ sh }) => { cargarImagenShape(sh); A.dibujar(g, sh, false, cfg); });
     return page;
   }
   function slug(t) { return (t || 'documento').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 80) || 'documento'; }
@@ -1311,7 +1460,7 @@
     sel.removeAllRanges();
     if (!rects.length) return;
     const tipo = ant.herramienta === 'subrayado' || ant.herramienta === 'tachado' ? ant.herramienta : 'resaltado_texto';
-    const sh = { tipo, color: tipo === 'resaltado_texto' ? '#facc15' : ant.color, grosor: 2, relleno: false, texto, autor: C.usuario || '', creado: fechaISO(), estado: 'abierta', notas: [], grupo: 0, pagina: paginaActual(), rects, opacidad: .32 };
+    const sh = { tipo, color: tipo === 'resaltado_texto' ? '#facc15' : ant.color, grosor: 2, estilo: 'solida', relleno: false, texto, autor: C.usuario || '', creado: fechaISO(), estado: 'abierta', notas: [], grupo: 0, pagina: paginaActual(), rects, opacidad: .32, capa: ant.capa };
     snapshot(); ant.shapes.push(sh); ant.sel = ant.shapes.length - 1; ant.multi = [ant.sel];
     marcarSucio(); redibujar(); pintarLista(); pintarDetalle();
   }
@@ -1338,19 +1487,71 @@
     $$('[data-tool]').forEach(b => b.addEventListener('click', () => {
       ant.herramienta = b.dataset.tool;
       ant.polygon = null;
-      if (['imagen', 'estampa', 'firma'].includes(ant.herramienta) && !ant.pendiente) {
+      if (['imagen', 'simbolo', 'estampa', 'firma'].includes(ant.herramienta) && !ant.pendiente) {
         panelTab('insertar');
         const c = $('#ant-cuerpo');
         if (c && window.matchMedia && matchMedia('(max-width: 80rem)').matches) c.classList.add('ant-movil-panel');
-        aviso({ imagen: 'Sube o elige una imagen para insertarla.', firma: 'Crea o elige una firma para insertarla.', estampa: 'Elige una estampa para insertarla.' }[ant.herramienta], 'ok');
+        aviso({ imagen: 'Sube o elige una imagen para insertarla.', simbolo: 'Elige un símbolo de la biblioteca.', firma: 'Crea o elige una firma para insertarla.', estampa: 'Elige una estampa para insertarla.' }[ant.herramienta], 'ok');
       }
       if (['resaltado_texto', 'subrayado', 'tachado'].includes(ant.herramienta)) montarTextLayer(); else limpiarTextLayer();
       pintarHerramientas(); redibujar();
     }));
     $('#ant-color') && $('#ant-color').addEventListener('input', e => { ant.color = e.target.value; const sh = ant.shapes[ant.sel]; if (sh && !ant.soloLectura) { sh.color = ant.color; marcarSucio(); redibujar(); } });
-    $('#ant-grosor') && $('#ant-grosor').addEventListener('change', e => { ant.grosor = parseFloat(e.target.value) || 5; const sh = ant.shapes[ant.sel]; if (sh && !ant.soloLectura) { sh.grosor = ant.grosor; marcarSucio(); redibujar(); } });
+    const cambiarGrosor = e => {
+      ant.grosor = parseFloat(e.target.value) || 5;
+      const v = $('#ant-grosor-val'); if (v) v.textContent = ant.grosor;
+      const sh = ant.shapes[ant.sel];
+      if (sh && !ant.soloLectura) { sh.grosor = ant.grosor; marcarSucio(); redibujar(); }
+    };
+    $('#ant-grosor') && $('#ant-grosor').addEventListener('input', cambiarGrosor);
+    $('#ant-grosor') && $('#ant-grosor').addEventListener('change', cambiarGrosor);
+    $('#ant-estilo') && $('#ant-estilo').addEventListener('change', e => {
+      ant.estilo = e.target.value;
+      const sh = ant.shapes[ant.sel];
+      if (sh && !ant.soloLectura) { sh.estilo = ant.estilo; marcarSucio(); redibujar(); }
+    });
     $('#ant-relleno') && $('#ant-relleno').addEventListener('change', e => { ant.relleno = e.target.checked; });
-    $('#ant-opacidad') && $('#ant-opacidad').addEventListener('input', e => { ant.opacidad = (parseInt(e.target.value, 10) || 100) / 100; });
+    $('#ant-opacidad') && $('#ant-opacidad').addEventListener('input', e => {
+      ant.opacidad = (parseInt(e.target.value, 10) || 100) / 100;
+      const v = $('#ant-opacidad-val'); if (v) v.textContent = Math.round(ant.opacidad * 100) + '%';
+      const sh = ant.shapes[ant.sel];
+      if (sh && !ant.soloLectura) { sh.opacidad = ant.opacidad; marcarSucio(); redibujar(); }
+    });
+    $('#ant-capa-activa') && $('#ant-capa-activa').addEventListener('change', e => { ant.capa = e.target.value; pintarCapas(); });
+    $('#ant-capa-nueva') && $('#ant-capa-nueva').addEventListener('click', nuevaCapa);
+    $('#ant-capas-lista') && $('#ant-capas-lista').addEventListener('click', e => {
+      const fila = e.target.closest('.ant-capa'); if (!fila) return;
+      const op = e.target.closest('[data-op]')?.dataset.op;
+      const id = fila.dataset.id, c = capaDe(id); if (!c) return;
+      if (!op) { ant.capa = id; pintarCapas(); return; }
+      if (ant.soloLectura) return;
+      if (op === 'ver') { c.visible = c.visible === false; }
+      else if (op === 'bloq') { c.bloqueada = !c.bloqueada; }
+      else if (op === 'subir' || op === 'bajar') {
+        const i = ant.capas.indexOf(c), j = op === 'subir' ? i - 1 : i + 1;
+        if (j >= 0 && j < ant.capas.length) { const t = ant.capas[i]; ant.capas[i] = ant.capas[j]; ant.capas[j] = t; }
+      } else if (op === 'borrar') {
+        if (ant.capas.length < 2) return;
+        const primera = ant.capas.find(x => x.id !== id);
+        ant.shapes.forEach(sh => { if (sh.capa === id) sh.capa = primera.id; });
+        ant.capas = ant.capas.filter(x => x.id !== id);
+        if (ant.capa === id) ant.capa = primera.id;
+      }
+      marcarSucio(); pintarCapas(); redibujar(); pintarLista(); pintarMedidas();
+    });
+    $('#ant-capas-lista') && $('#ant-capas-lista').addEventListener('input', e => {
+      if (ant.soloLectura) return;
+      const fila = e.target.closest('.ant-capa'); if (!fila) return;
+      const c = capaDe(fila.dataset.id); if (!c) return;
+      if (e.target.dataset.op === 'nombre') c.nombre = e.target.value.slice(0, 60);
+      else if (e.target.dataset.op === 'opacidad') c.opacidad = parseInt(e.target.value, 10) || 0;
+      else return;
+      marcarSucio(); redibujar();
+    });
+    $('#ant-capas-lista') && $('#ant-capas-lista').addEventListener('change', e => {
+      if (e.target.dataset.op === 'nombre') { pintarCapas(); marcarSucio(); }
+    });
+    $('#ant-sim-buscar') && $('#ant-sim-buscar').addEventListener('input', pintarSimbolos);
     $('#ant-undo') && $('#ant-undo').addEventListener('click', deshacer);
     $('#ant-redo') && $('#ant-redo').addEventListener('click', rehacer);
     $('#ant-borrar') && $('#ant-borrar').addEventListener('click', borrarSeleccion);
@@ -1464,11 +1665,14 @@
       sh.texto = $('#ant-prop-texto').value.trim();
       sh.color = $('#ant-prop-color').value;
       sh.grosor = parseFloat($('#ant-prop-grosor').value) || 5;
+      sh.estilo = $('#ant-prop-estilo').value || 'solida';
+      sh.opacidad = (parseInt($('#ant-prop-opacidad').value, 10) || 100) / 100;
+      sh.capa = $('#ant-prop-capa').value || sh.capa;
       sh.relleno = $('#ant-prop-relleno').checked;
       if (sh.tipo === 'volumen') sh.profundidad = Math.max(0, parseFloat($('#ant-prop-profundidad').value) || 0);
       if (sh.tipo === 'poligono') sh.etiqueta = $('#ant-prop-etiqueta').value;
       if (sh.tipo === 'firma') { sh.nombre = $('#ant-prop-nombre').value.trim(); sh.cargo = $('#ant-prop-cargo').value.trim(); }
-      if (['imagen', 'estampa', 'firma'].includes(sh.tipo)) { sh.rot = parseFloat($('#ant-prop-rot').value) || 0; sh.opacidad = (parseInt($('#ant-prop-opacidad').value, 10) || 100) / 100; }
+      if (['imagen', 'simbolo', 'estampa', 'firma'].includes(sh.tipo)) sh.rot = parseFloat($('#ant-prop-rot').value) || 0;
       marcarSucio(); redibujar(); pintarLista(); pintarDetalle(); pintarMedidas(); aviso('Propiedades aplicadas.', 'ok');
     });
     // atajos
@@ -1482,10 +1686,11 @@
       if (ctrl && e.key.toLowerCase() === 'c' && ant.sel >= 0) { ant.portapapeles = (ant.multi.length ? ant.multi : [ant.sel]).map(i => clon(ant.shapes[i])).filter(Boolean); return; }
       if (ctrl && e.key.toLowerCase() === 'v' && ant.portapapeles.length) { e.preventDefault(); pegar(); return; }
       if (ctrl && e.key.toLowerCase() === 'd' && ant.sel >= 0) { e.preventDefault(); duplicarSeleccion(); return; }
+      if (e.key === 'Backspace' && ant.polygon) { e.preventDefault(); ant.polygon.pts.pop(); if (!ant.polygon.pts.length) ant.polygon = null; redibujar(); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && ant.sel >= 0) { e.preventDefault(); borrarSeleccion(); return; }
       if (e.key === 'Escape') { ant.sel = -1; ant.multi = []; ant.polygon = null; ant.herramienta = 'seleccion'; limpiarTextLayer(); pintarHerramientas(); redibujar(); pintarLista(); pintarDetalle(); pintarProps(); return; }
       if (e.key === 'Enter' && ant.polygon) { e.preventDefault(); cerrarPoligono(); return; }
-      const k = e.key.toLowerCase(), mapa = { v: 'seleccion', h: 'mano', g: 'globo', t: 'texto', f: 'flecha', l: 'linea', r: 'rect', e: 'elipse', n: 'nube', m: 'medir', a: 'area', p: 'poligono', o: 'volumen' };
+      const k = e.key.toLowerCase(), mapa = { v: 'seleccion', h: 'mano', g: 'globo', t: 'texto', f: 'flecha', l: 'linea', y: 'polilinea', r: 'rect', e: 'elipse', n: 'nube', m: 'medir', a: 'area', p: 'poligono', o: 'volumen' };
       if (mapa[k]) { ant.herramienta = mapa[k]; ant.polygon = null; pintarHerramientas(); redibujar(); }
     });
     window.addEventListener('beforeunload', e => { if (ant.dirty && (ant.pdf || ant.img)) { e.preventDefault(); e.returnValue = ''; } });
@@ -1502,6 +1707,8 @@
 
   function borrarSeleccion() {
     if (ant.sel < 0 || ant.soloLectura) return;
+    const bloqueada = (ant.multi.length ? ant.multi : [ant.sel]).some(i => { const c = capaDe(ant.shapes[i]?.capa); return c && (c.bloqueada || c.visible === false); });
+    if (bloqueada) { aviso('La capa de la selección está bloqueada u oculta.'); return; }
     snapshot();
     const ix = (ant.multi.length ? ant.multi : [ant.sel]).slice().sort((a, b) => b - a);
     ix.forEach(i => ant.shapes.splice(i, 1));
@@ -1516,6 +1723,7 @@
   }
   function duplicarSeleccion() {
     const ix = ant.multi.length ? ant.multi.slice() : [ant.sel];
+    if (ix.some(i => { const c = capaDe(ant.shapes[i]?.capa); return c && (c.bloqueada || c.visible === false); })) { aviso('La capa de la selección está bloqueada u oculta.'); return; }
     const ors = ix.map(i => clon(ant.shapes[i])).filter(Boolean);
     snapshot();
     ors.forEach(sh => { A.mover(sh, 18, 18); sh.creado = fechaISO(); sh.autor = C.usuario || ''; ant.shapes.push(sh); });
@@ -1529,7 +1737,9 @@
   // ============================================================== arranque
   async function iniciar() {
     bind();
+    asegurarCapas();
     pintarHerramientas();
+    pintarCapas();
     if (C.abrir && C.abrir.id) {
       try { await abrirGuardado(C.abrir); construirPaginas(); }
       catch (e) { aviso(e.message || 'No se pudo abrir el documento.'); }

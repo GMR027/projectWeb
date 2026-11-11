@@ -22,9 +22,10 @@ class Anotador
     public const FUENTES_PROYECTO = ['archivo', 'vplan', 'editor', 'redactor'];
 
     public const HERRAMIENTAS = [
-        'globo', 'texto', 'resaltador', 'resaltado', 'rect', 'elipse', 'flecha', 'linea', 'mano', 'nube',
-        'medir', 'area', 'poligono', 'volumen', 'imagen', 'estampa', 'firma', 'resaltado_texto', 'subrayado', 'tachado',
+        'globo', 'texto', 'resaltador', 'resaltado', 'rect', 'elipse', 'flecha', 'linea', 'polilinea', 'mano', 'nube',
+        'medir', 'area', 'poligono', 'volumen', 'imagen', 'simbolo', 'estampa', 'firma', 'resaltado_texto', 'subrayado', 'tachado',
     ];
+    public const ESTILOS = ['solida', 'punteada', 'guiones', 'guion_punto'];
 
     /** Catálogo de fuentes del proyecto (se reutiliza el del Comparador: Archivo, vPlan, Editor y Redactor) */
     public static function fuentes(int $pid): array
@@ -391,7 +392,25 @@ class Anotador
             if ($v > 0) $escalas[$p] = max(1e-9, min(1e6, $v));
         }
         $unidad = mb_substr(trim((string)($d['unidad'] ?? 'm')), 0, 12) ?: 'm';
-        return ['escalas' => $escalas, 'unidad' => $unidad];
+        $capas = [];
+        $idsCapas = [];
+        foreach ((array)($d['capas'] ?? $d['layers'] ?? []) as $i => $c) {
+            if (!is_array($c)) continue;
+            $id = mb_substr(trim((string)($c['id'] ?? '')), 0, 40);
+            if ($id === '' || isset($idsCapas[$id])) $id = 'c' . ($i + 1);
+            while (isset($idsCapas[$id])) $id .= 'x';
+            $idsCapas[$id] = true;
+            $capas[] = [
+                'id' => $id,
+                'nombre' => mb_substr(trim((string)($c['nombre'] ?? $c['name'] ?? '')), 0, 60) ?: 'Capa ' . ($i + 1),
+                'visible' => !isset($c['visible']) || !empty($c['visible']),
+                'bloqueada' => !empty($c['bloqueada'] ?? $c['locked'] ?? false),
+                'opacidad' => max(0, min(100, (int)($c['opacidad'] ?? 100))),
+            ];
+            if (count($capas) >= 20) break;
+        }
+        if (!$capas) $capas = [['id' => 'c1', 'nombre' => 'Anotaciones', 'visible' => true, 'bloqueada' => false, 'opacidad' => 100]];
+        return ['escalas' => $escalas, 'unidad' => $unidad, 'capas' => $capas];
     }
 
     /**
@@ -418,6 +437,9 @@ class Anotador
             $base = [
                 'tipo' => $tipo, 'color' => $color,
                 'grosor' => max(1, min(80, (float)($s['grosor'] ?? 5))),
+                'opacidad' => max(.05, min(1, (float)($s['opacidad'] ?? 1))),
+                'estilo' => in_array(($s['estilo'] ?? 'solida'), self::ESTILOS, true) ? $s['estilo'] : 'solida',
+                'capa' => mb_substr(trim((string)($s['capa'] ?? $s['layer'] ?? '')), 0, 40),
                 'relleno' => !empty($s['relleno']),
                 'texto' => mb_substr(trim((string)($s['texto'] ?? '')), 0, 600),
                 'autor' => mb_substr(trim((string)($s['autor'] ?? '')), 0, 100),
@@ -469,7 +491,13 @@ class Anotador
                     $base['profundidad'] = $n($s['profundidad'] ?? null, 0, 10000, 0);
                     $base['etiqueta'] = ($s['etiqueta'] ?? '') === 'perimetro' ? 'perimetro' : 'area';
                     break;
-                case 'imagen': case 'estampa': case 'firma':
+                case 'polilinea':
+                    $p = $pts($s['pts'] ?? []);
+                    if (count($p) < 2) continue 2;
+                    $base['pts'] = $p;
+                    $base['cerrado'] = false;
+                    break;
+                case 'imagen': case 'simbolo': case 'estampa': case 'firma':
                     $base += [
                         'x' => $n($s['x'] ?? null, -200000, 200000), 'y' => $n($s['y'] ?? null, -200000, 200000),
                         'w' => $n($s['w'] ?? null, 1, 200000, 200), 'h' => $n($s['h'] ?? null, 1, 200000, 200),
@@ -477,6 +505,10 @@ class Anotador
                     ];
                     $img = basename((string)($s['imagen'] ?? $s['archivo'] ?? ''));
                     if ($img !== '' && preg_match('/^[a-f0-9]{32}\.(?:png|jpg|jpeg|webp|gif)$/i', $img)) $base['imagen'] = strtolower($img);
+                    if ($tipo === 'simbolo') {
+                        $base['simbolo_id'] = max(0, (int)($s['simbolo_id'] ?? 0));
+                        $base['nombre'] = mb_substr(trim((string)($s['nombre'] ?? '')), 0, 150);
+                    }
                     if ($tipo === 'estampa') $base['estampa_id'] = max(0, (int)($s['estampa_id'] ?? 0));
                     if ($tipo === 'firma') {
                         $base['nombre'] = mb_substr(trim((string)($s['nombre'] ?? '')), 0, 150);

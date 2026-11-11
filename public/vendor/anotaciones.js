@@ -10,9 +10,9 @@
 (function () {
   'use strict';
 
-  const VACIAS = ['rect', 'elipse', 'nube', 'resaltado', 'area', 'poligono', 'volumen'];
-  const TIPOS = ['seleccion', 'globo', 'texto', 'resaltador', 'resaltado', 'flecha', 'linea', 'rect', 'elipse', 'nube',
-    'medir', 'area', 'poligono', 'volumen', 'imagen', 'estampa', 'firma', 'resaltado_texto', 'subrayado', 'tachado', 'mano'];
+  const VACIAS = ['rect', 'elipse', 'nube', 'resaltado', 'area', 'poligono', 'volumen', 'polilinea'];
+  const TIPOS = ['seleccion', 'globo', 'texto', 'resaltador', 'resaltado', 'flecha', 'linea', 'polilinea', 'rect', 'elipse', 'nube',
+    'medir', 'area', 'poligono', 'volumen', 'imagen', 'simbolo', 'estampa', 'firma', 'resaltado_texto', 'subrayado', 'tachado', 'mano'];
 
   // ---------- utilidades de configuración ----------
   const base = cfg => Math.max(0.1, +(cfg && cfg.base) || 1);
@@ -22,6 +22,17 @@
 
   const vacia = sh => VACIAS.includes(sh && sh.tipo);
   const clone = o => JSON.parse(JSON.stringify(o));
+  const capaDe = (sh, cfg) => (sh && sh.capa && cfg && cfg.capas ? (cfg.capas.find(c => c.id === sh.capa) || null) : null);
+  const alfa = (sh, cfg) => {
+    const c = capaDe(sh, cfg);
+    return Math.max(0, Math.min(1, (sh.opacidad == null ? 1 : +sh.opacidad) * (c && c.opacidad != null ? +c.opacidad / 100 : 1)));
+  };
+  function estiloLinea(g, sh, e) {
+    const gs = Math.max(1, (sh.grosor || 5) * e);
+    const map = { solida: [], punteada: [gs * .2, gs * .8], guiones: [gs * 2.5, gs * 1.5], guion_punto: [gs * 3, gs, gs * .5, gs] };
+    g.setLineDash(map[sh.estilo] || []);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+  }
 
   // ---------- formato de medidas ----------
   function fmtLong(px, cfg) {
@@ -134,7 +145,7 @@
   function caja(sh, g, cfg) {
     g = g || lienzoMedicion();
     if (vacia(sh)) {
-      if ((sh.tipo === 'poligono' || sh.tipo === 'volumen') && sh.pts && sh.pts.length) {
+      if ((sh.tipo === 'poligono' || sh.tipo === 'volumen' || sh.tipo === 'polilinea') && sh.pts && sh.pts.length) {
         const xs = sh.pts.map(p => p[0]), ys = sh.pts.map(p => p[1]);
         return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(1, Math.max(...xs) - Math.min(...xs)), h: Math.max(1, Math.max(...ys) - Math.min(...ys)) };
       }
@@ -152,7 +163,7 @@
       if (sh.texto) { const c = cajaTextoGlobo(sh, g, cfg); b = { x: Math.min(b.x, c.x), y: Math.min(b.y, c.y), w: Math.max(b.x + b.w, c.x + c.w) - Math.min(b.x, c.x), h: Math.max(b.y + b.h, c.y + c.h) - Math.min(b.y, c.y) }; }
       return b;
     }
-    if (sh.tipo === 'imagen' || sh.tipo === 'estampa' || sh.tipo === 'firma') {
+    if (sh.tipo === 'imagen' || sh.tipo === 'simbolo' || sh.tipo === 'estampa' || sh.tipo === 'firma') {
       const extra = sh.tipo === 'firma' && (sh.nombre || sh.cargo || sh.fecha) ? 26 * base(cfg) : 0;
       return { x: sh.x, y: sh.y, w: sh.w, h: sh.h + extra };
     }
@@ -201,8 +212,10 @@
     const src = sh.imagen || sh.archivo || '';
     const img = src && cfg && cfg.imagenes ? cfg.imagenes[src] : null;
     if (!img) return;
+    const alImg = alfa(sh, cfg);
+    if (alImg <= .001) return;
     g.save();
-    if (sh.opacidad != null) g.globalAlpha = Math.max(0.05, Math.min(1, +sh.opacidad));
+    g.globalAlpha = alImg;
     const rot = ((+sh.rot || 0) * Math.PI) / 180;
     if (rot) {
       g.translate(sh.x + sh.w / 2, sh.y + sh.h / 2); g.rotate(rot); g.translate(-(sh.x + sh.w / 2), -(sh.y + sh.h / 2));
@@ -222,28 +235,33 @@
   }
 
   function dibujar(g, sh, seleccionada, cfg) {
+    const capa = capaDe(sh, cfg);
+    if (capa && capa.visible === false) return;
+    const al = alfa(sh, cfg);
+    if (al <= .001) return;
     const e = base(cfg), k = zoom(cfg), col = sh.color || '#e11d48', grosor = Math.max(1, (sh.grosor || 5) * e);
     g.save();
-    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = grosor; g.lineCap = 'round'; g.lineJoin = 'round';
-    if ((sh.estado || 'abierta') === 'resuelta' && (sh.tipo === 'globo' || sh.tipo === 'texto')) g.globalAlpha = 0.78;
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = grosor; g.globalAlpha = al;
+    estiloLinea(g, sh, e);
+    if ((sh.estado || 'abierta') === 'resuelta' && (sh.tipo === 'globo' || sh.tipo === 'texto')) g.globalAlpha = al * 0.78;
     switch (sh.tipo) {
       case 'rect':
       case 'elipse':
         g.beginPath();
         if (sh.tipo === 'rect') g.rect(sh.x, sh.y, sh.w, sh.h); else g.ellipse(sh.x + sh.w / 2, sh.y + sh.h / 2, Math.abs(sh.w / 2), Math.abs(sh.h / 2), 0, 0, Math.PI * 2);
-        if (sh.relleno) { g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; }
+        if (sh.relleno) { g.globalAlpha = al * .22; g.fill(); g.globalAlpha = al; }
         g.stroke(); break;
       case 'resaltado':
-        g.globalAlpha = .32; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = 1; break;
+        g.globalAlpha = al * .32; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = al; break;
       case 'area':
-        g.globalAlpha = .14; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = 1; g.strokeRect(sh.x, sh.y, sh.w, sh.h);
+        g.globalAlpha = al * .14; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = al; g.strokeRect(sh.x, sh.y, sh.w, sh.h);
         etiqueta(g, sh.x + sh.w / 2, sh.y + sh.h / 2, fmtArea(Math.abs(sh.w * sh.h), cfg), col, cfg); break;
       case 'poligono':
       case 'volumen': {
         const pts = sh.pts || [];
         if (pts.length < 2) break;
         if (trazoPoligono(g, pts, sh.tipo === 'poligono' || sh.cerrado !== false)) {
-          if (sh.relleno !== false) { g.globalAlpha = .14; g.fill(); g.globalAlpha = 1; }
+          if (sh.relleno !== false) { g.globalAlpha = al * .14; g.fill(); g.globalAlpha = al; }
           g.stroke();
         }
         if (sh.tipo === 'poligono' && pts.length > 2 && sh.cerrado !== false) {
@@ -259,7 +277,12 @@
         }
         break;
       }
-      case 'nube': nube(g, sh.x, sh.y, sh.w, sh.h, Math.max(8 * e, Math.min(sh.w, sh.h) / 8)); if (sh.relleno) { g.globalAlpha = .12; g.fill(); g.globalAlpha = 1; } g.stroke(); break;
+      case 'polilinea': {
+        const pts = sh.pts || [];
+        if (pts.length >= 2 && trazoPoligono(g, pts, false)) g.stroke();
+        break;
+      }
+      case 'nube': nube(g, sh.x, sh.y, sh.w, sh.h, Math.max(8 * e, Math.min(sh.w, sh.h) / 8)); if (sh.relleno) { g.globalAlpha = al * .12; g.fill(); g.globalAlpha = al; } g.stroke(); break;
       case 'flecha': case 'linea':
         g.beginPath(); g.moveTo(sh.x1, sh.y1); g.lineTo(sh.x2, sh.y2); g.stroke();
         if (sh.tipo === 'flecha') {
@@ -278,13 +301,13 @@
       }
       case 'mano': case 'resaltador':
         if (!sh.pts || sh.pts.length < 2) break;
-        g.globalAlpha = sh.tipo === 'resaltador' ? .36 : 1;
+        g.globalAlpha = sh.tipo === 'resaltador' ? al * .36 : al;
         g.lineWidth = sh.tipo === 'resaltador' ? grosor * 2.6 : grosor;
-        g.beginPath(); g.moveTo(sh.pts[0][0], sh.pts[0][1]); sh.pts.slice(1).forEach(p => g.lineTo(p[0], p[1])); g.stroke(); g.globalAlpha = 1; break;
+        g.beginPath(); g.moveTo(sh.pts[0][0], sh.pts[0][1]); sh.pts.slice(1).forEach(p => g.lineTo(p[0], p[1])); g.stroke(); g.globalAlpha = al; break;
       case 'texto': {
         const m = medidaTexto(sh, g, cfg); g.font = '600 ' + m.f + 'px Inter, system-ui, sans-serif'; g.textBaseline = 'top';
         m.lineas.forEach((l, i) => g.fillText(l, sh.x, sh.y + i * m.f * 1.28));
-        if ((sh.estado || 'abierta') === 'resuelta') { g.globalAlpha = 1; g.fillStyle = '#16a34a'; g.font = '700 ' + Math.max(10, 12 * e) + 'px Inter, sans-serif'; g.fillText('✓ resuelta', sh.x, sh.y - 18 * e); }
+        if ((sh.estado || 'abierta') === 'resuelta') { g.globalAlpha = al; g.fillStyle = '#16a34a'; g.font = '700 ' + Math.max(10, 12 * e) + 'px Inter, sans-serif'; g.fillText('✓ resuelta', sh.x, sh.y - 18 * e); }
         break;
       }
       case 'globo': {
@@ -302,7 +325,7 @@
           m.lineas.forEach((l, i) => g.fillText(l, c.x + 9 * e, c.y + 6 * e + i * m.f * 1.28));
         }
         if ((sh.estado || 'abierta') === 'resuelta') {
-          g.globalAlpha = 1; g.beginPath(); g.arc(sh.x + r * .78, sh.y - r * .78, r * .38, 0, Math.PI * 2); g.fillStyle = '#16a34a'; g.fill();
+          g.globalAlpha = al; g.beginPath(); g.arc(sh.x + r * .78, sh.y - r * .78, r * .38, 0, Math.PI * 2); g.fillStyle = '#16a34a'; g.fill();
           g.strokeStyle = '#fff'; g.lineWidth = Math.max(1.5, 2 * e); g.stroke();
           g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
           g.font = '700 ' + Math.round(r * .55) + 'px Inter, sans-serif'; g.fillText('✓', sh.x + r * .78, sh.y - r * .78);
@@ -316,8 +339,9 @@
         const rs = sh.rects || [];
         rs.forEach(r => {
           if (sh.tipo === 'resaltado_texto') {
-            g.globalAlpha = Math.max(.12, Math.min(.6, sh.opacidad != null ? +sh.opacidad : .32));
-            g.fillStyle = col; g.fillRect(r[0], r[1], r[2], r[3]); g.globalAlpha = 1;
+            const capaT = capaDe(sh, cfg);
+            g.globalAlpha = Math.min(1, Math.max(.12, Math.min(.6, sh.opacidad != null ? +sh.opacidad : .32)) * (capaT && capaT.opacidad != null ? capaT.opacidad / 100 : 1));
+            g.fillStyle = col; g.fillRect(r[0], r[1], r[2], r[3]); g.globalAlpha = al;
           } else {
             const y = sh.tipo === 'subrayado' ? r[1] + r[3] - Math.max(1, 1.5 * e) : r[1] + r[3] / 2;
             g.beginPath(); g.moveTo(r[0], y); g.lineTo(r[0] + r[2], y); g.lineWidth = Math.max(1, 1.6 * e); g.stroke();
@@ -326,11 +350,12 @@
         break;
       }
       case 'imagen':
+      case 'simbolo':
       case 'estampa':
       case 'firma':
         dibujarImagen(g, sh, cfg);
         if ((sh.tipo === 'estampa' || sh.tipo === 'firma') && sh.bloqueada) {
-          g.globalAlpha = 1; g.fillStyle = '#16a34a'; g.font = '700 ' + Math.max(9, 10 * e) + 'px Inter, sans-serif';
+          g.globalAlpha = al; g.fillStyle = '#16a34a'; g.font = '700 ' + Math.max(9, 10 * e) + 'px Inter, sans-serif';
           g.fillText('✓ firmado', sh.x, sh.y - 6 * e);
         }
         break;
@@ -348,7 +373,7 @@
   }
   function seleccion(g, sh, cfg) {
     const b = caja(sh, null, cfg), p = pxPantalla(cfg);
-    g.save(); g.strokeStyle = '#2563eb'; g.lineWidth = Math.max(1, 1.4 * p); g.setLineDash([6 * p, 4 * p]); g.strokeRect(b.x, b.y, b.w, b.h); g.setLineDash([]);
+    g.save(); g.globalAlpha = 1; g.strokeStyle = '#2563eb'; g.lineWidth = Math.max(1, 1.4 * p); g.setLineDash([6 * p, 4 * p]); g.strokeRect(b.x, b.y, b.w, b.h); g.setLineDash([]);
     handles(sh, cfg).forEach(h => { g.fillStyle = '#fff'; g.strokeStyle = '#2563eb'; g.lineWidth = 1.6 * p; g.fillRect(h.x - 4 * p, h.y - 4 * p, 8 * p, 8 * p); g.strokeRect(h.x - 4 * p, h.y - 4 * p, 8 * p, 8 * p); });
     g.restore();
   }
@@ -375,11 +400,11 @@
       for (let i = 1; i < sh.pts.length; i++) if (distSeg(p, { x: sh.pts[i - 1][0], y: sh.pts[i - 1][1] }, { x: sh.pts[i][0], y: sh.pts[i][1] }) <= Math.max(10 * pxPantalla(cfg), (sh.grosor || 5) * e)) return true;
       return false;
     }
-    if (sh.tipo === 'poligono' || sh.tipo === 'volumen') {
+    if (sh.tipo === 'poligono' || sh.tipo === 'volumen' || sh.tipo === 'polilinea') {
       const pts = sh.pts || [];
-      if (pts.length > 2 && sh.cerrado !== false && puntoEnPoligono(pts, p)) return true;
+      if (sh.tipo !== 'polilinea' && pts.length > 2 && sh.cerrado !== false && puntoEnPoligono(pts, p)) return true;
       for (let i = 1; i < pts.length; i++) if (distSeg(p, { x: pts[i - 1][0], y: pts[i - 1][1] }, { x: pts[i][0], y: pts[i][1] }) <= t) return true;
-      if (pts.length > 2 && distSeg(p, { x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] }, { x: pts[0][0], y: pts[0][1] }) <= t) return true;
+      if (sh.tipo !== 'polilinea' && pts.length > 2 && distSeg(p, { x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] }, { x: pts[0][0], y: pts[0][1] }) <= t) return true;
       return false;
     }
     const m = 4 * pxPantalla(cfg);
@@ -388,7 +413,7 @@
 
   function mover(sh, dx, dy) {
     if (sh.tipo === 'mano' || sh.tipo === 'resaltador') { sh.pts = sh.pts.map(p => [p[0] + dx, p[1] + dy]); }
-    else if (sh.tipo === 'poligono' || sh.tipo === 'volumen') { sh.pts = (sh.pts || []).map(p => [p[0] + dx, p[1] + dy]); }
+    else if (sh.tipo === 'poligono' || sh.tipo === 'volumen' || sh.tipo === 'polilinea') { sh.pts = (sh.pts || []).map(p => [p[0] + dx, p[1] + dy]); }
     else if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') { sh.x1 += dx; sh.y1 += dy; sh.x2 += dx; sh.y2 += dy; }
     else if (sh.tipo === 'globo') { sh.x += dx; sh.y += dy; sh.ax += dx; sh.ay += dy; }
     else if (sh.tipo === 'resaltado_texto' || sh.tipo === 'subrayado' || sh.tipo === 'tachado') { sh.rects = (sh.rects || []).map(r => [r[0] + dx, r[1] + dy, r[2], r[3]]); }
@@ -398,7 +423,7 @@
     const e = base(cfg), avg = (Math.abs(sx) + Math.abs(sy)) / 2;
     const X = v => ox + (v - ox) * sx, Y = v => oy + (v - oy) * sy;
     if (sh.tipo === 'mano' || sh.tipo === 'resaltador') sh.pts = sh.pts.map(p => [X(p[0]), Y(p[1])]);
-    else if (sh.tipo === 'poligono' || sh.tipo === 'volumen') sh.pts = (sh.pts || []).map(p => [X(p[0]), Y(p[1])]);
+    else if (sh.tipo === 'poligono' || sh.tipo === 'volumen' || sh.tipo === 'polilinea') sh.pts = (sh.pts || []).map(p => [X(p[0]), Y(p[1])]);
     else if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') { sh.x1 = X(sh.x1); sh.y1 = Y(sh.y1); sh.x2 = X(sh.x2); sh.y2 = Y(sh.y2); }
     else if (sh.tipo === 'globo') { sh.x = X(sh.x); sh.y = Y(sh.y); sh.ax = X(sh.ax); sh.ay = Y(sh.ay); sh.radio = Math.max(8, (sh.radio || 28) * avg); }
     else if (sh.tipo === 'resaltado_texto' || sh.tipo === 'subrayado' || sh.tipo === 'tachado') {
@@ -416,7 +441,9 @@
       case 'area': return 'Área ' + fmtArea(Math.abs(sh.w * sh.h), cfg);
       case 'poligono': return 'Polígono ' + fmtArea(areaPoligono(sh.pts || []), cfg) + (sh.etiqueta === 'perimetro' ? ' · ' + fmtLong(perimetroPoligono(sh.pts || []), cfg) : '');
       case 'volumen': return 'Volumen ' + (sh.profundidad ? sh.profundidad.toFixed(2) + ' m · ' : '') + fmtVolumen(areaPoligono(sh.pts || []), sh.profundidad || 0, cfg);
+      case 'polilinea': return 'Polilínea (' + ((sh.pts || []).length) + ' vértices)';
       case 'imagen': return 'Imagen';
+      case 'simbolo': return 'Símbolo' + (sh.nombre ? ' · ' + sh.nombre : '');
       case 'estampa': return 'Estampa';
       case 'firma': return 'Firma' + (sh.nombre ? ' · ' + sh.nombre : '');
       case 'resaltado_texto': return 'Texto resaltado';

@@ -245,6 +245,7 @@ $router->post('/api/lookahead/limitacion', [LookaheadController::class, 'guardar
 
 // ========== MATERIALES / SUBMITTALS / MSR ==========
 $router->get('/materiales', [MaterialController::class, 'index']);
+$router->get('/materiales/exportar', [MaterialController::class, 'exportar']);
 $router->get('/materiales/crear', [MaterialController::class, 'crear']);
 $router->post('/materiales/crear', [MaterialController::class, 'crear']);
 $router->get('/materiales/editar', [MaterialController::class, 'editar']);
@@ -876,10 +877,12 @@ $router->get('/anotador/firma-ver', [AnotadorController::class, 'firmaVer']);
 $router->post('/anotador/firma', [AnotadorController::class, 'firma']);
 $router->post('/anotador/firmar', [AnotadorController::class, 'firmar']);
 $router->post('/anotador/reabrir', [AnotadorController::class, 'reabrir']);
+$router->get('/anotador/simbolos', [AnotadorController::class, 'simbolos']);
 $router->get('/anotador/estampas', [AnotadorController::class, 'estampas']);
 $router->get('/anotador/estampa', [AnotadorController::class, 'estampa']);
 $router->get('/traductor', [TraductorController::class, 'index']);
 $router->post('/api/traductor/texto', [TraductorController::class, 'texto']);
+$router->post('/api/traductor/lista', [TraductorController::class, 'lista']);
 $router->post('/api/traductor/documento', [TraductorController::class, 'documento']);
 $router->post('/api/traductor/exportar', [TraductorController::class, 'exportar']);
 $router->get('/view360', [View360Controller::class, 'index']);

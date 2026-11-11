@@ -24,6 +24,7 @@
         <button type="button" class="btn btn-sm btn-primary" data-pestana="texto" role="tab" aria-selected="true"><i class="fa-solid fa-keyboard"></i> Texto</button>
         <?php if ($puedeDocumentos): ?>
             <button type="button" class="btn btn-sm btn-ghost" data-pestana="documento" role="tab" aria-selected="false"><i class="fa-solid fa-file-arrow-up"></i> Documento</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-pestana="plano" role="tab" aria-selected="false"><i class="fa-solid fa-sheet-plastic"></i> Plano en el lugar</button>
         <?php endif; ?>
     </div>
 
@@ -65,8 +66,39 @@
                 <span class="text-sm text-muted" id="trd-doc-estado" role="status"></span>
             </div>
         </section>
+
+        <section id="trd-plano" hidden>
+            <label class="trd-archivo">Plano PDF (con texto seleccionable)
+                <input type="file" id="trp-archivo" accept=".pdf,application/pdf">
+            </label>
+            <p class="text-sm text-muted">Conserva el plano y escribe la traducción encima de cada texto, en su misma posición. El PDF no se sube al servidor: solo se envían los textos al motor de traducción. Si el plano viene escaneado o con el texto convertido a curvas, no se puede traducir en el lugar.</p>
+            <div class="trd-plano-opciones">
+                <label>Fondo al tapar el original
+                    <select id="trp-fondo">
+                        <option value="blanco" selected>Blanco</option>
+                        <option value="auto">Color automático del plano</option>
+                        <option value="sin">Sin fondo (superponer)</option>
+                    </select>
+                </label>
+                <label>Páginas <input type="text" id="trp-paginas" placeholder="Todas (ej. 1-3,5)" maxlength="40"></label>
+            </div>
+            <div class="trd-acciones">
+                <button type="button" class="btn btn-primary" id="trp-traducir"<?php echo $configurado ? '' : ' disabled'; ?>><i class="fa-solid fa-language"></i> Traducir plano</button>
+                <button type="button" class="btn btn-ghost" id="trp-descargar" hidden><i class="fa-solid fa-file-arrow-down"></i> Descargar PDF</button>
+                <button type="button" class="btn btn-ghost" id="trp-cancelar" hidden>Cancelar</button>
+                <span class="text-sm text-muted" id="trp-estado" role="status"></span>
+            </div>
+            <progress id="trp-barra" max="1" value="0" hidden></progress>
+            <div id="trp-previa" hidden><iframe id="trp-iframe" title="Vista previa del plano traducido"></iframe></div>
+        </section>
     <?php endif; ?>
 </div>
+
+<?php if ($puedeDocumentos): ?>
+<script src="/vendor/pdfjs/pdf.min.js"></script>
+<script src="/vendor/jspdf/jspdf.umd.min.js"></script>
+<script src="/vendor/traductor-plano.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/traductor-plano.js'); ?>"></script>
+<?php endif; ?>
 
 <script>
 (function () {

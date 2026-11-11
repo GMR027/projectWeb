@@ -86,13 +86,43 @@ class Simbolo extends ActiveRecord
         return $out;
     }
 
-    /** Para el editor: predeterminados + los del proyecto */
+    /**
+     * Símbolos automáticos a partir de las imágenes del catálogo de materiales.
+     * No se copian archivos ni se guardan filas: se leen del material y se actualizan solos.
+     * La categoría es la especialidad del material.
+     */
+    public static function deMateriales(int $proyectoId): array
+    {
+        $out = [];
+        try {
+            $r = self::$db->query("SELECT id, nombre, especialidad, imagen FROM materiales WHERE proyecto_id = " . (int)$proyectoId . " AND imagen IS NOT NULL AND imagen <> '' ORDER BY especialidad, nombre, id");
+            while ($r && ($f = $r->fetch_assoc())) {
+                $archivo = basename((string)$f['imagen']);
+                if ($archivo === '' || !is_file(__DIR__ . '/../public/uploads/materiales/' . $archivo)) continue;
+                $esp = trim((string)$f['especialidad']);
+                $out[] = [
+                    'id' => 'm' . (int)$f['id'], 'material_id' => (int)$f['id'],
+                    'nombre' => (string)$f['nombre'],
+                    'categoria' => $esp !== '' ? $esp : 'Sin especialidad',
+                    'src' => '/uploads/materiales/' . $archivo,
+                    'archivo' => $archivo,
+                ];
+            }
+        } catch (\Throwable $e) {   // migración pendiente
+        }
+        return $out;
+    }
+
+    /** Para el editor: predeterminados + los del proyecto + las imágenes de materiales (sin `ref`, son copia) */
     public static function paraEditor(int $proyectoId): array
     {
         $out = self::predeterminados();
         try {
             foreach (self::deProyecto($proyectoId) as $s) $out[] = ['nombre' => $s->nombre, 'cat' => $s->categoria !== '' ? $s->categoria : 'Del proyecto', 'src' => $s->url(), 'ref' => 's:' . (int)$s->id, 'v' => basename((string)$s->archivo)];
         } catch (\Throwable $e) {   // migración pendiente
+        }
+        foreach (self::deMateriales($proyectoId) as $m) {
+            $out[] = ['nombre' => $m['nombre'], 'cat' => $m['categoria'], 'src' => $m['src'], 'origen' => 'material', 'material_id' => $m['material_id']];
         }
         return $out;
     }
@@ -107,18 +137,25 @@ class Simbolo extends ActiveRecord
         $out = [];
         try {
             $simbolos = self::deProyecto($proyectoId);
-            if (!$simbolos) return $out;
+            $materiales = self::deMateriales($proyectoId);
+            if (!$simbolos && !$materiales) return $out;
             $sql = 'SELECT marcas_json FROM vplan_laminas WHERE proyecto_id = ' . (int)$proyectoId . ' AND marcas_json IS NOT NULL'
                 . ' UNION ALL SELECT l.marcas_json FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE g.proyecto_id = ' . (int)$proyectoId . ' AND l.marcas_json IS NOT NULL';
             $r = self::$db->query($sql);
             $blobs = [];
             while ($r && ($fila = $r->fetch_row())) $blobs[] = (string)$fila[0];
+            $cuenta = function (string $url) use ($blobs): int {
+                $n = 0;
+                foreach ($blobs as $b) if (strpos($b, '"src":"' . $url . '"') !== false) $n++;
+                return $n;
+            };
             foreach ($simbolos as $s) {
                 $url = $s->url();
                 if ($url === '/uploads/' . self::CARPETA . '/') continue;
-                $n = 0;
-                foreach ($blobs as $b) if (strpos($b, '"src":"' . $url . '"') !== false) $n++;
-                if ($n) $out[(int)$s->id] = $n;
+                if ($n = $cuenta($url)) $out[(int)$s->id] = $n;
+            }
+            foreach ($materiales as $m) {
+                if ($n = $cuenta($m['src'])) $out['m' . $m['material_id']] = $n;
             }
         } catch (\Throwable $e) {   // migraciones pendientes
         }

@@ -1049,7 +1049,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'dependencias' => [],
         'curvas' => [],
         'submittals' => [],
-        'materiales' => [],
+        'materiales' => ['materiales'],
         'novedades' => [],
         'buscar' => [],
     ];

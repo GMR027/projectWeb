@@ -401,7 +401,7 @@ HTML],
 
 
 ['id' => 'calidad', 'despues' => 'punch', 'titulo' => 'Calidad e inspecciones (ITP)', 'icono' => 'fa-clipboard-check', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Planes de inspección, pruebas y puntos de control por actividad o para todo el proyecto. Está en <strong>Campo → Calidad e inspecciones</strong>.</p>
+<p>Planes de inspección, pruebas y puntos de control por actividad o para todo el proyecto. Está en <strong>Campo y ejecución → Calidad e inspecciones</strong>.</p>
 <ol>
 <li><strong>Nuevo plan:</strong> título, tipo (ITP, inspección o prueba), actividad, norma de referencia, responsable y fecha. En la primera captura escribe los <em>puntos de inspección</em>, uno por línea; puedes añadir el criterio después de una barra vertical (<code>Resistencia del concreto | f'c ≥ 250 kg/cm²</code>).</li>
 <li><strong>Marca cada punto:</strong> cumple, no cumple, no aplica o pendiente, con observación. Las no conformidades abiertas aparecen aparte y el estado del plan se actualiza solo.</li>
@@ -426,7 +426,7 @@ HTML],
 HTML],
 
 ['id' => 'equipo', 'despues' => 'calidad', 'titulo' => 'Equipo y maquinaria', 'icono' => 'fa-truck', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Registro del equipo propio o rentado, sus horas de trabajo y su costo. Está en <strong>Campo → Equipo y maquinaria</strong>.</p>
+<p>Registro del equipo propio o rentado, sus horas de trabajo y su costo. Está en <strong>Administración → Equipo y maquinaria</strong>.</p>
 <ol>
 <li><strong>Nuevo equipo:</strong> nombre, tipo, marca/modelo, serie, propietario, tarifa por hora y estado. Puedes fijar el próximo servicio por fecha o por horas acumuladas.</li>
 <li><strong>Registrar horas:</strong> elige equipo, fecha, horas y, si quieres, la actividad. El importe se calcula con la tarifa por hora.</li>
@@ -464,7 +464,7 @@ HTML],
 <p>Pulsa <strong>Materializar</strong>: se crea una <strong>restricción activa</strong> en la actividad ligada (con su tipo según la categoría) y el riesgo pasa a <em>materializado</em>. No se captura dos veces. Los riesgos que no ocurrieron se cierran al final de la obra y quedan como lección aprendida.</p>
 <p>El botón <strong>PDF</strong> genera la matriz y la lista para la junta semanal. Solo el dueño del proyecto o el administrador pueden eliminar un riesgo; el visitante solo consulta.</p>
 ['id' => 'almacen', 'despues' => 'msr', 'titulo' => 'Almacén y órdenes de compra', 'icono' => 'fa-warehouse', 'roles' => ['admin', 'cliente', 'visitante'], 'herr' => null, 'cuerpo' => <<<'HTML'
-<p>Sigue el material desde que lo pides hasta que se instala. Está en <strong>Materiales y cambios → Almacén</strong>.</p>
+<p>Sigue el material desde que lo pides hasta que se instala. Está en <strong>Materiales y compras → Almacén</strong>.</p>
 <ol>
 <li><strong>Orden de compra:</strong> proveedor, partida, fecha y líneas de material con cantidad y precio. El total se reserva como <strong>compromiso</strong> en Costos.</li>
 <li><strong>Recepción:</strong> captura lo que llegó, aunque sea parcial. Entra al almacén y suma a la existencia. Si escribes la factura, se aplica al compromiso y se registra como costo real.</li>

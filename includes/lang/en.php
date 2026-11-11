@@ -34,7 +34,7 @@ return [
     'Respaldo' => 'Backup', 'Respaldo diario automático' => 'Automatic daily backup', 'Activado' => 'Enabled', 'Hora' => 'Time', 'Generar respaldo' => 'Create backup', 'Automático' => 'Automatic',
     'Disco del servidor' => 'Server disk',
     // Barra de herramientas del proyecto
-    'Herramientas del proyecto' => 'Project tools', 'Secciones de herramientas' => 'Tool sections', 'Navegación' => 'Navigation', 'Proyecto' => 'Project', 'Planeación' => 'Planning', 'Campo' => 'Field', 'Materiales y cambios' => 'Materials & changes', 'Documentos y diseño' => 'Documents & design', 'Ensamblador de documentos' => 'Document assembler',
+    'Herramientas del proyecto' => 'Project tools', 'Secciones de herramientas' => 'Tool sections', 'Navegación' => 'Navigation', 'Proyecto' => 'Project', 'Planeación' => 'Planning', 'Campo' => 'Field', 'Campo y ejecución' => 'Field & execution', 'Materiales y cambios' => 'Materials & changes', 'Materiales y compras' => 'Materials & purchases', 'Documentos y diseño' => 'Documents & design', 'Ensamblador de documentos' => 'Document assembler',
     'Inteligencia artificial' => 'Artificial intelligence',
     'Administración' => 'Administration', 'Especialidades' => 'Specialties', 'Informes de IA' => 'AI reports', 'Grabaciones de reuniones' => 'Meeting recordings', 'Auditoría de la IA' => 'AI audit log', 'Biblioteca de IA' => 'AI library', 'Acciones rápidas' => 'Quick actions',
     // Notificaciones (campana) y novedades de la plataforma

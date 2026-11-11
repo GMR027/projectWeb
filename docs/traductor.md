@@ -10,3 +10,10 @@ _Se lee solo al tocar `classes/Traductor.php`, `controllers/TraductorController.
 - **Documentos** (≤ 20 MB, `EscanerArchivos::revisar` antes; requieren `puede_descargar()` o admin, nunca el demo): DOCX/PPTX/ODT/ODP se reescriben dentro del zip por párrafo (texto en el primer fragmento, el resto queda vacío: se pierde el formato interno del párrafo); XLSX/ODS/CSV con PhpSpreadsheet (solo celdas de texto, no fórmulas); TXT/MD por línea; PDF → PDF nuevo solo con texto (`pdftotext` + Dompdf, sin OCR). DOC/RTF/XLS/PPT se convierten antes con LibreOffice (`soffice`, si no está se avisa) y se entregan como DOCX/XLSX/PPTX. Tope de 600 000 caracteres por documento.
 - ODF: `<text:s/>` se convierte en espacios antes de unir fragmentos.
 - Pruebas: servidor falso compatible con LibreTranslate en `TRADUCTOR_URL`, o el motor local; temporales en `sys_get_temp_dir()` y se borran siempre.
+
+## Plano en el lugar (2026-11-11)
+
+- Tercera pestaña del **Traductor** (`#trd-plano`, `public/vendor/traductor-plano.js`): traduce un PDF **en el mismo lugar**, sin rehacer el diseño.
+- El PDF se procesa en el navegador con PDF.js; solo los textos extraídos viajan a `POST /api/traductor/lista` (lotes de 180 textos / 18 000 caracteres; máx. 500 textos y 50 000 caracteres por petición). No se guarda nada en el servidor.
+- Para cada fragmento se conserva la matriz de PDF.js (posición, escala y rotación), se tapa el original (blanco, color muestreado del plano o sin fondo) y se escribe la traducción con canvas; el PDF final se arma con jsPDF.
+- Límites: PDF con texto seleccionable, 25 MB y 40 páginas; no hace OCR. Las páginas resultantes son imagen (no conservan texto seleccionable).

@@ -167,7 +167,7 @@ HTML],
 <p>Es el corazón del sistema: el programa de obra organizado en <strong>partidas</strong> (capítulos o frentes, con su código WBS) y <strong>actividades</strong> dentro de cada partida. La página muestra, de arriba abajo, los datos del proyecto, los filtros, la tabla <em>Desglose WBS &amp; Partidas</em> y el <em>Diagrama de Gantt por Semanas</em>.</p>
 [[fig:programa]]
 <h4>Tipo de obra y base de partidas</h4>
-<p>En <em>Materiales y cambios → Tipo de obra</em> puedes elegir el tipo de obra del proyecto. Además de dar contexto a las herramientas de IA, el sistema ofrece una <strong>base de partidas y actividades</strong> para arrancar más rápido. Las plantillas de construcción incluyen: <strong>vivienda unifamiliar</strong>, <strong>edificio multifamiliar o comercial</strong>, <strong>nave industrial</strong>, <strong>remodelación y adecuación</strong>, <strong>urbanización y obra civil</strong> y la <strong>edificación</strong> general. La base solo se crea si el proyecto todavía no tiene partidas; después puedes renombrar, mover o eliminar lo que necesites.</p>
+<p>En <em>Planeación → Tipo de obra</em> puedes elegir el tipo de obra del proyecto. Además de dar contexto a las herramientas de IA, el sistema ofrece una <strong>base de partidas y actividades</strong> para arrancar más rápido. Las plantillas de construcción incluyen: <strong>vivienda unifamiliar</strong>, <strong>edificio multifamiliar o comercial</strong>, <strong>nave industrial</strong>, <strong>remodelación y adecuación</strong>, <strong>urbanización y obra civil</strong> y la <strong>edificación</strong> general. La base solo se crea si el proyecto todavía no tiene partidas; después puedes renombrar, mover o eliminar lo que necesites.</p>
 <h4>Crear una partida</h4>
 <ol>
 <li>Pulsa <strong>+ Nueva Partida</strong>.</li>
@@ -610,12 +610,15 @@ HTML],
 <li>Pulsa <strong>+ Nuevo material</strong>.</li>
 <li>Escribe el <strong>nombre base*</strong>, la marca, el modelo o tipo y un valor extra (dimensiones, capacidad…). El <strong>nombre completo</strong> se arma solo uniendo esas partes; las que dejes vacías se omiten.</li>
 <li>Indica la <strong>referencia (Spec Number)</strong>, la <strong>especialidad</strong>, certificado de calidad, link web, cantidad y unidad.</li>
-<li>Sube una <strong>imagen</strong> (se guarda en miniatura) y la <strong>ficha técnica</strong> en PDF.</li>
+<li>Sube una <strong>imagen</strong> (se guarda a 640 px para que también sirva como símbolo en planos) y la <strong>ficha técnica</strong> en PDF.</li>
+<li>En <strong>Normas, certificaciones y especificaciones</strong> agrega los códigos y valores que identifican el material (NOM, UL, calibre, voltaje, temperatura…). La búsqueda de normativa los usa, junto con marca, modelo, referencia y certificado.</li>
 <li>En <strong>Logística y entrega</strong> captura: fecha de compra programada y real, fecha de entrega programada y real. Estas fechas se reflejan solas en el MSR.</li>
 </ol>
 <ul>
 <li>En el listado, los botones de <strong>Compra</strong> y <strong>Entregado</strong> registran esos eventos con un clic.</li>
 <li>Puedes importar materiales desde el MSR.</li>
+<li><strong>Exportar</strong> (junto a «+ Nuevo material») descarga el catálogo con los filtros actuales en PDF A4 horizontal o en LibreOffice Calc (.ods), agrupado por especialidad y con imagen, referencia, material, status de compra y fechas.</li>
+<li>Las imágenes de los materiales aparecen solas en <a href="#simbolos">Símbolos → Materiales</a>, con la especialidad como categoría; se pueden insertar en vPlan y Editor.</li>
 </ul>
 <h4>Especialidades</h4>
 <p>Con el botón <strong>Especialidades</strong> administras las categorías técnicas del proyecto (eléctrica, hidráulica, etc.). Son propias de cada proyecto y no las ven otros. Muestra cuántos materiales y submittals usa cada una.</p>
@@ -949,6 +952,7 @@ HTML],
 <li><strong>Nuevo símbolo:</strong> escribe el <em>nombre*</em>, una categoría y sube la imagen (PNG con fondo transparente o SVG funcionan mejor). Pulsa <strong>Agregar símbolo</strong>.</li>
 <li><strong>Importar símbolos:</strong> sube un <strong>.zip</strong> de biblioteca o varias imágenes de una vez. <strong>Exportar biblioteca</strong> descarga la tuya para reusarla en otro proyecto.</li>
 <li>Puedes <strong>cambiar la imagen</strong> o eliminar un símbolo propio. Los <em>incluidos con la aplicación</em> sirven para todos los proyectos y no se editan.</li>
+<li>La pestaña <strong>Materiales</strong> se genera sola con las imágenes del catálogo: muestra el nombre del material y su especialidad como categoría. Se actualiza al crear, editar o eliminar un material; no se edita desde aquí (usa «Editar material»).</li>
 <li>El botón <strong>Guía rápida</strong> de la cabecera recorre la biblioteca paso a paso (pestañas, importación, estampas); el número azul de cada tarjeta dice en cuántas láminas se usa el símbolo.</li>
 </ul>
 <h4>Cajetines</h4>
@@ -1036,7 +1040,13 @@ HTML],
 <li>Si el PDF tiene varias hojas, usa las <strong>miniaturas</strong> o las flechas del pie para cambiar de página. Cada anotación pertenece a su página.</li>
 </ul>
 <h4>Anotar</h4>
-<p>La barra superior reúne las herramientas: <strong>seleccionar</strong>, <strong>mano</strong> para mover la vista, <strong>globo numerado</strong>, <strong>texto</strong>, <strong>resaltador</strong>, <strong>rectángulo resaltado</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>rectángulo</strong>, <strong>elipse</strong>, <strong>nube de revisión</strong>, <strong>medir</strong>, <strong>área</strong>, <strong>polígono</strong>, <strong>volumen</strong>, <strong>imagen</strong>, <strong>estampa</strong> y <strong>firma</strong>. Con la selección puedes mover, redimensionar, copiar (Ctrl+C), pegar (Ctrl+V), duplicar (Ctrl+D) y borrar (Supr). <strong>Mayús+clic</strong> selecciona varias.</p>
+<p>La barra superior reúne las herramientas: <strong>seleccionar</strong>, <strong>mano</strong> para mover la vista, <strong>globo numerado</strong>, <strong>texto</strong>, <strong>resaltador</strong>, <strong>rectángulo resaltado</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>polilínea</strong> (tecla Y), <strong>rectángulo</strong>, <strong>elipse</strong>, <strong>nube de revisión</strong>, <strong>medir</strong>, <strong>área</strong>, <strong>polígono</strong>, <strong>volumen</strong>, <strong>imagen</strong>, <strong>símbolo</strong>, <strong>estampa</strong> y <strong>firma</strong>. Con la selección puedes mover, redimensionar, copiar (Ctrl+C), pegar (Ctrl+V), duplicar (Ctrl+D) y borrar (Supr). <strong>Mayús+clic</strong> selecciona varias.</p>
+<h4>Estilo de línea</h4>
+<p>Antes de dibujar elige en la barra el <strong>color</strong>, el <strong>grosor</strong> (1–24), la <strong>opacidad</strong> y el <strong>tipo de línea</strong> (continua, punteada, guiones o guion y punto). Se aplica a lo nuevo y a la anotación seleccionada. La polilínea se cierra con doble clic o Enter; Retroceso quita el último vértice.</p>
+<h4>Capas</h4>
+<p>La pestaña <strong>Capas</strong> permite crear, renombrar, ordenar, ocultar, bloquear y atenuar capas. La capa activa recibe las anotaciones nuevas. Ocultar una capa también la excluye del PDF y de las medidas; bloquearla la deja visible pero sin poder seleccionarla.</p>
+<h4>Símbolos</h4>
+<p>En <strong>Insertar → Símbolos</strong> están los del proyecto, los de las imágenes de materiales (con su especialidad) y los predeterminados. Al elegir uno se copia al documento y se coloca con un clic; se mueve, escala y exporta como una imagen.</p>
 <h4>Medir áreas y volúmenes</h4>
 <ol>
 <li>En <strong>Medidas</strong> pulsa <strong>Calibrar página</strong> y dibuja una cota conocida; escribe cuántos metros mide. La escala se guarda por página.</li>
@@ -1072,6 +1082,13 @@ HTML],
 <li><strong>PowerPoint</strong> (.pptx, .ppt) e <strong>Impress</strong> (.odp): se traduce el texto de cada diapositiva y sus notas.</li>
 <li><strong>PDF</strong>: se entrega un PDF nuevo con el texto traducido (sin el diseño original). Un PDF escaneado, sin texto seleccionable, no se puede traducir.</li>
 <li><strong>TXT</strong> y Markdown: se traducen línea por línea.</li>
+</ul>
+<h4>Plano en el lugar</h4>
+<p>La pestaña <strong>Plano en el lugar</strong> conserva el diseño del PDF y escribe la traducción <strong>encima de cada texto, en su misma posición</strong>, incluidos los rótulos rotados. El PDF no se sube al servidor: solo se envían los textos al motor. Elige el fondo (blanco, color automático del plano o sin fondo), el rango de páginas y pulsa <strong>Traducir plano</strong>; revisa la vista previa y descarga el PDF.</p>
+<ul>
+<li>Funciona con PDF que tengan <strong>texto seleccionable</strong>; un plano escaneado o con el texto convertido a curvas no se puede traducir en el lugar.</li>
+<li>Las páginas traducidas quedan como imagen: no conservan texto seleccionable, pero mantienen el tamaño y la posición original.</li>
+<li>Si el texto traducido no cabe, se reduce la letra; las etiquetas muy largas pueden invadir el espacio vecino.</li>
 </ul>
 <p class="manual-nota">La traducción es automática: revísala antes de usarla en contratos, especificaciones o documentos oficiales. Los formatos .doc, .xls, .ppt y .rtf se entregan convertidos a .docx, .xlsx y .pptx. Traducir documentos requiere permiso de descarga.</p>
 HTML],

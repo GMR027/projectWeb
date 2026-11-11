@@ -24,9 +24,13 @@ ksort($cats);
 $catsPre = [];
 foreach ($predeterminados as $x) { $catsPre[$x['cat']] = ($catsPre[$x['cat']] ?? 0) + 1; }
 ksort($catsPre);
+$catsMat = [];
+foreach (($materialesSimbolos ?? []) as $x) { $catsMat[$x['categoria']] = ($catsMat[$x['categoria']] ?? 0) + 1; }
+ksort($catsMat);
 // El tercer valor es la entrada del glosario (includes/funciones.php): la burbuja de cada pestaña define su término
 $pestanas = [
     'proyecto' => ['Del proyecto', 'fa-folder-open', count($simbolos), ''],
+    'materiales' => ['Materiales', 'fa-cubes', count($materialesSimbolos ?? []), ''],
     'predeterminados' => ['Predeterminados', 'fa-shapes', count($predeterminados), ''],
     'simbologias' => ['Simbologías', 'fa-list-check', count($simbologias), 'simbologia'],
     'cajetines' => ['Cajetines', 'fa-table-cells-large', count($cajetines), 'cajetin'],
@@ -88,6 +92,31 @@ $pestanas = [
         </div>
     <?php endif; ?>
     <p class="text-muted sim-vacio" hidden>Ningún símbolo coincide con la búsqueda.</p>
+</section>
+
+<section class="sim-panel" id="sim-p-materiales" role="tabpanel" hidden>
+    <p class="text-muted text-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Se genera solo con las imágenes del catálogo de materiales: el nombre es el del material y la categoría es su especialidad. Si cambias la imagen, el nombre, la especialidad o eliminas el material, esta lista se actualiza. Se pueden insertar en el vPlan y en el Editor; al insertarlas se copian al dibujo.</p>
+    <?php if (!$materialesSimbolos): ?>
+        <?php echo estado_vacio('fa-cubes', 'Aún no hay imágenes de materiales', 'Agrega una imagen al catálogo de materiales y aparecerá aquí automáticamente. Las imágenes nuevas se guardan a 640 px para que también sirvan como símbolo.', null, null, '<a class="btn btn-primary" href="/materiales?proyecto=' . (int)$proyecto->id . '"><i class="fa-solid fa-cubes"></i> Ir al catálogo</a>', 'estado-vacio-sm'); ?>
+    <?php else: ?>
+        <div class="sim-barra">
+            <div class="pn-busca"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" class="sim-buscar" data-lista="sim-l-materiales" placeholder="Buscar material o especialidad…" aria-label="Buscar material"></div>
+            <div class="sim-chips" data-lista="sim-l-materiales"><?php foreach ($catsMat as $c => $n): ?><button type="button" class="sim-chip" data-cat="<?php echo s($c); ?>"><?php echo s($c); ?> <em><?php echo (int)$n; ?></em></button><?php endforeach; ?></div>
+        </div>
+        <div class="sim-admin" id="sim-l-materiales">
+            <?php foreach ($materialesSimbolos as $sim): $usos = (int)($usosSimbolos['m' . $sim['material_id']] ?? 0); ?>
+                <div class="sim-tarjeta" data-cat="<?php echo s($sim['categoria']); ?>" data-q="<?php echo s(mb_strtolower($sim['nombre'] . ' ' . $sim['categoria'])); ?>">
+                    <div class="sim-img"><img src="<?php echo s($sim['src']); ?>" alt="" loading="lazy"></div>
+                    <div class="sim-nombre"><?php echo s($sim['nombre']); ?></div>
+                    <div class="text-muted text-sm"><?php echo s($sim['categoria']); ?></div>
+                    <?php if ($usos): ?><span class="sim-uso" title="Aparece en <?php echo $usos; ?> lámina(s) del proyecto"><i class="fa-solid fa-layer-group"></i> <?php echo $usos; ?></span><?php endif; ?>
+                    <?php if ($puedeEditar): ?><a href="/materiales/editar?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$sim['material_id']; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen"></i> Editar material</a><?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <p class="text-muted sim-vacio" hidden>Ningún material coincide con la búsqueda.</p>
+    <?php endif; ?>
 </section>
 
 <section class="sim-panel" id="sim-p-simbologias" role="tabpanel" hidden>
@@ -389,7 +418,7 @@ window.Tour.registrar('simbolos', {
     auto: true,
     pasos: [
         { icono: 'fa-shapes', titulo: 'La biblioteca del proyecto', texto: 'Aquí viven los símbolos que se insertan en el vPlan y en el Editor con un clic, y sus dos primos: los <b>cajetines</b> (la tablita de datos del dibujo) y las <b>estampas inteligentes</b> (bloques que se llenan solos).' },
-        { sel: '#sim-tabs', icono: 'fa-table-columns', titulo: 'Cinco pestañas', texto: 'Los símbolos del proyecto y los incluidos con la aplicación, las simbologías (leyendas), los cajetines y las estampas. Cada una tiene su contador.' },
+        { sel: '#sim-tabs', icono: 'fa-table-columns', titulo: 'Seis pestañas', texto: 'Los símbolos del proyecto, las imágenes de materiales (se generan solas desde el catálogo), los incluidos con la aplicación, las simbologías (leyendas), los cajetines y las estampas. Cada una tiene su contador.' },
         { sel: '#sim-imp-btn', icono: 'fa-file-import', titulo: 'Importar en bloque', texto: 'Sube un .zip con varias imágenes (o varias sueltas) y quedan en la pestaña «Del proyecto», con categorías y buscador.' },
         { sel: '#sim-p-predeterminados', icono: 'fa-shapes', titulo: 'Predeterminados', texto: 'Los símbolos que ya vienen con la aplicación: cámaras, extintores, señalética… Se insertan igual que los tuyos.', alEntrar: () => document.querySelector('.sim-tab[data-tab="predeterminados"]')?.click() },
         { sel: '#sim-p-estampas', icono: 'fa-wand-magic-sparkles', titulo: 'Estampas inteligentes', texto: 'Se colocan en una lámina del vPlan y se actualizan solas: fecha, avance, restricciones, las actividades del día… Empieza con una de las plantillas.', alEntrar: () => document.querySelector('.sim-tab[data-tab="estampas"]')?.click() },

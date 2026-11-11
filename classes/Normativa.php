@@ -366,53 +366,145 @@ class Normativa
     // ---------- búsqueda ----------
 
     /** Fragmentos relevantes para unas palabras (en cualquier idioma), con puntaje 0–100 */
-    public static function buscar(int $pid, array $palabras, int $limite = 5, array $excluir = []): array
+    public static function buscar(int $pid, array $palabras, int $limite = 5, array $excluir = [], array $codigos = []): array
     {
-        $base = array_values(array_filter($palabras, fn($w) => strlen($w) >= 3));
-        if (count($base) < 1) return [];
-        $exp = Glosario::expandir($base);
-        $q = self::esc(implode(' ', array_slice($exp, 0, 30)));
-        $filas = self::filas("SELECT f.id, f.documento_id, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo, f.texto, f.idioma, f.csi, MATCH(f.titulo, f.texto) AGAINST ('$q' IN NATURAL LANGUAGE MODE) rel
-            FROM normativa_fragmentos f JOIN normativa_documentos d ON d.id = f.documento_id WHERE f.proyecto_id = $pid AND MATCH(f.titulo, f.texto) AGAINST ('$q' IN NATURAL LANGUAGE MODE) ORDER BY rel DESC LIMIT 40");
-        $directas = array_map(fn($w) => Glosario::variantes($w), $base);
         $out = [];
-        foreach ($filas as $f) {
-            if (in_array((int)$f['id'], $excluir, true)) continue;
-            $tokens = array_flip(Glosario::palabras($f['titulo'] . ' ' . $f['texto']));
-            $tk = $tokens + array_flip(array_map(fn($t) => Glosario::variantes($t)[1] ?? $t, array_keys($tokens)));
-            $dir = 0;
-            foreach ($directas as $vs) foreach ($vs as $v) if (isset($tk[$v])) { $dir++; break; }
-            $otras = array_diff($exp, $base);
-            $ex = 0;
-            foreach ($otras as $o) if (isset($tk[$o])) $ex++;
-            $hits = $dir + min($ex, 3) * 0.5;
-            if ($dir + $ex < 2) continue;
-            $f['puntaje'] = round(min(100, $hits / max(count($base), 2) * 100), 1);
-            $f['origen'] = 'palabras';
-            unset($f['rel']);
-            $out[] = $f;
+        $base = array_values(array_filter($palabras, fn($w) => strlen($w) >= 3));
+        if ($base) {
+            $exp = Glosario::expandir($base);
+            $q = self::esc(implode(' ', array_slice($exp, 0, 30)));
+            $filas = self::filas("SELECT f.id, f.documento_id, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo, f.texto, f.idioma, f.csi, MATCH(f.titulo, f.texto) AGAINST ('$q' IN NATURAL LANGUAGE MODE) rel
+                FROM normativa_fragmentos f JOIN normativa_documentos d ON d.id = f.documento_id WHERE f.proyecto_id = $pid AND MATCH(f.titulo, f.texto) AGAINST ('$q' IN NATURAL LANGUAGE MODE) ORDER BY rel DESC LIMIT 40");
+            $directas = array_map(fn($w) => Glosario::variantes($w), $base);
+            foreach ($filas as $f) {
+                if (in_array((int)$f['id'], $excluir, true)) continue;
+                $tokens = array_flip(Glosario::palabras($f['titulo'] . ' ' . $f['texto']));
+                $tk = $tokens + array_flip(array_map(fn($t) => Glosario::variantes($t)[1] ?? $t, array_keys($tokens)));
+                $dir = 0;
+                foreach ($directas as $vs) foreach ($vs as $v) if (isset($tk[$v])) { $dir++; break; }
+                $otras = array_diff($exp, $base);
+                $ex = 0;
+                foreach ($otras as $o) if (isset($tk[$o])) $ex++;
+                $hits = $dir + min($ex, 3) * 0.5;
+                if ($dir + $ex < 2) continue;
+                $f['puntaje'] = round(min(100, $hits / max(count($base), 2) * 100), 1);
+                $f['origen'] = 'palabras';
+                unset($f['rel']);
+                $out[(int)$f['id']] = $f;
+            }
         }
+        // Códigos, normas, certificaciones y modelos que MySQL FULLTEXT ignora (cortos, con números o con guiones)
+        $codigos = array_values(array_unique(array_filter(array_map(fn($c) => mb_substr(trim((string)$c), 0, 80), $codigos), fn($c) => $c !== '')));
+        if ($codigos) {
+            $cond = [];
+            foreach (array_slice($codigos, 0, 10) as $c) {
+                $c = self::esc(str_replace(['%', '_'], ['\\%', '\\_'], $c));
+                $cond[] = "(f.texto LIKE '%$c%' OR f.titulo LIKE '%$c%' OR d.titulo LIKE '%$c%' OR d.codigo LIKE '%$c%')";
+            }
+            $filas = self::filas("SELECT f.id, f.documento_id, d.titulo doc, d.codigo, f.pagina, f.clausula, f.titulo, f.texto, f.idioma, f.csi
+                FROM normativa_fragmentos f JOIN normativa_documentos d ON d.id = f.documento_id WHERE f.proyecto_id = $pid AND (" . implode(' OR ', $cond) . ") ORDER BY f.id LIMIT 40");
+            foreach ($filas as $f) {
+                if (in_array((int)$f['id'], $excluir, true) || isset($out[(int)$f['id']])) continue;
+                $f['puntaje'] = 90;
+                $f['origen'] = 'codigo';
+                $out[(int)$f['id']] = $f;
+            }
+        }
+        $out = array_values($out);
         usort($out, fn($a, $b) => $b['puntaje'] <=> $a['puntaje']);
         return array_slice($out, 0, $limite);
     }
 
-    /** Datos de la entidad para buscar: texto, referencia (CSI) y nombre a mostrar */
-    public static function entidad(int $pid, string $tipo, int $id): ?array
+    /** Tokens con dígitos (NOM-063-SCFI, THW-90, IP66, Q465…) para la pasada exacta */
+    public static function codigosDe(string $texto): array
+    {
+        preg_match_all('/[A-Za-z0-9][A-Za-z0-9._\/-]{0,}/u', $texto, $m);
+        $out = [];
+        foreach ($m[0] as $t) {
+            $t = trim($t, '._/-');
+            if ($t === '' || !preg_match('/\d/', $t) || mb_strlen($t) < 2) continue;
+            $out[] = mb_strtolower($t);
+        }
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * Datos de la entidad para buscar: texto, referencia (CSI), nombre a mostrar y ficha del material.
+     * En materiales incluye marca, modelo, especificaciones, certificado y normas/certificaciones de `material_atributos`.
+     * En actividades incluye el perfil de sus materiales ligados.
+     */
+    public static function entidad(int $pid, string $tipo, int $id, bool $conFicha = false): ?array
     {
         if ($tipo === 'material') {
-            $m = self::filas("SELECT nombre, nombre_base, especialidad, referencia FROM materiales WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
-            return $m ? ['nombre' => $m['nombre'], 'texto' => ($m['nombre_base'] ?: $m['nombre']) . ' ' . $m['especialidad'], 'csi' => preg_replace('/\D/', '', (string)$m['referencia'])] : null;
+            $m = self::filas("SELECT id, nombre, nombre_base, marca, modelo, valor_extra, especialidad, referencia, certificado_calidad, ficha_tecnica FROM materiales WHERE id = $id AND proyecto_id = $pid")[0] ?? null;
+            if (!$m) return null;
+            $partes = array_filter([
+                $m['nombre_base'] ?: $m['nombre'], $m['marca'], $m['modelo'], $m['valor_extra'],
+                $m['especialidad'], $m['certificado_calidad'], $m['referencia'],
+            ], fn($v) => trim((string)$v) !== '');
+            $texto = implode(' ', $partes);
+            $atributos = [];
+            try {
+                foreach (\Model\MaterialAtributo::deMaterial($pid, $id, true) as $a) {
+                    $atributos[] = trim($a->codigo . ' ' . $a->titulo . ' ' . $a->valor . ($a->unidad !== '' ? ' ' . $a->unidad : ''));
+                }
+            } catch (\Throwable $e) {   // migración pendiente
+            }
+            $texto .= ' ' . implode(' ', $atributos);
+            if ($conFicha) $texto .= ' ' . self::textoFicha($pid, $id, (string)($m['ficha_tecnica'] ?? ''));
+            return [
+                'nombre' => $m['nombre'],
+                'texto' => trim($texto),
+                'csi' => preg_replace('/\D/', '', (string)$m['referencia']),
+                'meta' => array_filter([
+                    'marca' => $m['marca'], 'modelo' => $m['modelo'], 'especificaciones' => $m['valor_extra'],
+                    'certificado' => $m['certificado_calidad'], 'referencia' => $m['referencia'],
+                    'atributos' => implode(' · ', $atributos),
+                ], fn($v) => trim((string)$v) !== ''),
+            ];
         }
         $a = self::filas("SELECT a.codigo, a.nombre, a.descripcion FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $id AND pa.proyecto_id = $pid")[0] ?? null;
         if (!$a) return null;
-        $csi = array_column(self::filas("SELECT m.referencia FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE am.actividad_id = $id"), 'referencia');
-        return ['nombre' => $a['codigo'] . ' ' . $a['nombre'], 'texto' => $a['nombre'] . ' ' . $a['descripcion'], 'csi' => $csi ? preg_replace('/\D/', '', (string)$csi[0]) : ''];
+        $materiales = self::filas("SELECT m.referencia, m.nombre, m.marca, m.modelo, m.valor_extra, m.certificado_calidad, m.especialidad FROM actividad_materiales am JOIN materiales m ON m.id = am.material_id WHERE am.actividad_id = $id");
+        $atributos = self::filas("SELECT GROUP_CONCAT(CONCAT_WS(' ', a.codigo, a.titulo, a.valor, a.unidad, a.emisor) SEPARATOR ' ') AS texto FROM material_atributos a JOIN actividad_materiales am ON am.material_id = a.material_id WHERE am.actividad_id = $id AND a.estado = 'aceptada'")[0]['texto'] ?? '';
+        $extra = [];
+        foreach ($materiales as $m) {
+            foreach (['nombre', 'marca', 'modelo', 'valor_extra', 'certificado_calidad', 'especialidad'] as $k) if (trim((string)$m[$k]) !== '') $extra[] = $m[$k];
+        }
+        $csi = array_column($materiales, 'referencia');
+        return [
+            'nombre' => $a['codigo'] . ' ' . $a['nombre'],
+            'texto' => trim($a['nombre'] . ' ' . $a['descripcion'] . ' ' . implode(' ', $extra) . ' ' . $atributos),
+            'csi' => $csi ? preg_replace('/\D/', '', (string)$csi[0]) : '',
+        ];
+    }
+
+    /** Texto de la ficha técnica (PDF) cacheado por material; solo se usa para sacar palabras clave */
+    private static function textoFicha(int $pid, int $materialId, string $archivo): string
+    {
+        $archivo = basename($archivo);
+        if ($archivo === '') return '';
+        $pdf = __DIR__ . '/../storage/fichas/' . $pid . '/' . $archivo;
+        if (!is_file($pdf)) return '';
+        $dir = __DIR__ . '/../storage/cache/normativa';
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) return '';
+        $cache = $dir . '/ficha-' . $pid . '-' . $materialId . '.txt';
+        if (is_file($cache) && filemtime($cache) >= (int)filemtime($pdf)) {
+            $t = (string)@file_get_contents($cache);
+            return mb_substr($t, 0, 30000);
+        }
+        $r = \Classes\ShellTools::pdfATexto($pdf, false, 60, 4_000_000);
+        if ($r === null || ($r['codigo'] ?? 1) !== 0) return '';
+        $t = trim((string)$r['salida']);
+        $t = mb_substr($t, 0, 30000);
+        @file_put_contents($cache, $t);
+        return $t;
     }
 
     /** Fragmentos candidatos para una entidad: primero los de su sección CSI, luego por palabras. Excluye los ya vinculados (en cualquier estado) */
     public static function candidatos(int $pid, string $tipo, int $id, int $limite = 4): array
     {
-        $e = self::entidad($pid, $tipo, $id);
+        $e = self::entidad($pid, $tipo, $id, true);
         if (!$e) return [];
         $ya = array_map('intval', array_column(self::filas("SELECT fragmento_id FROM normativa_aplicaciones WHERE proyecto_id = $pid AND entidad_tipo = '$tipo' AND entidad_id = $id AND fragmento_id IS NOT NULL"), 'fragmento_id'));
         $out = [];
@@ -424,14 +516,18 @@ class Normativa
                 $sec[$i]['_p'] = (str_starts_with($f['clausula'], 'Sección') ? 1000 : 0) + count(array_filter($pal, fn($w) => isset($tk[$w]) || isset($tk[Glosario::variantes($w)[1] ?? $w])));
             }
             usort($sec, fn($x, $y) => $y['_p'] <=> $x['_p'] ?: $x['id'] <=> $y['id']);
-            foreach (array_slice($sec, 0, $limite) as $f) {
+            // Se reservan un par de lugares para marca/modelo/norma, aunque la sección CSI tenga muchas cláusulas
+            foreach (array_slice($sec, 0, max(1, $limite - 2)) as $f) {
                 if (in_array((int)$f['id'], $ya, true)) continue;
                 unset($f['_p']);
                 $out[(int)$f['id']] = $f + ['puntaje' => 100, 'origen' => 'csi'];
             }
         }
-        foreach (self::buscar($pid, Glosario::palabras($e['texto']), $limite, $ya) as $f) if (!isset($out[(int)$f['id']])) $out[(int)$f['id']] = $f;
-        return array_slice(array_values($out), 0, $limite);
+        foreach (self::buscar($pid, Glosario::palabras($e['texto']), $limite, $ya, self::codigosDe($e['texto'])) as $f) if (!isset($out[(int)$f['id']])) $out[(int)$f['id']] = $f;
+        $out = array_values($out);
+        $prio = fn(array $f) => ($f['origen'] ?? '') === 'csi' ? 3 : (($f['origen'] ?? '') === 'codigo' ? 2 : 1);
+        usort($out, fn($a, $b) => $prio($b) <=> $prio($a) ?: ($b['puntaje'] <=> $a['puntaje']));
+        return array_slice($out, 0, $limite);
     }
 
     // ---------- vínculos ----------

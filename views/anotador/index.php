@@ -21,6 +21,7 @@ $herramientas = [
             ['resaltado', 'fa-fill-drip', 'Zona', '', 'Rectángulo resaltado'],
             ['flecha', 'fa-arrow-right', 'Flecha', 'F', 'Flecha'],
             ['linea', 'fa-minus', 'Línea', 'L', 'Línea'],
+            ['polilinea', 'fa-bezier-curve', 'Polilínea', 'Y', 'Polilínea abierta con varios vértices'],
             ['rect', 'fa-square', 'Rectángulo', 'R', 'Rectángulo'],
             ['elipse', 'fa-circle', 'Elipse', 'E', 'Elipse'],
             ['nube', 'fa-cloud', 'Nube', 'N', 'Nube de revisión'],
@@ -39,6 +40,7 @@ $herramientas = [
         'titulo' => 'Insertar',
         'items' => [
             ['imagen', 'fa-image', 'Imagen', '', 'Insertar una imagen'],
+            ['simbolo', 'fa-shapes', 'Símbolo', '', 'Insertar un símbolo de la biblioteca del proyecto o de los materiales'],
             ['estampa', 'fa-stamp', 'Estampa', '', 'Insertar una estampa inteligente'],
             ['firma', 'fa-signature', 'Firma', '', 'Insertar una firma'],
         ],
@@ -184,13 +186,20 @@ $herramientas = [
         </div>
         <div class="ant-grupo ant-estilo">
             <label class="ant-campo-inline" title="Color de la anotación"><span class="ant-solo-lectores">Color</span><input type="color" id="ant-color" value="#e11d48" aria-label="Color de la anotación"></label>
-            <label class="ant-campo-inline" title="Grosor"><span class="ant-solo-lectores">Grosor</span>
-                <select id="ant-grosor" aria-label="Grosor">
-                    <option value="2">Fino</option><option value="5" selected>Normal</option><option value="10">Grueso</option><option value="16">Muy grueso</option>
+            <label class="ant-campo-inline ant-grosor" title="Grosor de la línea"><span class="ant-solo-lectores">Grosor</span>
+                <input type="range" id="ant-grosor" min="1" max="24" step="1" value="5" aria-label="Grosor de la línea"><output id="ant-grosor-val">5</output>
+            </label>
+            <label class="ant-campo-inline" title="Tipo de línea"><span class="ant-solo-lectores">Tipo</span>
+                <select id="ant-estilo" aria-label="Tipo de línea">
+                    <option value="solida" selected>Continua</option>
+                    <option value="punteada">Punteada</option>
+                    <option value="guiones">Guiones</option>
+                    <option value="guion_punto">Guion y punto</option>
                 </select>
             </label>
             <label class="ant-mini" title="Relleno de formas"><input type="checkbox" id="ant-relleno"> Relleno</label>
-            <label class="ant-mini ant-mini-opacidad" title="Opacidad de imágenes y firmas">Opacidad <input type="range" id="ant-opacidad" min="10" max="100" value="100" aria-label="Opacidad de imágenes y firmas"></label>
+            <label class="ant-mini ant-mini-opacidad" title="Opacidad de la anotación"><span>Opacidad</span> <input type="range" id="ant-opacidad" min="5" max="100" value="100" aria-label="Opacidad de la anotación"><output id="ant-opacidad-val">100%</output></label>
+            <label class="ant-mini ant-mini-capa" title="Capa activa: ahí caen las anotaciones nuevas"><i class="fa-solid fa-layer-group"></i> <select id="ant-capa-activa" aria-label="Capa activa"></select></label>
         </div>
         <div class="ant-grupo">
             <button type="button" class="btn btn-sm btn-ghost" id="ant-undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><i class="fa-solid fa-rotate-left"></i></button>
@@ -245,6 +254,7 @@ $herramientas = [
             <div class="pn-tabs" role="tablist">
                 <button type="button" class="pn-tab activo" data-ptab="lista" role="tab" aria-selected="true"><i class="fa-solid fa-list-ol"></i> Anotaciones <span class="pn-cont" id="ant-cuenta">0</span></button>
                 <button type="button" class="pn-tab" data-ptab="props" role="tab" aria-selected="false"><i class="fa-solid fa-sliders"></i> Propiedades</button>
+                <button type="button" class="pn-tab" data-ptab="capas" role="tab" aria-selected="false"><i class="fa-solid fa-layer-group"></i> Capas <span class="pn-cont" id="ant-capas-cuenta">1</span></button>
                 <button type="button" class="pn-tab" data-ptab="medidas" role="tab" aria-selected="false"><i class="fa-solid fa-ruler-combined"></i> Medidas</button>
                 <button type="button" class="pn-tab" data-ptab="insertar" role="tab" aria-selected="false"><i class="fa-solid fa-plus"></i> Insertar</button>
             </div>
@@ -284,6 +294,13 @@ $herramientas = [
                         <label class="ant-campo">Color <input type="color" id="ant-prop-color"></label>
                         <label class="ant-campo">Grosor <input type="number" id="ant-prop-grosor" min="1" max="80" step="1"></label>
                     </div>
+                    <div class="ant-fila">
+                        <label class="ant-campo">Tipo de línea
+                            <select id="ant-prop-estilo"><option value="solida">Continua</option><option value="punteada">Punteada</option><option value="guiones">Guiones</option><option value="guion_punto">Guion y punto</option></select>
+                        </label>
+                        <label class="ant-campo">Capa <select id="ant-prop-capa"></select></label>
+                    </div>
+                    <label class="ant-campo">Opacidad <input type="range" id="ant-prop-opacidad" min="5" max="100"></label>
                     <label class="ant-campo ant-fila"><input type="checkbox" id="ant-prop-relleno"> Relleno</label>
                     <label class="ant-campo" id="ant-prop-profundidad-campo" hidden>Profundidad (m) <input type="number" id="ant-prop-profundidad" min="0" max="10000" step="0.01"></label>
                     <label class="ant-campo" id="ant-prop-etiqueta-campo" hidden>Etiqueta del polígono
@@ -295,10 +312,16 @@ $herramientas = [
                     </div>
                     <div class="ant-fila" id="ant-prop-imagen-campos" hidden>
                         <label class="ant-campo">Giro (°) <input type="number" id="ant-prop-rot" min="-360" max="360" step="1"></label>
-                        <label class="ant-campo">Opacidad <input type="range" id="ant-prop-opacidad" min="10" max="100"></label>
                     </div>
                     <button type="button" class="btn btn-sm btn-primary" id="ant-prop-aplicar"><i class="fa-solid fa-check"></i> Aplicar cambios</button>
                 </div>
+            </div>
+            <div class="ant-panel-cont" id="ant-p-capas" data-panel="capas" hidden>
+                <div class="ant-capas-cab">
+                    <p class="text-sm text-muted">Las capas se ocultan, bloquean y atenúan por separado. Las anotaciones nuevas caen en la capa activa.</p>
+                    <button type="button" class="btn btn-sm btn-primary" id="ant-capa-nueva"><i class="fa-solid fa-plus"></i> Nueva capa</button>
+                </div>
+                <div class="ant-capas-lista" id="ant-capas-lista"></div>
             </div>
             <div class="ant-panel-cont" id="ant-p-medidas" data-panel="medidas" hidden>
                 <p class="text-sm text-muted" id="ant-medidas-vacio">Aún no hay medidas. Calibra la página y dibuja una línea, un área o un polígono.</p>
@@ -336,6 +359,13 @@ $herramientas = [
                     <h4 class="pn-tit"><i class="fa-solid fa-stamp"></i> Estampas inteligentes</h4>
                     <p class="text-sm text-muted">Se llenan con datos del proyecto y se actualizan cuando cambian.</p>
                     <div class="ant-estampas-lista" id="ant-estampas-lista"></div>
+                </div>
+                <div class="pn-secc">
+                    <h4 class="pn-tit"><i class="fa-solid fa-shapes"></i> Símbolos</h4>
+                    <p class="text-sm text-muted">Del proyecto, de los materiales (con su especialidad) y los predeterminados. Se copian al documento.</p>
+                    <div class="pn-busca"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" id="ant-sim-buscar" placeholder="Buscar símbolo…" aria-label="Buscar símbolo"></div>
+                    <div class="ant-sim-lista" id="ant-simbolos-lista"></div>
                 </div>
                 <div class="pn-secc">
                     <h4 class="pn-tit"><i class="fa-solid fa-text-height"></i> Resaltar texto</h4>

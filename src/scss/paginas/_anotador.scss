@@ -287,3 +287,37 @@
 }
 .ant-texto-capa span::selection { background: rgba(37, 99, 235, .35); color: transparent; }
 .ant-texto-capa br { display: none; }
+
+// Estilo de línea (grosor, opacidad y capa)
+.ant-grosor input[type=range] { width: 8rem; }
+.ant-grosor output, .ant-mini-opacidad output { min-width: 3.2rem; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.ant-mini-capa select { max-width: 13rem; }
+.ant-estilo select, .ant-mini-capa select { max-width: 13rem; }
+
+// Capas
+.ant-capas-cab { display: flex; flex-direction: column; gap: .7rem; margin-bottom: .8rem; }
+.ant-capas-lista { display: flex; flex-direction: column; gap: .35rem; }
+.ant-capa { display: grid; grid-template-columns: auto minmax(0, 1fr) 5.5rem auto; align-items: center; gap: .4rem; padding: .4rem .5rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); cursor: pointer;
+  &.on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  &.oculta { opacity: .62; }
+  &.bloqueada .ant-capa-nombre { color: var(--text-dim); }
+  .ant-capa-acc { display: inline-flex; align-items: center; gap: .1rem; }
+  .ant-capa-nombre { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text); font-size: 1.15rem; font-weight: 600; padding: .2rem; }
+  .ant-capa-nombre:focus { background: var(--bg-secondary); outline: 1px solid var(--primary); border-radius: .3rem; }
+  .ant-capa-op { width: 5rem; }
+  small { white-space: nowrap; }
+}
+@media (max-width: 48rem) {
+  .ant-capa { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .ant-capa-op { display: none; }
+}
+
+// Símbolos del Anotador
+.ant-sim-lista { margin-top: .5rem; max-height: 40vh; overflow-y: auto; }
+.ant-sim-grupo { margin: .7rem 0 .3rem; font-size: 1.05rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.ant-sim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: .4rem; }
+.ant-sim-item { display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: .35rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--surface); color: var(--text); cursor: pointer; font-size: 1rem;
+  img { max-width: 100%; max-height: 42px; object-fit: contain; }
+  span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &:hover { border-color: var(--primary); }
+}

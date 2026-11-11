@@ -70,7 +70,7 @@ Herramienta `/anotador` (menú **Documentos y diseño**). Abre un PDF o una imag
 
 ## Rutas
 
-`/anotador`, `/anotador/fuente`, `/anotador/imagen` (GET y POST), `/anotador/miniatura`, `/anotador/guardar`, `/anotador/eliminar`, `/anotador/duplicar`, `/anotador/versiones`, `/anotador/restaurar`, `/anotador/firmas`, `/anotador/firma`, `/anotador/firma-ver`, `/anotador/firmar`, `/anotador/reabrir`, `/anotador/estampas`, `/anotador/estampa`.
+`/anotador`, `/anotador/fuente`, `/anotador/imagen` (GET y POST), `/anotador/miniatura`, `/anotador/guardar`, `/anotador/eliminar`, `/anotador/duplicar`, `/anotador/versiones`, `/anotador/restaurar`, `/anotador/firmas`, `/anotador/firma`, `/anotador/firma-ver`, `/anotador/firmar`, `/anotador/reabrir`, `/anotador/estampas`, `/anotador/estampa`, `/anotador/simbolos`.
 
 ## Almacenamiento, medios y respaldos
 
@@ -95,3 +95,11 @@ Herramienta `/anotador` (menú **Documentos y diseño**). Abre un PDF o una imag
 - Actualización automática de estampas ya colocadas (hoy se vuelven a insertar).
 - Edición de vértices del polígono después de cerrarlo (hoy se mueve/escala completo).
 - Enlace público de solo lectura (descartado en esta fase).
+
+## Estilos, polilínea, capas y símbolos (2026-11-11)
+
+- **Estilo desde el inicio:** barra con color, grosor 1–24, opacidad y tipo de línea (`solida`, `punteada`, `guiones`, `guion_punto`); se guarda en cada forma y se aplica a lo nuevo y a lo seleccionado. El motor compartido `anotaciones.js` dibuja el trazo y multiplica la opacidad de la forma por la de la capa.
+- **Polilínea:** herramienta `polilinea` (tecla Y), abierta y con 2+ vértices; doble clic o Enter termina, Retroceso quita el último. No calcula área.
+- **Capas:** `config.capas` (`id`, `nombre`, `visible`, `bloqueada`, `opacidad`) y `shape.capa`. Panel Capas para crear, renombrar, ordenar, ocultar, bloquear y atenuar; la capa activa recibe lo nuevo. Las capas ocultas no se dibujan, no se seleccionan, no salen en el PDF ni en las medidas; las bloqueadas se ven pero no se editan. Los documentos viejos usan una capa «Anotaciones».
+- **Símbolos:** `GET /anotador/simbolos` devuelve `Simbolo::paraEditor()` (proyecto + materiales + predeterminados). Se rasterizan (también SVG), se copian a `uploads/anotador` y se insertan como `tipo = simbolo` con `simbolo_id` y `nombre`.
+- Rutas nuevas: `/anotador/simbolos`. Pruebas: `tests/run.php` (normalización de polilínea/símbolo y capas) e `tests/integracion.php` (guardado/lectura de capas y símbolos).

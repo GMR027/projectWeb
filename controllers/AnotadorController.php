@@ -11,6 +11,7 @@ use Classes\Estampas;
 use Classes\Pdf;
 use Classes\PdfRaster;
 use Model\Estampa;
+use Model\Simbolo;
 
 /** Anotador: anota planos y documentos PDF, mide áreas y volúmenes, inserta imágenes, estampas y firmas */
 class AnotadorController
@@ -191,6 +192,14 @@ class AnotadorController
     }
 
     /** Estampas inteligentes del proyecto para insertar en el plano */
+    /** Biblioteca de símbolos para insertar en el documento (proyecto, materiales y predeterminados) */
+    public static function simbolos()
+    {
+        $proyecto = proyecto_de_peticion();
+        if (!puede_descargar() && !es_demo()) json_respuesta(['success' => false, 'error' => 'No tienes permiso para insertar símbolos.'], 403);
+        json_respuesta(['success' => true, 'simbolos' => Simbolo::paraEditor((int)$proyecto->id)]);
+    }
+
     public static function estampas()
     {
         $p = proyecto_api('ver');

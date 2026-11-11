@@ -9,7 +9,8 @@ use Intervention\Image\Drivers\Gd\Driver;
 class Imagenes
 {
     public const CARPETA = __DIR__ . '/../public/uploads/materiales';
-    public const ANCHO = 240;
+    /** Lado máximo de la miniatura. 640 px para que también sirva como símbolo en planos; las imágenes viejas siguen a 240 px. */
+    public const ANCHO = 640;
 
     /** Genera miniatura desde un archivo y devuelve el nombre guardado */
     public static function miniatura(string $origen): ?string

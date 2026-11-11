@@ -26,8 +26,20 @@
         <a href="/materiales/dependencias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-link"></i> Dependencias</a>
         <a href="/especialidades?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Especialidades</a>
         <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nuevo material</a>
+        <?php if (puede_descargar() || is_admin()): $qExp = http_build_query(array_filter([
+            'proyecto' => (int)$proyecto->id, 'q' => $q, 'especialidad' => $fEsp, 'entrega' => $fEntrega, 'compra' => $fCompra,
+        ], fn($v) => $v !== '' && $v !== null)); ?>
+        <details class="gr-descargar" data-ayuda="Descarga el catálogo con los filtros actuales, agrupado por especialidad, con imagen, referencia, material, status de compra y fechas. PDF para imprimir o .ods para editarlo en LibreOffice." data-manual="/manual#materiales">
+            <summary class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Exportar</summary>
+            <div class="gr-descargar-menu">
+                <a href="/materiales/exportar?<?php echo s($qExp); ?>&formato=pdf"><i class="fa-regular fa-file-pdf"></i> PDF (A4 horizontal)</a>
+                <a href="/materiales/exportar?<?php echo s($qExp); ?>&formato=ods"><i class="fa-solid fa-table"></i> LibreOffice Calc (.ods)</a>
+            </div>
+        </details>
+        <?php endif; ?>
     </div>
 </div>
+<?php if (!empty($_GET['error'])): ?><div class="alerta alerta-error" role="alert"><?php echo s((string)$_GET['error']); ?></div><?php endif; ?>
 
 <?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('materiales', '/materiales', $proyecto); ?>
 <?php

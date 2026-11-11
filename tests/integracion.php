@@ -185,6 +185,39 @@ $ok('el catálogo de fuentes incluye el Archivo del proyecto', count(array_filte
 $dupG = Classes\Comparador::duplicar($proy, Classes\Comparador::obtener((int)$proy->id, $idG));
 $ok('duplicar una comparación crea otra', $dupG > 0 && $dupG !== $idG && count(Classes\Comparador::listar((int)$proy->id)) === 2);
 $ok('eliminar borra la comparación', Classes\Comparador::eliminar((int)$proy->id, $idG) && Classes\Comparador::eliminar((int)$proy->id, $dupG) && count(Classes\Comparador::listar((int)$proy->id)) === 0);
+// ---------- Materiales: atributos, perfil de búsqueda y símbolos automáticos ----------
+echo "Materiales: atributos, perfil de búsqueda y símbolos\n";
+$ok('la tabla material_atributos existe', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'material_atributos'")->fetch_row());
+$imgMat = bin2hex(random_bytes(16)) . '.png';
+if (!is_dir(Classes\Imagenes::CARPETA)) @mkdir(Classes\Imagenes::CARPETA, 0775, true);
+$im = imagecreatetruecolor(40, 30); imagefill($im, 0, 0, imagecolorallocate($im, 20, 90, 160)); imagepng($im, Classes\Imagenes::CARPETA . '/' . $imgMat); imagedestroy($im);
+$matPrueba = new Model\Material([
+    'proyecto_id' => (int)$proy->id, 'referencia' => '26 05 19', 'nombre_base' => 'Cable THW-90',
+    'marca' => 'Condumex', 'modelo' => 'THW-90', 'valor_extra' => 'Calibre 12 AWG 600 V 90 C',
+    'nombre' => 'Cable THW-90 Condumex', 'especialidad' => 'Eléctrico', 'certificado_calidad' => 'NOM-063-SCFI',
+    'imagen' => $imgMat, 'compra' => 'pendiente',
+]);
+$rMat = $matPrueba->guardar();
+$matPrueba->id = (int)($rMat['id'] ?? 0);
+$ok('un material con imagen se guarda', $matPrueba->id > 0);
+$atr = new Model\MaterialAtributo(['proyecto_id' => (int)$proy->id, 'material_id' => (int)$matPrueba->id, 'tipo' => 'certificacion', 'codigo' => 'NOM-063-SCFI', 'titulo' => 'Certificado de conformidad', 'emisor' => 'NOM']);
+$rAtr = $atr->guardar();
+$ok('se guarda una norma/certificación del material', is_array($rAtr) && !empty($rAtr['resultado']));
+$entMat = Classes\Normativa::entidad((int)$proy->id, 'material', (int)$matPrueba->id);
+$ok('el perfil de búsqueda incluye marca, modelo y certificado', $entMat && stripos($entMat['texto'], 'condumex') !== false && stripos($entMat['texto'], 'thw-90') !== false && stripos($entMat['texto'], 'nom-063-scfi') !== false);
+$ok('la pasada exacta conserva el código de la norma', in_array('nom-063-scfi', Classes\Normativa::codigosDe((string)$entMat['texto']), true));
+$GLOBALS['db']->query("INSERT INTO normativa_documentos (proyecto_id, titulo, tipo, codigo, idioma, archivo, tamano, paginas, fragmentos) VALUES ({$proy->id}, 'Norma de prueba', 'norma', 'NOM-063-SCFI', 'es', 'prueba.pdf', 1, 1, 1)");
+$docId = (int)$GLOBALS['db']->insert_id;
+$GLOBALS['db']->query("INSERT INTO normativa_fragmentos (documento_id, proyecto_id, pagina, clausula, titulo, texto, idioma) VALUES ($docId, {$proy->id}, 1, '5.1', 'Conductores', 'El cable debe cumplir la norma NOM-063-SCFI y la temperatura de 90 C.', 'es')");
+$candsMat = Classes\Normativa::candidatos((int)$proy->id, 'material', (int)$matPrueba->id, 6);
+$ok('la pasada exacta encuentra la cláusula que menciona la norma del material', count(array_filter($candsMat, fn($c) => str_contains((string)$c['texto'], 'NOM-063-SCFI'))) === 1);
+$sims = Model\Simbolo::deMateriales((int)$proy->id);
+$ok('el material con imagen aparece como símbolo automático', count($sims) === 1 && $sims[0]['material_id'] === (int)$matPrueba->id && $sims[0]['categoria'] === 'Eléctrico');
+$ok('el selector del editor incluye el símbolo del material', count(array_filter(Model\Simbolo::paraEditor((int)$proy->id), fn($s) => ($s['origen'] ?? '') === 'material')) === 1);
+$matPrueba->eliminar();
+@unlink(Classes\Imagenes::CARPETA . '/' . $imgMat);
+$ok('al eliminar el material desaparece de los símbolos', count(Model\Simbolo::deMateriales((int)$proy->id)) === 0);
+
 // ---------- Anotador: documento, medidas, versiones y firma ----------
 echo "Anotador de planos\n";
 $ok('las tablas del Anotador existen', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'anotador_documentos'")->fetch_row() && (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'anotador_firmas_aplicadas'")->fetch_row());
@@ -222,6 +255,22 @@ $ok('el administrador puede reabrir el documento', Classes\Anotador::reabrir($pr
 $dupAnt = $dAnt ? Classes\Anotador::duplicar($proy, $dAnt) : null;
 $ok('duplicar no hereda el bloqueo de firma', $dupAnt && $dupAnt !== $idAnt && !Classes\Anotador::obtener((int)$proy->id, (int)$dupAnt)->finalizado());
 $ok('eliminar quita el documento', Classes\Anotador::eliminar((int)$proy->id, $idAnt) && Classes\Anotador::eliminar((int)$proy->id, (int)$dupAnt) && count(Classes\Anotador::listar((int)$proy->id)) === 0);
+$postCapas = [
+    'nombre' => 'Anotador capas CI', 'fuente_tipo' => 'archivo', 'fuente_id' => (int)$arch->id, 'paginas' => 1,
+    'config' => json_encode(['escalas' => [], 'unidad' => 'm', 'capas' => [
+        ['id' => 'c1', 'nombre' => 'Base', 'visible' => true, 'bloqueada' => false, 'opacidad' => 100],
+        ['id' => 'c2', 'nombre' => 'Marcas', 'visible' => false, 'bloqueada' => true, 'opacidad' => 45],
+    ]]),
+    'anotaciones' => json_encode(['version' => 2, 'ancho' => 20, 'alto' => 20, 'shapes' => [
+        ['tipo' => 'polilinea', 'pts' => [[0, 0], [20, 10], [40, 0]], 'capa' => 'c2', 'estilo' => 'punteada', 'opacidad' => .6, 'pagina' => 1],
+        ['tipo' => 'simbolo', 'x' => 1, 'y' => 1, 'w' => 8, 'h' => 8, 'imagen' => $sig, 'simbolo_id' => 3, 'nombre' => 'Cámara', 'capa' => 'c1', 'pagina' => 1],
+    ]]),
+];
+$rCapas = Classes\Anotador::guardar($proy, $postCapas);
+$idCapas = (int)($rCapas['id'] ?? 0);
+$dCapas = Classes\Anotador::obtener((int)$proy->id, $idCapas);
+$ok('el Anotador guarda capas, polilíneas y símbolos', !empty($rCapas['ok']) && $dCapas && count($dCapas->config()['capas']) === 2 && $dCapas->config()['capas'][1]['visible'] === false && count($dCapas->anotaciones()['shapes']) === 2 && $dCapas->anotaciones()['shapes'][0]['estilo'] === 'punteada' && $dCapas->anotaciones()['shapes'][1]['simbolo_id'] === 3);
+if ($idCapas) Classes\Anotador::eliminar((int)$proy->id, $idCapas);
 @unlink(Classes\Anotador::CARPETA . '/' . $sig);
 
 @unlink($dirArch . '/cmp-ci.png');

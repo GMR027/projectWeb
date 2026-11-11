@@ -5,8 +5,11 @@ namespace Controllers;
 use MVC\Router;
 use Model\Proyecto;
 use Model\Material;
+use Model\MaterialAtributo;
 use Classes\Imagenes;
 use Classes\MaterialesInteligentes;
+use Classes\Exportadores\MaterialesPdfExporter;
+use Classes\Exportadores\MaterialesSheetExporter;
 
 /** Catálogo de materiales por proyecto (alimenta submittals y MSR) */
 class MaterialController
@@ -60,6 +63,51 @@ class MaterialController
         ]);
     }
 
+    /** Exporta el catálogo filtrado (PDF o .ods) agrupado por especialidad */
+    public static function exportar()
+    {
+        $proyecto = proyecto_de_peticion();
+        if ((!puede_descargar() && !is_admin()) || es_demo()) {
+            http_response_code(403);
+            exit;
+        }
+        $formato = ($_GET['formato'] ?? '') === 'ods' ? 'ods' : 'pdf';
+        $q = trim((string)($_GET['q'] ?? ''));
+        $fEsp = trim((string)($_GET['especialidad'] ?? ''));
+        $fEntrega = in_array($_GET['entrega'] ?? '', ['entregado', 'pendiente'], true) ? $_GET['entrega'] : '';
+        $compraGet = $_GET['compra'] ?? '';
+        $fCompra = is_string($compraGet) && isset(Material::COMPRA[$compraGet]) ? $compraGet : '';
+        $materiales = array_values(array_filter(
+            Material::deProyecto((int)$proyecto->id),
+            fn($m) => ($q === '' || stripos($m->nombre . ' ' . $m->referencia . ' ' . $m->especialidad, $q) !== false)
+                && ($fEsp === '' || ($fEsp === '__sin' ? $m->especialidad === '' : $m->especialidad === $fEsp))
+                && ($fEntrega === '' || ($fEntrega === 'entregado') === $m->entregado())
+                && ($fCompra === '' || $m->compra === $fCompra)
+        ));
+        $filtros = ['q' => $q, 'especialidad' => $fEsp, 'entrega' => $fEntrega, 'compra' => $fCompra];
+        if (isset($_GET['nom_pre_tipo'])) nomenclatura_desde_post($_GET);   // respeta el prefijo/sufijo del Centro de Exportación
+        $nombreBase = 'Materiales' . ($fEsp !== '' && $fEsp !== '__sin' ? '-' . slug_archivo($fEsp) : '');
+        @set_time_limit(180); @ini_set('memory_limit', '512M');
+        try {
+            $exporter = $formato === 'ods'
+                ? (new MaterialesSheetExporter($proyecto))->setMateriales($materiales)->setFiltros($filtros)->setFormato('ods')
+                : (new MaterialesPdfExporter($proyecto))->setMateriales($materiales)->setFiltros($filtros);
+            $ruta = $exporter->generar($nombreBase);
+        } catch (\Throwable $e) {
+            error_log('Exportar materiales: ' . $e->getMessage());
+            header('Location: /materiales?proyecto=' . (int)$proyecto->id . '&error=' . urlencode('No se pudo generar el archivo.'));
+            exit;
+        }
+        $mime = $formato === 'ods' ? 'application/vnd.oasis.opendocument.spreadsheet' : 'application/pdf';
+        header('Content-Type: ' . $mime);
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Length: ' . filesize($ruta));
+        header('Content-Disposition: attachment; filename="' . basename($ruta) . '"; filename*=UTF-8\'\'' . rawurlencode(basename($ruta)));
+        readfile($ruta);
+        @unlink($ruta);
+        exit;
+    }
+
     public static function crear(Router $router)
     {
         $proyecto = self::proyecto($_SERVER['REQUEST_METHOD'] === 'POST' ? 'POST' : 'GET');
@@ -75,6 +123,7 @@ class MaterialController
         $router->render('materiales/formulario', [
             'titulo' => 'Nuevo material', 'proyecto' => $proyecto, 'material' => $material, 'alertas' => $alertas,
             'inteligentes' => is_admin() && MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => null,
+            'atributos' => $material->id ? MaterialAtributo::deMaterial((int)$proyecto->id, (int)$material->id) : [],
         ]);
     }
 
@@ -98,6 +147,7 @@ class MaterialController
         $router->render('materiales/formulario', [
             'titulo' => 'Editar material', 'proyecto' => $proyecto, 'material' => $material, 'alertas' => $alertas,
             'inteligentes' => is_admin() && MaterialesInteligentes::activo((int)$proyecto->id), 'verificacion' => is_admin() ? MaterialesInteligentes::deMaterial((int)$material->id) : null,
+            'atributos' => MaterialAtributo::deMaterial((int)$proyecto->id, (int)$material->id),
         ]);
     }
 
@@ -236,6 +286,10 @@ class MaterialController
 
         $r = $material->guardar();
         if (!$material->id && is_array($r)) $material->id = $r['id'];
+        if ($material->id) {
+            try { MaterialAtributo::sincronizarDesdePost((int)$proyecto->id, (int)$material->id, $_POST, (string)($_SESSION['nombre'] ?? '')); }
+            catch (\Throwable $e) { error_log('Atributos del material: ' . $e->getMessage()); }   // migración pendiente
+        }
         $material->sincronizarMsr();
         try { \Classes\DependenciasMateriales::propagar($proyecto); } catch (\Throwable $e) { error_log('Dependencias de materiales: ' . $e->getMessage()); }
         \Classes\Normativa::guardarManuales('material', (int)$material->id, (int)$proyecto->id, $_POST);   // normativa capturada a mano en el formulario

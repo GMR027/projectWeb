@@ -41,6 +41,25 @@ class TraductorController
         }
     }
 
+    /** Traduce una lista de textos cortos (planos: encabezados, rótulos y notas) conservando el orden */
+    public static function lista()
+    {
+        proyecto_de_peticion();
+        if ((!puede_descargar() && !is_admin()) || es_demo()) json_respuesta(['error' => 'No tienes permiso para traducir planos.'], 403);
+        if (!Traductor::configurado()) json_respuesta(['error' => 'El traductor no está disponible en el servidor.'], 503);
+        [$de, $a] = self::idiomas();
+        $textos = json_decode((string)($_POST['textos'] ?? '[]'), true);
+        if (!is_array($textos) || !$textos) json_respuesta(['error' => 'No hay textos para traducir.'], 422);
+        $textos = array_slice(array_values(array_map(fn($t) => is_string($t) ? $t : '', $textos)), 0, 500);
+        $total = array_sum(array_map('mb_strlen', $textos));
+        if ($total > 50000) json_respuesta(['error' => 'El lote de textos es demasiado grande; divide el plano en partes.'], 422);
+        try {
+            json_respuesta(['textos' => Traductor::traducir($textos, $de, $a)]);
+        } catch (\RuntimeException $e) {
+            json_respuesta(['error' => $e->getMessage()], 502);
+        }
+    }
+
     public static function documento()
     {
         $proyecto = proyecto_de_peticion();

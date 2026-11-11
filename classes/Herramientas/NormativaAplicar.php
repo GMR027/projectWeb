@@ -19,10 +19,10 @@ class NormativaAplicar extends Base
     public static function ficha(): array
     {
         return ['titulo' => 'Aplicar normativa y especificaciones', 'grupo' => 'documentos', 'tipo' => 'normativa', 'aplicable' => false,
-            'descripcion' => 'Lee las normas y especificaciones cargadas (PDF en español o inglés) y propone en qué materiales y actividades aplica cada cláusula, con el requisito resumido en español y la cita original. Tú aceptas o rechazas cada vínculo. Sin IA se proponen solo los de sección CSI exacta y mucha coincidencia de palabras.',
+            'descripcion' => 'Lee las normas y especificaciones cargadas (PDF en español o inglés) y propone en qué materiales y actividades aplica cada cláusula, con el requisito resumido en español y la cita original. Usa marca, modelo, especificaciones, referencia, certificado y normas del material, además del nombre. Tú aceptas o rechazas cada vínculo. Sin IA se proponen los de sección CSI exacta, código/norma y mucha coincidencia de palabras.',
             'requiere' => ['minimo' => 'basico', 'recomendado' => 'medio'],
             'parametros' => [['nombre' => 'ambito', 'etiqueta' => 'Qué revisar', 'tipo' => 'opcion', 'opciones' => ['materiales' => 'Materiales', 'actividades' => 'Actividades', 'ambos' => 'Materiales y actividades'], 'defecto' => 'materiales'],
-                ['nombre' => 'maximo', 'etiqueta' => 'Máximo de elementos por corrida', 'tipo' => 'numero', 'defecto' => 16, 'min' => 1, 'max' => 40]]];
+                ['nombre' => 'maximo', 'etiqueta' => 'Máximo de materiales por corrida', 'tipo' => 'numero', 'defecto' => 16, 'min' => 1, 'max' => 40]]];
     }
 
     public static function titulo(Proyecto $p, array $params): string
@@ -41,12 +41,24 @@ class NormativaAplicar extends Base
         if (in_array($params['ambito'], ['actividades', 'ambos'], true)) foreach (self::filas("SELECT a.id FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE pa.proyecto_id = $pid AND a.hito = 0 AND a.id NOT IN (SELECT entidad_id FROM normativa_aplicaciones WHERE entidad_tipo = 'actividad' AND proyecto_id = $pid AND estado IN ('propuesta','aceptada')) ORDER BY a.id LIMIT 300") as $f) $ids[] = ['actividad', (int)$f['id']];
         $out = [];
         foreach ($ids as [$tipo, $id]) {
-            $c = Normativa::candidatos($pid, $tipo, $id, 4);
+            $ent = Normativa::entidad($pid, $tipo, $id);
+            if (!$ent) continue;
+            $c = Normativa::candidatos($pid, $tipo, $id, $tipo === 'material' ? 6 : 4);
             if (!$c) continue;
-            $out[($tipo === 'material' ? 'M' : 'A') . $id] = ['tipo' => $tipo, 'id' => $id, 'nombre' => Normativa::entidad($pid, $tipo, $id)['nombre'], 'cand' => $c];
+            $out[($tipo === 'material' ? 'M' : 'A') . $id] = ['tipo' => $tipo, 'id' => $id, 'nombre' => $ent['nombre'], 'meta' => $ent['meta'] ?? [], 'cand' => $c];
             if (count($out) >= $max) break;
         }
         return $out;
+    }
+
+    /** Ficha corta del material/actividad para el prompt */
+    private static function perfil(array $e): string
+    {
+        if (empty($e['meta'])) return '';
+        $etq = ['marca' => 'Marca', 'modelo' => 'Modelo o tipo', 'especificaciones' => 'Especificaciones', 'certificado' => 'Certificado de calidad', 'referencia' => 'Referencia / CSI', 'atributos' => 'Normas, certificaciones y especificaciones'];
+        $out = [];
+        foreach ($e['meta'] as $k => $v) if (trim((string)$v) !== '') $out[] = ($etq[$k] ?? $k) . ': ' . self::corto((string)$v, 260);
+        return implode("\n", $out);
     }
 
     public static function preparar(Proyecto $p, array $params): array
@@ -61,9 +73,12 @@ class NormativaAplicar extends Base
                 $ref = trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento'] . ($z['seccion'] !== '' ? ' · ' . $z['seccion'] : '') . ($z['clausula'] !== '' ? ' · ' . $z['clausula'] : ''));
                 return "- CLÁUSULA {$c['id']} [{$ref} · pág. {$z['pagina']} · " . strtoupper($c['idioma']) . '] ' . self::corto(trim($c['titulo'] . '. ' . $c['texto']), 420);
             }, $e['cand']));
+            $perfil = self::perfil($e);
             $lotes[] = ['titulo' => "Revisando normativa: elemento $n de " . count($el) . ' (' . self::corto($e['nombre'], 40) . ')', 'clave' => $k, 'prompt' =>
                 "Eres especialista en normativa y especificaciones de construcción. Decide cuáles de estas CLÁUSULAS le aplican DE VERDAD al elemento (que exijan algo sobre ese material o trabajo, no solo que compartan palabras). Las cláusulas pueden estar en inglés o en español; resume SIEMPRE el requisito en español, con base solo en el texto de la cláusula; no inventes requisitos.\n\n"
-                . "ELEMENTO (" . ($e['tipo'] === 'material' ? 'material' : 'actividad') . "): " . self::corto($e['nombre'], 140) . "\n\nCLÁUSULAS CANDIDATAS:\n$cands\n\n"
+                . "ELEMENTO (" . ($e['tipo'] === 'material' ? 'material' : 'actividad') . "): " . self::corto($e['nombre'], 140) . "\n"
+                . ($perfil !== '' ? "FICHA DEL ELEMENTO:\n$perfil\n" : '')
+                . "\nBusca cláusulas que mencionen la marca, el modelo, la norma, la certificación o la especificación; si la cláusula es genérica pero aplica por el tipo de material o trabajo, también vale.\n\nCLÁUSULAS CANDIDATAS:\n$cands\n\n"
                 . "Responde SOLO con un objeto JSON, sin texto antes ni después ni bloques de código, con esta forma exacta:\n{\"aplicaciones\":[{\"clausula\":123,\"aplica\":true,\"requisito\":\"qué exige, en español, máx. 200 caracteres\"},{\"clausula\":456,\"aplica\":false,\"requisito\":\"\"}]}\nIncluye una entrada por cada cláusula candidata."];
         }
         return ['datos' => ['elementos' => $el], 'lotes' => $lotes];
@@ -78,7 +93,12 @@ class NormativaAplicar extends Base
         $porElemento = [];
         $decididos = [];
 
-        $etiqueta = fn(array $e) => ($e['tipo'] === 'material' ? 'Material' : 'Actividad') . ' · ' . self::corto($e['nombre'], 70);
+        $etiqueta = function (array $e) {
+            $m = [];
+            foreach (($e['meta'] ?? []) as $v) if (trim((string)$v) !== '') $m[] = (string)$v;
+            return ($e['tipo'] === 'material' ? 'Material' : 'Actividad') . ' · ' . self::corto($e['nombre'], 70)
+                . ($m ? ' — ' . self::corto(implode(' · ', array_slice($m, 0, 4)), 90) : '');
+        };
 
         foreach ($respuestas as $r) {
             foreach ((array)($r['aplicaciones'] ?? []) as $a) {
@@ -108,7 +128,11 @@ class NormativaAplicar extends Base
                 if (Normativa::proponerRegla($pid, $e['tipo'], $e['id'], $c)) {
                     $reglas++;
                     $z = Normativa::cita($c);
-                    $origen = $c['origen'] === 'csi' ? 'Sección CSI' : 'Palabras';
+                    $origen = match ($c['origen']) {
+                        'csi' => 'Sección CSI',
+                        'codigo' => 'Código / norma',
+                        default => 'Palabras',
+                    };
                     $filas[] = [$etiqueta($e), self::corto(trim(($z['codigo'] !== '' ? $z['codigo'] . ' · ' : '') . $z['documento']), 80), $z['seccion'], self::corto($z['clausula'], 80), $z['pagina'] ?: '', $origen, ''];
                     $porElemento[$k]['tipo'] = $e['tipo'];
                     $porElemento[$k]['nombre'] = $e['nombre'];

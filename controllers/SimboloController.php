@@ -15,11 +15,17 @@ class SimboloController
     {
         $proyecto = proyecto_de_peticion();
         $propios = Simbolo::deProyecto((int)$proyecto->id);
+        $deMateriales = Simbolo::deMateriales((int)$proyecto->id);
+        $categorias = array_values(array_unique(array_filter(array_merge(
+            array_map(fn($s) => $s->categoria, $propios),
+            array_map(fn($m) => $m['categoria'], $deMateriales)
+        ))));
+        sort($categorias, SORT_NATURAL | SORT_FLAG_CASE);
         $router->render('simbolos/index', [
             'titulo' => 'Símbolos - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'simbolos' => $propios, 'cajetines' => Cajetin::deProyecto((int)$proyecto->id), 'simbologias' => \Model\Grafico::simbologias((int)$proyecto->id),
             'predeterminados' => Simbolo::predeterminados(), 'puedeEditar' => puede_gestionar_proyecto($proyecto),
             'estampas' => \Model\Estampa::deProyecto((int)$proyecto->id), 'plantillasEstampa' => \Classes\Estampas::plantillas(),
-            'categorias' => array_values(array_unique(array_filter(array_map(fn($s) => $s->categoria, $propios)))),
+            'materialesSimbolos' => $deMateriales, 'categorias' => $categorias,
             'usosSimbolos' => Simbolo::usos((int)$proyecto->id),
         ]);
     }

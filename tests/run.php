@@ -12,6 +12,7 @@ use Model\Subactividad;
 
 $fallos = 0;
 $ok = function (string $nombre, bool $cond) use (&$fallos) { echo ($cond ? '  ok   ' : '  FALLA ') . $nombre . "\n"; if (!$cond) $fallos++; };
+$asset = fn(string $p): string => (string)@file_get_contents(__DIR__ . '/../' . $p);
 
 echo "SvgSeguro\n";
 $limpio = SvgSeguro::limpiar('<svg viewBox="0 0 10 10" onload="x()"><script>alert(1)</script><rect width="5" height="5" onclick="a" style="fill:url(http://x)"/><image href="http://e/x.png"/></svg>');
@@ -70,6 +71,14 @@ $ok('el progreso del curso se guarda en el navegador', is_file(__DIR__ . '/../pu
 echo "Traductor\n";
 $ok('solo español e inglés', Classes\Traductor::idiomaValido('es') && Classes\Traductor::idiomaValido('en') && !Classes\Traductor::idiomaValido('fr'));
 $ok('textos sin letras no llaman al motor', !Classes\Traductor::configurado() || Classes\Traductor::traducir(['123', ' ', '-'], 'es', 'en') === ['123', ' ', '-']);
+$ok('el plano en el lugar vive dentro del Traductor', str_contains($asset('views/traductor/index.php'), 'id="trd-plano"') && str_contains($asset('views/traductor/index.php'), 'data-pestana="plano"') && str_contains($asset('public/index.php'), "/api/traductor/lista"));
+$ok('el motor del plano extrae posiciones y dibuja encima', str_contains($asset('public/vendor/traductor-plano.js'), 'getTextContent') && str_contains($asset('public/vendor/traductor-plano.js'), 'Util.transform') && str_contains($asset('public/vendor/traductor-plano.js'), 'addImage') && str_contains($asset('public/vendor/traductor-plano.js'), 'pintarTexto'));
+
+echo "Materiales: exportación y símbolos automáticos\n";
+$ok('el catálogo se exporta a PDF y ODS por especialidad', is_file(__DIR__ . '/../classes/Exportadores/MaterialesPdfExporter.php') && is_file(__DIR__ . '/../classes/Exportadores/MaterialesSheetExporter.php') && str_contains($asset('classes/MaterialesCatalogo.php'), 'Sin especialidad'));
+$ok('la ruta y el botón de exportar están en el catálogo', str_contains($asset('public/index.php'), "/materiales/exportar") && str_contains($asset('views/materiales/index.php'), '/materiales/exportar?') && str_contains($asset('views/materiales/index.php'), 'formato=ods'));
+$ok('las imágenes nuevas de materiales se guardan a 640 px', str_contains($asset('classes/Imagenes.php'), 'const ANCHO = 640'));
+$ok('los materiales con imagen generan símbolos sin duplicar archivos', str_contains($asset('models/Simbolo.php'), 'function deMateriales') && str_contains($asset('models/Simbolo.php'), "'origen' => 'material'") && str_contains($asset('views/simbolos/index.php'), 'sim-p-materiales') && str_contains($asset('views/simbolos/index.php'), "'materiales' => ['Materiales'"));
 
 echo "OdpExporter\n";
 $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
@@ -663,6 +672,10 @@ $cita = \Classes\Normativa::cita(['documento' => 'Especificación', 'clausula' =
 $ok('una cláusula sin CSI se respeta tal cual', $cita['seccion'] === '' && $cita['clausula'] === 'ARTÍCULO 250' && $cita['pagina'] === 0);
 $cita = \Classes\Normativa::cita(['referencia' => 'NOM-001-STPS', 'clausula' => '', 'titulo' => '']);
 $ok('un vínculo manual conserva su referencia', $cita['documento'] === '' && $cita['seccion'] === '' && $cita['referencia'] === 'NOM-001-STPS');
+$ok('la búsqueda conserva códigos con números y guiones', \Classes\Normativa::codigosDe('Cable THW-90 NOM-063-SCFI IP66 Q465') === ['thw-90', 'nom-063-scfi', 'ip66', 'q465']);
+$ok('la búsqueda ampliada usa el perfil del material y una pasada exacta', str_contains($asset('classes/Normativa.php'), 'MaterialAtributo::deMaterial') && str_contains($asset('classes/Normativa.php'), "'codigo'") && str_contains($asset('classes/Normativa.php'), 'textoFicha'));
+$ok('el máximo se llama «Máximo de materiales por corrida»', str_contains($asset('classes/Herramientas/NormativaAplicar.php'), 'Máximo de materiales por corrida'));
+$ok('los atributos del material tienen tabla, migración y modelo', str_contains($asset('database/schema.sql'), 'CREATE TABLE IF NOT EXISTS material_atributos') && is_file(__DIR__ . '/../database/migracion_material_atributos.sql') && is_file(__DIR__ . '/../models/MaterialAtributo.php'));
 
 echo "Plantillas de proyecto desde un proceso\n";
 $tpl = \Classes\PlantillaProyecto::desdeTipoObra('videovigilancia');
@@ -1189,6 +1202,18 @@ $anAnt = \Classes\Anotador::anotaciones(json_encode(['ancho' => 1000, 'alto' => 
 $ok('el normalizador acepta polígonos, volúmenes y firmas y descarta lo desconocido', count($anAnt['shapes']) === 3 && $anAnt['shapes'][0]['tipo'] === 'poligono' && $anAnt['shapes'][1]['profundidad'] === 0.3 && $anAnt['shapes'][2]['nombre'] === 'Ana' && $anAnt['escalas'][1] === 0.002);
 $ok('una imagen de firma con nombre raro se rechaza', \Classes\Anotador::anotaciones(json_encode(['shapes' => [['tipo' => 'firma', 'imagen' => '../../etc/passwd', 'x' => 1, 'y' => 1, 'w' => 10, 'h' => 10]]]))['shapes'] === []);
 $ok('la configuración del Anotador acota las escalas por página', \Classes\Anotador::config(json_encode(['escalas' => [1 => 0.002, 2 => -5, 'x' => 1, 3 => '0.5'], 'unidad' => 'm']))['escalas'] === [1 => 0.002, 3 => 0.5]);
+$anNuevo = \Classes\Anotador::anotaciones(json_encode(['shapes' => [
+    ['tipo' => 'polilinea', 'pts' => [[0, 0], [20, 10], [40, 0]], 'estilo' => 'guiones', 'opacidad' => .5, 'capa' => 'c2', 'pagina' => 1],
+    ['tipo' => 'simbolo', 'x' => 1, 'y' => 1, 'w' => 10, 'h' => 10, 'imagen' => str_repeat('b', 32) . '.png', 'simbolo_id' => 7, 'nombre' => 'Cámara', 'capa' => 'c2', 'pagina' => 1],
+]]));
+$ok('el normalizador acepta polilíneas y símbolos con estilo y capa', count($anNuevo['shapes']) === 2 && $anNuevo['shapes'][0]['tipo'] === 'polilinea' && $anNuevo['shapes'][0]['cerrado'] === false && $anNuevo['shapes'][0]['estilo'] === 'guiones' && $anNuevo['shapes'][0]['opacidad'] === .5 && $anNuevo['shapes'][1]['simbolo_id'] === 7 && $anNuevo['shapes'][1]['capa'] === 'c2');
+$cfgCapas = \Classes\Anotador::config(json_encode(['capas' => [['id' => 'c1', 'nombre' => 'Base'], ['id' => 'c2', 'nombre' => 'Marcas', 'visible' => false, 'bloqueada' => true, 'opacidad' => 40]]]));
+$ok('la configuración conserva las capas con visibilidad, bloqueo y opacidad', count($cfgCapas['capas']) === 2 && $cfgCapas['capas'][1]['nombre'] === 'Marcas' && $cfgCapas['capas'][1]['visible'] === false && $cfgCapas['capas'][1]['bloqueada'] === true && $cfgCapas['capas'][1]['opacidad'] === 40);
+$ok('la vista del Anotador tiene estilos, capas y símbolos', str_contains($asset('views/anotador/index.php'), 'id="ant-estilo"') && str_contains($asset('views/anotador/index.php'), 'data-ptab="capas"') && str_contains($asset('views/anotador/index.php'), 'id="ant-simbolos-lista"') && str_contains($asset('public/vendor/anotador.js'), 'function pintarCapas') && str_contains($asset('public/vendor/anotador.js'), 'function colocarSimbolo') && str_contains($asset('public/vendor/anotaciones.js'), "case 'polilinea'"));
+$ok('el Anotador pide los símbolos con permiso del proyecto', str_contains($asset('public/index.php'), "/anotador/simbolos") && str_contains($asset('controllers/AnotadorController.php'), 'function simbolos'));
+$menuHerramientas = $asset('views/templates/herramientas-proyecto.php');
+$ok('el menú recategoriza costos, cambios, riesgos y recursos en Administración', str_contains($menuHerramientas, "['Administración', '/costos'") && str_contains($menuHerramientas, "['Administración', '/cambios'") && str_contains($menuHerramientas, "['Administración', '/riesgos'") && str_contains($menuHerramientas, "['Administración', '/recursos'"));
+$ok('el menú recategoriza líneas base en Planeación y separa Materiales y compras', str_contains($menuHerramientas, "['Planeación', '/lineas-base'") && str_contains($menuHerramientas, "['Materiales y compras', '/materiales'") && !str_contains($menuHerramientas, "['Materiales y cambios'"));
 
 echo "Seguridad: control de acceso del visitante\n";
 $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRAMIENTAS', (function () {
