@@ -781,10 +781,10 @@ HTML],
 <thead><tr><th>Grupo</th><th>Herramientas</th></tr></thead>
 <tbody>
 <tr><td><strong>Selección</strong></td><td>Seleccionar y mover (Esc), y selección múltiple con recuadro. Con Mayús o Ctrl + clic sumas marcas.</td></tr>
-<tr><td><strong>Líneas</strong></td><td>Continua, discontinua, trazo y punto, punteada, polilínea (clic por punto, doble clic o Enter para terminar), lápiz libre, flecha y flecha doble.</td></tr>
+<tr><td><strong>Líneas</strong></td><td>Continua, discontinua, trazo y punto, punteada, polilínea (clic por punto, doble clic o Enter para terminar), lápiz libre, flecha y flecha doble. Mantén <strong>Mayús, Ctrl o ⌘</strong> para trazar en horizontal o vertical; el interruptor <strong>Ortogonal</strong> (F8) lo deja fijo.</td></tr>
 <tr><td><strong>Formas</strong></td><td>Rectángulo, redondeado, elipse, triángulo, rombo, <strong>polígono</strong> (clic en cada vértice; doble clic, Enter o clic en el primer punto para cerrar), pentágono, hexágono, estrella, cruz, equis, palomita, flecha de bloque, chevron, trapecio y zona translúcida, más 22 formas extra (octágono, corazón, rayo, gota, globo de texto, bandera, flechas de bloque en cuatro direcciones, estrellas, etc.). Las líneas recuerdan el último color, grosor y opacidad usados.</td></tr>
 <tr><td><strong>Texto y marcadores</strong></td><td>Texto, <strong>caja de texto</strong> (haz clic y escribe: el texto baja a la siguiente línea dentro del ancho de la caja y no se desborda a la derecha; el ancho se cambia con las asas laterales o en Propiedades, donde también puedes convertir un texto normal en caja), tabla (arrastra para dibujarla; doble clic en una celda para escribir; Tab pasa a la siguiente; al escalarla con las asas la letra crece o se reduce junto con ella y las filas se reajustan), rombo de restricción numerado, círculo numerado, imagen, hipervínculo y vista 360.</td></tr>
-<tr><td><strong>Medir</strong></td><td>Traza dos puntos; la primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas. Eliges la unidad (mm, cm, m, pulgadas).</td></tr>
+<tr><td><strong>Medir</strong></td><td>Traza dos puntos; la primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas. Eliges la unidad (mm, cm, m, pulgadas), el <strong>tamaño de la cota</strong> y si las líneas y flechas nuevas muestran su longitud. Con <strong>Poner a las líneas</strong> se la aplicas a las ya dibujadas y con <strong>Aplicar tamaño</strong> igualas todas las cotas de la lámina. Mantén <strong>Mayús, Ctrl o ⌘</strong> (o activa «Ortogonal» con F8) para trazar en horizontal o vertical.</td></tr>
 </tbody>
 </table>
 <h4>Panel derecho</h4>
@@ -1040,7 +1040,7 @@ HTML],
 <li>Si el PDF tiene varias hojas, usa las <strong>miniaturas</strong> o las flechas del pie para cambiar de página. Cada anotación pertenece a su página.</li>
 </ul>
 <h4>Anotar</h4>
-<p>La barra superior reúne las herramientas: <strong>seleccionar</strong>, <strong>mano</strong> para mover la vista, <strong>globo numerado</strong>, <strong>texto</strong>, <strong>resaltador</strong>, <strong>rectángulo resaltado</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>polilínea</strong> (tecla Y), <strong>rectángulo</strong>, <strong>elipse</strong>, <strong>nube de revisión</strong>, <strong>medir</strong>, <strong>área</strong>, <strong>polígono</strong>, <strong>volumen</strong>, <strong>imagen</strong>, <strong>símbolo</strong>, <strong>estampa</strong> y <strong>firma</strong>. Con la selección puedes mover, redimensionar, copiar (Ctrl+C), pegar (Ctrl+V), duplicar (Ctrl+D) y borrar (Supr). <strong>Mayús+clic</strong> selecciona varias.</p>
+<p>La barra superior reúne las herramientas: <strong>seleccionar</strong>, <strong>mano</strong> para mover la vista, <strong>globo numerado</strong>, <strong>texto</strong>, <strong>resaltador</strong>, <strong>rectángulo resaltado</strong>, <strong>flecha</strong>, <strong>línea</strong>, <strong>polilínea</strong> (tecla Y), <strong>rectángulo</strong>, <strong>elipse</strong>, <strong>nube de revisión</strong>, <strong>medir</strong>, <strong>área</strong>, <strong>polígono</strong>, <strong>volumen</strong>, <strong>imagen</strong>, <strong>símbolo</strong>, <strong>estampa</strong> y <strong>firma</strong>. Con la selección puedes mover, redimensionar, copiar (Ctrl+C), pegar (Ctrl+V), duplicar (Ctrl+D) y borrar (Supr). <strong>Mayús+clic</strong> selecciona varias. Al trazar líneas, flechas, medidas o polilíneas, mantén <strong>Mayús, Ctrl o ⌘</strong> para el tramo salga horizontal o vertical; el interruptor <strong>Ortogonal</strong> de la barra deja el modo fijo (útil en tabletas).</p>
 <h4>Estilo de línea</h4>
 <p>Antes de dibujar elige en la barra el <strong>color</strong>, el <strong>grosor</strong> (1–24), la <strong>opacidad</strong> y el <strong>tipo de línea</strong> (continua, punteada, guiones o guion y punto). Se aplica a lo nuevo y a la anotación seleccionada. La polilínea se cierra con doble clic o Enter; Retroceso quita el último vértice.</p>
 <h4>Capas</h4>
@@ -1050,9 +1050,11 @@ HTML],
 <h4>Medir áreas y volúmenes</h4>
 <ol>
 <li>En <strong>Medidas</strong> pulsa <strong>Calibrar página</strong> y dibuja una cota conocida; escribe cuántos metros mide. La escala se guarda por página.</li>
+<li>Con la página calibrada, las <strong>líneas y flechas nuevas</strong> muestran su longitud centrada en la línea. Puedes quitarla o ponerla por línea en <strong>Propiedades</strong> y aplicar la cota a las líneas ya dibujadas de esa página.</li>
+<li><strong>Tamaño de las etiquetas</strong>: el deslizador del panel Medidas cambia todas las etiquetas del documento y, en Propiedades, cada etiqueta se ajusta de forma individual (30–300 %). Se aplica también a la miniatura y al PDF.</li>
 <li><strong>Polígono</strong>: haz clic en cada vértice y cierra con doble clic o Enter. La etiqueta muestra el área y, si lo eliges en Propiedades, también el perímetro.</li>
 <li><strong>Volumen</strong>: dibuja el polígono y escribe la <strong>profundidad</strong> en metros. El resultado es área × profundidad en m³. Puedes cambiarla en Propiedades.</li>
-<li>La tabla de <strong>Medidas</strong> resume todo y suma áreas y volúmenes; <strong>CSV</strong> y <strong>Copiar</strong> llevan el cuadro a otros documentos.</li>
+<li>La tabla de <strong>Medidas</strong> resume distancias (incluidas las líneas con cota), áreas y volúmenes, y suma áreas y volúmenes; <strong>CSV</strong> y <strong>Copiar</strong> llevan el cuadro a otros documentos.</li>
 </ol>
 <h4>Insertar imágenes, estampas y firmas</h4>
 <ul>

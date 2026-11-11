@@ -10,12 +10,14 @@
   const LADO_MAX = 3400;
   const EXT_IMG = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
   const TIPOS_MEDIDA = ['medir', 'area', 'poligono', 'volumen'];
+  const esLineaCota = sh => !!sh && ['linea', 'flecha'].includes(sh.tipo) && !!sh.cota && (ant.cfg.escalas[paginaDe(sh)] || 0) > 0;
+  const esMedida = sh => !!sh && (TIPOS_MEDIDA.includes(sh.tipo) || esLineaCota(sh));
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.js';
 
   const ant = {
     docId: 0, nombre: '', descripcion: '', fuenteTipo: '', fuenteId: null, fuenteNombre: '', ext: '',
-    pdf: null, img: null, pagina: 1, paginas: 1, sizes: {}, cfg: { escalas: {}, unidad: 'm', capas: [] }, shapes: [],
-    sel: -1, multi: [], herramienta: 'seleccion', color: '#e11d48', grosor: 5, relleno: false, opacidad: 1, estilo: 'solida',
+    pdf: null, img: null, pagina: 1, paginas: 1, sizes: {}, cfg: { escalas: {}, unidad: 'm', capas: [], etqTam: 1, cotaLineas: true }, shapes: [],
+    sel: -1, multi: [], herramienta: 'seleccion', color: '#e11d48', grosor: 5, relleno: false, opacidad: 1, estilo: 'solida', orto: false,
     capas: [], capa: 'c1', simbolos: [],
     activo: true, ver: true, undo: [], redo: [], drag: null, editando: -1, k: 1, x: 0, y: 0,
     dirty: false, finalizado: false, soloLectura: false, imagenes: {}, portapapeles: [], filtro: 'todas', todasPaginas: false,
@@ -36,8 +38,19 @@
   const tamPagina = n => ant.sizes[n] || ant.sizes[1] || { w: 1200, h: 800 };
   const cfgBase = () => {
     const w = tamPagina(paginaActual()).w || 1200;
-    return { base: Math.max(.75, Math.min(3, w / 1200)), k: ant.k, mPorPx: ant.cfg.escalas[paginaActual()] || 0, imagenes: ant.imagenes, capas: ant.capas };
+    return { base: Math.max(.75, Math.min(3, w / 1200)), k: ant.k, mPorPx: ant.cfg.escalas[paginaActual()] || 0, imagenes: ant.imagenes, capas: ant.capas, etqTam: ant.cfg.etqTam || 1 };
   };
+  const configNormal = c => ({
+    escalas: c && c.escalas ? c.escalas : {},
+    unidad: c && c.unidad ? c.unidad : 'm',
+    capas: c && Array.isArray(c.capas) ? c.capas : [],
+    etqTam: c && +c.etqTam > 0 ? Math.max(.3, Math.min(3, +c.etqTam)) : 1,
+    cotaLineas: !c || c.cotaLineas !== false,
+  });
+  /** Modo ortogonal: Mayús, Ctrl o ⌘ mientras se dibuja, o el interruptor de la barra (útil en tabletas) */
+  const ortoTemporal = e => !!(e && (e.shiftKey || e.ctrlKey || e.metaKey)) || !!ant.orto;
+  /** Punto ajustado al eje dominante respecto al origen */
+  const ejeOrto = (x0, y0, x, y) => Math.abs(x - x0) >= Math.abs(y - y0) ? { x, y: y0 } : { x: x0, y };
   const capaDe = id => ant.capas.find(c => c.id === id) || null;
   const capaActiva = () => capaDe(ant.capa) || ant.capas[0] || null;
   const capaIndex = sh => Math.max(0, ant.capas.findIndex(c => c.id === (sh && (sh.capa || ant.capa))));
@@ -74,7 +87,7 @@
   // ============================================================== fuente / documento
   function limpiarEstado() {
     ant.pdf = null; ant.img = null; ant.shapes = []; ant.sel = -1; ant.multi = []; ant.undo = []; ant.redo = [];
-    ant.pagina = 1; ant.sizes = {}; ant.imagenes = {}; ant.cfg = { escalas: {}, unidad: 'm', capas: [] };
+    ant.pagina = 1; ant.sizes = {}; ant.imagenes = {}; ant.cfg = configNormal(null);
     ant.capas = [{ id: 'c1', nombre: 'Anotaciones', visible: true, bloqueada: false, opacidad: 100 }]; ant.capa = 'c1';
     ant.polygon = null; ant.pendiente = null; ant.finalizado = false; ant.soloLectura = false; ant.dirty = true;
     ant.insertadas = []; ant.firmas = []; ant.estampas = []; ant.draftFile = null; ant.miniaturaAnterior = '';
@@ -118,8 +131,8 @@
     if (!r.ok) throw new Error('No se pudo abrir el documento base.');
     await cargarBlob(await r.blob(), d.ext, d.nombre_archivo || d.nombre, { nombre: d.nombre, descripcion: d.descripcion, docId: d.id });
     ant.fuenteTipo = d.fuente_tipo; ant.fuenteId = d.fuente_id; ant.fuenteNombre = d.nombre_archivo;
-    ant.cfg = d.config && d.config.escalas ? { escalas: d.config.escalas || {}, unidad: d.config.unidad || 'm', capas: d.config.capas || [] } : { escalas: {}, unidad: 'm', capas: [] };
-    ant.capas = Array.isArray(d.config?.capas) ? d.config.capas : [];
+    ant.cfg = configNormal(d.config);
+    ant.capas = Array.isArray(ant.cfg.capas) ? ant.cfg.capas : [];
     ant.shapes = (d.anotaciones && d.anotaciones.shapes) || [];
     asegurarCapas();
     const vistas = new Set();
@@ -396,6 +409,8 @@
       else if (['flecha', 'linea', 'medir'].includes(ant.herramienta)) sh = Object.assign(comun, { tipo: ant.herramienta, x1: p.x, y1: p.y, x2: p.x, y2: p.y });
       else if (ant.herramienta === 'mano' || ant.herramienta === 'resaltador') sh = Object.assign(comun, { tipo: ant.herramienta, pts: [[p.x, p.y]] });
       else sh = Object.assign(comun, { tipo: ant.herramienta, x: p.x, y: p.y, w: 0, h: 0 });
+      // Las líneas nuevas llevan la cota de longitud cuando la página ya está calibrada.
+      if (['linea', 'flecha'].includes(sh.tipo)) sh.cota = !!ant.cfg.cotaLineas && (ant.cfg.escalas[paginaActual()] || 0) > 0;
       ant.shapes.push(sh); ant.sel = ant.shapes.length - 1; ant.multi = [ant.sel];
       marcarSucio(); redibujar(); pintarLista(); pintarDetalle();
       if (ant.herramienta === 'texto' || ant.herramienta === 'globo') { abrirEditor(ant.sel); return; }
@@ -404,7 +419,11 @@
     });
 
     anotEl.addEventListener('pointermove', e => {
-      if (ant.polygon) { ant.polygon.mouse = { x: punto(e).x, y: punto(e).y }; redibujar(); }
+      if (ant.polygon) {
+        const p = punto(e), ult = ant.polygon.pts[ant.polygon.pts.length - 1];
+        const q = ortoTemporal(e) ? ejeOrto(ult.x, ult.y, p.x, p.y) : p;
+        ant.polygon.mouse = { x: q.x, y: q.y }; redibujar();
+      }
       const d = ant.drag; if (!d) return;
       const p = punto(e);
       if (d.modo !== 'draw' && !d.snap) { d.snap = true; snapshot(); }
@@ -422,7 +441,10 @@
       } else if (d.modo === 'draw') {
         const sh = ant.shapes[d.i]; if (!sh) return;
         if (sh.tipo === 'mano' || sh.tipo === 'resaltador') sh.pts.push([p.x, p.y]);
-        else if (['flecha', 'linea', 'medir'].includes(sh.tipo)) { sh.x2 = p.x; sh.y2 = p.y; }
+        else if (['flecha', 'linea', 'medir'].includes(sh.tipo)) {
+          const q = ortoTemporal(e) ? ejeOrto(d.ini.x, d.ini.y, p.x, p.y) : { x: p.x, y: p.y };
+          sh.x2 = q.x; sh.y2 = q.y;
+        }
         else { sh.x = Math.min(p.x, d.ini.x); sh.y = Math.min(p.y, d.ini.y); sh.w = Math.abs(p.x - d.ini.x); sh.h = Math.abs(p.y - d.ini.y); }
       }
       redibujar();
@@ -510,8 +532,9 @@
       redibujar(); return;
     }
     const ult = ant.polygon.pts[ant.polygon.pts.length - 1];
-    if (Math.hypot(p.x - ult.x, p.y - ult.y) < 3 / ant.k) return;
-    ant.polygon.pts.push({ x: p.x, y: p.y });
+    const q = ortoTemporal(e) ? ejeOrto(ult.x, ult.y, p.x, p.y) : { x: p.x, y: p.y };
+    if (Math.hypot(q.x - ult.x, q.y - ult.y) < 3 / ant.k) return;
+    ant.polygon.pts.push(q);
     redibujar();
   }
   async function cerrarPoligono() {
@@ -798,6 +821,7 @@
     if (sh.creado) meta.push(fechaCorta(sh.creado));
     meta.push('pág. ' + paginaDe(sh));
     if (sh.tipo === 'medir') meta.push(fmtLong(A.longitud(sh)));
+    if (['linea', 'flecha'].includes(sh.tipo) && sh.cota && (ant.cfg.escalas[paginaDe(sh)] || 0) > 0) meta.push(fmtLong(A.longitud(sh)));
     if (sh.tipo === 'poligono') meta.push(fmtArea(A.areaPoligono(sh.pts || [])) + ' · ' + fmtLong(A.perimetroPoligono(sh.pts || [])));
     if (sh.tipo === 'volumen') meta.push(fmtArea(A.areaPoligono(sh.pts || [])) + ' · ' + fmtVol(A.areaPoligono(sh.pts || []), sh.profundidad));
     if (sh.estado === 'resuelta') meta.push('resuelta');
@@ -843,6 +867,14 @@
     $('#ant-prop-profundidad').value = sh.profundidad || 0;
     $('#ant-prop-etiqueta-campo').hidden = sh.tipo !== 'poligono';
     $('#ant-prop-etiqueta').value = sh.etiqueta || 'area';
+    const esLineaCota = ['linea', 'flecha'].includes(sh.tipo);
+    const conEtiqueta = TIPOS_MEDIDA.includes(sh.tipo) || esLineaCota;
+    $('#ant-prop-cota-campo').hidden = !esLineaCota;
+    $('#ant-prop-cota').checked = !!sh.cota;
+    const conEscala = (ant.cfg.escalas[paginaDe(sh)] || 0) > 0;
+    $('#ant-prop-cota').title = conEscala ? 'Muestra la longitud real en el centro de la línea' : 'Calibra la página para poder mostrar la cota';
+    $('#ant-prop-etq-campo').hidden = !conEtiqueta || (esLineaCota && !sh.cota);
+    $('#ant-prop-etq').value = Math.round((sh.etqTam || 1) * 100);
     const esFirma = sh.tipo === 'firma';
     $('#ant-prop-firma-campos').hidden = !esFirma;
     if (esFirma) { $('#ant-prop-nombre').value = sh.nombre || ''; $('#ant-prop-cargo').value = sh.cargo || ''; }
@@ -850,6 +882,8 @@
     $('#ant-prop-imagen-campos').hidden = !esImg;
     if (esImg) $('#ant-prop-rot').value = sh.rot || 0;
     $$('#ant-props-form input, #ant-props-form textarea, #ant-props-form select, #ant-prop-aplicar').forEach(el => { el.disabled = ant.soloLectura; });
+    const cota = $('#ant-prop-cota');
+    if (cota) cota.disabled = ant.soloLectura || !((ant.cfg.escalas[paginaDe(sh)] || 0) > 0);
   }
   function pintarCapas() {
     const lista = $('#ant-capas-lista'); if (!lista) return;
@@ -892,15 +926,15 @@
     tbody.innerHTML = '';
     let areaTotal = 0, volTotal = 0, hay = false;
     ant.shapes.forEach(sh => {
-      if (!TIPOS_MEDIDA.includes(sh.tipo)) return;
+      if (!esMedida(sh)) return;
       const capa = capaDe(sh.capa);
       if (capa && (capa.visible === false || +capa.opacidad === 0)) return;
       hay = true;
       const tr = document.createElement('tr');
       const c = v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); };
       c('p. ' + paginaDe(sh));
-      c({ medir: 'Distancia', area: 'Área', poligono: 'Polígono', volumen: 'Volumen' }[sh.tipo]);
-      if (sh.tipo === 'medir') c(fmtLong(A.longitud(sh)));
+      c({ medir: 'Distancia', linea: 'Línea', flecha: 'Línea', area: 'Área', poligono: 'Polígono', volumen: 'Volumen' }[sh.tipo] || sh.tipo);
+      if (sh.tipo === 'medir' || esLineaCota(sh)) c(fmtLong(A.longitud(sh)));
       else c(fmtArea(A.areaPoligono(sh.pts || []) || Math.abs(sh.w * sh.h)));
       c(sh.tipo === 'poligono' || sh.tipo === 'volumen' ? fmtLong(A.perimetroPoligono(sh.pts || [])) : '—');
       c(sh.tipo === 'volumen' ? (sh.profundidad || 0).toFixed(2) + ' m' : '—');
@@ -919,6 +953,16 @@
     const txt = e > 0 ? '1 m = ' + Math.round(1 / e) + ' px' : 'Sin escala';
     ['#ant-escala', '#ant-escala-pie'].forEach(s => { const el = $(s); if (el) el.textContent = txt; });
     const m = $('#ant-medidas-vacio'); if (m && e > 0) m.textContent = 'La página está calibrada. Dibuja líneas, áreas o polígonos para medir.';
+    const cota = $('#ant-cota-lineas'), aplicar = $('#ant-cota-aplicar');
+    if (cota) {
+      cota.checked = ant.cfg.cotaLineas !== false;
+      cota.disabled = e <= 0 || ant.soloLectura;
+      cota.title = e > 0 ? 'Las líneas nuevas muestran su longitud' : 'Calibra la página para mostrar la cota en las líneas';
+    }
+    if (aplicar) aplicar.disabled = e <= 0 || ant.soloLectura;
+    const etq = $('#ant-etq-tam'), etqVal = $('#ant-etq-tam-val');
+    if (etq) { etq.value = Math.round((ant.cfg.etqTam || 1) * 100); etq.disabled = ant.soloLectura; }
+    if (etqVal) etqVal.textContent = Math.round((ant.cfg.etqTam || 1) * 100) + '%';
   }
   function actualizarTodo() {
     asegurarCapas(); pintarHerramientas(); pintarLista(); pintarDetalle(); pintarProps(); pintarCapas(); pintarMedidas(); pintarPaginasActiva(); actualizarEscalaInfo(); aplicar();
@@ -939,7 +983,7 @@
     g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
     g.drawImage(hojaEl, 0, 0, c.width, c.height);
     g.save(); g.scale(c.width / t.w, c.height / t.h);
-    const cfg = { base: Math.max(.75, Math.min(3, t.w / 1200)), k: 1, mPorPx: 0, imagenes: ant.imagenes, capas: ant.capas };
+    const cfg = { base: Math.max(.75, Math.min(3, t.w / 1200)), k: 1, mPorPx: 0, etqTam: ant.cfg.etqTam || 1, imagenes: ant.imagenes, capas: ant.capas };
     shapesOrdenados(paginaActual()).forEach(({ sh }) => A.dibujar(g, sh, false, cfg));
     g.restore();
     return c.toDataURL('image/jpeg', .8);
@@ -955,7 +999,7 @@
     if (!C.puedeGuardar) { aviso('No tienes permiso para guardar.'); return false; }
     const nombre = ($('#ant-g-nombre').value || ant.nombre || ant.fuenteNombre || '').trim();
     if (!nombre) { aviso('Escribe un nombre para el documento.'); return false; }
-    const cfg = { escalas: ant.cfg.escalas || {}, unidad: ant.cfg.unidad || 'm', capas: ant.capas };
+    const cfg = { escalas: ant.cfg.escalas || {}, unidad: ant.cfg.unidad || 'm', capas: ant.capas, etqTam: ant.cfg.etqTam || 1, cotaLineas: ant.cfg.cotaLineas !== false };
     const an = { version: 2, ancho: tamPagina(paginaActual()).w, alto: tamPagina(paginaActual()).h, escalas: cfg.escalas, unidad: cfg.unidad, shapes: ant.shapes };
     const fd = new FormData();
     fd.set('proyecto', C.proyecto); if (ant.docId) fd.set('id', ant.docId);
@@ -1270,7 +1314,7 @@
       const g = page.canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, t.w, t.h); g.drawImage(ant.img, 0, 0, t.w, t.h);
     }
     const g = page.canvas.getContext('2d');
-    const cfg = { base: Math.max(.75, Math.min(3, page.canvas.width / 1200)), k: 1, mPorPx: ant.cfg.escalas[n] || 0, imagenes: ant.imagenes, capas: ant.capas };
+    const cfg = { base: Math.max(.75, Math.min(3, page.canvas.width / 1200)), k: 1, mPorPx: ant.cfg.escalas[n] || 0, etqTam: ant.cfg.etqTam || 1, imagenes: ant.imagenes, capas: ant.capas };
     shapesOrdenados(n).forEach(({ sh }) => { cargarImagenShape(sh); A.dibujar(g, sh, false, cfg); });
     return page;
   }
@@ -1292,7 +1336,7 @@
         doc.addImage(p.canvas.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, pw, ph);
       }
       // Leyenda de medidas y firma
-      const med = ant.shapes.filter(s => TIPOS_MEDIDA.includes(s.tipo));
+      const med = ant.shapes.filter(esMedida);
       if (med.length || ant.finalizado) {
         doc.addPage('letter', 'portrait');
         let y = 18;
@@ -1309,6 +1353,7 @@
             if (y > 265) { doc.addPage('letter', 'portrait'); y = 18; }
             let txt = 'Pág. ' + paginaDe(sh) + ' · ';
             if (sh.tipo === 'medir') txt += 'Distancia ' + fmtLong(A.longitud(sh));
+            else if (esLineaCota(sh)) txt += 'Línea ' + fmtLong(A.longitud(sh));
             else if (sh.tipo === 'area') txt += 'Área ' + fmtArea(Math.abs(sh.w * sh.h));
             else if (sh.tipo === 'poligono') txt += 'Polígono ' + fmtArea(A.areaPoligono(sh.pts || [])) + ' · perímetro ' + fmtLong(A.perimetroPoligono(sh.pts || []));
             else txt += 'Volumen ' + fmtArea(A.areaPoligono(sh.pts || [])) + ' × ' + (sh.profundidad || 0).toFixed(2) + ' m = ' + fmtVol(A.areaPoligono(sh.pts || []), sh.profundidad);
@@ -1328,18 +1373,19 @@
   function medidasCsv() {
     const filas = [['Página', 'Tipo', 'Medida', 'Perímetro', 'Profundidad (m)', 'Volumen']];
     ant.shapes.forEach(sh => {
-      if (!TIPOS_MEDIDA.includes(sh.tipo)) return;
+      if (!esMedida(sh)) return;
       const area = sh.tipo === 'area' ? Math.abs(sh.w * sh.h) : A.areaPoligono(sh.pts || []);
-      filas.push([paginaDe(sh), sh.tipo, sh.tipo === 'medir' ? fmtLong(A.longitud(sh)) : fmtArea(area), sh.tipo === 'poligono' || sh.tipo === 'volumen' ? fmtLong(A.perimetroPoligono(sh.pts || [])) : '', sh.tipo === 'volumen' ? (sh.profundidad || 0).toFixed(2) : '', sh.tipo === 'volumen' ? fmtVol(area, sh.profundidad) : '']);
+      filas.push([paginaDe(sh), sh.tipo, sh.tipo === 'medir' || esLineaCota(sh) ? fmtLong(A.longitud(sh)) : fmtArea(area), sh.tipo === 'poligono' || sh.tipo === 'volumen' ? fmtLong(A.perimetroPoligono(sh.pts || [])) : '', sh.tipo === 'volumen' ? (sh.profundidad || 0).toFixed(2) : '', sh.tipo === 'volumen' ? fmtVol(area, sh.profundidad) : '']);
     });
     const csv = filas.map(f => f.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'medidas-' + slug(ant.nombre) + '.csv'; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
   function medidasTexto() {
-    return ant.shapes.filter(s => TIPOS_MEDIDA.includes(s.tipo)).map(sh => {
+    return ant.shapes.filter(esMedida).map(sh => {
       const area = sh.tipo === 'area' ? Math.abs(sh.w * sh.h) : A.areaPoligono(sh.pts || []);
       if (sh.tipo === 'medir') return 'Pág. ' + paginaDe(sh) + ' · Distancia ' + fmtLong(A.longitud(sh));
+      if (esLineaCota(sh)) return 'Pág. ' + paginaDe(sh) + ' · Línea ' + fmtLong(A.longitud(sh));
       if (sh.tipo === 'volumen') return 'Pág. ' + paginaDe(sh) + ' · Volumen ' + fmtArea(area) + ' × ' + (sh.profundidad || 0).toFixed(2) + ' m = ' + fmtVol(area, sh.profundidad);
       return 'Pág. ' + paginaDe(sh) + ' · ' + (sh.tipo === 'area' ? 'Área ' : 'Polígono ') + fmtArea(area);
     }).join('\n');
@@ -1511,6 +1557,7 @@
       if (sh && !ant.soloLectura) { sh.estilo = ant.estilo; marcarSucio(); redibujar(); }
     });
     $('#ant-relleno') && $('#ant-relleno').addEventListener('change', e => { ant.relleno = e.target.checked; });
+    $('#ant-orto') && $('#ant-orto').addEventListener('change', e => { ant.orto = e.target.checked; });
     $('#ant-opacidad') && $('#ant-opacidad').addEventListener('input', e => {
       ant.opacidad = (parseInt(e.target.value, 10) || 100) / 100;
       const v = $('#ant-opacidad-val'); if (v) v.textContent = Math.round(ant.opacidad * 100) + '%';
@@ -1569,6 +1616,23 @@
     $('#ant-reabrir') && $('#ant-reabrir').addEventListener('click', reabrir);
     $('#ant-versiones') && $('#ant-versiones').addEventListener('click', abrirVersiones);
     $('#ant-calibrar') && $('#ant-calibrar').addEventListener('click', calibrar);
+    $('#ant-etq-tam') && $('#ant-etq-tam').addEventListener('input', e => {
+      ant.cfg.etqTam = Math.max(.3, Math.min(3, (parseInt(e.target.value, 10) || 100) / 100));
+      const v = $('#ant-etq-tam-val'); if (v) v.textContent = Math.round(ant.cfg.etqTam * 100) + '%';
+      marcarSucio(); redibujar();
+    });
+    $('#ant-cota-lineas') && $('#ant-cota-lineas').addEventListener('change', e => {
+      ant.cfg.cotaLineas = e.target.checked; marcarSucio();
+    });
+    $('#ant-cota-aplicar') && $('#ant-cota-aplicar').addEventListener('click', () => {
+      if (!(ant.cfg.escalas[paginaActual()] > 0)) { aviso('Calibra la página para mostrar la cota en las líneas.', 'ok'); return; }
+      const lineas = ant.shapes.filter(sh => paginaDe(sh) === paginaActual() && ['linea', 'flecha'].includes(sh.tipo) && !sh.cota);
+      if (!lineas.length) { aviso('No hay líneas sin cota en esta página.', 'ok'); return; }
+      snapshot();
+      lineas.forEach(sh => { sh.cota = true; });
+      marcarSucio(); redibujar(); pintarLista(); pintarDetalle(); pintarProps(); pintarMedidas();
+      aviso('Cota activada en ' + lineas.length + ' línea(s).', 'ok');
+    });
     $('#ant-medidas-csv') && $('#ant-medidas-csv').addEventListener('click', medidasCsv);
     $('#ant-medidas-copiar') && $('#ant-medidas-copiar').addEventListener('click', async () => { try { await navigator.clipboard.writeText(medidasTexto()); aviso('Medidas copiadas.', 'ok'); } catch (e) { aviso('No se pudo copiar.'); } });
     const esMovil = () => !!(window.matchMedia && matchMedia('(max-width: 80rem)').matches);
@@ -1671,6 +1735,11 @@
       sh.relleno = $('#ant-prop-relleno').checked;
       if (sh.tipo === 'volumen') sh.profundidad = Math.max(0, parseFloat($('#ant-prop-profundidad').value) || 0);
       if (sh.tipo === 'poligono') sh.etiqueta = $('#ant-prop-etiqueta').value;
+      const esLinea = ['linea', 'flecha'].includes(sh.tipo);
+      if (esLinea) sh.cota = $('#ant-prop-cota').checked;
+      if (TIPOS_MEDIDA.includes(sh.tipo) || esLinea) {
+        sh.etqTam = Math.max(.3, Math.min(3, (parseInt($('#ant-prop-etq').value, 10) || 100) / 100));
+      }
       if (sh.tipo === 'firma') { sh.nombre = $('#ant-prop-nombre').value.trim(); sh.cargo = $('#ant-prop-cargo').value.trim(); }
       if (['imagen', 'simbolo', 'estampa', 'firma'].includes(sh.tipo)) sh.rot = parseFloat($('#ant-prop-rot').value) || 0;
       marcarSucio(); redibujar(); pintarLista(); pintarDetalle(); pintarMedidas(); aviso('Propiedades aplicadas.', 'ok');

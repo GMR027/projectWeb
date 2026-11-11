@@ -1209,6 +1209,28 @@ $anNuevo = \Classes\Anotador::anotaciones(json_encode(['shapes' => [
 $ok('el normalizador acepta polilíneas y símbolos con estilo y capa', count($anNuevo['shapes']) === 2 && $anNuevo['shapes'][0]['tipo'] === 'polilinea' && $anNuevo['shapes'][0]['cerrado'] === false && $anNuevo['shapes'][0]['estilo'] === 'guiones' && $anNuevo['shapes'][0]['opacidad'] === .5 && $anNuevo['shapes'][1]['simbolo_id'] === 7 && $anNuevo['shapes'][1]['capa'] === 'c2');
 $cfgCapas = \Classes\Anotador::config(json_encode(['capas' => [['id' => 'c1', 'nombre' => 'Base'], ['id' => 'c2', 'nombre' => 'Marcas', 'visible' => false, 'bloqueada' => true, 'opacidad' => 40]]]));
 $ok('la configuración conserva las capas con visibilidad, bloqueo y opacidad', count($cfgCapas['capas']) === 2 && $cfgCapas['capas'][1]['nombre'] === 'Marcas' && $cfgCapas['capas'][1]['visible'] === false && $cfgCapas['capas'][1]['bloqueada'] === true && $cfgCapas['capas'][1]['opacidad'] === 40);
+$anCota = \Classes\Anotador::anotaciones(json_encode(['shapes' => [
+    ['tipo' => 'linea', 'x1' => 0, 'y1' => 0, 'x2' => 100, 'y2' => 0, 'cota' => true, 'etqTam' => 1.4],
+    ['tipo' => 'medir', 'x1' => 0, 'y1' => 0, 'x2' => 100, 'y2' => 0, 'etqTam' => .8],
+]]));
+$ok('conserva la cota de las líneas y el tamaño de etiqueta', ($anCota['shapes'][0]['cota'] ?? null) === true && $anCota['shapes'][0]['etqTam'] === 1.4 && $anCota['shapes'][1]['etqTam'] === .8);
+$cfgEtq = \Classes\Anotador::config(json_encode(['etqTam' => 1.5, 'cotaLineas' => false]));
+$ok('la configuración conserva tamaño de etiqueta y cota de líneas', $cfgEtq['etqTam'] === 1.5 && $cfgEtq['cotaLineas'] === false);
+$ok('el Anotador tiene controles de cota, tamaño y ortogonal', str_contains($asset('views/anotador/index.php'), 'id="ant-prop-cota"') && str_contains($asset('views/anotador/index.php'), 'id="ant-etq-tam"') && str_contains($asset('views/anotador/index.php'), 'id="ant-orto"') && str_contains($asset('public/vendor/anotador.js'), 'esLineaCota') && str_contains($asset('public/vendor/anotador.js'), 'ortoTemporal'));
+$ok('el motor dibuja la cota de las líneas y escala las etiquetas', str_contains($asset('public/vendor/anotaciones.js'), 'cajaCota') && str_contains($asset('public/vendor/anotaciones.js'), 'etqEscala') && str_contains($asset('public/vendor/anotaciones.js'), 'sh.cota'));
+$ok('el Editor tiene cota en líneas y tamaño de etiqueta', str_contains($asset('views/vplan/_editor-lienzo.php'), 'id="p-cota"') && str_contains($asset('views/vplan/_editor-lienzo.php'), 'id="t-cota"') && str_contains($asset('public/vendor/vplan-editor.js'), 'nodoConCota') && str_contains($asset('public/vendor/vplan-editor.js'), 'e.evt.ctrlKey'));
+
+echo "Símbolos: subida de imágenes\n";
+$tmpImg = tempnam(sys_get_temp_dir(), 'sim');
+if (function_exists('imagecreatetruecolor')) {
+    $im = imagecreatetruecolor(4, 4); imagepng($im, $tmpImg); imagedestroy($im);
+    $ok('detecta el tipo de imagen por su firma', \Classes\Imagenes::tipoImagen($tmpImg) === 'image/png');
+} else {
+    $ok('detecta el tipo de imagen por su firma (GD no disponible)', true);
+}
+@unlink($tmpImg);
+$ok('la subida de símbolos usa el detector robusto y muestra los errores', str_contains($asset('controllers/SimboloController.php'), 'Imagenes::tipoImagen') && str_contains($asset('views/templates/alertas.php'), "\$_GET['error']"));
+$ok('la importación de símbolos explica los omitidos', str_contains($asset('controllers/SimboloController.php'), "'motivos' => \$motivos") && str_contains($asset('views/simbolos/index.php'), 'd.motivos'));
 $ok('la vista del Anotador tiene estilos, capas y símbolos', str_contains($asset('views/anotador/index.php'), 'id="ant-estilo"') && str_contains($asset('views/anotador/index.php'), 'data-ptab="capas"') && str_contains($asset('views/anotador/index.php'), 'id="ant-simbolos-lista"') && str_contains($asset('public/vendor/anotador.js'), 'function pintarCapas') && str_contains($asset('public/vendor/anotador.js'), 'function colocarSimbolo') && str_contains($asset('public/vendor/anotaciones.js'), "case 'polilinea'"));
 $ok('el Anotador pide los símbolos con permiso del proyecto', str_contains($asset('public/index.php'), "/anotador/simbolos") && str_contains($asset('controllers/AnotadorController.php'), 'function simbolos'));
 $menuHerramientas = $asset('views/templates/herramientas-proyecto.php');

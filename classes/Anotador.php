@@ -410,7 +410,9 @@ class Anotador
             if (count($capas) >= 20) break;
         }
         if (!$capas) $capas = [['id' => 'c1', 'nombre' => 'Anotaciones', 'visible' => true, 'bloqueada' => false, 'opacidad' => 100]];
-        return ['escalas' => $escalas, 'unidad' => $unidad, 'capas' => $capas];
+        $etqTam = isset($d['etqTam']) && is_numeric($d['etqTam']) ? max(.3, min(3, (float)$d['etqTam'])) : 1;
+        $cotaLineas = !isset($d['cotaLineas']) || !empty($d['cotaLineas']);
+        return ['escalas' => $escalas, 'unidad' => $unidad, 'capas' => $capas, 'etqTam' => $etqTam, 'cotaLineas' => $cotaLineas];
     }
 
     /**
@@ -434,11 +436,12 @@ class Anotador
             $tipo = (string)($s['tipo'] ?? '');
             if (!in_array($tipo, self::HERRAMIENTAS, true)) continue;
             $color = preg_match('/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/', (string)($s['color'] ?? '')) ? $s['color'] : '#e11d48';
+            $estilo = (string)($s['estilo'] ?? 'solida');
             $base = [
                 'tipo' => $tipo, 'color' => $color,
                 'grosor' => max(1, min(80, (float)($s['grosor'] ?? 5))),
                 'opacidad' => max(.05, min(1, (float)($s['opacidad'] ?? 1))),
-                'estilo' => in_array(($s['estilo'] ?? 'solida'), self::ESTILOS, true) ? $s['estilo'] : 'solida',
+                'estilo' => in_array($estilo, self::ESTILOS, true) ? $estilo : 'solida',
                 'capa' => mb_substr(trim((string)($s['capa'] ?? $s['layer'] ?? '')), 0, 40),
                 'relleno' => !empty($s['relleno']),
                 'texto' => mb_substr(trim((string)($s['texto'] ?? '')), 0, 600),
@@ -447,6 +450,7 @@ class Anotador
                 'estado' => ($s['estado'] ?? '') === 'resuelta' ? 'resuelta' : 'abierta',
                 'grupo' => max(0, min(1_000_000_000, (int)($s['grupo'] ?? 0))),
                 'pagina' => max(1, min(10000, (int)($s['pagina'] ?? 1))),
+                'etqTam' => max(.3, min(3, is_numeric($s['etqTam'] ?? null) ? (float)$s['etqTam'] : 1)),
             ];
             $notas = [];
             foreach (array_slice((array)($s['notas'] ?? []), 0, 50) as $nota) {
@@ -468,6 +472,7 @@ class Anotador
                     break;
                 case 'flecha': case 'linea': case 'medir':
                     $base += ['x1' => $n($s['x1'] ?? null, -200000, 200000), 'y1' => $n($s['y1'] ?? null, -200000, 200000), 'x2' => $n($s['x2'] ?? null, -200000, 200000), 'y2' => $n($s['y2'] ?? null, -200000, 200000)];
+                    if ($tipo !== 'medir') $base['cota'] = !empty($s['cota']);
                     break;
                 case 'mano': case 'resaltador':
                     $p = $pts($s['pts'] ?? []);

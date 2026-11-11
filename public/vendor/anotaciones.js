@@ -19,6 +19,12 @@
   const zoom = cfg => Math.max(0.02, +(cfg && cfg.k) || 1);
   const pxPantalla = cfg => 1 / zoom(cfg);
   const mPorPx = cfg => (cfg && cfg.mPorPx > 0 ? +cfg.mPorPx : 0);
+  /** Escala de las etiquetas: global del documento × ajuste propio de la forma */
+  const etqEscala = (sh, cfg) => {
+    const global = cfg && +cfg.etqTam > 0 ? +cfg.etqTam : 1;
+    const propio = sh && +sh.etqTam > 0 ? +sh.etqTam : 1;
+    return Math.max(.2, Math.min(4, global * propio));
+  };
 
   const vacia = sh => VACIAS.includes(sh && sh.tipo);
   const clone = o => JSON.parse(JSON.stringify(o));
@@ -177,8 +183,9 @@
     return { x: 0, y: 0, w: 0, h: 0 };
   }
 
-  function etiqueta(g, x, y, texto, col, cfg) {
-    const e = base(cfg), f = Math.max(10, 13 * e);
+  function etiqueta(g, x, y, texto, col, cfg, escala) {
+    const s = Math.max(.2, Math.min(4, +escala || 1));
+    const e = base(cfg) * s, f = Math.max(6, 13 * e);
     g.save(); g.font = '700 ' + f + 'px Inter, system-ui, sans-serif';
     const w = g.measureText(texto).width + 10 * e, h = f + 8 * e;
     g.fillStyle = 'rgba(15,23,42,.88)'; g.strokeStyle = col; g.lineWidth = Math.max(1, 1.5 * e);
@@ -186,6 +193,15 @@
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(texto, x, y + f * .04);
     g.restore();
+  }
+  /** Caja que ocupa la etiqueta de la cota de una línea (para poder seleccionarla) */
+  function cajaCota(sh, cfg) {
+    const g = lienzoMedicion(), s = etqEscala(sh, cfg), e = base(cfg) * s, f = Math.max(6, 13 * e);
+    g.save(); g.font = '700 ' + f + 'px Inter, system-ui, sans-serif';
+    const w = g.measureText(fmtLong(longitud(sh), cfg)).width + 10 * e, h = f + 8 * e;
+    g.restore();
+    const cx = ((sh.x1 || 0) + (sh.x2 || 0)) / 2, cy = ((sh.y1 || 0) + (sh.y2 || 0)) / 2;
+    return { x: cx - w / 2, y: cy - h / 2, w, h };
   }
 
   function nube(g, x, y, w, h, r) {
@@ -255,7 +271,7 @@
         g.globalAlpha = al * .32; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = al; break;
       case 'area':
         g.globalAlpha = al * .14; g.fillRect(sh.x, sh.y, sh.w, sh.h); g.globalAlpha = al; g.strokeRect(sh.x, sh.y, sh.w, sh.h);
-        etiqueta(g, sh.x + sh.w / 2, sh.y + sh.h / 2, fmtArea(Math.abs(sh.w * sh.h), cfg), col, cfg); break;
+        etiqueta(g, sh.x + sh.w / 2, sh.y + sh.h / 2, fmtArea(Math.abs(sh.w * sh.h), cfg), col, cfg, etqEscala(sh, cfg)); break;
       case 'poligono':
       case 'volumen': {
         const pts = sh.pts || [];
@@ -266,14 +282,14 @@
         }
         if (sh.tipo === 'poligono' && pts.length > 2 && sh.cerrado !== false) {
           const c = centroPoligono(pts), area = areaPoligono(pts);
-          etiqueta(g, c.x, c.y, (sh.etiqueta === 'perimetro' ? fmtLong(perimetroPoligono(pts), cfg) + ' · ' : '') + fmtArea(area, cfg), col, cfg);
+          etiqueta(g, c.x, c.y, (sh.etiqueta === 'perimetro' ? fmtLong(perimetroPoligono(pts), cfg) + ' · ' : '') + fmtArea(area, cfg), col, cfg, etqEscala(sh, cfg));
         }
         if (sh.tipo === 'volumen' && pts.length > 2 && sh.cerrado !== false) {
           const c = centroPoligono(pts), area = areaPoligono(pts);
           const prof = Math.max(0, +sh.profundidad || 0);
           const vol = prof > 0 ? fmtVolumen(area, prof, cfg) : '';
           const txt = fmtArea(area, cfg) + (prof > 0 ? ' × ' + prof.toFixed(2) + ' m = ' + vol : '');
-          etiqueta(g, c.x, c.y, txt, col, cfg);
+          etiqueta(g, c.x, c.y, txt, col, cfg, etqEscala(sh, cfg));
         }
         break;
       }
@@ -289,6 +305,9 @@
           const ang = Math.atan2(sh.y2 - sh.y1, sh.x2 - sh.x1), f = Math.max(10 * e, grosor * 2.6);
           g.beginPath(); g.moveTo(sh.x2, sh.y2); g.lineTo(sh.x2 - f * Math.cos(ang - .42), sh.y2 - f * Math.sin(ang - .42)); g.lineTo(sh.x2 - f * Math.cos(ang + .42), sh.y2 - f * Math.sin(ang + .42)); g.closePath(); g.fill();
         }
+        if (sh.cota && mPorPx(cfg)) {
+          etiqueta(g, (sh.x1 + sh.x2) / 2, (sh.y1 + sh.y2) / 2, fmtLong(longitud(sh), cfg), col, cfg, etqEscala(sh, cfg));
+        }
         break;
       case 'medir': {
         const t = Math.max(6 * e, grosor * 1.8), ang = Math.atan2(sh.y2 - sh.y1, sh.x2 - sh.x1);
@@ -296,7 +315,7 @@
         [[sh.x1, sh.y1], [sh.x2, sh.y2]].forEach(([x, y]) => {
           g.beginPath(); g.moveTo(x - Math.sin(ang) * t, y + Math.cos(ang) * t); g.lineTo(x + Math.sin(ang) * t, y - Math.cos(ang) * t); g.stroke();
         });
-        etiqueta(g, (sh.x1 + sh.x2) / 2, (sh.y1 + sh.y2) / 2 - 16 * e, fmtLong(longitud(sh), cfg), col, cfg);
+        etiqueta(g, (sh.x1 + sh.x2) / 2, (sh.y1 + sh.y2) / 2 - 16 * e, fmtLong(longitud(sh), cfg), col, cfg, etqEscala(sh, cfg));
         break;
       }
       case 'mano': case 'resaltador':
@@ -387,7 +406,13 @@
 
   function hit(sh, p, cfg) {
     const e = base(cfg), b = caja(sh, null, cfg), t = Math.max(6 * pxPantalla(cfg), (sh.grosor || 5) * e);
-    if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') return distSeg(p, { x: sh.x1, y: sh.y1 }, { x: sh.x2, y: sh.y2 }) <= t;
+    if (sh.tipo === 'flecha' || sh.tipo === 'linea' || sh.tipo === 'medir') {
+      if (sh.tipo !== 'medir' && sh.cota && mPorPx(cfg)) {
+        const c = cajaCota(sh, cfg);
+        if (p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) return true;
+      }
+      return distSeg(p, { x: sh.x1, y: sh.y1 }, { x: sh.x2, y: sh.y2 }) <= t;
+    }
     if (sh.tipo === 'globo') {
       if (Math.hypot(p.x - sh.x, p.y - sh.y) <= (sh.radio || 28) * e + 6 * pxPantalla(cfg)) return true;
       if (sh.texto) { const c = cajaTextoGlobo(sh, null, cfg); if (p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) return true; }
@@ -438,6 +463,8 @@
       case 'globo': return 'Globo ' + (sh.numero || '') + (sh.texto ? ': ' + sh.texto : '');
       case 'texto': return sh.texto || 'Texto';
       case 'medir': return 'Medida ' + fmtLong(longitud(sh), cfg);
+      case 'linea': return sh.cota && mPorPx(cfg) ? 'Línea ' + fmtLong(longitud(sh), cfg) : 'Línea';
+      case 'flecha': return sh.cota && mPorPx(cfg) ? 'Flecha ' + fmtLong(longitud(sh), cfg) : 'Flecha';
       case 'area': return 'Área ' + fmtArea(Math.abs(sh.w * sh.h), cfg);
       case 'poligono': return 'Polígono ' + fmtArea(areaPoligono(sh.pts || []), cfg) + (sh.etiqueta === 'perimetro' ? ' · ' + fmtLong(perimetroPoligono(sh.pts || []), cfg) : '');
       case 'volumen': return 'Volumen ' + (sh.profundidad ? sh.profundidad.toFixed(2) + ' m · ' : '') + fmtVolumen(areaPoligono(sh.pts || []), sh.profundidad || 0, cfg);

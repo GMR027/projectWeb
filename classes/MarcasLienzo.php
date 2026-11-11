@@ -59,7 +59,7 @@ class MarcasLienzo
     {
         $f = $_FILES['imagen'] ?? null;
         $ok = $f && empty($f['error']) && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
-            && in_array(mime_content_type($f['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
+            && Imagenes::tipoImagen($f['tmp_name']) !== null;
         $nombre = $ok ? Imagenes::guardarGrande($f['tmp_name'], 1600) : null;
         if (!$nombre) json_respuesta(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)'], 422);
         // El tope se mide con el archivo ya comprimido/reducido, no con la foto original.

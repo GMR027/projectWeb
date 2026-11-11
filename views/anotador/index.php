@@ -19,9 +19,9 @@ $herramientas = [
             ['texto', 'fa-font', 'Texto', 'T', 'Texto libre'],
             ['resaltador', 'fa-highlighter', 'Resaltador', '', 'Resaltador a mano alzada'],
             ['resaltado', 'fa-fill-drip', 'Zona', '', 'Rectángulo resaltado'],
-            ['flecha', 'fa-arrow-right', 'Flecha', 'F', 'Flecha'],
-            ['linea', 'fa-minus', 'Línea', 'L', 'Línea'],
-            ['polilinea', 'fa-bezier-curve', 'Polilínea', 'Y', 'Polilínea abierta con varios vértices'],
+            ['flecha', 'fa-arrow-right', 'Flecha', 'F', 'Flecha (Mayús, Ctrl o ⌘ para trazar en horizontal o vertical)'],
+            ['linea', 'fa-minus', 'Línea', 'L', 'Línea (Mayús, Ctrl o ⌘ para trazar en horizontal o vertical)'],
+            ['polilinea', 'fa-bezier-curve', 'Polilínea', 'Y', 'Polilínea abierta con varios vértices (Mayús, Ctrl o ⌘ para tramos horizontales o verticales)'],
             ['rect', 'fa-square', 'Rectángulo', 'R', 'Rectángulo'],
             ['elipse', 'fa-circle', 'Elipse', 'E', 'Elipse'],
             ['nube', 'fa-cloud', 'Nube', 'N', 'Nube de revisión'],
@@ -30,7 +30,7 @@ $herramientas = [
     'medir' => [
         'titulo' => 'Medir',
         'items' => [
-            ['medir', 'fa-ruler', 'Medir', 'M', 'Medir una distancia'],
+            ['medir', 'fa-ruler', 'Medir', 'M', 'Medir una distancia (Mayús, Ctrl o ⌘ para horizontal o vertical)'],
             ['area', 'fa-vector-square', 'Área', 'A', 'Área rectangular'],
             ['poligono', 'fa-draw-polygon', 'Polígono', 'P', 'Polígono: área y perímetro'],
             ['volumen', 'fa-cube', 'Volumen', 'O', 'Volumen: polígono por profundidad'],
@@ -198,6 +198,7 @@ $herramientas = [
                 </select>
             </label>
             <label class="ant-mini" title="Relleno de formas"><input type="checkbox" id="ant-relleno"> Relleno</label>
+            <label class="ant-mini" title="Trazar líneas, flechas, medidas y polilíneas solo en horizontal o vertical. También manteniendo Mayús, Ctrl o ⌘ al dibujar"><input type="checkbox" id="ant-orto"> Ortogonal</label>
             <label class="ant-mini ant-mini-opacidad" title="Opacidad de la anotación"><span>Opacidad</span> <input type="range" id="ant-opacidad" min="5" max="100" value="100" aria-label="Opacidad de la anotación"><output id="ant-opacidad-val">100%</output></label>
             <label class="ant-mini ant-mini-capa" title="Capa activa: ahí caen las anotaciones nuevas"><i class="fa-solid fa-layer-group"></i> <select id="ant-capa-activa" aria-label="Capa activa"></select></label>
         </div>
@@ -306,6 +307,10 @@ $herramientas = [
                     <label class="ant-campo" id="ant-prop-etiqueta-campo" hidden>Etiqueta del polígono
                         <select id="ant-prop-etiqueta"><option value="area">Área</option><option value="perimetro">Área y perímetro</option></select>
                     </label>
+                    <label class="ant-campo ant-fila" id="ant-prop-cota-campo" hidden><input type="checkbox" id="ant-prop-cota"> Mostrar medida en la línea</label>
+                    <label class="ant-campo" id="ant-prop-etq-campo" hidden>Tamaño de la etiqueta (%)
+                        <input type="number" id="ant-prop-etq" min="30" max="300" step="10" value="100">
+                    </label>
                     <div class="ant-fila" id="ant-prop-firma-campos" hidden>
                         <label class="ant-campo">Nombre <input type="text" id="ant-prop-nombre" maxlength="150"></label>
                         <label class="ant-campo">Cargo <input type="text" id="ant-prop-cargo" maxlength="150"></label>
@@ -328,6 +333,16 @@ $herramientas = [
                 <div class="ant-medidas-acc">
                     <button type="button" class="btn btn-sm btn-ghost" id="ant-calibrar"><i class="fa-solid fa-ruler-combined"></i> Calibrar página</button>
                     <span class="ant-escala text-sm text-muted" id="ant-escala">Sin escala</span>
+                </div>
+                <div class="ant-medidas-acc">
+                    <label class="ant-campo flex-1">Tamaño de las etiquetas
+                        <input type="range" id="ant-etq-tam" min="30" max="300" step="10" value="100" aria-label="Tamaño de las etiquetas">
+                        <output id="ant-etq-tam-val">100%</output>
+                    </label>
+                </div>
+                <div class="ant-medidas-acc">
+                    <label class="ant-campo ant-fila"><input type="checkbox" id="ant-cota-lineas" checked> Cota en las líneas nuevas</label>
+                    <button type="button" class="btn btn-sm btn-ghost" id="ant-cota-aplicar" title="Pone la cota a las líneas y flechas de esta página"><i class="fa-solid fa-ruler-horizontal"></i> Poner a las líneas de esta página</button>
                 </div>
                 <div class="ant-tabla-wrap">
                     <table class="ant-tabla" id="ant-medidas-tabla">

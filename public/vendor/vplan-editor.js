@@ -263,6 +263,33 @@
     img.src = src;
     return null;
   }
+  // Solo las líneas rectas y las flechas llevan cota; polilíneas, lápiz y polígonos no.
+  function esLineaRecta(d) {
+    return !!d && (d.type === 'arrow' || d.type === 'darrow' ||
+      (d.type === 'line' && !d.round && !d.tension && (d.points || []).length <= 4));
+  }
+  // Línea o flecha con su cota: el texto va centrado y horizontal; si la marca está rotada, se contra-rota.
+  function nodoConCota(d, linea, base, stroke) {
+    if (!esLineaRecta(d) || !d.cota || !escalaEf()) return null;
+    const [x1, y1, x2, y2] = d.points || [];
+    const len = Math.hypot((x2 || 0) - (x1 || 0), (y2 || 0) - (y1 || 0));
+    if (!(len > 0)) return null;
+    const fs = d.fontSize || cotaFs();
+    const t = new Konva.Text({
+      text: textoMedida(d, len), fontSize: fs, fontFamily: famDe(d), fontStyle: estiloDe(d, true), textDecoration: decoDe(d),
+      fill: stroke || d.stroke, stroke: '#ffffff', strokeWidth: Math.max(2, fs * 0.16), fillAfterStrokeEnabled: true, listening: false,
+    });
+    t.offsetX(t.width() / 2); t.offsetY(t.height() / 2);
+    t.position({ x: ((x1 || 0) + (x2 || 0)) / 2, y: ((y1 || 0) + (y2 || 0)) / 2 });
+    t.rotation(-(d.rotation || 0));
+    linea.setAttrs({ id: d.id + '-trazo', x: 0, y: 0, rotation: 0, draggable: false, opacity: 1 });
+    linea.name('ve-trazo');
+    const g = new Konva.Group({ ...base });
+    g.add(linea); g.add(t);
+    return g;
+  }
+  const nodoTrazo = n => (n && n.findOne && n.findOne('.ve-trazo')) || n;
+
   function crearNodo(d) {
     // Las marcas de materiales conservan el color que eligió el usuario; el estado solo manda si se pide.
     const lig = d.material && d.material.items && d.material.items.length && !d.mat_colorEstado ? null : colorLigado(d);
@@ -273,9 +300,16 @@
     const trazo = { stroke, strokeWidth: d.strokeWidth, dash: dashDe(d), lineJoin: 'round' };
     let n;
     switch (d.type) {
-      case 'line': n = new Konva.Line({ ...base, points: d.points, ...trazo, lineCap: d.round ? 'round' : 'butt', tension: d.tension || 0, hitStrokeWidth: Math.max(20, d.strokeWidth * 3) }); break;
-      case 'arrow': case 'darrow':
-        n = new Konva.Arrow({ ...base, points: d.points, ...trazo, fill: stroke, pointerLength: d.strokeWidth * 4, pointerWidth: d.strokeWidth * 4, pointerAtBeginning: d.type === 'darrow', hitStrokeWidth: Math.max(20, d.strokeWidth * 3) }); break;
+      case 'line': {
+        const linea = new Konva.Line({ ...base, points: d.points, ...trazo, lineCap: d.round ? 'round' : 'butt', tension: d.tension || 0, hitStrokeWidth: Math.max(20, d.strokeWidth * 3) });
+        n = nodoConCota(d, linea, base, stroke) || linea;
+        break;
+      }
+      case 'arrow': case 'darrow': {
+        const linea = new Konva.Arrow({ ...base, points: d.points, ...trazo, fill: stroke, pointerLength: d.strokeWidth * 4, pointerWidth: d.strokeWidth * 4, pointerAtBeginning: d.type === 'darrow', hitStrokeWidth: Math.max(20, d.strokeWidth * 3) });
+        n = nodoConCota(d, linea, base, stroke) || linea;
+        break;
+      }
       case 'rect': n = new Konva.Rect({ ...base, width: d.w, height: d.h, fill: relleno, ...trazo }); break;
       case 'rrect': n = new Konva.Rect({ ...base, width: d.w, height: d.h, fill: relleno, cornerRadius: Math.min(d.w, d.h) * 0.2, ...trazo }); break;
       case 'link': {   // área clicable: se ve al editar; el icono solo sale en las imágenes exportadas si d.showIcon
@@ -313,7 +347,7 @@
         const [x1, y1, x2, y2] = d.points, len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
         const fs = d.fontSize || 24, tick = Math.max(6, fs * 0.5), grosor = d.strokeWidth || 3;
         n = new Konva.Group({ ...base });
-        n.add(new Konva.Line({ points: [x1, y1, x2, y2], stroke: d.stroke, strokeWidth: grosor, dash: dashDe(d), hitStrokeWidth: Math.max(20, grosor * 3) }));
+        n.add(new Konva.Line({ name: 've-trazo', points: [x1, y1, x2, y2], stroke: d.stroke, strokeWidth: grosor, dash: dashDe(d), hitStrokeWidth: Math.max(20, grosor * 3) }));
         const nx = -Math.sin(ang) * tick, ny = Math.cos(ang) * tick;
         [[x1, y1], [x2, y2]].forEach(([px, py]) => n.add(new Konva.Line({ points: [px - nx, py - ny, px + nx, py + ny], stroke: d.stroke, strokeWidth: grosor })));
         const t = new Konva.Text({ text: textoMedida(d, len), fontSize: fs, fontFamily: famDe(d), fontStyle: estiloDe(d, true), textDecoration: decoDe(d), fill: d.stroke, stroke: '#ffffff', strokeWidth: Math.max(2, fs * 0.16), fillAfterStrokeEnabled: true, listening: false });
@@ -621,7 +655,7 @@
       });
       trLayer.batchDraw();
     };
-    const vistaPrevia = () => { n.points(pts); layer.batchDraw(); };
+    const vistaPrevia = () => { nodoTrazo(n).points(pts); layer.batchDraw(); };
     const terminar = () => { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === d.id); if (t) { t.points = pts.map(v => Math.round(v * 100) / 100); commit(nuevas); } };
     const minVerts = cerrada ? 3 : 2;
     const mkVertice = i => {
@@ -737,6 +771,17 @@
       if (/^#[0-9a-f]{6}$/i.test(m.stroke)) $('#t-stroke').value = m.stroke;
       if (Number.isFinite(m.sw) && m.sw >= 1) { sw = Math.round(m.sw); $('#t-sw').value = sw; $('#t-sw-r').value = Math.min(60, sw); }
       if (Number.isFinite(m.op)) { $('#t-op').value = $('#t-op-n').value = Math.min(100, Math.max(5, m.op)); }
+    } catch (_) {}
+  }
+  // Preferencias de la cota: si las líneas nuevas la llevan y con qué tamaño
+  function guardarCota() {
+    try { localStorage.setItem('ve-cota', JSON.stringify({ on: $('#t-cota').checked, fs: cotaFs() })); } catch (_) {}
+  }
+  function cargarCota() {
+    try {
+      const m = JSON.parse(localStorage.getItem('ve-cota') || 'null'); if (!m) return;
+      const c = $('#t-cota'); if (c && typeof m.on === 'boolean') c.checked = m.on;
+      const f = $('#t-cota-fs'); if (f && Number.isFinite(m.fs) && m.fs >= 6) f.value = Math.max(6, Math.min(200, m.fs));
     } catch (_) {}
   }
   function actualizar(id, cambios) {
@@ -873,17 +918,23 @@
     const [dl, dg] = dashMedidas(d); $('#p-dash-l').value = +dl.toFixed(1); $('#p-dash-g').value = +dg.toFixed(1);
     mostrar('#p-dash-l', conDash); mostrar('#p-dash-g', conDash);
     sincroniza('#p-op', '#p-op-n', d.opacity ?? 100);
-    const conLetra = esTexto || esTabla || d.type === 'measure';
-    $('#p-fs').value = d.fontSize || 40; mostrar('#p-fs', conLetra);
+    const esMedida = d.type === 'measure';
+    const esLinea = esLineaRecta(d);
+    const conLetra = esTexto || esTabla || esMedida || (esLinea && !!d.cota);
+    $('#p-fs').value = d.fontSize || (esMedida || esLinea ? cotaFs() : 40); mostrar('#p-fs', conLetra);
+    mostrar('#p-cota', esLinea);
+    $('#p-cota').checked = !!d.cota;
+    $('#p-cota').disabled = !escalaEf();
+    $('#p-cota').title = escalaEf() ? 'Muestra la longitud real en el centro de la línea' : 'Calibra el plano para poder mostrar la cota';
     mostrar('#p-b', conLetra); mostrar('#p-ff', conLetra); mostrar('#p-al', esTexto);
     $('#p-box').checked = !!d.boxW; mostrar('#p-box', esTexto);
     if (esTexto) sincroniza('#p-boxw-r', '#p-boxw', Math.round(d.boxW || anchoTexto(d)));
     mostrar('#p-boxw', esTexto && !!d.boxW);
     [['#p-b', d.bold], ['#p-i', d.italic], ['#p-u', d.underline], ['#p-s', d.strike]].forEach(([q, on]) => { $(q).classList.toggle('activo', !!on); $(q).setAttribute('aria-pressed', !!on); });
     $('#p-ff').value = FUENTES.includes(d.fontFamily) ? d.fontFamily : 'Arial'; $('#p-al').value = d.align || 'left';
-    const esMedida = d.type === 'measure';
-    mostrar('#p-unit', esMedida); mostrar('#p-ref', esMedida);
-    if (esMedida) { $('#p-unit').value = UNIDADES[d.unit] ? d.unit : (state.escala ? state.escala.unit : 'cm'); $('#p-medida').textContent = textoMedida(d, Math.hypot(d.points[2], d.points[3])); }
+    const conUnidad = esMedida || (esLinea && !!d.cota);
+    mostrar('#p-unit', conUnidad); mostrar('#p-ref', esMedida);
+    if (conUnidad) { $('#p-unit').value = UNIDADES[d.unit] ? d.unit : (state.escala ? state.escala.unit : 'cm'); $('#p-medida').textContent = textoMedida(d, Math.hypot(d.points[2] || 0, d.points[3] || 0)); }
     p.querySelectorAll('.ve-enlace').forEach(el => { el.style.display = esLink ? '' : 'none'; });
     if (esLink) {
       const es360 = d.kind === '360' && (d.url || '').startsWith('/uploads/'), ext = !es360 && (d.kind || 'ext') !== 'int';
@@ -936,7 +987,7 @@
     on('#p-bg', 'change', e => cur() && actualizar(state.selId, { bg: e.target.value }));
     on('#p-nofill', 'change', e => cur() && actualizar(state.selId, { fill: e.target.checked ? '' : $('#p-fill').value }));
     // Grosor: deslizador (se ve en vivo y se guarda al soltar) y cuadro numérico
-    on('#p-sw-r', 'input', e => { $('#p-sw').value = e.target.value; const nodo = nodes[state.selId]; if (nodo && nodo.strokeWidth && !(nodo instanceof Konva.Group)) { nodo.strokeWidth(+e.target.value); layer.batchDraw(); } });
+    on('#p-sw-r', 'input', e => { $('#p-sw').value = e.target.value; const trazo = nodoTrazo(nodes[state.selId]); if (trazo && trazo.strokeWidth) { trazo.strokeWidth(+e.target.value); layer.batchDraw(); } });
     on('#p-sw-r', 'change', e => cur() && actualizar(state.selId, { strokeWidth: num(e.target.value, 1, 80, sw) }));
     on('#p-sw', 'change', e => { const v = num(e.target.value, 1, 80, sw); $('#p-sw-r').value = v; cur() && actualizar(state.selId, { strokeWidth: v }); });
     // Estilo del texto (negrita, cursiva, subrayado, tachado), tipo de letra y alineación
@@ -1006,6 +1057,10 @@
       const d = cur(); if (!d) return;
       const fs = num(e.target.value, 6, 400, 40);
       if (d.type === 'table') modTabla(t => { t.fontSize = fs; ajustarFilas(t); }); else actualizar(state.selId, { fontSize: fs });
+    });
+    on('#p-cota', 'change', e => {
+      const d = cur(); if (!esLineaRecta(d)) return;
+      actualizar(state.selId, { cota: e.target.checked, fontSize: d.fontSize || cotaFs(), unit: d.unit || (state.escala ? state.escala.unit : 'cm') });
     });
     // Tabla
     const modTabla = fn => { const nuevas = clone(state.shapes), t = nuevas.find(x => x.id === state.selId); if (t && t.type === 'table') { fn(t); commit(nuevas); } };
@@ -1163,10 +1218,26 @@
   const ortoDelta = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? [dx, 0] : [0, dy];   // solo horizontal o vertical
   const estiloBase = () => ({ stroke: $('#t-stroke').value, strokeWidth: sw, dash: 'solid', opacity: opTrazo() });
   const LINEA_TOOLS = { line: {}, dash: { dash: 'dash' }, dashdot: { dash: 'dashdot' }, dot: { dash: 'dot' }, arrow: { _t: 'arrow' }, darrow: { _t: 'darrow' } };
+  /** Tamaño de la etiqueta de cota (px del dibujo); se recuerda entre sesiones */
+  function cotaFs() {
+    const inp = $('#t-cota-fs');
+    const v = inp ? parseInt(inp.value, 10) : 16;
+    return Math.max(6, Math.min(200, Number.isFinite(v) ? v : 16));
+  }
+  /** ¿Las líneas nuevas llevan cota? Solo tiene sentido si el plano ya tiene escala */
+  function cotaNueva() {
+    const c = $('#t-cota');
+    return !!(c && c.checked && escalaEf());
+  }
   function nuevoDato(tool, p) {
     const e = estiloBase(), id = uid();
-    if (LINEA_TOOLS[tool]) { const x = LINEA_TOOLS[tool]; return { id, type: x._t || 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, ...(x.dash ? { dash: x.dash } : {}) }; }
-    if (tool === 'measure') return { id, type: 'measure', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, dash: 'solid', fontSize: Math.max(10, Math.round(sw * 5)), unit: state.escala ? state.escala.unit : 'cm' };
+    if (LINEA_TOOLS[tool]) {
+      const x = LINEA_TOOLS[tool];
+      const d = { id, type: x._t || 'line', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, ...(x.dash ? { dash: x.dash } : {}) };
+      if (cotaNueva()) { d.cota = true; d.fontSize = cotaFs(); d.unit = state.escala ? state.escala.unit : 'cm'; }
+      return d;
+    }
+    if (tool === 'measure') return { id, type: 'measure', x: p.x, y: p.y, points: [0, 0, 0, 0], ...e, dash: 'solid', fontSize: cotaFs(), unit: state.escala ? state.escala.unit : 'cm' };
     if (tool === 'table') return { id, type: 'table', x: p.x, y: p.y, w: 1, h: 1, rows: 3, cols: 3, header: true, fontSize: Math.round(sw * 6), fill: '#ffffff', headerFill: '#dbe5f1', textColor: '#111111', rotation: 0, ...e, strokeWidth: Math.max(1, Math.round(sw / 2)) };
     if (tool === 'v360') return { id, type: 'link', x: p.x, y: p.y, w: 1, h: 1, kind: '360', url: pend360.url, label: pend360.nombre, icon: 'globe', iconColor: '#e65100', showIcon: false, rotation: 0, opacity: 100 };
     if (tool === 'link') return { id, type: 'link', x: p.x, y: p.y, w: 1, h: 1, kind: 'ext', url: '', label: '', icon: 'link', iconColor: '#0070c0', showIcon: false, rotation: 0, opacity: 100 };
@@ -1238,7 +1309,7 @@
             const k = 10 / stage.scaleX(), x0 = poli.d.x + poli.d.points[0], y0 = poli.d.y + poli.d.points[1];
             if (Math.hypot(p.x - x0, p.y - y0) <= k) { finalizarPoli(); return; }
           }
-          const q = puntoPoli(poli.d, p, e.evt.shiftKey);
+          const q = puntoPoli(poli.d, p, e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey);
           poli.d.points[poli.d.points.length - 2] = q[0]; poli.d.points[poli.d.points.length - 1] = q[1];   // fija el punto temporal
           poli.d.points.push(q[0], q[1]);                                                                    // y abre otro
         }
@@ -1259,7 +1330,7 @@
       if (poli) {
         const p = posRel(), d = poli.d, n = d.points.length;
         if (n === 2) d.points.push(0, 0);
-        const q = puntoPoli(d, p, e.evt.shiftKey);
+        const q = puntoPoli(d, p, e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey);
         d.points[d.points.length - 2] = q[0]; d.points[d.points.length - 1] = q[1];
         poli.nodo.destroy(); poli.nodo = crearNodo(d); layer.add(poli.nodo); layer.batchDraw(); return;
       }
@@ -1270,7 +1341,7 @@
         if (Math.hypot(dx - ult[0], dy - ult[1]) < paso) return;
         d.points.push(dx, dy);
       } else if (LINEAS.includes(d.type)) {
-        if (e.evt.shiftKey || orto()) [dx, dy] = ortoDelta(dx, dy);   // Mayús u «Ortogonal»: recta horizontal/vertical
+        if (e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey || orto()) [dx, dy] = ortoDelta(dx, dy);   // Mayús/Ctrl u «Ortogonal»: recta horizontal/vertical
         d.points = [0, 0, dx, dy];
       } else if (ELIPSE.includes(d.type)) {
         d.x = p0.x + dx / 2; d.y = p0.y + dy / 2; d.rx = Math.abs(dx) / 2; d.ry = Math.abs(dy) / 2;
@@ -1697,6 +1768,33 @@
     $('#t-grid-n').addEventListener('input', refrescarVista);
     $('#t-unidad').addEventListener('change', e => { if (state.escala) commit(undefined, undefined, { ...state.escala, unit: e.target.value }); });
     $('#ve-escala-x').addEventListener('click', () => { if (state.escala) commit(undefined, undefined, null); });
+    const cotaChk = $('#t-cota'); if (cotaChk) cotaChk.addEventListener('change', guardarCota);
+    const cotaNum = $('#t-cota-fs'); if (cotaNum) cotaNum.addEventListener('change', guardarCota);
+    const cotaAplicar = $('#t-cota-aplicar');
+    if (cotaAplicar) cotaAplicar.addEventListener('click', () => {
+      if (!escalaEf()) { status('Calibra el plano con la herramienta Medir primero.'); return; }
+      const lineas = state.shapes.filter(esLineaRecta);
+      if (!lineas.length) { status('No hay líneas rectas en esta lámina.'); return; }
+      const nuevas = clone(state.shapes);
+      nuevas.forEach(d => {
+        if (!esLineaRecta(d)) return;
+        d.cota = true; d.fontSize = d.fontSize || cotaFs(); d.unit = d.unit || (state.escala ? state.escala.unit : 'cm');
+      });
+      commit(nuevas);
+      status('Cota activada en ' + lineas.length + ' línea(s).');
+    });
+    const cotaTodas = $('#t-cota-todas');
+    if (cotaTodas) cotaTodas.addEventListener('click', () => {
+      if (!escalaEf()) { status('Calibra el plano con la herramienta Medir primero.'); return; }
+      const fs = cotaFs(); let n = 0;
+      const nuevas = clone(state.shapes);
+      nuevas.forEach(d => {
+        if (d.type === 'measure' || (esLineaRecta(d) && d.cota)) { d.fontSize = fs; n++; }
+      });
+      if (!n) { status('No hay cotas en esta lámina.'); return; }
+      commit(nuevas);
+      status('Tamaño aplicado a ' + n + ' cota(s).');
+    });
     const be = $('#ve-enfocar'); if (be) be.addEventListener('click', enfocarSeleccion);
     // Enfocar la selección con Mayús + 2 (en distribuciones donde 2 con Mayús es «@», también)
     document.addEventListener('keydown', e => {
@@ -1902,6 +2000,13 @@
     t.textContent = e ? '1 px = ' + fmtNum(e.mmPorPx) + ' mm' : 'Sin escala: traza una medida de referencia';
     $('#t-unidad').disabled = !e; if (e) $('#t-unidad').value = e.unit;
     $('#ve-escala-x').disabled = !e;
+    const cota = $('#t-cota'), aplicar = $('#t-cota-aplicar'), todas = $('#t-cota-todas');
+    if (cota) {
+      cota.disabled = !e;
+      cota.title = e ? 'Las líneas y flechas nuevas muestran su longitud en el centro' : 'Calibra el plano con la herramienta Medir para mostrar cotas en las líneas';
+    }
+    if (aplicar) aplicar.disabled = !e;
+    if (todas) todas.disabled = !e;
     dibujarReglas();
   }
 
@@ -2391,13 +2496,21 @@
   }
   async function importarSimbolos(archivos) {
     if (!archivos || !archivos.length) return;
-    const fd = new FormData(); fd.append('proyecto', C.proyecto); [...archivos].forEach(f => fd.append('archivos[]', f));
+    // Las fotos de celular se reducen antes de subirlas; SVG, GIF y ZIP pasan tal cual.
+    const comprimir = async f => {
+      if (!f || !window.KitEdicion || !KitEdicion.comprimirImagen || !/^image\//i.test(f.type || '') || /svg|gif/i.test(f.type)) return f;
+      try { return await KitEdicion.comprimirImagen(f, 1600, .85); } catch (e) { return f; }
+    };
+    status('Preparando imágenes…');
+    const fd = new FormData(); fd.append('proyecto', C.proyecto);
+    for (const f of [...archivos]) fd.append('archivos[]', await comprimir(f));
     status('Importando…');
     try {
       const d = await (await fetch('/api/simbolos/importar', { method: 'POST', body: fd })).json();
       if (!d.success) { status('Error: ' + (d.error || 'no se pudo importar')); return; }
       C.simbolos = d.simbolos; C.cajetines = d.cajetines; pintarSimbolos();
-      status('Importados: ' + d.importados + ' símbolo(s)' + (d.cajetines_nuevos ? ', ' + d.cajetines_nuevos + ' cajetín(es)' : '') + (d.omitidos ? ' · ' + d.omitidos + ' omitido(s)' : ''));
+      const motivos = Object.entries(d.motivos || {}).map(([m, n]) => n + '× ' + m).join('; ');
+      status('Importados: ' + d.importados + ' símbolo(s)' + (d.cajetines_nuevos ? ', ' + d.cajetines_nuevos + ' cajetín(es)' : '') + (d.omitidos ? ' · ' + d.omitidos + ' omitido(s)' + (motivos ? ' (' + motivos + ')' : '') : ''));
     } catch (e) { status('Error al importar'); }
   }
   function enlazarSimbolos() {
@@ -2814,6 +2927,7 @@
       if (window.VPFondos && VPFondos.esOscuro(C.fondo, C.fondoColor)) $('#t-stroke').value = '#ffffff';   // sobre fondo oscuro, trazo claro por defecto
     }
     cargarTrazo();
+    cargarCota();
     lbg.add(bg);
     glayer = new Konva.Layer({ listening: false }); stage.add(glayer);
     glayer.add(new Konva.Shape({ listening: false, sceneFunc: dibujarGrilla }));

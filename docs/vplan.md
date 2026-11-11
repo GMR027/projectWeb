@@ -120,6 +120,8 @@ El editor de marcas (vPlan y Editor de gráficos, `vplan-editor.js`) ya tenía c
 
 ## Herramientas por pestañas (2026-10-21)
 - **Editor de marcas / Editor de gráficos** (`_editor-lienzo.php`): la barra se divide en pestañas **Dibujo** (selección, líneas, formas y estilo de trazo), **Insertar** (fondo, texto y marcadores), **Medir y cuadrícula**; deshacer/rehacer/encuadrar/autoguardar quedan siempre visibles. Cada grupo lleva `data-pan`; la pestaña activa se recuerda en `localStorage` (`ve-pestana`). Estilos `.ve-pestanas`/`.ve-barra-pest` en `_lookahead.scss`.
+- **Cotas en líneas y tamaño de etiqueta (2026-11-11):** con escala, las líneas y flechas nuevas llevan `cota:true` y `fontSize` de la cota (`#t-cota-fs`, por defecto 16). El texto se dibuja centrado y horizontal en `crearNodo` mediante `nodoConCota()` y un `Konva.Group` (el trazo conserva el nombre `ve-trazo` para `editarNodos`). En Propiedades hay «Mostrar la medida en la línea» (`p-cota`) y el tamaño (`p-fs`); en la pestaña Medir, «Poner a las líneas» y «Aplicar tamaño» a las cotas de la lámina. Las preferencias se guardan en `localStorage` (`ve-cota`). Solo aplica a líneas rectas y flechas, no a polilíneas, lápiz ni polígonos.
+- **Ortogonal:** además de F8 y el interruptor `#t-orto`, mantener **Mayús, Ctrl o ⌘** mientras se traza una línea, flecha, medida o polilínea fuerza el eje horizontal/vertical (`ortoTemporal`/`e.evt.ctrlKey`).
 - **Lámina (`/vplan/ver`)**: el encabezado solo conserva el botón de volver; debajo hay pestañas **Lámina** (modo diseño, editar marcas, datos), **Vista** (Láminas, Ampliar, zoom) y **Notas** (crear nota). Recuerda `vp-pestana`. Los ids (`vp-ampliar`, `vp-zoom-*`, `vp-nota-nueva`) no cambiaron.
 
 ## Caja de texto en el editor de marcas (2026-10-23)

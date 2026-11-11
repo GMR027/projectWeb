@@ -43,13 +43,25 @@ class Simbolo extends ActiveRecord
         $crudo = (string)@file_get_contents($ruta, false, null, 0, 1024 * 1024 + 1);
         if (preg_match('/^\s*(<\?xml[^>]*>\s*)?(<!--.*?-->\s*)*(<!DOCTYPE[^>]*>\s*)?<svg\b/is', $crudo)) {
             $limpio = \Classes\SvgSeguro::limpiar($crudo);
-            if (!$limpio) return null;
+            if (!$limpio) {
+                error_log('Simbolo · el SVG no es válido o tiene elementos no permitidos');
+                return null;
+            }
             $dir = __DIR__ . '/../public/uploads/' . self::CARPETA;
-            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+                error_log('Simbolo · no se pudo crear la carpeta ' . $dir);
+                return null;
+            }
             $archivo = bin2hex(random_bytes(16)) . '.svg';
-            return file_put_contents($dir . '/' . $archivo, $limpio) !== false ? $archivo : null;
+            if (@file_put_contents($dir . '/' . $archivo, $limpio) === false) {
+                error_log('Simbolo · no se pudo escribir ' . $dir . '/' . $archivo);
+                return null;
+            }
+            return $archivo;
         }
-        return Imagenes::guardarEn(self::CARPETA, $ruta, self::LADO, 90);
+        $archivo = Imagenes::guardarEn(self::CARPETA, $ruta, self::LADO, 90);
+        if (!$archivo) error_log('Simbolo · no se pudo procesar la imagen ' . basename($ruta));
+        return $archivo;
     }
 
     public function url(): string

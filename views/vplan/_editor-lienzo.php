@@ -140,6 +140,10 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <?php echo $tool('measure', 'Medir: traza dos puntos. La primera vez indicas cuánto mide en la realidad y esa será la escala de las demás medidas'); ?>
         <span class="ve-mini text-muted" id="ve-escala-txt"></span>
         <label class="ve-mini">Unidad <select id="t-unidad" aria-label="Unidad de medida"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option><option value="in">pulgadas</option></select></label>
+        <label class="ve-mini" title="Tamaño de la etiqueta de las cotas nuevas">Tamaño <input type="number" id="t-cota-fs" min="6" max="200" step="1" value="16" aria-label="Tamaño de la cota"> px</label>
+        <label class="ve-mini" title="Las líneas y flechas nuevas muestran su longitud en el centro. También puedes activarlo o quitarlo en Propiedades"><input type="checkbox" id="t-cota" checked> Cota en las líneas nuevas</label>
+        <button type="button" class="btn btn-sm btn-ghost" id="t-cota-aplicar" title="Pone la medida a las líneas y flechas de esta lámina"><i class="fa-solid fa-ruler-horizontal"></i> Poner a las líneas</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="t-cota-todas" title="Aplica el tamaño de cota a todas las medidas y líneas con cota de esta lámina"><i class="fa-solid fa-text-height"></i> Aplicar tamaño</button>
         <button type="button" class="btn btn-sm btn-ghost" id="ve-escala-x" title="Quita la escala; las medidas dejan de calcularse">Quitar escala</button>
     </div>
     <div class="ve-grupo ve-grupo-ajustes" data-pan="medir" data-nombre="Cuadrícula">
@@ -157,7 +161,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <label class="ve-mini" title="Transparencia del trazo: 100 % es opaco; menos es más transparente">Opacidad
             <input type="range" id="t-op" min="5" max="100" step="5" value="100" aria-label="Opacidad de la línea">
             <input type="number" id="t-op-n" min="5" max="100" step="5" value="100"> <span class="text-muted">%</span></label>
-        <label class="ve-mini ve-orto" title="Las líneas, flechas y polilíneas se trazan solo en horizontal o vertical (F8)"><input type="checkbox" id="t-orto"> Ortogonal <kbd>F8</kbd></label>
+        <label class="ve-mini ve-orto" title="Las líneas, flechas y polilíneas se trazan solo en horizontal o vertical. Actívalo con F8 o mantén Mayús, Ctrl o ⌘ al trazar"><input type="checkbox" id="t-orto"> Ortogonal <kbd>F8</kbd></label>
     </div>
     <?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-barra.php'; ?>
     <div class="ve-grupo" data-nombre="Vista">
@@ -253,7 +257,8 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
                 <select id="p-ff"><?php foreach (['Arial', 'Verdana', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Courier New', 'Impact'] as $f): ?><option value="<?php echo s($f); ?>" style="font-family:'<?php echo s($f); ?>'"><?php echo s($f); ?></option><?php endforeach; ?></select></div>
             <div class="ve-f"><label>Alineación</label>
                 <select id="p-al"><option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option></select></div>
-            <div class="ve-f"><label>Tamaño de letra</label><input type="number" id="p-fs" min="6" max="400"></div>
+            <div class="ve-f"><label>Tamaño de letra / etiqueta</label><input type="number" id="p-fs" min="6" max="400"></div>
+            <div class="ve-f"><label class="ve-chk"><input type="checkbox" id="p-cota"> Mostrar la medida en la línea</label></div>
             <div class="ve-f"><label class="ve-chk"><input type="checkbox" id="p-box"> Caja de texto <small class="text-muted">(el texto baja a la siguiente línea y no se desborda)</small></label></div>
             <div class="ve-f"><label>Ancho de la caja</label>
                 <div class="ve-rango"><input type="range" id="p-boxw-r" min="40" max="4000" step="10" aria-label="Ancho de la caja"><span><input type="number" id="p-boxw" min="20" max="4000"> px</span></div>
@@ -413,7 +418,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <div id="sim-lista"></div>
         <h4 style="margin-top:1.2rem">Gráficos y simbologías del proyecto</h4>
         <div class="ve-btns" style="margin-bottom:.8rem">
-            <button type="button" class="btn btn-sm btn-primary" id="sim-gr-subir" title="Agrega una o varias imágenes de simbología desde tu equipo"><i class="fa-solid fa-plus"></i> Agregar simbologías</button>
+            <button type="button" class="btn btn-sm btn-primary" id="sim-gr-subir" title="Inserta una o varias imágenes en el dibujo. Para guardarlas en la biblioteca de símbolos usa «Importar símbolos»"><i class="fa-solid fa-plus"></i> Insertar imagen</button>
             <button type="button" class="btn btn-sm btn-ghost" id="sim-gr-todas" title="Inserta todas las simbologías del proyecto"><i class="fa-solid fa-layer-group"></i> Insertar todas</button>
             <input type="file" id="sim-gr-archivo" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
         </div>

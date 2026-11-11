@@ -33,17 +33,20 @@ Herramienta `/anotador` (menú **Documentos y diseño**). Abre un PDF o una imag
 ## Anotaciones
 
 - Motor compartido `window.Anotaciones`: dibujo, selección, tiradores, movimiento, escala, medidas y áreas. El Comparador lo usa desde la extracción (Fase 0) y el Anotador añade tipos nuevos.
-- Tipos del Anotador: `globo`, `texto`, `resaltador`, `resaltado`, `flecha`, `linea`, `rect`, `elipse`, `nube`, `mano`, `medir`, `area`, `poligono`, `volumen`, `imagen`, `estampa`, `firma`, `resaltado_texto`, `subrayado` y `tachado`.
+- Tipos del Anotador: `globo`, `texto`, `resaltador`, `resaltado`, `flecha`, `linea`, `polilinea`, `rect`, `elipse`, `nube`, `mano`, `medir`, `area`, `poligono`, `volumen`, `imagen`, `simbolo`, `estampa`, `firma`, `resaltado_texto`, `subrayado` y `tachado`.
 - Las coordenadas viven en píxeles de la página y cada forma lleva su `pagina`. El servidor normaliza en `Anotador::anotaciones()`: máx. 500 formas, coordenadas acotadas, colores hex, textos de 600 caracteres, notas de 1000 y profundidad de 0 a 10 000 m.
-- La configuración `config_json` guarda `escalas` por página, `unidad` y el estado de firma. **No hay enlace público**: el acceso exige sesión y permiso del proyecto.
+- La configuración `config_json` guarda `escalas` por página, `unidad`, `etqTam` (tamaño global de etiquetas, 0.3–3), `cotaLineas` (las líneas nuevas muestran su longitud) y el estado de firma. **No hay enlace público**: el acceso exige sesión y permiso del proyecto.
 
 ## Medidas, áreas y volúmenes
 
 - **Calibrar página**: dibuja una cota conocida y escribe los metros. Se guarda `escala[página] = m/px`; cada hoja puede tener una escala distinta. La línea de calibración se descarta.
 - **Polígono**: clic por vértice y doble clic o Enter para cerrar. Área por fórmula del polígono (shoelace), perímetro por suma de lados. La etiqueta puede mostrar solo el área o área y perímetro (Propiedades).
 - **Volumen**: polígono × profundidad en metros. El resultado se etiqueta en m³/cm³ y se puede cambiar después en Propiedades.
-- El panel **Medidas** lista distancia, área, perímetro, profundidad y volumen con totales por proyecto. Exporta **CSV** y copia el resumen. El PDF añade una hoja de leyenda con las medidas.
+- El panel **Medidas** lista distancia, área, perímetro, profundidad y volumen con totales por proyecto. Las **líneas y flechas con cota** también se listan como «Línea». Exporta **CSV** y copia el resumen. El PDF añade una hoja de leyenda con las medidas.
 - `Anotaciones::fmtLong/fmtArea/fmtVolumen` respetan metros, centímetros y milímetros según la magnitud.
+- **Cota en líneas:** al calibrar la página, las líneas y flechas nuevas llevan su longitud centrada en la línea (`shape.cota = true`). Se activa o desactiva por línea en Propiedades y hay un botón para ponérsela a las líneas ya dibujadas de la página. La etiqueta es siempre horizontal.
+- **Tamaño de etiquetas:** `config.etqTam` multiplica todas las etiquetas de medida y `shape.etqTam` ajusta cada una (30–300 %). El panel Medidas tiene el control global y Propiedades el ajuste fino. Se aplica igual en pantalla, miniatura y PDF.
+- **Ortogonal:** mantén Mayús, Ctrl o ⌘ al dibujar líneas, flechas, medidas o polilíneas para ajustar el tramo a horizontal/vertical; el interruptor «Ortogonal» de la barra deja el modo fijo (útil en tabletas).
 
 ## Imágenes, estampas y firmas
 
@@ -102,4 +105,5 @@ Herramienta `/anotador` (menú **Documentos y diseño**). Abre un PDF o una imag
 - **Polilínea:** herramienta `polilinea` (tecla Y), abierta y con 2+ vértices; doble clic o Enter termina, Retroceso quita el último. No calcula área.
 - **Capas:** `config.capas` (`id`, `nombre`, `visible`, `bloqueada`, `opacidad`) y `shape.capa`. Panel Capas para crear, renombrar, ordenar, ocultar, bloquear y atenuar; la capa activa recibe lo nuevo. Las capas ocultas no se dibujan, no se seleccionan, no salen en el PDF ni en las medidas; las bloqueadas se ven pero no se editan. Los documentos viejos usan una capa «Anotaciones».
 - **Símbolos:** `GET /anotador/simbolos` devuelve `Simbolo::paraEditor()` (proyecto + materiales + predeterminados). Se rasterizan (también SVG), se copian a `uploads/anotador` y se insertan como `tipo = simbolo` con `simbolo_id` y `nombre`.
-- Rutas nuevas: `/anotador/simbolos`. Pruebas: `tests/run.php` (normalización de polilínea/símbolo y capas) e `tests/integracion.php` (guardado/lectura de capas y símbolos).
+- **Cota y etiquetas (2026-11-11):** `shape.cota` en `linea`/`flecha` y `shape.etqTam` en las formas con etiqueta; `config.etqTam` y `config.cotaLineas`. El motor compartido añade `etqEscala()`, `cajaCota()` y dibuja la longitud en el centro de la línea. El servidor los conserva en `Anotador::anotaciones()` y `Anotador::config()`.
+- Rutas nuevas: `/anotador/simbolos`. Pruebas: `tests/run.php` (normalización de polilínea/símbolo, capas, cota/etiquetas) e `tests/integracion.php` (guardado/lectura de capas y símbolos).

@@ -53,7 +53,7 @@ $pestanas = [
     <?php if ($puedeEditar): ?>
 <details class="sim-nuevo" id="sim-nuevo"><summary class="btn btn-primary"><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo símbolo')); ?></summary>
     <div class="sim-nuevo-in">
-    <form method="POST" action="/simbolos/guardar" enctype="multipart/form-data" class="formulario">
+    <form method="POST" action="/simbolos/guardar" enctype="multipart/form-data" class="formulario" id="sim-form-nuevo">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div class="form-grid">
             <div class="campo"><label for="sim-nombre">Nombre *</label><input type="text" id="sim-nombre" name="nombre" maxlength="100" placeholder="Ej: Cámara tipo bala" required></div>
@@ -360,19 +360,48 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
 <script src="/vendor/estampas-editor.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/estampas-editor.js'); ?>"></script>
 <script>
 (function () {
-    const b = document.getElementById('sim-imp-btn'), f = document.getElementById('sim-imp-archivo'), est = document.getElementById('sim-imp-estado');
-    if (!b) return;
-    b.addEventListener('click', () => f.click());
-    f.addEventListener('change', async () => {
-        if (!f.files.length) return;
-        const fd = new FormData(); fd.append('proyecto', <?php echo (int)$proyecto->id; ?>); [...f.files].forEach(a => fd.append('archivos[]', a));
-        est.textContent = 'Importando…'; b.disabled = true;
-        try {
-            const d = await (await fetch('/api/simbolos/importar', { method: 'POST', body: fd })).json();
-            if (!d.success) { est.textContent = 'Error: ' + (d.error || 'no se pudo importar'); b.disabled = false; return; }
-            location.href = '/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>&ok=1';
-        } catch (e) { est.textContent = 'Error al importar'; b.disabled = false; }
-        f.value = '';
+    // Reduce fotos de celular antes de subirlas: menos peso, menos fallos por límites del servidor.
+    const comprimir = async a => {
+        if (!a || !window.KitEdicion || !KitEdicion.comprimirImagen || !/^image\//i.test(a.type || '') || /svg|gif/i.test(a.type)) return a;
+        try { return await KitEdicion.comprimirImagen(a, 1600, .85); } catch (e) { return a; }
+    };
+    const est = document.getElementById('sim-imp-estado');
+    const b = document.getElementById('sim-imp-btn'), f = document.getElementById('sim-imp-archivo');
+    if (b) {
+        b.addEventListener('click', () => f.click());
+        f.addEventListener('change', async () => {
+            if (!f.files.length) return;
+            b.disabled = true; est.textContent = 'Preparando imágenes…';
+            const fd = new FormData(); fd.append('proyecto', <?php echo (int)$proyecto->id; ?>);
+            for (const a of [...f.files]) fd.append('archivos[]', await comprimir(a));
+            est.textContent = 'Importando…';
+            try {
+                const d = await (await fetch('/api/simbolos/importar', { method: 'POST', body: fd })).json();
+                if (!d.success) { est.textContent = 'Error: ' + (d.error || 'no se pudo importar'); b.disabled = false; f.value = ''; return; }
+                const motivos = Object.entries(d.motivos || {}).map(([m, n]) => n + '× ' + m).join('; ');
+                const msg = 'Importados: ' + d.importados + (d.omitidos ? ' · Omitidos: ' + d.omitidos : '') + (motivos ? ' (' + motivos + ')' : '');
+                location.href = '/simbolos?proyecto=<?php echo (int)$proyecto->id; ?>&ok=' + encodeURIComponent(msg) + '&tab=proyecto';
+            } catch (e) { est.textContent = 'Error al importar'; b.disabled = false; }
+            f.value = '';
+        });
+    }
+    // Formularios de símbolo (nuevo y edición): comprimen la imagen y dejan que el POST normal lleve el archivo reducido.
+    [['sim-form-nuevo', 'sim-archivo'], ['sim-modal-form', 'sim-modal-archivo']].forEach(([fid, iid]) => {
+        const form = document.getElementById(fid), input = document.getElementById(iid);
+        if (!form || !input) return;
+        input.addEventListener('change', () => { delete input.dataset.comprimido; });
+        form.addEventListener('submit', async e => {
+            if (!input.files || !input.files[0] || input.dataset.comprimido === '1') return;
+            if (!window.KitEdicion || !KitEdicion.comprimirImagen) return;
+            e.preventDefault();
+            if (est) est.textContent = 'Preparando la imagen…';
+            try {
+                const reducida = await comprimir(input.files[0]);
+                const dt = new DataTransfer(); dt.items.add(reducida); input.files = dt.files;
+            } catch (_) { /* se sube la original */ }
+            input.dataset.comprimido = '1';
+            form.submit();
+        });
     });
 })();
 </script>
@@ -390,7 +419,8 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
     tabs.forEach(t => t.addEventListener('click', () => ir(t.dataset.tab, true)));
     document.addEventListener('click', e => { const l = e.target.closest('[data-ir-tab]'); if (l) { e.preventDefault(); ir(l.dataset.irTab, true); window.scrollTo(0, 0); } });
     const h = location.hash.replace('#', '');
-    ir(validas.includes(h) ? h : guardada, false);
+    const tabUrl = new URLSearchParams(location.search).get('tab') || '';
+    ir(validas.includes(tabUrl) ? tabUrl : (validas.includes(h) ? h : guardada), false);
     // Filtro por texto y categoría de cada lista de símbolos
     document.querySelectorAll('.sim-barra').forEach(barra => {
         const buscar = barra.querySelector('.sim-buscar'); if (!buscar) return;

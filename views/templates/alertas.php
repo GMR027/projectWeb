@@ -29,6 +29,8 @@ foreach ($flash as $clave => $texto) {
     if (isset($_GET[$clave])) echo '<div class="alerta alerta-exito" role="status">' . $texto . '</div>';
 }
 if (isset($_GET['importado'])) echo '<div class="alerta alerta-exito" role="status">Importación lista: ' . (int)$_GET['importado'] . ' renglones, ' . (int)($_GET['mat'] ?? 0) . ' materiales nuevos, ' . (int)($_GET['sub'] ?? 0) . ' paquetes nuevos' . (!empty($_GET['omitidos']) ? ', ' . (int)$_GET['omitidos'] . ' duplicados omitidos' : '') . '.</div>';
-if (isset($_GET['ok'])) echo '<div class="alerta alerta-exito" role="status">Guardado correctamente</div>';
-if (isset($_GET['error'])) echo '<div class="alerta alerta-error" role="alert">' . s($_GET['error']) . '</div>';
+$__ok = texto_param($_GET['ok'] ?? '');
+if ($__ok !== '') echo '<div class="alerta alerta-exito" role="status">' . s($__ok === '1' ? 'Guardado correctamente' : $__ok) . '</div>';
+$__error = texto_param($_GET['error'] ?? '');
+if ($__error !== '') echo '<div class="alerta alerta-error" role="alert">' . s($__error) . '</div>';
 ?>
