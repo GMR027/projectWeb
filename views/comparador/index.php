@@ -355,7 +355,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
 
 <script src="/vendor/pdfjs/pdf.min.js"></script>
 <script src="/vendor/jspdf/jspdf.umd.min.js"></script>
-<script src="/vendor/anotaciones.js"></script>
+<script src="/vendor/anotaciones.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/anotaciones.js'); ?>"></script>
 <script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
 <script>window.CMP_CONFIG = { proyecto: <?php echo (int)$proyecto->id; ?>, nombreProyecto: <?php echo json_encode($proyecto->nombre, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, usuario: <?php echo json_encode($_SESSION['nombre'] ?? '', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, puedeGuardar: <?php echo $puedeGuardar ? 'true' : 'false'; ?>, publico: <?php echo $publico ? 'true' : 'false'; ?>, token: <?php echo json_encode($publico ? ($token ?? '') : '', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>, worker: '/vendor/pdfjs/pdf.worker.min.js' };
 window.CMP_GUARDADO = <?php echo json_encode($abrir, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;

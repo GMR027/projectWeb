@@ -515,6 +515,6 @@ window.ANT_CONFIG = {
 </script>
 <script src="/vendor/pdfjs/pdf.min.js"></script>
 <script src="/vendor/jspdf/jspdf.umd.min.js"></script>
-<script src="/vendor/anotaciones.js"></script>
-<script src="/vendor/gestos-lienzo.js"></script>
-<script src="/vendor/anotador.js"></script>
+<script src="/vendor/anotaciones.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/anotaciones.js'); ?>"></script>
+<script src="/vendor/gestos-lienzo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/gestos-lienzo.js'); ?>"></script>
+<script src="/vendor/anotador.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/anotador.js'); ?>"></script>
