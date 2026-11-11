@@ -475,12 +475,13 @@ class VplanController
         }
         $json = texto_param($_POST['json'] ?? '');
         // Las imágenes dentro de las marcas deben ser archivos subidos por el editor
-        $bin = MarcasLienzo::binarioDeDataUrl(texto_param($_POST['png'] ?? ''), 'png|jpeg');
+        $bin = MarcasLienzo::binarioDePost('png');
         if (!MarcasLienzo::leer($json, '#^/uploads/vplan/[a-f0-9]{32}\.(png|jpg)$#', $bin, 30_000_000)) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
             exit;
         }
+        $anterior = $l->marcas_png ? (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . basename($l->marcas_png)) : 0;
         $nuevo = MarcasLienzo::guardarBinario($bin, 3840);
         if (!$nuevo) {
             http_response_code(422);
@@ -494,6 +495,8 @@ class VplanController
         $l->marcas_json = $json;
         $l->marcas_estados_hash = Vplan::datos($l, $proyecto)['hash'];
         $l->guardar();
+        $nuevoTam = (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . $nuevo);
+        \Classes\Almacenamiento::sumarCuentaProyecto($proyecto, $nuevoTam - $anterior);
         echo json_encode(['success' => true]);
         exit;
     }

@@ -2,6 +2,7 @@
 
 namespace Model;
 
+use Classes\Almacenamiento;
 use Classes\Plan;
 
 /**
@@ -220,7 +221,12 @@ class Organizacion extends ActiveRecord
                 ];
             }
         }
-        return Plan::limites($this->planClave(), $override);
+        $lim = Plan::limites($this->planClave(), $override);
+        // -1 en limites_json significa «sin límite» (null ya quiere decir «sin override»).
+        foreach (['obras', 'usuarios', 'visitantes', 'almacenamiento_gb', 'almacenamiento_por_obra_mb'] as $k) {
+            if (($lim[$k] ?? null) === -1) $lim[$k] = null;
+        }
+        return $lim;
     }
 
     /** ¿La organización puede usar una función del plan? */
@@ -377,6 +383,101 @@ class Organizacion extends ActiveRecord
             $this->trial_hasta = null;
         }
         return (bool)$this->guardar();
+    }
+
+    /**
+     * Activa o suspende la organización desde la ficha (admin).
+     * Al activar se quitan la prueba y las fechas de fin/gracia para que la
+     * empresa salga del modo solo lectura aunque el plan anterior hubiera vencido.
+     */
+    public function fijarEstado(string $estado): bool
+    {
+        if (!$this->id) return false;
+        $estado = $estado === 'activo' ? 'activo' : 'suspendido';
+        $this->estado_plan = $estado;
+        if ($estado === 'activo') {
+            $this->trial_hasta = null;
+            $this->plan_fin = null;
+            $this->gracia_hasta = null;
+        }
+        return (bool)$this->guardar();
+    }
+
+    /**
+     * Cambia el plan y los topes efectivos de la organización (admin).
+     * Los topes que coinciden con el plan no se guardan como override; un campo
+     * vacío significa «sin límite» (se guarda -1 para no confundirlo con «sin override»).
+     * Devuelve ['ok' => bool, 'error' => string].
+     */
+    public function fijarPlanYLimites(string $planClave, array $topes): array
+    {
+        if (!$this->id) return ['ok' => false, 'error' => 'La organización no existe.'];
+        $planClave = Plan::normalizar($planClave);
+        $plan = Plan::de($planClave);
+        $defecto = [
+            'obras' => $plan['obras'],
+            'usuarios' => $plan['usuarios'],
+            'visitantes' => $plan['visitantes'],
+            'almacenamiento_gb' => $plan['almacenamiento_gb'],
+            'almacenamiento_por_obra_mb' => $plan['almacenamiento_por_obra_mb'],
+        ];
+
+        $valores = [];
+        foreach ($defecto as $k => $base) {
+            $crudo = $topes[$k] ?? '';
+            $crudo = is_string($crudo) ? trim($crudo) : $crudo;
+            if ($k === 'almacenamiento_por_obra_mb') {
+                $n = filter_var($crudo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 100000]]);
+                if ($n === false) return ['ok' => false, 'error' => 'El espacio por obra debe ser un número entero entre 1 y 100000 MB.'];
+                $valores[$k] = (int)$n;
+                continue;
+            }
+            if ($crudo === '' || $crudo === null || $crudo === false) {
+                $valores[$k] = null;
+                continue;
+            }
+            $n = filter_var($crudo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1000000]]);
+            if ($n === false) return ['ok' => false, 'error' => 'Los topes deben ser números enteros (deja vacío para «sin límite»).'];
+            $valores[$k] = (int)$n;
+        }
+
+        // Nunca dejar un tope por debajo de lo que la organización ya usa.
+        $usos = [
+            'obras' => [$this->contarObrasActivas(), 'obras activas'],
+            'usuarios' => [$this->contarAsientos(), 'personas con acceso'],
+            'visitantes' => [$this->contarVisitantes(), 'visitantes'],
+        ];
+        foreach ($usos as $k => [$uso, $etiqueta]) {
+            if ($valores[$k] !== null && $valores[$k] < $uso) {
+                return ['ok' => false, 'error' => 'No puedes dejar ' . $etiqueta . ' en ' . $valores[$k] . ': la organización ya tiene ' . $uso . '.'];
+            }
+        }
+        if ($valores['almacenamiento_gb'] !== null) {
+            $usado = Almacenamiento::usadoCuenta((int)$this->id);
+            if ($usado > $valores['almacenamiento_gb'] * 1073741824) {
+                return ['ok' => false, 'error' => 'El almacenamiento total no puede ser menor que lo ya usado (' . Almacenamiento::formato($usado) . ').'];
+            }
+        }
+
+        // Solo se guarda lo que difiere del plan; -1 = quitar el tope del plan.
+        $override = [];
+        foreach ($defecto as $k => $base) {
+            $v = $valores[$k];
+            if ($k === 'almacenamiento_por_obra_mb') {
+                if ($v !== (int)$base) $override[$k] = $v;
+            } elseif ($v === null) {
+                if ($base !== null) $override[$k] = -1;
+            } elseif ($base === null || $v !== (int)$base) {
+                $override[$k] = $v;
+            }
+        }
+
+        $this->plan_id = $planClave;
+        $this->limites_json = $override ? json_encode($override, JSON_UNESCAPED_UNICODE) : null;
+        $r = $this->guardar();
+        $ok = is_array($r) ? !empty($r['resultado']) : (bool)$r;
+        if (!$ok) return ['ok' => false, 'error' => 'No se pudo guardar el plan.'];
+        return ['ok' => true, 'error' => ''];
     }
 
     /** Últimos pagos manuales de la organización */

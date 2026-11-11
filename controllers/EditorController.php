@@ -470,7 +470,7 @@ class EditorController
         $l = self::laminaDe($g, $_POST['hoja'] ?? null);
         if (!$l) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
         $json = texto_param($_POST['json'] ?? '');
-        $bin = \Classes\MarcasLienzo::binarioDeDataUrl(texto_param($_POST['png'] ?? ''));
+        $bin = \Classes\MarcasLienzo::binarioDePost('png');
         if (!\Classes\MarcasLienzo::leer($json, '#^/uploads/(?:vplan/[a-f0-9]{32}\.(?:png|jpg)|punch/min/[a-f0-9]{32}\.jpg)$#', $bin, 60_000_000)) {
             json_respuesta(['success' => false, 'error' => 'Datos no válidos'], 422);
         }
@@ -488,6 +488,8 @@ class EditorController
         $l->marcas_png = $nuevo;
         $l->marcas_json = $json;
         $l->guardar();
+        $nuevoTam = (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . $nuevo);
+        Almacenamiento::sumarCuentaProyecto($p, $nuevoTam - $anterior);
         $fresca = GraficoLamina::find($l->id);
         json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nuevo, 'version' => $fresca ? (string)$fresca->actualizado : '']);
     }

@@ -22,6 +22,7 @@
             </select>
         </div>
         <?php include __DIR__ . '/_organizacion-campos.php'; ?>
+        <?php if (empty($organizacion)): ?>
         <div class="campo" id="campo-limite">
             <label for="limite_proyectos">Límite de proyectos (rol cliente)</label>
             <input type="number" id="limite_proyectos" name="limite_proyectos" min="0" max="999" step="1" value="<?php echo s($usuario->limite_proyectos ?? 1); ?>">
@@ -35,6 +36,7 @@
             <input type="number" id="limite_colaboradores" name="limite_colaboradores" min="0" max="999" step="1" value="<?php echo s($usuario->limite_colaboradores ?? \Model\Usuario::MAX_COLABORADORES_CLIENTE); ?>">
             <small class="text-muted">El dueño crea a su equipo desde «Mi equipo» sin pasar del tope. 0 = no puede crear de ese tipo.</small>
         </div>
+        <?php endif; ?>
         <div class="campo oculto" id="campo-nivel">
             <label for="nivel_acceso">Tipo de acceso</label>
             <select id="nivel_acceso" name="nivel_acceso">
@@ -77,7 +79,7 @@
                 };
                 const toggle = () => {
                     caja.style.display = rol.value === 'admin' ? 'none' : '';
-                    lim.style.display = rol.value === 'cliente' ? '' : 'none';
+                    if (lim) lim.style.display = rol.value === 'cliente' ? '' : 'none';
                     herr.style.display = rol.value === 'visitante' ? '' : 'none';
                     niv.style.display = rol.value === 'visitante' ? '' : 'none';
                     toggleOrg();

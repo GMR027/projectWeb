@@ -72,6 +72,48 @@
     }
 
     /**
+     * Reduce y comprime una foto en el navegador antes de subirla.
+     * Una foto de celular de 4-12 MB baja a unos cientos de KB (la subida deja de
+     * tardar minutos en obra). Respeta la orientación EXIF, conserva PNG/WebP con
+     * transparencia y devuelve el archivo original si algo falla.
+     */
+    async function comprimirImagen(file, maxLado = 2000, calidad = 0.85) {
+        if (!file || !/^image\//i.test(file.type || '')) return file;
+        if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;   // animación/SVG: no se tocan
+        const yaEsPequena = file.size <= 400 * 1024;
+        let bitmap = null;
+        try {
+            if (window.createImageBitmap) {
+                bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+            }
+        } catch (_) { bitmap = null; }
+        if (!bitmap) {
+            const url = URL.createObjectURL(file);
+            bitmap = await new Promise((ok, ko) => {
+                const i = new Image();
+                i.onload = () => { URL.revokeObjectURL(url); ok(i); };
+                i.onerror = () => { URL.revokeObjectURL(url); ko(new Error('No se pudo leer la imagen')); };
+                i.src = url;
+            });
+        }
+        const w = bitmap.width || bitmap.naturalWidth || 0, h = bitmap.height || bitmap.naturalHeight || 0;
+        if (!w || !h) return file;
+        const k = Math.min(1, maxLado / Math.max(w, h));
+        if (yaEsPequena && k >= 1) { if (bitmap.close) { try { bitmap.close(); } catch (_) {} } return file; }   // ya viene lista: no la re-codificamos
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        cv.getContext('2d').drawImage(bitmap, 0, 0, cv.width, cv.height);
+        if (bitmap.close) { try { bitmap.close(); } catch (_) {} }
+        // PNG y WebP pueden traer transparencia: se conservan en PNG. Las fotos van a JPEG.
+        const tipo = (file.type === 'image/png' || file.type === 'image/webp') ? 'image/png' : 'image/jpeg';
+        const blob = await new Promise(ok => cv.toBlob(ok, tipo, tipo === 'image/jpeg' ? calidad : undefined));
+        if (!blob) return file;
+        const nombre = String(file.name || 'imagen').replace(/\.[^.]+$/, '') + (tipo === 'image/png' ? '.png' : '.jpg');
+        return new File([blob], nombre, { type: tipo, lastModified: Date.now() });
+    }
+
+    /**
      * De una lista de candidatos {pos, ...} el más cercano a `valor` dentro del umbral: {d, ref} (d = pos - valor) o null.
      * Con empate gana el primero; `ultimoGana` hace que gane el último (como hacía el editor Konva).
      */
@@ -132,5 +174,5 @@
         });
     }
 
-    window.KitEdicion = { esc, post, debounce, guardado, guarda, historial, atajos, avisoSalir, rasterizar, masCercano, renombrarEnLinea, listaOrdenable };
+    window.KitEdicion = { esc, post, debounce, guardado, guarda, historial, atajos, avisoSalir, rasterizar, comprimirImagen, masCercano, renombrarEnLinea, listaOrdenable };
 })();

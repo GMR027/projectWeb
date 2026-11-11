@@ -1393,5 +1393,24 @@ $ok('editar usuario convierte la organización vacía en NULL', str_contains($as
 $ok('las fechas vacías o inválidas del plan se guardan como NULL', \Model\Organizacion::fechaONull('') === null && \Model\Organizacion::fechaONull('2026-11-10') === '2026-11-10' && \Model\Organizacion::fechaONull('2026-02-30') === null && \Model\Organizacion::fechaONull('  2026-12-01 ') === '2026-12-01' && str_contains($asset('models/Organizacion.php'), 'self::fechaONull($gracia)'));
 $ok('sacar a un miembro limpia su acceso a las obras de la empresa', str_contains($asset('models/ProyectoAcceso.php'), 'function quitarEnOrganizacion') && str_contains($orgCtrl, 'quitarEnOrganizacion'));
 
+echo "Organizaciones: plan, estado y topes\n";
+$ok('el guardado de la ficha persiste (bug de editar corregido)', str_contains($orgCtrl, '$r = $org->guardar();') && str_contains($orgCtrl, "&guardado=1"));
+$ok('activar/suspender y cambiar plan tienen ruta propia', str_contains($asset('public/index.php'), '/organizaciones/estado') && str_contains($asset('public/index.php'), '/organizaciones/plan') && str_contains($orgCtrl, 'function estado(') && str_contains($orgCtrl, 'function plan('));
+$ok('activar limpia la prueba y las fechas de vencimiento', str_contains($orgModel, 'function fijarEstado(') && str_contains($orgModel, '$this->plan_fin = null;') && str_contains($orgModel, '$this->gracia_hasta = null;'));
+$ok('los topes se guardan como override y vacío = sin límite', str_contains($orgModel, 'function fijarPlanYLimites(') && str_contains($orgModel, '$override[$k] = -1;') && str_contains($orgModel, '=== -1'));
+$ok('no deja bajar un tope por debajo de lo ya usado', str_contains($orgModel, 'la organización ya tiene') && str_contains($orgModel, 'contarAsientos()'));
+$ok('la ficha tiene el bloque Plan y estado con los 5 topes', str_contains($asset('views/organizaciones/ver.php'), 'id="plan"') && str_contains($asset('views/organizaciones/ver.php'), 'name="topes[visitantes]"') && str_contains($asset('views/organizaciones/ver.php'), 'name="topes[almacenamiento_gb]"') && str_contains($asset('views/organizaciones/ver.php'), 'name="topes[almacenamiento_por_obra_mb]"'));
+$ok('la lista permite activar/suspender sin abrir la ficha', str_contains($asset('views/organizaciones/index.php'), 'action="/organizaciones/estado"'));
+$ok('el formulario de la empresa ya no mezcla plan/estado/fechas', !str_contains($asset('views/organizaciones/_form.php'), 'name="estado_plan"') && !str_contains($asset('views/organizaciones/_form.php'), 'name="plan_fin"'));
+$ok('editar al propietario ya no cambia el plan de la organización', !str_contains($asset('controllers/AuthController.php'), '$org->fijarPlan(') && str_contains($asset('views/auth/_organizacion-campos.php'), 'Administrar plan y estado'));
+
+echo "Editor: subida de imágenes\n";
+$ok('la imagen se comprime en el navegador antes de subir', str_contains($asset('public/vendor/kit-edicion.js'), 'function comprimirImagen') && str_contains($asset('public/vendor/vplan-editor.js'), 'KitEdicion.comprimirImagen') && str_contains($asset('public/vendor/kit-edicion.js'), 'createImageBitmap'));
+$ok('la subida muestra progreso y pausa el autoguardado', str_contains($asset('public/vendor/vplan-editor.js'), 'subirConProgreso') && str_contains($asset('public/vendor/vplan-editor.js'), 'subiendoImagen'));
+$ok('el lienzo viaja como archivo y el servidor lo acepta', str_contains($asset('public/vendor/vplan-editor.js'), "fd.append('png_file'") && str_contains($asset('classes/MarcasLienzo.php'), 'function binarioDePost'));
+$ok('el tope se mide con el archivo final, no con el original', str_contains($asset('classes/MarcasLienzo.php'), 'filesize($ruta)') && str_contains($asset('classes/MarcasLienzo.php'), 'sumarCuentaProyecto'));
+$ok('el total de la organización usa un contador en vez de recorrer todas las obras', str_contains($asset('classes/Almacenamiento.php'), 'function usadoConContador') && str_contains($asset('classes/Almacenamiento.php'), 'function sumarCuentaProyecto'));
+$ok('las imágenes de vPlan buscan primero por columna exacta', str_contains($asset('classes/Media.php'), "if (\$carpeta === 'vplan')") && str_contains($asset('classes/Media.php'), 'editor_graficos'));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

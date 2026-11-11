@@ -60,6 +60,36 @@ $ok('columna organizacion_id en proyectos', (bool)$GLOBALS['db']->query("SHOW CO
 $ok('columna archivado en proyectos', (bool)$GLOBALS['db']->query("SHOW COLUMNS FROM proyectos LIKE 'archivado'")->fetch_row());
 $ok('los 4 planes comerciales están sembrados', (int)$GLOBALS['db']->query("SELECT COUNT(*) FROM planes WHERE clave IN ('obra','pro','constructora','corporativo')")->fetch_row()[0] === 4);
 
+// ---------- plan, estado y topes de la organización ----------
+echo "Organización: plan, estado y topes\n";
+$orgPrueba = new Model\Organizacion([
+    'nombre' => 'Prueba límites',
+    'plan_id' => 'pro',
+    'estado_plan' => 'trial',
+    'trial_hasta' => date('Y-m-d'),
+    'plan_inicio' => date('Y-m-d'),
+]);
+$orgPrueba->id = (int)$orgPrueba->guardar()['id'];
+$ok('la organización de prueba se crea', $orgPrueba->id > 0);
+$r = $orgPrueba->fijarPlanYLimites('pro', ['obras' => 3, 'usuarios' => 4, 'visitantes' => 2, 'almacenamiento_gb' => 12, 'almacenamiento_por_obra_mb' => 1024]);
+$lim = $orgPrueba->limites();
+$ok('cambiar plan y topes los aplica', $r['ok'] && (int)$lim['obras'] === 3 && (int)$lim['usuarios'] === 4 && (int)$lim['visitantes'] === 2 && (int)$lim['almacenamiento_gb'] === 12 && (int)$lim['almacenamiento_por_obra_mb'] === 1024);
+$r = $orgPrueba->fijarPlanYLimites('pro', ['obras' => '', 'usuarios' => 4, 'visitantes' => '', 'almacenamiento_gb' => '', 'almacenamiento_por_obra_mb' => 6144]);
+$lim = $orgPrueba->limites();
+$ok('un tope vacío queda sin límite', $r['ok'] && $lim['obras'] === null && $lim['visitantes'] === null && $lim['almacenamiento_gb'] === null && (int)$lim['usuarios'] === 4);
+$GLOBALS['db']->query("INSERT INTO usuarios (nombre, email, password, rol, nivel_acceso, confirmado, organizacion_id, rol_org, puede_crear_proyectos) VALUES ('Asiento prueba', 'asiento@prueba.local', 'x', 'visitante', 'editar', 1, {$orgPrueba->id}, 'colaborador', 0)");
+$r = $orgPrueba->fijarPlanYLimites('pro', ['obras' => '', 'usuarios' => 0, 'visitantes' => '', 'almacenamiento_gb' => '', 'almacenamiento_por_obra_mb' => 6144]);
+$ok('no deja bajar los asientos por debajo de los usuarios actuales', !$r['ok'] && str_contains($r['error'], 'personas con acceso'));
+$orgPrueba->plan_fin = date('Y-m-d', strtotime('-60 days'));
+$orgPrueba->gracia_hasta = null;
+$orgPrueba->estado_plan = 'activo';
+$orgPrueba->guardar();
+$orgPrueba = Model\Organizacion::find($orgPrueba->id);
+$ok('un plan vencido deja la organización en solo lectura', $orgPrueba->soloLectura());
+$ok('activar quita las fechas y sale de solo lectura', $orgPrueba->fijarEstado('activo') && !$orgPrueba->soloLectura() && $orgPrueba->plan_fin === null && $orgPrueba->gracia_hasta === null);
+$GLOBALS['db']->query("DELETE FROM usuarios WHERE email = 'asiento@prueba.local'");
+$GLOBALS['db']->query('DELETE FROM organizaciones WHERE id = ' . (int)$orgPrueba->id);
+
 // ---------- seed del administrador ----------
 echo "Seed del administrador\n";
 $u = Usuario::where('email', 'admin@po.local');

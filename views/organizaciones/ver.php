@@ -22,10 +22,128 @@ $gestores = array_values(array_filter($clientes, fn($u) => (string)$u->rol_org =
         </p>
     </div>
     <div class="acciones">
-        <a href="/organizaciones/editar?id=<?php echo (int)$org->id; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen"></i> Editar</a>
+        <a href="/organizaciones/editar?id=<?php echo (int)$org->id; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-id-card"></i> Datos de la empresa</a>
         <a href="/organizaciones" class="btn btn-sm btn-ghost">← Volver</a>
     </div>
 </div>
+
+<?php if (!empty($_GET['guardado'])): ?>
+    <p class="text-sm" style="color:var(--primary)" role="status"><i class="fa-solid fa-circle-check"></i> Cambios guardados.</p>
+<?php endif; ?>
+<?php $msgError = $_GET['error'] ?? ''; if (is_string($msgError) && $msgError !== ''): ?>
+    <p class="text-sm" role="alert" style="color:var(--danger, #ef4444)"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo s($msgError); ?></p>
+<?php endif; ?>
+
+<?php
+$activa = ($org->estado_plan ?? '') === 'activo';
+$enPrueba = ($org->estado_plan ?? '') === 'trial';
+$diasPrueba = $org->diasTrial();
+$tope = fn(string $k) => ($limites[$k] ?? null) === null ? '' : (string)(int)$limites[$k];
+$porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
+?>
+<section id="plan" class="card" style="margin-top:1.2rem" <?php echo atributos_ayuda(['ayuda' => 'Activa o suspende la empresa y cambia su plan y sus topes. Suspender deja toda la empresa en solo lectura.', 'manual' => 'organizaciones', 'label' => 'Plan y estado'], true); ?>>
+    <h3 class="card-titulo"><i class="fa-solid fa-layer-group"></i> Plan y estado</h3>
+
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem; margin-bottom:1.4rem">
+        <div>
+            <span class="text-muted text-sm">Estado</span><br>
+            <span class="badge <?php echo s($org->estadoBadge()); ?>" style="font-size:1.3rem"><?php echo s($org->estadoEtiqueta()); ?></span>
+            <?php if ($enPrueba && $diasPrueba !== null): ?>
+                <span class="text-muted text-sm"> · quedan <?php echo max(0, (int)$diasPrueba); ?> día(s) de prueba</span>
+            <?php endif; ?>
+        </div>
+        <form method="POST" action="/organizaciones/estado" class="inline"
+            <?php echo !$activa ? '' : 'data-confirm="¿Suspender la empresa?|Quedará en solo lectura: podrá consultar y exportar, pero no crear ni editar. Podrás reactivarla cuando quieras."'; ?>>
+            <input type="hidden" name="id" value="<?php echo (int)$org->id; ?>">
+            <input type="hidden" name="estado" value="<?php echo $activa ? 'suspendido' : 'activo'; ?>">
+            <button type="submit" class="btn <?php echo $activa ? 'btn-ghost' : 'btn-primary'; ?>">
+                <i class="fa-solid <?php echo $activa ? 'fa-pause' : 'fa-play'; ?>"></i>
+                <?php echo $activa ? 'Suspender' : ($enPrueba ? 'Activar plan' : 'Activar'); ?>
+            </button>
+        </form>
+        <span class="text-muted text-sm">Suspender no borra nada. Al activar se quitan la prueba y las fechas de vencimiento.</span>
+    </div>
+
+    <form method="POST" action="/organizaciones/plan" class="formulario" id="org-plan-form">
+        <input type="hidden" name="id" value="<?php echo (int)$org->id; ?>">
+        <div class="form-grid">
+            <div class="campo">
+                <label for="org-plan_id">Plan</label>
+                <select id="org-plan_id" name="plan_id">
+                    <?php foreach ($planes as $p): ?>
+                        <option value="<?php echo s($p['clave']); ?>"
+                            data-obras="<?php echo $p['obras'] === null ? '' : (int)$p['obras']; ?>"
+                            data-usuarios="<?php echo $p['usuarios'] === null ? '' : (int)$p['usuarios']; ?>"
+                            data-visitantes="<?php echo $p['visitantes'] === null ? '' : (int)$p['visitantes']; ?>"
+                            data-almacenamiento-gb="<?php echo $p['almacenamiento_gb'] === null ? '' : (int)$p['almacenamiento_gb']; ?>"
+                            data-almacenamiento-por-obra-mb="<?php echo (int)$p['almacenamiento_por_obra_mb']; ?>"
+                            <?php echo $org->planClave() === $p['clave'] ? 'selected' : ''; ?>>
+                            <?php echo s($p['nombre']); ?> · <?php echo s(\Classes\Plan::precio($p['clave'])); ?> MXN/mes
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="text-muted">Al cambiar de plan se rellenan los topes con los del plan; después puedes ajustarlos.</small>
+            </div>
+        </div>
+
+        <h4 style="margin:1.2rem 0 .4rem">Topes de la empresa</h4>
+        <p class="text-muted text-sm" style="margin-top:0">Deja un campo vacío para que no tenga límite. No puedes dejar un tope por debajo de lo que la empresa ya usa.</p>
+        <div class="form-grid">
+            <div class="campo">
+                <label for="tope-obras">Obras activas</label>
+                <input type="number" id="tope-obras" name="topes[obras]" min="0" max="1000000" step="1" value="<?php echo s($tope('obras')); ?>" placeholder="Sin límite">
+                <small class="text-muted">En uso: <?php echo (int)$obras_activas; ?></small>
+            </div>
+            <div class="campo">
+                <label for="tope-usuarios">Personas que editan</label>
+                <input type="number" id="tope-usuarios" name="topes[usuarios]" min="0" max="1000000" step="1" value="<?php echo s($tope('usuarios')); ?>" placeholder="Sin límite">
+                <small class="text-muted">Incluye al propietario y a los gestores. En uso: <?php echo (int)$asientos; ?></small>
+            </div>
+            <div class="campo">
+                <label for="tope-visitantes">Visitantes</label>
+                <input type="number" id="tope-visitantes" name="topes[visitantes]" min="0" max="1000000" step="1" value="<?php echo s($tope('visitantes')); ?>" placeholder="Sin límite">
+                <small class="text-muted">En uso: <?php echo (int)$visitantes; ?></small>
+            </div>
+            <div class="campo">
+                <label for="tope-gb">Almacenamiento total (GB)</label>
+                <input type="number" id="tope-gb" name="topes[almacenamiento_gb]" min="0" max="1000000" step="1" value="<?php echo s($tope('almacenamiento_gb')); ?>" placeholder="Sin límite">
+                <small class="text-muted">En uso: <?php echo \Classes\Almacenamiento::formato((int)$almacenamiento); ?></small>
+            </div>
+            <div class="campo">
+                <label for="tope-obra-mb">Almacenamiento por obra (MB)</label>
+                <input type="number" id="tope-obra-mb" name="topes[almacenamiento_por_obra_mb]" min="1" max="100000" step="1" value="<?php echo (int)$porObra; ?>" required>
+                <small class="text-muted">Espacio de cada obra (archivos, fotos, planos y fichas).</small>
+            </div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1.2rem">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar plan y topes</button>
+            <button type="button" class="btn btn-ghost" id="org-plan-aplicar"><i class="fa-solid fa-wand-magic-sparkles"></i> Aplicar límites del plan</button>
+        </div>
+    </form>
+</section>
+
+<script>
+(function () {
+    const f = document.getElementById('org-plan-form');
+    if (!f) return;
+    const sel = f.querySelector('[name="plan_id"]');
+    const campos = {
+        obras: 'obras', usuarios: 'usuarios', visitantes: 'visitantes',
+        almacenamiento_gb: 'almacenamiento-gb', almacenamiento_por_obra_mb: 'almacenamiento-por-obra-mb'
+    };
+    const aplicar = () => {
+        const o = sel && sel.options[sel.selectedIndex];
+        if (!o) return;
+        Object.entries(campos).forEach(([campo, dato]) => {
+            const input = f.querySelector('[name="topes[' + campo + ']"]');
+            if (input) input.value = o.dataset[dato] ?? '';
+        });
+    };
+    if (sel) sel.addEventListener('change', aplicar);
+    const b = document.getElementById('org-plan-aplicar');
+    if (b) b.addEventListener('click', e => { e.preventDefault(); aplicar(); });
+})();
+</script>
 
 <div class="pestanas" role="tablist" aria-label="Secciones de la organización">
     <a href="#resumen" class="activo"><i class="fa-solid fa-chart-pie"></i> Resumen</a>

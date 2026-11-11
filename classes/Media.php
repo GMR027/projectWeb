@@ -85,6 +85,26 @@ class Media
             $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
             return $id ?: null;
         }
+        // vPlan/Editor: primero las columnas exactas (rápido). El LIKE sobre el JSON
+        // queda como último recurso, solo para imágenes insertadas dentro de una lámina.
+        if ($carpeta === 'vplan') {
+            foreach ([
+                "SELECT proyecto_id FROM vplan_laminas WHERE plano = '$a' OR simbologia = '$a' OR marcas_png = '$a' LIMIT 1",
+                "SELECT g.proyecto_id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE l.marcas_png = '$a' LIMIT 1",
+                "SELECT proyecto_id FROM editor_graficos WHERE fondo_imagen = '$a' LIMIT 1",
+            ] as $sql) {
+                $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
+                if ($id) return $id;
+            }
+            foreach ([
+                "SELECT proyecto_id FROM vplan_laminas WHERE marcas_json LIKE '%$a%' LIMIT 1",
+                "SELECT g.proyecto_id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE l.marcas_json LIKE '%$a%' LIMIT 1",
+            ] as $sql) {
+                $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
+                if ($id) return $id;
+            }
+            return null;
+        }
         $sql = match ($carpeta) {
             'evidencias' => "SELECT proyecto_id FROM evidencias WHERE foto = '$a' LIMIT 1",
             'materiales' => "SELECT proyecto_id FROM materiales WHERE imagen = '$a' LIMIT 1",
@@ -93,9 +113,6 @@ class Media
             'reportes' => "SELECT proyecto_id FROM reportes_diarios WHERE fotos_json LIKE '%\"$a\"%' OR firma_imagen = '$a' LIMIT 1",
             'punch' => "SELECT proyecto_id FROM punch_items WHERE foto_antes = '$a' OR foto_despues = '$a' LIMIT 1",
             'anotador' => "SELECT proyecto_id FROM anotador_documentos WHERE archivo = '$a' OR nombre_archivo = '$a' OR anotaciones_json LIKE '%$a%' LIMIT 1",
-            'vplan' => "SELECT proyecto_id FROM vplan_laminas WHERE plano = '$a' OR simbologia = '$a' OR marcas_png = '$a' OR marcas_json LIKE '%$a%'"
-                . " UNION SELECT g.proyecto_id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE l.marcas_png = '$a' OR l.marcas_json LIKE '%$a%'"
-                . " UNION SELECT proyecto_id FROM editor_graficos WHERE fondo_imagen = '$a' LIMIT 1",
             default => '',
         };
         if ($sql === '') return null;

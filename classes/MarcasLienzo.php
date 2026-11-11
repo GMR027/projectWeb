@@ -30,6 +30,20 @@ class MarcasLienzo
         return preg_match('#^data:image/(' . $tipos . ');base64,#', $dataUrl) ? base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true) : false;
     }
 
+    /**
+     * Binario del lienzo que manda el editor: el archivo `png_file` (FormData, sin el
+     * +33 % del base64) o, como respaldo, el data URL del campo `png`.
+     */
+    public static function binarioDePost(string $campo = 'png'): string|false
+    {
+        $f = $_FILES[$campo . '_file'] ?? null;
+        if ($f && isset($f['error']) && (int)$f['error'] === UPLOAD_ERR_OK && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && (int)$f['size'] > 0) {
+            $mime = mime_content_type($f['tmp_name']);
+            if (in_array($mime, ['image/png', 'image/jpeg'], true)) return (string)file_get_contents($f['tmp_name']);
+        }
+        return self::binarioDeDataUrl(texto_param($_POST[$campo] ?? ''), 'png|jpeg');
+    }
+
     /** Guarda el binario como imagen del vPlan (lado mayor $lado) y devuelve su nombre o null */
     public static function guardarBinario(string $bin, int $lado): ?string
     {
@@ -44,11 +58,18 @@ class MarcasLienzo
     public static function subirImagen(Proyecto $proyecto): void
     {
         $f = $_FILES['imagen'] ?? null;
-        $ok = $f && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
+        $ok = $f && empty($f['error']) && !empty($f['tmp_name']) && is_uploaded_file($f['tmp_name']) && $f['size'] <= 20 * 1024 * 1024
             && in_array(mime_content_type($f['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
-        if ($ok && !Almacenamiento::cabe((int)$proyecto->id, (int)$f['size'])) json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$proyecto->id)], 422);
         $nombre = $ok ? Imagenes::guardarGrande($f['tmp_name'], 1600) : null;
         if (!$nombre) json_respuesta(['success' => false, 'error' => 'Imagen no válida (jpg, png, webp o gif de hasta 20 MB)'], 422);
+        // El tope se mide con el archivo ya comprimido/reducido, no con la foto original.
+        $ruta = Imagenes::CARPETA_VPLAN . '/' . $nombre;
+        $final = (int)@filesize($ruta);
+        if (!Almacenamiento::cabe((int)$proyecto->id, $final)) {
+            Imagenes::eliminarVplan($nombre);
+            json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$proyecto->id)], 422);
+        }
+        Almacenamiento::sumarCuentaProyecto($proyecto, $final);
         json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
     }
 }

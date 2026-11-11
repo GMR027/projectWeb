@@ -115,6 +115,8 @@ $router->post('/organizaciones/crear', [OrganizacionController::class, 'crear'])
 $router->get('/organizaciones/ver', [OrganizacionController::class, 'ver']);
 $router->get('/organizaciones/editar', [OrganizacionController::class, 'editar']);
 $router->post('/organizaciones/editar', [OrganizacionController::class, 'editar']);
+$router->post('/organizaciones/estado', [OrganizacionController::class, 'estado']);
+$router->post('/organizaciones/plan', [OrganizacionController::class, 'plan']);
 $router->post('/organizaciones/archivar', [OrganizacionController::class, 'archivar']);
 $router->post('/organizaciones/desarchivar', [OrganizacionController::class, 'desarchivar']);
 $router->post('/organizaciones/eliminar', [OrganizacionController::class, 'eliminar']);

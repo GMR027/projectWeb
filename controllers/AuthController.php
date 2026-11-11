@@ -419,7 +419,8 @@ class AuthController
             if (empty($alertas)) {
                 $resultado = $usuario->guardar();
                 if ($resultado) {
-                    // Organización: crear si el cliente no tenía (migración) y actualizar plan/datos
+                    // Organización: crear si el cliente no tenía (migración). El plan y el
+                    // estado de una organización existente se editan en su ficha.
                     if ($usuario->rol === 'cliente' && $usuario->rol_org === 'propietario') {
                         $org = Organizacion::deUsuario((int)$id);
                         $orgFallida = false;
@@ -430,25 +431,6 @@ class AuthController
                                 $usuario->guardar();
                             } else {
                                 $orgFallida = true;
-                            }
-                        } elseif ($org->esPropietario((int)$id)) {
-                            $org->nombre = trim((string)($_POST['organizacion_nombre'] ?? '')) ?: $org->nombre;
-                            $org->razon_social = trim((string)($_POST['razon_social'] ?? '')) ?: $org->razon_social;
-                            $org->rfc = strtoupper(trim((string)($_POST['rfc'] ?? ''))) ?: $org->rfc;
-                            $org->correo_facturacion = trim((string)($_POST['correo_facturacion'] ?? '')) ?: $org->correo_facturacion;
-                            $org->telefono = trim((string)($_POST['telefono'] ?? '')) ?: $org->telefono;
-                            $org->guardar();
-                            if (!empty($_POST['plan_id'])) {
-                                $precioLegado = isset($_POST['precio_legado']) && $_POST['precio_legado'] !== ''
-                                    ? (float)$_POST['precio_legado'] : $org->precio_legado;
-                                $org->fijarPlan(
-                                    (string)$_POST['plan_id'],
-                                    (string)($_POST['estado_plan'] ?? $org->estado_plan),
-                                    $_POST['plan_inicio'] ?? $org->plan_inicio,
-                                    $_POST['plan_fin'] ?? $org->plan_fin,
-                                    $_POST['gracia_hasta'] ?? $org->gracia_hasta,
-                                    $precioLegado
-                                );
                             }
                         }
                     }

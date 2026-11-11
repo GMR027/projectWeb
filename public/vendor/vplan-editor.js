@@ -1377,6 +1377,9 @@
     if (!file) return;
     const destino = cambiar360; cambiar360 = null;
     if (file.size > 40 * 1024 * 1024) { status('La foto 360 no puede pesar más de 40 MB'); return; }
+    try {
+      if (window.KitEdicion && KitEdicion.comprimirImagen) file = await KitEdicion.comprimirImagen(file, 4096, 0.9);
+    } catch (_) { /* se sube el original */ }
     status('Subiendo foto 360…');
     const fd = new FormData(); fd.append('proyecto', C.proyecto); fd.append('imagen', file);
     try {
@@ -1391,13 +1394,43 @@
   }
 
   // ---------- imágenes dentro del editor ----------
+  let subiendoImagen = 0;   // mientras sube una imagen no se dispara el autoguardado del lienzo
+
+  /** Data URL → Blob sin usar fetch (la CSP solo permite connect-src 'self') */
+  function dataUrlABlob(url) {
+    const partes = String(url).split(',');
+    const mime = (partes[0].match(/^data:([^;]+)/) || [])[1] || 'image/png';
+    const bin = atob(partes[1] || '');
+    const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return new Blob([u8], { type: mime });
+  }
+
+  /** Sube un FormData con barra de progreso (fetch no informa el avance de subida) */
+  function subirConProgreso(url, fd, etiqueta) {
+    return new Promise((ok, ko) => {
+      const x = new XMLHttpRequest();
+      x.open('POST', url);
+      x.responseType = 'json';
+      x.upload.onprogress = e => { if (e.lengthComputable && e.total) status(etiqueta + '… ' + Math.round(e.loaded / e.total * 100) + '%'); };
+      x.onload = () => ok(x.response || { success: false, error: 'Respuesta no válida' });
+      x.onerror = () => ko(new Error('Error de conexión'));
+      x.ontimeout = () => ko(new Error('Tiempo de espera agotado'));
+      x.send(fd);
+    });
+  }
+
   async function subirImagen(file, fraccion = 0.3, vinculo = null) {
     if (!file) return;
-    status('Subiendo imagen…');
-    const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('imagen', file);
+    subiendoImagen++;
     try {
-      const r = await fetch((C.api && C.api.imagen) || '/api/vplan/imagen', { method: 'POST', body: fd });
-      const d = await r.json();
+      // Comprimir en el navegador: una foto de celular de varios MB baja a cientos de KB.
+      status('Preparando imagen…');
+      try {
+        if (window.KitEdicion && KitEdicion.comprimirImagen) file = await KitEdicion.comprimirImagen(file, 2000, 0.85);
+      } catch (_) { /* si falla se sube el original */ }
+      const fd = new FormData(); fd.append('lamina', C.lamina); fd.append('imagen', file);
+      const d = await subirConProgreso((C.api && C.api.imagen) || '/api/vplan/imagen', fd, 'Subiendo imagen');
       if (!d.success) { status('Error: ' + (d.error || 'no se pudo subir')); return; }
       const img = new Image();
       img.onload = () => {
@@ -1410,6 +1443,10 @@
       };
       img.src = d.src;
     } catch (e) { status('Error al subir la imagen'); }
+    finally {
+      subiendoImagen--;
+      if (subiendoImagen <= 0) { subiendoImagen = 0; programarAuto(); }
+    }
   }
 
   // ---------- zoom / encuadre ----------
@@ -1954,7 +1991,7 @@
     tAuto = setTimeout(async () => {
       const ocupado = dibujando || poli || marco || document.querySelector('.modal-overlay.abierto') || (document.activeElement && ['TEXTAREA', 'INPUT', 'SELECT'].includes(document.activeElement.tagName));
       if (!sucio) return;
-      if (ocupado) { programarAuto(); return; }
+      if (subiendoImagen > 0 || ocupado) { programarAuto(); return; }
       await guardar({ auto: true });
     }, 12000);
   }
@@ -1974,9 +2011,16 @@
       for (const sl of lista) {
         const datos = sl ? sl.data : { shapes: state.shapes, layers: state.layers, escala: state.escala, guides: state.guides };
         const png = await renderizar({ ancho: state.W, alto: state.H, mime: C.guardado === 'png' ? 'image/png' : 'image/jpeg', calidad: 0.92, datos });
-        const cuerpo = { lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: datos.shapes, layers: datos.layers, escala: datos.escala || null, guides: datos.guides || [] }), png };
+        const cuerpo = { lamina: C.lamina, json: JSON.stringify({ v: 2, w: state.W, h: state.H, shapes: datos.shapes, layers: datos.layers, escala: datos.escala || null, guides: datos.guides || [] }) };
         if (sl) { cuerpo.hoja = sl.id; cuerpo.version = sl.version || ''; }
-        const enviar = async () => (await fetch((C.api && C.api.marcas) || '/api/vplan/marcas', { method: 'POST', body: new URLSearchParams(cuerpo) })).json();
+        const enviar = async () => {
+          // El lienzo viaja como archivo binario: ahorra el +33 % del base64 y el escape de la URL.
+          const fd = new FormData();
+          Object.entries(cuerpo).forEach(([k, v]) => fd.append(k, v == null ? '' : String(v)));
+          try { fd.append('png_file', dataUrlABlob(png), 'lamina.png'); }
+          catch (_) { fd.append('png', png); }   // respaldo si el navegador no convierte el data URL
+          return (await fetch((C.api && C.api.marcas) || '/api/vplan/marcas', { method: 'POST', body: fd })).json();
+        };
         let d = await enviar();
         if (!d.success && d.conflicto && op.auto) { autoPausado = true; status('Autoguardado en pausa: la lámina cambió en otra sesión. Guarda a mano para decidir.'); return false; }
         if (!d.success && d.conflicto) {   // otra sesión guardó esta lámina mientras estaba abierta

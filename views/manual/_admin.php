@@ -83,6 +83,26 @@ HTML],
 <p class="manual-nota"><strong>Espacio de los proyectos que creas.</strong> Cada proyecto tiene un tope de espacio para sus archivos, fotos, planos y fichas. En los proyectos que te pertenecen (creados por ti) puedes ampliarlo o reducirlo cuando quieras en <em>Ajustes del proyecto → Datos → Almacenamiento</em>: escribe los MB y pulsa <em>Ampliar o reducir</em>. Con <strong>0</strong> el proyecto vuelve al límite heredado. Los proyectos de un cliente usan el espacio que tú le fijaste en <em>Usuarios y Accesos</em>.</p>
 HTML],
 
+['id' => 'organizaciones', 'despues' => 'sistema', 'titulo' => 'Organizaciones: activar, plan y topes', 'icono' => 'fa-building', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>En <strong>Organizaciones</strong> se administra cada empresa que contrata el plan. Todo lo importante está en la ficha de la empresa, en el bloque <strong>Plan y estado</strong>.</p>
+<h4>Activar o suspender</h4>
+<ul>
+<li><strong>Activa</strong>: la empresa trabaja con normalidad.</li>
+<li><strong>Suspendida</strong>: toda la empresa queda en <em>solo lectura</em>. Puede consultar y exportar, pero no crear ni editar. No se borra nada y puedes reactivarla cuando quieras.</li>
+<li>El botón también está en la lista de organizaciones, para resolverlo sin abrir la ficha.</li>
+<li>Si la empresa está <strong>en prueba</strong>, verás los días que quedan. Al pulsar <em>Activar plan</em> la prueba termina y se quitan las fechas de vencimiento.</li>
+</ul>
+<h4>Cambiar el plan y los topes</h4>
+<ol>
+<li>Elige el <strong>plan</strong>. Al cambiarlo, los cinco topes se rellenan con los del plan.</li>
+<li>Ajusta si hace falta: <strong>obras activas</strong>, <strong>personas que editan</strong> (incluye al propietario y gestores), <strong>visitantes</strong>, <strong>almacenamiento total en GB</strong> y <strong>almacenamiento por obra en MB</strong>.</li>
+<li>Un campo <strong>vacío</strong> significa <em>sin límite</em>. El espacio por obra siempre necesita un número.</li>
+<li>Pulsa <strong>Guardar plan y topes</strong>. El sistema no deja bajar un tope por debajo de lo que la empresa ya usa (por ejemplo, menos obras que las activas).</li>
+<li><strong>Aplicar límites del plan</strong> devuelve los cinco valores a los del plan elegido.</li>
+</ol>
+<p class="manual-nota">El <strong>propietario</strong>, los gestores, los visitantes, los colaboradores y las obras se agregan desde las pestañas de la misma ficha. Los datos fiscales y el logo se editan con <em>Datos de la empresa</em>. En la pantalla del usuario ya no se cambia el plan: se administra aquí para que no haya dos lugares que se pisen.</p>
+HTML],
+
 ['id' => 'escritorio', 'despues' => 'sistema', 'titulo' => 'App de escritorio', 'icono' => 'fa-desktop', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>La <strong>app de escritorio</strong> (Project Web Desktop) es la forma de usar las herramientas de IA: muestra tu ProjectWeb y añade un menú de <em>Herramientas IA</em>. El modelo se ejecuta en <strong>tu equipo</strong> y la app envía el resultado al servidor, que lo valida. Solo el administrador la usa.</p>
 [[fig:escritorio]]

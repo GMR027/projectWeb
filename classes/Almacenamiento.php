@@ -17,6 +17,7 @@ class Almacenamiento
 
     public const LIMITE = 300 * 1024 * 1024;   // 300 MB por defecto (proyectos de admin o sin dueño)
     private const RAIZ = __DIR__ . '/..';
+    private static array $cacheUsado = [];      // por proyecto, dentro de la misma petición
 
     private static function tam(string $ruta): int
     {
@@ -153,6 +154,7 @@ class Almacenamiento
     /** Recalcula y guarda el contador de la organización (para el panel admin) */
     public static function recalcularCuenta(int $orgId): int
     {
+        self::$cacheUsado = [];
         $total = 0;
         foreach (Proyecto::whereAll('organizacion_id', (string)$orgId, 'id ASC') as $p) {
             $total += self::usado((int)$p->id);
@@ -209,7 +211,26 @@ class Almacenamiento
 
     public static function usado(int $proyectoId): int
     {
-        return array_sum(self::desglose($proyectoId));
+        if (array_key_exists($proyectoId, self::$cacheUsado)) return self::$cacheUsado[$proyectoId];
+        return self::$cacheUsado[$proyectoId] = array_sum(self::desglose($proyectoId));
+    }
+
+    /**
+     * Ajusta el contador de la organización con el espacio de un archivo nuevo
+     * (o el delta al reemplazar el lienzo). Así `cabe()` no tiene que recorrer
+     * todas las obras en cada subida.
+     */
+    public static function sumarCuentaProyecto(Proyecto $p, int $bytes): void
+    {
+        if ($bytes === 0) return;
+        $pid = (int)$p->id;
+        if (array_key_exists($pid, self::$cacheUsado)) self::$cacheUsado[$pid] = max(0, self::$cacheUsado[$pid] + $bytes);
+        $org = self::organizacionDeProyecto($p);
+        if (!$org) return;
+        try {
+            self::db()->query('UPDATE organizaciones SET almacenamiento_bytes = GREATEST(0, almacenamiento_bytes + ' . (int)$bytes . ') WHERE id = ' . (int)$org->id);
+        } catch (\Throwable $e) {
+        }
     }
 
     public static function disponible(int $proyectoId): int
@@ -225,9 +246,26 @@ class Almacenamiento
         $org = $p ? self::organizacionDeProyecto($p) : null;
         if ($org) {
             $total = self::limiteCuenta((int)$org->id);
-            if ($total !== null && $bytes > max(0, $total - self::usadoCuenta((int)$org->id))) return false;
+            if ($total !== null && $bytes > max(0, $total - self::usadoConContador($org))) return false;
         }
         return true;
+    }
+
+    /**
+     * Espacio usado por la organización sin recorrer todas las obras en cada subida.
+     * La primera vez (contador en 0) se calcula y se guarda; después se mantiene
+     * con sumarCuentaProyecto() y con «Recalcular» del panel.
+     */
+    private static function usadoConContador(Organizacion $org): int
+    {
+        $guardado = (int)($org->almacenamiento_bytes ?? 0);
+        if ($guardado > 0) return $guardado;
+        $total = self::usadoCuenta((int)$org->id);
+        try {
+            self::db()->query('UPDATE organizaciones SET almacenamiento_bytes = ' . (int)$total . ' WHERE id = ' . (int)$org->id . ' AND almacenamiento_bytes = 0');
+        } catch (\Throwable $e) {
+        }
+        return $total;
     }
 
     public static function mensajeLleno(int $proyectoId): string

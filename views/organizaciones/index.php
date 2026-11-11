@@ -12,6 +12,8 @@
 <?php if (!empty($_GET['creada'])): ?><p class="text-sm" style="color:var(--primary)">Organización creada. Agrega su cliente propietario en la ficha.</p><?php endif; ?>
 <?php if (!empty($_GET['eliminada'])): ?><p class="text-sm" style="color:var(--primary)">Organización eliminada.</p><?php endif; ?>
 <?php if (!empty($_GET['recalculado'])): ?><p class="text-sm" style="color:var(--primary)">Almacenamiento recalculado.</p><?php endif; ?>
+<?php if (!empty($_GET['guardado'])): ?><p class="text-sm" style="color:var(--primary)" role="status"><i class="fa-solid fa-circle-check"></i> Cambios guardados.</p><?php endif; ?>
+<?php $msgError = $_GET['error'] ?? ''; if (is_string($msgError) && $msgError !== ''): ?><p class="text-sm" role="alert" style="color:var(--danger, #ef4444)"><?php echo s($msgError); ?></p><?php endif; ?>
 
 <div class="card" style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-bottom:1.2rem">
     <span class="text-sm"><?php echo count($filas); ?> organización(es)</span>
@@ -50,6 +52,16 @@
                     <?php if (($org->estado_plan ?? '') === 'trial' && $org->diasTrial() !== null): ?>
                         <br><span class="text-muted text-sm">Quedan <?php echo max(0, (int)$org->diasTrial()); ?> día(s)</span>
                     <?php endif; ?>
+                    <?php $activa = ($org->estado_plan ?? '') === 'activo'; ?>
+                    <form method="POST" action="/organizaciones/estado" class="inline"
+                        <?php echo $activa ? 'data-confirm="¿Suspender la empresa?|Quedará en solo lectura; podrás reactivarla cuando quieras."' : ''; ?>>
+                        <input type="hidden" name="id" value="<?php echo (int)$org->id; ?>">
+                        <input type="hidden" name="volver" value="lista">
+                        <input type="hidden" name="estado" value="<?php echo $activa ? 'suspendido' : 'activo'; ?>">
+                        <button type="submit" class="btn btn-xs btn-ghost" title="<?php echo $activa ? 'Suspender la organización' : 'Activar la organización'; ?>">
+                            <i class="fa-solid <?php echo $activa ? 'fa-pause' : 'fa-play'; ?>"></i> <?php echo $activa ? 'Suspender' : 'Activar'; ?>
+                        </button>
+                    </form>
                 </td>
                 <td class="mono hide-m"><?php echo (int)$f['obras']; ?> / <?php echo $lim['obras'] === null ? '∞' : (int)$lim['obras']; ?></td>
                 <td class="mono hide-m"><?php echo (int)$f['asientos']; ?> / <?php echo $lim['usuarios'] === null ? '∞' : (int)$lim['usuarios']; ?><br><span class="text-muted text-sm"><?php echo (int)$f['visitantes']; ?> visitantes</span></td>

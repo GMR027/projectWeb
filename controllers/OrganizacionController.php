@@ -68,10 +68,16 @@ class OrganizacionController
     {
         redirigir_si_no_admin();
         if (self::faltaMigracion($router)) return;
-        $org = new Organizacion(['estado_plan' => 'trial', 'plan_inicio' => date('Y-m-d')]);
+        $org = new Organizacion([
+            'estado_plan' => 'trial',
+            'trial_hasta' => date('Y-m-d', strtotime('+14 days')),
+            'plan_inicio' => date('Y-m-d'),
+            'plan_id' => Plan::normalizar((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO)),
+        ]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             self::guardarDesdePost($org, $_POST);
+            $org->plan_id = Plan::normalizar((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO));
             if (empty(Usuario::getAlertas())) {
                 $r = $org->guardar();
                 if (!empty($r['resultado'])) {
@@ -106,6 +112,7 @@ class OrganizacionController
             'org' => $org,
             'propietario' => $org->propietario(),
             'plan' => $org->plan(),
+            'planes' => Plan::todos(),
             'limites' => $org->limites(),
             'obras_activas' => $org->contarObrasActivas(),
             'asientos' => $org->contarAsientos(),
@@ -136,18 +143,23 @@ class OrganizacionController
             if (!empty(Usuario::getAlertas())) {
                 $alertas = Usuario::getAlertas();
             } else {
-                header('Location: /organizaciones/ver?id=' . (int)$org->id . '&guardado=1');
-                exit;
+                $r = $org->guardar();
+                $ok = is_array($r) ? !empty($r['resultado']) : (bool)$r;
+                if ($ok) {
+                    header('Location: /organizaciones/ver?id=' . (int)$org->id . '&guardado=1');
+                    exit;
+                }
+                Usuario::setAlerta('error', 'No se pudieron guardar los datos de la empresa.');
+                $alertas = Usuario::getAlertas();
             }
         }
 
         $router->render('organizaciones/editar', [
-            'titulo' => 'Editar ' . $org->nombre,
+            'titulo' => 'Datos de ' . $org->nombre,
             'org' => $org,
             'propietario' => $org->propietario(),
             'plan' => $org->plan(),
             'limites' => $org->limites(),
-            'planes' => Plan::todos(),
             'obras' => $org->contarObrasActivas(),
             'asientos' => $org->contarAsientos(),
             'visitantes' => $org->contarVisitantes(),
@@ -157,7 +169,7 @@ class OrganizacionController
         ]);
     }
 
-    /** Campos de la organización comunes a crear y editar */
+    /** Campos de la empresa (datos fiscales y logo); el plan y el estado viven en la ficha */
     private static function guardarDesdePost(Organizacion $org, array $post): void
     {
         $nombre = trim((string)($post['nombre'] ?? ''));
@@ -171,21 +183,45 @@ class OrganizacionController
         $org->telefono = trim((string)($post['telefono'] ?? ''));
         $logo = guardar_imagen_subida('logo', 'logos');
         if ($logo) $org->logo = $logo;
+    }
 
-        $estado = (string)($post['estado_plan'] ?? 'trial');
-        $estado = in_array($estado, ['trial', 'activo', 'suspendido', 'cancelado'], true) ? $estado : 'trial';
-        $org->estado_plan = $estado;
-        $org->plan_id = Plan::normalizar((string)($post['plan_id'] ?? Plan::POR_DEFECTO));
-        $org->plan_inicio = Organizacion::fechaONull($post['plan_inicio'] ?? '') ?: ($org->plan_inicio ?: date('Y-m-d'));
-        $org->plan_fin = Organizacion::fechaONull($post['plan_fin'] ?? '');
-        $org->gracia_hasta = Organizacion::fechaONull($post['gracia_hasta'] ?? '');
-        $org->precio_legado = isset($post['precio_legado']) && $post['precio_legado'] !== '' ? (float)$post['precio_legado'] : null;
-        if ($estado === 'trial' && empty($org->trial_hasta)) {
-            $org->trial_hasta = date('Y-m-d', strtotime('+14 days'));
+    /** Cambia solo el estado (Activa/Suspendida) desde la ficha o la lista */
+    public static function estado()
+    {
+        redirigir_si_no_admin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !Organizacion::disponible()) {
+            header('Location: /organizaciones');
+            exit;
         }
-        if ($estado !== 'trial') {
-            $org->trial_hasta = null;
+        $org = self::cargar(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        $estado = ($_POST['estado'] ?? '') === 'activo' ? 'activo' : 'suspendido';
+        $ok = $org->fijarEstado($estado);
+        $mensaje = $ok ? 'guardado=1' : 'error=' . urlencode('No se pudo cambiar el estado.');
+        if (($_POST['volver'] ?? '') === 'lista') {
+            header('Location: /organizaciones?' . $mensaje);
+        } else {
+            header('Location: /organizaciones/ver?id=' . (int)$org->id . '&' . $mensaje . '#plan');
         }
+        exit;
+    }
+
+    /** Cambia el plan y los topes de la organización (visitantes, personas, almacenamiento) */
+    public static function plan()
+    {
+        redirigir_si_no_admin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !Organizacion::disponible()) {
+            header('Location: /organizaciones');
+            exit;
+        }
+        $org = self::cargar(filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT));
+        $topes = is_array($_POST['topes'] ?? null) ? $_POST['topes'] : [];
+        $r = $org->fijarPlanYLimites((string)($_POST['plan_id'] ?? Plan::POR_DEFECTO), $topes);
+        if ($r['ok']) {
+            header('Location: /organizaciones/ver?id=' . (int)$org->id . '&guardado=1#plan');
+            exit;
+        }
+        header('Location: /organizaciones/ver?id=' . (int)$org->id . '&error=' . urlencode($r['error']) . '#plan');
+        exit;
     }
 
     /** Archiva: deja de listarse, conserva obras, usuarios y pagos */
