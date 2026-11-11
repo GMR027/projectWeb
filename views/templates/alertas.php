@@ -30,7 +30,11 @@ foreach ($flash as $clave => $texto) {
 }
 if (isset($_GET['importado'])) echo '<div class="alerta alerta-exito" role="status">Importación lista: ' . (int)$_GET['importado'] . ' renglones, ' . (int)($_GET['mat'] ?? 0) . ' materiales nuevos, ' . (int)($_GET['sub'] ?? 0) . ' paquetes nuevos' . (!empty($_GET['omitidos']) ? ', ' . (int)$_GET['omitidos'] . ' duplicados omitidos' : '') . '.</div>';
 $__ok = texto_param($_GET['ok'] ?? '');
-if ($__ok !== '') echo '<div class="alerta alerta-exito" role="status">' . s($__ok === '1' ? 'Guardado correctamente' : $__ok) . '</div>';
+if ($__ok !== '') {
+    // Los códigos cortos (ok=1, ok=accesos…) mantienen el mensaje genérico; los textos largos se muestran tal cual.
+    $__textoOk = ($__ok === '1' || preg_match('/^[a-z0-9_-]+$/i', $__ok)) ? 'Guardado correctamente' : $__ok;
+    echo '<div class="alerta alerta-exito" role="status">' . s($__textoOk) . '</div>';
+}
 $__error = texto_param($_GET['error'] ?? '');
 if ($__error !== '') echo '<div class="alerta alerta-error" role="alert">' . s($__error) . '</div>';
 ?>
