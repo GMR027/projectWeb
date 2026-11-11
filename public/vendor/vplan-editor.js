@@ -1433,6 +1433,7 @@
       const d = await subirConProgreso((C.api && C.api.imagen) || '/api/vplan/imagen', fd, 'Subiendo imagen');
       if (!d.success) { status('Error: ' + (d.error || 'no se pudo subir')); return; }
       const img = new Image();
+      img.onerror = () => status('La imagen se subió, pero no se pudo mostrar. Vuelve a intentarlo.');
       img.onload = () => {
         imgCache[d.src] = { img, ok: true };
         const max = Math.min(state.W, state.H) * fraccion, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));

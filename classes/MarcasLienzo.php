@@ -70,6 +70,16 @@ class MarcasLienzo
             json_respuesta(['success' => false, 'error' => Almacenamiento::mensajeLleno((int)$proyecto->id)], 422);
         }
         Almacenamiento::sumarCuentaProyecto($proyecto, $final);
+        // La imagen recién subida todavía no está en el JSON de la lámina (el autoguardado
+        // tarda unos segundos). Se autoriza en la sesión para que el editor pueda mostrarla
+        // de inmediato sin que /uploads devuelva 404.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $mapa = is_array($_SESSION['vplan_uploads'] ?? null) ? $_SESSION['vplan_uploads'] : [];
+            $mapa[$nombre] = (int)$proyecto->id;
+            if (count($mapa) > 80) $mapa = array_slice($mapa, -80, null, true);
+            $_SESSION['vplan_uploads'] = $mapa;
+            session_write_close();   // que la petición de la imagen ya encuentre el archivo autorizado
+        }
         json_respuesta(['success' => true, 'src' => '/uploads/vplan/' . $nombre]);
     }
 }

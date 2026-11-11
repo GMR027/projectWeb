@@ -1411,6 +1411,8 @@ $ok('el lienzo viaja como archivo y el servidor lo acepta', str_contains($asset(
 $ok('el tope se mide con el archivo final, no con el original', str_contains($asset('classes/MarcasLienzo.php'), 'filesize($ruta)') && str_contains($asset('classes/MarcasLienzo.php'), 'sumarCuentaProyecto'));
 $ok('el total de la organización usa un contador en vez de recorrer todas las obras', str_contains($asset('classes/Almacenamiento.php'), 'function usadoConContador') && str_contains($asset('classes/Almacenamiento.php'), 'function sumarCuentaProyecto'));
 $ok('las imágenes de vPlan buscan primero por columna exacta', str_contains($asset('classes/Media.php'), "if (\$carpeta === 'vplan')") && str_contains($asset('classes/Media.php'), 'editor_graficos'));
+$ok('la imagen recién subida se autoriza en la sesión hasta que el autoguardado la referencia', str_contains($asset('classes/MarcasLienzo.php'), 'vplan_uploads') && str_contains($asset('classes/Media.php'), 'vplan_uploads'));
+$ok('el editor avisa si la imagen subida no se puede mostrar', str_contains($asset('public/vendor/vplan-editor.js'), 'img.onerror'));
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);

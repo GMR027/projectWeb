@@ -88,6 +88,8 @@ class Media
         // vPlan/Editor: primero las columnas exactas (rápido). El LIKE sobre el JSON
         // queda como último recurso, solo para imágenes insertadas dentro de una lámina.
         if ($carpeta === 'vplan') {
+            // Imagen recién subida por este usuario: el autoguardado aún no la incluye en el JSON.
+            if (!empty($_SESSION['vplan_uploads'][$archivo])) return (int)$_SESSION['vplan_uploads'][$archivo];
             foreach ([
                 "SELECT proyecto_id FROM vplan_laminas WHERE plano = '$a' OR simbologia = '$a' OR marcas_png = '$a' LIMIT 1",
                 "SELECT g.proyecto_id FROM editor_laminas l JOIN editor_graficos g ON g.id = l.grafico_id WHERE l.marcas_png = '$a' LIMIT 1",
