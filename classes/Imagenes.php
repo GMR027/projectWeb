@@ -49,7 +49,8 @@ class Imagenes
             error_log('Imagenes · tipo no admitido: ' . basename($origen));
             return null;
         }
-        $formato = in_array($mime, ['image/png', 'image/gif'], true) ? 'png' : 'jpg';
+        // WebP también va a PNG para conservar la transparencia (muchos símbolos la usan).
+        $formato = in_array($mime, ['image/png', 'image/gif', 'image/webp'], true) ? 'png' : 'jpg';
 
         // 1) Intervention Image (comportamiento histórico)
         try {
