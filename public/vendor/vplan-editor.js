@@ -1439,8 +1439,10 @@
     state.tool = t;
     document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('activo', b.dataset.tool === t));
     Object.values(nodes).forEach(n => n.draggable(modoSel() && n.listening()));
-    stage.container().style.cursor = modoSel() ? 'default' : 'crosshair';
-    if (!modoSel()) { tr.nodes([]); limpiarNodos(); trLayer.batchDraw(); }
+    // En móvil el dock se crea antes de que la imagen del plano termine de cargar (arrancar()).
+    // Sin stage todavía, solo se cambia el estado del botón.
+    if (stage) stage.container().style.cursor = modoSel() ? 'default' : 'crosshair';
+    if (!modoSel() && tr && trLayer) { tr.nodes([]); limpiarNodos(); trLayer.batchDraw(); }
   }
 
   // ---------- foto 360 de un hipervínculo «Vista 360» ----------
