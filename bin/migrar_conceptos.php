@@ -37,10 +37,7 @@ try {
     exit(1);
 }
 
-if (!$filas) {
-    print("No hay conceptos de obra antiguos que migrar.\n");
-    exit(0);
-}
+if (!$filas) print("No hay conceptos de obra antiguos que migrar.\n");
 
 $creados = $asignados = $existentes = 0;
 $proyectos = [];
@@ -101,6 +98,11 @@ foreach ($filas as $f) {
     $proyectos[$pid] = true;
 }
 
+// Aunque no haya conceptos viejos, normaliza los presupuestos de las obras que ya
+// tengan costos guardados (instalaciones con el importe solo en «presupuesto»).
+$r = $db->query("SELECT DISTINCT proyecto_id FROM costos_partidas");
+while ($r && ($f = $r->fetch_assoc())) $proyectos[(int)$f['proyecto_id']] = true;
+
 // La cantidad contractual arranca en lo que quedó asignado (hasta que el usuario ponga la del contrato)
 $ajustes = 0;
 foreach (array_keys($proyectos) as $pid) {
@@ -108,15 +110,20 @@ foreach (array_keys($proyectos) as $pid) {
             SELECT SUM(ac.cantidad) FROM actividad_conceptos ac WHERE ac.concepto_id = co.id
         ), co.cantidad)
         WHERE co.proyecto_id = $pid AND co.cantidad = 0");
+    // Instalaciones antiguas guardaban el presupuesto solo en «presupuesto» (con
+    // presupuesto_manual en NULL). Se conserva como referencia manual antes de recalcular;
+    // si no, al pasar al catálogo el importe se perdería.
+    $db->query("UPDATE costos_partidas SET presupuesto_manual = presupuesto
+        WHERE proyecto_id = $pid AND presupuesto_manual IS NULL AND presupuesto > 0");
     // Conserva el presupuesto manual anterior como ajuste visible (solo la primera vez:
     // después de recalcular, el origen ya es «conceptos» y no se vuelve a tocar).
     $db->query("UPDATE costos_partidas cp
         JOIN (SELECT co.partida_id, SUM(co.cantidad * co.precio_unitario) suma
               FROM conceptos_obra co WHERE co.proyecto_id = $pid AND co.partida_id IS NOT NULL
               GROUP BY co.partida_id) t ON t.partida_id = cp.partida_id
-        SET cp.ajuste = ROUND(GREATEST(0, COALESCE(cp.presupuesto_manual, 0) - t.suma), 2)
+        SET cp.ajuste = ROUND(GREATEST(0, COALESCE(cp.presupuesto_manual, cp.presupuesto, 0) - t.suma), 2)
         WHERE cp.proyecto_id = $pid AND cp.origen = 'manual' AND cp.ajuste = 0
-          AND cp.presupuesto_manual IS NOT NULL AND cp.presupuesto_manual > t.suma + 0.005");
+          AND COALESCE(cp.presupuesto_manual, cp.presupuesto, 0) > t.suma + 0.005");
     $ajustes += (int)$db->affected_rows;
     $n = Conceptos::recalcularProyecto((int)$pid);
     $ok("proyecto $pid: presupuestos recalculados en $n partida(s)");
