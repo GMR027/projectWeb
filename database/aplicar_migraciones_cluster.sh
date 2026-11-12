@@ -7,7 +7,9 @@ NS=projectweb
 sql() { kubectl -n $NS exec -i deploy/mysql -c mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --default-character-set=utf8mb4 -N project' 2>&1 | grep -v 'Using a password' || true; }
 
 # Tablas nuevas (CREATE TABLE IF NOT EXISTS)
-for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento migracion_dependencias_materiales_tablas migracion_material_atributos migracion_anotador migracion_accesos migracion_planes_organizaciones; do echo ">> $f"; sql < $f.sql; done
+for f in migracion_estampas migracion_ensamble_pdf migracion_lookahead_config migracion_vplan_columnas migracion_directorio migracion_permisos_tipos migracion_ia_fase2 migracion_fase3 migracion_personalizacion migracion_fase5 migracion_login_intentos migracion_telegram migracion_telegram_config migracion_telegram_limites migracion_inconsistencias_lotes migracion_analisis_materiales migracion_submittal_laminas migracion_rfi_laminas migracion_subactividades migracion_subactividad_hojas migracion_indices_rendimiento migracion_calidad_equipo_contratos_cierre migracion_ia_rendimiento migracion_dependencias_materiales_tablas migracion_material_atributos migracion_anotador migracion_accesos migracion_planes_organizaciones migracion_catalogo_conceptos; do echo ">> $f"; sql < $f.sql; done
+# Catálogo de conceptos: después de aplicar, ejecutar en la app `php bin/migrar_conceptos.php`
+# (convierte las cantidades sueltas y conserva el presupuesto manual anterior como ajuste).
 
 # Columnas nuevas: se agregan solo si no existen
 col() {   # tabla columna "ALTER completo"
@@ -55,6 +57,8 @@ col proyectos tema_paleta "ALTER TABLE proyectos ADD COLUMN tema_paleta VARCHAR(
 col proyectos nombres_herramientas "ALTER TABLE proyectos ADD COLUMN nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0 AFTER tema_paleta;"
 col proyectos menu_superior "ALTER TABLE proyectos ADD COLUMN menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico' AFTER nombres_herramientas;"
 col proyectos limite_almacenamiento_mb "ALTER TABLE proyectos ADD COLUMN limite_almacenamiento_mb INT NULL AFTER marca_color2;"
+col costos_partidas ajuste "ALTER TABLE costos_partidas ADD COLUMN ajuste DECIMAL(16,2) NOT NULL DEFAULT 0 AFTER presupuesto_manual;"
+echo "ALTER TABLE costos_partidas MODIFY COLUMN origen ENUM('manual','cantidades','conceptos') NOT NULL DEFAULT 'manual';" | sql   # idempotente
 for c in "clima_auto TINYINT(1) NOT NULL DEFAULT 0" "clima_ultimo DATE NULL" "clima_aviso DATE NULL"; do
   col proyectos "${c%% *}" "ALTER TABLE proyectos ADD COLUMN $c;"
 done

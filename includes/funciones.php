@@ -295,6 +295,27 @@ function puede_eliminar_contenido($proyecto): bool
     return is_admin() || es_propietario($proyecto);
 }
 
+/**
+ * ¿Puede borrar contenido de obra (actividades, partidas, conceptos)?
+ * Admin y dueño siempre; el cliente que gestiona el proyecto (propio o asignado) también.
+ * El colaborador y el visitante nunca borran, aunque puedan editar.
+ */
+function puede_borrar_contenido($proyecto): bool
+{
+    if (!$proyecto || !is_auth() || !puede_ver_proyecto($proyecto)) return false;
+    if (is_admin() || es_propietario($proyecto)) return true;
+    return ($_SESSION['rol'] ?? '') === 'cliente' && puede_gestionar_proyecto($proyecto);
+}
+
+/** ¿Puede editar el catálogo de conceptos? Admin, cliente que gestiona, o colaborador con «conceptos» habilitado */
+function puede_gestionar_conceptos($proyecto): bool
+{
+    if (!$proyecto || !is_auth() || !puede_ver_proyecto($proyecto)) return false;
+    if (is_admin()) return true;
+    if (($_SESSION['rol'] ?? '') === 'cliente') return puede_gestionar_proyecto($proyecto);
+    return es_colaborador($proyecto) && in_array('conceptos', herramientas_edicion_permitidas(), true);
+}
+
 /** Archivar: admin, propietario o gestor de la organización dueña. */
 function puede_archivar_proyecto($proyecto): bool
 {
@@ -763,6 +784,27 @@ function herramienta_permitida(?string $clave, ?string $ruta = null): bool
     return ruta_general($ruta ?? (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'));
 }
 
+/**
+ * Aviso cuando el catálogo de conceptos está a medias en la base de datos.
+ * Evita que el usuario llegue a un guardado que va a fallar.
+ */
+function aviso_esquema_catalogo(): string
+{
+    try {
+        $e = \Classes\Conceptos::estadoEsquema();
+    } catch (\Throwable $x) {
+        return '';
+    }
+    if (!empty($e['ok'])) return '';
+    $lista = '';
+    foreach (($e['faltan'] ?? []) as $f) $lista .= '<li>' . s($f) . '</li>';
+    return '<div class="alerta alerta-error" role="alert">'
+        . '<strong>El catálogo de conceptos está incompleto en la base de datos.</strong>'
+        . '<ul>' . $lista . '</ul>'
+        . '<p>Ejecuta <code>php bin/reparar_conceptos.php</code> o aplica <code>database/migracion_catalogo_conceptos.sql</code>. '
+        . 'Mientras tanto, los presupuestos manuales siguen funcionando.</p></div>';
+}
+
 /** Primera pantalla del proyecto a la que el usuario tiene acceso (el programa, salvo que se le haya ocultado) */
 function url_inicio_proyecto(int $proyectoId): string
 {
@@ -1010,6 +1052,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'transmittals' => ['fase3'],
         'balance' => ['fase3'],
         'costos' => ['fase3', 'cambios'],
+        'conceptos' => ['fase3'],
         'recursos' => ['fase3'],
         'rfi' => ['fase3', 'cambios'],
         'compartir' => ['fase3'],

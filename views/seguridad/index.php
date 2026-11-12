@@ -21,7 +21,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     <div class="card"><small>Vencidos sin cerrar</small><strong class="<?php echo $resumen['vencidos'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['vencidos']; ?></strong></div>
     <div class="card"><small>Actividades (7 días) sin permiso</small><strong class="<?php echo $resumen['faltan'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['faltan']; ?></strong></div>
     <div class="card"><small>Incidentes abiertos</small><strong><?php echo (int)$resumen['incidentes_abiertos']; ?></strong></div>
-    <div class="card"><small>ATS pendientes (7 días)</small><strong class="<?php echo $resumen['ats_pendientes'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['ats_pendientes']; ?></strong></div>
+    <div class="card"><small>ATS pendientes (7 días)</small><strong class="<?php echo !empty($resumen['ats_pendientes']) ? 'prg-peor' : ''; ?>"><?php echo (int)($resumen['ats_pendientes'] ?? 0); ?></strong></div>
 </div>
 
 <nav class="centro-ia-tabs" aria-label="Seguridad">

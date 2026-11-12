@@ -66,6 +66,7 @@ class Usuario extends ActiveRecord
         'acciones' => ['Acciones rápidas', ['/acciones']],
         'historial' => ['Historial de cambios', ['/historial', '/api/historial']],
         'costos' => ['Costos y presupuesto', ['/costos']],
+        'conceptos' => ['Catálogo de conceptos', ['/conceptos']],
         'recursos' => ['Recursos y cuadrillas', ['/recursos']],
         'rfi' => ['RFI', ['/rfi']],
         'seguridad' => ['Seguridad y permisos', ['/seguridad']],
@@ -108,7 +109,7 @@ class Usuario extends ActiveRecord
         'Planeación' => ['programa', 'dependencias', 'lineatiempo', 'balance', 'planificador', 'lookahead', 'vplan', 'lastplanner', 'riesgos', 'programador', 'calendario', 'curvas'],
         'Obra y seguimiento' => ['reportes', 'bitacora', 'minutas', 'evidencias', 'archivos', 'visor', 'historial', 'mapa-avance', 'acciones', 'punch', 'rfi', 'calidad', 'seguridad'],
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
-        'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'recursos', 'cambios'],
+        'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'conceptos', 'recursos', 'cambios'],
         'Administración del proyecto' => ['equipo', 'contratos', 'subcontratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
         'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones'],
     ];

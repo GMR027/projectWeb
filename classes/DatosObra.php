@@ -23,11 +23,24 @@ class DatosObra
             WHERE pa.proyecto_id = $pid ORDER BY pa.orden, a.orden");
     }
 
+    /** Conceptos del catálogo ligados a cada actividad (antes: una fila suelta por actividad) */
     public static function cantidades(int $pid): array
     {
-        return self::filas("SELECT c.clave, c.concepto, c.cantidad, c.unidad, c.precio_unitario, c.importe, a.id actividad_id, a.codigo, a.nombre actividad
-            FROM actividad_cantidades c JOIN actividades a ON a.id = c.actividad_id JOIN partidas pa ON pa.id = a.partida_id
-            WHERE c.proyecto_id = $pid ORDER BY pa.orden, a.orden");
+        try {
+            $filas = self::filas("SELECT co.clave, co.descripcion concepto, ac.cantidad, co.unidad, co.precio_unitario,
+                    ROUND(ac.cantidad * co.precio_unitario, 2) importe, a.id actividad_id, a.codigo, a.nombre actividad
+                FROM actividad_conceptos ac
+                JOIN conceptos_obra co ON co.id = ac.concepto_id
+                JOIN actividades a ON a.id = ac.actividad_id
+                JOIN partidas pa ON pa.id = a.partida_id
+                WHERE pa.proyecto_id = $pid AND co.activo = 1
+                ORDER BY pa.orden, a.orden, co.orden, co.clave");
+            return $filas;
+        } catch (\Throwable $e) {   // migración pendiente: datos antiguos
+            return self::filas("SELECT c.clave, c.concepto, c.cantidad, c.unidad, c.precio_unitario, c.importe, a.id actividad_id, a.codigo, a.nombre actividad
+                FROM actividad_cantidades c JOIN actividades a ON a.id = c.actividad_id JOIN partidas pa ON pa.id = a.partida_id
+                WHERE c.proyecto_id = $pid ORDER BY pa.orden, a.orden");
+        }
     }
 
     public static function contactos(int $pid): array

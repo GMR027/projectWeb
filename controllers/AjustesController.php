@@ -418,6 +418,7 @@ class AjustesController
             'curva' => 'curvas',
             'msr' => 'msr',
             'lineatiempo' => 'lineatiempo',
+            'presupuesto' => 'conceptos',
             'rfi' => 'rfi',
             'submittal' => 'submittals',
             'reportes' => ([
@@ -481,6 +482,7 @@ class AjustesController
         // qué entregables lleva el ZIP (sin la lista se incluyen todos)
         $incluir = isset($_POST['incluir']) ? array_map('strval', (array)$_POST['incluir']) : (isset($_POST['elegir']) ? [] : null);
         $toolDe = ['prog_pdf' => 'programa', 'prog_xml' => 'programa', 'prog_pod' => 'programa',
+            'presupuesto' => 'conceptos',
             'la_pdf' => 'lookahead', 'la_xlsx' => 'lookahead', 'msr_pdf' => 'msr', 'msr_xlsx' => 'msr',
             'curvas' => 'curvas', 'vplan' => 'vplan'];
         $quiere = fn(string $k) => ($incluir === null || in_array($k, $incluir, true)) && herramienta_permitida($toolDe[$k] ?? 'programa');
@@ -521,6 +523,14 @@ class AjustesController
         if ($quiere('prog_pdf')) $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->generar("Programa"));
         if ($quiere('prog_xml')) $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->generar("Programa"));
         if ($quiere('prog_pod')) $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->generar("Programa"));
+        if ($quiere('presupuesto') && \Classes\Conceptos::disponible()) {
+            $datos = \Classes\Conceptos::presupuesto((int)$proyecto->id);
+            if ($datos['grupos'] || $datos['sinPartida']) {
+                $agregar('06_Presupuesto', 'Catálogo de conceptos PDF', fn() => (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)->generar("Presupuesto"));
+            } else {
+                $omitidos[] = 'Presupuesto: el catálogo está vacío';
+            }
+        }
         if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setFechaReferencia($lunes)->generar("4WLA"));
         if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
 
@@ -754,6 +764,15 @@ class AjustesController
                     $f = $_POST;
                     $f['submittal_ids'] = (array)($_POST['submittal_ids'] ?? []);
                     $exporter = (new \Classes\Exportadores\ReportesPdfExporter($proyecto))->setOpciones(texto_param($_POST['tipo'] ?? ''), $f);
+                    break;
+                case 'presupuesto':
+                    if (!\Classes\Conceptos::disponible()) throw new \Exception('Falta aplicar la migración del catálogo de conceptos');
+                    $salida = in_array($_POST['salida'] ?? 'pdf', ['xlsx', 'ods'], true) ? $_POST['salida'] : 'pdf';
+                    $datos = \Classes\Conceptos::presupuesto((int)$proyecto->id);
+                    if (!$datos['grupos'] && !$datos['sinPartida']) throw new \Exception('El catálogo de conceptos está vacío');
+                    $exporter = $salida === 'pdf'
+                        ? (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)
+                        : (new \Classes\Exportadores\PresupuestoSheetExporter($proyecto))->setFormato($salida)->setDatos($datos);
                     break;
                 case 'xml':
                     $exporter = new \Classes\Exportadores\MspdiXmlExporter($proyecto);

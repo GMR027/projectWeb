@@ -140,8 +140,8 @@
 <!-- Tabla de actividades -->
 <div class="card">
     <h3 class="card-titulo"><i class="fa-solid fa-list"></i> <?php echo s(t('Desglose WBS & Partidas')); ?></h3>
-    <?php $puedeGestionar = puede_gestionar_proyecto($proyecto); ?>
-    <?php if ($puedeGestionar): ?>
+    <?php $puedeGestionar = puede_gestionar_proyecto($proyecto); $puedeBorrar = puede_borrar_contenido($proyecto); ?>
+    <?php if ($puedeGestionar && $puedeBorrar): ?>
     <form method="POST" action="/programa/eliminar-varias" id="form-seleccion" class="barra-seleccion" hidden>
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <span class="barra-seleccion-n"><b id="sel-n">0</b> <?php echo s(t('seleccionadas')); ?></span>
@@ -155,7 +155,7 @@
         // Posición de cada actividad dentro de su partida (sobre el programa completo, aunque haya filtros) para los botones subir/bajar
         $posAct = [];
         if ($puedeGestionar) foreach (\Classes\Renumeracion::estructura((int)$proyecto->id) as $pp) foreach ($pp['actividades'] as $k => $aa) $posAct[$aa['id']] = [$k, count($pp['actividades'])];
-        $colsTabla = count(array_filter($columnas, fn($c) => $c['k'] !== 'acciones' || $puedeGestionar)) + ($puedeGestionar ? 1 : 0);
+        $colsTabla = count(array_filter($columnas, fn($c) => $c['k'] !== 'acciones' || $puedeGestionar)) + ($puedeBorrar ? 1 : 0);
         $partidaPrevia = null;
         $filaRapida = function (array $p) use ($proyecto, $colsTabla) { ?>
                     <tr class="fila-rapida">
@@ -188,7 +188,7 @@
         <table class="tabla tabla-programa" data-proyecto="<?php echo (int)$proyecto->id; ?>">
             <thead>
                 <tr>
-                    <?php if ($puedeGestionar): ?><th class="th-sel"><input type="checkbox" id="sel-todo" title="Seleccionar todo" aria-label="Seleccionar todo"></th><?php endif; ?>
+                    <?php if ($puedeBorrar): ?><th class="th-sel"><input type="checkbox" id="sel-todo" title="Seleccionar todo" aria-label="Seleccionar todo"></th><?php endif; ?>
                     <?php foreach ($cols as $c): $k = $c['k']; ?>
                         <th class="<?php echo $claseTh($k); ?>" data-col="<?php echo s($k); ?>"<?php echo $puedeGestionar && $k !== 'acciones' ? ' draggable="true" title="Doble clic para renombrar · arrastra para reordenar"' : ''; ?>>
                             <?php if ($k === 'nombre' && !$c['propio']): ?><span class="hide-m"><?php echo s(t('Nombre')); ?></span><span class="solo-movil"><?php echo s(t('Actividad')); ?></span>
@@ -203,7 +203,7 @@
                     <?php if ($fila['tipo'] === 'partida'): ?>
                     <?php if ($puedeGestionar && $partidaPrevia) $filaRapida($partidaPrevia); $partidaPrevia = $fila; ?>
                         <tr class="fila-partida" id="fila-p<?php echo (int)$fila['id']; ?>" <?php if ($fila['color_bg']) echo 'style="background-color: ' . s($fila['color_bg']) . '22; border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
-                            <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
+                            <?php if ($puedeBorrar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="p<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar partida"></td><?php endif; ?>
                             <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono negrita hide-m"><?php echo s($fila['codigo']); ?></td>
                             <?php break; case 'nombre': $pb = (int)($punchBloqueos[(int)$fila['id']] ?? 0); ?>
@@ -239,12 +239,14 @@
                                     <?php else: ?>
                                         <a href="/programa/partidas/cerrar?id=<?php echo s($fila['id']); ?>" class="btn-action" title="Cerrar partida"><i class="fa-solid fa-lock"></i></a>
                                     <?php endif; ?>
+                                    <?php if (puede_borrar_contenido($proyecto)): ?>
                                     <form class="inline" method="POST" action="/programa/partidas/eliminar" data-confirm="¿Eliminar partida?|Se eliminará la partida junto con todas sus actividades. Esta acción no se puede deshacer.">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" class="btn-action btn-action-delete" title="Eliminar partida">
                                             <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
+                                    <?php endif; ?>
                                 </td>
                             <?php break; default: ?>
                             <td class="hide-m">—</td>
@@ -252,7 +254,7 @@
                         </tr>
                     <?php else: ?>
                         <tr class="fila-actividad" id="fila-a<?php echo (int)$fila['id']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>">
-                            <?php if ($puedeGestionar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="a<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar actividad"></td><?php endif; ?>
+                            <?php if ($puedeBorrar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="a<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar actividad"></td><?php endif; ?>
                             <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
                             <td class="mono indent hide-m"><?php echo s($fila['codigo']); ?></td>
                             <?php break; case 'nombre': ?>
@@ -393,12 +395,14 @@
                                     <a href="/programa/actividades/editar?id=<?php echo s($fila['id']); ?>" class="btn-action btn-action-edit" title="Editar actividad">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
+                                    <?php if (puede_borrar_contenido($proyecto)): ?>
                                     <form class="inline" method="POST" action="/programa/actividades/eliminar" data-confirm="¿Eliminar actividad?|Se eliminará la actividad y sus restricciones asociadas. Esta acción no se puede deshacer.">
                                         <input type="hidden" name="id" value="<?php echo s($fila['id']); ?>">
                                         <button type="submit" class="btn-action btn-action-delete" title="Eliminar actividad">
                                             <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
+                                    <?php endif; ?>
                                 </td>
                             <?php break; default: if (!empty($c['campo'])) echo \Classes\CamposPersonalizados::celda($c['campo'], (int)$fila['id'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? '', $puedeGestionar); endswitch; endforeach; ?>
                         </tr>

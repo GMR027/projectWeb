@@ -53,7 +53,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
         <p class="exp-nomen-vista text-sm">Así quedará: <strong class="mono" id="exp-nomen-ejemplo"></strong></p>
     </section>
 
-    <?php if (herramienta_permitida('programa') || herramienta_permitida('lookahead') || herramienta_permitida('msr') || herramienta_permitida('curvas') || herramienta_permitida('vplan')): ?>
+    <?php if (herramienta_permitida('programa') || herramienta_permitida('lookahead') || herramienta_permitida('msr') || herramienta_permitida('curvas') || herramienta_permitida('vplan') || herramienta_permitida('conceptos')): ?>
     <form method="POST" action="/exportar/todo" class="exportar-todo">
         <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
         <input type="hidden" name="elegir" value="1">
@@ -65,10 +65,11 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                 <div class="exp-checks-lista">
                     <?php foreach ([
                         'prog_pdf' => ['Programa · PDF', 'programa'], 'prog_xml' => ['Programa · XML (MS Project)', 'programa'], 'prog_pod' => ['Programa · POD (ProjectLibre)', 'programa'],
+                        'presupuesto' => ['Presupuesto · Catálogo de conceptos (PDF)', 'conceptos'],
                         'la_pdf' => ['Lookahead · PDF', 'lookahead'], 'la_xlsx' => ['Lookahead · Excel', 'lookahead'],
                         'msr_pdf' => ['MSR · PDF', 'msr'], 'msr_xlsx' => ['MSR · Excel', 'msr'],
                         'curvas' => ['Curvas de productividad · PDF', 'curvas'], 'vplan' => ['vPlan · PDF', 'vplan'],
-                    ] as $k => [$etq, $tool]): if (!herramienta_permitida($tool)) continue; ?>
+                    ] as $k => [$etq, $tool]): if (!herramienta_permitida($tool)) continue; if ($k === 'presupuesto' && !\Classes\Conceptos::disponible()) continue; ?>
                         <label><input type="checkbox" name="incluir[]" value="<?php echo $k; ?>" checked> <span><?php echo s($etq); ?></span></label>
                     <?php endforeach; ?>
                 </div>
@@ -96,6 +97,24 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                 </select>
                 <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar programa</button>
+            </form>
+        </div>
+
+        <div class="exportador-card"<?php echo herramienta_permitida('conceptos') && \Classes\Conceptos::disponible() ? '' : ' hidden'; ?>>
+            <div class="exportador-icono pdf">📋</div>
+            <h4>Presupuesto de obra</h4>
+            <p class="text-sm text-muted">Catálogo de conceptos por partida: cantidad, precio unitario, importe, programado y pendiente, con ajustes, cargos del proyecto y totales. Lleva la marca del cliente.</p>
+            <form method="POST" action="/exportar/generar">
+                <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
+                <input type="hidden" name="formato" value="presupuesto">
+                <label class="text-sm text-muted" for="pres_salida">Formato de archivo</label>
+                <select id="pres_salida" name="salida">
+                    <option value="pdf">PDF (.pdf)</option>
+                    <option value="xlsx">Excel (.xlsx)</option>
+                    <option value="ods">LibreOffice Calc (.ods)</option>
+                </select>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Presupuesto" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar presupuesto</button>
             </form>
         </div>
 

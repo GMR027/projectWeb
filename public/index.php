@@ -73,6 +73,7 @@ use Controllers\ArchivoController;
 use Controllers\VisorController;
 use Controllers\MinutaController;
 use Controllers\CostosController;
+use Controllers\ConceptosController;
 use Controllers\EstimacionesController;
 use Controllers\AlmacenController;
 use Controllers\SubcontratoController;
@@ -424,7 +425,21 @@ $router->post('/carpetas/mover', [CarpetaController::class, 'mover']);
 // Fase 3: costos, recursos, RFI y enlaces de solo lectura
 $router->get('/costos', [CostosController::class, 'index']);
 $router->post('/costos/presupuesto', [CostosController::class, 'presupuesto']);
+$router->post('/costos/cargos', [ConceptosController::class, 'cargos']);
 $router->post('/costos/recalcular', [CostosController::class, 'recalcular']);
+
+// Catálogo de conceptos (presupuesto por conceptos ligados a partidas y actividades)
+$router->get('/conceptos', [ConceptosController::class, 'index']);
+$router->post('/conceptos/guardar', [ConceptosController::class, 'guardar']);
+$router->post('/conceptos/eliminar', [ConceptosController::class, 'eliminar']);
+$router->post('/conceptos/asignar', [ConceptosController::class, 'asignar']);
+$router->post('/conceptos/desasignar', [ConceptosController::class, 'desasignar']);
+$router->post('/conceptos/repartir', [ConceptosController::class, 'repartir']);
+$router->post('/conceptos/actividad', [ConceptosController::class, 'crearActividad']);
+$router->get('/conceptos/importar', [ConceptosController::class, 'importar']);
+$router->post('/conceptos/importar', [ConceptosController::class, 'importar']);
+$router->post('/conceptos/importar/aplicar', [ConceptosController::class, 'aplicarImportacion']);
+$router->get('/conceptos/exportar', [ConceptosController::class, 'exportar']);
 $router->post('/costos/flujo/concepto', [CostosController::class, 'conceptoFlujo']);
 $router->post('/costos/flujo/concepto/eliminar', [CostosController::class, 'eliminarConceptoFlujo']);
 $router->post('/costos/compromiso', [CostosController::class, 'compromiso']);

@@ -63,12 +63,15 @@ class CostosController
     public static function presupuesto()
     {
         $proyecto = proyecto_de_peticion(true);
+        $fallos = [];
         foreach ((array)($_POST['presupuesto'] ?? []) as $partidaId => $monto) {
             $monto = str_replace([',', '$', ' '], '', (string)$monto);
             if ($monto === '' || !is_numeric($monto)) $monto = '0';
-            Costos::guardarPresupuesto((int)$proyecto->id, (int)$partidaId, (float)$monto);
+            if (!Costos::guardarPresupuesto((int)$proyecto->id, (int)$partidaId, (float)$monto)) $fallos[] = (int)$partidaId;
         }
-        self::volver((int)$proyecto->id, 'resumen', '&ok=presupuesto');
+        self::volver((int)$proyecto->id, 'resumen', $fallos
+            ? '&error=' . urlencode('No se pudieron guardar ' . count($fallos) . ' partida(s). Revisa la migración del catálogo.')
+            : '&ok=presupuesto');
     }
 
     public static function conceptoFlujo()

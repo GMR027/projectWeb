@@ -91,6 +91,7 @@ class HistorialCambios
         'cambio_partidas' => ['cambios', 'orden', 'Efecto de orden de cambio', ['descripcion'], ['ordenes_cambio', 'orden_id']],
         'lineas_base' => ['lineas-base', 'linea-base', 'Línea base', ['nombre'], null],
         'costos_movimientos' => ['costos', 'movimiento', 'Movimiento de costo', ['fecha', 'concepto'], null],
+        'conceptos_obra' => ['conceptos', 'concepto', 'Concepto del catálogo', ['clave', 'descripcion'], null],
         'curvas' => ['curvas', 'curva', 'Curva de productividad', ['nombre'], null],
 
         // ---- Documentos y diseño ----
@@ -121,6 +122,7 @@ class HistorialCambios
         // tablas sin columna `id`: se registran, pero no se pueden cancelar automáticamente (ver SIN_ID)
         'campos_valores' => ['campos', 'campo', 'Valor de campo', [], ['campos_personalizados', 'campo_id']],
         'costos_partidas' => ['costos', 'partida', 'Presupuesto de partida', [], ['partidas', 'partida_id']],
+        'proyecto_cargos' => ['costos', 'cargos', 'Cargos del proyecto', [], null],
         'curva_reales' => ['curvas', 'curva', 'Punto real de la curva', ['periodo'], ['curvas', 'curva_id']],
         'submittal_materiales' => ['submittals', 'submittal', 'Material del submittal', [], ['submittals', 'submittal_id']],
         'submittal_laminas' => ['submittals', 'submittal', 'Lámina del submittal', [], ['submittals', 'submittal_id']],
@@ -131,8 +133,8 @@ class HistorialCambios
      * Tablas que no tienen columna `id`: se registran (son cambios reales del usuario) pero **no se pueden
      * cancelar automáticamente**, porque no hay con qué volver a localizar la fila.
      */
-    private const SIN_ID = ['campos_valores', 'actividad_avance', 'actividad_cantidades', 'actividad_recursos',
-        'costos_partidas', 'curva_reales', 'submittal_materiales', 'submittal_laminas', 'rfi_laminas', 'lineas_base_actividades', 'lineas_base_materiales', 'disenos_lista'];
+    private const SIN_ID = ['campos_valores', 'actividad_avance', 'actividad_cantidades', 'actividad_conceptos', 'actividad_recursos',
+        'costos_partidas', 'proyecto_cargos', 'curva_reales', 'submittal_materiales', 'submittal_laminas', 'rfi_laminas', 'lineas_base_actividades', 'lineas_base_materiales', 'disenos_lista'];
 
     /**
      * Tablas sin `proyecto_id` que se suben por su padre: tabla => [tabla padre, columna que apunta al padre].

@@ -16,6 +16,7 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · presupuesto por partida, costo real, valor ganado y estimaciones</p>
     </div>
     <div class="la-controles">
+        <a href="/conceptos?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-rectangle-list"></i> Catálogo de conceptos</a>
         <a href="/curvas/s?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-chart-line"></i> Curva S</a>
         <a href="/cambios?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-file-circle-exclamation"></i> Órdenes de cambio</a>
     </div>
@@ -31,10 +32,12 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
     <?php endforeach; ?>
 </nav>
 <?php if ($error !== ''): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
+<?php echo aviso_esquema_catalogo(); ?>
 
-<?php if ($pestana === 'resumen'): $t = $resumen['total']; ?>
+<?php if ($pestana === 'resumen'): $t = $resumen['total']; $cargos = $resumen['cargos'] ?? \Classes\CargosProyecto::deProyecto($pid); ?>
     <div class="cb-kpis">
-        <div class="cb-kpi"><small>Presupuesto vigente</small><strong><?php echo $m($t['bac']); ?></strong><span><?php echo $m($t['presupuesto']); ?> original<?php echo $t['cambios'] ? ' ' . ($t['cambios'] > 0 ? '+' : '−') . ' ' . $m(abs($t['cambios'])) . ' en cambios' : ''; ?></span></div>
+        <div class="cb-kpi"><small title="Catálogo + ajustes + cambios + cargos del proyecto">Presupuesto vigente</small><strong><?php echo $m($t['bac']); ?></strong><span><?php echo $m($t['presupuesto']); ?> directo<?php echo $t['ajuste'] ? ' + ' . $m($t['ajuste']) . ' ajuste' : ''; ?><?php echo $t['cambios'] ? ' ' . ($t['cambios'] > 0 ? '+' : '−') . ' ' . $m(abs($t['cambios'])) . ' en cambios' : ''; ?><?php echo $t['cargos_total'] ? ' + ' . $m($t['cargos_total']) . ' cargos' : ''; ?></span></div>
+        <div class="cb-kpi"><small>Catálogo programado</small><strong><?php echo $m($t['programado']); ?></strong><span>Pendiente de programar: <?php echo $m($t['pendiente']); ?></span></div>
         <div class="cb-kpi"><small>Valor ganado (EV)</small><strong><?php echo $m($t['ev']); ?></strong><span>Programado a hoy (PV): <?php echo $m($t['pv']); ?></span></div>
         <div class="cb-kpi"><small>Costo real (AC)</small><strong><?php echo $m($t['ac']); ?></strong><span class="<?php echo $clsVar($t['cv']); ?>">Variación de costo: <?php echo $m($t['cv']); ?></span></div>
         <div class="cb-kpi"><small title="Órdenes de compra, subcontratos y servicios vigentes que aún no se facturan">Comprometido</small><strong><?php echo $m($t['comprometido']); ?></strong><span>Prometido, aún sin factura</span></div>
@@ -43,6 +46,25 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <div class="cb-kpi"><small title="Presupuesto ÷ CPI">Costo final estimado (EAC)</small><strong><?php echo $t['eac'] !== null ? $m($t['eac']) : '—'; ?></strong><span class="<?php echo $clsVar($t['vac']); ?>"><?php echo $t['vac'] !== null ? 'Variación al final: ' . $m($t['vac']) : 'Se calcula con el primer costo real'; ?></span></div>
         <div class="cb-kpi"><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Neto a cobrar: <?php echo $m($t['estimado_neto']); ?></span></div>
     </div>
+
+    <?php if (\Classes\CargosProyecto::disponible()): ?>
+    <form method="POST" action="/costos/cargos" class="card co-form">
+        <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+        <h3><i class="fa-solid fa-percent"></i> Cargos del proyecto</h3>
+        <p class="text-muted text-sm">Se aplican al subtotal directo del catálogo más los cambios autorizados. El IVA se muestra en el PDF y las estimaciones; por defecto no entra al presupuesto vigente para que el CPI compare costos sin IVA.</p>
+        <div class="co-campos">
+            <label>Indirectos (%)<input type="number" name="indirectos" min="0" max="100" step="0.001" value="<?php echo s((string)$cargos['indirectos']); ?>"></label>
+            <label>Financiamiento (%)<input type="number" name="financiamiento" min="0" max="100" step="0.001" value="<?php echo s((string)$cargos['financiamiento']); ?>"></label>
+            <label>Utilidad (%)<input type="number" name="utilidad" min="0" max="100" step="0.001" value="<?php echo s((string)$cargos['utilidad']); ?>"></label>
+            <label>IVA (%)<input type="number" name="iva" min="0" max="100" step="0.001" value="<?php echo s((string)$cargos['iva']); ?>"></label>
+            <label class="co-check campo-check"><input type="checkbox" name="iva_en_bac" value="1"<?php echo $cargos['iva_en_bac'] ? ' checked' : ''; ?>> Incluir el IVA en el presupuesto vigente</label>
+        </div>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
+            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Guardar cargos</button>
+            <?php if ($t['cargos_total']): ?><span class="text-muted text-sm">Cargos sobre <?php echo $m($t['base_cargos']); ?>: <?php echo $m($t['cargos_total']); ?> · factor <?php echo number_format((float)$t['factor'], 4); ?></span><?php endif; ?>
+        </div>
+    </form>
+    <?php endif; ?>
 
     <?php if ($curva): ?>
     <div class="card curva-grafica">
@@ -57,26 +79,30 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
         <h3><i class="fa-solid fa-list-check"></i> Por partida</h3>
         <?php if (!$resumen['partidas']): ?><p class="text-muted">Aún no hay partidas. Créalas en <a href="/programa?proyecto=<?php echo $pid; ?>">Programa</a>.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla co-tabla">
-            <thead><tr><th>Partida</th><th title="Se calcula con las cantidades cuando la partida está completa; si no, se captura a mano">Presupuesto</th><th class="hide-m">Cambios</th><th class="hide-m">Vigente</th><th class="hide-m">Prog. / real</th><th>PV</th><th>EV</th><th>AC</th><th>Comprometido</th><th>Disponible</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
+            <thead><tr><th>Partida</th><th title="Suma de cantidad × precio unitario del catálogo; si la partida no tiene conceptos, se captura a mano">Presupuesto / ajuste</th><th class="hide-m">Cambios</th><th>Vigente</th><th class="hide-m">Programado</th><th class="hide-m">Pendiente</th><th class="hide-m">Prog. / real</th><th class="hide-m">PV</th><th>EV</th><th>AC</th><th>Comprometido</th><th>Disponible</th><th class="hide-m">CPI</th><th class="hide-m">Estimado</th></tr></thead>
             <tbody>
             <?php foreach ($resumen['partidas'] as $p): ?>
                 <tr>
                     <td><span class="co-punto" style="background:<?php echo s($p['color'] ?: '#64748b'); ?>"></span> <span class="mono"><?php echo s($p['codigo']); ?></span> <?php echo s($p['nombre']); ?></td>
                     <td>
                         <?php if ($p['calculado']): ?>
-                            <span class="mono"><?php echo $m($p['presupuesto']); ?></span>
-                            <small class="text-muted" title="Suma de cantidad × precio unitario de las actividades de la partida"><i class="fa-solid fa-calculator"></i> <?php echo (int)$p['valuadas']; ?>/<?php echo (int)$p['actividades']; ?> conceptos</small>
+                            <span class="mono"><?php echo $m($p['directo']); ?></span>
+                            <small class="text-muted"><i class="fa-solid fa-list-check"></i> <?php echo (int)$p['conceptos']; ?> concepto(s) del catálogo</small>
+                            <label class="text-sm" style="display:block;margin-top:.25rem">Ajuste
+                                <input type="text" inputmode="decimal" class="co-in" name="presupuesto[<?php echo (int)$p['id']; ?>]" value="<?php echo $p['ajuste'] ? s(number_format($p['ajuste'], 2, '.', '')) : ''; ?>" placeholder="0.00" aria-label="Ajuste al catálogo de <?php echo s($p['nombre']); ?>">
+                            </label>
+                            <?php if ($p['presupuesto_manual'] > 0): ?><small class="text-muted" title="Presupuesto manual que existía antes del catálogo. Si era mayor, su diferencia quedó en el ajuste; ya no se suma aparte.">Manual anterior: <?php echo $m($p['presupuesto_manual']); ?></small><?php endif; ?>
                         <?php else: ?>
                             <input type="text" inputmode="decimal" class="co-in" name="presupuesto[<?php echo (int)$p['id']; ?>]" value="<?php echo $p['presupuesto'] ? s(number_format($p['presupuesto'], 2, '.', '')) : ''; ?>" placeholder="0.00" aria-label="Presupuesto de <?php echo s($p['nombre']); ?>">
-                            <?php if ((int)$p['faltantes'] > 0): ?>
-                                <small class="co-aviso" title="Mientras falten actividades por valuar se conserva el presupuesto manual"><i class="fa-solid fa-triangle-exclamation"></i> faltan <?php echo (int)$p['faltantes']; ?> por valuar<?php if ($p['suma_parcial'] > 0): ?> · parcial <?php echo $m($p['suma_parcial']); ?><?php endif; ?></small>
-                            <?php endif; ?>
+                            <small class="text-muted">Sin conceptos: monto manual</small>
                         <?php endif; ?>
                     </td>
                     <td class="mono hide-m <?php echo $clsVar($p['cambios']); ?>"><?php echo $p['cambios'] ? $m($p['cambios']) : '—'; ?></td>
-                    <td class="mono hide-m"><?php echo $m($p['bac']); ?></td>
+                    <td class="mono"><?php echo $m($p['bac']); ?></td>
+                    <td class="mono hide-m"><?php echo $m($p['programado']); ?></td>
+                    <td class="mono hide-m <?php echo $p['pendiente'] > 0 ? 'co-aviso' : ''; ?>"><?php echo $p['pendiente'] > 0 ? $m($p['pendiente']) : '—'; ?></td>
                     <td class="mono hide-m"><?php echo number_format($p['plan_pct'], 0); ?>% / <?php echo number_format($p['real_pct'], 0); ?>%</td>
-                    <td class="mono"><?php echo $m($p['pv']); ?></td>
+                    <td class="mono hide-m"><?php echo $m($p['pv']); ?></td>
                     <td class="mono"><?php echo $m($p['ev']); ?></td>
                     <td class="mono"><?php echo $m($p['ac']); ?></td>
                     <td class="mono <?php echo $p['comprometido'] > 0 ? 'co-aviso' : ''; ?>"><?php echo $m($p['comprometido']); ?></td>
@@ -86,17 +112,18 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
                 </tr>
             <?php endforeach; ?>
             </tbody>
-            <tfoot><tr><th>Total</th><th class="mono"><?php echo $m($t['presupuesto']); ?></th><th class="mono hide-m"><?php echo $m($t['cambios']); ?></th><th class="mono hide-m"><?php echo $m($t['bac']); ?></th><th class="hide-m"></th><th class="mono"><?php echo $m($t['pv']); ?></th><th class="mono"><?php echo $m($t['ev']); ?></th><th class="mono"><?php echo $m($t['ac']); ?></th><th class="mono"><?php echo $m($t['comprometido']); ?></th><th class="mono <?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></th><th class="mono hide-m <?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></th><th class="mono hide-m"><?php echo $m($t['estimado']); ?></th></tr></tfoot>
+            <tfoot><tr><th>Total</th><th class="mono"><?php echo $m($t['presupuesto']); ?></th><th class="mono hide-m"><?php echo $m($t['cambios']); ?></th><th class="mono"><?php echo $m($t['bac']); ?></th><th class="mono hide-m"><?php echo $m($t['programado']); ?></th><th class="mono hide-m"><?php echo $m($t['pendiente']); ?></th><th class="hide-m"></th><th class="mono hide-m"><?php echo $m($t['pv']); ?></th><th class="mono"><?php echo $m($t['ev']); ?></th><th class="mono"><?php echo $m($t['ac']); ?></th><th class="mono"><?php echo $m($t['comprometido']); ?></th><th class="mono <?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></th><th class="mono hide-m <?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></th><th class="mono hide-m"><?php echo $m($t['estimado']); ?></th></tr></tfoot>
         </table></div>
-        <?php $sp = $resumen['sinPartida']; if ($sp['cambios'] || $sp['real'] || $sp['estimado']): ?>
-            <p class="text-muted text-sm">Sin partida (cuenta en el total): cambios <?php echo $m($sp['cambios']); ?> · costo real <?php echo $m($sp['real']); ?> · estimado <?php echo $m($sp['estimado']); ?>.</p>
+        <?php $sp = $resumen['sinPartida']; ?>
+        <?php if ($sp['conceptos'] || $sp['cambios'] || $sp['real'] || $sp['estimado']): ?>
+            <p class="text-muted text-sm">Sin partida (cuenta en el total): catálogo <?php echo $m($sp['directo']); ?> · programado <?php echo $m($sp['programado']); ?> · pendiente <?php echo $m($sp['pendiente']); ?> · cambios <?php echo $m($sp['cambios']); ?> · costo real <?php echo $m($sp['real']); ?> · estimado <?php echo $m($sp['estimado']); ?>.</p>
         <?php endif; ?>
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar presupuesto</button>
-        <button type="submit" formaction="/costos/recalcular" class="btn btn-ghost" formnovalidate title="Vuelve a sumar las cantidades de todas las partidas (útil para datos anteriores a esta función)"><i class="fa-solid fa-calculator"></i> Recalcular desde cantidades</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar montos</button>
+        <button type="submit" formaction="/costos/recalcular" class="btn btn-ghost" formnovalidate title="Vuelve a sumar el catálogo en todas las partidas"><i class="fa-solid fa-calculator"></i> Recalcular desde el catálogo</button>
         <?php endif; ?>
     </form>
-    <p class="text-muted text-sm">Cuando todas las actividades con duración de una partida tienen cantidad y precio unitario, el presupuesto se calcula solo y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto manual y se muestra cuántas faltan. El <strong>importe</strong> se captura en la actividad (<em>Editar actividad → Concepto de obra</em>).</p>
-    <p class="text-muted text-sm">PV = presupuesto vigente × avance programado a hoy · EV = presupuesto vigente × avance real (ambos pesados por la duración de las actividades, como la Curva S) · AC = costo real capturado · CPI = EV ÷ AC · SPI = EV ÷ PV.</p>
+    <p class="text-muted text-sm">El presupuesto de cada partida es la suma de su <strong>catálogo de conceptos</strong> (cantidad × precio unitario) más el ajuste que escribas. <strong>Programado</strong> es lo que ya ejecutan las actividades y <strong>pendiente</strong> lo que falta por repartir. El catálogo y sus ligas se editan en <a href="/conceptos?proyecto=<?php echo $pid; ?>">Catálogo de conceptos</a> o en <em>Editar actividad → Conceptos de la actividad</em>.</p>
+    <p class="text-muted text-sm">PV = presupuesto vigente × avance programado a hoy · EV = presupuesto vigente × avance real (ambos se pesan por el importe de los conceptos de cada actividad; si falta alguno, por duración, como la Curva S) · AC = costo real capturado · CPI = EV ÷ AC · SPI = EV ÷ PV.</p>
 
 <?php elseif ($pestana === 'flujo'): ?>
     <?php include __DIR__ . '/_flujo.php'; ?>

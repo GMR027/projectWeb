@@ -782,6 +782,39 @@ $ok('la salud de la revisión calcula precisión y separa accionables de observa
 $db->query("DELETE FROM actividades WHERE partida_id = {$pi->id}");
 $db->query("DELETE FROM partidas WHERE id = {$pi->id}");
 
+// ---------- Catálogo de conceptos y presupuesto ----------
+echo "Catálogo de conceptos\n";
+$_SESSION = ['id' => (int)$u->id, 'nombre' => 'Admin CI', 'email' => $u->email, 'rol' => $u->rol];
+$ok('el esquema del catálogo está completo', Classes\Conceptos::estadoEsquema()['ok']);
+$pc = new Model\Partida(['proyecto_id' => (int)$proy->id, 'codigo' => 'CAT.1', 'nombre' => 'Partida del catálogo', 'orden' => 950]);
+$rpc = $pc->guardar();
+$pc->id = (int)($rpc['id'] ?? 0);
+$ac = new Model\Actividad(['partida_id' => $pc->id, 'codigo' => 'CAT.1.1', 'nombre' => 'Actividad del catálogo',
+    'fecha_inicio' => '2026-11-02', 'duracion_dias' => 5, 'fecha_fin' => '2026-11-06', 'progreso' => 0]);
+$rac = $ac->guardar();
+$ac->id = (int)($rac['id'] ?? 0);
+$ok('se crea la partida y la actividad de prueba', $pc->id > 0 && $ac->id > 0);
+[$o1, $m1, $c1] = Classes\Conceptos::guardar((int)$proy->id, ['partida_id' => $pc->id, 'clave' => 'CI-C1', 'descripcion' => 'Concepto CI', 'unidad' => 'm2', 'cantidad' => 100, 'precio_unitario' => 10]);
+$ok('crea un concepto', $o1 && $c1 > 0);
+[$o2] = Classes\Conceptos::asignar((int)$proy->id, $ac->id, (int)$c1, 40);
+$ok('liga el concepto a una actividad', $o2);
+$res = Classes\Conceptos::resumenPartida((int)$proy->id, (int)$pc->id);
+$ok('suma, programado y pendiente cuadran', $res['suma'] === 1000.0 && $res['programado'] === 400.0 && $res['pendiente'] === 600.0);
+[$o3, $m3] = Classes\Conceptos::asignar((int)$proy->id, $ac->id, (int)$c1, 120);
+$ok('pasarse de la cantidad pide motivo', !$o3 && str_contains($m3, 'motivo'));
+[$o4] = Classes\Conceptos::asignar((int)$proy->id, $ac->id, (int)$c1, 120, 'Trabajo extra aprobado en campo');
+$ok('con motivo se permite el excedido', $o4);
+$prov = (float)$GLOBALS['db']->query("SELECT presupuesto FROM costos_partidas WHERE partida_id = {$pc->id}")->fetch_row()[0];
+$ok('el presupuesto de la partida sale del catálogo', $prov === 1000.0);
+[$cg] = Classes\CargosProyecto::guardar((int)$proy->id, ['indirectos' => 10, 'financiamiento' => 0, 'utilidad' => 5, 'iva' => 16, 'iva_en_bac' => 0]);
+$ok('los cargos se guardan y el factor aplica', $cg && abs(Classes\CargosProyecto::factor(Classes\CargosProyecto::deProyecto((int)$proy->id)) - 1.15) < 0.0001);
+$GLOBALS['db']->query("DELETE FROM actividades WHERE id = {$ac->id}");
+$ok('borrar la actividad quita sus vínculos (FK en cascada)', (int)$GLOBALS['db']->query("SELECT COUNT(*) FROM actividad_conceptos WHERE concepto_id = {$c1}")->fetch_row()[0] === 0);
+$GLOBALS['db']->query("DELETE FROM conceptos_obra WHERE id = {$c1}");
+$GLOBALS['db']->query("DELETE FROM costos_partidas WHERE partida_id = {$pc->id}");
+$GLOBALS['db']->query("DELETE FROM partidas WHERE id = {$pc->id}");
+$GLOBALS['db']->query("DELETE FROM proyecto_cargos WHERE proyecto_id = {$proy->id}");
+
 $_SESSION = [];
 $ok('sin nadie con sesión no hay usuario que atribuir', !Classes\HistorialCambios::conUsuario());
 $antesH = $cuenta();

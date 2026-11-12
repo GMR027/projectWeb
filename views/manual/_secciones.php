@@ -689,14 +689,20 @@ HTML],
 <p>Compara <strong>lo presupuestado, lo avanzado y lo gastado</strong>. Lo ven el administrador y el cliente que gestiona el proyecto (los visitantes no).</p>
 <h4>Qué capturas</h4>
 <ul>
-<li><strong>Presupuesto por partida:</strong> en la pestaña <em>Resumen</em>, un monto por partida y <em>Guardar presupuesto</em>. Si la partida está valuada por completo (todas sus actividades con cantidad y precio unitario), el campo se calcula solo y no se edita a mano.</li>
-<li><strong>Concepto de obra:</strong> en <em>Editar actividad → Concepto de obra</em> capturas clave, concepto, cantidad, unidad y precio unitario; el importe se calcula. Al guardarlo se actualiza el presupuesto de la partida.</li>
+<li><strong>Catálogo de conceptos:</strong> la lista del presupuesto (clave, descripción, unidad, cantidad contractual y precio unitario). Se captura en <strong>Catálogo de conceptos</strong> (<code>/conceptos</code>) o se importa de Excel/CSV. Cada concepto pertenece a una partida o queda como general.</li>
+<li><strong>Reparto en el programa:</strong> en <em>Editar actividad → Conceptos de la actividad</em> indicas cuánto de cada concepto ejecuta esa actividad. Un concepto puede repartirse entre varias actividades y una actividad tener varios. Si te pasas de la cantidad del catálogo, el sistema avisa y pide un motivo.</li>
+<li><strong>Presupuesto por partida:</strong> en <em>Resumen</em> se calcula solo con el catálogo y solo agregas un <strong>ajuste</strong> si necesitas un monto global. <em>Guardar montos</em> conserva ese ajuste.</li>
 <li><strong>Costo real:</strong> cada gasto (factura, nómina, renta…) con fecha, monto y, si quieres, su partida y la orden de cambio que lo originó.</li>
 <li><strong>Estimaciones:</strong> lo que cobras al cliente. Las de estado <em>borrador</em> no cuentan hasta aprobarse.</li>
 </ul>
-<h4>Presupuesto desde cantidades</h4>
-<p>Cada actividad puede tener su <strong>concepto de obra</strong>: cantidad × precio unitario = importe. Cuando <strong>todas</strong> las actividades con duración de una partida están valuadas, su presupuesto pasa a ser la suma de esos importes y el campo manual se desactiva. Si falta alguna, se conserva el presupuesto escrito a mano y la tabla avisa cuántas faltan y cuánto suman las que ya están.</p>
-<p>El botón <strong>Recalcular desde cantidades</strong> vuelve a sumar todas las partidas (útil para datos que ya existían). El precio es costo directo: no incluye IVA ni indirectos.</p>
+<h4>Catálogo de conceptos</h4>
+<p>El presupuesto se arma con conceptos: <strong>cantidad × precio unitario = importe</strong>. Cada concepto tiene su cantidad <em>contractual</em> (lo que se vendió) y se reparte entre las actividades que lo ejecutan. La pantalla muestra por concepto cuánto está <strong>programado</strong>, cuánto queda <strong>pendiente</strong> y si se excedió.</p>
+<ul>
+<li><strong>Importar:</strong> CSV, Excel (.xlsx) u ODS con encabezados (<code>Partida</code>, <code>Clave</code>, <code>Descripción</code>, <code>Unidad</code>, <code>Cantidad</code>, <code>Precio unitario</code>, <code>Importe</code>). Se revisa el mapeo y una vista previa antes de aplicar; las partidas que falten se crean y las claves repetidas se actualizan.</li>
+<li><strong>Repartir:</strong> el botón de la fila reparte lo pendiente entre las actividades de la partida por duración. <strong>Crear actividad</strong> genera una actividad nueva con lo que falte.</li>
+<li><strong>Exportar:</strong> PDF con la marca del cliente u hoja de cálculo, desde el catálogo o desde el Centro de Exportación.</li>
+</ul>
+<p>El <strong>presupuesto vigente</strong> es el subtotal del catálogo + ajustes + cambios autorizados + <strong>cargos del proyecto</strong> (indirectos, financiamiento y utilidad; el IVA se muestra aparte y solo entra si lo marcas). El precio es costo directo. El botón <strong>Recalcular desde el catálogo</strong> vuelve a sumar todas las partidas.</p>
 <h4>Dinero comprometido</h4>
 <p>La pestaña <strong>Compromisos</strong> guarda lo que ya prometiste pagar aunque la factura no haya llegado: órdenes de compra, subcontratos y órdenes de servicio. Al guardarlos como <em>vigentes</em> reservan presupuesto y el <strong>Disponible</strong> de la partida baja en ese momento.</p>
 <ol>

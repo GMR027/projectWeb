@@ -216,9 +216,14 @@ class Seguridad
     {
         $c = fn(string $sql) => (int)(self::filas($sql)[0]['n'] ?? 0);
         $hoy = date('Y-m-d');
-        return ['vigentes' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta >= '$hoy'"), 'por_aprobar' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'solicitado'"),
-            'vencidos' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta < '$hoy'"), 'incidentes_abiertos' => $c("SELECT COUNT(*) n FROM seguridad_incidentes WHERE proyecto_id = $pid AND estado = 'abierto'"),
-            'faltan' => count(array_filter(self::requeridos($pid, 7), fn($x) => $x['estado'] === 'falta'))];
+        return [
+            'vigentes' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta >= '$hoy'"),
+            'por_aprobar' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'solicitado'"),
+            'vencidos' => $c("SELECT COUNT(*) n FROM permisos_trabajo WHERE proyecto_id = $pid AND estado = 'aprobado' AND vigente_hasta < '$hoy'"),
+            'incidentes_abiertos' => $c("SELECT COUNT(*) n FROM seguridad_incidentes WHERE proyecto_id = $pid AND estado = 'abierto'"),
+            'faltan' => count(array_filter(self::requeridos($pid, 7), fn($x) => $x['estado'] === 'falta')),
+            'ats_pendientes' => count(self::atsPendientes($pid, 7)),
+        ];
     }
 
 

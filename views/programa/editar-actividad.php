@@ -142,69 +142,131 @@
 </script>
 
 <?php
-$cant = $cantidad ?? [];
-$cantImporte = \Classes\Cantidades::importe($cant['cantidad'] ?? null, $cant['precio_unitario'] ?? null);
-$cr = $cantidadResumen ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
+$asignados = $conceptosActividad ?? [];
+$catalogoC = $conceptosCatalogo ?? [];
+$cr = $conceptoResumen ?? ['conceptos' => 0, 'suma' => 0.0, 'programado' => 0.0, 'pendiente' => 0.0, 'actividades' => 0];
+$moneda = fn($n) => '$' . number_format((float)$n, 2);
+$puedeConceptos = puede_gestionar_conceptos($proyecto);
 ?>
 <div class="ce-cantidad">
-    <h4><i class="fa-solid fa-ruler-combined"></i> Concepto de obra</h4>
-    <p class="text-muted text-sm">Cantidad × precio unitario = importe. Cuando todas las actividades con duración de la partida están valuadas, su presupuesto en <a href="/costos?proyecto=<?php echo (int)$proyecto->id; ?>" target="_top">Costos</a> se calcula solo con esta suma; si falta alguna, se conserva el presupuesto manual.</p>
-    <?php if (isset($_GET['cant']) || isset($_GET['cant_error'])): ?>
-        <div class="alerta <?php echo isset($_GET['cant']) ? 'alerta-exito' : 'alerta-error'; ?>" role="status"><?php echo isset($_GET['cant']) ? 'Concepto de obra guardado.' : s(texto_param($_GET['cant_error'] ?? 'No se pudo guardar el concepto')); ?></div>
+    <h4><i class="fa-solid fa-list-check"></i> Conceptos de la actividad</h4>
+    <?php echo aviso_esquema_catalogo(); ?>
+    <p class="text-muted text-sm">El <a href="/conceptos?proyecto=<?php echo (int)$proyecto->id; ?>" target="_top">catálogo de conceptos</a> guarda la cantidad contractual y el precio unitario. Aquí indicas <strong>cuánto ejecuta esta actividad</strong> de cada concepto: una actividad puede tener varios y un concepto puede repartirse entre varias actividades.</p>
+    <?php if (isset($_GET['concepto_ok']) || isset($_GET['concepto_error'])): ?>
+        <div class="alerta <?php echo isset($_GET['concepto_ok']) ? 'alerta-exito' : 'alerta-error'; ?>" role="status"><?php echo isset($_GET['concepto_ok']) ? 'Conceptos actualizados.' : s(texto_param($_GET['concepto_error'] ?? 'No se pudo guardar el concepto')); ?></div>
     <?php endif; ?>
-    <p class="text-sm <?php echo $cr['completo'] ? 'text-success' : 'text-muted'; ?>">
-        <?php if ($cr['total'] === 0): ?>
-            La partida aún no tiene actividades con duración.
-        <?php elseif ($cr['completo']): ?>
-            <i class="fa-solid fa-circle-check"></i> Partida valuada por completo (<?php echo (int)$cr['valuadas']; ?> de <?php echo (int)$cr['total']; ?> actividades) · suma $<?php echo number_format((float)$cr['suma'], 2); ?>.
-        <?php else: ?>
-            <i class="fa-solid fa-circle-info"></i> <?php echo (int)$cr['valuadas']; ?> de <?php echo (int)$cr['total']; ?> actividades valuadas · faltan <?php echo (int)$cr['faltantes']; ?>. Mientras falten, el presupuesto de la partida sigue siendo el manual.
-        <?php endif; ?>
+    <p class="text-sm text-muted">
+        Partida: <strong><?php echo (int)$cr['conceptos']; ?></strong> concepto(s) ·
+        presupuesto <?php echo $moneda($cr['suma']); ?> ·
+        programado <?php echo $moneda($cr['programado']); ?> ·
+        pendiente <?php echo $moneda($cr['pendiente']); ?>
     </p>
-    <form method="POST" action="/programa/actividades/cantidad" class="form-grid" style="margin-top:1rem">
-        <input type="hidden" name="id" value="<?php echo (int)$actividad->id; ?>">
-        <div class="campo">
-            <label for="cant-clave">Clave</label>
-            <input type="text" id="cant-clave" name="clave" maxlength="60" value="<?php echo s($cant['clave'] ?? ''); ?>" placeholder="Ej.: CIT-04">
-        </div>
-        <div class="campo">
-            <label for="cant-unidad">Unidad</label>
-            <input type="text" id="cant-unidad" name="unidad" maxlength="30" value="<?php echo s($cant['unidad'] ?? ''); ?>" placeholder="m³, m², kg, ml…">
-        </div>
+
+    <?php if ($asignados): ?>
+    <div class="tabla-wrapper">
+        <table class="tabla">
+            <thead><tr><th>Clave</th><th>Concepto</th><th>Unidad</th><th>Cantidad en la actividad</th><th class="hide-m">% del concepto</th><th class="hide-m">P. unitario</th><th>Importe</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($asignados as $a): ?>
+                <tr>
+                    <td class="mono"><?php echo s($a['clave'] ?: '—'); ?></td>
+                    <td><?php echo s($a['descripcion']); ?><?php if ($a['motivo_excedido'] !== ''): ?><br><span class="badge badge-pdf" title="<?php echo s($a['motivo_excedido']); ?>"><i class="fa-solid fa-triangle-exclamation"></i> Excedido</span><?php endif; ?></td>
+                    <td><?php echo s($a['unidad'] ?: '—'); ?></td>
+                    <td>
+                        <?php if ($puedeConceptos): ?>
+                        <form method="POST" action="/conceptos/asignar" class="inline" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+                            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+                            <input type="hidden" name="actividad_id" value="<?php echo (int)$actividad->id; ?>">
+                            <input type="hidden" name="concepto_id" value="<?php echo (int)$a['concepto_id']; ?>">
+                            <input type="number" name="cantidad" min="0" step="0.001" value="<?php echo s((string)$a['cantidad']); ?>" class="co-in" aria-label="Cantidad de <?php echo s($a['descripcion']); ?>" required>
+                            <input type="text" name="motivo" maxlength="500" placeholder="Motivo si excede" aria-label="Motivo del excedido" style="max-width:16rem">
+                            <button class="btn btn-xs btn-ghost" type="submit" title="Guardar la cantidad" aria-label="Guardar la cantidad"><i class="fa-solid fa-floppy-disk"></i></button>
+                        </form>
+                        <?php else: ?>
+                            <span class="mono"><?php echo \Classes\Conceptos::cantidad($a['cantidad'], $a['unidad']); ?></span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="hide-m mono"><?php echo number_format((float)$a['pct'], 1); ?> %<br><small class="text-muted">de <?php echo \Classes\Conceptos::cantidad($a['cantidad_concepto'], $a['unidad']); ?></small></td>
+                    <td class="hide-m mono"><?php echo $moneda($a['precio_unitario']); ?></td>
+                    <td class="mono"><?php echo $moneda($a['importe']); ?></td>
+                    <td>
+                        <?php if ($puedeConceptos): ?>
+                        <form class="inline" method="POST" action="/conceptos/desasignar" data-confirm="Quitar concepto|Se quitará este concepto de la actividad; su cantidad vuelve a quedar pendiente en el catálogo.|Quitar">
+                            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+                            <input type="hidden" name="actividad_id" value="<?php echo (int)$actividad->id; ?>">
+                            <input type="hidden" name="concepto_id" value="<?php echo (int)$a['concepto_id']; ?>">
+                            <button class="btn btn-xs btn-ghost text-danger" type="submit" title="Quitar de la actividad" aria-label="Quitar de la actividad"><i class="fa-solid fa-xmark"></i></button>
+                        </form>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php else: ?>
+        <p class="text-sm text-muted">Esta actividad todavía no tiene conceptos ligados.</p>
+    <?php endif; ?>
+
+    <?php if ($catalogoC && $puedeConceptos): ?>
+    <form method="POST" action="/conceptos/asignar" class="form-grid" style="margin-top:1rem" id="form-concepto">
+        <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+        <input type="hidden" name="actividad_id" value="<?php echo (int)$actividad->id; ?>">
         <div class="campo campo-full">
-            <label for="cant-concepto">Concepto</label>
-            <input type="text" id="cant-concepto" name="concepto" maxlength="255" value="<?php echo s($cant['concepto'] ?? ''); ?>" placeholder="Ej.: Losa de cimentación de sala blanca">
+            <label for="concepto_id">Agregar concepto</label>
+            <select id="concepto_id" name="concepto_id" required>
+                <option value="">— Elige un concepto de la partida o general —</option>
+                <?php foreach ($catalogoC as $c): ?>
+                    <?php $pend = max(0, (float)$c['cantidad'] - (float)$c['programado_qty']); ?>
+                    <option value="<?php echo (int)$c['id']; ?>" data-pendiente="<?php echo s((string)$pend); ?>" data-precio="<?php echo s((string)$c['precio_unitario']); ?>" data-unidad="<?php echo s($c['unidad']); ?>">
+                        <?php echo s(($c['clave'] ? $c['clave'] . ' · ' : '') . $c['descripcion']); ?><?php echo $c['partida_id'] === null ? ' (general)' : ''; ?> · pendiente <?php echo \Classes\Conceptos::cantidad($pend, $c['unidad']); ?> · <?php echo $moneda($c['precio_unitario']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="campo">
-            <label for="cant-cantidad">Cantidad</label>
-            <input type="number" id="cant-cantidad" name="cantidad" min="0" step="0.001" value="<?php echo ($cant['cantidad'] ?? null) !== null && $cant['cantidad'] !== '' ? s($cant['cantidad']) : ''; ?>">
+            <label for="cantidad-nueva">Cantidad que ejecuta</label>
+            <input type="number" id="cantidad-nueva" name="cantidad" min="0" step="0.001" required>
+            <small class="text-muted">Se propone lo que falta por programar del concepto.</small>
         </div>
         <div class="campo">
-            <label for="cant-precio">Precio unitario</label>
-            <input type="number" id="cant-precio" name="precio_unitario" min="0" step="0.01" value="<?php echo ($cant['precio_unitario'] ?? null) !== null && $cant['precio_unitario'] !== '' ? s($cant['precio_unitario']) : ''; ?>">
+            <label for="motivo-nuevo">Motivo (solo si excede)</label>
+            <input type="text" id="motivo-nuevo" name="motivo" maxlength="500" placeholder="Mínimo 10 caracteres">
         </div>
         <div class="campo">
             <label>Importe</label>
-            <output id="cant-importe" class="mono ce-importe" for="cant-cantidad cant-precio"><?php echo $cantImporte === null ? '—' : '$' . number_format($cantImporte, 2); ?></output>
-            <small class="text-muted">Se calcula: cantidad × precio unitario</small>
+            <output id="importe-nuevo" class="mono ce-importe">—</output>
         </div>
         <div class="campo campo-full">
-            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Guardar concepto</button>
-            <?php if (!empty($cant)): ?><small class="text-muted">Deja todos los campos vacíos y guarda para quitar el concepto.</small><?php endif; ?>
+            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-plus"></i> Ligar concepto</button>
+            <a class="btn btn-ghost" href="/conceptos?proyecto=<?php echo (int)$proyecto->id; ?>&partida=<?php echo (int)$partida->id; ?>&nuevo=1" target="_top"><i class="fa-solid fa-list-check"></i> Crear un concepto nuevo</a>
         </div>
     </form>
+    <script>
+    (function () {
+        const sel = document.getElementById('concepto_id'), cant = document.getElementById('cantidad-nueva'), out = document.getElementById('importe-nuevo');
+        if (!sel || !cant || !out) return;
+        const pintar = () => {
+            const o = sel.selectedOptions[0], n = Number(cant.value), p = Number(o?.dataset.precio || 0);
+            out.textContent = (cant.value === '' || !isFinite(n)) ? '—' : '$' + (n * p).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        sel.addEventListener('change', () => {
+            const pend = sel.selectedOptions[0]?.dataset.pendiente;
+            if (pend !== undefined && pend !== '') cant.value = pend;
+            pintar();
+        });
+        cant.addEventListener('input', pintar);
+        pintar();
+    })();
+    </script>
+    <?php elseif (!$puedeConceptos): ?>
+        <p class="text-sm text-muted" style="margin-top:1rem">Solo el dueño, el administrador o un colaborador con el catálogo habilitado pueden cambiar los conceptos de la actividad.</p>
+    <?php elseif (!\Classes\Conceptos::disponible()): ?>
+        <p class="text-sm text-muted" style="margin-top:1rem">Completa la migración del catálogo para poder ligar conceptos a la actividad (revisa el aviso de arriba o entra a <a href="/conceptos?proyecto=<?php echo (int)$proyecto->id; ?>" target="_top">Catálogo de conceptos</a>).</p>
+    <?php else: ?>
+        <p class="text-sm text-muted" style="margin-top:1rem">La partida aún no tiene conceptos. <a href="/conceptos?proyecto=<?php echo (int)$proyecto->id; ?>&partida=<?php echo (int)$partida->id; ?>&nuevo=1" target="_top">Crea el primero en el catálogo</a>.</p>
+    <?php endif; ?>
 </div>
-<script>
-(function () {
-    const c = document.getElementById('cant-cantidad'), p = document.getElementById('cant-precio'), out = document.getElementById('cant-importe');
-    if (!c || !p || !out) return;
-    const pintar = () => {
-        const n = Number(c.value), u = Number(p.value);
-        out.textContent = (c.value === '' || p.value === '' || !isFinite(n) || !isFinite(u)) ? '—' : '$' + (n * u).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-    c.addEventListener('input', pintar); p.addEventListener('input', pintar);
-})();
-</script>
 
     <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
 

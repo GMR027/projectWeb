@@ -29,12 +29,25 @@ class CurvaS
         // Con el catálogo de conceptos completo (importe en todas las actividades con duración) el avance se pesa por importe
         try {
             $imp = [];
-            $q = self::db()->query("SELECT actividad_id, importe FROM actividad_cantidades WHERE proyecto_id = $proyectoId AND importe > 0");
-            while ($q && ($g = $q->fetch_assoc())) $imp[(int)$g['actividad_id']] = (float)$g['importe'];
-            $pesadas = array_filter($out, fn($a) => $a['peso'] > 0);
-            if ($pesadas && !array_diff_key($pesadas, $imp)) foreach ($out as $id => $a) $out[$id]['peso'] = $a['peso'] > 0 ? $imp[$id] : 0;
-        } catch (\Throwable $e) {   // migración pendiente
+            $q = self::db()->query("SELECT ac.actividad_id, SUM(ac.cantidad * co.precio_unitario) importe
+                FROM actividad_conceptos ac
+                JOIN conceptos_obra co ON co.id = ac.concepto_id AND co.activo = 1
+                JOIN actividades a ON a.id = ac.actividad_id
+                JOIN partidas p ON p.id = a.partida_id
+                WHERE p.proyecto_id = $proyectoId
+                GROUP BY ac.actividad_id");
+            while ($q && ($g = $q->fetch_assoc())) if ((float)$g['importe'] > 0) $imp[(int)$g['actividad_id']] = (float)$g['importe'];
+        } catch (\Throwable $e) {   // catálogo pendiente: se usa la tabla antigua
+            try {
+                $imp = [];
+                $q = self::db()->query("SELECT actividad_id, importe FROM actividad_cantidades WHERE proyecto_id = $proyectoId AND importe > 0");
+                while ($q && ($g = $q->fetch_assoc())) $imp[(int)$g['actividad_id']] = (float)$g['importe'];
+            } catch (\Throwable $e2) {
+                $imp = [];
+            }
         }
+        $pesadas = array_filter($out, fn($a) => $a['peso'] > 0);
+        if ($pesadas && !array_diff_key($pesadas, $imp)) foreach ($out as $id => $a) $out[$id]['peso'] = $a['peso'] > 0 ? $imp[$id] : 0;
         return $out;
     }
 

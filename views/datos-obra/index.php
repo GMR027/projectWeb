@@ -49,7 +49,7 @@ $tipos = ['inicio' => 'Inicio', 'fin' => 'Término', 'hito' => 'Hito'];
 
 <div class="card">
     <h3>Cantidades de obra<?php if ($total > 0): ?> <small class="text-muted">· importe total $<?php echo $n($total); ?></small><?php endif; ?></h3>
-    <p class="text-muted text-sm">El importe se calcula como cantidad × precio unitario. Puedes ajustarlo en la actividad (concepto de obra); si todas las actividades de una partida están valuadas, su presupuesto en Costos se actualiza solo.</p>
+    <p class="text-muted text-sm">El importe se calcula como cantidad × precio unitario. Los conceptos viven en el <a href="/conceptos?proyecto=<?php echo (int)$proyecto->id; ?>">catálogo</a> y aquí se ve cuánto ejecuta cada actividad; el presupuesto de la partida en Costos se actualiza solo.</p>
     <?php if (!$cantidades): ?><p class="text-muted">Sin catálogo de conceptos cargado.</p>
     <?php else: ?>
         <table class="tabla">

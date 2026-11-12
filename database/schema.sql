@@ -2018,15 +2018,64 @@ CREATE TABLE IF NOT EXISTS catalogo_categorias (
 
 -- Fase 3: costos y presupuesto, recursos y cuadrillas, RFI, enlaces de solo lectura (cliente y calendario .ics)
 
--- 3.1 Costos: presupuesto por partida y movimientos (costo real y estimaciones)
+-- 3.1 Costos: catálogo de conceptos, presupuesto por partida y movimientos
+
+-- Catálogo de conceptos: cantidad contractual × precio unitario, agrupado por partida
+CREATE TABLE IF NOT EXISTS conceptos_obra (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    partida_id INT NULL,                             -- NULL = concepto general (sin partida)
+    clave VARCHAR(60) NULL,                          -- única por proyecto; NULL = sin clave
+    descripcion VARCHAR(255) NOT NULL,
+    unidad VARCHAR(30) NOT NULL DEFAULT '',
+    cantidad DECIMAL(14,3) NOT NULL DEFAULT 0,       -- cantidad contractual
+    precio_unitario DECIMAL(14,2) NOT NULL DEFAULT 0,
+    origen VARCHAR(255) NOT NULL DEFAULT 'manual',
+    notas VARCHAR(500) NOT NULL DEFAULT '',
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    orden INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_co_clave (proyecto_id, clave),
+    KEY idx_co_partida (proyecto_id, partida_id, orden),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Cuánto de cada concepto ejecuta cada actividad (muchos a muchos)
+CREATE TABLE IF NOT EXISTS actividad_conceptos (
+    actividad_id INT NOT NULL,
+    concepto_id INT NOT NULL,
+    cantidad DECIMAL(14,3) NOT NULL DEFAULT 0,
+    motivo_excedido VARCHAR(500) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (actividad_id, concepto_id),
+    KEY idx_ac_concepto (concepto_id),
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (concepto_id) REFERENCES conceptos_obra(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS costos_partidas (
     partida_id INT NOT NULL PRIMARY KEY,
     proyecto_id INT NOT NULL,
     presupuesto DECIMAL(16,2) NOT NULL DEFAULT 0,
-    presupuesto_manual DECIMAL(16,2) NULL,
-    origen ENUM('manual','cantidades') NOT NULL DEFAULT 'manual',
+    presupuesto_manual DECIMAL(16,2) NULL,           -- presupuesto manual anterior (legado) o total si la partida no tiene conceptos
+    ajuste DECIMAL(16,2) NOT NULL DEFAULT 0,         -- línea de ajuste que se suma al catálogo
+    origen ENUM('manual','cantidades','conceptos') NOT NULL DEFAULT 'manual',
     KEY idx_cp_proyecto (proyecto_id),
     FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Cargos del proyecto sobre el subtotal directo del catálogo
+CREATE TABLE IF NOT EXISTS proyecto_cargos (
+    proyecto_id INT NOT NULL PRIMARY KEY,
+    indirectos DECIMAL(6,3) NOT NULL DEFAULT 0,
+    financiamiento DECIMAL(6,3) NOT NULL DEFAULT 0,
+    utilidad DECIMAL(6,3) NOT NULL DEFAULT 0,
+    iva DECIMAL(6,3) NOT NULL DEFAULT 16,
+    iva_en_bac TINYINT(1) NOT NULL DEFAULT 0,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

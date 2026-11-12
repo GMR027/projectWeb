@@ -753,17 +753,53 @@ $ok('la migración y el esquema traen precio unitario y el respaldo del presupue
     $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_cantidades_precio.sql');
     $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
     return str_contains($m, 'precio_unitario') && str_contains($m, 'presupuesto_manual')
-        && str_contains($s, 'precio_unitario DECIMAL(14,2)') && str_contains($s, 'origen ENUM(\'manual\',\'cantidades\')');
+        && str_contains($s, 'precio_unitario DECIMAL(14,2)') && str_contains($s, "'manual','cantidades','conceptos'");
 })());
 $ok('la ruta para guardar el concepto de obra está registrada', str_contains((string)@file_get_contents(__DIR__ . '/../public/index.php'), "'/programa/actividades/cantidad'"));
-$ok('la actividad tiene el formulario de concepto de obra', (function () {
+$ok('la actividad tiene el selector de conceptos del catálogo', (function () {
     $v = (string)@file_get_contents(__DIR__ . '/../views/programa/editar-actividad.php');
-    return str_contains($v, '/programa/actividades/cantidad') && str_contains($v, 'cant-precio') && str_contains($v, 'cant-importe');
+    return str_contains($v, '/conceptos/asignar') && str_contains($v, 'conceptosActividad') && str_contains($v, '/conceptos/desasignar');
 })());
-$ok('Costos calcula el presupuesto desde las cantidades y conserva el manual', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'Cantidades::resumenPartidas(')
-    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'presupuesto_manual'));
+$ok('Costos toma el presupuesto del catálogo y aplica los cargos', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'Conceptos::resumenPartidas(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Costos.php'), 'CargosProyecto::factor('));
 $ok('Datos de obra muestra el precio unitario', str_contains((string)@file_get_contents(__DIR__ . '/../classes/DatosObra.php'), 'precio_unitario'));
-$ok('el Ensamblador deduce el precio unitario al importar cantidades', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Ensamblador.php'), 'precio_unitario, importe, origen'));
+$ok('el Ensamblador escribe en el catálogo de conceptos', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Ensamblador.php'), 'Conceptos::fijarDesdeTexto('));
+echo "Catálogo de conceptos\n";
+$ok('el importe es cantidad × precio unitario y no acepta negativos', \Classes\Conceptos::importe(2.5, 100.50) === 251.25
+    && \Classes\Conceptos::importe(-5, 10) === 0.0);
+$ok('los cargos multiplican el subtotal y el IVA solo entra si se marca', (function () {
+    $c = ['indirectos' => 10, 'financiamiento' => 2, 'utilidad' => 5, 'iva' => 16, 'iva_en_bac' => 0];
+    $sinIva = \Classes\CargosProyecto::factor($c);
+    $c['iva_en_bac'] = 1;
+    return abs($sinIva - 1.17) < 0.0001 && abs(\Classes\CargosProyecto::factor($c) - 1.33) < 0.0001;
+})());
+$ok('la migración y el esquema traen catálogo, vínculos, ajuste y cargos', (function () {
+    $m = (string)@file_get_contents(__DIR__ . '/../database/migracion_catalogo_conceptos.sql');
+    $s = (string)@file_get_contents(__DIR__ . '/../database/schema.sql');
+    return str_contains($m, 'CREATE TABLE IF NOT EXISTS conceptos_obra') && str_contains($m, 'CREATE TABLE IF NOT EXISTS actividad_conceptos')
+        && str_contains($m, 'CREATE TABLE IF NOT EXISTS proyecto_cargos') && str_contains($m, 'ADD COLUMN ajuste')
+        && str_contains($s, 'CREATE TABLE IF NOT EXISTS conceptos_obra') && str_contains($s, 'CREATE TABLE IF NOT EXISTS proyecto_cargos');
+})());
+$ok('las rutas del catálogo están registradas', (function () {
+    $t = (string)@file_get_contents(__DIR__ . '/../public/index.php');
+    return str_contains($t, "'/conceptos'") && str_contains($t, "'/conceptos/asignar'")
+        && str_contains($t, "'/conceptos/repartir'") && str_contains($t, "'/conceptos/importar'")
+        && str_contains($t, "'/conceptos/exportar'") && str_contains($t, "'/costos/cargos'");
+})());
+$ok('el catálogo está declarado para el visitante y agrupado con costos', isset(\Model\Usuario::HERRAMIENTAS['conceptos'])
+    && in_array('conceptos', \Model\Usuario::HERRAMIENTAS_GRUPOS['Materiales y costos'], true));
+$ok('las pantallas del catálogo y la importación existen', is_file(__DIR__ . '/../views/conceptos/index.php')
+    && is_file(__DIR__ . '/../views/conceptos/importar.php') && is_file(__DIR__ . '/../views/exportar/pdf-presupuesto.php'));
+$ok('Cantidades sigue funcionando como fachada del catálogo', str_contains((string)@file_get_contents(__DIR__ . '/../classes/Cantidades.php'), 'Conceptos::asignacionesDeActividad(')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/Cantidades.php'), 'Conceptos::recalcularPartida('));
+$ok('la Curva S pesa por el importe del catálogo y deja respaldo a la tabla antigua', str_contains((string)@file_get_contents(__DIR__ . '/../classes/CurvaS.php'), 'actividad_conceptos')
+    && str_contains((string)@file_get_contents(__DIR__ . '/../classes/CurvaS.php'), 'actividad_cantidades'));
+$ok('el Centro de Exportación incluye el presupuesto', (function () {
+    $v = (string)@file_get_contents(__DIR__ . '/../views/exportar/index.php');
+    $c = (string)@file_get_contents(__DIR__ . '/../controllers/AjustesController.php');
+    return str_contains($v, 'value="presupuesto"') && str_contains($c, "case 'presupuesto':")
+        && str_contains($c, "'presupuesto' => 'conceptos'");
+})());
 echo "Compromisos y disponible\n";
 $ok('los catálogos de compromisos están completos', count(\Classes\Compromisos::TIPOS) === 3
     && count(\Classes\Compromisos::ESTADOS) === 5 && \Classes\Compromisos::ABIERTOS === ['vigente', 'parcial']);

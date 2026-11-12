@@ -6,10 +6,11 @@ use Model\Proyecto;
 
 /**
  * Costos y presupuesto del proyecto.
- *  - Presupuesto por partida (`costos_partidas`), ajustado con las órdenes de cambio autorizadas (impacto_costo).
+ *  - Presupuesto por partida: catálogo de conceptos (`Classes\Conceptos`) + ajuste manual; después se suman
+ *    las órdenes de cambio autorizadas (impacto_costo) y los cargos del proyecto (`Classes\CargosProyecto`).
  *  - Movimientos (`costos_movimientos`): costo real (gastos) y estimaciones (lo que se cobra al cliente).
- *  - Valor ganado: PV = presupuesto × avance programado, EV = presupuesto × avance real (ambos pesados por la duración de las
- *    actividades de la partida, igual que la Curva S), AC = costo real. CPI = EV/AC, SPI = EV/PV.
+ *  - Valor ganado: PV = presupuesto × avance programado, EV = presupuesto × avance real (por importe del catálogo
+ *    o, si falta, por duración, igual que la Curva S), AC = costo real. CPI = EV/AC, SPI = EV/PV.
  *  - La curva de costos por semana sale de la Curva S (`CurvaS::calcular`): PV = plan % × presupuesto total, EV = real % × presupuesto.
  */
 class Costos
@@ -30,18 +31,54 @@ class Costos
 
     // ---------- escritura ----------
 
+    /**
+     * Guarda el monto de una partida. Si la partida tiene conceptos, el monto es el
+     * AJUSTE que se suma al catálogo; si no tiene conceptos, es el presupuesto manual.
+     */
+    /** ¿La migración del catálogo ya agregó `costos_partidas.ajuste`? (una instalación vieja debe seguir funcionando) */
+    private static $columnaAjuste = null;
+
+    private static function tieneAjuste(): bool
+    {
+        if (self::$columnaAjuste === null) {
+            try {
+                $r = self::db()->query("SHOW COLUMNS FROM costos_partidas LIKE 'ajuste'");
+                self::$columnaAjuste = (bool)($r && $r->fetch_row());
+            } catch (\Throwable $e) {
+                self::$columnaAjuste = false;
+            }
+        }
+        return self::$columnaAjuste;
+    }
+
     public static function guardarPresupuesto(int $pid, int $partidaId, float $monto): bool
     {
         if (!self::filas("SELECT id FROM partidas WHERE id = $partidaId AND proyecto_id = $pid")) return false;
         $monto = max(0, round($monto, 2));
-        $info = Cantidades::resumenPartidas($pid, $partidaId)[$partidaId] ?? null;
-        $calculado = !empty($info['completo']);
-        $valor = $calculado ? round((float)$info['suma'], 2) : $monto;
-        $origen = $calculado ? 'cantidades' : 'manual';
+        $info = Conceptos::disponible() ? Conceptos::resumenPartida($pid, $partidaId) : ['conceptos' => 0];
         $antes = self::presupuestoDe($partidaId);
-        self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto, presupuesto_manual, origen)
-            VALUES ($partidaId, $pid, $valor, $monto, '$origen')
-            ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto), presupuesto_manual = VALUES(presupuesto_manual), origen = VALUES(origen)");
+        $conceptos = (int)$info['conceptos'] > 0 && self::tieneAjuste();
+        try {
+            if ($conceptos) {
+                self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto, presupuesto_manual, ajuste, origen)
+                    VALUES ($partidaId, $pid, $monto, NULL, $monto, 'conceptos')
+                    ON DUPLICATE KEY UPDATE ajuste = VALUES(ajuste), origen = 'conceptos'");
+                Conceptos::recalcularPartida($pid, $partidaId);
+            } elseif (self::tieneAjuste()) {
+                self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto, presupuesto_manual, ajuste, origen)
+                    VALUES ($partidaId, $pid, $monto, $monto, 0, 'manual')
+                    ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto), presupuesto_manual = VALUES(presupuesto_manual),
+                        ajuste = 0, origen = 'manual'");
+            } else {
+                // Instalación sin la migración del catálogo: solo las columnas originales
+                self::db()->query("INSERT INTO costos_partidas (partida_id, proyecto_id, presupuesto, presupuesto_manual, origen)
+                    VALUES ($partidaId, $pid, $monto, $monto, 'manual')
+                    ON DUPLICATE KEY UPDATE presupuesto = VALUES(presupuesto), presupuesto_manual = VALUES(presupuesto_manual), origen = 'manual'");
+            }
+        } catch (\Throwable $e) {
+            error_log('Costos::guardarPresupuesto: ' . $e->getMessage());
+            return false;
+        }
         HistorialCambios::desdeImagen('costos_partidas', $antes ? 'modificado' : 'creado', $antes, self::presupuestoDe($partidaId));
         return true;
     }
@@ -49,7 +86,8 @@ class Costos
     /** Presupuesto de una partida (la tabla no tiene `id`, se localiza por `partida_id`) */
     private static function presupuestoDe(int $partidaId): ?array
     {
-        return self::filas("SELECT partida_id, proyecto_id, presupuesto, presupuesto_manual, origen FROM costos_partidas WHERE partida_id = $partidaId")[0] ?? null;
+        $ajuste = self::tieneAjuste() ? 'ajuste' : '0 ajuste';
+        return self::filas("SELECT partida_id, proyecto_id, presupuesto, presupuesto_manual, $ajuste, origen FROM costos_partidas WHERE partida_id = $partidaId")[0] ?? null;
     }
 
     /** @return string|null mensaje de error */
@@ -110,8 +148,13 @@ class Costos
         $cal = new Calendario((int)$proyecto->id);
         $out = [];
         $filas = self::filas("SELECT a.id, a.partida_id, a.fecha_inicio, a.fecha_fin, a.duracion_dias, a.hito, a.progreso FROM actividades a JOIN partidas p ON p.id = a.partida_id WHERE p.proyecto_id = " . (int)$proyecto->id);
+        // Igual que la Curva S: si todas las actividades con duración tienen importe de catálogo,
+        // el avance se pesa por dinero; si falta alguna, se pesa por duración.
+        $imp = Conceptos::importeActividades((int)$proyecto->id);
+        $conDuracion = array_filter($filas, fn($a) => (int)$a['hito'] === 0 && (int)$a['duracion_dias'] > 0);
+        $porImporte = $conDuracion && !array_diff(array_map(fn($a) => (int)$a['id'], $conDuracion), array_keys($imp));
         foreach ($filas as $a) {
-            $peso = (int)$a['hito'] ? 0 : max(0, (int)$a['duracion_dias']);
+            $peso = (int)$a['hito'] ? 0 : ($porImporte ? (float)($imp[(int)$a['id']] ?? 0) : max(0, (int)$a['duracion_dias']));
             $pid = (int)$a['partida_id'];
             $o = &$out[$pid];
             $o ??= ['peso' => 0.0, 'plan' => 0.0, 'real' => 0.0];
@@ -135,16 +178,20 @@ class Costos
     }
 
     /**
-     * Resumen completo: por partida (presupuesto, cambios, PV, EV, AC, estimado) y totales con índices.
-     * @return array{partidas: array[], total: array, sinPartida: array}
+     * Resumen completo: por partida (catálogo + ajuste, cambios, PV, EV, AC, estimado) y totales con índices.
+     * Los cargos del proyecto (indirectos, financiamiento, utilidad e IVA si se marcó) se aplican al subtotal.
+     * @return array{partidas: array[], total: array, sinPartida: array, cargos: array}
      */
     public static function resumen(Proyecto $proyecto, ?string $fecha = null): array
     {
         $pid = (int)$proyecto->id;
         $fecha ??= date('Y-m-d');
         $av = self::avancePartidas($proyecto, $fecha);
-        $pres = array_column(self::filas("SELECT partida_id, presupuesto, presupuesto_manual, origen FROM costos_partidas WHERE proyecto_id = $pid"), null, 'partida_id');
-        $calc = Cantidades::resumenPartidas($pid);
+        $colAjuste = self::tieneAjuste() ? 'ajuste' : '0 ajuste';
+        $pres = array_column(self::filas("SELECT partida_id, presupuesto, presupuesto_manual, $colAjuste, origen FROM costos_partidas WHERE proyecto_id = $pid"), null, 'partida_id');
+        $cat = Conceptos::disponible() ? Conceptos::resumenPartidas($pid) : ['partidas' => [], 'sinPartida' => ['conceptos' => 0, 'cantidad' => 0.0, 'suma' => 0.0, 'programado_qty' => 0.0, 'programado' => 0.0, 'pendiente' => 0.0, 'actividades' => 0]];
+        $cargos = CargosProyecto::deProyecto($pid);
+        $factor = CargosProyecto::factor($cargos);
         $comp = Compromisos::disponible() ? Compromisos::resumenProyecto($pid) : [];
         $cambios = [];
         $cambiosGenerales = 0.0;
@@ -160,33 +207,53 @@ class Costos
             elseif ($m['estado'] !== 'borrador') { $p ? $es[$p] = ($es[$p] ?? 0) + (float)$m['m'] : $sinEst += (float)$m['m']; }
         }
         $partidas = [];
-        $t = ['presupuesto' => 0.0, 'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0, 'estimado_neto' => 0.0, 'comprometido' => 0.0, 'disponible' => 0.0];
+        $t = ['presupuesto' => 0.0, 'directo' => 0.0, 'ajuste' => 0.0, 'programado' => 0.0, 'pendiente' => 0.0,
+            'cambios' => 0.0, 'bac' => 0.0, 'pv' => 0.0, 'ev' => 0.0, 'ac' => 0.0, 'estimado' => 0.0,
+            'estimado_neto' => 0.0, 'comprometido' => 0.0, 'disponible' => 0.0];
         foreach (self::filas("SELECT id, codigo, nombre, color_bg FROM partidas WHERE proyecto_id = $pid ORDER BY orden, codigo") as $p) {
             $id = (int)$p['id'];
-            $info = $calc[$id] ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false];
-            $calculado = !empty($info['completo']);
-            $origenGuardado = (string)($pres[$id]['origen'] ?? 'manual');
-            // Si estaba calculada y dejó de estar completa (p. ej. se agregó una actividad sin valuar), vuelve al manual
-            $presupuesto = $calculado ? (float)$info['suma']
-                : (float)($origenGuardado === 'cantidades' ? ($pres[$id]['presupuesto_manual'] ?? 0) : ($pres[$id]['presupuesto'] ?? 0));
-            $manual = (float)($pres[$id]['presupuesto_manual'] ?? $pres[$id]['presupuesto'] ?? 0);
+            $info = $cat['partidas'][$id] ?? null;
+            $tiene = $info && (int)$info['conceptos'] > 0;
+            $manualRef = (float)($pres[$id]['presupuesto_manual'] ?? 0);
+            if ($tiene) {
+                $directo = round((float)$info['suma'], 2);
+                $ajuste = round((float)($pres[$id]['ajuste'] ?? 0), 2);
+                $programado = round((float)$info['programado'], 2);
+                $pendiente = round((float)$info['pendiente'], 2);
+            } else {
+                $directo = (float)($pres[$id]['presupuesto_manual'] ?? $pres[$id]['presupuesto'] ?? 0);
+                $ajuste = 0.0;
+                $programado = 0.0;
+                $pendiente = 0.0;
+            }
+            $presupuesto = round($directo + $ajuste, 2);
             $camb = (float)($cambios[$id] ?? 0);
-            $bac = $presupuesto + $camb;
+            $bac = round(($presupuesto + $camb) * $factor, 2);
             $acPartida = round((float)($ac[$id] ?? 0), 2);
             $compr = round((float)($comp[$id]['comprometido'] ?? 0), 2);
             $a = $av[$id] ?? ['plan' => 0.0, 'real' => 0.0];
-            $f = ['id' => $id, 'codigo' => $p['codigo'], 'nombre' => $p['nombre'], 'color' => $p['color_bg'], 'presupuesto' => $presupuesto, 'cambios' => $camb, 'bac' => $bac,
-                'presupuesto_manual' => $manual, 'calculado' => $calculado, 'origen' => $calculado ? 'cantidades' : 'manual',
-                'actividades' => (int)$info['total'], 'valuadas' => (int)$info['valuadas'], 'faltantes' => (int)$info['faltantes'], 'suma_parcial' => round((float)$info['suma'], 2),
+            $f = ['id' => $id, 'codigo' => $p['codigo'], 'nombre' => $p['nombre'], 'color' => $p['color_bg'],
+                'presupuesto' => $presupuesto, 'directo' => round($directo, 2), 'ajuste' => $ajuste,
+                'programado' => $programado, 'pendiente' => $pendiente, 'cambios' => $camb, 'bac' => $bac,
+                'presupuesto_manual' => $manualRef, 'calculado' => $tiene, 'origen' => $tiene ? 'conceptos' : 'manual',
+                'conceptos' => $tiene ? (int)$info['conceptos'] : 0, 'actividades' => $tiene ? (int)$info['actividades'] : 0,
                 'plan_pct' => round($a['plan'] * 100, 1), 'real_pct' => round($a['real'] * 100, 1),
                 'pv' => round($bac * $a['plan'], 2), 'ev' => round($bac * $a['real'], 2), 'ac' => $acPartida,
                 'comprometido' => $compr, 'disponible' => round($bac - $acPartida - $compr, 2), 'estimado' => round((float)($es[$id] ?? 0), 2)];
             $partidas[] = $f;
-            foreach (['presupuesto', 'cambios', 'bac', 'pv', 'ev', 'ac', 'estimado', 'comprometido'] as $k) $t[$k] += $f[$k];
+            foreach (['presupuesto', 'directo', 'ajuste', 'programado', 'pendiente', 'cambios', 'bac', 'pv', 'ev', 'ac', 'estimado', 'comprometido'] as $k) $t[$k] += $f[$k];
         }
-        // Lo que no se asignó a una partida cuenta en los totales: costo real, estimaciones y cambios sin partida
+        // Conceptos generales (sin partida) y movimientos/cambios sin partida cuentan en los totales
+        $sin = $cat['sinPartida'];
+        if ((int)$sin['conceptos'] > 0) {
+            $t['directo'] += (float)$sin['suma'];
+            $t['presupuesto'] += (float)$sin['suma'];
+            $t['programado'] += (float)$sin['programado'];
+            $t['pendiente'] += (float)$sin['pendiente'];
+            $t['bac'] += round((float)$sin['suma'] * $factor, 2);
+        }
         $t['cambios'] += $cambiosGenerales;
-        $t['bac'] += $cambiosGenerales;
+        $t['bac'] += round($cambiosGenerales * $factor, 2);
         $t['ac'] += $sinReal;
         $t['estimado'] += $sinEst;
         // Neto a cobrar: estimaciones formales (neto) + estimaciones simples antiguas (su monto)
@@ -203,8 +270,22 @@ class Costos
         $t['disponible'] = round($t['bac'] - $t['ac'] - $t['comprometido'], 2);
         $t += self::indices($t['pv'], $t['ev'], $t['ac'], $t['bac']);
         $t['por_cobrar'] = round($t['ev'] - $t['estimado'], 2);
+        // Cargos del proyecto (se muestran desglosados; el BAC es el total con cargos)
+        $base = round($t['presupuesto'] + $t['cambios'], 2);
+        $desglose = CargosProyecto::desglose($base, $cargos);
+        $t['factor'] = $factor;
+        $t['base_cargos'] = $base;
+        $t['cargos_total'] = round($t['bac'] - $base, 2);
+        $t['indirectos'] = $desglose['indirectos'];
+        $t['financiamiento'] = $desglose['financiamiento'];
+        $t['utilidad'] = $desglose['utilidad'];
+        $t['iva'] = $desglose['iva'];
+        $t['iva_en_bac'] = (int)$cargos['iva_en_bac'];
         foreach ($partidas as &$f) $f += self::indices($f['pv'], $f['ev'], $f['ac'], $f['bac']);
-        return ['partidas' => $partidas, 'total' => $t, 'sinPartida' => ['cambios' => round($cambiosGenerales, 2), 'real' => round($sinReal, 2), 'estimado' => round($sinEst, 2)]];
+        return ['partidas' => $partidas, 'total' => $t, 'cargos' => $cargos,
+            'sinPartida' => ['cambios' => round($cambiosGenerales, 2), 'real' => round($sinReal, 2), 'estimado' => round($sinEst, 2),
+                'directo' => round((float)$sin['suma'], 2), 'programado' => round((float)$sin['programado'], 2),
+                'pendiente' => round((float)$sin['pendiente'], 2), 'conceptos' => (int)$sin['conceptos']]];
     }
 
     /** CPI, SPI, variaciones y proyecciones al final (EAC = BAC / CPI) */

@@ -16,6 +16,7 @@ use Classes\GanttRenderer;
 use Classes\Dependencias;
 use Classes\ProgramaColumnas;
 use Classes\Cantidades;
+use Classes\Conceptos;
 
 class ProgramaController
 {
@@ -616,7 +617,12 @@ class ProgramaController
             $partida = Partida::find($id);
             if ($partida) {
                 $proyectoId = $partida->proyecto_id;
-                exigir_gestionar_proyecto(Proyecto::find($proyectoId));
+                $proyecto = Proyecto::find($proyectoId);
+                exigir_gestionar_proyecto($proyecto);
+                if (!puede_borrar_contenido($proyecto)) {
+                    header('Location: /programa?proyecto=' . $proyectoId . '&error=' . urlencode('Solo el dueño o el administrador pueden eliminar partidas.'));
+                    exit;
+                }
                 $partida->eliminarConActividades();
                 header('Location: /programa?proyecto=' . $proyectoId . '&eliminado=partida');
                 exit;
@@ -641,6 +647,10 @@ class ProgramaController
             exit;
         }
         exigir_gestionar_proyecto($proyecto);
+        if (!puede_borrar_contenido($proyecto)) {
+            header('Location: /programa?proyecto=' . $proyectoId . '&error=' . urlencode('Solo el dueño o el administrador pueden eliminar partidas o actividades.'));
+            exit;
+        }
 
         $partidas = $actividades = [];
         foreach ((array)($_POST['sel'] ?? []) as $ref) {
@@ -1051,9 +1061,9 @@ class ProgramaController
             'seleccion' => \Model\ActividadMaterial::deActividad((int)$id),
             'roles' => $_SERVER['REQUEST_METHOD'] === 'POST' ? (array)($_POST['roles'] ?? []) : \Model\ActividadMaterial::rolesDeActividad((int)$id),
             'gestionarMateriales' => $_SERVER['REQUEST_METHOD'] === 'POST' ? !empty($_POST['gestionar_materiales']) : (bool)\Model\ActividadMaterial::deActividad((int)$id),
-            'cantidad' => Cantidades::deActividad((int)$id),
-            'cantidadResumen' => Cantidades::resumenPartidas((int)$proyecto->id, (int)$partida->id)[(int)$partida->id]
-                ?? ['total' => 0, 'valuadas' => 0, 'faltantes' => 0, 'suma' => 0.0, 'completo' => false],
+            'conceptosActividad' => Conceptos::asignacionesDeActividad((int)$id),
+            'conceptosCatalogo' => Conceptos::asignables((int)$proyecto->id, (int)$partida->id),
+            'conceptoResumen' => Conceptos::resumenPartida((int)$proyecto->id, (int)$partida->id),
             'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyecto->id) : [],
             'fechasSugeridas' => self::fechasRealesSugeridas((int)$proyecto->id, (int)$id),
             'frentes' => \Classes\LineaBalance::disponible() ? \Classes\LineaBalance::frentes((int)$proyecto->id) : [],
@@ -1073,6 +1083,10 @@ class ProgramaController
         $partida = Partida::find($actividad->partida_id);
         $proyecto = Proyecto::find($partida->proyecto_id);
         exigir_gestionar_proyecto($proyecto);
+        if (!puede_gestionar_conceptos($proyecto)) {
+            header('Location: /programa/actividades/editar?id=' . (int)$id . '&concepto_error=' . urlencode('No tienes permiso para editar el catálogo de conceptos'));
+            exit;
+        }
         [$ok, $msg] = Cantidades::guardar((int)$proyecto->id, (int)$id, $_POST);
         header('Location: /programa/actividades/editar?id=' . (int)$id . ($ok ? '&cant=1' : '&cant_error=' . urlencode($msg)));
         exit;
@@ -1133,7 +1147,12 @@ class ProgramaController
             if ($actividad) {
                 $partida = Partida::find($actividad->partida_id);
                 $proyectoId = $partida->proyecto_id;
-                exigir_gestionar_proyecto(Proyecto::find($proyectoId));
+                $proyecto = Proyecto::find($proyectoId);
+                exigir_gestionar_proyecto($proyecto);
+                if (!puede_borrar_contenido($proyecto)) {
+                    header('Location: /programa?proyecto=' . $proyectoId . '&error=' . urlencode('Solo el dueño o el administrador pueden eliminar actividades.'));
+                    exit;
+                }
                 Actividad::quitarIcono((int)$id, (string)($actividad->icono ?? ''));   // borra también el archivo del icono
                 try { SubactividadHoja::desvincular($actividad); } catch (\Throwable $e) { error_log('Subactividades al eliminar actividad: ' . $e->getMessage()); }
                 $actividad->eliminar();
