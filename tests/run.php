@@ -48,6 +48,27 @@ $ok('el estado se deriva del avance', $sub->estado() === 'completada'
     && (new Subactividad(['progreso' => 0]))->estado() === 'no_iniciada');
 $ok('el código se deriva del padre', (new Subactividad())->codigo('1.2', 3) === '1.2.3');
 
+echo "Programa: filas y filtros con subactividades\n";
+$filasPrueba = [
+    ['tipo' => 'partida', 'id' => 1, 'partida_id' => 1, 'codigo' => '1', 'nombre' => 'P1'],
+    ['tipo' => 'actividad', 'id' => 10, 'partida_id' => 1, 'codigo' => '1.1', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
+    ['tipo' => 'subactividad', 'id' => 100, 'actividad_id' => 10, 'partida_id' => 1, 'codigo' => '1.1.1', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
+    ['tipo' => 'actividad', 'id' => 11, 'partida_id' => 1, 'codigo' => '1.2', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
+    ['tipo' => 'subactividad', 'id' => 101, 'actividad_id' => 11, 'partida_id' => 1, 'codigo' => '1.2.1', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
+    ['tipo' => 'partida', 'id' => 2, 'partida_id' => 2, 'codigo' => '2', 'nombre' => 'P2'],
+    ['tipo' => 'actividad', 'id' => 12, 'partida_id' => 2, 'codigo' => '2.1', 'status' => 'completada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 100],
+];
+$filtrosVacios = ['partida' => 0, 'status' => '', 'prioridad' => '', 'restriccion' => '', 'riesgo' => ''];
+$ids = fn(array $fs) => array_column($fs, 'id');
+$ok('sin filtros se muestran todas las filas', count(\Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [], [], [], [])) === 7);
+$porEstado = \Classes\ProgramaFilas::filtrar($filasPrueba, ['status' => 'no_iniciada'] + $filtrosVacios, [], [], [], []);
+$ok('un hijo que cumple se ve con su actividad de cabecera', $ids($porEstado) === [1, 10, 11, 101]);
+$porPartida = \Classes\ProgramaFilas::filtrar($filasPrueba, ['partida' => 2] + $filtrosVacios, [], [], [], []);
+$ok('el filtro por partida conserva su cabecera y sus filas', $ids($porPartida) === [2, 12]);
+$porCp = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [7 => 'Nivel A'], [7 => ['id' => 7, 'tipo' => 'texto']], [], [10 => [7 => 'Nivel A'], 11 => [7 => 'Nivel B']]);
+$ok('el hijo hereda el campo personalizado de su actividad', $ids($porCp) === [1, 10, 100]);
+$ok('un filtro sin coincidencias no deja filas', \Classes\ProgramaFilas::filtrar($filasPrueba, ['prioridad' => 'alta'] + $filtrosVacios, [], [], [], []) === []);
+
 echo "Contacto\n";
 $ok('el interés agrupa plataforma, servicio y ambos', in_array('Plan Pro', \Model\Contacto::planesValidos(), true)
     && in_array('Piloto de 30 días', \Model\Contacto::planesValidos(), true)

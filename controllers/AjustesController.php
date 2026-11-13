@@ -523,6 +523,7 @@ class AjustesController
         @ini_set('memory_limit', '1024M');
 
         $nombreBase = trim($_POST['nombre_base'] ?? '') ?: 'Exportacion';
+        $incluirSub = !empty($_POST['subactividades']);
         $lunes = \Controllers\LookaheadController::lunesDe('')->format('Y-m-d');
 
         $zipRuta = __DIR__ . '/../public/exportaciones/' . generar_nombre_archivo($nombreBase, 'zip', $proyecto);
@@ -545,7 +546,7 @@ class AjustesController
             }
         };
 
-        if ($quiere('prog_pdf')) $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->generar("Programa"));
+        if ($quiere('prog_pdf')) $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->setIncluirSubactividades($incluirSub)->generar("Programa"));
         if ($quiere('prog_xml')) $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->generar("Programa"));
         if ($quiere('prog_pod')) $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->generar("Programa"));
         if ($quiere('presupuesto') && \Classes\Conceptos::disponible()) {
@@ -658,6 +659,7 @@ class AjustesController
         nomenclatura_desde_post($_POST);
         $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
         $formato = $_POST['formato'] ?? '';
+        $incluirSub = !empty($_POST['subactividades']);
         $nombreBase = trim($_POST['nombre_base'] ?? 'Programa_Obra');
 
         $proyecto = Proyecto::find($proyectoId);
@@ -677,7 +679,7 @@ class AjustesController
         try {
             switch ($formato) {
                 case 'pdf':
-                    $exporter = new \Classes\Exportadores\PdfExporter($proyecto);
+                    $exporter = (new \Classes\Exportadores\PdfExporter($proyecto))->setIncluirSubactividades($incluirSub);
                     break;
                 case 'lookahead':
                     $salida = $_POST['salida'] ?? 'pdf';

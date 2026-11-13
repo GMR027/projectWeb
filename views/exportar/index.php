@@ -76,6 +76,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             </div>
         </div>
         <div class="exp-todo-accion">
+            <label class="text-sm" style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades en el programa</label>
             <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Exportacion" placeholder="Nombre base" required>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-zipper"></i> Exportar todo</button>
         </div>
@@ -95,6 +96,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                     <option value="xml">Microsoft Project (.xml)</option>
                     <option value="pod">ProjectLibre (.pod)</option>
                 </select>
+                <label class="text-sm text-muted"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades en el PDF</label>
                 <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar programa</button>
             </form>

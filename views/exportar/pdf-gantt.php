@@ -20,6 +20,8 @@
         td { padding: 4px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
         tr.partida td { background: #f0f0f5; font-weight: bold; }
         tr.actividad td:first-child { padding-left: 14px; }
+        tr.subactividad td { background: #fafafa; font-size: 7.5pt; }
+        tr.subactividad td:first-child { padding-left: 30px; }
         .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 7pt; }
         .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 7pt; }
         .badge-completada { background: #d4edda; color: #155724; }
@@ -41,6 +43,8 @@
         .barra-no_iniciada { background: #adb5bd; }
         .barra-partida { background: #212942; height: 8px; }
         .gantt-compacto .barra-partida { height: 6px; }
+        .barra-subactividad { height: 8px; opacity: .85; }
+        .gantt-compacto .barra-subactividad { height: 6px; }
         .footer { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 7pt; color: #888; }
     </style>
 </head>
@@ -110,9 +114,11 @@
                 <?php
                 foreach ($filas as $fila):
                     $esPartida = $fila['tipo'] === 'partida';
-                    $dur = $esPartida ? '—' : (!empty($fila['hito']) ? 'Hito' : number_format($calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']), 1) . ' d');
+                    $esSub = $fila['tipo'] === 'subactividad';
+                    $dur = $esPartida ? '—' : (!empty($fila['hito']) ? 'Hito'
+                        : number_format($esSub ? (float)($fila['duracion_dias'] ?? 0) : $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']), 1) . ' d');
                 ?>
-                    <tr class="<?php echo $esPartida ? 'partida' : 'actividad'; ?>">
+                    <tr class="<?php echo $esPartida ? 'partida' : ($esSub ? 'subactividad' : 'actividad'); ?>">
                         <?php foreach ($columnasTabla as $c): $k = $c['k']; ?>
                             <?php if ($k === 'codigo'): ?><td class="mono"><?php echo htmlspecialchars($fila['codigo']); ?></td>
                             <?php elseif ($k === 'nombre'): ?><td><?php echo htmlspecialchars($fila['nombre']); ?></td>
@@ -128,14 +134,16 @@
                             <?php elseif ($k === 'responsable' || $k === 'libre_texto'): ?><td><?php echo $esPartida || ($fila[$k] ?? '') === '' ? '—' : htmlspecialchars((string)$fila[$k]); ?></td>
                             <?php elseif ($k === 'libre_numero'): ?><td class="mono text-right"><?php echo $esPartida ? '—' : $fmtN($fila['libre_numero'] ?? null); ?></td>
                             <?php elseif ($k === 'rec_inicio' || $k === 'rec_fin' || $k === 'libre_fecha'): ?><td class="mono"><?php echo $esPartida ? '—' : $fmtF($fila[$k] ?? null); ?></td>
-                            <?php elseif ($k === 'predecesora' || $k === 'sucesora'): $lista = $esPartida ? [] : ($vecinas[$k === 'predecesora' ? 'pred' : 'suc'][(int)$fila['id']] ?? []); ?>
+                            <?php elseif ($k === 'predecesora' || $k === 'sucesora'): $lista = ($esPartida || $esSub) ? [] : ($vecinas[$k === 'predecesora' ? 'pred' : 'suc'][(int)$fila['id']] ?? []); ?>
                                 <td class="mono"><?php echo $lista ? htmlspecialchars(implode(', ', array_map(fn($i) => $codigosAct[$i] ?? '', $lista))) : '—'; ?></td>
                             <?php elseif ($k === 'indicador'):
-                                $vi = $campoInd === 'duracion' ? (!$esPartida && empty($fila['hito']) ? $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']) : null)
+                                $vi = $campoInd === 'duracion' ? (!$esPartida && empty($fila['hito'])
+                                        ? ($esSub ? (float)($fila['duracion_dias'] ?? 0) : $calendario->calcularDuracion($fila['fecha_inicio'], $fila['fecha_fin']))
+                                        : null)
                                     : ($campoInd === 'libre_numero' ? ($esPartida ? null : ($fila['libre_numero'] ?? null)) : ($fila['progreso'] ?? null));
                                 $colI = \Classes\ProgramaColumnas::colorIndicador($indicador['reglas'], $vi); ?>
                                 <td class="text-center"><?php if ($colI): ?><span style="color:<?php echo htmlspecialchars($colI); ?>;font-size:12pt">●</span><?php else: ?>—<?php endif; ?></td>
-                            <?php elseif (!empty($c['campo'])): $vcp = $esPartida ? '' : \Classes\CamposPersonalizados::texto($c['campo'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? ''); ?>
+                            <?php elseif (!empty($c['campo'])): $vcp = ($esPartida || $esSub) ? '' : \Classes\CamposPersonalizados::texto($c['campo'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? ''); ?>
                                 <td><?php echo $vcp === '' ? '—' : htmlspecialchars($vcp); ?></td>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -196,11 +204,12 @@
                             $spanDespues = $visible ? ($totalCols - $spanAntes - $spanBarra) : 0;
 
                             $esPartida = $fila['tipo'] === 'partida';
-                            $clase = $esPartida ? 'barra-partida' : 'barra-' . $fila['status'];
+                            $esSub = $fila['tipo'] === 'subactividad';
+                            $clase = $esPartida ? 'barra-partida' : ($esSub ? 'barra-' . $fila['status'] . ' barra-subactividad' : 'barra-' . $fila['status']);
                         ?>
-                            <tr class="<?php echo $esPartida ? 'fila-partida-gantt' : ''; ?>">
+                            <tr class="<?php echo $esPartida ? 'fila-partida-gantt' : ($esSub ? 'fila-subactividad-gantt' : ''); ?>">
                                 <td>
-                                    <span class="mono"><?php echo htmlspecialchars($fila['codigo']); ?></span>
+                                    <?php if ($esSub): ?><span style="padding-left:16px"></span><?php endif; ?><span class="mono"><?php echo htmlspecialchars($fila['codigo']); ?></span>
                                     <?php echo htmlspecialchars(mb_substr($fila['nombre'], 0, $modoCompacto ? 35 : 45)); ?>
                                 </td>
                                 <?php if (!$visible): ?>

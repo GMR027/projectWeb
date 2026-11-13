@@ -12,6 +12,7 @@ class PdfExporter extends BaseExporter
         $proyecto = $this->proyecto;
         $calendario = new Calendario($proyecto->id);
         $gantt = new \Classes\GanttRenderer($proyecto);
+        $gantt->setIncluirSubactividades($this->incluirSubactividades);
         $filas = $gantt->getFilas();
 
         $inicio = new \DateTime($proyecto->fecha_inicio);

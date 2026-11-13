@@ -676,6 +676,11 @@ $hito->id = (int)($rh['id'] ?? 0);
 $ok('un hito no tiene duración', !empty($rh['resultado']) && $hito->duracion() === 0.0 && $hito->fecha_fin === $hito->fecha_inicio);
 \Classes\Subactividades::eliminar($hito, ['hoja' => false, 'propagar' => false]);
 $ok('eliminar una subactividad recalcula la actividad', count(Model\Subactividad::deActividad((int)$as0->id)) === 2);
+$gSub = new \Classes\GanttRenderer($proy);
+$gSub->setIncluirSubactividades(true);
+$filasSub = array_values(array_filter($gSub->getFilas(), fn($f) => $f['tipo'] === 'subactividad'));
+$ok('el Gantt incluye las subactividades cuando se pide', count(array_filter($filasSub, fn($f) => (int)$f['actividad_id'] === (int)$as0->id)) === 2);
+$ok('el Gantt no las incluye por defecto', count(array_filter((new \Classes\GanttRenderer($proy))->getFilas(), fn($f) => $f['tipo'] === 'subactividad')) === 0);
 
 // ---- Subactividades ↔ SheetFlow: el vínculo se actualiza en los dos sentidos ----
 echo "Subactividades ↔ SheetFlow\n";

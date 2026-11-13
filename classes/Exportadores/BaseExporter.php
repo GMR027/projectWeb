@@ -9,6 +9,8 @@ abstract class BaseExporter
 {
     protected Proyecto $proyecto;
     protected string $carpetaSalida;
+    /** Incluir subactividades como filas hijas (PDF del programa, XML/POD, etc.) */
+    protected bool $incluirSubactividades = false;
 
     public function __construct(Proyecto $proyecto)
     {
@@ -20,6 +22,17 @@ abstract class BaseExporter
     }
 
     abstract public function generar(string $nombreBase): string; // retorna ruta absoluta
+
+    public function setIncluirSubactividades(bool $incluir): static
+    {
+        $this->incluirSubactividades = $incluir;
+        return $this;
+    }
+
+    public function incluyeSubactividades(): bool
+    {
+        return $this->incluirSubactividades;
+    }
 
     protected function nombreFinal(string $nombreBase, string $extension): string
     {

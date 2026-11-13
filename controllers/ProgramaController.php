@@ -15,6 +15,7 @@ use Classes\Calendario;
 use Classes\GanttRenderer;
 use Classes\Dependencias;
 use Classes\ProgramaColumnas;
+use Classes\ProgramaFilas;
 use Classes\Cantidades;
 use Classes\Conceptos;
 
@@ -80,62 +81,7 @@ class ProgramaController
         $camposCp = \Classes\CamposPersonalizados::deProyecto($proyectoId, 'actividad');
         $filtrosCp = \Classes\CamposPersonalizados::filtrosDePeticion($proyectoId, 'actividad');
         $valoresCp = $camposCp ? \Classes\CamposPersonalizados::valores($proyectoId, 'actividad') : [];
-        $filas = $todas;
-        if (array_filter($filtros) || $filtrosCp) {
-            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp;
-            $padres = [];
-            foreach ($todas as $f) if ($f['tipo'] === 'actividad') $padres[(int)$f['id']] = $f;
-
-            // Un filtro de actividad se cumple o no; un hijo hereda el de campos personalizados y riesgo del padre,
-            // pero evalúa su propio estado/prioridad/restricción.
-            $coincide = function (array $f, bool $esSub, ?array $padre) use ($filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp): bool {
-                if ($filtros['status'] && (string)$f['status'] !== $filtros['status']) return false;
-                if ($filtros['prioridad'] && (string)$f['prioridad'] !== $filtros['prioridad']) return false;
-                if ($filtros['restriccion'] === 'con' && empty($f['tiene_restriccion'])) return false;
-                if ($filtros['restriccion'] === 'sin' && !empty($f['tiene_restriccion'])) return false;
-                $ref = $esSub ? (int)($padre['id'] ?? 0) : (int)$f['id'];
-                if ($filtros['riesgo'] && empty($riesgos[$ref])) return false;
-                if ($filtrosCp && !\Classes\CamposPersonalizados::coincide($valoresCp[$ref] ?? [], $filtrosCp, $camposCp)) return false;
-                return true;
-            };
-
-            // ¿Algún hijo cumple los filtros? Entonces su actividad se muestra como cabecera.
-            $padreConHijo = [];
-            if ($hayFiltroAct) {
-                foreach ($todas as $f) {
-                    if ($f['tipo'] !== 'subactividad') continue;
-                    $padre = $padres[(int)$f['actividad_id']] ?? null;
-                    if ($padre && $coincide($f, true, $padre)) $padreConHijo[(int)$f['actividad_id']] = true;
-                }
-            }
-
-            $filas = [];
-            $cabecera = null;
-            $mostrarHijos = false;
-            foreach ($todas as $f) {
-                if ($f['tipo'] === 'partida') {
-                    $cabecera = (!$filtros['partida'] || (int)$f['id'] === $filtros['partida']) ? $f : null;
-                    // Solo filtro por partida: se muestra aunque no tenga actividades
-                    if ($cabecera && !$hayFiltroAct) { $filas[] = $cabecera; $cabecera = null; }
-                    $mostrarHijos = false;
-                    continue;
-                }
-                $partidaOk = !$filtros['partida'] || (int)$f['partida_id'] === $filtros['partida'];
-                if ($f['tipo'] === 'subactividad') {
-                    if (!$partidaOk || !$mostrarHijos) continue;
-                    if ($hayFiltroAct && !$coincide($f, true, $padres[(int)$f['actividad_id']] ?? null)) continue;
-                    $filas[] = $f;
-                    continue;
-                }
-                // Actividad
-                if (!$partidaOk) { $mostrarHijos = false; continue; }
-                $mostrar = !$hayFiltroAct || $coincide($f, false, null) || !empty($padreConHijo[(int)$f['id']]);
-                $mostrarHijos = $mostrar;
-                if (!$mostrar) continue;
-                if ($cabecera) { $filas[] = $cabecera; $cabecera = null; }
-                $filas[] = $f;
-            }
-        }
+        $filas = ProgramaFilas::filtrar($todas, $filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp);
 
         // Programas grandes: la tabla y el Gantt se pintan por tramos (300 filas por defecto).
         // «Mostrar más» recarga con ?filas=N en vez de renderizar miles de filas de golpe.
