@@ -135,6 +135,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                 </select>
                 <label class="text-sm text-muted" for="fecha_ref">Semana de referencia</label>
                 <input type="date" id="fecha_ref" name="fecha_ref" value="<?php echo s($lunes->format('Y-m-d')); ?>" required>
+                <label class="text-sm"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades</label>
                 <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="4WLA" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar Lookahead</button>
             </form>
@@ -197,6 +198,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                     <option value="2">2 columnas × 3 filas (6 por hoja, margen cómodo)</option>
                     <option value="3">3 columnas × 3 filas (9 por hoja, margen mínimo)</option>
                 </select>
+                <label class="text-sm"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades</label>
                 <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="LastPlanner" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar Last Planner</button>
             </form>

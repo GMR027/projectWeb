@@ -20,7 +20,7 @@ class LookaheadPdfExporter extends BaseExporter
     {
         $proyecto = $this->proyecto;
         $lunes = $this->lunes ?? LookaheadController::lunesDe('');
-        $datos = LookaheadController::datos($proyecto, $lunes);
+        $datos = LookaheadController::datos($proyecto, $lunes, $this->incluirSubactividades);
         extract($datos);
 
         // Logos (empresa y contratista) en base64; webp se convierte a PNG

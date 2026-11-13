@@ -36,6 +36,12 @@
                     <i class="fa-solid fa-plus"></i> Crear Actividad
                 </button>
             <?php endif; ?>
+            <form method="get" action="/calendario" style="display:inline-flex;align-items:center;gap:.4rem">
+                <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+                <input type="hidden" name="mes" value="<?php echo s($mesActual); ?>">
+                <input type="hidden" name="sub" value="0">
+                <label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?> onchange="this.form.submit()"> Subactividades</label>
+            </form>
             <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesAnterior); ?>" class="btn btn-sm btn-ghost">
                 <i class="fa-solid fa-chevron-left"></i> Anterior
             </a>
@@ -108,13 +114,13 @@
                     <?php endif; ?>
                     <?php if ($tieneActividades): ?>
                         <div class="dia-actividades">
-                            <?php foreach (array_slice($actividadesPorDia[$dia], 0, 2) as $item): ?>
-                                <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>"
-                                   <?php echo $puedeGestionar ? 'data-editar-actividad="' . (int)$item['actividad']->id . '"' : ''; ?>
-                                   class="dia-actividad status-<?php echo s($item['actividad']->status); ?>"
+                            <?php foreach (array_slice($actividadesPorDia[$dia], 0, 2) as $item): $esSub = ($item['tipo'] ?? '') === 'subactividad'; ?>
+                                <a href="<?php echo $esSub ? '/programa/subactividades/editar?id=' . (int)$item['actividad']->id . '&volver=programa' : '/programa/actividades/editar?id=' . (int)$item['actividad']->id; ?>"
+                                   <?php echo $puedeGestionar && !$esSub ? 'data-editar-actividad="' . (int)$item['actividad']->id . '"' : ''; ?>
+                                   class="dia-actividad status-<?php echo s($item['actividad']->status); ?><?php echo $esSub ? ' dia-actividad-sub' : ''; ?>"
                                    title="<?php echo s($item['actividad']->codigo . ': ' . $item['actividad']->nombre . ' (' . $item['actividad']->progreso . '%)'); ?>">
                                     <div class="dia-actividad-codigo"><?php echo s($item['actividad']->codigo); ?></div>
-                                    <div class="dia-actividad-nombre"><?php echo s($item['actividad']->nombre); ?></div>
+                                    <div class="dia-actividad-nombre"><?php echo $esSub ? '↳ ' : ''; ?><?php echo s($item['actividad']->nombre); ?></div>
                                     <div class="dia-actividad-progreso"><?php echo s($item['actividad']->progreso); ?>%</div>
                                 </a>
                             <?php endforeach; ?>
@@ -132,7 +138,7 @@
 
     <?php if (!empty($actividades)): ?>
         <h4 style="margin-top: 2rem;">
-            <i class="fa-solid fa-list-check"></i> Actividades del Mes (<?php echo count($actividades); ?>)
+            <i class="fa-solid fa-list-check"></i> Actividades y subactividades del Mes (<?php echo count($actividades); ?>)
         </h4>
         <div class="tabla-wrapper">
             <table class="tabla">
@@ -148,10 +154,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($actividades as $item): ?>
-                        <tr>
+                    <?php foreach ($actividades as $item): $esSub = ($item['tipo'] ?? '') === 'subactividad'; ?>
+                        <tr class="<?php echo $esSub ? 'cal-fila-sub' : ''; ?>">
                             <td class="mono"><?php echo s($item['actividad']->codigo); ?></td>
-                            <td><?php echo s($item['actividad']->nombre); ?></td>
+                            <td><?php echo $esSub ? '↳ ' : ''; ?><?php echo s($item['actividad']->nombre); ?></td>
                             <td class="text-sm text-muted hide-m"><?php echo s($item['partida']->nombre); ?></td>
                             <td class="mono hide-m"><?php echo s($item['actividad']->progreso); ?>%</td>
                             <td>
@@ -162,9 +168,11 @@
                             <td class="mono hide-m"><?php echo s(implode(', ', $item['dias_en_mes'])); ?></td>
                             <?php if (puede_gestionar_proyecto($proyecto)): ?>
                                 <td>
-                                    <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>" data-editar-actividad="<?php echo (int)$item['actividad']->id; ?>" class="btn btn-xs btn-ghost">
-                                        <i class="fa-solid fa-pen"></i> Editar
-                                    </a>
+                                    <?php if ($esSub): ?>
+                                        <a href="/programa/subactividades/editar?id=<?php echo s($item['actividad']->id); ?>&volver=programa" class="btn btn-xs btn-ghost"><i class="fa-solid fa-pen"></i> Editar</a>
+                                    <?php else: ?>
+                                        <a href="/programa/actividades/editar?id=<?php echo s($item['actividad']->id); ?>" data-editar-actividad="<?php echo (int)$item['actividad']->id; ?>" class="btn btn-xs btn-ghost"><i class="fa-solid fa-pen"></i> Editar</a>
+                                    <?php endif; ?>
                                 </td>
                             <?php endif; ?>
                         </tr>

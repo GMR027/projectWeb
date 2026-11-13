@@ -60,7 +60,7 @@ $y0 = (27.94 - $altoGrid) / 2;
                                 <?php foreach ($t['items'] as $it): ?>
                                     <tr>
                                         <td class="nom">
-                                            <?php if ($it['completada']): ?><span class="verde rb">◆</span> <?php endif; ?><?php if ($it['proceso']): ?><span class="amarillo rb">◆</span> <?php endif; ?><?php if ($it['restriccion']): ?><span class="rojo rb">◆</span> <?php endif; ?><?php if (!empty($it['partida'])): ?><span style="font-family:DejaVu Sans Mono,monospace;font-size:5pt;font-weight:bold;background:#e5e7eb">&nbsp;<?php echo s($it['partida']->codigo); ?>&nbsp;</span> <?php endif; ?><?php echo s(mb_strimwidth($it['actividad']->nombre, 0, 78, '…')); ?>
+                                            <?php if ($it['completada']): ?><span class="verde rb">◆</span> <?php endif; ?><?php if ($it['proceso']): ?><span class="amarillo rb">◆</span> <?php endif; ?><?php if ($it['restriccion']): ?><span class="rojo rb">◆</span> <?php endif; ?><?php if (!empty($it['partida'])): ?><span style="font-family:DejaVu Sans Mono,monospace;font-size:5pt;font-weight:bold;background:#e5e7eb">&nbsp;<?php echo s($it['partida']->codigo); ?>&nbsp;</span> <?php endif; ?><?php if (!empty($it['subactividad'])): ?>↳ <?php endif; ?><?php echo s(mb_strimwidth($it['actividad']->nombre, 0, 78, '…')); ?>
                                         </td>
                                         <td class="dias"><?php echo (int)$it['dias']; ?></td>
                                     </tr>

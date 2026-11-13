@@ -557,8 +557,8 @@ class AjustesController
                 $omitidos[] = 'Presupuesto: el catálogo está vacío';
             }
         }
-        if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setFechaReferencia($lunes)->generar("4WLA"));
-        if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
+        if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFechaReferencia($lunes)->generar("4WLA"));
+        if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
 
         if ($quiere('msr_pdf') || $quiere('msr_xlsx')) {
             $hayMsr = false;
@@ -683,12 +683,15 @@ class AjustesController
                     break;
                 case 'lookahead':
                     $salida = $_POST['salida'] ?? 'pdf';
+                    $incluirSubLt = !empty($_POST['subactividades']);
                     if (in_array($salida, ['xlsx', 'ods'], true)) {
                         $exporter = (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))
+                            ->setIncluirSubactividades($incluirSubLt)
                             ->setFormato($salida)
                             ->setFechaReferencia($_POST['fecha_ref'] ?? '');
                     } else {
                         $exporter = (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))
+                            ->setIncluirSubactividades($incluirSubLt)
                             ->setFechaReferencia($_POST['fecha_ref'] ?? '');
                     }
                     break;
@@ -700,7 +703,7 @@ class AjustesController
                     }
                     break;
                 case 'lastplanner':
-                    $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setOpciones(
+                    $exporter = (new \Classes\Exportadores\LastPlannerPdfExporter($proyecto))->setIncluirSubactividades(!empty($_POST['subactividades']))->setOpciones(
                         $_POST['partida_id'] ?? 'todas', (int)($_POST['columnas'] ?? 2)
                     )->setFiltros(
                         texto_param($_POST['periodo'] ?? ''), texto_param($_POST['desde'] ?? ''), texto_param($_POST['hasta'] ?? ''),

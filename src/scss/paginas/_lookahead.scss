@@ -64,6 +64,11 @@
     border-left: 4px solid var(--la-color, var(--border-accent)); }
   .la-partida .la-id { text-align: center; }
 
+  .la-subactividad {
+    .la-id { color: var(--text-dim); }
+    .la-nombre { padding-left: 2.4rem; font-size: .95em; }
+  }
+
   .la-actividad {
     .la-id { background: var(--surface); }
     .la-nombre { text-align: left; min-width: 36rem; width: 36rem; position: sticky; left: 5.4rem; background: var(--surface); z-index: 2; }
@@ -212,6 +217,7 @@ $e: 1.7;
   .lp-cuerpo { flex: 1; padding: .1cm * $e .2cm * $e; overflow: hidden; }
   .lp-cab { display: flex; justify-content: space-between; font-size: 6px * $e; margin-bottom: .1cm * $e; }
   .lp-act { display: flex; justify-content: space-between; gap: .2cm * $e; border-bottom: 1px dotted #888; padding: .08cm * $e 0; font-size: 9px * $e; line-height: 1.15; }
+  .lp-act.lp-sub { padding-left: 1.2em; font-style: italic; }
   .lp-nom { flex: 1; .lp-rombo { font-size: 21px * $e; margin-right: .06cm * $e; vertical-align: -1px; } }
   .lp-indicador { display: flex; flex-direction: column; justify-content: center; gap: .05cm * $e;
     .lp-ind { font-size: 6px * $e; white-space: nowrap; .lp-rombo { font-size: 16px * $e; vertical-align: -1px; } } }

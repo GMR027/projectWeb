@@ -376,6 +376,24 @@
   }
 }
 
+.dia-actividad.dia-actividad-sub {
+  border-style: dashed;
+  margin-left: 0.7rem;
+  opacity: 0.92;
+}
+
+.cal-fila-sub {
+  background: rgba(128, 128, 128, 0.045);
+
+  td {
+    font-size: 0.95em;
+  }
+
+  td:nth-child(2) {
+    padding-left: 2.2rem;
+  }
+}
+
 .dia-actividad-mas {
   padding: 0.2rem 0.5rem;
   font-family: $font-mono;

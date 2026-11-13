@@ -40,6 +40,12 @@ $colsExtra = ($verComp ? 1 : 0) + ($verPta ? 1 : 0);    // % Comp y PTA (van tra
                 <?php $cursor->modify('+1 month'); ?>
             <?php endwhile; ?>
         </select>
+        <form method="get" action="/lookahead" class="no-print" style="display:inline-flex;align-items:center;gap:.4rem">
+            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+            <input type="hidden" name="fecha" value="<?php echo s($lunes->format('Y-m-d')); ?>">
+            <input type="hidden" name="sub" value="0">
+            <label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?> onchange="this.form.submit()"> <?php echo s(t('Mostrar subactividades')); ?></label>
+        </form>
         <?php if ($puedeEditar): ?>
         <span class="la-semanas-ctl" title="Semanas visibles después de la actual (no se imprime)">
             <button type="button" class="btn btn-ghost btn-sm" id="la-menos" <?php echo $nSig <= \Model\LookaheadConfig::MIN_SEMANAS ? 'disabled' : ''; ?> aria-label="Quitar una semana"><i class="fa-solid fa-minus"></i></button>
@@ -149,13 +155,14 @@ $colsExtra = ($verComp ? 1 : 0) + ($verPta ? 1 : 0);    // % Comp y PTA (van tra
                     <?php if ($verId): ?><td class="la-id"><?php echo s($partida->codigo); ?></td><?php endif; ?>
                     <td colspan="<?php echo 1 + $totalCols + $colsExtra + $nLim; ?>"><?php echo s($partida->nombre); ?></td>
                 </tr>
-                <?php foreach ($bloque['actividades'] as $fila): $act = $fila['actividad']; ?>
-                    <tr class="la-actividad">
+                <?php foreach ($bloque['actividades'] as $fila): $act = $fila['actividad']; $esSub = ($fila['tipo'] ?? '') === 'subactividad'; ?>
+                    <tr class="la-actividad<?php echo $esSub ? ' la-subactividad' : ''; ?>">
                         <?php if ($verId): ?><td class="la-id"><?php echo s($act->codigo); ?></td><?php endif; ?>
                         <td class="la-nombre <?php echo $fila['atrasada'] ? 'la-atrasada' : ''; ?>">
+                            <?php if ($esSub): ?><i class="fa-solid fa-turn-up fa-rotate-90 text-dim" aria-hidden="true"></i><?php endif; ?>
                             <?php echo s($act->nombre); ?>
                             <?php if ($fila['atrasada']): ?><span class="la-tag">Atrasada</span><?php endif; ?>
-                            <?php echo \Classes\Salud::insignia(\Classes\Salud::riesgosActividades((int)$proyecto->id), (int)$act->id); ?>
+                            <?php if (!$esSub) echo \Classes\Salud::insignia(\Classes\Salud::riesgosActividades((int)$proyecto->id), (int)$act->id); ?>
                         </td>
                         <?php foreach ($semanas as $i => $sem): ?>
                             <?php foreach ($sem['dias'] as $d): ?>
@@ -172,7 +179,7 @@ $colsExtra = ($verComp ? 1 : 0) + ($verPta ? 1 : 0);    // % Comp y PTA (van tra
                                 <?php if ($verComp): ?><td class="la-comp <?php echo (int)$act->progreso >= 100 ? 'la-comp-ok' : ((int)$act->progreso > 0 ? 'la-comp-parcial' : ''); ?>"><?php echo s((int)$act->progreso); ?>%</td><?php endif; ?>
                                 <?php if ($verPta): ?><td class="la-pta-celda hide-m">
                                     <?php if ($puedeEditar): ?>
-                                        <button type="button" class="la-pta-btn <?php echo $fila['pta_ok'] ? 'la-pta-ok' : 'la-pta-no'; ?>" data-actividad="<?php echo s($act->id); ?>" title="Clic para alternar OK / !"><?php echo $fila['pta_ok'] ? 'OK' : '!'; ?></button>
+                                        <button type="button" class="la-pta-btn <?php echo $fila['pta_ok'] ? 'la-pta-ok' : 'la-pta-no'; ?>" <?php if ($esSub): ?>data-subactividad="<?php echo s($act->id); ?>"<?php else: ?>data-actividad="<?php echo s($act->id); ?>"<?php endif; ?> title="Clic para alternar OK / !"><?php echo $fila['pta_ok'] ? 'OK' : '!'; ?></button>
                                     <?php else: ?>
                                         <span class="<?php echo $fila['pta_ok'] ? 'la-pta-ok' : 'la-pta-no'; ?>"><?php echo $fila['pta_ok'] ? 'OK' : '!'; ?></span>
                                     <?php endif; ?>
@@ -241,10 +248,13 @@ document.querySelectorAll('.la-pta-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
+            const cuerpo = btn.dataset.subactividad
+                ? 'subactividad_id=' + encodeURIComponent(btn.dataset.subactividad) + '&tipo=subactividad'
+                : 'actividad_id=' + encodeURIComponent(btn.dataset.actividad);
             const r = await fetch('/api/actividad/pta', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'actividad_id=' + encodeURIComponent(btn.dataset.actividad)
+                body: cuerpo
             });
             const d = await r.json();
             if (!d.success) throw new Error(d.error);

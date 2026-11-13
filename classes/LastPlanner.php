@@ -32,7 +32,7 @@ class LastPlanner
     /**
      * @return array[] tarjetas ['fecha','partida','items'=>[['actividad','dias','completada','restriccion']],'parte','partes']
      */
-    public static function tarjetas(Proyecto $proyecto, Partida $partida, string $desde, string $hasta, bool $ocultarCompletadas = false): array
+    public static function tarjetas(Proyecto $proyecto, Partida $partida, string $desde, string $hasta, bool $ocultarCompletadas = false, bool $incluirSub = true): array
     {
         $acts = $partida->getActividades();
         if ($ocultarCompletadas) {
@@ -43,9 +43,18 @@ class LastPlanner
         $cal = new Calendario((int)$proyecto->id);
         $restricciones = \Controllers\LookaheadController::restriccionesActivas((int)$proyecto->id);
         $riesgos = Salud::riesgosActividades((int)$proyecto->id);
+        $subs = $incluirSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
 
-        $ini = min(array_map(fn($a) => $a->fecha_inicio, $acts));
-        $fin = max(array_map(fn($a) => $a->fecha_fin, $acts));
+        // Actividades + subactividades como ítems del día. La subactividad conserva su padre para el contexto.
+        $nodos = [];
+        foreach ($acts as $a) {
+            $nodos[] = [$a, null];
+            foreach ($subs[(int)$a->id] ?? [] as $s) $nodos[] = [$s, $a];
+        }
+        if (!$nodos) return [];
+
+        $ini = min(array_map(fn($x) => $x[0]->fecha_inicio, $nodos));
+        $fin = max(array_map(fn($x) => $x[0]->fecha_fin, $nodos));
 
         // Días hábiles acumulados desde el primer inicio; restantes(d, fin) = acum[fin] - acum[d]
         $acum = self::acumuladoHabil($cal, $ini, $fin);
@@ -57,15 +66,18 @@ class LastPlanner
             $dia = $d->format('Y-m-d');
             if (!$cal->esHabil($dia)) continue;
             $items = [];
-            foreach ($acts as $a) {
+            foreach ($nodos as [$a, $padre]) {
                 if ($a->fecha_inicio <= $dia && $dia <= $a->fecha_fin) {
+                    $ref = $padre ? (int)$padre->id : (int)$a->id;
                     $items[] = [
                         'actividad' => $a,
+                        'padre' => $padre,
+                        'subactividad' => $padre !== null,
                         'dias' => ($acum[$a->fecha_fin] ?? $acum[$dia]) - $acum[$dia],   // 0 el último día
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
-                        'restriccion' => !empty($restricciones[$a->id]),
-                        'riesgo' => implode(' · ', array_column($riesgos[$a->id] ?? [], 'texto')),
+                        'restriccion' => !empty($restricciones[$ref]),
+                        'riesgo' => implode(' · ', array_column($riesgos[$ref] ?? [], 'texto')),
                     ];
                 }
             }
@@ -97,13 +109,18 @@ class LastPlanner
         return array_values(array_filter($tarjetas, fn($t) => array_filter($t['items'], fn($i) => !empty($i['restriccion']))));
     }
 
-    public static function tarjetasTodas(Proyecto $proyecto, bool $ocultarCompletadas = false, string $desde = '1900-01-01', string $hasta = '2999-12-31'): array
+    public static function tarjetasTodas(Proyecto $proyecto, bool $ocultarCompletadas = false, string $desde = '1900-01-01', string $hasta = '2999-12-31', bool $incluirSub = true): array
     {
         $acts = [];
+        $subs = $incluirSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
         foreach ($proyecto->getPartidasConActividades() as $bloque) {
             foreach ($bloque['actividades'] as $a) {
                 if ($ocultarCompletadas && self::completada($a)) continue;
-                $acts[] = [$bloque['partida'], $a];
+                $acts[] = [$bloque['partida'], $a, null];
+                foreach ($subs[(int)$a->id] ?? [] as $s) {
+                    if ($ocultarCompletadas && self::completada($s)) continue;
+                    $acts[] = [$bloque['partida'], $s, $a];
+                }
             }
         }
         if (!$acts) return [];
@@ -124,15 +141,17 @@ class LastPlanner
             $dia = $d->format('Y-m-d');
             if (!$cal->esHabil($dia)) continue;
             $items = [];
-            foreach ($acts as [$partida, $a]) {
+            foreach ($acts as [$partida, $a, $padre]) {
                 if ($a->fecha_inicio <= $dia && $dia <= $a->fecha_fin) {
+                    $ref = $padre ? (int)$padre->id : (int)$a->id;
                     $items[] = [
                         'actividad' => $a, 'partida' => $partida,
+                        'padre' => $padre, 'subactividad' => $padre !== null,
                         'dias' => ($acum[$a->fecha_fin] ?? $acum[$dia]) - $acum[$dia],
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
-                        'restriccion' => !empty($restricciones[$a->id]),
-                        'riesgo' => implode(' · ', array_column($riesgos[$a->id] ?? [], 'texto')),
+                        'restriccion' => !empty($restricciones[$ref]),
+                        'riesgo' => implode(' · ', array_column($riesgos[$ref] ?? [], 'texto')),
                     ];
                 }
             }

@@ -59,14 +59,20 @@ class LookaheadController
         return (int)$ref->format('N') === 1 ? $ref : $ref->modify('last monday');
     }
 
-    /** Datos del 4WLA (también los usa el exportador PDF) */
-    public static function datos(Proyecto $proyecto, \DateTime $lunes): array
+    /** Datos del 4WLA (también los usan los exportadores PDF/Excel) */
+    public static function datos(Proyecto $proyecto, \DateTime $lunes, ?bool $incluirSub = null): array
     {
         $calendario = new Calendario((int)$proyecto->id);
         $config = LookaheadConfig::deProyecto((int)$proyecto->id);
         $semanas = self::armarSemanas($lunes, $calendario, (int)$config->semanas);
         $tipos = TipoRestriccion::all('id ASC');
         $restricciones = self::restriccionesActivas((int)$proyecto->id);
+
+        if ($incluirSub === null) {
+            $subParam = $_GET['sub'] ?? null;
+            $incluirSub = $subParam === '1' ? true : ($subParam === '0' ? false : (bool)($proyecto->mostrar_subactividades ?? 0));
+        }
+        $subsPorActividad = $incluirSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
 
         $filas = [];
         foreach ($proyecto->getPartidasConActividades() as $bloque) {
@@ -82,6 +88,7 @@ class LookaheadController
                     }
                 }
                 $acts[] = [
+                    'tipo' => 'actividad',
                     'actividad' => $act,
                     'celdas' => $celdas,
                     'tipos' => $porTipo,
@@ -89,31 +96,59 @@ class LookaheadController
                     'con_restriccion' => !empty($porTipo),
                     'atrasada' => $atrasada,
                 ];
+
+                if (!$incluirSub) continue;
+                foreach ($subsPorActividad[(int)$act->id] ?? [] as $i => $sub) {
+                    $sub->codigo = $act->codigo . '.' . ($i + 1);
+                    $celdasSub = [];
+                    foreach ($semanas as $sem) {
+                        foreach ($sem['dias'] as $d) {
+                            $celdasSub[$d['fecha']] = $d['fecha'] >= $sub->fecha_inicio && $d['fecha'] <= $sub->fecha_fin && $d['habil'];
+                        }
+                    }
+                    $acts[] = [
+                        'tipo' => 'subactividad',
+                        'actividad' => $sub,
+                        'actividad_id' => (int)$act->id,
+                        'celdas' => $celdasSub,
+                        'tipos' => [],   // las restricciones propias llegan en la fase de restricciones
+                        'pta_ok' => (int)$sub->pta === 1,
+                        'con_restriccion' => false,
+                        'atrasada' => $sub->fecha_fin < $lunes->format('Y-m-d') && (int)$sub->progreso < 100,
+                    ];
+                }
             }
             if ($acts) {
                 $filas[] = ['partida' => $partida, 'actividades' => $acts];
             }
         }
 
-        return ['semanas' => $semanas, 'tipos' => $tipos, 'filas' => $filas, 'config' => $config];
+        return ['semanas' => $semanas, 'tipos' => $tipos, 'filas' => $filas, 'config' => $config, 'mostrarSub' => $incluirSub];
     }
 
-    /** Alterna PTA (OK / !) de una actividad. Solo quien gestiona el proyecto. */
+    /** Alterna PTA (OK / !) de una actividad o de una subactividad. Solo quien gestiona el proyecto. */
     public static function togglePta()
     {
         header('Content-Type: application/json');
-        $act = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth()
-            ? \Model\Actividad::find(filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT))
-            : null;
+        $post = $_SERVER['REQUEST_METHOD'] === 'POST' && is_auth();
+        $sub = $post ? \Model\Subactividad::find(filter_var($_POST['subactividad_id'] ?? null, FILTER_VALIDATE_INT)) : null;
+        $act = $sub ? \Model\Actividad::find((int)$sub->actividad_id) : ($post ? \Model\Actividad::find(filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT)) : null);
         $partida = $act ? \Model\Partida::find($act->partida_id) : null;
         if (!$partida || !puede_gestionar_proyecto(Proyecto::find($partida->proyecto_id))) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             exit;
         }
-        $act->pta = (int)$act->pta === 1 ? 0 : 1;
-        $act->guardar();
-        echo json_encode(['success' => true, 'pta' => (int)$act->pta]);
+        if ($sub) {
+            $sub->pta = (int)$sub->pta === 1 ? 0 : 1;
+            $sub->guardar();
+            $pta = (int)$sub->pta;
+        } else {
+            $act->pta = (int)$act->pta === 1 ? 0 : 1;
+            $act->guardar();
+            $pta = (int)$act->pta;
+        }
+        echo json_encode(['success' => true, 'pta' => $pta]);
         exit;
     }
 

@@ -31,6 +31,8 @@ class Subactividad extends ActiveRecord
     public $actividad_id;
     public $calendario_id;
     public $frente_id;
+    /** Código derivado del padre (no es columna: se rellena al consultar) */
+    public $codigo;
     public $nombre;
     public $descripcion;
     public $fecha_inicio;
@@ -68,6 +70,7 @@ class Subactividad extends ActiveRecord
         $this->actividad_id = $args['actividad_id'] ?? null;
         $this->calendario_id = $args['calendario_id'] ?? null;
         $this->frente_id = $args['frente_id'] ?? null;
+        $this->codigo = $args['codigo'] ?? '';
         $this->nombre = $args['nombre'] ?? '';
         $this->descripcion = $args['descripcion'] ?? '';
         $this->fecha_inicio = $args['fecha_inicio'] ?? null;

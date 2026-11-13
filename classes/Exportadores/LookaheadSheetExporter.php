@@ -35,7 +35,7 @@ class LookaheadSheetExporter extends BaseExporter
     {
         $p = $this->proyecto;
         $lunes = $this->lunes ?? LookaheadController::lunesDe('');
-        $d = LookaheadController::datos($p, $lunes);
+        $d = LookaheadController::datos($p, $lunes, $this->incluirSubactividades);
         $semanas = $d['semanas'];
         $tipos = $d['tipos'];
 
@@ -143,8 +143,10 @@ class LookaheadSheetExporter extends BaseExporter
             $r++;
             foreach ($bloque['actividades'] as $f) {
                 $act = $f['actividad'];
+                $esSub = ($f['tipo'] ?? '') === 'subactividad';
                 $hoja->setCellValueExplicit('A' . $r, (string)$act->codigo, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                $hoja->setCellValue('B' . $r, $act->nombre);
+                $hoja->setCellValue('B' . $r, ($esSub ? '↳ ' : '') . $act->nombre);
+                if ($esSub) $hoja->getStyle('A' . $r . ':B' . $r)->getFont()->getColor()->setRGB('475569');
                 if ($f['atrasada']) $hoja->getStyle('B' . $r)->getFont()->getColor()->setRGB('DC2626');
 
                 $colorX = self::COLOR_X[$f['con_restriccion'] ? 'restriccion' : $act->status] ?? '555555';

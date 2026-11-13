@@ -23,7 +23,9 @@ class CalendarioController
         $festivos = $proyecto->getFestivos();
         $mesActual = $_GET['mes'] ?? date('Y-m');
         $calendario = new Calendario($proyectoId);
-        $actividades = self::obtenerActividadesDelMes($proyecto, $mesActual);
+        $subParam = $_GET['sub'] ?? null;
+        $mostrarSub = $subParam === '1' ? true : ($subParam === '0' ? false : (bool)($proyecto->mostrar_subactividades ?? 0));
+        $actividades = self::obtenerActividadesDelMes($proyecto, $mesActual, $mostrarSub);
 
         $router->render('calendario/index', [
             'titulo' => 'Calendario - ' . $proyecto->nombre,
@@ -31,15 +33,17 @@ class CalendarioController
             'festivos' => $festivos,
             'mesActual' => $mesActual,
             'actividades' => $actividades,
-            'calendario' => $calendario
+            'calendario' => $calendario,
+            'mostrarSub' => $mostrarSub,
         ]);
     }
 
-    private static function obtenerActividadesDelMes(Proyecto $proyecto, string $mesYmd): array
+    private static function obtenerActividadesDelMes(Proyecto $proyecto, string $mesYmd, bool $incluirSub = false): array
     {
         $inicioMes = new \DateTime($mesYmd . '-01');
         $finMes = clone $inicioMes;
         $finMes->modify('last day of this month');
+        $subs = $incluirSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
 
         $resultado = [];
         foreach ($proyecto->getPartidasConActividades() as $bloque) {
@@ -50,9 +54,25 @@ class CalendarioController
 
                 if ($inicioAct <= $finMes && $finAct >= $inicioMes) {
                     $resultado[] = [
+                        'tipo' => 'actividad',
                         'actividad' => $act,
                         'partida' => $partida,
                         'dias_en_mes' => self::calcularDiasEnMes($act, $inicioMes, $finMes)
+                    ];
+                }
+
+                foreach ($subs[(int)$act->id] ?? [] as $i => $sub) {
+                    if (!$sub->fecha_inicio || !$sub->fecha_fin) continue;
+                    $iniSub = new \DateTime($sub->fecha_inicio);
+                    $finSub = new \DateTime($sub->fecha_fin);
+                    if ($iniSub > $finMes || $finSub < $inicioMes) continue;
+                    $sub->codigo = $act->codigo . '.' . ($i + 1);
+                    $resultado[] = [
+                        'tipo' => 'subactividad',
+                        'actividad' => $sub,
+                        'padre' => $act,
+                        'partida' => $partida,
+                        'dias_en_mes' => self::calcularDiasEnMes($sub, $inicioMes, $finMes)
                     ];
                 }
             }

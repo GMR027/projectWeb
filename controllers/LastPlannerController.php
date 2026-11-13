@@ -27,7 +27,9 @@ class LastPlannerController
         $pMes = preg_match('/^\d{4}-\d{2}$/', texto_param($_GET['mes'] ?? '')) ? $_GET['mes'] : '';
         [$desde, $hasta] = LastPlanner::rangoPeriodo($periodo, $pDesde, $pHasta, $pMes);
 
-        $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto, false, $desde, $hasta) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, $desde, $hasta) : []);
+        $subParam = $_GET['sub'] ?? null;
+        $mostrarSub = $subParam === '1' ? true : ($subParam === '0' ? false : (bool)($proyecto->mostrar_subactividades ?? 0));
+        $tarjetas = $todas ? LastPlanner::tarjetasTodas($proyecto, false, $desde, $hasta, $mostrarSub) : ($partida ? LastPlanner::tarjetas($proyecto, $partida, $desde, $hasta, false, $mostrarSub) : []);
         $soloRestriccion = !empty($_GET['restriccion']);
         if ($soloRestriccion) $tarjetas = LastPlanner::conRestriccion($tarjetas);
 
@@ -41,6 +43,7 @@ class LastPlannerController
             'todas' => $todas,
             'tarjetas' => $tarjetas, 'soloRestriccion' => $soloRestriccion,
             'periodo' => $periodo, 'pDesde' => $pDesde, 'pHasta' => $pHasta, 'pMes' => $pMes,
+            'mostrarSub' => $mostrarSub,
         ]);
     }
 

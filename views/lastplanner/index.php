@@ -60,6 +60,7 @@
     <?php endif; ?>
     <div class="campo"><label for="lp-zoom">Tamaño <span id="lp-zoom-val">100%</span></label>
         <input type="range" id="lp-zoom" min="30" max="150" step="5" value="100"></div>
+    <div class="campo"><input type="hidden" name="sub" value="0"><label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?> onchange="this.form.submit()"> Mostrar subactividades</label></div>
 </form>
 <p class="text-muted text-sm lp-leyenda"><i class="lp-rombo lp-verde">◆</i> Actividad finalizada &nbsp; <i class="lp-rombo lp-amarillo">◆</i> Actividad en proceso &nbsp; <i class="lp-rombo lp-rojo">◆</i> Actividad con restricción activa &nbsp; <i class="lp-rombo lp-naranja">▲</i> En riesgo (material sin submittal aprobado, pendiente grave o permiso que falta) &nbsp; · Los post-it se calculan con el programa de obra: si cambian las fechas, se ajustan solos. Para imprimirlos usa <a href="/exportar?proyecto=<?php echo s($proyecto->id); ?>">Exportar</a>.</p>
 

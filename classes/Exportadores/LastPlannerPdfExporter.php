@@ -59,12 +59,12 @@ class LastPlannerPdfExporter extends BaseExporter
         $paginas = [];
         $total = 0;
         if ($this->partida === 'juntas') {
-            $t = $this->tarjetas(LastPlanner::tarjetasTodas($this->proyecto, false, $this->desde, $this->hasta));
+            $t = $this->tarjetas(LastPlanner::tarjetasTodas($this->proyecto, false, $this->desde, $this->hasta, $this->incluirSubactividades));
             $total += count($t);
             foreach (array_chunk($t, $porPagina) as $grupo) $paginas[] = $grupo;
         }
         foreach ($partidas as $p) {
-            $t = $this->tarjetas(LastPlanner::tarjetas($this->proyecto, $p, $this->desde, $this->hasta));
+            $t = $this->tarjetas(LastPlanner::tarjetas($this->proyecto, $p, $this->desde, $this->hasta, false, $this->incluirSubactividades));
             $total += count($t);
             foreach (array_chunk($t, $porPagina) as $grupo) $paginas[] = $grupo;
         }

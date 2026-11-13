@@ -28,6 +28,8 @@ $nDias = count($semanas) * 7;
     .partida td { background: #cfcfcf; font-weight: bold; text-align: left; text-transform: uppercase; }
     .id { font-size: 6pt; }
     .nom { text-align: left; }
+    .nom.sub { padding-left: 18px; color: #555; }
+    tr.sub td { background: #fafafa; }
     .x { font-weight: bold; font-size: 7pt; }
     .ok { color: #16a34a; font-weight: bold; }
     .no { color: #dc2626; font-weight: bold; }
@@ -86,11 +88,11 @@ if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $K
                 <td class="id"><?php echo s($partida->codigo); ?></td>
                 <td colspan="<?php echo $nDias + 3 + count($tipos); ?>"><?php echo s($partida->nombre); ?></td>
             </tr>
-            <?php foreach ($bloque['actividades'] as $f): $act = $f['actividad']; ?>
+            <?php foreach ($bloque['actividades'] as $f): $act = $f['actividad']; $esSub = ($f['tipo'] ?? '') === 'subactividad'; ?>
                 <?php $color = $colorX[$f['con_restriccion'] ? 'restriccion' : $act->status] ?? '#555'; $prog = (int)$act->progreso; ?>
-                <tr>
+                <tr class="<?php echo $esSub ? 'sub' : ''; ?>">
                     <td class="id"><?php echo s($act->codigo); ?></td>
-                    <td class="nom <?php echo $f['atrasada'] ? 'atr' : ''; ?>"><?php echo s($act->nombre); ?></td>
+                    <td class="nom <?php echo $f['atrasada'] ? 'atr' : ''; ?> <?php echo $esSub ? 'sub' : ''; ?>"><?php echo $esSub ? '↳ ' : ''; ?><?php echo s($act->nombre); ?></td>
                     <?php foreach ($semanas as $i => $sem): ?>
                         <?php foreach ($sem['dias'] as $d): $on = $f['celdas'][$d['fecha']] ?? false; ?>
                             <td class="<?php echo !$d['habil'] ? 'inh' : ''; ?> <?php echo $on ? 'x' : ''; ?>" <?php echo $on ? 'style="color:' . $color . '"' : ''; ?>><?php echo $on ? 'X' : '&nbsp;'; ?></td>

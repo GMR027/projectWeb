@@ -12,13 +12,14 @@ $ts = strtotime($t['fecha']);
     <div class="lp-cuerpo">
         <div class="lp-cab"><span>ACTIVIDAD:</span><span>DÍAS PARA TERMINAR:</span></div>
         <?php foreach ($t['items'] as $it): ?>
-            <div class="lp-act">
+            <div class="lp-act<?php echo !empty($it['subactividad']) ? ' lp-sub' : ''; ?>">
                 <span class="lp-nom">
                     <?php if ($it['completada']): ?><i class="lp-rombo lp-verde" title="Actividad finalizada">◆</i><?php endif; ?>
                     <?php if ($it['proceso']): ?><i class="lp-rombo lp-amarillo" title="Actividad en proceso">◆</i><?php endif; ?>
                     <?php if ($it['restriccion']): ?><i class="lp-rombo lp-rojo" title="Con restricción">◆</i><?php endif; ?>
                     <?php if (!empty($it['riesgo'])): ?><i class="lp-rombo lp-naranja" title="En riesgo: <?php echo s($it['riesgo']); ?>">▲</i><?php endif; ?>
                     <?php if (!empty($it['partida'])): ?><span class="lp-cod" title="<?php echo s($it['partida']->nombre); ?>"><?php echo s($it['partida']->codigo); ?></span><?php endif; ?>
+                    <?php if (!empty($it['subactividad'])): ?><span title="Subactividad">↳</span><?php endif; ?>
                     <?php echo s($it['actividad']->nombre); ?>
                 </span>
                 <span class="lp-dias"><?php echo (int)$it['dias']; ?></span>
