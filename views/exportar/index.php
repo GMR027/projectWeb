@@ -267,6 +267,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                 ], 'Se muestran las de cualquier estado marcado.'); ?>
                 <label class="text-sm"><input type="checkbox" name="restriccion" value="1"> Solo con restricción</label>
                 <label class="text-sm"><input type="checkbox" name="icono" value="1"> Icono de actividad (disco sobre cada barra)</label>
+                <label class="text-sm"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades</label>
                 <label class="text-sm text-muted" for="lt_partida">Partida</label>
                 <select id="lt_partida" name="partida_id">
                     <option value="">Todas</option>

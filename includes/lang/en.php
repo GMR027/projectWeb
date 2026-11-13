@@ -448,6 +448,7 @@ return [
     'Mostrar 300 más' => 'Show 300 more',
     'Mostrar todo' => 'Show all',
     'Mostrar subactividades' => 'Show sub-activities',
+    'subactividades' => 'sub-activities',
     'Recientes' => 'Recent',
     'Buscar en los ajustes…' => 'Search settings…',
     'Buscar en los ajustes' => 'Search settings',

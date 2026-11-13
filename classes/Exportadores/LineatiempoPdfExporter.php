@@ -41,19 +41,23 @@ class LineatiempoPdfExporter extends BaseExporter
         $conIconos = !empty($lt['iconos']);
         $filaGrp = 26;
         $filaAct = $conIconos ? 82 : 30;
+        $filaSub = $conIconos ? 70 : max(16, (int)round($filaAct * 0.72));
+        $nSub = count(array_filter($lt['actividades'], fn($a) => ($a['tipo'] ?? '') === 'subactividad'));
+        $nAct = count($lt['actividades']) - $nSub;
         $filasVis = array_filter($lt['partidas'], function ($p) use ($lt) {
             return array_filter($lt['actividades'], fn($a) => (int)$a['partida_id'] === (int)$p['id']);
         });
-        $altoFilas = count($filasVis) * $filaGrp + count($lt['actividades']) * $filaAct;
+        $altoFilas = count($filasVis) * $filaGrp + $nAct * $filaAct + $nSub * $filaSub;
         // Tope de alto (los visores de PDF aguantan hojas de hasta ~200"): si hay demasiadas
         // actividades se estrechan las filas; nunca por debajo de 12 px.
         $maxFilas = 17000 - $eje - $cab;
         if ($altoFilas > $maxFilas) {
             $k = $maxFilas / $altoFilas;
             $filaAct = max(12, (int)($filaAct * $k));
+            $filaSub = max(12, (int)($filaSub * $k));
             $filaGrp = max(12, (int)($filaGrp * $k));
             $conIconos = $conIconos && $filaAct >= 48;
-            $altoFilas = count($filasVis) * $filaGrp + count($lt['actividades']) * $filaAct;
+            $altoFilas = count($filasVis) * $filaGrp + $nAct * $filaAct + $nSub * $filaSub;
         }
 
         // Meses del rango (como la banda de la vista)

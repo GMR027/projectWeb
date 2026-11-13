@@ -117,20 +117,30 @@ class LineatiempoSheetExporter extends BaseExporter
         $r = 9;
 
         foreach ($lt['partidas'] as $p) {
-            $acts = array_values(array_filter($lt['actividades'], fn($a) => (int)$a['partida_id'] === (int)$p['id']));
-            if (!$acts) continue;
+            $acts = array_values(array_filter($lt['actividades'], fn($a) => (int)$a['partida_id'] === (int)$p['id'] && ($a['tipo'] ?? '') !== 'subactividad'));
+            $subs = array_values(array_filter($lt['actividades'], fn($a) => (int)$a['partida_id'] === (int)$p['id'] && ($a['tipo'] ?? '') === 'subactividad'));
+            if (!$acts && !$subs) continue;
             $color = ltrim($p['color'] ?: '#3b82f6', '#');
 
             $hoja->mergeCells('A' . $r . ':' . $L($ultima) . $r);
-            $hoja->setCellValue('A' . $r, '◆ ' . $p['codigo'] . ' · ' . $p['nombre'] . ' (' . (int)$p['total'] . ' actividades'
+            $hoja->setCellValue('A' . $r, '◆ ' . $p['codigo'] . ' · ' . $p['nombre'] . ' (' . count($acts) . ' actividades'
+                . (count($subs) ? ' · ' . count($subs) . ' subactividades' : '')
                 . ($p['restricciones'] ? ', ' . (int)$p['restricciones'] . ' con restricción' : '') . ')');
             $relleno('A' . $r . ':' . $L($ultima) . $r, 'CFCFCF');
             $hoja->getStyle('A' . $r)->getFont()->setBold(true);
             $r++;
 
+            $filasLT = [];
             foreach ($acts as $a) {
+                $filasLT[] = [$a, false];
+                foreach ($subs as $s) if ((int)$s['actividad_id'] === (int)$a['id']) $filasLT[] = [$s, true];
+            }
+            foreach ($subs as $s) if (!in_array((int)$s['actividad_id'], array_map(fn($a) => (int)$a['id'], $acts), true)) $filasLT[] = [$s, true];
+
+            foreach ($filasLT as [$a, $esSub]) {
                 $hoja->setCellValueExplicit('A' . $r, (string)$a['codigo'], DataType::TYPE_STRING);
-                $hoja->setCellValue('B' . $r, $a['nombre']);
+                $hoja->setCellValue('B' . $r, ($esSub ? '↳ ' : '') . $a['nombre']);
+                if ($esSub) $hoja->getStyle('A' . $r . ':B' . $r)->getFont()->getColor()->setRGB('475569');
                 [$estTxt, $estColor] = $estados[$a['status']] ?? $estados['no_iniciada'];
                 $hoja->setCellValue('C' . $r, $estTxt);
                 $hoja->getStyle('C' . $r)->getFont()->getColor()->setRGB($estColor);

@@ -96,6 +96,8 @@ $leyenda = [
     .lab-grp i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
     .lab { font-size: 9px; color: #1f2937; padding-left: 14px; }
     .lab b { color: #0f172a; }
+    .lab.lab-sub { padding-left: 28px; font-size: 8.5px; color: #475569; background: #fafafa; }
+    .barra.barra-sub { border: 1px dashed rgba(0, 0, 0, .35); }
     .warn { color: #dc2626; font-weight: bold; }
 
     /* Filas del lienzo y barras */
@@ -164,8 +166,10 @@ $leyenda = [
             <?php $y += $filaGrp; ?>
 
             <?php foreach ($acts as $a):
-                $altoBarra = min(22, max(10, $filaAct - 8));
-                $yBarra = $y + (int)(($filaAct - $altoBarra) / 2);
+                $esSub = ($a['tipo'] ?? '') === 'subactividad';
+                $alto = $esSub ? $filaSub : $filaAct;
+                $altoBarra = min($esSub ? 16 : 22, max(8, $alto - 8));
+                $yBarra = $y + (int)(($alto - $altoBarra) / 2);
                 [$i0, $i1] = [max(0, $idxDe($a['fecha_inicio'])), min(count($lt['dias']) - 1, $idxDe($a['fecha_fin']))];
                 if ($i1 < $i0) $i1 = $i0;
                 $x0 = $etq + $i0 * $ppd;
@@ -175,7 +179,7 @@ $leyenda = [
                 // Etiqueta: código + nombre recortado al espacio real (con holguras: la negrita
                 // del código pesa ~15 % más que la métrica base)
                 $warnW = $a['restriccion'] ? 14 : 0;
-                $presupuesto = 236 - $warnW - $anchoTexto($a['codigo'], 9, 1.15) - 6;
+                $presupuesto = ($esSub ? 222 : 236) - $warnW - $anchoTexto($a['codigo'], 9, 1.15) - 6;
                 $nombre = $recortar((string)$a['nombre'], $presupuesto, 9, 1.06);
 
                 // Texto de la barra: tamaño ajustado para que quepa dentro (si no, no se dibuja)
@@ -188,18 +192,18 @@ $leyenda = [
                 }
                 $lhBarra = round($altoBarra / 2 + 0.26 * $ftxt, 1);   // texto centrado en la barra
                 $lhChip = round(8 + 0.26 * 10, 1);                     // glifo dentro del disco de 16 px
-                $lhLab = $filaAct <= 40 ? round($filaAct / 2 + 0.26 * 9, 1) : 16;
+                $lhLab = $alto <= 40 ? round($alto / 2 + 0.26 * 9, 1) : 16;
             ?>
                 <!-- Etiqueta -->
-                <div class="abs lab" style="left:0;top:<?php echo $y; ?>px;width:236px;height:<?php echo $filaAct; ?>px;line-height:<?php echo $lhLab; ?>px;white-space:nowrap"><b><?php echo $h($nb((string)$a['codigo'])); ?></b>&nbsp;<?php echo $h($nb($nombre)); ?><?php echo $a['restriccion'] ? '<span class="warn">&nbsp;⚠</span>' : ''; ?></div>
-                <div class="abs fila" style="left:<?php echo $etq; ?>px;top:<?php echo $y; ?>px;width:<?php echo $anchoTira; ?>px;height:<?php echo $filaAct - 1; ?>px"></div>
+                <div class="abs lab<?php echo $esSub ? ' lab-sub' : ''; ?>" style="left:0;top:<?php echo $y; ?>px;width:236px;height:<?php echo $alto; ?>px;line-height:<?php echo $lhLab; ?>px;white-space:nowrap"><b><?php echo $h($nb((string)$a['codigo'])); ?></b>&nbsp;<?php echo $h($nb($nombre)); ?><?php echo $a['restriccion'] ? '<span class="warn">&nbsp;⚠</span>' : ''; ?></div>
+                <div class="abs fila" style="left:<?php echo $etq; ?>px;top:<?php echo $y; ?>px;width:<?php echo $anchoTira; ?>px;height:<?php echo $alto - 1; ?>px"></div>
 
                 <?php if ($a['hito']): ?>
                     <!-- Hito: rombo sobre su día -->
                     <div class="abs hito" style="left:<?php echo $x0; ?>px;top:<?php echo $yBarra; ?>px;width:<?php echo max($ppd, 16); ?>px;height:<?php echo $altoBarra; ?>px;line-height:<?php echo round($altoBarra / 2 + 0.26 * 15, 1); ?>px">◆</div>
                 <?php else: ?>
                     <!-- Barra con su avance -->
-                    <div class="barra" style="left:<?php echo $x0; ?>px;top:<?php echo $yBarra; ?>px;width:<?php echo $anchoBarra; ?>px;height:<?php echo $altoBarra; ?>px;background:<?php echo $h($color); ?>">
+                    <div class="barra<?php echo $esSub ? ' barra-sub' : ''; ?>" style="left:<?php echo $x0; ?>px;top:<?php echo $yBarra; ?>px;width:<?php echo $anchoBarra; ?>px;height:<?php echo $altoBarra; ?>px;background:<?php echo $h($color); ?>">
                         <?php if ((int)$a['progreso'] > 0): ?><span class="fill" style="width:<?php echo min(100, (int)$a['progreso']); ?>%;background:<?php echo \Classes\Exportadores\LineatiempoPdfExporter::claro($color); ?>"></span><?php endif; ?>
                         <?php if ($txtBarra !== ''): ?><span class="txt" style="width:100%;line-height:<?php echo $lhBarra; ?>px;font-size:<?php echo $ftxt; ?>px"><?php echo $h($nb($txtBarra)); ?></span><?php endif; ?>
                     </div>
@@ -211,7 +215,7 @@ $leyenda = [
                 $xCip = $x0 + $anchoBarra + 5;
                 $maxCip = $etq + count($lt['dias']) * $ppd + 48 - $anchoChips;
                 if ($xCip > $maxCip) $xCip = max($x0 + 2, $maxCip);
-                $yChip = $y + (int)(($filaAct - 16) / 2);
+                $yChip = $y + (int)(($alto - 16) / 2);
                 ?>
                 <div class="chip" style="left:<?php echo $xCip; ?>px;top:<?php echo $yChip; ?>px;background:<?php echo $chipColor; ?>;line-height:<?php echo $lhChip; ?>px"><?php echo $chipGlifo; ?></div>
                 <?php if ($a['restriccion']): ?>
@@ -226,7 +230,7 @@ $leyenda = [
                     <?php endif; ?>
                 <?php endif; ?>
 
-                <?php $y += $filaAct; ?>
+                <?php $y += $alto; ?>
             <?php endforeach; ?>
         <?php endforeach; ?>
     </div>

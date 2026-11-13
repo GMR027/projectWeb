@@ -7,6 +7,7 @@ $qLT = http_build_query(array_filter([
     'estado' => $filtros['estado'],
     'restriccion' => $filtros['restriccion'] ? 1 : null,
     'icono' => $filtros['icono'] ? 1 : null,
+    'sub' => !empty($filtros['sub']) ? 1 : 0,
 ], fn($v) => $v !== null && $v !== ''));
 ?>
 <div class="page-header">
@@ -45,12 +46,14 @@ $qLT = http_build_query(array_filter([
     </select></label>
     <label class="campo-check"><input type="checkbox" name="restriccion" value="1"<?php echo $filtros['restriccion'] ? ' checked' : ''; ?> onchange="this.form.submit()"> <?php echo s(t('Solo con restricción')); ?></label>
     <label class="campo-check"><input type="checkbox" name="icono" value="1"<?php echo !empty($filtros['icono']) ? ' checked' : ''; ?> onchange="this.form.submit()"> <?php echo s(t('Icono de actividad')); ?></label>
+    <input type="hidden" name="sub" value="0">
+    <label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($filtros['sub']) ? ' checked' : ''; ?> onchange="this.form.submit()"> <?php echo s(t('Mostrar subactividades')); ?></label>
     <span class="lt-nav" role="group" aria-label="<?php echo s(t('Navegar por meses')); ?>">
         <button type="button" class="btn btn-sm btn-ghost" id="lt-prev" title="<?php echo s(t('Mes anterior')); ?>" aria-label="<?php echo s(t('Mes anterior')); ?>"><i class="fa-solid fa-chevron-left"></i></button>
         <button type="button" class="btn btn-sm btn-ghost" id="lt-hoy" title="<?php echo s(t('Hoy')); ?>" aria-label="<?php echo s(t('Hoy')); ?>"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button type="button" class="btn btn-sm btn-ghost" id="lt-next" title="<?php echo s(t('Mes siguiente')); ?>" aria-label="<?php echo s(t('Mes siguiente')); ?>"><i class="fa-solid fa-chevron-right"></i></button>
     </span>
-    <span class="lt-contador" aria-live="polite"><strong id="lt-cont-total"><?php echo (int)$lt['total']; ?></strong> <?php echo s(t('actividades')); ?><span id="lt-cont-restr"<?php echo $lt['conRestriccion'] ? '' : ' hidden'; ?>> · <strong id="lt-cont-restr-n"><?php echo (int)$lt['conRestriccion']; ?></strong> <?php echo s(t('con restricción')); ?></span></span>
+    <span class="lt-contador" aria-live="polite"><strong id="lt-cont-total"><?php echo (int)$lt['total']; ?></strong> <?php echo s(t('actividades')); ?><?php if (!empty($lt['totalSub'])): ?> · <strong><?php echo (int)$lt['totalSub']; ?></strong> <?php echo s(t('subactividades')); ?><?php endif; ?><span id="lt-cont-restr"<?php echo $lt['conRestriccion'] ? '' : ' hidden'; ?>> · <strong id="lt-cont-restr-n"><?php echo (int)$lt['conRestriccion']; ?></strong> <?php echo s(t('con restricción')); ?></span></span>
 </form>
 
 <div id="lt-aviso" class="lt-aviso" hidden aria-live="polite"></div>

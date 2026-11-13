@@ -745,6 +745,7 @@ class AjustesController
                         'estados' => $estadosLt,
                         'restriccion' => !empty($_POST['restriccion']),
                         'icono' => !empty($_POST['icono']),
+                        'sub' => !empty($_POST['subactividades']) ? '1' : '0',
                     ];
                     $nuevoExportador = function (array $d) use ($proyecto, $salida) {
                         $e = in_array($salida, ['ods', 'xlsx'], true)

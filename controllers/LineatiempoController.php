@@ -90,6 +90,7 @@ class LineatiempoController
                 'estado' => $_GET['estado'] ?? '',
                 'restriccion' => !empty($_GET['restriccion']),
                 'icono' => !empty($_GET['icono']),
+                'sub' => $_GET['sub'] ?? null,
             ];
         }
         $partidaFiltro = filter_var($f['partida'] ?? null, FILTER_VALIDATE_INT);
@@ -120,6 +121,12 @@ class LineatiempoController
         $restricciones = self::restriccionesActivas((int)$proyecto->id);   // [actividad_id => ['tipos' => [], 'texto' => '']]
         $iconos = self::iconosActividades((int)$proyecto->id);   // [actividad_id => '/build/img/…']
 
+        // Subactividades: mismo check que el programa, con el ajuste del proyecto como valor por defecto.
+        $subParam = $f['sub'] ?? null;
+        $mostrarSub = $subParam === '1' ? true : ($subParam === '0' ? false : (bool)($proyecto->mostrar_subactividades ?? 0));
+        $subsPorActividad = $mostrarSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
+        $cals = [];
+
         // Selector de partidas: todas las que tienen actividades (aunque el filtro actual no las muestre)
         $partidasSel = [];
         foreach ($todas as $a) {
@@ -127,22 +134,59 @@ class LineatiempoController
         }
         asort($partidasSel);
 
+        // Lista de nodos: actividad + sus subactividades (id de la subactividad con prefijo «s» para no chocar con la actividad)
+        $nodos = [];
+        foreach ($todas as $a) {
+            $a['tipo'] = 'actividad';
+            $propias = $subsPorActividad[(int)$a['id']] ?? [];
+            $a['con_sub'] = count($propias);
+            $nodos[] = $a;
+            foreach ($propias as $i => $s) {
+                $cid = (int)($s->calendario_id ?? 0);
+                $calSub = $cals[$cid] ??= new Calendario((int)$proyecto->id, $cid);
+                $nodos[] = [
+                    'id' => 's' . (int)$s->id,
+                    'tipo' => 'subactividad',
+                    'actividad_id' => (int)$a['id'],
+                    'partida_id' => (int)$a['partida_id'],
+                    'partida_codigo' => $a['partida_codigo'],
+                    'partida' => $a['partida'],
+                    'color' => $a['color'],
+                    'codigo' => $a['codigo'] . '.' . ($i + 1),
+                    'nombre' => (string)$s->nombre,
+                    'fecha_inicio' => (string)$s->fecha_inicio,
+                    'fecha_fin' => (string)$s->fecha_fin,
+                    'duracion_dias' => (int)ceil($s->duracion($calSub)),
+                    'hito' => $s->esHito() ? 1 : 0,
+                    'fecha_fija' => (int)$s->fecha_fija,
+                    'progreso' => (int)$s->progreso,
+                    'status' => $s->estado(),
+                    'calendario_id' => $s->calendario_id,
+                    'restriccion' => null,   // las propias llegan en la fase de restricciones
+                    'icono' => $s->urlIcono(),
+                    'con_sub' => 0,
+                ];
+            }
+        }
+
         $visibles = [];
         $conRestriccion = 0;
-        foreach ($todas as $a) {
-            $a['id'] = (int)$a['id'];
+        $totalSub = 0;
+        foreach ($nodos as $a) {
+            $a['id'] = $a['tipo'] === 'actividad' ? (int)$a['id'] : (string)$a['id'];
             $a['partida_id'] = (int)$a['partida_id'];
             $a['hito'] = (int)$a['hito'];
             $a['progreso'] = (int)$a['progreso'];
-            $a['restriccion'] = $restricciones[$a['id']] ?? null;
+            if ($a['tipo'] === 'actividad') $a['restriccion'] = $restricciones[(int)$a['id']] ?? null;
             if ($partidaFiltro && $a['partida_id'] !== $partidaFiltro) continue;
             if (!in_array($a['status'], $estadosSel, true)) continue;
             if ($soloRestriccion && !$a['restriccion']) continue;
             if (!$a['fecha_inicio'] || !$a['fecha_fin']) continue;
             if ($mes !== null && ($a['fecha_fin'] < $mesInicio || $a['fecha_inicio'] > $mesFin)) continue;   // solo lo de ese mes
-            $a['icono'] = $iconos[(int)$a['id']] ?? null;   // imagen subida a la actividad (si la tiene)
+            if ($a['tipo'] === 'actividad') $a['icono'] = $iconos[(int)$a['id']] ?? null;   // imagen subida a la actividad
             $visibles[] = $a;
             if ($a['restriccion']) $conRestriccion++;
+            if ($a['tipo'] === 'subactividad') $totalSub++;
         }
 
         // Partidas que quedaron con actividades visibles (con cuántas restricciones hay en ellas)
@@ -194,12 +238,13 @@ class LineatiempoController
             'lt' => [
                 'proyecto' => (int)$proyecto->id, 'inicio' => $inicioR, 'fin' => $finR,
                 'hoy' => $hoy, 'dias' => $dias, 'partidas' => array_values($partidas),
-                'actividades' => $visibles, 'total' => count($visibles), 'conRestriccion' => $conRestriccion,
+                'actividades' => $visibles, 'total' => count(array_filter($visibles, fn($x) => $x['tipo'] === 'actividad')),
+                'totalSub' => $totalSub, 'conRestriccion' => $conRestriccion,
                 'iconos' => $iconoActivo,
             ],
             'partidasSel' => $partidasSel,
             'filtros' => ['partida' => $partidaFiltro ?: 0, 'estado' => $estado, 'restriccion' => $soloRestriccion,
-                'icono' => $iconoActivo, 'estados' => $estadosSel, 'mes' => $mes],
+                'icono' => $iconoActivo, 'estados' => $estadosSel, 'mes' => $mes, 'sub' => $mostrarSub ? 1 : 0],
         ];
     }
 
@@ -233,6 +278,43 @@ class LineatiempoController
     public static function fechas()
     {
         $p = proyecto_api('gestionar');
+        $subId = filter_var($_POST['subactividad_id'] ?? null, FILTER_VALIDATE_INT);
+
+        // Subactividad: se mueve ella y se recalcula el envolvente de su actividad.
+        if ($subId) {
+            $sub = \Model\Subactividad::find($subId);
+            $actividad = $sub ? Actividad::find((int)$sub->actividad_id) : null;
+            $partida = $actividad ? Partida::find((int)$actividad->partida_id) : null;
+            if (!$sub || !$actividad || !$partida || (int)$partida->proyecto_id !== (int)$p->id) {
+                json_respuesta(['success' => false, 'error' => 'Subactividad no encontrada'], 404);
+            }
+            $ini = self::fechaValida($_POST['fecha_inicio'] ?? '');
+            $fin = self::fechaValida($_POST['fecha_fin'] ?? '');
+            if (!$ini || !$fin) json_respuesta(['success' => false, 'error' => 'Fechas inválidas'], 422);
+            if ($fin < $ini) json_respuesta(['success' => false, 'error' => 'La fecha de fin no puede ser anterior a la de inicio'], 422);
+            $calSub = new Calendario((int)$p->id, (int)($sub->calendario_id ?? 0));
+            $ini = self::habilMasCercano($calSub, $ini);
+            $fin = self::habilMasCercano($calSub, $fin);
+            if ($fin < $ini) $fin = $ini;
+            $sub->fecha_inicio = $ini;
+            $sub->fecha_fin = $sub->esHito() ? $ini : $fin;
+            try {
+                $r = \Classes\Subactividades::guardar($sub, $actividad);
+                if (!$r['ok']) json_respuesta(['success' => false, 'error' => implode(' ', $r['errores'])], 422);
+                $actividad = Actividad::find((int)$actividad->id);
+                json_respuesta([
+                    'success' => true, 'dependientes_movidas' => (int)($r['movidas'] ?? 0),
+                    'fecha_inicio' => $sub->fecha_inicio, 'fecha_fin' => $sub->fecha_fin,
+                    'duracion_dias' => (int)ceil($sub->duracion($calSub)),
+                    'duracion_real' => $sub->duracion($calSub),
+                    'actividad_fecha_inicio' => $actividad->fecha_inicio ?? null,
+                    'actividad_fecha_fin' => $actividad->fecha_fin ?? null,
+                ]);
+            } catch (\Throwable $e) {
+                json_respuesta(['success' => false, 'error' => $e->getMessage()], 500);
+            }
+        }
+
         $actividad = Actividad::find(filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT));
         $partida = $actividad ? Partida::find($actividad->partida_id) : null;
         if (!$actividad || !$partida || (int)$partida->proyecto_id !== (int)$p->id) {
@@ -243,12 +325,26 @@ class LineatiempoController
         if (!$ini || !$fin) json_respuesta(['success' => false, 'error' => 'Fechas inválidas'], 422);
         if ($fin < $ini) json_respuesta(['success' => false, 'error' => 'La fecha de fin no puede ser anterior a la de inicio'], 422);
 
-        $calendario = new Calendario((int)$p->id);
+        $calendario = new Calendario((int)$p->id, (int)($actividad->calendario_id ?? 0));
         $ini = self::habilMasCercano($calendario, $ini);
         $fin = self::habilMasCercano($calendario, $fin);
         if ($fin < $ini) $fin = $ini;
 
         try {
+            // Actividad con subactividades: es un resumen. Mover el cuerpo o el inicio desplaza a todas las hijas;
+            // el fin se deriva del máximo de ellas.
+            if ($actividad->tieneSubactividades()) {
+                $r = \Classes\Subactividades::moverInicio($actividad, $ini);
+                if (!empty($r['errores'])) json_respuesta(['success' => false, 'error' => implode(' ', $r['errores'])], 422);
+                $actividad = Actividad::find((int)$actividad->id);
+                json_respuesta([
+                    'success' => true, 'dependientes_movidas' => (int)($r['movidas'] ?? 0),
+                    'fecha_inicio' => $actividad->fecha_inicio, 'fecha_fin' => $actividad->fecha_fin,
+                    'duracion_dias' => (int)$actividad->duracion_dias,
+                    'duracion_real' => $calendario->calcularDuracion($actividad->fecha_inicio, $actividad->fecha_fin),
+                ]);
+            }
+
             $actividad->fecha_inicio = $ini;
             if ($actividad->esHito()) {
                 $actividad->normalizarHito();   // un hito no tiene duración: se mueve completo

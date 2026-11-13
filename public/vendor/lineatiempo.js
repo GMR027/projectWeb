@@ -21,7 +21,7 @@
   const d0 = dn(LT.inicio), len = LT.dias.length;
   const idxDe = s => dn(s) - d0;
   const esHabil = i => !!(LT.dias[i] && LT.dias[i].habil);
-  const act = id => LT.actividades.find(a => a.id === id);
+  const act = id => LT.actividades.find(a => String(a.id) === String(id));
   const partidas = new Map(LT.partidas.map(p => [p.id, p]));
   let mesesIdx = [];   // [{i0, i1, etiqueta}] de la última pintada
 
@@ -102,14 +102,15 @@
 
   function barra(a, top, alto) {
     const p = partidas.get(a.partida_id) || {};
+    const esSub = a.tipo === 'subactividad';
     const col = coloresBarra(p.color || '#3b82f6');
     const tinta = col.tinta;
     const [i0, i1] = barraI(a);
-    const cls = 'lt-barra st-' + esc(a.status) + (a.hito ? ' lt-hito' : '') + (col.clara ? ' lt-barra-clara' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
-    const titulo = a.codigo + ' — ' + a.nombre + ' | ' + fmt(a.fecha_inicio) + ' → ' + fmt(a.fecha_fin) + ' | ' + a.progreso + '%';
+    const cls = 'lt-barra st-' + esc(a.status) + (esSub ? ' lt-sub' : '') + (a.hito ? ' lt-hito' : '') + (col.clara ? ' lt-barra-clara' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
+    const titulo = (esSub ? 'Subactividad · ' : '') + a.codigo + ' — ' + a.nombre + ' | ' + fmt(a.fecha_inicio) + ' → ' + fmt(a.fecha_fin) + ' | ' + a.progreso + '%';
     const x0 = i0 * ppd, ancho = (i1 - i0 + 1) * ppd, x1 = x0 + ancho;
     const centro = alto - 15;   // centro vertical de la barra (fila normal y fila con iconos)
-    const manos = (LT.puedeEditar && !a.hito) ? '<span class="lt-mano lt-mano-l" title="Cambiar el inicio">◀</span><span class="lt-mano lt-mano-r" title="Cambiar el fin">▶</span>' : '';
+    const manos = (LT.puedeEditar && !a.hito) ? '<span class="lt-mano lt-mano-l" title="Cambiar el inicio">◀</span>' + (a.con_sub ? '' : '<span class="lt-mano lt-mano-r" title="Cambiar el fin">▶</span>') : '';
     // El número de la actividad con sus días de duración, centrado en la barra (los hitos solo muestran el rombo)
     const texto = a.hito ? '' : '<span class="lt-barra-texto mono">' + esc(a.codigo) + ' (' + (Number(a.duracion_dias) || 0) + ' d)</span>';
     // Chips a la derecha de la barra, fuera de ella y legibles: estado (✕ roja = no iniciada, reloj amarillo =
@@ -132,8 +133,8 @@
     const icono = (LT.iconos && a.icono)
       ? '<img class="lt-icono" src="' + esc(a.icono) + '" alt="" draggable="false" style="left:' + (x0 + ancho / 2 - 24) + 'px" onerror="this.remove()">'
       : '';
-    return '<div class="lt-fila" style="top:' + top + 'px;height:' + alto + 'px">' +
-      '<div class="' + cls + '" data-id="' + a.id + '" style="left:' + x0 + 'px;width:' + ancho + 'px;background:' + col.fondo + ';color:' + tinta + '" title="' + esc(titulo) + '">' +
+    return '<div class="lt-fila' + (esSub ? ' lt-fila-sub' : '') + '" style="top:' + top + 'px;height:' + alto + 'px">' +
+      '<div class="' + cls + '" data-id="' + esc(String(a.id)) + '" style="left:' + x0 + 'px;width:' + ancho + 'px;background:' + col.fondo + ';color:' + tinta + '" title="' + esc(titulo) + '">' +
       '<span class="lt-barra-fill" style="width:' + (a.progreso || 0) + '%"></span>' + manos + texto + '</div>' + chipEst + chipRest + icono + '</div>';
   }
 
@@ -168,10 +169,12 @@
 
     // Etiquetas + filas (agrupadas por partida); con icono la fila de actividad crece para que el disco quepa sobre la barra
     const filaAlto = LT.iconos ? 82 : ROW;   // el icono mide 48 px: la fila crece para que quepa sobre la barra
+    const filaAltoSub = LT.iconos ? 70 : Math.max(30, ROW - 8);
     let labels = '<div class="lt-lab-cab" style="height:' + HEAD + 'px">Actividad / partida</div>', filas = '', y = HEAD;
     LT.partidas.forEach(p => {
-      const acts = LT.actividades.filter(a => a.partida_id === p.id);
-      if (!acts.length) return;
+      const acts = LT.actividades.filter(a => a.partida_id === p.id && a.tipo !== 'subactividad');
+      const subsPartida = LT.actividades.filter(s => s.partida_id === p.id && s.tipo === 'subactividad');
+      if (!acts.length && !subsPartida.length) return;
       labels += '<div class="lt-lab-grp" style="height:' + GRP + 'px"><i class="lt-chip" style="background:' + esc(p.color || '#3b82f6') + '"></i><span>' + esc(p.codigo) + ' · ' + esc(p.nombre) + '</span>' +
         (p.restricciones ? ' <span class="lt-warn" title="' + p.restricciones + ' actividad(es) con restricción">⚠</span>' : '') + '</div>';
       filas += '<div class="lt-grp" style="top:' + y + 'px;height:' + GRP + 'px"><i class="lt-chip" style="background:' + esc(p.color || '#3b82f6') + '"></i>' + esc(p.codigo) + ' · ' + esc(p.nombre) + '</div>';
@@ -181,6 +184,19 @@
           (a.restriccion ? ' <span class="lt-warn" title="' + esc((a.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</div>';
         filas += barra(a, y, filaAlto);
         y += filaAlto;
+        // Subactividades visibles de esta actividad, debajo y con sangría
+        subsPartida.filter(s => s.actividad_id === a.id).forEach(s => {
+          labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><b>' + esc(s.codigo) + '</b> ' + esc(s.nombre) +
+            (s.restriccion ? ' <span class="lt-warn" title="' + esc((s.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</div>';
+          filas += barra(s, y, filaAltoSub);
+          y += filaAltoSub;
+        });
+      });
+      // Si el filtro ocultó a la actividad pero dejó visible una subactividad, se pinta igual (su código da el contexto)
+      subsPartida.filter(s => !acts.some(a => a.id === s.actividad_id)).forEach(s => {
+        labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><b>' + esc(s.codigo) + '</b> ' + esc(s.nombre) + '</div>';
+        filas += barra(s, y, filaAltoSub);
+        y += filaAltoSub;
       });
     });
 
@@ -193,13 +209,22 @@
   // ---------- guardar ----------
   function guardar(a, ini, fin) {
     const fd = new FormData();
-    fd.append('proyecto', LT.proyecto); fd.append('actividad_id', a.id);
+    fd.append('proyecto', LT.proyecto);
+    const id = String(a.id);
+    if (id.startsWith('s')) fd.append('subactividad_id', id.slice(1));
+    else fd.append('actividad_id', a.id);
     fd.append('fecha_inicio', ini); fd.append('fecha_fin', fin);
     return fetch('/api/lineatiempo/fechas', { method: 'POST', body: fd })
       .then(r => r.json())
       .then(d => {
         if (!d.success) { aviso(d.error || 'No se pudo guardar el cambio', 'error'); return false; }
         a.fecha_inicio = d.fecha_inicio; a.fecha_fin = d.fecha_fin; a.duracion_dias = d.duracion_dias;
+        // Una subactividad mueve el envolvente del padre; un padre con hijas las desplaza a todas (se recarga para verlas).
+        if (a.tipo === 'subactividad' && d.actividad_fecha_inicio) {
+          const padre = LT.actividades.find(x => x.tipo !== 'subactividad' && x.id === a.actividad_id);
+          if (padre) { padre.fecha_inicio = d.actividad_fecha_inicio; padre.fecha_fin = d.actividad_fecha_fin; }
+        }
+        if (a.con_sub) { window.location.reload(); return true; }
         if (d.dependientes_movidas > 0) aviso('<strong>' + d.dependientes_movidas + '</strong> actividad(es) dependiente(s) se reprogramaron con este movimiento (dependencias en modo automático).', 'ok');
         return true;
       })
@@ -228,7 +253,7 @@
     if (!LT.puedeEditar) return;
     const barraEl = e.target.closest('.lt-barra');
     if (!barraEl) return;
-    const a = act(+barraEl.dataset.id);
+    const a = act(barraEl.dataset.id);
     if (!a || !a.fecha_inicio || !a.fecha_fin) return;
     // Un hito no se redimensiona: solo se mueve completo
     const modo = a.hito ? 'mover' : e.target.classList.contains('lt-mano-l') ? 'ini' : e.target.classList.contains('lt-mano-r') ? 'fin' : 'mover';
@@ -348,7 +373,7 @@
   }
   function popOcultarPronto() { clearTimeout(popOc); popOc = setTimeout(popOcultar, 150); }   // gracia para llegar a la burbuja
   function popMostrar(chip) {
-    const a = act(+chip.dataset.id);
+    const a = act(chip.dataset.id);
     if (!a || !a.restriccion || !document.body.contains(chip)) return;
     if (!pop) {
       pop = document.createElement('div');
