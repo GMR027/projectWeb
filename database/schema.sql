@@ -465,6 +465,15 @@ CREATE TABLE actividad_materiales (
     FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE subactividad_materiales (
+    subactividad_id INT NOT NULL,
+    material_id INT NOT NULL,
+    rol ENUM('instala','consume') NOT NULL DEFAULT 'instala',
+    PRIMARY KEY (subactividad_id, material_id),
+    FOREIGN KEY (subactividad_id) REFERENCES subactividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE msrs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -1851,12 +1860,14 @@ CREATE TABLE ordenes_cambio (
     impacto_costo DECIMAL(14,2) NOT NULL DEFAULT 0,
     impacto_dias INT NOT NULL DEFAULT 0,
     actividad_id INT NULL,                         -- actividad principal afectada (opcional)
+    subactividad_id INT NULL,                      -- subactividad principal afectada (opcional)
     creado_por VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_oc_proyecto (proyecto_id, estado),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL
+    FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    FOREIGN KEY (subactividad_id) REFERENCES subactividades(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE cambio_partidas (
@@ -1870,6 +1881,7 @@ CREATE TABLE cambio_partidas (
     cantidad DECIMAL(12,2) NULL,
     unidad VARCHAR(30) NOT NULL DEFAULT '',
     actividad_id INT NULL,
+    subactividad_id INT NULL,
     material_id INT NULL,
     requiere_retiro TINYINT(1) NOT NULL DEFAULT 0,
     estado ENUM('pendiente','ejecutado','retirado','verificado','cancelado') NOT NULL DEFAULT 'pendiente',
@@ -1884,6 +1896,7 @@ CREATE TABLE cambio_partidas (
     FOREIGN KEY (orden_id) REFERENCES ordenes_cambio(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
+    FOREIGN KEY (subactividad_id) REFERENCES subactividades(id) ON DELETE SET NULL,
     FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -1895,6 +1908,7 @@ CREATE TABLE lineas_base (
     notas VARCHAR(500) NOT NULL DEFAULT '',
     fin_programado DATE NULL,
     total_actividades INT NOT NULL DEFAULT 0,
+    total_subactividades INT NOT NULL DEFAULT 0,
     criticas_json TEXT NULL,                       -- ids de actividades en ruta crítica al capturar
     creado_por VARCHAR(150) NOT NULL DEFAULT '',
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1914,6 +1928,23 @@ CREATE TABLE lineas_base_actividades (
     progreso TINYINT UNSIGNED NOT NULL DEFAULT 0,
     hito TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (linea_id, actividad_id),
+    FOREIGN KEY (linea_id) REFERENCES lineas_base(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE lineas_base_subactividades (
+    linea_id INT NOT NULL,
+    subactividad_id INT NOT NULL,
+    actividad_id INT NOT NULL,
+    codigo VARCHAR(60) NOT NULL DEFAULT '',
+    nombre VARCHAR(200) NOT NULL DEFAULT '',
+    partida VARCHAR(200) NOT NULL DEFAULT '',
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    duracion_dias INT NOT NULL DEFAULT 1,
+    progreso TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    hito TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (linea_id, subactividad_id),
+    KEY idx_lbsub_actividad (linea_id, actividad_id),
     FOREIGN KEY (linea_id) REFERENCES lineas_base(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

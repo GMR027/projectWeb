@@ -25,6 +25,9 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
     </div>
     <?php if (trim((string)$orden->descripcion) !== ''): ?><p class="cb-desc"><?php echo nl2br(s($orden->descripcion)); ?></p><?php endif; ?>
     <?php if ($orden->actividad_id): ?><p class="text-muted"><i class="fa-solid fa-link"></i> Actividad: <?php echo s($etqAct($orden->actividad_id)); ?></p><?php endif; ?>
+    <?php if ($orden->subactividad_id): $sOrden = null; foreach (($subactividades ?? []) as $s) if ((int)$s['id'] === (int)$orden->subactividad_id) $sOrden = $s; ?>
+        <p class="text-muted"><i class="fa-solid fa-turn-up fa-rotate-90"></i> Subactividad: <?php echo s($sOrden ? $sOrden['codigo'] . ' · ' . $sOrden['nombre'] : '#' . $orden->subactividad_id); ?></p>
+    <?php endif; ?>
 </div>
 
 <div class="card">
@@ -46,8 +49,9 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
                     <?php if ($c->fecha_prevista): ?>Previsto <?php echo formatear_fecha($c->fecha_prevista); ?> · <?php endif; ?>
                     <?php if ($c->fecha_ejecucion): ?>Ejecutado <?php echo formatear_fecha($c->fecha_ejecucion); ?> · <?php endif; ?>
                     <?php if ($c->requiere_retiro): ?>Retiro <?php echo $c->fecha_retiro_real ? 'realizado ' . formatear_fecha($c->fecha_retiro_real) : ($c->fecha_retiro_prevista ? 'previsto ' . formatear_fecha($c->fecha_retiro_prevista) : 'sin programar'); ?> · <?php endif; ?>
-                    <?php if ($c->actividad_id): ?><i class="fa-solid fa-link"></i> <?php echo s($etqAct($c->actividad_id)); ?> · <?php endif; ?>
-                    <?php if ($c->material_id): ?><i class="fa-solid fa-cube"></i> <?php echo s($matNombres[$c->material_id] ?? ''); ?><?php endif; ?>
+                    <?php if ($c->actividad_id): ?><i class="fa-solid fa-link"></i> <?php echo s($etqAct($c->actividad_id)); ?><?php endif; ?>
+                    <?php if ($c->subactividad_id): $sLinea = null; foreach (($subactividades ?? []) as $s) if ((int)$s['id'] === (int)$c->subactividad_id) $sLinea = $s; ?><?php if ($c->actividad_id): ?> · <?php endif; ?><i class="fa-solid fa-turn-up fa-rotate-90"></i> <?php echo s($sLinea ? $sLinea['codigo'] . ' · ' . $sLinea['nombre'] : '#' . $c->subactividad_id); ?><?php endif; ?>
+                    <?php if ($c->material_id): ?> · <i class="fa-solid fa-cube"></i> <?php echo s($matNombres[$c->material_id] ?? ''); ?><?php endif; ?>
                 </p>
                 <?php if ($c->notas): ?><p class="text-muted"><?php echo s($c->notas); ?></p><?php endif; ?>
                 <footer>
@@ -93,6 +97,8 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
             <div class="campo campo-check"><label><input type="checkbox" name="requiere_retiro" value="1" id="p-req"> Requiere retiro posterior (siempre activo en instalación temporal)</label></div>
             <div class="campo"><label for="p-act">Actividad afectada</label>
                 <select id="p-act" name="actividad_id"><option value="">— Ninguna —</option><?php echo opciones_actividades($actividades); ?></select></div>
+            <div class="campo"><label for="p-sub">Subactividad afectada</label>
+                <select id="p-sub" name="subactividad_id"><option value="">— Ninguna —</option><?php foreach (($subactividades ?? []) as $s): ?><option value="<?php echo (int)$s['id']; ?>"><?php echo s($s['codigo'] . ' · ' . $s['nombre']); ?></option><?php endforeach; ?></select></div>
             <div class="campo"><label for="p-mat">Material</label>
                 <select id="p-mat" name="material_id"><option value="">— Ninguno —</option><?php foreach ($materiales as $m): ?><option value="<?php echo s($m->id); ?>"><?php echo s($m->nombre); ?></option><?php endforeach; ?></select></div>
             <div class="campo campo-full"><label for="p-notas">Notas</label><input type="text" id="p-notas" name="notas"></div>
@@ -104,13 +110,13 @@ $matNombres = array_column(array_map(fn($m) => ['id' => $m->id, 'n' => $m->nombr
 <script>
 (() => {
     const datos = <?php echo json_encode(array_map(fn($c) => ['id' => (int)$c->id, 'tipo' => $c->tipo, 'descripcion' => $c->descripcion, 'ubicacion_original' => $c->ubicacion_original, 'ubicacion_nueva' => $c->ubicacion_nueva, 'cantidad' => $c->cantidad, 'unidad' => $c->unidad,
-        'fecha_prevista' => $c->fecha_prevista, 'fecha_retiro_prevista' => $c->fecha_retiro_prevista, 'requiere_retiro' => (int)$c->requiere_retiro, 'actividad_id' => $c->actividad_id, 'material_id' => $c->material_id, 'notas' => $c->notas], $partidas), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        'fecha_prevista' => $c->fecha_prevista, 'fecha_retiro_prevista' => $c->fecha_retiro_prevista, 'requiere_retiro' => (int)$c->requiere_retiro, 'actividad_id' => $c->actividad_id, 'subactividad_id' => $c->subactividad_id, 'material_id' => $c->material_id, 'notas' => $c->notas], $partidas), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
     const f = document.querySelector('#cb-form-partida form'), titulo = document.getElementById('cb-form-titulo'), cancelar = document.getElementById('cb-cancelar');
     document.querySelectorAll('[data-editar]').forEach(b => b.addEventListener('click', () => {
         const d = datos.find(x => x.id == b.dataset.editar);
         if (!d) return;
         f.id.value = d.id;
-        ['tipo', 'descripcion', 'ubicacion_original', 'ubicacion_nueva', 'cantidad', 'unidad', 'fecha_prevista', 'fecha_retiro_prevista', 'actividad_id', 'material_id', 'notas'].forEach(k => { f[k].value = d[k] ?? ''; });
+        ['tipo', 'descripcion', 'ubicacion_original', 'ubicacion_nueva', 'cantidad', 'unidad', 'fecha_prevista', 'fecha_retiro_prevista', 'actividad_id', 'subactividad_id', 'material_id', 'notas'].forEach(k => { f[k].value = d[k] ?? ''; });
         f.requiere_retiro.checked = !!d.requiere_retiro;
         titulo.textContent = 'Editar renglón'; cancelar.hidden = false;
         f.scrollIntoView({ behavior: 'smooth', block: 'center' });

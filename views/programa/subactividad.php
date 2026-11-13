@@ -120,7 +120,6 @@ $duracion = $subactividad->duracion($cal);
             </div>
             <div class="campo campo-full">
                 <label class="campo-check"><input type="checkbox" name="pta" value="1"<?php echo (int)($subactividad->pta ?? 1) === 1 ? ' checked' : ''; ?>> PTA revisada (Lookahead)</label>
-                <label class="campo-check"><input type="checkbox" name="sin_material" value="1"<?php echo (int)($subactividad->sin_material ?? 0) === 1 ? ' checked' : ''; ?>> No requiere material</label>
                 <label class="campo-check"><input type="checkbox" name="fecha_fija" value="1"<?php echo (int)($subactividad->fecha_fija ?? 0) === 1 ? ' checked' : ''; ?>> Fecha fija (las dependencias no la mueven)</label>
             </div>
             <div class="campo">
@@ -135,6 +134,15 @@ $duracion = $subactividad->duracion($cal);
                 <label for="libre_fecha">Campo libre (fecha)</label>
                 <input type="date" id="libre_fecha" name="libre_fecha" value="<?php echo s($subactividad->libre_fecha ?? ''); ?>">
             </div>
+            <?php
+            // Materiales propios de la subactividad (misma pieza que usa la actividad)
+            $entidadMateriales = $subactividad;
+            $catalogo = $catalogoMateriales ?? [];
+            $seleccion = $materialesSub ?? [];
+            $roles = $rolesSub ?? [];
+            $gestionarMateriales = $gestionarMateriales ?? false;
+            include __DIR__ . '/_materiales-actividad.php';
+            ?>
             <div class="campo campo-full">
                 <label for="icono">Icono de la subactividad</label>
                 <?php if (!empty($subactividad->icono)): ?>

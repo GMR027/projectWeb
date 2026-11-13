@@ -695,6 +695,36 @@ $gRest->setIncluirSubactividades(true);
 $filaRest = array_values(array_filter($gRest->getFilas(), fn($f) => $f['tipo'] === 'subactividad' && (int)$f['id'] === (int)$s0a->id))[0] ?? null;
 $ok('el Gantt marca la restricción en la fila hija', $filaRest && $filaRest['tiene_restriccion'] && count($filaRest['restricciones']) === 1);
 
+// Materiales propios de una subactividad: MSR, dependencias y cruce
+$db->query("INSERT INTO materiales (proyecto_id, referencia, nombre, unidad) VALUES ($pidH, 'MAT-SUB', 'Material de subactividad', 'pza')");
+$matSub = (int)$db->insert_id;
+\Model\SubactividadMaterial::guardarDeSubactividad((int)$s0a->id, $pidH, [$matSub], [$matSub => 'instala']);
+$ok('los materiales de la subactividad se guardan aparte', \Model\SubactividadMaterial::deSubactividad((int)$s0a->id) === [$matSub]);
+$db->query("INSERT INTO msr_items (proyecto_id, material_id) VALUES ($pidH, $matSub)");
+$msrId = (int)$db->insert_id;
+\Model\ActividadMaterial::sincronizarInstalacion($pidH);
+$fechaMsr = $db->query("SELECT fecha_instalacion_prog FROM msr_items WHERE id = $msrId")->fetch_row()[0] ?? null;
+$ok('el MSR toma la fecha de la subactividad', $fechaMsr === $s0a->fecha_inicio);
+$porMat = \Classes\DependenciasMateriales::actividadesPorMaterial($pidH);
+$ok('las dependencias de materiales ven la subactividad', count(array_filter($porMat[$matSub] ?? [], fn($x) => (int)($x['subactividad_id'] ?? 0) === (int)$s0a->id)) === 1);
+$cruceSub = \Classes\CruceMateriales::cruzar($proy);
+$ok('el cruce materiales-cronograma incluye la subactividad', count(array_filter($cruceSub['filas'], fn($x) => $x['origen'] === 'programa' && str_contains((string)$x['actividad'], 'Tramo A'))) === 1);
+
+// Líneas base y órdenes de cambio con subactividades
+$lbId = \Classes\LineasBase::capturar($proy, 'Línea base con subactividades', '');
+$ok('la línea base guarda las subactividades', (int)$db->query("SELECT COUNT(*) FROM lineas_base_subactividades WHERE linea_id = $lbId")->fetch_row()[0] >= 2);
+$lb = Model\LineaBase::find($lbId);
+$cmpLb = \Classes\LineasBase::comparar($proy, $lb);
+$ok('la comparación de línea base incluye subactividades', count(array_filter($cmpLb['filas'], fn($f) => ($f['tipo'] ?? '') === 'subactividad')) >= 2);
+$oc = new Model\OrdenCambio(['proyecto_id' => $pidH, 'titulo' => 'Orden con subactividad', 'estado' => 'borrador', 'fecha' => '2026-11-13',
+    'actividad_id' => $as0->id, 'subactividad_id' => $s0a->id]);
+$oc->id = (int)$oc->guardar()['id'];
+$cp = new Model\CambioPartida(['orden_id' => $oc->id, 'proyecto_id' => $pidH, 'tipo' => 'modificacion',
+    'descripcion' => 'Renglón con subactividad', 'actividad_id' => $as0->id, 'subactividad_id' => $s0a->id, 'estado' => 'pendiente']);
+$cp->id = (int)$cp->guardar()['id'];
+$ok('la orden y el renglón guardan la subactividad', (int)Model\OrdenCambio::find($oc->id)->subactividad_id === (int)$s0a->id
+    && (int)Model\CambioPartida::find($cp->id)->subactividad_id === (int)$s0a->id);
+
 // Dependencias con subactividades: nodos unificados, ciclos y empuje del envolvente
 $proy->modo_dependencias = 'informativo';
 $proy->guardar();

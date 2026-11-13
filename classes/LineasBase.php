@@ -4,6 +4,7 @@ namespace Classes;
 
 use Model\LineaBase;
 use Model\Proyecto;
+use Model\Subactividad;
 
 /** Líneas base del programa: foto inmutable (actividades, fechas, ruta crítica y fechas de materiales) y comparación contra el programa actual */
 class LineasBase
@@ -18,16 +19,37 @@ class LineasBase
         $esc = fn($v) => $db->real_escape_string((string)$v);
         $acts = Dependencias::actividades($pid);
         $criticas = [];
-        foreach (Dependencias::datos($p)['actividades'] as $a) if ($a['critica']) $criticas[] = (int)$a['id'];
+        foreach (Dependencias::datos($p)['actividades'] as $a) {
+            if (!$a['critica']) continue;
+            $nid = (int)preg_replace('/^[as]/', '', (string)$a['id']);
+            if (($a['tipo'] ?? '') === 'subactividad' && !empty($a['padre'])) $nid = (int)substr((string)$a['padre'], 1);
+            if ($nid > 0) $criticas[] = $nid;
+        }
+        $criticas = array_values(array_unique($criticas));
         $fin = $acts ? max(array_column($acts, 'fecha_fin')) : null;
         $db->begin_transaction();
         try {
-            HistorialCambios::escribir('lineas_base', 'creado', 0, fn() => $db->query("INSERT INTO lineas_base (proyecto_id, nombre, notas, fin_programado, total_actividades, criticas_json, creado_por) VALUES ($pid, '{$esc(mb_substr($nombre, 0, 150))}', '{$esc(mb_substr($notas, 0, 500))}', "
-                . ($fin ? "'$fin'" : 'NULL') . ', ' . count($acts) . ", '" . $esc(json_encode($criticas)) . "', '{$esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150))}')"));
-            $id = (int)$db->insert_id;
+            $id = 0;
+            HistorialCambios::escribir('lineas_base', 'creado', 0, function () use ($db, &$id, $pid, $esc, $nombre, $notas, $fin, $acts, $criticas) {
+                $ok = $db->query("INSERT INTO lineas_base (proyecto_id, nombre, notas, fin_programado, total_actividades, criticas_json, creado_por) VALUES ($pid, '{$esc(mb_substr($nombre, 0, 150))}', '{$esc(mb_substr($notas, 0, 500))}', "
+                    . ($fin ? "'$fin'" : 'NULL') . ', ' . count($acts) . ", '" . $esc(json_encode($criticas)) . "', '{$esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150))}')");
+                if ($ok) $id = (int)$db->insert_id;
+                return $ok;
+            });
             foreach ($acts as $a) {
                 $db->query("INSERT INTO lineas_base_actividades (linea_id, actividad_id, codigo, nombre, partida, fecha_inicio, fecha_fin, duracion_dias, progreso, hito) VALUES ($id, " . (int)$a['id'] . ", '{$esc($a['codigo'])}', '{$esc($a['nombre'])}', '{$esc($a['partida_codigo'] . ' · ' . $a['partida'])}', '{$a['fecha_inicio']}', '{$a['fecha_fin']}', " . (int)$a['duracion_dias'] . ', ' . (int)$a['progreso'] . ', ' . (int)$a['hito'] . ')');
             }
+            $nSub = 0;
+            foreach (Subactividad::deProyecto($pid) as $aid => $lista) {
+                $a = $acts[$aid] ?? null;
+                if (!$a) continue;
+                foreach ($lista as $i => $s) {
+                    $codSub = $a['codigo'] . '.' . ($i + 1);
+                    $db->query("INSERT INTO lineas_base_subactividades (linea_id, subactividad_id, actividad_id, codigo, nombre, partida, fecha_inicio, fecha_fin, duracion_dias, progreso, hito) VALUES ($id, " . (int)$s->id . ", $aid, '{$esc($codSub)}', '{$esc($s->nombre)}', '{$esc($a['partida_codigo'] . ' · ' . $a['partida'])}', '{$s->fecha_inicio}', '{$s->fecha_fin}', " . max(1, (int)ceil($s->duracion())) . ', ' . (int)$s->progreso . ', ' . ($s->esHito() ? 1 : 0) . ')');
+                    $nSub++;
+                }
+            }
+            $db->query("UPDATE lineas_base SET total_subactividades = $nSub WHERE id = $id");
             $db->query("INSERT INTO lineas_base_materiales (linea_id, material_id, nombre, cantidad, fecha_compra_prog, fecha_entrega_prog) SELECT $id, id, nombre, cantidad, fecha_compra_prog, fecha_entrega_prog FROM materiales WHERE proyecto_id = $pid");
             $db->commit();
         } catch (\Throwable $e) {
@@ -67,7 +89,12 @@ class LineasBase
         $matRiesgo = CruceMateriales::actividadesConMaterialEnRiesgo(CruceMateriales::cruzar($p));
         $dep = Dependencias::datos($p);
         $criticasAhora = [];
-        foreach ($dep['actividades'] as $a) if ($a['critica']) $criticasAhora[(int)$a['id']] = true;
+        foreach ($dep['actividades'] as $a) {
+            if (!$a['critica']) continue;
+            $nid = (int)preg_replace('/^[as]/', '', (string)$a['id']);
+            if (($a['tipo'] ?? '') === 'subactividad' && !empty($a['padre'])) $nid = (int)substr((string)$a['padre'], 1);
+            if ($nid > 0) $criticasAhora[$nid] = true;
+        }
         $criticasAntes = array_flip($lb->criticas());
 
         $filas = [];
@@ -78,7 +105,7 @@ class LineasBase
         };
         foreach ($actuales as $id => $a) {
             $b = $base[$id] ?? null;
-            $fila = ['actividad_id' => $id, 'codigo' => $a['codigo'], 'nombre' => $a['nombre'], 'partida' => $a['partida_codigo'] . ' · ' . $a['partida'], 'color' => $a['color'], 'progreso' => (int)$a['progreso'],
+            $fila = ['tipo' => 'actividad', 'padre_id' => null, 'actividad_id' => $id, 'codigo' => $a['codigo'], 'nombre' => $a['nombre'], 'partida' => $a['partida_codigo'] . ' · ' . $a['partida'], 'color' => $a['color'], 'progreso' => (int)$a['progreso'],
                 'base_inicio' => $b['fecha_inicio'] ?? null, 'base_fin' => $b['fecha_fin'] ?? null, 'inicio' => $a['fecha_inicio'], 'fin' => $a['fecha_fin'], 'd_inicio' => 0, 'd_fin' => 0, 'd_dur' => 0,
                 'critica_antes' => isset($criticasAntes[$id]), 'critica_ahora' => isset($criticasAhora[$id]), 'causa' => null, 'detalle' => ''];
             if (!$b) {
@@ -95,8 +122,46 @@ class LineasBase
         }
         foreach ($base as $id => $b) {
             if (isset($actuales[$id])) continue;
-            $filas[] = ['actividad_id' => $id, 'codigo' => $b['codigo'], 'nombre' => $b['nombre'], 'partida' => $b['partida'], 'color' => null, 'progreso' => (int)$b['progreso'], 'base_inicio' => $b['fecha_inicio'], 'base_fin' => $b['fecha_fin'],
+            $filas[] = ['tipo' => 'actividad', 'padre_id' => null, 'actividad_id' => $id, 'codigo' => $b['codigo'], 'nombre' => $b['nombre'], 'partida' => $b['partida'], 'color' => null, 'progreso' => (int)$b['progreso'], 'base_inicio' => $b['fecha_inicio'], 'base_fin' => $b['fecha_fin'],
                 'inicio' => null, 'fin' => null, 'd_inicio' => 0, 'd_fin' => 0, 'd_dur' => 0, 'critica_antes' => isset($criticasAntes[$id]), 'critica_ahora' => false, 'estado' => 'eliminada', 'causa' => 'sin_justificar', 'detalle' => ''];
+        }
+
+        // Subactividades: misma comparación, anidadas bajo su actividad
+        $baseSubs = [];
+        try {
+            foreach (self::filas("SELECT * FROM lineas_base_subactividades WHERE linea_id = $lid ORDER BY fecha_inicio, codigo") as $b) $baseSubs[(int)$b['subactividad_id']] = $b;
+        } catch (\Throwable $e) {   // migración pendiente
+        }
+        $subsActuales = Subactividad::deProyecto($pid);
+        $subIds = [];
+        foreach ($subsActuales as $aid => $lista) {
+            $a = $actuales[$aid] ?? null;
+            if (!$a) continue;
+            foreach ($lista as $i => $s) {
+                $subIds[(int)$s->id] = true;
+                $b = $baseSubs[(int)$s->id] ?? null;
+                $fila = ['tipo' => 'subactividad', 'padre_id' => $aid, 'subactividad_id' => (int)$s->id,
+                    'codigo' => $a['codigo'] . '.' . ($i + 1), 'nombre' => (string)$s->nombre, 'partida' => $a['partida_codigo'] . ' · ' . $a['partida'], 'color' => $a['color'], 'progreso' => (int)$s->progreso,
+                    'base_inicio' => $b['fecha_inicio'] ?? null, 'base_fin' => $b['fecha_fin'] ?? null, 'inicio' => $s->fecha_inicio, 'fin' => $s->fecha_fin, 'd_inicio' => 0, 'd_fin' => 0, 'd_dur' => 0,
+                    'critica_antes' => isset($criticasAntes[$aid]), 'critica_ahora' => isset($criticasAhora[$aid]), 'causa' => null, 'detalle' => ''];
+                if (!$b) {
+                    $fila['estado'] = 'nueva';
+                    [$fila['causa'], $fila['detalle']] = $causa((int)$aid);
+                } else {
+                    $fila['d_inicio'] = $cal->difHab($b['fecha_inicio'], $s->fecha_inicio);
+                    $fila['d_fin'] = $cal->difHab($b['fecha_fin'], $s->fecha_fin);
+                    $fila['d_dur'] = (int)ceil($s->duracion()) - (int)$b['duracion_dias'];
+                    $fila['estado'] = $fila['d_inicio'] || $fila['d_fin'] || $fila['d_dur'] ? 'movida' : 'igual';
+                    if ($fila['estado'] === 'movida') [$fila['causa'], $fila['detalle']] = $causa((int)$aid);
+                }
+                $filas[] = $fila;
+            }
+        }
+        foreach ($baseSubs as $sid => $b) {
+            if (isset($subIds[$sid])) continue;
+            $filas[] = ['tipo' => 'subactividad', 'padre_id' => (int)$b['actividad_id'], 'subactividad_id' => $sid, 'codigo' => $b['codigo'], 'nombre' => $b['nombre'], 'partida' => $b['partida'], 'color' => null, 'progreso' => (int)$b['progreso'],
+                'base_inicio' => $b['fecha_inicio'], 'base_fin' => $b['fecha_fin'], 'inicio' => null, 'fin' => null, 'd_inicio' => 0, 'd_fin' => 0, 'd_dur' => 0,
+                'critica_antes' => isset($criticasAntes[(int)$b['actividad_id']]), 'critica_ahora' => false, 'estado' => 'eliminada', 'causa' => 'sin_justificar', 'detalle' => ''];
         }
         usort($filas, fn($x, $y) => strcmp($x['base_inicio'] ?? $x['inicio'] ?? '', $y['base_inicio'] ?? $y['inicio'] ?? ''));
 
@@ -109,6 +174,7 @@ class LineasBase
         $entran = array_values(array_filter($filas, fn($f) => $f['critica_ahora'] && !$f['critica_antes'] && $f['estado'] !== 'eliminada'));
         $salen = array_values(array_filter($filas, fn($f) => $f['critica_antes'] && !$f['critica_ahora']));
         $resumen = $r + [
+            'total_subactividades' => (int)($lb->total_subactividades ?? 0),
             'fin_base' => $lb->fin_programado, 'fin_actual' => $finActual, 'd_fin' => $lb->fin_programado && $finActual ? $cal->difHab($lb->fin_programado, $finActual) : 0,
             'criticas_entran' => $entran, 'criticas_salen' => $salen, 'hay_ruta_critica' => (bool)$criticasAhora || (bool)$criticasAntes,
         ];

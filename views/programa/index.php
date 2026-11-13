@@ -521,6 +521,7 @@ document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventLis
                             <td class="hide-m prg-celda text-center"><?php if (!empty($fila['icono'])): ?><img class="prg-icono" src="<?php echo s('/build/img/actividades-iconos/' . basename($fila['icono'])); ?>" alt=""><?php else: ?>—<?php endif; ?></td>
                             <?php break; case 'acciones': ?>
                                 <td class="acciones">
+                                    <a href="/programa/subactividades/editar?id=<?php echo (int)$fila['id']; ?>&volver=programa#seccion-materiales" class="btn-action" title="Materiales de la subactividad"><i class="fa-solid fa-cubes"></i></a>
                                     <a href="/programa/subactividades/editar?id=<?php echo (int)$fila['id']; ?>&volver=programa" class="btn-action btn-action-edit" title="Editar subactividad"><i class="fa-solid fa-pen-to-square"></i></a>
                                     <?php if (puede_borrar_contenido($proyecto)): ?>
                                     <form class="inline" method="POST" action="/programa/subactividades/eliminar" data-confirm="¿Eliminar subactividad?|Se quitará «<?php echo s($fila['nombre']); ?>» y el avance de la actividad se recalculará. Esta acción no se puede deshacer.|Eliminar">

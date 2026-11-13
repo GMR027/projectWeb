@@ -57,6 +57,17 @@ class CruceMateriales
             $filas[] = ['origen' => 'programa', 'ref' => $f['codigo'], 'actividad_id' => (int)$f['actividad_id'], 'actividad' => $f['actividad'], 'material' => $f['material'], 'cantidad' => $f['cantidad'], 'unidad' => $f['unidad'],
                 'necesidad' => $f['fecha_inicio'], 'compra' => $f['compra'], 'entrega' => $f['fecha_entrega_real'] ?: $f['fecha_entrega_prog'], 'entrega_real' => (bool)$f['fecha_entrega_real'], 'estado' => $e, 'dias' => $dias, 'submittal' => $f['sub']];
         }
+        // Subactividades con materiales propios (el id de la fila sigue siendo el de su actividad para atribuir desviaciones)
+        $sqlSub = "SELECT a.id actividad_id, a.codigo, CONCAT(a.nombre, ' · ', s.nombre) actividad, s.fecha_inicio, m.id material_id, m.nombre material, m.cantidad, m.unidad, m.compra, m.fecha_compra_prog, m.fecha_entrega_prog, m.fecha_entrega_real,
+                (SELECT s2.estatus FROM submittal_materiales sm2 JOIN submittals s2 ON s2.id = sm2.submittal_id WHERE sm2.material_id = m.id ORDER BY (s2.estatus IN ('aprobado','aprobado_an')) DESC, s2.fecha DESC LIMIT 1) sub
+            FROM subactividad_materiales sm JOIN materiales m ON m.id = sm.material_id JOIN subactividades s ON s.id = sm.subactividad_id JOIN actividades a ON a.id = s.actividad_id JOIN partidas pa ON pa.id = a.partida_id
+            WHERE pa.proyecto_id = $pid AND s.progreso < 100 AND s.sin_material = 0 ORDER BY s.fecha_inicio, a.codigo";
+        foreach (self::filas($sqlSub) as $f) {
+            $ef = $disp['materiales'][(int)$f['material_id']]['entrega_ef'] ?? null;
+            [$e, $dias] = self::evaluar($f['fecha_inicio'], $f, $hoy, $ef);
+            $filas[] = ['origen' => 'programa', 'ref' => $f['codigo'], 'actividad_id' => (int)$f['actividad_id'], 'actividad' => $f['actividad'], 'material' => $f['material'], 'cantidad' => $f['cantidad'], 'unidad' => $f['unidad'],
+                'necesidad' => $f['fecha_inicio'], 'compra' => $f['compra'], 'entrega' => $f['fecha_entrega_real'] ?: $f['fecha_entrega_prog'], 'entrega_real' => (bool)$f['fecha_entrega_real'], 'estado' => $e, 'dias' => $dias, 'submittal' => $f['sub']];
+        }
         foreach (Cambios::materialesDeCambios($pid) as $f) {
             $nec = $f['fecha_prevista'] ?: $f['act_inicio'];
             $ef = $disp['materiales'][(int)($f['material_id'] ?? 0)]['entrega_ef'] ?? null;

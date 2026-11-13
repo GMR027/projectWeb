@@ -25,6 +25,15 @@
                 </select>
                 <small class="text-muted">Una orden vinculada a una actividad justifica sus desviaciones frente a la línea base.</small>
             </div>
+            <div class="campo campo-full"><label for="subactividad_id">Subactividad principal afectada (opcional)</label>
+                <select id="subactividad_id" name="subactividad_id">
+                    <option value="">— Ninguna —</option>
+                    <?php foreach (($subactividades ?? []) as $s): ?>
+                        <option value="<?php echo (int)$s['id']; ?>"<?php echo (int)($orden->subactividad_id ?? 0) === (int)$s['id'] ? ' selected' : ''; ?>><?php echo s($s['codigo'] . ' · ' . $s['nombre']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="text-muted">Si eliges una subactividad, la actividad principal se toma de su padre.</small>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Guardar orden</button>
     </form>

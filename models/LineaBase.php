@@ -5,7 +5,7 @@ namespace Model;
 class LineaBase extends ActiveRecord
 {
     protected static $tabla = 'lineas_base';
-    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'notas', 'fin_programado', 'total_actividades', 'criticas_json', 'creado_por'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'nombre', 'notas', 'fin_programado', 'total_actividades', 'total_subactividades', 'criticas_json', 'creado_por'];
 
     public $id;
     public $proyecto_id;
@@ -13,6 +13,7 @@ class LineaBase extends ActiveRecord
     public $notas;
     public $fin_programado;
     public $total_actividades;
+    public $total_subactividades;
     public $criticas_json;
     public $creado_por;
     public $creado;
@@ -25,6 +26,7 @@ class LineaBase extends ActiveRecord
         $this->notas = $args['notas'] ?? '';
         $this->fin_programado = $args['fin_programado'] ?? null;
         $this->total_actividades = (int)($args['total_actividades'] ?? 0);
+        $this->total_subactividades = (int)($args['total_subactividades'] ?? 0);
         $this->criticas_json = $args['criticas_json'] ?? null;
         $this->creado_por = $args['creado_por'] ?? '';
         $this->creado = $args['creado'] ?? null;

@@ -5,7 +5,7 @@ namespace Model;
 class OrdenCambio extends ActiveRecord
 {
     protected static $tabla = 'ordenes_cambio';
-    protected static $columnasDB = ['id', 'proyecto_id', 'numero', 'titulo', 'descripcion', 'solicitante', 'estado', 'fecha', 'impacto_costo', 'impacto_dias', 'actividad_id', 'creado_por'];
+    protected static $columnasDB = ['id', 'proyecto_id', 'numero', 'titulo', 'descripcion', 'solicitante', 'estado', 'fecha', 'impacto_costo', 'impacto_dias', 'actividad_id', 'subactividad_id', 'creado_por'];
 
     public $id;
     public $proyecto_id;
@@ -18,6 +18,7 @@ class OrdenCambio extends ActiveRecord
     public $impacto_costo;
     public $impacto_dias;
     public $actividad_id;
+    public $subactividad_id;
     public $creado_por;
     /** Solo lectura (la llena la BD): sirve para detectar ediciones simultáneas */
     public $actualizado;
@@ -39,6 +40,7 @@ class OrdenCambio extends ActiveRecord
         $this->impacto_costo = $args['impacto_costo'] ?? 0;
         $this->impacto_dias = $args['impacto_dias'] ?? 0;
         $this->actividad_id = $args['actividad_id'] ?? null;
+        $this->subactividad_id = $args['subactividad_id'] ?? null;
         $this->creado_por = $args['creado_por'] ?? '';
         $this->actualizado = $args['actualizado'] ?? null;
     }

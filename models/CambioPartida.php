@@ -6,7 +6,7 @@ namespace Model;
 class CambioPartida extends ActiveRecord
 {
     protected static $tabla = 'cambio_partidas';
-    protected static $columnasDB = ['id', 'orden_id', 'proyecto_id', 'tipo', 'descripcion', 'ubicacion_original', 'ubicacion_nueva', 'cantidad', 'unidad', 'actividad_id', 'material_id', 'requiere_retiro', 'estado', 'fecha_prevista', 'fecha_ejecucion', 'fecha_retiro_prevista', 'fecha_retiro_real', 'notas'];
+    protected static $columnasDB = ['id', 'orden_id', 'proyecto_id', 'tipo', 'descripcion', 'ubicacion_original', 'ubicacion_nueva', 'cantidad', 'unidad', 'actividad_id', 'subactividad_id', 'material_id', 'requiere_retiro', 'estado', 'fecha_prevista', 'fecha_ejecucion', 'fecha_retiro_prevista', 'fecha_retiro_real', 'notas'];
 
     public $id;
     public $orden_id;
@@ -18,6 +18,7 @@ class CambioPartida extends ActiveRecord
     public $cantidad;
     public $unidad;
     public $actividad_id;
+    public $subactividad_id;
     public $material_id;
     public $requiere_retiro;
     public $estado;
@@ -63,6 +64,7 @@ class CambioPartida extends ActiveRecord
         $this->cantidad = $args['cantidad'] ?? null;
         $this->unidad = $args['unidad'] ?? '';
         $this->actividad_id = $args['actividad_id'] ?? null;
+        $this->subactividad_id = $args['subactividad_id'] ?? null;
         $this->material_id = $args['material_id'] ?? null;
         $this->requiere_retiro = (int)($args['requiere_retiro'] ?? 0);
         $this->estado = $args['estado'] ?? 'pendiente';

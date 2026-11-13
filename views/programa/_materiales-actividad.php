@@ -6,14 +6,15 @@
 $seleccion = $seleccion ?? [];
 $roles = $roles ?? [];
 $catalogo = $catalogo ?? [];
+$entidadMateriales = $entidadMateriales ?? $actividad;
 ?>
 <div class="campo campo-full">
-    <label class="campo-check"><input type="checkbox" id="sin_material" name="sin_material" value="1" <?php echo !empty($actividad->sin_material) ? 'checked' : ''; ?>> Actividad sin material</label>
-    <small class="text-muted">Márcala si esta actividad no requiere material: dejará de aparecer en «Actividades sin materiales» de Acciones rápidas.</small>
+    <label class="campo-check"><input type="checkbox" id="sin_material" name="sin_material" value="1" <?php echo !empty($entidadMateriales->sin_material) ? 'checked' : ''; ?>> Sin material</label>
+    <small class="text-muted">Márcala si esta actividad o subactividad no requiere material: dejará de aparecer en «Actividades sin materiales» de Acciones rápidas.</small>
 </div>
 <div class="campo campo-full">
     <label class="campo-check"><input type="checkbox" id="gestionar_materiales" name="gestionar_materiales" value="1" <?php echo !empty($gestionarMateriales) ? 'checked' : ''; ?>> Gestionar materiales</label>
-    <small class="text-muted">Indica qué materiales del catálogo necesita esta actividad. Sirve para saber si puede ejecutarse (Planificador) y para la fecha de instalación del MSR.</small>
+    <small class="text-muted">Indica qué materiales del catálogo necesita esta actividad o subactividad. Sirve para saber si puede ejecutarse (Planificador) y para la fecha de instalación del MSR.</small>
 </div>
 <div class="campo campo-full" id="seccion-materiales" <?php echo empty($gestionarMateriales) ? 'hidden' : ''; ?>>
     <h3>Materiales</h3>

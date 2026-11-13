@@ -16,14 +16,14 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-timeline"></i> <?php echo s($linea->nombre); ?> <small class="text-muted">contra el programa de hoy</small></h2>
-        <p class="text-muted">Línea base guardada el <?php echo formatear_fecha(substr((string)$linea->creado, 0, 10)); ?> · <?php echo (int)$linea->total_actividades; ?> actividades</p>
+        <p class="text-muted">Línea base guardada el <?php echo formatear_fecha(substr((string)$linea->creado, 0, 10)); ?> · <?php echo (int)$linea->total_actividades; ?> actividades<?php if (!empty($linea->total_subactividades)): ?> · <?php echo (int)$linea->total_subactividades; ?> subactividades<?php endif; ?></p>
     </div>
     <a href="/lineas-base?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">← Líneas base</a>
 </div>
 
 <div class="cb-kpis">
     <div class="cb-kpi <?php echo $r['d_fin'] > 0 ? 'cb-kpi-alerta' : ''; ?>"><small>Fecha de término</small><strong><?php echo $signo((int)$r['d_fin']); ?> d</strong><span><?php echo $r['fin_base'] ? formatear_fecha($r['fin_base']) : '—'; ?> → <?php echo $r['fin_actual'] ? formatear_fecha($r['fin_actual']) : '—'; ?> (días hábiles)</span></div>
-    <div class="cb-kpi"><small>Actividades movidas</small><strong><?php echo (int)$r['movida']; ?></strong><span><?php echo (int)$r['nueva']; ?> nueva(s) · <?php echo (int)$r['eliminada']; ?> eliminada(s)</span></div>
+    <div class="cb-kpi"><small>Nodos movidos</small><strong><?php echo (int)$r['movida']; ?></strong><span><?php echo (int)$r['nueva']; ?> nueva(s) · <?php echo (int)$r['eliminada']; ?> eliminada(s)<?php if (!empty($r['total_subactividades'])): ?> · incluye subactividades<?php endif; ?></span></div>
     <div class="cb-kpi"><small>Justificadas</small><strong><?php echo (int)$r['oc'] + (int)$r['material']; ?></strong><span><?php echo (int)$r['oc']; ?> por orden de cambio · <?php echo (int)$r['material']; ?> por material</span></div>
     <div class="cb-kpi <?php echo $r['sin_justificar'] ? 'cb-kpi-alerta' : ''; ?>"><small>Sin justificar</small><strong><?php echo (int)$r['sin_justificar']; ?></strong><span>cambios sin orden de cambio</span></div>
 </div>
@@ -75,9 +75,9 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
     <div class="cb-gantt" style="--dias: <?php echo $total; ?>">
         <div class="cb-gantt-eje"><span><?php echo formatear_fecha($min); ?></span><span><?php echo formatear_fecha($max); ?></span></div>
         <?php foreach ($filas as $f): ?>
-        <div class="cb-gantt-fila cb-e-<?php echo s($f['estado']); ?>">
+        <div class="cb-gantt-fila cb-e-<?php echo s($f['estado']); ?><?php echo ($f['tipo'] ?? '') === 'subactividad' ? ' cb-sub' : ''; ?>">
             <div class="cb-gantt-etq" title="<?php echo s($f['partida']); ?>">
-                <span class="mono"><?php echo s($f['codigo']); ?></span> <?php echo s($f['nombre']); ?>
+                <?php if (($f['tipo'] ?? '') === 'subactividad'): ?><span class="text-dim">↳</span> <?php endif; ?><span class="mono"><?php echo s($f['codigo']); ?></span> <?php echo s($f['nombre']); ?>
                 <small>
                     <?php if ($f['estado'] === 'movida'): ?>
                         inicio <?php echo $signo($f['d_inicio']); ?> d · fin <?php echo $signo($f['d_fin']); ?> d<?php echo $f['d_dur'] ? ' · duración ' . $signo($f['d_dur']) . ' d' : ''; ?>

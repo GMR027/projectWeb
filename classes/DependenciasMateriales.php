@@ -42,12 +42,23 @@ class DependenciasMateriales
         $out = [];
         foreach (self::filas(
             "SELECT am.material_id, am.rol, a.id, a.codigo, a.nombre, a.fecha_inicio, a.fecha_fin, a.duracion_dias,
-                    a.progreso, a.hito, a.fecha_fija, p.id AS partida_id, p.codigo AS partida_codigo, p.nombre AS partida
+                    a.progreso, a.hito, a.fecha_fija, p.id AS partida_id, p.codigo AS partida_codigo, p.nombre AS partida,
+                    NULL AS subactividad_id
              FROM actividad_materiales am
              JOIN actividades a ON a.id = am.actividad_id
              JOIN partidas p ON p.id = a.partida_id
              WHERE p.proyecto_id = $proyectoId
-             ORDER BY a.fecha_inicio ASC, a.codigo ASC"
+             UNION ALL
+             SELECT sm.material_id, sm.rol, a.id, a.codigo, a.nombre, s.fecha_inicio, s.fecha_fin,
+                    GREATEST(1, DATEDIFF(s.fecha_fin, s.fecha_inicio) + 1) AS duracion_dias,
+                    s.progreso, s.hito, s.fecha_fija, p.id AS partida_id, p.codigo AS partida_codigo, p.nombre AS partida,
+                    s.id AS subactividad_id
+             FROM subactividad_materiales sm
+             JOIN subactividades s ON s.id = sm.subactividad_id
+             JOIN actividades a ON a.id = s.actividad_id
+             JOIN partidas p ON p.id = a.partida_id
+             WHERE p.proyecto_id = $proyectoId
+             ORDER BY fecha_inicio ASC, codigo ASC"
         ) as $f) {
             $out[(int)$f['material_id']][] = $f;
         }

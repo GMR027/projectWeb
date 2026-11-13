@@ -9,6 +9,7 @@ use Classes\Dependencias;
 use Model\CambioPartida;
 use Model\Material;
 use Model\OrdenCambio;
+use Model\Subactividad;
 
 /** Órdenes de cambio con seguimiento de lo que se instala, retira, reubica, demuele o agrega */
 class CambioController
@@ -56,6 +57,27 @@ class CambioController
         return $m && (int)$m->proyecto_id === (int)$proyecto->id ? (int)$m->id : null;
     }
 
+    /** Subactividad del proyecto (o null) */
+    private static function subactividadValida($proyecto, $id): ?int
+    {
+        $s = Subactividad::find((int)$id);
+        return $s && (int)$s->proyectoId() === (int)$proyecto->id ? (int)$s->id : null;
+    }
+
+    /** Lista plana de subactividades para los selectores de la pantalla */
+    private static function listaSubactividades($proyecto): array
+    {
+        $out = [];
+        foreach ($proyecto->getPartidasConActividades() as $bloque) {
+            foreach ($bloque['actividades'] as $a) {
+                foreach (Subactividad::deActividad((int)$a->id) as $i => $s) {
+                    $out[] = ['id' => (int)$s->id, 'codigo' => $a->codigo . '.' . ($i + 1), 'nombre' => (string)$s->nombre, 'actividad_id' => (int)$a->id];
+                }
+            }
+        }
+        return $out;
+    }
+
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -83,7 +105,7 @@ class CambioController
         $pid = (int)$proyecto->id;
         $router->render('cambios/ver', [
             'titulo' => 'Orden ' . $orden->numero . ' - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'orden' => $orden, 'partidas' => $orden->partidas(),
-            'actividades' => Dependencias::actividades($pid), 'materiales' => Material::deProyecto($pid),
+            'actividades' => Dependencias::actividades($pid), 'subactividades' => self::listaSubactividades($proyecto), 'materiales' => Material::deProyecto($pid),
             'editar' => puede_gestionar_proyecto($proyecto),
         ]);
     }
@@ -118,7 +140,10 @@ class CambioController
             $orden->fecha = trim($_POST['fecha'] ?? '');
             $orden->impacto_costo = self::numero($_POST['impacto_costo'] ?? '') ?? 0;
             $orden->impacto_dias = (int)($_POST['impacto_dias'] ?? 0);
-            $orden->actividad_id = self::actividadValida($proyecto, $_POST['actividad_id'] ?? 0);
+            $orden->subactividad_id = self::subactividadValida($proyecto, $_POST['subactividad_id'] ?? 0);
+            $orden->actividad_id = $orden->subactividad_id
+                ? (int)(Subactividad::find((int)$orden->subactividad_id)->actividad_id ?? 0)
+                : self::actividadValida($proyecto, $_POST['actividad_id'] ?? 0);
             $orden->proyecto_id = $proyecto->id;
             if ($nueva) $orden->creado_por = usuario_actual()['nombre'] ?? '';
             $alertas = $orden->validar();
@@ -132,6 +157,7 @@ class CambioController
         $router->render('cambios/formulario', [
             'titulo' => $orden->id ? 'Editar orden de cambio' : 'Nueva orden de cambio', 'proyecto' => $proyecto, 'orden' => $orden, 'alertas' => $alertas,
             'actividades' => Dependencias::actividades((int)$proyecto->id),
+            'subactividades' => self::listaSubactividades($proyecto),
         ]);
     }
 
@@ -178,7 +204,10 @@ class CambioController
         $c->ubicacion_nueva = mb_substr(trim($_POST['ubicacion_nueva'] ?? ''), 0, 200);
         $c->cantidad = self::numero($_POST['cantidad'] ?? '');
         $c->unidad = mb_substr(trim($_POST['unidad'] ?? ''), 0, 30);
-        $c->actividad_id = self::actividadValida($proyecto, $_POST['actividad_id'] ?? 0);
+        $c->subactividad_id = self::subactividadValida($proyecto, $_POST['subactividad_id'] ?? 0);
+        $c->actividad_id = $c->subactividad_id
+            ? (int)(Subactividad::find((int)$c->subactividad_id)->actividad_id ?? 0)
+            : self::actividadValida($proyecto, $_POST['actividad_id'] ?? 0);
         $c->material_id = self::materialValido($proyecto, $_POST['material_id'] ?? 0);
         $c->requiere_retiro = $tipo === 'instalacion_temporal' || !empty($_POST['requiere_retiro']) ? 1 : 0;
         $c->fecha_prevista = self::fecha($_POST['fecha_prevista'] ?? '');

@@ -1353,6 +1353,22 @@ class ProgramaController
             return;
         }
 
+        // Materiales propios de la subactividad (independientes de los de la actividad)
+        try {
+            if (!empty($_POST['sin_material'])) {
+                \Model\SubactividadMaterial::guardarDeSubactividad((int)$sub->id, (int)$proyecto->id, []);
+            } elseif (!empty($_POST['gestionar_materiales'])) {
+                $rolesMat = [];
+                foreach ((array)($_POST['roles'] ?? []) as $mid => $rol) {
+                    if (in_array($rol, ['instala', 'consume'], true)) $rolesMat[(int)$mid] = $rol;
+                }
+                \Model\SubactividadMaterial::guardarDeSubactividad((int)$sub->id, (int)$proyecto->id, (array)($_POST['materiales'] ?? []), $rolesMat);
+            }
+            \Model\ActividadMaterial::sincronizarInstalacion((int)$proyecto->id);
+        } catch (\Throwable $e) {
+            error_log('Materiales de subactividad: ' . $e->getMessage());
+        }
+
         if (texto_param($_POST['volver'] ?? '') === 'actividad') {
             header('Location: /programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades');
         } else {
@@ -1372,6 +1388,10 @@ class ProgramaController
             'volver' => $volver === 'actividad' ? 'actividad' : 'programa',
             'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyecto->id) : [],
             'frentes' => \Classes\LineaBalance::disponible() ? \Classes\LineaBalance::frentes((int)$proyecto->id) : [],
+            'catalogoMateriales' => self::catalogoMateriales((int)$proyecto->id),
+            'materialesSub' => $sub->id ? \Model\SubactividadMaterial::deSubactividad((int)$sub->id) : [],
+            'rolesSub' => $sub->id ? \Model\SubactividadMaterial::rolesDeSubactividad((int)$sub->id) : [],
+            'gestionarMateriales' => $sub->id ? (bool)\Model\SubactividadMaterial::deSubactividad((int)$sub->id) : false,
         ]);
     }
 

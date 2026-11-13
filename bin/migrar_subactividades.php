@@ -153,7 +153,36 @@ if (existeTabla($db, 'restricciones') && existeTabla($db, 'subactividades')) {
     }
 }
 
-// 7) Tabla de dependencias con subactividades.
+// 7) Materiales propios de subactividad.
+if (!existeTabla($db, 'subactividad_materiales')) {
+    $sqlMat = @file_get_contents(__DIR__ . '/../database/migracion_subactividad_materiales.sql');
+    if ($sqlMat) {
+        $db->multi_query($sqlMat);
+        while ($db->more_results() && $db->next_result()) { /* vaciar resultados */ }
+        echo "  + tabla subactividad_materiales\n";
+    }
+}
+
+// 8) Líneas base con subactividades.
+if (existeTabla($db, 'lineas_base') && !existeTabla($db, 'lineas_base_subactividades')) {
+    $sqlLb = @file_get_contents(__DIR__ . '/../database/migracion_lineas_base_subactividades.sql');
+    if ($sqlLb) {
+        $db->multi_query($sqlLb);
+        while ($db->more_results() && $db->next_result()) { /* vaciar resultados */ }
+        echo "  + tablas de líneas base con subactividades\n";
+    }
+}
+
+// 9) Órdenes de cambio con subactividades.
+if (existeTabla($db, 'ordenes_cambio') && existeTabla($db, 'cambio_partidas')) {
+    $sqlCambios = @file_get_contents(__DIR__ . '/../database/migracion_cambios_subactividades.sql');
+    if ($sqlCambios) {
+        $db->multi_query($sqlCambios);
+        while ($db->more_results() && $db->next_result()) { /* vaciar resultados */ }
+    }
+}
+
+// 10) Tabla de dependencias con subactividades.
 if (!existeTabla($db, 'subactividad_dependencias')) {
     $sqlDep = @file_get_contents(__DIR__ . '/../database/migracion_subactividad_dependencias.sql');
     if ($sqlDep) {

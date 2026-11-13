@@ -56,13 +56,27 @@ class ActividadMaterial extends ActiveRecord
      */
     public static function sincronizarInstalacion(int $proyectoId): void
     {
+        // La fecha de instalación es la más temprana entre las actividades y las subactividades que usan el material.
         self::$db->query(
             "UPDATE msr_items i
-             JOIN (SELECT am.material_id, MIN(a.fecha_inicio) AS f
-                   FROM actividad_materiales am
-                   JOIN actividades a ON a.id = am.actividad_id
-                   JOIN partidas p ON p.id = a.partida_id
-                   WHERE p.proyecto_id = $proyectoId GROUP BY am.material_id) x ON x.material_id = i.material_id
+             JOIN (
+                SELECT material_id, MIN(f) AS f FROM (
+                    SELECT am.material_id, MIN(a.fecha_inicio) AS f
+                    FROM actividad_materiales am
+                    JOIN actividades a ON a.id = am.actividad_id
+                    JOIN partidas p ON p.id = a.partida_id
+                    WHERE p.proyecto_id = $proyectoId
+                    GROUP BY am.material_id
+                    UNION ALL
+                    SELECT sm.material_id, MIN(s.fecha_inicio) AS f
+                    FROM subactividad_materiales sm
+                    JOIN subactividades s ON s.id = sm.subactividad_id
+                    JOIN actividades a ON a.id = s.actividad_id
+                    JOIN partidas p ON p.id = a.partida_id
+                    WHERE p.proyecto_id = $proyectoId
+                    GROUP BY sm.material_id
+                ) u GROUP BY material_id
+             ) x ON x.material_id = i.material_id
              SET i.fecha_instalacion_prog = x.f
              WHERE i.proyecto_id = $proyectoId"
         );
