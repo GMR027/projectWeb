@@ -67,6 +67,7 @@ class LookaheadController
         $semanas = self::armarSemanas($lunes, $calendario, (int)$config->semanas);
         $tipos = TipoRestriccion::all('id ASC');
         $restricciones = self::restriccionesActivas((int)$proyecto->id);
+        $restriccionesSub = self::restriccionesActivasSub((int)$proyecto->id);
 
         if ($incluirSub === null) {
             $subParam = $_GET['sub'] ?? null;
@@ -111,9 +112,9 @@ class LookaheadController
                         'actividad' => $sub,
                         'actividad_id' => (int)$act->id,
                         'celdas' => $celdasSub,
-                        'tipos' => [],   // las restricciones propias llegan en la fase de restricciones
+                        'tipos' => $restriccionesSub[(int)$sub->id] ?? [],
                         'pta_ok' => (int)$sub->pta === 1,
-                        'con_restriccion' => false,
+                        'con_restriccion' => !empty($restriccionesSub[(int)$sub->id]),
                         'atrasada' => $sub->fecha_fin < $lunes->format('Y-m-d') && (int)$sub->progreso < 100,
                     ];
                 }
@@ -266,11 +267,32 @@ class LookaheadController
             "SELECT r.* FROM restricciones r
              JOIN actividades a ON a.id = r.actividad_id
              JOIN partidas p ON p.id = a.partida_id
-             WHERE p.proyecto_id = $proyectoId AND r.estado = 'activa'"
+             WHERE p.proyecto_id = $proyectoId AND r.estado = 'activa' AND r.subactividad_id IS NULL"
         );
         $mapa = [];
         foreach ($rows as $r) {
             $mapa[$r->actividad_id][$r->tipo_id] = ($mapa[$r->actividad_id][$r->tipo_id] ?? 0) + 1;
+        }
+        return $mapa;
+    }
+
+    /** @return array<int, array<int,int>> subactividad_id => [tipo_id => cantidad] */
+    public static function restriccionesActivasSub(int $proyectoId): array
+    {
+        try {
+            $rows = Restriccion::consultarSQL(
+                "SELECT r.* FROM restricciones r
+                 JOIN subactividades s ON s.id = r.subactividad_id
+                 JOIN actividades a ON a.id = s.actividad_id
+                 JOIN partidas p ON p.id = a.partida_id
+                 WHERE p.proyecto_id = $proyectoId AND r.estado = 'activa'"
+            );
+        } catch (\Throwable $e) {   // migración pendiente
+            return [];
+        }
+        $mapa = [];
+        foreach ($rows as $r) {
+            $mapa[(int)$r->subactividad_id][$r->tipo_id] = ($mapa[(int)$r->subactividad_id][$r->tipo_id] ?? 0) + 1;
         }
         return $mapa;
     }

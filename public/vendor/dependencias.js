@@ -18,7 +18,7 @@
   };
   let LBL = medidaLbl();
   let autoVista = true;   // mientras el usuario no toque el zoom, la vista se reajusta al girar el teléfono
-  const act = id => datos.actividades.find(a => a.id === id);
+  const act = id => datos.actividades.find(a => String(a.id) === String(id));
 
   // ---------- comunicación con el servidor ----------
   async function api(ruta, cuerpo = {}) {
@@ -78,7 +78,18 @@
     $('dep-zoom-pct').textContent = Math.round(S.ppd / PPD_BASE * 100) + '%';
     const lista = filtradas();
     const filas = []; let ult = null;
-    lista.forEach(a => { if (a.partida_id !== ult) { filas.push({ g: a.partida }); ult = a.partida_id; } filas.push({ a }); });
+    const acts = lista.filter(a => a.tipo !== 'subactividad');
+    const subs = lista.filter(a => a.tipo === 'subactividad');
+    acts.forEach(a => {
+      if (a.partida_id !== ult) { filas.push({ g: a.partida }); ult = a.partida_id; }
+      filas.push({ a });
+      subs.filter(s => s.padre === a.id).forEach(s => filas.push({ a: s, sub: true }));
+    });
+    // Si el filtro ocultó a la actividad pero dejó una subactividad visible, se pinta igual (su código da el contexto)
+    subs.filter(s => !acts.some(a => a.id === s.padre)).forEach(s => {
+      if (s.partida_id !== ult) { filas.push({ g: s.partida }); ult = s.partida_id; }
+      filas.push({ a: s, sub: true });
+    });
     let y = HEAD; const pos = {};
     filas.forEach(f => { f.y = y; y += f.g ? GRP : ROW; if (f.a) pos[f.a.id] = f; });
     const alto = y + 10;
@@ -90,7 +101,7 @@
     $('dep-labels').style.width = LBL + 'px';
     $('dep-labels').innerHTML = '<div class="dep-lab-cab" style="height:' + HEAD + 'px">Actividad</div>' + filas.map(f => f.g
       ? '<div class="dep-lab-grp" style="height:' + GRP + 'px">' + esc(f.g) + '</div>'
-      : '<div class="dep-lab' + (f.a.id === S.sel ? ' sel' : '') + (f.a.id === S.origen ? ' origen' : '') + '" style="height:' + ROW + 'px" data-id="' + f.a.id + '" title="' + esc(f.a.codigo + ' · ' + f.a.nombre) + '"><b>' + esc(f.a.codigo) + '</b> ' + esc(f.a.nombre) + (f.a.critica ? ' <i class="dep-pt crit"></i>' : '') + (f.a.conflicto ? ' <i class="dep-pt warn"></i>' : '') + '</div>').join('');
+      : '<div class="dep-lab' + (f.sub ? ' dep-lab-sub' : '') + (f.a.id === S.sel ? ' sel' : '') + (f.a.id === S.origen ? ' origen' : '') + '" style="height:' + ROW + 'px" data-id="' + f.a.id + '" title="' + esc(f.a.codigo + ' · ' + f.a.nombre) + '"><b>' + esc(f.a.codigo) + '</b> ' + esc(f.a.nombre) + (f.a.critica ? ' <i class="dep-pt crit"></i>' : '') + (f.a.conflicto ? ' <i class="dep-pt warn"></i>' : '') + '</div>').join('');
 
     let s = '';
     // ejes: semanas y meses
@@ -123,7 +134,7 @@
     lista.forEach(a => {
       const f = pos[a.id], x1 = X(a.inicio), x2 = X(a.fin) + ppd, y_ = f.y + 6, h = ROW - 12;
       const color = a.critica && datos.modo !== 'apagado' ? '#dc2626' : (a.color || '#3b82f6');
-      const cls = 'dep-barra-g' + (a.id === S.sel ? ' sel' : '') + (a.id === S.origen ? ' origen' : '') + (a.conflicto ? ' conf' : '');
+      const cls = 'dep-barra-g' + (a.tipo === 'subactividad' ? ' dep-barra-sub' : '') + (a.id === S.sel ? ' sel' : '') + (a.id === S.origen ? ' origen' : '') + (a.conflicto ? ' conf' : '');
       s += '<g class="' + cls + '" data-id="' + a.id + '">';
       if (datos.modo !== 'apagado' && a.es && a.es !== a.inicio) s += '<rect class="dep-fantasma" x="' + X(a.es) + '" y="' + (y_ - 2) + '" width="' + Math.max(ppd, (dn(a.ef) - dn(a.es) + 1) * ppd) + '" height="' + (h + 4) + '" rx="3"/>';
       if (a.hito) s += '<path class="dep-hito" d="M' + x1 + ',' + (y_ - 1) + ' l' + (h / 2 + 1) + ',' + (h / 2 + 1) + ' l' + (-(h / 2 + 1)) + ',' + (h / 2 + 1) + ' l' + (-(h / 2 + 1)) + ',' + (-(h / 2 + 1)) + ' z" fill="' + color + '"/>';
@@ -209,13 +220,13 @@
   }
   function pintarPanel() {
     const p = $('dep-panel'), a = S.sel != null ? act(S.sel) : null;
-    if (!a) { p.innerHTML = '<p class="text-muted">Elige una actividad para ver sus predecesoras y sucesoras.</p>'; return; }
+    if (!a) { p.innerHTML = '<p class="text-muted">Elige una actividad o subactividad para ver sus predecesoras y sucesoras.</p>'; return; }
     const preds = datos.relaciones.filter(r => r.suc === a.id), sucs = datos.relaciones.filter(r => r.pred === a.id);
     const opciones = quitar => '<option value="">— Elegir actividad —</option>' + datos.actividades.filter(x => x.id !== a.id && !quitar.includes(x.id)).map(x => '<option value="' + x.id + '">' + esc(x.codigo + ' · ' + x.nombre) + '</option>').join('');
     const calc = datos.modo === 'apagado' ? '' :
       '<p class="dep-datos">' + (a.holgura != null ? 'Holgura: <strong>' + a.holgura + ' día(s) hábil(es)</strong>' : 'Sin relaciones: no entra al cálculo') + (a.critica ? ' · <span class="dep-et crit">Ruta crítica</span>' : '') + (a.conflicto ? ' · <span class="dep-et warn">Conflicto</span>' : '') +
       (a.es && a.es !== a.inicio ? '<br>Fecha calculada: <strong>' + fmt(a.es) + ' – ' + fmt(a.ef) + '</strong> (+' + a.empuje + ' d)' : '') + '</p>';
-    p.innerHTML = '<h3>' + esc(a.codigo) + ' · ' + esc(a.nombre) + '</h3><p class="text-muted text-sm">' + esc(a.partida) + '</p>' +
+    p.innerHTML = '<h3>' + esc(a.codigo) + ' · ' + esc(a.nombre) + '</h3><p class="text-muted text-sm">' + (a.tipo === 'subactividad' ? 'Subactividad de ' + esc((act(a.padre) || {}).codigo || '') + ' · ' : '') + esc(a.partida) + '</p>' +
       '<p class="dep-datos mono">' + fmt(a.inicio) + ' – ' + fmt(a.fin) + ' · ' + (a.hito ? 'hito' : a.dur + ' día(s)') + ' · ' + a.progreso + ' %</p>' + calc +
       (D.puedeEditar ? '<label class="campo-check" title="El modo automático no mueve esta actividad; solo se avisa si choca con sus predecesoras"><input type="checkbox" id="dep-fija"' + (a.fija ? ' checked' : '') + '> 📌 Fecha fija</label>' : '') +
       '<h4>Predecesoras <small class="text-muted">(deben cumplirse antes)</small></h4>' + (preds.map(r => filaRel(r, 'pred')).join('') || '<p class="text-muted text-sm">Ninguna.</p>') +
@@ -281,17 +292,17 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && (S.enlazar || S.origen != null)) alternarEnlazar(false); });
 
     // clic en etiquetas y barras; arrastre desde el asa
-    $('dep-labels').addEventListener('click', e => { const f = e.target.closest('.dep-lab'); if (f) elegir(+f.dataset.id); });
+    $('dep-labels').addEventListener('click', e => { const f = e.target.closest('.dep-lab'); if (f) elegir(f.dataset.id); });
     const svg = $('dep-svg');
     svg.addEventListener('click', e => {
       if (arrastrando) return;
-      const fl = e.target.closest('[data-dep]'); if (fl) { const r = datos.relaciones.find(x => x.id === +fl.dataset.dep); if (r) { S.sel = r.suc; S.selDep = r.id; pintar(); } return; }
-      const g = e.target.closest('.dep-barra-g'); if (g) elegir(+g.dataset.id);
+      const fl = e.target.closest('[data-dep]'); if (fl) { const r = datos.relaciones.find(x => String(x.id) === String(fl.dataset.dep)); if (r) { S.sel = r.suc; S.selDep = r.id; pintar(); } return; }
+      const g = e.target.closest('.dep-barra-g'); if (g) elegir(g.dataset.id);
     });
     let arrastrando = null;
     svg.addEventListener('mousedown', e => {
       const asa = e.target.closest('.dep-asa'); if (!asa || !D.puedeEditar) return;
-      e.preventDefault(); arrastrando = { id: +asa.dataset.id, x: +asa.getAttribute('cx'), y: +asa.getAttribute('cy') };
+      e.preventDefault(); arrastrando = { id: asa.dataset.id, x: +asa.getAttribute('cx'), y: +asa.getAttribute('cy') };
       const ln = $('dep-arrastre'); ln.hidden = false; ln.setAttribute('x1', arrastrando.x); ln.setAttribute('y1', arrastrando.y); ln.setAttribute('x2', arrastrando.x); ln.setAttribute('y2', arrastrando.y);
     });
     window.addEventListener('mousemove', e => {
@@ -303,23 +314,23 @@
       const o = arrastrando.id; const ln = $('dep-arrastre'); if (ln) ln.hidden = true;
       const el = document.elementFromPoint(e.clientX, e.clientY), g = el && el.closest && el.closest('.dep-barra-g, .dep-lab');
       arrastrando = null; setTimeout(() => { /* evita el clic posterior */ }, 0);
-      const dest = g ? +g.dataset.id : null;
+      const dest = g ? g.dataset.id : null;
       if (dest && dest !== o) crear(o, dest);
     });
 
     // panel
     const p = $('dep-panel');
     p.addEventListener('click', async e => {
-      const ir = e.target.closest('.dep-ir'); if (ir) { e.preventDefault(); S.sel = +ir.dataset.id; S.selDep = null; pintar(); return; }
-      const del = e.target.closest('.dep-del'); if (del) { const id = +del.closest('.dep-rel').dataset.dep; if (await api('eliminar', { id })) { S.selDep = null; pintar(); pintarPartidas(); aviso('Relación eliminada.', 'ok'); } return; }
-      if (e.target.id === 'dep-add-pred-b') { const v = +$('dep-add-pred').value; if (v) crear(v, S.sel); }
-      if (e.target.id === 'dep-add-suc-b') { const v = +$('dep-add-suc').value; if (v) crear(S.sel, v); }
-      const rel = e.target.closest('.dep-rel'); if (rel && !e.target.closest('select,input,button,a')) { S.selDep = +rel.dataset.dep; pintar(); }
+      const ir = e.target.closest('.dep-ir'); if (ir) { e.preventDefault(); S.sel = ir.dataset.id; S.selDep = null; pintar(); return; }
+      const del = e.target.closest('.dep-del'); if (del) { const id = del.closest('.dep-rel').dataset.dep; if (await api('eliminar', { id })) { S.selDep = null; pintar(); pintarPartidas(); aviso('Relación eliminada.', 'ok'); } return; }
+      if (e.target.id === 'dep-add-pred-b') { const v = $('dep-add-pred').value; if (v) crear(v, S.sel); }
+      if (e.target.id === 'dep-add-suc-b') { const v = $('dep-add-suc').value; if (v) crear(S.sel, v); }
+      const rel = e.target.closest('.dep-rel'); if (rel && !e.target.closest('select,input,button,a')) { S.selDep = rel.dataset.dep; pintar(); }
     });
     p.addEventListener('change', async e => {
       if (e.target.id === 'dep-fija') { if (await api('fijar', { actividad_id: S.sel, fija: e.target.checked ? 1 : 0 })) pintar(); return; }
       const rel = e.target.closest('.dep-rel'); if (!rel) return;
-      const r = datos.relaciones.find(x => x.id === +rel.dataset.dep); if (!r) return;
+      const r = datos.relaciones.find(x => String(x.id) === String(rel.dataset.dep)); if (!r) return;
       const tipo = rel.querySelector('[data-campo=tipo]').value, retraso = parseInt(rel.querySelector('[data-campo=retraso]').value, 10) || 0;
       S.selDep = r.id; if (await api('guardar', { pred: r.pred, suc: r.suc, tipo, retraso })) pintar();
     });

@@ -771,6 +771,7 @@ body.gr-editor-page {
 .dep-labels { flex: none; position: sticky; left: 0; z-index: 3; background: var(--bg-secondary, #1c2541); border-right: 1px solid var(--border);
   .dep-lab-cab { display: flex; align-items: flex-end; padding: 0 1rem .6rem; font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: inherit; }
   .dep-lab-grp { display: flex; align-items: center; padding: 0 1rem; font-size: 1.1rem; font-weight: 700; color: var(--text-muted); background: rgba(128, 128, 128, .12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dep-lab.dep-lab-sub { padding-left: 2.6rem; font-size: 1.05rem; color: var(--text-muted); }
   .dep-lab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border-bottom: 1px solid rgba(128, 128, 128, .12); b { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
     &:hover { background: rgba(255, 255, 255, .05); } &.sel { background: color-mix(in srgb, var(--secondary) 25%, transparent); } &.origen { background: color-mix(in srgb, var(--primary) 30%, transparent); } }
   .dep-pt { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; &.crit { background: var(--danger); } &.warn { background: var(--warning); } } }
@@ -780,6 +781,7 @@ body.gr-editor-page {
   .dep-hoy { stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 4 3; } .dep-fgrp { fill: rgba(128, 128, 128, .1); }
   .dep-barra-g { cursor: pointer; .dep-barra { stroke: rgba(0, 0, 0, .35); stroke-width: 1; } .dep-prog { fill: rgba(255, 255, 255, .85); }
     &.sel .dep-barra, &.sel .dep-hito { stroke: #fff; stroke-width: 2.5; } &.origen .dep-barra { stroke: var(--primary); stroke-width: 3; } &.conf .dep-barra { stroke: var(--warning); stroke-width: 2.5; } }
+  .dep-barra-g.dep-barra-sub .dep-barra { stroke-dasharray: 4 3; }
   .dep-asa { fill: #fff; stroke: var(--primary); stroke-width: 2; opacity: 0; cursor: crosshair; } .dep-barra-g:hover .dep-asa, .dep-asa:hover { opacity: 1; }
   .dep-fantasma { fill: none; stroke: var(--warning); stroke-width: 1.5; stroke-dasharray: 5 3; }
   .dep-flecha { fill: none; stroke: #94a3b8; stroke-width: 1.5; &.crit { stroke: var(--danger); stroke-width: 2; } &.conf { stroke: var(--warning); stroke-dasharray: 5 3; } &.sel { stroke: #fff; stroke-width: 3; } &.apag { stroke-dasharray: 2 3; opacity: .7; } }

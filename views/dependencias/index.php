@@ -8,7 +8,7 @@ $modos = [
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-diagram-project"></i> <?php echo s(t('Dependencias de obra')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué actividad debe terminar (o empezar) antes de que otra pueda empezar (o terminar)</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué actividad o subactividad debe terminar (o empezar) antes de que otra pueda empezar (o terminar)</p>
     </div>
     <a href="/programa?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← <?php echo s(t('Programa')); ?></a>
 </div>
@@ -26,8 +26,8 @@ $modos = [
 
 <div class="card dep-barra">
     <label>Partida <select id="dep-partida"><option value="">Todas</option></select></label>
-    <label class="campo-check"><input type="checkbox" id="dep-solo"> Solo actividades con relaciones</label>
-    <input type="search" id="dep-buscar" placeholder="Buscar actividad…" aria-label="Buscar actividad">
+    <label class="campo-check"><input type="checkbox" id="dep-solo"> Solo nodos con relaciones</label>
+    <input type="search" id="dep-buscar" placeholder="Buscar actividad o subactividad…" aria-label="Buscar actividad o subactividad">
     <span class="dep-zoom" role="group" aria-label="Zoom del diagrama">
         <button type="button" class="btn btn-sm btn-ghost" id="dep-menos" title="Alejar (Ctrl + rueda)" aria-label="Alejar"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
         <span class="dep-zoom-pct" id="dep-zoom-pct" aria-live="polite">100%</span>

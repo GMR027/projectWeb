@@ -138,4 +138,29 @@ if (existeTabla($db, 'proyectos')) {
     addCol($db, 'proyectos', 'mostrar_subactividades', 'TINYINT(1) NOT NULL DEFAULT 0', $pcols);
 }
 
+// 6) Restricciones propias de subactividad (columna, índice y FK idempotentes).
+if (existeTabla($db, 'restricciones') && existeTabla($db, 'subactividades')) {
+    $rcols = columnas($db, 'restricciones');
+    addCol($db, 'restricciones', 'subactividad_id', 'INT NULL', $rcols);
+    $ridx = indices($db, 'restricciones');
+    if (!isset($ridx['idx_restriccion_subactividad'])) {
+        $db->query('ALTER TABLE restricciones ADD KEY idx_restriccion_subactividad (subactividad_id)');
+    }
+    $fk = $db->query("SELECT COUNT(*) FROM information_schema.table_constraints
+        WHERE table_schema = DATABASE() AND table_name = 'restricciones' AND constraint_name = 'fk_restriccion_subactividad'");
+    if ($fk && (int)$fk->fetch_row()[0] === 0) {
+        $db->query('ALTER TABLE restricciones ADD CONSTRAINT fk_restriccion_subactividad FOREIGN KEY (subactividad_id) REFERENCES subactividades(id) ON DELETE CASCADE');
+    }
+}
+
+// 7) Tabla de dependencias con subactividades.
+if (!existeTabla($db, 'subactividad_dependencias')) {
+    $sqlDep = @file_get_contents(__DIR__ . '/../database/migracion_subactividad_dependencias.sql');
+    if ($sqlDep) {
+        $db->multi_query($sqlDep);
+        while ($db->more_results() && $db->next_result()) { /* vaciar resultados */ }
+        echo "  + tabla subactividad_dependencias\n";
+    }
+}
+
 echo "Listo. Columnas actuales: " . count(columnas($db, $tabla)) . "\n";

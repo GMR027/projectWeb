@@ -1,14 +1,16 @@
 <div class="page-header">
-    <h2><?php echo !empty($editando) ? 'Editar' : 'Nueva'; ?> Restricción — <?php echo s($actividad->codigo); ?></h2>
+    <h2><?php echo !empty($editando) ? 'Editar' : 'Nueva'; ?> Restricción — <?php echo s($actividad->codigo); ?><?php if (!empty($subactividad)): ?> · <?php echo s($subactividad->codigo ?: $subactividad->nombre); ?><?php endif; ?></h2>
     <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 
 <div class="card">
     <div class="alerta alerta-info">
         <strong>Actividad:</strong> <?php echo s($actividad->nombre); ?>
+        <?php if (!empty($subactividad)): ?><br><strong>Subactividad:</strong> <?php echo s($subactividad->nombre); ?><?php endif; ?>
     </div>
     <form method="POST" class="formulario">
         <?php if (!empty($volver)): ?><input type="hidden" name="volver" value="<?php echo s($volver); ?>"><?php endif; ?>
+        <input type="hidden" name="subactividad_id" value="<?php echo (int)($subactividad->id ?? 0); ?>">
         <div class="form-grid">
             <div class="campo">
                 <label for="tipo_id">Tipo de Restricción *</label>

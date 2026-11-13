@@ -42,6 +42,7 @@ class LastPlanner
 
         $cal = new Calendario((int)$proyecto->id);
         $restricciones = \Controllers\LookaheadController::restriccionesActivas((int)$proyecto->id);
+        $restriccionesSub = \Controllers\LookaheadController::restriccionesActivasSub((int)$proyecto->id);
         $riesgos = Salud::riesgosActividades((int)$proyecto->id);
         $subs = $incluirSub ? \Model\Subactividad::deProyecto((int)$proyecto->id) : [];
 
@@ -76,7 +77,7 @@ class LastPlanner
                         'dias' => ($acum[$a->fecha_fin] ?? $acum[$dia]) - $acum[$dia],   // 0 el último día
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
-                        'restriccion' => !empty($restricciones[$ref]),
+                        'restriccion' => $padre ? !empty($restriccionesSub[(int)$a->id]) : !empty($restricciones[(int)$a->id]),
                         'riesgo' => implode(' · ', array_column($riesgos[$ref] ?? [], 'texto')),
                     ];
                 }
@@ -127,6 +128,7 @@ class LastPlanner
 
         $cal = new Calendario((int)$proyecto->id);
         $restricciones = \Controllers\LookaheadController::restriccionesActivas((int)$proyecto->id);
+        $restriccionesSub = \Controllers\LookaheadController::restriccionesActivasSub((int)$proyecto->id);
         $riesgos = Salud::riesgosActividades((int)$proyecto->id);
         // Del inicio del proyecto a su fin (ampliado si alguna actividad queda fuera)
         $ini = min($proyecto->fecha_inicio, min(array_map(fn($x) => $x[1]->fecha_inicio, $acts)));
@@ -150,7 +152,7 @@ class LastPlanner
                         'dias' => ($acum[$a->fecha_fin] ?? $acum[$dia]) - $acum[$dia],
                         'completada' => self::completada($a),
                         'proceso' => !self::completada($a) && ((int)$a->progreso > 0 || $a->status === 'en_proceso'),
-                        'restriccion' => !empty($restricciones[$ref]),
+                        'restriccion' => $padre ? !empty($restriccionesSub[(int)$a->id]) : !empty($restricciones[(int)$a->id]),
                         'riesgo' => implode(' · ', array_column($riesgos[$ref] ?? [], 'texto')),
                     ];
                 }

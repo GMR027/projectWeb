@@ -264,6 +264,7 @@ INSERT INTO tipos_restriccion (nombre, color) VALUES
 CREATE TABLE restricciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     actividad_id INT NOT NULL,
+    subactividad_id INT NULL,                     -- si la restricción es propia de una subactividad
     tipo_id INT NOT NULL,
     codigo VARCHAR(50) DEFAULT NULL,
     descripcion TEXT,
@@ -272,7 +273,8 @@ CREATE TABLE restricciones (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
     FOREIGN KEY (tipo_id) REFERENCES tipos_restriccion(id),
-    KEY idx_restriccion_estado (actividad_id, estado)
+    KEY idx_restriccion_estado (actividad_id, estado),
+    KEY idx_restriccion_subactividad (subactividad_id)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -314,6 +316,10 @@ CREATE TABLE subactividades (
     KEY idx_subactividades_actividad (actividad_id),
     KEY idx_subactividades_actividad_orden (actividad_id, orden)
 ) ENGINE=InnoDB;
+
+-- Restricciones propias de una subactividad (la FK se agrega aquí porque subactividades se crea después)
+ALTER TABLE restricciones
+    ADD CONSTRAINT fk_restriccion_subactividad FOREIGN KEY (subactividad_id) REFERENCES subactividades(id) ON DELETE CASCADE;
 
 -- ============================================================
 -- CALENDARIO OPERATIVO (por proyecto)
@@ -1034,6 +1040,24 @@ CREATE TABLE dependencias_cambios (
     proyecto_id INT NOT NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cambios_json LONGTEXT NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Dependencias que tocan una subactividad (las actividad↔actividad siguen en actividad_dependencias)
+CREATE TABLE subactividad_dependencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    pred_tipo ENUM('actividad','subactividad') NOT NULL,
+    pred_id INT NOT NULL,
+    suc_tipo ENUM('actividad','subactividad') NOT NULL,
+    suc_id INT NOT NULL,
+    tipo ENUM('FS','SS','FF','SF') NOT NULL DEFAULT 'FS',
+    retraso INT NOT NULL DEFAULT 0,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_subdependencia (pred_tipo, pred_id, suc_tipo, suc_id),
+    KEY idx_subdependencia_proyecto (proyecto_id),
+    KEY idx_subdependencia_pred (pred_tipo, pred_id),
+    KEY idx_subdependencia_suc (suc_tipo, suc_id),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

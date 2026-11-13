@@ -119,6 +119,8 @@ class LineatiempoController
 
         $todas = Dependencias::actividades((int)$proyecto->id);   // [id => fila con partida, color, etc.]
         $restricciones = self::restriccionesActivas((int)$proyecto->id);   // [actividad_id => ['tipos' => [], 'texto' => '']]
+        $restriccionesSub = \Model\Restriccion::activasSubactividadesPorProyecto((int)$proyecto->id);
+        $restriccionesSub = self::formatoRestricciones($restriccionesSub);
         $iconos = self::iconosActividades((int)$proyecto->id);   // [actividad_id => '/build/img/…']
 
         // Subactividades: mismo check que el programa, con el ajuste del proyecto como valor por defecto.
@@ -162,7 +164,7 @@ class LineatiempoController
                     'progreso' => (int)$s->progreso,
                     'status' => $s->estado(),
                     'calendario_id' => $s->calendario_id,
-                    'restriccion' => null,   // las propias llegan en la fase de restricciones
+                    'restriccion' => $restriccionesSub[(int)$s->id] ?? null,
                     'icono' => $s->urlIcono(),
                     'con_sub' => 0,
                 ];
@@ -408,6 +410,22 @@ class LineatiempoController
         return $out;
     }
 
+    /** Mismo formato que restriccionesActivas(), a partir de los objetos del modelo */
+    private static function formatoRestricciones(array $map): array
+    {
+        $out = [];
+        foreach ($map as $id => $lista) {
+            foreach ($lista as $r) {
+                $tipo = (string)($r->getTipo()?->nombre ?? '');
+                if ($tipo !== '' && !in_array($tipo, $out[$id]['tipos'] ?? [], true)) $out[$id]['tipos'][] = $tipo;
+                $out[$id]['texto'][] = trim(implode(' · ', array_filter([$tipo, $r->codigo ?? '', self::corto($r->descripcion ?? '', 60)])));
+                $out[$id]['items'][] = ['id' => (int)$r->id, 'codigo' => (string)($r->codigo ?? ''), 'tipo' => $tipo, 'descripcion' => (string)($r->descripcion ?? '')];
+                $out[$id]['total'] = ($out[$id]['total'] ?? 0) + 1;
+            }
+        }
+        return $out;
+    }
+
     private static function restriccionesActivas(int $proyectoId): array
     {
         $out = [];
@@ -418,7 +436,7 @@ class LineatiempoController
              JOIN actividades a ON a.id = r.actividad_id
              JOIN partidas p ON p.id = a.partida_id
              LEFT JOIN tipos_restriccion tr ON tr.id = r.tipo_id
-             WHERE p.proyecto_id = $pid AND r.estado = 'activa'
+             WHERE p.proyecto_id = $pid AND r.estado = 'activa' AND r.subactividad_id IS NULL
              ORDER BY r.actividad_id, r.id"
         ) as $f) {
             $id = (int)$f['actividad_id'];

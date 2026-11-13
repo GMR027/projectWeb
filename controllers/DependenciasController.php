@@ -27,7 +27,7 @@ class DependenciasController
     public static function guardar()
     {
         $p = proyecto_api('gestionar');
-        [$ok, $msg] = Dependencias::guardar((int)$p->id, (int)($_POST['pred'] ?? 0), (int)($_POST['suc'] ?? 0), (string)($_POST['tipo'] ?? 'FS'), (int)($_POST['retraso'] ?? 0));
+        [$ok, $msg] = Dependencias::guardar((int)$p->id, texto_param($_POST['pred'] ?? ''), texto_param($_POST['suc'] ?? ''), texto_param($_POST['tipo'] ?? 'FS'), (int)($_POST['retraso'] ?? 0));
         if (!$ok) json_respuesta(['success' => false, 'error' => $msg], 422);
         json_respuesta(['success' => true, 'datos' => Dependencias::datos($p)]);
     }
@@ -35,14 +35,14 @@ class DependenciasController
     public static function eliminar()
     {
         $p = proyecto_api('gestionar');
-        Dependencias::eliminar((int)$p->id, (int)($_POST['id'] ?? 0));
+        Dependencias::eliminar((int)$p->id, texto_param($_POST['id'] ?? ''));
         json_respuesta(['success' => true, 'datos' => Dependencias::datos($p)]);
     }
 
     public static function fijar()
     {
         $p = proyecto_api('gestionar');
-        if (!Dependencias::fijar((int)$p->id, (int)($_POST['actividad_id'] ?? 0), !empty($_POST['fija']))) json_respuesta(['success' => false, 'error' => 'Actividad no encontrada'], 404);
+        if (!Dependencias::fijar((int)$p->id, texto_param($_POST['actividad_id'] ?? ''), !empty($_POST['fija']))) json_respuesta(['success' => false, 'error' => 'Actividad o subactividad no encontrada'], 404);
         json_respuesta(['success' => true, 'datos' => Dependencias::datos($p)]);
     }
 

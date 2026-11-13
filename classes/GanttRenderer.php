@@ -83,6 +83,7 @@ class GanttRenderer
             : Subactividad::conteoPorProyecto($pid);
         $progresos = \Model\Partida::progresosDeProyecto($pid);
         $restricciones = \Model\Restriccion::activasPorProyecto($pid);
+        $restriccionesSub = $this->incluirSubactividades ? \Model\Restriccion::activasSubactividadesPorProyecto($pid) : [];
         $calendarios = [0 => $this->calendario];
         foreach ($this->proyecto->getPartidasConActividades() as $bloque) {
             $partida = $bloque['partida'];
@@ -139,6 +140,7 @@ class GanttRenderer
                 foreach ($subsPorActividad[(int)$act->id] ?? [] as $i => $sub) {
                     $cid = (int)($sub->calendario_id ?? 0);
                     $calSub = $calendarios[$cid] ??= new Calendario($pid, $cid);
+                    $restSub = $restriccionesSub[(int)$sub->id] ?? [];
                     $filas[] = [
                         'tipo' => 'subactividad',
                         'id' => (int)$sub->id,
@@ -171,8 +173,8 @@ class GanttRenderer
                         'pta' => (int)$sub->pta,
                         'sin_material' => (int)$sub->sin_material,
                         'fecha_fija' => (int)$sub->fecha_fija,
-                        'tiene_restriccion' => false,
-                        'restricciones' => [],
+                        'tiene_restriccion' => !empty($restSub),
+                        'restricciones' => $restSub,
                         'pos' => $this->calcularPosicion($sub->fecha_inicio, $sub->fecha_fin),
                     ];
                 }

@@ -496,7 +496,20 @@ document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventLis
                             <?php break; case 'prioridad': ?>
                             <td class="hide-m"><span class="badge-prio prio-<?php echo s($fila['prioridad']); ?>"><?php echo s(ucfirst((string)$fila['prioridad'])); ?></span></td>
                             <?php break; case 'restriccion': ?>
-                            <td class="hide-m"><span class="text-dim" title="Las restricciones propias de la subactividad se gestionan en su ficha">—</span></td>
+                            <td class="hide-m">
+                                <?php if (!empty($fila['restricciones'])): ?>
+                                    <div class="restricciones-lista">
+                                        <?php foreach ($fila['restricciones'] as $rest): $tipoRest = $rest->getTipo(); ?>
+                                            <span class="badge-restriccion" title="<?php echo s($rest->descripcion ?: 'Sin descripción'); ?><?php echo $rest->fecha ? ' · ' . formatear_fecha($rest->fecha) : ''; ?>">
+                                                <i class="fa-solid fa-circle-exclamation"></i> <?php echo s($rest->codigo ?: ($tipoRest ? $tipoRest->nombre : 'Restricción')); ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-dim">—</span>
+                                <?php endif; ?>
+                                <?php if ($puedeGestionar): ?><a href="/programa/restricciones/crear?subactividad=<?php echo (int)$fila['id']; ?>" class="btn-action btn-action-warning" title="Agregar restricción a la subactividad"><i class="fa-solid fa-triangle-exclamation"></i></a><?php endif; ?>
+                            </td>
                             <?php break; case 'responsable': case 'rec_inicio': case 'rec_fin': case 'libre_texto': case 'libre_numero': case 'libre_fecha':
                                 $v = $fila[$c['k']] ?? ''; $esFecha = in_array($c['k'], ['rec_inicio', 'rec_fin', 'libre_fecha'], true); ?>
                             <td class="hide-m prg-celda"><span class="<?php echo $esFecha ? 'mono' : ''; ?>"><?php echo $v === '' || $v === null ? '—' : s($esFecha ? formatear_fecha($v) : $v); ?></span></td>
@@ -575,7 +588,7 @@ document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventLis
                 $esPartida = $fila['tipo'] === 'partida';
                 $esSub = $fila['tipo'] === 'subactividad';
                 $claseLabel = $esPartida ? 'label-partida' : ($esSub ? 'label-subactividad' : 'label-actividad');
-                $dataNodo = $esPartida ? '' : ($esSub ? ' data-sub="' . (int)$fila['id'] . '"' : ' data-act="' . (int)$fila['id'] . '"');
+                $dataNodo = $esPartida ? '' : ($esSub ? ' data-nodo="s' . (int)$fila['id'] . '"' : ' data-nodo="a' . (int)$fila['id'] . '"');
             ?>
                 <!-- Columna etiqueta -->
                 <div class="gantt-cell gantt-label <?php echo $claseLabel; ?>"
@@ -625,7 +638,7 @@ document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventLis
         if (chk && !chk.checked) return;
         const g = grid.getBoundingClientRect();
         svg.setAttribute('width', grid.scrollWidth); svg.setAttribute('height', grid.scrollHeight);
-        const caja = id => { const el = grid.querySelector('.gantt-barra[data-act="' + id + '"]'); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - g.left, r: r.right - g.left, y: r.top - g.top + r.height / 2, h: r.height }; };
+        const caja = id => { const el = grid.querySelector('.gantt-barra[data-nodo="' + id + '"]'); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - g.left, r: r.right - g.left, y: r.top - g.top + r.height / 2, h: r.height }; };
         let out = '';
         rels.forEach(r => {
             const A = caja(r.pred), B = caja(r.suc); if (!A || !B) return;

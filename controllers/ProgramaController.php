@@ -1566,9 +1566,11 @@ class ProgramaController
     public static function crearRestriccion(Router $router)
     {
         redirigir_si_no_auth();
-        $actividadId = filter_var($_GET['actividad'] ?? null, FILTER_VALIDATE_INT);
+        $subId = filter_var($_GET['subactividad'] ?? $_POST['subactividad_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+        $subactividad = $subId ? Subactividad::find($subId) : null;
+        $actividadId = $subactividad ? (int)$subactividad->actividad_id : filter_var($_GET['actividad'] ?? null, FILTER_VALIDATE_INT);
         $actividad = Actividad::find($actividadId);
-        if (!$actividad) {
+        if (!$actividad || ($subactividad && (int)$subactividad->actividad_id !== (int)$actividad->id)) {
             header('Location: /proyectos');
             exit;
         }
@@ -1578,12 +1580,13 @@ class ProgramaController
         $tipos = TipoRestriccion::all('id ASC');
 
         $alertas = [];
-        $restriccion = new Restriccion(['actividad_id' => $actividadId, 'fecha' => date('Y-m-d')]);
+        $restriccion = new Restriccion(['actividad_id' => $actividadId, 'subactividad_id' => $subId, 'fecha' => date('Y-m-d')]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $restriccion->sincronizar($_POST);
             $restriccion->id = null;
             $restriccion->actividad_id = $actividadId;
+            $restriccion->subactividad_id = $subId;
             if (!$restriccion->tipo_id) {
                 Restriccion::setAlerta('error', 'Debes seleccionar un tipo de restricción');
             }
@@ -1591,7 +1594,7 @@ class ProgramaController
             if (empty($alertas)) {
                 $resultado = $restriccion->guardar();
                 if ($resultado['resultado']) {
-                    header('Location: /programa?proyecto=' . $proyecto->id . '&creado=restriccion');
+                    header('Location: /programa?proyecto=' . $proyecto->id . ($subId ? '&sub=1&foco=s' . $subId : '&creado=restriccion'));
                     exit;
                 }
             }
@@ -1601,6 +1604,7 @@ class ProgramaController
             'titulo' => 'Nueva Restricción',
             'proyecto' => $proyecto,
             'actividad' => $actividad,
+            'subactividad' => $subactividad,
             'tipos' => $tipos,
             'restriccion' => $restriccion,
             'alertas' => $alertas
@@ -1620,6 +1624,7 @@ class ProgramaController
         $proyecto = Proyecto::find($partida->proyecto_id);
         exigir_gestionar_proyecto($proyecto);
         $tipos = TipoRestriccion::all('id ASC');
+        $subactividad = $restriccion->subactividad_id ? Subactividad::find((int)$restriccion->subactividad_id) : null;
         $volver = ($_GET['volver'] ?? $_POST['volver'] ?? '') === '/acciones' ? '/acciones' : '';
 
         $alertas = [];
@@ -1638,7 +1643,10 @@ class ProgramaController
             $alertas = Restriccion::getAlertas();
             if (empty($alertas)) {
                 $restriccion->guardar();
-                header('Location: ' . ($volver ? '/acciones?proyecto=' . $proyecto->id . '#acc-restr' : '/programa/actividades/editar?id=' . $actividad->id));
+                $destino = $volver ? '/acciones?proyecto=' . $proyecto->id . '#acc-restr'
+                    : ($subactividad ? '/programa?proyecto=' . $proyecto->id . '&sub=1&foco=s' . (int)$subactividad->id
+                        : '/programa/actividades/editar?id=' . $actividad->id);
+                header('Location: ' . $destino);
                 exit;
             }
         }
@@ -1647,6 +1655,7 @@ class ProgramaController
             'titulo' => 'Editar Restricción',
             'proyecto' => $proyecto,
             'actividad' => $actividad,
+            'subactividad' => $subactividad,
             'tipos' => $tipos,
             'restriccion' => $restriccion,
             'alertas' => $alertas,

@@ -682,6 +682,53 @@ $filasSub = array_values(array_filter($gSub->getFilas(), fn($f) => $f['tipo'] ==
 $ok('el Gantt incluye las subactividades cuando se pide', count(array_filter($filasSub, fn($f) => (int)$f['actividad_id'] === (int)$as0->id)) === 2);
 $ok('el Gantt no las incluye por defecto', count(array_filter((new \Classes\GanttRenderer($proy))->getFilas(), fn($f) => $f['tipo'] === 'subactividad')) === 0);
 
+// Restricción propia de una subactividad (no se mezcla con las de la actividad)
+$db->query("INSERT INTO tipos_restriccion (nombre, color) VALUES ('Prueba sub', '#dc2626')");
+$tipoRest = (int)$db->insert_id;
+$rr = new Model\Restriccion(['actividad_id' => $as0->id, 'subactividad_id' => $s0a->id, 'tipo_id' => $tipoRest,
+    'codigo' => 'R-SUB', 'descripcion' => 'Restricción de la hija', 'fecha' => '2026-11-10', 'estado' => 'activa']);
+$rr->id = (int)$rr->guardar()['id'];
+$ok('la restricción de la subactividad no se lista como de la actividad', empty(Model\Restriccion::activasPorProyecto($pidH)[(int)$as0->id] ?? []));
+$ok('la restricción se agrupa bajo su subactividad', count(Model\Restriccion::activasSubactividadesPorProyecto($pidH)[(int)$s0a->id] ?? []) === 1);
+$gRest = new \Classes\GanttRenderer($proy);
+$gRest->setIncluirSubactividades(true);
+$filaRest = array_values(array_filter($gRest->getFilas(), fn($f) => $f['tipo'] === 'subactividad' && (int)$f['id'] === (int)$s0a->id))[0] ?? null;
+$ok('el Gantt marca la restricción en la fila hija', $filaRest && $filaRest['tiene_restriccion'] && count($filaRest['restricciones']) === 1);
+
+// Dependencias con subactividades: nodos unificados, ciclos y empuje del envolvente
+$proy->modo_dependencias = 'informativo';
+$proy->guardar();
+$s0a = Model\Subactividad::find((int)$s0a->id);
+$s0b = Model\Subactividad::find((int)$s0b->id);
+[$okDep] = \Classes\Dependencias::guardar($pidH, 's' . $s0a->id, 's' . $s0b->id, 'FS', 0);
+$ok('se crea una dependencia entre subactividades', $okDep);
+[$okPadre] = \Classes\Dependencias::guardar($pidH, 'a' . $as0->id, 's' . $s0a->id, 'FS', 0);
+$ok('no se permite que una subactividad dependa de su actividad padre', !$okPadre);
+[$okCiclo] = \Classes\Dependencias::guardar($pidH, 's' . $s0b->id, 's' . $s0a->id, 'FS', 0);
+$ok('no se permite un ciclo entre subactividades', !$okCiclo);
+$depDatos = \Classes\Dependencias::datos($proy);
+$ok('la pantalla de dependencias incluye los nodos hijos y la relación', count(array_filter($depDatos['actividades'], fn($a) => $a['tipo'] === 'subactividad')) >= 2
+    && count(array_filter($depDatos['relaciones'], fn($r) => $r['pred'] === 's' . $s0a->id && $r['suc'] === 's' . $s0b->id)) === 1);
+
+// Empuje automático: una actividad que termina después obliga a mover la subactividad y el padre recalcula su envolvente
+$empujeAct = new Model\Actividad(['partida_id' => $ps0->id, 'codigo' => 'SUB.0.2', 'nombre' => 'Actividad que empuja',
+    'fecha_inicio' => '2026-11-10', 'fecha_fin' => '2026-11-20', 'duracion_dias' => 9, 'progreso' => 0]);
+$empujeAct->id = (int)$empujeAct->guardar()['id'];
+\Classes\Dependencias::guardar($pidH, 'a' . $empujeAct->id, 's' . $s0b->id, 'FS', 0);
+$proy->modo_dependencias = 'automatico';
+$proy->guardar();
+$previaDep = \Classes\Dependencias::previa($proy);
+$ok('la previa detecta el movimiento de la subactividad', count(array_filter($previaDep, fn($c) => $c['id'] === 's' . $s0b->id)) === 1);
+$movidasDep = \Classes\Dependencias::aplicar($proy);
+$s0b = Model\Subactividad::find((int)$s0b->id);
+$as0 = Model\Actividad::find((int)$as0->id);
+$ok('aplicar mueve la subactividad y el padre recalcula su fin', $movidasDep > 0 && $s0b->fecha_inicio > '2026-11-16' && $as0->fecha_fin === $s0b->fecha_fin);
+$restauradas = \Classes\Dependencias::deshacer($proy);
+$s0b = Model\Subactividad::find((int)$s0b->id);
+$ok('deshacer restaura la fecha de la subactividad', $restauradas > 0 && $s0b->fecha_inicio === '2026-11-12');
+$proy->modo_dependencias = 'apagado';
+$proy->guardar();
+
 // ---- Subactividades ↔ SheetFlow: el vínculo se actualiza en los dos sentidos ----
 echo "Subactividades ↔ SheetFlow\n";
 $pf = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.2', 'nombre' => 'Partida vinculada a SheetFlow', 'orden' => 903]);
