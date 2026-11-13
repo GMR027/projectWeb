@@ -96,7 +96,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                     <option value="xml">Microsoft Project (.xml)</option>
                     <option value="pod">ProjectLibre (.pod)</option>
                 </select>
-                <label class="text-sm text-muted"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades en el PDF</label>
+                <label class="text-sm text-muted"><input type="checkbox" name="subactividades" value="1"<?php echo !empty($proyecto->mostrar_subactividades) ? ' checked' : ''; ?>> Incluir subactividades (PDF/XML/POD)</label>
                 <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Programa" placeholder="Nombre base" required>
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-export"></i> Exportar programa</button>
             </form>

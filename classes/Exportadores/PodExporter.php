@@ -10,7 +10,7 @@ class PodExporter extends BaseExporter
 {
     public function generar(string $nombreBase): string
     {
-        $ms = new MspdiXmlExporter($this->proyecto);
+        $ms = (new MspdiXmlExporter($this->proyecto))->setIncluirSubactividades($this->incluirSubactividades);
         $rutaXml = $ms->generar($nombreBase . '_tmp');
         // Renombrar a .pod
         $nombrePod = $this->nombreFinal($nombreBase, 'pod');

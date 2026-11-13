@@ -205,14 +205,14 @@ HTML],
 <li>Cuando se resuelva, pulsa <strong>Resolver</strong>. Las restricciones activas aparecen en el Gantt, en el Lookahead (columna de limitaciones), en vPlan y en las Acciones rápidas.</li>
 </ol>
 <h4>Subactividades</h4>
-<p>Una actividad se puede dividir en <strong>subactividades</strong> con su propio nombre, fechas y avance (0–100 %). Se agregan, editan y eliminan en la página de la actividad completa, debajo de «Restricciones de esta Actividad».</p>
+<p>Una actividad se puede dividir en <strong>subactividades</strong> con su propio nombre, fechas y avance (0–100 %). Se agregan, editan y eliminan desde la actividad completa o desde su ficha en el Programa.</p>
 <ul>
 <li>Mientras la actividad tenga subactividades, su <strong>Progreso (%)</strong> es el <strong>promedio</strong> de ellas y el campo queda bloqueado; en la tabla del programa se muestra con un candado.</li>
 <li>Si eliminas la última subactividad, se conserva el último promedio como avance manual de la actividad.</li>
 <li>Con el check <strong>«Mostrar subactividades»</strong> del programa (y el ajuste por defecto en Ajustes → General) aparecen como filas indentadas bajo su actividad. Se editan sus fechas y su avance en línea, o todos sus campos en su ficha.</li>
 <li>La actividad es el resumen: su inicio es el mínimo de las subactividades y su fin el máximo. Al mover el inicio de la actividad se desplazan todas sus hijas; el fin y la duración de la actividad no se escriben a mano mientras tenga subactividades.</li>
 </ul>
-<p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad y las columnas <em>Nombre, Inicio, Fin y Avance (%)</em>. La tabla se abre en <a href="#sheetflow">SheetFlow</a> y desde ese momento se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan; no aparecen en la actividad. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). Si la tabla tiene fórmulas en columnas adicionales, agrega o elimina renglones en SheetFlow para que las referencias se ajusten. <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
+<p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad: las columnas base <em>Nombre, Inicio, Fin y Avance (%)</em> y los campos nuevos (descripción, prioridad, responsable, recuperación, libres, fechas reales, duración restante, restricción, PTA, hito y fecha fija). La tabla se abre en <a href="#sheetflow">SheetFlow</a> y se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
 <h4>Filtros</h4>
 <p>Arriba de la tabla puedes filtrar por <strong>partida</strong>, <strong>estatus</strong>, <strong>prioridad</strong> y <strong>restricción</strong> (con o sin). <em>Limpiar</em> quita los filtros.</p>
 <h4>Importar desde otro programa</h4>
@@ -241,7 +241,8 @@ HTML],
 HTML],
 
 ['id' => 'dependencias', 'titulo' => 'Dependencias de obra', 'icono' => 'fa-diagram-project', 'roles' => $todos, 'herr' => 'dependencias', 'cuerpo' => <<<'HTML'
-<p>Aquí defines <strong>qué actividad debe terminar (o empezar) antes de que otra pueda empezar (o terminar)</strong>. Con eso el sistema calcula la <em>ruta crítica</em>, las holguras y los conflictos, y los dibuja en un diagrama de barras.</p>
+<p>Aquí defines <strong>qué actividad o subactividad debe terminar (o empezar) antes de que otra pueda empezar (o terminar)</strong>. Con eso el sistema calcula la <em>ruta crítica</em>, las holguras y los conflictos, y los dibuja en un diagrama de barras.</p>
+<p class="manual-nota">Las subactividades aparecen como nodos hijos indentados bajo su actividad. Se pueden enlazar entre sí o con actividades; una subactividad no puede depender de su propia actividad padre. Si una relación empuja a una actividad con hijas, se desplazan todas sus hijas.</p>
 <h4>1. Elige el modo</h4>
 <ul>
 <li><strong>Apagado:</strong> las fechas se escriben a mano, como siempre. Las relaciones se guardan pero no se calcula nada.</li>
@@ -299,6 +300,7 @@ HTML],
 <li>Con <em>Solo con restricción</em> te quedas únicamente con las actividades (y partidas) que tienen una restricción activa; la marca⚠ queda <strong>fuera de la barra, a la derecha y en rojo</strong> y <strong>al acercar el puntero se abre una ventana flotante</strong> (con retardo, igual que las burbujas de ayuda de arriba) con el detalle de cada restricción y un botón <strong>Resolver</strong> que la marca como resuelta sin recargar.</li>
 <li>Cada barra lleva, <strong>fuera de ella y a la derecha</strong> (justo antes de la restricción), el estado en un circulito <strong>relleno con la marca en blanco</strong>: <strong style="color:var(--danger-ink)">rojo con ✕</strong> si está <em>no iniciada</em>, <strong style="color:var(--warning-ink)">ámbar con reloj</strong> si está <em>en proceso</em> y <strong style="color:var(--success-ink)">verde con paloma</strong> si está <em>completada</em> (los tres están explicados en la leyenda de arriba).</li>
 <li>Con la casilla <strong>Icono de actividad</strong> cada actividad muestra, en forma <strong>circular y sobre su barra</strong>, la imagen que se le cargó al crearla o editarla (el disco mide 48 px y las filas se hacen más altas para no tapar la barra).</li>
+<li>Con el check <strong>«Mostrar subactividades»</strong> aparecen como barras hijas indentadas bajo su actividad; se arrastran y redimensionan igual. Al mover una hija se recalcula el envolvente del padre y al mover el padre se desplazan todas.</li>
 <li>Los <strong>días no hábiles</strong> (según la jornada del proyecto y sus festivos) aparecen sombreados y la línea naranja es <em>hoy</em>.</li>
 </ul>
 <h4>2. Cómo se mueven las fechas</h4>
@@ -340,10 +342,12 @@ HTML],
 <p>El <strong>Lookahead</strong> es la mirada a las próximas semanas (por defecto la actual y las cuatro siguientes): qué actividades tocan, en qué días y qué limitaciones tienen.</p>
 <ul>
 <li>Con las flechas <strong>◀ ▶</strong> cambias de semana y con <strong>Hoy</strong> regresas a la actual.</li>
+<li>El check <strong>«Mostrar subactividades»</strong> agrega sus filas indentadas al Lookahead.</li>
 <li>La tabla lista cada actividad con su <strong>ID (EDT)</strong>, nombre, semana y <strong>% completo</strong>, y marca con <strong>X</strong> los días en que se trabaja.</li>
 <li>Con <strong>−</strong> y <strong>+</strong> (junto al selector de mes) quitas o agregas semanas visibles, de 1 a 8 después de la actual. Esos botones no salen en el PDF.</li>
 <li>En <strong>Ajustes</strong> cambias el nombre de la herramienta, el de la columna PTA, el título del banner (con {semanas}, {proyecto}, {codigo}) y eliges una <strong>plantilla de encabezado</strong> (cajetín con logos hecho en Estampas inteligentes). El administrador también agrega, renombra o quita ahí las <strong>limitaciones</strong>; son las mismas del programa de obra y Last Planner, así que el cambio vale en todos los proyectos. Una limitación con restricciones registradas no se puede quitar hasta resolverlas.</li>
-<li>La columna <strong>PTA</strong> (o el nombre que le pongas) es un botón: haz clic para alternar entre <strong>OK</strong> y <strong>!</strong> y así marcar el estado de esa actividad.</li>
+<li>Con el check <strong>«Mostrar subactividades»</strong> cada actividad muestra sus hijas como filas indentadas, con su PTA y sus limitaciones propias.</li>
+<li>La columna <strong>PTA</strong> (o el nombre que le pongas) es un botón: haz clic para alternar entre <strong>OK</strong> y <strong>!</strong> y así marcar el estado de esa actividad o subactividad.</li>
 <li>El bloque <strong>Limitaciones</strong> muestra las restricciones activas de cada actividad, una columna por tipo de restricción.</li>
 </ul>
 <p>Los datos salen del programa de obra: si cambias fechas o avances, el Lookahead se ajusta solo. Para imprimirlo o editarlo usa <em>Exportar</em> → <strong>Lookahead</strong> (PDF tabloide, o .xlsx / .ods editable).</p>
@@ -429,6 +433,7 @@ HTML],
 <p>Genera los <strong>post-its de planeación</strong> a partir del programa de obra: una tarjeta por actividad y día.</p>
 <ul>
 <li>Elige la <strong>partida</strong> (o <em>Mostrar todas</em>).</li>
+<li>Con el check <strong>«Mostrar subactividades»</strong> cada subactividad entra como un ítem más del día, marcada con ↳ y con su propio avance y restricción.</li>
 <li>El rombo de cada tarjeta indica el estado: <strong>verde</strong> actividad finalizada, <strong>amarillo</strong> en proceso, <strong>rojo</strong> con restricción activa.</li>
 <li>El triángulo <strong>naranja</strong> ▲ marca una actividad <em>en riesgo</em> (ver «Actividades en riesgo» en Programa de obra); pasa el cursor para ver el motivo. Solo se muestra en pantalla, no en el PDF.</li>
 <li>Los post-its se calculan solos: si cambian las fechas del programa, se ajustan.</li>

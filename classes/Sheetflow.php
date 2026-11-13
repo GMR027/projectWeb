@@ -27,12 +27,26 @@ class Sheetflow
     public const MAX_FILAS = 1000;
     public const MAX_CELDA = 500;
     public const MAX_BYTES = 2_000_000;
-    /** Columnas base de una tabla vinculada a las subactividades de una actividad */
-    public const ROLES_SUBACTIVIDAD = ['nombre', 'inicio', 'fin', 'progreso', 'status'];
+    /** Columnas base y campos opcionales de una tabla vinculada a las subactividades de una actividad */
+    public const ROLES_SUBACTIVIDAD = [
+        'nombre', 'inicio', 'fin', 'progreso', 'status',
+        'descripcion', 'prioridad', 'responsable', 'rec_inicio', 'rec_fin',
+        'libre_texto', 'libre_numero', 'libre_fecha',
+        'fecha_inicio_real', 'fecha_fin_real', 'duracion_restante',
+        'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo',
+        'pta', 'hito', 'fecha_fija',
+    ];
     /** Columnas base de la tabla de instalación de materiales de una lámina de vPlan */
     public const ROLES_MATERIALES = ['material', 'fecha_material', 'status_material'];
     /** Roles que sobreviven a las herramientas (los demás se descartan) */
-    public const ROLES = ['nombre', 'inicio', 'fin', 'progreso', 'status', 'material', 'fecha_material', 'status_material'];
+    public const ROLES = [
+        'nombre', 'inicio', 'fin', 'progreso', 'status', 'material', 'fecha_material', 'status_material',
+        'descripcion', 'prioridad', 'responsable', 'rec_inicio', 'rec_fin',
+        'libre_texto', 'libre_numero', 'libre_fecha',
+        'fecha_inicio_real', 'fecha_fin_real', 'duracion_restante',
+        'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo',
+        'pta', 'hito', 'fecha_fija',
+    ];
 
     private static function hex($c, string $def): string
     {

@@ -547,8 +547,8 @@ class AjustesController
         };
 
         if ($quiere('prog_pdf')) $agregar('01_Programa', 'Programa PDF', fn() => (new \Classes\Exportadores\PdfExporter($proyecto))->setIncluirSubactividades($incluirSub)->generar("Programa"));
-        if ($quiere('prog_xml')) $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->generar("Programa"));
-        if ($quiere('prog_pod')) $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->generar("Programa"));
+        if ($quiere('prog_xml')) $agregar('01_Programa', 'Programa XML (MS Project)', fn() => (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->setIncluirSubactividades($incluirSub)->generar("Programa"));
+        if ($quiere('prog_pod')) $agregar('01_Programa', 'Programa POD (ProjectLibre)', fn() => (new \Classes\Exportadores\PodExporter($proyecto))->setIncluirSubactividades($incluirSub)->generar("Programa"));
         if ($quiere('presupuesto') && \Classes\Conceptos::disponible()) {
             $datos = \Classes\Conceptos::presupuesto((int)$proyecto->id);
             if ($datos['grupos'] || $datos['sinPartida']) {
@@ -806,10 +806,10 @@ class AjustesController
                         : (new \Classes\Exportadores\PresupuestoSheetExporter($proyecto))->setFormato($salida)->setDatos($datos);
                     break;
                 case 'xml':
-                    $exporter = new \Classes\Exportadores\MspdiXmlExporter($proyecto);
+                    $exporter = (new \Classes\Exportadores\MspdiXmlExporter($proyecto))->setIncluirSubactividades($incluirSub);
                     break;
                 case 'pod':
-                    $exporter = new \Classes\Exportadores\PodExporter($proyecto);
+                    $exporter = (new \Classes\Exportadores\PodExporter($proyecto))->setIncluirSubactividades($incluirSub);
                     break;
                 default:
                     throw new \Exception('Formato no soportado');

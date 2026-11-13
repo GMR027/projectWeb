@@ -759,6 +759,19 @@ $ok('deshacer restaura la fecha de la subactividad', $restauradas > 0 && $s0b->f
 $proy->modo_dependencias = 'apagado';
 $proy->guardar();
 
+// XML/POD: viaje de ida y vuelta con subactividades y predecesoras
+$xmlPrueba = (new \Classes\Exportadores\MspdiXmlExporter($proy))->setIncluirSubactividades(true)->generar('Prueba-Roundtrip');
+$pd = new Model\Proyecto(['codigo' => 'IMP-1', 'nombre' => 'Proyecto importado', 'fecha_inicio' => '2026-11-02', 'fecha_fin' => '2026-12-31', 'usuario_id' => (int)$u->id]);
+$pd->id = (int)$pd->guardar()['id'];
+$pd->inicializarJornadaDefault();
+$preview = \Classes\ProgramaImportador::analizar($xmlPrueba, (int)$pd->id);
+$ok('el XML exportado reconoce subactividades', ($preview['resumen']['subactividades'] ?? 0) > 0);
+$imp = \Classes\ProgramaImportador::aplicar($preview['token'], $pd);
+$ok('la importación crea las subactividades', ($imp['subactividades'] ?? 0) > 0 && count(Model\Subactividad::deProyecto((int)$pd->id)) > 0);
+$relsDestino = \Classes\Dependencias::relacionesNodos((int)$pd->id);
+$ok('la importación reconstruye las relaciones', count($relsDestino) > 0);
+@unlink($xmlPrueba);
+
 // ---- Subactividades ↔ SheetFlow: el vínculo se actualiza en los dos sentidos ----
 echo "Subactividades ↔ SheetFlow\n";
 $pf = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.2', 'nombre' => 'Partida vinculada a SheetFlow', 'orden' => 903]);
@@ -787,7 +800,7 @@ $shd['rows'][$rA][0] = 'Tramo A editado';
 $shd['rows'][$rA][3] = '100';
 array_splice($shd['rows'], $rB, 1);
 array_splice($ids, $rB, 1);
-$shd['cols'][] = ['n' => 'Responsable'];
+$shd['cols'][] = ['n' => 'Columna extra'];
 foreach ($shd['rows'] as &$fila) $fila[] = 'Ing. X';
 unset($fila);
 $shd['rows'][] = ['Tramo C', '2026-11-05', '2026-11-08', '25', 'Ing. Y'];
@@ -803,7 +816,8 @@ $ok('el avance de la actividad se recalcula desde la hoja', (int)Model\Actividad
 $shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
 $idsF = $shd['meta']['subactividad']['ids'];
 $ok('la hoja conserva los ids de las subactividades', in_array((int)$subsF[0]->id, $idsF, true) && in_array((int)$subsF[1]->id, $idsF, true));
-$ok('la columna extra se queda en SheetFlow', in_array('Responsable', array_column($shd['cols'], 'n'), true) && $shd['rows'][0][4] === 'Ing. X');
+$colExtra = array_search('Columna extra', array_column($shd['cols'], 'n'), true);
+$ok('la columna extra se queda en SheetFlow', $colExtra !== false && ($shd['rows'][0][$colExtra] ?? null) === 'Ing. X');
 
 // La hoja se queda con los valores ya validados (límite de avance y fechas de respaldo)
 $rA2 = array_search((int)$subsF[0]->id, $shd['meta']['subactividad']['ids'], true);
@@ -823,7 +837,7 @@ $errF = Model\SubactividadHoja::reflejar($asf);
 $shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
 $ok('la sección se refleja en la hoja', $errF === null && in_array((int)$sfC->id, $shd['meta']['subactividad']['ids'], true)
     && in_array('Tramo D', array_column($shd['rows'], 0), true));
-$ok('la columna extra sigue después de reflejar', in_array('Responsable', array_column($shd['cols'], 'n'), true));
+$ok('la columna extra sigue después de reflejar', in_array('Columna extra', array_column($shd['cols'], 'n'), true));
 
 // Quitar un renglón desde vPlan borra su subactividad y no desalinea los ids
 $rC = array_search((int)$subsF[1]->id, $shd['meta']['subactividad']['ids'], true);

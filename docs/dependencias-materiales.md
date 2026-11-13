@@ -90,3 +90,8 @@ Archivos: `views/materiales/dependencias.php`, `public/vendor/dependencias-mater
 
 La ruta vive bajo `/materiales`, así que el visitante la ve si tiene habilitado el Catálogo de
 materiales. Editar exige `puede_gestionar_proyecto()`.
+
+## Subactividades (2026-11-13)
+- `subactividad_materiales` guarda los materiales propios de cada subactividad (independientes de los de su actividad).
+- La fecha de instalación del MSR es la más temprana entre actividades y subactividades; el cruce materiales-cronograma incluye las subactividades con su propio `sin_material`.
+- `DependenciasMateriales::actividadesPorMaterial()` mezcla ambos nodos (la fila de una subactividad conserva el id de su actividad padre para las sugerencias).

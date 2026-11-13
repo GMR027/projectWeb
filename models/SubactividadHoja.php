@@ -21,6 +21,30 @@ class SubactividadHoja extends ActiveRecord
 
     public const DEPARTAMENTO = 'Programa de obra';
 
+    /**
+     * Campos opcionales que la tabla vinculada puede sincronizar.
+     * rol => [nombre, tipo SheetFlow, alineación, ancho, opciones]
+     */
+    private const CAMPOS = [
+        'descripcion' => ['Descripción', 'texto', 'izquierda', 220, null],
+        'prioridad' => ['Prioridad', 'lista', 'centro', 110, Subactividad::PRIORIDADES],
+        'responsable' => ['Responsable', 'texto', 'izquierda', 180, null],
+        'rec_inicio' => ['Inicio de recuperación', 'fecha', 'centro', 130, null],
+        'rec_fin' => ['Fin de recuperación', 'fecha', 'centro', 130, null],
+        'libre_texto' => ['Campo libre (texto)', 'texto', 'izquierda', 180, null],
+        'libre_numero' => ['Campo libre (número)', 'numero', 'derecha', 110, null],
+        'libre_fecha' => ['Campo libre (fecha)', 'fecha', 'centro', 120, null],
+        'fecha_inicio_real' => ['Inicio real', 'fecha', 'centro', 120, null],
+        'fecha_fin_real' => ['Fin real', 'fecha', 'centro', 120, null],
+        'duracion_restante' => ['Duración restante', 'numero', 'derecha', 110, null],
+        'restriccion_tipo' => ['Restricción de fecha', 'lista', 'centro', 140, Subactividad::RESTRICCIONES],
+        'restriccion_fecha' => ['Fecha de la restricción', 'fecha', 'centro', 130, null],
+        'restriccion_motivo' => ['Motivo de la restricción', 'texto', 'izquierda', 220, null],
+        'pta' => ['PTA', 'casilla', 'centro', 80, null],
+        'hito' => ['Hito', 'casilla', 'centro', 80, null],
+        'fecha_fija' => ['Fecha fija', 'casilla', 'centro', 100, null],
+    ];
+
     public $id;
     public $proyecto_id;
     public $actividad_id;
@@ -90,14 +114,21 @@ class SubactividadHoja extends ActiveRecord
             ['n' => 'Fin', 't' => 'fecha', 'a' => 'centro', 'w' => 100, 'rol' => 'fin', 'fija' => 1],
             ['n' => 'Avance (%)', 't' => 'porcentaje', 'a' => 'derecha', 'w' => 95, 'rol' => 'progreso', 'fija' => 1],
         ];
+        foreach (self::CAMPOS as $rol => [$nom, $tipo, $align, $w, $op]) {
+            $col = ['n' => $nom, 't' => $tipo, 'a' => $align, 'w' => $w, 'rol' => $rol];
+            if ($op) $col['op'] = $op;
+            $cols[] = $col;
+        }
         $rows = [];
         $ids = [];
         foreach (Subactividad::deActividad((int)$actividad->id) as $s) {
-            $rows[] = [(string)$s->nombre, (string)$s->fecha_inicio, (string)$s->fecha_fin, (string)(int)$s->progreso];
+            $fila = [(string)$s->nombre, (string)$s->fecha_inicio, (string)$s->fecha_fin, (string)(int)$s->progreso];
+            foreach (self::CAMPOS as $rol => $def) $fila[] = self::campoValor($s, $rol);
+            $rows[] = $fila;
             $ids[] = (int)$s->id;
         }
         if (!$rows) {
-            $rows[] = ['', '', '', ''];
+            $rows[] = array_fill(0, count($cols), '');
             $ids[] = null;
         }
         $datos = Sheetflow::normalizar([
@@ -110,7 +141,7 @@ class SubactividadHoja extends ActiveRecord
         if ($etiqueta === '') $etiqueta = 'Actividad #' . (int)$actividad->id;
         $nombre = mb_substr('Subactividades · ' . $etiqueta, 0, 150);
         $descripcion = mb_substr('Tabla vinculada a las subactividades de la actividad ' . $etiqueta
-            . '. Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos.', 0, 300);
+            . '. Nombre, fechas, avance y los campos de la subactividad se sincronizan en los dos sentidos; las columnas extra se quedan aquí.', 0, 300);
         $departamento = \Classes\Catalogo::agregarDepartamento((int)$proyecto->id, self::DEPARTAMENTO) ?: self::DEPARTAMENTO;
 
         $db = SheetflowHoja::conexion();
@@ -232,6 +263,9 @@ class SubactividadHoja extends ActiveRecord
             $sub->fecha_inicio = $inicio;
             $sub->fecha_fin = $fin;
             $sub->progreso = $progreso;
+            foreach (self::CAMPOS as $rol => $def) {
+                if (isset($roles[$rol])) self::setCampo($sub, $rol, self::valor($datos, $r, $roles[$rol]));
+            }
             $alertas = $sub->validar();
             if (!empty($alertas)) {
                 throw new \RuntimeException('El renglón ' . ($r + 2) . ': ' . implode(' ', array_unique($alertas['error'] ?? [])));
@@ -250,6 +284,7 @@ class SubactividadHoja extends ActiveRecord
             $datos['rows'][$r][$roles['inicio']] = (string)$sub->fecha_inicio;
             $datos['rows'][$r][$roles['fin']] = (string)$sub->fecha_fin;
             $datos['rows'][$r][$roles['progreso']] = (string)(int)$sub->progreso;
+            foreach (self::CAMPOS as $rol => $def) if (isset($roles[$rol])) $datos['rows'][$r][$roles[$rol]] = self::campoValor($sub, $rol);
         }
 
         // Las subactividades que ya no tienen renglón se eliminan
@@ -322,6 +357,7 @@ class SubactividadHoja extends ActiveRecord
             $datos['rows'][$r][$roles['inicio']] = (string)$s->fecha_inicio;
             $datos['rows'][$r][$roles['fin']] = (string)$s->fecha_fin;
             $datos['rows'][$r][$roles['progreso']] = (string)(int)$s->progreso;
+            foreach (self::CAMPOS as $rol => $def) if (isset($roles[$rol])) $datos['rows'][$r][$roles[$rol]] = self::campoValor($s, $rol);
         }
 
         // Agregar las subactividades nuevas en el primer renglón vacío o al final
@@ -331,6 +367,7 @@ class SubactividadHoja extends ActiveRecord
             $fila[$roles['inicio']] = (string)$s->fecha_inicio;
             $fila[$roles['fin']] = (string)$s->fecha_fin;
             $fila[$roles['progreso']] = (string)(int)$s->progreso;
+            foreach (self::CAMPOS as $rol => $def) if (isset($roles[$rol])) $fila[$roles[$rol]] = self::campoValor($s, $rol);
             $blanco = null;
             foreach ($datos['rows'] as $r => $f) {
                 if (empty($ids[$r]) && self::filaBaseVacia($datos, $r, $roles)) { $blanco = $r; break; }
@@ -355,6 +392,43 @@ class SubactividadHoja extends ActiveRecord
         if (!$hoja->guardar()) return 'No se pudo actualizar la tabla vinculada.';
         Sheetflow::limpiarImagenes($antes, $hoja->imagenes(), (int)$hoja->proyecto_id, (int)$hoja->id);
         return null;
+    }
+
+    /** Valor de un campo opcional de la subactividad para la hoja */
+    private static function campoValor(Subactividad $s, string $rol): string
+    {
+        switch ($rol) {
+            case 'descripcion': return (string)($s->descripcion ?? '');
+            case 'prioridad': return (string)($s->prioridad ?? 'media');
+            case 'responsable': case 'libre_texto': case 'restriccion_motivo': return (string)($s->$rol ?? '');
+            case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'fecha_inicio_real': case 'fecha_fin_real': case 'restriccion_fecha':
+                return (string)($s->$rol ?? '');
+            case 'duracion_restante': case 'libre_numero':
+                return $s->$rol === null || $s->$rol === '' ? '' : (string)$s->$rol;
+            case 'restriccion_tipo': return (string)($s->restriccion_tipo ?? 'ninguna');
+            case 'pta': case 'hito': case 'fecha_fija': return (int)$s->$rol === 1 ? '1' : '0';
+        }
+        return '';
+    }
+
+    /** Aplica a la subactividad un campo opcional leído de la hoja */
+    private static function setCampo(Subactividad $s, string $rol, string $v): void
+    {
+        $v = trim($v);
+        switch ($rol) {
+            case 'descripcion': $s->descripcion = mb_substr($v, 0, 2000); break;
+            case 'prioridad': $s->prioridad = in_array($v, Subactividad::PRIORIDADES, true) ? $v : 'media'; break;
+            case 'responsable': $s->responsable = $v === '' ? null : mb_substr($v, 0, 150); break;
+            case 'rec_inicio': case 'rec_fin': case 'libre_fecha': case 'fecha_inicio_real': case 'fecha_fin_real': case 'restriccion_fecha':
+                $s->$rol = self::fecha($v) ?: null; break;
+            case 'duracion_restante': case 'libre_numero':
+                $s->$rol = $v === '' ? null : (float)str_replace(',', '.', $v); break;
+            case 'libre_texto': $s->libre_texto = $v === '' ? null : mb_substr($v, 0, 255); break;
+            case 'restriccion_tipo': $s->restriccion_tipo = in_array($v, Subactividad::RESTRICCIONES, true) ? $v : 'ninguna'; break;
+            case 'restriccion_motivo': $s->restriccion_motivo = mb_substr($v, 0, 500); break;
+            case 'pta': case 'hito': case 'fecha_fija':
+                $s->$rol = in_array(mb_strtolower($v), ['1', 'sí', 'si', 'true', 'x', '✓'], true) ? 1 : 0; break;
+        }
     }
 
     /** Roles de las columnas base: ['nombre' => índice, …]. «status» antiguo = «progreso» */

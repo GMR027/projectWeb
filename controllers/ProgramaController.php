@@ -486,7 +486,7 @@ class ProgramaController
         try {
             // Importación masiva: el resumen de lo importado basta; fila por fila llenaría el historial de cambios
             $r = \Classes\HistorialCambios::silenciar(fn() => \Classes\ProgramaImportador::aplicar($_POST['token'] ?? '', $proyecto));
-            header('Location: /programa?proyecto=' . $proyecto->id . '&importado=' . $r['actividades'] . '&partidas=' . $r['partidas']);
+            header('Location: /programa?proyecto=' . $proyecto->id . '&importado=' . $r['actividades'] . '&partidas=' . $r['partidas'] . '&subactividades=' . ($r['subactividades'] ?? 0));
         } catch (\Throwable $e) {
             header('Location: /programa/importar?proyecto=' . $proyecto->id . '&error=' . urlencode($e->getMessage()));
         }

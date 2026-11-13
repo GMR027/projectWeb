@@ -29,7 +29,7 @@
 <?php else: $r = $previa['resumen']; ?>
 <div class="card">
     <h3>Vista previa</h3>
-    <p><strong><?php echo (int)$r['partidas']; ?></strong> partida(s) · <strong><?php echo (int)$r['actividades']; ?></strong> actividad(es) · <strong><?php echo (int)$r['hitos']; ?></strong> hito(s)</p>
+    <p><strong><?php echo (int)$r['partidas']; ?></strong> partida(s) · <strong><?php echo (int)$r['actividades']; ?></strong> actividad(es)<?php if (!empty($r['subactividades'])): ?> · <strong><?php echo (int)$r['subactividades']; ?></strong> subactividad(es)<?php endif; ?> · <strong><?php echo (int)$r['hitos']; ?></strong> hito(s)</p>
     <?php if ($previa['avisos']): ?>
         <details open><summary class="text-sm"><?php echo count($previa['avisos']); ?> aviso(s)</summary>
             <ul class="text-sm text-muted"><?php foreach ($previa['avisos'] as $a): ?><li><?php echo s($a); ?></li><?php endforeach; ?></ul>
@@ -56,6 +56,10 @@
                 <?php foreach ($p['actividades'] as $a): if ($mostradas++ >= 80) break; ?>
                     <tr><td class="mono"><?php echo s($a['codigo']); ?></td><td><?php echo $a['hito'] ? '◆ ' : ''; ?><?php echo s($a['nombre']); ?></td>
                         <td class="mono"><?php echo formatear_fecha($a['inicio']); ?></td><td class="mono"><?php echo formatear_fecha($a['hito'] ? $a['inicio'] : $a['fin']); ?></td><td class="mono"><?php echo (int)$a['avance']; ?>%</td></tr>
+                    <?php foreach (($a['subactividades'] ?? []) as $s): ?>
+                        <tr class="fila-subactividad"><td class="mono indent-sub"><?php echo s($s['codigo']); ?></td><td class="indent-sub">↳ <?php echo s($s['nombre']); ?></td>
+                            <td class="mono"><?php echo formatear_fecha($s['inicio']); ?></td><td class="mono"><?php echo formatear_fecha($s['hito'] ? $s['inicio'] : $s['fin']); ?></td><td class="mono"><?php echo (int)$s['avance']; ?>%</td></tr>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
             <?php endforeach; ?>
             </tbody>

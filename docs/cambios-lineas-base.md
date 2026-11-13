@@ -29,3 +29,7 @@ _Se lee solo al trabajar en este módulo._ Migración: `database/migracion_cambi
 - Hoy se encola el **cambio de estado de renglones** (`POST /api/cambios/partida-estado`). Manda `base` (el `actualizado` que el usuario vio): si el renglón cambió en el servidor responde 409 y el usuario elige «Aplicar el mío» (`forzar=1`) o «Descartar». Para encolar otra operación: `POOffline.encolar({url, cuerpo, etiqueta})` y que el endpoint soporte `base`/409.
 - Al cerrar sesión (`/logout`) y al desactivar el modo se borran las cachés `po-*`. Las fotos y subidas de archivos requieren conexión. Funciona igual dentro de la app de escritorio (la vista web es un origen http(s) normal).
 - Prueba hecha: Electron oculto + servidor detenido (página cacheada, cola, subida, conflicto y resolución).
+
+## Subactividades en líneas base y órdenes de cambio (2026-11-13)
+- La línea base guarda también `lineas_base_subactividades` (fechas, duración, avance e hito) y `lineas_base.total_subactividades`. La comparación las muestra indentadas bajo su actividad; los cambios se justifican con la orden de cambio de la actividad padre.
+- `ordenes_cambio.subactividad_id` y `cambio_partidas.subactividad_id` permiten referenciar una subactividad; la actividad padre se toma automáticamente. El cruce materiales-cronograma usa la fecha de la subactividad cuando el renglón la tiene.

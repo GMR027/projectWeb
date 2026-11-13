@@ -29,7 +29,7 @@
     <div class="alerta alerta-exito"><?php echo s(t('Diseño del programa guardado.')); ?></div>
 <?php endif; ?>
 <?php if (!empty($_GET['importado'])): ?>
-    <div class="alerta alerta-exito">Programa importado: <?php echo (int)($_GET['partidas'] ?? 0); ?> partida(s) y <?php echo (int)$_GET['importado']; ?> actividad(es).</div>
+    <div class="alerta alerta-exito">Programa importado: <?php echo (int)($_GET['partidas'] ?? 0); ?> partida(s), <?php echo (int)$_GET['importado']; ?> actividad(es)<?php if (!empty($_GET['subactividades'])): ?> y <?php echo (int)$_GET['subactividades']; ?> subactividad(es)<?php endif; ?>.</div>
 <?php endif; ?>
 
 <?php foreach (array_slice(\Classes\DatosObra::alertas((int)$proyecto->id), 0, 3) as $al): ?>
