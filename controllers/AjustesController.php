@@ -320,6 +320,31 @@ class AjustesController
         exit;
     }
 
+    /** Mostrar subactividades por defecto en el programa y las vistas de planeación */
+    public static function guardarSubactividades()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $proyectoId = filter_var($_POST['proyecto_id'] ?? null, FILTER_VALIDATE_INT);
+        $proyecto = $proyectoId ? Proyecto::find($proyectoId) : null;
+        if (!$proyecto) {
+            header('Location: /proyectos');
+            exit;
+        }
+        exigir_gestionar_proyecto($proyecto);
+        $valor = !empty($_POST['mostrar_subactividades']) ? 1 : 0;
+        try {
+            $GLOBALS['db']->query('UPDATE proyectos SET mostrar_subactividades = ' . $valor . ' WHERE id = ' . (int)$proyecto->id);
+            header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&subactividades=ok#subactividades');
+        } catch (\Throwable $e) {
+            header('Location: /ajustes?proyecto=' . (int)$proyecto->id . '&subactividades=error#subactividades');
+        }
+        exit;
+    }
+
     /**
      * Espacio de almacenamiento del proyecto (MB). Solo el administrador puede
      * cambiarlo (los clientes y visitantes no ven el control).

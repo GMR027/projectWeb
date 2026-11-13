@@ -42,7 +42,11 @@ $sub->validar();
 $ok('rechaza fin anterior al inicio', !empty(Subactividad::getAlertas()['error']));
 $sub = new Subactividad(['nombre' => 'Tramo A', 'fecha_inicio' => '2026-10-01', 'fecha_fin' => '2026-10-10', 'status' => 140]);
 $alertas = $sub->validar();
-$ok('una subactividad válida no tiene errores y acota el avance', empty($alertas) && $sub->status === 100);
+$ok('una subactividad válida no tiene errores y acota el avance', empty($alertas) && $sub->progreso === 100 && $sub->status === 'completada');
+$ok('el estado se deriva del avance', $sub->estado() === 'completada'
+    && (new Subactividad(['progreso' => 40]))->estado() === 'en_proceso'
+    && (new Subactividad(['progreso' => 0]))->estado() === 'no_iniciada');
+$ok('el código se deriva del padre', (new Subactividad())->codigo('1.2', 3) === '1.2.3');
 
 echo "Contacto\n";
 $ok('el interés agrupa plataforma, servicio y ambos', in_array('Plan Pro', \Model\Contacto::planesValidos(), true)

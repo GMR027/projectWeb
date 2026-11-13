@@ -132,10 +132,37 @@
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+        <div class="campo">
+            <input type="hidden" name="sub" value="0">
+            <label class="campo-check" for="f-sub">
+                <input type="checkbox" id="f-sub" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?>>
+                <i class="fa-solid fa-list-tree" aria-hidden="true"></i> <?php echo s(t('Mostrar subactividades')); ?>
+            </label>
+        </div>
         <?php if ($hayFiltros): ?><a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><?php echo s(t('Limpiar')); ?></a><?php endif; ?>
     </div>
 </form>
-<script>document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventListener('change', () => s.form.submit()));</script>
+<script>
+document.querySelectorAll('.programa-filtros select').forEach(s => s.addEventListener('change', () => s.form.submit()));
+(function () {
+    const chk = document.getElementById('f-sub');
+    if (chk) chk.addEventListener('change', () => {
+        try { localStorage.setItem('po_sub_programa', chk.checked ? '1' : '0'); } catch (e) {}
+        chk.form.submit();
+    });
+    // Recuerda la última elección del navegador si la URL no trae ?sub=
+    if (!new URL(location.href).searchParams.has('sub')) {
+        try {
+            const guardado = localStorage.getItem('po_sub_programa');
+            if (guardado === '0' || guardado === '1') {
+                const url = new URL(location.href);
+                url.searchParams.set('sub', guardado);
+                location.replace(url);
+            }
+        } catch (e) {}
+    }
+})();
+</script>
 
 <!-- Tabla de actividades -->
 <div class="card">
@@ -180,8 +207,13 @@
         $claseTh = fn($k) => match ($k) { 'nombre' => '', 'fecha_inicio', 'fecha_fin' => 'col-fecha', 'acciones' => 'th-acciones', default => 'hide-m' };
         $reglasInd = $indicador['reglas']; $campoInd = $indicador['campo'];
         $valorInd = function (array $f) use ($campoInd, $calendario) {
-            if ($campoInd === 'duracion') return $f['tipo'] === 'actividad' && empty($f['hito']) ? $calendario->calcularDuracion($f['fecha_inicio'], $f['fecha_fin']) : null;
-            if ($campoInd === 'libre_numero') return $f['tipo'] === 'actividad' ? $f['libre_numero'] : null;
+            $esSub = ($f['tipo'] ?? '') === 'subactividad';
+            if ($campoInd === 'duracion') {
+                if (!empty($f['hito'])) return null;
+                if ($esSub) return (float)($f['duracion_dias'] ?? 0);
+                return ($f['tipo'] ?? '') === 'actividad' ? $calendario->calcularDuracion($f['fecha_inicio'], $f['fecha_fin']) : null;
+            }
+            if ($campoInd === 'libre_numero') return in_array($f['tipo'] ?? '', ['actividad', 'subactividad'], true) ? ($f['libre_numero'] ?? null) : null;
             return $f['progreso'] ?? null;
         };
         ?>
@@ -252,7 +284,8 @@
                             <td class="hide-m">—</td>
                             <?php endswitch; endforeach; ?>
                         </tr>
-                    <?php else: ?>
+                    <?php elseif ($fila['tipo'] === 'actividad'): ?>
+                        <?php $conSub = !empty($fila['subactividades_total']); ?>
                         <tr class="fila-actividad" id="fila-a<?php echo (int)$fila['id']; ?>" data-actividad-id="<?php echo s($fila['id']); ?>">
                             <?php if ($puedeBorrar): ?><td class="td-sel"><input type="checkbox" class="sel-fila" value="a<?php echo (int)$fila['id']; ?>" aria-label="Seleccionar actividad"></td><?php endif; ?>
                             <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
@@ -275,13 +308,16 @@
                             </td>
                             <?php break; case 'fecha_fin': ?>
                             <td class="fecha-editable">
-                                <?php if ($puedeGestionar): ?>
+                                <?php if ($puedeGestionar && !$conSub): ?>
                                     <input type="date"
                                            class="input-fecha fecha-fin-input hide-m"
                                            value="<?php echo s($fila['fecha_fin']); ?>"
                                            data-actividad-id="<?php echo s($fila['id']); ?>"
                                            data-tipo="fin"
                                            aria-label="Fecha de fin de <?php echo s($fila['codigo']); ?>">
+                                    <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
+                                <?php elseif ($conSub): ?>
+                                    <span class="mono hide-m" title="El fin se calcula del máximo de sus subactividades"><?php echo formatear_fecha($fila['fecha_fin']); ?> <i class="fa-solid fa-lock text-muted"></i></span>
                                     <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
                                 <?php else: ?>
                                     <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
@@ -380,7 +416,7 @@
                                 <td class="acciones">
                                     <button type="button" class="btn-action btn-action-edit btn-fechas solo-movil" title="Cambiar fechas"
                                             data-id="<?php echo s($fila['id']); ?>" data-nombre="<?php echo s($fila['nombre']); ?>"
-                                            data-inicio="<?php echo s($fila['fecha_inicio']); ?>" data-fin="<?php echo s($fila['fecha_fin']); ?>">
+                                            data-inicio="<?php echo s($fila['fecha_inicio']); ?>" data-fin="<?php echo s($fila['fecha_fin']); ?>"<?php echo $conSub ? ' data-bloquea-fin="1"' : ''; ?>>
                                         <i class="fa-regular fa-calendar-days"></i>
                                     </button>
                                     <a href="/programa/restricciones/crear?actividad=<?php echo s($fila['id']); ?>" class="btn-action btn-action-warning" title="Agregar restricción">
@@ -405,6 +441,85 @@
                                     <?php endif; ?>
                                 </td>
                             <?php break; default: if (!empty($c['campo'])) echo \Classes\CamposPersonalizados::celda($c['campo'], (int)$fila['id'], $valoresCp[(int)$fila['id']][$c['campo']['id']] ?? '', $puedeGestionar); endswitch; endforeach; ?>
+                        </tr>
+                    <?php else: ?>
+                        <?php // Subactividad: fila hija indentada, editable en fechas y avance; el resto abre su ficha ?>
+                        <tr class="fila-actividad fila-subactividad" id="fila-s<?php echo (int)$fila['id']; ?>" data-subactividad-id="<?php echo (int)$fila['id']; ?>" data-padre-id="<?php echo (int)$fila['actividad_id']; ?>">
+                            <?php if ($puedeBorrar): ?><td class="td-sel"></td><?php endif; ?>
+                            <?php foreach ($cols as $c): switch ($c['k']): case 'codigo': ?>
+                            <td class="mono indent-sub hide-m"><?php echo s($fila['codigo']); ?></td>
+                            <?php break; case 'nombre': ?>
+                            <td class="indent-sub"><span class="solo-movil mono text-sm"><?php echo s($fila['codigo']); ?></span><i class="fa-solid fa-turn-up fa-rotate-90 text-dim sub-marca" aria-hidden="true"></i> <?php echo s($fila['nombre']); ?></td>
+                            <?php break; case 'fecha_inicio': ?>
+                            <td class="fecha-editable">
+                                <?php if ($puedeGestionar): ?>
+                                    <input type="date" class="input-fecha input-fecha-sub hide-m" value="<?php echo s($fila['fecha_inicio']); ?>" data-subactividad-id="<?php echo (int)$fila['id']; ?>" data-tipo="inicio" aria-label="Fecha de inicio de <?php echo s($fila['codigo']); ?>">
+                                    <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
+                                <?php else: ?>
+                                    <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_inicio']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_inicio']); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <?php break; case 'fecha_fin': ?>
+                            <td class="fecha-editable">
+                                <?php if ($puedeGestionar): ?>
+                                    <input type="date" class="input-fecha input-fecha-sub hide-m" value="<?php echo s($fila['fecha_fin']); ?>" data-subactividad-id="<?php echo (int)$fila['id']; ?>" data-tipo="fin" aria-label="Fecha de fin de <?php echo s($fila['codigo']); ?>">
+                                    <span class="solo-movil mono fecha-texto-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
+                                <?php else: ?>
+                                    <span class="mono hide-m"><?php echo formatear_fecha($fila['fecha_fin']); ?></span><span class="mono solo-movil"><?php echo fecha_movil($fila['fecha_fin']); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <?php break; case 'duracion': ?>
+                            <td class="mono duracion-cell hide-m"><?php echo !empty($fila['hito']) ? 'Hito' : s(number_format((float)$fila['duracion_dias'], 1)) . ' d'; ?></td>
+                            <?php break; case 'progreso': ?>
+                            <td class="hide-m">
+                                <div class="progreso-cell">
+                                    <div class="barra-progreso barra-sm barra-status-<?php echo s($fila['status']); ?>">
+                                        <div class="barra-fill" style="width: <?php echo (int)$fila['progreso']; ?>%"></div>
+                                    </div>
+                                    <?php if ($puedeGestionar): ?>
+                                        <input type="number" class="input-avance input-progreso input-progreso-sub" min="0" max="100" step="1" value="<?php echo (int)$fila['progreso']; ?>" data-subactividad-id="<?php echo (int)$fila['id']; ?>" aria-label="Avance (%)">
+                                    <?php else: ?>
+                                        <span class="mono text-sm"><?php echo (int)$fila['progreso']; ?>%</span>
+                                    <?php endif; ?>%
+                                </div>
+                            </td>
+                            <?php break; case 'status': ?>
+                            <td class="hide-m">
+                                <span class="badge-status status-<?php echo s($fila['status']); ?>">
+                                    <?php echo match($fila['status']) {
+                                        'completada' => '<i class="fa-solid fa-check-circle"></i> Completada',
+                                        'en_proceso' => '<i class="fa-solid fa-spinner"></i> En Proceso',
+                                        default => '<i class="fa-solid fa-circle"></i> No Iniciada'
+                                    }; ?>
+                                </span>
+                            </td>
+                            <?php break; case 'prioridad': ?>
+                            <td class="hide-m"><span class="badge-prio prio-<?php echo s($fila['prioridad']); ?>"><?php echo s(ucfirst((string)$fila['prioridad'])); ?></span></td>
+                            <?php break; case 'restriccion': ?>
+                            <td class="hide-m"><span class="text-dim" title="Las restricciones propias de la subactividad se gestionan en su ficha">—</span></td>
+                            <?php break; case 'responsable': case 'rec_inicio': case 'rec_fin': case 'libre_texto': case 'libre_numero': case 'libre_fecha':
+                                $v = $fila[$c['k']] ?? ''; $esFecha = in_array($c['k'], ['rec_inicio', 'rec_fin', 'libre_fecha'], true); ?>
+                            <td class="hide-m prg-celda"><span class="<?php echo $esFecha ? 'mono' : ''; ?>"><?php echo $v === '' || $v === null ? '—' : s($esFecha ? formatear_fecha($v) : $v); ?></span></td>
+                            <?php break; case 'predecesora': case 'sucesora': ?>
+                            <td class="hide-m prg-celda"><span class="text-dim" title="Las dependencias de la subactividad se gestionan en Dependencias de obra">—</span></td>
+                            <?php break; case 'indicador': $vi = $valorInd($fila); $col = \Classes\ProgramaColumnas::colorIndicador($reglasInd, $vi); ?>
+                            <td class="hide-m prg-celda"><?php if ($col): ?><span class="prg-ind" style="--ind: <?php echo s($col); ?>"></span> <span class="mono text-sm text-muted"><?php echo s(rtrim(rtrim(number_format((float)$vi, 2, '.', ''), '0'), '.')); ?></span><?php else: ?>—<?php endif; ?></td>
+                            <?php break; case 'icono': ?>
+                            <td class="hide-m prg-celda text-center"><?php if (!empty($fila['icono'])): ?><img class="prg-icono" src="<?php echo s('/build/img/actividades-iconos/' . basename($fila['icono'])); ?>" alt=""><?php else: ?>—<?php endif; ?></td>
+                            <?php break; case 'acciones': ?>
+                                <td class="acciones">
+                                    <a href="/programa/subactividades/editar?id=<?php echo (int)$fila['id']; ?>&volver=programa" class="btn-action btn-action-edit" title="Editar subactividad"><i class="fa-solid fa-pen-to-square"></i></a>
+                                    <?php if (puede_borrar_contenido($proyecto)): ?>
+                                    <form class="inline" method="POST" action="/programa/subactividades/eliminar" data-confirm="¿Eliminar subactividad?|Se quitará «<?php echo s($fila['nombre']); ?>» y el avance de la actividad se recalculará. Esta acción no se puede deshacer.|Eliminar">
+                                        <input type="hidden" name="id" value="<?php echo (int)$fila['id']; ?>">
+                                        <input type="hidden" name="volver" value="programa">
+                                        <button type="submit" class="btn-action btn-action-delete" title="Eliminar subactividad"><i class="fa-solid fa-trash-can"></i></button>
+                                    </form>
+                                    <?php endif; ?>
+                                </td>
+                            <?php break; default: ?>
+                            <td class="hide-m">—</td>
+                            <?php endswitch; endforeach; ?>
                         </tr>
                     <?php endif; ?>
                 <?php endforeach; ?>
@@ -457,12 +572,16 @@
             foreach ($filas as $fila):
                 [$colI, $colF] = $fila['pos'];
                 $span = $colF - $colI + 1;
+                $esPartida = $fila['tipo'] === 'partida';
+                $esSub = $fila['tipo'] === 'subactividad';
+                $claseLabel = $esPartida ? 'label-partida' : ($esSub ? 'label-subactividad' : 'label-actividad');
+                $dataNodo = $esPartida ? '' : ($esSub ? ' data-sub="' . (int)$fila['id'] . '"' : ' data-act="' . (int)$fila['id'] . '"');
             ?>
                 <!-- Columna etiqueta -->
-                <div class="gantt-cell gantt-label <?php echo $fila['tipo'] === 'partida' ? 'label-partida' : 'label-actividad'; ?>"
-                     <?php if ($fila['tipo'] === 'partida' && $fila['color_bg']) echo 'style="border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
+                <div class="gantt-cell gantt-label <?php echo $claseLabel; ?>"
+                     <?php if ($esPartida && $fila['color_bg']) echo 'style="border-left: 3px solid ' . s($fila['color_bg']) . ';"'; ?>>
                     <span class="mono text-sm"><?php echo s($fila['codigo']); ?></span>
-                    <span class="gantt-label-nombre"><?php echo s($fila['nombre']); ?></span>
+                    <span class="gantt-label-nombre"><?php if ($esSub): ?><i class="fa-solid fa-turn-up fa-rotate-90 text-dim" aria-hidden="true"></i> <?php endif; ?><?php echo s($fila['nombre']); ?></span>
                 </div>
 
                 <!-- Spacer antes de la barra -->
@@ -472,11 +591,11 @@
 
                 <!-- Celda con la barra: ocupa las columnas de su duración -->
                 <div class="gantt-cell gantt-bar-cell" style="grid-column: span <?php echo $span; ?>;">
-                    <div<?php echo $fila['tipo'] === 'actividad' ? ' data-act="' . (int)$fila['id'] . '"' : ''; ?> class="gantt-barra <?php echo $fila['tipo']; ?> <?php echo !empty($fila['hito']) ? 'gantt-hito' : ''; ?> status-<?php echo $fila['tipo'] === 'partida' ? 'partida' : s($fila['status']); ?>"
+                    <div<?php echo $dataNodo; ?> class="gantt-barra <?php echo $esSub ? 'subactividad' : $fila['tipo']; ?> <?php echo !empty($fila['hito']) ? 'gantt-hito' : ''; ?> status-<?php echo $esPartida ? 'partida' : s($fila['status']); ?>"
                          title="<?php echo s($fila['codigo'] . ' — ' . $fila['nombre']); ?> | <?php echo formatear_fecha($fila['fecha_inicio']); ?> → <?php echo formatear_fecha($fila['fecha_fin']); ?> | <?php echo s($fila['progreso']); ?>%">
-                        <?php if ($fila['tipo'] === 'actividad'): ?>
+                        <?php if (!$esPartida): ?>
                             <div class="gantt-barra-fill" style="width: <?php echo s($fila['progreso']); ?>%"></div>
-                            <?php if ($fila['tiene_restriccion']): ?>
+                            <?php if (!$esSub && $fila['tiene_restriccion']): ?>
                                 <span class="gantt-restriccion-dot"></span>
                             <?php endif; ?>
                         <?php endif; ?>
@@ -554,6 +673,9 @@
         actual = b.dataset;
         document.getElementById('mf-actividad').textContent = b.dataset.nombre;
         ini.value = b.dataset.inicio; fin.value = b.dataset.fin; err.hidden = true;
+        const bloqueado = b.dataset.bloqueaFin === '1';
+        fin.disabled = bloqueado;
+        fin.title = bloqueado ? 'El fin se calcula de las subactividades' : '';
         modal.classList.add('abierto'); modal.setAttribute('aria-hidden', 'false');
     }));
     document.getElementById('mf-cancelar').addEventListener('click', cerrar);
@@ -568,9 +690,10 @@
         err.hidden = true;
         if (!ini.value || !fin.value || fin.value < ini.value) { err.textContent = 'La fecha de fin no puede ser anterior a la de inicio.'; err.hidden = false; return; }
         try {
-            // Primero el inicio (la API mueve el fin con la misma duración) y después el fin definitivo
+            // Primero el inicio (la API mueve el fin con la misma duración) y después el fin definitivo.
+            // Con subactividades el fin lo calcula el servidor y no se envía.
             if (ini.value !== actual.inicio) { const d = await enviar('inicio', ini.value); if (!d.success) throw new Error(d.error); }
-            const d2 = await enviar('fin', fin.value); if (!d2.success) throw new Error(d2.error);
+            if (!fin.disabled) { const d2 = await enviar('fin', fin.value); if (!d2.success) throw new Error(d2.error); }
             location.reload();
         } catch (e) { err.textContent = e.message || 'No se pudo guardar'; err.hidden = false; }
     });

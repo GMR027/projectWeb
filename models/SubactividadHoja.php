@@ -88,12 +88,12 @@ class SubactividadHoja extends ActiveRecord
             ['n' => 'Nombre', 't' => 'texto', 'a' => 'izquierda', 'w' => 260, 'rol' => 'nombre', 'fija' => 1],
             ['n' => 'Inicio', 't' => 'fecha', 'a' => 'centro', 'w' => 100, 'rol' => 'inicio', 'fija' => 1],
             ['n' => 'Fin', 't' => 'fecha', 'a' => 'centro', 'w' => 100, 'rol' => 'fin', 'fija' => 1],
-            ['n' => 'Avance (%)', 't' => 'porcentaje', 'a' => 'derecha', 'w' => 95, 'rol' => 'status', 'fija' => 1],
+            ['n' => 'Avance (%)', 't' => 'porcentaje', 'a' => 'derecha', 'w' => 95, 'rol' => 'progreso', 'fija' => 1],
         ];
         $rows = [];
         $ids = [];
         foreach (Subactividad::deActividad((int)$actividad->id) as $s) {
-            $rows[] = [(string)$s->nombre, (string)$s->fecha_inicio, (string)$s->fecha_fin, (string)(int)$s->status];
+            $rows[] = [(string)$s->nombre, (string)$s->fecha_inicio, (string)$s->fecha_fin, (string)(int)$s->progreso];
             $ids[] = (int)$s->id;
         }
         if (!$rows) {
@@ -186,7 +186,7 @@ class SubactividadHoja extends ActiveRecord
         if (!$actividad) throw new \RuntimeException('La actividad vinculada ya no existe.');
 
         $roles = self::roles($datos);
-        foreach (['nombre', 'inicio', 'fin', 'status'] as $rol) {
+        foreach (['nombre', 'inicio', 'fin', 'progreso'] as $rol) {
             if (!isset($roles[$rol])) {
                 throw new \RuntimeException('La tabla vinculada necesita las columnas Nombre, Inicio, Fin y Avance. No elimines esas columnas.');
             }
@@ -211,7 +211,7 @@ class SubactividadHoja extends ActiveRecord
             if (mb_strlen($nombre) > 200) {
                 throw new \RuntimeException('El renglón ' . ($r + 2) . ': el nombre no puede superar los 200 caracteres.');
             }
-            foreach (['nombre', 'inicio', 'fin', 'status'] as $rol) {
+            foreach (['nombre', 'inicio', 'fin', 'progreso'] as $rol) {
                 if (SheetflowFormulas::esFormula((string)($datos['rows'][$r][$roles[$rol]] ?? ''))) {
                     throw new \RuntimeException('El renglón ' . ($r + 2) . ': las columnas Nombre, Inicio, Fin y Avance no pueden ser fórmulas.');
                 }
@@ -226,12 +226,12 @@ class SubactividadHoja extends ActiveRecord
             if ($inicio === '' || $fin === '') throw new \RuntimeException('El renglón ' . ($r + 2) . ': faltan las fechas.');
             if ($fin < $inicio) throw new \RuntimeException('El renglón ' . ($r + 2) . ': la fecha de fin es anterior a la de inicio.');
 
-            $status = self::status(self::valor($datos, $r, $roles['status']));
+            $progreso = self::status(self::valor($datos, $r, $roles['progreso']));
             $sub = ($id && isset($existentes[$id]) && !isset($vistos[$id])) ? $existentes[$id] : new Subactividad(['actividad_id' => (int)$actividad->id]);
             $sub->nombre = $nombre;
             $sub->fecha_inicio = $inicio;
             $sub->fecha_fin = $fin;
-            $sub->status = $status;
+            $sub->progreso = $progreso;
             $alertas = $sub->validar();
             if (!empty($alertas)) {
                 throw new \RuntimeException('El renglón ' . ($r + 2) . ': ' . implode(' ', array_unique($alertas['error'] ?? [])));
@@ -249,7 +249,7 @@ class SubactividadHoja extends ActiveRecord
             $datos['rows'][$r][$roles['nombre']] = (string)$sub->nombre;
             $datos['rows'][$r][$roles['inicio']] = (string)$sub->fecha_inicio;
             $datos['rows'][$r][$roles['fin']] = (string)$sub->fecha_fin;
-            $datos['rows'][$r][$roles['status']] = (string)(int)$sub->status;
+            $datos['rows'][$r][$roles['progreso']] = (string)(int)$sub->progreso;
         }
 
         // Las subactividades que ya no tienen renglón se eliminan
@@ -283,7 +283,7 @@ class SubactividadHoja extends ActiveRecord
         $antes = $hoja->imagenes();
         $datos = $hoja->contenido();
         $roles = self::roles($datos);
-        foreach (['nombre', 'inicio', 'fin', 'status'] as $rol) {
+        foreach (['nombre', 'inicio', 'fin', 'progreso'] as $rol) {
             if (!isset($roles[$rol])) return 'La tabla vinculada perdió una columna base. Vuelve a crearla desde la actividad.';
         }
         if (!isset($datos['meta']['subactividad']['ids']) || !is_array($datos['meta']['subactividad']['ids'])) {
@@ -321,7 +321,7 @@ class SubactividadHoja extends ActiveRecord
             $datos['rows'][$r][$roles['nombre']] = (string)$s->nombre;
             $datos['rows'][$r][$roles['inicio']] = (string)$s->fecha_inicio;
             $datos['rows'][$r][$roles['fin']] = (string)$s->fecha_fin;
-            $datos['rows'][$r][$roles['status']] = (string)(int)$s->status;
+            $datos['rows'][$r][$roles['progreso']] = (string)(int)$s->progreso;
         }
 
         // Agregar las subactividades nuevas en el primer renglón vacío o al final
@@ -330,7 +330,7 @@ class SubactividadHoja extends ActiveRecord
             $fila[$roles['nombre']] = (string)$s->nombre;
             $fila[$roles['inicio']] = (string)$s->fecha_inicio;
             $fila[$roles['fin']] = (string)$s->fecha_fin;
-            $fila[$roles['status']] = (string)(int)$s->status;
+            $fila[$roles['progreso']] = (string)(int)$s->progreso;
             $blanco = null;
             foreach ($datos['rows'] as $r => $f) {
                 if (empty($ids[$r]) && self::filaBaseVacia($datos, $r, $roles)) { $blanco = $r; break; }
@@ -357,12 +357,13 @@ class SubactividadHoja extends ActiveRecord
         return null;
     }
 
-    /** Roles de las columnas base: ['nombre' => índice, …] */
+    /** Roles de las columnas base: ['nombre' => índice, …]. «status» antiguo = «progreso» */
     private static function roles(array $datos): array
     {
         $out = [];
         foreach ((array)($datos['cols'] ?? []) as $i => $c) {
             $rol = (string)($c['rol'] ?? '');
+            if ($rol === 'status') $rol = 'progreso';   // tablas creadas antes de la migración
             if (in_array($rol, Sheetflow::ROLES_SUBACTIVIDAD, true) && !isset($out[$rol])) $out[$rol] = (int)$i;
         }
         return $out;
@@ -411,7 +412,7 @@ class SubactividadHoja extends ActiveRecord
 
     private static function filaBaseVacia(array $datos, int $r, array $roles): bool
     {
-        foreach (['nombre', 'inicio', 'fin', 'status'] as $rol) {
+        foreach (['nombre', 'inicio', 'fin', 'progreso'] as $rol) {
             if (trim(self::valor($datos, $r, $roles[$rol])) !== '') return false;
         }
         return true;

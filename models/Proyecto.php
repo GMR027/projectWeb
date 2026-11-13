@@ -5,7 +5,7 @@ namespace Model;
 class Proyecto extends ActiveRecord
 {
     protected static $tabla = 'proyectos';
-    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias', 'modo_dependencias_materiales', 'organizacion_id', 'archivado', 'archivado_en', 'archivado_por'];
+    protected static $columnasDB = ['id', 'codigo', 'nombre', 'descripcion', 'ubicacion', 'empresa', 'contratista', 'contratista_logo', 'numero_trabajo', 'msr_umbral_critico', 'logo', 'caratula', 'fecha_inicio', 'fecha_fin', 'color', 'usuario_id', 'modo_dependencias', 'modo_dependencias_materiales', 'mostrar_subactividades', 'organizacion_id', 'archivado', 'archivado_en', 'archivado_por'];
 
     public $id;
     public $codigo;
@@ -25,6 +25,8 @@ class Proyecto extends ActiveRecord
     public $usuario_id;
     public $modo_dependencias;
     public $modo_dependencias_materiales;
+    // Mostrar subactividades en el programa y las vistas de planeación (Ajustes → General)
+    public $mostrar_subactividades;
     public $tema_modo;
     // Programa configurable (Classes\ProgramaColumnas): se escriben con SQL propio, no con guardar()
     public $programa_nombre;
@@ -72,6 +74,7 @@ class Proyecto extends ActiveRecord
         $this->usuario_id = $args['usuario_id'] ?? null;
         $this->modo_dependencias = $args['modo_dependencias'] ?? 'apagado';
         $this->modo_dependencias_materiales = $args['modo_dependencias_materiales'] ?? 'apagado';
+        $this->mostrar_subactividades = (int)($args['mostrar_subactividades'] ?? 0);
         $this->ayuda_burbujas = $args['ayuda_burbujas'] ?? 1;
         $this->tema_textura = $args['tema_textura'] ?? 'ninguna';
         $this->tema_textura_intensidad = $args['tema_textura_intensidad'] ?? 35;

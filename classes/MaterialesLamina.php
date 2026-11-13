@@ -56,7 +56,8 @@ class MaterialesLamina
                         'nombre' => (string)$s->nombre,
                         'fecha_inicio' => (string)($s->fecha_inicio ?? ''),
                         'fecha_fin' => (string)($s->fecha_fin ?? ''),
-                        'status' => (int)$s->status,
+                        'progreso' => (int)$s->progreso,
+                        'status' => (string)$s->estado(),
                     ], $propias),
                 ];
             }
@@ -166,7 +167,7 @@ class MaterialesLamina
                     return [
                         'clave' => $clave, 'tipo' => 'subactividad', 'id' => $id, 'actividad_id' => (int)$a['id'],
                         'nombre' => self::nombre($a['codigo'], $s['nombre']),
-                        'fecha' => (string)$s['fecha_fin'], 'status' => self::statusDeAvance((int)$s['status']),
+                        'fecha' => (string)$s['fecha_fin'], 'status' => self::statusDeAvance((int)($s['progreso'] ?? 0)),
                         'estado' => (string)$a['estado'],
                     ];
                 }

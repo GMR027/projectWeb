@@ -209,7 +209,8 @@ HTML],
 <ul>
 <li>Mientras la actividad tenga subactividades, su <strong>Progreso (%)</strong> es el <strong>promedio</strong> de ellas y el campo queda bloqueado; en la tabla del programa se muestra con un candado.</li>
 <li>Si eliminas la última subactividad, se conserva el último promedio como avance manual de la actividad.</li>
-<li>Las subactividades <strong>no</strong> aparecen en el programa de obra, dependencias, línea de tiempo ni Lookahead: solo alimentan el avance de su actividad.</li>
+<li>Con el check <strong>«Mostrar subactividades»</strong> del programa (y el ajuste por defecto en Ajustes → General) aparecen como filas indentadas bajo su actividad. Se editan sus fechas y su avance en línea, o todos sus campos en su ficha.</li>
+<li>La actividad es el resumen: su inicio es el mínimo de las subactividades y su fin el máximo. Al mover el inicio de la actividad se desplazan todas sus hijas; el fin y la duración de la actividad no se escriben a mano mientras tenga subactividades.</li>
 </ul>
 <p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad y las columnas <em>Nombre, Inicio, Fin y Avance (%)</em>. La tabla se abre en <a href="#sheetflow">SheetFlow</a> y desde ese momento se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan; no aparecen en la actividad. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). Si la tabla tiene fórmulas en columnas adicionales, agrega o elimina renglones en SheetFlow para que las referencias se ajusten. <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
 <h4>Filtros</h4>

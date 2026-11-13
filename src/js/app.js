@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const valorOriginal = input.value;
 
     input.addEventListener('change', async (e) => {
+      if (e.target.dataset.subactividadId) return; // lo maneja el bloque de subactividades
       const actividadId = e.target.dataset.actividadId;
       const tipo = e.target.dataset.tipo; // 'inicio' o 'fin'
       const nuevaFecha = e.target.value;
@@ -560,6 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ EDICIÓN INLINE DEL AVANCE (%) ============
   document.querySelectorAll('.input-progreso').forEach(input => {
+    if (input.dataset.subactividadId) return; // lo maneja el bloque de subactividades
     const original = input.value;
     input.addEventListener('change', async () => {
       if (input.value === '' || input.value === original) { input.value = original; return; }
@@ -576,6 +578,71 @@ document.addEventListener('DOMContentLoaded', () => {
           window.avisoModal('No se pudo actualizar', data.error || 'No se pudo actualizar el avance.');
           input.value = original;
         }
+      } catch (error) {
+        window.avisoModal('Error de conexión', 'Intenta de nuevo en unos segundos.');
+        input.value = original;
+      } finally {
+        input.disabled = false;
+      }
+    });
+  });
+
+  // ============ EDICIÓN INLINE DE SUBACTIVIDADES ============
+  document.querySelectorAll('.input-fecha-sub').forEach(input => {
+    const original = input.value;
+    input.addEventListener('change', async () => {
+      const id = input.dataset.subactividadId;
+      const tipo = input.dataset.tipo; // 'inicio' o 'fin'
+      const nueva = input.value;
+      if (!id || !nueva || nueva === original) return;
+      const fila = input.closest('tr');
+      const ini = fila && fila.querySelector('.input-fecha-sub[data-tipo="inicio"]');
+      const fin = fila && fila.querySelector('.input-fecha-sub[data-tipo="fin"]');
+      if (ini && fin && fin.value < ini.value) {
+        window.avisoModal('Fechas no válidas', 'La fecha de fin no puede ser anterior a la fecha de inicio.');
+        input.value = original;
+        return;
+      }
+      input.disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append('subactividad_id', id);
+        fd.append('tipo', tipo);
+        fd.append('fecha', nueva);
+        const resp = await fetch('/api/subactividad/actualizar-fecha', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!data.success) {
+          window.avisoModal('No se pudo actualizar', data.error || 'No se pudo actualizar la subactividad.');
+          input.value = original;
+          return;
+        }
+        window.location.reload();
+      } catch (error) {
+        window.avisoModal('Error de conexión', 'Intenta de nuevo en unos segundos.');
+        input.value = original;
+      } finally {
+        input.disabled = false;
+      }
+    });
+  });
+
+  document.querySelectorAll('.input-progreso-sub').forEach(input => {
+    const original = input.value;
+    input.addEventListener('change', async () => {
+      if (input.value === '' || input.value === original) { input.value = original; return; }
+      input.disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append('subactividad_id', input.dataset.subactividadId);
+        fd.append('progreso', input.value);
+        const resp = await fetch('/api/subactividad/actualizar-progreso', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!data.success) {
+          window.avisoModal('No se pudo actualizar', data.error || 'No se pudo actualizar el avance.');
+          input.value = original;
+          return;
+        }
+        window.location.reload();
       } catch (error) {
         window.avisoModal('Error de conexión', 'Intenta de nuevo en unos segundos.');
         input.value = original;

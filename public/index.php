@@ -195,6 +195,8 @@ $router->post('/programa/importar/p6/confirmar', [ProgramaController::class, 'co
 $router->post('/programa/importar/p6/cancelar', [ProgramaController::class, 'cancelarImportacionP6']);
 $router->post('/api/actividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaAjax']);
 $router->post('/api/actividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoAjax']);
+$router->post('/api/subactividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaSubactividadAjax']);
+$router->post('/api/subactividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoSubactividadAjax']);
 $router->get('/programa/diseno', [ProgramaController::class, 'diseno']);
 $router->post('/programa/diseno', [ProgramaController::class, 'diseno']);
 $router->post('/api/programa/campo', [ProgramaController::class, 'campoAjax']);
@@ -225,6 +227,9 @@ $router->post('/programa/actividades/eliminar', [ProgramaController::class, 'eli
 $router->post('/programa/actividades/rapida', [ProgramaController::class, 'actividadRapida']);
 $router->post('/programa/actividades/mover', [ProgramaController::class, 'moverActividad']);
 // Subactividades (solo se gestionan desde la edición de la actividad)
+$router->get('/programa/subactividades/crear', [ProgramaController::class, 'crearSubactividadForm']);
+$router->get('/programa/subactividades/editar', [ProgramaController::class, 'editarSubactividadForm']);
+$router->post('/programa/subactividades/guardar', [ProgramaController::class, 'guardarSubactividad']);
 $router->post('/programa/subactividades/crear', [ProgramaController::class, 'crearSubactividad']);
 $router->post('/programa/subactividades/editar', [ProgramaController::class, 'editarSubactividad']);
 $router->post('/programa/subactividades/eliminar', [ProgramaController::class, 'eliminarSubactividad']);
@@ -935,6 +940,7 @@ $router->post('/ajustes/calendario/festivo', [AjustesController::class, 'calenda
 $router->post('/ajustes/calendario/festivo/eliminar', [AjustesController::class, 'calendarioFestivoEliminar']);
 $router->post('/ajustes/registros', [AjustesController::class, 'guardarRegistros']);
 $router->post('/ajustes/tema', [AjustesController::class, 'guardarTema']);
+$router->post('/ajustes/subactividades', [AjustesController::class, 'guardarSubactividades']);
 $router->post('/ajustes/festivo/agregar', [AjustesController::class, 'agregarFestivo']);
 $router->post('/ajustes/almacenamiento', [AjustesController::class, 'guardarAlmacenamiento']);
 $router->post('/ajustes/accesos', [AjustesController::class, 'guardarAccesos']);

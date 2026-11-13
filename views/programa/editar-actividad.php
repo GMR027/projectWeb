@@ -8,6 +8,8 @@
 </div>
 <?php endif; ?>
 
+<?php $tieneSubactividades = !empty($subactividades ?? []); ?>
+
 <?php if (!empty($duplicado)): ?>
 <div class="modal-overlay abierto" id="modal-codigo-duplicado" data-tono="aviso" aria-hidden="false">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mcd-titulo">
@@ -78,8 +80,8 @@
             </div>
 <div class="campo">
                 <label for="duracion_dias">Duración (días hábiles) *</label>
-                <input type="number" id="duracion_dias" name="duracion_dias" value="<?php echo s($actividad->duracion_dias); ?>" min="1" required data-min="1">
-                <small class="text-muted">Fecha fin actual: <strong><?php echo formatear_fecha($actividad->fecha_fin); ?></strong> (se recalculará al guardar)</small>
+                <input type="number" id="duracion_dias" name="duracion_dias" value="<?php echo s($actividad->duracion_dias); ?>" min="1" required data-min="1"<?php echo $tieneSubactividades ? ' disabled' : ''; ?>>
+                <small class="text-muted">Fecha fin actual: <strong><?php echo formatear_fecha($actividad->fecha_fin); ?></strong> <?php if ($tieneSubactividades): ?>(se calcula del máximo de sus subactividades; para mover el grupo, cambia el inicio desde el Programa)<?php else: ?>(se recalculará al guardar)<?php endif; ?></small>
             </div>
             <?php $sug = $fechasSugeridas ?? ['inicio' => null, 'fin' => null]; ?>
             <div class="campo"><label for="fecha_inicio_real">Inicio real</label><input type="date" id="fecha_inicio_real" name="fecha_inicio_real" value="<?php echo s($actividad->fecha_inicio_real ?: ($sug['inicio'] ?? '')); ?>"><?php if (!$actividad->fecha_inicio_real && !empty($sug['inicio'])): ?><small class="text-muted">Sugerido por el parte diario.</small><?php endif; ?></div>
@@ -326,14 +328,14 @@ $puedeConceptos = puede_gestionar_conceptos($proyecto);
     $subEstado = $subEstado ?? '';
     $subError = $subError ?? '';
     $totalSub = count($subactividades ?? []);
-    $promedioSub = $totalSub ? \Model\Subactividad::promedio(array_map(fn($x) => (int)$x->status, $subactividades)) : 0;
+    $promedioSub = $totalSub ? \Model\Subactividad::promedio(array_map(fn($x) => (int)$x->progreso, $subactividades)) : 0;
     $hojaSub = $hojaSubactividades ?? null;
     $hojaVersion = $hojaSub ? (string)$hojaSub->actualizado : '';
     ?>
     <h4 id="subactividades">Subactividades</h4>
     <p class="text-muted text-sm">
         Divide la actividad en partes con su propio avance. Si hay subactividades, el <strong>Progreso (%)</strong> de la actividad es su promedio y no se puede escribir a mano.
-        Las subactividades no aparecen en el programa, dependencias, línea de tiempo ni Lookahead.
+        Se pueden mostrar en el programa y en las vistas de planeación con el check <strong>«Mostrar subactividades»</strong>.
     </p>
     <?php if ($subEstado === 'creada'): ?><div class="alerta alerta-exito">Subactividad agregada.</div><?php endif; ?>
     <?php if ($subEstado === 'editada'): ?><div class="alerta alerta-exito">Subactividades guardadas y avance de la actividad recalculado.</div><?php endif; ?>
@@ -386,8 +388,9 @@ $puedeConceptos = puede_gestionar_conceptos($proyecto);
                                 <td><input type="text" name="sub[<?php echo $sid; ?>][nombre]" value="<?php echo s($sub->nombre); ?>" maxlength="200" required aria-label="Nombre de la subactividad"></td>
                                 <td><input type="date" name="sub[<?php echo $sid; ?>][fecha_inicio]" value="<?php echo s($sub->fecha_inicio); ?>" required aria-label="Fecha de inicio"></td>
                                 <td><input type="date" name="sub[<?php echo $sid; ?>][fecha_fin]" value="<?php echo s($sub->fecha_fin); ?>" required aria-label="Fecha de fin"></td>
-                                <td class="mono"><input type="number" name="sub[<?php echo $sid; ?>][status]" value="<?php echo (int)$sub->status; ?>" min="0" max="100" step="1" required aria-label="Avance (%)" style="width:7rem"> %</td>
+                                <td class="mono"><input type="number" name="sub[<?php echo $sid; ?>][progreso]" value="<?php echo (int)$sub->progreso; ?>" min="0" max="100" step="1" required aria-label="Avance (%)" style="width:7rem"> %</td>
                                 <td class="acciones">
+                                    <a href="/programa/subactividades/editar?id=<?php echo $sid; ?>&volver=actividad" class="btn btn-xs btn-ghost" title="Editar todos los campos de la subactividad"><i class="fa-solid fa-pen-to-square"></i></a>
                                     <button type="submit" form="sub-del-<?php echo $sid; ?>" class="btn btn-xs btn-danger" title="Eliminar subactividad">✕</button>
                                 </td>
                             </tr>
@@ -405,7 +408,9 @@ $puedeConceptos = puede_gestionar_conceptos($proyecto);
         <?php endforeach; ?>
     <?php endif; ?>
 
-    <h5 style="margin-top: 1.5rem;">Agregar subactividad</h5>
+    <h5 style="margin-top: 1.5rem; display:flex; align-items:center; gap:.8rem; flex-wrap:wrap">Agregar subactividad
+        <a href="/programa/subactividades/crear?actividad=<?php echo (int)$actividad->id; ?>&volver=actividad" class="btn btn-xs btn-ghost"><i class="fa-solid fa-up-right-from-square"></i> Abrir ficha completa</a>
+    </h5>
     <form method="POST" action="/programa/subactividades/crear" class="form-grid formulario-subactividad">
         <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
         <?php if ($hojaSub): ?><input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>"><?php endif; ?>
@@ -423,7 +428,7 @@ $puedeConceptos = puede_gestionar_conceptos($proyecto);
         </div>
         <div class="campo">
             <label for="sub-status">Avance (%) *</label>
-            <input type="number" id="sub-status" name="status" value="0" min="0" max="100" step="1" required>
+            <input type="number" id="sub-status" name="progreso" value="0" min="0" max="100" step="1" required>
         </div>
         <div class="campo campo-full">
             <button type="submit" class="btn btn-secondary">+ Agregar subactividad</button>

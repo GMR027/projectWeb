@@ -615,7 +615,7 @@ $as->id = $as->guardar()['id'];
 $ok('sin subactividades conserva el avance manual', (int)Model\Actividad::find($as->id)->progreso === 40 && !$as->tieneSubactividades());
 foreach ([100, 50] as $i => $st) {
     $sb = new Model\Subactividad(['actividad_id' => $as->id, 'nombre' => 'Tramo ' . ($i + 1),
-        'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'status' => $st]);
+        'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'progreso' => $st]);
     $ok('se guarda la subactividad ' . ($i + 1), (bool)$sb->guardar()['resultado']);
 }
 $as->recalcularDesdeSubactividades();
@@ -623,7 +623,7 @@ $f = Model\Actividad::find($as->id);
 $ok('con subactividades el avance es su promedio', (int)$f->progreso === 75 && $f->status === 'en_proceso' && $as->tieneSubactividades());
 $ok('el programa sabe qué actividades tienen subactividades', (Model\Subactividad::conteoPorProyecto($pidH)[$as->id] ?? 0) === 2);
 $subs = Model\Subactividad::deActividad((int)$as->id);
-$subs[1]->status = 100;
+$subs[1]->progreso = 100;
 $ok('se edita una subactividad', (bool)$subs[1]->guardar());
 $as->recalcularDesdeSubactividades();
 $f = Model\Actividad::find($as->id);
@@ -640,6 +640,43 @@ $as->recalcularDesdeSubactividades();
 $ok('al quitar la última se conserva el último promedio como avance manual',
     (int)Model\Actividad::find($as->id)->progreso === 100 && !$as->tieneSubactividades());
 
+// ---- Subactividades: campos completos, envolvente y desplazamiento ----
+echo "Subactividades: campos y fechas\n";
+$ps0 = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.0', 'nombre' => 'Partida de reglas de subactividades', 'orden' => 904]);
+$ps0->id = $ps0->guardar()['id'];
+$as0 = new Model\Actividad(['partida_id' => $ps0->id, 'codigo' => 'SUB.0.1', 'nombre' => 'Actividad con reglas',
+    'fecha_inicio' => '2026-11-02', 'fecha_fin' => '2026-11-06', 'duracion_dias' => 5, 'progreso' => 10]);
+$as0->id = $as0->guardar()['id'];
+$s0a = new Model\Subactividad(['actividad_id' => $as0->id, 'nombre' => 'Tramo A', 'fecha_inicio' => '2026-11-03', 'fecha_fin' => '2026-11-04',
+    'progreso' => 0, 'prioridad' => 'alta', 'responsable' => 'Ing. Prueba', 'descripcion' => 'Detalle A']);
+$s0a->id = $s0a->guardar()['id'];
+$s0b = new Model\Subactividad(['actividad_id' => $as0->id, 'nombre' => 'Tramo B', 'fecha_inicio' => '2026-11-05', 'fecha_fin' => '2026-11-09', 'progreso' => 100]);
+$s0b->id = $s0b->guardar()['id'];
+$r0 = \Classes\Subactividades::recalcular($as0, ['hoja' => false, 'propagar' => false]);
+$f0 = Model\Actividad::find($as0->id);
+$ok('el recalculo deja el promedio y el envolvente', $r0['progreso'] === 50 && (int)$f0->progreso === 50
+    && $f0->status === 'en_proceso' && $f0->fecha_inicio === '2026-11-03' && $f0->fecha_fin === '2026-11-09');
+$ok('los campos nuevos de la subactividad persisten', (int)$s0a->pta === 1 && $s0a->prioridad === 'alta'
+    && $s0a->responsable === 'Ing. Prueba' && $s0a->descripcion === 'Detalle A'
+    && Model\Subactividad::find($s0a->id)->prioridad === 'alta');
+$ok('el código se deriva del padre y del orden', Model\Subactividad::codigosDeActividad((int)$as0->id, 'SUB.0.1') ===
+    [(int)$s0a->id => 'SUB.0.1.1', (int)$s0b->id => 'SUB.0.1.2']);
+$r0 = \Classes\Subactividades::moverInicio($as0, '2026-11-10', ['hoja' => false, 'propagar' => false]);
+$s0a = Model\Subactividad::find($s0a->id);
+$s0b = Model\Subactividad::find($s0b->id);
+$f0 = Model\Actividad::find($as0->id);
+$ok('mover el inicio de la actividad desplaza a todas las hijas', $r0['movidas'] === 2
+    && $s0a->fecha_inicio === '2026-11-10' && $s0a->fecha_fin === '2026-11-11'
+    && $s0b->fecha_inicio === '2026-11-12' && $s0b->fecha_fin === '2026-11-16'
+    && $f0->fecha_inicio === '2026-11-10' && $f0->fecha_fin === '2026-11-16');
+$hito = new Model\Subactividad(['actividad_id' => $as0->id, 'nombre' => 'Hito interno', 'fecha_inicio' => '2026-11-17',
+    'fecha_fin' => '2026-11-17', 'progreso' => 100, 'hito' => 1]);
+$rh = $hito->guardar();
+$hito->id = (int)($rh['id'] ?? 0);
+$ok('un hito no tiene duración', !empty($rh['resultado']) && $hito->duracion() === 0.0 && $hito->fecha_fin === $hito->fecha_inicio);
+\Classes\Subactividades::eliminar($hito, ['hoja' => false, 'propagar' => false]);
+$ok('eliminar una subactividad recalcula la actividad', count(Model\Subactividad::deActividad((int)$as0->id)) === 2);
+
 // ---- Subactividades ↔ SheetFlow: el vínculo se actualiza en los dos sentidos ----
 echo "Subactividades ↔ SheetFlow\n";
 $pf = new Model\Partida(['proyecto_id' => $pidH, 'codigo' => 'SUB.2', 'nombre' => 'Partida vinculada a SheetFlow', 'orden' => 903]);
@@ -647,9 +684,9 @@ $pf->id = $pf->guardar()['id'];
 $asf = new Model\Actividad(['partida_id' => $pf->id, 'codigo' => 'SUB.2.1', 'nombre' => 'Actividad vinculada a SheetFlow',
     'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-10', 'duracion_dias' => 5, 'progreso' => 0]);
 $asf->id = $asf->guardar()['id'];
-$sfA = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo A', 'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-06', 'status' => 40]);
+$sfA = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo A', 'fecha_inicio' => '2026-11-04', 'fecha_fin' => '2026-11-06', 'progreso' => 40]);
 $sfA->id = $sfA->guardar()['id'];
-$sfB = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo B', 'fecha_inicio' => '2026-11-07', 'fecha_fin' => '2026-11-10', 'status' => 60]);
+$sfB = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo B', 'fecha_inicio' => '2026-11-07', 'fecha_fin' => '2026-11-10', 'progreso' => 60]);
 $sfB->id = $sfB->guardar()['id'];
 $asf->recalcularDesdeSubactividades();
 [$sh, $sv] = Model\SubactividadHoja::crearParaActividad($asf, $proy, null);
@@ -658,7 +695,7 @@ $shd = $sh->contenido();
 $ok('la hoja trae una fila por subactividad', count($shd['rows']) === 2 && count($shd['meta']['subactividad']['ids']) === 2);
 $roles = [];
 foreach ($shd['cols'] as $i => $c) if (!empty($c['rol'])) $roles[$c['rol']] = $i;
-$ok('las columnas base llevan su rol y están protegidas', ($roles['nombre'] ?? -1) === 0 && ($roles['status'] ?? -1) === 3 && !empty($shd['cols'][0]['fija']));
+$ok('las columnas base llevan su rol y están protegidas', ($roles['nombre'] ?? -1) === 0 && ($roles['progreso'] ?? -1) === 3 && !empty($shd['cols'][0]['fija']));
 
 // Editar A, borrar B, agregar C y una columna extra desde la hoja
 $ids = $shd['meta']['subactividad']['ids'];
@@ -678,7 +715,7 @@ $shd['meta']['subactividad']['ids'] = $ids;
 
 $subsF = Model\Subactividad::deActividad((int)$asf->id);
 $porNombre = [];
-foreach ($subsF as $s) $porNombre[$s->nombre] = (int)$s->status;
+foreach ($subsF as $s) $porNombre[$s->nombre] = (int)$s->progreso;
 $ok('la hoja actualiza, crea y elimina subactividades', $porNombre === ['Tramo A editado' => 100, 'Tramo C' => 25]);
 $ok('el avance de la actividad se recalcula desde la hoja', (int)Model\Actividad::find($asf->id)->progreso === 63);
 $shd = Model\SheetflowHoja::find((int)$sh->id)->contenido();
@@ -697,7 +734,7 @@ $ok('la hoja se queda con el avance acotado y las fechas de la actividad', $shd[
     && $shd['rows'][$rA2][2] === '2026-11-10' && $shd['rows'][$rA2][3] === '100');
 
 // Cambio desde la sección de subactividades y se refleja en la hoja
-$sfC = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo D', 'fecha_inicio' => '2026-11-09', 'fecha_fin' => '2026-11-10', 'status' => 50]);
+$sfC = new Model\Subactividad(['actividad_id' => $asf->id, 'nombre' => 'Tramo D', 'fecha_inicio' => '2026-11-09', 'fecha_fin' => '2026-11-10', 'progreso' => 50]);
 $sfC->id = $sfC->guardar()['id'];
 $asf->recalcularDesdeSubactividades();
 $errF = Model\SubactividadHoja::reflejar($asf);
@@ -726,7 +763,7 @@ try {
 }
 $sfC = Model\Subactividad::find((int)$sfC->id);
 $ok('no acepta dejar sin nombre una subactividad y no deja cambios a medias', $falloF !== null && str_contains($falloF, 'sin nombre')
-    && $sfC->nombre === 'Tramo D' && (int)$sfC->status === 50);
+    && $sfC->nombre === 'Tramo D' && (int)$sfC->progreso === 50);
 
 // Desvincular conserva la tabla y las subactividades
 Model\SubactividadHoja::desvincular($asf);

@@ -144,6 +144,7 @@ CREATE TABLE proyectos (
     usuario_id INT NOT NULL,
     modo_dependencias ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
     modo_dependencias_materiales ENUM('apagado','informativo','automatico') NOT NULL DEFAULT 'apagado',
+    mostrar_subactividades TINYINT(1) NOT NULL DEFAULT 0,   -- programa y vistas de planeación (Ajustes → General)
     registros_por_pagina SMALLINT NOT NULL DEFAULT 10,
     tema_modo ENUM('usuario','claro','oscuro') NOT NULL DEFAULT 'usuario',
     tema_paleta VARCHAR(20) NOT NULL DEFAULT 'naranja',
@@ -280,13 +281,38 @@ CREATE TABLE restricciones (
 CREATE TABLE subactividades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     actividad_id INT NOT NULL,
+    calendario_id INT NULL,
+    frente_id INT NULL,
     nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
-    status TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'avance de la subactividad, 0-100',
+    fecha_inicio_real DATE NULL,
+    fecha_fin_real DATE NULL,
+    duracion_restante DECIMAL(6,2) NULL,
+    restriccion_tipo ENUM('ninguna','no_antes','no_despues','terminar_antes') NOT NULL DEFAULT 'ninguna',
+    restriccion_fecha DATE NULL,
+    restriccion_motivo VARCHAR(500) NOT NULL DEFAULT '',
+    progreso TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'avance 0-100',
+    status ENUM('no_iniciada','en_proceso','completada') NOT NULL DEFAULT 'no_iniciada',
+    prioridad ENUM('baja','media','alta','critica') NULL DEFAULT 'media',
+    pta TINYINT(1) NOT NULL DEFAULT 1,
+    hito TINYINT NOT NULL DEFAULT 0,
+    sin_material TINYINT(1) NOT NULL DEFAULT 0,
+    orden INT NULL DEFAULT 0,
+    fecha_fija TINYINT(1) NOT NULL DEFAULT 0,
+    responsable VARCHAR(150) NULL,
+    rec_inicio DATE NULL,
+    rec_fin DATE NULL,
+    libre_texto VARCHAR(255) NULL,
+    libre_numero DECIMAL(14,4) NULL,
+    libre_fecha DATE NULL,
+    icono VARCHAR(120) NULL,
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE CASCADE,
-    KEY idx_subactividades_actividad (actividad_id)
+    KEY idx_subactividades_actividad (actividad_id),
+    KEY idx_subactividades_actividad_orden (actividad_id, orden)
 ) ENGINE=InnoDB;
 
 -- ============================================================

@@ -190,6 +190,20 @@ class Actividad extends ActiveRecord
         return Restriccion::whereAll('actividad_id', $this->id, 'creado DESC');
     }
 
+    /** Proyecto de la actividad (a través de su partida), memorizado por partida */
+    public function proyectoId(): int
+    {
+        $pid = (int)$this->partida_id;
+        if (!$pid) return 0;
+        static $cache = [];
+        if (!array_key_exists($pid, $cache)) {
+            $r = self::$db->query('SELECT proyecto_id FROM partidas WHERE id = ' . $pid);
+            $f = $r ? $r->fetch_row() : null;
+            $cache[$pid] = (int)($f[0] ?? 0);
+        }
+        return $cache[$pid];
+    }
+
     /**
      * Todas las actividades del proyecto en UNA consulta (antes: una por partida). Para listas, Gantt y
      * exportadores; el orden respeta partida y actividad.
@@ -221,18 +235,22 @@ class Actividad extends ActiveRecord
     /** Promedio de las subactividades, o null si la actividad no tiene ninguna */
     public function progresoDesdeSubactividades(): ?int
     {
-        $statuses = [];
+        $valores = [];
         try {
-            $r = self::$db->query('SELECT status FROM subactividades WHERE actividad_id = ' . (int)$this->id);
-            if ($r) {
-                while ($f = $r->fetch_row()) $statuses[] = (int)$f[0];
-            } else {
+            // `progreso` es el nombre nuevo; si la migración aún no se aplicó, se usa el antiguo `status` numérico.
+            $r = self::$db->query('SELECT progreso FROM subactividades WHERE actividad_id = ' . (int)$this->id);
+        } catch (\Throwable $e) {
+            try {
+                $r = self::$db->query('SELECT status FROM subactividades WHERE actividad_id = ' . (int)$this->id);
+            } catch (\Throwable $e2) {   // migración pendiente
                 return null;
             }
-        } catch (\Throwable $e) {   // migración pendiente
-            return null;
         }
-        return $statuses ? Subactividad::promedio($statuses) : null;
+        if (!$r) return null;
+        while ($f = $r->fetch_row()) {
+            if ($f[0] !== null && is_numeric($f[0])) $valores[] = (int)$f[0];
+        }
+        return $valores ? Subactividad::promedio($valores) : null;
     }
 
     /**

@@ -28,11 +28,11 @@ class Sheetflow
     public const MAX_CELDA = 500;
     public const MAX_BYTES = 2_000_000;
     /** Columnas base de una tabla vinculada a las subactividades de una actividad */
-    public const ROLES_SUBACTIVIDAD = ['nombre', 'inicio', 'fin', 'status'];
+    public const ROLES_SUBACTIVIDAD = ['nombre', 'inicio', 'fin', 'progreso', 'status'];
     /** Columnas base de la tabla de instalación de materiales de una lámina de vPlan */
     public const ROLES_MATERIALES = ['material', 'fecha_material', 'status_material'];
     /** Roles que sobreviven a las herramientas (los demás se descartan) */
-    public const ROLES = ['nombre', 'inicio', 'fin', 'status', 'material', 'fecha_material', 'status_material'];
+    public const ROLES = ['nombre', 'inicio', 'fin', 'progreso', 'status', 'material', 'fecha_material', 'status_material'];
 
     private static function hex($c, string $def): string
     {

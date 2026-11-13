@@ -37,7 +37,11 @@ class ProgramaController
 
         exigir_ver_proyecto($proyecto);
 
+        // Mostrar subactividades: ?sub=1/0 manda; si no viene, se usa el ajuste del proyecto.
+        $subParam = $_GET['sub'] ?? null;
+        $mostrarSub = $subParam === '1' ? true : ($subParam === '0' ? false : (bool)($proyecto->mostrar_subactividades ?? 0));
         $gantt = new GanttRenderer($proyecto);
+        $gantt->setIncluirSubactividades($mostrarSub);
         $semanas = $gantt->getSemanas();
         $todas = $gantt->getFilas();
         $calendario = new Calendario($proyectoId);
@@ -78,24 +82,56 @@ class ProgramaController
         $valoresCp = $camposCp ? \Classes\CamposPersonalizados::valores($proyectoId, 'actividad') : [];
         $filas = $todas;
         if (array_filter($filtros) || $filtrosCp) {
+            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp;
+            $padres = [];
+            foreach ($todas as $f) if ($f['tipo'] === 'actividad') $padres[(int)$f['id']] = $f;
+
+            // Un filtro de actividad se cumple o no; un hijo hereda el de campos personalizados y riesgo del padre,
+            // pero evalúa su propio estado/prioridad/restricción.
+            $coincide = function (array $f, bool $esSub, ?array $padre) use ($filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp): bool {
+                if ($filtros['status'] && (string)$f['status'] !== $filtros['status']) return false;
+                if ($filtros['prioridad'] && (string)$f['prioridad'] !== $filtros['prioridad']) return false;
+                if ($filtros['restriccion'] === 'con' && empty($f['tiene_restriccion'])) return false;
+                if ($filtros['restriccion'] === 'sin' && !empty($f['tiene_restriccion'])) return false;
+                $ref = $esSub ? (int)($padre['id'] ?? 0) : (int)$f['id'];
+                if ($filtros['riesgo'] && empty($riesgos[$ref])) return false;
+                if ($filtrosCp && !\Classes\CamposPersonalizados::coincide($valoresCp[$ref] ?? [], $filtrosCp, $camposCp)) return false;
+                return true;
+            };
+
+            // ¿Algún hijo cumple los filtros? Entonces su actividad se muestra como cabecera.
+            $padreConHijo = [];
+            if ($hayFiltroAct) {
+                foreach ($todas as $f) {
+                    if ($f['tipo'] !== 'subactividad') continue;
+                    $padre = $padres[(int)$f['actividad_id']] ?? null;
+                    if ($padre && $coincide($f, true, $padre)) $padreConHijo[(int)$f['actividad_id']] = true;
+                }
+            }
+
             $filas = [];
             $cabecera = null;
-            $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp;
+            $mostrarHijos = false;
             foreach ($todas as $f) {
                 if ($f['tipo'] === 'partida') {
                     $cabecera = (!$filtros['partida'] || (int)$f['id'] === $filtros['partida']) ? $f : null;
                     // Solo filtro por partida: se muestra aunque no tenga actividades
                     if ($cabecera && !$hayFiltroAct) { $filas[] = $cabecera; $cabecera = null; }
+                    $mostrarHijos = false;
                     continue;
                 }
-                if (!$cabecera && $hayFiltroAct) continue;
-                if (!$hayFiltroAct) { if (!$filtros['partida'] || (int)$f['partida_id'] === $filtros['partida']) $filas[] = $f; continue; }
-                if ($filtros['status'] && $f['status'] !== $filtros['status']) continue;
-                if ($filtros['prioridad'] && $f['prioridad'] !== $filtros['prioridad']) continue;
-                if ($filtros['restriccion'] === 'con' && !$f['tiene_restriccion']) continue;
-                if ($filtros['restriccion'] === 'sin' && $f['tiene_restriccion']) continue;
-                if ($filtros['riesgo'] && empty($riesgos[(int)$f['id']])) continue;
-                if ($filtrosCp && !\Classes\CamposPersonalizados::coincide($valoresCp[(int)$f['id']] ?? [], $filtrosCp, $camposCp)) continue;
+                $partidaOk = !$filtros['partida'] || (int)$f['partida_id'] === $filtros['partida'];
+                if ($f['tipo'] === 'subactividad') {
+                    if (!$partidaOk || !$mostrarHijos) continue;
+                    if ($hayFiltroAct && !$coincide($f, true, $padres[(int)$f['actividad_id']] ?? null)) continue;
+                    $filas[] = $f;
+                    continue;
+                }
+                // Actividad
+                if (!$partidaOk) { $mostrarHijos = false; continue; }
+                $mostrar = !$hayFiltroAct || $coincide($f, false, null) || !empty($padreConHijo[(int)$f['id']]);
+                $mostrarHijos = $mostrar;
+                if (!$mostrar) continue;
                 if ($cabecera) { $filas[] = $cabecera; $cabecera = null; }
                 $filas[] = $f;
             }
@@ -146,7 +182,8 @@ class ProgramaController
             'filas' => $filas,
             'limiteFilas' => $limiteFilas,
             'totalFilas' => $totalFilas,
-            'calendario' => $calendario
+            'calendario' => $calendario,
+            'mostrarSub' => $mostrarSub,
         ]);
     }
 
@@ -276,6 +313,23 @@ class ProgramaController
         $calendario = new Calendario($partida->proyecto_id);
 
         try {
+            if ($actividad->tieneSubactividades()) {
+                // La actividad es el resumen: mover el inicio desplaza a todas sus hijas;
+                // el fin/duración se calcula del envolvente y no se edita a mano.
+                if ($tipo === 'fin') {
+                    json_respuesta(['success' => false, 'error' => 'El fin de la actividad se calcula de sus subactividades. Mueve el inicio o edita las subactividades.'], 422);
+                }
+                $res = \Classes\Subactividades::moverInicio($actividad, $nuevaFecha);
+                if (!empty($res['errores'])) json_respuesta(['success' => false, 'error' => implode(' ', $res['errores'])], 422);
+                $actividad = Actividad::find((int)$actividad->id);
+                json_respuesta([
+                    'success' => true, 'dependientes_movidas' => (int)($res['movidas'] ?? 0),
+                    'fecha_inicio' => $actividad->fecha_inicio,
+                    'fecha_fin' => $actividad->fecha_fin,
+                    'duracion_dias' => (int)$actividad->duracion_dias,
+                    'duracion_real' => $calendario->calcularDuracion($actividad->fecha_inicio, $actividad->fecha_fin),
+                ]);
+            }
             if ($actividad->esHito()) {
                 // Un hito no tiene duración: cualquier fecha lo mueve completo
                 $actividad->fecha_inicio = $nuevaFecha;
@@ -363,6 +417,98 @@ class ProgramaController
         }
         echo json_encode(['success' => true, 'progreso' => (int)$actividad->progreso]);
         exit;
+    }
+
+    /** Endpoint AJAX para actualizar fechas de una subactividad (mueve el envolvente de su actividad) */
+    public static function actualizarFechaSubactividadAjax()
+    {
+        $proyecto = proyecto_api('gestionar');
+        $sub = Subactividad::find(filter_var($_POST['subactividad_id'] ?? null, FILTER_VALIDATE_INT));
+        $actividad = $sub ? Actividad::find((int)$sub->actividad_id) : null;
+        $partida = $actividad ? Partida::find((int)$actividad->partida_id) : null;
+        if (!$sub || !$actividad || !$partida || (int)$partida->proyecto_id !== (int)$proyecto->id) {
+            json_respuesta(['success' => false, 'error' => 'Subactividad no encontrada'], 404);
+        }
+        $tipo = ($_POST['tipo'] ?? '') === 'fin' ? 'fin' : 'inicio';
+        $nueva = self::fechaOpcional($_POST['fecha'] ?? null);
+        if (!$nueva) json_respuesta(['success' => false, 'error' => 'Fecha inválida'], 422);
+
+        $cal = new Calendario((int)$proyecto->id, (int)($sub->calendario_id ?? 0));
+        $nueva = self::fechaHabilMasCercana($cal, $nueva);
+        if ($sub->esHito()) {
+            $sub->fecha_inicio = $nueva;
+            $sub->fecha_fin = $nueva;
+        } elseif ($tipo === 'inicio') {
+            $dur = max(1, (int)ceil($sub->duracion($cal)));
+            $sub->fecha_inicio = $nueva;
+            $sub->fecha_fin = $cal->calcularFechaFin($nueva, $dur);
+        } else {
+            if ($nueva < (string)$sub->fecha_inicio) {
+                json_respuesta(['success' => false, 'error' => 'La fecha de fin no puede ser anterior a la de inicio'], 422);
+            }
+            $sub->fecha_fin = $nueva;
+        }
+
+        $r = \Classes\Subactividades::guardar($sub, $actividad);
+        if (!$r['ok']) json_respuesta(['success' => false, 'error' => implode(' ', $r['errores'])], 422);
+
+        $actividad = Actividad::find((int)$actividad->id);
+        json_respuesta([
+            'success' => true,
+            'fecha_inicio' => $sub->fecha_inicio,
+            'fecha_fin' => $sub->fecha_fin,
+            'duracion_real' => $sub->duracion($cal),
+            'actividad' => [
+                'progreso' => (int)($actividad->progreso ?? 0),
+                'status' => (string)($actividad->status ?? ''),
+                'fecha_inicio' => $actividad->fecha_inicio ?? null,
+                'fecha_fin' => $actividad->fecha_fin ?? null,
+            ],
+        ]);
+    }
+
+    /** Endpoint AJAX para actualizar el avance de una subactividad (recalcula el promedio de su actividad) */
+    public static function actualizarProgresoSubactividadAjax()
+    {
+        $proyecto = proyecto_api('gestionar');
+        $sub = Subactividad::find(filter_var($_POST['subactividad_id'] ?? null, FILTER_VALIDATE_INT));
+        $actividad = $sub ? Actividad::find((int)$sub->actividad_id) : null;
+        $partida = $actividad ? Partida::find((int)$actividad->partida_id) : null;
+        if (!$sub || !$actividad || !$partida || (int)$partida->proyecto_id !== (int)$proyecto->id) {
+            json_respuesta(['success' => false, 'error' => 'Subactividad no encontrada'], 404);
+        }
+        if (!is_numeric($_POST['progreso'] ?? null)) {
+            json_respuesta(['success' => false, 'error' => 'Valor inválido'], 422);
+        }
+        $sub->progreso = max(0, min(100, (int)round((float)$_POST['progreso'])));
+        $r = \Classes\Subactividades::guardar($sub, $actividad, ['envolvente' => false]);
+        if (!$r['ok']) json_respuesta(['success' => false, 'error' => implode(' ', $r['errores'])], 422);
+
+        $actividad = Actividad::find((int)$actividad->id);
+        $bloqueo = Actividad::bloqueoCalidad();
+        json_respuesta([
+            'success' => true,
+            'progreso' => (int)$sub->progreso,
+            'status' => (string)$sub->estado(),
+            'actividad_progreso' => (int)($actividad->progreso ?? 0),
+            'actividad_status' => (string)($actividad->status ?? ''),
+            'bloqueo' => $bloqueo,
+        ]);
+    }
+
+    /** Día hábil más cercano (hacia delante si hay empate) */
+    private static function fechaHabilMasCercana(Calendario $cal, string $fecha): string
+    {
+        if ($cal->esHabil($fecha)) return $fecha;
+        $adelante = new \DateTime($fecha);
+        $atras = new \DateTime($fecha);
+        for ($i = 0; $i < 400; $i++) {
+            $adelante->modify('+1 day');
+            if ($cal->esHabil($adelante->format('Y-m-d'))) return $adelante->format('Y-m-d');
+            $atras->modify('-1 day');
+            if ($cal->esHabil($atras->format('Y-m-d'))) return $atras->format('Y-m-d');
+        }
+        return $fecha;
     }
 
     // ==================== IMPORTAR XML / POD ====================
@@ -1027,6 +1173,8 @@ class ProgramaController
                 $actividad->normalizarHito();
                 $actividad->sincronizarStatus();
                 if ($actividad->guardar()) {
+                    // Con hijas, las fechas de la actividad las manda el envolvente (no la duración del formulario).
+                    if ($actividad->tieneSubactividades()) \Classes\Subactividades::recalcular($actividad);
                     $partida->recalcularFechas();
                     Cantidades::recalcularPartida((int)$proyecto->id, (int)$partida->id);
                     if ((int)$actividad->partida_id !== (int)$partida->id) Cantidades::recalcularPartida((int)$proyecto->id, (int)$actividad->partida_id);
@@ -1170,8 +1318,122 @@ class ProgramaController
     }
 
     // ==================== SUBACTIVIDADES ====================
-    /* Las subactividades no salen en el programa, dependencias, línea de tiempo ni lookahead:
-       solo se gestionan desde la edición de la actividad y alimentan su % de avance. */
+    /* Subactividades: se gestionan desde la actividad y, a partir de la fase 1,
+       también desde el programa, dependencias, línea de tiempo, lookahead, etc. */
+
+    /** Formulario completo de una subactividad nueva */
+    public static function crearSubactividadForm(Router $router)
+    {
+        [$actividad, $proyecto] = self::contextoSubactividad($_GET['actividad'] ?? null, false);
+        $sub = new Subactividad([
+            'actividad_id' => $actividad->id,
+            'fecha_inicio' => $actividad->fecha_inicio,
+            'fecha_fin' => $actividad->fecha_fin,
+            'orden' => count(Subactividad::deActividad((int)$actividad->id)) + 1,
+        ]);
+        self::renderSubactividadForm($router, $proyecto, $actividad, $sub, [], texto_param($_GET['volver'] ?? 'programa'));
+    }
+
+    /** Formulario completo de una subactividad existente */
+    public static function editarSubactividadForm(Router $router)
+    {
+        $sub = Subactividad::find(filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT));
+        if (!$sub) {
+            header('Location: /proyectos');
+            exit;
+        }
+        [$actividad, $proyecto] = self::contextoSubactividad($sub->actividad_id, false);
+        self::renderSubactividadForm($router, $proyecto, $actividad, $sub, [], texto_param($_GET['volver'] ?? 'programa'));
+    }
+
+    /** Guarda una subactividad desde su formulario completo (crear o editar) */
+    public static function guardarSubactividad()
+    {
+        redirigir_si_no_auth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /proyectos');
+            exit;
+        }
+        $actividadId = filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT);
+        [$actividad, $proyecto] = self::contextoSubactividad($actividadId, true);
+        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $sub = $id ? Subactividad::find($id) : new Subactividad(['actividad_id' => $actividad->id]);
+        if (!$sub || (int)$sub->actividad_id !== (int)$actividad->id) {
+            header('Location: /programa?proyecto=' . (int)$proyecto->id);
+            exit;
+        }
+
+        $sub->nombre = $_POST['nombre'] ?? '';
+        $sub->descripcion = $_POST['descripcion'] ?? '';
+        $sub->fecha_inicio = $_POST['fecha_inicio'] ?? '';
+        $sub->fecha_fin = $_POST['fecha_fin'] ?? '';
+        $sub->progreso = $_POST['progreso'] ?? 0;
+        $sub->prioridad = $_POST['prioridad'] ?? 'media';
+        $sub->responsable = $_POST['responsable'] ?? null;
+        $sub->fecha_inicio_real = self::fechaOpcional($_POST['fecha_inicio_real'] ?? null);
+        $sub->fecha_fin_real = self::fechaOpcional($_POST['fecha_fin_real'] ?? null);
+        $sub->duracion_restante = ($_POST['duracion_restante'] ?? '') === '' ? null : (float)$_POST['duracion_restante'];
+        $sub->restriccion_tipo = $_POST['restriccion_tipo'] ?? 'ninguna';
+        $sub->restriccion_fecha = self::fechaOpcional($_POST['restriccion_fecha'] ?? null);
+        $sub->restriccion_motivo = $_POST['restriccion_motivo'] ?? '';
+        $sub->pta = !empty($_POST['pta']) ? 1 : 0;
+        $sub->hito = !empty($_POST['hito']) ? 1 : 0;
+        $sub->sin_material = !empty($_POST['sin_material']) ? 1 : 0;
+        $sub->fecha_fija = !empty($_POST['fecha_fija']) ? 1 : 0;
+        $sub->rec_inicio = self::fechaOpcional($_POST['rec_inicio'] ?? null);
+        $sub->rec_fin = self::fechaOpcional($_POST['rec_fin'] ?? null);
+        $sub->libre_texto = $_POST['libre_texto'] ?? null;
+        $sub->libre_numero = ($_POST['libre_numero'] ?? '') === '' ? null : (float)$_POST['libre_numero'];
+        $sub->libre_fecha = self::fechaOpcional($_POST['libre_fecha'] ?? null);
+        $sub->calendario_id = filter_var($_POST['calendario_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+        $sub->frente_id = filter_var($_POST['frente_id'] ?? null, FILTER_VALIDATE_INT) ?: null;
+        $sub->orden = (int)($_POST['orden'] ?? $sub->orden ?? 0);
+
+        if (!empty($_POST['quitar_icono'])) {
+            $sub->icono = null;
+        } elseif (!empty($_FILES['icono']['tmp_name'])) {
+            $nuevo = guardar_imagen_subida('icono', 'actividades-iconos');
+            if ($nuevo) $sub->icono = $nuevo;
+        }
+
+        $alertas = $sub->validar();
+        if ($alertas) {
+            self::renderSubactividadForm($router, $proyecto, $actividad, $sub, $alertas, texto_param($_POST['volver'] ?? 'programa'));
+            return;
+        }
+        $r = \Classes\Subactividades::guardar($sub, $actividad);
+        if (!$r['ok']) {
+            self::renderSubactividadForm($router, $proyecto, $actividad, $sub, ['error' => $r['errores']], texto_param($_POST['volver'] ?? 'programa'));
+            return;
+        }
+
+        if (texto_param($_POST['volver'] ?? '') === 'actividad') {
+            header('Location: /programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades');
+        } else {
+            header('Location: /programa?proyecto=' . (int)$proyecto->id . '&sub=1&foco=s' . (int)$sub->id);
+        }
+        exit;
+    }
+
+    private static function renderSubactividadForm(Router $router, Proyecto $proyecto, Actividad $actividad, Subactividad $sub, array $alertas, string $volver): void
+    {
+        $router->render('programa/subactividad', [
+            'titulo' => ($sub->id ? 'Editar' : 'Nueva') . ' subactividad - ' . $proyecto->nombre,
+            'proyecto' => $proyecto,
+            'actividad' => $actividad,
+            'subactividad' => $sub,
+            'alertas' => $alertas,
+            'volver' => $volver === 'actividad' ? 'actividad' : 'programa',
+            'calendarios' => \Classes\Calendarios::disponible() ? \Classes\Calendarios::opciones((int)$proyecto->id) : [],
+            'frentes' => \Classes\LineaBalance::disponible() ? \Classes\LineaBalance::frentes((int)$proyecto->id) : [],
+        ]);
+    }
+
+    private static function fechaOpcional($v): ?string
+    {
+        $v = trim((string)$v);
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : null;
+    }
 
     public static function crearSubactividad()
     {
@@ -1184,7 +1446,8 @@ class ProgramaController
             'nombre' => $_POST['nombre'] ?? '',
             'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
             'fecha_fin' => $_POST['fecha_fin'] ?? '',
-            'status' => $_POST['status'] ?? 0,
+            'progreso' => $_POST['progreso'] ?? $_POST['status'] ?? 0,
+            'orden' => count(Subactividad::deActividad((int)$actividad->id)) + 1,
         ]);
         $alertas = $subactividad->validar();
         if (!empty($alertas)) {
@@ -1215,7 +1478,7 @@ class ProgramaController
             $subactividad->nombre = $datos['nombre'] ?? '';
             $subactividad->fecha_inicio = $datos['fecha_inicio'] ?? '';
             $subactividad->fecha_fin = $datos['fecha_fin'] ?? '';
-            $subactividad->status = $datos['status'] ?? 0;
+            $subactividad->progreso = $datos['progreso'] ?? $datos['status'] ?? 0;
             $alertas = $subactividad->validar();
             if (!empty($alertas)) {
                 $errores = array_merge($errores, $alertas['error'] ?? []);
@@ -1292,11 +1555,11 @@ class ProgramaController
         $db->begin_transaction();
         try {
             $cambio();
-            $actividad->recalcularDesdeSubactividades();
-            $error = SubactividadHoja::reflejar($actividad);
-            if ($error !== null) {
+            // Promedio + envolvente de la actividad + tabla vinculada, en un solo sitio.
+            $res = \Classes\Subactividades::recalcular($actividad);
+            if (!empty($res['errores'])) {
                 $db->rollback();
-                self::volverSubactividad($actividad, 'error', $error);
+                self::volverSubactividad($actividad, 'error', implode(' ', $res['errores']));
             }
             $db->commit();
         } catch (\Throwable $e) {
@@ -1340,6 +1603,13 @@ class ProgramaController
 
     private static function volverSubactividad(Actividad $actividad, string $estado, string $mensaje = ''): void
     {
+        if (texto_param($_POST['volver'] ?? '') === 'programa') {
+            $partida = Partida::find($actividad->partida_id);
+            $url = '/programa?proyecto=' . (int)($partida->proyecto_id ?? 0) . '&sub=1#fila-a' . (int)$actividad->id;
+            if ($estado === 'error') $url = '/programa/actividades/editar?id=' . (int)$actividad->id . '&sub_error=' . urlencode($mensaje) . '#subactividades';
+            header('Location: ' . $url);
+            exit;
+        }
         $url = '/programa/actividades/editar?id=' . (int)$actividad->id;
         $url .= $estado === 'error' ? '&sub_error=' . urlencode($mensaje) : '&sub=' . urlencode($estado);
         header('Location: ' . $url . '#subactividades');

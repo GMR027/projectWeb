@@ -235,6 +235,20 @@ if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuen
         <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
     </form>
 </div>
+<div class="card" id="subactividades">
+    <h3 class="card-titulo"><i class="fa-solid fa-list-tree"></i> Subactividades</h3>
+    <?php if (($_GET['subactividades'] ?? '') === 'ok'): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
+    <?php if (($_GET['subactividades'] ?? '') === 'error'): ?><div class="alerta alerta-error">No se pudo guardar. Revisa que la migración <code>database/migracion_mostrar_subactividades.sql</code> esté aplicada.</div><?php endif; ?>
+    <p class="text-muted text-sm">Si está activo, las subactividades aparecen indentadas bajo su actividad en el programa y en las vistas de planeación. Cada vista conserva su propio check: puedes ocultarlas o mostrarlas ahí sin cambiar esta preferencia. Por defecto están ocultas.</p>
+    <form method="POST" action="/ajustes/subactividades" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <input type="hidden" name="proyecto_id" value="<?php echo (int)$proyecto->id; ?>">
+        <label class="campo-check" style="margin:0">
+            <input type="checkbox" name="mostrar_subactividades" value="1"<?php echo (int)($proyecto->mostrar_subactividades ?? 0) === 1 ? ' checked' : ''; ?>>
+            Mostrar subactividades por defecto
+        </label>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
+    </form>
+</div>
 <div class="card" id="idioma">
     <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
     <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
