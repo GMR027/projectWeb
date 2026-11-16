@@ -453,4 +453,13 @@ return [
     'Buscar en los ajustes…' => 'Search settings…',
     'Buscar en los ajustes' => 'Search settings',
     'Ninguna sección coincide.' => 'No section matches.',
+    // vPlan y Editor: espacio de trabajo
+    'Descargar el PDF de esta lámina (en el Centro de Exportación hay más opciones)' => 'Download this sheet as PDF (the Export Center has more options)',
+    'Descargar el gráfico (guarda antes lo pendiente)' => 'Download the drawing (pending changes are saved first)',
+    'Con opciones…' => 'With options…',
+    'formato, tamaño, transparencia' => 'format, size, transparency',
+    'Más acciones' => 'More actions',
+    'Pantalla completa, solo las láminas' => 'Full screen, sheets only',
+    'Tamaño y fondo' => 'Size and background',
+    'Cerrar' => 'Close',
 ];
