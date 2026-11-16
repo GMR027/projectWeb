@@ -66,7 +66,13 @@ class VplanMaterialesController
         if (!$l) json_respuesta(['success' => false, 'error' => 'Lámina no encontrada'], 404);
         $ids = $_POST['actividades'] ?? [];
         if (is_string($ids)) $ids = preg_split('/\D+/', $ids, -1, PREG_SPLIT_NO_EMPTY);
-        json_respuesta(['success' => true, 'imagenes' => MaterialesLamina::imagenes($proyecto, (array)$ids)]);
+        $subIds = $_POST['subactividades'] ?? [];
+        if (is_string($subIds)) $subIds = preg_split('/\D+/', $subIds, -1, PREG_SPLIT_NO_EMPTY);
+        json_respuesta([
+            'success' => true,
+            'imagenes' => MaterialesLamina::imagenes($proyecto, (array)$ids),
+            'imagenes_sub' => MaterialesLamina::imagenesSubactividades($proyecto, (array)$subIds),
+        ]);
     }
 
     public static function desvincular()

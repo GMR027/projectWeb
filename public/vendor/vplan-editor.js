@@ -86,7 +86,9 @@
   const TIPOS_MATERIAL = ['line', 'arrow', 'darrow', 'rect', 'rrect', 'ellipse', 'zone', 'polygon', ...POLI];
   const materialActivo = () => {
     const t = document.querySelector('#ve-pestanas [data-pest].activo');
-    return !!t && t.dataset.pest === 'materiales';
+    if (t && t.dataset.pest === 'materiales') return true;
+    const c = document.getElementById('t-material');   // interruptor «Material» de la pestaña Dibujo
+    return !!(c && c.checked);
   };
   // Lo que se dibuja desde la pestaña Materiales nace relacionado con actividades (aunque esté vacío)
   function prepararMateriales(nuevas) {
@@ -2138,6 +2140,8 @@
         }
         if (!d.success) { status('Error: ' + (d.error || 'no se pudo guardar')); return false; }
         if (sl) { sl.dirty = false; if (d.version) sl.version = d.version; }
+        // En vPlan, el servidor mantiene sola la tabla de materiales al guardar: el panel se refresca con lo que devuelve
+        if (d.materiales) document.dispatchEvent(new CustomEvent('vplan:marcas-guardadas', { detail: d }));
       }
       autoPausado = false;
       dirty(false); const hh = new Date(); status(op.auto ? 'Autoguardado ✔ ' + String(hh.getHours()).padStart(2, '0') + ':' + String(hh.getMinutes()).padStart(2, '0') : (lista.length || !state.slides ? 'Guardado ✔' : 'Sin cambios')); pintarLaminas(); return true;

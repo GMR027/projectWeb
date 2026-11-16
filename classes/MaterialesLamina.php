@@ -372,4 +372,41 @@ class MaterialesLamina
         }
         return $out;
     }
+
+    /**
+     * Imágenes del catálogo de los materiales propios de cada subactividad (independientes de su actividad):
+     * [subactividad_id => [{id, nombre, src, marca, modelo}, …]]
+     */
+    public static function imagenesSubactividades(Proyecto $proyecto, array $subactividadIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $subactividadIds), fn($i) => $i > 0)));
+        if (!$ids) return [];
+        $lista = implode(',', $ids);
+        $out = [];
+        try {
+            $r = SheetflowHoja::conexion()->query(
+                "SELECT sm.subactividad_id, m.id, m.nombre, m.imagen, m.marca, m.modelo
+                 FROM subactividad_materiales sm
+                 JOIN materiales m ON m.id = sm.material_id
+                 WHERE sm.subactividad_id IN ($lista) AND m.proyecto_id = " . (int)$proyecto->id . "
+                   AND m.imagen IS NOT NULL AND m.imagen <> ''
+                 ORDER BY sm.subactividad_id, m.nombre, m.id"
+            );
+            while ($r && ($m = $r->fetch_assoc())) {
+                $sid = (int)$m['subactividad_id'];
+                if (count($out[$sid] ?? []) >= self::MAX_IMAGENES) continue;
+                $arch = basename((string)$m['imagen']);
+                if (!preg_match('/^[A-Za-z0-9._-]+$/', $arch)) continue;
+                $out[$sid][] = [
+                    'id' => (int)$m['id'],
+                    'nombre' => (string)$m['nombre'],
+                    'src' => '/uploads/materiales/' . $arch,
+                    'marca' => (string)$m['marca'],
+                    'modelo' => (string)$m['modelo'],
+                ];
+            }
+        } catch (\Throwable $e) {   // tabla de subactividad_materiales no disponible
+        }
+        return $out;
+    }
 }

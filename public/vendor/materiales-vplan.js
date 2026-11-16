@@ -20,6 +20,7 @@
     tabla: M.tabla || null,
     datos: null,
     imgs: {},          // actividad_id => [{src, nombre}]
+    imgsSub: {},       // subactividad_id => [{src, nombre}] (materiales propios de la subactividad)
     q: '',
     draft: null,
     pendiente: 0,
@@ -57,8 +58,10 @@
   function imagenesParaMarca(d) {
     const out = [], vistos = new Set();
     for (const it of itemsDe(d)) {
-      const aid = actividadDeItem(it);
-      for (const im of (S.imgs[aid] || [])) {
+      // Una subactividad con materiales propios muestra SUS fotos; si no tiene, las de su actividad
+      const propias = it.tipo === 'subactividad' ? (S.imgsSub[Number(it.id)] || []) : [];
+      const lista = propias.length ? propias : (S.imgs[actividadDeItem(it)] || []);
+      for (const im of lista) {
         if (!im || !im.src || vistos.has(im.src)) continue;
         vistos.add(im.src);
         out.push(im);
@@ -73,22 +76,29 @@
   async function cargarImagenes() {
     const v = V();
     if (!v) return;
-    const ids = [];
-    const vistos = new Set();
+    const ids = [], subIds = [];
+    const vistos = new Set(), vistosSub = new Set();
     v.state.shapes.forEach(d => itemsDe(d).forEach(it => {
       const aid = actividadDeItem(it);
       if (aid && !vistos.has(aid) && !(aid in S.imgs)) { vistos.add(aid); ids.push(aid); }
+      if (it.tipo === 'subactividad') {
+        const sid = Number(it.id);
+        if (sid && !vistosSub.has(sid) && !(sid in S.imgsSub)) { vistosSub.add(sid); subIds.push(sid); }
+      }
     }));
-    if (!ids.length) return;
+    if (!ids.length && !subIds.length) return;
     try {
       const fd = new FormData();
       fd.append('proyecto', C.proyecto);
       fd.append('lamina', C.lamina);
       ids.forEach(id => fd.append('actividades[]', id));
+      subIds.forEach(id => fd.append('subactividades[]', id));
       const r = await fetch(M.api.imagenes, { method: 'POST', body: fd }).then(x => x.json());
       if (!r || !r.success) return;
       Object.keys(r.imagenes || {}).forEach(id => { S.imgs[Number(id)] = r.imagenes[id] || []; });
       ids.forEach(id => { if (!(id in S.imgs)) S.imgs[id] = []; });
+      Object.keys(r.imagenes_sub || {}).forEach(id => { S.imgsSub[Number(id)] = r.imagenes_sub[id] || []; });
+      subIds.forEach(id => { if (!(id in S.imgsSub)) S.imgsSub[id] = []; });
       if (v.renderOverlays) v.renderOverlays();
       actualizarProps();
     } catch (e) { /* sin fotos: la herramienta sigue funcionando */ }
@@ -294,6 +304,9 @@
   }
 
   // ---------- selector de actividades ----------
+  // En táctil el selector abre en una hoja inferior (campos de tamaño normal, sin tapar el teclado)
+  let pickerHoja = null;
+  const pickerEnHoja = () => !!(window.GestosLienzo && GestosLienzo.esTactil() && window.HojaInferior);
   function abrirPicker() {
     const d = marcaActual();
     if (!d || !compatible(d)) return;
@@ -302,10 +315,18 @@
     if (!ov) return;
     $('#mat-modal-buscar').value = '';
     pintarPicker('');
+    if (pickerEnHoja()) {
+      if (!pickerHoja) pickerHoja = HojaInferior.crear('ve-mat');
+      const card = ov.querySelector('.ve-mat-modal-card') || pickerHoja.cuerpo.querySelector('.ve-mat-modal-card');
+      if (card && card.parentNode !== pickerHoja.cuerpo) pickerHoja.cuerpo.appendChild(card);
+      pickerHoja.abrir({ posicion: 'completa', enfocar: false, alCerrar: () => { S.draft = null; } });
+      return;
+    }
     ov.classList.add('abierto'); ov.setAttribute('aria-hidden', 'false');
     setTimeout(() => $('#mat-modal-buscar').focus(), 30);
   }
   function cerrarPicker() {
+    if (pickerHoja && pickerHoja.estaAbierta && pickerHoja.estaAbierta()) pickerHoja.cerrar();
     const ov = $('#ve-mat-modal');
     if (ov) { ov.classList.remove('abierto'); ov.setAttribute('aria-hidden', 'true'); }
     S.draft = null;
@@ -447,6 +468,8 @@
     }
     // El núcleo avisa cuando se pinta o se elige otra marca
     document.addEventListener('vplan:panel', actualizarProps);
+    // Al guardar las marcas, el servidor ya sincronizó la tabla de instalación: se refresca con su respuesta
+    document.addEventListener('vplan:marcas-guardadas', e => { if (e.detail && e.detail.materiales) aplicarDatos({ success: true, ...e.detail.materiales }); });
     let tRender = 0;
     document.addEventListener('vplan:render', () => {
       clearTimeout(tRender);
@@ -468,7 +491,8 @@
       if (document.querySelector('input:focus, textarea:focus, select:focus')) return;
       cargarDatos();
     }, 20000);
-    window.MaterialesVplan.activo = () => !!(document.querySelector('#ve-pestanas [data-pest].activo[data-pest="materiales"]'));
+    window.MaterialesVplan.activo = () => !!(document.querySelector('#ve-pestanas [data-pest].activo[data-pest="materiales"]')
+      || (document.getElementById('t-material') || {}).checked);
   }
 
   if (window.__vplan) iniciar();

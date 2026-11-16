@@ -583,7 +583,18 @@ class VplanController
         $l->guardar();
         $nuevoTam = (int)@filesize(Imagenes::CARPETA_VPLAN . '/' . $nuevo);
         \Classes\Almacenamiento::sumarCuentaProyecto($proyecto, $nuevoTam - $anterior);
-        echo json_encode(['success' => true]);
+        // La tabla de instalación de materiales se mantiene sola: si la lámina ya tiene una,
+        // cada guardado de marcas agrega las actividades/subactividades nuevas (sin pisar lo capturado).
+        $materiales = null;
+        if (\Classes\MaterialesLamina::tablaDe($proyecto, $l)) {
+            try {
+                \Classes\MaterialesLamina::sincronizar($proyecto, $l, false);
+                $materiales = \Classes\MaterialesLamina::datos($proyecto, VplanLamina::find((int)$l->id));
+            } catch (\Throwable $e) {
+                error_log('Materiales vPlan (auto-sincronizar): ' . $e->getMessage());
+            }
+        }
+        echo json_encode(['success' => true] + ($materiales ? ['materiales' => $materiales] : []), JSON_UNESCAPED_UNICODE);
         exit;
     }
 

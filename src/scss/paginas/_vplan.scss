@@ -459,6 +459,12 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
     small { color: var(--text-muted); font-weight: 400; } }
   &[open] > summary { border-bottom: 1px solid var(--border); } }
 .mat-grupo-act { padding: .45rem .8rem .6rem; }
+// En táctil las filas del selector crecen al mínimo cómodo (4.4 rem) y la lista aprovecha la hoja inferior
+@media (pointer: coarse) {
+  .mat-check { min-height: 4.4rem; }
+  .hi-cuerpo .mat-modal-lista { max-height: none; }
+  .hi-cuerpo .ve-mat-modal-card { border: 0; box-shadow: none; background: none; padding: 0; max-width: none; }
+}
 .mat-check { display: flex; align-items: center; gap: .6rem; padding: .3rem .2rem; font-size: 1.12rem; cursor: pointer;
   input { flex: 0 0 auto; }
   span { flex: 1 1 auto; }

@@ -162,6 +162,9 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
             <input type="range" id="t-op" min="5" max="100" step="5" value="100" aria-label="Opacidad de la línea">
             <input type="number" id="t-op-n" min="5" max="100" step="5" value="100"> <span class="text-muted">%</span></label>
         <label class="ve-mini ve-orto" title="Las líneas, flechas y polilíneas se trazan solo en horizontal o vertical. Actívalo con F8 o mantén Mayús, Ctrl o ⌘ al trazar"><input type="checkbox" id="t-orto"> Ortogonal <kbd>F8</kbd></label>
+        <?php if (!empty($config['materiales'])): ?>
+        <label class="ve-mini" title="Lo que dibujes nace como marca de material (igual que desde la pestaña Materiales): se le asignan actividades o subactividades y entra en la tabla de instalación"><input type="checkbox" id="t-material"> Material</label>
+        <?php endif; ?>
     </div>
     <?php if (!empty($config['materiales'])) include __DIR__ . '/_materiales-barra.php'; ?>
     <div class="ve-grupo" data-nombre="Vista">
