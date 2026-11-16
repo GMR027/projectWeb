@@ -2279,7 +2279,7 @@
     const sfCaja = $('#sim-sheetflow-caja');
     if (sfCaja) {
       sfCaja.hidden = !(C.sheetflow || []).length;
-      $('#sim-sheetflow').innerHTML = (C.sheetflow || []).map((h, i) => '<button type="button" class="btn btn-sm btn-ghost" data-sf="' + i + '" title="Inserta una copia de la tabla (' + h.filas + ' renglones × ' + h.cols + ' columnas)"><i class="fa-solid fa-table-cells"></i> ' + esc(h.nombre) + '</button>').join('');
+      $('#sim-sheetflow').innerHTML = (C.sheetflow || []).map((h, i) => '<button type="button" class="btn btn-sm btn-ghost" data-sf="' + i + '" title="Inserta la tabla vinculada: se actualiza sola con la hoja (' + h.filas + ' renglones × ' + h.cols + ' columnas)"><i class="fa-solid fa-table-cells"></i> ' + esc(h.nombre) + '</button>').join('');
     }
     const gr = $('#sim-graficos');
     gr.innerHTML = (C.graficos || []).filter(x => !q || x.nombre.toLowerCase().includes(q)).map(x =>

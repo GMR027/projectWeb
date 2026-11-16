@@ -50,6 +50,9 @@ $esSubactividades = $t->sheetflow_id && \Model\SubactividadHoja::deHoja((int)$t-
             <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$t->sheetflow_id; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-cells"></i> Editar en SheetFlow</a>
         <?php else: ?>
         <button type="button" class="btn btn-sm btn-primary vp-agregar-dato" data-tabla="<?php echo (int)$t->id; ?>">+ Agregar dato</button>
+        <?php if ((int)$t->sheetflow_id): ?>
+            <a href="/sheetflow/abrir?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo (int)$t->sheetflow_id; ?>" class="btn btn-sm btn-ghost" title="La tabla está vinculada: lo que cambies aquí o allá se ve en los dos lados"><i class="fa-solid fa-table-cells"></i> Editar en SheetFlow</a>
+        <?php endif; ?>
         <a href="/vplan/tablas/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($t->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen-to-square"></i> Editar datos</a>
         <?php endif; ?>
     </div>

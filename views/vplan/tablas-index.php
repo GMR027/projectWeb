@@ -30,7 +30,7 @@
             <?php foreach ($hojasSheetflow as $h): ?><option value="<?php echo (int)$h['id']; ?>"><?php echo s($h['nombre'] . ' · ' . $h['filas'] . '×' . $h['cols']); ?></option><?php endforeach; ?>
         </select>
         <button type="submit" class="btn btn-sm btn-primary">Crear tabla</button>
-        <small class="text-muted">Copia las primeras 8 columnas y hasta 200 renglones; después se puede actualizar desde SheetFlow.</small>
+        <small class="text-muted">La tabla queda <strong>vinculada</strong>: muestra la hoja en vivo (primeras 8 columnas, hasta 200 renglones) y lo que edites en la lámina se guarda en SheetFlow.</small>
     </form>
 </div>
 <?php endif; ?>

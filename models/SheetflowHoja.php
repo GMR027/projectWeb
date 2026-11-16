@@ -72,7 +72,7 @@ class SheetflowHoja extends ActiveRecord
     {
         $out = [];
         try {
-            $r = self::$db->query("SELECT t.id, t.titulo, COUNT(lt.lamina_id) AS laminas FROM vplan_tablas t LEFT JOIN vplan_lamina_tablas lt ON lt.tabla_id = t.id WHERE t.sheetflow_id = " . (int)$this->id . " GROUP BY t.id, t.titulo");
+            $r = self::$db->query("SELECT t.id, t.titulo, COUNT(lt.lamina_id) AS laminas FROM vplan_tablas t LEFT JOIN vplan_lamina_tablas lt ON lt.tabla_id = t.id WHERE t.tipo = 'otro' AND t.sheetflow_id = " . (int)$this->id . " GROUP BY t.id, t.titulo");
             while ($r && ($f = $r->fetch_assoc())) $out[] = $f;
         } catch (\Throwable $e) {   // migración pendiente
         }

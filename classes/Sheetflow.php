@@ -974,6 +974,9 @@ class Sheetflow
     /** Crea (o actualiza, si $existente) una tabla «otro» de vPlan con los valores ya formateados de la hoja. Máx. 8 columnas */
     public static function aVplan(SheetflowHoja $h, ?VplanTabla $existente = null): VplanTabla
     {
+        // Una tabla especial (materiales, punch…) que apunte a esta hoja no se convierte en «otro»:
+        // sus columnas y filas las gobierna su propia herramienta. Se devuelve intacta.
+        if ($existente && $existente->tipo !== 'otro') return $existente;
         $m = self::matriz($h);
         $columnas = array_slice($m['columnas'], 0, 8);
         $nc = count($columnas);
@@ -996,10 +999,11 @@ class Sheetflow
         return $t;
     }
 
-    /** Tabla de vPlan que ya muestra esta hoja, o una nueva vinculada (nunca duplica) */
+    /** Tabla de vPlan que ya muestra esta hoja, o una nueva vinculada (nunca duplica).
+     *  Solo considera tablas «otro»: la tabla de materiales también apunta a una hoja, pero no es intercambiable. */
     public static function tablaVplanDe(SheetflowHoja $h): VplanTabla
     {
-        foreach (VplanTabla::deProyecto((int)$h->proyecto_id) as $x) if ((int)$x->sheetflow_id === (int)$h->id) return $x;
+        foreach (VplanTabla::deProyecto((int)$h->proyecto_id) as $x) if ($x->tipo === 'otro' && (int)$x->sheetflow_id === (int)$h->id) return $x;
         return self::aVplan($h);
     }
 

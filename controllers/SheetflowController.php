@@ -296,6 +296,12 @@ class SheetflowController
                 $existente = VplanTabla::find(filter_var($_POST['tabla'], FILTER_VALIDATE_INT));
                 if (!$existente || (int)$existente->proyecto_id !== (int)$proyecto->id || (int)$existente->sheetflow_id !== (int)$h->id) $existente = null;
             }
+            // Sin tabla elegida no se duplica: si la hoja ya tiene una tabla «otro» vinculada, se actualiza esa
+            if (!$existente) {
+                foreach (VplanTabla::deProyecto((int)$proyecto->id) as $x) {
+                    if ($x->tipo === 'otro' && (int)$x->sheetflow_id === (int)$h->id) { $existente = $x; break; }
+                }
+            }
             $t = Sheetflow::aVplan($h, $existente);
             $destino = '/vplan/tablas/editar?proyecto=' . $proyecto->id . '&id=' . $t->id . '&ok=1';
         }
