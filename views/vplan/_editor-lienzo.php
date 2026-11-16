@@ -172,6 +172,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         <button type="button" id="ve-redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><?php echo $svg($ic['redo']); ?></button>
         <button type="button" id="ve-fit" title="Encuadrar plano" aria-label="Encuadrar plano"><?php echo $svg($ic['fit']); ?></button>
         <button type="button" id="ve-enfocar" title="Enfocar la selección (Mayús + 2); sin selección, encuadra todo" aria-label="Enfocar la selección"><?php echo $svg('<circle cx="12" cy="12" r="5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'); ?></button>
+        <button type="button" id="ve-atajos" title="Trucos y atajos del editor" aria-label="Trucos y atajos del editor"><?php echo $svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.8.3-.9 1-.9 1.7"/><path d="M12 16.6v.2"/>'); ?></button>
         <label class="ve-mini" title="Guarda solo, unos segundos después de tu último cambio"><input type="checkbox" id="t-auto" checked> Autoguardar</label>
         <span class="text-sm text-muted" id="ve-zoom"></span>
         <span class="text-sm text-muted" id="ve-contador"></span>

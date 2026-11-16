@@ -3047,6 +3047,15 @@
     try { const c = $('#t-auto'); if (c) { c.checked = localStorage.getItem('ve-auto') !== '0'; c.addEventListener('change', () => { try { localStorage.setItem('ve-auto', c.checked ? '1' : '0'); } catch (_) {} autoPausado = false; programarAuto(); }); } } catch (_) {}
     $('#ve-undo').addEventListener('click', undo); $('#ve-redo').addEventListener('click', redo);
     $('#ve-fit').addEventListener('click', encuadrar);
+    // «?»: los trucos y atajos del editor en tarjetas (antes solo vivían como párrafo en Propiedades)
+    const bAtajos = document.getElementById('ve-atajos');
+    if (bAtajos && window.avisoModal) bAtajos.addEventListener('click', () => window.avisoModal('Editor · trucos y atajos',
+      '<div class="guia-tarjetas">' + [
+        ['fa-arrow-pointer', 'Seleccionar y mover', 'Clic elige una marca; <kbd>Mayús</kbd> o <kbd>Ctrl</kbd> + clic suma varias y <kbd>Mayús</kbd> + arrastrar dibuja un recuadro. Las <kbd>flechas</kbd> mueven lo elegido (<kbd>Mayús</kbd> = 10 px) y <kbd>Supr</kbd> lo borra.'],
+        ['fa-pen-ruler', 'Dibujar', '<kbd>Mayús</kbd>, <kbd>Ctrl</kbd> o <kbd>F8</kbd> fuerzan horizontal/vertical. Polilínea y polígono: doble clic o <kbd>Enter</kbd> terminan. Doble clic en un texto o celda lo edita.'],
+        ['fa-magnifying-glass', 'Vista', 'Rueda = zoom (en táctil, pellizco). <kbd>Espacio</kbd> + arrastrar desplaza el plano con cualquier herramienta. <kbd>Mayús</kbd> + <kbd>2</kbd> enfoca la selección; <kbd>RePág</kbd>/<kbd>AvPág</kbd> cambian de lámina.'],
+        ['fa-clone', 'Editar', '<kbd>Ctrl</kbd> + <kbd>Z</kbd>/<kbd>Y</kbd> deshace y rehace; <kbd>Ctrl</kbd> + <kbd>C</kbd>/<kbd>V</kbd>/<kbd>D</kbd> copia, pega y duplica; <kbd>Ctrl</kbd> + <kbd>G</kbd> agrupa (<kbd>Mayús</kbd> la deshace); <kbd>Ctrl</kbd> + <kbd>S</kbd> guarda.'],
+      ].map(t => '<div class="guia-tarjeta"><i class="fa-solid ' + t[0] + '"></i><b>' + t[1] + '</b><small>' + t[2] + '</small></div>').join('') + '</div>', true));
     // Al salir con cambios sin guardar: modal de la aplicación (el aviso del navegador queda solo para cerrar la pestaña)
     window.KitEdicion.avisoSalir({
       sucio: () => sucio, guardar, limpiar: () => { sucio = false; },
