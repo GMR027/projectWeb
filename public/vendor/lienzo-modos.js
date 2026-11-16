@@ -32,13 +32,23 @@
     if (!silencioso) document.dispatchEvent(new CustomEvent('vp:modo', { detail: { modo: modo } }));
   }
 
+  // Guardias por modo: antes de abandonar un modo se le pregunta a su motor (p. ej. Acomodar
+  // guarda solo sus cambios pendientes). Devuelve false (o promesa de false) para quedarse.
+  const guardias = {};
+
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-lz-modo]');
     if (!b || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
     const modo = b.dataset.lzModo;
     if (!modo || !panel(modo)) return;   // sin panel propio: es un enlace normal (otra herramienta)
     e.preventDefault();
-    ir(modo, { url: b.dataset.lzUrl || (b.tagName === 'A' ? b.getAttribute('href') : null) });
+    const url = b.dataset.lzUrl || (b.tagName === 'A' ? b.getAttribute('href') : null);
+    const desde = document.body.dataset.modoLienzo || '';
+    if (desde && desde !== modo && guardias[desde]) {
+      Promise.resolve().then(() => guardias[desde](modo)).then(ok => { if (ok !== false) ir(modo, { url }); }, () => { /* el guardia falló: quedarse */ });
+      return;
+    }
+    ir(modo, { url });
   });
 
   // Estado inicial: el servidor pinta data-modo-lienzo y los [hidden]; si no, se deduce de la URL.

@@ -2604,8 +2604,7 @@
     // se queda con toda la pantalla y las propiedades no quedan debajo, fuera de la vista.
     const tactil = !!(window.GestosLienzo && GestosLienzo.esTactil() && window.HojaInferior);
     const enHoja = tactil && window.matchMedia('(max-width: 80rem)').matches;
-    const conDock = tactil && window.matchMedia('(max-width: 64rem)').matches
-      && !document.body.classList.contains('gr-editor-page');
+    const conDock = tactil && window.matchMedia('(max-width: 64rem)').matches;
 
     let hoja = null, dockPanel = null;
     if (enHoja) {

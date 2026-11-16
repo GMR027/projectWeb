@@ -1338,6 +1338,12 @@
         } catch (_) { msg.textContent = 'Error de conexión'; btn.disabled = false; return false; }
     }
     $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&modo=acomodar'; });
+    // Al cambiar de modo (Ver/Dibujar) con cambios pendientes, Acomodar guarda solo; si el guardado
+    // falla, el usuario se queda en Acomodar con el mensaje de error a la vista.
+    if (window.LienzoModos && window.LienzoModos.guardia) window.LienzoModos.guardia('acomodar', async () => {
+        if (!sucio) return true;
+        return await guardarDiseno();
+    });
     // ---- Deshacer / rehacer (Ctrl+Z, Ctrl+Y o Ctrl+Mayús+Z): foto de bloques y guías tras cada cambio ----
     const hist = window.KitEdicion.historial({
         foto: () => { const b = JSON.stringify(bloques), g = JSON.stringify(guias); return { k: b + '|' + g, b, g, els: Object.fromEntries(bloques.map(x => [x.clave, elDe(x)])) }; },

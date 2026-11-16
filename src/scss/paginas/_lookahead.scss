@@ -1092,6 +1092,12 @@ body.gr-editor-page {
 
 // Barra inferior del editor en celular: las 4 herramientas que más se usan + guardar, panel y «Más».
 .ve-dock { display: none; }
+// En /vplan/ver el dock pertenece a Dibujar: en Ver y Acomodar se oculta (la página del Editor
+// fija data-modo-lienzo="dibujar", así que allá siempre se ve).
+body[data-modo-lienzo='ver'] .ve-dock,
+body[data-modo-lienzo='acomodar'] .ve-dock { display: none !important; }
+body[data-modo-lienzo='ver'].ve-con-dock,
+body[data-modo-lienzo='acomodar'].ve-con-dock { padding-bottom: 0; }
 @media (pointer: coarse) and (max-width: 64rem) {
   body.ve-con-dock .ve-dock { position: fixed; z-index: 1700; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem;
     padding: .4rem .4rem calc(.4rem + env(safe-area-inset-bottom, 0)); background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -.4rem 1.6rem rgba(0, 0, 0, .3); }

@@ -61,7 +61,7 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
         case 'plano':
             $fit = $ajuste($planoImg, $b);
             if ($puedeEditar && $lamina->plano && !$modoDiseno): ?>
-                <div class="vp-plano-esq no-print"><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="vp-plano-editar" title="Abrir el editor de marcas de este plano"><i class="fa-solid fa-pen-ruler"></i> Editar marcas</a></div>
+                <div class="vp-plano-esq no-print"><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="vp-plano-editar" data-lz-modo="dibujar" data-lz-url="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>&modo=dibujar" title="Dibujar sobre este plano (líneas, formas, textos, materiales)"><i class="fa-solid fa-pen-ruler"></i> Dibujar en el plano</a></div>
             <?php endif;
             if ($fit): ?>
                 <div class="vp-plano-ajuste" style="left:<?php echo round((100 - $fit[0]) / 2, 3); ?>%;top:<?php echo round((100 - $fit[1]) / 2, 3); ?>%;width:<?php echo $fit[0]; ?>%;height:<?php echo $fit[1]; ?>%">

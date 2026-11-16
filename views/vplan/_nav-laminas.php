@@ -59,5 +59,16 @@ $urlDe = fn($id) => '/vplan/ver?proyecto=' . (int)$proyecto->id . '&id=' . (int)
     });
     const act = document.querySelector('#vp-nav .vp-nav-item.activa');
     if (act) act.scrollIntoView({ block: 'nearest' });
+    // La otra lámina se abre en el modo en el que se está AHORA (el servidor solo conoce el inicial)
+    document.querySelectorAll('#vp-nav .vp-nav-item').forEach(a => a.addEventListener('click', () => {
+        const m = (window.LienzoModos && window.LienzoModos.actual()) || '';
+        if (!m) return;
+        try {
+            const u = new URL(a.href, location.origin);
+            u.searchParams.delete('diseno');
+            if (m === 'ver') u.searchParams.delete('modo'); else u.searchParams.set('modo', m);
+            a.href = u.pathname + '?' + u.searchParams.toString();
+        } catch (_) { /* URL rara: se deja como está */ }
+    }));
 })();
 </script>
