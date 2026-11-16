@@ -31,8 +31,10 @@
 
     function aplicar(z) {
         z = Math.max(MIN_Z, Math.min(MAX_Z, z));
-        // En modo diseño la hoja tiene que caber en el panel: si no, las reglas se descuadran
-        if (sheet.classList.contains('vp-diseno')) z = Math.min(z, zAjuste());
+        // En modo diseño (escritorio) la hoja tiene que caber en el panel: si no, las reglas se descuadran.
+        // En táctil las reglas arrancan apagadas y sin zoom los bloques quedan diminutos en el celular,
+        // así que ahí el pellizco sí puede acercar también en Acomodar.
+        if (sheet.classList.contains('vp-diseno') && !(window.GestosLienzo && GestosLienzo.esTactil())) z = Math.min(z, zAjuste());
         zActual = z;
         sheet.style.setProperty('--vp-ancho-px', (FISICO * z) + 'px');
         if (lbl) lbl.textContent = Math.round(z * 100) + ' %';

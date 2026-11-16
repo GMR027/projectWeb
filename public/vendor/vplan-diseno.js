@@ -599,6 +599,7 @@
     function pintarCtx() {
         const b = seleccion;
         ctx.hidden = !b || !!guiaSel;
+        document.body.classList.toggle('vp-con-ctx', !ctx.hidden);   // los flotantes del borde inferior se apartan
         if (!b) return;
         const oc = ctx.querySelector('[data-ctx="oculto"]'), bl = ctx.querySelector('[data-ctx="bloqueo"]');
         oc.querySelector('i').className = 'fa-solid ' + (b.config.oculto ? 'fa-eye-slash' : 'fa-eye');

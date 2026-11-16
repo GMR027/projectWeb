@@ -20,6 +20,12 @@ if ($puedeDibujar) {
     $lzModos[] = ['id' => 'dibujar', 'texto' => t('Dibujar'), 'icono' => 'fa-pen-ruler', 'url' => $urlModo('dibujar'), 'activo' => $modoInicial === 'dibujar'];
 }
 $lzExtra = '<button type="button" class="lz-modo" id="vp-tareas-btn" aria-expanded="false" title="' . s(t('Ver la lista de tareas de la lámina')) . '"><i class="fa-solid fa-list-check"></i> ' . s(t('Tareas')) . '</button>';
+if (puede_descargar($proyecto)) {
+    // Exportar sin salir de la lámina: el PDF de ESTA lámina en un clic (el Centro de Exportación sigue para todo lo demás)
+    $lzExtra .= '<form method="POST" action="/exportar/generar" class="lz-form-inline">'
+        . '<input type="hidden" name="proyecto" value="' . (int)$proyecto->id . '"><input type="hidden" name="formato" value="vplan"><input type="hidden" name="lamina_id" value="' . (int)$lamina->id . '">'
+        . '<button type="submit" class="lz-modo" title="' . s(t('Descargar el PDF de esta lámina (en el Centro de Exportación hay más opciones)')) . '"><i class="fa-solid fa-file-pdf"></i> PDF</button></form>';
+}
 if ($puedeEditar) {
     $lzExtra .= '<button type="button" class="lz-modo" id="vp-nota-nueva" title="' . s(t('Crear una nota en esta lámina')) . '"><i class="fa-solid fa-note-sticky"></i> ' . s(t('Nota')) . '</button>';
     $lzExtra .= '<a class="lz-modo" href="/vplan/editar?' . $q . '"' . glosario('lamina') . '><i class="fa-solid fa-sliders"></i> ' . s(t('Datos')) . '</a>';

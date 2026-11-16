@@ -667,7 +667,13 @@ body.gr-editor-page {
 .gr-descargar { position: relative; display: inline-block; vertical-align: middle;
   summary { list-style: none; cursor: pointer; &::-webkit-details-marker { display: none; } }
   .gr-descargar-menu { position: absolute; z-index: 40; right: 0; top: calc(100% + .4rem); min-width: 26rem; display: flex; flex-direction: column; padding: .6rem; background: var(--surface, #1e293b); border: 1px solid var(--border); border-radius: .8rem; box-shadow: 0 1rem 3rem rgba(0, 0, 0, .5);
-    a { padding: .8rem 1rem; border-radius: .5rem; color: var(--text); text-decoration: none; font-size: 1.3rem; white-space: nowrap; &:hover { background: rgba(0, 112, 192, .25); } i { width: 2rem; } } } }
+    a, button { display: flex; align-items: center; gap: .6rem; padding: .8rem 1rem; border: 0; border-radius: .5rem; background: none; color: var(--text); text-decoration: none; text-align: left; font: inherit; font-size: 1.3rem; white-space: nowrap; cursor: pointer; &:hover, &:focus-visible { background: rgba(0, 112, 192, .25); } i { width: 2rem; } small { margin-left: .3rem; } } } }
+
+// Exportar con opciones: el panel vive en un diálogo nativo (antes era una tarjeta debajo del lienzo)
+.gr-exportar-dlg { width: min(72rem, calc(100vw - 2rem)); max-height: calc(100dvh - 4rem); border: 0; padding: 0; background: transparent; overflow: visible;
+  &::backdrop { background: rgba(2, 6, 23, .55); backdrop-filter: blur(2px); }
+  .gr-exportar { margin: 0; max-height: calc(100dvh - 4rem); overflow: auto; }
+  .gr-exportar-pie { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; } }
 .gr-laminas-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); gap: 1.4rem; margin-top: 1.4rem; figure { margin: 0; text-align: center; img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: .6rem; background: #fff; } figcaption { margin-top: .5rem; font-size: 1.2rem; color: var(--text-muted); } } }
 
 // Comentarios sobre marcas

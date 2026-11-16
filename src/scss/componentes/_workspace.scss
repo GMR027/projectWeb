@@ -183,6 +183,9 @@ $herr: 'body[data-vista]';
     margin-left: auto;
   }
 
+  // Formulario en línea dentro de la barra de modos (p. ej. el PDF de la lámina)
+  .lz-form-inline { display: contents; }
+
   // Contenedores que se alternan sin recargar (modos del lienzo)
   .lz-panel[hidden] { display: none !important; }
   .lz-solo-modo { display: none !important; }
