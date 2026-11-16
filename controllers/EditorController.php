@@ -34,6 +34,7 @@ class EditorController
         $router->render('graficos/index', [
             'titulo' => 'Editor - ' . $proyecto->nombre, 'proyecto' => $proyecto,
             'graficos' => Grafico::deProyecto((int)$proyecto->id),
+            'categorias' => GraficoCategoria::deProyecto((int)$proyecto->id),
             'puedeEditar' => puede_gestionar_proyecto($proyecto), 'puedeDescargar' => puede_descargar(),
         ]);
     }
@@ -45,8 +46,22 @@ class EditorController
         $g = new Grafico(['proyecto_id' => $proyecto->id, 'nombre' => '', 'tipo' => $tipo] + ($tipo === 'simbologia' ? ['ancho' => 1200, 'alto' => 700] : []));
         $alertas = [];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // «+ Nueva categoría…» del asistente: se crea aquí mismo, sin perder lo capturado
+            $catId = $_POST['categoria_id'] ?? null;
+            if ($catId === 'nueva' && ($nombreCat = trim((string)($_POST['categoria_nueva'] ?? ''))) !== '') {
+                foreach (GraficoCategoria::deProyecto((int)$proyecto->id) as $c) {
+                    if (mb_strtolower($c->nombre) === mb_strtolower($nombreCat)) { $catId = (int)$c->id; break; }   // ya existía: se reutiliza
+                }
+                if ($catId === 'nueva') {
+                    $cat = new GraficoCategoria(['proyecto_id' => $proyecto->id, 'nombre' => $nombreCat]);
+                    if (!$cat->validar()) {
+                        $r = $cat->guardar();
+                        $catId = is_array($r) ? ($r['id'] ?? null) : $cat->id;
+                    }
+                }
+            }
             $g = new Grafico([
-                'proyecto_id' => $proyecto->id, 'tipo' => $tipo, 'nombre' => $_POST['nombre'] ?? '', 'categoria_id' => GraficoCategoria::valida((int)$proyecto->id, $_POST['categoria_id'] ?? null), 'ancho' => $_POST['ancho'] ?? 0, 'alto' => $_POST['alto'] ?? 0,
+                'proyecto_id' => $proyecto->id, 'tipo' => $tipo, 'nombre' => $_POST['nombre'] ?? '', 'categoria_id' => GraficoCategoria::valida((int)$proyecto->id, $catId), 'ancho' => $_POST['ancho'] ?? 0, 'alto' => $_POST['alto'] ?? 0,
                 'fondo' => $_POST['fondo'] ?? 'liso', 'fondo_color' => $_POST['fondo_color'] ?? '#ffffff',
             ]);
             $alertas = $g->validar();

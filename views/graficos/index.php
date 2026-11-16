@@ -25,10 +25,19 @@
         ['texto' => 'Biblioteca de símbolos', 'url' => '/simbolos?proyecto=' . s($proyecto->id), 'icono' => 'fa-shapes']); ?></div>
 <?php else: ?>
 
+<?php if (!empty($categorias)): ?>
+<?php // ---- Chips de categoría: filtran la galería y la lista sin recargar ---- ?>
+<div class="pn-chips gr-cat-chips no-print" role="group" aria-label="<?php echo s(t('Filtrar por categoría')); ?>">
+    <button type="button" class="pn-chip activo" data-cat="">Todo</button>
+    <?php foreach ($categorias as $c): ?><button type="button" class="pn-chip" data-cat="<?php echo (int)$c->id; ?>"><?php echo s($c->nombre); ?></button><?php endforeach; ?>
+    <button type="button" class="pn-chip" data-cat="0">Sin categoría</button>
+</div>
+<?php endif; ?>
+
 <?php // ---- Galería: tarjetas con la portada y las acciones en un menú ---- ?>
 <div class="gr-galeria" id="gr-galeria">
     <?php foreach ($graficos as $g): $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$g->id; ?>
-    <article class="gr-gal-card">
+    <article class="gr-gal-card" data-categoria="<?php echo (int)$g->categoria_id; ?>">
         <a class="gr-gal-img" href="/graficos/ver?<?php echo $q; ?>" aria-label="Ver <?php echo s($g->nombre); ?>">
             <?php if ($g->portada): ?><img src="/uploads/vplan/<?php echo s($g->portada); ?>" alt="" loading="lazy"><?php else: ?><i class="fa-regular fa-image"></i><?php endif; ?>
             <?php if ((int)$g->num_laminas > 1): ?><span class="gr-gal-n"><?php echo (int)$g->num_laminas; ?> láminas</span><?php endif; ?>
@@ -67,7 +76,7 @@
             <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Nombre')); ?></th><th class="hide-m"><?php echo s(t('Categoría')); ?></th><th class="hide-m"><?php echo s(t('Tamaño')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
             <tbody>
             <?php foreach ($graficos as $g): $q = 'proyecto=' . (int)$proyecto->id . '&id=' . (int)$g->id; ?>
-                <tr>
+                <tr data-categoria="<?php echo (int)$g->categoria_id; ?>">
                     <td class="mono"><?php echo s(formatear_fecha($g->creado, 'd/m/Y H:i')); ?></td>
                     <td>
                         <div class="gr-nombre">
@@ -132,5 +141,18 @@
     document.addEventListener('click', e => {
         document.querySelectorAll('.gr-gal-menu[open]').forEach(m => { if (!m.contains(e.target)) m.removeAttribute('open'); });
     });
+    // Chips de categoría: filtran la galería y la lista (se recuerda por proyecto)
+    const chips = document.querySelectorAll('.gr-cat-chips [data-cat]');
+    if (chips.length) {
+        const clave = 'gr-cat-<?php echo (int)$proyecto->id; ?>';
+        const filtrar = cat => {
+            chips.forEach(c => c.classList.toggle('activo', c.dataset.cat === cat));
+            document.querySelectorAll('[data-categoria]').forEach(el => { el.hidden = cat !== '' && el.dataset.categoria !== cat; });
+            try { localStorage.setItem(clave, cat); } catch (e) { /* sin almacenamiento */ }
+        };
+        chips.forEach(c => c.addEventListener('click', () => filtrar(c.dataset.cat)));
+        let ini = ''; try { ini = localStorage.getItem(clave) || ''; } catch (e) { /* idem */ }
+        if (ini && [...chips].some(c => c.dataset.cat === ini)) filtrar(ini);
+    }
 })();
 </script>

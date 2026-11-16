@@ -33,10 +33,19 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
                 <select id="categoria_id" name="categoria_id">
                     <option value="">— Sin categoría —</option>
                     <?php foreach ($categorias ?? [] as $c): ?><option value="<?php echo (int)$c->id; ?>"<?php echo (int)$grafico->categoria_id === (int)$c->id ? ' selected' : ''; ?>><?php echo s($c->nombre); ?></option><?php endforeach; ?>
+                    <option value="nueva">+ Nueva categoría…</option>
                 </select>
+                <input type="text" id="categoria_nueva" name="categoria_nueva" maxlength="100" placeholder="Nombre de la categoría nueva" hidden aria-label="Nombre de la categoría nueva">
                 <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>">Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
             </div>
         </div>
+        <script>
+        // «+ Nueva categoría…» sin salir del asistente (antes el enlace te sacaba y perdías lo escrito)
+        (function () {
+            const sel = document.getElementById('categoria_id'), inp = document.getElementById('categoria_nueva');
+            sel.addEventListener('change', () => { inp.hidden = sel.value !== 'nueva'; if (!inp.hidden) inp.focus(); });
+        })();
+        </script>
         </div><!-- /paso 1 -->
         <div class="paso-secc" data-paso="2" hidden>
         <?php endif; ?>

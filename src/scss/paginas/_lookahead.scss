@@ -674,6 +674,7 @@ body.gr-editor-page {
   &::backdrop { background: rgba(2, 6, 23, .55); backdrop-filter: blur(2px); }
   .gr-exportar { margin: 0; max-height: calc(100dvh - 4rem); overflow: auto; }
   .gr-exportar-pie { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; } }
+.gr-cat-chips { margin-bottom: 1.4rem; }
 .gr-laminas-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); gap: 1.4rem; margin-top: 1.4rem; figure { margin: 0; text-align: center; img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: .6rem; background: #fff; } figcaption { margin-top: .5rem; font-size: 1.2rem; color: var(--text-muted); } } }
 
 // Comentarios sobre marcas

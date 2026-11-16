@@ -462,4 +462,5 @@ return [
     'Pantalla completa, solo las láminas' => 'Full screen, sheets only',
     'Tamaño y fondo' => 'Size and background',
     'Cerrar' => 'Close',
+    'Filtrar por categoría' => 'Filter by category',
 ];
