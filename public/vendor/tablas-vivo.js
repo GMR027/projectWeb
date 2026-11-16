@@ -1,5 +1,6 @@
-/* Actualización en vivo de tablas: consulta cada pocos segundos una huella de los datos y, si cambió, recarga la página
-   (solo si nadie está escribiendo ni hay un diálogo abierto). Uso: window.TABLAS_VIVO = { url, datos: {campo: valor}, version }. */
+/* Actualización en vivo de tablas: consulta cada pocos segundos una huella de los datos y, si cambió, refresca
+   (solo si nadie está escribiendo ni hay un diálogo abierto). Uso: window.TABLAS_VIVO = { url, datos: {campo: valor}, version }.
+   Con C.refrescar (función async que devuelve true si pudo), se refresca en su lugar sin recargar la página. */
 (function () {
   const C = window.TABLAS_VIVO; if (!C) return;
   let version = C.version || null, ocupado = false;
@@ -15,6 +16,9 @@
       if (version === null) { version = r.version; return; }
       if (r.version !== version) {
         if (escribiendo()) return;   // se reintenta en el siguiente ciclo
+        if (typeof C.refrescar === 'function') {
+          if (await C.refrescar() !== false) { version = r.version; return; }
+        }
         const y = window.scrollY; try { sessionStorage.setItem('tv-y', y); } catch (e) { /* sin almacenamiento */ }
         location.reload();
       }

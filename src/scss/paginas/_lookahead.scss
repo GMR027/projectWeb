@@ -258,6 +258,10 @@ $vp-rojo: var(--danger);
   .vp-vacio-blk { margin: 0; padding: .6em; color: #666; font-size: 1.2rem; text-align: center; }
   // Zona activa en la esquina superior izquierda: al acercarse aparece «Editar marcas»
   .vp-plano-esq { position: absolute; top: 0; left: 0; width: 22rem; height: 9rem; z-index: 5; padding: .8rem; }
+  // En Acomodar manda la capa de diseño: el acceso a dibujar se oculta (el servidor lo renderiza siempre)
+  body[data-modo-lienzo='acomodar'] .vp-plano-esq { display: none; }
+  // Un bloque oculto solo se ve (atenuado) en el modo diseño; en Ver y en el refresco en vivo no existe
+  .vp-sheet:not(.vp-diseno) .vp-b-oculto { display: none !important; }
   .vp-plano-editar { display: inline-flex; align-items: center; gap: .6rem; padding: .6rem 1.2rem; border-radius: 99rem; background: var(--primary); color: var(--on-primary); font-size: 1.3rem; font-weight: 600; text-decoration: none; box-shadow: 0 .2rem 1rem rgba(0, 0, 0, .4); opacity: 0; transform: translateY(-.4rem); transition: opacity .15s, transform .15s; }
   .vp-plano-esq:hover .vp-plano-editar, .vp-plano-editar:focus-visible { opacity: 1; transform: none; }
   @media (hover: none) { .vp-plano-editar { opacity: .9; transform: none; } }

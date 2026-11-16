@@ -1185,7 +1185,8 @@
         if (ok) conServidor({ proyecto: D.proyecto, lamina: D.lamina, accion: 'quitar', ajax: 1 }, '/vplan/lamina/recovery', 'No se pudo quitar el recovery');
     });
 
-    /** Guarda el diseño pendiente, hace el cambio en el servidor y recarga la hoja (las tablas y columnas se dibujan en el servidor) */
+    /** Guarda el diseño pendiente, hace el cambio en el servidor y refresca la hoja sin recargar
+     *  (las tablas y columnas se dibujan en el servidor) */
     async function conServidor(datos, url, errorMsg) {
         const msg = $('vp-dis-msg');
         document.querySelectorAll('#vp-ins-tablas button, #vp-rec-mas, #vp-rec-menos').forEach(b => { b.disabled = true; });
@@ -1193,7 +1194,10 @@
             if (sucio && !(await guardarDiseno())) throw new Error('guardar');
             const d = await post(url, datos);
             if (!d.success) throw new Error('servidor');
-            location.href = D.volver + '&modo=acomodar';
+            const h = await post('/api/vplan/hoja', { proyecto: D.proyecto, id: D.lamina });
+            if (!h.success) throw new Error('hoja');
+            reemplazarHoja(h);
+            msg.textContent = '';
         } catch (_) {
             if (!msg.textContent || msg.textContent === 'Guardando…') msg.textContent = errorMsg;
             pintarTablas(); pintarRecovery();
@@ -1321,23 +1325,53 @@
 
 
     // ================== Guardar ==================
+    /**
+     * La hoja al día desde el servidor, sin recargar la página: reemplaza el contenido de #vp-sheet,
+     * reconstruye el modelo (bloques con sus ids reales, catálogo, recovery) y vuelve a montar las capas
+     * del modo diseño. El historial se reinicia: guardar es una frontera (igual que con la recarga de antes).
+     */
+    function reemplazarHoja(d) {
+        if (!d || !d.html) return;
+        const t = document.createElement('template');
+        t.innerHTML = d.html.trim();
+        const nueva = t.content.querySelector('#vp-sheet');
+        if (!nueva) return;
+        if (Array.isArray(d.bloques)) bloques = d.bloques.map(b => ({ ...b, config: { ...(b.config || {}) }, clave: String(b.id) }));
+        if (d.recovery) { D.recovery.n = d.recovery.n; }
+        if (d.catalogo) { D.catalogo.length = 0; d.catalogo.forEach(x => D.catalogo.push(x)); }
+        if (d.tablas) { Object.keys(D.tablas).forEach(k => delete D.tablas[k]); Object.assign(D.tablas, d.tablas); }
+        const enDiseno = sheet.classList.contains('vp-diseno');
+        Array.from(nueva.attributes).forEach(a => { if (a.name !== 'class') sheet.setAttribute(a.name, a.value); });
+        sheet.innerHTML = nueva.innerHTML;
+        sheet.classList.toggle('vp-diseno', enDiseno);
+        normalizarZ();
+        sheet.querySelectorAll('.vp-blk').forEach(el => { const b = bloques.find(x => x.clave === el.dataset.id); if (b) asegurarCapa(b, el); });
+        aplicarTodos(); pintarGuias(); pintarGuiasLista(); seleccionar(null); pintarCapas(); pintarTablas(); pintarRecovery();
+        hist.reinicia();
+        escalaFirma = '';
+        if (window.vplanAjustar) window.vplanAjustar();
+        document.dispatchEvent(new CustomEvent('vp:hoja'));
+    }
     async function guardarDiseno() {
         const btn = $('vp-dis-guardar'), msg = $('vp-dis-msg');
         btn.disabled = true; msg.textContent = 'Guardando…';
         const t = leerTamano();
         const diseno = {
             tamano: { preset: t.preset, orientacion: selOri.value, ancho: t.w, alto: t.h, unidad: 'mm' },
-            bloques: bloques.slice().sort((a, b) => a.z - b.z).map(b => ({ id: b.id, tipo: b.tipo, x: b.x, y: b.y, w: b.w, h: b.h, config: b.config })),
+            bloques: bloques.slice().sort((a, b) => a.z - b.z).map(b => ({ id: b.id, clave: b.clave, tipo: b.tipo, x: b.x, y: b.y, w: b.w, h: b.h, config: b.config })),
             guias: guias.map(g => ({ id: g.id, eje: g.eje, pos: g.pos, visible: g.visible, bloqueada: g.bloqueada, nombre: g.nombre })),
         };
         try {
-            const d = await post('/api/vplan/diseno', { lamina: D.lamina, diseno: JSON.stringify(diseno) });
+            const d = await post('/api/vplan/diseno', { lamina: D.lamina, diseno: JSON.stringify(diseno), html: 1 });
             if (!d.success) { msg.textContent = d.error || 'No se pudo guardar'; btn.disabled = false; return false; }
-            sucio = false; btn.classList.remove('vp-pendiente'); btn.disabled = false; msg.textContent = '';
+            sucio = false; btn.classList.remove('vp-pendiente'); btn.disabled = false;
+            reemplazarHoja(d);
+            msg.textContent = 'Guardado ✓';
+            setTimeout(() => { if (msg.textContent === 'Guardado ✓') msg.textContent = ''; }, 2500);
             return true;
         } catch (_) { msg.textContent = 'Error de conexión'; btn.disabled = false; return false; }
     }
-    $('vp-dis-guardar').addEventListener('click', async () => { if (await guardarDiseno()) location.href = D.volver + '&modo=acomodar'; });
+    $('vp-dis-guardar').addEventListener('click', guardarDiseno);
     // Al cambiar de modo (Ver/Dibujar) con cambios pendientes, Acomodar guarda solo; si el guardado
     // falla, el usuario se queda en Acomodar con el mensaje de error a la vista.
     if (window.LienzoModos && window.LienzoModos.guardia) window.LienzoModos.guardia('acomodar', async () => {
@@ -1436,5 +1470,7 @@
             });
         },
         guardar: guardarDiseno,
+        reemplazarHoja: reemplazarHoja,   // la actualización en vivo refresca la hoja con el modelo del modo diseño
+        sucio: () => sucio,
     };
 })();

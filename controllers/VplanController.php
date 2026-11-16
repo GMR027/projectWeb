@@ -377,6 +377,47 @@ class VplanController
         ]);
     }
 
+    /**
+     * La hoja (#vp-sheet) renderizada + el modelo de la lámina, para refrescarla sin recargar la página.
+     * La usan el guardado del diseño, la inserción de tablas/recovery y la actualización en vivo.
+     */
+    private static function cargaHoja(\Model\Proyecto $proyecto, VplanLamina $lamina, bool $edita): array
+    {
+        $lamina->olvidarBloques();
+        $datos = Vplan::datos($lamina, $proyecto);
+        extract($datos + ['proyecto' => $proyecto, 'lamina' => $lamina, 'puedeEditar' => $edita, 'modoDiseno' => $edita]);
+        ob_start();
+        include __DIR__ . '/../views/vplan/_hoja.php';
+        $html = ob_get_clean();
+        $enLamina = array_map(fn($t) => (int)$t['tabla']->id, $datos['tablas']);
+        return [
+            'html' => $html,
+            'bloques' => array_map(fn($b) => $b->aArray(), $lamina->bloques()),
+            'tamano' => ['preset' => $lamina->preset, 'ancho_mm' => (int)$lamina->ancho_mm, 'alto_mm' => (int)$lamina->alto_mm],
+            'guias' => $lamina->guias(),
+            'recovery' => ['n' => (int)$lamina->recovery_n, 'max' => VplanLamina::MAX_RECOVERY],
+            'tablas' => array_reduce($datos['tablas'], function ($c, $t) { $c[(int)$t['tabla']->id] = ['titulo' => $t['tabla']->etiqueta()]; return $c; }, []),
+            'catalogo' => $edita ? self::catalogoTablas($proyecto, $enLamina) : [],
+            'hash' => (string)($datos['hash'] ?? ''),
+        ];
+    }
+
+    /** POST /api/vplan/hoja — la hoja al día en JSON (quien solo ve la recibe sin campos editables) */
+    public static function hojaParcial()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $l = self::laminaDe($proyecto);
+        header('Content-Type: application/json');
+        $edita = $l && puede_gestionar_proyecto($proyecto);
+        if (!$l || (!$edita && !(int)$l->visible)) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Lámina no encontrada']);
+            exit;
+        }
+        echo json_encode(['success' => true] + self::cargaHoja($proyecto, $l, $edita), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     /** Todas las tablas que se pueden insertar, de todos los tipos: las del catálogo y las hojas de SheetFlow que aún no son tabla del vPlan */
     private static function catalogoTablas($proyecto, array $enLamina): array
     {
@@ -677,6 +718,7 @@ class VplanController
 
         $conservados = [];
         $nuevos = [];
+        $clavePorBloque = [];   // clave del cliente => id guardado (para que el modo diseño actualice su modelo sin recargar)
         $z = 0;
         foreach ($datos['bloques'] as $in) {
             $tipo = (string)($in['tipo'] ?? '');
@@ -697,6 +739,8 @@ class VplanController
             $b->z = $z++;
             $b->setConfig($cfg);
             $nuevos[] = $b;
+            $clave = substr(preg_replace('/[^a-z0-9_-]/i', '', (string)($in['clave'] ?? '')), 0, 20);
+            if ($clave !== '') $clavePorBloque[spl_object_id($b)] = $clave;
             if ($b->id) $conservados[(int)$b->id] = true;
         }
         foreach ($actuales as $id => $b) {
@@ -727,7 +771,13 @@ class VplanController
         if ($antes !== $despues) $l->restr_auto = 0;   // otras actividades: se reevalúan las restricciones
         $l->guardar();
         Vplan::asegurarRestricciones($l, $proyecto);
-        echo json_encode(['success' => true]);
+        $respuesta = ['success' => true];
+        if (!empty($_POST['html'])) {   // el modo diseño pide la hoja al día para refrescarla sin recargar
+            $ids = [];
+            foreach ($nuevos as $b) if (isset($clavePorBloque[spl_object_id($b)])) $ids[$clavePorBloque[spl_object_id($b)]] = (int)$b->id;
+            $respuesta += ['ids' => $ids] + self::cargaHoja($proyecto, $l, true);
+        }
+        echo json_encode($respuesta, JSON_UNESCAPED_UNICODE);
         exit;
     }
 

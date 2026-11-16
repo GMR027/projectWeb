@@ -60,7 +60,8 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
             <?php break;
         case 'plano':
             $fit = $ajuste($planoImg, $b);
-            if ($puedeEditar && $lamina->plano && !$modoDiseno): ?>
+            // El enlace para dibujar se renderiza siempre (el CSS lo oculta en Acomodar, donde manda la capa de diseño)
+            if ($puedeEditar && $lamina->plano): ?>
                 <div class="vp-plano-esq no-print"><a href="/vplan/editor?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>" class="vp-plano-editar" data-lz-modo="dibujar" data-lz-url="/vplan/ver?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($lamina->id); ?>&modo=dibujar" title="Dibujar sobre este plano (líneas, formas, textos, materiales)"><i class="fa-solid fa-pen-ruler"></i> Dibujar en el plano</a></div>
             <?php endif;
             if ($fit): ?>

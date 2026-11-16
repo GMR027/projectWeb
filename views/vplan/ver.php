@@ -515,58 +515,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const lamina = <?php echo (int)$lamina->id; ?>;
     const post = (url, datos) => fetch(url, { method: 'POST', body: new URLSearchParams(datos) }).then(r => r.json());
 
-    // Recovery de las tareas del programa
-    document.querySelectorAll('.vp-rec:not(.vp-fecha-act):not(.vp-progreso-act):not(.vp-col-texto)').forEach(inp => inp.addEventListener('change', async () => {
+    // Campos de las tablas de tareas (recovery, columnas de texto, campos del programa, fechas y avance).
+    // Delegado en document: los campos siguen funcionando cuando la hoja se refresca sin recargar.
+    document.addEventListener('change', async e => {
+        const inp = e.target.closest('.vp-rec');
+        if (!inp) return;
         inp.classList.remove('msr-error');
         try {
-            const d = await post('/api/vplan/recovery', { lamina, actividad: inp.dataset.actividad, n: inp.dataset.n, campo: inp.dataset.campo, valor: inp.value });
-            if (!d.success) inp.classList.add('msr-error');
+            if (inp.classList.contains('vp-col-texto')) {
+                const d = await post('/api/vplan/columna-texto', { lamina, actividad: inp.dataset.actividad, col: inp.dataset.col, valor: inp.value });
+                if (!d.success) inp.classList.add('msr-error');
+            } else if (inp.classList.contains('vp-prg-campo')) {
+                // Responsable, recuperación de la actividad, libres: se guardan en el programa de obra
+                const d = await post('/api/programa/campo', { actividad_id: inp.dataset.actividad, campo: inp.dataset.campo, valor: inp.value });
+                if (!d.success) { inp.classList.add('msr-error'); inp.title = d.error || ''; }
+            } else if (inp.classList.contains('vp-fecha-act')) {
+                // Inicio y fin de la tarea: mismos datos del programa de obra
+                if (!inp.value) { inp.classList.add('msr-error'); return; }
+                const d = await post('/api/actividad/actualizar-fecha', { actividad_id: inp.dataset.actividad, tipo: inp.dataset.tipo, fecha: inp.value });
+                if (!d.success) { inp.classList.add('msr-error'); return; }
+                const fila = inp.closest('tr');
+                fila.querySelector('[data-tipo=inicio]').value = d.fecha_inicio;
+                fila.querySelector('[data-tipo=fin]').value = d.fecha_fin;
+            } else if (inp.classList.contains('vp-progreso-act')) {
+                // % de avance de la tarea: mismo dato del programa de obra
+                const d = await post('/api/actividad/actualizar-progreso', { actividad_id: inp.dataset.actividad, progreso: inp.value });
+                if (!d.success) { inp.classList.add('msr-error'); return; }
+                inp.value = d.progreso;
+                const td = inp.closest('td');
+                td.classList.toggle('vp-verde', d.progreso >= 100);
+                td.classList.toggle('vp-amarillo', d.progreso > 0 && d.progreso < 100);
+            } else {
+                // Recovery por lámina
+                const d = await post('/api/vplan/recovery', { lamina, actividad: inp.dataset.actividad, n: inp.dataset.n, campo: inp.dataset.campo, valor: inp.value });
+                if (!d.success) inp.classList.add('msr-error');
+            }
         } catch (_) { inp.classList.add('msr-error'); }
-    }));
-
-    // Columnas de texto propias de las tablas de tareas
-    document.querySelectorAll('.vp-col-texto').forEach(inp => inp.addEventListener('change', async () => {
-        inp.classList.remove('msr-error');
-        try {
-            const d = await post('/api/vplan/columna-texto', { lamina, actividad: inp.dataset.actividad, col: inp.dataset.col, valor: inp.value });
-            if (!d.success) inp.classList.add('msr-error');
-        } catch (_) { inp.classList.add('msr-error'); }
-    }));
-
-    // Campos del programa (responsable, recuperación de la actividad, libres): se guardan en el programa de obra
-    document.querySelectorAll('.vp-prg-campo').forEach(inp => inp.addEventListener('change', async () => {
-        inp.classList.remove('msr-error');
-        try {
-            const d = await post('/api/programa/campo', { actividad_id: inp.dataset.actividad, campo: inp.dataset.campo, valor: inp.value });
-            if (!d.success) { inp.classList.add('msr-error'); inp.title = d.error || ''; }
-        } catch (_) { inp.classList.add('msr-error'); }
-    }));
-
-    // Inicio y fin de la tarea: son los mismos datos del programa de obra (se guardan ahí y se reflejan en todos los formatos)
-    document.querySelectorAll('.vp-fecha-act').forEach(inp => inp.addEventListener('change', async () => {
-        inp.classList.remove('msr-error');
-        if (!inp.value) { inp.classList.add('msr-error'); return; }
-        try {
-            const d = await post('/api/actividad/actualizar-fecha', { actividad_id: inp.dataset.actividad, tipo: inp.dataset.tipo, fecha: inp.value });
-            if (!d.success) { inp.classList.add('msr-error'); return; }
-            const fila = inp.closest('tr');
-            fila.querySelector('[data-tipo=inicio]').value = d.fecha_inicio;
-            fila.querySelector('[data-tipo=fin]').value = d.fecha_fin;
-        } catch (_) { inp.classList.add('msr-error'); }
-    }));
-
-    // % de avance de la tarea: mismo dato del programa de obra
-    document.querySelectorAll('.vp-progreso-act').forEach(inp => inp.addEventListener('change', async () => {
-        inp.classList.remove('msr-error');
-        try {
-            const d = await post('/api/actividad/actualizar-progreso', { actividad_id: inp.dataset.actividad, progreso: inp.value });
-            if (!d.success) { inp.classList.add('msr-error'); return; }
-            inp.value = d.progreso;
-            const td = inp.closest('td');
-            td.classList.toggle('vp-verde', d.progreso >= 100);
-            td.classList.toggle('vp-amarillo', d.progreso > 0 && d.progreso < 100);
-        } catch (_) { inp.classList.add('msr-error'); }
-    }));
+    });
 
     // Tablas adicionales: editar en línea, agregar y quitar renglones
     const colorPct = td => {
@@ -642,7 +627,34 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php endif; ?>
 
 <?php // La actualización en vivo de tablas se salta sola cuando el lienzo no está en modo Ver ?>
-<script>window.TABLAS_VIVO = { url: '/api/vplan/tablas-version', datos: { lamina: <?php echo (int)$lamina->id; ?> } };</script>
+<script>
+window.TABLAS_VIVO = { url: '/api/vplan/tablas-version', datos: { lamina: <?php echo (int)$lamina->id; ?> } };
+// Refresco sin recargar: trae la hoja al día y la cambia en su sitio (con el modo diseño cargado, usa su modelo)
+window.TABLAS_VIVO.refrescar = async function () {
+    try {
+        const r = await fetch('/api/vplan/hoja', { method: 'POST', body: new URLSearchParams({ proyecto: '<?php echo (int)$proyecto->id; ?>', id: '<?php echo (int)$lamina->id; ?>' }) });
+        const d = await r.json();
+        if (!d.success || !d.html) return false;
+        if (window.__vpDiseno && window.__vpDiseno.reemplazarHoja) {
+            if (window.__vpDiseno.sucio && window.__vpDiseno.sucio()) return false;   // no pisar cambios en curso
+            window.__vpDiseno.reemplazarHoja(d);
+            return true;
+        }
+        const sheet = document.getElementById('vp-sheet');
+        const t = document.createElement('template');
+        t.innerHTML = d.html.trim();
+        const nueva = t.content.querySelector('#vp-sheet');
+        if (!sheet || !nueva) return false;
+        const enDiseno = sheet.classList.contains('vp-diseno');
+        Array.from(nueva.attributes).forEach(a => { if (a.name !== 'class') sheet.setAttribute(a.name, a.value); });
+        sheet.innerHTML = nueva.innerHTML;
+        sheet.classList.toggle('vp-diseno', enDiseno);
+        if (window.vplanAjustar) window.vplanAjustar();
+        document.dispatchEvent(new CustomEvent('vp:hoja'));
+        return true;
+    } catch (e) { return false; }
+};
+</script>
 <script src="/vendor/tablas-vivo.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tablas-vivo.js'); ?>"></script>
 <script src="/vendor/vplan-ajuste.js?v=<?php echo filemtime(__DIR__ . "/../../public/vendor/vplan-ajuste.js"); ?>"></script>
 <?php // gestos-lienzo, capa-superior y hoja-inferior también los carga el editor de marcas; no se repiten ?>
