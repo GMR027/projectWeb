@@ -786,7 +786,7 @@ HTML],
 <li>Escribe el <strong>nombre*</strong> y elige la <strong>categoría</strong> (opcional).</li>
 <li><strong>Tamaño:</strong> elige la tarjeta con la proporción del papel (pantalla, papel a 300 dpi, redes) u <em>Personalizado</em>, la orientación y el ancho × alto en píxeles.</li>
 <li><strong>Fondo:</strong> una plantilla (liso, retícula, milimetrado, papel de ingeniería, texturas, fondos oscuros…) o <em>Imagen propia</em>, que puedes ajustar (modo, zoom, posición, repeticiones, opacidad).</li>
-<li>Se abre el editor. Puedes cambiar tamaño y fondo después con <strong>Tamaño y fondo</strong>; el contenido se centra o se queda en la esquina, tú eliges.</li>
+<li>Se abre el editor. Puedes cambiar tamaño y fondo después con <strong>Tamaño y fondo</strong> (menú ⋯ del editor: se abre encima del lienzo, guarda antes lo pendiente y al aplicar vuelves a la misma lámina); el contenido se centra o se queda en la esquina, tú eliges.</li>
 </ol>
 <h4>La barra de herramientas</h4>
 <table class="tabla manual-tabla">

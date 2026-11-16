@@ -347,7 +347,12 @@ class EditorController
                     }
                 }
                 $form->guardar();
-                header('Location: /graficos/abrir?proyecto=' . $proyecto->id . '&id=' . $g->id . '&regen=1');
+                $destino = '/graficos/abrir?proyecto=' . $proyecto->id . '&id=' . $g->id . '&regen=1';
+                if (es_modal()) {   // abierto en el diálogo del editor: la página de atrás recarga el lienzo en la lámina en la que estaba
+                    echo '<!DOCTYPE html><html><body><script>parent.postMessage({ tipo: "grafico-fondo", url: ' . json_encode($destino) . ' }, location.origin);</script></body></html>';
+                    exit;
+                }
+                header('Location: ' . $destino);
                 exit;
             }
         }

@@ -13,7 +13,7 @@ return [
     'Modos de la lámina' => 'Sheet modes', 'Acomodar' => 'Arrange', 'Dibujar' => 'Draw', 'Tareas' => 'Tasks', 'Nota' => 'Note', 'Datos' => 'Data',
     'Ver la lista de tareas de la lámina' => 'View the sheet task list', 'Crear una nota en esta lámina' => 'Create a note on this sheet',
     'Presentación .odp' => '.odp presentation', 'Todo se envía al final' => 'Everything is sent at the end',
-    'Crear y abrir en el editor' => 'Create and open in the editor', 'Aplicar y volver al editor' => 'Apply and return to the editor',
+    'Crear y abrir en el editor' => 'Create and open in the editor', 'Aplicar y volver al editor' => 'Apply and return to the editor', 'Aplicar' => 'Apply', 'Cargando…' => 'Loading…', 'Guardando…' => 'Saving…',
     'Otro formato o tamaño' => 'Other format or size', 'Gráficos' => 'Graphics', 'Nombre del gráfico' => 'Graphic name', 'Simbologías' => 'Symbol libraries',
     'Cambiar el nombre' => 'Rename', 'Recorrer el editor paso a paso (se muestra solo la primera vez)' => 'Walk through the editor step by step (shown only the first time)',
     // Ajustes del proyecto

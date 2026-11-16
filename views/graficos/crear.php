@@ -1,13 +1,16 @@
 <?php use Model\Grafico;
 $edicion = !empty($edicion);
-$esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de un gráfico ya creado ?>
+$esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de un gráfico ya creado
+$enModal = $edicion && es_modal();   // abierto desde el propio editor, en un diálogo ?>
+<?php if (!$enModal): ?>
 <div class="page-header">
     <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo $edicion ? 'Tamaño y fondo · ' . s($grafico->nombre) : ($esSimb ? 'Nueva simbología' : 'Nuevo gráfico'); ?></h2>
     <a href="<?php echo $edicion ? '/graficos/abrir?proyecto=' . s($proyecto->id) . '&id=' . (int)$grafico->id : ($esSimb ? '/simbolos?proyecto=' . s($proyecto->id) . '#simbologias' : '/graficos?proyecto=' . s($proyecto->id)); ?>" class="btn btn-ghost">← Volver</a>
 </div>
+<?php endif; ?>
 
 <div class="card">
-    <form method="POST" action="/graficos/<?php echo $edicion ? 'fondo' : 'crear'; ?>" class="formulario" id="gr-form" enctype="multipart/form-data">
+    <form method="POST" action="/graficos/<?php echo $edicion ? 'fondo' : 'crear'; ?><?php echo $enModal ? '?modal=1' : ''; ?>" class="formulario" id="gr-form" enctype="multipart/form-data">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if ($edicion): ?><input type="hidden" name="id" value="<?php echo (int)$grafico->id; ?>"><?php endif; ?>
         <?php if ($esSimb && !$edicion): ?><input type="hidden" name="tipo" value="simbologia"><?php endif; ?>
@@ -36,7 +39,7 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
                     <option value="nueva">+ Nueva categoría…</option>
                 </select>
                 <input type="text" id="categoria_nueva" name="categoria_nueva" maxlength="100" placeholder="Nombre de la categoría nueva" hidden aria-label="Nombre de la categoría nueva">
-                <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>">Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
+                <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>"<?php echo $enModal ? ' target="_top"' : ''; ?>>Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
             </div>
         </div>
         <script>
@@ -56,7 +59,7 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
                     <option value="">— Sin categoría —</option>
                     <?php foreach ($categorias ?? [] as $c): ?><option value="<?php echo (int)$c->id; ?>"<?php echo (int)$grafico->categoria_id === (int)$c->id ? ' selected' : ''; ?>><?php echo s($c->nombre); ?></option><?php endforeach; ?>
                 </select>
-                <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>">Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
+                <small class="text-muted"><a href="/graficos/categorias?proyecto=<?php echo s($proyecto->id); ?>"<?php echo $enModal ? ' target="_top"' : ''; ?>>Administrar categorías</a> · sirven para clasificar y filtrar los gráficos</small>
             </div>
         </div><?php endif; ?>
 
@@ -185,7 +188,14 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
         </div>
         </div><!-- /paso 3 -->
         <?php else: ?>
+        <?php if ($enModal): ?>
+        <div class="modal-acciones">
+            <button type="button" class="btn btn-ghost" onclick="parent.postMessage({ tipo: 'grafico-fondo-cancelar' }, location.origin)"><?php echo s(t('Cancelar')); ?></button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> <?php echo s(t('Aplicar')); ?></button>
+        </div>
+        <?php else: ?>
         <button type="submit" class="btn btn-primary"><?php echo s(t('Aplicar y volver al editor')); ?></button>
+        <?php endif; ?>
         <?php endif; ?>
     </form>
 </div>

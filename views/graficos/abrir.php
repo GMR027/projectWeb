@@ -21,7 +21,7 @@ $lz = [
             . '<button type="button" id="ve-ampliar"><i class="fa-solid fa-expand"></i> ' . s(t('Ampliar')) . '</button>'
             . '<button type="button" id="ve-presentar" title="' . s(t('Pantalla completa, solo las láminas')) . '"><i class="fa-solid fa-play"></i> ' . s(t('Presentar')) . '</button>'
             . '<a href="/graficos/ver?' . $q . '"><i class="fa-regular fa-eye"></i> ' . s(t('Ver')) . '</a>'
-            . '<a href="/graficos/fondo?' . $q . '"><i class="fa-solid fa-image"></i> ' . s(t('Tamaño y fondo')) . '</a>'
+            . '<a href="/graficos/fondo?' . $q . '" id="gr-fondo-abrir"><i class="fa-solid fa-image"></i> ' . s(t('Tamaño y fondo')) . '</a>'
             . '<button type="button" data-tour="editor-canvas"><i class="fa-solid fa-circle-play"></i> ' . s(t('Guía rápida')) . '</button>'
             . '</div></details>'],
         ['url' => $grafico->tipo === 'simbologia' ? '/simbolos?proyecto=' . (int)$proyecto->id . '#simbologias' : '/graficos?proyecto=' . (int)$proyecto->id, 'texto' => $grafico->tipo === 'simbologia' ? '← ' . s(t('Simbologías')) : '← ' . s(t('Editor'))],
@@ -132,6 +132,49 @@ include __DIR__ . '/../lienzo/_cabecera.php';
         document.querySelectorAll('details.gr-descargar[open]').forEach(d => {
             if (!d.contains(e.target) || e.target.closest('a, button:not(summary)')) d.removeAttribute('open');
         });
+    });
+})();
+</script>
+<dialog class="gr-exportar-dlg gr-fondo-dlg" id="gr-fondo-dlg" aria-label="<?php echo s(t('Tamaño y fondo')); ?>">
+<section class="card gr-exportar">
+    <div class="gr-fondo-cab"><h3><i class="fa-solid fa-image"></i> <?php echo s(t('Tamaño y fondo')); ?></h3>
+    <button type="button" class="btn btn-sm btn-ghost" id="gr-fondo-cerrar" aria-label="<?php echo s(t('Cerrar')); ?>"><i class="fa-solid fa-xmark"></i></button></div>
+    <p class="text-muted text-sm" id="gr-fondo-cargando"><?php echo s(t('Cargando…')); ?></p>
+    <iframe id="gr-fondo-frame" title="<?php echo s(t('Tamaño y fondo')); ?>"></iframe>
+</section>
+</dialog>
+<script>
+(function () {
+    // «Tamaño y fondo» sin salir del editor: guarda lo pendiente y abre el formulario en un diálogo.
+    // Al aplicar, el lienzo se recarga ya con el nuevo tamaño/fondo en la misma lámina.
+    const a = document.getElementById('gr-fondo-abrir'), dlg = document.getElementById('gr-fondo-dlg');
+    if (!a || !dlg || !window.fetch) return;
+    const frame = document.getElementById('gr-fondo-frame'), cargando = document.getElementById('gr-fondo-cargando');
+    const cerrar = () => { if (dlg.open) dlg.close(); frame.removeAttribute('src'); };
+    a.addEventListener('click', async e => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;   // abrir en otra pestaña sigue funcionando
+        e.preventDefault();
+        const est = document.getElementById('ve-estado'), antes = est ? est.textContent : '';
+        if (window.__vplan && window.__vplan.guardar) {
+            if (est) est.textContent = <?php echo json_encode(t('Guardando…')); ?>;
+            const ok = await window.__vplan.guardar();
+            if (est) est.textContent = antes;
+            if (ok === false) return;
+        }
+        cargando.hidden = false; frame.classList.remove('listo');
+        frame.src = a.href + '&modal=1';
+        dlg.showModal();
+    });
+    frame.addEventListener('load', () => { cargando.hidden = true; frame.classList.add('listo'); });
+    document.getElementById('gr-fondo-cerrar').addEventListener('click', cerrar);
+    dlg.addEventListener('click', e => { if (e.target === dlg) cerrar(); });
+    window.addEventListener('message', e => {
+        if (e.origin !== location.origin || !e.data) return;
+        if (e.data.tipo === 'grafico-fondo-cancelar') cerrar();
+        if (e.data.tipo === 'grafico-fondo' && typeof e.data.url === 'string' && e.data.url.startsWith('/graficos/abrir')) {
+            const st = window.__vplan && window.__vplan.state, sl = st && st.slides && st.slides[st.idx];
+            location.href = e.data.url + (sl ? '&hoja=' + encodeURIComponent(sl.id) : '');
+        }
     });
 })();
 </script>

@@ -1143,3 +1143,10 @@ body[data-modo-lienzo='acomodar'].ve-con-dock { padding-bottom: 0; }
   .ve-split:focus-visible { outline: 2px solid var(--vplan-acento, var(--primary)); outline-offset: 2px; }
   .ve-area.ve-sin-lateral .ve-split { display: none; }
 }
+
+// Editor: «Tamaño y fondo» en un diálogo sobre el lienzo (iframe con layout-modal)
+.gr-fondo-dlg {
+  .gr-exportar { display: flex; flex-direction: column; height: min(78rem, calc(100dvh - 4rem)); padding-bottom: 0; }
+  .gr-fondo-cab { display: flex; align-items: center; justify-content: space-between; gap: 1rem; h3 { margin: 0; } }
+  iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: transparent; opacity: 0; transition: opacity .15s; &.listo { opacity: 1; } }
+}
