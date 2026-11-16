@@ -2290,15 +2290,21 @@
       '<button type="button" class="ve-sim ve-sim-gr" data-src="' + esc(x.src) + '"' + (x.ref ? ' data-ref="' + esc(x.ref) + '" data-v="' + esc(x.v || '') + '"' : '') + ' title="Insertar «' + esc(x.nombre) + '» (vinculada: se actualiza si la editas)"><img src="' + esc(x.src) + '" alt="" loading="lazy"><span>' + esc(x.nombre) + '</span></button>').join('') || '<p class="text-muted text-sm">No hay otros gráficos guardados en este proyecto.</p>';
   }
   // Cajetín: tabla con los datos del dibujo (proyecto, título, fecha…). Si la lámina ya tiene uno de la misma plantilla, se actualiza
-  function insertarCajetin(c) {
-    if (!capaOk()) return;
+  /** Celdas de un cajetín con las variables resueltas HOY: { banda, filas, cells } (cells con la forma de la tabla) */
+  function celdasDeCajetin(c) {
     const hoy = new Date(), p2 = n => String(n).padStart(2, '0');
     const vars = { proyecto: C.proyectoNombre || '', titulo: C.nombre || '', fecha: p2(hoy.getDate()) + '/' + p2(hoy.getMonth() + 1) + '/' + hoy.getFullYear(), autor: C.usuario || '',
       lamina: String(state.slides ? state.idx + 1 : 1), total: String(state.slides ? state.slides.length : 1), escala: state.escala ? fmtNum(state.escala.mmPorPx) + ' mm/px' : '' };
     const val = t => String(t || '').replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);
     const filas = (c.filas || []).map(([e, v]) => [e || '', val(v)]);
+    const banda = c.orientacion === 'banda';
+    return { banda, filas, cells: banda ? [filas.map(f => f[0]), filas.map(f => f[1])] : filas.map(f => [f[0], f[1]]) };
+  }
+  function insertarCajetin(c) {
+    if (!capaOk()) return;
+    const { banda, filas } = celdasDeCajetin(c);
     if (!filas.length) return;
-    const banda = c.orientacion === 'banda', tw = state.W * Math.min(1, Math.max(0.15, (c.ancho || 28) / 100));
+    const tw = state.W * Math.min(1, Math.max(0.15, (c.ancho || 28) / 100));
     const d = { id: uid(), type: 'table', x: 0, y: 0, w: 1, h: 1, rows: banda ? 2 : filas.length, cols: banda ? filas.length : 2, header: banda, cajetin: c.id || 'base',
       fontSize: Math.max(10, Math.round(tw / (banda ? filas.length * 9 : 20))), fill: '#ffffff', headerFill: '#dbe5f1', textColor: '#111111', stroke: '#111111', strokeWidth: Math.max(1, Math.round(state.W / 1200)), rotation: 0, opacity: 100 };
     normalizarTabla(d);
@@ -2306,10 +2312,46 @@
     d.cells = banda ? [filas.map(f => f[0]), filas.map(f => f[1])] : filas.map(f => [f[0], f[1]]);
     if (!banda) { d.cellFill = {}; filas.forEach((_, r) => { d.cellFill[r + ',0'] = '#dbe5f1'; }); }
     d.w = suma(d.colW); ajustarFilas(d);
+    d.cajetinBase = clone(d.cells);   // foto de lo autollenado: al abrir, lo no editado a mano se refresca solo
     const margen = state.W * 0.02;
     d.x = banda ? (state.W - d.w) / 2 : state.W - d.w - margen; d.y = state.H - d.h - margen;
     const resto = clone(state.shapes).filter(x => !(x.type === 'table' && x.cajetin === d.cajetin));
     state.selId = d.id; commit([...resto, d]); status('Cajetín «' + (c.nombre || '') + '» colocado');
+  }
+  // Cajetín vivo: al abrir, cada cajetín vuelve a resolver su plantilla y sus variables ({fecha}, {titulo}…).
+  // Una celda editada a mano (distinta de lo que se autollenó, guardado en cajetinBase) se respeta.
+  function refrescarCajetines() {
+    const lista = state.shapes.filter(x => x.type === 'table' && x.cajetin);
+    if (!lista.length || !(C.cajetines || []).length) return;
+    let cambiadas = 0;
+    lista.forEach(s => {
+      const c = (C.cajetines || []).find(x => String(x.id || 'base') === String(s.cajetin));
+      if (!c) return;   // la plantilla ya no existe: el cajetín se queda como está
+      const { cells } = celdasDeCajetin(c);
+      // Si la plantilla cambió de forma (filas/columnas), solo se reconstruye cuando no hay ediciones a mano
+      const base = Array.isArray(s.cajetinBase) ? s.cajetinBase : null;
+      const mismaForma = cells.length === s.cells.length && cells.every((f, r) => f.length === (s.cells[r] || []).length);
+      if (!mismaForma) {
+        const editado = base && s.cells.some((f, r) => f.some((v, cc) => String(v) !== String((base[r] || [])[cc])));
+        if (editado || !base) return;
+        s.rows = cells.length; s.cols = cells[0].length;
+        normalizarTabla(s);
+        s.cells = clone(cells); s.cajetinBase = clone(cells);
+        ajustarFilas(s);
+        cambiadas++;
+        return;
+      }
+      let toco = false;
+      const nuevas = s.cells.map((f, r) => f.map((v, cc) => {
+        const b = base ? String((base[r] || [])[cc] ?? v) : String(v);   // sin base: la celda actual ES la base
+        if (String(v) !== b) return v;   // editada a mano: se respeta
+        if (String(cells[r][cc]) !== String(v)) toco = true;
+        return cells[r][cc];
+      }));
+      if (toco) { s.cells = nuevas; cambiadas++; }
+      s.cajetinBase = clone(cells);   // de aquí en adelante se compara contra lo recién autollenado
+    });
+    if (cambiadas) { render(); dirty(true); status('Cajetín actualizado con los datos de hoy · guarda para conservarlo'); }
   }
   // Letra de una tabla: la que le toca según el ancho del dibujo, pero nunca tan chica que no se pueda
   // leer en pantalla con el zoom actual (si el dibujo se ve muy lejos, la letra se agranda; hasta el doble).
@@ -2959,7 +3001,7 @@
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000], ideal = state.W / 40;
     $('#t-grid-n').value = nice.reduce((a, b) => Math.abs(b - ideal) < Math.abs(a - ideal) ? b : a);   // cuadrícula acorde al tamaño del dibujo
     asegurarCapas();
-    configurarEventos(); montarGestos(); iniciarMenuContexto(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas();
+    configurarEventos(); montarGestos(); iniciarMenuContexto(); enlazarPanel(); enlazarCapas(); enlazarAlinear(); enlazarLaminas(); enlazarSimbolos(); enlazarVista(); enlazarGuias(); encuadrar(); render(); pintarLaminas(); dirty(false); refrescarSheetflow(); vigilarSheetflow(); refrescarPunch(); refrescarVinculadas(); refrescarCajetines();
     if (state.slides) state.slides.forEach(x => { if (x.thumb === '' || x.thumb === undefined) x.thumb = ''; });
     window.addEventListener('resize', encuadrar);
     if (C.regen && state.slides) {
