@@ -285,11 +285,14 @@
         const dpr = window.devicePixelRatio || 1;
         const color = getComputedStyle(rx).color;
         [[rx, true], [ry, false]].forEach(([cv, horiz]) => {
-            const largo = horiz ? r.width : r.height, grosor = 24;
-            cv.width = Math.round((horiz ? largo : grosor) * dpr); cv.height = Math.round((horiz ? grosor : largo) * dpr);
+            // El lienzo mide lo que su celda; los ticks se desplazan con la hoja (zoom y paneo)
+            const cr = cv.getBoundingClientRect();
+            const largo = horiz ? r.width : r.height, grosor = 24, visible = Math.max(1, horiz ? cr.width : cr.height);
+            cv.width = Math.round((horiz ? visible : grosor) * dpr); cv.height = Math.round((horiz ? grosor : visible) * dpr);
             const c = cv.getContext('2d');
             c.setTransform(dpr, 0, 0, dpr, 0, 0);
             c.clearRect(0, 0, cv.width, cv.height);
+            c.translate(horiz ? r.left - cr.left : 0, horiz ? 0 : r.top - cr.top);
             c.strokeStyle = color; c.fillStyle = color; c.font = '10px Inter, sans-serif'; c.lineWidth = 1;
             const totalMm = horiz ? mm().w : mm().h, pxMm = largo / totalMm;
             const cmPx = pxMm * 10;
@@ -331,6 +334,7 @@
         regla.addEventListener('pointermove', mover); regla.addEventListener('pointerup', fin); regla.addEventListener('pointercancel', fin);
     }));
     if (window.ResizeObserver) new ResizeObserver(() => dibujarReglas()).observe(sheet);
+    { const h = sheet.closest('.vp-hoja'); let rafR = 0; if (h) h.addEventListener('scroll', () => { if (!rafR) rafR = requestAnimationFrame(() => { rafR = 0; dibujarReglas(); }); }, { passive: true }); }
     window.addEventListener('resize', dibujarReglas);
 
     // ---- Ayudas de dibujo (rejilla, imán, guías, reglas) ----
@@ -1418,6 +1422,9 @@
         [[
             'fa-up-down-left-right', 'Mover y redimensionar',
             'Arrastra el bloque para moverlo y sus esquinas para cambiarle el tamaño. Las <kbd>flechas</kbd> lo afinan (<kbd>Mayús</kbd> = más rápido) y <kbd>Supr</kbd> lo quita.'
+        ], [
+            'fa-magnifying-glass-plus', 'Zoom y paneo',
+            'La <kbd>rueda</kbd> del ratón acerca o aleja hacia el cursor; mantén presionado el <kbd>botón central</kbd> y arrastra para moverte por la hoja. Las reglas siguen al zoom.'
         ], [
             'fa-plus', 'Insertar cosas',
             'En el panel «Insertar»: un clic pone el bloque en el centro de la hoja y arrastrándolo lo dejas donde quieras. <kbd>/</kbd> abre el buscador.'

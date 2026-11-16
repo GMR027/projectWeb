@@ -18,6 +18,7 @@ Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm
 - **PDF de la lámina en un clic** desde la cabecera de la propia lámina (mismo `pdf-vplan.php`; el PDF no cambia).
 - **SheetFlow**: `Sheetflow::aVplan` ya no convierte en «otro» una tabla de materiales/punch al revincular; «Crear tabla en vPlan» reutiliza la tabla vinculada en vez de duplicar. Las tablas vinculadas dicen «vinculada» (no «copia») y muestran **Editar en SheetFlow**. `VplanTabla::duplicar` sigue creando copia independiente al duplicar lámina (intencional).
 - **Editor Konva**: el **cajetín es vivo** (al abrir se vuelven a resolver `{fecha}`, `{titulo}`, `{lamina}`…; lo autollenado vive en `cajetinBase` y una celda editada a mano se respeta) y hay botón **«?»** con atajos en tarjetas.
+- **Ratón**: en Ver y Acomodar la rueda hace zoom hacia el cursor y el botón central arrastra la hoja (`vplan-zoom.js`: `zoomEn`, `desplazar`); con zoom manual Acomodar ya no se topa en «Ajustar» y las reglas dibujan solo lo visible, desplazadas con la hoja (se redibujan al hacer scroll en `.vp-hoja`).
 - **Táctil**: pellizco para acercar también en Acomodar; los flotantes del borde inferior se apilan sin encimarse; el dock de herramientas solo aparece en Dibujar.
 - Pendiente (plan F3–F7): concha única con riel/inspector, catálogo «Insertar» unificado con selector de tabla viva en 3 pasos, paleta Ctrl+K, checklist de inicio, estampas en el Editor y layout «Campo» en celular.
 

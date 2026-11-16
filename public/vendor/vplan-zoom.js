@@ -34,7 +34,8 @@
         // En modo diseño (escritorio) la hoja tiene que caber en el panel: si no, las reglas se descuadran.
         // En táctil las reglas arrancan apagadas y sin zoom los bloques quedan diminutos en el celular,
         // así que ahí el pellizco sí puede acercar también en Acomodar.
-        if (sheet.classList.contains('vp-diseno') && !(window.GestosLienzo && GestosLienzo.esTactil())) z = Math.min(z, zAjuste());
+        // Con zoom manual (rueda, botones, pellizco) se puede acercar también ahí: las reglas siguen a la hoja.
+        if (modo !== 'manual' && sheet.classList.contains('vp-diseno') && !(window.GestosLienzo && GestosLienzo.esTactil())) z = Math.min(z, zAjuste());
         zActual = z;
         sheet.style.setProperty('--vp-ancho-px', (FISICO * z) + 'px');
         if (lbl) lbl.textContent = Math.round(z * 100) + ' %';
@@ -48,21 +49,25 @@
     // hoja al empezar y se recoloca al terminar cada movimiento.
     let anclaGesto = null;
 
-    const anchoReal = () => FISICO * zActual;
-    const desfaseX = () => Math.max(0, (((cont && cont.clientWidth) || 0) - anchoReal()) / 2);
-
+    // Punto de la hoja (en fracción de su ancho y alto) que está bajo el cursor o los dedos
     function puntoDeContenido(cx, cy) {
-        const r = cont.getBoundingClientRect();
-        return {
-            x: (cx - r.left - desfaseX() + cont.scrollLeft) / Math.max(1, anchoReal()),
-            y: cy - r.top + cont.scrollTop,
-        };
+        const r = sheet.getBoundingClientRect();
+        return { x: (cx - r.left) / Math.max(1, r.width), y: (cy - r.top) / Math.max(1, r.height) };
     }
 
+    // Desplaza para que ese punto vuelva a quedar bajo (cx, cy). En horizontal se mueve el contenedor;
+    // en vertical, el contenedor si tiene scroll propio (celular, vista ampliada) y si no, la página.
+    function desplazar(dx, dy) {
+        if (!dx && !dy) return;
+        const antesX = cont.scrollLeft, antesY = cont.scrollTop;
+        cont.scrollLeft += dx;
+        if (cont.scrollHeight > cont.clientHeight + 1) cont.scrollTop += dy;
+        const restoX = dx - (cont.scrollLeft - antesX), restoY = dy - (cont.scrollTop - antesY);
+        if (Math.abs(restoX) >= 1 || Math.abs(restoY) >= 1) window.scrollBy(Math.abs(restoX) >= 1 ? restoX : 0, Math.abs(restoY) >= 1 ? restoY : 0);
+    }
     function llevarAPunto(a, cx, cy) {
-        const r = cont.getBoundingClientRect();
-        cont.scrollLeft = a.x * anchoReal() + desfaseX() - (cx - r.left);
-        cont.scrollTop = a.y - (cy - r.top);
+        const r = sheet.getBoundingClientRect();
+        desplazar(r.left + a.x * r.width - cx, r.top + a.y * r.height - cy);
     }
 
     function zoomEn(cx, cy, z) {
@@ -194,12 +199,45 @@
         else if (k === 'centro') centrar();
     });
 
-    // La rueda del mouse sobre la hoja hace zoom (con Ctrl para no quitarle el scroll a la página)
-    sheet.addEventListener('wheel', e => {
-        if (!e.ctrlKey && !e.metaKey) return;
-        e.preventDefault();
-        manual_(zActual * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
-    }, { passive: false });
+    // Ver y Acomodar: la rueda del ratón hace zoom hacia el cursor y el botón central (presionado) mueve
+    // la hoja. En Dibujar manda el lienzo Konva, que tiene sus propios gestos.
+    const modoConZoom = () => { const m = document.body.dataset.modoLienzo || 'ver'; return m === 'ver' || m === 'acomodar'; };
+    if (cont) {
+        cont.addEventListener('wheel', e => {
+            if (!modoConZoom() || e.shiftKey) return;   // Mayús + rueda conserva el scroll horizontal
+            e.preventDefault();
+            const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+            const f = Math.exp(-Math.max(-300, Math.min(300, px)) * (e.ctrlKey ? 0.01 : 0.0018));   // Ctrl+rueda = pellizco del touchpad
+            zoomEn(e.clientX, e.clientY, zActual * f);
+        }, { passive: false });
+
+        let paneo = null;
+        cont.addEventListener('mousedown', e => { if (e.button === 1 && modoConZoom()) e.preventDefault(); });   // sin el autoscroll del navegador
+        cont.addEventListener('pointerdown', e => {
+            if (e.button !== 1 || e.pointerType !== 'mouse' || !modoConZoom()) return;
+            e.preventDefault();
+            paneo = { x: e.clientX, y: e.clientY, id: e.pointerId, movido: false };
+            try { cont.setPointerCapture(e.pointerId); } catch (_) { }
+            document.body.classList.add('vp-paneando');
+        });
+        cont.addEventListener('pointermove', e => {
+            if (!paneo || e.pointerId !== paneo.id) return;
+            const dx = e.clientX - paneo.x, dy = e.clientY - paneo.y;
+            if (!dx && !dy) return;
+            paneo.x = e.clientX; paneo.y = e.clientY; paneo.movido = true;
+            desplazar(-dx, -dy);
+        });
+        const finPaneo = e => {
+            if (!paneo || e.pointerId !== paneo.id) return;
+            try { cont.releasePointerCapture(e.pointerId); } catch (_) { }
+            document.body.classList.remove('vp-paneando');
+            const movido = paneo.movido;
+            paneo = null;
+            if (movido) cont.addEventListener('auxclick', ev => ev.preventDefault(), { once: true, capture: true });   // no abrir enlaces en otra pestaña
+        };
+        cont.addEventListener('pointerup', finPaneo);
+        cont.addEventListener('pointercancel', finPaneo);
+    }
 
     let anchoPrevio = cont ? cont.clientWidth : 0;
     window.addEventListener('resize', () => {

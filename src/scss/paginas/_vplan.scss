@@ -623,3 +623,6 @@ body.vp-ver-tareas .vp-zoom-flot { display: none; }
   body:has(.dv-boton) .vp-zoom-flot { bottom: calc(8.4rem + env(safe-area-inset-bottom, 0)); }
   body:has(.dv-boton).vp-con-ctx .vp-zoom-flot { bottom: calc(15rem + env(safe-area-inset-bottom, 0)); }
 }
+
+// Paneo con el botón central del ratón (vplan-zoom.js)
+body.vp-paneando, body.vp-paneando * { cursor: grabbing !important; user-select: none; }
