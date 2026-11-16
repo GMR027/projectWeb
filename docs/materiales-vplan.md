@@ -41,6 +41,12 @@ Cada marca guarda en su JSON (`vplan_laminas.marcas_json`):
 - **Panel Materiales**: resumen, leyenda con colores y conteo de marcas, tabla completa con todas las columnas de SheetFlow, búsqueda y clic en una fila para seleccionar sus marcas en el plano.
 - Al guardar una foto o un cambio de asignación se llama a `cargarImagenes()` y `vplan:render` refresca el panel.
 
+## Sincronización y marcas desde cualquier herramienta (2026-11-16)
+- **Guardar las marcas sincroniza la tabla**: `VplanController::guardarMarcas` llama a `MaterialesLamina::sincronizar()` cuando la lámina tiene tabla de materiales; ya no hace falta pulsar «Sincronizar».
+- Interruptor **«Material»** en la barra del editor: cualquier herramienta (línea, forma, polígono…) dibuja una marca de material (`material.items = []`), sin pasar a la pestaña Materiales.
+- Las fotos también salen de los **materiales propios de subactividades** (`subactividad_materiales`).
+- En táctil el selector de actividades se abre en hoja inferior (`HojaInferior`).
+
 ## Lámina y PDF
 - El bloque de tabla es de tipo `materiales`; `_tabla-adicional.php` lo trata como tabla genérica (`otro`) y muestra «Marcar materiales» y «Editar en SheetFlow».
 - Las tablas de vPlan muestran hasta 8 columnas por defecto; **materiales** sube el tope a 30 (`VplanTabla::maxColumnas()`), pero conviene mover/ampliar el bloque o reducir la letra si hay muchas.

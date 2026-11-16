@@ -355,7 +355,7 @@ HTML],
 
 ['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-sheet-plastic', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
 <p>El vPlan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
-<p class="manual-nota">Una lámina se trabaja en <strong>tres modos</strong>, sin salir de la página: <strong>Ver</strong> (zoom, buscar, tareas y notas), <strong>Acomodar</strong> (mover y estirar bloques) y <strong>Dibujar</strong> (el editor de marcas sobre el plano). Cambiar de modo no recarga ni pierde el zoom.</p>
+<p class="manual-nota">Una lámina se trabaja en <strong>tres modos</strong>, sin salir de la página: <strong>Ver</strong> (zoom, buscar, tareas y notas), <strong>Acomodar</strong> (mover y estirar bloques) y <strong>Dibujar</strong> (el editor de marcas sobre el plano). Cambiar de modo no recarga ni pierde el zoom, y al salir de Acomodar tus cambios se <strong>guardan solos</strong>. Guardar el diseño, insertar una tabla o agregar recovery tampoco recarga la página.</p>
 <h4>vPlans y áreas</h4>
 <p>Puedes tener <strong>varios vPlan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada vPlan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del vPlan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
 <p>Es la primera vez que usas estas herramientas: el botón <strong>Guía rápida</strong> (o <em>abrir con <code>?tour=1</code></em>) recorre la pantalla paso a paso; se muestra sola la primera vez y se puede repetir cuando quieras. En el gestor del vPlan hay dos vistas: <strong>Galería</strong> (tarjetas con miniatura que se reordenan arrastrando) y <strong>Lista</strong> (detallada, con orden y grupos).</p>
@@ -365,7 +365,7 @@ HTML],
 <li>En <strong>vPlan</strong> pulsa para crear una lámina. La <strong>partida inicial</strong> es opcional: solo arma el primer bloque de tareas.</li>
 <li>Elige el <strong>tamaño de la hoja</strong> con las tarjetas de proporción (tabloide ★ es la más usada, carta, A4, A3, A2, A1, Arch D u otra medida en mm, cm o pulgadas) y su orientación.</li>
 <li>Escribe el <strong>título</strong> y el <strong>supervisor</strong>.</li>
-<li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda).</li>
+<li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda). También puedes dejarlo para después y <strong>arrastrar la imagen</strong> hasta el bloque Plano vacío de la lámina.</li>
 <li>Si elegiste partida, marca qué actividades muestra. Si no marcas ninguna, muestra toda la partida.</li>
 <li>Agrega las columnas de <strong>recovery</strong> que necesites (una o más) en el modo diseño, pestaña «Hoja».</li>
 </ol>
@@ -403,14 +403,14 @@ HTML],
 <h4>Notas de la lámina</h4>
 <p>En la barra de la lámina pulsa <strong>Nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
-<p class="manual-nota">Para imprimir una lámina o llevarla a PDF usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
+<p class="manual-nota">El botón <strong>PDF</strong> de la cabecera de la lámina descarga esa lámina en un clic. Para varias láminas o más opciones usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
 HTML],
 
 ['id' => 'materiales', 'titulo' => 'Materiales en el plano', 'icono' => 'fa-cubes', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
 <p>En el editor de marcas de vPlan, la pestaña <strong>Materiales</strong> sirve para marcar en el plano <em>dónde</em> se instala cada material y <em>cuándo</em>. Sustituye a la liga simple de una actividad por una relación múltiple.</p>
 <h4>Dibujar y asignar</h4>
 <ol>
-<li>Abre la lámina, entra en el modo <strong>Dibujar</strong> y elige la pestaña <strong>Materiales</strong>.</li>
+<li>Abre la lámina, entra en el modo <strong>Dibujar</strong> y elige la pestaña <strong>Materiales</strong>. Si prefieres otra herramienta (polígono, flecha, rectángulo…), activa el interruptor <strong>Material</strong> de la barra: lo que dibujes nacerá como marca de material.</li>
 <li>Dibuja una <strong>línea de materiales</strong> o una <strong>forma de materiales</strong>. La marca nace preparada para recibir actividades.</li>
 <li>Con la marca seleccionada, en <strong>Propiedades → Materiales de esta marca</strong> pulsa <strong>Agregar actividad</strong>. También puedes hacerlo desde el panel <strong>Materiales → Asignar a la marca seleccionada</strong>, sin cambiar de pestaña. Busca por partida, código o nombre y marca una o varias actividades; si una actividad tiene subactividades, despliégalas y marca las que correspondan. Se asignan actividades: los materiales y sus fotos salen del catálogo de cada una.</li>
 <li>Repite con todas las líneas y formas. Una misma actividad puede estar en varias marcas; la tabla la muestra una sola vez y cuenta sus ubicaciones.</li>
@@ -422,7 +422,7 @@ HTML],
 <ol>
 <li>En el panel <strong>Materiales</strong> pulsa <strong>Crear tabla de materiales</strong>. Se crea en SheetFlow con una fila por actividad o subactividad y tres columnas: <strong>Material</strong>, <strong>Fecha de material</strong> (la fecha fin del programa) y <strong>Status</strong>.</li>
 <li>La tabla se agrega como bloque a la lámina; en <strong>Modo diseño</strong> la mueves y redimensionas como cualquier otra.</li>
-<li>Cuando agregues o quites marcas, pulsa <strong>Sincronizar</strong>: añade las filas nuevas y no toca las columnas extra. Si cambió el programa y quieres actualizar nombre, fecha y status, usa <strong>Traer fechas y estado del programa</strong>.</li>
+<li>Al <strong>guardar las marcas</strong> la tabla se sincroniza sola: añade las filas nuevas y no toca las columnas extra (el botón <strong>Sincronizar</strong> sigue disponible). Si cambió el programa y quieres actualizar nombre, fecha y status, usa <strong>Traer fechas y estado del programa</strong>.</li>
 <li>En <strong>SheetFlow</strong> puedes agregar todas las columnas que quieras (observaciones, fecha real, proveedor…). Aparecen en el panel del editor y en la tabla de la lámina.</li>
 <li>En el panel, haz clic en una fila para seleccionar en el plano todas sus líneas y formas. Los renglones cuya actividad ya no está en el plano se marcan como «sin ubicación» para no perder lo capturado.</li>
 </ol>
@@ -779,7 +779,7 @@ HTML],
 <h4>El listado</h4>
 <p>Tiene dos vistas: <strong>Galería</strong> (tarjetas con la portada y las acciones en el menú <em>⋮</em>: descargar, duplicar, guardar como simbología, eliminar) y <strong>Lista</strong> (tabla detallada). La vista se recuerda para la próxima vez.</p>
 <h4>Categorías</h4>
-<p>El botón <strong>Categorías</strong> abre un pequeño CRUD para clasificar tus gráficos: crear, renombrar y eliminar (no se puede eliminar una categoría que algún gráfico use; los nombres no se repiten). El selector <em>Categoría</em> aparece al crear un gráfico y en <em>Tamaño y fondo</em>.</p>
+<p>El botón <strong>Categorías</strong> abre un pequeño CRUD para clasificar tus gráficos: crear, renombrar y eliminar (no se puede eliminar una categoría que algún gráfico use; los nombres no se repiten). El selector <em>Categoría</em> aparece al crear un gráfico (con la opción <strong>+ Nueva categoría…</strong> para crearla ahí mismo sin perder lo escrito) y en <em>Tamaño y fondo</em>. En el listado, los <strong>chips de categoría</strong> filtran los gráficos y se recuerdan por proyecto.</p>
 <h4>Crear un gráfico</h4>
 <ol>
 <li>Pulsa <strong>Nuevo gráfico</strong>. La fecha se pone sola.</li>
@@ -840,7 +840,7 @@ HTML],
 <h4>Guardar y exportar</h4>
 <ul>
 <li><strong>Guardar:</strong> botón Guardar o Ctrl + S. También hay <em>autoguardado</em> (casilla en la barra). Si otra sesión modificó la lámina, el sistema te avisa antes de reemplazarla.</li>
-<li><strong>Exportar:</strong> a PNG, JPG, WebP, PDF u ODP, con el tamaño y calidad que elijas (el contenido se ajusta sin deformarse) y fondo transparente opcional en PNG/WebP. Con varias láminas, puedes exportar todas.</li>
+<li><strong>Exportar</strong> (menú de la cabecera, junto al nombre): a PNG, JPG, WebP, PDF u ODP en un clic, o con <em>Con opciones…</em> el tamaño y calidad que elijas (el contenido se ajusta sin deformarse) y fondo transparente opcional en PNG/WebP. Con varias láminas, puedes exportar todas.</li>
 </ul>
 <h4>Atajos de teclado</h4>
 <table class="tabla manual-tabla">

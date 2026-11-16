@@ -11,6 +11,16 @@
 
 Una lámina ya no depende de una partida: es un **lienzo** (`ancho_mm`, `alto_mm`, `preset`) con **bloques** posicionables.
 
+## Fluidez sin recargas y conexiones (2026-11-16, rama `ux-vplan-editor`)
+- **Guardar el diseño no recarga**: `POST /api/vplan/hoja` (`VplanController::hojaParcial`, comparte `cargaHoja()` con `ver`) devuelve el HTML de la hoja y `vplan-diseno.js` la reemplaza en su sitio. Insertar tablas y columnas de recovery usa la misma vía; la actualización en vivo (`tablas-vivo.js`) tampoco recarga.
+- **Subir el plano arrastrándolo** al bloque Plano vacío: `POST /api/vplan/plano` (`subirPlano`, validación compartida en `subirImagenLamina()` con `editar()`).
+- **Cambiar de modo guarda solo**: `lienzo-modos.js` tiene **guardias por modo** (`LienzoModos.guardia(modo, fn)`; el motor de Acomodar guarda sus cambios pendientes y puede devolver `false` para quedarse). Las miniaturas del navegador conservan el modo, y «Dibujar en el plano»/«Marcar materiales» cambian de modo sin navegar.
+- **PDF de la lámina en un clic** desde la cabecera de la propia lámina (mismo `pdf-vplan.php`; el PDF no cambia).
+- **SheetFlow**: `Sheetflow::aVplan` ya no convierte en «otro» una tabla de materiales/punch al revincular; «Crear tabla en vPlan» reutiliza la tabla vinculada en vez de duplicar. Las tablas vinculadas dicen «vinculada» (no «copia») y muestran **Editar en SheetFlow**. `VplanTabla::duplicar` sigue creando copia independiente al duplicar lámina (intencional).
+- **Editor Konva**: el **cajetín es vivo** (al abrir se vuelven a resolver `{fecha}`, `{titulo}`, `{lamina}`…; lo autollenado vive en `cajetinBase` y una celda editada a mano se respeta) y hay botón **«?»** con atajos en tarjetas.
+- **Táctil**: pellizco para acercar también en Acomodar; los flotantes del borde inferior se apilan sin encimarse; el dock de herramientas solo aparece en Dibujar.
+- Pendiente (plan F3–F7): concha única con riel/inspector, catálogo «Insertar» unificado con selector de tabla viva en 3 pasos, paleta Ctrl+K, checklist de inicio, estampas en el Editor y layout «Campo» en celular.
+
 ## vPlans (paquetes) — varios por proyecto
 - `vplan_paquetes` (`proyecto_id, nombre, orden`) agrupa las láminas; cada lámina es **un área** con su plano, tablas, título, simbología y distribución. `vplan_laminas` gana `paquete_id`, `visible` (0 = oculta) y `grupo` (disciplina, nivel…; solo organiza el gestor).
 - Pantallas: `/vplan` (lista de vPlans), `/vplan/paquete` (gestor: ojo, orden ↑↓, grupo editable, mostrar/ocultar grupo, duplicar, editar, eliminar; botones de icono `.vp-ib`; en móvil —≤64rem— cada fila queda en miniatura + título + **Abrir** y **Editar**, el resto se hace en escritorio), `/vplan/ver` (con el **navegador de láminas** `_nav-laminas.php`: columna izquierda con miniaturas a escala agrupadas por grupo, buscador, plegable; recuerda su estado en localStorage `vp-nav-oculta`).
