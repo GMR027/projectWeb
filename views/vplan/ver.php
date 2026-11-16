@@ -749,7 +749,7 @@ window.VP_DISENO = <?php echo json_encode([
 window.Tour.registrar('vplan-diseno', {
     auto: <?php echo $modoDiseno ? 'true' : 'false'; ?>,
     pasos: [
-        { icono: 'fa-vector-square', titulo: 'Acomodar bloques', texto: 'Aquí se arma la lámina: cada bloque (tablas del programa, estampas, títulos…) se <b>arrastra</b> para moverlo y se estira por sus <b>esquinas</b>. Nada se guarda hasta que pulsas «Guardar diseño».' },
+        { icono: 'fa-vector-square', titulo: 'Acomodar bloques', texto: 'Aquí se arma la lámina: cada bloque (tablas del programa, estampas, títulos…) se <b>arrastra</b> para moverlo y se estira por sus <b>esquinas</b>. Se guarda con «Guardar diseño» o solo, al pasar a Ver o Dibujar.' },
         { sel: '#vp-dis-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar diseño', texto: 'Guarda la posición y el tamaño de todos los bloques. También con <b>Ctrl + S</b>. Antes de salirte te avisa si algo quedó sin guardar.' },
         { sel: '.vp-tgls', icono: 'fa-magnet', titulo: 'Rejilla, imán y reglas', texto: 'Con el <b>imán</b> los bloques se pegan a las guías y a los bordes de la hoja; arrastra desde las <b>reglas</b> para crear guías.' },
         { sel: '#vp-dis-panel .pn-tabs', icono: 'fa-plus', titulo: 'Panel: Insertar', texto: 'La pestaña «Insertar» trae todo lo que puede llevar una lámina: tablas, estampas, símbolos, cajetines… Un clic lo pone en el centro; arrastrándolo lo dejas donde quieras.', alEntrar: () => document.querySelector('#vp-dis-panel [data-ptab="insertar"]')?.click() },

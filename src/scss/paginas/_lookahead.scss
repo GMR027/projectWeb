@@ -1150,3 +1150,10 @@ body[data-modo-lienzo='acomodar'].ve-con-dock { padding-bottom: 0; }
   .gr-fondo-cab { display: flex; align-items: center; justify-content: space-between; gap: 1rem; h3 { margin: 0; } }
   iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: transparent; opacity: 0; transition: opacity .15s; &.listo { opacity: 1; } }
 }
+
+// Con el dock de herramientas (Dibujar/Editor en táctil), el menú y el divisor flotan sobre él
+@media (pointer: coarse) {
+  body.ve-con-dock:not([data-modo-lienzo='ver']):not([data-modo-lienzo='acomodar']) {
+    .btn-menu-movil, .dv-boton { bottom: calc(7.2rem + env(safe-area-inset-bottom, 0)); }
+  }
+}

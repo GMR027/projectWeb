@@ -615,3 +615,11 @@ body.vp-ver-tareas .vp-zoom-flot { display: none; }
   // La pestaña de reabrir el panel estorba con la barra contextual (elegir un bloque ya abre el panel)
   body.vp-con-ctx .vp-dis-wrap.vp-dis-on > .pn-abrir { display: none !important; }
 }
+
+// Flotantes táctiles apilados (no encimados):
+// - el zoom de la lámina sube sobre el botón del divisor de ventana (misma esquina inferior derecha);
+// - con el dock de Dibujar abierto, el menú ☰ y el divisor suben por encima del dock.
+@media (pointer: coarse) {
+  body:has(.dv-boton) .vp-zoom-flot { bottom: calc(8.4rem + env(safe-area-inset-bottom, 0)); }
+  body:has(.dv-boton).vp-con-ctx .vp-zoom-flot { bottom: calc(15rem + env(safe-area-inset-bottom, 0)); }
+}

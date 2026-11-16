@@ -42,14 +42,18 @@
     const modo = b.dataset.lzModo;
     if (!modo || !panel(modo)) return;   // sin panel propio: es un enlace normal (otra herramienta)
     e.preventDefault();
-    const url = b.dataset.lzUrl || (b.tagName === 'A' ? b.getAttribute('href') : null);
-    const desde = document.body.dataset.modoLienzo || '';
-    if (desde && desde !== modo && guardias[desde]) {
-      Promise.resolve().then(() => guardias[desde](modo)).then(ok => { if (ok !== false) ir(modo, { url }); }, () => { /* el guardia falló: quedarse */ });
-      return;
-    }
-    ir(modo, { url });
+    cambiar(modo, { url: b.dataset.lzUrl || (b.tagName === 'A' ? b.getAttribute('href') : null) });
   });
+
+  // Cambio de modo pasando por el guardia del modo que se abandona. Devuelve una promesa con
+  // true si se cambió y false si el guardia pidió quedarse (o falló).
+  function cambiar(modo, op = {}) {
+    const desde = document.body.dataset.modoLienzo || '';
+    if (!desde || desde === modo || !guardias[desde]) { ir(modo, op); return Promise.resolve(true); }
+    return Promise.resolve().then(() => guardias[desde](modo))
+      .then(ok => { if (ok === false) return false; ir(modo, op); return true; }, () => false);
+  }
+  function guardia(modo, fn) { if (typeof fn === 'function') guardias[modo] = fn; else delete guardias[modo]; }
 
   // Estado inicial: el servidor pinta data-modo-lienzo y los [hidden]; si no, se deduce de la URL.
   document.addEventListener('DOMContentLoaded', () => {
@@ -61,5 +65,5 @@
     if (panel(modo)) ir(modo, { silencioso: true });
   });
 
-  window.LienzoModos = { ir, actual: () => document.body.dataset.modoLienzo || '' };
+  window.LienzoModos = { ir: cambiar, guardia, actual: () => document.body.dataset.modoLienzo || '' };
 })();
