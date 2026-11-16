@@ -616,6 +616,55 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.querySelectorAll('.vp-pct').forEach(colorPct);
 
+    // Subir el plano arrastrándolo al bloque (o tocándolo). Tras la primera subida se recarga una vez:
+    // la página gana el modo Dibujar (scripts y configuración que pinta el servidor).
+    (function () {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp,image/gif'; input.hidden = true;
+        document.body.appendChild(input);
+        let subiendo = false;
+        async function subir(file, zona) {
+            if (subiendo || !file) return;
+            subiendo = true;
+            if (zona) { zona.disabled = true; zona.querySelector('b').textContent = 'Subiendo…'; }
+            try {
+                const fd = new FormData();
+                fd.append('proyecto', '<?php echo (int)$proyecto->id; ?>');
+                fd.append('id', '<?php echo (int)$lamina->id; ?>');
+                fd.append('campo', 'plano');
+                fd.append('imagen', file);
+                const d = await (await fetch('/api/vplan/plano', { method: 'POST', body: fd })).json();
+                if (!d.success) throw new Error(d.error || 'No se pudo subir el plano');
+                location.href = '/vplan/ver?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$lamina->id; ?>&modo=dibujar';
+            } catch (e) {
+                subiendo = false;
+                if (zona) { zona.disabled = false; zona.querySelector('b').textContent = 'Arrastra aquí el plano'; }
+                if (window.avisoModal) window.avisoModal('No se pudo subir el plano', String(e.message || e)); else alert(String(e.message || e));
+            }
+        }
+        document.addEventListener('click', e => {
+            const z = e.target.closest('[data-plano-drop]');
+            if (!z || subiendo) return;
+            input.onchange = () => { if (input.files[0]) subir(input.files[0], z); input.value = ''; };
+            input.click();
+        });
+        document.addEventListener('dragover', e => {
+            const z = e.target.closest('[data-plano-drop]');
+            if (z) { e.preventDefault(); z.classList.add('vp-drop-activo'); }
+        });
+        document.addEventListener('dragleave', e => {
+            const z = e.target.closest('[data-plano-drop]');
+            if (z) z.classList.remove('vp-drop-activo');
+        });
+        document.addEventListener('drop', e => {
+            const z = e.target.closest('[data-plano-drop]');
+            if (!z) return;
+            e.preventDefault();
+            z.classList.remove('vp-drop-activo');
+            subir(e.dataTransfer.files && e.dataTransfer.files[0], z);
+        });
+    })();
+
     // Los textos largos se ajustan a su contenido (sin cortarse)
     const crecer = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
     const crecerTodos = () => document.querySelectorAll('.vp-ta').forEach(crecer);

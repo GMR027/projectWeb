@@ -366,6 +366,7 @@ $router->post('/api/vplan/materiales/desvincular', [VplanMaterialesController::c
 $router->post('/api/vplan/materiales/vincular', [VplanMaterialesController::class, 'vincular']);
 $router->post('/api/vplan/diseno', [VplanController::class, 'guardarDiseno']);
 $router->post('/api/vplan/hoja', [VplanController::class, 'hojaParcial']);
+$router->post('/api/vplan/plano', [VplanController::class, 'subirPlano']);
 $router->post('/api/vplan/diseno/escala', [VplanController::class, 'escalaBloque']);
 $router->post('/vplan/diseno/restablecer', [VplanController::class, 'restablecerDiseno']);
 $router->post('/api/vplan/fila', [VplanTablaController::class, 'apiFila']);

@@ -378,6 +378,51 @@ class VplanController
     }
 
     /**
+     * Valida y guarda una imagen subida (plano o simbología) en la lámina. Devuelve el mensaje de error o null.
+     * Mismo criterio que el formulario de la lámina: tipo real, almacenamiento y re-codificación con Imagenes.
+     */
+    private static function subirImagenLamina(\Model\Proyecto $proyecto, VplanLamina $l, string $campo, array $file): ?string
+    {
+        $codigo = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+        if ($codigo === UPLOAD_ERR_INI_SIZE || $codigo === UPLOAD_ERR_FORM_SIZE) return "La imagen de $campo pesa más de lo que permite el servidor (" . ini_get('upload_max_filesize') . ').';
+        if ($codigo !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) return "No se pudo subir la imagen de $campo. Inténtalo de nuevo.";
+        if (!in_array(mime_content_type($file['tmp_name']), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) return "La imagen de $campo debe ser jpg, png, webp o gif";
+        if (!\Classes\Almacenamiento::cabe((int)$proyecto->id, (int)$file['size'])) return \Classes\Almacenamiento::mensajeLleno((int)$proyecto->id);
+        $nuevo = Imagenes::guardarGrande($file['tmp_name']);
+        if (!$nuevo) return "No se pudo procesar la imagen de $campo.";
+        Imagenes::eliminarVplan($l->$campo);
+        $l->$campo = $nuevo;
+        if ($campo === 'plano') {   // un plano nuevo invalida las marcas dibujadas sobre el anterior
+            Imagenes::eliminarVplan($l->marcas_png);
+            $l->marcas_png = null;
+            $l->marcas_json = null;
+        }
+        return null;
+    }
+
+    /** POST /api/vplan/plano — sube o reemplaza el plano (o la simbología) desde la propia lámina, sin pasar por el formulario */
+    public static function subirPlano()
+    {
+        $proyecto = proyecto_de_peticion(true);
+        $l = self::laminaDe($proyecto);
+        header('Content-Type: application/json');
+        if (!$l) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Lámina no encontrada']);
+            exit;
+        }
+        $campo = ($_POST['campo'] ?? 'plano') === 'simbologia' ? 'simbologia' : 'plano';
+        if ($error = self::subirImagenLamina($proyecto, $l, $campo, $_FILES['imagen'] ?? [])) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => $error]);
+            exit;
+        }
+        $l->guardar();
+        echo json_encode(['success' => true, 'archivo' => $l->$campo] + self::cargaHoja($proyecto, $l, true), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
      * La hoja (#vp-sheet) renderizada + el modelo de la lámina, para refrescarla sin recargar la página.
      * La usan el guardado del diseño, la inserción de tablas/recovery y la actualización en vivo.
      */

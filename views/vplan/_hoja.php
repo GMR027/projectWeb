@@ -68,7 +68,13 @@ $ajuste = function (?string $archivo, VplanBloque $b) use ($lamina): ?array {
                 <div class="vp-plano-ajuste" style="left:<?php echo round((100 - $fit[0]) / 2, 3); ?>%;top:<?php echo round((100 - $fit[1]) / 2, 3); ?>%;width:<?php echo $fit[0]; ?>%;height:<?php echo $fit[1]; ?>%">
                     <?php if ($enlaces): ?><div class="vp-lk-wrap"><?php endif; ?><img src="/uploads/vplan/<?php echo s($planoImg); ?>" alt="Plano"><?php if ($enlaces): echo \Classes\EnlacesLamina::html($enlaces, $lkW, $lkH); ?></div><?php endif; ?>
                 </div>
-            <?php else: ?><p class="vp-vacio-blk">Sin imagen de plano. Súbela en «Editar lámina».</p><?php endif;
+            <?php elseif ($puedeEditar): ?>
+                <button type="button" class="vp-plano-drop no-print" data-plano-drop>
+                    <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+                    <b>Arrastra aquí el plano</b>
+                    <span>o toca para elegir la imagen (jpg, png, webp o gif)</span>
+                </button>
+            <?php else: ?><p class="vp-vacio-blk">Sin imagen de plano.</p><?php endif;
             break;
         case 'simbologia':
             $fit = $ajuste($lamina->simbologia, $b); ?>
