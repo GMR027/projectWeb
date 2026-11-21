@@ -24,10 +24,11 @@ $nomAct = function (int $idA) use ($parte): string {
                 <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Cerrar parte</button>
             </form>
-        <?php elseif ($puede_cerrar && $cerrado): ?>
-            <form method="POST" action="/reportes/parte/reabrir" data-confirm="Reabrir el parte|Se podrá editar de nuevo y el resumen de la bitácora se conserva.|Reabrir">
+        <?php elseif ($cerrado && !empty($puede_corregir)): ?>
+            <form method="POST" action="/reportes/parte/reabrir" class="co-form" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap">
                 <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
-                <button type="submit" class="btn btn-ghost"><i class="fa-solid fa-lock-open"></i> Reabrir</button>
+                <label style="min-width:26rem">Motivo de la corrección *<input type="text" name="motivo" minlength="10" maxlength="500" required placeholder="Qué se corrige y por qué"></label>
+                <button type="submit" class="btn btn-ghost"><i class="fa-solid fa-lock-open"></i> Corregir</button>
             </form>
         <?php endif; ?>
         <a href="/reportes?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Reportes</a>
@@ -168,6 +169,14 @@ $nomAct = function (int $idA) use ($parte): string {
         <div class="card">
             <h3>Registro</h3>
             <p class="text-sm text-muted">Creado por <?php echo s($r->creado_por ?: '—'); ?><?php if ($r->cerrado_en): ?><br>Cerrado el <?php echo s(date('d/m/Y H:i', strtotime($r->cerrado_en))); ?><?php endif; ?></p>
+            <?php if (!empty($correcciones)): ?>
+                <p class="text-sm text-muted" style="margin-top:.8rem"><strong>Correcciones</strong></p>
+                <ul class="text-sm text-muted">
+                    <?php foreach ($correcciones as $c): ?>
+                        <li><?php echo s(date('d/m/Y H:i', strtotime((string)$c['creado']))); ?> · <?php echo s($c['usuario'] ?: 'Usuario'); ?>: <?php echo s($c['motivo']); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
     </aside>
 </div>

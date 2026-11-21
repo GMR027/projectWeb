@@ -302,6 +302,7 @@ class ParteDiario
         $r->firma_nombre = mb_substr(trim((string)($post['firma_nombre'] ?? '')), 0, 150);
         if ($uuid !== '') $r->offline_uuid = $uuid;
         if (!$r->id && trim((string)$r->creado_por) === '') $r->creado_por = mb_substr((string)(usuario_actual()['nombre'] ?? ''), 0, 150);
+        if (!$r->id && empty($r->creado_por_id)) $r->creado_por_id = (int)(usuario_actual()['id'] ?? 0) ?: null;
 
         $catalogo = self::catalogos($proyecto);
         $actsValidas = array_column($catalogo['actividades'], 'id');
@@ -636,6 +637,81 @@ class ParteDiario
         if (!$r || (int)$r->proyecto_id !== $pid) return [false, 'El parte no existe'];
         self::db()->query("UPDATE reportes_diarios SET estado = 'borrador', cerrado_en = NULL WHERE id = $id AND proyecto_id = $pid");
         return [true, 'Parte reabierto para edición'];
+    }
+
+    // ---------------------------------------------------------------- correcciones
+
+    /** ¿Puede este usuario corregir el parte? Solo quien lo creó y el admin. */
+    public static function puedeCorregir(Proyecto $proyecto, int $id): bool
+    {
+        $r = ReporteDiario::find($id);
+        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) return false;
+        if (is_admin()) return true;
+        $uid = (int)(usuario_actual()['id'] ?? 0);
+        return $uid > 0 && (int)$r->creado_por_id === $uid;
+    }
+
+    /** Historial de correcciones de un parte (más reciente primero). */
+    public static function correcciones(int $id): array
+    {
+        return self::filas("SELECT c.* FROM parte_correcciones c WHERE c.reporte_id = $id ORDER BY c.creado DESC, c.id DESC");
+    }
+
+    private static function registrarCorreccion(int $id, string $motivo): void
+    {
+        $u = usuario_actual();
+        $uid = (int)($u['id'] ?? 0);
+        self::db()->query("INSERT INTO parte_correcciones (reporte_id, usuario_id, usuario, motivo) VALUES
+            ($id, " . ($uid ?: 'NULL') . ", '" . self::esc(mb_substr((string)($u['nombre'] ?? ''), 0, 150)) . "', '" . self::esc($motivo) . "')");
+    }
+
+    /** Reabre un parte cerrado con motivo (web). La app guarda y vuelve a cerrar en una sola operación. */
+    public static function reabrirConMotivo(Proyecto $proyecto, int $id, string $motivo): array
+    {
+        $motivo = trim($motivo);
+        if (mb_strlen($motivo) < 10) return [false, 'Escribe el motivo de la corrección (mínimo 10 caracteres).'];
+        if (!self::puedeCorregir($proyecto, $id)) return [false, 'Solo quien creó el parte o el administrador pueden corregirlo.'];
+        $r = ReporteDiario::find($id);
+        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) return [false, 'El parte no existe'];
+        if (!$r->estaCerrado()) return [false, 'El parte no está cerrado.'];
+        self::db()->query("UPDATE reportes_diarios SET estado = 'borrador', cerrado_en = NULL WHERE id = $id AND proyecto_id = " . (int)$proyecto->id);
+        self::registrarCorreccion($id, $motivo);
+        return [true, 'Parte reabierto para corrección.'];
+    }
+
+    /**
+     * Corrige un parte cerrado desde la app: guarda los cambios, registra el motivo
+     * y lo vuelve a cerrar. Si algo falla, la transacción deja el parte como estaba.
+     */
+    public static function corregir(Proyecto $proyecto, int $id, array $post, string $motivo): array
+    {
+        $motivo = trim($motivo);
+        if ($id <= 0) return ['ok' => false, 'id' => 0, 'errores' => ['Falta el parte.']];
+        if (mb_strlen($motivo) < 10) return ['ok' => false, 'id' => $id, 'errores' => ['Escribe el motivo de la corrección (mínimo 10 caracteres).']];
+        if (!self::puedeCorregir($proyecto, $id)) return ['ok' => false, 'id' => $id, 'errores' => ['Solo quien creó el parte o el administrador pueden corregirlo.']];
+        $r = ReporteDiario::find($id);
+        if (!$r || (int)$r->proyecto_id !== (int)$proyecto->id) return ['ok' => false, 'id' => $id, 'errores' => ['El parte no existe.']];
+        if (!$r->estaCerrado()) return ['ok' => false, 'id' => $id, 'errores' => ['El parte no está cerrado.']];
+
+        $post['id'] = $id;
+        $db = self::db();
+        $db->begin_transaction();
+        try {
+            $db->query("UPDATE reportes_diarios SET estado = 'borrador', cerrado_en = NULL WHERE id = $id AND proyecto_id = " . (int)$proyecto->id);
+            $res = self::guardar($proyecto, $post, []);
+            if (empty($res['ok'])) {
+                $db->rollback();
+                return $res;
+            }
+            self::registrarCorreccion($id, $motivo);
+            self::cerrar($proyecto, $id);
+            $db->commit();
+            return $res;
+        } catch (\Throwable $e) {
+            $db->rollback();
+            error_log('ParteDiario::corregir: ' . $e->getMessage());
+            return ['ok' => false, 'id' => $id, 'errores' => ['No se pudo guardar la corrección.']];
+        }
     }
 
     /** ¿Puede este usuario cerrar o reabrir? Dueño del proyecto o admin. */

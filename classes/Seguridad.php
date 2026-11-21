@@ -188,17 +188,86 @@ class Seguridad
     {
         $f = \DateTime::createFromFormat('Y-m-d', (string)($d['fecha'] ?? ''));
         $desc = trim((string)($d['descripcion'] ?? ''));
-        if (!$f || $desc === '') return [false, 'La fecha y la descripción son obligatorias.'];
+        if (!$f || $desc === '') return [false, 'La fecha y la descripción son obligatorias.', 0];
         $aid = (int)($d['actividad_id'] ?? 0);
         if ($aid && !self::filas("SELECT 1 FROM actividades a JOIN partidas pa ON pa.id = a.partida_id WHERE a.id = $aid AND pa.proyecto_id = $pid")) $aid = 0;
-        self::db()->query("INSERT INTO seguridad_incidentes (proyecto_id, fecha, tipo, severidad, area, actividad_id, descripcion, acciones, reportado_por) VALUES ($pid, '{$f->format('Y-m-d')}', '" . (isset(self::INCIDENTES[$d['tipo'] ?? '']) ? $d['tipo'] : 'incidente') . "', '" . (in_array($d['severidad'] ?? '', ['baja', 'media', 'alta', 'critica'], true) ? $d['severidad'] : 'media') . "', '"
-            . self::esc(mb_substr((string)($d['area'] ?? ''), 0, 150)) . "', " . ($aid ?: 'NULL') . ", '" . self::esc(mb_substr($desc, 0, 3000)) . "', '" . self::esc(mb_substr((string)($d['acciones'] ?? ''), 0, 3000)) . "', '" . self::esc(mb_substr(usuario_actual()['nombre'] ?? '', 0, 150)) . "')");
-        return [true, 'Incidente registrado.'];
+        $tipo = isset(self::INCIDENTES[$d['tipo'] ?? '']) ? $d['tipo'] : 'incidente';
+        $sev = in_array($d['severidad'] ?? '', ['baja', 'media', 'alta', 'critica'], true) ? $d['severidad'] : 'media';
+        $dias = max(0, (int)($d['dias_perdidos'] ?? 0));
+        $costo = max(0, (float)str_replace([',', '$', ' '], '', (string)($d['costo'] ?? 0)));
+        $v = fn($x) => "'" . self::esc($x) . "'";
+        self::db()->query("INSERT INTO seguridad_incidentes
+            (proyecto_id, fecha, tipo, severidad, area, actividad_id, descripcion, personas, acciones,
+             causa_inmediata, causa_raiz, acciones_correctivas, dias_perdidos, costo, investigado_por, reportado_por)
+            VALUES ($pid, '{$f->format('Y-m-d')}', '$tipo', '$sev', "
+            . $v(mb_substr((string)($d['area'] ?? ''), 0, 150)) . ", " . ($aid ?: 'NULL') . ", "
+            . $v(mb_substr($desc, 0, 3000)) . ", " . $v(mb_substr((string)($d['personas'] ?? ''), 0, 1000)) . ", "
+            . $v(mb_substr((string)($d['acciones'] ?? ''), 0, 3000)) . ", "
+            . $v(mb_substr((string)($d['causa_inmediata'] ?? ''), 0, 3000)) . ", "
+            . $v(mb_substr((string)($d['causa_raiz'] ?? ''), 0, 3000)) . ", "
+            . $v(mb_substr((string)($d['acciones_correctivas'] ?? ''), 0, 3000)) . ", "
+            . "$dias, $costo, " . $v(mb_substr((string)($d['investigado_por'] ?? ''), 0, 150)) . ", "
+            . $v(mb_substr((string)(usuario_actual()['nombre'] ?? ''), 0, 150)) . ")");
+        return [true, 'Incidente registrado.', (int)self::db()->insert_id];
     }
 
     public static function incidentes(int $pid, int $limite = 200): array
     {
-        return self::filas("SELECT i.*, a.codigo act_codigo FROM seguridad_incidentes i LEFT JOIN actividades a ON a.id = i.actividad_id WHERE i.proyecto_id = $pid ORDER BY i.estado = 'cerrado', i.fecha DESC, i.id DESC LIMIT $limite");
+        return self::filas("SELECT i.*, a.codigo act_codigo,
+                (SELECT COUNT(*) FROM seguridad_incidente_fotos f WHERE f.incidente_id = i.id) fotos
+            FROM seguridad_incidentes i LEFT JOIN actividades a ON a.id = i.actividad_id
+            WHERE i.proyecto_id = $pid ORDER BY i.estado = 'cerrado', i.fecha DESC, i.id DESC LIMIT $limite");
+    }
+
+    /** Fotos de un incidente (archivos en public/uploads/incidentes). */
+    public static function fotosIncidente(int $id): array
+    {
+        return self::filas("SELECT * FROM seguridad_incidente_fotos WHERE incidente_id = $id ORDER BY id");
+    }
+
+    /** Guarda fotos que llegan como data URL base64 (app Android). */
+    public static function adjuntarFotosIncidente(int $id, array $dataUrls): int
+    {
+        $inc = self::filas("SELECT proyecto_id FROM seguridad_incidentes WHERE id = $id LIMIT 1")[0] ?? null;
+        if (!$inc) return 0;
+        $pid = (int)$inc['proyecto_id'];
+        $n = 0;
+        foreach (array_slice($dataUrls, 0, 5) as $data) {
+            if (!is_string($data) || !preg_match('#^data:image/(?:jpeg|jpg|png|webp);base64,(.+)$#s', $data, $m)) continue;
+            $bin = base64_decode($m[1], true);
+            if (!$bin || strlen($bin) > 15 * 1024 * 1024) continue;
+            if (!\Classes\Almacenamiento::cabe($pid, strlen($bin))) break;
+            $tmp = tempnam(sys_get_temp_dir(), 'inc');
+            if (!$tmp || file_put_contents($tmp, $bin) === false) { @unlink((string)$tmp); continue; }
+            $nombre = \Classes\Imagenes::guardarEn('incidentes', $tmp, 1600, 85);
+            @unlink($tmp);
+            if (!$nombre) continue;
+            self::db()->query("INSERT INTO seguridad_incidente_fotos (incidente_id, archivo) VALUES ($id, '" . self::esc($nombre) . "')");
+            $n++;
+        }
+        return $n;
+    }
+
+    /** Adjunta fotos subidas por el formulario web (input file multiple). */
+    public static function adjuntarFotosIncidenteFiles(int $id, array $files): int
+    {
+        $inc = self::filas("SELECT proyecto_id FROM seguridad_incidentes WHERE id = $id LIMIT 1")[0] ?? null;
+        if (!$inc) return 0;
+        $pid = (int)$inc['proyecto_id'];
+        $tmpNames = (array)($files['tmp_name'] ?? []);
+        $errors = (array)($files['error'] ?? []);
+        $sizes = (array)($files['size'] ?? []);
+        $n = 0;
+        foreach ($tmpNames as $i => $tmp) {
+            if ($n >= 5) break;
+            if ((int)($errors[$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp)) continue;
+            if ((int)($sizes[$i] ?? 0) > 15 * 1024 * 1024) continue;
+            $nombre = \Classes\Imagenes::guardarEn('incidentes', $tmp, 1600, 85);
+            if (!$nombre) continue;
+            self::db()->query("INSERT INTO seguridad_incidente_fotos (incidente_id, archivo) VALUES ($id, '" . self::esc($nombre) . "')");
+            $n++;
+        }
+        return $n;
     }
 
     public static function cerrarIncidente(int $pid, int $id, array|string $d): bool

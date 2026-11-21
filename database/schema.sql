@@ -865,6 +865,7 @@ CREATE TABLE reportes_diarios (
     firma_imagen VARCHAR(255) NULL,
     offline_uuid VARCHAR(64) NULL,
     creado_por VARCHAR(150) NOT NULL DEFAULT '',
+    creado_por_id INT NULL,
     cerrado_en DATETIME NULL,
     personal_json LONGTEXT,      -- [id de personal, ...]
     actividades_json LONGTEXT,   -- [id de actividad del programa, ...]
@@ -872,7 +873,21 @@ CREATE TABLE reportes_diarios (
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     KEY idx_reporte_proyecto_fecha (proyecto_id, fecha),
+    KEY idx_reporte_creado_por (creado_por_id),
     UNIQUE KEY uq_reporte_offline (offline_uuid)
+) ENGINE=InnoDB;
+
+-- Historial de correcciones de un parte ya cerrado (quién, cuándo y por qué)
+CREATE TABLE IF NOT EXISTS parte_correcciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporte_id INT NOT NULL,
+    usuario_id INT NULL,
+    usuario VARCHAR(150) NOT NULL DEFAULT '',
+    motivo TEXT NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_pc_reporte (reporte_id, creado),
+    FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE bitacora (
@@ -1700,6 +1715,7 @@ CREATE TABLE IF NOT EXISTS seguridad_incidentes (
     actividad_id INT NULL,
     reporte_id INT NULL,
     descripcion TEXT NOT NULL,
+    personas VARCHAR(1000) NOT NULL DEFAULT '',
     acciones TEXT NULL,
     causa_inmediata TEXT NULL,
     causa_raiz TEXT NULL,
@@ -1715,6 +1731,15 @@ CREATE TABLE IF NOT EXISTS seguridad_incidentes (
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (actividad_id) REFERENCES actividades(id) ON DELETE SET NULL,
     FOREIGN KEY (reporte_id) REFERENCES reportes_diarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS seguridad_incidente_fotos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    incidente_id INT NOT NULL,
+    archivo VARCHAR(120) NOT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_sif_incidente (incidente_id),
+    FOREIGN KEY (incidente_id) REFERENCES seguridad_incidentes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS punch_items (

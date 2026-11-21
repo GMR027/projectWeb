@@ -93,7 +93,11 @@ class SeguridadController
     public static function incidente()
     {
         $p = self::gestion();
-        [$ok, $msg] = Seguridad::registrarIncidente((int)$p->id, $_POST);
+        [$ok, $msg, $id] = Seguridad::registrarIncidente((int)$p->id, $_POST);
+        if ($ok && $id && !empty($_FILES['fotos']['tmp_name'][0] ?? null)) {
+            $n = Seguridad::adjuntarFotosIncidenteFiles((int)$id, $_FILES['fotos']);
+            if ($n) $msg .= ' ' . $n . ' foto(s) adjunta(s).';
+        }
         self::volver($p, $ok, $msg);
     }
 

@@ -128,7 +128,7 @@ El **proyecto DEMO** trae ejemplos claros: 6 planes de calidad (uno por cada est
 
 - `seguridad_ats`: actividad, fecha, responsable, trabajo, peligros, controles, EPP, participantes y estado; `seguridad_ats_firmas` guarda nombre/puesto. `atsFirmado()` exige un ATS `firmado` o `cerrado` para la actividad y fecha.
 - Permisos de alto riesgo (`ATS_TIPOS`: altura, caliente, espacio confinado, excavación, eléctrico, izaje): `cambiarEstado()` no aprueba si no existe ATS firmado para la actividad y `vigente_desde`.
-- `seguridad_incidentes` se amplía con causa inmediata, causa raíz, acciones correctivas, días perdidos, costo, investigado por y cierre; `seguridad_acciones` guarda el seguimiento verificado.
+- `seguridad_incidentes` se amplía con causa inmediata, causa raíz, acciones correctivas, días perdidos, costo, investigado por y cierre; `personas` guarda las personas involucradas y `seguridad_incidente_fotos` las fotos (archivos en `public/uploads/incidentes`). `seguridad_acciones` guarda el seguimiento verificado. La app Android registra estos mismos campos con `seguridad_incidente_crear`; migraciones `database/migracion_incidentes_app.sql` y `database/migracion_seguridad_sistema.sql`.
 - `Seguridad::indicadores()` calcula horas-hombre con `reporte_personal` del parte diario, frecuencia y gravedad (base 200,000) y días sin accidente; meses sin horas muestran «—».
 - UI con pestañas **Permisos**, **ATS**, **Incidentes** e **Indicadores**; `resumen()` incluye `ats_pendientes` y Salud lo usa en el semáforo.
 - Migración `database/migracion_seguridad_sistema.sql`.

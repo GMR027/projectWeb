@@ -47,7 +47,8 @@ class Media
 
         // 0) Si el visitante tiene ocultas las herramientas donde se usa esa imagen, tampoco la ve.
         $herramientas = [
-            'evidencias' => ['evidencias'], 'reportes' => ['reportes', 'evidencias'], 'punch' => ['punch', 'vplan'],
+            'evidencias' => ['evidencias'], 'reportes' => ['reportes', 'evidencias'],
+            'incidentes' => ['seguridad'], 'punch' => ['punch', 'vplan'],
             'materiales' => ['materiales', 'submittals', 'msr'], 'personal' => ['minutas', 'reportes', 'recursos', 'redactor'],
             'vplan' => ['vplan', 'graficos', 'submittals', 'view360', 'redactor'], 'simbolos' => ['graficos', 'vplan'],
             'firmas' => ['redactor'], 'soporte' => [], 'anotador' => ['anotador', 'comparador'],
@@ -109,6 +110,8 @@ class Media
         }
         $sql = match ($carpeta) {
             'evidencias' => "SELECT proyecto_id FROM evidencias WHERE foto = '$a' LIMIT 1",
+            'incidentes' => "SELECT i.proyecto_id FROM seguridad_incidente_fotos f
+                JOIN seguridad_incidentes i ON i.id = f.incidente_id WHERE f.archivo = '$a' LIMIT 1",
             'materiales' => "SELECT proyecto_id FROM materiales WHERE imagen = '$a' LIMIT 1",
             'personal' => "SELECT proyecto_id FROM personal WHERE imagen = '$a' LIMIT 1",
             'simbolos' => "SELECT proyecto_id FROM simbolos WHERE archivo = '$a' LIMIT 1",

@@ -61,6 +61,7 @@ class AppApi
             ['GET', '/sesiones', 'sesiones'],
             ['POST', '/sesiones/cerrar', 'cerrarSesion'],
             ['GET', '/archivo', 'archivoGet'],
+            ['GET', '/parte', 'parteGet'],
             ['POST', '/enlace', 'enlace'],
             ['GET', '/chat', 'chatGet'],
             ['POST', '/chat/nueva', 'chatNueva'],
@@ -393,6 +394,70 @@ class AppApi
         ]);
     }
 
+    /** Detalle de un parte para abrirlo o corregirlo en la app. */
+    private static function parteGet(): never
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $r = $id > 0 ? ReporteDiario::find($id) : null;
+        $p = $r ? Proyecto::find((int)$r->proyecto_id) : null;
+        if (!$r || !$p || !puede_ver_proyecto($p)) self::error(404, 'no_encontrado', 'El parte no existe o no tienes acceso.');
+        $cerrado = $r->estaCerrado();
+        $edita = puede_gestionar_proyecto($p);
+        $puedeCorregir = $cerrado && ParteDiario::puedeCorregir($p, $id);
+        if ($cerrado && !$puedeCorregir) self::error(403, 'solo_creador', 'Solo quien creó el parte o el administrador pueden corregirlo.');
+        if (!$cerrado && !$edita) self::error(403, 'solo_lectura', 'No puedes editar este parte.');
+        $v = ParteDiario::vista($p, $id);
+        if (!$v) self::error(404, 'no_encontrado', 'El parte no existe.');
+        $base = $v['base'];
+        $actividades = [];
+        foreach ($v['actividades'] as $a) if (!empty($a['sel'])) $actividades[] = (int)$a['id'];
+        $fotos = (int)(self::filas("SELECT COUNT(*) n FROM reporte_fotos WHERE reporte_id = $id")[0]['n'] ?? 0);
+        self::responder([
+            'success' => true,
+            'parte' => [
+                'id' => $id,
+                'estado' => (string)$r->estado,
+                'fecha' => (string)$base['fecha'],
+                'turno' => (string)$base['turno'],
+                'area' => (string)$base['area'],
+                'supervisor' => (string)$base['supervisor'],
+                'visitas' => (string)$base['visitas'],
+                'comentarios' => (string)$base['comentarios'],
+                'clima_precip_mm' => $base['clima_precip_mm'],
+                'clima_viento_kmh' => $base['clima_viento_kmh'],
+                'clima_tmax' => $base['clima_tmax'],
+                'clima_tmin' => $base['clima_tmin'],
+                'firma_nombre' => (string)$base['firma_nombre'],
+                'offline_uuid' => (string)($base['offline_uuid'] ?? ''),
+                'actividades' => $actividades,
+                'personal' => array_map(fn($x) => [
+                    'personal_id' => (int)$x['personal_id'], 'horas_normal' => (float)$x['horas_normal'],
+                    'horas_extra' => (float)$x['horas_extra'], 'actividad_id' => (int)$x['actividad_id'],
+                ], $v['personal']),
+                'equipo' => array_map(fn($x) => [
+                    'equipo_id' => (int)$x['equipo_id'], 'horas' => (float)$x['horas'],
+                    'actividad_id' => (int)$x['actividad_id'], 'operador' => (string)$x['operador'],
+                ], $v['equipo']),
+                'materiales' => array_map(fn($x) => [
+                    'material_id' => (int)$x['material_id'], 'cantidad' => (float)$x['cantidad'],
+                    'unidad' => (string)$x['unidad'], 'tipo' => (string)$x['tipo'],
+                ], $v['materiales']),
+                'tiempos' => array_map(fn($x) => [
+                    'horas' => (float)$x['horas'], 'causa' => (string)$x['causa'],
+                    'actividad_id' => (int)$x['actividad_id'], 'nota' => (string)$x['nota'],
+                ], $v['tiempos']),
+                'seguridad' => [
+                    'charla_tema' => (string)($v['seguridad']['charla_tema'] ?? ''),
+                    'asistentes' => (int)($v['seguridad']['asistentes'] ?? 0),
+                    'epp_ok' => (int)($v['seguridad']['epp_ok'] ?? 0),
+                ],
+                'fotos' => $fotos,
+                'puede_corregir' => $puedeCorregir,
+                'correcciones' => ParteDiario::correcciones($id),
+            ],
+        ]);
+    }
+
     private static function archivoGet(): never
     {
         $id = (int)($_GET['id'] ?? 0);
@@ -670,26 +735,35 @@ class AppApi
                 })(),
                 'festivos' => array_column(self::filas("SELECT fecha FROM calendario_festivos WHERE proyecto_id = $pid"), 'fecha'),
             ],
-            'partes' => array_map(fn($r) => [
-                'id' => (int)$r['id'],
-                'fecha' => (string)$r['fecha'],
-                'turno' => (string)$r['turno'],
-                'area' => (string)($r['area'] ?? ''),
-                'supervisor' => (string)($r['supervisor'] ?? ''),
-                'estado' => (string)$r['estado'],
-                'comentarios' => (string)($r['comentarios'] ?? ''),
-                'personal' => (int)$r['personal'],
-                'equipo' => (int)$r['equipo'],
-                'materiales' => (int)$r['materiales'],
-                'tiempos' => round((float)$r['tiempos'], 2),
-                'horas_personal' => round((float)$r['horas_personal'], 2),
-                'horas_equipo' => round((float)$r['horas_equipo'], 2),
-            ], ReporteDiario::recientes($pid, 12)),
+            'partes' => array_map(function ($r) use ($p) {
+                $uid = (int)(self::usuario()['id'] ?? 0);
+                $cerrado = (string)$r['estado'] === 'cerrado';
+                return [
+                    'id' => (int)$r['id'],
+                    'fecha' => (string)$r['fecha'],
+                    'turno' => (string)$r['turno'],
+                    'area' => (string)($r['area'] ?? ''),
+                    'supervisor' => (string)($r['supervisor'] ?? ''),
+                    'estado' => (string)$r['estado'],
+                    'comentarios' => (string)($r['comentarios'] ?? ''),
+                    'creado_por' => (string)($r['creado_por'] ?? ''),
+                    'personal' => (int)$r['personal'],
+                    'equipo' => (int)$r['equipo'],
+                    'materiales' => (int)$r['materiales'],
+                    'tiempos' => round((float)$r['tiempos'], 2),
+                    'horas_personal' => round((float)$r['horas_personal'], 2),
+                    'horas_equipo' => round((float)$r['horas_equipo'], 2),
+                    'puede_corregir' => $cerrado && (is_admin() || (int)($r['creado_por_id'] ?? 0) === $uid),
+                    'puede_abrir' => !$cerrado && puede_gestionar_proyecto($p),
+                ];
+            }, ReporteDiario::recientes($pid, 12)),
             'bitacora' => $bitacora,
             'seguridad' => [
                 'resumen' => $segResumen,
                 'incidentes' => $incidentes,
                 'ats_pendientes' => $atsPendientes,
+                'tipos' => Seguridad::INCIDENTES,
+                'severidades' => ['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'critica' => 'Crítica'],
             ],
             'riesgos' => $riesgos,
             'recordatorios' => $recordatorios,
@@ -800,6 +874,8 @@ class AppApi
             'rfi_estado' => self::opRfiEstado($p, $op),
             'parte_diario' => self::opParteDiario($p, $op),
             'parte_cerrar' => self::opParteCerrar($p, $op),
+            'parte_corregir' => self::opParteCorregir($p, $op),
+            'seguridad_incidente_crear' => self::opSeguridadIncidente($p, $op),
             'evidencia_crear' => self::opEvidencia($p, $op),
             default => ['ok' => false, 'codigo' => 'tipo_desconocido', 'mensaje' => 'Tipo de operación no soportado: ' . $tipo],
         };
@@ -871,11 +947,56 @@ class AppApi
 
     private static function opParteCerrar(Proyecto $p, array $op): array
     {
+        $id = (int)($op['id'] ?? 0);
         $uuid = (string)($op['offline_uuid'] ?? $op['uuid'] ?? '');
-        $r = ReporteDiario::porOfflineUuid((int)$p->id, $uuid);
-        if (!$r) return ['ok' => false, 'codigo' => 'no_encontrado', 'mensaje' => 'El parte todavía no se ha guardado.'];
+        $r = $id > 0 ? ReporteDiario::find($id) : ReporteDiario::porOfflineUuid((int)$p->id, $uuid);
+        if (!$r || (int)$r->proyecto_id !== (int)$p->id) return ['ok' => false, 'codigo' => 'no_encontrado', 'mensaje' => 'El parte todavía no se ha guardado.'];
         [$ok, $msg] = ParteDiario::cerrar($p, (int)$r->id);
         return ['ok' => $ok, 'codigo' => $ok ? '' : 'cerrar', 'mensaje' => $msg, 'datos' => ['id' => (int)$r->id]];
+    }
+
+    private static function opParteCorregir(Proyecto $p, array $op): array
+    {
+        $id = (int)($op['id'] ?? 0);
+        $motivo = self::texto($op['motivo'] ?? '', 500);
+        $parte = $op['parte'] ?? null;
+        if ($id <= 0 || !is_array($parte)) return ['ok' => false, 'codigo' => 'datos', 'mensaje' => 'Falta el parte o su identificador.'];
+        $fotos = is_array($parte['fotos_base64'] ?? null) ? array_slice($parte['fotos_base64'], 0, 5) : [];
+        unset($parte['fotos_base64']);
+        $parte['id'] = $id;
+        $r = ParteDiario::corregir($p, $id, $parte, $motivo);
+        if (empty($r['ok'])) {
+            $errores = array_values(array_filter((array)($r['errores'] ?? [])));
+            return ['ok' => false, 'codigo' => 'parte', 'mensaje' => $errores ? implode(' ', $errores) : 'No se pudo corregir el parte.', 'datos' => ['errores' => $errores]];
+        }
+        $fotosGuardadas = $fotos ? ParteDiario::adjuntarFotosBase64($p, $id, $fotos) : 0;
+        return ['ok' => true, 'datos' => ['id' => $id, 'avisos' => $r['avisos'] ?? [], 'fotos' => $fotosGuardadas]];
+    }
+
+    private static function opSeguridadIncidente(Proyecto $p, array $op): array
+    {
+        $descripcion = self::texto($op['descripcion'] ?? '', 3000);
+        if ($descripcion === '') return ['ok' => false, 'codigo' => 'datos', 'mensaje' => 'Escribe qué pasó.'];
+        $fotos = is_array($op['fotos_base64'] ?? null) ? array_slice($op['fotos_base64'], 0, 5) : [];
+        [$ok, $msg, $id] = Seguridad::registrarIncidente((int)$p->id, [
+            'fecha' => self::texto($op['fecha'] ?? date('Y-m-d'), 10),
+            'tipo' => self::texto($op['tipo_incidente'] ?? 'incidente', 30),
+            'severidad' => self::texto($op['severidad'] ?? 'media', 20),
+            'area' => self::texto($op['area'] ?? '', 150),
+            'actividad_id' => (int)($op['actividad_id'] ?? 0),
+            'descripcion' => $descripcion,
+            'personas' => self::texto($op['personas'] ?? '', 1000),
+            'acciones' => self::texto($op['acciones'] ?? '', 3000),
+            'causa_inmediata' => self::texto($op['causa_inmediata'] ?? '', 3000),
+            'causa_raiz' => self::texto($op['causa_raiz'] ?? '', 3000),
+            'acciones_correctivas' => self::texto($op['acciones_correctivas'] ?? '', 3000),
+            'dias_perdidos' => (int)($op['dias_perdidos'] ?? 0),
+            'costo' => $op['costo'] ?? 0,
+            'investigado_por' => self::texto($op['investigado_por'] ?? '', 150),
+        ]);
+        if (!$ok) return ['ok' => false, 'codigo' => 'datos', 'mensaje' => $msg];
+        $fotosGuardadas = $fotos && $id ? Seguridad::adjuntarFotosIncidente((int)$id, $fotos) : 0;
+        return ['ok' => true, 'datos' => ['id' => (int)$id, 'fotos' => $fotosGuardadas, 'mensaje' => $msg]];
     }
 
     private static function opActividad(Proyecto $p, array $op): array

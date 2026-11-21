@@ -8,7 +8,7 @@ class ReporteDiario extends ActiveRecord
     protected static $columnasDB = [
         'id', 'proyecto_id', 'fecha', 'area', 'turno', 'supervisor', 'comentarios', 'estado',
         'clima_precip_mm', 'clima_viento_kmh', 'clima_tmax', 'clima_tmin', 'visitas',
-        'firma_nombre', 'firma_imagen', 'offline_uuid', 'creado_por', 'cerrado_en',
+        'firma_nombre', 'firma_imagen', 'offline_uuid', 'creado_por', 'creado_por_id', 'cerrado_en',
         'personal_json', 'actividades_json', 'fotos_json',
     ];
 
@@ -32,6 +32,7 @@ class ReporteDiario extends ActiveRecord
     public $firma_imagen;
     public $offline_uuid;
     public $creado_por;
+    public $creado_por_id;
     public $cerrado_en;
     public $personal_json;
     public $actividades_json;
@@ -56,6 +57,7 @@ class ReporteDiario extends ActiveRecord
         $this->firma_imagen = $args['firma_imagen'] ?? null;
         $this->offline_uuid = $args['offline_uuid'] ?? null;
         $this->creado_por = $args['creado_por'] ?? '';
+        $this->creado_por_id = $args['creado_por_id'] ?? null;
         $this->cerrado_en = $args['cerrado_en'] ?? null;
         $this->personal_json = $args['personal_json'] ?? '[]';
         $this->actividades_json = $args['actividades_json'] ?? '[]';
@@ -118,7 +120,8 @@ class ReporteDiario extends ActiveRecord
     public static function recientes(int $proyectoId, int $limite = 12): array
     {
         $limite = max(1, min(50, $limite));
-        $res = self::$db->query("SELECT r.id, r.fecha, r.turno, r.area, r.supervisor, r.estado, r.comentarios, r.cerrado_en,
+        $res = self::$db->query("SELECT r.id, r.fecha, r.turno, r.area, r.supervisor, r.estado, r.comentarios,
+                r.creado_por, r.creado_por_id, r.cerrado_en,
                 (SELECT COUNT(*) FROM reporte_personal rp WHERE rp.reporte_id = r.id) personal,
                 (SELECT COUNT(*) FROM reporte_equipo re WHERE re.reporte_id = r.id) equipo,
                 (SELECT COUNT(*) FROM reporte_materiales rm WHERE rm.reporte_id = r.id) materiales,

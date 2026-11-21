@@ -64,6 +64,8 @@ class ReporteController
             'proyecto' => $proyecto, 'reporte' => $parte['reporte'], 'parte' => $parte,
             'subactividades' => Subactividad::conteoPorProyecto((int)$proyecto->id),
             'puede_cerrar' => ParteDiario::puedeCerrar($proyecto),
+            'puede_corregir' => ParteDiario::puedeCorregir($proyecto, (int)$id),
+            'correcciones' => ParteDiario::correcciones((int)$id),
             'alertas' => $alertas,
         ]);
     }
@@ -123,7 +125,7 @@ class ReporteController
             header('Location: /reportes/parte?proyecto=' . $pid . ($id ? '&id=' . $id : ''));
             exit;
         }
-        if (($_POST['accion'] ?? '') === 'cerrar' && ParteDiario::puedeCerrar($proyecto)) {
+        if (($_POST['accion'] ?? '') === 'cerrar' && (ParteDiario::puedeCerrar($proyecto) || ParteDiario::puedeCorregir($proyecto, (int)$res['id']))) {
             ParteDiario::cerrar($proyecto, (int)$res['id']);
         }
         $avisos = array_values(array_filter((array)($res['avisos'] ?? [])));
@@ -153,13 +155,14 @@ class ReporteController
         $proyecto = proyecto_de_peticion(true);
         $pid = (int)$proyecto->id;
         $id = (int)($_POST['id'] ?? 0);
-        if (!ParteDiario::puedeCerrar($proyecto)) {
-            http_response_code(403);
-            exit('Solo el dueño del proyecto o el administrador pueden reabrir el parte.');
-        }
-        [$ok, $msg] = ParteDiario::reabrir($proyecto, $id);
+        $motivo = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
+        [$ok, $msg] = ParteDiario::reabrirConMotivo($proyecto, $id, $motivo);
         $_SESSION['parte_alertas'] = [($ok ? 'exito' : 'error') => [$msg]];
-        header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $id);
+        if ($ok) {
+            header('Location: /reportes/parte?proyecto=' . $pid . '&id=' . $id);
+        } else {
+            header('Location: /reportes/ver?proyecto=' . $pid . '&id=' . $id);
+        }
         exit;
     }
 

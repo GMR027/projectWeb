@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.10';
-const APP_VERSION_CODE = 2010;
+const APP_VERSION = '0.2.11';
+const APP_VERSION_CODE = 2011;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -35,7 +35,11 @@ const state = {
   detenido: false,
   ultimaPregunta: '',
   parteFotos: [],
+  parteModo: 'nuevo',
+  parteDetalle: null,
   evidenciaFotos: [],
+  incidentesVolver: 'obras',
+  incidenteFotos: [],
   stream: null,
   motor: {
     disponible: false,
@@ -382,6 +386,7 @@ function renderTodo() {
     const p = proyectoActual();
     if (p && state.tab === 'punch') renderPunch(p);
     if (p && state.tab === 'rfi') renderRfi(p);
+    if (p && state.tab === 'incidentes') renderIncidentes(p);
     if (p && state.tab === 'archivo') renderArchivoObra(p);
   }
   renderChatEstado();
@@ -473,7 +478,7 @@ const HERRAMIENTAS_OBRA = [
   ['EV', 'Evidencias', 'Fotos por actividad', '/evidencias'],
   ['CO', 'Costos', 'Presupuesto y estimaciones', '/costos'],
   ['MT', 'Materiales', 'Compras y almacén', '/materiales'],
-  ['SG', 'Seguridad', 'Incidentes y ATS', '/seguridad'],
+  ['SG', 'Incidentes', 'Seguridad y ATS', '/seguridad'],
   ['CA', 'Calidad', 'Inspecciones y NC', '/calidad'],
 ];
 
@@ -555,6 +560,7 @@ function abrirObra(id) {
     if (ruta === '/archivos') { abrirArchivoObra(Number(proj.id)); return; }
     if (ruta === '/punch') { abrirPunch(Number(proj.id)); return; }
     if (ruta === '/rfi') { abrirRfi(Number(proj.id)); return; }
+    if (ruta === '/seguridad') { abrirIncidentes(Number(proj.id)); return; }
     abrirWeb(ruta + (ruta.includes('?') ? '&' : '?') + 'proyecto=' + Number(proj.id));
   }));
 }
@@ -903,6 +909,168 @@ function formRfi(p, pre = {}) {
   });
 }
 
+const INCIDENTES_TIPOS = { incidente: 'Incidente', casi_accidente: 'Casi accidente', acto_inseguro: 'Acto inseguro', condicion_insegura: 'Condición insegura' };
+const INCIDENTES_SEVERIDADES = { baja: 'Baja', media: 'Media', alta: 'Alta', critica: 'Crítica' };
+
+function abrirIncidentes(id) {
+  const p = state.sync.find((x) => Number(x.proyecto.id) === Number(id));
+  if (!p) { toast('No se encontró la obra.'); return; }
+  state.incidentesVolver = state.tab === 'incidentes' ? 'obras' : state.tab;
+  state.proyectoId = Number(p.proyecto.id);
+  cacheGuardar('proyecto', String(state.proyectoId));
+  cerrarModal();
+  $('#incidentes-obra').textContent = `${p.proyecto.nombre} · ${p.proyecto.codigo || ''}`;
+  const input = $('#incidentes-buscar'); if (input) input.value = '';
+  renderIncidentes(p);
+  irA('incidentes');
+  setTimeout(() => { const v = $('#vista'); if (v) v.scrollTo({ top: 0, behavior: 'auto' }); }, 220);
+}
+
+function renderIncidentes(p) {
+  const cont = $('#incidentes-lista');
+  if (!cont) return;
+  const items = Array.isArray(p.seguridad?.incidentes) ? p.seguridad.incidentes : [];
+  const tipos = p.seguridad?.tipos || INCIDENTES_TIPOS;
+  const q = normalizarTexto($('#incidentes-buscar')?.value || '').trim();
+  const lista = q ? items.filter((x) => normalizarTexto(`${x.descripcion || ''} ${x.personas || ''} ${x.area || ''} ${tipos[x.tipo] || x.tipo || ''} ${x.reportado_por || ''}`).includes(q)) : items;
+  $('#incidentes-nuevo').hidden = !p.permisos?.editar;
+  if (!lista.length) {
+    cont.innerHTML = `<div class="aviso"><svg class="ico"><use href="#i-shield"/></svg><p>${items.length ? 'No hay incidentes que coincidan.' : 'No hay incidentes registrados. Crea el primero con «+ Nuevo».'}</p></div>`;
+    return;
+  }
+  cont.innerHTML = lista.map((x) => `
+    <button class="tarea-item" type="button" data-incidente="${Number(x.id)}"${Number(x.id) <= 0 ? ' disabled' : ''}>
+      <span class="tarea-punto ${esc(x.severidad || 'media')}"></span>
+      <span class="tarea-txt"><strong>${esc(tipos[x.tipo] || x.tipo || 'Incidente')}</strong>
+        <small>${esc(fechaLarga(x.fecha))} · ${esc(x.area || 'Sin área')}${x.personas ? ' · ' + esc(String(x.personas).slice(0, 70)) : ''}${Number(x.fotos) ? ' · ' + Number(x.fotos) + ' foto(s)' : ''}</small>
+        <small>${esc(String(x.descripcion || '').slice(0, 120))}</small></span>
+      <span class="chip ${x.estado === 'cerrado' ? 'chip-ok' : (x.severidad === 'critica' || x.severidad === 'alta' ? 'chip-bad' : 'chip-warn')}">${x.estado === 'cerrado' ? 'Cerrado' : 'Abierto'}</span>
+    </button>`).join('');
+  cont.onclick = (e) => {
+    const b = e.target.closest('[data-incidente]');
+    if (!b || !cont.contains(b)) return;
+    const x = items.find((i) => Number(i.id) === Number(b.dataset.incidente));
+    if (x) verIncidente(p, x);
+  };
+}
+
+function verIncidente(p, x) {
+  const tipos = p.seguridad?.tipos || INCIDENTES_TIPOS;
+  const sev = p.seguridad?.severidades || INCIDENTES_SEVERIDADES;
+  const filas = [
+    ['Fecha', fechaLarga(x.fecha)],
+    ['Tipo', tipos[x.tipo] || x.tipo || 'Incidente'],
+    ['Severidad', sev[x.severidad] || x.severidad || 'Media'],
+    ['Área', x.area || '—'],
+    ['Actividad', x.act_codigo || '—'],
+    ['Estado', x.estado === 'cerrado' ? 'Cerrado' : 'Abierto'],
+    ['Reportado por', x.reportado_por || '—'],
+    ['Días perdidos', Number(x.dias_perdidos) || 0],
+    ['Costo', '$' + (Number(x.costo) || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
+    ['Fotos', Number(x.fotos) || 0],
+  ];
+  abrirModal('Incidente', `
+    <div class="hist-detalle">${filas.map(([k, v]) => `<div><span>${esc(k)}</span><strong>${esc(String(v))}</strong></div>`).join('')}</div>
+    ${x.personas ? `<p class="parte-nota"><strong>Personas involucradas:</strong><br>${esc(x.personas)}</p>` : ''}
+    <p class="parte-nota"><strong>Qué pasó:</strong><br>${esc(x.descripcion || '—')}</p>
+    ${x.acciones ? `<p class="parte-nota"><strong>Acciones inmediatas:</strong><br>${esc(x.acciones)}</p>` : ''}
+    ${x.causa_inmediata ? `<p class="parte-nota"><strong>Causa inmediata:</strong><br>${esc(x.causa_inmediata)}</p>` : ''}
+    ${x.causa_raiz ? `<p class="parte-nota"><strong>Causa raíz:</strong><br>${esc(x.causa_raiz)}</p>` : ''}
+    ${x.acciones_correctivas ? `<p class="parte-nota"><strong>Acciones correctivas:</strong><br>${esc(x.acciones_correctivas)}</p>` : ''}
+    ${x._pendiente ? '<p class="parte-nota">Pendiente de enviar: se sincroniza al recuperar conexión.</p>' : ''}
+    <div class="tarea-acciones"><button class="btn-mini" type="button" id="incidente-ver-web">Permisos y ATS en la web</button></div>`);
+  $('#incidente-ver-web')?.addEventListener('click', () => abrirWeb('/seguridad'));
+}
+
+function renderFotosIncidente() {
+  const cont = $('#inc-fotos-prev');
+  if (!cont) return;
+  cont.innerHTML = state.incidenteFotos.length ? state.incidenteFotos.map((f, i) => `
+    <div class="parte-foto">
+      <img src="${f.data}" alt="${esc(f.nombre || 'Foto del incidente')}">
+      <button type="button" data-quitar-incidencia="${i}" aria-label="Quitar foto">×</button>
+    </div>`).join('') : '';
+  $$('[data-quitar-incidencia]', cont).forEach((b) => b.addEventListener('click', () => {
+    state.incidenteFotos.splice(Number(b.dataset.quitarIncidencia), 1);
+    renderFotosIncidente();
+  }));
+}
+
+function formIncidente(p) {
+  const tipos = p.seguridad?.tipos || INCIDENTES_TIPOS;
+  const sev = p.seguridad?.severidades || INCIDENTES_SEVERIDADES;
+  state.incidenteFotos = [];
+  abrirModal('Nuevo incidente', `
+    <form id="incidente-form" class="modal-form">
+      <div class="parte-grid">
+        <label class="parte-campo">Fecha *<input type="date" id="inc-fecha" value="${hoyISO()}" required></label>
+        <label class="parte-campo">Tipo<select id="inc-tipo">${Object.entries(tipos).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join('')}</select></label>
+        <label class="parte-campo">Severidad<select id="inc-severidad">${Object.entries(sev).map(([k, v]) => `<option value="${esc(k)}"${k === 'media' ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+        <label class="parte-campo">Área<input type="text" id="inc-area" maxlength="150" placeholder="Nivel 3, eje B"></label>
+        <label class="parte-campo">Actividad<select id="inc-actividad">${opcionesActividades(p)}</select></label>
+        <label class="parte-campo">Días perdidos<input type="number" id="inc-dias" min="0" value="0"></label>
+        <label class="parte-campo">Costo<input type="number" id="inc-costo" min="0" step=".01" value="0"></label>
+        <label class="parte-campo">Investigado por<input type="text" id="inc-investigado" maxlength="150" value="${esc(state.usuario?.nombre || '')}"></label>
+      </div>
+      <label class="parte-campo">Qué pasó *<textarea id="inc-descripcion" rows="3" maxlength="3000" required placeholder="Describe el hecho, dónde y cuándo"></textarea></label>
+      <label class="parte-campo">Personas involucradas<textarea id="inc-personas" rows="2" maxlength="1000" placeholder="Nombre, puesto o cuadrilla"></textarea></label>
+      <label class="parte-campo">Acciones inmediatas<textarea id="inc-acciones" rows="2" maxlength="3000" placeholder="Qué se hizo en el momento"></textarea></label>
+      <label class="parte-campo">Causa inmediata<textarea id="inc-causa-inmediata" rows="2" maxlength="3000"></textarea></label>
+      <label class="parte-campo">Causa raíz<textarea id="inc-causa-raiz" rows="2" maxlength="3000"></textarea></label>
+      <label class="parte-campo">Acciones correctivas<textarea id="inc-correctivas" rows="2" maxlength="3000"></textarea></label>
+      <label class="parte-campo">Fotos (máx. 5)<input type="file" id="inc-fotos" class="parte-file" accept="image/*" multiple></label>
+      <div id="inc-fotos-prev" class="parte-fotos-prev"></div>
+      <button class="btn-principal" type="submit">Guardar incidente</button>
+    </form>`);
+  renderFotosIncidente();
+  $('#inc-fotos')?.addEventListener('change', async (e) => {
+    const archivos = [...(e.target.files || [])].slice(0, Math.max(0, 5 - state.incidenteFotos.length));
+    for (const archivo of archivos) {
+      if (!archivo.type.startsWith('image/')) continue;
+      if (archivo.size > 8 * 1024 * 1024) { toast('Cada foto debe pesar menos de 8 MB.'); continue; }
+      try {
+        state.incidenteFotos.push({ nombre: archivo.name, data: await leerArchivoDataUrl(archivo) });
+      } catch (err) { toast('No se pudo leer la foto.'); }
+    }
+    e.target.value = '';
+    renderFotosIncidente();
+  });
+  $('#incidente-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const descripcion = String($('#inc-descripcion')?.value || '').trim();
+    if (!descripcion) { toast('Escribe qué pasó.'); return; }
+    const op = {
+      tipo: 'seguridad_incidente_crear', proyecto: Number(p.proyecto.id), uuid: nuevoUuid(),
+      fecha: String($('#inc-fecha')?.value || hoyISO()),
+      tipo_incidente: String($('#inc-tipo')?.value || 'incidente'),
+      severidad: String($('#inc-severidad')?.value || 'media'),
+      area: String($('#inc-area')?.value || '').trim(),
+      actividad_id: Number($('#inc-actividad')?.value || 0),
+      descripcion,
+      personas: String($('#inc-personas')?.value || '').trim(),
+      acciones: String($('#inc-acciones')?.value || '').trim(),
+      causa_inmediata: String($('#inc-causa-inmediata')?.value || '').trim(),
+      causa_raiz: String($('#inc-causa-raiz')?.value || '').trim(),
+      acciones_correctivas: String($('#inc-correctivas')?.value || '').trim(),
+      dias_perdidos: Number($('#inc-dias')?.value || 0),
+      costo: Number($('#inc-costo')?.value || 0),
+      investigado_por: String($('#inc-investigado')?.value || '').trim(),
+      fotos_base64: state.incidenteFotos.map((f) => f.data),
+    };
+    await encolar(op);
+    if (!p.seguridad) p.seguridad = {};
+    if (!Array.isArray(p.seguridad.incidentes)) p.seguridad.incidentes = [];
+    p.seguridad.incidentes.unshift({
+      ...op, id: 0, estado: 'abierto', reportado_por: state.usuario?.nombre || '',
+      fotos: state.incidenteFotos.length, _pendiente: true, act_codigo: '',
+    });
+    cerrarModal();
+    renderIncidentes(p);
+    toast('Incidente guardado. Se enviará al sincronizar.');
+    if (navigator.onLine) sincronizar(true);
+  });
+}
+
 function renderArchivoObra(p) {
   const cont = $('#archivo-lista');
   if (!cont) return;
@@ -1227,11 +1395,19 @@ function abrirEvidencias(id) {
   setTimeout(() => { const v = $('#vista'); if (v) v.scrollTo({ top: 0, behavior: 'auto' }); }, 250);
 }
 
-function renderParteDiario(p) {
+function renderParteDiario(p, detalle = null, modoForzado = '') {
   const proj = p.proyecto;
   const hoy = hoyISO();
   const cat = p.parte || {};
+  const base = detalle || {};
+  const modo = detalle ? (base.estado === 'cerrado' ? 'corregir' : 'editar') : (modoForzado || 'nuevo');
+  state.parteModo = modo;
+  state.parteDetalle = detalle;
   state.parteFotos = [];
+  const actsSel = new Set((base.actividades || []).map(Number));
+  const perMap = new Map((base.personal || []).map((x) => [Number(x.personal_id), x]));
+  const eqMap = new Map((base.equipo || []).map((x) => [Number(x.equipo_id), x]));
+  const matMap = new Map((base.materiales || []).map((x) => [Number(x.material_id), x]));
   const acts = (p.actividades || []).filter((a) => !Number(a.hito))
     .sort((a, b) => String(a.fecha_inicio || '').localeCompare(String(b.fecha_inicio || '')));
   const personal = cat.personal || [];
@@ -1240,53 +1416,86 @@ function renderParteDiario(p) {
   const turnos = cat.turnos || { dia: 'Día', tarde: 'Tarde', noche: 'Noche' };
   const tipos = cat.tipos_material || { consumido: 'Consumido', recibido: 'Recibido', retirado: 'Retirado' };
   const actOpts = '<option value="0">Sin actividad</option>' + acts.map((a) => `<option value="${Number(a.id)}">${esc(a.codigo)} · ${esc(a.nombre)}</option>`).join('');
+  const actOptsSel = (sel) => '<option value="0">Sin actividad</option>' + acts.map((a) => `<option value="${Number(a.id)}"${Number(a.id) === Number(sel) ? ' selected' : ''}>${esc(a.codigo)} · ${esc(a.nombre)}</option>`).join('');
   const esDeHoy = (a) => a.fecha_inicio && a.fecha_fin && a.fecha_inicio <= hoy && a.fecha_fin >= hoy && Number(a.progreso) < 100;
-  const actRows = acts.length ? acts.map((a) => `
+  const actRows = acts.length ? acts.map((a) => {
+    const marcada = detalle ? actsSel.has(Number(a.id)) : esDeHoy(a);
+    return `
     <label class="parte-act">
-      <input type="checkbox" data-act="${Number(a.id)}"${esDeHoy(a) ? ' checked' : ''}>
+      <input type="checkbox" data-act="${Number(a.id)}"${marcada ? ' checked' : ''}>
       <span><strong>${esc(a.codigo)} · ${esc(a.nombre)}</strong><small>${Number(a.progreso) || 0} % · fin ${esc(fechaLarga(a.fecha_fin))}</small></span>
       <input type="number" min="0" max="100" step="1" value="${Number(a.progreso) || 0}" data-avance="${Number(a.id)}" aria-label="Avance de ${esc(a.nombre)}">
-    </label>`).join('') : '<p class="parte-vacio">No hay actividades en el programa descargado.</p>';
-  const personalRows = personal.length ? personal.map((x) => `
+    </label>`;
+  }).join('') : '<p class="parte-vacio">No hay actividades en el programa descargado.</p>';
+  const personalRows = personal.length ? personal.map((x) => {
+    const d = perMap.get(Number(x.id));
+    return `
     <div class="parte-fila">
-      <label class="parte-check"><input type="checkbox" data-personal="${Number(x.id)}"><span><strong>${esc(x.nombre)}</strong><small>${esc(x.departamento || 'Sin departamento')}</small></span></label>
-      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="8" data-horas="${Number(x.id)}"></label>
-      <label class="parte-campo">Extra<input type="number" min="0" max="24" step=".25" value="0" data-extra="${Number(x.id)}"></label>
-      <label class="parte-campo">Actividad<select data-personal-act="${Number(x.id)}">${actOpts}</select></label>
-    </div>`).join('') : '<p class="parte-vacio">Sincroniza para descargar el personal de la obra.</p>';
-  const equipoRows = equipo.length ? equipo.map((x) => `
+      <label class="parte-check"><input type="checkbox" data-personal="${Number(x.id)}"${d ? ' checked' : ''}><span><strong>${esc(x.nombre)}</strong><small>${esc(x.departamento || 'Sin departamento')}</small></span></label>
+      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="${d ? Number(d.horas_normal) : 8}" data-horas="${Number(x.id)}"></label>
+      <label class="parte-campo">Extra<input type="number" min="0" max="24" step=".25" value="${d ? Number(d.horas_extra) : 0}" data-extra="${Number(x.id)}"></label>
+      <label class="parte-campo">Actividad<select data-personal-act="${Number(x.id)}">${actOptsSel(d?.actividad_id)}</select></label>
+    </div>`;
+  }).join('') : '<p class="parte-vacio">Sincroniza para descargar el personal de la obra.</p>';
+  const equipoRows = equipo.length ? equipo.map((x) => {
+    const d = eqMap.get(Number(x.id));
+    return `
     <div class="parte-fila">
-      <label class="parte-check"><input type="checkbox" data-equipo="${Number(x.id)}"><span><strong>${esc(x.nombre)}</strong><small>${esc(x.tipo || 'Equipo')} · ${esc(x.estado || '')}</small></span></label>
-      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="8" data-equipo-horas="${Number(x.id)}"></label>
-      <label class="parte-campo">Actividad<select data-equipo-act="${Number(x.id)}">${actOpts}</select></label>
-      <label class="parte-campo">Operador<input type="text" maxlength="150" data-operador="${Number(x.id)}"></label>
-    </div>`).join('') : '<p class="parte-vacio">No hay equipo registrado.</p>';
-  const matRows = mats.length ? mats.slice(0, 300).map((x) => `
+      <label class="parte-check"><input type="checkbox" data-equipo="${Number(x.id)}"${d ? ' checked' : ''}><span><strong>${esc(x.nombre)}</strong><small>${esc(x.tipo || 'Equipo')} · ${esc(x.estado || '')}</small></span></label>
+      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="${d ? Number(d.horas) : 8}" data-equipo-horas="${Number(x.id)}"></label>
+      <label class="parte-campo">Actividad<select data-equipo-act="${Number(x.id)}">${actOptsSel(d?.actividad_id)}</select></label>
+      <label class="parte-campo">Operador<input type="text" maxlength="150" data-operador="${Number(x.id)}" value="${esc(d?.operador || '')}"></label>
+    </div>`;
+  }).join('') : '<p class="parte-vacio">No hay equipo registrado.</p>';
+  const matRows = mats.length ? mats.slice(0, 300).map((x) => {
+    const d = matMap.get(Number(x.id));
+    return `
     <div class="parte-fila">
-      <label class="parte-check"><input type="checkbox" data-material="${Number(x.id)}" data-unidad="${esc(x.unidad || '')}"><span><strong>${esc(x.nombre)}</strong><small>${esc(x.marca || '')} ${esc(x.unidad || '')}</small></span></label>
-      <label class="parte-campo">Cantidad<input type="number" min="0" step=".001" value="0" data-material-cant="${Number(x.id)}"></label>
-      <label class="parte-campo">Movimiento<select data-material-tipo="${Number(x.id)}">${Object.entries(tipos).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join('')}</select></label>
+      <label class="parte-check"><input type="checkbox" data-material="${Number(x.id)}" data-unidad="${esc(x.unidad || '')}"${d ? ' checked' : ''}><span><strong>${esc(x.nombre)}</strong><small>${esc(x.marca || '')} ${esc(x.unidad || '')}</small></span></label>
+      <label class="parte-campo">Cantidad<input type="number" min="0" step=".001" value="${d ? Number(d.cantidad) : 0}" data-material-cant="${Number(x.id)}"></label>
+      <label class="parte-campo">Movimiento<select data-material-tipo="${Number(x.id)}">${Object.entries(tipos).map(([k, v]) => `<option value="${esc(k)}"${d && d.tipo === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
       <span></span>
-    </div>`).join('') : '<p class="parte-vacio">No hay materiales en el catálogo descargado.</p>';
+    </div>`;
+  }).join('') : '<p class="parte-vacio">No hay materiales en el catálogo descargado.</p>';
 
-  const opcionesTurno = Object.entries(turnos).map(([k, v]) => `<option value="${esc(k)}"${k === 'dia' ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  const turnoSel = String(base.turno || 'dia');
+  const opcionesTurno = Object.entries(turnos).map(([k, v]) => `<option value="${esc(k)}"${k === turnoSel ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  const bloqueMotivo = modo === 'corregir' ? `
+    <div class="parte-grupo">
+      <h3>Motivo de la corrección</h3>
+      <p class="parte-nota">El parte sigue cerrado. La corrección queda registrada con tu nombre, la fecha y el motivo.</p>
+      <label class="parte-campo">Motivo *<textarea id="parte-motivo" rows="3" minlength="10" maxlength="500" required placeholder="Qué se corrige y por qué"></textarea></label>
+    </div>` : '';
+  const accionesParte = modo === 'corregir' ? `
+    <div class="parte-acciones">
+      <button class="btn-principal" type="submit">Guardar corrección</button>
+      <button class="btn-mini" type="button" id="parte-cancelar">Cancelar</button>
+      <p class="parte-nota" style="flex-basis:100%;margin:.3rem 0 0">El parte seguirá cerrado y la corrección quedará en el historial.</p>
+    </div>` : `
+    <div class="parte-acciones">
+      <button class="btn-principal" type="submit" name="accion" value="cerrar">Guardar y cerrar</button>
+      <button class="btn-mini" type="submit" name="accion" value="guardar">${modo === 'editar' ? 'Guardar cambios' : 'Guardar borrador'}</button>
+      <button class="btn-mini" type="button" id="parte-cancelar">Cancelar</button>
+      <p class="parte-nota" style="flex-basis:100%;margin:.3rem 0 0">«${modo === 'editar' ? 'Guardar cambios' : 'Guardar borrador'}» lo deja abierto; «Guardar y cerrar» agrega el resumen a la bitácora.</p>
+    </div>`;
   $('#parte-obra').textContent = `${proj.nombre} · ${proj.codigo || ''}`;
   $('#parte-form').innerHTML = `
+    ${modo === 'corregir' ? `<div class="aviso" style="margin-bottom:.9rem"><svg class="ico"><use href="#i-shield"/></svg><p>Estás corrigiendo un parte cerrado. Al guardar se pedirá el motivo y el parte seguirá cerrado.</p></div>` : ''}
     <div class="parte-grupo">
       <h3>Datos del día</h3>
       <div class="parte-grid">
-        <label class="parte-campo">Fecha *<input type="date" id="parte-fecha" value="${hoy}" required></label>
+        <label class="parte-campo">Fecha *<input type="date" id="parte-fecha" value="${esc(base.fecha || hoy)}" required></label>
         <label class="parte-campo">Turno<select id="parte-turno">${opcionesTurno}</select></label>
-        <label class="parte-campo">Área / frente<input type="text" id="parte-area" maxlength="150" placeholder="Torre A, nivel 3…"></label>
-        <label class="parte-campo">Supervisor<input type="text" id="parte-supervisor" maxlength="150" value="${esc(state.usuario?.nombre || '')}"></label>
-        <label class="parte-campo">Visitas<input type="text" id="parte-visitas" maxlength="500" placeholder="Cliente, supervisión…"></label>
+        <label class="parte-campo">Área / frente<input type="text" id="parte-area" maxlength="150" placeholder="Torre A, nivel 3…" value="${esc(base.area || '')}"></label>
+        <label class="parte-campo">Supervisor<input type="text" id="parte-supervisor" maxlength="150" value="${esc(base.supervisor || state.usuario?.nombre || '')}"></label>
+        <label class="parte-campo">Visitas<input type="text" id="parte-visitas" maxlength="500" placeholder="Cliente, supervisión…" value="${esc(base.visitas || '')}"></label>
       </div>
-      <label class="parte-campo" style="margin-top:.7rem">Comentarios del día<textarea id="parte-comentarios" rows="3" maxlength="5000" placeholder="Qué se hizo, qué quedó pendiente…"></textarea></label>
+      <label class="parte-campo" style="margin-top:.7rem">Comentarios del día<textarea id="parte-comentarios" rows="3" maxlength="5000" placeholder="Qué se hizo, qué quedó pendiente…">${esc(base.comentarios || '')}</textarea></label>
       <div class="parte-grid" style="margin-top:.7rem">
-        <label class="parte-campo">Lluvia (mm)<input type="number" id="parte-lluvia" step=".1" min="0"></label>
-        <label class="parte-campo">Viento (km/h)<input type="number" id="parte-viento" step=".1" min="0"></label>
-        <label class="parte-campo">T. máx (°C)<input type="number" id="parte-tmax" step=".1"></label>
-        <label class="parte-campo">T. mín (°C)<input type="number" id="parte-tmin" step=".1"></label>
+        <label class="parte-campo">Lluvia (mm)<input type="number" id="parte-lluvia" step=".1" min="0" value="${base.clima_precip_mm ?? ''}"></label>
+        <label class="parte-campo">Viento (km/h)<input type="number" id="parte-viento" step=".1" min="0" value="${base.clima_viento_kmh ?? ''}"></label>
+        <label class="parte-campo">T. máx (°C)<input type="number" id="parte-tmax" step=".1" value="${base.clima_tmax ?? ''}"></label>
+        <label class="parte-campo">T. mín (°C)<input type="number" id="parte-tmin" step=".1" value="${base.clima_tmin ?? ''}"></label>
       </div>
     </div>
     <div class="parte-grupo">
@@ -1318,15 +1527,16 @@ function renderParteDiario(p) {
     <div class="parte-grupo">
       <h3>Fotos</h3>
       <p class="parte-nota">Hasta 5 fotos del avance, materiales o incidencias. Se guardan en el teléfono y se envían al sincronizar.</p>
+      ${Number(base.fotos) > 0 ? `<p class="parte-nota">${Number(base.fotos)} foto(s) ya guardadas. Las nuevas se agregan al guardar.</p>` : ''}
       <input type="file" id="parte-fotos" class="parte-file" accept="image/*" multiple>
       <div id="parte-fotos-prev" class="parte-fotos-prev"></div>
     </div>
     <div class="parte-grupo">
       <h3>Seguridad</h3>
       <div class="parte-grid">
-        <label class="parte-campo">Charla / tema<input type="text" id="parte-charla" maxlength="255" placeholder="Orden y limpieza…"></label>
-        <label class="parte-campo">Asistentes<input type="number" id="parte-asistentes" min="0" max="32767" value="0"></label>
-        <label class="parte-check" style="align-self:end"><input type="checkbox" id="parte-epp"> EPP completo</label>
+        <label class="parte-campo">Charla / tema<input type="text" id="parte-charla" maxlength="255" placeholder="Orden y limpieza…" value="${esc(base.seguridad?.charla_tema || '')}"></label>
+        <label class="parte-campo">Asistentes<input type="number" id="parte-asistentes" min="0" max="32767" value="${Number(base.seguridad?.asistentes) || 0}"></label>
+        <label class="parte-check" style="align-self:end"><input type="checkbox" id="parte-epp"${Number(base.seguridad?.epp_ok) ? ' checked' : ''}> EPP completo</label>
       </div>
     </div>
     <div class="parte-grupo">
@@ -1334,16 +1544,12 @@ function renderParteDiario(p) {
       <p class="parte-nota">Firma con el dedo o el lápiz. Se guarda con el parte.</p>
       <canvas id="parte-firma" class="parte-firma" width="700" height="220"></canvas>
       <div class="parte-grid" style="margin-top:.6rem">
-        <label class="parte-campo">Nombre de quien firma<input type="text" id="parte-firma-nombre" maxlength="150" value="${esc(state.usuario?.nombre || '')}"></label>
+        <label class="parte-campo">Nombre de quien firma<input type="text" id="parte-firma-nombre" maxlength="150" value="${esc(base.firma_nombre || state.usuario?.nombre || '')}"></label>
         <button class="btn-mini" type="button" id="parte-firma-limpiar" style="align-self:end">Limpiar firma</button>
       </div>
     </div>
-    <div class="parte-acciones">
-      <button class="btn-principal" type="submit" name="accion" value="cerrar">Guardar y cerrar</button>
-      <button class="btn-mini" type="submit" name="accion" value="guardar">Guardar borrador</button>
-      <button class="btn-mini" type="button" id="parte-cancelar">Cancelar</button>
-      <p class="parte-nota" style="flex-basis:100%;margin:.3rem 0 0">«Guardar borrador» lo deja abierto; «Guardar y cerrar» agrega el resumen a la bitácora.</p>
-    </div>`;
+    ${bloqueMotivo}
+    ${accionesParte}`;
 
   $('#parte-cancelar')?.addEventListener('click', () => irA(state.parteVolver || 'obras'));
   const firma = $('#parte-firma');
@@ -1365,22 +1571,23 @@ function renderParteDiario(p) {
   });
   renderFotosParte();
   const causas = cat.causas_tiempo || { lluvia: 'Lluvia', falta_material: 'Falta de material', espera: 'Espera / instrucción', falla_equipo: 'Falla de equipo', seguridad: 'Seguridad', otra: 'Otra' };
-  const agregarTiempo = () => {
+  const agregarTiempo = (inicial = null) => {
     const cont = $('#parte-tiempos');
     if (!cont) return;
     const fila = document.createElement('div');
     fila.className = 'parte-fila';
     fila.dataset.tiempo = '1';
     fila.innerHTML = `
-      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="1" data-t-horas></label>
-      <label class="parte-campo">Causa<select data-t-causa>${Object.entries(causas).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join('')}</select></label>
-      <label class="parte-campo">Actividad<select data-t-act>${actOpts}</select></label>
-      <label class="parte-campo">Nota<input type="text" maxlength="500" data-t-nota placeholder="Qué se detuvo"></label>
+      <label class="parte-campo">Horas<input type="number" min="0" max="24" step=".25" value="${inicial ? Number(inicial.horas) || 0 : 1}" data-t-horas></label>
+      <label class="parte-campo">Causa<select data-t-causa>${Object.entries(causas).map(([k, v]) => `<option value="${esc(k)}"${inicial && inicial.causa === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+      <label class="parte-campo">Actividad<select data-t-act>${actOptsSel(inicial?.actividad_id)}</select></label>
+      <label class="parte-campo">Nota<input type="text" maxlength="500" data-t-nota placeholder="Qué se detuvo" value="${esc(inicial?.nota || '')}"></label>
       <button class="btn-mini" type="button" data-t-quitar>Quitar</button>`;
     fila.querySelector('[data-t-quitar]')?.addEventListener('click', () => fila.remove());
     cont.appendChild(fila);
   };
-  $('#parte-tiempo-add')?.addEventListener('click', agregarTiempo);
+  $('#parte-tiempo-add')?.addEventListener('click', () => agregarTiempo());
+  (base.tiempos || []).forEach((t) => agregarTiempo(t));
   renderHistorialPartes(p);
 
   $('#parte-form').addEventListener('submit', async (e) => {
@@ -1483,22 +1690,46 @@ function renderParteDiario(p) {
     parte.firma_nombre = String($('#parte-firma-nombre')?.value || parte.supervisor || '').trim();
     if (firma?.dataset.tocada === '1') parte.firma_data = firma.toDataURL('image/png');
     if (state.parteFotos.length) parte.fotos_base64 = state.parteFotos.map((f) => f.data);
-    const parteUuid = nuevoUuid();
+    const editando = !!(detalle && Number(base.id) > 0);
+    if (editando) parte.id = Number(base.id);
+    const parteUuid = (detalle && base.offline_uuid) ? String(base.offline_uuid) : nuevoUuid();
     parte.offline_uuid = parteUuid;
-    await encolar({ tipo: 'parte_diario', proyecto: Number(proj.id), uuid: nuevoUuid(), parte });
-    if (accion === 'cerrar') {
-      await encolar({ tipo: 'parte_cerrar', proyecto: Number(proj.id), uuid: nuevoUuid(), offline_uuid: parteUuid });
-    }
-    if (!Array.isArray(p.partes)) p.partes = [];
-    p.partes.unshift({
-      id: 0, fecha, turno: parte.turno, area: parte.area, supervisor: parte.supervisor,
+    const resumenLocal = {
+      fecha, turno: parte.turno, area: parte.area, supervisor: parte.supervisor,
       estado: accion === 'cerrar' ? 'cerrado' : 'borrador', comentarios: parte.comentarios,
       personal: personalId.length, equipo: equipoId.length, materiales: materialId.length,
       tiempos: tiempoHoras.reduce((a, b) => a + b, 0),
       horas_personal: personalHoras.reduce((a, b) => a + b, 0) + personalExtra.reduce((a, b) => a + b, 0),
       horas_equipo: equipoHoras.reduce((a, b) => a + b, 0),
-    });
-    toast(accion === 'cerrar' ? 'Parte diario guardado y cerrado.' : 'Parte diario guardado como borrador.');
+    };
+    if (modo === 'corregir') {
+      const motivo = String($('#parte-motivo')?.value || '').trim();
+      if (motivo.length < 10) {
+        toast('Escribe el motivo de la corrección (mínimo 10 caracteres).');
+        $('#parte-motivo')?.focus();
+        return;
+      }
+      await encolar({ tipo: 'parte_corregir', proyecto: Number(proj.id), uuid: nuevoUuid(), id: Number(base.id), motivo, parte });
+      if (!Array.isArray(p.partes)) p.partes = [];
+      const item = p.partes.find((x) => Number(x.id) === Number(base.id));
+      if (item) Object.assign(item, resumenLocal, { estado: 'cerrado', puede_corregir: true, puede_abrir: false });
+      toast('Corrección guardada. El parte sigue cerrado.');
+      if (navigator.onLine) sincronizar(true);
+      irA(state.parteVolver || 'obras');
+      return;
+    }
+    await encolar({ tipo: 'parte_diario', proyecto: Number(proj.id), uuid: nuevoUuid(), parte });
+    if (accion === 'cerrar') {
+      await encolar({ tipo: 'parte_cerrar', proyecto: Number(proj.id), uuid: nuevoUuid(), id: editando ? Number(base.id) : 0, offline_uuid: parteUuid });
+    }
+    if (!Array.isArray(p.partes)) p.partes = [];
+    if (editando) {
+      const item = p.partes.find((x) => Number(x.id) === Number(base.id));
+      if (item) Object.assign(item, resumenLocal, { puede_abrir: accion !== 'cerrar', puede_corregir: accion === 'cerrar' });
+    } else {
+      p.partes.unshift({ id: 0, ...resumenLocal });
+    }
+    toast(accion === 'cerrar' ? 'Parte diario guardado y cerrado.' : (editando ? 'Cambios guardados.' : 'Parte diario guardado como borrador.'));
     irA(state.parteVolver || 'obras');
   });
 }
@@ -1537,13 +1768,23 @@ function verParteHistorial(r) {
     ['Horas de equipo', (Number(r.horas_equipo) || 0) + ' h'],
     ['Materiales', Number(r.materiales) || 0],
     ['Tiempos muertos', (Number(r.tiempos) || 0) + ' h'],
+    ['Creado por', r.creado_por || '—'],
   ];
+  const acciones = [];
+  if (Number(r.id) > 0 && r.estado === 'borrador' && r.puede_abrir) {
+    acciones.push(`<button class="btn-mini" type="button" data-abrir-parte="${Number(r.id)}">Abrir para editar</button>`);
+  }
+  if (Number(r.id) > 0 && r.estado === 'cerrado' && r.puede_corregir) {
+    acciones.push(`<button class="btn-principal" type="button" data-corregir-parte="${Number(r.id)}">Corregir</button>`);
+  }
   abrirModal('Parte del ' + fechaLarga(r.fecha), `
     <div class="hist-detalle">
       ${filas.map(([k, v]) => `<div><span>${esc(k)}</span><strong>${esc(String(v))}</strong></div>`).join('')}
       ${r.comentarios ? `<p class="parte-nota">${esc(r.comentarios)}</p>` : ''}
-      <p class="parte-nota">Para editar un parte ya enviado, ábrelo en la web desde el hub de Obras.</p>
+      ${acciones.length ? `<div class="tarea-acciones">${acciones.join('')}</div>` : `<p class="parte-nota">Solo quien creó el parte o el administrador pueden corregirlo.</p>`}
     </div>`);
+  $$('#modal-cuerpo [data-abrir-parte]').forEach((b) => b.addEventListener('click', () => abrirParteExistente(Number(b.dataset.abrirParte), 'editar')));
+  $$('#modal-cuerpo [data-corregir-parte]').forEach((b) => b.addEventListener('click', () => abrirParteExistente(Number(b.dataset.corregirParte), 'corregir')));
 }
 
 function abrirParteDiario(id) {
@@ -1554,6 +1795,7 @@ function abrirParteDiario(id) {
   state.proyectoId = Number(projIdDe(p));
   cacheGuardar('proyecto', String(state.proyectoId));
   cerrarModal();
+  state.parteDetalle = null;
   renderParteDiario(p);
   irA('parte');
   setTimeout(() => {
@@ -1561,6 +1803,36 @@ function abrirParteDiario(id) {
     if (vista) vista.scrollTo({ top: 0, behavior: 'auto' });
     window.scrollTo(0, 0);
   }, 250);
+}
+
+async function abrirParteExistente(id, modo = 'editar') {
+  const p = proyectoActual();
+  if (!p) { toast('No se encontró la obra.'); return; }
+  if (!navigator.onLine) { toast('Necesitas conexión para abrir un parte guardado.'); return; }
+  try {
+    const r = await apiFetch('/api/app/parte?id=' + Number(id));
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.success || !j.parte) throw new Error(j.error || 'No se pudo abrir el parte.');
+    const detalle = j.parte;
+    if (detalle.estado === 'cerrado' && !detalle.puede_corregir) {
+      toast('Solo quien creó el parte o el administrador pueden corregirlo.', 6000);
+      return;
+    }
+    state.parteVolver = state.tab === 'parte' ? 'obras' : state.tab;
+    state.proyectoId = Number(projIdDe(p));
+    cacheGuardar('proyecto', String(state.proyectoId));
+    cerrarModal();
+    state.parteDetalle = detalle;
+    renderParteDiario(p, detalle, modo);
+    irA('parte');
+    setTimeout(() => {
+      const vista = $('#vista');
+      if (vista) vista.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo(0, 0);
+    }, 250);
+  } catch (e) {
+    toast(String(e?.message || e || 'No se pudo abrir el parte.'), 6000);
+  }
 }
 
 function projIdDe(p) {
@@ -3054,10 +3326,14 @@ function init() {
   $('#archivo-volver')?.addEventListener('click', () => irA(state.archivoVolver || 'obras'));
   $('#punch-volver')?.addEventListener('click', () => irA(state.punchVolver || 'obras'));
   $('#rfi-volver')?.addEventListener('click', () => irA(state.rfiVolver || 'obras'));
+  $('#incidentes-volver')?.addEventListener('click', () => irA(state.incidentesVolver || 'obras'));
   $('#punch-nuevo')?.addEventListener('click', () => { const p = proyectoActual(); if (p && p.permisos?.editar) formPunch(p); });
   $('#rfi-nuevo')?.addEventListener('click', () => { const p = proyectoActual(); if (p && p.permisos?.editar) formRfi(p); });
+  $('#incidentes-nuevo')?.addEventListener('click', () => { const p = proyectoActual(); if (p && p.permisos?.editar) formIncidente(p); });
   $('#punch-buscar')?.addEventListener('input', () => { const p = proyectoActual(); if (p) renderPunch(p); });
   $('#rfi-buscar')?.addEventListener('input', () => { const p = proyectoActual(); if (p) renderRfi(p); });
+  $('#incidentes-buscar')?.addEventListener('input', () => { const p = proyectoActual(); if (p) renderIncidentes(p); });
+  $('#incidentes-web')?.addEventListener('click', () => abrirWeb('/seguridad'));
   $('#visor-volver')?.addEventListener('click', () => cerrarVisor(true));
   $('#visor-mas')?.addEventListener('click', () => visorZoom(0.35));
   $('#visor-menos')?.addEventListener('click', () => visorZoom(-0.35));

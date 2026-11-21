@@ -6,7 +6,7 @@ sincroniza al volver. El asistente ya ejecuta **Qwen2.5 GGUF con llama.cpp en el
 teléfono** (sin nube) y el historial se consulta en la web. Los avisos son locales y se
 muestran al abrir o sincronizar; no se usa FCM/Google. Falta el resto de la Fase 2/3.
 
-APK 0.2.10 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
+APK 0.2.11 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
 El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera y el asistente usan el logo de Project Web (casco); el icono de Ajustes es un engrane y no hay mascota de chatbot.
 
 ## Decisiones cerradas
@@ -59,7 +59,8 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 | POST | `/api/app/logout` | Revoca el token del teléfono |
 | GET | `/api/app/bootstrap` | Proyectos, servidor, APK y modelos |
 | GET | `/api/app/sync` | Contexto de una obra o de todas las visibles |
-| POST | `/api/app/sync` | Aplica operaciones offline idempotentes (avance, bitácora, **punch/rfi crear y estado**, **parte diario**, cierre y **evidencias**) |
+| POST | `/api/app/sync` | Aplica operaciones offline idempotentes (avance, bitácora, **punch/rfi crear y estado**, **parte diario**, **corrección de parte**, cierre, **incidentes de seguridad** y **evidencias**) |
+| GET | `/api/app/parte?id=` | Detalle de un parte para abrirlo o corregirlo en la app |
 | POST | `/api/app/enlace` | URL de un solo uso para abrir una herramienta web con la sesión del usuario |
 | GET | `/api/app/archivo?id=` | Descarga un documento con el token (también acepta `?token=` para el visor del sistema) |
 | GET | `/api/app/sesiones` | Dispositivos con sesión |
@@ -149,7 +150,9 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 
 - **Pantalla `parte`:** se abre desde Inicio («Parte diario»), desde el hub de Obras o desde la tarjeta de la obra. Incluye fecha, turno, área, supervisor, visitas, comentarios, clima, actividades con avance, personal con horas normal/extra, equipo con horas y operador, materiales (consumido/recibido/retirado), fotos, charla de seguridad/EPP y **firma con el dedo**.
 - **Sin conexión:** el parte se guarda en la cola local (`parte_diario`) con un UUID idempotente y se envía al sincronizar. Los catálogos (personal, turnos, causas y tipos de material) viajan en el snapshot para poder llenar el formulario sin señal. Incluye **tiempos muertos** (horas, causa, actividad y nota) y una lista de **partes recientes** con su detalle, descargada en el snapshot.
-- **Servidor:** `AppApi::opParteDiario()` llama a `ParteDiario::guardar()`; las fotos llegan como data URL base64 (máx. 5 por parte) y se procesan con `ParteDiario::adjuntarFotosBase64()`. El parte se puede guardar como **borrador** o **guardar y cerrar** desde la app; al cerrarlo se agrega el resumen a la bitácora. La web sigue disponible para revisarlo o reabrirlo.
+- **Servidor:** `AppApi::opParteDiario()` llama a `ParteDiario::guardar()`; las fotos llegan como data URL base64 (máx. 5 por parte) y se procesan con `ParteDiario::adjuntarFotosBase64()`. El parte se puede guardar como **borrador** o **guardar y cerrar** desde la app; al cerrarlo se agrega el resumen a la bitácora. La web sigue disponible para revisarlo.
+- **Migraciones:** `database/migracion_parte_correcciones.sql` agrega `reportes_diarios.creado_por_id` y la tabla `parte_correcciones`; `database/migracion_incidentes_app.sql` agrega `seguridad_incidentes.personas` y `seguridad_incidente_fotos`. Ambas son idempotentes y están en `database/aplicar_migraciones_cluster.sh`.
+- **Corrección de partes cerrados:** `GET /api/app/parte?id=` entrega el detalle; el botón **Corregir** solo aparece para **quien creó el parte** y el **admin** (columna `reportes_diarios.creado_por_id`). La operación `parte_corregir` exige un **motivo de al menos 10 caracteres**, guarda los cambios, registra la corrección en `parte_correcciones` y vuelve a cerrar el parte. Se puede corregir en cualquier momento; la web muestra el historial en `/reportes/ver`.
 
 ### Archivo nativo y visor (bajo demanda)
 
@@ -165,7 +168,12 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 - Desde el hub de Obras, **Evidencias** abre una pantalla para elegir actividad, fecha, departamento, categoría, descripción y hasta 5 fotos.
 - Se guardan en la cola offline con `evidencia_crear` y el servidor las procesa con `Evidencia`/`Imagenes`; aparecen en `/evidencias` de la web.
 - Es independiente de las fotos del parte diario; sirve para evidencias sueltas por actividad.
-- **Límites actuales:** los incidentes de seguridad detallados y la edición de un parte ya enviado siguen en el formulario web. La firma, las fotos, los tiempos muertos y el historial sí están en la app.
+### Incidentes de seguridad nativos
+
+- Desde el hub de Obras, **Incidentes** abre una pantalla nativa con búsqueda, lista y alta.
+- Campos: fecha, tipo, severidad, área, actividad, descripción, **personas involucradas**, acciones inmediatas, causa inmediata, causa raíz, acciones correctivas, días perdidos, costo, investigado por y hasta 5 fotos.
+- Se guarda en la cola offline con `seguridad_incidente_crear`; el servidor lo registra con `Seguridad::registrarIncidente()` y guarda las fotos en `public/uploads/incidentes` (`seguridad_incidente_fotos`). Aparece en `/seguridad?tab=incidentes` de la web, con las mismas reglas de permisos del proyecto.
+- Los permisos y ATS siguen en la web: el botón **Permisos y ATS en la web** abre `/seguridad` con la sesión puente.
 
 ### Extras del asistente
 
@@ -179,7 +187,6 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 ### Pendiente de la Fase 1
 
 - Push con la app cerrada: **no incluido** por decisión (sin Google/FCM); los avisos se muestran al abrir o sincronizar.
-- Incidentes de seguridad detallados y edición de partes ya cerrados dentro de la app.
 - Las herramientas que no son de campo (Programa/Gantt, Costos, Materiales, Calidad) siguen abriéndose en la web mediante el puente de sesión.
 
 ## Fase 0 — lo que ya está hecho
@@ -235,7 +242,6 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 
 ### Lo que sigue en la app Android
 
-- **Edición de partes ya cerrados** e **incidentes de seguridad detallados** (hoy se editan en la web).
 - **Sincronización nativa del resto de herramientas**: avance, bitácora, punch, RFI, parte diario, evidencias y archivo ya son nativos; Programa/Gantt, Costos, Materiales, Calidad y el resto se abren en la web con el puente de sesión.
 - **Motor de fechas/ruta crítica en Rust** para propuestas 100 % offline (la simulación «¿qué pasa si…?» ya funciona con el snapshot, pero no recalcula toda la ruta crítica en el teléfono).
 - **Whisper local** para dictado (hoy se usa el reconocimiento del WebView) y ajuste de latencia/modelo (3B solo en equipos de 12 GB o más).
@@ -279,7 +285,7 @@ publicar: copiar el APK a `storage/android/projectweb-android-<versión>.apk` y 
 
 ## Servidor
 
-- **Desplegado:** 2026-11-20 (Helm revisión 103). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.9 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
+- **Desplegado:** 2026-11-20 (Helm revisión 104). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.11 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
 - **Orden de despliegue:** primero el backend (`public/index.php` con el despacho de
   `/api/app` antes de `csrf_verificar()`, `classes/AppApi.php`, `classes/Asistente.php` y las
   migraciones) y después el APK. Si el backend viejo recibe un POST JSON sin `_csrf`,
