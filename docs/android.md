@@ -158,7 +158,7 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 - **PDF** se renderiza dentro de la app con `pdf.js` (páginas continuas, zoom y carga diferida); las **imágenes** y el **texto/CSV** se muestran en el visor nativo. Los documentos de oficina (DOCX, XLSX…) se abren con la app externa o el navegador.
 - El comando `leer_archivo` entrega los bytes al WebView y solo acepta rutas dentro de `files/archivos`.
 - El endpoint `GET /api/app/archivo?id=...` valida el proyecto y el token; PDF e imágenes se sirven inline.
-- No se descarga todo el Archivo automáticamente: se baja lo que el usuario abre. Para planos grandes se recomienda Wi-Fi.
+- No se descarga todo el Archivo automáticamente: se baja lo que el usuario abre. Para planos grandes se recomienda Wi-Fi. Al cerrar sesión se borran los documentos descargados (`limpiar_archivos`); el modelo de IA se conserva.
 
 ### Evidencias nativas
 

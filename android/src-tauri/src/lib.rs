@@ -206,6 +206,21 @@ fn abrir_db(app: &tauri::AppHandle) -> Result<Connection, String> {
 }
 
 /// Estado del almacenamiento local para Ajustes (no expone la llave).
+/// Borra los documentos descargados para el visor (al cerrar sesión).
+#[tauri::command]
+async fn limpiar_archivos(app: tauri::AppHandle) -> Result<(), String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("files")
+        .join("archivos");
+    if dir.exists() {
+        fs::remove_dir_all(&dir).map_err(|e| format!("No se pudieron borrar los archivos: {e}"))?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 async fn db_estado(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?.join("files");
@@ -1149,6 +1164,7 @@ pub fn run() {
         .plugin(tauri_plugin_secure_keystore::init())
         .invoke_handler(tauri::generate_handler![
             db_estado,
+            limpiar_archivos,
             cache_guardar,
             cache_leer,
             cache_borrar,

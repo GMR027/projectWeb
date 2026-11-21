@@ -280,6 +280,7 @@ async function limpiarSesion() {
   state.generando = false;
   for (const p of proyectos) await cacheBorrar('chat_' + Number(p?.proyecto?.id || 0));
   await borrarTokenSeguro();
+  if (tieneTauri()) { try { await invokeTauri('limpiar_archivos'); } catch (e) {} }
   for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas']) await cacheBorrar(k);
   state.outbox = [];
   actualizarPendientes();
