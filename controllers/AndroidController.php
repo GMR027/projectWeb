@@ -18,7 +18,15 @@ class AndroidController
 
     private static function exigirSesion(): void
     {
-        if (!is_auth()) self::json(['success' => false, 'error' => 'Inicia sesión para descargar la app.'], 401);
+        if (is_auth()) return;
+        // La app Android descarga su propia actualización con el token pwa_… (sin cookie web).
+        $auth = (string)($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+        $token = '';
+        if (preg_match('/^Bearer\s+(pwa_[A-Za-z0-9._-]+)$/i', $auth, $m)) $token = $m[1];
+        if ($token === '' && !empty($_SERVER['HTTP_X_APP_TOKEN'])) $token = (string)$_SERVER['HTTP_X_APP_TOKEN'];
+        if ($token === '' && !empty($_GET['token'])) $token = (string)$_GET['token'];
+        if ($token !== '' && \Classes\Sesiones::verificarToken($token)) return;
+        self::json(['success' => false, 'error' => 'Inicia sesión para descargar la app.'], 401);
     }
 
     public static function version()

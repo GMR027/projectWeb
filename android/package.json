@@ -1,7 +1,7 @@
 {
   "name": "projectweb-android",
   "private": true,
-  "version": "0.2.13",
+  "version": "0.2.15",
   "description": "Project Web para Android (Tauri + Rust)",
   "scripts": {
     "tauri": "tauri",

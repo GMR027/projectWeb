@@ -23,6 +23,9 @@ use tauri::{Emitter, Manager};
 use tauri_plugin_secure_keystore::{ItemKey, SecureKeystoreExt, SetItemRequest};
 use tauri_plugin_notification::NotificationExt;
 
+#[cfg(target_os = "android")]
+mod apk_installer;
+
 const CLAVE_ITEM: &str = "db_key";
 static CLAVE_DB: OnceLock<String> = OnceLock::new();
 
@@ -1063,6 +1066,83 @@ fn motor_responder(app: tauri::AppHandle, mensajes: Vec<MensajeEntrada>, max_tok
     Ok(())
 }
 
+/// Descarga el APK publicado a la caché privada y verifica su SHA-256.
+#[tauri::command]
+async fn descargar_apk(
+    app: tauri::AppHandle,
+    url: String,
+    token: String,
+    sha256: String,
+) -> Result<String, String> {
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return Err("Dirección de actualización no válida.".into());
+    }
+    if token.trim().is_empty() {
+        return Err("Falta la sesión para descargar la actualización.".into());
+    }
+    let base = app.path().app_cache_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&base).map_err(|e| e.to_string())?;
+    let destino = base.join("projectweb-actualizacion.apk");
+    let destino_tarea = destino.clone();
+    let esperado = sha256.trim().to_lowercase();
+
+    let tarea = tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        use sha2::{Digest, Sha256};
+        let respuesta = ureq::get(&url)
+            .set("Authorization", &format!("Bearer {token}"))
+            .set("X-App-Token", &token)
+            .call()
+            .map_err(|e| format!("No se pudo descargar la actualización: {e}"))?;
+        let mut lector = respuesta.into_reader();
+        let mut archivo = File::create(&destino_tarea)
+            .map_err(|e| format!("No se pudo preparar el archivo: {e}"))?;
+        std::io::copy(&mut lector, &mut archivo)
+            .map_err(|e| format!("Se interrumpió la descarga: {e}"))?;
+        archivo.flush().ok();
+        drop(archivo);
+
+        if !esperado.is_empty() {
+            let mut f = File::open(&destino_tarea).map_err(|e| e.to_string())?;
+            let mut hasher = Sha256::new();
+            let mut buf = [0u8; 65536];
+            loop {
+                let n = f.read(&mut buf).map_err(|e| e.to_string())?;
+                if n == 0 {
+                    break;
+                }
+                hasher.update(&buf[..n]);
+            }
+            let real = format!("{:x}", hasher.finalize());
+            if real != esperado {
+                let _ = fs::remove_file(&destino_tarea);
+                return Err("La actualización descargada no coincide con la publicada. Inténtalo de nuevo.".into());
+            }
+        }
+        Ok(())
+    });
+    tarea
+        .await
+        .map_err(|e| format!("No se pudo completar la descarga: {e}"))??;
+    Ok(destino.to_string_lossy().to_string())
+}
+
+#[cfg(target_os = "android")]
+#[tauri::command]
+async fn instalar_apk(app: tauri::AppHandle, ruta: String) -> Result<(), String> {
+    let plugin = app.state::<apk_installer::ApkInstaller<tauri::Wry>>();
+    plugin
+        .handle
+        .run_mobile_plugin::<()>("install", serde_json::json!({ "path": ruta }))
+        .map_err(|e| format!("No se pudo abrir el instalador: {e}"))?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "android"))]
+#[tauri::command]
+async fn instalar_apk(_ruta: String) -> Result<(), String> {
+    Err("La instalación de la app solo está disponible en Android.".into())
+}
+
 #[tauri::command]
 fn descargar_archivo(
     app: tauri::AppHandle,
@@ -1158,10 +1238,13 @@ fn leer_archivo(app: tauri::AppHandle, ruta: String) -> Result<tauri::ipc::Respo
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_secure_keystore::init())
+        .plugin(tauri_plugin_secure_keystore::init());
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(apk_installer::init());
+    builder
         .invoke_handler(tauri::generate_handler![
             db_estado,
             limpiar_archivos,
@@ -1177,6 +1260,8 @@ pub fn run() {
             motor_eliminar,
             motor_responder,
             descargar_archivo,
+            descargar_apk,
+            instalar_apk,
             leer_archivo
         ])
         .setup(|app| {

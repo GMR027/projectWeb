@@ -306,6 +306,37 @@ class Usuario extends ActiveRecord
         }
     }
 
+    /** El usuario entró desde la app Android: ya la tiene instalada. */
+    public static function marcarAppAndroid(int $id): void
+    {
+        try {
+            self::$db->query('UPDATE usuarios SET android_app_en = NOW() WHERE id = ' . (int)$id);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /** ¿Mostrar el aviso de descarga? Solo si no la ha usado y no cerró el aviso. */
+    public static function bannerAndroidVisible(int $id): bool
+    {
+        try {
+            $r = self::$db->query('SELECT android_app_en, android_banner_oculto FROM usuarios WHERE id = ' . (int)$id);
+            $f = $r ? $r->fetch_assoc() : null;
+            if (!$f) return false;
+            return empty($f['android_app_en']) && (int)($f['android_banner_oculto'] ?? 0) === 0;
+        } catch (\Throwable $e) {
+            return false;   // sin la migración aplicada no se muestra el aviso
+        }
+    }
+
+    /** El usuario cerró el aviso: no volver a mostrarlo. */
+    public static function ocultarBannerAndroid(int $id): void
+    {
+        try {
+            self::$db->query('UPDATE usuarios SET android_banner_oculto = 1 WHERE id = ' . (int)$id);
+        } catch (\Throwable $e) {
+        }
+    }
+
     /** Visitantes de solo lectura que un cliente puede crear por defecto (el admin lo cambia por cuenta) */
     public const MAX_VISITANTES_CLIENTE = 2;
     /** Colaboradores (pueden editar) que un cliente puede crear por defecto */

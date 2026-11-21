@@ -913,3 +913,36 @@ body.modal-abierto { overflow: hidden; }
 /* Acciones de los mensajes del asistente */
 .msg-acciones { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 .msg-acciones .btn-mini { font-size: .82rem; padding: .2rem .55rem; }
+
+/* Ojo para mostrar la contraseña */
+.campo-password { position: relative; display: block; }
+.campo-password input { padding-right: 4.8rem; }
+.ojo-password {
+  position: absolute;
+  top: 50%;
+  right: .5rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 3.8rem;
+  height: 3.8rem;
+  border: 0;
+  border-radius: .8rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ojo-password .ico { width: 2.1rem; height: 2.1rem; }
+.ojo-password:active { background: var(--surface-2); }
+
+/* Actualización y novedades de la app */
+.app-actualizar, .app-novedades { margin-top: 1.2rem; padding: 1.2rem; }
+.app-act-cab { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: .6rem; }
+.app-act-cab h2, .app-novedades h2 { margin: 0; font-size: 1.5rem; }
+.app-actualizar .btn-principal { margin-top: .9rem; }
+.app-novedades-lista, #app-novedades-lista { display: flex; flex-direction: column; gap: .8rem; }
+.novedad-app { padding: .8rem 0; border-top: 1px solid var(--line); }
+.novedad-app:first-child { border-top: 0; padding-top: 0; }
+.novedad-app strong { display: block; font-size: 1.15rem; }
+.novedad-app small { color: var(--muted); font-size: .95rem; }
+.novedad-app p { margin: .25rem 0 0; color: var(--muted); font-size: 1.05rem; white-space: pre-wrap; }

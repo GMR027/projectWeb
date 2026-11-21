@@ -9,6 +9,21 @@ $fechaCorta = fn($f) => $f ? date('d/m/y', strtotime($f)) : '—';
         <a href="/dashboard?personalizar=1#inicio-personalizar" class="btn btn-sm btn-ghost" style="margin-left:1rem"><i class="fa-solid fa-sliders"></i> <?php echo s(t('Personalizar inicio')); ?></a></p>
 </div>
 
+<?php if (!empty($mostrar_banner_android) && !empty($apk_android)): ?>
+<section class="card banner-android" id="banner-android">
+    <span class="banner-android-ico"><i class="fa-brands fa-android"></i></span>
+    <div class="banner-android-txt">
+        <strong><?php echo s(t('Lleva Project Web en tu Android')); ?></strong>
+        <p><?php echo s(t('Descarga la app para reportar desde campo, incluso sin conexión.')); ?>
+            <span class="text-muted">v<?php echo s($apk_android['version']); ?> · <?php echo number_format($apk_android['tam'] / 1048576, 1); ?> MB</span></p>
+    </div>
+    <a href="/api/android/descargar" class="btn btn-primary"><i class="fa-solid fa-download"></i> <?php echo s(t('Descargar app')); ?></a>
+    <form method="POST" action="/dashboard/banner-android" class="banner-android-cerrar">
+        <button type="submit" aria-label="<?php echo s(t('Cerrar aviso')); ?>" title="<?php echo s(t('Cerrar aviso')); ?>">×</button>
+    </form>
+</section>
+<?php endif; ?>
+
 <details class="card inicio-personalizar" id="inicio-personalizar"<?php echo $personalizando ? ' open' : ''; ?>>
     <summary><strong><?php echo s(t('Personalizar mi inicio')); ?></strong> <small class="text-muted"><?php echo s(t('· elige qué bloques ves y en qué orden (solo afecta tu cuenta)')); ?></small></summary>
     <form method="POST" action="/inicio/guardar" class="formulario" id="inicio-form">

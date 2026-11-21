@@ -52,6 +52,8 @@ CREATE TABLE usuarios (
     confirmado TINYINT(1) DEFAULT 0,
     debe_cambiar_password TINYINT(1) NOT NULL DEFAULT 0,   -- contraseña inicial (seed o temporal): se pide cambiarla al entrar
     ultimo_acceso DATETIME NULL,                        -- último acceso correcto
+    android_app_en DATETIME NULL,                       -- última vez que entró desde la app Android
+    android_banner_oculto TINYINT(1) NOT NULL DEFAULT 0, -- cerró el aviso de descarga de la app
     novedades_vistas DATETIME NULL,   -- última vez que abrió las novedades de la plataforma
     inicio_json TEXT NULL,            -- Inicio personalizado (bloques y orden), Fase 4.5
     creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

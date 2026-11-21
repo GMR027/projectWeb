@@ -241,6 +241,7 @@ class AppApi
             $u->guardar();
         }
         Usuario::marcarUltimoAcceso((int)$u->id);
+        Usuario::marcarAppAndroid((int)$u->id);
         Accesos::registrar((int)$u->id, $email, 'ok');
 
         $token = 'pwa_' . bin2hex(random_bytes(32));
@@ -592,6 +593,11 @@ class AppApi
                 'minSdk' => $apk['min_sdk'],
                 'url' => '/api/android/descargar',
             ] : null,
+            'apk_novedades' => array_map(fn($a) => [
+                'version' => (string)$a['version'],
+                'fecha' => date('Y-m-d', (int)$a['fecha']),
+                'notas' => (string)$a['notas'],
+            ], array_slice(ApkAndroid::listar(), 0, 5)),
         ];
     }
 

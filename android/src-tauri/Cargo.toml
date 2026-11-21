@@ -1,6 +1,6 @@
 [package]
 name = "projectweb_android"
-version = "0.2.13"
+version = "0.2.15"
 description = "Project Web para Android: obras, asistente local y modo sin conexión"
 authors = ["Project Web"]
 license = "UNLICENSED"
@@ -30,3 +30,4 @@ rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"]
 getrandom = "0.2"
 llama-cpp-2 = "0.1.161"
 ureq = { version = "2.12", features = ["tls"] }
+sha2 = "0.10"

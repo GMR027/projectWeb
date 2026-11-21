@@ -32,6 +32,8 @@
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-model" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h.1M15 12h.1M9 16h6M12 7V4M8 4h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.2A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.1M6.1 6.7C3.3 8.5 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.2-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
 <div class="app">
@@ -346,10 +348,27 @@
         </button>
       </div>
 
+      <section class="card app-actualizar" id="app-actualizar">
+        <div class="app-act-cab">
+          <h2>Actualizar app</h2>
+          <span class="chip" id="app-act-chip">—</span>
+        </div>
+        <p class="parte-nota">Versión instalada: <strong id="app-act-instalada">—</strong></p>
+        <p class="parte-nota" id="app-act-disponible">Comprobando la versión disponible…</p>
+        <div class="barra motor-barra" id="app-act-barra" hidden><i id="app-act-barra-i" style="width:0%"></i></div>
+        <button class="btn-principal" type="button" id="btn-actualizar-app">Buscar actualización</button>
+        <p class="parte-nota" id="app-act-estado"></p>
+      </section>
+
+      <section class="card app-novedades" id="app-novedades">
+        <h2>Novedades de la app</h2>
+        <div id="app-novedades-lista"><p class="parte-nota">Conecta tu cuenta para ver las novedades.</p></div>
+      </section>
+
       <div class="version">
         <img src="assets/projectweb.svg" alt="" class="version-bot">
-        <p><strong>Project Web Android</strong><br>Versión <span id="app-version">0.2.1</span> · Fase 1</p>
-        <p class="texto-tenue">La app se actualiza desde Ajustes en la web. El asistente digital funciona en el teléfono y no manda tus datos a la nube.</p>
+        <p><strong>Project Web Android</strong><br>Versión <span id="app-version">0.2.1</span></p>
+        <p class="texto-tenue">El asistente digital funciona en el teléfono y no manda tus datos a la nube.</p>
       </div>
     </section>
   </main>
@@ -379,7 +398,10 @@
         <input id="login-email" type="email" autocomplete="username" required>
       </label>
       <label>Contraseña
-        <input id="login-password" type="password" autocomplete="current-password" required>
+        <span class="campo-password">
+          <input id="login-password" type="password" autocomplete="current-password" required>
+          <button type="button" class="ojo-password" id="login-password-ojo" aria-label="Mostrar contraseña" title="Mostrar contraseña"><svg class="ico"><use href="#i-eye"/></svg></button>
+        </span>
       </label>
       <p class="login-error" id="login-error" role="alert"></p>
       <button class="btn-principal" type="submit" id="login-entrar">Entrar y descargar mis obras</button>

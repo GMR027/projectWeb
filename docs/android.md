@@ -6,7 +6,7 @@ sincroniza al volver. El asistente ya ejecuta **Qwen2.5 GGUF con llama.cpp en el
 teléfono** (sin nube) y el historial se consulta en la web. Los avisos son locales y se
 muestran al abrir o sincronizar; no se usa FCM/Google. Falta el resto de la Fase 2/3.
 
-APK 0.2.13 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
+APK 0.2.15 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
 El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera y el asistente usan el logo de Project Web (casco); el icono de Ajustes es un engrane y no hay mascota de chatbot.
 
 ## Decisiones cerradas
@@ -76,7 +76,9 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 
 - **Login de app:** `POST /api/app/login` con correo/contraseña y token `pwa_…`; se guarda
   solo su SHA-256 en `sesiones_usuario`. El token dura 90 días y se puede revocar.
+- **Sesión guardada:** si el usuario ya inició sesión, el token queda en el Keystore y la app entra directo con los datos descargados al volver a abrirla. Si no hay sesión, muestra el login (sin vista previa).
 - **Login obligatorio al abrir:** si no hay una sesión guardada, la app muestra directamente el login (sin vista previa ni datos de ejemplo); la app solo aparece después de autenticarse. Si ya hay sesión, entra con los datos descargados y sincroniza. El botón «Cancelar» del login solo existe cuando un usuario ya conectado abre «Conectar mi cuenta».
+- **Ojo de la contraseña:** el campo de contraseña del login tiene un botón para mostrar/ocultar lo que se escribe.
 - **Servidor oculto:** el campo «Servidor» del login está oculto por defecto para los clientes.
   Solo lo ve el **admin ya conectado** o cuando se activa el **modo desarrollo**: 7 toques
   seguidos en el logo del login, o el interruptor **Ajustes → Modo desarrollo** (solo admin).
@@ -173,6 +175,20 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 - Desde el hub de Obras, **Evidencias** abre una pantalla para elegir actividad, fecha, departamento, categoría, descripción y hasta 5 fotos.
 - Se guardan en la cola offline con `evidencia_crear` y el servidor las procesa con `Evidencia`/`Imagenes`; aparecen en `/evidencias` de la web.
 - Es independiente de las fotos del parte diario; sirve para evidencias sueltas por actividad.
+### Actualización dentro de la app
+
+- Ajustes → **Actualizar app** muestra la versión instalada, la publicada, el tamaño y la fecha, con un botón **Buscar actualización** / **Descargar e instalar**.
+- La descarga la hace el comando Rust `descargar_apk` con el token de la app, guarda el APK en la caché privada y **verifica el SHA-256** publicado.
+- La instalación la abre el plugin Android `ApkInstallerPlugin` con un `content://` de FileProvider; Android pide permiso para instalar apps desde Project Web la primera vez. El APK se instala encima de la versión anterior (misma firma).
+- Ajustes → **Novedades de la app** lista las notas de las últimas versiones publicadas (`apk_novedades` del servidor).
+- El banner superior de una versión nueva lleva a esa sección; la instalación ya no se hace desde la web.
+
+### Aviso de descarga en /dashboard
+
+- La web muestra un aviso con el botón **Descargar app** para quien puede descargar (admin, cliente o colaborador).
+- Se oculta solo cuando el usuario entra a la app (`usuarios.android_app_en`) o cuando pulsa la **×** (`usuarios.android_banner_oculto`); migración `database/migracion_app_android_banner.sql`.
+- El aviso no se muestra si no hay un APK publicado.
+
 ### Incidentes de seguridad nativos
 
 - Desde el hub de Obras, **Incidentes** abre una pantalla nativa con búsqueda, lista y alta.
@@ -290,7 +306,7 @@ publicar: copiar el APK a `storage/android/projectweb-android-<versión>.apk` y 
 
 ## Servidor
 
-- **Desplegado:** 2026-11-20 (Helm revisión 106). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.13 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
+- **Desplegado:** 2026-11-20 (Helm revisión 107). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.15 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
 - **Orden de despliegue:** primero el backend (`public/index.php` con el despacho de
   `/api/app` antes de `csrf_verificar()`, `classes/AppApi.php`, `classes/Asistente.php` y las
   migraciones) y después el APK. Si el backend viejo recibe un POST JSON sin `_csrf`,

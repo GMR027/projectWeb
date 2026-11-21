@@ -509,4 +509,8 @@ return [
     'Tamaño y fondo' => 'Size and background',
     'Cerrar' => 'Close',
     'Filtrar por categoría' => 'Filter by category',
+    'Lleva Project Web en tu Android' => 'Get Project Web on your Android',
+    'Descarga la app para reportar desde campo, incluso sin conexión.' => 'Download the app to report from the field, even offline.',
+    'Descargar app' => 'Download app',
+    'Cerrar aviso' => 'Dismiss notice',
 ];

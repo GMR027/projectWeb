@@ -160,6 +160,7 @@ $router->get('/manual/curso', [ManualController::class, 'curso']);
 $router->get('/novedades', [NovedadesController::class, 'index']);
 $router->post('/novedades/vistas', [NovedadesController::class, 'vistas']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
+$router->post('/dashboard/banner-android', [DashboardController::class, 'ocultarBannerAndroid']);
 $router->post('/inicio/guardar', [DashboardController::class, 'guardarInicio']);
 
 // ========== PROYECTOS ==========

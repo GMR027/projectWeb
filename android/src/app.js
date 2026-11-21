@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.13';
-const APP_VERSION_CODE = 2013;
+const APP_VERSION = '0.2.15';
+const APP_VERSION_CODE = 2015;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -266,6 +266,7 @@ async function guardarSesion(datos, servidor) {
   await cacheGuardar('servidor', state.servidor);
   await cacheGuardar('usuario', JSON.stringify(state.usuario || {}));
   await cacheGuardar('proyectos', JSON.stringify(state.proyectos));
+  await cacheGuardar('servidor_info', JSON.stringify(state.servidorInfo || {}));
   actualizarBanner();
 }
 
@@ -285,7 +286,7 @@ async function limpiarSesion() {
   for (const p of proyectos) await cacheBorrar('chat_' + Number(p?.proyecto?.id || 0));
   await borrarTokenSeguro();
   if (tieneTauri()) { try { await invokeTauri('limpiar_archivos'); } catch (e) {} }
-  for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas']) await cacheBorrar(k);
+  for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas', 'servidor_info']) await cacheBorrar(k);
   localStorage.removeItem('pw-dev');
   state.outbox = [];
   actualizarPendientes();
@@ -305,6 +306,8 @@ async function cargarSesion() {
   if (usuario) { try { state.usuario = JSON.parse(usuario); } catch (e) {} }
   const outbox = await cacheLeer('outbox');
   if (outbox) { try { state.outbox = JSON.parse(outbox) || []; } catch (e) { state.outbox = []; } }
+  const servidorInfo = await cacheLeer('servidor_info');
+  if (servidorInfo) { try { state.servidorInfo = JSON.parse(servidorInfo); } catch (e) {} }
   actualizarPendientes();
   const sync = await cacheLeer('sync');
   const proyectoGuardado = Number(await cacheLeer('proyecto') || 0);
@@ -1910,6 +1913,7 @@ function renderPerfil() {
   if (ses) ses.textContent = (state.sesiones.length || 1) + ' dispositivo(s) con sesión abierta';
   renderDatosLocales();
   renderModoDesarrollo();
+  renderActualizacionApp();
   const mod = $('#ajustes-modelo-txt');
   if (mod) {
     const m = state.motor;
@@ -2802,7 +2806,111 @@ function actualizarBanner() {
   const txt = $('#banner-texto');
   if (txt) txt.textContent = `Hay una versión nueva (${apk.version}).`;
   const link = $('#banner-link');
-  if (link) link.href = normalizarServidor(state.servidor) + '/ajustes';
+  if (link) {
+    link.href = '#';
+    link.textContent = 'Actualizar';
+    link.onclick = (e) => {
+      e.preventDefault();
+      irA('ajustes');
+      setTimeout(() => $('#app-actualizar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
+    };
+  }
+  renderActualizacionApp();
+}
+
+function renderActualizacionApp() {
+  const actual = $('#app-act-instalada');
+  if (actual) actual.textContent = APP_VERSION;
+  const apk = state.servidorInfo?.apk;
+  const disp = $('#app-act-disponible');
+  const chip = $('#app-act-chip');
+  const btn = $('#btn-actualizar-app');
+  const estado = $('#app-act-estado');
+  const lista = $('#app-novedades-lista');
+  let novedades = Array.isArray(state.servidorInfo?.apk_novedades) ? state.servidorInfo.apk_novedades : [];
+  if (!novedades.length && apk) novedades = [{ version: apk.version, fecha: apk.fecha, notas: apk.notas }];
+  if (lista) {
+    lista.innerHTML = novedades.length
+      ? novedades.map((n) => `<div class="novedad-app"><strong>Versión ${esc(n.version || '')}</strong> <small>${esc(fechaLarga(String(n.fecha || '').slice(0, 10)))}</small><p>${esc(n.notas || 'Sin notas publicadas.')}</p></div>`).join('')
+      : '<p class="parte-nota">No hay novedades publicadas.</p>';
+  }
+  if (!state.token) {
+    if (disp) disp.textContent = 'Conecta tu cuenta para comprobar si hay una versión nueva.';
+    if (chip) { chip.textContent = '—'; chip.className = 'chip'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Conecta tu cuenta'; }
+    if (estado) estado.textContent = '';
+    return;
+  }
+  if (!apk) {
+    if (disp) disp.textContent = 'Todavía no hay una versión publicada.';
+    if (chip) { chip.textContent = '—'; chip.className = 'chip'; }
+    if (btn) { btn.disabled = false; btn.dataset.modo = 'buscar'; btn.textContent = 'Buscar actualización'; }
+    if (estado) estado.textContent = '';
+    return;
+  }
+  const hay = Number(apk.versionCode) > APP_VERSION_CODE;
+  if (disp) disp.innerHTML = `Versión disponible: <strong>${esc(apk.version)}</strong> · ${formatoMB(apk.size)}${apk.fecha ? ' · ' + esc(String(apk.fecha).slice(0, 10)) : ''}`;
+  if (chip) {
+    chip.textContent = hay ? 'Nueva' : 'Al día';
+    chip.className = 'chip ' + (hay ? 'chip-warn' : 'chip-ok');
+  }
+  if (btn) {
+    btn.disabled = false;
+    btn.dataset.modo = hay ? 'instalar' : 'buscar';
+    btn.textContent = hay ? `Descargar e instalar ${apk.version}` : 'Buscar actualización';
+  }
+  if (estado) estado.textContent = hay ? 'Se descargará dentro de la app y se abrirá el instalador de Android.' : 'Tienes la última versión publicada.';
+}
+
+async function buscarActualizacionApp() {
+  if (!state.token) { toast('Conecta tu cuenta para buscar actualizaciones.'); return; }
+  const btn = $('#btn-actualizar-app');
+  const estado = $('#app-act-estado');
+  if (btn) { btn.disabled = true; btn.textContent = 'Buscando…'; }
+  if (estado) estado.textContent = 'Consultando la versión publicada…';
+  try {
+    const r = await apiFetch('/api/app/bootstrap');
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.success) throw new Error(j.error || 'No se pudo consultar la versión.');
+    state.servidorInfo = j.servidor || state.servidorInfo;
+    await cacheGuardar('servidor_info', JSON.stringify(state.servidorInfo || {}));
+    actualizarBanner();
+    renderActualizacionApp();
+    const apk = state.servidorInfo?.apk;
+    toast(apk && Number(apk.versionCode) > APP_VERSION_CODE ? `Hay una versión nueva: ${apk.version}` : 'Tienes la última versión.');
+  } catch (e) {
+    if (estado) estado.textContent = String(e?.message || e || 'No se pudo consultar la versión.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Buscar actualización'; btn.dataset.modo = 'buscar'; }
+    toast('No se pudo buscar la actualización.', 5000);
+  }
+}
+
+async function actualizarAppAndroid() {
+  const apk = state.servidorInfo?.apk;
+  if (!apk || Number(apk.versionCode) <= APP_VERSION_CODE) { buscarActualizacionApp(); return; }
+  if (!state.token) { toast('Conecta tu cuenta para actualizar la app.'); return; }
+  if (!navigator.onLine) { toast('Necesitas conexión para descargar la actualización.'); return; }
+  if (!tieneTauri()) { toast('La actualización dentro de la app está disponible en Android.'); return; }
+  const btn = $('#btn-actualizar-app');
+  const estado = $('#app-act-estado');
+  const barra = $('#app-act-barra');
+  if (btn) { btn.disabled = true; btn.textContent = 'Descargando…'; }
+  if (estado) estado.textContent = 'Descargando la actualización…';
+  if (barra) barra.hidden = false;
+  try {
+    const url = normalizarServidor(state.servidor) + '/api/android/descargar';
+    const ruta = await invokeTauri('descargar_apk', { url, token: state.token, sha256: apk.sha256 });
+    if (estado) estado.textContent = 'Abriendo el instalador de Android…';
+    await invokeTauri('instalar_apk', { ruta });
+    if (estado) estado.textContent = 'Sigue las instrucciones de Android para instalar la actualización.';
+    toast('Instalador abierto. Confirma la actualización.', 6000);
+  } catch (e) {
+    if (estado) estado.textContent = String(e?.message || e || 'No se pudo descargar la actualización.');
+    toast('No se pudo actualizar la app.', 6000);
+  } finally {
+    if (barra) barra.hidden = true;
+    if (btn) { btn.disabled = false; btn.textContent = `Descargar e instalar ${apk.version}`; btn.dataset.modo = 'instalar'; }
+  }
 }
 
 
@@ -3399,6 +3507,24 @@ function init() {
   });
 
   $('#login-form')?.addEventListener('submit', login);
+  $('#login-password-ojo')?.addEventListener('click', () => {
+    const input = $('#login-password');
+    const boton = $('#login-password-ojo');
+    if (!input) return;
+    const ver = input.type === 'password';
+    input.type = ver ? 'text' : 'password';
+    if (boton) {
+      boton.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      boton.setAttribute('title', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      const use = boton.querySelector('use');
+      if (use) use.setAttribute('href', ver ? '#i-eye-off' : '#i-eye');
+    }
+  });
+  $('#btn-actualizar-app')?.addEventListener('click', () => {
+    const modo = $('#btn-actualizar-app')?.dataset.modo || 'buscar';
+    if (modo === 'instalar') actualizarAppAndroid();
+    else buscarActualizacionApp();
+  });
   $('#login-cancelar')?.addEventListener('click', cerrarConexion);
   $('#login-salir')?.addEventListener('click', cerrarSesion);
   $('#btn-conectar')?.addEventListener('click', abrirConexion);
