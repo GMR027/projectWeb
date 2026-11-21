@@ -963,5 +963,59 @@ $db->query("DELETE FROM actividades WHERE partida_id = {$ph->id}");
 $db->query("DELETE FROM partidas WHERE proyecto_id = $pidH AND codigo IN ('HIST.1', 'HIST.2')");
 $_SESSION = [];
 
+// ---------- Sesiones y dispositivos ----------
+echo "Sesiones y dispositivos\n";
+$ok('la tabla sesiones_usuario existe', \Classes\Sesiones::disponible());
+$GLOBALS['db']->query("DELETE FROM sesiones_usuario WHERE usuario_id = " . (int)$u->id);
+$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
+$_SERVER['REMOTE_ADDR'] = '203.0.113.77';
+$t1 = \Classes\Sesiones::crearWeb((int)$u->id);
+$ok('crea una sesión web con token de 64 caracteres', is_string($t1) && strlen($t1) === 64);
+$lista = \Classes\Sesiones::listar((int)$u->id, $t1);
+$ok('la lista trae la sesión actual marcada', count($lista) === 1 && !empty($lista[0]['actual']) && $lista[0]['dispositivo'] === 'Chrome en Windows');
+$ok('tocar mantiene viva la sesión', \Classes\Sesiones::tocar($t1));
+$ok('cuenta un dispositivo', \Classes\Sesiones::contar((int)$u->id) === 1);
+$t2 = \Classes\Sesiones::crearWeb((int)$u->id);
+$ok('dos dispositivos abiertos', is_string($t2) && \Classes\Sesiones::contar((int)$u->id) === 2);
+$id2 = 0;
+foreach (\Classes\Sesiones::listar((int)$u->id, $t1) as $s) if (empty($s['actual'])) $id2 = (int)$s['id'];
+$ok('cerrar la otra sesión la revoca', $id2 > 0 && \Classes\Sesiones::cerrar((int)$u->id, $id2) && !\Classes\Sesiones::tocar($t2));
+$ok('cerrar todas las demás deja solo la actual', \Classes\Sesiones::cerrarOtras((int)$u->id, $t1) >= 0 && \Classes\Sesiones::contar((int)$u->id) === 1);
+$_SESSION['id'] = (int)$u->id;
+$_SESSION['sesion_id'] = $t1;
+\Classes\Sesiones::revocarActual();
+$ok('logout revoca la sesión actual', !\Classes\Sesiones::tocar($t1) && \Classes\Sesiones::contar((int)$u->id) === 0);
+$ok('el panel del administrador lista sesiones activas', is_array(\Classes\Sesiones::listarTodas()) && \Classes\Sesiones::contarTodas() >= 0);
+$GLOBALS['db']->query("DELETE FROM sesiones_usuario WHERE usuario_id = " . (int)$u->id);
+$_SESSION = [];
+
+
+// ---------- Asistente: historial y borradores ----------
+echo "Asistente: historial y borradores\n";
+$ok('las tablas del asistente existen', Classes\Asistente::disponible());
+$ok('la tabla de operaciones de la app existe', (bool)$GLOBALS['db']->query("SHOW TABLES LIKE 'app_operaciones'")->fetch_row());
+$_SESSION = ['id' => (int)$u->id, 'nombre' => 'Admin CI', 'email' => $u->email, 'rol' => 'admin'];
+$convAs = Classes\Asistente::crearConversacion((int)$u->id, (int)$proy->id, 'Conversación CI');
+$ok('crea una conversación', $convAs > 0);
+$m1 = Classes\Asistente::agregarMensaje($convAs, 'user', '¿Cómo va la obra?', ['fuente' => 'test']);
+$m2 = Classes\Asistente::agregarMensaje($convAs, 'assistant', 'Va al 45 %.', ['fuente' => 'test']);
+$ok('guarda mensajes de usuario y asistente', $m1 > 0 && $m2 > 0);
+$msgs = Classes\Asistente::mensajes($convAs);
+$ok('recupera el historial en orden', count($msgs) === 2 && $msgs[0]['rol'] === 'user' && $msgs[1]['rol'] === 'assistant');
+$convs = Classes\Asistente::conversaciones((int)$u->id, (int)$proy->id, true);
+$ok('el administrador ve la conversación con su conteo', count($convs) >= 1 && (int)$convs[0]['mensajes'] === 2);
+$bor = Classes\Asistente::crearBorrador((int)$u->id, (int)$proy->id, 'bitacora', ['descripcion' => 'Nota del borrador', 'importancia' => 'alta'], $convAs);
+$ok('crea un borrador', $bor > 0);
+$ok('el borrador aparece pendiente', count(Classes\Asistente::borradores((int)$u->id, (int)$proy->id, true)) >= 1);
+$resBor = Classes\Asistente::aplicarBorrador($bor, (int)$u->id, true);
+$ok('aplica el borrador de bitácora y crea el registro', $resBor['ok'] && $resBor['entidad_id'] > 0);
+$estadoBor = (string)($GLOBALS['db']->query("SELECT estado FROM asistente_borradores WHERE id = $bor")->fetch_row()[0] ?? '');
+$ok('el borrador queda aplicado', $estadoBor === 'aplicado');
+$GLOBALS['db']->query("DELETE FROM asistente_mensajes WHERE conversacion_id = $convAs");
+$GLOBALS['db']->query("DELETE FROM asistente_borradores WHERE id = $bor");
+$GLOBALS['db']->query("DELETE FROM asistente_conversaciones WHERE id = $convAs");
+$GLOBALS['db']->query("DELETE FROM bitacora WHERE descripcion = 'Nota del borrador'");
+$_SESSION = [];
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nIntegración OK\n";
 exit($fallos ? 1 : 0);

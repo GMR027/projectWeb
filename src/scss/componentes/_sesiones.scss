@@ -1,0 +1,108 @@
+// Sesiones y dispositivos (cuenta del usuario y Sistema → Sesiones)
+.sesiones-card {
+    width: 100%;
+    max-width: 76rem;
+}
+
+.sesiones-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.6rem 0;
+}
+
+.sesion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.2rem;
+    padding: 1.2rem 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    background: var(--surface);
+    min-width: 0;
+
+    &.es-actual {
+        border-color: var(--primary-line);
+        background: var(--primary-soft);
+    }
+}
+
+.sesion-ico {
+    flex: 0 0 4rem;
+    width: 4rem;
+    height: 4rem;
+    display: grid;
+    place-items: center;
+    border-radius: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--primary);
+    font-size: 1.8rem;
+}
+
+.sesion-datos {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+
+    strong {
+        font-size: 1.5rem;
+        overflow-wrap: anywhere;
+    }
+}
+
+.sesion-tipo,
+.sesion-meta {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    overflow-wrap: anywhere;
+}
+
+.sesion-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+
+    i {
+        color: var(--secondary);
+    }
+}
+
+.sesion-meta-suave {
+    opacity: .8;
+}
+
+.sesion-sep {
+    opacity: .5;
+    margin: 0 .2rem;
+}
+
+.sesion-acciones {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+}
+
+.sesiones-cerrar-todas {
+    margin: 1.6rem 0;
+}
+
+@media (max-width: 48rem) {
+    .sesion-item {
+        flex-wrap: wrap;
+    }
+
+    .sesion-acciones {
+        flex: 1 1 100%;
+        justify-content: flex-end;
+    }
+
+    .sesion-ico {
+        flex-basis: 3.6rem;
+        width: 3.6rem;
+        height: 3.6rem;
+        font-size: 1.6rem;
+    }
+}

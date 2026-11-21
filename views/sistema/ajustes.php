@@ -113,6 +113,96 @@ $vols = [
     </form>
 </div>
 
+<div class="card" id="android" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-brands fa-android"></i> <?php echo s(t('App Android')); ?><?php echo $apkVersion ? ' · v' . s($apkVersion) : ''; ?></h3>
+    <p class="text-muted text-sm"><?php echo s(t('Solo el administrador publica versiones. Los clientes y el admin las descargan desde Ajustes → App Android.')); ?></p>
+    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
+    <?php if ($apks): ?>
+    <div class="tabla-wrapper">
+    <table class="tabla">
+        <thead><tr><th><?php echo s(t('Archivo')); ?></th><th><?php echo s(t('Versión')); ?></th><th><?php echo s(t('Tamaño')); ?></th><th><?php echo s(t('Publicado')); ?></th><th>SHA-256</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($apks as $a): ?>
+            <tr>
+                <td><code><?php echo s($a['archivo']); ?></code></td>
+                <td><strong><?php echo s($a['version']); ?></strong><br><span class="text-muted text-sm">code <?php echo (int)$a['version_code']; ?></span></td>
+                <td><?php echo number_format($a['tam'] / 1048576, 1); ?> MB</td>
+                <td><?php echo s(date('d/m/Y H:i', $a['fecha'])); ?></td>
+                <td><code title="<?php echo s($a['sha']); ?>"><?php echo s(substr($a['sha'], 0, 12)); ?>…</code></td>
+                <td style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+                    <a class="btn btn-sm btn-primary" href="/api/android/descargar?archivo=<?php echo urlencode($a['archivo']); ?>"><i class="fa-solid fa-download"></i> <?php echo s(t('Descargar')); ?></a>
+                    <form method="POST" action="/sistema/android/eliminar" data-confirmar="<?php echo s(t('¿Eliminar este APK? Los usuarios ya no podrán descargarlo.')); ?>">
+                        <input type="hidden" name="archivo" value="<?php echo s($a['archivo']); ?>">
+                        <button class="btn btn-sm btn-ghost" type="submit" aria-label="<?php echo s(t('Eliminar APK')); ?>"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    </div>
+    <?php else: ?>
+        <p class="text-muted"><?php echo s(t('Aún no hay APK publicados.')); ?></p>
+    <?php endif; ?>
+    <form method="POST" action="/sistema/android/subir" enctype="multipart/form-data" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.4rem">
+        <label><?php echo s(t('Publicar APK (projectweb-android-<versión>.apk)')); ?><input type="file" name="apk" accept=".apk,application/vnd.android.package-archive" required></label>
+        <label style="flex:1 1 26rem;min-width:0"><?php echo s(t('Notas de la versión (opcional)')); ?><input type="text" name="notas" maxlength="1000" placeholder="<?php echo s(t('Qué cambia en esta versión')); ?>"></label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> <?php echo s(t('Publicar')); ?></button>
+    </form>
+    <p class="text-muted text-sm" style="margin-top:.8rem"><?php echo s(t('El archivo debe llamarse projectweb-android-<versión>.apk. Si subes el mismo nombre, se reemplaza y se avisa si el contenido cambió.')); ?></p>
+</div>
+
+<div class="card" id="sesiones" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-shield-halved"></i> <?php echo s(t('Sesiones y dispositivos')); ?></h3>
+    <p class="text-muted text-sm">
+        <?php echo s(t('Sesiones activas en toda la plataforma: {n}. Cada usuario ve las suyas en Ajustes → Cuenta; aquí el administrador puede cerrar cualquiera.', ['n' => (int)$sesionesTotal])); ?>
+    </p>
+    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
+    <form method="GET" action="/sistema#sesiones" class="filtros" style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin:1.2rem 0">
+        <label><?php echo s(t('Buscar')); ?><input type="search" name="q" value="<?php echo s($sesionesFiltro['q']); ?>" placeholder="<?php echo s(t('Nombre, correo, IP o dispositivo')); ?>"></label>
+        <label><?php echo s(t('Tipo')); ?>
+            <select name="tipo">
+                <option value=""><?php echo s(t('Todos')); ?></option>
+                <option value="web" <?php echo $sesionesFiltro['tipo'] === 'web' ? 'selected' : ''; ?>><?php echo s(t('Navegador web')); ?></option>
+                <option value="android" <?php echo $sesionesFiltro['tipo'] === 'android' ? 'selected' : ''; ?>><?php echo s(t('App Android')); ?></option>
+            </select>
+        </label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter"></i> <?php echo s(t('Filtrar')); ?></button>
+        <?php if ($sesionesFiltro['q'] !== '' || $sesionesFiltro['tipo'] !== ''): ?><a class="btn btn-ghost" href="/sistema#sesiones"><?php echo s(t('Limpiar')); ?></a><?php endif; ?>
+    </form>
+    <?php if ($sesionesAdmin): ?>
+    <div class="tabla-wrapper">
+    <table class="tabla">
+        <thead><tr><th><?php echo s(t('Usuario')); ?></th><th><?php echo s(t('Dispositivo')); ?></th><th><?php echo s(t('IP')); ?></th><th><?php echo s(t('Último acceso')); ?></th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($sesionesAdmin as $s): ?>
+            <tr>
+                <td><strong><?php echo s($s['nombre']); ?></strong><br><span class="text-muted text-sm"><?php echo s($s['email']); ?> · <?php echo s($s['rol']); ?></span></td>
+                <td><?php echo s($s['dispositivo']); ?><br><span class="text-muted text-sm"><?php echo s($s['tipo_texto']); ?><?php if (!empty($s['app_version'])): ?> · v<?php echo s($s['app_version']); ?><?php endif; ?></span></td>
+                <td><code><?php echo s($s['ip']); ?></code></td>
+                <td><?php echo s(!empty($s['ultimo_acceso']) ? date('d/m/Y H:i', strtotime((string)$s['ultimo_acceso'])) : '—'); ?></td>
+                <td>
+                    <?php if (!empty($s['actual'])): ?>
+                        <span class="badge badge-cliente"><?php echo s(t('Tu sesión')); ?></span>
+                    <?php else: ?>
+                        <form method="POST" action="/sistema/sesiones/cerrar" data-confirmar="<?php echo s(t('¿Cerrar esta sesión? El usuario tendrá que iniciar sesión de nuevo.')); ?>">
+                            <input type="hidden" name="id" value="<?php echo (int)$s['id']; ?>">
+                            <button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-xmark"></i> <?php echo s(t('Cerrar')); ?></button>
+                        </form>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    </div>
+    <?php else: ?>
+        <p class="text-muted"><?php echo s(t('No hay sesiones activas con ese filtro.')); ?></p>
+    <?php endif; ?>
+</div>
+
 <div class="card" id="herramientas" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-plug"></i> Conectar herramientas de IA</h3>
     <p class="text-muted text-sm">Registro de las IA que usas desde la app de escritorio (local, CLI o API). <strong>Aquí no se guardan API keys</strong>: escríbelas solo en la app de escritorio (Ajustes → proveedores) para que no queden en el servidor ni en los respaldos.</p>

@@ -1,0 +1,32 @@
+[package]
+name = "projectweb_android"
+version = "0.2.9"
+description = "Project Web para Android: obras, asistente local y modo sin conexión"
+authors = ["Project Web"]
+license = "UNLICENSED"
+repository = ""
+edition = "2024"
+rust-version = "1.90"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.12.7", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-secure-keystore = "0.0.3-beta.1"
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
+getrandom = "0.2"
+llama-cpp-2 = "0.1.161"
+ureq = { version = "2.12", features = ["tls"] }

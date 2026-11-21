@@ -1,0 +1,333 @@
+// Historial web del asistente
+.asis-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    padding: 1.2rem;
+    margin-bottom: 1.4rem;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        min-width: 18rem;
+        flex: 0 1 26rem;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    select,
+    input[type="search"] {
+        width: 100%;
+        min-width: 0;
+        padding: .7rem .8rem;
+        border: 1px solid var(--border);
+        border-radius: .8rem;
+        background: var(--bg-secondary);
+        color: var(--text);
+        font-size: 1.3rem;
+    }
+}
+
+.asis-layout {
+    display: grid;
+    grid-template-columns: 30rem minmax(0, 1fr);
+    gap: 1.4rem;
+    align-items: start;
+    margin-bottom: 1.4rem;
+}
+
+.asis-conv,
+.asis-chat,
+.asis-borradores {
+    min-width: 0;
+}
+
+.asis-conv {
+    padding: 1.2rem;
+}
+
+.asis-cab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    h3 {
+        margin: 0;
+        font-size: 1.55rem;
+    }
+}
+
+.asis-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-height: 64rem;
+    overflow-y: auto;
+}
+
+.asis-conv-item {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .8rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    min-width: 0;
+
+    > .fa-chevron-right {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    &.activa {
+        border-color: var(--primary-line);
+        background: var(--primary-soft);
+    }
+}
+
+.asis-conv-ico {
+    width: 3.2rem;
+    height: 3.2rem;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: .9rem;
+    background: var(--bg-tertiary);
+    color: var(--primary);
+}
+
+.asis-conv-txt {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+
+    strong,
+    small {
+        overflow-wrap: anywhere;
+    }
+
+    strong {
+        font-size: 1.2rem;
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: 1.02rem;
+    }
+}
+
+.asis-chat {
+    padding: 1.4rem;
+    min-height: 48rem;
+}
+
+.asis-chat-cab {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+
+    h3 {
+        margin: 0 0 .2rem;
+        font-size: 1.65rem;
+        overflow-wrap: anywhere;
+    }
+}
+
+.asis-chat-acciones {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    form { margin: 0; }
+}
+
+.asis-mensajes {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1.2rem;
+    max-height: 64rem;
+    overflow-y: auto;
+}
+
+.asis-msg {
+    display: flex;
+    align-items: flex-end;
+    gap: .6rem;
+    min-width: 0;
+
+    &.asis-msg-user {
+        justify-content: flex-end;
+
+        .asis-burbuja {
+            background: var(--primary-soft);
+            border-color: var(--primary-line);
+            border-radius: 1.4rem 1.4rem .35rem 1.4rem;
+        }
+    }
+}
+
+.asis-msg-avatar {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+}
+
+.asis-burbuja {
+    max-width: min(82%, 65rem);
+    padding: .9rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 1.4rem 1.4rem 1.4rem .35rem;
+    background: var(--surface);
+    min-width: 0;
+}
+
+.asis-msg-txt {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+}
+
+.asis-msg-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .5rem;
+    color: var(--text-muted);
+    font-size: 1.02rem;
+
+    details {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    summary {
+        cursor: pointer;
+        color: var(--secondary);
+    }
+
+    pre {
+        max-height: 20rem;
+        overflow: auto;
+        margin: .4rem 0 0;
+        padding: .6rem;
+        border-radius: .6rem;
+        background: var(--bg-secondary);
+        font-size: 1rem;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+}
+
+.asis-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+
+    > i {
+        font-size: 2.8rem;
+        color: var(--primary);
+    }
+
+    p { margin: 0; }
+    small { font-size: 1.05rem; }
+}
+
+.asis-vacio-grande {
+    min-height: 40rem;
+
+    img { margin-bottom: .4rem; }
+    h3 { margin: 0; color: var(--text); }
+}
+
+.asis-borradores {
+    padding: 1.4rem;
+}
+
+.asis-borradores-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+}
+
+.asis-borrador {
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+    padding: .9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    min-width: 0;
+}
+
+.asis-borrador-ico {
+    width: 3.2rem;
+    height: 3.2rem;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: .9rem;
+    background: var(--bg-tertiary);
+    color: var(--secondary);
+}
+
+.asis-borrador-txt {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    strong,
+    p,
+    small {
+        overflow-wrap: anywhere;
+    }
+
+    strong { font-size: 1.2rem; }
+    p { margin: .15rem 0; color: var(--text); font-size: 1.12rem; }
+    small { color: var(--text-muted); font-size: 1.02rem; }
+}
+
+.asis-borrador-acciones {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+
+    form { margin: 0; }
+}
+
+@media (max-width: 80rem) {
+    .asis-layout { grid-template-columns: 25rem minmax(0, 1fr); }
+}
+
+@media (max-width: 48rem) {
+    .asis-layout { grid-template-columns: 1fr; }
+    .asis-lista,
+    .asis-mensajes { max-height: none; }
+    .asis-chat { min-height: 0; }
+    .asis-chat-cab { flex-direction: column; }
+    .asis-chat-acciones { justify-content: flex-start; }
+    .asis-borrador { flex-wrap: wrap; }
+    .asis-borrador-acciones { flex: 1 1 100%; justify-content: flex-end; }
+}

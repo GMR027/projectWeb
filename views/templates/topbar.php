@@ -168,6 +168,9 @@ $notifTotal = $notifSinVer + (int)($notifHoy['total'] ?? 0) + count($notifPortaf
             <i class="fa-solid fa-gear"></i>
         </a>
         <?php endif; ?>
+        <a href="/cuenta/sesiones" class="btn btn-ghost btn-sm topbar-icono" title="<?php echo s(t('Sesiones y dispositivos')); ?>" aria-label="<?php echo s(t('Sesiones y dispositivos')); ?>">
+            <i class="fa-solid fa-shield-halved"></i>
+        </a>
         <div class="user-info">
             <span class="user-name"><?php echo s($_SESSION['nombre'] ?? 'Invitado'); ?></span>
             <span class="user-role badge badge-<?php echo s($_SESSION['rol'] ?? 'visitante'); ?>">

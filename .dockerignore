@@ -12,3 +12,8 @@ helm
 deploy.sh
 *.md
 design
+android
+desktop
+tests
+clases
+storage

@@ -17,8 +17,7 @@ class ResumenIA
     public static function datos(Proyecto $p, int $horas = 24): array
     {
         $pid = (int)$p->id;
-        $desde = date('Y-m-d H:i:s', time() - $horas * 3600);
-        $d = "'" . self::esc($desde) . "'";
+        $d = 'DATE_SUB(NOW(), INTERVAL ' . max(1, (int)$horas) . ' HOUR)';
 
         $porEvento = [];
         foreach (self::filas("SELECT evento, herramienta, COUNT(*) n FROM auditoria_cambios WHERE proyecto_id = $pid AND creado >= $d GROUP BY evento, herramienta") as $f) {

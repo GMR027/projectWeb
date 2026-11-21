@@ -56,6 +56,8 @@ class AjustesController
             'equipoDisponible' => $equipoDisponible,
             'equipoProyecto' => $equipoProyecto,
             'calendarios' => $calendarios,
+            'sesiones' => \Classes\Sesiones::listar((int)($_SESSION['id'] ?? 0), \Classes\Sesiones::tokenActual()),
+            'apk' => \Classes\ApkAndroid::ultima(),
         ]);
     }
 

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>Project Web</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-obra" viewBox="0 0 24 24"><path d="M4 21V8l8-5 8 5v13M8 21v-7h8v7M3 21h18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9h8M8 12.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7M10 20h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-ajustes" viewBox="0 0 24 24"><path d="M19.14 12.94c.05-.31.08-.62.08-.94s-.03-.63-.08-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.49-.43h-3.84a.5.5 0 0 0-.49.43l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.74 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.05.31-.08.62-.08.94s.03.63.08.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.25.43.49.43h3.84c.24 0 .45-.19.49-.43l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2.2-7.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.4" fill="currentColor"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24"><path d="M3 3l18 18M8.5 8.5A6 6 0 0 1 18 9c0 6 2 7 2 7H8M6 9c0 6-2 7-2 7h9M10 20h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5M12 17.5v.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V3M5 4h13l-2.2 4L18 12H5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-model" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h.1M15 12h.1M9 16h6M12 7V4M8 4h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="app">
+  <div class="banner-actualizacion" id="banner-actualizacion" hidden>
+    <svg class="ico"><use href="#i-alert"/></svg>
+    <span id="banner-texto">Hay una versión nueva de la app.</span>
+    <a id="banner-link" href="#" target="_blank" rel="noopener">Actualizar</a>
+  </div>
+
+  <header class="app-bar">
+    <div class="marca">
+      <img class="marca-logo" src="assets/projectweb.svg" alt="">
+      <div class="marca-txt">
+        <strong>Project Web</strong>
+        <span id="estado-conexion"><i class="punto"></i> Sin conexión</span>
+      </div>
+    </div>
+    <button class="icono-btn" id="tema" type="button" aria-label="Cambiar tema" title="Cambiar tema">
+      <svg class="ico" id="tema-ico"><use href="#i-moon"/></svg>
+    </button>
+  </header>
+
+  <main class="vista" id="vista">
+    <!-- INICIO -->
+    <section class="pantalla activa" data-vista="inicio">
+      <div class="saludo">
+        <p class="eyebrow" id="inicio-fecha">Viernes, 20 de noviembre</p>
+        <h1 id="inicio-saludo">Buenos días, Edgar.</h1>
+        <p class="subtitulo">Esto es lo que tienes hoy en <strong id="inicio-subtitulo-proyecto">Torre Reforma 120</strong>.</p>
+      </div>
+
+      <article class="obra-card">
+        <div class="obra-cab">
+          <div>
+            <span class="chip chip-ok"><span class="punto"></span> En proceso</span>
+            <h2 id="inicio-nombre">Torre Reforma 120</h2>
+            <p class="obra-meta" id="inicio-meta">CDMX · 18 nov — 30 abr 2027</p>
+          </div>
+          <div class="aro" id="inicio-aro" style="--p:62" aria-label="Avance 62 por ciento">
+            <span id="inicio-avance">62<small>%</small></span>
+          </div>
+        </div>
+        <div class="barra"><i id="inicio-barra" style="width:62%"></i></div>
+        <div class="obra-pie">
+          <span id="inicio-hito"><svg class="ico"><use href="#i-clock"/></svg> Próximo hito: losa nivel 4</span>
+          <button class="btn-mini" type="button" data-ir="obras">Ver obra <svg class="ico"><use href="#i-arrow"/></svg></button>
+        </div>
+      </article>
+
+      <div class="grid-kpi">
+        <div class="kpi"><span class="kpi-ico kpi-ok"><svg class="ico"><use href="#i-check"/></svg></span><strong id="kpi-actividades">48</strong><small>Actividades en programa</small></div>
+        <div class="kpi"><span class="kpi-ico kpi-warn"><svg class="ico"><use href="#i-alert"/></svg></span><strong id="kpi-punch">3</strong><small>Punch críticos</small></div>
+        <div class="kpi"><span class="kpi-ico kpi-warn"><svg class="ico"><use href="#i-clock"/></svg></span><strong id="kpi-rfi">2</strong><small>RFI por vencer</small></div>
+        <div class="kpi"><span class="kpi-ico kpi-bad"><svg class="ico"><use href="#i-offline"/></svg></span><strong id="kpi-atrasos">5</strong><small>Actividades atrasadas</small></div>
+      </div>
+
+      <div class="seccion-cab"><h3>Recordatorios</h3><button class="enlace" type="button" data-ir="alertas">Ver todo</button></div>
+      <div class="lista-hoy" id="lista-hoy">
+        <div class="item-hoy"><span class="item-hora">08:00</span><span class="item-punto kpi-warn"></span><div><strong>Revisión de seguridad</strong><small>Torre A · 8 personas</small></div><svg class="ico"><use href="#i-arrow"/></svg></div>
+        <div class="item-hoy"><span class="item-hora">11:30</span><span class="item-punto kpi-ok"></span><div><strong>Colado de losa nivel 4</strong><small>Actividad crítica · 2 supervisores</small></div><svg class="ico"><use href="#i-arrow"/></svg></div>
+        <div class="item-hoy"><span class="item-hora">16:00</span><span class="item-punto kpi-warn"></span><div><strong>Mantenimiento de grúa</strong><small>Próximo servicio · 250 h</small></div><svg class="ico"><use href="#i-arrow"/></svg></div>
+      </div>
+
+      <div class="acciones-rapidas" id="acciones-rapidas">
+        <button class="btn-mini" id="btn-avance" type="button"><svg class="ico"><use href="#i-check"/></svg> Actualizar avance</button>
+        <button class="btn-mini" id="btn-nota" type="button"><svg class="ico"><use href="#i-chat"/></svg> Nota rápida</button>
+        <button class="btn-mini" id="btn-parte" type="button"><svg class="ico"><use href="#i-obra"/></svg> Parte diario</button>
+        <span class="chip chip-warn" id="pendientes-chip" hidden>0 pendientes</span>
+      </div>
+
+      <article class="asistente-card" data-ir="asistente" role="button" tabindex="0">
+        <img src="assets/bot.svg" alt="" class="asistente-bot">
+        <div>
+          <span class="chip chip-ia">Asistente digital</span>
+          <h3>Pregúntame por tu obra</h3>
+          <p>Estatus, punch, retrasos, materiales o qué toca hoy.</p>
+        </div>
+        <svg class="ico asistente-flecha"><use href="#i-arrow"/></svg>
+      </article>
+    </section>
+
+    <!-- OBRAS -->
+    <section class="pantalla" data-vista="obras">
+      <div class="seccion-cab"><h1>Mis obras</h1><button class="btn-mini" type="button" data-toast="Las obras se crean desde la web de Project Web.">+ Nueva</button></div>
+      <div class="buscador"><svg class="ico"><use href="#i-obra"/></svg><input type="search" id="obras-buscar" placeholder="Buscar obra" aria-label="Buscar obra"></div>
+      <div class="grid-2" id="obras-grid"></div>
+      <div class="aviso"><svg class="ico"><use href="#i-obra"/></svg><p>Aquí ves las obras que tienes asignadas y puedes cambiar la obra activa. Las herramientas completas (programa, Gantt, costos, documentos) siguen en la web; en la app tienes avance, avisos y asistente sin conexión.</p></div>
+    </section>
+
+    <!-- PARTE DIARIO -->
+    <section class="pantalla" data-vista="parte">
+      <div class="parte-cab">
+        <button class="icono-btn" id="parte-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Campo</span>
+          <h1>Parte diario</h1>
+          <p class="subtitulo" id="parte-obra">Selecciona una obra.</p>
+        </div>
+      </div>
+      <div id="parte-historial" class="parte-historial"></div>
+      <form id="parte-form" class="parte-form" autocomplete="off"></form>
+    </section>
+
+    <!-- EVIDENCIAS -->
+    <section class="pantalla" data-vista="evidencias">
+      <div class="parte-cab">
+        <button class="icono-btn" id="evidencias-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Campo</span>
+          <h1>Evidencias</h1>
+          <p class="subtitulo" id="evidencias-obra">Selecciona una obra.</p>
+        </div>
+      </div>
+      <form id="evidencias-form" class="parte-form" autocomplete="off"></form>
+    </section>
+
+    <!-- ARCHIVO -->
+    <section class="pantalla" data-vista="archivo">
+      <div class="parte-cab">
+        <button class="icono-btn" id="archivo-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Documentos</span>
+          <h1>Archivo</h1>
+          <p class="subtitulo" id="archivo-obra">Selecciona una obra.</p>
+        </div>
+      </div>
+      <div class="buscador"><svg class="ico"><use href="#i-obra"/></svg><input type="search" id="archivo-buscar" placeholder="Buscar archivo" aria-label="Buscar archivo"></div>
+      <div id="archivo-lista" class="archivo-lista"></div>
+      <p class="parte-nota">Los PDF e imágenes se guardan en el teléfono y se abren dentro de la app; si ya los descargaste, funcionan sin conexión. Los documentos de oficina se abren con la app correspondiente.</p>
+    </section>
+
+    <!-- PUNCH -->
+    <section class="pantalla" data-vista="punch">
+      <div class="parte-cab">
+        <button class="icono-btn" id="punch-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Calidad</span>
+          <h1>Punch</h1>
+          <p class="subtitulo" id="punch-obra">Selecciona una obra.</p>
+        </div>
+        <button class="btn-mini" type="button" id="punch-nuevo">+ Nuevo</button>
+      </div>
+      <div class="buscador"><svg class="ico"><use href="#i-obra"/></svg><input type="search" id="punch-buscar" placeholder="Buscar pendiente" aria-label="Buscar pendiente"></div>
+      <div id="punch-lista" class="tarea-lista"></div>
+    </section>
+
+    <!-- RFI -->
+    <section class="pantalla" data-vista="rfi">
+      <div class="parte-cab">
+        <button class="icono-btn" id="rfi-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Consultas</span>
+          <h1>RFI</h1>
+          <p class="subtitulo" id="rfi-obra">Selecciona una obra.</p>
+        </div>
+        <button class="btn-mini" type="button" id="rfi-nuevo">+ Nuevo</button>
+      </div>
+      <div class="buscador"><svg class="ico"><use href="#i-obra"/></svg><input type="search" id="rfi-buscar" placeholder="Buscar RFI" aria-label="Buscar RFI"></div>
+      <div id="rfi-lista" class="tarea-lista"></div>
+    </section>
+
+    <!-- VISOR DE DOCUMENTOS -->
+    <section class="pantalla visor-pantalla" data-vista="visor">
+      <div class="parte-cab visor-cab">
+        <button class="icono-btn" id="visor-volver" type="button" aria-label="Volver" title="Volver">
+          <svg class="ico" style="transform:scaleX(-1)"><use href="#i-arrow"/></svg>
+        </button>
+        <div>
+          <span class="eyebrow">Documento</span>
+          <h1 id="visor-titulo">Archivo</h1>
+          <p class="subtitulo" id="visor-info"></p>
+        </div>
+        <div class="visor-zoom" id="visor-zoom" hidden>
+          <button class="icono-btn" type="button" id="visor-menos" aria-label="Alejar" title="Alejar">−</button>
+          <button class="icono-btn" type="button" id="visor-mas" aria-label="Acercar" title="Acercar">+</button>
+        </div>
+      </div>
+      <div id="visor-paginas" class="visor-paginas"></div>
+      <div id="visor-estado" class="aviso" hidden></div>
+    </section>
+
+    <!-- ASISTENTE -->
+    <section class="pantalla pantalla-chat" data-vista="asistente">
+      <div class="chat-cab">
+        <img src="assets/bot.svg" alt="" class="chat-avatar">
+        <div><h2>Asistente digital</h2><span class="chat-estado" id="chat-estado"><span class="punto"></span> Conecta tu cuenta</span></div>
+        <button class="icono-btn" id="btn-acciones-chat" type="button" aria-label="Acciones del asistente" title="Acciones"><svg class="ico"><use href="#i-chat"/></svg></button>
+        <button class="icono-btn" id="btn-modelo-chat" type="button" aria-label="Ajustes del asistente" title="Asistente digital"><svg class="ico"><use href="#i-ajustes"/></svg></button>
+      </div>
+
+      <div class="motor-card" id="motor-card" hidden>
+        <span class="motor-card-ico"><svg class="ico"><use href="#i-model"/></svg></span>
+        <div class="motor-card-txt">
+          <strong id="motor-card-titulo">Asistente digital</strong>
+          <p id="motor-card-texto">Se prepara una sola vez y después responde sin conexión.</p>
+          <div class="barra motor-barra" id="motor-barra" hidden><i id="motor-barra-i" style="width:0%"></i></div>
+        </div>
+        <button class="btn-mini" id="motor-card-btn" type="button">Preparar</button>
+      </div>
+
+      <div class="chat-mensajes" id="chat-mensajes" aria-live="polite">
+        <div class="msg msg-bot">
+          <img src="assets/bot.svg" alt="" class="msg-avatar">
+          <div class="burbuja" id="chat-bienvenida">Hola, Edgar. Puedo revisar tu obra y darte respuestas cortas con datos reales. Conecta tu cuenta y prepara el modelo para usarme sin señal.</div>
+        </div>
+      </div>
+
+      <div class="sugerencias" id="sugerencias">
+        <button type="button" data-pregunta="¿Cómo va la obra?">¿Cómo va la obra?</button>
+        <button type="button" data-pregunta="¿Qué punch crítico queda?">¿Qué punch queda?</button>
+        <button type="button" data-pregunta="¿Qué actividades están atrasadas?">¿Qué está atrasado?</button>
+        <button type="button" data-pregunta="¿Este material cumple la normativa?">Material y normativa</button>
+        <button type="button" data-pregunta="¿Qué tengo esta semana?">¿Qué tengo esta semana?</button>
+        <button type="button" data-pregunta="Prepárame para la reunión">Preparar reunión</button>
+        <button type="button" data-pregunta="¿Qué cambió?">Qué cambió</button>
+        <button type="button" data-pregunta="Muéstrame el portafolio">Portafolio</button>
+        <button type="button" data-pregunta="Glosario de obra">Glosario</button>
+      </div>
+
+      <form class="chat-input" id="chat-form">
+        <button class="icono-btn" id="btn-voz" type="button" aria-label="Dictar" title="Dictar"><svg class="ico"><use href="#i-mic"/></svg></button>
+        <input id="chat-texto" type="text" placeholder="Pregunta sobre tu obra…" autocomplete="off" aria-label="Mensaje para el asistente">
+        <button class="enviar" type="submit" aria-label="Enviar"><svg class="ico"><use href="#i-send"/></svg></button>
+      </form>
+    </section>
+
+    <!-- ALERTAS -->
+    <section class="pantalla" data-vista="alertas">
+      <div class="seccion-cab"><h1>Alertas</h1><span class="chip chip-ia">3 nuevas</span></div>
+      <div class="lista-alertas" id="alertas-lista">
+        <article class="alerta-item alerta-critica"><span class="alerta-ico"><svg class="ico"><use href="#i-alert"/></svg></span><div><strong>Punch crítico en Torre A</strong><p>Falta barandal en nivel 3. Responsable: Luis Méndez.</p><small>Hace 12 min · push</small></div></article>
+        <article class="alerta-item"><span class="alerta-ico"><svg class="ico"><use href="#i-clock"/></svg></span><div><strong>RFI vence mañana</strong><p>RFI-018 · Detalle de anclaje de fachada.</p><small>Hoy 09:00 · recordatorio</small></div></article>
+        <article class="alerta-item"><span class="alerta-ico"><svg class="ico"><use href="#i-model"/></svg></span><div><strong>Mantenimiento de grúa</strong><p>Servicio de 250 h en 2 días.</p><small>Ayer · equipo</small></div></article>
+      </div>
+      <div class="aviso"><svg class="ico"><use href="#i-bell"/></svg><p>Las notificaciones push y los recordatorios del asistente se activan en la fase 1.</p></div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section class="pantalla" data-vista="ajustes">
+      <h1>Ajustes</h1>
+      <div class="perfil">
+        <div class="perfil-avatar">E</div>
+        <div><strong id="perfil-nombre">Edgar Guzmán</strong><span id="perfil-email">Administrador · Project Web</span></div>
+        <span class="chip chip-ok" id="perfil-estado">En línea</span>
+      </div>
+      <div class="conexion-acciones">
+        <button class="btn-mini" id="btn-conectar" type="button"><svg class="ico"><use href="#i-shield"/></svg> Conectar mi cuenta</button>
+        <button class="btn-mini" id="btn-sync" type="button"><svg class="ico"><use href="#i-model"/></svg> Sincronizar ahora</button>
+        <button class="btn-mini" id="btn-notificar" type="button"><svg class="ico"><use href="#i-bell"/></svg> Probar aviso</button>
+      </div>
+
+      <div class="ajustes-lista">
+        <button class="ajuste-item" type="button" id="btn-sesiones">
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-shield"/></svg></span>
+          <div><strong>Sesiones y dispositivos</strong><small id="ajustes-sesiones-txt">2 dispositivos con sesión abierta</small></div>
+          <svg class="ico"><use href="#i-arrow"/></svg>
+        </button>
+        <button class="ajuste-item" type="button" id="btn-modelo" data-solo-admin="1" hidden>
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-model"/></svg></span>
+          <div><strong>Modelo de IA</strong><small id="ajustes-modelo-txt">Qwen2.5 · pendiente de descargar</small></div>
+          <span class="chip chip-warn" id="ajustes-modelo-chip">2 GB</span>
+        </button>
+        <button class="ajuste-item" type="button" id="btn-tema">
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-moon"/></svg></span>
+          <div><strong>Apariencia</strong><small>Oscuro / claro</small></div>
+          <svg class="ico"><use href="#i-arrow"/></svg>
+        </button>
+        <button class="ajuste-item" type="button" id="btn-datos">
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-shield"/></svg></span>
+          <div><strong>Seguridad de los datos</strong><small id="ajustes-datos-txt">Comprobando la base local…</small></div>
+          <span class="chip" id="ajustes-datos-chip">—</span>
+        </button>
+        <button class="ajuste-item" type="button" data-toast="La app guarda los datos en el teléfono; el asistente funciona sin conexión.">
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-offline"/></svg></span>
+          <div><strong>Modo sin conexión</strong><small>Datos y archivos que abras</small></div>
+          <svg class="ico"><use href="#i-arrow"/></svg>
+        </button>
+      </div>
+
+      <div class="version">
+        <img src="assets/bot.svg" alt="" class="version-bot">
+        <p><strong>Project Web Android</strong><br>Versión <span id="app-version">0.2.1</span> · Fase 1</p>
+        <p class="texto-tenue">La app se actualiza desde Ajustes en la web. El asistente digital funciona en el teléfono y no manda tus datos a la nube.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Navegación principal">
+    <button class="tab activo" data-tab="inicio" type="button" aria-label="Inicio"><svg class="ico"><use href="#i-home"/></svg><span>Inicio</span></button>
+    <button class="tab" data-tab="obras" type="button" aria-label="Obras"><svg class="ico"><use href="#i-obra"/></svg><span>Obras</span></button>
+    <button class="tab tab-chat" data-tab="asistente" type="button" aria-label="Asistente"><img src="assets/bot.svg" alt=""><span>Asistente</span></button>
+    <button class="tab" data-tab="alertas" type="button" aria-label="Alertas"><svg class="ico"><use href="#i-bell"/></svg><span>Alertas</span><i class="tab-badge">3</i></button>
+    <button class="tab" data-tab="ajustes" type="button" aria-label="Ajustes"><svg class="ico"><use href="#i-ajustes"/></svg><span>Ajustes</span></button>
+  </nav>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Conexión con la cuenta -->
+<div class="modal" id="conexion" hidden>
+  <div class="modal-card modal-conexion">
+    <img src="assets/bot.svg" alt="" class="modal-bot">
+    <h2>Conecta tu cuenta</h2>
+    <p class="texto-tenue">Descarga tus obras para consultarlas sin señal y usa el asistente con datos reales.</p>
+    <form id="login-form" autocomplete="on">
+      <label>Servidor
+        <input id="login-servidor" type="url" inputmode="url" placeholder="https://projectweb.iguzman.com.mx" required>
+      </label>
+      <label>Correo
+        <input id="login-email" type="email" autocomplete="username" required>
+      </label>
+      <label>Contraseña
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="login-error" id="login-error" role="alert"></p>
+      <button class="btn-principal" type="submit" id="login-entrar">Entrar y descargar mis obras</button>
+    </form>
+    <button class="enlace" type="button" id="login-cancelar">Ahora no, ver la vista previa</button>
+    <button class="enlace" type="button" id="login-salir" hidden>Cerrar sesión en este teléfono</button>
+  </div>
+</div>
+
+<!-- Modal genérico (sesiones, modelo) -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <h2 id="modal-titulo">Sesiones</h2>
+    <div id="modal-cuerpo" class="modal-cuerpo"></div>
+    <button class="btn-principal" type="button" id="modal-cerrar">Cerrar</button>
+  </div>
+</div>
+<script src="vendor/pdfjs/pdf.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

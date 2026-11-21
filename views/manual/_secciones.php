@@ -123,6 +123,44 @@ HTML],
 HTML],
 
 
+['id' => 'sesiones', 'titulo' => 'Sesiones y dispositivos', 'icono' => 'fa-shield-halved', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>En <strong>Ajustes → Cuenta</strong> o con el escudo de la barra superior puedes ver <strong>dónde iniciaste sesión</strong> y cuántos dispositivos tienen la sesión abierta.</p>
+<ul>
+<li>Cada fila muestra el dispositivo, el navegador o la app, la IP, la fecha de inicio y el último acceso.</li>
+<li>La sesión actual aparece marcada como <strong>Esta sesión</strong>.</li>
+<li>Puedes <strong>cerrar</strong> una sesión concreta o <strong>cerrar todas las demás</strong>. El dispositivo cerrado vuelve al login en la siguiente petición.</li>
+<li>Si cambias la contraseña, las demás sesiones se cierran automáticamente.</li>
+<li>El <strong>administrador</strong> ve las sesiones de todos en <strong>Sistema → Sesiones</strong> y puede cerrar cualquiera.</li>
+</ul>
+<p class="manual-nota">Los tokens se guardan solo como huella SHA-256. Si pierdes un teléfono, cierra su sesión desde otro equipo; la app borrará sus datos locales en el siguiente sync.</p>
+HTML],
+
+['id' => 'asistente', 'titulo' => 'Asistente (historial y borradores)', 'icono' => 'fa-robot', 'roles' => $gestion, 'herr' => 'asistente', 'cuerpo' => <<<'HTML'
+<p>La conversación con el asistente se hace en la <strong>app Android</strong>; la web es para <strong>consultar el historial</strong>, buscar y revisar borradores. No hay chat en la web.</p>
+<ul>
+<li>Elige una obra o busca por texto.</li>
+<li>El administrador ve las conversaciones de todos; el cliente solo las suyas.</li>
+<li><strong>Borradores:</strong> el asistente propone un punch, RFI o nota de bitácora. Revísalo y pulsa <em>Aplicar</em> para crear el registro real, o <em>Descartar</em>.</li>
+<li>Los borradores de reporte diario o minuta se completan en su formulario; no se aplican solos.</li>
+<li>Retención: conversaciones 6 meses desde su creación; borradores 30 días.</li>
+</ul>
+<p class="manual-nota">Lo que se aplica queda registrado con el usuario y la fecha. El historial no se comparte por enlace público.</p>
+HTML],
+
+['id' => 'android', 'titulo' => 'App Android', 'icono' => 'fa-mobile-screen', 'roles' => $todos, 'herr' => null, 'cuerpo' => <<<'HTML'
+<p>La app Android se descarga desde <strong>Ajustes → App Android</strong>. No está en Google Play: el administrador publica el APK desde <strong>Sistema → App Android</strong> y tú lo instalas directamente.</p>
+<h4>Instalar o actualizar</h4>
+<ol>
+<li>Descarga el APK y ábrelo.</li>
+<li>Android pedirá permitir instalar apps de esta fuente; actívalo solo para el navegador o el archivo que estás usando.</li>
+<li>Para actualizar, descarga la versión nueva <strong>encima</strong> de la anterior: no desinstales.</li>
+</ol>
+<h4>Qué incluye esta versión</h4>
+<p>La <strong>versión 0.2.9</strong> conecta tu cuenta, descarga tus obras y permite actualizar el avance y guardar notas <strong>sin conexión</strong>; al volver la señal se sincroniza. El <strong>asistente digital</strong> funciona en el teléfono: la primera vez descarga sus datos por Wi-Fi y después responde sin conexión. El historial queda en la web.</p>
+<p>En <strong>Obras</strong>, toca una obra para ver su resumen y abrir sus herramientas (programa, línea de tiempo, parte diario, punch, archivo, costos, etc.). El <strong>Parte diario</strong> se captura en la app: actividades y avance, personal y horas, equipo, materiales, <strong>tiempos muertos</strong>, fotos y firma; se guarda sin conexión y se envía al sincronizar. Puedes guardarlo como borrador o guardarlo y cerrarlo, y consultar los <strong>partes recientes</strong> desde la misma pantalla. Desde el hub de Obras, <strong>Evidencias</strong> permite subir fotos sueltas por actividad sin conexión; <strong>Punch</strong> y <strong>RFI</strong> permiten crear pendientes y consultas y cambiar su estado desde el teléfono; <strong>Archivo</strong> guarda el documento y lo abre en un <strong>visor propio</strong> (PDF con zoom, imágenes y texto), por lo que después funciona sin conexión. Las herramientas que no son de campo se abren en la web <strong>ya con tu sesión</strong> (un código de un solo uso evita volver a escribir la contraseña). En el chat puedes abrir el menú del asistente para empezar un <strong>Nuevo chat</strong> o detener una respuesta. Si la respuesta contradice un dato de la obra, la app muestra la respuesta verificada con los datos reales. También puedes pedirle que <strong>busque</strong> en toda la obra, que <strong>simule</strong> un atraso («si atraso SUB.0.2 5 días»), que arme la <strong>minuta del día</strong> para guardarla en la bitácora o que prepare un <strong>borrador de punch/RFI</strong>; cada respuesta se puede escuchar o copiar. Los avisos se muestran al abrir o sincronizar la app; no hay push con la app cerrada. El botón del micrófono dicta la pregunta si el teléfono lo permite; también hay un glosario de obra.</p>
+<p class="manual-nota">El icono de la app es el casco; el robot con casco es la cara del asistente. El APK se sirve solo con sesión iniciada y se verifica su SHA-256.</p>
+HTML],
+
 ['id' => 'bandeja', 'titulo' => 'Bandeja de entrada', 'icono' => 'fa-inbox', 'roles' => $admin, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>Reúne en un solo lugar los <strong>mensajes del formulario de contacto</strong> de la página principal y los <strong>mensajes de soporte</strong> que escriben tus clientes. El menú lateral muestra el número de mensajes sin leer.</p>
 [[fig:bandeja]]

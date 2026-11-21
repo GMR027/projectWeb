@@ -86,6 +86,7 @@ class Usuario extends ActiveRecord
         'datos-obra' => ['Datos de obra', ['/datos-obra']],
         'normativa' => ['Normativa y especificaciones', ['/normativa']],
         'programador' => ['Programador de actividades', ['/programador', '/api/programador']],
+        'asistente' => ['Asistente', ['/asistente']],
         'revision-datos' => ['Revisión de datos (IA)', ['/inconsistencias', '/api/inconsistencias', '/analisis-materiales', '/api/analisis-materiales', '/api/materiales-inteligentes']],
         'centro-ia' => ['Centro de IA', ['/propuestas-ia', '/resumen-ia', '/uso-ia', '/calidad-ia', '/api/ia', '/biblioteca-ia', '/informes-ia', '/grabaciones', '/historial-cambios']],
         'revisiones' => ['Revisiones', ['/revisiones', '/api/revisiones']],
@@ -111,7 +112,7 @@ class Usuario extends ActiveRecord
         'Documentos y planos' => ['redactor', 'sheetflow', 'comparador', 'anotador', 'ensamble', 'traductor', 'view360', 'graficos', 'submittals'],
         'Materiales y costos' => ['msr', 'materiales', 'almacen', 'costos', 'conceptos', 'recursos', 'cambios'],
         'Administración del proyecto' => ['equipo', 'contratos', 'subcontratos', 'cierre', 'datos-obra', 'plantillas', 'directorio', 'especialidades', 'normativa', 'campos', 'lista-diseno', 'plantillas-proyecto', 'marca', 'integraciones', 'compartir', 'ajustes'],
-        'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones'],
+        'IA y revisión' => ['revision-datos', 'centro-ia', 'revisiones', 'asistente'],
     ];
 
     /**
@@ -142,7 +143,7 @@ class Usuario extends ActiveRecord
     public const RUTAS_GENERALES = [
         '/', '/proyectos', '/dashboard', '/inicio', '/portafolio', '/manual', '/novedades', '/buscar', '/idioma',
         '/soporte', '/api/soporte', '/api/empezar', '/api/acciones', '/cliente', '/calendario/ics', '/media',
-        '/login', '/logout', '/contacto', '/terminos', '/servicios', '/demo',
+        '/login', '/logout', '/cuenta', '/contacto', '/terminos', '/servicios', '/demo',
         '/exportar',   // el Centro de Exportación filtra cada formato por la herramienta que el usuario ve
     ];
 

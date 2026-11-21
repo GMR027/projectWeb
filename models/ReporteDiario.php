@@ -114,6 +114,24 @@ class ReporteDiario extends ActiveRecord
         return self::consultarSQL("SELECT * FROM reportes_diarios WHERE proyecto_id = $proyectoId ORDER BY fecha DESC, id DESC");
     }
 
+    /** Últimos partes con totales, para el historial de la app (una sola consulta por obra) */
+    public static function recientes(int $proyectoId, int $limite = 12): array
+    {
+        $limite = max(1, min(50, $limite));
+        $res = self::$db->query("SELECT r.id, r.fecha, r.turno, r.area, r.supervisor, r.estado, r.comentarios, r.cerrado_en,
+                (SELECT COUNT(*) FROM reporte_personal rp WHERE rp.reporte_id = r.id) personal,
+                (SELECT COUNT(*) FROM reporte_equipo re WHERE re.reporte_id = r.id) equipo,
+                (SELECT COUNT(*) FROM reporte_materiales rm WHERE rm.reporte_id = r.id) materiales,
+                (SELECT COALESCE(SUM(horas), 0) FROM reporte_tiempos rt WHERE rt.reporte_id = r.id) tiempos,
+                (SELECT COALESCE(SUM(horas_normal + horas_extra), 0) FROM reporte_personal rp WHERE rp.reporte_id = r.id) horas_personal,
+                (SELECT COALESCE(SUM(horas), 0) FROM reporte_equipo re WHERE re.reporte_id = r.id) horas_equipo
+            FROM reportes_diarios r WHERE r.proyecto_id = $proyectoId
+            ORDER BY r.fecha DESC, r.id DESC LIMIT $limite");
+        $filas = [];
+        while ($res && ($fila = $res->fetch_assoc())) $filas[] = $fila;
+        return $filas;
+    }
+
     /** Busca por la marca local de un parte capturado sin conexión (idempotencia al sincronizar) */
     public static function porOfflineUuid(int $proyectoId, string $uuid): ?ReporteDiario
     {

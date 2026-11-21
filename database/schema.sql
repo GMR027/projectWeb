@@ -59,6 +59,46 @@ CREATE TABLE usuarios (
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Sesiones y dispositivos activos (ver database/migracion_sesiones_dispositivos.sql)
+CREATE TABLE IF NOT EXISTS sesiones_usuario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    tipo ENUM('web', 'android') NOT NULL DEFAULT 'web',
+    dispositivo VARCHAR(120) NOT NULL DEFAULT '',
+    navegador VARCHAR(120) NOT NULL DEFAULT '',
+    sistema VARCHAR(80) NOT NULL DEFAULT '',
+    ip VARCHAR(45) NOT NULL DEFAULT '',
+    agente VARCHAR(255) NOT NULL DEFAULT '',
+    app_version VARCHAR(30) NULL,
+    push_token VARCHAR(255) NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ultimo_acceso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expira DATETIME NULL,
+    revocada TINYINT(1) NOT NULL DEFAULT 0,
+    revocada_en DATETIME NULL,
+    revocada_por INT NULL,
+    UNIQUE KEY uq_sesion_token (token_hash),
+    KEY idx_sesion_usuario (usuario_id, revocada, ultimo_acceso),
+    KEY idx_sesion_creado (creado),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Puente de sesión app Android → web (código de un solo uso; ver database/migracion_app_enlaces.sql)
+CREATE TABLE IF NOT EXISTS app_enlaces (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    codigo_hash CHAR(64) NOT NULL,
+    ruta VARCHAR(255) NOT NULL DEFAULT '/dashboard',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expira DATETIME NOT NULL,
+    usado TINYINT(1) NOT NULL DEFAULT 0,
+    usado_en DATETIME NULL,
+    UNIQUE KEY uq_enlace_codigo (codigo_hash),
+    KEY idx_enlace_usuario (usuario_id, usado, expira),
+    KEY idx_enlace_expira (expira)
+) ENGINE=InnoDB;
+
 -- ============================================================
 -- ORGANIZACIONES (empresa que contrata el plan)
 -- ============================================================
@@ -3261,4 +3301,75 @@ CREATE TABLE IF NOT EXISTS portafolio_alertas (
     UNIQUE KEY uq_portafolio_alerta (proyecto_id, clave),
     KEY idx_pa_actualizado (actualizado),
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Operaciones de la app Android para sincronización offline (ver database/migracion_app_sync.sql)
+CREATE TABLE IF NOT EXISTS app_operaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(64) NOT NULL,
+    usuario_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    tipo VARCHAR(40) NOT NULL,
+    resultado_json TEXT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_app_operacion_uuid (uuid),
+    KEY idx_app_operacion_usuario (usuario_id, creado),
+    KEY idx_app_operacion_proyecto (proyecto_id, creado),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Asistente: conversaciones, mensajes y borradores (ver database/migracion_asistente.sql)
+CREATE TABLE IF NOT EXISTS asistente_conversaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    uuid VARCHAR(64) NULL,
+    titulo VARCHAR(200) NOT NULL DEFAULT 'Asistente',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    archivada TINYINT(1) NOT NULL DEFAULT 0,
+    eliminada_en DATETIME NULL,
+    UNIQUE KEY uq_asistente_conv_uuid (uuid),
+    KEY idx_asistente_conv_usuario (usuario_id, proyecto_id, actualizado),
+    KEY idx_asistente_conv_proyecto (proyecto_id, actualizado),
+    KEY idx_asistente_conv_creado (creado),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS asistente_mensajes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversacion_id INT NOT NULL,
+    uuid VARCHAR(64) NULL,
+    rol ENUM('user','assistant','system','tool') NOT NULL DEFAULT 'user',
+    contenido MEDIUMTEXT NOT NULL,
+    datos_json TEXT NULL,
+    modelo VARCHAR(150) NOT NULL DEFAULT '',
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    eliminado_en DATETIME NULL,
+    UNIQUE KEY uq_asistente_msg_uuid (uuid),
+    KEY idx_asistente_msg_conv (conversacion_id, creado),
+    FOREIGN KEY (conversacion_id) REFERENCES asistente_conversaciones(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS asistente_borradores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    conversacion_id INT NULL,
+    uuid VARCHAR(64) NULL,
+    tipo ENUM('punch','rfi','bitacora','reporte','minuta') NOT NULL,
+    datos_json TEXT NOT NULL,
+    estado ENUM('pendiente','aplicado','rechazado','expirado') NOT NULL DEFAULT 'pendiente',
+    entidad_id INT NULL,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    aplicado_en DATETIME NULL,
+    expira_en DATETIME NULL,
+    UNIQUE KEY uq_asistente_borrador_uuid (uuid),
+    KEY idx_asistente_borrador (proyecto_id, usuario_id, estado, creado),
+    KEY idx_asistente_borrador_expira (estado, expira_en),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (conversacion_id) REFERENCES asistente_conversaciones(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

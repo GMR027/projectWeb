@@ -48,10 +48,14 @@ class AuthController
                                 $usuarioDB->guardar();
                             }
                             session_regenerate_id(true);
+                            \Classes\Sesiones::revocarActual();   // si el navegador ya tenía una sesión, no dejarla huérfana
                             $_SESSION['id'] = $usuarioDB->id;
                             $_SESSION['nombre'] = $usuarioDB->nombre;
                             $_SESSION['email'] = $usuarioDB->email;
                             $_SESSION['rol'] = $usuarioDB->rol;
+                            // Sesiones y dispositivos: token propio para poder cerrarla desde Ajustes
+                            $_SESSION['sesion_id'] = \Classes\Sesiones::crearWeb((int)$usuarioDB->id) ?: '';
+                            unset($_SESSION['sesion_tocado']);
                             // Contraseña inicial o temporal: se pide cambiarla antes de seguir
                             $_SESSION['debe_cambiar'] = Usuario::debeCambiarPassword((int)$usuarioDB->id);
                             \Model\Usuario::marcarUltimoAcceso((int)$usuarioDB->id);
@@ -77,12 +81,49 @@ class AuthController
         ]);
     }
 
+    /**
+     * Puente de sesión app → web: canjea el código de un solo uso, inicia la sesión normal y
+     * redirige a la herramienta pedida. El código caduca a los 120 s y solo sirve una vez.
+     */
+    public static function accesoApp()
+    {
+        $codigo = is_string($_GET['c'] ?? null) ? $_GET['c'] : '';
+        $enlace = \Classes\EnlacesApp::canjear($codigo);
+        if (!$enlace) {
+            header('Location: /login?acceso=invalido');
+            exit;
+        }
+        $usuarioDB = Usuario::find((int)$enlace['usuario_id']);
+        if (!$usuarioDB || !(int)$usuarioDB->confirmado) {
+            header('Location: /login?acceso=invalido');
+            exit;
+        }
+
+        // Se cierra la sesión web que hubiera en este navegador antes de abrir la de la app.
+        \Classes\Sesiones::revocarActual();
+        $_SESSION = [];
+        session_regenerate_id(true);
+        $_SESSION['id'] = $usuarioDB->id;
+        $_SESSION['nombre'] = $usuarioDB->nombre;
+        $_SESSION['email'] = $usuarioDB->email;
+        $_SESSION['rol'] = $usuarioDB->rol;
+        $_SESSION['sesion_id'] = \Classes\Sesiones::crearWeb((int)$usuarioDB->id) ?: '';
+        unset($_SESSION['sesion_tocado']);
+        $_SESSION['debe_cambiar'] = Usuario::debeCambiarPassword((int)$usuarioDB->id);
+        Usuario::marcarUltimoAcceso((int)$usuarioDB->id);
+        \Classes\Accesos::registrar((int)$usuarioDB->id, (string)$usuarioDB->email, 'ok');
+
+        header('Location: ' . \Classes\EnlacesApp::rutaSegura((string)($enlace['ruta'] ?? '/dashboard')));
+        exit;
+    }
+
     public static function logout()
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {   // cerrar sesión cambia estado: nada de enlaces GET
             header('Location: /');
             exit;
         }
+        \Classes\Sesiones::revocarActual();
         $_SESSION = [];
         session_destroy();
         header('Location: /');   // al cerrar sesión se vuelve a la página principal
@@ -512,6 +553,9 @@ class AuthController
         Usuario::marcarPasswordCambiada((int)$usuario->id);
         $_SESSION['debe_cambiar'] = false;
         session_regenerate_id(true);
+        // Cambiar la contraseña cierra las demás sesiones; la actual sigue viva.
+        \Classes\Sesiones::asegurarWeb();
+        \Classes\Sesiones::revocarTodas((int)$usuario->id, \Classes\Sesiones::tokenActual());
         header('Location: ' . ($obligatorio ? '/dashboard' : $volver . (str_contains($volver, '?') ? '&' : '?') . 'pw=ok#cuenta'));
         exit;
     }

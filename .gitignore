@@ -39,6 +39,10 @@
 /storage/instaladores/*
 !/storage/instaladores/.gitkeep
 
+# APK de Android (se publican desde Sistema; viven en el volumen del clúster)
+/storage/android/*
+!/storage/android/.gitkeep
+
 # App de escritorio: paquetes generados
 /desktop/release/
 /storage/grabaciones/*

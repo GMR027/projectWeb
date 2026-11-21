@@ -1043,6 +1043,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'traductor' => ['traductor'],
         'programador' => ['programador'],
         'mapa-avance' => ['inconsistencias', 'programador'],
+        'asistente' => ['asistente'],
         'calendario' => ['ajustes'],
         'lineas-base' => ['cambios', 'programa'],
         'punch' => ['inconsistencias', 'programador'],

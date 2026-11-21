@@ -54,6 +54,7 @@ $secNav = [
     ['empezar', 'fa-flag-checkered', 'Por dónde empezar', 'Ruta de arranque'],
     ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
 ];
+$secNav[] = ['android', 'fa-mobile-screen', 'App Android', 'Descargar e instalar'];
 if (is_admin() || $esElectron) $secNav[] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
 if ($esCliente) $secNav[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra al proyecto'];
 if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Contraseña y soporte'];
@@ -805,6 +806,38 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 
 </section>
 
+<section class="ajustes-seccion" id="android">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-mobile-screen"></i> <?php echo s(t('App Android')); ?></h3>
+    <div class="card">
+        <h3 class="card-titulo"><i class="fa-brands fa-android"></i> <?php echo s(t('Project Web para Android')); ?><?php echo !empty($apk['version']) ? ' · v' . s($apk['version']) : ''; ?></h3>
+        <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap">
+            <img src="/build/img/chatbot/bot-192.png" alt="<?php echo s(t('Asistente de Project Web')); ?>" width="96" height="96" loading="lazy" style="width:9.6rem;height:9.6rem;flex:0 0 auto">
+            <div style="flex:1 1 28rem;min-width:0">
+                <p class="text-muted text-sm" style="margin-top:0">
+                    <?php echo s(t('Lleva tus obras en el teléfono. La app está pensada para funcionar sin conexión y con el asistente de IA en el dispositivo.')); ?>
+                </p>
+                <?php if (!empty($apk['archivo'])): ?>
+                    <p class="text-sm" style="margin:.4rem 0">
+                        <strong><?php echo s(t('Versión')); ?> <?php echo s($apk['version']); ?></strong>
+                        <span class="text-muted">· <?php echo number_format($apk['tam'] / 1048576, 1); ?> MB · <?php echo s(date('d/m/Y', $apk['fecha'])); ?></span>
+                    </p>
+                    <?php if (!empty($apk['notas'])): ?><p class="text-muted text-sm" style="margin:.2rem 0"><?php echo s($apk['notas']); ?></p><?php endif; ?>
+                    <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin:1rem 0">
+                        <a href="/api/android/descargar" class="btn btn-primary"><i class="fa-solid fa-download"></i> <?php echo s(t('Descargar APK')); ?></a>
+                        <?php if (is_admin()): ?><a href="/sistema#android" class="btn btn-ghost"><i class="fa-solid fa-upload"></i> <?php echo s(t('Publicar otra versión')); ?></a><?php endif; ?>
+                    </div>
+                    <p class="text-muted text-sm" style="margin-bottom:0">
+                        <?php echo s(t('Abre el APK y permite instalar apps de esta fuente. Para actualizar, descarga la versión nueva encima de la anterior: no desinstales.')); ?>
+                    </p>
+                <?php else: ?>
+                    <p class="text-muted"><?php echo s(t('Aún no hay una versión publicada.')); ?><?php echo is_admin() ? ' ' . s(t('Súbela desde Sistema → App Android.')) : ''; ?></p>
+                    <?php if (is_admin()): ?><a href="/sistema#android" class="btn btn-primary"><i class="fa-solid fa-upload"></i> <?php echo s(t('Publicar la primera versión')); ?></a><?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</section>
+
 <?php if (is_admin() || $esElectron): ?>
 <section class="ajustes-seccion" id="equipo">
     <h3 class="seccion-titulo"><i class="fa-solid fa-desktop"></i> Equipo</h3>
@@ -923,6 +956,18 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> <?php echo s(t('Actualizar contraseña')); ?></button>
     </form>
+</div>
+
+<?php $nSesiones = count($sesiones ?? []); ?>
+<div class="card" id="sesiones">
+    <h3 class="card-titulo"><i class="fa-solid fa-shield-halved"></i> <?php echo s(t('Sesiones y dispositivos')); ?></h3>
+    <p class="text-muted text-sm">
+        <?php echo $nSesiones === 1
+            ? s(t('Tienes 1 dispositivo con la sesión abierta.'))
+            : s(t('Tienes {n} dispositivos con la sesión abierta.', ['n' => $nSesiones])); ?>
+        <?php echo s(t('Desde aquí puedes ver dónde iniciaste sesión y cerrar los dispositivos que ya no uses.')); ?>
+    </p>
+    <a href="/cuenta/sesiones" class="btn btn-primary"><i class="fa-solid fa-shield-halved"></i> <?php echo s(t('Gestionar sesiones')); ?></a>
 </div>
 </section>
 <?php endif; ?>

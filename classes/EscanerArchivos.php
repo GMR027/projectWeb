@@ -25,20 +25,26 @@ class EscanerArchivos
      *                               a propósito, así que solo se revisan nombre, tamaño y antivirus.
      * @return string[] motivos de rechazo (vacío = archivo limpio)
      */
-    public static function revisar(string $ruta, string $nombreOriginal, bool $permitirBinarios = false): array
+    public static function revisar(string $ruta, string $nombreOriginal, bool $permitirBinarios = false, array $extensionesPermitidas = []): array
     {
         $ext = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
-        if ($e = self::revisarNombre($nombreOriginal)) return [$e];
+        $permitida = in_array($ext, $extensionesPermitidas, true);
+        if (!$permitida && ($e = self::revisarNombre($nombreOriginal))) return [$e];
 
         $cabeza = (string)@file_get_contents($ruta, false, null, 0, 4096);
         if ($cabeza === '' && (int)@filesize($ruta) === 0) return ['El archivo está vacío'];
-        if (!$permitirBinarios && ($e = self::revisarFirma($ruta, $ext, $cabeza))) return [$e];
+        if ($permitida && $ext === 'apk') {
+            if (!str_starts_with($cabeza, "PK\x03\x04")) return ['El APK no es un archivo válido (no es un ZIP)'];
+            if ($e = self::revisarApk($ruta)) return [$e];
+        } elseif (!$permitirBinarios && !$permitida && ($e = self::revisarFirma($ruta, $ext, $cabeza))) {
+            return [$e];
+        }
         if ($permitirBinarios && $ext === 'gz' && str_contains($nombreOriginal, '.tar.gz')) {
             // Un .tar.gz de instalación tampoco debe traer rutas «../»; se revisa al descomprimir el nombre
             if (preg_match('#(^|/)\.\.(/|$)#', $nombreOriginal)) return ['Nombre de archivo no válido'];
         }
 
-        if (in_array($ext, ['zip', 'ifczip', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'odg', 'otg', 'ott', 'ots', 'otp', 'odf'], true)) {
+        if (!$permitida && in_array($ext, ['zip', 'ifczip', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp', 'odg', 'otg', 'ott', 'ots', 'otp', 'odf'], true)) {
             if ($e = self::revisarZip($ruta, $ext === 'zip' || $ext === 'ifczip')) return [$e];
         }
         if (in_array($ext, ['doc', 'xls', 'ppt'], true) && self::contieneMacrosOle($ruta)) {
@@ -117,6 +123,42 @@ class EscanerArchivos
                     foreach ($partes as $p) if (in_array($p, self::PELIGROSAS, true)) return 'El comprimido contiene un archivo no permitido (' . basename($n) . ')';
                 }
             }
+        } finally {
+            $zip->close();
+        }
+        return null;
+    }
+
+    /**
+     * Un APK es un ZIP con AndroidManifest.xml y al menos un classes*.dex.
+     * No se revisan las extensiones internas (.so, .dex…) porque son parte normal del paquete;
+     * sí se comprueban rutas, tamaño y bombas de compresión.
+     */
+    private static function revisarApk(string $ruta): ?string
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($ruta, \ZipArchive::RDONLY) !== true) return 'El APK está dañado o no se puede leer';
+        try {
+            if ($zip->numFiles > 20000) return 'El APK tiene demasiados archivos';
+            $manifest = $zip->locateName('AndroidManifest.xml') !== false;
+            $dex = false;
+            $total = 0;
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $s = $zip->statIndex($i);
+                if ($s === false) return 'El APK está dañado';
+                $n = str_replace('\\', '/', (string)$s['name']);
+                if (str_contains($n, "\0") || str_starts_with($n, '/') || preg_match('#(^|/)\.\.(/|$)#', $n)) {
+                    return 'El APK contiene rutas no válidas';
+                }
+                if (preg_match('#^classes\d*\.dex$#', $n)) $dex = true;
+                $total += (int)$s['size'];
+                if ($total > 2 * 1024 * 1024 * 1024) return 'El APK ocupa demasiado al descomprimirse';
+                $comp = (int)$s['comp_size'];
+                if ($comp > 0 && (int)$s['size'] / $comp > 500 && (int)$s['size'] > 50 * 1024 * 1024) {
+                    return 'El APK parece una bomba de compresión';
+                }
+            }
+            if (!$manifest || !$dex) return 'El archivo no parece un APK (falta AndroidManifest.xml o classes.dex)';
         } finally {
             $zip->close();
         }

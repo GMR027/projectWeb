@@ -324,6 +324,7 @@ class ParteDiario
         $rid = (int)($r->id ?: (is_array($res) ? ($res['id'] ?? 0) : 0));
         if (!$rid) return ['ok' => false, 'id' => 0, 'errores' => ['No se pudo guardar el parte']];
 
+        if ((int)$r->id !== $rid) $r->id = $rid;
         self::guardarHijos($proyecto, $rid, $r, $post, $files, $catalogo);
         return ['ok' => true, 'id' => $rid, 'errores' => [], 'avisos' => self::$avisos];
     }
@@ -578,6 +579,35 @@ class ParteDiario
         if ($r->firma_imagen) \Classes\Imagenes::eliminarEn('reportes', $r->firma_imagen);
         $r->firma_imagen = $nombre;
         self::db()->query("UPDATE reportes_diarios SET firma_imagen = '" . self::esc($nombre) . "' WHERE id = " . (int)$r->id);
+    }
+
+    /** Adjunta fotos que llegan de la app como data URL base64 (sin $_FILES). */
+    public static function adjuntarFotosBase64(Proyecto $proyecto, int $rid, array $dataUrls): int
+    {
+        $pid = (int)$proyecto->id;
+        $db = self::db();
+        $nombres = [];
+        $n = 0;
+        foreach ($dataUrls as $data) {
+            if ($n >= self::MAX_FOTOS) break;
+            if (!is_string($data) || !preg_match('#^data:image/(?:jpeg|jpg|png|webp);base64,(.+)$#s', $data, $m)) continue;
+            $bin = base64_decode($m[1], true);
+            if (!$bin || strlen($bin) > self::MAX_FOTO_BYTES) continue;
+            if (!\Classes\Almacenamiento::cabe($pid, strlen($bin))) break;
+            $tmp = tempnam(sys_get_temp_dir(), 'pd');
+            if (!$tmp || file_put_contents($tmp, $bin) === false) { @unlink((string)$tmp); continue; }
+            $nombre = \Classes\Imagenes::guardarEn('reportes', $tmp, 1600, 82);
+            @unlink($tmp);
+            if (!$nombre) continue;
+            $db->query("INSERT INTO reporte_fotos (reporte_id, archivo, leyenda) VALUES ($rid, '" . self::esc($nombre) . "', '')");
+            $nombres[] = $nombre;
+            $n++;
+        }
+        if ($nombres) {
+            $todos = array_column(self::filas("SELECT archivo FROM reporte_fotos WHERE reporte_id = $rid ORDER BY id"), 'archivo');
+            $db->query("UPDATE reportes_diarios SET fotos_json = '" . self::esc(json_encode(array_values($todos))) . "' WHERE id = $rid");
+        }
+        return $n;
     }
 
     // ---------------------------------------------------------------- cierre

@@ -37,6 +37,12 @@ spec:
               chown -R 33:33 /files
           volumeMounts:
             - { name: files, mountPath: /files }
+      initContainers:
+        - name: preparar-android
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["sh", "-c", "mkdir -p /files/android && chown -R www-data:www-data /files/android"]
+          volumeMounts:
+            - { name: files, mountPath: /files }
       containers:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -82,6 +88,7 @@ spec:
             - { name: files, mountPath: /var/www/html/storage/sesiones-app, subPath: sesiones-app }
             - { name: files, mountPath: /var/www/html/storage/normativa, subPath: normativa }
             - { name: files, mountPath: /var/www/html/storage/grabaciones, subPath: grabaciones }
+            - { name: files, mountPath: /var/www/html/storage/android, subPath: android }
             # Clave AES del token: del secreto de K8s, NUNCA del PVC de usuarios (un bug de subida no debe poder leerla ni reemplazarla)
             - { name: telegram-clave, mountPath: /var/www/html/storage/secretos, readOnly: true }
           resources: {{ toYaml .Values.app.resources | nindent 12 }}

@@ -16,6 +16,13 @@ class SistemaController
         $bd = Volumen::baseDatos();
         Volumen::registrarHoy($archivos['usado'], $bd['usado']);
         $historial = Volumen::historial(90);
+        $sesionesAdmin = \Classes\Sesiones::listarTodas(['q' => $_GET['q'] ?? '', 'tipo' => $_GET['tipo'] ?? '']);
+        $hashActual = \Classes\Sesiones::hash((string)\Classes\Sesiones::tokenActual());
+        foreach ($sesionesAdmin as &$s) {
+            $s['actual'] = hash_equals((string)($s['token_hash'] ?? ''), $hashActual);
+            unset($s['token_hash']);
+        }
+        unset($s);
 
         $router->render('sistema/ajustes', [
             'titulo' => 'Ajustes',
@@ -29,6 +36,11 @@ class SistemaController
             'programado' => Respaldo::programado(), 'ultimoAuto' => Respaldo::ultimoAutomatico(), 'proximoAuto' => Respaldo::proximo(),
             'herramientas' => \Model\HerramientaIA::all('nombre ASC'),
             'instaladores' => \Classes\Instaladores::listar(),
+            'apks' => \Classes\ApkAndroid::listar(),
+            'apkVersion' => \Classes\ApkAndroid::version(),
+            'sesionesAdmin' => $sesionesAdmin,
+            'sesionesTotal' => \Classes\Sesiones::contarTodas(),
+            'sesionesFiltro' => ['q' => (string)($_GET['q'] ?? ''), 'tipo' => (string)($_GET['tipo'] ?? '')],
             'ok' => $_GET['ok'] ?? '',
             'error' => $_GET['error'] ?? '',
         ]);

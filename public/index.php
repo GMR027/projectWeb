@@ -4,6 +4,9 @@ require_once __DIR__ . '/../includes/app.php';
 
 use MVC\Router;
 use Controllers\AuthController;
+use Controllers\SesionController;
+use Controllers\AndroidController;
+use Controllers\AsistenteController;
 use Controllers\OrganizacionController;
 use Controllers\BuscarController;
 use Controllers\CarpetaController;
@@ -104,6 +107,10 @@ $router = new Router();
 $router->get('/login', [AuthController::class, 'login']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);   // cerrar sesión cambia estado: solo por POST
+$router->get('/acceso-app', [AuthController::class, 'accesoApp']);   // puente de sesión app Android → web (código de un solo uso)
+$router->get('/cuenta/sesiones', [SesionController::class, 'index']);
+$router->post('/cuenta/sesiones/cerrar', [SesionController::class, 'cerrar']);
+$router->post('/cuenta/sesiones/cerrar-otras', [SesionController::class, 'cerrarOtras']);
 $router->get('/usuarios', [AuthController::class, 'listar']);
 $router->get('/usuarios/crear', [AuthController::class, 'crear']);
 $router->post('/usuarios/crear', [AuthController::class, 'crear']);
@@ -921,7 +928,16 @@ $router->post('/api/simbolos/importar', [SimboloController::class, 'importar']);
 
 
 // ========== AJUSTES Y EXPORTACIÓN ==========
+$router->get('/asistente', [AsistenteController::class, 'index']);
+$router->post('/asistente/borrador/aplicar', [AsistenteController::class, 'aplicar']);
+$router->post('/asistente/borrador/rechazar', [AsistenteController::class, 'rechazar']);
+$router->post('/asistente/eliminar', [AsistenteController::class, 'eliminar']);
 $router->get('/sistema', [SistemaController::class, 'ajustes']);
+$router->post('/sistema/sesiones/cerrar', [SesionController::class, 'adminCerrar']);
+$router->post('/sistema/android/subir', [AndroidController::class, 'subir']);
+$router->post('/sistema/android/eliminar', [AndroidController::class, 'eliminar']);
+$router->get('/api/android/version', [AndroidController::class, 'version']);
+$router->get('/api/android/descargar', [AndroidController::class, 'descargar']);
 $router->post('/sistema/respaldo/crear', [SistemaController::class, 'respaldoCrear']);
 $router->post('/sistema/respaldo/programar', [SistemaController::class, 'respaldoProgramar']);
 $router->get('/sistema/respaldo/descargar', [SistemaController::class, 'respaldoDescargar']);
@@ -963,12 +979,30 @@ $router->get('/exportar', [AjustesController::class, 'exportarIndex']);
 $router->post('/exportar/generar', [AjustesController::class, 'exportar']);
 $router->post('/exportar/todo', [AjustesController::class, 'exportarTodo']);
 
+// API de la app Android (Fase 1): token de dispositivo, sin cookie ni CSRF
+if (\Classes\AppApi::esDeLaApi()) \Classes\AppApi::despachar();
 // API REST (Fase 5.1): con token, sin sesión ni CSRF; atiende la petición completa
 if (\Classes\ApiRest::esDeLaApi()) \Classes\ApiRest::despachar();
 // Bot de Telegram: Telegram llama aquí (secreto en cabecera, sin sesión ni CSRF)
 if (\Classes\Telegram::esWebhook()) \Classes\Telegram::atender();
 
 csrf_verificar();   // todo POST necesita el código de la sesión
+
+// Sesiones y dispositivos: si el usuario cerró esta sesión desde Ajustes, se corta aquí.
+$rutaSesion = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+if (is_auth() && $rutaSesion !== '/logout' && !\Classes\Sesiones::tocar()) {
+    $quiereJson = str_starts_with($rutaSesion, '/api/') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+    $_SESSION = [];
+    session_destroy();
+    if ($quiereJson) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'codigo' => 'sesion_revocada', 'error' => 'La sesión se cerró desde otro dispositivo. Vuelve a iniciar sesión.'], JSON_UNESCAPED_UNICODE);
+    } else {
+        header('Location: /login?sesion=cerrada');
+    }
+    exit;
+}
 
 // Contraseña inicial o temporal: no se puede usar la plataforma hasta cambiarla.
 if (is_auth() && debe_cambiar_password()) {

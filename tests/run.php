@@ -1524,5 +1524,35 @@ $ok('las imágenes de vPlan buscan primero por columna exacta', str_contains($as
 $ok('la imagen recién subida se autoriza en la sesión hasta que el autoguardado la referencia', str_contains($asset('classes/MarcasLienzo.php'), 'vplan_uploads') && str_contains($asset('classes/Media.php'), 'vplan_uploads'));
 $ok('el editor avisa si la imagen subida no se puede mostrar', str_contains($asset('public/vendor/vplan-editor.js'), 'img.onerror'));
 
+echo "Sesiones y dispositivos\n";
+$ok('el esquema y su migración crean sesiones_usuario', str_contains($asset('database/schema.sql'), 'CREATE TABLE IF NOT EXISTS sesiones_usuario') && is_file(__DIR__ . '/../database/migracion_sesiones_dispositivos.sql'));
+$ok('la etiqueta del navegador es legible', \Classes\Sesiones::etiqueta('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36') === ['Chrome en Windows', 'Chrome', 'Windows']);
+$ok('la app Android se identifica como tal', \Classes\Sesiones::etiqueta('ProjectWebAndroid/0.1.0 (Android 14; Pixel 8)')[0] === 'App Project Web en Android');
+$ok('el token se guarda como SHA-256, nunca en claro', strlen(\Classes\Sesiones::hash('token-de-prueba')) === 64);
+$ok('las rutas de sesiones están registradas', str_contains($asset('public/index.php'), "/cuenta/sesiones") && str_contains($asset('public/index.php'), "/cuenta/sesiones/cerrar-otras") && str_contains($asset('public/index.php'), "/sistema/sesiones/cerrar"));
+$ok('la cuenta es una ruta general para visitantes', str_contains($asset('models/Usuario.php'), "'/cuenta'"));
+
+echo "App Android: APK y mascota\n";
+$ok('el nombre del APK lleva versión', \Classes\ApkAndroid::nombreValido('projectweb-android-0.1.0.apk') === 'projectweb-android-0.1.0.apk');
+$ok('la versión se extrae del nombre', \Classes\ApkAndroid::versionDeNombre('projectweb-android-1.2.3.apk') === '1.2.3');
+$ok('versionCode compara 1.2.3 como 1002003', \Classes\ApkAndroid::versionCode('1.2.3') === 1002003);
+$ok('un nombre sin el prefijo se rechaza', \Classes\ApkAndroid::nombreValido('app-release.apk') === null);
+$apkTmp = tempnam(sys_get_temp_dir(), 'apk');
+$z = new ZipArchive();
+$z->open($apkTmp, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$z->addFromString('AndroidManifest.xml', '<manifest/>');
+$z->addFromString('classes.dex', 'dex');
+$z->close();
+$ok('un APK con manifiesto y classes.dex pasa el escáner', \Classes\EscanerArchivos::revisar($apkTmp, 'projectweb-android-0.1.0.apk', true, ['apk']) === []);
+$apkMalo = tempnam(sys_get_temp_dir(), 'apk');
+$z = new ZipArchive();
+$z->open($apkMalo, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$z->addFromString('classes.dex', 'dex');
+$z->close();
+$ok('un ZIP sin AndroidManifest.xml se rechaza como APK', count(\Classes\EscanerArchivos::revisar($apkMalo, 'projectweb-android-0.1.0.apk', true, ['apk'])) === 1);
+@unlink($apkTmp); @unlink($apkMalo);
+$ok('las rutas del APK están registradas', str_contains($asset('public/index.php'), "/api/android/version") && str_contains($asset('public/index.php'), "/api/android/descargar") && str_contains($asset('public/index.php'), "/sistema/android/subir"));
+$ok('el mascota del chatbot existe en SVG y PNG', is_file(__DIR__ . '/../public/build/img/chatbot/bot.svg') && is_file(__DIR__ . '/../public/build/img/chatbot/bot-192.png') && str_contains($asset('public/build/img/chatbot/bot.svg'), '#f97316'));
+
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);
