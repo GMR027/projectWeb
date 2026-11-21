@@ -339,7 +339,7 @@ publicar: copiar el APK a `storage/android/projectweb-android-<versión>.apk` y 
 
 ## Servidor
 
-- **Desplegado:** 2026-11-20 (Helm revisión 107). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.15 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
+- **Desplegado:** 2026-11-21 (Helm revisión 108). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.17 está en `storage/android` del clúster, montado en el PVC (`storage/android`) para que sobreviva a los despliegues.
 - **Orden de despliegue:** primero el backend (`public/index.php` con el despacho de
   `/api/app` antes de `csrf_verificar()`, `classes/AppApi.php`, `classes/Asistente.php` y las
   migraciones) y después el APK. Si el backend viejo recibe un POST JSON sin `_csrf`,
