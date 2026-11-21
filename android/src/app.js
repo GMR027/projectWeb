@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.12';
-const APP_VERSION_CODE = 2012;
+const APP_VERSION = '0.2.13';
+const APP_VERSION_CODE = 2013;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -289,6 +289,12 @@ async function limpiarSesion() {
   localStorage.removeItem('pw-dev');
   state.outbox = [];
   actualizarPendientes();
+  document.body.classList.add('sin-sesion');
+}
+
+function ocultarArranque() {
+  const a = $('#arranque');
+  if (a) a.hidden = true;
 }
 
 async function cargarSesion() {
@@ -315,11 +321,15 @@ async function cargarSesion() {
   if (token) {
     state.token = token;
     state.conectado = true;
+    document.body.classList.remove('sin-sesion');
+    ocultarArranque();
+    renderTodo();
     await guardarTokenSeguro(token);   // migra el token antiguo del SQLite al Keystore
     await sincronizar(true);
   } else {
-    renderTodo();
-    setTimeout(() => abrirConexion(), 700);
+    document.body.classList.add('sin-sesion');
+    ocultarArranque();
+    abrirConexion();
   }
 }
 
@@ -338,7 +348,8 @@ async function sincronizar(silencioso = false) {
     if (syncResp.status === 401) {
       await limpiarSesion();
       renderTodo();
-      if (!silencioso) { toast('La sesión se cerró. Vuelve a conectar tu cuenta.'); abrirConexion(); }
+      abrirConexion();
+      if (!silencioso) toast('La sesión se cerró. Vuelve a conectar tu cuenta.');
       return false;
     }
     const j = await syncResp.json();
@@ -2682,6 +2693,7 @@ function renderModoDesarrollo() {
 function abrirConexion() {
   const c = $('#conexion');
   if (!c) return;
+  if (!state.token) document.body.classList.add('sin-sesion');
   const srv = $('#login-servidor');
   if (srv && !srv.value) srv.value = state.servidor;
   actualizarCampoServidor();
@@ -2690,14 +2702,18 @@ function abrirConexion() {
   const err = $('#login-error'); if (err) err.textContent = '';
   const salir = $('#login-salir');
   if (salir) salir.hidden = !state.token;
+  const cancelar = $('#login-cancelar');
+  if (cancelar) cancelar.hidden = !state.token;
   c.hidden = false;
   document.body.classList.add('modal-abierto');
 }
 
 function cerrarConexion() {
+  if (!state.token) return;   // sin sesión el login es obligatorio
   const c = $('#conexion');
   if (c) c.hidden = true;
   document.body.classList.remove('modal-abierto');
+  document.body.classList.remove('sin-sesion');
 }
 
 async function login(ev) {
@@ -3421,7 +3437,13 @@ function init() {
   $('#btn-acciones-chat')?.addEventListener('click', abrirAccionesChat);
   $('#btn-notificar')?.addEventListener('click', async () => { await notificar('Project Web', 'Las notificaciones están activas.'); });
   $('#modal-cerrar')?.addEventListener('click', cerrarModal);
-  $$('.modal').forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) { m.hidden = true; state.modal = null; document.body.classList.remove('modal-abierto'); } }));
+  $$('.modal').forEach((m) => m.addEventListener('click', (e) => {
+    if (e.target !== m) return;
+    if (m.id === 'conexion' && !state.token) return;   // el login no se cierra sin sesión
+    m.hidden = true;
+    state.modal = null;
+    document.body.classList.remove('modal-abierto');
+  }));
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && tieneTauri()) pedirEstadoMotor();
