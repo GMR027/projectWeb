@@ -47,7 +47,7 @@ $qsBase = array_filter(['proyecto' => $proyectoFiltro ?: null, 'q' => $q !== '' 
                     ]));
                 ?>
                 <a class="asis-conv-item<?php echo $activa ? ' activa' : ''; ?>" href="<?php echo s($link); ?>">
-                    <span class="asis-conv-ico"><i class="fa-solid fa-robot"></i></span>
+                    <span class="asis-conv-ico"><i class="fa-solid fa-helmet-safety"></i></span>
                     <span class="asis-conv-txt">
                         <strong><?php echo s($c['titulo']); ?></strong>
                         <small><?php echo s($c['proyecto']); ?> · <?php echo (int)$c['mensajes']; ?> mensaje(s)</small>
@@ -63,7 +63,7 @@ $qsBase = array_filter(['proyecto' => $proyectoFiltro ?: null, 'q' => $q !== '' 
     <section class="card asis-chat">
         <?php if (!$conversacion): ?>
             <div class="asis-vacio asis-vacio-grande">
-                <img src="/build/img/chatbot/bot-192.png" alt="" width="96" height="96">
+                <img src="/build/img/projectweb.svg" alt="" width="96" height="96">
                 <h3>Sin conversación seleccionada</h3>
                 <p>Elige una conversación de la lista o abre el asistente en la app para comenzar una.</p>
             </div>
@@ -85,7 +85,7 @@ $qsBase = array_filter(['proyecto' => $proyectoFiltro ?: null, 'q' => $q !== '' 
             <div class="asis-mensajes">
                 <?php foreach ($mensajes as $m): ?>
                     <div class="asis-msg asis-msg-<?php echo s($m['rol'] === 'user' ? 'user' : 'bot'); ?>">
-                        <?php if ($m['rol'] !== 'user'): ?><img src="/build/img/chatbot/bot-96.png" alt="" class="asis-msg-avatar"><?php endif; ?>
+                        <?php if ($m['rol'] !== 'user'): ?><img src="/build/img/projectweb.svg" alt="" class="asis-msg-avatar"><?php endif; ?>
                         <div class="asis-burbuja">
                             <div class="asis-msg-txt"><?php echo nl2br(s($m['contenido'])); ?></div>
                             <div class="asis-msg-pie">

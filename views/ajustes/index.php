@@ -811,7 +811,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
     <div class="card">
         <h3 class="card-titulo"><i class="fa-brands fa-android"></i> <?php echo s(t('Project Web para Android')); ?><?php echo !empty($apk['version']) ? ' · v' . s($apk['version']) : ''; ?></h3>
         <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap">
-            <img src="/build/img/chatbot/bot-192.png" alt="<?php echo s(t('Asistente de Project Web')); ?>" width="96" height="96" loading="lazy" style="width:9.6rem;height:9.6rem;flex:0 0 auto">
+            <img src="/build/img/projectweb.svg" alt="Project Web" width="96" height="96" loading="lazy" style="width:9.6rem;height:9.6rem;flex:0 0 auto">
             <div style="flex:1 1 28rem;min-width:0">
                 <p class="text-muted text-sm" style="margin-top:0">
                     <?php echo s(t('Lleva tus obras en el teléfono. La app está pensada para funcionar sin conexión y con el asistente de IA en el dispositivo.')); ?>

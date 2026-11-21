@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.9';
-const APP_VERSION_CODE = 2009;
+const APP_VERSION = '0.2.10';
+const APP_VERSION_CODE = 2010;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -1962,7 +1962,7 @@ function burbuja(texto, tipo, hint) {
   wrap.className = 'msg ' + (tipo === 'user' ? 'msg-user' : 'msg-bot');
   if (tipo !== 'user') {
     const img = document.createElement('img');
-    img.src = 'assets/bot.svg'; img.alt = ''; img.className = 'msg-avatar';
+    img.src = 'assets/projectweb.svg'; img.alt = ''; img.className = 'msg-avatar';
     wrap.appendChild(img);
   }
   const b = document.createElement('div');
@@ -2201,7 +2201,7 @@ function asegurarStream() {
   const wrap = document.createElement('div');
   wrap.className = 'msg msg-bot';
   const img = document.createElement('img');
-  img.src = 'assets/bot.svg'; img.alt = ''; img.className = 'msg-avatar';
+  img.src = 'assets/projectweb.svg'; img.alt = ''; img.className = 'msg-avatar';
   const b = document.createElement('div');
   b.className = 'burbuja';
   const texto = document.createElement('span');
@@ -2994,7 +2994,7 @@ async function notificar(titulo, cuerpo) {
     if ('Notification' in window) {
       let permiso = Notification.permission;
       if (permiso === 'default') permiso = await Notification.requestPermission();
-      if (permiso === 'granted') { new Notification(titulo, { body: cuerpo, icon: 'assets/bot.svg' }); return true; }
+      if (permiso === 'granted') { new Notification(titulo, { body: cuerpo, icon: 'assets/projectweb.svg' }); return true; }
     }
   } catch (e) {}
   toast(titulo + ': ' + cuerpo);

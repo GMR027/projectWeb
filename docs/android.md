@@ -6,8 +6,8 @@ sincroniza al volver. El asistente ya ejecuta **Qwen2.5 GGUF con llama.cpp en el
 teléfono** (sin nube) y el historial se consulta en la web. Los avisos son locales y se
 muestran al abrir o sincronizar; no se usa FCM/Google. Falta el resto de la Fase 2/3.
 
-APK 0.2.9 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
-El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera usa el casco de Project Web; el icono de Ajustes es un engrane y la mascota se rediseñó desde cero.
+APK 0.2.10 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
+El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera y el asistente usan el logo de Project Web (casco); el icono de Ajustes es un engrane y no hay mascota de chatbot.
 
 ## Decisiones cerradas
 
@@ -29,7 +29,7 @@ El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK
 
 ```
 android/
-├── src/                       # UI WebView: index.html, styles.css, app.js, assets/bot.svg
+├── src/                       # UI WebView: index.html, styles.css, app.js, assets/projectweb.svg
 ├── src-tauri/                 # Rust + configuración Tauri
 │   ├── src/                   # main.rs / lib.rs
 │   ├── Cargo.toml
@@ -42,7 +42,7 @@ android/
 
 - App ID: `com.projectweb.android`; debug: `com.projectweb.android.debug`.
 - `minSdkVersion = 26` (Android 8), `targetSdk = 37`, ABI principal `arm64-v8a`.
-- El icono de la app es el **casco**; el mascota con casco es solo la cara del asistente.
+- El icono de la app y el asistente usan el **casco de Project Web**; no hay mascota de chatbot.
 
 
 
@@ -213,14 +213,13 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 - Sesiones revocadas/caducadas se purgan a los 90 días.
 - El registro de intentos (`accesos`) sigue siendo independiente.
 
-### 3. Mascota del asistente
+### 3. Logo de Project Web
 
-- `public/build/img/chatbot/bot.svg` y PNG 512/192/96/48.
-- Avatar con fondo circular claro/oscuro (`bot-avatar-*-*.png`).
-- Diseño: burbuja de chat azul marino, cara clara, audífonos azules y el casco naranja del
-  icono de la app encima. El casco va recto; el icono de la app no cambia.
-- Uso previsto: avatar del chat, estado vacío, mensajes del asistente y notificación grande.
-  Para la notificación pequeña de Android se usará un casco monocromo (pendiente).
+- `public/build/img/projectweb.svg` en la web y `android/src/assets/projectweb.svg` en la app:
+  el casco naranja de Project Web.
+- Se usa en la cabecera, la tarjeta y el avatar del asistente, los mensajes, la pestaña
+  «Asistente», el login y los avisos locales. No hay mascota de chatbot ni carpeta
+  `public/build/img/chatbot/`.
 
 ### 4. Shell de la app
 
@@ -234,28 +233,14 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 
 ## Pendiente por fase
 
-### Resto de la Fase 1
+### Lo que sigue en la app Android
 
-- **Token en Android Keystore** con `tauri-plugin-secure-keystore` (AES-256-GCM); el SQLite local sigue protegido por el sandbox de la app, pero sus datos no están cifrados todavía.
-- Borradores de reporte diario y minuta creados desde el chat (la tabla y la web ya existen).
-- Adjuntos/fotos offline en la cola de salida (hoy la cola es de datos).
-- Mejorar la latencia de la primera respuesta del 1.5B (contexto más corto/caché de prompt
-  y, si se requiere más calidad, un 3B para equipos de 12 GB o más).
-
-### Fase 2 — Acciones y extras
-
-- Borradores de punch, RFI, bitácora, reporte diario y minuta (punch/RFI/bitácora con
-  revisión y confirmación; reporte/minuta prellenados para completar).
-- Propuesta de cambios de fecha (solo propone; el usuario edita).
-- Preparar reunión, buscar documentos/fotos, cierre de punch, glosario, portafolio admin,
-  voz (Whisper local) y web de historial/borradores.
-
-### Fase 3 — Todo offline
-
-- Adaptadores de sincronización para el resto de herramientas de la web.
-- Motor de fechas/ruta crítica en Rust para propuestas 100 % offline.
-- Simulación “¿qué pasa si muevo X?”.
-- Firma y actualizaciones, push y modelos afinados.
+- **Edición de partes ya cerrados** e **incidentes de seguridad detallados** (hoy se editan en la web).
+- **Sincronización nativa del resto de herramientas**: avance, bitácora, punch, RFI, parte diario, evidencias y archivo ya son nativos; Programa/Gantt, Costos, Materiales, Calidad y el resto se abren en la web con el puente de sesión.
+- **Motor de fechas/ruta crítica en Rust** para propuestas 100 % offline (la simulación «¿qué pasa si…?» ya funciona con el snapshot, pero no recalcula toda la ruta crítica en el teléfono).
+- **Whisper local** para dictado (hoy se usa el reconocimiento del WebView) y ajuste de latencia/modelo (3B solo en equipos de 12 GB o más).
+- **Vistas nativas de Costos/Materiales/Calidad** si el producto las necesita; hoy son web.
+- **Push con la app cerrada:** omitido por decisión (sin Google/FCM); los avisos se ven al abrir o sincronizar.
 
 ## Compilar
 
@@ -294,7 +279,7 @@ publicar: copiar el APK a `storage/android/projectweb-android-<versión>.apk` y 
 
 ## Servidor
 
-- **Desplegado:** 2026-11-20 (Helm revisión 102). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.9 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
+- **Desplegado:** 2026-11-20 (Helm revisión 103). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.9 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
 - **Orden de despliegue:** primero el backend (`public/index.php` con el despacho de
   `/api/app` antes de `csrf_verificar()`, `classes/AppApi.php`, `classes/Asistente.php` y las
   migraciones) y después el APK. Si el backend viejo recibe un POST JSON sin `_csrf`,

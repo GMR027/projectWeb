@@ -1532,7 +1532,7 @@ $ok('el token se guarda como SHA-256, nunca en claro', strlen(\Classes\Sesiones:
 $ok('las rutas de sesiones están registradas', str_contains($asset('public/index.php'), "/cuenta/sesiones") && str_contains($asset('public/index.php'), "/cuenta/sesiones/cerrar-otras") && str_contains($asset('public/index.php'), "/sistema/sesiones/cerrar"));
 $ok('la cuenta es una ruta general para visitantes', str_contains($asset('models/Usuario.php'), "'/cuenta'"));
 
-echo "App Android: APK y mascota\n";
+echo "App Android: APK y logo\n";
 $ok('el nombre del APK lleva versión', \Classes\ApkAndroid::nombreValido('projectweb-android-0.1.0.apk') === 'projectweb-android-0.1.0.apk');
 $ok('la versión se extrae del nombre', \Classes\ApkAndroid::versionDeNombre('projectweb-android-1.2.3.apk') === '1.2.3');
 $ok('versionCode compara 1.2.3 como 1002003', \Classes\ApkAndroid::versionCode('1.2.3') === 1002003);
@@ -1552,7 +1552,8 @@ $z->close();
 $ok('un ZIP sin AndroidManifest.xml se rechaza como APK', count(\Classes\EscanerArchivos::revisar($apkMalo, 'projectweb-android-0.1.0.apk', true, ['apk'])) === 1);
 @unlink($apkTmp); @unlink($apkMalo);
 $ok('las rutas del APK están registradas', str_contains($asset('public/index.php'), "/api/android/version") && str_contains($asset('public/index.php'), "/api/android/descargar") && str_contains($asset('public/index.php'), "/sistema/android/subir"));
-$ok('el mascota del chatbot existe en SVG y PNG', is_file(__DIR__ . '/../public/build/img/chatbot/bot.svg') && is_file(__DIR__ . '/../public/build/img/chatbot/bot-192.png') && str_contains($asset('public/build/img/chatbot/bot.svg'), '#f97316'));
+$ok('el logo de Project Web existe en SVG', is_file(__DIR__ . '/../public/build/img/projectweb.svg') && str_contains($asset('public/build/img/projectweb.svg'), '#f97316'));
+$ok('la mascota del chatbot ya no existe', !is_dir(__DIR__ . '/../public/build/img/chatbot') && !is_file(__DIR__ . '/../android/src/assets/bot.svg'));
 
 echo $fallos ? "\n$fallos prueba(s) fallaron\n" : "\nTodo bien\n";
 exit($fallos ? 1 : 0);
