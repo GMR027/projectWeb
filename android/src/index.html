@@ -320,6 +320,11 @@
           <div><strong>Modelo de IA</strong><small id="ajustes-modelo-txt">Qwen2.5 · pendiente de descargar</small></div>
           <span class="chip chip-warn" id="ajustes-modelo-chip">2 GB</span>
         </button>
+        <button class="ajuste-item" type="button" id="btn-dev" data-solo-admin="1" hidden>
+          <span class="ajuste-ico"><svg class="ico"><use href="#i-ajustes"/></svg></span>
+          <div><strong>Modo desarrollo</strong><small id="ajustes-dev-txt">Servidor oculto en el login</small></div>
+          <span class="chip" id="ajustes-dev-chip">No</span>
+        </button>
         <button class="ajuste-item" type="button" id="btn-tema">
           <span class="ajuste-ico"><svg class="ico"><use href="#i-moon"/></svg></span>
           <div><strong>Apariencia</strong><small>Oscuro / claro</small></div>
@@ -359,12 +364,12 @@
 <!-- Conexión con la cuenta -->
 <div class="modal" id="conexion" hidden>
   <div class="modal-card modal-conexion">
-    <img src="assets/projectweb.svg" alt="" class="modal-bot">
+    <img src="assets/projectweb.svg" alt="" class="modal-bot" id="login-logo">
     <h2>Conecta tu cuenta</h2>
     <p class="texto-tenue">Descarga tus obras para consultarlas sin señal y usa el asistente con datos reales.</p>
     <form id="login-form" autocomplete="on">
-      <label>Servidor
-        <input id="login-servidor" type="url" inputmode="url" placeholder="https://projectweb.iguzman.com.mx" required>
+      <label id="login-servidor-campo" hidden>Servidor
+        <input id="login-servidor" type="url" inputmode="url" placeholder="https://projectweb.iguzman.com.mx">
       </label>
       <label>Correo
         <input id="login-email" type="email" autocomplete="username" required>

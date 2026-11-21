@@ -6,7 +6,7 @@ sincroniza al volver. El asistente ya ejecuta **Qwen2.5 GGUF con llama.cpp en el
 teléfono** (sin nube) y el historial se consulta en la web. Los avisos son locales y se
 muestran al abrir o sincronizar; no se usa FCM/Google. Falta el resto de la Fase 2/3.
 
-APK 0.2.11 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
+APK 0.2.12 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
 El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera y el asistente usan el logo de Project Web (casco); el icono de Ajustes es un engrane y no hay mascota de chatbot.
 
 ## Decisiones cerradas
@@ -76,6 +76,10 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 
 - **Login de app:** `POST /api/app/login` con correo/contraseña y token `pwa_…`; se guarda
   solo su SHA-256 en `sesiones_usuario`. El token dura 90 días y se puede revocar.
+- **Servidor oculto:** el campo «Servidor» del login está oculto por defecto para los clientes.
+  Solo lo ve el **admin ya conectado** o cuando se activa el **modo desarrollo**: 7 toques
+  seguidos en el logo del login, o el interruptor **Ajustes → Modo desarrollo** (solo admin).
+  Sin el campo visible, el login usa el servidor guardado o el de producción.
 - **Bootstrap:** `GET /api/app/bootstrap` devuelve usuario, organización, proyectos, APK
   publicada y catálogo de modelos (vacío hasta publicar un GGUF).
 - **Sincronización:** `GET /api/app/sync` entrega actividades, punch, RFI, materiales con
@@ -285,7 +289,7 @@ publicar: copiar el APK a `storage/android/projectweb-android-<versión>.apk` y 
 
 ## Servidor
 
-- **Desplegado:** 2026-11-20 (Helm revisión 104). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.11 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
+- **Desplegado:** 2026-11-20 (Helm revisión 105). `POST /api/app/login` responde 422/401 correctamente en producción y el APK 0.2.12 está en `storage/android` del clúster, montado ahora en el PVC (`storage/android`) para que sobreviva a los despliegues.
 - **Orden de despliegue:** primero el backend (`public/index.php` con el despacho de
   `/api/app` antes de `csrf_verificar()`, `classes/AppApi.php`, `classes/Asistente.php` y las
   migraciones) y después el APK. Si el backend viejo recibe un POST JSON sin `_csrf`,

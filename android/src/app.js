@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.11';
-const APP_VERSION_CODE = 2011;
+const APP_VERSION = '0.2.12';
+const APP_VERSION_CODE = 2012;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -286,6 +286,7 @@ async function limpiarSesion() {
   await borrarTokenSeguro();
   if (tieneTauri()) { try { await invokeTauri('limpiar_archivos'); } catch (e) {} }
   for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas']) await cacheBorrar(k);
+  localStorage.removeItem('pw-dev');
   state.outbox = [];
   actualizarPendientes();
 }
@@ -1897,6 +1898,7 @@ function renderPerfil() {
   const ses = $('#ajustes-sesiones-txt');
   if (ses) ses.textContent = (state.sesiones.length || 1) + ' dispositivo(s) con sesión abierta';
   renderDatosLocales();
+  renderModoDesarrollo();
   const mod = $('#ajustes-modelo-txt');
   if (mod) {
     const m = state.motor;
@@ -2649,11 +2651,40 @@ function cerrarModal() {
   document.body.classList.remove('modal-abierto');
 }
 
+function modoDesarrollo() {
+  return localStorage.getItem('pw-dev') === '1';
+}
+
+/** El servidor solo lo cambia el admin ya conectado o el modo desarrollo antes de entrar. */
+function puedeCambiarServidor() {
+  if (state.usuario) return String(state.usuario.rol || '') === 'admin';
+  return modoDesarrollo();
+}
+
+function actualizarCampoServidor() {
+  const campo = $('#login-servidor-campo');
+  if (campo) campo.hidden = !puedeCambiarServidor();
+  const srv = $('#login-servidor');
+  if (srv && !srv.value) srv.value = state.servidor;
+}
+
+function renderModoDesarrollo() {
+  const activo = modoDesarrollo();
+  const chip = $('#ajustes-dev-chip');
+  if (chip) {
+    chip.textContent = activo ? 'Sí' : 'No';
+    chip.className = 'chip' + (activo ? ' chip-ok' : '');
+  }
+  const txt = $('#ajustes-dev-txt');
+  if (txt) txt.textContent = activo ? 'Servidor visible en el login' : 'Servidor oculto en el login';
+}
+
 function abrirConexion() {
   const c = $('#conexion');
   if (!c) return;
   const srv = $('#login-servidor');
   if (srv && !srv.value) srv.value = state.servidor;
+  actualizarCampoServidor();
   const em = $('#login-email');
   if (em && state.usuario?.email && !em.value) em.value = state.usuario.email;
   const err = $('#login-error'); if (err) err.textContent = '';
@@ -2673,7 +2704,9 @@ async function login(ev) {
   ev.preventDefault();
   const err = $('#login-error');
   const btn = $('#login-entrar');
-  const servidor = normalizarServidor($('#login-servidor')?.value || '');
+  const servidor = puedeCambiarServidor()
+    ? normalizarServidor($('#login-servidor')?.value || '')
+    : normalizarServidor(state.servidor);
   const email = String($('#login-email')?.value || '').trim();
   const password = String($('#login-password')?.value || '');
   if (err) err.textContent = '';
@@ -3364,6 +3397,25 @@ function init() {
   });
   $('#btn-avance')?.addEventListener('click', verActividades);
   $('#btn-datos')?.addEventListener('click', verDatosLocales);
+  $('#btn-dev')?.addEventListener('click', () => {
+    const activo = !modoDesarrollo();
+    localStorage.setItem('pw-dev', activo ? '1' : '0');
+    renderModoDesarrollo();
+    actualizarCampoServidor();
+    toast(activo ? 'Modo desarrollo activado: el servidor se verá en el login.' : 'Modo desarrollo desactivado.');
+  });
+  let toquesLogo = 0, timerLogo = 0;
+  $('#login-logo')?.addEventListener('click', () => {
+    toquesLogo++;
+    clearTimeout(timerLogo);
+    timerLogo = setTimeout(() => { toquesLogo = 0; }, 1500);
+    if (toquesLogo < 7) return;
+    toquesLogo = 0;
+    const activo = !modoDesarrollo();
+    localStorage.setItem('pw-dev', activo ? '1' : '0');
+    actualizarCampoServidor();
+    toast(activo ? 'Modo desarrollo activado.' : 'Modo desarrollo desactivado.');
+  });
   $('#btn-nota')?.addEventListener('click', nuevaNota);
   $('#btn-voz')?.addEventListener('click', dictarMensaje);
   $('#btn-acciones-chat')?.addEventListener('click', abrirAccionesChat);
