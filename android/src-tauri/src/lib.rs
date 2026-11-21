@@ -10,6 +10,7 @@ use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{LlamaChatMessage, LlamaChatTemplate, LlamaModel};
 use llama_cpp_2::sampling::LlamaSampler;
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File, OpenOptions};
@@ -25,6 +26,8 @@ use tauri_plugin_notification::NotificationExt;
 
 #[cfg(target_os = "android")]
 mod apk_installer;
+#[cfg(target_os = "android")]
+mod galeria;
 
 const CLAVE_ITEM: &str = "db_key";
 static CLAVE_DB: OnceLock<String> = OnceLock::new();
@@ -1003,6 +1006,14 @@ fn ejecutar_generacion(
     mensajes: Vec<MensajeEntrada>,
     max_tokens: u32,
 ) {
+    // Si el precalentamiento está cargando el modelo, espera a que termine
+    // para no cargar dos copias en memoria.
+    for _ in 0..600 {
+        if !bloquear_motor().cargando {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
     let resultado = obtener_contexto(app).and_then(|(modelo, mut ctx)| {
         let r = generar_tokens(app, modelo, &mut ctx, &mensajes, max_tokens);
         bloquear_motor().ctx = Some(ctx);
@@ -1063,6 +1074,44 @@ fn motor_responder(app: tauri::AppHandle, mensajes: Vec<MensajeEntrada>, max_tok
     let app_hilo = app.clone();
     let max = max_tokens.unwrap_or(MAX_SALIDA);
     std::thread::spawn(move || ejecutar_generacion(&app_hilo, mensajes, max));
+    Ok(())
+}
+
+/// Deja el modelo cargado en memoria al abrir la app. La primera respuesta
+/// del asistente ya no paga la carga completa del GGUF.
+#[tauri::command]
+fn motor_precalentar(app: tauri::AppHandle) -> Result<(), String> {
+    {
+        let mut m = bloquear_motor();
+        if m.generando || m.cargando {
+            return Ok(());
+        }
+        if m.modelo.is_some() && m.ctx.is_some() {
+            return Ok(());
+        }
+        m.cargando = true;
+    }
+    let app_hilo = app.clone();
+    std::thread::spawn(move || {
+        match obtener_contexto(&app_hilo) {
+            Ok((_, ctx)) => {
+                {
+                    let mut m = bloquear_motor();
+                    m.ctx = Some(ctx);
+                    m.cargando = false;
+                }
+                let _ = app_hilo.emit("motor-listo", EventoMensaje { mensaje: "listo".into() });
+            }
+            Err(e) => {
+                {
+                    let mut m = bloquear_motor();
+                    m.cargando = false;
+                }
+                // Silencioso: puede faltar la descarga del modelo todavía.
+                let _ = app_hilo.emit("motor-precalentado-error", EventoMensaje { mensaje: e });
+            }
+        }
+    });
     Ok(())
 }
 
@@ -1236,14 +1285,149 @@ fn leer_archivo(app: tauri::AppHandle, ruta: String) -> Result<tauri::ipc::Respo
     Ok(tauri::ipc::Response::new(datos))
 }
 
+// ---------------------------------------------------------------------------
+// Herramientas locales (solo en el teléfono, sin sincronización con la web)
+// ---------------------------------------------------------------------------
+
+fn nombre_herr_seguro(nombre: &str) -> String {
+    let mut limpio: String = nombre
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') { c } else { '_' })
+        .collect();
+    if limpio.trim_matches(['.', '_']).is_empty() {
+        limpio = format!("foto_{}.jpg", SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0));
+    }
+    if !limpio.contains('.') {
+        limpio.push_str(".jpg");
+    }
+    if limpio.len() > 140 {
+        limpio.truncate(140);
+    }
+    limpio
+}
+
+fn dir_herramientas(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("files")
+        .join("herramientas");
+    fs::create_dir_all(&dir).map_err(|e| format!("No se pudo preparar la carpeta local: {e}"))?;
+    Ok(dir)
+}
+
+/// Guarda la foto de una herramienta en el almacenamiento privado de la app.
+/// El navegador manda un data URL (`data:image/jpeg;base64,...`) o base64 puro.
+#[tauri::command]
+fn guardar_foto_herramienta(
+    app: tauri::AppHandle,
+    nombre: String,
+    base64: String,
+) -> Result<String, String> {
+    let limpio = nombre_herr_seguro(&nombre);
+    let datos = base64.trim();
+    let datos = datos.split_once(',').map(|(_, b)| b).unwrap_or(datos);
+    let bytes = BASE64
+        .decode(datos)
+        .map_err(|e| format!("La foto no llegó en un formato válido: {e}"))?;
+    if bytes.is_empty() {
+        return Err("La foto llegó vacía.".into());
+    }
+    if bytes.len() > 30 * 1024 * 1024 {
+        return Err("La foto es demasiado grande (máximo 30 MB).".into());
+    }
+    let destino = dir_herramientas(&app)?.join(&limpio);
+    fs::write(&destino, &bytes).map_err(|e| format!("No se pudo guardar la foto local: {e}"))?;
+    Ok(destino.display().to_string())
+}
+
+/// Lee una foto guardada por las herramientas locales.
+#[tauri::command]
+fn leer_foto_herramienta(
+    app: tauri::AppHandle,
+    ruta: String,
+) -> Result<tauri::ipc::Response, String> {
+    let base = dir_herramientas(&app)?;
+    let base = base.canonicalize().unwrap_or(base);
+    let archivo = PathBuf::from(&ruta)
+        .canonicalize()
+        .map_err(|_| "La foto ya no está en este teléfono.".to_string())?;
+    if !archivo.starts_with(&base) {
+        return Err("Ruta de foto no válida.".into());
+    }
+    let meta = fs::metadata(&archivo).map_err(|e| e.to_string())?;
+    if meta.len() > 60 * 1024 * 1024 {
+        return Err("La foto es demasiado grande para verla dentro de la app.".into());
+    }
+    let datos = fs::read(&archivo).map_err(|e| format!("No se pudo leer la foto: {e}"))?;
+    Ok(tauri::ipc::Response::new(datos))
+}
+
+/// Borra una foto de las herramientas locales.
+#[tauri::command]
+fn borrar_foto_herramienta(app: tauri::AppHandle, ruta: String) -> Result<(), String> {
+    let base = dir_herramientas(&app)?;
+    let base = base.canonicalize().unwrap_or(base);
+    let archivo = PathBuf::from(&ruta)
+        .canonicalize()
+        .map_err(|_| "La foto ya no está en este teléfono.".to_string())?;
+    if !archivo.starts_with(&base) {
+        return Err("Ruta de foto no válida.".into());
+    }
+    fs::remove_file(&archivo).map_err(|e| format!("No se pudo borrar la foto: {e}"))?;
+    Ok(())
+}
+
+/// Copia una foto local al álbum del teléfono (Pictures/Project Web/<álbum>).
+#[cfg(target_os = "android")]
+#[tauri::command]
+async fn guardar_en_galeria(
+    app: tauri::AppHandle,
+    ruta: String,
+    album: String,
+    nombre: String,
+    mime: String,
+) -> Result<(), String> {
+    let plugin = app.state::<galeria::Galeria<tauri::Wry>>();
+    plugin
+        .handle
+        .run_mobile_plugin::<()>(
+            "guardar",
+            serde_json::json!({
+                "path": ruta,
+                "album": album,
+                "nombre": nombre,
+                "mime": mime,
+            }),
+        )
+        .map_err(|e| format!("No se pudo guardar en el álbum del teléfono: {e}"))?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "android"))]
+#[tauri::command]
+async fn guardar_en_galeria(
+    _app: tauri::AppHandle,
+    _ruta: String,
+    _album: String,
+    _nombre: String,
+    _mime: String,
+) -> Result<(), String> {
+    Err("Guardar en el álbum del teléfono solo está disponible en Android.".into())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let builder = tauri::Builder::default()
+pub fn run() {    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_secure_keystore::init());
+        .plugin(tauri_plugin_secure_keystore::init())
+        .on_permission_request(|_webview, kind| match kind {
+            tauri::webview::PermissionKind::Geolocation => tauri::webview::PermissionResponse::Allow,
+            _ => tauri::webview::PermissionResponse::Default,
+        });
     #[cfg(target_os = "android")]
-    let builder = builder.plugin(apk_installer::init());
+    let builder = builder.plugin(apk_installer::init()).plugin(galeria::init());
     builder
         .invoke_handler(tauri::generate_handler![
             db_estado,
@@ -1259,6 +1443,11 @@ pub fn run() {
             motor_detener,
             motor_eliminar,
             motor_responder,
+            motor_precalentar,
+            guardar_foto_herramienta,
+            leer_foto_herramienta,
+            borrar_foto_herramienta,
+            guardar_en_galeria,
             descargar_archivo,
             descargar_apk,
             instalar_apk,

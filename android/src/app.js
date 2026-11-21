@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.15';
-const APP_VERSION_CODE = 2015;
+const APP_VERSION = '0.2.17';
+const APP_VERSION_CODE = 2017;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -30,6 +30,8 @@ const state = {
   conectado: false,
   cargando: false,
   modal: null,
+  indiceAsistente: { version: 0, generado: null, proyectos: {} },
+  indiceTimer: 0,
   chatTurnos: [],
   generando: false,
   detenido: false,
@@ -132,6 +134,16 @@ function normalizarTexto(v) {
   return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+/** Huella rápida (FNV-1a) para saber si una obra cambió sin comparar todo su JSON. */
+function hashTexto(texto) {
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) {
+    h ^= texto.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
+}
+
 function normalizarServidor(valor) {
   let s = String(valor || '').trim();
   if (s === '') s = DEFAULT_SERVER;
@@ -212,6 +224,12 @@ function irA(tab) {
     vista.classList.toggle('vista-chat', tab === 'asistente');
     vista.scrollTo({ top: 0, behavior: tab === 'parte' ? 'auto' : 'smooth' });
   }
+  if (tab === 'asistente') precalentarMotor();
+  if (tab !== 'alertas') alternarPanelAlertas(false);
+  if (window.Herramientas) {
+    if (tab === 'herramientas' && !window.Herramientas.abriendo) window.Herramientas.inicio();
+    if (tab !== 'herramientas') window.Herramientas.vista = 'inicio';
+  }
 }
 
 function toast(texto, ms = 3400) {
@@ -280,16 +298,21 @@ async function limpiarSesion() {
   state.proyectoId = null;
   state.actualizado = null;
   state.conectado = false;
+  state.indiceAsistente = { version: 0, generado: null, proyectos: {} };
+  clearTimeout(state.indiceTimer);
   state.chatTurnos = [];
   state.stream = null;
   state.generando = false;
   for (const p of proyectos) await cacheBorrar('chat_' + Number(p?.proyecto?.id || 0));
   await borrarTokenSeguro();
   if (tieneTauri()) { try { await invokeTauri('limpiar_archivos'); } catch (e) {} }
-  for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas', 'servidor_info']) await cacheBorrar(k);
+  for (const k of ['usuario', 'proyectos', 'sync', 'outbox', 'alertas_vistas', 'servidor_info', 'asistente_indice']) await cacheBorrar(k);
   localStorage.removeItem('pw-dev');
   state.outbox = [];
   actualizarPendientes();
+  if (window.Herramientas) window.Herramientas.reiniciar();
+  alternarPanelAlertas(false);
+  renderAlertasPanel();
   document.body.classList.add('sin-sesion');
 }
 
@@ -302,6 +325,7 @@ async function cargarSesion() {
   const token = await leerTokenSeguro();
   const servidor = await cacheLeer('servidor');
   if (servidor) state.servidor = servidor;
+  await cargarIndiceAsistente();
   const usuario = await cacheLeer('usuario');
   if (usuario) { try { state.usuario = JSON.parse(usuario); } catch (e) {} }
   const outbox = await cacheLeer('outbox');
@@ -319,6 +343,7 @@ async function cargarSesion() {
       state.proyectos = state.sync.map((p) => p.proyecto);
       state.proyectoId = state.sync.some((p) => Number(p.proyecto.id) === proyectoGuardado)
         ? proyectoGuardado : elegirProyectoInicial();
+      actualizarIndiceAsistente();
     } catch (e) {}
   }
   if (token) {
@@ -336,7 +361,7 @@ async function cargarSesion() {
   }
 }
 
-async function sincronizar(silencioso = false) {
+async function sincronizar(silencioso = false, soloProyecto = 0) {
   if (!state.token) {
     if (!silencioso) abrirConexion();
     return false;
@@ -344,9 +369,10 @@ async function sincronizar(silencioso = false) {
   state.cargando = true;
   try {
     if (navigator.onLine && state.outbox.length) await enviarPendientes(true);
+    const rutaSync = '/api/app/sync' + (soloProyecto ? '?proyecto=' + encodeURIComponent(soloProyecto) : '');
     const [syncResp, sesionesResp] = await Promise.all([
-      apiFetch('/api/app/sync'),
-      apiFetch('/api/app/sesiones').catch(() => null),
+      apiFetch(rutaSync),
+      soloProyecto ? Promise.resolve(null) : apiFetch('/api/app/sesiones').catch(() => null),
     ]);
     if (syncResp.status === 401) {
       await limpiarSesion();
@@ -358,9 +384,18 @@ async function sincronizar(silencioso = false) {
     const j = await syncResp.json();
     if (!syncResp.ok || !j.success) throw new Error(j.error || 'No se pudo sincronizar');
     const anterior = state.sync;
-    state.sync = j.proyectos || [];
+    const recibidos = j.proyectos || [];
+    if (soloProyecto && recibidos.length) {
+      // Actualización incremental: conserva las demás obras y reemplaza solo la consultada.
+      const porId = new Map(state.sync.map((x) => [Number(x.proyecto.id), x]));
+      for (const x of recibidos) porId.set(Number(x.proyecto.id), x);
+      state.sync = [...porId.values()];
+    } else {
+      state.sync = recibidos;
+    }
     state.cambios = calcularCambios(anterior, state.sync);
     state.actualizado = j.generado || new Date().toISOString();
+    actualizarIndiceAsistente();
     const proyectoGuardado = Number(await cacheLeer('proyecto') || 0);
     if (!state.proyectoId || !state.sync.some((p) => Number(p.proyecto.id) === Number(state.proyectoId))) {
       state.proyectoId = state.sync.some((p) => Number(p.proyecto.id) === proyectoGuardado)
@@ -375,9 +410,11 @@ async function sincronizar(silencioso = false) {
     await cacheGuardar('proyectos', JSON.stringify(state.sync.map((p) => p.proyecto)));
     state.conectado = true;
     renderTodo();
-    await cargarChat();
+    if (!soloProyecto) {
+      await cargarChat();
+      avisarNuevosCriticos();
+    }
     estadoRed();
-    avisarNuevosCriticos();
     if (!silencioso) toast(state.sync.length ? 'Obras actualizadas.' : 'No hay obras para mostrar.');
     return true;
   } catch (e) {
@@ -406,6 +443,10 @@ function renderTodo() {
   }
   renderChatEstado();
   estadoRed();
+  renderAlertasPanel();
+  // Las escrituras offline también cambian la lectura del asistente: se
+  // reconstruye solo la ficha de la obra afectada, con un pequeño retardo.
+  programarIndiceAsistente();
 }
 
 function nivelChip(nivel) {
@@ -764,7 +805,7 @@ async function cambiarEstadoPunch(p, x, estado) {
   cerrarModal();
   renderPunch(p);
   toast('Pendiente actualizado.');
-  if (navigator.onLine) sincronizar(true);
+  if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
 }
 
 function formPunch(p, pre = {}) {
@@ -807,7 +848,7 @@ function formPunch(p, pre = {}) {
     cerrarModal();
     renderPunch(p);
     toast('Pendiente guardado. Se enviará al sincronizar.');
-    if (navigator.onLine) sincronizar(true);
+    if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
   });
 }
 
@@ -882,7 +923,7 @@ async function cambiarEstadoRfi(p, x, estado) {
   cerrarModal();
   renderRfi(p);
   toast('RFI actualizado.');
-  if (navigator.onLine) sincronizar(true);
+  if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
 }
 
 function formRfi(p, pre = {}) {
@@ -920,7 +961,7 @@ function formRfi(p, pre = {}) {
     cerrarModal();
     renderRfi(p);
     toast('RFI guardado. Se enviará al sincronizar.');
-    if (navigator.onLine) sincronizar(true);
+    if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
   });
 }
 
@@ -1082,7 +1123,7 @@ function formIncidente(p) {
     cerrarModal();
     renderIncidentes(p);
     toast('Incidente guardado. Se enviará al sincronizar.');
-    if (navigator.onLine) sincronizar(true);
+    if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
   });
 }
 
@@ -1729,7 +1770,7 @@ function renderParteDiario(p, detalle = null, modoForzado = '') {
       const item = p.partes.find((x) => Number(x.id) === Number(base.id));
       if (item) Object.assign(item, resumenLocal, { estado: 'cerrado', puede_corregir: true, puede_abrir: false });
       toast('Corrección guardada. El parte sigue cerrado.');
-      if (navigator.onLine) sincronizar(true);
+      if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
       irA(state.parteVolver || 'obras');
       return;
     }
@@ -1890,6 +1931,8 @@ function renderAlertas() {
   if (!cont) return;
   const p = proyectoActual();
   const recs = p?.recordatorios || [];
+  const chip = $('#alertas-chip');
+  if (chip) chip.textContent = recs.length ? `${recs.length} recordatorio${recs.length === 1 ? '' : 's'}` : 'Sin alertas';
   if (!recs.length) {
     cont.innerHTML = '<div class="aviso"><svg class="ico"><use href="#i-check"/></svg><p>No hay recordatorios próximos. Cuando sincronices se actualizarán.</p></div>';
     return;
@@ -1899,6 +1942,36 @@ function renderAlertas() {
       <span class="alerta-ico"><svg class="ico"><use href="#${r.tipo === 'punch' ? 'i-alert' : (r.tipo === 'equipo' ? 'i-model' : (r.tipo === 'rfi' ? 'i-chat' : 'i-clock'))}"/></svg></span>
       <div><strong>${esc(r.titulo)}</strong><p>${esc(r.detalle || '')}</p><small>${esc(fechaLarga(r.fecha))} · ${esc(r.tipo)}</small></div>
     </article>`).join('');
+}
+
+function renderAlertasPanel() {
+  const lista = $('#panel-alertas-lista');
+  const badge = $('#alerta-badge');
+  const resumen = $('#panel-alertas-resumen');
+  if (!lista || !badge) return;
+  const recs = proyectoActual()?.recordatorios || [];
+  badge.hidden = !recs.length;
+  badge.textContent = recs.length > 99 ? '99+' : String(recs.length);
+  if (resumen) resumen.textContent = recs.length
+    ? `${recs.length} recordatorio${recs.length === 1 ? '' : 's'} de la obra`
+    : 'Sin recordatorios próximos';
+  lista.innerHTML = recs.length
+    ? recs.slice(0, 4).map((r) => `
+      <div class="panel-alerta ${r.nivel === 'critico' ? 'critica' : ''}">
+        <span class="panel-alerta-ico"><svg class="ico"><use href="#${r.tipo === 'punch' ? 'i-alert' : (r.tipo === 'equipo' ? 'i-model' : (r.tipo === 'rfi' ? 'i-chat' : 'i-clock'))}"/></svg></span>
+        <div><strong>${esc(r.titulo)}</strong><small>${esc(fechaLarga(r.fecha))} · ${esc(r.tipo)}</small></div>
+      </div>`).join('')
+    : '<p class="panel-alertas-vacio">No hay alertas próximas. Se actualizan al sincronizar.</p>';
+}
+
+function alternarPanelAlertas(mostrar) {
+  const panel = $('#panel-alertas');
+  if (!panel) return;
+  const abrir = typeof mostrar === 'boolean' ? mostrar : panel.hidden;
+  if (abrir) renderAlertasPanel();
+  panel.hidden = !abrir;
+  const btn = $('#btn-alertas');
+  if (btn) btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
 }
 
 function renderPerfil() {
@@ -1976,7 +2049,9 @@ function renderChatEstado() {
   if (state.conectado && state.actualizado) {
     const f = state.actualizado.slice(0, 10);
     const cuando = f === hoyISO() ? 'hoy' : 'al ' + fechaCorta(f);
-    el.innerHTML = `<span class="punto activo"></span> ${navigator.onLine ? 'Datos de ' + cuando : 'Sin conexión · datos de ' + cuando}`;
+    const n = state.sync.length;
+    const obras = n ? ` · ${n} obra${n === 1 ? '' : 's'} leída${n === 1 ? '' : 's'}` : '';
+    el.innerHTML = `<span class="punto activo"></span> ${navigator.onLine ? 'Datos de ' + cuando : 'Sin conexión · datos de ' + cuando}${obras}`;
   } else {
     el.innerHTML = '<span class="punto"></span> Conecta tu cuenta';
   }
@@ -2127,7 +2202,7 @@ function abrirAccionesChat() {
       p.bitacora.unshift({ id: 0, fecha: hoyISO(), descripcion: contenido, importancia: 'media' });
       cerrarModal();
       toast('Minuta guardada en la bitácora.');
-      if (navigator.onLine) sincronizar(true);
+      if (navigator.onLine) sincronizar(true, Number(p.proyecto.id));
     });
   });
 }
@@ -2157,9 +2232,19 @@ async function copiarTexto(texto) {
 }
 
 function respuestaLocal(texto) {
-  const p = proyectoActual();
+  const t = normalizarTexto(texto);
+  if (/(portafolio|todas las obras|comparar|otras obras)/.test(t)) {
+    if (!state.sync.length) return 'No hay obras descargadas en el teléfono. Conecta tu cuenta y sincroniza.';
+    actualizarIndiceAsistente();
+    return 'Portafolio: ' + state.sync.map((x) => {
+      const ix = indiceDe(x);
+      return ix
+        ? `${ix.nombre} ${ix.progreso}% (${ix.totales.punch} punch, ${ix.totales.rfis} RFI, ${ix.totales.atrasadas} atrasadas)`
+        : `${x.proyecto.nombre} ${Math.round(Number(x.proyecto.progreso) || 0)}%`;
+    }).join('; ') + '.';
+  }
+  const p = proyectoDePregunta(texto, proyectoActual());
   if (!p) return respuestaDemo(texto);
-  const t = texto.toLowerCase();
   const proj = p.proyecto;
   const hoy = hoyISO();
   const abiertos = (p.punch || []).filter((x) => ['abierto', 'en_proceso'].includes(x.estado));
@@ -2225,9 +2310,6 @@ function respuestaLocal(texto) {
     const rfi = rfis.slice(0, 4).map((x) => `${x.numero}: ${x.asunto}`);
     const ret = atras.slice(0, 4).map((a) => `${a.codigo} ${a.nombre} (${a.progreso}%)`);
     return `Para la reunión: ${crit.length ? 'punch crítico: ' + crit.join(', ') + '. ' : ''}${rfi.length ? 'RFI abiertos: ' + rfi.join(', ') + '. ' : ''}${ret.length ? 'actividades atrasadas: ' + ret.join(', ') + '. ' : ''}${(!crit.length && !rfi.length && !ret.length) ? 'No hay pendientes críticos en la copia descargada.' : ''}`;
-  }
-  if (/(portafolio|todas las obras|comparar)/.test(t)) {
-    return 'Portafolio: ' + state.sync.map((x) => `${x.proyecto.nombre} ${Math.round(x.proyecto.progreso)}% (${(x.punch || []).filter((q) => ['abierto', 'en_proceso'].includes(q.estado)).length} punch, ${(x.rfis || []).filter((q) => q.estado === 'abierto').length} RFI)`).join('; ') + '.';
   }
   if (/(glosario|qu[eé] significa|definici[oó]n|qu[eé] es un)/.test(t)) {
     return 'Glosario rápido: RFI = solicitud de información; Punch = pendiente de corrección; Lookahead = planeación de las próximas semanas; Last Planner = compromisos semanales del equipo; PPC = porcentaje de compromisos cumplidos; SPI = avance real contra el programado; CPI = valor ganado contra el costo; ATS = análisis de trabajo seguro; NC = no conformidad; ITP = plan de inspección y pruebas.';
@@ -2304,112 +2386,242 @@ function actividadTexto(a) {
   return partes.join(', ');
 }
 
-function contextoObra(pregunta = '') {
-  const p = proyectoActual();
+/* ------------------------------------------------------------------
+   Lectura inicial del asistente.
+   La app arma una vez el índice compacto de TODAS las obras visibles
+   y lo guarda en el teléfono. En las siguientes sincronizaciones solo
+   se vuelve a leer la obra cuya huella cambió; las demás se reutilizan.
+   Así el asistente no reescanea ni reconstruye todo en cada pregunta.
+   ------------------------------------------------------------------ */
+const INDICE_ASISTENTE_VERSION = 1;
+
+function firmaProyecto(p) {
+  // Solo lo que el asistente usa para responder. Si algo de esto cambia,
+  // se reconstruye la ficha de esa obra; las demás se conservan.
+  const datos = {
+    proyecto: p.proyecto,
+    actividades: p.actividades || [],
+    punch: p.punch || [],
+    rfis: p.rfis || [],
+    materiales: p.materiales || [],
+    recordatorios: p.recordatorios || [],
+    equipo: p.equipo || [],
+    seguridad: p.seguridad || {},
+    riesgos: p.riesgos || [],
+    archivos: p.archivos || [],
+    salud: p.salud || {},
+    contratos: p.contratos || [],
+    bitacora: (p.bitacora || []).slice(0, 40),
+  };
+  return hashTexto(JSON.stringify(datos));
+}
+
+function construirIndiceProyecto(p, firma) {
   const hoy = hoyISO();
-  const normal = (v) => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const t = normal(pregunta);
-  const pide = (re) => re.test(t);
+  const pr = p.proyecto || {};
+  const acts = p.actividades || [];
+  const abiertas = acts.filter((a) => !Number(a.hito) && Number(a.progreso) < 100);
+  const atrasadas = abiertas
+    .filter((a) => a.fecha_fin && a.fecha_fin < hoy)
+    .sort((a, b) => String(a.fecha_fin).localeCompare(String(b.fecha_fin)));
+  const proximas = abiertas
+    .filter((a) => a.fecha_inicio && a.fecha_inicio >= hoy)
+    .sort((a, b) => String(a.fecha_inicio).localeCompare(String(b.fecha_inicio)));
+  const punch = (p.punch || []).filter((x) => ['abierto', 'en_proceso'].includes(x.estado));
+  const punchGraves = punch.filter((x) => ['alta', 'critica'].includes(x.severidad));
+  const rfis = (p.rfis || []).filter((x) => x.estado === 'abierto');
+  const recordatorios = (p.recordatorios || []).filter((r) => r.fecha >= hoy).slice(0, 8);
+  const materiales = (p.materiales || []).slice(0, 12);
+  const equipo = (p.equipo || []).slice(0, 8);
+  const seguridad = p.seguridad || {};
+  const incidentes = (seguridad.incidentes || []).filter((x) => x.estado === 'abierto').slice(0, 6);
+  const riesgos = (p.riesgos || []).slice(0, 6);
+  const salud = p.salud || {};
+  const saludNivel = salud.nivel === 'critico' ? 'crítica' : (salud.nivel === 'aviso' ? 'con avisos' : 'sin alertas graves');
+
+  const lineas = [];
+  lineas.push(`Obra: ${pr.nombre || 'sin nombre'}${pr.codigo ? ' (' + pr.codigo + ')' : ''}, avance ${Math.round(Number(pr.progreso) || 0)} %, programada del ${pr.fecha_inicio || '—'} al ${pr.fecha_fin || '—'}${Number(pr.archivado) ? ', archivada' : ''}.`);
+  lineas.push(`Resumen: ${abiertas.length} actividades sin terminar, ${atrasadas.length} atrasadas, ${punch.length} punch abiertos (${punchGraves.length} graves), ${rfis.length} RFI abiertos. Salud: ${saludNivel}.`);
+  if (salud.indicadores?.length) {
+    const ind = salud.indicadores.filter((i) => Number(i.valor) > 0).slice(0, 3).map((i) => `${i.titulo}: ${i.valor}`).join('; ');
+    if (ind) lineas.push('Indicadores: ' + ind + '.');
+  }
+  if (atrasadas.length) lineas.push('Actividades atrasadas: ' + atrasadas.slice(0, 8).map(actividadTexto).join(' | ') + '.');
+  if (proximas.length) lineas.push('Próximas por iniciar: ' + proximas.slice(0, 8).map(actividadTexto).join(' | ') + '.');
+  if (punch.length) lineas.push('Punch abierto: ' + punch.slice(0, 8).map((x) => `${x.titulo} (${x.severidad}${x.ubicacion ? ', ' + x.ubicacion : ''}${x.fecha_limite ? ', vence ' + x.fecha_limite : ''}${x.responsable ? ', resp. ' + x.responsable : ''})`).join(' | ') + '.');
+  if (rfis.length) lineas.push('RFI abiertos: ' + rfis.slice(0, 6).map((x) => `${x.numero || ''} ${x.asunto || ''}${x.fecha_limite ? ' (vence ' + x.fecha_limite + ')' : ''}`).join(' | ') + '.');
+  if (recordatorios.length) lineas.push('Recordatorios: ' + recordatorios.map((r) => `${r.fecha} ${r.titulo} (${r.nivel})`).join(' | ') + '.');
+  if (materiales.length) {
+    lineas.push('Materiales: ' + materiales.slice(0, 8).map((m) => {
+      const normas = (m.normativa || []).slice(0, 2).map((n) => (n.documento || n.codigo || n.referencia || '') + (n.clausula ? ' ' + n.clausula : '')).filter(Boolean);
+      return `${m.nombre}${m.marca ? ' ' + m.marca : ''}${m.modelo ? ' ' + m.modelo : ''}, ${m.cantidad || ''} ${m.unidad || ''}, verificación ${m.verificacion_estado || 'sin registro'}${normas.length ? ', norma ' + [...new Set(normas)].join('; ') : ''}`;
+    }).join(' | ') + '.');
+  }
+  if (equipo.length) lineas.push('Equipo: ' + equipo.map((e) => `${e.nombre} (${e.estado}${e.proximo_servicio ? ', servicio ' + e.proximo_servicio : ''})`).join(' | ') + '.');
+  if (incidentes.length || Number(seguridad.ats_pendientes?.length)) {
+    lineas.push(`Seguridad: ${incidentes.length} incidente(s) abierto(s), ${(seguridad.ats_pendientes || []).length} ATS pendiente(s).`);
+    if (incidentes.length) lineas.push('Incidentes: ' + incidentes.slice(0, 4).map((x) => `${x.tipo || 'incidente'}: ${x.descripcion || ''} (${x.severidad || 'sin severidad'})`).join(' | ') + '.');
+  }
+  if (riesgos.length) lineas.push('Riesgos: ' + riesgos.map((r) => `${r.titulo} (${r.probabilidad}/${r.impacto})`).join(' | ') + '.');
+
+  return {
+    version: INDICE_ASISTENTE_VERSION,
+    firma,
+    id: Number(pr.id || 0),
+    nombre: pr.nombre || 'Obra sin nombre',
+    codigo: pr.codigo || '',
+    progreso: Math.round(Number(pr.progreso) || 0),
+    archivado: Number(pr.archivado) || 0,
+    saludNivel,
+    totales: {
+      actividades: acts.length,
+      abiertas: abiertas.length,
+      atrasadas: atrasadas.length,
+      punch: punch.length,
+      punchGraves: punchGraves.length,
+      rfis: rfis.length,
+      recordatorios: recordatorios.length,
+      materiales: (p.materiales || []).length,
+      archivos: (p.archivos || []).length,
+    },
+    atrasadas: atrasadas.slice(0, 10),
+    proximas: proximas.slice(0, 10),
+    punch: punch.slice(0, 10),
+    rfis: rfis.slice(0, 8),
+    recordatorios,
+    materiales,
+    equipo,
+    incidentes,
+    riesgos,
+    seguridad: { ats_pendientes: (seguridad.ats_pendientes || []).length },
+    archivos: (p.archivos || []).slice(0, 60).map((a) => a.nombre).filter(Boolean),
+    texto: lineas.join('\n').slice(0, 3200),
+  };
+}
+
+function lineaResumenObra(ix) {
+  return `${ix.nombre}${ix.codigo ? ' [' + ix.codigo + ']' : ''}: ${ix.progreso} % de avance, ${ix.totales.atrasadas} atrasadas, ${ix.totales.punch} punch abiertos, ${ix.totales.rfis} RFI, salud ${ix.saludNivel}`;
+}
+
+function actualizarIndiceAsistente() {
+  const previos = state.indiceAsistente?.proyectos || {};
+  const proyectos = {};
+  let reconstruidos = 0;
+  for (const p of state.sync) {
+    const id = Number(p?.proyecto?.id || 0);
+    if (!id) continue;
+    const firma = firmaProyecto(p);
+    const previo = previos[id];
+    if (previo && previo.version === INDICE_ASISTENTE_VERSION && previo.firma === firma && previo.texto) {
+      proyectos[id] = previo;
+      continue;
+    }
+    proyectos[id] = construirIndiceProyecto(p, firma);
+    reconstruidos++;
+  }
+  const totalPrevio = Object.keys(previos).length;
+  const totalNuevo = Object.keys(proyectos).length;
+  state.indiceAsistente = {
+    version: INDICE_ASISTENTE_VERSION,
+    generado: state.actualizado,
+    proyectos,
+  };
+  if (reconstruidos || totalNuevo !== totalPrevio) {
+    cacheGuardar('asistente_indice', JSON.stringify(state.indiceAsistente));
+  }
+  return state.indiceAsistente;
+}
+
+function programarIndiceAsistente() {
+  clearTimeout(state.indiceTimer);
+  state.indiceTimer = setTimeout(() => actualizarIndiceAsistente(), 500);
+}
+
+async function cargarIndiceAsistente() {
+  try {
+    const guardado = await cacheLeer('asistente_indice');
+    if (!guardado) return;
+    const j = JSON.parse(guardado);
+    if (j && j.version === INDICE_ASISTENTE_VERSION && j.proyectos) {
+      state.indiceAsistente = j;
+    }
+  } catch (e) { /* se reconstruye al sincronizar */ }
+}
+
+function indiceDe(p) {
+  if (!p) return null;
+  const id = Number(p?.proyecto?.id || 0);
+  return state.indiceAsistente?.proyectos?.[id] || null;
+}
+
+/** Elige la obra nombrada en la pregunta; si no hay nombre, la obra activa.
+ *  Devuelve null cuando la pregunta es del portafolio completo. */
+function proyectoDePregunta(pregunta, porDefecto = null) {
+  const t = ' ' + normalizarTexto(pregunta) + ' ';
+  if (/(portafolio|todas las obras|comparar|otras obras|entre obras|global)/.test(t)) return null;
+  const candidatos = state.sync
+    .filter((x) => x?.proyecto)
+    .slice()
+    .sort((a, b) => String(b.proyecto.nombre || '').length - String(a.proyecto.nombre || '').length);
+  for (const x of candidatos) {
+    const nombre = normalizarTexto(x.proyecto.nombre);
+    const codigo = normalizarTexto(x.proyecto.codigo);
+    if (nombre && t.includes(nombre)) return x;
+    if (codigo && codigo.length > 2 && t.includes(codigo)) return x;
+  }
+  return porDefecto || proyectoActual();
+}
+
+function contextoObra(pregunta = '') {
+  const hoy = hoyISO();
+  const t = normalizarTexto(pregunta);
   const lineas = [`Fecha de hoy: ${hoy}.`];
-  if (!p) {
+  if (!state.sync.length) {
     lineas.push('No hay obras descargadas en el teléfono.');
     return lineas.join('\n');
   }
+
+  // Índice incremental: solo se reconstruye la obra que cambió.
+  actualizarIndiceAsistente();
+  const p = proyectoDePregunta(pregunta, proyectoActual());
+
+  lineas.push(`Obras leídas en el teléfono (${state.sync.length}): ` + state.sync.map((x) => {
+    const ix = indiceDe(x);
+    return ix ? lineaResumenObra(ix) : `${x.proyecto.nombre}: ${Math.round(Number(x.proyecto.progreso) || 0)} %`;
+  }).join(' | ') + '.');
+
+  if (!p) {
+    lineas.push('La pregunta es del portafolio completo: compara las obras anteriores y responde con las cifras de cada una.');
+    if (state.cambios.length) lineas.push('Cambios recientes: ' + state.cambios.slice(0, 8).join('; ') + '.');
+    return lineas.join('\n').slice(0, 5200);
+  }
+
   const proj = p.proyecto;
-  lineas.push(`Obra activa: ${proj.nombre} (${proj.codigo || 'sin código'}), avance ${Number(proj.progreso) || 0} %, del ${proj.fecha_inicio || '—'} al ${proj.fecha_fin || '—'}.`);
+  const ix = indiceDe(p);
+  lineas.push(`Obra consultada: ${proj.nombre} (${proj.codigo || 'sin código'}), avance ${Math.round(Number(proj.progreso) || 0)} %, del ${proj.fecha_inicio || '—'} al ${proj.fecha_fin || '—'}.`);
+  lineas.push(ix?.texto || construirIndiceProyecto(p, firmaProyecto(p)).texto);
 
-  const acts = p.actividades || [];
-  const abiertas = acts.filter((a) => !Number(a.hito) && Number(a.progreso) < 100);
-  const atras = abiertas.filter((a) => a.fecha_fin && a.fecha_fin < hoy)
-    .sort((a, b) => String(a.fecha_fin).localeCompare(String(b.fecha_fin)));
-  const proximas = abiertas.filter((a) => a.fecha_inicio >= hoy)
-    .sort((a, b) => String(a.fecha_inicio).localeCompare(String(b.fecha_inicio)));
-  const punch = (p.punch || []).filter((x) => ['abierto', 'en_proceso'].includes(x.estado));
-  const rfis = (p.rfis || []).filter((x) => x.estado === 'abierto');
-  const salud = p.salud || {};
-  lineas.push(`Resumen: ${abiertas.length} actividades sin terminar, ${atras.length} atrasadas, ${punch.length} punch abiertos, ${rfis.length} RFI abiertos.`);
-  if (salud.nivel) {
-    const ind = (salud.indicadores || []).filter((i) => Number(i.valor) > 0).slice(0, 3)
-      .map((i) => `${i.titulo}: ${i.valor}`).join('; ');
-    lineas.push(`Salud de la obra: ${salud.nivel}.${ind ? ' ' + ind + '.' : ''}`);
-  }
-
-  const temas = {
-    punch: pide(/(punch|pendiente|corregir|acabado|detalle|observacion)/),
-    atrasos: pide(/(atras|retras)/),
-    fechas: pide(/(fecha|cambiar|mover|programa|actividad|avance|estatus|como va)/),
-    material: pide(/(material|marca|modelo|norma|cumple|especifica|ficha|proveedor)/),
-    seguridad: pide(/(seguridad|incidente|accidente|riesgo|ats|permiso|epp)/),
-    equipo: pide(/(equipo|maquina|grua|mantenimiento|servicio|recordatorio|evento|vence|calendario|semana|hoy)/),
-    reunion: pide(/(reuni|junta|prepar|resumen ejecutivo)/),
-    portafolio: pide(/(portafolio|todas las obras|comparar|otras obras)/),
-    cambios: pide(/(cambi|actualiz|sincroniz)/),
-  };
-  const general = !Object.values(temas).some(Boolean);
-
-  if ((temas.atrasos || temas.fechas || temas.reunion || general) && atras.length) {
-    lineas.push('Actividades atrasadas: ' + atras.slice(0, 8).map(actividadTexto).join(' | ') + '.');
-  }
-  const soloAtrasos = temas.atrasos && !temas.fechas && !temas.reunion && !general;
-  if (!soloAtrasos && (temas.fechas || temas.reunion || general) && proximas.length) {
-    lineas.push('Próximas por iniciar: ' + proximas.slice(0, 9).map(actividadTexto).join(' | ') + '.');
-  }
-  if ((temas.punch || temas.reunion || general) && punch.length) {
-    lineas.push('Punch: ' + punch.slice(0, 8).map((x) => `${x.titulo} (${x.severidad}, ${x.ubicacion || 'sin ubicación'}${x.fecha_limite ? ', vence ' + x.fecha_limite : ''}${x.responsable ? ', resp. ' + x.responsable : ''})`).join(' | ') + '.');
-  }
-  if ((temas.reunion || general || pide(/rfi|consulta/)) && rfis.length) {
-    lineas.push('RFI: ' + rfis.slice(0, 6).map((x) => `${x.numero || ''} ${x.asunto || ''}${x.fecha_limite ? ' (vence ' + x.fecha_limite + ')' : ''}`).join(' | ') + '.');
-  }
-  if (temas.equipo || general) {
-    const recs = (p.recordatorios || []).filter((r) => r.fecha >= hoy).slice(0, 8);
-    if (recs.length) lineas.push('Recordatorios: ' + recs.map((r) => `${r.fecha} ${r.titulo} (${r.nivel})`).join(' | ') + '.');
-  }
-  if (temas.material || general) {
-    const mats = p.materiales || [];
-    if (mats.length) {
-      const textoMat = (m) => {
+  if (/(material|marca|modelo|norma|cumple|especifica|ficha|proveedor)/.test(t) && ix) {
+    const ignorar = new Set(['que', 'cual', 'como', 'para', 'material', 'materiales', 'marca', 'modelo', 'norma', 'normativa', 'cumple', 'busca', 'buscar', 'este', 'esta', 'hay', 'del', 'los', 'las', 'con', 'por', 'una', 'uno', 'sobre', 'dime', 'tiene']);
+    const palabras = t.split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !ignorar.has(w));
+    const encontrados = palabras.length ? (p.materiales || []).filter((m) => {
+      const heno = normalizarTexto(`${m.nombre || ''} ${m.marca || ''} ${m.modelo || ''} ${(m.normativa || []).map((n) => n.documento || n.codigo || '').join(' ')}`);
+      return palabras.some((w) => heno.includes(w));
+    }).slice(0, 5) : [];
+    if (encontrados.length) {
+      lineas.push('Materiales que coinciden: ' + encontrados.map((m) => {
         const normas = (m.normativa || []).slice(0, 3).map((n) => (n.documento || n.codigo || n.referencia || '') + (n.clausula ? ' ' + n.clausula : '')).filter(Boolean);
-        return `${m.nombre}${m.marca ? ' ' + m.marca : ''}${m.modelo ? ' ' + m.modelo : ''}, ${m.cantidad || ''} ${m.unidad || ''}, verificación ${m.verificacion_estado || 'sin registro'}${normas.length ? ', norma ' + [...new Set(normas)].join('; ') : ''}`;
-      };
-      const ignorar = new Set(['que', 'cual', 'como', 'para', 'material', 'materiales', 'marca', 'modelo', 'norma', 'normativa', 'cumple', 'busca', 'buscar', 'este', 'esta', 'hay', 'del', 'los', 'las', 'con', 'por', 'una', 'uno', 'sobre', 'dime', 'tiene']);
-      const palabras = normal(pregunta).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !ignorar.has(w));
-      const encontrados = palabras.length ? mats.filter((m) => {
-        const heno = normal(`${m.nombre || ''} ${m.marca || ''} ${m.modelo || ''} ${(m.normativa || []).map((n) => n.documento || n.codigo || '').join(' ')}`);
-        return palabras.some((w) => heno.includes(w));
-      }).slice(0, 8) : [];
-      if (encontrados.length) lineas.push('Materiales que coinciden: ' + encontrados.map(textoMat).join(' | ') + '.');
-      lineas.push(`Materiales en la obra (${mats.length}${encontrados.length ? ', muestra' : ''}): ` + mats.slice(0, 8).map(textoMat).join(' | ') + '.');
+        return `${m.nombre}${m.marca ? ' ' + m.marca : ''}${m.modelo ? ' ' + m.modelo : ''}, verificación ${m.verificacion_estado || 'sin registro'}${normas.length ? ', norma ' + [...new Set(normas)].join('; ') : ''}`;
+      }).join(' | ') + '.');
     }
   }
-  if (temas.seguridad) {
-    const archivos = p.archivos || [];
-  if (archivos.length) {
-    lineas.push('Archivos del proyecto (' + archivos.length + '): ' + archivos.slice(0, 20).map((a) => `${a.nombre}${a.revision ? ' rev. ' + a.revision : ''}`).join(' | ') + '.');
+  if (/(archivo|plano|documento)/.test(t) && ix?.archivos?.length) {
+    lineas.push('Archivos del proyecto: ' + ix.archivos.slice(0, 20).join(' | ') + '.');
   }
-
-  const seg = p.seguridad || {};
-    const inc = (seg.incidentes || []).filter((x) => x.estado === 'abierto');
-    lineas.push(`Seguridad: ${inc.length} incidente(s) abierto(s), ${(seg.ats_pendientes || []).length} ATS pendiente(s).`);
-    if (inc.length) lineas.push('Incidentes: ' + inc.slice(0, 5).map((x) => `${x.tipo || 'incidente'}: ${x.descripcion || ''} (${x.severidad || 'sin severidad'})`).join(' | ') + '.');
-    const riesgos = (p.riesgos || []).slice(0, 6);
-    if (riesgos.length) lineas.push('Riesgos: ' + riesgos.map((r) => `${r.titulo} (${r.probabilidad}/${r.impacto})`).join(' | ') + '.');
-  }
-  if (temas.equipo) {
-    const equipo = (p.equipo || []).slice(0, 8);
-    if (equipo.length) lineas.push('Equipo: ' + equipo.map((e) => `${e.nombre} (${e.estado}${e.proximo_servicio ? ', servicio ' + e.proximo_servicio : ''})`).join(' | ') + '.');
-  }
-  if (temas.portafolio) {
-    lineas.push('Portafolio: ' + state.sync.map((x) => {
-      const p2 = x.proyecto;
-      const pn = (x.punch || []).filter((q) => ['abierto', 'en_proceso'].includes(q.estado)).length;
-      const rn = (x.rfis || []).filter((q) => q.estado === 'abierto').length;
-      return `${p2.nombre} ${Number(p2.progreso) || 0} % (${pn} punch, ${rn} RFI)`;
-    }).join(' | ') + '.');
-  }
-  if (temas.cambios && state.cambios.length) {
+  if (/(cambi|actualiz|sincron)/.test(t) && state.cambios.length) {
     lineas.push('Cambios recientes: ' + state.cambios.slice(0, 8).join('; ') + '.');
   }
-  return lineas.join('\n').slice(0, 4200);
+  return lineas.join('\n').slice(0, 5200);
 }
 
 function esConsultaDeDatos(pregunta) {
@@ -2422,6 +2634,7 @@ function mensajesParaModelo(pregunta) {
     'Responde en 2 a 5 frases (máximo 130 palabras), salvo que pidan una lista; entonces usa viñetas cortas.',
     'Usa solo el CONTEXTO y la RESPUESTA BASE. Si un dato no está, dilo con naturalidad; nunca inventes cifras, fechas, nombres, códigos, punch ni normas.',
     'Nombra la obra por su nombre, no solo por su código.',
+    'Ya leíste el resumen de todas las obras visibles al abrir la app y solo actualizas las que cambiaron. Si la pregunta nombra otra obra, usa su ficha del CONTEXTO; no digas que solo puedes ver la obra activa.',
     'Si aparece RESPUESTA BASE VERIFICADA, es la verdad de los datos: reformúlala sin cambiar cifras, códigos ni nombres. Si dice que no hay punch, dilo así; no confundas códigos de actividad con punch.',
     'Para materiales cita marca, modelo y normativa cuando existan. Para seguridad, sugiere revisar el procedimiento sin dar órdenes peligrosas.',
     'Si te piden cambiar o mover una fecha, propone la fecha y explica el efecto, pero aclara que tú no aplicas cambios: se hacen en la app.',
@@ -2474,10 +2687,14 @@ function respuestaModeloAceptable(pregunta, texto) {
 function actualizarBienvenida() {
   const b = $('#chat-bienvenida');
   if (!b) return;
+  const n = state.sync.length;
+  const leidas = n ? `Ya leí ${n} obra${n === 1 ? '' : 's'}. ` : '';
   if (state.motor.presente) {
-    b.textContent = 'Hola. El asistente ya está en tu teléfono: pregúntame por el avance, punch, RFI, materiales o fechas, incluso sin señal.';
+    b.textContent = n
+      ? `Hola. ${leidas}Pregúntame por el avance, punch, RFI, materiales, fechas o cualquier otra obra, incluso sin señal.`
+      : 'Hola. El asistente ya está en tu teléfono: conecta tu cuenta para leer tus obras.';
   } else if (state.conectado) {
-    b.textContent = 'Hola. Ya tengo los datos de tus obras. Prepara el asistente digital (una sola descarga por Wi-Fi) para que pueda responder sin señal.';
+    b.textContent = `Hola. ${leidas}Prepara el asistente digital (una sola descarga por Wi-Fi) para que pueda responder sin señal.`;
   } else {
     b.textContent = 'Hola. Conecta tu cuenta y prepara el asistente digital para que pueda responder sin señal.';
   }
@@ -2589,7 +2806,7 @@ async function enviarConModelo(pregunta) {
   try {
     await invokeTauri('motor_responder', {
       mensajes: mensajesParaModelo(pregunta),
-      maxTokens: 240,
+      maxTokens: 200,
     });
   } catch (e) {
     state.generando = false;
@@ -2828,7 +3045,10 @@ function renderActualizacionApp() {
   const estado = $('#app-act-estado');
   const lista = $('#app-novedades-lista');
   let novedades = Array.isArray(state.servidorInfo?.apk_novedades) ? state.servidorInfo.apk_novedades : [];
-  if (!novedades.length && apk) novedades = [{ version: apk.version, fecha: apk.fecha, notas: apk.notas }];
+  // La sección «Actualizar app» muestra solo la última versión publicada,
+  // no el historial de versiones anteriores.
+  if (apk) novedades = [{ version: apk.version, fecha: apk.fecha, notas: apk.notas }];
+  else novedades = novedades.slice(0, 1);
   if (lista) {
     lista.innerHTML = novedades.length
       ? novedades.map((n) => `<div class="novedad-app"><strong>Versión ${esc(n.version || '')}</strong> <small>${esc(fechaLarga(String(n.fecha || '').slice(0, 10)))}</small><p>${esc(n.notas || 'Sin notas publicadas.')}</p></div>`).join('')
@@ -3113,6 +3333,13 @@ async function pedirEstadoMotor() {
   } catch (e) { /* versión sin motor o error de IPC */ }
 }
 
+/** Carga el modelo en segundo plano para que la primera pregunta no espere. */
+function precalentarMotor() {
+  if (!tieneTauri() || !state.motor.presente || state.motor.cargado || state.motor.cargando) return;
+  state.motor.cargando = true;
+  invokeTauri('motor_precalentar').catch(() => { state.motor.cargando = false; });
+}
+
 function pintarMotor() {
   const m = state.motor;
   const card = $('#motor-card');
@@ -3334,14 +3561,25 @@ async function registrarEventosMotor() {
     await listen('motor-descarga-fin', async (ev) => {
       const mensaje = String(ev.payload?.mensaje || '');
       await pedirEstadoMotor();
-      if (mensaje === 'listo') toast('Asistente digital listo. Ya responde sin conexión.');
-      else if (mensaje) toast(mensaje, 5000);
+      if (mensaje === 'listo') {
+        toast('Asistente digital listo. Ya responde sin conexión.');
+        precalentarMotor();
+      } else if (mensaje) toast(mensaje, 5000);
     });
     await listen('motor-cargando', () => {
       state.motor.cargando = true;
       const s = state.stream;
       if (s && !s.acumulado) s.texto.textContent = 'Preparando el asistente…';
       renderChatEstado();
+    });
+    await listen('motor-listo', () => {
+      state.motor.cargado = true;
+      state.motor.cargando = false;
+      pintarMotor();
+    });
+    await listen('motor-precalentado-error', () => {
+      state.motor.cargando = false;
+      pintarMotor();
     });
     await listen('motor-token', (ev) => {
       state.motor.cargando = false;
@@ -3408,6 +3646,7 @@ async function registrarEventosMotor() {
 async function iniciarMotor() {
   if (tieneTauri()) await registrarEventosMotor();
   await pedirEstadoMotor();
+  if (state.motor.presente) setTimeout(precalentarMotor, 3500);
 }
 
 // ---------- Avisos locales ----------
@@ -3457,6 +3696,13 @@ function init() {
 
   $('#tema')?.addEventListener('click', () => aplicarTema(state.tema === 'dark' ? 'light' : 'dark'));
   $('#btn-tema')?.addEventListener('click', () => aplicarTema(state.tema === 'dark' ? 'light' : 'dark'));
+  $('#btn-alertas')?.addEventListener('click', (e) => { e.stopPropagation(); alternarPanelAlertas(); });
+  $('#panel-alertas-cerrar')?.addEventListener('click', () => alternarPanelAlertas(false));
+  $('#panel-alertas-ver')?.addEventListener('click', () => { alternarPanelAlertas(false); irA('alertas'); });
+  $('#alertas-volver')?.addEventListener('click', () => irA('inicio'));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#panel-alertas') && !e.target.closest('#btn-alertas')) alternarPanelAlertas(false);
+  });
   $$('.tab').forEach((b) => b.addEventListener('click', () => irA(b.dataset.tab)));
 
   // Delegación: funciona también con tarjetas y botones creados al vuelo.

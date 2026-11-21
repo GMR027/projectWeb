@@ -3486,8 +3486,9 @@ dependencies = [
 
 [[package]]
 name = "projectweb_android"
-version = "0.2.15"
+version = "0.2.17"
 dependencies = [
+ "base64 0.22.1",
  "getrandom 0.2.17",
  "llama-cpp-2",
  "log",

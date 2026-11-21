@@ -597,7 +597,7 @@ class AppApi
                 'version' => (string)$a['version'],
                 'fecha' => date('Y-m-d', (int)$a['fecha']),
                 'notas' => (string)$a['notas'],
-            ], array_slice(ApkAndroid::listar(), 0, 5)),
+            ], array_slice(ApkAndroid::listar(), 0, 1)),
         ];
     }
 

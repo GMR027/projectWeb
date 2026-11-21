@@ -6,7 +6,7 @@ sincroniza al volver. El asistente ya ejecuta **Qwen2.5 GGUF con llama.cpp en el
 teléfono** (sin nube) y el historial se consulta en la web. Los avisos son locales y se
 muestran al abrir o sincronizar; no se usa FCM/Google. Falta el resto de la Fase 2/3.
 
-APK 0.2.15 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher) y publicado desde Ajustes → App Android.
+APK 0.2.17 release firmado (arm64, ~28 MB con llama.cpp y SQLCipher); se publica desde Ajustes → App Android.
 El GGUF se descarga aparte (1.0–2.1 GB según el equipo), no va dentro del APK. La cabecera y el asistente usan el logo de Project Web (casco); el icono de Ajustes es un engrane y no hay mascota de chatbot.
 
 ## Decisiones cerradas
@@ -133,8 +133,16 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
   por `Range` y validación de tamaño + cabecera `GGUF`. Se guarda en
   `<datos privados>/files/modelos/`. Al cambiar de gama se borran los modelos anteriores.
 - **Comandos Rust:** `motor_estado`, `motor_descargar`, `motor_cancelar_descarga`,
-  `motor_detener`, `motor_eliminar` y `motor_responder`. Los eventos `motor-progreso`,
-  `motor-token`, `motor-fin`, `motor-error` y `motor-cargando` alimentan la UI.
+  `motor_detener`, `motor_eliminar`, `motor_responder` y `motor_precalentar`. Los eventos `motor-progreso`,
+  `motor-token`, `motor-fin`, `motor-error`, `motor-cargando`, `motor-listo` y
+  `motor-precalentado-error` alimentan la UI.
+- **Lectura inicial e incremental:** al sincronizar, la app construye un índice compacto de
+  **todas las obras visibles** y lo guarda en SQLite (`asistente_indice`). Cada obra lleva una
+  huella de sus datos; en las siguientes lecturas solo se reconstruye la ficha de la obra que
+  cambió y las demás se reutilizan. El asistente puede responder sobre cualquier obra nombrada
+  en la pregunta (no solo la activa) y el chat muestra cuántas obras leyó. Al abrir la app se
+  precalienta el GGUF en segundo plano (`motor_precalentar`), de modo que la primera pregunta
+  no paga la carga completa del modelo.
 - **Contexto:** la app arma un resumen compacto e intencional (obra, salud, actividades
   atrasadas/próximas, punch, RFI, recordatorios, materiales con normativa, seguridad,
   equipo, riesgos y portafolio) y una **respuesta base verificada** con las reglas. El
@@ -152,6 +160,31 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
   **0.4 tok/s** por swap. Se validó respuesta con el servidor PHP apagado (datos cacheados
   + modelo local), detener respuesta, «Nuevo chat», historial en `/asistente` y corrección
   de una alucinación de punch con la respuesta base.
+
+### Herramientas de campo (solo en el teléfono)
+
+La barra superior tiene la **campana de Alertas** a la izquierda de **Apariencia**; abre un panel rápido con los recordatorios y un botón **Ver todas las alertas**. El lugar de Alertas en la barra inferior lo ocupa **Herramientas**.
+
+Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, no entran a la cola de salida y no aparecen en la web:
+
+- **Foto sellada:** foto con obra, actividad, fecha, GPS, responsable, nota y QR local. El sello se dibuja después de tomar la foto (cámara del sistema o galería), con plantilla completa o compacta.
+- **Rutas:** recorrido de fotos con GPS y hora, distancia Haversine, croquis esquemático offline y resumen. Las fotos y el croquis se guardan en `Pictures/Project Web/Rutas`.
+- **Comparador antes/después:** dos fotos locales en una sola imagen.
+- **Rondín GPS:** checkpoints con ubicación, llegada por GPS/hora, foto opcional y resumen.
+- **Check-in de residente:** tarjeta con hora, ubicación, nota y selfie opcional.
+- **Inspección rápida:** checklist de calidad/seguridad con resultado, nota y resumen.
+- **Croquis de punch:** puntos numerados y notas sobre una foto.
+- **Medición sobre foto:** medida referencial con una escala conocida; guarda la imagen con las líneas.
+
+**Almacenamiento y privacidad**
+
+- Metadatos en la SQLite cifrada de la app, bajo las claves `herr_*`; cada registro lleva `usuario_id`, así que otra cuenta no los ve aunque use el mismo teléfono. Al cerrar sesión no se borran; el botón **Borrar mis datos locales** elimina solo los del usuario actual.
+- Fotos y croquis en `files/herramientas/` (almacenamiento privado). Además se copian al álbum público `Pictures/Project Web/<herramienta>` con `GaleriaPlugin` (MediaStore); las fotos del álbum no se borran al borrar el registro de la app.
+- No hay exportación GPX, ZIP ni sincronización: la única salida es la foto en el álbum del teléfono.
+- Permisos: ubicación (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`) y, en Android 8–9, escritura externa para el álbum. La cámara se abre con el selector del sistema; no requiere permiso propio de cámara.
+- Si el GPS no responde, la foto se guarda sin coordenadas y el sello lo indica. El EXIF de la foto se usa como respaldo cuando existe.
+
+**Archivos:** `android/src/herramientas.js`, `android/src/vendor/qrcode/qrcode.js`, `android/src-tauri/src/galeria.rs`, `android/src-tauri/gen/android/app/src/main/java/com/projectweb/android/galeria/GaleriaPlugin.kt`.
 
 ### Parte diario nativo (campo)
 
@@ -180,7 +213,7 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
 - Ajustes → **Actualizar app** muestra la versión instalada, la publicada, el tamaño y la fecha, con un botón **Buscar actualización** / **Descargar e instalar**.
 - La descarga la hace el comando Rust `descargar_apk` con el token de la app, guarda el APK en la caché privada y **verifica el SHA-256** publicado.
 - La instalación la abre el plugin Android `ApkInstallerPlugin` con un `content://` de FileProvider; Android pide permiso para instalar apps desde Project Web la primera vez. El APK se instala encima de la versión anterior (misma firma).
-- Ajustes → **Novedades de la app** lista las notas de las últimas versiones publicadas (`apk_novedades` del servidor).
+- Ajustes → **Novedades de la app** lista **solo la última versión publicada** (`apk_novedades` del servidor devuelve únicamente la más reciente; el historial de versiones viejas ya no se muestra).
 - El banner superior de una versión nueva lleva a esa sección; la instalación ya no se hace desde la web.
 
 ### Aviso de descarga en /dashboard

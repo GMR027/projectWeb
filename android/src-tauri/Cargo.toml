@@ -1,6 +1,6 @@
 [package]
 name = "projectweb_android"
-version = "0.2.15"
+version = "0.2.17"
 description = "Project Web para Android: obras, asistente local y modo sin conexión"
 authors = ["Project Web"]
 license = "UNLICENSED"
@@ -20,6 +20,7 @@ tauri-build = { version = "2.7.6", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+base64 = "0.22"
 log = "0.4"
 tauri = { version = "2.12.7", features = [] }
 tauri-plugin-log = "2"
