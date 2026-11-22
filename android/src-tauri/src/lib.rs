@@ -10,6 +10,7 @@ use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{LlamaChatMessage, LlamaChatTemplate, LlamaModel};
 use llama_cpp_2::sampling::LlamaSampler;
+use llama_cpp_2::token::LlamaToken;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -305,7 +306,7 @@ fn notificar(app: tauri::AppHandle, titulo: String, cuerpo: String) -> Result<()
 // =====================================================================================
 
 const CTX_TOKENS: u32 = 4096;
-const MAX_SALIDA: u32 = 300;
+const MAX_SALIDA: u32 = 200;
 
 struct ModeloDef {
     nombre: &'static str,
@@ -434,6 +435,9 @@ struct Motor {
     bytes: u64,
     total: u64,
     error: Option<String>,
+    /// Tokens que ya están en la KV cache del contexto (prompt + respuesta).
+    prompt_tokens: Vec<LlamaToken>,
+    n_past: usize,
 }
 
 impl Default for Motor {
@@ -450,6 +454,8 @@ impl Default for Motor {
             bytes: 0,
             total: modelo_actual().bytes,
             error: None,
+            prompt_tokens: Vec::new(),
+            n_past: 0,
         }
     }
 }
@@ -554,6 +560,10 @@ struct EventoFin {
     tokens: u32,
     ms: u64,
     tps: f32,
+    prompt_tokens: usize,
+    prefill_ms: u64,
+    primer_token_ms: u64,
+    reutilizados: usize,
 }
 
 #[derive(Clone, Serialize)]
@@ -775,6 +785,8 @@ fn motor_eliminar(app: tauri::AppHandle) -> Result<(), String> {
         m.pct = 0.0;
         m.bytes = 0;
         m.error = None;
+        m.prompt_tokens.clear();
+        m.n_past = 0;
     }
     let _ = fs::remove_file(&destino);
     let _ = fs::remove_file(&parcial);
@@ -787,7 +799,7 @@ fn crear_contexto(modelo: &'static LlamaModel) -> Result<LlamaContext<'static>, 
     let hilos = hilos_para(ram);
     let ctx_params = LlamaContextParams::default()
         .with_n_ctx(NonZeroU32::new(CTX_TOKENS))
-        .with_n_batch(512)
+        .with_n_batch(1024)
         .with_n_threads(hilos)
         .with_n_threads_batch(hilos);
     modelo
@@ -795,7 +807,25 @@ fn crear_contexto(modelo: &'static LlamaModel) -> Result<LlamaContext<'static>, 
         .map_err(|e| format!("No se pudo preparar el contexto del modelo: {e}"))
 }
 
+/// El APK se compila con kernels dotprod/FP16 (Honor Magic 7 Lite y superiores).
+/// En un equipo sin dotprod conviene devolver un error claro en vez de arriesgar
+/// una instrucción ilegal al cargar el modelo.
+fn soporta_dotprod() -> bool {
+    fs::read_to_string("/proc/cpuinfo")
+        .map(|texto| texto.lines().any(|l| l.contains("asimddp") || l.contains("dotprod")))
+        .unwrap_or(true)
+}
+
+fn requiere_dotprod() -> bool {
+    option_env!("GGML_CPU_ARM_ARCH")
+        .map(|v| v.contains("dotprod"))
+        .unwrap_or(false)
+}
+
 fn cargar_modelo(app: &tauri::AppHandle) -> Result<(&'static LlamaModel, LlamaContext<'static>), String> {
+    if requiere_dotprod() && !soporta_dotprod() {
+        return Err("Este teléfono no tiene las instrucciones ARM (dotprod) que usa este APK del asistente.".into());
+    }
     let def = modelo_actual();
     let ruta = ruta_modelo(app)?;
     let tam = fs::metadata(&ruta).map(|m| m.len()).unwrap_or(0);
@@ -822,10 +852,17 @@ fn obtener_contexto(app: &tauri::AppHandle) -> Result<(&'static LlamaModel, Llam
         if let Some(ctx) = ctx {
             return Ok((modelo, ctx));
         }
+        {
+            let mut m = bloquear_motor();
+            m.prompt_tokens.clear();
+            m.n_past = 0;
+        }
         return crear_contexto(modelo).map(|ctx| (modelo, ctx));
     }
     {
         let mut m = bloquear_motor();
+        m.prompt_tokens.clear();
+        m.n_past = 0;
         m.cargando = true;
     }
     let _ = app.emit(
@@ -881,13 +918,36 @@ struct MensajeEntrada {
     content: String,
 }
 
-fn generar_tokens(
-    app: &tauri::AppHandle,
+struct ResultadoGeneracion {
+    texto: String,
+    tokens: u32,
+    ms: u64,
+    prompt_tokens: Vec<LlamaToken>,
+    n_past: usize,
+    prompt_len: usize,
+    prefill_ms: u64,
+    primer_token_ms: u64,
+    reutilizados: usize,
+}
+
+fn resultado_vacio() -> ResultadoGeneracion {
+    ResultadoGeneracion {
+        texto: String::new(),
+        tokens: 0,
+        ms: 0,
+        prompt_tokens: Vec::new(),
+        n_past: 0,
+        prompt_len: 0,
+        prefill_ms: 0,
+        primer_token_ms: 0,
+        reutilizados: 0,
+    }
+}
+
+fn tokens_de_mensajes(
     modelo: &'static LlamaModel,
-    ctx: &mut LlamaContext<'static>,
     mensajes: &[MensajeEntrada],
-    max_tokens: u32,
-) -> Result<(String, u32, u64), String> {
+) -> Result<Vec<LlamaToken>, String> {
     let plantilla = modelo
         .chat_template(None)
         .or_else(|_| LlamaChatTemplate::new("chatml"))
@@ -910,11 +970,27 @@ fn generar_tokens(
         .apply_chat_template(&plantilla, &chat, true)
         .map_err(|e| format!("No se pudo aplicar la plantilla del chat: {e}"))?;
     let tokens = modelo.vocab().tokenize(prompt.as_bytes(), true, true);
-    let max_tokens = max_tokens.clamp(32, MAX_SALIDA) as usize;
     if tokens.is_empty() {
         return Err("El mensaje quedó vacío.".into());
     }
-    if tokens.len() + max_tokens + 8 >= CTX_TOKENS as usize {
+    Ok(tokens)
+}
+
+fn generar_tokens(
+    app: &tauri::AppHandle,
+    modelo: &'static LlamaModel,
+    ctx: &mut LlamaContext<'static>,
+    mensajes: &[MensajeEntrada],
+    max_tokens: u32,
+    cache_tokens: &[LlamaToken],
+    cache_n_past: usize,
+) -> Result<ResultadoGeneracion, String> {
+    let prompt_tokens = tokens_de_mensajes(modelo, mensajes)?;
+    let max_tokens = max_tokens.clamp(32, MAX_SALIDA) as usize;
+    if prompt_tokens.is_empty() {
+        return Err("El mensaje quedó vacío.".into());
+    }
+    if prompt_tokens.len() + max_tokens + 8 >= CTX_TOKENS as usize {
         return Err("La conversación es demasiado larga para el modelo. Inicia un chat nuevo.".into());
     }
 
@@ -923,19 +999,34 @@ fn generar_tokens(
         m.cancelar_gen.clone()
     };
     if cancelar.load(Ordering::SeqCst) {
-        return Ok((String::new(), 0, 0));
+        return Ok(resultado_vacio());
     }
 
-    ctx.clear_kv_cache();
-    let mut batch = LlamaBatch::new(512, 1);
-    let total_prompt = tokens.len();
+    // Si el prompt nuevo empieza exactamente con lo que ya está en la KV
+    // cache, solo se procesa lo nuevo. Si cambió el sistema, la obra o los
+    // datos, se descarta y se procesa todo.
+    let reutilizar = cache_n_past > 0
+        && cache_n_past == cache_tokens.len()
+        && cache_n_past <= prompt_tokens.len()
+        && prompt_tokens[..cache_n_past] == cache_tokens[..];
+    let mut inicio = if reutilizar { cache_n_past } else { 0 };
+    if !reutilizar {
+        ctx.clear_kv_cache();
+    } else if inicio == prompt_tokens.len() {
+        // Mismo prompt: hay que recalcular los logits del último token.
+        inicio = prompt_tokens.len().saturating_sub(1);
+    }
+
+    let inicio_total = Instant::now();
+    let mut batch = LlamaBatch::new(1024, 1);
+    let total_prompt = prompt_tokens.len();
     let ultimo = total_prompt - 1;
-    for (i, bloque) in tokens.chunks(256).enumerate() {
+    for (i, bloque) in prompt_tokens[inicio..].chunks(512).enumerate() {
         if cancelar.load(Ordering::SeqCst) {
-            return Ok((String::new(), 0, 0));
+            return Ok(resultado_vacio());
         }
         batch.clear();
-        let base = i * 256;
+        let base = inicio + i * 512;
         for (j, token) in bloque.iter().enumerate() {
             let pos = base + j;
             batch
@@ -945,6 +1036,7 @@ fn generar_tokens(
         ctx.decode(&mut batch)
             .map_err(|e| format!("El modelo no pudo procesar el contexto: {e}"))?;
     }
+    let prefill_ms = inicio_total.elapsed().as_millis() as u64;
 
     let semilla = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -957,11 +1049,14 @@ fn generar_tokens(
         LlamaSampler::dist(semilla),
     ]);
 
-    let inicio = Instant::now();
+    let inicio_gen = Instant::now();
     let mut salida = String::new();
     let mut pendiente: Vec<u8> = Vec::new();
     let mut n_cur = total_prompt as i32;
     let mut generados: u32 = 0;
+    let mut generados_tokens: Vec<LlamaToken> = Vec::new();
+    let mut decodificados: usize = 0;
+    let mut primer_token_ms: u64 = 0;
 
     loop {
         if cancelar.load(Ordering::SeqCst) {
@@ -975,6 +1070,10 @@ fn generar_tokens(
         pendiente.extend_from_slice(&modelo.vocab().token_to_piece(token, false, None));
         emitir_pieza(app, &mut pendiente, &mut salida);
         generados += 1;
+        if primer_token_ms == 0 {
+            primer_token_ms = inicio_total.elapsed().as_millis() as u64;
+        }
+        generados_tokens.push(token);
         if generados as usize >= max_tokens {
             break;
         }
@@ -988,6 +1087,7 @@ fn generar_tokens(
         ctx.decode(&mut batch)
             .map_err(|e| format!("El modelo se detuvo: {e}"))?;
         n_cur += 1;
+        decodificados += 1;
     }
 
     if !pendiente.is_empty() {
@@ -997,8 +1097,63 @@ fn generar_tokens(
         }
     }
 
-    let ms = inicio.elapsed().as_millis() as u64;
-    Ok((salida, generados, ms))
+    let ms = inicio_gen.elapsed().as_millis() as u64;
+    let mut todos = prompt_tokens;
+    todos.extend(generados_tokens.iter().take(decodificados).copied());
+    Ok(ResultadoGeneracion {
+        texto: salida,
+        tokens: generados,
+        ms,
+        n_past: total_prompt + decodificados,
+        prompt_tokens: todos,
+        prompt_len: total_prompt,
+        prefill_ms,
+        primer_token_ms,
+        reutilizados: if reutilizar { cache_n_past } else { 0 },
+    })
+}
+
+/// Procesa el prompt (sistema + historial) sin generar texto, para que la
+/// primera pregunta real solo tenga que procesar el turno nuevo.
+fn prefill_mensajes(
+    modelo: &'static LlamaModel,
+    ctx: &mut LlamaContext<'static>,
+    mensajes: &[MensajeEntrada],
+    cache_tokens: &[LlamaToken],
+    cache_n_past: usize,
+) -> Result<(Vec<LlamaToken>, usize), String> {
+    let prompt_tokens = tokens_de_mensajes(modelo, mensajes)?;
+    if prompt_tokens.len() + 256 >= CTX_TOKENS as usize {
+        return Err("El contexto es demasiado largo para precalentar.".into());
+    }
+
+    let reutilizar = cache_n_past > 0
+        && cache_n_past == cache_tokens.len()
+        && cache_n_past <= prompt_tokens.len()
+        && prompt_tokens[..cache_n_past] == cache_tokens[..];
+    let mut inicio = if reutilizar { cache_n_past } else { 0 };
+    if !reutilizar {
+        ctx.clear_kv_cache();
+    } else if inicio == prompt_tokens.len() {
+        inicio = prompt_tokens.len().saturating_sub(1);
+    }
+
+    let total_prompt = prompt_tokens.len();
+    let ultimo = total_prompt - 1;
+    let mut batch = LlamaBatch::new(1024, 1);
+    for (i, bloque) in prompt_tokens[inicio..].chunks(512).enumerate() {
+        batch.clear();
+        let base = inicio + i * 512;
+        for (j, token) in bloque.iter().enumerate() {
+            let pos = base + j;
+            batch
+                .add(*token, pos as i32, &[0], pos == ultimo)
+                .map_err(|e| format!("No se pudo preparar el lote: {e}"))?;
+        }
+        ctx.decode(&mut batch)
+            .map_err(|e| format!("El modelo no pudo procesar el contexto: {e}"))?;
+    }
+    Ok((prompt_tokens, total_prompt))
 }
 
 fn ejecutar_generacion(
@@ -1015,22 +1170,59 @@ fn ejecutar_generacion(
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
     let resultado = obtener_contexto(app).and_then(|(modelo, mut ctx)| {
-        let r = generar_tokens(app, modelo, &mut ctx, &mensajes, max_tokens);
-        bloquear_motor().ctx = Some(ctx);
+        let (cache_tokens, cache_n_past) = {
+            let m = bloquear_motor();
+            (m.prompt_tokens.clone(), m.n_past)
+        };
+        let r = generar_tokens(
+            app,
+            modelo,
+            &mut ctx,
+            &mensajes,
+            max_tokens,
+            &cache_tokens,
+            cache_n_past,
+        );
+        {
+            let mut m = bloquear_motor();
+            match &r {
+                Ok(res) => {
+                    m.prompt_tokens = res.prompt_tokens.clone();
+                    m.n_past = res.n_past;
+                }
+                Err(_) => {
+                    m.prompt_tokens.clear();
+                    m.n_past = 0;
+                }
+            }
+            m.ctx = Some(ctx);
+        }
         r
     });
 
     match resultado {
-        Ok((texto, tokens, ms)) => {
-            let tps = if ms > 0 {
-                (tokens as f32) / (ms as f32 / 1000.0)
+        Ok(res) => {
+            let tps = if res.ms > 0 {
+                (res.tokens as f32) / (res.ms as f32 / 1000.0)
             } else {
                 0.0
             };
-            if texto.trim().is_empty() {
+            if res.texto.trim().is_empty() {
                 let cancelado = bloquear_motor().cancelar_gen.load(Ordering::SeqCst);
                 if cancelado {
-                    let _ = app.emit("motor-fin", EventoFin { texto: String::new(), tokens: 0, ms, tps: 0.0 });
+                    let _ = app.emit(
+                        "motor-fin",
+                        EventoFin {
+                            texto: String::new(),
+                            tokens: 0,
+                            ms: res.ms,
+                            tps: 0.0,
+                            prompt_tokens: res.prompt_len,
+                            prefill_ms: res.prefill_ms,
+                            primer_token_ms: res.primer_token_ms,
+                            reutilizados: res.reutilizados,
+                        },
+                    );
                 } else {
                     let mensaje = "El modelo no devolvió texto. Intenta con una pregunta más corta.".to_string();
                     bloquear_motor().error = Some(mensaje.clone());
@@ -1039,12 +1231,25 @@ fn ejecutar_generacion(
             } else {
                 let _ = app.emit(
                     "motor-fin",
-                    EventoFin { texto, tokens, ms, tps },
+                    EventoFin {
+                        texto: res.texto,
+                        tokens: res.tokens,
+                        ms: res.ms,
+                        tps,
+                        prompt_tokens: res.prompt_len,
+                        prefill_ms: res.prefill_ms,
+                        primer_token_ms: res.primer_token_ms,
+                        reutilizados: res.reutilizados,
+                    },
                 );
             }
         }
         Err(e) => {
-            bloquear_motor().error = Some(e.clone());
+            let mut m = bloquear_motor();
+            m.prompt_tokens.clear();
+            m.n_past = 0;
+            m.error = Some(e.clone());
+            drop(m);
             let _ = app.emit("motor-error", EventoMensaje { mensaje: e });
         }
     }
@@ -1080,13 +1285,16 @@ fn motor_responder(app: tauri::AppHandle, mensajes: Vec<MensajeEntrada>, max_tok
 /// Deja el modelo cargado en memoria al abrir la app. La primera respuesta
 /// del asistente ya no paga la carga completa del GGUF.
 #[tauri::command]
-fn motor_precalentar(app: tauri::AppHandle) -> Result<(), String> {
+fn motor_precalentar(
+    app: tauri::AppHandle,
+    mensajes: Option<Vec<MensajeEntrada>>,
+) -> Result<(), String> {
     {
         let mut m = bloquear_motor();
         if m.generando || m.cargando {
             return Ok(());
         }
-        if m.modelo.is_some() && m.ctx.is_some() {
+        if mensajes.is_none() && m.modelo.is_some() && m.ctx.is_some() {
             return Ok(());
         }
         m.cargando = true;
@@ -1094,7 +1302,27 @@ fn motor_precalentar(app: tauri::AppHandle) -> Result<(), String> {
     let app_hilo = app.clone();
     std::thread::spawn(move || {
         match obtener_contexto(&app_hilo) {
-            Ok((_, ctx)) => {
+            Ok((modelo, mut ctx)) => {
+                if let Some(msgs) = mensajes {
+                    let (cache_tokens, cache_n_past) = {
+                        let m = bloquear_motor();
+                        (m.prompt_tokens.clone(), m.n_past)
+                    };
+                    match prefill_mensajes(modelo, &mut ctx, &msgs, &cache_tokens, cache_n_past) {
+                        Ok((tokens, n_past)) => {
+                            let mut m = bloquear_motor();
+                            m.prompt_tokens = tokens;
+                            m.n_past = n_past;
+                        }
+                        Err(_) => {
+                            // Si el prefijo no cabe o falla, la primera pregunta
+                            // se procesa como siempre; no es un error visible.
+                            let mut m = bloquear_motor();
+                            m.prompt_tokens.clear();
+                            m.n_past = 0;
+                        }
+                    }
+                }
                 {
                     let mut m = bloquear_motor();
                     m.ctx = Some(ctx);
@@ -1417,6 +1645,95 @@ async fn guardar_en_galeria(
     Err("Guardar en el álbum del teléfono solo está disponible en Android.".into())
 }
 
+/// Adaptador JS que se inyecta solamente en la ventana de herramientas web.
+const WEB_SHIM: &str = include_str!("web_shim.js");
+
+/// Abre los enlaces externos con la aplicación del sistema (Chrome, WhatsApp, teléfono…).
+/// Se hace en un hilo aparte porque el plugin de Android no responde desde el callback
+/// de navegación del WebView.
+fn abrir_externo(app: tauri::AppHandle, url: String) {
+    std::thread::spawn(move || {
+        use tauri_plugin_opener::OpenerExt;
+        if let Err(e) = app.opener().open_url(url, None::<&str>) {
+            eprintln!("no se pudo abrir el enlace externo: {e}");
+        }
+    });
+}
+
+/// Abre una herramienta web dentro de la app, en una Activity aparte.
+///
+/// Solo acepta la URL del puente de sesión (`/acceso-app?c=…`) del servidor configurado.
+/// El código de un solo uso lo crea `POST /api/app/enlace`; así la herramienta abre ya
+/// autenticada y la app nativa no se descarga.
+#[tauri::command]
+async fn abrir_herramienta_web(
+    app: tauri::AppHandle,
+    url: String,
+    servidor: String,
+) -> Result<(), String> {
+    let destino = tauri::Url::parse(&url)
+        .map_err(|_| "La dirección de la herramienta no es válida.".to_string())?;
+    let base = tauri::Url::parse(&servidor)
+        .map_err(|_| "El servidor configurado no es válido.".to_string())?;
+
+    let es_local = |u: &tauri::Url| matches!(u.host_str(), Some("localhost") | Some("127.0.0.1"));
+    let esquema_ok = destino.scheme() == "https"
+        || (destino.scheme() == "http" && es_local(&destino));
+    if !esquema_ok {
+        return Err("La herramienta debe abrirse con https:// (http solo para localhost).".into());
+    }
+    if destino.origin().ascii_serialization() != base.origin().ascii_serialization() {
+        return Err("La herramienta no pertenece al servidor configurado.".into());
+    }
+    if destino.path() != "/acceso-app" || !destino.query_pairs().any(|(k, _)| k == "c") {
+        return Err("La dirección de la herramienta no es válida.".into());
+    }
+
+    let origen = destino.origin().ascii_serialization();
+
+    // Una sola herramienta web a la vez: si la ventana ya existe, se reutiliza.
+    if let Some(ventana) = app.get_webview_window("herramienta-web") {
+        let _ = ventana.navigate(destino.clone());
+        let _ = ventana.set_focus();
+        return Ok(());
+    }
+
+    let app_externo = app.clone();
+    let origen_nav = origen.clone();
+    let builder = tauri::WebviewWindowBuilder::new(
+        &app,
+        "herramienta-web",
+        tauri::WebviewUrl::External(destino),
+    )
+    .title("Project Web")
+    .initialization_script(WEB_SHIM)
+    .on_navigation(move |u| match u.scheme() {
+        "http" | "https" => {
+            if u.origin().ascii_serialization() == origen_nav {
+                true
+            } else {
+                abrir_externo(app_externo.clone(), u.to_string());
+                false
+            }
+        }
+        "about" | "data" | "blob" => true,
+        "mailto" | "tel" | "sms" | "whatsapp" | "geo" => {
+            abrir_externo(app_externo.clone(), u.to_string());
+            false
+        }
+        _ => false,
+    });
+
+    // `activity_name` solo existe en la compilación de Android.
+    #[cfg(target_os = "android")]
+    let builder = builder.activity_name("HerramientaWebActivity");
+
+    builder
+        .build()
+        .map_err(|e| format!("No se pudo abrir la herramienta: {e}"))?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
@@ -1451,7 +1768,8 @@ pub fn run() {    let builder = tauri::Builder::default()
             descargar_archivo,
             descargar_apk,
             instalar_apk,
-            leer_archivo
+            leer_archivo,
+            abrir_herramienta_web
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -32,6 +32,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Herramientas web abiertas dentro de la app (Programa, Costos, Materiales…).
+             La ventana la crea el comando Rust `abrir_herramienta_web`; no se exporta. -->
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:label="@string/main_activity_title"
+            android:name=".HerramientaWebActivity"
+            android:theme="@style/Theme.projectweb_android"
+            android:exported="false" />
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"

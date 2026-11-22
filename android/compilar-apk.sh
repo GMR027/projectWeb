@@ -10,4 +10,5 @@ mkdir -p "$LOCAL"
 for t in ar ranlib nm strip objcopy objdump ld; do
   ln -sf "$BIN/llvm-$t" "$LOCAL/aarch64-linux-android-$t"
 done
+export GGML_CPU_ARM_ARCH="${GGML_CPU_ARM_ARCH:-armv8.2-a+dotprod+fp16}"
 PATH="$LOCAL:$PATH" exec npx tauri android build --apk --target aarch64 "$@"

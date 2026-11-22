@@ -8,8 +8,8 @@
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const DEFAULT_SERVER = 'https://projectweb.iguzman.com.mx';
-const APP_VERSION = '0.2.17';
-const APP_VERSION_CODE = 2017;
+const APP_VERSION = '0.2.19';
+const APP_VERSION_CODE = 2019;
 
 const state = {
   tema: localStorage.getItem('pw-theme') || 'dark',
@@ -536,6 +536,7 @@ const HERRAMIENTAS_OBRA = [
   ['MT', 'Materiales', 'Compras y almacén', '/materiales'],
   ['SG', 'Incidentes', 'Seguridad y ATS', '/seguridad'],
   ['CA', 'Calidad', 'Inspecciones y NC', '/calidad'],
+  ['EX', 'Exportar', 'PDF, XML y ZIP', '/exportar'],
 ];
 
 async function abrirWeb(ruta, proyecto = 0) {
@@ -546,6 +547,7 @@ async function abrirWeb(ruta, proyecto = 0) {
     ruta += (ruta.includes('?') ? '&' : '?') + 'proyecto=' + pid;
   }
   let url = apiUrl(ruta);
+  let puenteOk = false;
   // Puente de sesión: la web abre ya autenticada con un código de un solo uso.
   if (state.token) {
     try {
@@ -557,11 +559,18 @@ async function abrirWeb(ruta, proyecto = 0) {
       });
       if (r.ok) {
         const j = await r.json();
-        if (j?.url) url = j.url;
+        if (j?.url) { url = j.url; puenteOk = true; }
       }
     } catch (e) { /* sin puente: abre la URL normal y pedirá sesión */ }
   }
   try {
+    // Dentro de la app: Activity aparte, con la sesión web ya iniciada.
+    if (puenteOk && tieneTauri() && window.__TAURI__?.core?.invoke) {
+      try {
+        await window.__TAURI__.core.invoke('abrir_herramienta_web', { url, servidor: state.servidor });
+        return;
+      } catch (e) { /* APK anterior o URL no válida: se usa el navegador */ }
+    }
     if (tieneTauri() && window.__TAURI__?.opener?.openUrl) {
       await window.__TAURI__.opener.openUrl(url);
       return;
@@ -597,9 +606,9 @@ function abrirObra(id) {
       <button class="btn-principal" id="hub-entrar" type="button">Entrar a la obra</button>
       <button class="btn-mini" type="button" data-web="/reportes">Parte diario</button>
     </div>
-    <p class="hub-nota">Las herramientas se abren en la web de Project Web. Necesitas conexión; el avance, las notas y el asistente funcionan sin señal.</p>
+    <p class="hub-nota">Las herramientas web se abren dentro de la app. Necesitan conexión; el avance, las notas y el asistente siguen funcionando sin señal.</p>
     <div class="hub-grid">${herramientas}</div>
-    <div class="conexion-acciones"><button class="btn-mini" type="button" data-web="/dashboard">Ver todas las herramientas en la web</button></div>`);
+    <div class="conexion-acciones"><button class="btn-mini" type="button" data-web="/dashboard">Ver todas las herramientas</button></div>`);
   state.modal = 'obra';
   $('#hub-entrar')?.addEventListener('click', () => {
     state.proyectoId = Number(proj.id);
@@ -2252,7 +2261,7 @@ function respuestaLocal(texto) {
   const atras = (p.actividades || []).filter((a) => !Number(a.hito) && Number(a.progreso) < 100 && a.fecha_fin && a.fecha_fin < hoy);
   const nombre = (x) => String(x.nombre || x.titulo || x.asunto || '').trim();
 
-  if (/(estatus|c[oó]mo va|avance|salud)/.test(t) && !/material/.test(t)) {
+  if (/(estatus|c[oó]mo va|avance|salud|resumen|resume)/.test(t) && !/material/.test(t)) {
     const nivel = p.salud?.nivel === 'critico' ? 'en riesgo' : (p.salud?.nivel === 'aviso' ? 'con avisos' : 'sin alertas graves');
     const ind = (p.salud?.indicadores || []).filter((i) => Number(i.valor) > 0).slice(0, 3).map((i) => `${i.titulo}: ${i.valor}`).join('; ');
     return `${proj.nombre} va al ${Math.round(proj.progreso)} % y está ${nivel}. Hay ${abiertos.length} punch abiertos (${abiertos.filter((x) => ['alta', 'critica'].includes(x.severidad)).length} graves), ${rfis.length} RFI abiertos y ${atras.length} actividades atrasadas.${ind ? ' Indicadores: ' + ind + '.' : ''}`;
@@ -2272,7 +2281,7 @@ function respuestaLocal(texto) {
     if (!abiertos.length) return 'No hay punch abiertos en esta obra.';
     return 'Punch abiertos: ' + abiertos.slice(0, 6).map((x) => `${nombre(x)} (${x.severidad}${x.fecha_limite ? ', vence ' + fechaCorta(x.fecha_limite) : ''})`).join('; ') + '.';
   }
-  if (/(atras|retras|fecha|cambiar|mover)/.test(t)) {
+  if (/(atras|retras)/.test(t)) {
     if (!atras.length) return 'No veo actividades atrasadas con la fecha de hoy.';
     const lista = atras.slice(0, 6).map((a) => `${a.codigo} ${a.nombre}: fin ${fechaLarga(a.fecha_fin)}, avance ${a.progreso} %`).join('; ');
     return `Estas son las que revisaría primero: ${lista}. No cambiaré fechas; dime cuál quieres mover y la ajustas en la app.`;
@@ -2291,12 +2300,20 @@ function respuestaLocal(texto) {
     }).join('. ');
     return lista ? 'Materiales: ' + lista + '.' : 'No encontré materiales en la copia descargada.';
   }
-  if (/(semana|hoy|record|mantenimiento|evento|vence)/.test(t)) {
+  if (/(semana|record|mantenimiento|evento|vence|agenda)/.test(t) || /(tengo|hay).*hoy|hoy.*(tengo|hay)/.test(t)) {
     const recs = (p.recordatorios || []).filter((r) => r.fecha >= hoy).slice(0, 7);
     if (!recs.length) return 'No hay recordatorios próximos en la copia descargada.';
     return 'Próximos recordatorios: ' + recs.map((r) => `${r.titulo} (${fechaLarga(r.fecha)})`).join('; ') + '.';
   }
-  if (/(incidente|seguridad|accidente|riesgo|ats)/.test(t)) {
+  if (/riesgo/.test(t)) {
+    const riesgos = (p.riesgos || []).slice(0, 5);
+    if (!riesgos.length) return 'No hay riesgos registrados en la copia descargada.';
+    return 'Riesgos: ' + riesgos.map((r) => {
+      const nivel = [r.probabilidad, r.impacto].filter(Boolean).join('/');
+      return `${r.titulo || r.descripcion || 'Riesgo'}${nivel ? ' (' + nivel + ')' : ''}${r.mitigacion ? ': ' + r.mitigacion : ''}`;
+    }).join('; ') + '.';
+  }
+  if (/(incidente|seguridad|accidente|ats)/.test(t)) {
     const inc = (p.seguridad?.incidentes || []).filter((x) => x.estado === 'abierto');
     const ats = (p.seguridad?.ats_pendientes || []).length;
     return `Seguridad: ${inc.length} incidente(s) abierto(s) y ${ats} ATS pendiente(s). ${inc.length ? 'El más reciente: ' + (inc[0].descripcion || inc[0].tipo) + '.' : 'Sin incidentes abiertos.'}`;
@@ -2393,7 +2410,7 @@ function actividadTexto(a) {
    se vuelve a leer la obra cuya huella cambió; las demás se reutilizan.
    Así el asistente no reescanea ni reconstruye todo en cada pregunta.
    ------------------------------------------------------------------ */
-const INDICE_ASISTENTE_VERSION = 1;
+const INDICE_ASISTENTE_VERSION = 2;
 
 function firmaProyecto(p) {
   // Solo lo que el asistente usa para responder. Si algo de esto cambia,
@@ -2495,7 +2512,7 @@ function construirIndiceProyecto(p, firma) {
     riesgos,
     seguridad: { ats_pendientes: (seguridad.ats_pendientes || []).length },
     archivos: (p.archivos || []).slice(0, 60).map((a) => a.nombre).filter(Boolean),
-    texto: lineas.join('\n').slice(0, 3200),
+    texto: lineas.join('\n').slice(0, 2400),
   };
 }
 
@@ -2572,36 +2589,26 @@ function proyectoDePregunta(pregunta, porDefecto = null) {
   return porDefecto || proyectoActual();
 }
 
-function contextoObra(pregunta = '') {
-  const hoy = hoyISO();
+/** Datos que cambian con la pregunta. Van en el turno del usuario para que
+ *  el prefijo del sistema se mantenga igual entre preguntas y la KV cache
+ *  del modelo se pueda reutilizar. */
+function datosDePregunta(pregunta, p = proyectoDePregunta(pregunta, proyectoActual())) {
+  if (state.sync.length) actualizarIndiceAsistente();
   const t = normalizarTexto(pregunta);
-  const lineas = [`Fecha de hoy: ${hoy}.`];
-  if (!state.sync.length) {
-    lineas.push('No hay obras descargadas en el teléfono.');
-    return lineas.join('\n');
+  const ix = p ? indiceDe(p) : null;
+  const activo = proyectoActual();
+  const lineas = [];
+
+  if (!p && /(portafolio|todas las obras|comparar|otras obras|entre obras|global)/.test(t)) {
+    lineas.push('La pregunta es del portafolio completo: compara las obras del CONTEXTO con sus cifras.');
+  }
+  if (p && Number(p.proyecto?.id || 0) !== Number(activo?.proyecto?.id || 0)) {
+    const proj = p.proyecto;
+    lineas.push(`Obra consultada: ${proj.nombre} (${proj.codigo || 'sin código'}), avance ${Math.round(Number(proj.progreso) || 0)} %, del ${proj.fecha_inicio || '—'} al ${proj.fecha_fin || '—'}.`);
+    lineas.push(ix?.texto || construirIndiceProyecto(p, firmaProyecto(p)).texto);
   }
 
-  // Índice incremental: solo se reconstruye la obra que cambió.
-  actualizarIndiceAsistente();
-  const p = proyectoDePregunta(pregunta, proyectoActual());
-
-  lineas.push(`Obras leídas en el teléfono (${state.sync.length}): ` + state.sync.map((x) => {
-    const ix = indiceDe(x);
-    return ix ? lineaResumenObra(ix) : `${x.proyecto.nombre}: ${Math.round(Number(x.proyecto.progreso) || 0)} %`;
-  }).join(' | ') + '.');
-
-  if (!p) {
-    lineas.push('La pregunta es del portafolio completo: compara las obras anteriores y responde con las cifras de cada una.');
-    if (state.cambios.length) lineas.push('Cambios recientes: ' + state.cambios.slice(0, 8).join('; ') + '.');
-    return lineas.join('\n').slice(0, 5200);
-  }
-
-  const proj = p.proyecto;
-  const ix = indiceDe(p);
-  lineas.push(`Obra consultada: ${proj.nombre} (${proj.codigo || 'sin código'}), avance ${Math.round(Number(proj.progreso) || 0)} %, del ${proj.fecha_inicio || '—'} al ${proj.fecha_fin || '—'}.`);
-  lineas.push(ix?.texto || construirIndiceProyecto(p, firmaProyecto(p)).texto);
-
-  if (/(material|marca|modelo|norma|cumple|especifica|ficha|proveedor)/.test(t) && ix) {
+  if (/(material|marca|modelo|norma|cumple|especifica|ficha|proveedor)/.test(t) && p) {
     const ignorar = new Set(['que', 'cual', 'como', 'para', 'material', 'materiales', 'marca', 'modelo', 'norma', 'normativa', 'cumple', 'busca', 'buscar', 'este', 'esta', 'hay', 'del', 'los', 'las', 'con', 'por', 'una', 'uno', 'sobre', 'dime', 'tiene']);
     const palabras = t.split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !ignorar.has(w));
     const encontrados = palabras.length ? (p.materiales || []).filter((m) => {
@@ -2621,48 +2628,181 @@ function contextoObra(pregunta = '') {
   if (/(cambi|actualiz|sincron)/.test(t) && state.cambios.length) {
     lineas.push('Cambios recientes: ' + state.cambios.slice(0, 8).join('; ') + '.');
   }
-  return lineas.join('\n').slice(0, 5200);
+  return lineas.join('\n').slice(0, 900);
+}
+
+function contextoObra(pregunta = '', incluirExtras = true) {
+  const hoy = hoyISO();
+  const lineas = [`Fecha de hoy: ${hoy}.`];
+  if (!state.sync.length) {
+    lineas.push('No hay obras descargadas en el teléfono.');
+    return lineas.join('\n');
+  }
+
+  // Índice incremental: solo se reconstruye la obra que cambió.
+  actualizarIndiceAsistente();
+  const p = proyectoDePregunta(pregunta, proyectoActual());
+
+  lineas.push(`Obras leídas en el teléfono (${state.sync.length}): ` + state.sync.map((x) => {
+    const ix = indiceDe(x);
+    return ix ? lineaResumenObra(ix) : `${x.proyecto.nombre}: ${Math.round(Number(x.proyecto.progreso) || 0)} %`;
+  }).join(' | ') + '.');
+
+  if (!p) {
+    lineas.push('La pregunta es del portafolio completo: compara las obras anteriores y responde con las cifras de cada una.');
+    if (incluirExtras) {
+      const extras = datosDePregunta(pregunta, p);
+      if (extras) lineas.push(extras);
+    }
+    return lineas.join('\n').slice(0, 3000);
+  }
+
+  const proj = p.proyecto;
+  const ix = indiceDe(p);
+  lineas.push(`Obra consultada: ${proj.nombre} (${proj.codigo || 'sin código'}), avance ${Math.round(Number(proj.progreso) || 0)} %, del ${proj.fecha_inicio || '—'} al ${proj.fecha_fin || '—'}.`);
+  lineas.push(ix?.texto || construirIndiceProyecto(p, firmaProyecto(p)).texto);
+
+  if (incluirExtras) {
+    const extras = datosDePregunta(pregunta, p);
+    if (extras) lineas.push(extras);
+  }
+  return lineas.join('\n').slice(0, 3000);
+}
+
+/** Resumen mínimo para el modelo: lo esencial de la obra y nada más.
+ *  Las preguntas de datos ya se responden con las reglas y su respuesta base. */
+function contextoBreve() {
+  if (!state.sync.length) return 'No hay obras descargadas en el teléfono.';
+  actualizarIndiceAsistente();
+  const p = proyectoActual();
+  if (!p) {
+    return 'Obras: ' + state.sync.map((x) => {
+      const ix = indiceDe(x);
+      return ix
+        ? `${ix.nombre} ${ix.progreso}% (${ix.totales.atrasadas} atrasadas, ${ix.totales.punch} punch)`
+        : `${x.proyecto.nombre}: ${Math.round(Number(x.proyecto.progreso) || 0)}%`;
+    }).join('; ').slice(0, 900);
+  }
+  const ix = indiceDe(p);
+  const proj = p.proyecto;
+  if (!ix) {
+    return `Obra: ${proj.nombre}, avance ${Math.round(Number(proj.progreso) || 0)} %.`;
+  }
+  const lineas = [
+    `Obra: ${ix.nombre}${ix.codigo ? ' (' + ix.codigo + ')' : ''}, avance ${ix.progreso} %, salud ${ix.saludNivel}.`,
+    `${ix.totales.atrasadas} atrasadas, ${ix.totales.punch} punch (${ix.totales.punchGraves} graves), ${ix.totales.rfis} RFI.`,
+  ];
+  if (ix.atrasadas?.length) lineas.push('Atrasadas: ' + ix.atrasadas.slice(0, 2).map(actividadTexto).join(' | '));
+  if (ix.punch?.length) lineas.push('Punch: ' + ix.punch.slice(0, 2).map((x) => `${x.titulo} (${x.severidad})`).join(' | '));
+  return lineas.join('\n').slice(0, 600);
 }
 
 function esConsultaDeDatos(pregunta) {
-  return /(estatus|como va|avance|salud|punch|pendiente|corregir|atras|retras|fecha|material|marca|modelo|norma|cumple|semana|hoy|record|mantenimiento|evento|vence|incidente|seguridad|accidente|riesgo|ats|cambi|actualiz|sincron|portafolio|todas las obras|comparar|reuni|junta|prepar)/.test(normalizarTexto(pregunta));
+  return /(estatus|como va|avance|salud|resumen|resume|punch|pendiente|corregir|atras|retras|fecha|material|marca|modelo|norma|cumple|semana|hoy|record|mantenimiento|evento|vence|incidente|seguridad|accidente|riesgo|ats|cambi|actualiz|sincron|portafolio|todas las obras|comparar|reuni|junta|prepar)/.test(normalizarTexto(pregunta));
+}
+
+/** Turno del usuario tal como lo ve el modelo: pregunta + respuesta base + datos
+ *  que dependen de la pregunta. Se guarda para que el historial sea idéntico al
+ *  prompt anterior y la KV cache pueda reutilizarse. */
+function contenidoUsuarioModelo(pregunta) {
+  const datos = [];
+  if (esConsultaDeDatos(pregunta)) {
+    const base = respuestaLocal(pregunta);
+    if (base && !base.startsWith('Puedo revisar ')) {
+      datos.push('RESPUESTA BASE VERIFICADA (datos exactos de la obra):', base);
+    }
+  }
+  const extras = datosDePregunta(pregunta);
+  if (extras) datos.push('DATOS PARA ESTA PREGUNTA:', extras);
+  return (datos.length ? `${pregunta}\n\n${datos.join('\n')}` : pregunta).slice(0, 700);
+}
+
+function sistemaModelo() {
+  return [
+    'Eres el asistente de obra de Project Web. Español de México, breve.',
+    'Responde en 2 a 5 frases; si piden lista, usa viñetas cortas.',
+    'Usa el CONTEXTO y los DATOS. No inventes cifras, fechas, códigos, punch ni normas.',
+    'Si hay RESPUESTA BASE VERIFICADA, es la verdad: reformúlala sin cambiar datos.',
+    'Para materiales cita marca/modelo/norma; para seguridad, revisa el procedimiento.',
+    'No apliques cambios: propone y aclara que se hace en la app.',
+    'Hoy es ' + hoyISO() + '.',
+    '',
+    'CONTEXTO:',
+    contextoBreve(),
+  ].join('\n');
+}
+
+function historialModelo(excluirUltimo = false, compacto = false) {
+  const turnos = excluirUltimo ? state.chatTurnos.slice(0, -1) : state.chatTurnos;
+  const historial = turnos
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .map((m) => ({
+      role: m.role,
+      content: String(m.modelo || m.content || '').slice(0, m.role === 'assistant' ? 1500 : 1000),
+    }));
+  if (compacto) {
+    return historial.slice(-2).map((m) => ({ role: m.role, content: m.content.slice(0, 300) }));
+  }
+  // Se conserva el prefijo completo mientras quepa: así el prompt nuevo es una
+  // extensión del anterior y la KV cache se reutiliza. Solo al pasar del
+  // presupuesto se descarta lo más viejo (y el motor reprocesa una vez).
+  const MAX_HISTORIAL = 7000;
+  let previos = historial;
+  let total = historial.reduce((n, m) => n + m.content.length, 0);
+  if (total > MAX_HISTORIAL) {
+    previos = [];
+    total = 0;
+    for (let i = historial.length - 1; i >= 0; i--) {
+      const m = historial[i];
+      if (total + m.content.length > MAX_HISTORIAL) break;
+      previos.unshift(m);
+      total += m.content.length;
+    }
+  }
+  return previos;
+}
+
+function mensajesPrefijoModelo() {
+  return [{ role: 'system', content: sistemaModelo() }, ...historialModelo(false, true)];
 }
 
 function mensajesParaModelo(pregunta) {
-  const partes = [
-    'Eres el asistente de obra de Project Web dentro de la app Android. Hablas español de México, claro y breve.',
-    'Responde en 2 a 5 frases (máximo 130 palabras), salvo que pidan una lista; entonces usa viñetas cortas.',
-    'Usa solo el CONTEXTO y la RESPUESTA BASE. Si un dato no está, dilo con naturalidad; nunca inventes cifras, fechas, nombres, códigos, punch ni normas.',
-    'Nombra la obra por su nombre, no solo por su código.',
-    'Ya leíste el resumen de todas las obras visibles al abrir la app y solo actualizas las que cambiaron. Si la pregunta nombra otra obra, usa su ficha del CONTEXTO; no digas que solo puedes ver la obra activa.',
-    'Si aparece RESPUESTA BASE VERIFICADA, es la verdad de los datos: reformúlala sin cambiar cifras, códigos ni nombres. Si dice que no hay punch, dilo así; no confundas códigos de actividad con punch.',
-    'Para materiales cita marca, modelo y normativa cuando existan. Para seguridad, sugiere revisar el procedimiento sin dar órdenes peligrosas.',
-    'Si te piden cambiar o mover una fecha, propone la fecha y explica el efecto, pero aclara que tú no aplicas cambios: se hacen en la app.',
-    'No uses Markdown complicado; texto plano con guiones si hace falta.',
-    'Hoy es ' + hoyISO() + '.',
-    '',
+  const actual = state.chatTurnos[state.chatTurnos.length - 1];
+  const contenido = actual && actual.role === 'user' && actual.modelo
+    ? actual.modelo
+    : contenidoUsuarioModelo(pregunta);
+  return [
+    { role: 'system', content: sistemaModelo() },
+    ...historialModelo(true, true),
+    { role: 'user', content: contenido },
   ];
-  if (esConsultaDeDatos(pregunta)) {
-    partes.push('RESPUESTA BASE VERIFICADA (datos exactos de la obra):', respuestaLocal(pregunta), '');
-  }
-  partes.push('CONTEXTO DESCARGADO EN EL TELÉFONO:', contextoObra(pregunta));
-  const sistema = partes.join('\n');
-  const previos = state.chatTurnos.slice(0, -1)
-    .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .slice(-4)
-    .map((m) => ({ role: m.role, content: String(m.content || '').slice(0, 1500) }));
-  return [{ role: 'system', content: sistema }, ...previos, { role: 'user', content: pregunta }];
 }
+
+const GRUPOS_DATOS = [
+  /(estatus|c[oó]mo va|avance|salud|resumen|resume)/,
+  /(punch|pendiente|corregir)/,
+  /(atras|retras)/,
+  /(material|marca|modelo|norma|cumple)/,
+  /(semana|record|mantenimiento|evento|vence|agenda|(tengo|hay).*hoy|hoy.*(tengo|hay))/,
+  /(incidente|seguridad|accidente|riesgo|ats)/,
+  /(cambi|actualiz|sincron)/,
+  /(reuni|junta|prepar)/,
+  /(portafolio|todas las obras|comparar|otras obras|entre obras|global)/,
+];
 
 function respuestaDirecta(pregunta) {
   const t = normalizarTexto(pregunta);
   const base = respuestaLocal(pregunta);
+  if (!base || base.startsWith('Puedo revisar ')) return '';
   if (/(glosario|qu[eé] significa|definici[oó]n)/.test(t)) return base;
   if (/(busca|buscar|encuentra|d[oó]nde est[aá])/.test(t)) return base;
   if (/(si\s+(atraso|retraso|muevo|mover)|qu[eé] pasa si|simula)/.test(t) && /d[ií]as?/.test(t)) return base;
   if (/(punch|pendiente|corregir)/.test(t) && /no hay punch/i.test(base)) return base;
   if (/(atras|retras)/.test(t) && /no veo actividades atrasadas/i.test(base)) return base;
   if (/(material|marca|modelo|cumple)/.test(t) && /no encontr[eé] materiales/i.test(base)) return base;
+  // Explicaciones, análisis y redacción los resuelve el modelo.
+  if (/(por qu[eé]|explica|explicar|recomienda|sugiere|mitig|analiza|interpreta|redacta|propone|opina)/.test(t)) return '';
+  if (GRUPOS_DATOS.filter((r) => r.test(t)).length === 1) return base;
   return '';
 }
 
@@ -2795,7 +2935,7 @@ function respuestaConReglas(texto, motivo) {
     cont.scrollTop = cont.scrollHeight;
     state.chatTurnos.push({ role: 'assistant', content: respuesta });
     guardarMensajeChat('assistant', respuesta, { datos: { fuente: 'reglas', hint }, modelo: 'reglas-locales' });
-  }, 450);
+  }, 120);
 }
 
 async function enviarConModelo(pregunta) {
@@ -2806,7 +2946,7 @@ async function enviarConModelo(pregunta) {
   try {
     await invokeTauri('motor_responder', {
       mensajes: mensajesParaModelo(pregunta),
-      maxTokens: 200,
+      maxTokens: 150,
     });
   } catch (e) {
     state.generando = false;
@@ -2851,7 +2991,7 @@ function enviarTexto(texto) {
   const input = $('#chat-texto');
   if (input) input.value = '';
   cont.scrollTop = cont.scrollHeight;
-  state.chatTurnos.push({ role: 'user', content: limpio });
+  state.chatTurnos.push({ role: 'user', content: limpio, modelo: contenidoUsuarioModelo(limpio) });
   state.ultimaPregunta = limpio;
   guardarMensajeChat('user', limpio);
 
@@ -3335,9 +3475,11 @@ async function pedirEstadoMotor() {
 
 /** Carga el modelo en segundo plano para que la primera pregunta no espere. */
 function precalentarMotor() {
-  if (!tieneTauri() || !state.motor.presente || state.motor.cargado || state.motor.cargando) return;
+  if (!tieneTauri() || !state.motor.presente || state.motor.cargando || state.motor.generando) return;
   state.motor.cargando = true;
-  invokeTauri('motor_precalentar').catch(() => { state.motor.cargando = false; });
+  let mensajes = null;
+  try { mensajes = mensajesPrefijoModelo(); } catch (e) { /* sin datos todavía */ }
+  invokeTauri('motor_precalentar', { mensajes }).catch(() => { state.motor.cargando = false; });
 }
 
 function pintarMotor() {
@@ -3594,7 +3736,19 @@ async function registrarEventosMotor() {
       state.motor.cargado = true;
       state.motor.cargando = false;
       bloquearEnvio(false);
-      const texto = String(d.texto || '')
+      if (modoDesarrollo()) {
+        console.info('[asistente]', {
+          promptTokens: Number(d.promptTokens) || 0,
+          prefillMs: Number(d.prefillMs) || 0,
+          primerTokenMs: Number(d.primerTokenMs) || 0,
+          reutilizados: Number(d.reutilizados) || 0,
+          tokens: Number(d.tokens) || 0,
+          ms: Number(d.ms) || 0,
+          tps: Number(d.tps) || 0,
+        });
+      }
+      const textoCrudo = String(d.texto || '');
+      const texto = textoCrudo
         .replace(/\*\*(.+?)\*\*/g, '$1')
         .replace(/^#{1,4}\s+/gm, '')
         .trim();
@@ -3618,9 +3772,19 @@ async function registrarEventosMotor() {
         return;
       }
       finalizarStream(texto, 'Asistente digital');
-      state.chatTurnos.push({ role: 'assistant', content: texto });
+      // El historial del modelo guarda el texto crudo: si se recorta o se
+      // limpia, la próxima pregunta ya no puede reutilizar la KV cache.
+      state.chatTurnos.push({ role: 'assistant', content: textoCrudo });
       guardarMensajeChat('assistant', texto, {
-        datos: { fuente: 'modelo', tokens: Number(d.tokens) || 0, tps: Number(d.tps) || 0 },
+        datos: {
+          fuente: 'modelo',
+          tokens: Number(d.tokens) || 0,
+          tps: Number(d.tps) || 0,
+          promptTokens: Number(d.promptTokens) || 0,
+          prefillMs: Number(d.prefillMs) || 0,
+          primerTokenMs: Number(d.primerTokenMs) || 0,
+          reutilizados: Number(d.reutilizados) || 0,
+        },
         modelo: String(state.motor.archivo || 'qwen2.5').replace('.gguf', ''),
       });
       renderChatEstado();

@@ -1,0 +1,5 @@
+[env]
+# Honor Magic 7 Lite (Snapdragon 6 Gen 1, Cortex-A78/A55) y equipos superiores.
+# Habilita los kernels int8 dot-product/FP16 de llama.cpp; sin esto el build
+# usa ARMv8.0 genérico y Q4_K_M pierde buena parte de su velocidad.
+GGML_CPU_ARM_ARCH = "armv8.2-a+dotprod+fp16"

@@ -141,13 +141,17 @@ cookies. Apache debe exponer `Authorization` a PHP (`SetEnvIf` en `docker/apache
   huella de sus datos; en las siguientes lecturas solo se reconstruye la ficha de la obra que
   cambió y las demás se reutilizan. El asistente puede responder sobre cualquier obra nombrada
   en la pregunta (no solo la activa) y el chat muestra cuántas obras leyó. Al abrir la app se
-  precalienta el GGUF en segundo plano (`motor_precalentar`), de modo que la primera pregunta
-  no paga la carga completa del modelo.
+  precalienta el GGUF en segundo plano (`motor_precalentar`) y, cuando ya hay datos, procesa
+  también el prompt del sistema y el historial, de modo que la primera pregunta solo tenga que
+  procesar el turno nuevo.
 - **Contexto:** la app arma un resumen compacto e intencional (obra, salud, actividades
   atrasadas/próximas, punch, RFI, recordatorios, materiales con normativa, seguridad,
   equipo, riesgos y portafolio) y una **respuesta base verificada** con las reglas. El
   modelo la reformula; si contradice un dato (por ejemplo, inventa punch cuando no hay) se
   descarta y se muestra la respuesta base con la etiqueta «Datos verificados».
+- **Rendimiento:** el build usa `GGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16` (`android/.cargo/config.toml` y `compilar-apk.sh`), seguro para el Honor Magic 7 Lite (Snapdragon 6 Gen 1, Cortex-A78/A55) y equipos superiores. El asistente reutiliza la **KV cache** entre preguntas y solo procesa los tokens nuevos; las consultas de datos (avance, punch, atrasos, materiales, seguridad, recordatorios) se responden con las reglas sin pasar por el modelo. El prompt del modelo usa un resumen compacto (~600 caracteres) y hasta 2 turnos de historial (300 caracteres cada uno); el prefill va en lotes de 1.024.
+- **Métricas:** `motor-fin` incluye `promptTokens`, `prefillMs`, `primerTokenMs` y `reutilizados`; en modo desarrollo se imprimen en la consola del WebView.
+- **Pruebas en Honor Magic 7 Lite (Android 16, 8 GB):** preguntas de datos en menos de 1 s; la primera pregunta abierta con el prompt precalentado mostró el primer token en ~3–5 s y la respuesta completa en ~8 s; las siguientes abiertas en ~2–5 s. Si se pregunta justo al abrir la app, todavía se paga la carga/prefill inicial.
 - **Extras:** dictado por voz con `SpeechRecognition` del WebView (si el teléfono lo soporta) y glosario de obra (RFI, Punch, Lookahead, PPC, SPI, CPI, ATS, NC, ITP).
 - **UI:** el asistente se muestra siempre como **«Asistente digital»**; el nombre del modelo y su estado solo aparecen en el menú de administración (Ajustes → Modelo de IA y menú del asistente), nunca para el cliente. Tarjeta de preparación/progreso en el chat, modal de modelo (RAM, hilos, tamaño,
   estado, descarga/cancelación/eliminación), botón de detener respuesta y menú del
@@ -167,7 +171,7 @@ La barra superior tiene la **campana de Alertas** a la izquierda de **Apariencia
 
 Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, no entran a la cola de salida y no aparecen en la web:
 
-- **Foto sellada:** foto con obra, actividad, fecha, GPS, responsable, nota y QR local. El sello se dibuja después de tomar la foto (cámara del sistema o galería), con plantilla completa o compacta.
+- **Foto sellada:** foto con obra, actividad, fecha, GPS, responsable y nota. El sello se dibuja después de tomar la foto (cámara del sistema o galería), con plantilla completa o compacta.
 - **Rutas:** recorrido de fotos con GPS y hora, distancia Haversine, croquis esquemático offline y resumen. Las fotos y el croquis se guardan en `Pictures/Project Web/Rutas`.
 - **Comparador antes/después:** dos fotos locales en una sola imagen.
 - **Rondín GPS:** checkpoints con ubicación, llegada por GPS/hora, foto opcional y resumen.
@@ -184,7 +188,7 @@ Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, 
 - Permisos: ubicación (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`) y, en Android 8–9, escritura externa para el álbum. La cámara se abre con el selector del sistema; no requiere permiso propio de cámara.
 - Si el GPS no responde, la foto se guarda sin coordenadas y el sello lo indica. El EXIF de la foto se usa como respaldo cuando existe.
 
-**Archivos:** `android/src/herramientas.js`, `android/src/vendor/qrcode/qrcode.js`, `android/src-tauri/src/galeria.rs`, `android/src-tauri/gen/android/app/src/main/java/com/projectweb/android/galeria/GaleriaPlugin.kt`.
+**Archivos:** `android/src/herramientas.js`, `android/src-tauri/src/galeria.rs`, `android/src-tauri/gen/android/app/src/main/java/com/projectweb/android/galeria/GaleriaPlugin.kt`.
 
 ### Parte diario nativo (campo)
 
@@ -238,10 +242,39 @@ Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, 
 - **Lectura y copia:** cada respuesta tiene botones **Escuchar** (TTS del sistema) y **Copiar**.
 - **Dictado:** el micrófono usa `SpeechRecognition` del WebView cuando el teléfono lo soporta.
 
+### Herramientas web dentro de la app (Activity aparte)
+
+Las herramientas que no son de campo ya **no se abren en el navegador externo**: se abren dentro de la app, en una Activity propia, sin descargar ni reiniciar la app nativa. Esto incluye Programa, Línea de tiempo, Lookahead, Bitácora, Costos, Materiales, Calidad, Exportar y «Ver todas las herramientas».
+
+- **`HerramientaWebActivity`** (`android/src-tauri/gen/android/app/src/main/java/com/projectweb/android/HerramientaWebActivity.kt`) extiende `TauriActivity` y vive en su propia actividad. La app nativa queda detrás, con su estado intacto.
+- **Comando Rust `abrir_herramienta_web(url, servidor)`** (`android/src-tauri/src/lib.rs`): solo acepta la URL del puente de sesión (`/acceso-app?c=…`) del servidor configurado; crea la ventana con `activity_name("HerramientaWebActivity")` y una política de navegación que:
+  - deja dentro el servidor de confianza;
+  - abre en el sistema los enlaces externos, `mailto:`, `tel:`, WhatsApp y mapas;
+  - bloquea `file:`, `content:` y `javascript:`.
+- **`android/src/app.js` → `abrirWeb()`**: sigue pidiendo el código a `POST /api/app/enlace` y ahora invoca `abrir_herramienta_web`. Si el APK es viejo o la URL no es válida, cae al `opener` de siempre.
+- **`android/src-tauri/src/web_shim.js`**: adaptador que se inyecta **solo** en la ventana de la herramienta. No modifica la web normal. Cubre lo que el WebView de Android no hace:
+  - `target="_blank"` y `window.open` se abren en la misma pestaña;
+  - descargas `blob:`/`data:` y enlaces con `download` pasan al puente nativo;
+  - los formularios de exportación POST (`/exportar/generar` y `/exportar/todo`) se envían con `fetch` y el archivo se guarda con el puente;
+  - enlaces a PDFs conocidos se descargan con `ProjectWebAndroid.abrirPdf()`;
+  - se oculta el logout web y el aviso de descarga del APK; el logout real es el de la app;
+  - agrega **«Volver a la app»** en tres lugares, solo dentro de esta ventana: un botón en la cabecera (ocupa el lugar del logout oculto), una entrada al inicio del menú lateral y un botón flotante que aparece cuando la cabecera sale de la pantalla (o siempre en páginas sin cabecera). Al tocarlo se llama a `ProjectWebAndroid.volver()` y la app nativa recupera su estado, sin cerrar sesión.
+- **Puente nativo `ProjectWebAndroid`**: `guardar(base64, nombre, tipo)`, `abrirPdf(url)`, `imprimir(titulo)`, `error(mensaje)` y `volver()`. Guarda en `Descargas` con MediaStore (Android 10+) o en la carpeta privada + FileProvider (Android 8–9) y abre el archivo con la app que corresponda. `window.print()` se redirige al cuadro de impresión de Android.
+- **Descargas GET**: `DownloadListener` nativo con la cookie de sesión y `DownloadManager`. Probado con el PDF de Línea de tiempo.
+- **Exportación POST**: probado con «Exportar todo» del Centro de Exportación; el ZIP queda en `Descargas` con el nombre de la nomenclatura.
+- **Atrás**: primero recorre el historial web; cuando la página anterior es `/acceso-app` o `/login`, cierra la Activity y vuelve a la app. No se reutiliza el código de un solo uso.
+- **Sesión**: la cookie web se guarda en el WebView compartido de la app. Al cerrar la Activity se borran las cookies; la próxima herramienta pide un código nuevo a `/api/app/enlace`.
+- **Sin conexión**: estas herramientas necesitan conexión. La app nativa sigue funcionando sin señal (avance, notas, parte diario, asistente local y cola de salida).
+- **Exportar en el hub**: se agregó la tarjeta **Exportar** (PDF, XML y ZIP) para que el Centro de Exportación sea accesible desde el teléfono; en la web el enlace «Ajustes y exportar» de Programa está oculto en móvil.
+
+**Archivos:** `android/src/app.js`, `android/src-tauri/src/lib.rs`, `android/src-tauri/src/web_shim.js`, `android/.../HerramientaWebActivity.kt`, `AndroidManifest.xml` y `res/xml/file_paths.xml`.
+
+> `HerramientaWebActivity` y el `<activity>` del manifest viven en `gen/android`, que es generado. Si se vuelve a ejecutar `tauri android init`, hay que volver a agregarlos (igual que la firma y el `roundIcon`).
+
 ### Pendiente de la Fase 1
 
 - Push con la app cerrada: **no incluido** por decisión (sin Google/FCM); los avisos se muestran al abrir o sincronizar.
-- Las herramientas que no son de campo (Programa/Gantt, Costos, Materiales, Calidad) siguen abriéndose en la web mediante el puente de sesión.
+- Las herramientas web ya se abren dentro de la app con el puente de sesión; siguen necesitando conexión y las de lienzo (vPlan, Editor, Anotador) son más cómodas en tablet.
 
 ## Fase 0 — lo que ya está hecho
 
@@ -287,7 +320,7 @@ Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, 
 `android/src/` incluye una pantalla móvil con:
 - Inicio con la obra, avance, KPIs, pendientes de hoy y tarjeta del asistente.
 - Obras reales, alertas/recordatorios, ajustes, conexión y chat con datos sincronizados.
-- **Obras** lista las obras visibles, permite buscar y cambiar la obra activa y muestra avance/atrasos. Al tocar una obra se abre un **hub** con acceso a Programa, Línea de tiempo, Lookahead, Parte diario, Bitácora, Punch, RFI, Archivo, Costos, Materiales, Seguridad y Calidad; las herramientas se abren en la web con `tauri-plugin-opener` (requieren conexión). La app todavía no replica esas herramientas de forma nativa.
+- **Obras** lista las obras visibles, permite buscar y cambiar la obra activa y muestra avance/atrasos. Al tocar una obra se abre un **hub** con acceso a Programa, Línea de tiempo, Lookahead, Parte diario, Bitácora, Punch, RFI, Archivo, Costos, Materiales, Seguridad, Calidad y **Exportar**. Las herramientas web se abren dentro de la app en `HerramientaWebActivity` (requieren conexión); las de campo siguen siendo nativas.
 - Actualización de avance y notas rápidas que funcionan sin conexión (cola de salida).
 - Tema claro/oscuro, navegación inferior, estado de conexión y diseño responsive para móvil
   y tablet (sin desbordes horizontales).
@@ -296,7 +329,7 @@ Las herramientas viven solo en la app Android. No se envían a `/api/app/sync`, 
 
 ### Lo que sigue en la app Android
 
-- **Sincronización nativa del resto de herramientas**: avance, bitácora, punch, RFI, parte diario, evidencias y archivo ya son nativos; Programa/Gantt, Costos, Materiales, Calidad y el resto se abren en la web con el puente de sesión.
+- **Sincronización nativa del resto de herramientas**: avance, bitácora, punch, RFI, parte diario, evidencias y archivo ya son nativos; Programa/Gantt, Costos, Materiales, Calidad y el resto se abren dentro de la app en `HerramientaWebActivity` con el puente de sesión (online).
 - **Motor de fechas/ruta crítica en Rust** para propuestas 100 % offline (la simulación «¿qué pasa si…?» ya funciona con el snapshot, pero no recalcula toda la ruta crítica en el teléfono).
 - **Whisper local** para dictado (hoy se usa el reconocimiento del WebView) y ajuste de latencia/modelo (3B solo en equipos de 12 GB o más).
 - **Vistas nativas de Costos/Materiales/Calidad** si el producto las necesita; hoy son web.

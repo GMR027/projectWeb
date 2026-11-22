@@ -458,7 +458,7 @@
     if (meta.responsable) lineas.push({ t: `Responsable: ${meta.responsable}`, px: S * 0.023, peso: 500 });
     if (meta.nota) lineas.push({ t: meta.nota, px: S * 0.023, peso: 400 });
     let yy = y + S * 0.028;
-    const maxAncho = w - pad * 2 - (compacto ? 0 : S * 0.20);
+    const maxAncho = w - pad * 2;
     for (const linea of lineas.slice(0, compacto ? 2 : 6)) {
       ctx.font = `${linea.peso} ${Math.round(linea.px)}px Inter, system-ui, sans-serif`;
       for (const l of envolver(ctx, linea.t, maxAncho).slice(0, compacto ? 2 : 3)) {
@@ -468,8 +468,6 @@
       }
     }
     if (!compacto) {
-      const qrLado = Math.min(S * 0.20, alto - pad * 1.2);
-      dibujarQR(ctx, meta.qr || `PROJECTWEB|${meta.obra}|${meta.fecha}|${meta.lat},${meta.lon}`, w - pad - qrLado, h - pad - qrLado, qrLado);
       ctx.font = `500 ${Math.round(S * 0.018)}px Inter, system-ui, sans-serif`;
       ctx.fillStyle = 'rgba(255,255,255,.65)';
       ctx.fillText('Project Web · solo en este teléfono', pad, h - S * 0.026);
@@ -489,7 +487,7 @@
         <div class="herr-form-grid">
           <label>Obra<input type="text" value="${esc2(p?.nombre || 'Sin obra')}" readonly></label>
           <label>Actividad<select id="fs-actividad"><option value="">Sin actividad</option>${acts.map((a) => `<option value="${esc2(a.nombre || a.codigo)}">${esc2(a.codigo ? a.codigo + ' · ' : '')}${esc2(a.nombre)}</option>`).join('')}</select></label>
-          <label>Plantilla<select id="fs-plantilla"><option value="completo">Completa (con QR)</option><option value="compacto">Compacta</option></select></label>
+          <label>Plantilla<select id="fs-plantilla"><option value="completo">Completa</option><option value="compacto">Compacta</option></select></label>
           <label>Responsable<input type="text" id="fs-responsable" value="${esc2(nombreUsuario())}" maxlength="80"></label>
         </div>
         <label class="herr-ancho">Nota<textarea id="fs-nota" rows="3" maxlength="300" placeholder="Qué muestra la foto, dónde y por qué…"></textarea></label>
@@ -522,7 +520,6 @@
         fecha: datos.tomada_en,
         lat: datos.lat, lon: datos.lon,
       };
-      meta.qr = `PROJECTWEB|FOTO|${proyecto()?.id || 0}|${meta.fecha}|${meta.lat ?? ''},${meta.lon ?? ''}`;
       selloFoto(img.canvas, meta);
       if (cont) cont.innerHTML = '';
       const preview = document.createElement('div');
