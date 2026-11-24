@@ -3,7 +3,7 @@
 use Classes\Seguridad;
 ?>
 <?php if ($puede): ?>
-<details class="card prg-seccion"><summary><strong>Registrar un incidente</strong> <small class="text-muted">· investigación y acciones</small></summary>
+<details class="suite-details"><summary><span><i class="fa-solid fa-triangle-exclamation"></i> Registrar un incidente</span><small class="text-muted">investigación y acciones</small></summary>
 <form method="post" action="/seguridad/incidente" enctype="multipart/form-data" class="co-form" style="margin-top:1rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <div class="co-campos">
         <label>Fecha<input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required></label>
@@ -27,8 +27,9 @@ use Classes\Seguridad;
 </details>
 <?php endif; ?>
 
-<div class="card prg-seccion">
-    <h3><i class="fa-solid fa-triangle-exclamation"></i> Incidentes y condiciones inseguras</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-triangle-exclamation"></i> Incidentes y condiciones inseguras <span class="suite-chip"><?php echo count($incidentes); ?></span></h3><p class="text-muted text-sm">Investigación, causas y acciones de cierre.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$incidentes): ?><p class="text-muted">Sin incidentes registrados.</p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla"><thead><tr><th>Fecha</th><th>Tipo / severidad</th><th>Qué pasó / causa</th><th class="num">Días</th><th class="num">Costo</th><th>Estado</th><th></th></tr></thead><tbody>
         <?php foreach ($incidentes as $i): $acciones = Seguridad::accionesIncidente((int)$i['id']); $fotosInc = Seguridad::fotosIncidente((int)$i['id']); ?>
@@ -71,4 +72,5 @@ use Classes\Seguridad;
         <?php endforeach; ?>
     </tbody></table></div>
     <?php endif; ?>
+    </div>
 </div>

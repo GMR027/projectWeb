@@ -5,12 +5,14 @@ $m = fn($v) => '$' . number_format((float)$v, 2);
 $n = $ncVer;
 ?>
 <?php if ($n): ?>
-<div class="card" style="margin-bottom:1.4rem">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+<div class="suite-panel" style="margin-bottom:1.4rem">
+    <div class="suite-panel-cab"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;width:100%">
         <div><h3 class="m-0"><?php echo s($n['codigo']); ?> · <?php echo s(mb_substr((string)$n['hallazgo'], 0, 100)); ?></h3><p class="text-muted text-sm m-0"><?php echo $n['act_codigo'] ? s($n['act_codigo'] . ' · ' . $n['act_nombre']) . ' · ' : ''; ?><?php echo s(CalidadCompleta::NC_ESTADOS[$n['estado']] ?? $n['estado']); ?></p></div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap"><a class="btn btn-sm btn-ghost" href="<?php echo s($url(['tab' => 'nc'])); ?>">Cerrar</a><?php if ($puedeEditar && $n['estado'] !== 'cerrada'): ?><form class="inline" method="POST" action="/calidad/nc/cerrar" data-confirm="Cerrar no conformidad|Se marcará como cerrada y se liberará el avance si no hay otra NC abierta.|Cerrar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$n['id']; ?>"><button class="btn btn-sm btn-primary" type="submit"><i class="fa-solid fa-circle-check"></i> Cerrar NC</button></form><?php endif; ?></div>
     </div>
-    <div class="rg-detalle-grid" style="margin-top:1rem">
+    </div>
+    <div class="suite-panel-cuerpo">
+    <div class="rg-detalle-grid">
         <div><small>Causa raíz</small><b><?php echo s($n['causa'] ?: '—'); ?></b></div>
         <div><small>Responsable</small><b><?php echo s($n['responsable'] ?: '—'); ?></b></div>
         <div><small>Compromiso</small><b><?php echo $n['fecha_compromiso'] ? s(formatear_fecha($n['fecha_compromiso'], 'd/m/Y')) : '—'; ?></b></div>
@@ -46,13 +48,14 @@ $n = $ncVer;
         <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-plus"></i> Agregar acción</button>
     </form>
     <?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>
 
 <?php if ($puedeEditar && !$n): ?>
-<form method="POST" action="/calidad/nc" class="card co-form">
+<form method="POST" action="/calidad/nc" class="suite-panel suite-form co-form" style="padding:1.2rem 1.4rem">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-    <h3><i class="fa-solid fa-triangle-exclamation"></i> Nueva no conformidad</h3>
+    <h3 style="margin:0 0 .8rem"><i class="fa-solid fa-triangle-exclamation"></i> Nueva no conformidad</h3>
     <div class="co-campos">
         <label>Código<input type="text" name="codigo" maxlength="40" value="<?php echo s($siguienteNC); ?>"></label>
         <label>Actividad<select name="actividad_id"><option value="0">— Sin actividad —</option><?php echo opciones_actividades($actividades, 0); ?></select></label>
@@ -71,8 +74,9 @@ $n = $ncVer;
 </form>
 <?php endif; ?>
 
-<div class="card">
-    <h3><i class="fa-solid fa-list"></i> No conformidades formales</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-list"></i> No conformidades formales <span class="suite-chip"><?php echo count($ncs); ?></span></h3><p class="text-muted text-sm">Hallazgos, acciones correctivas y costo asociado.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$ncs): ?><p class="text-muted">Sin no conformidades formales registradas.</p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Código</th><th>Hallazgo</th><th>Actividad</th><th>Responsable</th><th>Compromiso</th><th class="num">Costo</th><th>Estado</th><th></th></tr></thead>
@@ -83,4 +87,5 @@ $n = $ncVer;
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>

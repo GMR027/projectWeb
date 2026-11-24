@@ -16,7 +16,12 @@ $pre = [
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-circle-question"></i> RFI · Solicitudes de información</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · quién debe responder, para cuándo y qué actividad detiene</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · quién debe responder, para cuándo y qué actividad detiene.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-circle-question"></i><b><?php echo (int)$resumen['abierto']; ?></b> abiertos</span>
+            <span class="herr-chip<?php echo $resumen['vencidos'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-calendar-xmark"></i><b><?php echo (int)$resumen['vencidos']; ?></b> vencidos</span>
+            <span class="herr-chip<?php echo $resumen['bloqueando'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-lock"></i><b><?php echo (int)$resumen['bloqueando']; ?></b> bloqueando</span>
+        </div>
     </div>
     <?php if ($puedeEditar && $disponible): ?><a href="<?php echo s($url(['nuevo' => 1])); ?>" class="btn btn-primary">+ Nuevo RFI</a><?php endif; ?>
 </div>
@@ -27,14 +32,27 @@ $pre = [
 
 <?php if ($error !== ''): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
 
-<div class="cb-kpis">
-    <div class="cb-kpi"><small>Abiertos</small><strong><?php echo (int)$resumen['abierto']; ?></strong><span><?php echo (int)$resumen['respondido']; ?> respondido(s) · <?php echo (int)$resumen['cerrado']; ?> cerrado(s)</span></div>
-    <div class="cb-kpi <?php echo $resumen['vencidos'] ? 'cb-kpi-alerta' : ''; ?>"><small>Vencidos</small><strong><?php echo (int)$resumen['vencidos']; ?></strong><span>Abiertos con la fecha límite pasada</span></div>
-    <div class="cb-kpi <?php echo $resumen['bloqueando'] ? 'cb-kpi-alerta' : ''; ?>"><small>Bloqueando actividades</small><strong><?php echo (int)$resumen['bloqueando']; ?></strong><span>Abiertos sobre actividades sin terminar</span></div>
+<div class="suite-kpis">
+    <div class="suite-kpi <?php echo $resumen['abierto'] ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Abiertos</small><strong><?php echo (int)$resumen['abierto']; ?></strong><span><?php echo (int)$resumen['respondido']; ?> respondido(s) · <?php echo (int)$resumen['cerrado']; ?> cerrado(s)</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['vencidos'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Vencidos</small><strong><?php echo (int)$resumen['vencidos']; ?></strong><span>abiertos con la fecha límite pasada</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['bloqueando'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Bloqueando actividades</small><strong><?php echo (int)$resumen['bloqueando']; ?></strong><span>abiertos sobre actividades sin terminar</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-reply" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Respondidos</small><strong><?php echo (int)$resumen['respondido']; ?></strong><span>de <?php echo (int)$resumen['total']; ?> solicitudes</span></span>
+    </div>
 </div>
 
 <?php if ($puedeEditar && $abrirForm): ?>
-<form method="POST" action="/rfi/guardar" class="card co-form">
+<form method="POST" action="/rfi/guardar" class="suite-panel suite-form co-form" style="padding:1.2rem 1.4rem">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <input type="hidden" name="id" value="<?php echo $e ? (int)$e['id'] : 0; ?>">
     <h3><?php echo $e ? 'Editar ' . s($e['numero']) : 'Nuevo RFI'; ?></h3>
@@ -89,7 +107,9 @@ $pre = [
     <?php foreach (Rfi::ESTADOS as $k => $etq): ?><a href="<?php echo s($url(['estado' => $k])); ?>" class="cb-chip<?php echo $filtro === $k ? ' activo' : ''; ?>"><?php echo $etq; ?> <b><?php echo (int)$resumen[$k]; ?></b></a><?php endforeach; ?>
     <a href="<?php echo s($url(['estado' => 'vencidos'])); ?>" class="cb-chip<?php echo $filtro === 'vencidos' ? ' activo' : ''; ?>">Vencidos <b><?php echo (int)$resumen['vencidos']; ?></b></a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-list"></i> Solicitudes <span class="suite-chip"><?php echo count($lista); ?></span></h3><p class="text-muted text-sm">Cada RFI indica responsable, fecha límite y la actividad que detiene.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$lista): ?><?php echo estado_vacio('fa-circle-question',
         $filtro !== '' ? 'Ningún RFI coincide con el filtro' : 'Aún no hay RFI',
         $filtro !== '' ? 'Prueba con otro estado o quita el filtro.' : 'Registra las dudas y consultas de la obra; el RFI bloquea la actividad hasta que se responde.',
@@ -133,6 +153,7 @@ $pre = [
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>
 <?php if (!empty($laminasDisponibles)): ?>
 <script>

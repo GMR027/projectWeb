@@ -21,17 +21,29 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
     <a href="/lineas-base?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">← Líneas base</a>
 </div>
 
-<div class="cb-kpis">
-    <div class="cb-kpi <?php echo $r['d_fin'] > 0 ? 'cb-kpi-alerta' : ''; ?>"><small>Fecha de término</small><strong><?php echo $signo((int)$r['d_fin']); ?> d</strong><span><?php echo $r['fin_base'] ? formatear_fecha($r['fin_base']) : '—'; ?> → <?php echo $r['fin_actual'] ? formatear_fecha($r['fin_actual']) : '—'; ?> (días hábiles)</span></div>
-    <div class="cb-kpi"><small>Nodos movidos</small><strong><?php echo (int)$r['movida']; ?></strong><span><?php echo (int)$r['nueva']; ?> nueva(s) · <?php echo (int)$r['eliminada']; ?> eliminada(s)<?php if (!empty($r['total_subactividades'])): ?> · incluye subactividades<?php endif; ?></span></div>
-    <div class="cb-kpi"><small>Justificadas</small><strong><?php echo (int)$r['oc'] + (int)$r['material']; ?></strong><span><?php echo (int)$r['oc']; ?> por orden de cambio · <?php echo (int)$r['material']; ?> por material</span></div>
-    <div class="cb-kpi <?php echo $r['sin_justificar'] ? 'cb-kpi-alerta' : ''; ?>"><small>Sin justificar</small><strong><?php echo (int)$r['sin_justificar']; ?></strong><span>cambios sin orden de cambio</span></div>
+<div class="suite-kpis">
+    <div class="suite-kpi <?php echo $r['d_fin'] > 0 ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Fecha de término</small><strong><?php echo $signo((int)$r['d_fin']); ?> d</strong><span><?php echo $r['fin_base'] ? formatear_fecha($r['fin_base']) : '—'; ?> → <?php echo $r['fin_actual'] ? formatear_fecha($r['fin_actual']) : '—'; ?> en días hábiles</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Nodos movidos</small><strong><?php echo (int)$r['movida']; ?></strong><span><?php echo (int)$r['nueva']; ?> nueva(s) · <?php echo (int)$r['eliminada']; ?> eliminada(s)<?php if (!empty($r['total_subactividades'])): ?> · con subactividades<?php endif; ?></span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Justificadas</small><strong><?php echo (int)$r['oc'] + (int)$r['material']; ?></strong><span><?php echo (int)$r['oc']; ?> por orden de cambio · <?php echo (int)$r['material']; ?> por material</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $r['sin_justificar'] ? 'is-danger' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Sin justificar</small><strong><?php echo (int)$r['sin_justificar']; ?></strong><span>cambios sin orden de cambio</span></span>
+    </div>
 </div>
 
 <?php if (!empty($cmp['contrato'])): ?>
-<div class="card">
-    <h3>Contra el contrato</h3>
-    <p class="text-muted">Fechas contractuales tomadas de los documentos (Ensamblador). Un desfase positivo significa que el programa queda después de la fecha del contrato.</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-contract"></i> Contra el contrato</h3><p class="text-muted text-sm">Fechas contractuales tomadas de los documentos (Ensamblador). Un desfase positivo significa que el programa queda después de la fecha del contrato.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <table class="tabla">
         <thead><tr><th>Fecha contractual</th><th>Contrato</th><th>Línea base</th><th>Programa de hoy</th><th>Penalización</th></tr></thead>
         <tbody>
@@ -48,29 +60,33 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </div>
 <?php endif; ?>
 
 <?php if ($r['criticas_entran'] || $r['criticas_salen']): ?>
-<div class="card">
-    <h3>Cambios en la ruta crítica</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-route"></i> Cambios en la ruta crítica</h3></div>
+    <div class="suite-panel-cuerpo">
     <ul class="cb-ul">
         <?php foreach ($r['criticas_entran'] as $f): ?><li><span class="cb-tag cb-tag-critica">Entra</span> <?php echo s($f['codigo'] . ' · ' . $f['nombre']); ?></li><?php endforeach; ?>
         <?php foreach ($r['criticas_salen'] as $f): ?><li><span class="cb-tag cb-tag-ok">Sale</span> <?php echo s($f['codigo'] . ' · ' . $f['nombre']); ?></li><?php endforeach; ?>
     </ul>
+    </div>
 </div>
 <?php elseif (!$r['hay_ruta_critica']): ?>
 <p class="text-muted">La ruta crítica no se compara porque las dependencias de obra están apagadas o sin relaciones.</p>
 <?php endif; ?>
 
-<div class="card">
-    <div class="cb-barra-herr">
-        <h3>Programa: línea base vs actual</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab cb-panel-cab">
+        <h3><i class="fa-solid fa-chart-gantt"></i> Programa: línea base vs actual</h3>
         <a href="/lineas-base/comparar?proyecto=<?php echo $pid; ?>&id=<?php echo s($linea->id); ?><?php echo $soloCambios ? '&todas=1' : ''; ?>" class="btn btn-sm btn-ghost"><?php echo $soloCambios ? 'Mostrar todas las actividades' : 'Mostrar solo las que cambiaron'; ?></a>
     </div>
     <p class="cb-leyenda"><span class="cb-lg cb-lg-base"></span> línea base <span class="cb-lg cb-lg-act"></span> programa actual <span class="cb-lg cb-lg-crit"></span> en ruta crítica</p>
+    <div class="suite-panel-cuerpo">
     <?php if (empty($filas)): ?>
-        <p class="text-muted">El programa de hoy es igual a la línea base.</p>
+        <?php echo estado_vacio('fa-circle-check', 'El programa de hoy es igual a la línea base', 'No hay fechas movidas, actividades nuevas ni eliminadas con los filtros actuales.', null, null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
     <div class="cb-gantt" style="--dias: <?php echo $total; ?>">
         <div class="cb-gantt-eje"><span><?php echo formatear_fecha($min); ?></span><span><?php echo formatear_fecha($max); ?></span></div>
@@ -93,11 +109,13 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php if ($materiales): ?>
-<div class="card">
-    <h3>Materiales cuyas fechas cambiaron</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-boxes-stacked"></i> Materiales cuyas fechas cambiaron</h3></div>
+    <div class="suite-panel-cuerpo">
     <table class="tabla">
         <thead><tr><th>Material</th><th>Compra (base → hoy)</th><th>Entrega (base → hoy)</th><th class="hide-m">Cantidad</th></tr></thead>
         <tbody>
@@ -107,5 +125,6 @@ $causas = ['oc' => 'Orden de cambio', 'material' => 'Material en riesgo', 'sin_j
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </div>
 <?php endif; ?>

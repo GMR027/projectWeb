@@ -16,6 +16,11 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
     <div>
         <h2><i class="fa-solid fa-screwdriver-wrench"></i> <?php echo s(t('Punch list')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · pendientes de calidad con fecha de emisión, responsable, fecha límite y fotos antes/después. Haz una inspección con lista de verificación y cada falla se vuelve un pendiente.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-screwdriver-wrench"></i><b><?php echo (int)$analisis['pendientes']; ?></b> pendientes</span>
+            <span class="herr-chip<?php echo $analisis['vencidos'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-calendar-xmark"></i><b><?php echo (int)$analisis['vencidos']; ?></b> vencidos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-circle-check"></i><b><?php echo (int)$analisis['cerrados']; ?></b> cerrados</span>
+        </div>
     </div>
     <div class="inc-acciones">
         <?php if ($puede): ?><a class="btn btn-primary" href="/punch/inspeccion?proyecto=<?php echo $pid; ?>"><i class="fa-solid fa-list-check"></i> Nueva inspección</a><?php endif; ?>
@@ -25,16 +30,28 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 
-<div class="prg-resumen inc-resumen">
-    <div class="card"><small>Pendientes</small><strong><?php echo (int)$analisis['pendientes']; ?></strong><span>de <?php echo (int)$analisis['total']; ?></span></div>
-    <div class="card"><small>Vencidos</small><strong class="<?php echo $analisis['vencidos'] ? 'prg-peor' : ''; ?>"><?php echo (int)$analisis['vencidos']; ?></strong></div>
-    <div class="card"><small>Cerrados</small><strong class="prg-mejor"><?php echo (int)$analisis['cerrados']; ?></strong></div>
-    <div class="card"><small>Antigüedad media de los pendientes</small><strong><?php echo $analisis['edad'] !== null ? $analisis['edad'] . ' d' : '—'; ?></strong></div>
+<div class="suite-kpis">
+    <div class="suite-kpi <?php echo $analisis['pendientes'] ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Pendientes</small><strong><?php echo (int)$analisis['pendientes']; ?></strong><span>de <?php echo (int)$analisis['total']; ?> en total</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $analisis['vencidos'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Vencidos</small><strong><?php echo (int)$analisis['vencidos']; ?></strong><span>con la fecha límite pasada</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Cerrados</small><strong><?php echo (int)$analisis['cerrados']; ?></strong><span>verificados y cerrados</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Antigüedad media</small><strong><?php echo $analisis['edad'] !== null ? $analisis['edad'] . ' d' : '—'; ?></strong><span>de los pendientes abiertos</span></span>
+    </div>
 </div>
 
 <?php if ($analisis['total']): ?>
-<details class="card prg-seccion">
-    <summary><strong>Dónde se repiten los pendientes</strong> (para atacar la causa, no el síntoma)</summary>
+<details class="suite-details">
+    <summary><span><i class="fa-solid fa-chart-pie"></i> Dónde se repiten los pendientes</span><small class="text-muted">para atacar la causa, no el síntoma</small></summary>
     <div class="inf-gen" style="margin-top:1rem">
         <?php foreach (['categorias' => 'Por categoría', 'contratistas' => 'Por contratista', 'ubicaciones' => 'Por ubicación'] as $k => $tit): ?>
             <div><h4><?php echo $tit; ?></h4><table class="prg-tabla"><thead><tr><th></th><th class="num">Total</th><th class="num">Pendientes</th><th class="num">Graves</th></tr></thead><tbody>
@@ -45,7 +62,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
 <?php endif; ?>
 
 <?php if ($puede): ?>
-<details class="card prg-seccion" id="categorias-punch"><summary><strong>Categorías</strong> <small class="text-muted">· crea, renombra o elimina las categorías de los pendientes</small></summary>
+<details class="suite-details" id="categorias-punch"><summary><span><i class="fa-solid fa-tags"></i> Categorías</span><small class="text-muted">crea, renombra o elimina las categorías</small></summary>
     <?php $catsUso = \Classes\Catalogo::categoriasConUso((int)$pid, 'punch'); ?>
     <ul class="hist-lista" style="margin-top:1rem">
         <?php foreach ($catsUso as $nom => $inf): ?>
@@ -63,7 +80,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
         <button class="btn btn-primary" type="submit">Crear categoría</button></form>
     <form method="post" action="/punch/categorias/sugeridas" style="margin-top:.8rem"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><button class="btn btn-sm btn-ghost" type="submit">Cargar las categorías de las plantillas de inspección</button></form>
 </details>
-<details class="card prg-seccion"><summary><strong>Registrar un pendiente</strong></summary>
+<details class="suite-details" id="registrar-punch"><summary><span><i class="fa-solid fa-plus"></i> Registrar un pendiente</span><small class="text-muted">con foto «antes» y responsable</small></summary>
     <form method="post" action="/punch/guardar" enctype="multipart/form-data" class="inc-filtros" style="margin-top:1rem"<?php echo $desdeComparador ? ' id="punch-desde-comparador"' : ''; ?>><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <?php if ($desdeComparador): ?><p class="text-sm text-muted full m-0"><i class="fa-solid fa-code-compare"></i> Precargado desde una anotación del Comparador. Revisa y completa los datos antes de guardar.</p><?php endif; ?>
         <label class="flex-2">Pendiente <input type="text" name="titulo" required maxlength="200" value="<?php echo s($pre['titulo']); ?>"></label>
@@ -80,7 +97,7 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
         <button class="btn btn-primary" type="submit">Registrar</button></form></details>
 <?php endif; ?>
 
-<form method="get" action="/punch" class="card inc-filtros"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
+<form method="get" action="/punch" class="suite-toolbar"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <label>Estado <select name="estado" onchange="this.form.submit()"><option value="pendientes"<?php echo $filtros['estado'] === 'pendientes' ? ' selected' : ''; ?>>Pendientes</option><option value="">Todos</option><?php foreach (Punch::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $filtros['estado'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
     <label>Severidad <select name="severidad" onchange="this.form.submit()"><option value="">Todas</option><?php foreach (Punch::SEVERIDADES as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $filtros['severidad'] === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></label>
     <label>Contratista <select name="contratista" onchange="this.form.submit()"><option value="">Todos</option><?php foreach ($contratistas as $c): ?><option<?php echo $filtros['contratista'] === $c ? ' selected' : ''; ?>><?php echo s($c); ?></option><?php endforeach; ?></select></label>
@@ -88,8 +105,8 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
     <?php if ($filtros['contratista'] !== ''): ?><a class="btn btn-sm btn-ghost" href="/punch/pdf?proyecto=<?php echo $pid; ?>&contratista=<?php echo urlencode($filtros['contratista']); ?>">PDF de <?php echo s($filtros['contratista']); ?></a><?php endif; ?></form>
 
 <?php $herramienta = 'punch'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
-<?php if (!$lista): ?><div class="card prg-vacio"><h3>Sin pendientes con estos filtros</h3><p class="text-muted">Registra uno arriba o haz una inspección.</p></div>
-<?php else: $grupoActual = null; $dis = $diseno['por']; ?><ul class="inc-lista" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>><?php foreach ($lista as $x): ?>
+<?php if (!$lista): ?><div class="suite-panel"><?php echo estado_vacio('fa-screwdriver-wrench', 'Sin pendientes con estos filtros', 'Registra uno arriba o haz una inspección con lista de verificación.', $puede ? ['texto' => 'Registrar pendiente', 'url' => '#registrar-punch', 'icono' => 'fa-plus'] : null); ?></div>
+<?php else: $grupoActual = null; $dis = $diseno['por']; ?><div class="suite-panel"><div class="suite-panel-cab"><div><h3><i class="fa-solid fa-list"></i> Pendientes <span class="suite-chip"><?php echo count($lista); ?></span></h3><p class="text-muted text-sm">Ordenados por severidad y fecha límite.</p></div></div><div class="suite-panel-cuerpo"><ul class="inc-lista" <?php echo $cp['agrupar'] ? '' : pag_attr($proyecto); ?>><?php foreach ($lista as $x): ?>
     <?php if ($cp['agrupar'] && $grupoActual !== $cp['grupo'][(int)$x['id']]): $grupoActual = $cp['grupo'][(int)$x['id']]; ?><li class="cp-grupo-li"><strong><?php echo s($grupoActual); ?></strong></li><?php endif; ?>
     <li class="card inc-item sev-<?php echo $sevCls[$x['severidad']]; ?><?php echo in_array($x['estado'], ['cerrado', 'rechazado'], true) ? ' est-aceptada' : ''; ?>">
         <div class="inc-cab">
@@ -119,4 +136,14 @@ $desdeComparador = ($_GET['desde'] ?? '') === 'comparador';
             <?php foreach (['abierto' => [['en_proceso', 'Empezar']], 'en_proceso' => [['corregido', 'Marcar corregido']], 'corregido' => [['cerrado', 'Verificado: cerrar'], ['abierto', 'Reabrir']]][$x['estado']] as [$e, $n]): ?>
                 <form class="inline" method="post" action="/punch/estado"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$x['id']; ?>"><input type="hidden" name="estado" value="<?php echo $e; ?>"><button class="btn btn-sm <?php echo $e === 'cerrado' ? 'btn-primary' : 'btn-ghost'; ?>" type="submit"><?php echo $n; ?></button></form>
             <?php endforeach; ?></div><?php endif; ?>
-    </li><?php endforeach; ?></ul><?php endif; ?>
+    </li><?php endforeach; ?></ul></div></div><?php endif; ?>
+
+<?php if ($puede): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var b = document.querySelector('.suite-panel .estado-vacio .btn-primary');
+    var d = document.getElementById('registrar-punch');
+    if (b && d) b.addEventListener('click', function (e) { e.preventDefault(); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+});
+</script>
+<?php endif; ?>

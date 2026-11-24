@@ -3,9 +3,11 @@
 use Classes\Seguridad;
 ?>
 <?php if ($puede && !$atsVer): ?>
-<form method="POST" action="/seguridad/ats" class="card co-form">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-clipboard-list"></i> Nuevo ATS</h3><p class="text-muted text-sm">Análisis de riesgo de la tarea antes de iniciar el trabajo de alto riesgo.</p></div></div>
+    <div class="suite-panel-cuerpo">
+    <form method="POST" action="/seguridad/ats" class="co-form">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-    <h3><i class="fa-solid fa-clipboard-list"></i> Nuevo ATS</h3>
     <div class="co-campos">
         <label>Actividad<select name="actividad_id"><option value="0">— Sin actividad —</option><?php echo opciones_actividades($actividades); ?></select></label>
         <label>Fecha<input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required></label>
@@ -18,7 +20,9 @@ use Classes\Seguridad;
         <label>Estado<select name="estado"><option value="borrador">Borrador</option><option value="firmado">Firmado</option></select></label>
     </div>
     <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar ATS</button>
-</form>
+    </form>
+    </div>
+</div>
 <?php endif; ?>
 
 <?php if ($atsPendientes): ?>
@@ -28,12 +32,15 @@ use Classes\Seguridad;
 <?php endif; ?>
 
 <?php if ($atsVer): $a = $atsVer; ?>
-<div class="card" style="margin-bottom:1.4rem">
+<div class="suite-panel" style="margin-bottom:1.4rem">
+    <div class="suite-panel-cab">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
         <div><h3 class="m-0">ATS · <?php echo s($a['act_codigo'] ? $a['act_codigo'] . ' · ' . $a['act_nombre'] : 'Sin actividad'); ?></h3><p class="text-muted text-sm m-0"><?php echo s($fmt($a['fecha'])); ?> · <?php echo s(Seguridad::ATS_ESTADOS[$a['estado']] ?? $a['estado']); ?> · <?php echo count($a['firmas_lista']); ?>/<?php echo (int)$a['participantes']; ?> firmas</p></div>
         <a class="btn btn-sm btn-ghost" href="/seguridad?proyecto=<?php echo $pid; ?>&tab=ats">Cerrar</a>
     </div>
-    <div class="rg-detalle-grid" style="margin-top:1rem">
+    </div>
+    <div class="suite-panel-cuerpo">
+    <div class="rg-detalle-grid">
         <div><small>Trabajo</small><b><?php echo nl2br(s($a['trabajo'])); ?></b></div>
         <div><small>Peligros</small><b><?php echo nl2br(s($a['peligros'])); ?></b></div>
         <div><small>Controles</small><b><?php echo nl2br(s($a['controles'])); ?></b></div>
@@ -48,14 +55,17 @@ use Classes\Seguridad;
         <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-signature"></i> Agregar firma</button>
     </form>
     <?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>
 
-<div class="card">
-    <h3><i class="fa-solid fa-clipboard-list"></i> ATS registrados</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-clipboard-list"></i> ATS registrados <span class="suite-chip"><?php echo count($ats); ?></span></h3></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$ats): ?><p class="text-muted">Aún no hay ATS. Crea uno antes de la tarea de alto riesgo.</p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla"><thead><tr><th>Fecha</th><th>Actividad</th><th>Trabajo</th><th>Firmas</th><th>Estado</th><th></th></tr></thead><tbody>
         <?php foreach ($ats as $a): ?><tr><td class="mono"><?php echo s($fmt($a['fecha'])); ?></td><td class="text-sm"><?php echo s($a['act_codigo'] ? $a['act_codigo'] . ' · ' . $a['act_nombre'] : '—'); ?></td><td><?php echo s(mb_substr((string)$a['trabajo'], 0, 120)); ?></td><td class="num"><?php echo (int)$a['firmas']; ?>/<?php echo (int)$a['participantes']; ?></td><td><span class="badge badge-<?php echo $a['estado'] === 'firmado' ? 'cliente' : ($a['estado'] === 'cerrado' ? 'visitante' : 'admin'); ?>"><?php echo s(Seguridad::ATS_ESTADOS[$a['estado']] ?? $a['estado']); ?></span></td><td><a class="btn btn-xs btn-ghost" href="/seguridad?proyecto=<?php echo $pid; ?>&tab=ats&ats=<?php echo (int)$a['id']; ?>" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye"></i></a></td></tr><?php endforeach; ?>
     </tbody></table></div>
     <?php endif; ?>
+    </div>
 </div>

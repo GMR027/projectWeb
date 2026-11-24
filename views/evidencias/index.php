@@ -3,19 +3,51 @@ $meses = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'a
 $fechaLarga = function (string $f) use ($meses) { $t = strtotime($f); return date('d', $t) . ' de ' . $meses[(int)date('n', $t)] . ' de ' . date('Y', $t); };
 $q = fn(array $extra = []) => '/evidencias?' . http_build_query(array_filter(array_merge(['proyecto' => $proyecto->id], $filtros, $extra), fn($v) => $v !== '' && $v !== 0 && $v !== null));
 $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . ' · ' . $acts[$id]['actividad']->nombre : null;
+$nPaginas = max(1, (int)ceil($totalDias / max(1, $porPagina)));
+$ultimaFecha = $dias ? array_key_first($dias) : null;
+$actsConFotos = [];
+foreach ($dias as $g) {
+    foreach ($g['reportes'] ?? [] as $r) foreach ($r['acts'] as $aid) $actsConFotos[$aid] = true;
+    foreach ($g['subidas'] ?? [] as $e) if ($e->actividad_id) $actsConFotos[(int)$e->actividad_id] = true;
+}
 ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-camera-retro"></i> <?php echo s(t('Evidencias')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · línea de tiempo con las fotos de los reportes diarios y las subidas a una actividad</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · línea de tiempo con las fotos de los reportes diarios y las subidas a una actividad.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-camera"></i><b><?php echo (int)$totalFotos; ?></b> foto<?php echo (int)$totalFotos === 1 ? '' : 's'; ?></span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-calendar-days"></i><b><?php echo (int)$totalDias; ?></b> día<?php echo (int)$totalDias === 1 ? '' : 's'; ?> con evidencia</span>
+            <?php if ($ultimaFecha): ?><span class="herr-chip herr-chip-suave"><i class="fa-solid fa-clock-rotate-left"></i> última: <b><?php echo s(fecha_corta_es($ultimaFecha)); ?></b></span><?php endif; ?>
+        </div>
     </div>
     <?php if ($puedeEditar): ?><button type="button" class="btn btn-primary" id="ev-subir-btn"><i class="fa-solid fa-camera"></i> <?php echo s(t('Agregar evidencia')); ?></button><?php endif; ?>
 </div>
 
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Fotos</small><strong><?php echo (int)$totalFotos; ?></strong><span>en la línea de tiempo</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Días con evidencia</small><strong><?php echo (int)$totalDias; ?></strong><span>fechas con al menos una foto</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Actividades</small><strong><?php echo count($actsConFotos); ?></strong><span>vinculadas a las fotos de esta página</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Página</small><strong><?php echo (int)$pagina; ?> / <?php echo $nPaginas; ?></strong><span><?php echo (int)$porPagina; ?> días por página</span></span>
+    </div>
+</div>
+
 <?php if ($puedeEditar): ?>
-<div class="card" id="ev-subir" hidden>
-    <h3>Nueva evidencia</h3>
-    <form method="POST" action="/evidencias/subir" enctype="multipart/form-data" class="formulario">
+<div class="suite-panel" id="ev-subir" hidden>
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-camera"></i> Nueva evidencia</h3></div>
+    <div class="suite-panel-cuerpo">
+    <form method="POST" action="/evidencias/subir" enctype="multipart/form-data" class="formulario suite-form">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div class="form-grid">
             <div class="campo campo-full"><label for="ev-act">Actividad *</label>
@@ -35,10 +67,18 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> Subir</button>
     </form>
+    </div>
 </div>
 <?php endif; ?>
 
-<div class="card hide-m">
+<div class="suite-panel hide-m">
+    <div class="suite-panel-cab">
+        <div>
+            <h3><i class="fa-solid fa-filter"></i> Filtrar evidencias</h3>
+            <p class="text-muted text-sm"><?php echo (int)$totalFotos; ?> foto(s) en <?php echo (int)$totalDias; ?> día(s) con los filtros actuales.</p>
+        </div>
+    </div>
+    <div class="suite-panel-cuerpo">
     <form method="GET" action="/evidencias" class="ev-filtros">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <div><label class="text-sm text-muted"><?php echo s(t('Partida')); ?></label><br>
@@ -58,11 +98,13 @@ $nombreAct = fn(int $id) => isset($acts[$id]) ? $acts[$id]['partida']->codigo . 
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> <?php echo s(t('Filtrar')); ?></button>
         <a href="/evidencias?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><?php echo s(t('Limpiar')); ?></a>
     </form>
-    <p class="text-muted text-sm" style="margin-top:1rem"><?php echo (int)$totalFotos; ?> foto(s) en <?php echo (int)$totalDias; ?> día(s)</p>
+    </div>
 </div>
 
 <?php if (!$dias): ?>
-    <div class="card"><p class="text-muted">No hay evidencias con estos filtros. Las fotos de los <a href="/reportes?proyecto=<?php echo (int)$proyecto->id; ?>">reportes diarios</a> aparecen aquí solas<?php echo $puedeEditar ? ', y puedes subir más con «Agregar evidencia»' : ''; ?>.</p></div>
+    <div class="suite-panel">
+        <?php echo estado_vacio('fa-camera-retro', 'No hay evidencias con estos filtros', 'Las fotos de los reportes diarios aparecen aquí solas; también puedes subir fotos a una actividad.', ['texto' => 'Ver reportes diarios', 'url' => '/reportes?proyecto=' . (int)$proyecto->id, 'icono' => 'fa-clipboard-list']); ?>
+    </div>
 <?php else: ?>
 <div class="ev-linea" <?php echo pag_attr($proyecto); ?>>
     <?php foreach ($dias as $fecha => $g): $n = array_sum(array_map(fn($r) => count($r['fotos']), $g['reportes'] ?? [])) + count($g['subidas'] ?? []); ?>

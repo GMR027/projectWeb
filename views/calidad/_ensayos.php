@@ -4,9 +4,9 @@ use Classes\CalidadCompleta;
 $m = fn($v) => '$' . number_format((float)$v, 2);
 ?>
 <?php if ($puedeEditar): ?>
-<form method="POST" action="/calidad/ensayo" class="card co-form">
+<form method="POST" action="/calidad/ensayo" class="suite-panel suite-form co-form" style="padding:1.2rem 1.4rem">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-    <h3><i class="fa-solid fa-flask"></i> Nuevo ensayo</h3>
+    <h3 style="margin:0 0 .8rem"><i class="fa-solid fa-flask"></i> Nuevo ensayo</h3>
     <div class="co-campos">
         <label>Tipo de ensayo *<input type="text" name="tipo" maxlength="100" required placeholder="Resistencia, hermeticidad, densidad…"></label>
         <label>Actividad<select name="actividad_id"><option value="0">— Sin actividad —</option><?php echo opciones_actividades($actividades, 0); ?></select></label>
@@ -26,8 +26,9 @@ $m = fn($v) => '$' . number_format((float)$v, 2);
 </form>
 <?php endif; ?>
 
-<div class="card">
-    <h3><i class="fa-solid fa-flask"></i> Ensayos registrados</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-flask"></i> Ensayos registrados <span class="suite-chip"><?php echo count($ensayos); ?></span></h3><p class="text-muted text-sm">Resultados de laboratorio y certificados del Archivo.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$ensayos): ?><p class="text-muted">Aún no hay ensayos. Registra el primero con el formulario de arriba.</p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Tipo / muestra</th><th>Actividad</th><th>Fechas</th><th>Laboratorio / norma</th><th>Resultado</th><th>Certificado</th><th></th></tr></thead>
@@ -46,4 +47,5 @@ $m = fn($v) => '$' . number_format((float)$v, 2);
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>

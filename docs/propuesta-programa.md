@@ -84,3 +84,33 @@ balance (takt)** y **vPlan**, incluyendo sus ventanas, paneles y formularios.
 
 Para revisar: `npx gulp`, abrir cada herramienta con un proyecto con datos y alternar tema
 claro/oscuro, móvil, los modos de vPlan y los modales de Dependencias/notas/materiales.
+
+## Fase 3: herramientas de campo y seguimiento
+
+La misma capa visual se aplicó a **Calendario**, **Líneas base**, **Tipo de obra** (`/plantillas`),
+**Reporte diario**, **Bitácora**, **Minutas**, **Evidencias**, **Seguridad**, **Punch list**,
+**Calidad**, **RFI** y **Mapa de avance**.
+
+- **Capa compartida** `src/scss/componentes/_suite.scss`: se amplió la lista de `body[data-vista^=…]`
+  y se sumaron pestañas de herramienta (`.centro-ia-tabs`), chips de filtro (`.cb-chip`) y secciones
+  plegables (`.suite-details`). El hero, los KPIs, paneles, leyendas, estados vacíos y formularios
+  siguen saliendo de la misma hoja.
+- **Hoja de página** `src/scss/paginas/_campo.scss` (se carga con `css_paginas_de_vista()` en las
+  vistas mapeadas): rejilla del calendario, tarjetas de líneas base, ranking de tipo de obra,
+  línea de tiempo de evidencias, tarjetas de permisos y punch, y detalles de mapa de avance.
+- **Calendario**: KPIs de días hábiles, actividades y festivos; barra de mes con navegación y
+  «Crear actividad»; panel del mes con leyenda de estados; tabla del mes y estado vacío.
+- **Líneas base**: KPIs de fotos, actividades y fin programado; formulario de captura en panel;
+  lista de líneas base y comparación con KPIs de desfase y Gantt base vs actual.
+- **Tipo de obra**: identificación automática con barras de coincidencia, catálogo de tipos,
+  secuencia de etapas, submittals, materiales críticos y base de partidas.
+- **Reportes, bitácora, minutas y evidencias**: hero con contexto, KPIs, filtros en barra,
+  paneles de lista y línea de tiempo de fotos con tarjetas legibles.
+- **Seguridad, punch y calidad**: KPIs de riesgo con semáforo, pestañas, formularios plegables,
+  tarjetas de permisos/pendientes y paneles de detenidas, liberaciones, ensayos y expedientes.
+- **RFI y mapa de avance**: KPIs de vencidos y bloqueos, filtros por estado, paneles de solicitudes,
+  capas por lámina y comparación planos vs programa.
+
+**Sin cambios de rutas, permisos, selectores ni esquema.** Las vistas conservan sus formularios,
+IDs, APIs y comportamiento; el cambio es de marcado y estilos. Para revisar: `npx gulp`, abrir cada
+herramienta con un proyecto con datos y probar escritorio/móvil y tema claro/oscuro.

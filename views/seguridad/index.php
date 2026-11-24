@@ -9,20 +9,45 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-helmet-safety"></i> <?php echo s(t('Seguridad y permisos de trabajo')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · permisos de trabajo (altura, caliente, espacios confinados, excavación, eléctrico, izaje) con su lista de medidas y vigencia, y registro de incidentes. El sistema avisa qué actividades próximas exigen permiso y cuáles no lo tienen. <strong>Es un registro de apoyo: no sustituye la firma ni el cumplimiento de la normativa aplicable.</strong></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · permisos de trabajo, medidas de control y registro de incidentes. El sistema avisa qué actividades próximas exigen permiso y cuáles no lo tienen. <strong>Es un registro de apoyo: no sustituye la firma ni el cumplimiento de la normativa aplicable.</strong></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-id-card"></i><b><?php echo (int)$resumen['vigentes']; ?></b> permisos vigentes</span>
+            <span class="herr-chip<?php echo !empty($resumen['ats_pendientes']) ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-clipboard-list"></i><b><?php echo (int)($resumen['ats_pendientes'] ?? 0); ?></b> ATS pendientes</span>
+            <span class="herr-chip<?php echo $resumen['incidentes_abiertos'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-triangle-exclamation"></i><b><?php echo (int)$resumen['incidentes_abiertos']; ?></b> incidentes abiertos</span>
+        </div>
     </div>
     <?php if (is_admin()): ?><div class="inc-acciones"><a href="/informes-ia?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-file-lines"></i> Informes de IA</a></div><?php endif; ?>
 </div>
-<?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
+<?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>" role="status"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 
-<div class="prg-resumen inc-resumen">
-    <div class="card"><small>Permisos vigentes</small><strong><?php echo (int)$resumen['vigentes']; ?></strong></div>
-    <div class="card"><small>Por aprobar</small><strong><?php echo (int)$resumen['por_aprobar']; ?></strong></div>
-    <div class="card"><small>Vencidos sin cerrar</small><strong class="<?php echo $resumen['vencidos'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['vencidos']; ?></strong></div>
-    <div class="card"><small>Actividades (7 días) sin permiso</small><strong class="<?php echo $resumen['faltan'] ? 'prg-peor' : ''; ?>"><?php echo (int)$resumen['faltan']; ?></strong></div>
-    <div class="card"><small>Incidentes abiertos</small><strong><?php echo (int)$resumen['incidentes_abiertos']; ?></strong></div>
-    <div class="card"><small>ATS pendientes (7 días)</small><strong class="<?php echo !empty($resumen['ats_pendientes']) ? 'prg-peor' : ''; ?>"><?php echo (int)($resumen['ats_pendientes'] ?? 0); ?></strong></div>
+<?php if ($tab !== 'indicadores'): ?>
+<div class="suite-kpis">
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-id-card" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Permisos vigentes</small><strong><?php echo (int)$resumen['vigentes']; ?></strong><span>aprobados y dentro de vigencia</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['por_aprobar'] ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Por aprobar</small><strong><?php echo (int)$resumen['por_aprobar']; ?></strong><span>solicitudes esperando revisión</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['vencidos'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Vencidos sin cerrar</small><strong><?php echo (int)$resumen['vencidos']; ?></strong><span>permisos que ya pasaron su fecha</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['faltan'] ? 'is-danger' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Actividades sin permiso</small><strong><?php echo (int)$resumen['faltan']; ?></strong><span>de alto riesgo en los próximos 7 días</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['incidentes_abiertos'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-bell" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Incidentes abiertos</small><strong><?php echo (int)$resumen['incidentes_abiertos']; ?></strong><span>en investigación o sin cierre</span></span>
+    </div>
+    <div class="suite-kpi <?php echo !empty($resumen['ats_pendientes']) ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>ATS pendientes</small><strong><?php echo (int)($resumen['ats_pendientes'] ?? 0); ?></strong><span>tareas de alto riesgo sin ATS (7 días)</span></span>
+    </div>
 </div>
+<?php endif; ?>
 
 <nav class="centro-ia-tabs" aria-label="Seguridad">
     <?php foreach (['permisos' => ['fa-id-card', 'Permisos'], 'ats' => ['fa-clipboard-list', 'ATS'], 'incidentes' => ['fa-triangle-exclamation', 'Incidentes'], 'indicadores' => ['fa-chart-line', 'Indicadores']] as $k => [$ic, $nom]): ?>
@@ -32,31 +57,46 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
 
 <?php if ($tab === 'permisos'): ?>
 <?php if (!empty($climaPermisos)): ?>
-<div class="card prg-seccion">
-    <h3><i class="fa-solid fa-cloud-showers-heavy"></i> Permisos en días de lluvia o viento (próximos 7 días)</h3>
-    <p class="text-muted text-sm">Según el pronóstico del proyecto, estos días no son buenos para trabajos en altura, izaje, excavación, eléctricos o en caliente. Revisa si conviene reprogramar o suspender el permiso.</p>
-    <div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Fecha</th><th>Pronóstico</th><th>Permisos vigentes ese día</th></tr></thead><tbody>
-        <?php foreach ($climaPermisos as $c): ?>
-            <tr><td class="fecha"><?php echo s($fmt($c['fecha'])); ?></td><td><?php echo s(ucfirst($c['condicion'])); ?> (<?php echo s($c['precip']); ?> mm · <?php echo s($c['viento']); ?> km/h)</td>
-                <td><?php echo s(implode('; ', array_map(fn($p) => ($nTipos[$p['tipo']] ?? $p['tipo']) . ' — ' . mb_substr($p['titulo'], 0, 60) . ($p['estado'] === 'solicitado' ? ' (por aprobar)' : ''), $c['permisos']))); ?></td></tr>
-        <?php endforeach; ?></tbody></table></div>
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div>
+            <h3><i class="fa-solid fa-cloud-showers-heavy"></i> Permisos en días de lluvia o viento</h3>
+            <p class="text-muted text-sm">Próximos 7 días. Revisa si conviene reprogramar o suspender el permiso.</p>
+        </div>
+        <span class="suite-chip is-warning"><i class="fa-solid fa-cloud-rain"></i> clima adverso</span>
+    </div>
+    <div class="suite-panel-cuerpo">
+        <div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Fecha</th><th>Pronóstico</th><th>Permisos vigentes ese día</th></tr></thead><tbody>
+            <?php foreach ($climaPermisos as $c): ?>
+                <tr><td class="fecha"><?php echo s($fmt($c['fecha'])); ?></td><td><?php echo s(ucfirst($c['condicion'])); ?> (<?php echo s($c['precip']); ?> mm · <?php echo s($c['viento']); ?> km/h)</td>
+                    <td><?php echo s(implode('; ', array_map(fn($p) => ($nTipos[$p['tipo']] ?? $p['tipo']) . ' — ' . mb_substr($p['titulo'], 0, 60) . ($p['estado'] === 'solicitado' ? ' (por aprobar)' : ''), $c['permisos']))); ?></td></tr>
+            <?php endforeach; ?></tbody></table></div>
+    </div>
 </div>
 <?php endif; ?>
 
-<div class="card prg-seccion">
-    <h3>Permisos que exigen las actividades de los próximos 14 días</h3>
-    <?php if (!$requeridos): ?><p class="text-muted">Ninguna actividad próxima parece requerir un permiso especial (se detecta por palabras de su nombre: azotea, soldadura, zanja, tablero, grúa…).</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div>
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Permisos que exigen las actividades próximas</h3>
+            <p class="text-muted text-sm">Próximos 14 días. Se detecta por palabras del nombre: azotea, soldadura, zanja, tablero, grúa…</p>
+        </div>
+        <span class="suite-chip <?php echo $requeridos ? 'is-warning' : ''; ?>"><?php echo count($requeridos); ?> actividad<?php echo count($requeridos) === 1 ? '' : 'es'; ?></span>
+    </div>
+    <div class="suite-panel-cuerpo">
+    <?php if (!$requeridos): ?><p class="text-muted">Ninguna actividad próxima parece requerir un permiso especial.</p>
     <?php else: ?><div class="prg-tabla-wrap"><table class="prg-tabla"><thead><tr><th>Actividad</th><th>Inicio</th><th>Permiso requerido</th><th>Situación</th></tr></thead><tbody>
         <?php foreach ($requeridos as $r): $a = $r['actividad']; ?>
             <tr><td><strong><?php echo s($a['codigo']); ?></strong> <?php echo s(mb_substr($a['nombre'], 0, 70)); ?></td><td class="fecha"><?php echo s($fmt($a['fecha_inicio'])); ?></td><td><?php echo s($nTipos[$r['tipo']]); ?></td>
                 <td><span class="hist-ev ev-<?php echo $r['estado'] === 'ok' ? 'aplicado' : ($r['estado'] === 'tramite' ? 'reabierto' : 'rechazado'); ?>"><?php echo ['ok' => 'Con permiso aprobado', 'tramite' => 'En trámite', 'falta' => 'Falta el permiso'][$r['estado']]; ?></span>
                     <?php if ($r['estado'] === 'falta' && $puede): ?> <button type="button" class="btn btn-sm btn-ghost" data-nuevo="<?php echo s(json_encode(['tipo' => $r['tipo'], 'actividad' => (int)$a['id'], 'titulo' => $nTipos[$r['tipo']] . ': ' . mb_substr($a['nombre'], 0, 120), 'desde' => $a['fecha_inicio'], 'hasta' => $a['fecha_fin']], JSON_UNESCAPED_UNICODE)); ?>">Crear permiso</button><?php endif; ?></td></tr>
         <?php endforeach; ?></tbody></table></div><?php endif; ?>
+    </div>
 </div>
 
 <?php if ($puede): ?>
-<details class="card prg-seccion" id="nuevo-permiso">
-    <summary><strong>Solicitar un permiso de trabajo</strong></summary>
+<details class="suite-details" id="nuevo-permiso">
+    <summary><span><i class="fa-solid fa-id-card"></i> Solicitar un permiso de trabajo</span><small class="text-muted">medidas, vigencia y responsable</small></summary>
     <form method="post" action="/seguridad/permiso" class="inc-filtros" style="margin-top:1rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Tipo <select name="tipo" id="p-tipo"><?php foreach ($nTipos as $k => $n): ?><option value="<?php echo s($k); ?>"><?php echo s($n); ?></option><?php endforeach; ?></select></label>
@@ -87,8 +127,8 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
     })();
 </script>
 
-<details class="card prg-seccion" id="tipos-permiso">
-    <summary><strong>Tipos de permiso</strong> <small class="text-muted">· <?php echo count($tipos); ?> disponibles (los fijos no se editan; crea los tuyos)</small></summary>
+<details class="suite-details" id="tipos-permiso">
+    <summary><span><i class="fa-solid fa-layer-group"></i> Tipos de permiso</span><small class="text-muted"><?php echo count($tipos); ?> disponibles · los fijos no se editan</small></summary>
     <ul class="hist-lista" style="margin-top:1rem">
         <?php foreach ($tipos as $k => $t): ?><li><strong><?php echo s($t['nombre']); ?></strong> <small class="text-muted">· <?php echo empty($t['propio']) ? 'fijo' : 'propio'; ?> · <?php echo count($t['medidas']); ?> medidas<?php echo $t['palabras'] ? ' · detecta: ' . s(implode(', ', array_slice($t['palabras'], 0, 6))) . (count($t['palabras']) > 6 ? '…' : '') : ''; ?></small>
             <?php if (!empty($t['propio'])): ?><form class="inline" method="post" action="/seguridad/tipo/eliminar" data-confirmar="¿Eliminar este tipo de permiso?"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><input type="hidden" name="id" value="<?php echo (int)$t['id']; ?>"><button class="btn btn-sm btn-ghost" type="submit"><i class="fa-solid fa-trash"></i></button></form><?php endif; ?></li><?php endforeach; ?>
@@ -101,9 +141,12 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
 </details>
 <?php endif; ?>
 
-<div class="card prg-seccion">
-    <div class="prg-cab"><h3>Permisos</h3>
-        <form class="m-0" method="get" action="/seguridad"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><select name="estado" aria-label="Filtrar por estado" onchange="this.form.submit()"><option value="">Todos</option><?php foreach (Seguridad::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $estado === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></form></div>
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div><h3><i class="fa-solid fa-id-card"></i> Permisos <span class="suite-chip"><?php echo count($permisos); ?></span></h3><p class="text-muted text-sm">Medidas verificadas, vigencia y firmas de cada permiso.</p></div>
+        <form class="m-0" method="get" action="/seguridad"><input type="hidden" name="proyecto" value="<?php echo $pid; ?>"><select name="estado" aria-label="Filtrar por estado" onchange="this.form.submit()"><option value="">Todos</option><?php foreach (Seguridad::ESTADOS as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $estado === $k ? ' selected' : ''; ?>><?php echo s($n); ?></option><?php endforeach; ?></select></form>
+    </div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$permisos): ?><p class="text-muted">No hay permisos con este filtro.</p><?php endif; ?>
     <ul class="inc-lista">
         <?php foreach ($permisos as $x): ?>
@@ -127,6 +170,7 @@ $catalogo = array_map(fn($t) => $t['medidas'], $tipos);
             </li>
         <?php endforeach; ?>
     </ul>
+    </div>
 </div>
 
 <?php elseif ($tab === 'ats'): ?>

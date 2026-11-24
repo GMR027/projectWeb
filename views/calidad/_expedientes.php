@@ -1,9 +1,9 @@
 <?php
 /** Expedientes de calidad por partida. Variables: $proyecto, $pid, $expedientes, $puedeEditar */
 ?>
-<div class="card">
-    <h3><i class="fa-solid fa-folder-open"></i> Expedientes de calidad por partida</h3>
-    <p class="text-muted text-sm">Cada expediente reúne los ITP, puntos, ensayos y no conformidades de la partida. Se puede consultar vivo o cerrar en un PDF firmado que queda congelado.</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-folder-open"></i> Expedientes de calidad por partida</h3><p class="text-muted text-sm">Reúne los ITP, puntos, ensayos y no conformidades de la partida; se puede cerrar en un PDF firmado.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$expedientes): ?><p class="text-muted">Aún no hay partidas para expedientes.</p><?php else: ?>
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Partida</th><th class="num">Planes</th><th class="num">Puntos</th><th class="num">Ensayos</th><th class="num">NC abiertas</th><th>Estado</th><th></th></tr></thead>
@@ -35,4 +35,5 @@
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>

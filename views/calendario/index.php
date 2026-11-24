@@ -1,82 +1,101 @@
-<?php $puedeGestionar = puede_gestionar_proyecto($proyecto); ?>
+<?php
+$puedeGestionar = puede_gestionar_proyecto($proyecto);
+$meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+$mes = (int)date('n', strtotime($mesActual . '-01'));
+$anio = date('Y', strtotime($mesActual . '-01'));
+$mesAnterior = date('Y-m', strtotime($mesActual . '-01 -1 month'));
+$mesSiguiente = date('Y-m', strtotime($mesActual . '-01 +1 month'));
+$mesHoy = date('Y-m');
+
+$primerDia = new DateTime($mesActual . '-01');
+$ultimoDia = clone $primerDia;
+$ultimoDia->modify('last day of this month');
+$diasEnMes = (int)$ultimoDia->format('d');
+$primerDiaSemana = (int)$primerDia->format('N');
+
+$actividadesPorDia = [];
+foreach ($actividades as $item) {
+    foreach ($item['dias_en_mes'] as $dia) $actividadesPorDia[$dia][] = $item;
+}
+$festivosMap = [];
+foreach ($festivos as $f) $festivosMap[$f->fecha] = $f;
+
+$diasHabiles = 0;
+$nFestivosMes = 0;
+for ($dia = 1; $dia <= $diasEnMes; $dia++) {
+    $fecha = $mesActual . '-' . str_pad($dia, 2, '0', STR_PAD_LEFT);
+    if ($calendario->esHabil($fecha)) $diasHabiles++;
+    if (isset($festivosMap[$fecha])) $nFestivosMes++;
+}
+$nActividades = count(array_filter($actividades, fn($i) => ($i['tipo'] ?? '') === 'actividad'));
+$nSubactividades = count($actividades) - $nActividades;
+$nCompletadas = count(array_filter($actividades, fn($i) => $i['actividad']->status === 'completada'));
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-calendar-days"></i> Calendario del Proyecto</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s($proyecto->codigo); ?></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s($proyecto->codigo); ?> · <?php echo $meses[$mes]; ?> <?php echo $anio; ?></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-briefcase"></i><b><?php echo $diasHabiles; ?></b> días hábiles</span>
+            <span class="herr-chip<?php echo $nFestivosMes ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-ban"></i><b><?php echo $nFestivosMes; ?></b> festivo<?php echo $nFestivosMes === 1 ? '' : 's'; ?></span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-list-check"></i><b><?php echo $nActividades; ?></b> actividades<?php echo $nSubactividades ? ' · ' . $nSubactividades . ' sub' : ''; ?></span>
+        </div>
     </div>
-    <div>
+    <div class="la-controles">
         <?php if ($puedeGestionar && !is_visitante()): ?><a href="/compartir?proyecto=<?php echo s($proyecto->id); ?>#calendario" class="btn btn-ghost" title="Suscribe tu celular al calendario del proyecto (.ics)"><i class="fa-solid fa-calendar-plus"></i> Suscribir (.ics)</a><?php endif; ?>
-        <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">
-            <i class="fa-solid fa-gear"></i> Ajustes
-        </a>
-        <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">
-            <i class="fa-solid fa-arrow-left"></i> Programa
-        </a>
+        <a href="/ajustes?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-gear"></i> Ajustes</a>
+        <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Programa</a>
     </div>
 </div>
 
-<div class="card">
-    <div class="calendario-header">
-        <h3 class="card-titulo">
-            <?php
-            $meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            $mes = (int)date('n', strtotime($mesActual . '-01'));
-            $anio = date('Y', strtotime($mesActual . '-01'));
-            echo $meses[$mes] . ' ' . $anio;
-            ?>
-        </h3>
-        <div class="calendario-nav">
-            <?php
-            $mesAnterior = date('Y-m', strtotime($mesActual . '-01 -1 month'));
-            $mesSiguiente = date('Y-m', strtotime($mesActual . '-01 +1 month'));
-            $mesHoy = date('Y-m');
-            ?>
-            <?php if ($puedeGestionar): ?>
-                <button type="button" class="btn btn-sm btn-primary" id="cal-crear-actividad" data-url="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>&modal=1">
-                    <i class="fa-solid fa-plus"></i> Crear Actividad
-                </button>
-            <?php endif; ?>
-            <form method="get" action="/calendario" style="display:inline-flex;align-items:center;gap:.4rem">
-                <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
-                <input type="hidden" name="mes" value="<?php echo s($mesActual); ?>">
-                <input type="hidden" name="sub" value="0">
-                <label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?> onchange="this.form.submit()"> Subactividades</label>
-            </form>
-            <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesAnterior); ?>" class="btn btn-sm btn-ghost">
-                <i class="fa-solid fa-chevron-left"></i> Anterior
-            </a>
-            <?php if ($mesActual !== $mesHoy): ?>
-                <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-secondary">Hoy</a>
-            <?php endif; ?>
-            <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesSiguiente); ?>" class="btn btn-sm btn-ghost">
-                Siguiente <i class="fa-solid fa-chevron-right"></i>
-            </a>
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Días hábiles</small><strong><?php echo $diasHabiles; ?></strong><span>en <?php echo $meses[$mes]; ?> según la jornada del proyecto</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Actividades del mes</small><strong><?php echo $nActividades; ?></strong><span><?php echo $nSubactividades; ?> subactividad<?php echo $nSubactividades === 1 ? '' : 'es'; ?> incluidas</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nCompletadas === $nActividades && $nActividades ? 'is-success' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Completadas</small><strong><?php echo $nCompletadas; ?></strong><span>de <?php echo $nActividades; ?> actividad<?php echo $nActividades === 1 ? '' : 'es'; ?></span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nFestivosMes ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-ban" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Festivos</small><strong><?php echo $nFestivosMes; ?></strong><span>días no laborables en el mes</span></span>
+    </div>
+</div>
+
+<div class="cal-toolbar">
+    <div class="cal-toolbar-mes"><i class="fa-regular fa-calendar"></i> <?php echo $meses[$mes]; ?> <small><?php echo $anio; ?></small></div>
+    <div class="cal-toolbar-grupo">
+        <form method="get" action="/calendario" class="m-0">
+            <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
+            <input type="hidden" name="mes" value="<?php echo s($mesActual); ?>">
+            <input type="hidden" name="sub" value="0">
+            <label class="campo-check"><input type="checkbox" name="sub" value="1"<?php echo !empty($mostrarSub) ? ' checked' : ''; ?> onchange="this.form.submit()"> Subactividades</label>
+        </form>
+        <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesAnterior); ?>" class="btn btn-sm btn-ghost" aria-label="Mes anterior"><i class="fa-solid fa-chevron-left"></i> Anterior</a>
+        <?php if ($mesActual !== $mesHoy): ?><a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-secondary">Hoy</a><?php endif; ?>
+        <a href="/calendario?proyecto=<?php echo s($proyecto->id); ?>&mes=<?php echo s($mesSiguiente); ?>" class="btn btn-sm btn-ghost" aria-label="Mes siguiente">Siguiente <i class="fa-solid fa-chevron-right"></i></a>
+        <?php if ($puedeGestionar): ?>
+            <button type="button" class="btn btn-sm btn-primary" id="cal-crear-actividad" data-url="/programa/actividades/crear?proyecto=<?php echo s($proyecto->id); ?>&modal=1"><i class="fa-solid fa-plus"></i> Crear actividad</button>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="suite-panel">
+    <div class="cal-panel-cab">
+        <h3><i class="fa-regular fa-calendar"></i> <?php echo $meses[$mes]; ?> <?php echo $anio; ?></h3>
+        <div class="cal-leyenda">
+            <span class="is-no"><i></i> No iniciada</span>
+            <span class="is-proceso"><i></i> En proceso</span>
+            <span class="is-hecha"><i></i> Completada</span>
+            <span class="is-festivo"><i></i> Festivo</span>
         </div>
     </div>
-
-    <?php
-    $primerDia = new DateTime($mesActual . '-01');
-    $ultimoDia = clone $primerDia;
-    $ultimoDia->modify('last day of this month');
-    $diasEnMes = (int)$ultimoDia->format('d');
-    $primerDiaSemana = (int)$primerDia->format('N');
-
-    $actividadesPorDia = [];
-    foreach ($actividades as $item) {
-        foreach ($item['dias_en_mes'] as $dia) {
-            if (!isset($actividadesPorDia[$dia])) {
-                $actividadesPorDia[$dia] = [];
-            }
-            $actividadesPorDia[$dia][] = $item;
-        }
-    }
-
-    $festivosMap = [];
-    foreach ($festivos as $f) {
-        $festivosMap[$f->fecha] = $f;
-    }
-    ?>
-
+    <div class="suite-panel-cuerpo">
     <div class="calendario-mes">
         <div class="calendario-grid">
             <div class="calendario-dia-header">Lun</div>
@@ -135,11 +154,16 @@
             ?>
         </div>
     </div>
+    </div>
+</div>
 
-    <?php if (!empty($actividades)): ?>
-        <h4 style="margin-top: 2rem;">
-            <i class="fa-solid fa-list-check"></i> Actividades y subactividades del Mes (<?php echo count($actividades); ?>)
-        </h4>
+<?php if (!empty($actividades)): ?>
+<div class="suite-panel">
+    <div class="cal-tabla-cab">
+        <h4><i class="fa-solid fa-list-check"></i> Actividades y subactividades del mes <span class="suite-chip is-primary"><?php echo count($actividades); ?></span></h4>
+        <span class="text-muted text-sm">Haz clic en una actividad para editarla en una ventana.</span>
+    </div>
+    <div class="suite-panel-cuerpo">
         <div class="tabla-wrapper">
             <table class="tabla">
                 <thead>
@@ -180,10 +204,19 @@
                 </tbody>
             </table>
         </div>
-    <?php else: ?>
-        <p class="text-muted" style="margin-top: 2rem;">No hay actividades programadas en este mes.</p>
-    <?php endif; ?>
+    </div>
 </div>
+<?php else: ?>
+<div class="suite-panel">
+    <?php echo estado_vacio('fa-calendar-xmark', 'Sin actividades este mes', 'No hay actividades programadas en este mes. Cambia de mes o crea una actividad para verla aquí.', $puedeGestionar ? ['texto' => 'Crear actividad', 'url' => '#', 'icono' => 'fa-plus'] : null); ?>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var b = document.querySelector('.suite-panel .estado-vacio .btn-primary');
+    if (b && b.getAttribute('href') === '#') { b.addEventListener('click', function (e) { e.preventDefault(); var c = document.getElementById('cal-crear-actividad'); if (c) c.click(); }); }
+});
+</script>
+<?php endif; ?>
 
 <?php if ($puedeGestionar): ?>
 <div class="modal-overlay" id="cal-modal" aria-hidden="true">

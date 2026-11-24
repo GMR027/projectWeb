@@ -9,7 +9,12 @@ $e = $editarPlan;
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-clipboard-check"></i> Calidad e inspecciones</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · puntos de inspección, pruebas y no conformidades</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · puntos de inspección, pruebas y no conformidades que detienen el avance.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-clipboard-check"></i><b><?php echo (int)$resumen['planes']; ?></b> planes</span>
+            <span class="herr-chip<?php echo $resumen['nc'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-triangle-exclamation"></i><b><?php echo (int)$resumen['nc']; ?></b> NC abiertas</span>
+            <span class="herr-chip<?php echo $detenidas ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-lock"></i><b><?php echo count($detenidas); ?></b> actividades detenidas</span>
+        </div>
     </div>
     <?php if ($puedeEditar && $disponible): ?><a href="<?php echo s($url(['nuevo' => 1])); ?>" class="btn btn-primary">+ Nuevo plan</a><?php endif; ?>
 </div>
@@ -28,14 +33,32 @@ $e = $editarPlan;
 
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
 
-<div class="cb-kpis">
-    <div class="cb-kpi"><small>Planes</small><strong><?php echo (int)$resumen['planes']; ?></strong><span><?php echo (int)$resumen['pendiente']; ?> pendiente(s) · <?php echo (int)$resumen['en_proceso']; ?> en proceso</span></div>
-    <div class="cb-kpi"><small>Puntos de inspección</small><strong><?php echo (int)$resumen['puntos']; ?></strong><span><?php echo (int)$resumen['puntos_cumplen']; ?> cumplen · <?php echo (int)$resumen['puntos_pendientes']; ?> sin revisar</span></div>
-    <div class="cb-kpi <?php echo $resumen['nc'] ? 'cb-kpi-alerta' : ''; ?>"><small>No conformidades abiertas</small><strong><?php echo (int)$resumen['nc']; ?></strong><span>Puntos marcados «no cumple» sin resolver</span></div>
-    <div class="cb-kpi <?php echo $detenidas ? 'cb-kpi-alerta' : ''; ?>"><small>Actividades detenidas</small><strong><?php echo count($detenidas); ?></strong><span>El avance está topado por su inspección</span></div>
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Planes</small><strong><?php echo (int)$resumen['planes']; ?></strong><span><?php echo (int)$resumen['pendiente']; ?> pendiente(s) · <?php echo (int)$resumen['en_proceso']; ?> en proceso</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Puntos de inspección</small><strong><?php echo (int)$resumen['puntos']; ?></strong><span><?php echo (int)$resumen['puntos_cumplen']; ?> cumplen · <?php echo (int)$resumen['puntos_pendientes']; ?> sin revisar</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['nc'] ? 'is-danger' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>No conformidades abiertas</small><strong><?php echo (int)$resumen['nc']; ?></strong><span>puntos «no cumple» sin resolver</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $detenidas ? 'is-danger' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Actividades detenidas</small><strong><?php echo count($detenidas); ?></strong><span>el avance está topado por su inspección</span></span>
+    </div>
     <?php if (!empty($completa)): ?>
-    <div class="cb-kpi <?php echo $completa['rechazados'] ? 'cb-kpi-alerta' : ''; ?>"><small>Ensayos rechazados</small><strong><?php echo (int)$completa['rechazados']; ?></strong><span>De <?php echo (int)$completa['ensayos']; ?> ensayo(s)</span></div>
-    <div class="cb-kpi <?php echo $completa['nc_abiertas'] ? 'cb-kpi-alerta' : ''; ?>"><small>NC formales abiertas</small><strong><?php echo (int)$completa['nc_abiertas']; ?></strong><span>Costo abierto <?php echo '$' . number_format((float)$completa['costo_nc'], 2); ?></span></div>
+    <div class="suite-kpi <?php echo $completa['rechazados'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-flask" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Ensayos rechazados</small><strong><?php echo (int)$completa['rechazados']; ?></strong><span>de <?php echo (int)$completa['ensayos']; ?> ensayo(s)</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $completa['nc_abiertas'] ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-circle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>NC formales abiertas</small><strong><?php echo (int)$completa['nc_abiertas']; ?></strong><span>costo abierto $<?php echo number_format((float)$completa['costo_nc'], 2); ?></span></span>
+    </div>
     <?php endif; ?>
 </div>
 
@@ -47,7 +70,7 @@ $e = $editarPlan;
 
 <?php if ($tab === 'planes'): ?>
 <?php if ($puedeEditar && $abrirForm): ?>
-<form method="POST" action="/calidad/guardar" class="card co-form">
+<form method="POST" action="/calidad/guardar" class="suite-panel suite-form co-form" style="padding:1.2rem 1.4rem">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <input type="hidden" name="id" value="<?php echo $e ? (int)$e['id'] : 0; ?>">
     <h3><?php echo $e ? 'Editar plan' : 'Nuevo plan de inspección'; ?></h3>
@@ -80,7 +103,9 @@ $e = $editarPlan;
     <?php foreach (Calidad::ESTADOS as $k => $etq): ?><a href="<?php echo s($url(['estado' => $k])); ?>" class="cb-chip<?php echo $filtro === $k ? ' activo' : ''; ?>"><?php echo s($etq); ?></a><?php endforeach; ?>
 </div>
 
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-clipboard-check"></i> Planes de inspección <span class="suite-chip"><?php echo count($lista); ?></span></h3><p class="text-muted text-sm">Cada plan reúne sus puntos, resultados y no conformidades.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$lista): ?><?php echo estado_vacio('fa-clipboard-check',
         $filtro !== '' ? 'Ningún plan coincide con el filtro' : 'Aún no hay planes de inspección',
         $filtro !== '' ? 'Prueba con otro estado.' : 'Crea el primer plan con sus puntos de inspección, pruebas y no conformidades.',
@@ -113,16 +138,20 @@ $e = $editarPlan;
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php if ($plan): ?>
-<div class="card" id="plan-<?php echo (int)$plan['id']; ?>">
-    <div class="page-header" style="margin-bottom:1rem">
+<div class="suite-panel" id="plan-<?php echo (int)$plan['id']; ?>">
+    <div class="suite-panel-cab">
+    <div class="page-header" style="margin-bottom:0">
         <div><h3><?php echo s(trim(($plan['codigo'] ? $plan['codigo'] . ' · ' : '') . $plan['titulo'])); ?></h3>
             <p class="text-muted"><?php echo $plan['act_codigo'] ? s($plan['act_codigo'] . ' · ' . $plan['act_nombre']) . ' · ' : ''; ?><?php echo s(Calidad::TIPOS[$plan['tipo']] ?? $plan['tipo']); ?><?php echo $plan['norma'] ? ' · ' . s($plan['norma']) : ''; ?></p>
             <?php if ((int)$plan['bloquea']): ?><span class="badge badge-visitante"><i class="fa-solid fa-lock"></i> Detiene el avance de la actividad</span><?php else: ?><span class="badge badge-cliente"><i class="fa-solid fa-lock-open"></i> Solo informativo</span><?php endif; ?></div>
         <a href="<?php echo s($url()); ?>" class="btn btn-ghost btn-sm">Cerrar</a>
     </div>
+    </div>
+    <div class="suite-panel-cuerpo">
     <?php if ($puedeEditar): ?>
     <form method="POST" action="/calidad/punto/agregar" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:end;margin-bottom:1rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
@@ -161,13 +190,14 @@ $e = $editarPlan;
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>
 
 <?php if ($detenidas): ?>
-<div class="card" id="detenidas">
-    <h3><i class="fa-solid fa-lock text-warning"></i> Actividades detenidas por calidad</h3>
-    <p class="text-muted text-sm">Mientras su inspección tenga puntos pendientes, la actividad no pasa de 99 %. Con una no conformidad abierta, el avance se congela. Al marcar los puntos como «cumple» el candado se abre solo.</p>
+<div class="suite-panel" id="detenidas">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-lock"></i> Actividades detenidas por calidad</h3><p class="text-muted text-sm">Mientras su inspección tenga puntos pendientes, la actividad no pasa de 99 %. Con una no conformidad abierta, el avance se congela.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <div class="tabla-wrapper"><table class="tabla tabla-ancha">
         <thead><tr><th>Actividad</th><th>Por qué está detenida</th><th class="num">Avance</th><?php if ($puedeLiberar): ?><th>Liberar avance</th><?php endif; ?></tr></thead>
         <tbody>
@@ -207,13 +237,14 @@ $e = $editarPlan;
         </tbody>
     </table></div>
     <p class="solo-movil text-muted text-sm"><i class="fa-solid fa-arrows-left-right"></i> Desliza la tabla para ver el avance y las acciones.</p>
+    </div>
 </div>
 <?php endif; ?>
 
 <?php if ($liberaciones && $puedeLiberar): ?>
-<div class="card">
-    <h3><i class="fa-solid fa-lock-open"></i> Liberaciones firmadas</h3>
-    <p class="text-muted text-sm">Una liberación caduca sola si aparece una no conformidad nueva en esa actividad.</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-lock-open"></i> Liberaciones firmadas</h3><p class="text-muted text-sm">Una liberación caduca sola si aparece una no conformidad nueva en esa actividad.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Actividad</th><th class="num">Hasta</th><th>Motivo</th><th>Quién y cuándo</th><th>Estado</th><th></th></tr></thead>
         <tbody>
@@ -235,12 +266,14 @@ $e = $editarPlan;
         <?php endforeach; ?>
         </tbody>
     </table></div>
+    </div>
 </div>
 <?php endif; ?>
 
 <?php if ($noConformidades): ?>
-<div class="card">
-    <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> No conformidades abiertas</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-triangle-exclamation"></i> No conformidades abiertas <span class="suite-chip is-danger"><?php echo count($noConformidades); ?></span></h3></div>
+    <div class="suite-panel-cuerpo">
     <div class="tabla-wrapper"><table class="tabla">
         <thead><tr><th>Plan</th><th>Punto</th><th>Observación</th><th></th></tr></thead>
         <tbody><?php foreach ($noConformidades as $n): ?>
@@ -250,6 +283,7 @@ $e = $editarPlan;
                 <td><a class="btn btn-xs btn-ghost" href="<?php echo s($url(['ver' => $n['plan_id']])); ?>">Ver plan</a></td></tr>
         <?php endforeach; ?></tbody>
     </table></div>
+    </div>
 </div>
 <?php endif; ?>
 <?php elseif ($tab === 'ensayos'): ?>
