@@ -202,18 +202,18 @@ HTML],
 ['id' => 'programa', 'titulo' => 'Programa de obra', 'icono' => 'fa-list-check', 'roles' => $todos, 'herr' => 'programa', 'cuerpo' => <<<'HTML'
 <h4>Actividades en riesgo</h4>
 <p>Junto al nombre de una actividad pendiente que <strong>inicia en los próximos 30 días</strong> (o ya debió iniciar) puede aparecer la marca <strong>⚠ En riesgo</strong>. Significa que alguno de estos puntos está sin resolver: un <em>material vinculado sin submittal aprobado</em> (ni en un submittal aprobado ni con status A/AN en el MSR), un <em>pendiente grave del punch</em> (severidad alta o crítica, abierto) o un <em>permiso de trabajo que falta</em>. Pasa el cursor para ver el motivo y pulsa la marca para ir a donde se resuelve. Las actividades marcadas «sin material» no se evalúan por material. Con el filtro <em>Riesgo → Solo en riesgo</em> ves únicamente esas actividades. También aparece en el Lookahead y en el Last Planner.</p>
-<p>Es el corazón del sistema: el programa de obra organizado en <strong>partidas</strong> (capítulos o frentes, con su código WBS) y <strong>actividades</strong> dentro de cada partida. La página muestra, de arriba abajo, los datos del proyecto, los filtros, la tabla <em>Desglose WBS &amp; Partidas</em> y el <em>Diagrama de Gantt por Semanas</em>.</p>
+<p>Es el corazón del sistema: el programa de obra organizado en <strong>partidas</strong> (capítulos o frentes, con su código WBS) y <strong>actividades</strong> dentro de cada partida. Arriba ves la ficha del proyecto, el <strong>avance ponderado</strong>, los indicadores de actividades, riesgos, restricciones y días restantes; debajo, una barra de búsqueda y filtros, la tabla <em>Desglose WBS</em> y el <em>Cronograma semanal</em>. La vista <strong>Tabla · Gantt · Ambos</strong> permite ocultar una de las dos partes.</p>
 [[fig:programa]]
 <h4>Tipo de obra y base de partidas</h4>
 <p>En <em>Planeación → Tipo de obra</em> puedes elegir el tipo de obra del proyecto. Además de dar contexto a las herramientas de IA, el sistema ofrece una <strong>base de partidas y actividades</strong> para arrancar más rápido. Las plantillas de construcción incluyen: <strong>vivienda unifamiliar</strong>, <strong>edificio multifamiliar o comercial</strong>, <strong>nave industrial</strong>, <strong>remodelación y adecuación</strong>, <strong>urbanización y obra civil</strong> y la <strong>edificación</strong> general. La base solo se crea si el proyecto todavía no tiene partidas; después puedes renombrar, mover o eliminar lo que necesites.</p>
 <h4>Crear una partida</h4>
 <ol>
-<li>Pulsa <strong>+ Nueva Partida</strong>.</li>
+<li>Pulsa <strong>+ Nueva Partida</strong> (se abre en una ventana, sin salir del programa).</li>
 <li>Escribe el <strong>código WBS*</strong> (por ejemplo 4.0) y el <strong>nombre*</strong>. Opcionalmente descripción, un color de fondo (se usa en el Gantt) y el orden.</li>
 </ol>
 <h4>Crear una actividad</h4>
 <ol>
-<li>Pulsa <strong>+ Nueva Actividad</strong> (o el botón <em>+</em> de la fila de una partida, que ya elige esa partida).</li>
+<li>Pulsa <strong>+ Nueva Actividad</strong> (o el botón <em>+</em> de la fila de una partida, que ya elige esa partida). El formulario se abre en una ventana y, al guardar, vuelve al programa con la fila resaltada.</li>
 <li>Completa: <strong>partida*</strong>, <strong>código*</strong>, <strong>nombre*</strong>, descripción, <strong>fecha de inicio*</strong>, <strong>duración en días hábiles*</strong>, <strong>progreso (%)*</strong>, prioridad y orden.</li>
 <li>La <strong>fecha de fin se calcula sola</strong> usando el calendario del proyecto: salta los días no laborables y los festivos.</li>
 <li>Marca <strong>Es un hito</strong> si es un punto de control: dura 0 días y empieza y termina el mismo día.</li>
@@ -232,7 +232,7 @@ HTML],
 <li><strong>Eliminar una partida</strong> elimina también todas sus actividades (con sus restricciones, dependencias y materiales vinculados).</li>
 </ul>
 <h4>Cambiar las fechas rápidamente</h4>
-<p>En la tabla, el icono de <em>Cambiar fechas</em> de una actividad abre una ventana con las fechas de inicio y fin. Si mueves el inicio, el fin se corre con la misma duración; después puedes ajustar el fin.</p>
+<p>En el celular, el icono de <em>Cambiar fechas</em> de una actividad abre una ventana con las fechas de inicio y fin, la duración en días hábiles y atajos <em>Hoy</em>, <em>+1 día</em> y <em>+1 semana</em>. En escritorio puedes editar las fechas directamente en la tabla; si mueves el inicio, el fin se corre con la misma duración.</p>
 <h4>Copiar y pegar fechas</h4>
 <p>Haz clic sobre cualquier fecha visible (en el programa, en tablas, en el vPlan o en el Gantt) y pulsa <strong>Ctrl + C</strong>; se copia el día completo como <span class="mono">AAAA-MM-DD</span>, aunque solo hayas seleccionado una parte del texto. Después entra al campo de fecha de destino y pulsa <strong>Ctrl + V</strong>. Acepta fechas escritas como <span class="mono">AAAA-MM-DD</span>, <span class="mono">DD/MM/AAAA</span>, <span class="mono">20 oct 2026</span> o <span class="mono">20 de octubre de 2026</span>. Al pegar en una fecha editable se guarda igual que si la escribieras; el campo se marca en verde un instante para confirmar.</p>
 <h4>Restricciones</h4>
@@ -251,8 +251,8 @@ HTML],
 <li>La actividad es el resumen: su inicio es el mínimo de las subactividades y su fin el máximo. Al mover el inicio de la actividad se desplazan todas sus hijas; el fin y la duración de la actividad no se escriben a mano mientras tenga subactividades.</li>
 </ul>
 <p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad: las columnas base <em>Nombre, Inicio, Fin y Avance (%)</em> y los campos nuevos (descripción, prioridad, responsable, recuperación, libres, fechas reales, duración restante, restricción, PTA, hito y fecha fija). La tabla se abre en <a href="#sheetflow">SheetFlow</a> y se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
-<h4>Filtros</h4>
-<p>Arriba de la tabla puedes filtrar por <strong>partida</strong>, <strong>estatus</strong>, <strong>prioridad</strong> y <strong>restricción</strong> (con o sin). <em>Limpiar</em> quita los filtros.</p>
+<h4>Buscar, filtrar y cambiar de vista</h4>
+<p>La barra superior busca por <strong>código, nombre de actividad o responsable</strong> y filtra con un clic por <strong>estatus</strong> o desde <strong>Filtros</strong> por partida, prioridad, restricción, riesgo y campos personalizados. Los filtros activos aparecen como chips que se pueden quitar uno a uno. <strong>Tabla · Gantt · Ambos</strong> cambia la vista, y «Mostrar subactividades» y «Contraer» controlan el detalle de la tabla.</p>
 <h4>Importar desde otro programa</h4>
 <ol>
 <li>Pulsa <strong>Importar XML / POD</strong>.</li>
@@ -268,8 +268,8 @@ HTML],
 <li>Revisa la vista previa: partidas (WBS), actividades, dependencias, hitos y avisos.</li>
 <li>Confirma. Se importan también las <strong>relaciones</strong> (FS, SS, FF, SF con su espera) y el <strong>% de avance</strong>. Las tareas de resumen WBS se omiten.</li>
 </ol>
-<h4>Diagrama de Gantt por semanas</h4>
-<p>Debajo de la tabla, cada fila tiene su barra distribuida por semana: color según el estatus y relleno según el avance; un punto marca las actividades con restricción. Si activaste las <strong>Dependencias de obra</strong> en modo Informativo o Automático, aparece la casilla <em>Dependencias</em> en la leyenda para mostrar u ocultar las flechas entre actividades (rojas en la ruta crítica, naranjas con conflicto). El Gantt no se muestra en pantallas de celular.</p>
+<h4>Cronograma semanal</h4>
+<p>Debajo de la tabla, cada fila tiene su barra distribuida por semana: color según el estatus, relleno según el avance y un punto en las actividades con restricción. La cabecera agrupa los meses y resalta la semana actual; <strong>Hoy</strong> centra el cronograma en esa semana y <strong>Línea de tiempo</strong> abre la versión diaria. Si activaste las <strong>Dependencias de obra</strong> en modo Informativo o Automático, el interruptor <em>Dependencias</em> muestra u oculta las flechas (rojas en la ruta crítica, naranjas con conflicto). En el celular el cronograma se desplaza en horizontal y las barras se pueden tocar para editar la actividad.</p>
 <h4>Fechas reales, calendarios y restricciones</h4>
 <p>En <strong>Editar actividad</strong> puedes capturar el <strong>inicio real</strong>, el <strong>fin real</strong> y la <strong>duración restante</strong>. Si la actividad tiene parte diario, el sistema sugiere la primera y la última fecha trabajada. Con eso el Programa calcula el <strong>fin proyectado</strong> y muestra <em>Tarde</em> si se pasa de la fecha planeada.</p>
 <p>El <strong>calendario</strong> de la actividad puede ser el general del proyecto o uno propio (por cuadrilla o subcontratista), con su jornada y sus días no laborables. Se crean en <em>Ajustes → Calendarios por cuadrilla o subcontratista</em>.</p>

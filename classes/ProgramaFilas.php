@@ -18,16 +18,36 @@ class ProgramaFilas
      * @param array $camposCp  definición de campos personalizados
      * @param array $riesgos   [actividad_id => [...]]
      * @param array $valoresCp [actividad_id => [campo_id => valor]]
+     * @param string $texto    búsqueda libre por código, nombre o responsable
      */
-    public static function filtrar(array $todas, array $filtros, array $filtrosCp, array $camposCp, array $riesgos, array $valoresCp): array
+    public static function filtrar(array $todas, array $filtros, array $filtrosCp, array $camposCp, array $riesgos, array $valoresCp, string $texto = ''): array
     {
-        $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp;
+        $texto = trim(mb_strtolower($texto));
+        $hayTexto = $texto !== '';
+        $hayFiltroAct = $filtros['status'] || $filtros['prioridad'] || $filtros['restriccion'] || $filtros['riesgo'] || $filtrosCp || $hayTexto;
         if (!$hayFiltroAct && empty($filtros['partida'])) return $todas;
 
         $padres = [];
-        foreach ($todas as $f) if (($f['tipo'] ?? '') === 'actividad') $padres[(int)$f['id']] = $f;
+        $partidas = [];
+        foreach ($todas as $f) {
+            if (($f['tipo'] ?? '') === 'actividad') $padres[(int)$f['id']] = $f;
+            elseif (($f['tipo'] ?? '') === 'partida') $partidas[(int)$f['id']] = $f;
+        }
 
-        $coincide = function (array $f, bool $esSub, ?array $padre) use ($filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp): bool {
+        // Si la búsqueda coincide con una partida se muestran todas sus filas;
+        // si coincide con una actividad, también sus subactividades.
+        $partidaTexto = [];
+        $padreTexto = [];
+        if ($hayTexto) {
+            foreach ($partidas as $id => $p) {
+                if (self::coincideTexto($p, $texto)) $partidaTexto[$id] = true;
+            }
+            foreach ($padres as $id => $p) {
+                if (self::coincideTexto($p, $texto)) $padreTexto[$id] = true;
+            }
+        }
+
+        $coincide = function (array $f, bool $esSub, ?array $padre) use ($filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp, $hayTexto, $texto, $partidaTexto, $padreTexto): bool {
             if ($filtros['status'] && (string)$f['status'] !== $filtros['status']) return false;
             if ($filtros['prioridad'] && (string)$f['prioridad'] !== $filtros['prioridad']) return false;
             if ($filtros['restriccion'] === 'con' && empty($f['tiene_restriccion'])) return false;
@@ -35,6 +55,19 @@ class ProgramaFilas
             $ref = $esSub ? (int)($padre['id'] ?? 0) : (int)$f['id'];
             if ($filtros['riesgo'] && empty($riesgos[$ref])) return false;
             if ($filtrosCp && !CamposPersonalizados::coincide($valoresCp[$ref] ?? [], $filtrosCp, $camposCp)) return false;
+
+            if ($hayTexto) {
+                $partidaId = (int)($f['partida_id'] ?? 0);
+                if (!isset($partidaTexto[$partidaId])) {
+                    if ($esSub) {
+                        $padreId = (int)($padre['id'] ?? 0);
+                        if (!isset($padreTexto[$padreId]) && !self::coincideTexto($f, $texto)) return false;
+                    } elseif (!self::coincideTexto($f, $texto)) {
+                        return false;
+                    }
+                }
+            }
+
             return true;
         };
 
@@ -76,5 +109,15 @@ class ProgramaFilas
             $filas[] = $f;
         }
         return $filas;
+    }
+
+    /** ¿El código, el nombre o el responsable contienen el texto buscado? */
+    private static function coincideTexto(array $f, string $texto): bool
+    {
+        foreach (['codigo', 'nombre', 'responsable'] as $campo) {
+            $valor = trim((string)($f[$campo] ?? ''));
+            if ($valor !== '' && mb_strpos(mb_strtolower($valor), $texto) !== false) return true;
+        }
+        return false;
     }
 }

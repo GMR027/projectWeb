@@ -202,6 +202,7 @@ $router->post('/programa/importar/p6', [ProgramaController::class, 'importarP6']
 $router->post('/programa/importar/p6/confirmar', [ProgramaController::class, 'confirmarImportacionP6']);
 $router->post('/programa/importar/p6/cancelar', [ProgramaController::class, 'cancelarImportacionP6']);
 $router->post('/api/actividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaAjax']);
+$router->get('/api/calendario/duracion', [ProgramaController::class, 'duracionCalendarioAjax']);
 $router->post('/api/actividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoAjax']);
 $router->post('/api/subactividad/actualizar-fecha', [ProgramaController::class, 'actualizarFechaSubactividadAjax']);
 $router->post('/api/subactividad/actualizar-progreso', [ProgramaController::class, 'actualizarProgresoSubactividadAjax']);

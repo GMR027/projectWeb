@@ -726,7 +726,7 @@ function es_modal(): bool
 function terminar_guardado(string $destino, string $evento = 'actividad-guardada'): void
 {
     if (es_modal()) {
-        echo '<!DOCTYPE html><html><body><script>parent.postMessage({ tipo: ' . json_encode($evento) . ' }, location.origin);</script></body></html>';
+        echo '<!DOCTYPE html><html><body><script>parent.postMessage({ tipo: ' . json_encode($evento) . ', destino: ' . json_encode($destino) . ' }, location.origin);</script></body></html>';
         exit;
     }
     header('Location: ' . $destino);

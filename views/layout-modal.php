@@ -37,5 +37,17 @@ if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
     </main>
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
     <script src="/build/js/bundle.min.js?v=<?php echo filemtime(__DIR__ . '/../public/build/js/bundle.min.js'); ?>"></script>
+    <script>
+    // Los formularios abiertos en el iframe del Programa cierran el diálogo del padre.
+    document.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-cerrar-modal]');
+        if (!b) return;
+        e.preventDefault();
+        parent.postMessage({ tipo: 'cerrar-modal' }, location.origin);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') parent.postMessage({ tipo: 'cerrar-modal' }, location.origin);
+    });
+    </script>
 </body>
 </html>

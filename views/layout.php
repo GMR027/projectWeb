@@ -66,7 +66,7 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
         })();
     </script>
 </head>
-<body data-vista="<?php echo s(str_replace('/', '-', $__vista ?? '')); ?>">
+<body data-vista="<?php echo s(str_replace('/', '-', $__vista ?? '')); ?>"<?php echo es_modal() ? ' class="body-modal"' : ''; ?>>
     <div class="barra-progreso" id="pw-progreso" aria-hidden="true"></div>
     <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
     <?php if (es_demo()): ?>

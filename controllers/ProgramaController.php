@@ -16,6 +16,7 @@ use Classes\GanttRenderer;
 use Classes\Dependencias;
 use Classes\ProgramaColumnas;
 use Classes\ProgramaFilas;
+use Classes\ProgramaResumen;
 use Classes\Cantidades;
 use Classes\Conceptos;
 
@@ -47,7 +48,7 @@ class ProgramaController
         $todas = $gantt->getFilas();
         $calendario = new Calendario($proyectoId);
 
-        // Filtros (GET): partida, status, prioridad, restricción
+        // Filtros (GET): partida, status, prioridad, restricción, búsqueda y vista
         $filtros = [
             'partida' => filter_var($_GET['partida'] ?? null, FILTER_VALIDATE_INT) ?: 0,
             'status' => in_array($_GET['status'] ?? '', ['no_iniciada', 'en_proceso', 'completada'], true) ? $_GET['status'] : '',
@@ -55,6 +56,8 @@ class ProgramaController
             'restriccion' => in_array($_GET['restriccion'] ?? '', ['con', 'sin'], true) ? $_GET['restriccion'] : '',
             'riesgo' => ($_GET['riesgo'] ?? '') === '1' ? '1' : '',
         ];
+        $texto = mb_substr(trim(texto_param($_GET['q'] ?? '')), 0, 80);
+        $vista = in_array($_GET['vista'] ?? '', ['tabla', 'gantt', 'ambos'], true) ? $_GET['vista'] : 'ambos';
         $proyecciones = [];
         $cals = [];
         foreach ($todas as $f) {
@@ -77,11 +80,21 @@ class ProgramaController
         }
         $riesgos = \Classes\Salud::riesgosActividades($proyectoId);
         $bloqueosCalidad = \Classes\Calidad::disponible() ? \Classes\Calidad::bloqueosProyecto($proyectoId) : [];
+        $punchBloqueos = \Classes\Punch::partidasBloqueadas($proyectoId);
         // Campos personalizados de las actividades (Nivel, Frente…): filtran igual que los demás
         $camposCp = \Classes\CamposPersonalizados::deProyecto($proyectoId, 'actividad');
         $filtrosCp = \Classes\CamposPersonalizados::filtrosDePeticion($proyectoId, 'actividad');
         $valoresCp = $camposCp ? \Classes\CamposPersonalizados::valores($proyectoId, 'actividad') : [];
-        $filas = ProgramaFilas::filtrar($todas, $filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp);
+        $filas = ProgramaFilas::filtrar($todas, $filtros, $filtrosCp, $camposCp, $riesgos, $valoresCp, $texto);
+
+        // KPIs de la cabecera: se calculan sobre TODAS las filas del proyecto (no sobre el filtro).
+        $resumen = ProgramaResumen::deFilas($todas, $proyecto->getProgreso());
+        $resumen['dias_restantes'] = ProgramaResumen::diasHabilesRestantes($calendario, date('Y-m-d'), $proyecto->fecha_fin);
+        $resumen['meses'] = ProgramaResumen::mesesDeSemanas($semanas);
+        $resumen['riesgo'] = count($riesgos);
+        $resumen['punch_bloqueos'] = count($punchBloqueos);
+        $resumen['calidad_bloqueos'] = count($bloqueosCalidad);
+        $resumen['vista'] = $vista;
 
         // Programas grandes: la tabla y el Gantt se pintan por tramos (300 filas por defecto).
         // «Mostrar más» recarga con ?filas=N en vez de renderizar miles de filas de golpe.
@@ -118,11 +131,14 @@ class ProgramaController
             'filtros' => $filtros,
             'riesgos' => $riesgos,
             'bloqueosCalidad' => $bloqueosCalidad,
-            'punchBloqueos' => \Classes\Punch::partidasBloqueadas($proyectoId),
+            'punchBloqueos' => $punchBloqueos,
             'proyecciones' => $proyecciones,
-            'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp,
+            'hayFiltros' => (bool)array_filter($filtros) || (bool)$filtrosCp || $texto !== '',
             'camposCp' => $camposCp, 'filtrosCp' => $filtrosCp, 'valoresCp' => $valoresCp,
-            'titulo' => 'Programa de Obra - ' . ProgramaColumnas::nombrePrograma($proyecto),
+            'texto' => $texto,
+            'vista' => $vista,
+            'resumen' => $resumen,
+            'titulo' => 'Programa de Obra · ' . $proyecto->codigo,
             'proyecto' => $proyecto,
             'semanas' => $semanas,
             'filas' => $filas,
@@ -315,6 +331,23 @@ class ProgramaController
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
         exit;
+    }
+
+    /** Duración en días hábiles entre dos fechas, para la vista previa del modal de fechas */
+    public static function duracionCalendarioAjax()
+    {
+        header('Content-Type: application/json');
+        $proyecto = proyecto_api('ver');
+        $inicio = self::fechaOpcional($_GET['inicio'] ?? null);
+        $fin = self::fechaOpcional($_GET['fin'] ?? null);
+        if (!$inicio || !$fin) {
+            json_respuesta(['success' => false, 'error' => 'Fechas no válidas'], 422);
+        }
+        $calendario = new Calendario((int)$proyecto->id);
+        json_respuesta([
+            'success' => true,
+            'dias' => round($calendario->calcularDuracion($inicio, $fin), 1),
+        ]);
     }
 
     /** Endpoint AJAX para actualizar el % de avance de una actividad */
@@ -653,8 +686,7 @@ class ProgramaController
             if (empty($alertas)) {
                 $resultado = $partida->guardar();
                 if ($resultado['resultado']) {
-                    header('Location: /programa?proyecto=' . $proyectoId . '&creado=partida&foco=p' . (int)$resultado['id']);
-                    exit;
+                    terminar_guardado('/programa?proyecto=' . $proyectoId . '&creado=partida&foco=p' . (int)$resultado['id'], 'partida-guardada');
                 }
             }
         }
@@ -687,8 +719,7 @@ class ProgramaController
             $alertas = $partida->validar();
             if (empty($alertas)) {
                 if ($partida->guardar()) {
-                    header('Location: /programa?proyecto=' . $proyecto->id . '&editado=partida&foco=p' . (int)$partida->id);
-                    exit;
+                    terminar_guardado('/programa?proyecto=' . $proyecto->id . '&editado=partida&foco=p' . (int)$partida->id, 'partida-guardada');
                 }
             }
         }
@@ -1369,12 +1400,10 @@ class ProgramaController
             error_log('Materiales de subactividad: ' . $e->getMessage());
         }
 
-        if (texto_param($_POST['volver'] ?? '') === 'actividad') {
-            header('Location: /programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades');
-        } else {
-            header('Location: /programa?proyecto=' . (int)$proyecto->id . '&sub=1&foco=s' . (int)$sub->id);
-        }
-        exit;
+        $destino = texto_param($_POST['volver'] ?? '') === 'actividad'
+            ? '/programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades'
+            : '/programa?proyecto=' . (int)$proyecto->id . '&sub=1&foco=s' . (int)$sub->id;
+        terminar_guardado($destino, 'subactividad-guardada');
     }
 
     private static function renderSubactividadForm(Router $router, Proyecto $proyecto, Actividad $actividad, Subactividad $sub, array $alertas, string $volver): void

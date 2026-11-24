@@ -5,13 +5,15 @@
 </div>
 <?php endif; ?>
 
-<div class="card">
+<div class="card prg-form">
+    <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error" role="alert"><?php echo s($e); ?></div><?php endforeach; ?>
     <?php if (empty($partidas)): ?>
         <div class="alerta alerta-error">Primero debes crear al menos una partida.</div>
         <a href="/programa/partidas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary" target="_top">Crear Partida</a>
     <?php else: ?>
         <form method="POST" enctype="multipart/form-data" class="formulario" id="form-actividad">
             <div class="form-grid">
+                <div class="prg-form-sec-titulo campo-full"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> <?php echo s(t('Datos generales')); ?></div>
                 <div class="campo">
                     <label for="partida_id">Partida *</label>
                     <select id="partida_id" name="partida_id" required>
@@ -43,6 +45,7 @@
                     <label for="descripcion">Descripción</label>
                     <textarea id="descripcion" name="descripcion" rows="3"><?php echo s($actividad->descripcion); ?></textarea>
                 </div>
+                <div class="prg-form-sec-titulo campo-full"><i class="fa-regular fa-calendar" aria-hidden="true"></i> <?php echo s(t('Programación')); ?></div>
                 <div class="campo">
                     <label for="fecha_inicio">Fecha de Inicio *</label>
                     <input type="date" id="fecha_inicio" name="fecha_inicio" value="<?php echo s($actividad->fecha_inicio); ?>" required>
@@ -74,6 +77,7 @@
                 </div>
                 <div class="campo"><label for="restriccion_fecha">Fecha de la restricción</label><input type="date" id="restriccion_fecha" name="restriccion_fecha" value="<?php echo s($actividad->restriccion_fecha ?? ''); ?>"></div>
                 <div class="campo campo-full"><label for="restriccion_motivo">Motivo de la restricción</label><input type="text" id="restriccion_motivo" name="restriccion_motivo" maxlength="500" value="<?php echo s($actividad->restriccion_motivo ?? ''); ?>"></div>
+                <div class="prg-form-sec-titulo campo-full"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> <?php echo s(t('Seguimiento')); ?></div>
                 <div class="campo">
                     <label for="progreso">Progreso (%) *</label>
                     <input type="number" id="progreso" name="progreso" value="<?php echo s($actividad->progreso); ?>" min="0" max="100" required>
@@ -99,7 +103,14 @@
                 <?php include __DIR__ . '/_materiales-actividad.php'; ?>
             <?php $tipoEntidad = 'actividad'; $entidadId = null; include __DIR__ . '/../normativa/_seccion.php'; ?>
             </div>
-            <button type="submit" class="btn btn-primary">Crear Actividad</button>
+            <div class="prg-form-pie">
+                <?php if (es_modal()): ?>
+                    <button type="button" class="btn btn-ghost" data-cerrar-modal><?php echo s(t('Cancelar')); ?></button>
+                <?php else: ?>
+                    <a href="/programa?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><?php echo s(t('Cancelar')); ?></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check" aria-hidden="true"></i> <?php echo s(t('Crear actividad')); ?></button>
+            </div>
         </form>
 <script>
 (function () {

@@ -50,13 +50,13 @@ $ok('el código se deriva del padre', (new Subactividad())->codigo('1.2', 3) ===
 
 echo "Programa: filas y filtros con subactividades\n";
 $filasPrueba = [
-    ['tipo' => 'partida', 'id' => 1, 'partida_id' => 1, 'codigo' => '1', 'nombre' => 'P1'],
-    ['tipo' => 'actividad', 'id' => 10, 'partida_id' => 1, 'codigo' => '1.1', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
-    ['tipo' => 'subactividad', 'id' => 100, 'actividad_id' => 10, 'partida_id' => 1, 'codigo' => '1.1.1', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
-    ['tipo' => 'actividad', 'id' => 11, 'partida_id' => 1, 'codigo' => '1.2', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
-    ['tipo' => 'subactividad', 'id' => 101, 'actividad_id' => 11, 'partida_id' => 1, 'codigo' => '1.2.1', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
-    ['tipo' => 'partida', 'id' => 2, 'partida_id' => 2, 'codigo' => '2', 'nombre' => 'P2'],
-    ['tipo' => 'actividad', 'id' => 12, 'partida_id' => 2, 'codigo' => '2.1', 'status' => 'completada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 100],
+    ['tipo' => 'partida', 'id' => 1, 'partida_id' => 1, 'codigo' => '1', 'nombre' => 'Cimentación'],
+    ['tipo' => 'actividad', 'id' => 10, 'partida_id' => 1, 'codigo' => '1.1', 'nombre' => 'Colado de pilotes', 'responsable' => 'Ing. López', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
+    ['tipo' => 'subactividad', 'id' => 100, 'actividad_id' => 10, 'partida_id' => 1, 'codigo' => '1.1.1', 'nombre' => 'Tramo A', 'responsable' => 'Ing. López', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
+    ['tipo' => 'actividad', 'id' => 11, 'partida_id' => 1, 'codigo' => '1.2', 'nombre' => 'Muros de contención', 'responsable' => 'Ing. López', 'status' => 'en_proceso', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 50],
+    ['tipo' => 'subactividad', 'id' => 101, 'actividad_id' => 11, 'partida_id' => 1, 'codigo' => '1.2.1', 'nombre' => 'Tramo B', 'responsable' => 'Ing. Ramírez', 'status' => 'no_iniciada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 0],
+    ['tipo' => 'partida', 'id' => 2, 'partida_id' => 2, 'codigo' => '2', 'nombre' => 'Acabados'],
+    ['tipo' => 'actividad', 'id' => 12, 'partida_id' => 2, 'codigo' => '2.1', 'nombre' => 'Pintura', 'responsable' => 'Ing. Ramírez', 'status' => 'completada', 'prioridad' => 'media', 'tiene_restriccion' => false, 'progreso' => 100],
 ];
 $filtrosVacios = ['partida' => 0, 'status' => '', 'prioridad' => '', 'restriccion' => '', 'riesgo' => ''];
 $ids = fn(array $fs) => array_column($fs, 'id');
@@ -68,6 +68,26 @@ $ok('el filtro por partida conserva su cabecera y sus filas', $ids($porPartida) 
 $porCp = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [7 => 'Nivel A'], [7 => ['id' => 7, 'tipo' => 'texto']], [], [10 => [7 => 'Nivel A'], 11 => [7 => 'Nivel B']]);
 $ok('el hijo hereda el campo personalizado de su actividad', $ids($porCp) === [1, 10, 100]);
 $ok('un filtro sin coincidencias no deja filas', \Classes\ProgramaFilas::filtrar($filasPrueba, ['prioridad' => 'alta'] + $filtrosVacios, [], [], [], []) === []);
+$porTextoPartida = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [], [], [], [], 'ciment');
+$ok('la búsqueda por partida muestra todas sus filas', $ids($porTextoPartida) === [1, 10, 100, 11, 101]);
+$porTextoActividad = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [], [], [], [], 'colado');
+$ok('la búsqueda por actividad muestra la partida y sus subactividades', $ids($porTextoActividad) === [1, 10, 100]);
+$porTextoSub = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [], [], [], [], 'tramo b');
+$ok('la búsqueda por subactividad muestra su actividad de cabecera', $ids($porTextoSub) === [1, 11, 101]);
+$porTextoResp = \Classes\ProgramaFilas::filtrar($filasPrueba, $filtrosVacios, [], [], [], [], 'ramírez');
+$ok('la búsqueda por responsable encuentra las actividades y sus hijas', $ids($porTextoResp) === [1, 11, 101, 2, 12]);
+
+echo "Programa: resumen de cabecera\n";
+$resumenPrueba = \Classes\ProgramaResumen::deFilas($filasPrueba, 42.5);
+$ok('cuenta partidas, actividades, subactividades y estados', $resumenPrueba['partidas'] === 2 && $resumenPrueba['actividades'] === 3 && $resumenPrueba['subactividades'] === 2
+    && $resumenPrueba['completadas'] === 1 && $resumenPrueba['en_proceso'] === 2 && $resumenPrueba['no_iniciadas'] === 2
+    && $resumenPrueba['avance'] === 42.5);
+$mesesPrueba = \Classes\ProgramaResumen::mesesDeSemanas([
+    ['inicio' => '2026-11-02', 'fin' => '2026-11-08'],
+    ['inicio' => '2026-11-09', 'fin' => '2026-11-15'],
+    ['inicio' => '2026-12-07', 'fin' => '2026-12-13'],
+]);
+$ok('agrupa las semanas en bandas de mes consecutivas', count($mesesPrueba) === 2 && $mesesPrueba[0]['span'] === 2 && $mesesPrueba[1]['span'] === 1 && $mesesPrueba[0]['corto'] === 'NOV 26');
 
 echo "Contacto\n";
 $ok('el interés agrupa plataforma, servicio y ambos', in_array('Plan Pro', \Model\Contacto::planesValidos(), true)
@@ -1008,7 +1028,7 @@ $ok('el Cierre topa en 99 y bloquea el punto de punch', (function () {
     return str_contains($c, "if (\$cat === 'punch' && \$estado === 'completado')")
         && str_contains($c, 'punch_bloqueos') && str_contains($c, 'min(99, $pct)');
 })());
-$ok('el Programa y el Cierre muestran el candado de punch', str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'punchBloqueos')
+$ok('el Programa y el Cierre muestran el candado de punch', str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/_tabla.php'), 'punchBloqueos')
     && str_contains((string)@file_get_contents(__DIR__ . '/../views/cierre/index.php'), 'Entrega detenida por punch'));
 echo "Calidad completa\n";
 $ok('los catálogos de ensayos y NC están completos', count(\Classes\CalidadCompleta::VEREDICTOS) === 3
@@ -1084,7 +1104,7 @@ $ok('la actividad tiene los campos de fecha real, calendario y restricción', (f
         && str_contains($v, 'name="restriccion_tipo"') && str_contains($v, 'name="duracion_restante"');
 })());
 $ok('el Programa proyecta el fin y avisa si llega tarde o incumple la restricción', str_contains((string)@file_get_contents(__DIR__ . '/../controllers/ProgramaController.php'), 'proyectarFin(')
-    && str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/index.php'), 'proyecciones'));
+    && str_contains((string)@file_get_contents(__DIR__ . '/../views/programa/_tabla.php'), 'proyecciones'));
 echo "Nivelación de recursos\n";
 $ok('la nivelación solo propone actividades no críticas con holgura', (function () {
     $c = (string)@file_get_contents(__DIR__ . '/../classes/NivelacionRecursos.php');

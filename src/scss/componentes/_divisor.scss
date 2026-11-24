@@ -5,6 +5,30 @@ html.embebido {
   .main-content { margin-left: 0 !important; width: 100%; }
 }
 
+// Formularios abiertos con ?modal=1 (actividad, partida, subactividad, gráficos…).
+// El iframe ya oculta el menú; aquí se quita también la barra superior para que
+// el formulario use todo el alto disponible.
+body.body-modal {
+  background: transparent;
+
+  .topbar,
+  .btn-menu-movil,
+  .sidebar,
+  .sidebar-fondo {
+    display: none !important;
+  }
+
+  .app-container { display: block; }
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none;
+    padding: .6rem .8rem 1.2rem !important;
+  }
+
+  .page-header { display: none !important; }
+}
+
 .dv-boton {
   position: fixed; right: 1.6rem; bottom: 1.6rem; z-index: 900;
   width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 1px solid var(--border, #334155);

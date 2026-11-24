@@ -5,6 +5,7 @@ $volver = ($volver ?? 'programa') === 'actividad' ? 'actividad' : 'programa';
 $cal = new \Classes\Calendario((int)$proyecto->id, (int)($subactividad->calendario_id ?? 0));
 $duracion = $subactividad->duracion($cal);
 ?>
+<?php if (!es_modal()): ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-list-tree"></i> <?php echo $subactividad->id ? 'Editar' : 'Nueva'; ?> subactividad</h2>
@@ -12,9 +13,10 @@ $duracion = $subactividad->duracion($cal);
     </div>
     <a href="<?php echo $volver === 'actividad' ? '/programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades' : '/programa?proyecto=' . (int)$proyecto->id . '&sub=1'; ?>" class="btn btn-ghost">← Volver</a>
 </div>
+<?php endif; ?>
 
-<div class="card">
-    <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
+<div class="card prg-form">
+    <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error" role="alert"><?php echo s($e); ?></div><?php endforeach; ?>
     <p class="text-muted text-sm">
         El código se genera solo a partir de la actividad (<code><?php echo s($actividad->codigo); ?>.1</code>, <code><?php echo s($actividad->codigo); ?>.2</code>…).
         La duración se calcula con el calendario y no se escribe a mano. El avance de la actividad será el promedio de sus subactividades.
@@ -23,6 +25,7 @@ $duracion = $subactividad->duracion($cal);
         <input type="hidden" name="id" value="<?php echo (int)($subactividad->id ?? 0); ?>">
         <input type="hidden" name="actividad_id" value="<?php echo (int)$actividad->id; ?>">
         <input type="hidden" name="volver" value="<?php echo s($volver); ?>">
+        <div class="prg-form-sec-titulo campo-full"><i class="fa-solid fa-list-tree" aria-hidden="true"></i> <?php echo s(t('Datos y programación')); ?></div>
         <div class="form-grid">
             <div class="campo campo-full">
                 <label for="nombre">Nombre de la subactividad *</label>
@@ -152,9 +155,13 @@ $duracion = $subactividad->duracion($cal);
                 <small class="text-muted">Opcional: imagen pequeña que se muestra en el programa y la línea de tiempo.</small>
             </div>
         </div>
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar subactividad</button>
-            <a href="<?php echo $volver === 'actividad' ? '/programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades' : '/programa?proyecto=' . (int)$proyecto->id . '&sub=1'; ?>" class="btn btn-ghost">Cancelar</a>
+        <div class="prg-form-pie">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save" aria-hidden="true"></i> <?php echo s(t('Guardar subactividad')); ?></button>
+            <?php if (es_modal()): ?>
+                <button type="button" class="btn btn-ghost" data-cerrar-modal><?php echo s(t('Cancelar')); ?></button>
+            <?php else: ?>
+                <a href="<?php echo $volver === 'actividad' ? '/programa/actividades/editar?id=' . (int)$actividad->id . '#subactividades' : '/programa?proyecto=' . (int)$proyecto->id . '&sub=1'; ?>" class="btn btn-ghost"><?php echo s(t('Cancelar')); ?></a>
+            <?php endif; ?>
         </div>
     </form>
 </div>
