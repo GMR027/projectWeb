@@ -6,20 +6,27 @@ $q = 'proyecto=' . (int)$proyecto->id;
 $porGrupo = [];
 foreach ($laminas as $l) $porGrupo[trim((string)$l->grupo)][] = $l;
 uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
+$nOcultas = count(array_filter($laminas, fn($l) => !(int)$l->visible));
 ?>
+<div class="vplan-paquete-page">
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-sheet-plastic"></i> <?php echo s($paquete->nombre); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($laminas); ?> lámina(s)</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-layer-group"></i> <b><?php echo count($laminas); ?></b> láminas</span>
+            <span class="herr-chip"><i class="fa-solid fa-folder-tree"></i> <b><?php echo count($porGrupo); ?></b> grupos</span>
+            <?php if ($nOcultas): ?><span class="herr-chip" style="border-color:var(--warning);color:var(--warning-ink)"><i class="fa-solid fa-eye-slash"></i> <b><?php echo $nOcultas; ?></b> ocultas</span><?php endif; ?>
+        </div>
     </div>
     <div class="la-controles">
-        <a href="/vplan?<?php echo $q; ?>" class="btn btn-ghost">← vPlans</a>
+        <a href="/vplan?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> vPlans</a>
         <a href="/exportar?<?php echo $q; ?>&vplan=<?php echo s($paquete->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</a>
-        <?php if ($puedeEditar): ?>
         <span class="vp-seg" role="group" aria-label="Vista de la lista">
-            <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-galeria" title="Tarjetas con miniatura, se reordenan arrastrando"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
+            <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-galeria" title="Tarjetas con miniatura"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
             <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-tabla" title="Lista detallada con orden y grupos"><i class="fa-solid fa-table-list"></i> <span class="hide-m">Lista</span></button>
         </span>
+        <?php if ($puedeEditar): ?>
         <a href="/vplan/crear?<?php echo $q; ?>&paquete=<?php echo s($paquete->id); ?>" class="btn btn-primary"<?php echo glosario('lamina'); ?>>+ Nueva lámina</a><?php endif; ?>
     </div>
 </div>
@@ -94,7 +101,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
 
 <?php // ---- Galería: tarjetas con miniatura; las láminas se reordenan arrastrando (API /api/vplan/lamina/ajustar) ---- ?>
 <div class="vp-galeria<?php echo $puedeEditar ? '' : ' vp-galeria-lectura'; ?>" id="vp-galeria"<?php echo $laminas ? ' hidden' : ''; ?>>
-    <?php foreach ($porGrupo as $g => $lista): foreach ($lista as $l): $img = $l->marcas_png ?: $l->plano; $oculta = !(int)$l->visible; ?>
+    <?php foreach ($laminas as $l): $img = $l->marcas_png ?: $l->plano; $oculta = !(int)$l->visible; $g = trim((string)$l->grupo); ?>
     <article class="vp-gal-card<?php echo $oculta ? ' vp-oculta' : ''; ?>" data-lamina="<?php echo s($l->id); ?>"<?php echo $puedeEditar ? ' draggable="true"' : ''; ?>>
         <a class="vp-gal-img" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>" aria-label="Abrir <?php echo s($l->titulo); ?>">
             <?php if ($img): ?><img src="/uploads/vplan/<?php echo s($img); ?>" alt="" loading="lazy"><?php else: ?><i class="fa-regular fa-image"></i><?php endif; ?>
@@ -114,7 +121,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
             <?php endif; ?>
         </div>
     </article>
-    <?php endforeach; endforeach; ?>
+    <?php endforeach; ?>
     <p class="text-muted text-sm" id="vp-gal-estado" aria-live="polite"></p>
 </div>
 <script>
@@ -132,7 +139,7 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
     };
     bG.addEventListener('click', () => ver('galeria'));
     bT.addEventListener('click', () => ver('lista'));
-    let inicial = 'lista'; try { inicial = localStorage.getItem('vp-paq-vista') || 'lista'; } catch (e) { /* idem */ }
+    let inicial = 'galeria'; try { inicial = localStorage.getItem('vp-paq-vista') || 'galeria'; } catch (e) { /* idem */ }
     ver(inicial);
 
     // ---- Reordenar arrastrando: se guarda al soltar (API /api/vplan/lamina/ajustar con «orden») ----
@@ -209,3 +216,4 @@ uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
 })();
 </script>
 <?php endif; ?>
+</div>

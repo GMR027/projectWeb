@@ -59,5 +59,6 @@
 @use 'paginas/empezar';
 @use 'componentes/divisor';
 @use 'componentes/workspace';
+@use 'componentes/suite';
 @use 'layout/notificaciones';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

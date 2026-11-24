@@ -1,4 +1,5 @@
-<?php $tab = 'laminas'; $totalLaminas = 0; foreach ($paquetes as $px) $totalLaminas += (int)$px->total; ?>
+<?php $tab = 'laminas'; $totalLaminas = 0; $totalVisibles = 0; foreach ($paquetes as $px) { $totalLaminas += (int)$px->total; $totalVisibles += (int)$px->visibles; } ?>
+<div class="vplan-page">
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-sheet-plastic"></i> vPlan · Plan visual</h2><?php // el glosario está en la pestaña y en la ayuda de la herramienta ?>
@@ -15,8 +16,10 @@
 </div>
 <?php include __DIR__ . '/_tabs.php'; ?>
 
+<div class="vplan-hub-grid">
+<div class="vplan-hub-main">
 <?php if ($puedeEditar): ?>
-<form method="POST" action="/vplan/paquete/crear" class="card vp-nuevo-paquete">
+<form method="POST" action="/vplan/paquete/crear" class="card vp-nuevo-paquete suite-form-inline" id="vp-np-form">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
     <label for="vp-np-nombre" class="text-sm"<?php echo glosario('vplan'); ?>>Nuevo vPlan:</label>
     <input type="text" id="vp-np-nombre" name="nombre" maxlength="200" placeholder="Ej: Videovigilancia, Fase 2, Torre A…" required>
@@ -62,8 +65,37 @@
         </div>
     </div>
     <?php endforeach; ?>
+    <?php if ($puedeEditar): ?>
+    <a class="vp-paquete-crear" href="#vp-np-nombre"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Crear otro vPlan</span><small>Reúne las láminas de otra área o fase</small></a>
+    <?php endif; ?>
 </div>
 <?php endif; ?>
+</div>
+<aside class="vplan-hub-aside">
+    <section class="card suite-panel vplan-guia">
+        <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-circle-info"></i> ¿Qué es un vPlan?</h3><p class="text-muted text-sm">Una forma visual de organizar el programa.</p></div></div>
+        <div class="suite-panel-cuerpo">
+            <ul>
+                <li><b>Una lámina por área</b><span>Plano de fondo, tablas, título y simbología.</span></li>
+                <li><b>Plano + tablas + programa</b><span>Lo que está en la hoja sale del mismo programa.</span></li>
+                <li><b>Listo para imprimir</b><span>PDF tabloide 11×17" por lámina o por vPlan.</span></li>
+            </ul>
+            <a class="btn btn-ghost btn-sm" href="/manual?proyecto=<?php echo (int)$proyecto->id; ?>#vplan"><i class="fa-solid fa-book-open"></i> Ver guía de 1 minuto</a>
+        </div>
+    </section>
+    <section class="card suite-panel vplan-resumen">
+        <div class="suite-panel-cab"><h3><i class="fa-solid fa-chart-simple"></i> Resumen</h3></div>
+        <div class="suite-panel-cuerpo">
+            <div class="vplan-resumen-dato"><span>vPlan</span><strong><?php echo count($paquetes); ?></strong></div>
+            <div class="vplan-resumen-dato"><span>Láminas</span><strong><?php echo $totalLaminas; ?></strong></div>
+            <div class="vplan-resumen-dato"><span>Visibles</span><strong><?php echo $totalVisibles; ?></strong></div>
+            <div class="vplan-resumen-barra"><span style="width: <?php echo $totalLaminas ? round($totalVisibles / $totalLaminas * 100) : 0; ?>%"></span></div>
+            <p class="text-muted text-sm"><?php echo $totalLaminas ? 'Las láminas ocultas no se exportan.' : 'Crea el primer vPlan para empezar.'; ?></p>
+        </div>
+    </section>
+</aside>
+</div>
+</div>
 <script>
 document.addEventListener('click', e => {
     const abre = e.target.closest('.vp-renombrar-btn'), cierra = e.target.closest('.vp-renombrar-cancelar');

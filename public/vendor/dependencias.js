@@ -220,7 +220,7 @@
   }
   function pintarPanel() {
     const p = $('dep-panel'), a = S.sel != null ? act(S.sel) : null;
-    if (!a) { p.innerHTML = '<p class="text-muted">Elige una actividad o subactividad para ver sus predecesoras y sucesoras.</p>'; return; }
+    if (!a) { p.innerHTML = '<div class="dep-vacio"><i class="fa-solid fa-arrow-pointer"></i><strong>Elige una actividad</strong><p>Haz clic en una barra para ver y editar sus predecesoras y sucesoras.</p></div>'; return; }
     const preds = datos.relaciones.filter(r => r.suc === a.id), sucs = datos.relaciones.filter(r => r.pred === a.id);
     const opciones = quitar => '<option value="">— Elegir actividad —</option>' + datos.actividades.filter(x => x.id !== a.id && !quitar.includes(x.id)).map(x => '<option value="' + x.id + '">' + esc(x.codigo + ' · ' + x.nombre) + '</option>').join('');
     const calc = datos.modo === 'apagado' ? '' :

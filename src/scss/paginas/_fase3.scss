@@ -90,3 +90,183 @@
 .flujo-datos small { display: block; color: var(--text-muted); font-size: 1.05rem; text-transform: uppercase; letter-spacing: .04em; }
 .flujo-datos b { font-size: 1.3rem; }
 .flujo-negativo td { background: rgba(220, 38, 38, .06); }
+
+// ============================================================
+// Línea de balance (takt) — rediseño de /balance
+// ============================================================
+.balance-page {
+  .bal-config {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 46rem), 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: start;
+  }
+
+  .bal-card {
+    padding: 0;
+    overflow: hidden;
+
+    .suite-panel-cab { padding: .8rem 1rem; }
+    .suite-panel-cuerpo { padding: .9rem 1rem 1rem; }
+  }
+
+  .bal-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .5rem;
+    margin-bottom: .8rem;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+      color: var(--text-muted);
+      font-size: 1.02rem;
+    }
+
+    input, select {
+      min-height: 3rem;
+      padding: .3rem .5rem;
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1.12rem;
+      &:focus { outline: 0; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); }
+    }
+
+    input[type="color"] { width: 4.2rem; padding: .2rem; }
+    .btn { min-height: 3rem; }
+  }
+
+  .bal-frentes-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .5rem;
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .35rem .6rem;
+      border: 1px solid var(--border);
+      border-radius: .55rem;
+      background: color-mix(in srgb, var(--surface) 75%, transparent);
+      color: var(--text);
+      font-size: 1.08rem;
+      white-space: nowrap;
+      form { display: inline-flex; }
+    }
+  }
+
+  .bal-tipos {
+    th:first-child, td:first-child { min-width: 12rem; white-space: nowrap; }
+    td form { display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
+    input[type="text"], input[type="number"] {
+      min-height: 2.8rem;
+      padding: .2rem .4rem;
+      border: 1px solid var(--border);
+      border-radius: .45rem;
+      background: var(--surface);
+      color: var(--text);
+    }
+  }
+
+  .bal-chart {
+    padding: 0;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .bal-chart-cab {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(120deg, color-mix(in srgb, var(--primary) 6%, var(--surface)), var(--surface));
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin: 0;
+      font-size: 1.5rem;
+      i { color: var(--primary-ink); }
+    }
+    p { margin: .15rem 0 0; }
+  }
+
+  .bal-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .2rem .6rem;
+      border: 1px solid var(--border);
+      border-radius: 99rem;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 1.02rem;
+      white-space: nowrap;
+    }
+    i { width: .75rem; height: .75rem; border-radius: 50%; }
+  }
+
+  .bal-chart-scroll {
+    overflow-x: auto;
+    padding: 1rem 1rem 1.2rem;
+    background:
+      radial-gradient(600px 240px at 50% 0%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 70%),
+      var(--surface);
+    color: var(--text-muted);
+  }
+
+  .bal-chart-pie { margin: 0; padding: 0 1rem 1rem; }
+
+  .bal-svg {
+    display: block;
+    min-width: 80rem;
+    color: var(--text-muted);
+    font-family: $font-body;
+    polyline { filter: drop-shadow(0 3px 5px rgba(2, 6, 23, .25)); }
+    circle { transition: r .15s ease; }
+    circle:hover { r: 8; }
+    text { font-family: $font-body; }
+  }
+
+  .bal-conflictos {
+    padding: 0;
+    overflow: hidden;
+    .bal-chart-cab { padding: .8rem 1rem; }
+    .tabla-wrapper { margin: 0 1rem 1rem; }
+    .tabla thead th { background: color-mix(in srgb, var(--surface-raised) 82%, var(--surface)); }
+  }
+
+  .bal-generador, .co-form {
+    .co-campos { gap: .8rem 1rem; }
+    label { font-size: 1.08rem; }
+    input, select { min-height: 3rem; }
+  }
+
+  @media (max-width: 80rem) {
+    .bal-chart-scroll { padding: .8rem; }
+  }
+
+  @media (max-width: 48rem) {
+    .bal-inline { label { width: 100%; } input, select { width: 100%; } .btn { width: 100%; } }
+    .bal-chart-cab { padding: .7rem .8rem; h3 { font-size: 1.3rem; } }
+    .bal-leyenda { flex-wrap: nowrap; overflow-x: auto; }
+    .bal-svg { min-width: 70rem; }
+    .bal-conflictos .tabla-wrapper { margin: 0 .6rem .8rem; }
+  }
+}

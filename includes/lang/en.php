@@ -614,4 +614,9 @@ return [
     'Por iniciar' => 'Not started',
     'Finalizada' => 'Finished',
     'En ejecución' => 'In progress',
+    // Línea de tiempo activa
+    'Partidas' => 'Work packages',
+    'Horizonte' => 'Horizon',
+    'Cronograma diario' => 'Daily schedule',
+    'Barras por día con estado, avance y restricciones.' => 'Daily bars with status, progress and constraints.',
 ];

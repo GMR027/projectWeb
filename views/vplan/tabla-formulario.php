@@ -7,7 +7,7 @@ $cfgPunch = $tabla->configPunch();
 $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
 ?>
 <div class="page-header">
-    <h2><?php echo $esNueva ? 'Nueva tabla adicional' : 'Editar tabla: ' . s($tabla->titulo); ?></h2>
+    <h2><i class="fa-solid <?php echo $esNueva ? 'fa-table' : 'fa-pen-to-square'; ?>"></i> <?php echo $esNueva ? 'Nueva tabla adicional' : 'Editar tabla: ' . s($tabla->titulo); ?></h2>
     <a href="/vplan/tablas?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Tablas</a>
 </div>
 <?php $avisoTexto = 'Las tablas adicionales solo se pueden configurar en una tablet o en un equipo de escritorio.'; $avisoLectura = false; include __DIR__ . '/../templates/aviso-escritorio.php'; ?>
@@ -43,7 +43,7 @@ $contratistasPunch = \Classes\Punch::contratistas((int)$proyecto->id);
     </form>
 </div>
 <?php endif; ?>
-<div class="card">
+<div class="card suite-form">
     <form method="POST" action="/vplan/tablas/<?php echo $esNueva ? 'crear' : 'editar'; ?>" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if (!$esNueva): ?><input type="hidden" name="id" value="<?php echo s($tabla->id); ?>"><?php endif; ?>

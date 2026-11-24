@@ -31,7 +31,26 @@ $qLT = http_build_query(array_filter([
     </div>
 </div>
 
-<form class="card lt-filtros" method="get" action="/lineatiempo">
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small><?php echo s(t('Actividades')); ?></small><strong><?php echo (int)$lt['total']; ?></strong><span><?php echo !empty($lt['totalSub']) ? (int)$lt['totalSub'] . ' subactividades' : 'en la línea de tiempo'; ?></span></span>
+    </div>
+    <div class="suite-kpi <?php echo $lt['conRestriccion'] ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small><?php echo s(t('Con restricción')); ?></small><strong><?php echo (int)$lt['conRestriccion']; ?></strong><span>cuellos de botella activos</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small><?php echo s(t('Partidas')); ?></small><strong><?php echo count($partidasSel); ?></strong><span>agrupadas por color</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small><?php echo s(t('Horizonte')); ?></small><strong><?php echo s(fecha_corta_es($proyecto->fecha_inicio)); ?></strong><span>a <?php echo s(fecha_corta_es($proyecto->fecha_fin)); ?></span></span>
+    </div>
+</div>
+
+<form class="card lt-filtros suite-toolbar" method="get" action="/lineatiempo">
     <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
     <label><?php echo s(t('Partida')); ?> <select name="partida" onchange="this.form.submit()">
         <option value=""><?php echo s(t('Todas')); ?></option>
@@ -59,6 +78,13 @@ $qLT = http_build_query(array_filter([
 <div id="lt-aviso" class="lt-aviso" hidden aria-live="polite"></div>
 
 <div class="card lt-lienzo">
+    <div class="lt-lienzo-cab">
+        <div>
+            <h3><i class="fa-solid fa-chart-gantt"></i> <?php echo s(t('Cronograma diario')); ?></h3>
+            <p class="text-muted text-sm"><?php echo s(t('Barras por día con estado, avance y restricciones.')); ?></p>
+        </div>
+        <span class="suite-chip is-primary"><i class="fa-solid fa-calendar-day"></i> <?php echo (int)$lt['total']; ?> actividades</span>
+    </div>
     <div class="lt-leyenda">
         <span><i class="lt-sw" style="background:#3b82f6"></i> <?php echo s(t('Color de su partida')); ?></span>
         <span><i class="lt-sw lt-sw-nohab"></i> <?php echo s(t('Día no hábil (jornada o festivo)')); ?></span>

@@ -9,8 +9,13 @@ $modos = [
     <div>
         <h2><i class="fa-solid fa-diagram-project"></i> <?php echo s(t('Dependencias de obra')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué actividad o subactividad debe terminar (o empezar) antes de que otra pueda empezar (o terminar)</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-diagram-project"></i> <b><?php echo count($datos['actividades'] ?? []); ?></b> nodos</span>
+            <span class="herr-chip"><i class="fa-solid fa-link"></i> <b><?php echo count($datos['relaciones'] ?? []); ?></b> relaciones</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-calendar"></i> calendario del proyecto</span>
+        </div>
     </div>
-    <a href="/programa?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← <?php echo s(t('Programa')); ?></a>
+    <a href="/programa?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> <?php echo s(t('Programa')); ?></a>
 </div>
 
 <div class="dep-modos" role="radiogroup" aria-label="Modo de dependencias">
@@ -49,7 +54,7 @@ $modos = [
         </div>
         <div class="dep-scroll" id="dep-scroll" tabindex="0" role="region" aria-label="Diagrama de dependencias"><div class="dep-labels" id="dep-labels"></div><svg id="dep-svg" class="dep-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
     </div>
-    <aside class="card dep-panel" id="dep-panel"><p class="text-muted">Elige una actividad para ver sus predecesoras y sucesoras.</p></aside>
+    <aside class="card dep-panel" id="dep-panel"><div class="dep-vacio"><i class="fa-solid fa-arrow-pointer"></i><strong>Elige una actividad</strong><p>Haz clic en una barra para ver y editar sus predecesoras y sucesoras.</p></div></aside>
 </div>
 
 <div class="modal-overlay" id="dep-modal" aria-hidden="true">

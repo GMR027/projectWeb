@@ -15,7 +15,7 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   const DOW = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  const HEAD = 62, GRP = 26, ROW = 30;   // HEAD = banda de mes (22) + celdas de día (40)
+  const HEAD = 62, GRP = 28, ROW = 44;   // HEAD = banda de mes (22) + celdas de día (40)
   const PPD_MIN = 8, PPD_MAX = 120;
   let ppd = 30;
   const d0 = dn(LT.inicio), len = LT.dias.length;
@@ -109,7 +109,7 @@
     const cls = 'lt-barra st-' + esc(a.status) + (esSub ? ' lt-sub' : '') + (a.hito ? ' lt-hito' : '') + (col.clara ? ' lt-barra-clara' : '') + (a.fecha_inicio < LT.inicio ? ' corta-ini' : '') + (a.fecha_fin > LT.fin ? ' corta-fin' : '');
     const titulo = (esSub ? 'Subactividad · ' : '') + a.codigo + ' — ' + a.nombre + ' | ' + fmt(a.fecha_inicio) + ' → ' + fmt(a.fecha_fin) + ' | ' + a.progreso + '%';
     const x0 = i0 * ppd, ancho = (i1 - i0 + 1) * ppd, x1 = x0 + ancho;
-    const centro = alto - 15;   // centro vertical de la barra (fila normal y fila con iconos)
+    const centro = LT.iconos ? alto - 15 : alto / 2;   // centro vertical de la barra (normal vs. fila con iconos)
     const manos = (LT.puedeEditar && !a.hito) ? '<span class="lt-mano lt-mano-l" title="Cambiar el inicio">◀</span>' + (a.con_sub ? '' : '<span class="lt-mano lt-mano-r" title="Cambiar el fin">▶</span>') : '';
     // El número de la actividad con sus días de duración, centrado en la barra (los hitos solo muestran el rombo)
     const texto = a.hito ? '' : '<span class="lt-barra-texto mono">' + esc(a.codigo) + ' (' + (Number(a.duracion_dias) || 0) + ' d)</span>';
@@ -169,7 +169,7 @@
 
     // Etiquetas + filas (agrupadas por partida); con icono la fila de actividad crece para que el disco quepa sobre la barra
     const filaAlto = LT.iconos ? 82 : ROW;   // el icono mide 48 px: la fila crece para que quepa sobre la barra
-    const filaAltoSub = LT.iconos ? 70 : Math.max(30, ROW - 8);
+    const filaAltoSub = LT.iconos ? 70 : Math.max(36, ROW - 10);
     let labels = '<div class="lt-lab-cab" style="height:' + HEAD + 'px">Actividad / partida</div>', filas = '', y = HEAD;
     LT.partidas.forEach(p => {
       const acts = LT.actividades.filter(a => a.partida_id === p.id && a.tipo !== 'subactividad');
@@ -180,21 +180,21 @@
       filas += '<div class="lt-grp" style="top:' + y + 'px;height:' + GRP + 'px"><i class="lt-chip" style="background:' + esc(p.color || '#3b82f6') + '"></i>' + esc(p.codigo) + ' · ' + esc(p.nombre) + '</div>';
       y += GRP;
       acts.forEach(a => {
-        labels += '<div class="lt-lab" style="height:' + filaAlto + 'px" title="' + esc(a.codigo + ' — ' + a.nombre) + '"><b>' + esc(a.codigo) + '</b> ' + esc(a.nombre) +
-          (a.restriccion ? ' <span class="lt-warn" title="' + esc((a.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</div>';
+        labels += '<div class="lt-lab" style="height:' + filaAlto + 'px" title="' + esc(a.codigo + ' — ' + a.nombre) + '"><span class="lt-lab-cod"><b>' + esc(a.codigo) + '</b><span class="lt-lab-dur">' + (Number(a.duracion_dias) || 0) + ' d</span></span><span class="lt-lab-nom">' + esc(a.nombre) +
+          (a.restriccion ? ' <span class="lt-warn" title="' + esc((a.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</span></div>';
         filas += barra(a, y, filaAlto);
         y += filaAlto;
         // Subactividades visibles de esta actividad, debajo y con sangría
         subsPartida.filter(s => s.actividad_id === a.id).forEach(s => {
-          labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><b>' + esc(s.codigo) + '</b> ' + esc(s.nombre) +
-            (s.restriccion ? ' <span class="lt-warn" title="' + esc((s.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</div>';
+          labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><span class="lt-lab-cod"><b>' + esc(s.codigo) + '</b><span class="lt-lab-dur">' + (Number(s.duracion_dias) || 0) + ' d</span></span><span class="lt-lab-nom">' + esc(s.nombre) +
+            (s.restriccion ? ' <span class="lt-warn" title="' + esc((s.restriccion.texto || []).join(' | ')) + '">⚠</span>' : '') + '</span></div>';
           filas += barra(s, y, filaAltoSub);
           y += filaAltoSub;
         });
       });
       // Si el filtro ocultó a la actividad pero dejó visible una subactividad, se pinta igual (su código da el contexto)
       subsPartida.filter(s => !acts.some(a => a.id === s.actividad_id)).forEach(s => {
-        labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><b>' + esc(s.codigo) + '</b> ' + esc(s.nombre) + '</div>';
+        labels += '<div class="lt-lab lt-lab-sub" style="height:' + filaAltoSub + 'px" title="' + esc(s.codigo + ' — ' + s.nombre) + '"><span class="lt-lab-cod"><b>' + esc(s.codigo) + '</b><span class="lt-lab-dur">' + (Number(s.duracion_dias) || 0) + ' d</span></span><span class="lt-lab-nom">' + esc(s.nombre) + '</span></div>';
         filas += barra(s, y, filaAltoSub);
         y += filaAltoSub;
       });

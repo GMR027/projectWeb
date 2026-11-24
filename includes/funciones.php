@@ -1090,7 +1090,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'manual' => ['curso-admin'],
         'manual/curso' => ['curso-admin'],
         'lastplanner' => [],
-        'dependencias' => [],
+        'dependencias' => ['dependencias'],
         'curvas' => [],
         'submittals' => [],
         'materiales' => ['materiales'],

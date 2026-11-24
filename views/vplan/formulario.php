@@ -3,7 +3,7 @@
     <h2><?php echo $esNueva ? '<i class="fa-solid fa-wand-sparkles"></i> ' . s(t('Nueva lámina de vPlan')) : '<i class="fa-solid fa-sliders"></i> ' . s(t('Editar lámina')); ?></h2>
     <a href="<?php echo $lamina->paquete_id ? '/vplan/paquete?proyecto=' . s($proyecto->id) . '&id=' . s($lamina->paquete_id) : '/vplan?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← <?php echo s(t('Volver')); ?></a>
 </div>
-<div class="card">
+<div class="card suite-form">
 <?php if ($esNueva): ?>
     <?php // ---- Asistente de 3 pasos: qué lleva · tamaño de hoja · datos (los pasos se envían juntos) ---- ?>
     <div class="pasos" role="tablist" aria-label="<?php echo s(t('Pasos de creación')); ?>">

@@ -58,3 +58,29 @@ php bin/idioma_cobertura.php
 Abrir un proyecto con partidas y actividades, probar los filtros, la búsqueda, el cambio de
 vista, contraer partidas, editar fechas/avance en línea, abrir una actividad en modal, el modal
 de fechas en móvil y el tema claro/oscuro.
+
+## Fase 2: suite de planeación
+
+El mismo lenguaje visual se extendió a **Dependencias**, **Línea de tiempo activa**, **Línea de
+balance (takt)** y **vPlan**, incluyendo sus ventanas, paneles y formularios.
+
+- **Capa compartida** `src/scss/componentes/_suite.scss` (importada en `app-base.scss` y
+  `app.scss`): hero compacto, KPIs, barra de herramientas, paneles, leyendas, estados vacíos,
+  formularios y pestañas. Se activa con `body[data-vista^="dependencias|lineatiempo|balance|vplan"]`,
+  porque las vistas agregan su sufijo (`dependencias-index`, `vplan-ver`…).
+- **Dependencias** (`src/scss/paginas/_dependencias.scss`): modos como tarjetas compactas,
+  KPIs, barra fija, diagrama e inspector con estado vacío, y modal de reprogramación.
+- **Línea de tiempo** (`src/scss/paginas/_lineatiempo.scss`): KPIs, filtros compactos, leyenda
+  en píldoras y etiquetas de dos líneas (código + duración / nombre) sin cambiar el motor de
+  arrastre ni las llamadas a `/api/lineatiempo/fechas`.
+- **Balance** (bloque `.balance-page` al final de `src/scss/paginas/_fase3.scss`): configuración
+  en tarjetas, diagrama con leyenda por oficio, generador y tabla de cruces con desfase. La
+  rejilla se adapta sola cuando el visitante solo ve una tarjeta.
+- **vPlan** (bloque al final de `src/scss/paginas/_vplan.scss`): hub con guía/resumen, tarjetas
+  de vPlan, galería de láminas en cuadrícula plana (el grupo ya se lee en cada tarjeta), espacio
+  de trabajo con modos Ver · Acomodar · Dibujar, panel de diseño, materiales y formularios.
+- **Sin cambios de rutas, permisos, selectores ni esquema.** La galería de vPlan sigue siendo
+  la vista inicial y el reordenamiento por arrastre guarda el orden con la API existente.
+
+Para revisar: `npx gulp`, abrir cada herramienta con un proyecto con datos y alternar tema
+claro/oscuro, móvil, los modos de vPlan y los modales de Dependencias/notas/materiales.
