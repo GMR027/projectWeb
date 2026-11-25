@@ -5,7 +5,7 @@
     </div>
 </div>
 
-<main class="lp-wrap lp-legal">
+<main class="lp-wrap lp-legal" id="contenido">
     <h1>Términos y condiciones de uso</h1>
     <p class="lp-legal-fecha">Última actualización: <?php echo s($actualizado); ?></p>
 

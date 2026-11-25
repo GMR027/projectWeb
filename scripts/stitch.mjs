@@ -8,9 +8,12 @@
  * Uso:
  *   node scripts/stitch.mjs list
  *   node scripts/stitch.mjs create "ProjectWeb · Inicio / Dashboard"
+ *   node scripts/stitch.mjs design-systems <proyecto> [json]
  *   node scripts/stitch.mjs copy-design <proyectoDestino> <proyectoOrigen>
  *   node scripts/stitch.mjs generate <proyecto> <desktop|mobile> <assetOSistema|-> "<prompt>"
+ *   node scripts/stitch.mjs project <proyecto>
  *   node scripts/stitch.mjs screens <proyecto>
+ *   node scripts/stitch.mjs screen <proyecto> <screen>
  *   node scripts/stitch.mjs export <proyecto> <carpeta>
  *   node scripts/stitch.mjs download <projects/.../files/...> <archivo>
  */
@@ -99,16 +102,45 @@ async function crear(titulo) {
   console.log(JSON.stringify(r, null, 2));
 }
 
+async function sistemasDiseno(proyecto, crudo = false) {
+  if (!proyecto) throw new Error('Falta el proyecto.');
+  const r = await mcp('list_design_systems', { projectId: idProyecto(proyecto) });
+  if (crudo) { console.log(JSON.stringify(r, null, 2)); return; }
+  for (const s of r.designSystems || r.design_systems || []) {
+    const base = s.designSystem || s;
+    console.log([
+      s.name || base.name || '',
+      base.displayName || '',
+      base.theme?.colorMode || '',
+      base.theme?.headlineFontFamily || base.theme?.headlineFont || '',
+    ].join('\t'));
+  }
+}
+
 async function copiarDiseno(destino, origen) {
   const lista = await mcp('list_design_systems', { projectId: idProyecto(origen) });
   const sistemas = lista.designSystems || lista.design_systems || [];
   if (!sistemas.length) throw new Error('El proyecto de origen no tiene sistemas de diseño.');
   const base = sistemas[0].designSystem || sistemas[0];
-  const tema = base.theme || base;
+  const t = base.theme || base;
+  // Solo los campos que acepta create_design_system; el manifest completo se rechaza.
+  const tema = {
+    bodyFont: t.bodyFont || 'MANROPE',
+    colorMode: t.colorMode || 'DARK',
+    customColor: t.customColor || t.overridePrimaryColor || '#ff5a1f',
+    headlineFont: t.headlineFont || 'SPACE_GROTESK',
+    labelFont: t.labelFont || 'JETBRAINS_MONO',
+    roundness: t.roundness || 'ROUND_FOUR',
+    colorVariant: t.colorVariant || 'FIDELITY',
+    overrideNeutralColor: t.overrideNeutralColor || '#0b132b',
+    overridePrimaryColor: t.overridePrimaryColor || '#ff5a1f',
+    overrideSecondaryColor: t.overrideSecondaryColor || '#00b4d8',
+    overrideTertiaryColor: t.overrideTertiaryColor || '#3a506b',
+  };
   const r = await mcp('create_design_system', {
     projectId: idProyecto(destino),
     designSystem: {
-      displayName: base.displayName || 'CivilTech Cockpit',
+      displayName: base.displayName || 'Vanguard CivilTech',
       theme: tema,
     },
   });
@@ -124,6 +156,26 @@ async function generar(proyecto, device, asset, prompt) {
   };
   if (asset && asset !== '-') argumentos.designSystem = idAsset(asset);
   const r = await mcp('generate_screen_from_text', argumentos);
+  const salida = path.join('/tmp/opencode', 'stitch-' + Date.now() + '.json');
+  fs.mkdirSync(path.dirname(salida), { recursive: true });
+  fs.writeFileSync(salida, JSON.stringify(r, null, 2));
+  console.log(`Respuesta guardada en ${salida}`);
+  for (const c of r.outputComponents || []) {
+    for (const s of c.design?.screens || []) {
+      console.log(`SCREEN ${s.id}\t${s.name}\t${s.title || ''}\t${s.screenshot?.name || ''}\t${s.htmlCode?.name || ''}`);
+    }
+  }
+}
+
+async function proyecto(nombre) {
+  if (!nombre) throw new Error('Falta el proyecto.');
+  const r = await mcp('get_project', { name: `projects/${idProyecto(nombre)}` });
+  console.log(JSON.stringify(r, null, 2));
+}
+
+async function pantalla(proyecto, screen) {
+  if (!proyecto || !screen) throw new Error('Uso: screen <proyecto> <screen>');
+  const r = await mcp('get_screen', { name: `projects/${idProyecto(proyecto)}/screens/${screen}` });
   console.log(JSON.stringify(r, null, 2));
 }
 
@@ -181,9 +233,12 @@ try {
   switch (cmd) {
     case 'list': await listar(); break;
     case 'create': await crear(args[0]); break;
+    case 'design-systems': await sistemasDiseno(args[0], args[1] === 'json'); break;
     case 'copy-design': await copiarDiseno(args[0], args[1]); break;
     case 'generate': await generar(args[0], args[1], args[2], args.slice(3).join(' ')); break;
     case 'screens': await pantallas(args[0]); break;
+    case 'screen': await pantalla(args[0], args[1]); break;
+    case 'project': await proyecto(args[0]); break;
     case 'download': await descargar(args[0], path.resolve(RAIZ, args[1] || 'design/stitch-descarga')); break;
     case 'export': await exportar(args[0], args[1]); break;
     default:

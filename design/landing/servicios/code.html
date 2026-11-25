@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProjectWeb - Sistema de Gestión de Obra</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0B132B',
+              surface: 'rgba(18, 30, 61, 0.7)',
+              surfaceBorder: 'rgba(0, 180, 216, 0.22)',
+              orange: '#FF5A1F',
+              orangeHover: '#E04B14',
+              cyan: '#00B4D8',
+              cyanGlow: 'rgba(0, 180, 216, 0.25)',
+              navyLight: '#1C2A4A',
+              navyCard: 'rgba(23, 37, 73, 0.82)'
+            }
+          },
+          fontFamily: {
+            title: ['Space Grotesk', 'sans-serif'],
+            body: ['Manrope', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      body {
+        overscroll-behavior: none;
+      }
+    }
+    body {
+      background-color: #0B132B;
+      color: #E2E8F0;
+      font-family: 'Manrope', sans-serif;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      background-image: 
+        linear-gradient(to right, rgba(0, 180, 216, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 180, 216, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .radial-glow {
+      background: radial-gradient(circle at 50% 20%, rgba(0, 180, 216, 0.12) 0%, rgba(255, 90, 31, 0.06) 45%, transparent 75%);
+    }
+    .glass-panel {
+      background: rgba(16, 26, 53, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 180, 216, 0.2);
+      box-shadow: 0 16px 36px -10px rgba(5, 10, 24, 0.75);
+    }
+    .text-gradient {
+      background: linear-gradient(105deg, #FF5A1F 15%, #00B4D8 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+<meta content="web_standard" name="shell-type"/>
+</head>
+<body class="grid-bg min-h-screen relative selection:bg-[#FF5A1F]/30 selection:text-white">
+<div class="fixed inset-0 radial-glow pointer-events-none z-0"></div>
+<!-- FIXED TOPBAR -->
+<header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-[#00B4D8]/20 bg-[#0B132B]/85 backdrop-blur-md">
+<div class="max-w-[1440px] mx-auto px-6 h-18 flex items-center justify-between py-3.5">
+<!-- LOGO: ProjectWeb (Casco) -->
+<a class="flex items-center gap-3 group" data-path="projectweb-landing-page-obra" href="#">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF5A1F] to-[#00B4D8] p-0.5 shadow-[0_0_15px_rgba(255,90,31,0.35)] transition group-hover:scale-105">
+<div class="w-full h-full bg-[#0B132B] rounded-[6px] flex items-center justify-center text-[#FF5A1F]">
+<svg class="w-6 h-6 stroke-[#FF5A1F]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"></path>
+<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"></path>
+<path d="M4 15v-3a8 8 0 0 1 16 0v3"></path>
+</svg>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-title text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+Project<span class="text-[#00B4D8]">Web</span>
+<span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#00B4D8]/10 text-[#00B4D8] border border-[#00B4D8]/30">v3.2</span>
+</span>
+<span class="text-[11px] font-mono text-slate-400 tracking-wider">CIVIL TECH CONTROL</span>
+</div>
+</a>
+<!-- NAVIGATION LINKS -->
+<nav class="hidden md:flex items-center gap-7 text-sm font-medium" data-active-classes="text-[#00B4D8] font-semibold border-b-2 border-[#00B4D8] pb-1">
+<a class="text-slate-300 hover:text-[#00B4D8] transition-colors pb-1" data-path="projectweb-funciones-y-5-frentes-de-obra" href="#funciones">Funciones</a>
+<a class="text-[#00B4D8] font-semibold border-b-2 border-[#00B4D8] pb-1 transition-colors" data-path="projectweb-por-que-y-calculadora-de-ahorro" href="#servicios">Servicios</a>
+<a class="text-slate-300 hover:text-[#00B4D8] transition-colors pb-1" data-path="projectweb-piloto" href="#piloto">Piloto</a>
+<a class="text-slate-300 hover:text-[#00B4D8] transition-colors pb-1" data-path="projectweb-planes" href="#planes">Planes</a>
+<a class="text-slate-300 hover:text-[#00B4D8] transition-colors pb-1" data-path="projectweb-contacto" href="#contacto">Contacto</a>
+</nav>
+<!-- TOP ACTIONS -->
+<div class="flex items-center gap-3">
+<!-- WhatsApp Button -->
+<a class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/30 text-xs font-mono font-medium transition" href="https://wa.me/" rel="noopener noreferrer" target="_blank">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24">
+<path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.592 2.654-.696c1.004.573 1.944.896 2.806.897h.005c3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.768-5.773-5.78zm0 10.37c-.777 0-1.58-.225-2.29-.652l-.164-.098-1.543.405.412-1.503-.108-.172c-.477-.761-.729-1.516-.728-2.35 0-2.536 2.063-4.6 4.601-4.601 2.538 0 4.602 2.064 4.602 4.6 0 2.538-2.064 4.601-4.602 4.601z"></path>
+<path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.353 5.011L2 22l5.12-1.341a9.98 9.98 0 004.887 1.282h.005c5.507 0 9.99-4.479 9.99-9.986 0-5.507-4.482-9.955-9.99-9.955zm0 18.232c-1.574 0-3.113-.422-4.455-1.222l-.32-.191-3.313.869.884-3.23-.209-.333a8.214 8.214 0 01-1.26-4.379c.002-4.561 3.712-8.272 8.275-8.272 4.563 0 8.273 3.711 8.274 8.272-.001 4.561-3.713 8.273-8.276 8.273z"></path>
+</svg>
+<span>WhatsApp</span>
+</a>
+<!-- Iniciar Sesion Button -->
+<a class="px-4 py-2 rounded-lg bg-[#172549] hover:bg-[#1E305C] border border-[#00B4D8]/30 text-white font-mono text-xs font-semibold tracking-wide transition shadow-sm" href="#login">
+Iniciar sesión
+</a>
+</div>
+</div>
+</header>
+<!-- MAIN WRAPPER -->
+<main class="relative z-10 pt-18 pb-20 max-w-[1440px] mx-auto px-6 space-y-24"><div class="flex flex-col w-full space-y-32">
+<!-- ========================================== -->
+<!-- 1. HERO SECTION                            -->
+<!-- ========================================== -->
+<section class="relative pt-6 lg:pt-12">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-start">
+<!-- Columna Izquierda: Mensaje y CTA -->
+<div class="lg:col-span-7 flex flex-col space-y-8 pr-0 lg:pr-6">
+<!-- Eyebrow -->
+<div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-900/80 shadow-inner w-fit">
+<span class="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse"></span>
+<span class="font-mono text-xs uppercase tracking-widest text-[#00E5FF] font-semibold">Servicios Administrativos de Obra</span>
+</div>
+<!-- Headline -->
+<div class="space-y-4">
+<h1 class="font-headline text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.08]">
+            Tú construyes.<br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400">Nosotros mantenemos</span>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A1F] to-[#00E5FF]"> el control.</span>
+</h1>
+<p class="font-body text-slate-300 text-lg sm:text-xl font-normal leading-relaxed max-w-2xl">
+            Nos encargamos de la administración y el seguimiento de tu obra sobre una plataforma propia. La experiencia técnica de cada disciplina la aporta tu equipo.
+          </p>
+</div>
+<!-- Botones de Acción -->
+<div class="flex flex-wrap items-center gap-4 pt-2">
+<a class="group inline-flex items-center gap-3 px-7 py-4 rounded-xl bg-[#FF5A1F] text-white font-mono text-sm font-semibold tracking-wide shadow-[0_0_28px_rgba(255,90,31,0.4)] hover:bg-[#E04B14] hover:shadow-[0_0_36px_rgba(255,90,31,0.6)] transition-all duration-300" href="#piloto">
+<span>Agendar piloto de 30 días</span>
+<span class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+<a class="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-slate-900/60 text-slate-200 font-mono text-sm font-medium hover:bg-slate-800/80 hover:text-[#00E5FF] shadow-sm transition-all duration-200" href="#frentes">
+<span>Ver qué ofrecemos</span>
+<span class="material-symbols-outlined text-base text-[#00E5FF]">expand_more</span>
+</a>
+</div>
+<!-- Quick Assurance Metrics -->
+<div class="pt-6 grid grid-cols-3 gap-6">
+<div class="flex flex-col">
+<span class="font-mono text-2xl font-bold text-white tracking-tight">100%</span>
+<span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider mt-1">Acreditable en Piloto</span>
+</div>
+<div class="flex flex-col">
+<span class="font-mono text-2xl font-bold text-[#00E5FF] tracking-tight">48 hrs</span>
+<span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider mt-1">Despliegue Inicial</span>
+</div>
+<div class="flex flex-col">
+<span class="font-mono text-2xl font-bold text-[#FF5A1F] tracking-tight">12 Frentes</span>
+<span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider mt-1">Gobernanza Total</span>
+</div>
+</div>
+</div>
+<!-- Columna Derecha: Tablero de Seguimiento en Vivo -->
+<div class="lg:col-span-5 relative">
+<!-- Glow backing -->
+<div class="absolute -inset-1 bg-gradient-to-r from-[#FF5A1F]/15 via-transparent to-[#00E5FF]/20 rounded-2xl blur-xl pointer-events-none"></div>
+<div class="relative rounded-2xl bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-6">
+<!-- Live Header -->
+<div class="flex items-center justify-between pb-4">
+<div class="flex flex-col">
+<span class="font-mono text-[10px] uppercase tracking-widest text-slate-400">EN VIVO // PROYECTO AUDITADO</span>
+<span class="font-headline text-base font-bold text-white tracking-tight">TORRE METRÓPOLI III</span>
+</div>
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/60 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+<span class="font-mono text-[10px] text-emerald-300 font-medium">Sincronizado hoy 08:30</span>
+</div>
+</div>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-3 gap-3">
+<div class="p-3.5 rounded-xl bg-slate-950/60 shadow-sm flex flex-col">
+<span class="font-mono text-[10px] uppercase text-slate-400 tracking-wider">Avance Real</span>
+<span class="font-mono text-xl font-bold text-white mt-1">68.0%</span>
+<span class="font-mono text-[10px] text-[#FF5A1F] mt-0.5 font-medium">Prog. 70.2% (-2.2%)</span>
+</div>
+<div class="p-3.5 rounded-xl bg-slate-950/60 shadow-sm flex flex-col">
+<span class="font-mono text-[10px] uppercase text-slate-400 tracking-wider">Índice SPI</span>
+<span class="font-mono text-xl font-bold text-[#00E5FF] mt-1">0.97</span>
+<span class="font-mono text-[10px] text-slate-400 mt-0.5">Controlado</span>
+</div>
+<div class="p-3.5 rounded-xl bg-slate-950/60 shadow-sm flex flex-col">
+<span class="font-mono text-[10px] uppercase text-slate-400 tracking-wider">Restricciones</span>
+<span class="font-mono text-xl font-bold text-amber-400 mt-1">6 act.</span>
+<span class="font-mono text-[10px] text-slate-400 mt-0.5">2 crit. / 4 mitig.</span>
+</div>
+</div>
+<!-- Semáforo de Estatus por Frente -->
+<div class="space-y-2.5 pt-1">
+<div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+<span>Semáforo Operativo por Frente</span>
+<span>Lookahead S4</span>
+</div>
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/40">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"></span>
+<span class="font-body text-xs font-medium text-slate-200">Cimentación &amp; Muros de Contención</span>
+</div>
+<span class="font-mono text-[11px] text-emerald-400 font-semibold">100% Cerrado</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/40">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]"></span>
+<span class="font-body text-xs font-medium text-slate-200">Estructura Metálica Niveles 8-12</span>
+</div>
+<span class="font-mono text-[11px] text-amber-400 font-medium">Ruta Crítica S4</span>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/40">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"></span>
+<span class="font-body text-xs font-medium text-slate-200">Instalaciones MEP (HVAC e Hidráulico)</span>
+</div>
+<span class="font-mono text-[11px] text-emerald-400 font-medium">Stock en Sitio</span>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/40">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.7)]"></span>
+<span class="font-body text-xs font-medium text-slate-200">Acabados Interiores Planta Baja</span>
+</div>
+<span class="font-mono text-[11px] text-[#00E5FF] font-medium">Preparación</span>
+</div>
+</div>
+<!-- Micro-nota de Auditoría -->
+<div class="pt-3 flex items-center gap-2.5 text-[11px] font-mono text-slate-400">
+<span class="material-symbols-outlined text-sm text-[#00E5FF]">verified_user</span>
+<span>Auditoría de datos validada con firma de captura en sitio.</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 2. CLARIDAD Y FRONTERAS OPERATIVAS         -->
+<!-- ========================================== -->
+<section class="space-y-10">
+<div class="max-w-3xl space-y-3">
+<span class="font-mono text-xs uppercase tracking-widest text-[#FF5A1F] font-semibold">// ALCANCE Y RESPONSABILIDADES</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Fronteras operativas transparentes</h2>
+<p class="font-body text-slate-300 text-base leading-relaxed">
+        El éxito de nuestra integración radica en la claridad absoluta de roles. Nosotros somos tu equipo de control técnico-administrativo; tus ingenieros dirigen la construcción.
+      </p>
+</div>
+<!-- Para quién es / Para quién no es (2 Columnas) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Para quién SÍ -->
+<div class="p-8 rounded-2xl bg-slate-900/70 shadow-lg space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined text-xl">check_circle</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white">Para quién es este servicio</h3>
+</div>
+<ul class="space-y-4 font-body text-sm text-slate-300">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-400 text-lg shrink-0 mt-0.5">done</span>
+<span><strong>Constructoras y desarrolladores con múltiples frentes</strong> que necesitan unificar métricas ejecutivas sin la carga de contratar analistas o coordinadores administrativos adicionales.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-400 text-lg shrink-0 mt-0.5">done</span>
+<span><strong>Directores y gerentes generales</strong> que buscan trazabilidad real, Curvas S confiables y reportes auditables semanales sin tener que perseguir a los residentes de obra.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-400 text-lg shrink-0 mt-0.5">done</span>
+<span><strong>Empresas en expansión</strong> que desean institucionalizar sus procesos de control de obra bajo estándares CPM, Last Planner y Valor Ganado (EVM).</span>
+</li>
+</ul>
+</div>
+<!-- Para quién NO -->
+<div class="p-8 rounded-2xl bg-slate-900/70 shadow-lg space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400">
+<span class="material-symbols-outlined text-xl">cancel</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white">Para quién no es</h3>
+</div>
+<ul class="space-y-4 font-body text-sm text-slate-300">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-rose-400 text-lg shrink-0 mt-0.5">close</span>
+<span><strong>Empresas que buscan suministro de mano de obra directa</strong> o personal de ejecución física con pala, andamio y herramienta en campo.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-rose-400 text-lg shrink-0 mt-0.5">close</span>
+<span><strong>Equipos que prefieren bitácoras informales en papel</strong>, libretas de obra o coordinación caótica mediante grupos de mensajería instantánea sin rigor metodológico.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-rose-400 text-lg shrink-0 mt-0.5">close</span>
+<span><strong>Proyectos que buscan un perito responsable de obra (DRO)</strong> que asuma las firmas estructurales o licencias municipales en su representación legal.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Bloque Destacado: Qué hacemos vs Qué NO hacemos -->
+<div class="rounded-2xl p-8 sm:p-10 bg-slate-900 shadow-xl relative overflow-hidden">
+<!-- Glow sutil de fondo -->
+<div class="absolute -right-24 -bottom-24 w-96 h-96 bg-[#00E5FF]/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+<!-- Qué Hacemos (7 Cols) -->
+<div class="lg:col-span-7 space-y-4">
+<div class="inline-flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[#00E5FF]">
+<span class="material-symbols-outlined text-base">task_alt</span>
+<span>Lo que ProjectWeb ejecuta por ti</span>
+</div>
+<h4 class="font-headline text-2xl font-bold text-white tracking-tight">Gobernanza de datos y rigor de control</h4>
+<p class="font-body text-slate-300 text-sm leading-relaxed">
+            Estructuramos tus cronogramas maestros en ProjectWeb, alimentamos la bitácora legal y técnica diaria, generamos tableros ejecutivos semanales, coordinamos sesiones Lookahead a 4 semanas y conciliamos cada reporte de avance y variación antes de que impacte tu flujo financiero.
+          </p>
+</div>
+<!-- Frontera Clara (5 Cols) -->
+<div class="lg:col-span-5 p-6 rounded-xl bg-slate-950/80 flex flex-col justify-center space-y-3 shadow-inner">
+<div class="flex items-center gap-2 text-[#FF5A1F] font-mono text-xs font-semibold uppercase tracking-wider">
+<span class="material-symbols-outlined text-base">gavel</span>
+<span>Frontera Técnica &amp; Legal</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+<span class="text-white font-semibold">No sustituimos la responsabilidad técnica ni el peritaje;</span> no ejecutamos obra directa en campo; no firmamos bitácoras oficiales ni actas de entrega en tu representación legal. La dirección de obra sigue siendo tuya al 100%.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 3. LOS 12 FRENTES DE OBRA EN 5 CATEGORÍAS  -->
+<!-- ========================================== -->
+<section class="space-y-12" id="frentes">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="max-w-2xl space-y-3">
+<span class="font-mono text-xs uppercase tracking-widest text-[#00E5FF] font-semibold">// ALCANCE OPERATIVO EN 5 EJES</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Los 12 frentes de control de obra</h2>
+<p class="font-body text-slate-300 text-base">
+          Metodología integral que abarca desde la concepción del programa maestro hasta la entrega y finiquito final.
+        </p>
+</div>
+<div class="font-mono text-xs text-slate-400 bg-slate-900/80 px-4 py-2 rounded-lg self-start md:self-auto">
+        12 FRENTES ACTIVOS EN PARALELO
+      </div>
+</div>
+<div class="space-y-8">
+<!-- Categoría 01: PLANEAR -->
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm font-bold text-[#00E5FF] px-2.5 py-1 rounded bg-[#00E5FF]/10">01</span>
+<h3 class="font-headline text-lg font-bold uppercase tracking-wider text-white">Planear</h3>
+<span class="text-xs font-mono text-slate-500">// Gobernanza del tiempo y holguras</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Frente 1 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 01</span>
+<span class="material-symbols-outlined text-[#00E5FF] text-xl">account_tree</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Cronograma Maestro &amp; Ruta Crítica</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Desglose analítico WBS, detección de holguras dinámicas, fijación de línea base oficial y monitoreo de variaciones CPM en tiempo real.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Gantt</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">CPM</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Baseline</span>
+</div>
+</div>
+<!-- Frente 2 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 02</span>
+<span class="material-symbols-outlined text-[#00E5FF] text-xl">visibility</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Planificación Lookahead a 4 Semanas</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Anticipación estructurada de cuellos de botella, liberación sistemática de restricciones de materiales, equipos e información técnica antes de entrar a ruta de trabajo.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">LPS</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Restricciones</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">4S</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Categoría 02: EJECUTAR -->
+<div class="space-y-4 pt-4">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm font-bold text-[#FF5A1F] px-2.5 py-1 rounded bg-[#FF5A1F]/10">02</span>
+<h3 class="font-headline text-lg font-bold uppercase tracking-wider text-white">Ejecutar</h3>
+<span class="text-xs font-mono text-slate-500">// Rendimiento de cuadrillas y confiabilidad</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Frente 3 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 03</span>
+<span class="material-symbols-outlined text-[#FF5A1F] text-xl">groups</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Control Diario de Cuadrillas &amp; Avance</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Registro sistemático de personal en sitio, rendimientos métricos por frente, control de jornadas extraordinarias y cálculo de productividad unitaria.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Mano de Obra</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Rendimiento</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Frente</span>
+</div>
+</div>
+<!-- Frente 4 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 04</span>
+<span class="material-symbols-outlined text-[#FF5A1F] text-xl">fact_check</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">vPlan y Cumplimiento Semanal</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Seguimiento de Porcentaje del Plan Cumplido (PPC) semanal, análisis de causas raíz de no cumplimiento y compromisos contractuales de subcontratistas.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">PPC</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Lean Constr.</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Metas</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Categoría 03: ABASTECER -->
+<div class="space-y-4 pt-4">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm font-bold text-amber-400 px-2.5 py-1 rounded bg-amber-400/10">03</span>
+<h3 class="font-headline text-lg font-bold uppercase tracking-wider text-white">Abastecer</h3>
+<span class="text-xs font-mono text-slate-500">// Cadena de suministros y disponibilidad de activos</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Frente 5 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 05</span>
+<span class="material-symbols-outlined text-amber-400 text-xl">inventory_2</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Solicitudes y Requisiciones de Material</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Trazabilidad integral de suministros críticos: orden de compra, fecha estimada en sitio, recepción de remisiones y control estricto de mermas.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Just-in-Time</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Remisiones</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Stock</span>
+</div>
+</div>
+<!-- Frente 6 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 06</span>
+<span class="material-symbols-outlined text-amber-400 text-xl">precision_manufacturing</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Control de Equipos y Maquinaria Pesada</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Bitácora de horómetros diarios, índice de disponibilidad mecánica, programación de mantenimientos preventivos y minimización de horas en standby.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Maquinaria</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Horas-Hombre</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Standby</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Categoría 04: DOCUMENTAR -->
+<div class="space-y-4 pt-4">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm font-bold text-indigo-400 px-2.5 py-1 rounded bg-indigo-400/10">04</span>
+<h3 class="font-headline text-lg font-bold uppercase tracking-wider text-white">Documentar</h3>
+<span class="text-xs font-mono text-slate-500">// Trazabilidad legal, fotográfica y técnica</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Frente 7 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 07</span>
+<span class="material-symbols-outlined text-indigo-400 text-xl">photo_camera</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Bitácora Electrónica &amp; Fotos</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Registro inviolable con geo-referenciación, marcas de tiempo automáticas y archivo fotográfico clasificado por eje y nivel constructivo.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Bitácora Legal</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Fotos 360°</span>
+</div>
+</div>
+<!-- Frente 8 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 08</span>
+<span class="material-symbols-outlined text-indigo-400 text-xl">handshake</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Minutas y Acuerdos de Coordinación</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Levantamiento formal de sesiones de obra, asignación de responsables con fechas fatales de cumplimiento y tablero de compromisos pendientes.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Actas</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Plazos</span>
+</div>
+</div>
+<!-- Frente 9 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 09</span>
+<span class="material-symbols-outlined text-indigo-400 text-xl">architecture</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Visor y Planos As-Built</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Control estricto de versiones vigentes, gestión de solicitudes de información (RFIs) e integración de marcas rojas directas de campo.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">As-Built</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">RFIs</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Categoría 05: CONTROLAR -->
+<div class="space-y-4 pt-4">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm font-bold text-[#00E5FF] px-2.5 py-1 rounded bg-[#00E5FF]/10">05</span>
+<h3 class="font-headline text-lg font-bold uppercase tracking-wider text-white">Controlar</h3>
+<span class="text-xs font-mono text-slate-500">// Valor ganado, variaciones de costo y dossier final</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Frente 10 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 10</span>
+<span class="material-symbols-outlined text-[#00E5FF] text-xl">show_chart</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Informe Ejecutivo y Curva S</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Cálculo de Earned Value Management (EVM), índices de costo y cronograma (CPI/SPI) y pronósticos de cierre financiero a término.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Curva S</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">EVM</span>
+</div>
+</div>
+<!-- Frente 11 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 11</span>
+<span class="material-symbols-outlined text-[#00E5FF] text-xl">receipt_long</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Gestión de Órdenes de Cambio</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Cuantificación preliminar de impacto en costo y plazo previo a cualquier instrucción de obra; dictamen técnico antes de ejecución.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Addendas</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Variaciones</span>
+</div>
+</div>
+<!-- Frente 12 -->
+<div class="p-6 rounded-2xl bg-slate-900/70 shadow-md space-y-4 hover:bg-slate-900/90 transition-all duration-200">
+<div class="flex items-start justify-between">
+<span class="font-mono text-xs text-slate-400 font-semibold">FRENTE 12</span>
+<span class="material-symbols-outlined text-[#00E5FF] text-xl">folder_check</span>
+</div>
+<div>
+<h4 class="font-headline text-base font-bold text-white">Expediente de Cierre y Entrega</h4>
+<p class="font-body text-xs text-slate-300 mt-2 leading-relaxed">
+                Dossier de liquidación técnico-administrativo, punch list de observaciones finiquitadas y garantías de instalaciones para inversionistas.
+              </p>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-2">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Punch List</span>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-400">Dossier</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 4. MATRIZ COMPARATIVA DE ENTREGABLES       -->
+<!-- ========================================== -->
+<section class="space-y-8">
+<div class="max-w-3xl space-y-3">
+<span class="font-mono text-xs uppercase tracking-widest text-[#FF5A1F] font-semibold">// ALCANCE COMPARATIVO DETALLADO</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Matriz de entregables por modalidad</h2>
+<p class="font-body text-slate-300 text-base">
+        Visualiza el alcance exacto de cada informe y artefacto de gestión de acuerdo al nivel de control requerido para tu proyecto.
+      </p>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto rounded-2xl bg-slate-900/80 shadow-2xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-950/70 text-xs font-mono uppercase tracking-wider text-slate-400">
+<th class="py-5 px-6 font-semibold">Entregable Operativo</th>
+<th class="py-5 px-6 font-semibold w-56">Esencial</th>
+<th class="py-5 px-6 font-semibold w-56 text-[#00E5FF]">Completo</th>
+<th class="py-5 px-6 font-semibold w-64 text-[#FF5A1F]">Consolidado</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-800/40 text-xs font-body text-slate-300">
+<!-- Fila 1 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Informe Ejecutivo Semanal (Curva S + EVM)</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida + Sesión</span></td>
+</tr>
+<!-- Fila 2 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Reporte Diario Consolidado de Avance</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base con fotos clasif.</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida + Cuadrillas</span></td>
+</tr>
+<!-- Fila 3 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Planificación Lookahead a 4 Semanas</td>
+<td class="py-4 px-6 text-slate-400 font-mono">Mensual</td>
+<td class="py-4 px-6 text-[#00E5FF] font-mono font-medium">Quincenal</td>
+<td class="py-4 px-6 text-[#FF5A1F] font-mono font-semibold">Semanal (Taller continuo)</td>
+</tr>
+<!-- Fila 4 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Minutas y Seguimiento de Acuerdos</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida</span></td>
+</tr>
+<!-- Fila 5 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Archivo Documental &amp; Planos As-Built</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base con versionado</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida ilimitado</span></td>
+</tr>
+<!-- Fila 6 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Tablero vPlan y Métricas PPC (Lean)</td>
+<td class="py-4 px-6 text-slate-500 font-mono">No incluido</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida</span></td>
+</tr>
+<!-- Fila 7 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Trazabilidad de Materiales y Equipos</td>
+<td class="py-4 px-6 text-slate-500 font-mono">No incluido</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida</span></td>
+</tr>
+<!-- Fila 8 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Matriz de Órdenes de Cambio</td>
+<td class="py-4 px-6 text-slate-500 font-mono">No incluido</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida</span></td>
+</tr>
+<!-- Fila 9 -->
+<tr class="hover:bg-slate-800/20 transition-colors">
+<td class="py-4 px-6 font-medium text-white">Dossier de Cierre y Entrega Final</td>
+<td class="py-4 px-6 text-slate-400 font-mono">Opcional</td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 text-[#00E5FF] font-mono text-[11px] font-semibold">Base</span></td>
+<td class="py-4 px-6"><span class="px-2.5 py-1 rounded-md bg-[#FF5A1F]/15 text-[#FF5A1F] font-mono text-[11px] font-semibold">A medida completo</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 5. TARJETAS DE ENTRADA Y PLANES            -->
+<!-- ========================================== -->
+<section class="space-y-12" id="piloto">
+<!-- Header -->
+<div class="max-w-3xl space-y-3">
+<span class="font-mono text-xs uppercase tracking-widest text-[#00E5FF] font-semibold">// MODELOS DE CONTRATACIÓN</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Comienza sin riesgos o escala tu operación</h2>
+<p class="font-body text-slate-300 text-base">
+        Valida el impacto operativo de ProjectWeb con nuestros esquemas de entrada rápida o contrata un esquema continuo mensual para el ciclo total de tu desarrollo.
+      </p>
+</div>
+<!-- Bloque 1: Entrada Rápida (Onboarding) -->
+<div class="space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00E5FF] text-lg">bolt</span>
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-300">Entrada Rápida / Onboarding Inmediato</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Piloto 30 días -->
+<div class="p-8 rounded-2xl bg-slate-900/90 shadow-xl relative overflow-hidden flex flex-col justify-between space-y-6">
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs text-[#00E5FF] font-bold uppercase tracking-wider">Garantía Total</span>
+<span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[10px] font-semibold uppercase">100% Acreditable</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-white">Piloto de 30 días</h3>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">$14,900</span>
+<span class="font-mono text-xs text-slate-400">MXN / pago único</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+              Prueba el sistema con una obra real durante un mes completo. El costo total es <strong>100% acreditable</strong> al contratar cualquier plan de servicio mensual.
+            </p>
+<ul class="space-y-2.5 pt-2 text-xs font-body text-slate-300">
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Configuración de 1 proyecto en ProjectWeb</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Carga y estructuración de cronograma maestro</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Capacitación remota a residentes de obra</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>4 Informes Ejecutivos Semanales con Curva S</span>
+</li>
+</ul>
+</div>
+<a class="w-full text-center py-3.5 px-4 rounded-xl bg-[#00E5FF] text-slate-950 font-mono text-xs font-bold uppercase tracking-wider hover:bg-cyan-300 transition-colors shadow-md" href="#contacto">
+            Solicitar Piloto de 30 Días
+          </a>
+</div>
+<!-- Diagnóstico de Obra -->
+<div class="p-8 rounded-2xl bg-slate-900/70 shadow-lg flex flex-col justify-between space-y-6">
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs text-slate-400 font-bold uppercase tracking-wider">Auditoría Puntual</span>
+<span class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono text-[10px]">Entrega 5 días</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-white">Diagnóstico de Obra</h3>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">$9,900</span>
+<span class="font-mono text-xs text-slate-400">MXN / por proyecto</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+              Auditoría rápida y rigurosa del estado de tu cronograma actual, detección de desvíos ocultos y reporte de salud técnico-administrativa para la dirección.
+            </p>
+<ul class="space-y-2.5 pt-2 text-xs font-body text-slate-300">
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Revisión de consistencia de Ruta Crítica</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Detección de holguras negativas y riesgos latentes</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Reporte ejecutivo con recomendaciones correctivas</span>
+</li>
+</ul>
+</div>
+<a class="w-full text-center py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm" href="#contacto">
+            Solicitar Diagnóstico
+          </a>
+</div>
+</div>
+</div>
+<!-- Bloque 2: Niveles de Servicio Mensual -->
+<div class="space-y-4 pt-4" id="planes">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-lg">calendar_month</span>
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-300">Planes de Continuidad Operativa Mensual</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+<!-- Esencial -->
+<div class="p-8 rounded-2xl bg-slate-900/60 shadow-lg flex flex-col justify-between space-y-6">
+<div class="space-y-4">
+<span class="font-mono text-xs text-slate-400 font-semibold uppercase tracking-wider">Plan Esencial</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-3xl font-bold text-white tracking-tight">$19,900</span>
+<span class="font-mono text-xs text-slate-400">MXN / mes</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+              Ideal para contratistas y obras unitarias que necesitan orden administrativo, bitácora estructurada y reportes periódicos confiables.
+            </p>
+<ul class="space-y-2.5 pt-2 text-xs font-body text-slate-300">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>1 Obra activa en plataforma</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Informe Ejecutivo Semanal base</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Lookahead mensual a 4 semanas</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-base">check</span>
+<span>Bitácora fotográfica geo-referenciada</span>
+</li>
+</ul>
+</div>
+<a class="w-full text-center py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm" href="#contacto">
+            Elegir Esencial
+          </a>
+</div>
+<!-- Completo (Destacado) -->
+<div class="p-8 rounded-2xl bg-slate-900 shadow-2xl relative flex flex-col justify-between space-y-6">
+<!-- Tag Recomendado -->
+<div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#FF5A1F] text-white font-mono text-[10px] font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(255,90,31,0.5)]">
+            Recomendado por Directores
+          </div>
+<div class="space-y-4 pt-2">
+<span class="font-mono text-xs text-[#FF5A1F] font-bold uppercase tracking-wider">Plan Completo</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-4xl font-bold text-white tracking-tight">$34,900</span>
+<span class="font-mono text-xs text-slate-400">MXN / mes</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+              Control integral de obra mediana con administración proactiva: sesiones Lookahead quincenales, seguimiento de restricciones y órdenes de cambio.
+            </p>
+<ul class="space-y-2.5 pt-2 text-xs font-body text-slate-200">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-base">check_circle</span>
+<span>Hasta 2 frentes u obras vinculadas</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-base">check_circle</span>
+<span>Curva S con análisis EVM semanal</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-base">check_circle</span>
+<span>Lookahead quincenal con taller de restricciones</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-base">check_circle</span>
+<span>Matriz completa de Órdenes de Cambio</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5A1F] text-base">check_circle</span>
+<span>Dossier de finiquito y entrega base</span>
+</li>
+</ul>
+</div>
+<a class="w-full text-center py-3.5 px-4 rounded-xl bg-[#FF5A1F] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-[#E04B14] shadow-[0_0_20px_rgba(255,90,31,0.4)] transition-all" href="#contacto">
+            Elegir Completo
+          </a>
+</div>
+<!-- Consolidado -->
+<div class="p-8 rounded-2xl bg-slate-900/60 shadow-lg flex flex-col justify-between space-y-6">
+<div class="space-y-4">
+<span class="font-mono text-xs text-[#00E5FF] font-semibold uppercase tracking-wider">Plan Consolidado</span>
+<div class="flex items-baseline gap-2">
+<span class="font-mono text-xs text-slate-400">Desde</span>
+<span class="font-headline text-3xl font-bold text-white tracking-tight">$54,900</span>
+<span class="font-mono text-xs text-slate-400">MXN / mes</span>
+</div>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+              Diseñado para desarrolladores y constructoras corporativas con múltiples proyectos simultáneos o proyectos de alta complejidad estructural.
+            </p>
+<ul class="space-y-2.5 pt-2 text-xs font-body text-slate-300">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Multi-proyecto ilimitado en dashboard</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Sesión ejecutiva semanal de presentación C-Level</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Taller semanal continuo de restricciones Last Planner</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00E5FF] text-base">check</span>
+<span>Expediente de Cierre completo y auditoría final</span>
+</li>
+</ul>
+</div>
+<a class="w-full text-center py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm" href="#contacto">
+            Cotizar Consolidado
+          </a>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 6. ENTREGABLE DE MUESTRA (INTERACTIVO)     -->
+<!-- ========================================== -->
+<section class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div class="max-w-2xl space-y-2">
+<span class="font-mono text-xs uppercase tracking-widest text-[#FF5A1F] font-semibold">// ARTEFACTO DE CONTROL</span>
+<h2 class="font-headline text-3xl font-bold text-white tracking-tight">Ejemplo real de entregable ejecutivo</h2>
+</div>
+<div class="font-mono text-xs text-slate-400">
+        ACTUALIZADO SEMANALMENTE
+      </div>
+</div>
+<!-- Panel Simulado de Reporte Semanal -->
+<div class="relative rounded-2xl bg-slate-900/90 shadow-2xl p-6 sm:p-9 space-y-8 overflow-hidden">
+<!-- Marca de Agua Diáfana -->
+<div class="absolute -right-8 -bottom-10 font-headline font-bold text-8xl sm:text-9xl text-slate-800/10 select-none pointer-events-none rotate-[-6deg]">
+        EJEMPLO REAL
+      </div>
+<!-- Header del Documento -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800/50">
+<div class="space-y-1">
+<div class="flex items-center gap-2 font-mono text-xs text-[#00E5FF]">
+<span class="material-symbols-outlined text-sm">analytics</span>
+<span>INFORME EJECUTIVO SEMANA 18</span>
+</div>
+<h3 class="font-headline text-xl sm:text-2xl font-bold text-white">PROYECTO PARQUE INDUSTRIAL NORTE // NAVE LOGÍSTICA B</h3>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 rounded bg-slate-950 text-slate-400 font-mono text-xs">Corte: 24 Octubre 2025</span>
+<span class="px-3 py-1 rounded bg-[#FF5A1F]/10 text-[#FF5A1F] font-mono text-xs font-bold">Rev: 01 Final</span>
+</div>
+</div>
+<!-- Gráfico Curva S & Brecha (Visualización SVG Inyectada) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- SVG Sparkline / Curva S -->
+<div class="lg:col-span-8 p-5 rounded-xl bg-slate-950/60 space-y-3">
+<div class="flex items-center justify-between text-xs font-mono">
+<span class="text-slate-400">Curva S de Avance Acumulado (EVM)</span>
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5 text-slate-400"><span class="w-2.5 h-1 bg-slate-500 rounded"></span> Programado</span>
+<span class="flex items-center gap-1.5 text-[#00E5FF]"><span class="w-2.5 h-1 bg-[#00E5FF] rounded"></span> Real Ejecutado</span>
+</div>
+</div>
+<!-- SVG Chart -->
+<div class="h-32 w-full pt-2">
+<svg class="w-full h-full overflow-visible" fill="none" viewbox="0 0 500 100">
+<!-- Grid horizontal faint lines -->
+<line stroke="#1E293B" stroke-dasharray="3 3" x1="0" x2="500" y1="20" y2="20"></line>
+<line stroke="#1E293B" stroke-dasharray="3 3" x1="0" x2="500" y1="50" y2="50"></line>
+<line stroke="#1E293B" stroke-dasharray="3 3" x1="0" x2="500" y1="80" y2="80"></line>
+<!-- Programmed line (Grey) -->
+<path d="M 0 95 Q 120 90, 240 60 T 500 20" fill="none" stroke="#64748B" stroke-width="2.5"></path>
+<!-- Actual progress line (Cyan with Glow) -->
+<path d="M 0 95 Q 120 92, 240 65 T 380 32" fill="none" stroke="#00E5FF" stroke-linecap="round" stroke-width="3"></path>
+<!-- Marker Point Actual -->
+<circle cx="380" cy="32" fill="#00E5FF" r="5"></circle>
+<circle cx="380" cy="32" r="9" stroke="#00E5FF" stroke-opacity="0.4" stroke-width="2"></circle>
+</svg>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+<span>Semana 01</span>
+<span>Semana 08</span>
+<span>Semana 14</span>
+<span class="text-[#00E5FF] font-semibold">Semana 18 (Hoy)</span>
+<span>Semana 26 (Cierre)</span>
+</div>
+</div>
+<!-- Métricas de Avance -->
+<div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3">
+<div class="p-4 rounded-xl bg-slate-950/60 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-mono text-[10px] uppercase text-slate-400">Avance Programado</span>
+<span class="font-mono text-2xl font-bold text-slate-200">72.0%</span>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-2xl">schedule</span>
+</div>
+<div class="p-4 rounded-xl bg-slate-950/60 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-mono text-[10px] uppercase text-slate-400">Avance Real</span>
+<span class="font-mono text-2xl font-bold text-[#00E5FF]">69.4%</span>
+<span class="font-mono text-[11px] text-[#FF5A1F] font-semibold">Brecha: -2.6%</span>
+</div>
+<span class="material-symbols-outlined text-[#00E5FF] text-2xl">speed</span>
+</div>
+</div>
+</div>
+<!-- Frentes & Secciones Operativas -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Frentes -->
+<div class="p-5 rounded-xl bg-slate-950/50 space-y-3">
+<span class="font-mono text-xs uppercase text-slate-400 font-semibold tracking-wide">Semáforo de Frentes</span>
+<div class="space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-300">Nave A (Estructura)</span>
+<span class="text-emerald-400 font-mono font-semibold">Verde</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-300">Nave B (Panel Aislante)</span>
+<span class="text-amber-400 font-mono font-semibold">Amarillo</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-300">Vialidades &amp; Drenaje</span>
+<span class="text-emerald-400 font-mono font-semibold">Verde</span>
+</div>
+</div>
+</div>
+<!-- Desviaciones & Hallazgos -->
+<div class="p-5 rounded-xl bg-slate-950/50 space-y-3">
+<span class="font-mono text-xs uppercase text-[#FF5A1F] font-semibold tracking-wide flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span>Hallazgos Críticos</span>
+</span>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+            Identificación de 3 días de lluvia atípica que afectaron terracerías. Desfase de 5 días en entrega de transformador principal por proveedor externo en aduana.
+          </p>
+</div>
+<!-- Decisiones Requeridas -->
+<div class="p-5 rounded-xl bg-slate-950/50 space-y-3">
+<span class="font-mono text-xs uppercase text-[#00E5FF] font-semibold tracking-wide flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">how_to_reg</span>
+<span>Decisiones de Dirección</span>
+</span>
+<p class="font-body text-xs text-slate-300 leading-relaxed">
+            Aprobación requerida para reprogramación parcial de colados nocturnos sin alterar la ruta crítica de entrega ni generar sobrecostos de mano de obra.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 7. PREGUNTAS FRECUENTES (FAQ)              -->
+<!-- ========================================== -->
+<section class="space-y-8">
+<div class="max-w-2xl space-y-3">
+<span class="font-mono text-xs uppercase tracking-widest text-[#00E5FF] font-semibold">// DUDAS FRECUENTES</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Preguntas de servicio y operación</h2>
+<p class="font-body text-slate-300 text-base">
+        Todo lo que necesitas saber sobre la integración operativa de ProjectWeb en tus obras cotidianas.
+      </p>
+</div>
+<!-- Accordion Group -->
+<div class="max-w-4xl space-y-3" id="faq-container">
+<!-- FAQ 1 -->
+<div class="rounded-xl bg-slate-900/70 shadow-sm overflow-hidden">
+<button class="w-full text-left p-5 flex items-center justify-between text-white font-headline text-base font-semibold hover:text-[#00E5FF] transition-colors focus:outline-none" onclick="toggleFaq(1)">
+<span>¿Quién suministra los datos crudos de la obra?</span>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="faq-icon-1">expand_more</span>
+</button>
+<div class="hidden px-5 pb-5 text-sm font-body text-slate-300 leading-relaxed" id="faq-ans-1">
+          Tus ingenieros residentes o supervisores de obra cargan el reporte fotográfico y notas diarias desde la app móvil o interfaz rápida de ProjectWeb (les toma menos de 10 minutos al final del turno). Nuestro equipo valida, clasifica y procesa esos datos para transformarlos en tableros ejecutivos y Curvas S auditables.
+        </div>
+</div>
+<!-- FAQ 2 -->
+<div class="rounded-xl bg-slate-900/70 shadow-sm overflow-hidden">
+<button class="w-full text-left p-5 flex items-center justify-between text-white font-headline text-base font-semibold hover:text-[#00E5FF] transition-colors focus:outline-none" onclick="toggleFaq(2)">
+<span>¿ProjectWeb sustituye a mi superintendente o gerente de proyecto?</span>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="faq-icon-2">expand_more</span>
+</button>
+<div class="hidden px-5 pb-5 text-sm font-body text-slate-300 leading-relaxed" id="faq-ans-2">
+          De ninguna manera. Tu superintendente es indispensable en sitio tomando decisiones constructivas y coordinando cuadrillas. Nosotros somos su soporte analítico y administrativo, liberándolo del papeleo pesado, hojas de cálculo enredadas y elaboración manual de presentaciones para los inversionistas.
+        </div>
+</div>
+<!-- FAQ 3 -->
+<div class="rounded-xl bg-slate-900/70 shadow-sm overflow-hidden">
+<button class="w-full text-left p-5 flex items-center justify-between text-white font-headline text-base font-semibold hover:text-[#00E5FF] transition-colors focus:outline-none" onclick="toggleFaq(3)">
+<span>¿Qué pasa si ya contamos con formatos propios de la empresa?</span>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="faq-icon-3">expand_more</span>
+</button>
+<div class="hidden px-5 pb-5 text-sm font-body text-slate-300 leading-relaxed" id="faq-ans-3">
+          Durante la fase de onboarding adaptamos nuestros modelos de extracción a tu estructura de codificación (WBS) o catálogos existentes de conceptos. Así conservas tu nomenclatura interna sin perder la potencia analítica automatizada de ProjectWeb.
+        </div>
+</div>
+<!-- FAQ 4 -->
+<div class="rounded-xl bg-slate-900/70 shadow-sm overflow-hidden">
+<button class="w-full text-left p-5 flex items-center justify-between text-white font-headline text-base font-semibold hover:text-[#00E5FF] transition-colors focus:outline-none" onclick="toggleFaq(4)">
+<span>¿Cómo funciona la garantía acreditable del Piloto de 30 días?</span>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="faq-icon-4">expand_more</span>
+</button>
+<div class="hidden px-5 pb-5 text-sm font-body text-slate-300 leading-relaxed" id="faq-ans-4">
+          Pagas los $14,900 MXN para correr el piloto de un mes en una obra real. Si al término de los 30 días decides contratar el servicio mensual continuo (Plan Esencial, Completo o Consolidado), descontamos el 100% del valor del piloto de tus primeras mensualidades. Sin letra chica.
+        </div>
+</div>
+<!-- FAQ 5 -->
+<div class="rounded-xl bg-slate-900/70 shadow-sm overflow-hidden">
+<button class="w-full text-left p-5 flex items-center justify-between text-white font-headline text-base font-semibold hover:text-[#00E5FF] transition-colors focus:outline-none" onclick="toggleFaq(5)">
+<span>¿En cuánto tiempo está operativo el servicio tras la firma?</span>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="faq-icon-5">expand_more</span>
+</button>
+<div class="hidden px-5 pb-5 text-sm font-body text-slate-300 leading-relaxed" id="faq-ans-5">
+          El despliegue toma exactamente 48 horas una vez recibido tu archivo de programa maestro (MS Project o Primavera) y los datos generales del personal responsable en campo.
+        </div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 8. SECCIÓN FINAL CTA                       -->
+<!-- ========================================== -->
+<section class="relative rounded-3xl bg-slate-950 p-10 sm:p-16 overflow-hidden shadow-2xl" id="contacto">
+<!-- Ambient Halos -->
+<div class="absolute -top-32 -left-32 w-96 h-96 bg-[#FF5A1F]/15 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-32 -right-32 w-96 h-96 bg-[#00E5FF]/15 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 max-w-3xl mx-auto text-center space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-[#00E5FF] font-mono text-xs uppercase tracking-widest font-semibold">
+<span class="w-2 h-2 rounded-full bg-[#00E5FF]"></span>
+<span>Sin compromiso • Sesión Técnica</span>
+</div>
+<div class="space-y-4">
+<h2 class="font-headline text-4xl sm:text-5xl font-bold text-white tracking-tight">
+          Hablemos de tu próxima obra
+        </h2>
+<p class="font-body text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+          Agenda una sesión técnica de 20 minutos con nuestros especialistas de control de obra y definamos el esquema adecuado para tus frentes activos.
+        </p>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+<a class="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-[#FF5A1F] text-white font-mono text-sm font-semibold tracking-wide shadow-[0_0_24px_rgba(255,90,31,0.4)] hover:bg-[#E04B14] hover:shadow-[0_0_32px_rgba(255,90,31,0.6)] transition-all" href="mailto:contacto@projectweb.io?subject=Solicitud%20de%20Piloto%20ProjectWeb">
+<span>Solicitar diagnóstico o piloto</span>
+<span class="material-symbols-outlined text-lg">calendar_add_on</span>
+</a>
+<a class="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-slate-900 text-slate-200 font-mono text-sm font-medium hover:bg-slate-800 hover:text-emerald-400 shadow-sm transition-all" href="https://wa.me/" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-emerald-400 text-lg">chat</span>
+<span>Conversar por WhatsApp directo</span>
+</a>
+</div>
+<div class="pt-6 flex flex-wrap items-center justify-center gap-8 text-xs font-mono text-slate-500">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-[#00E5FF]">lock</span> Acuerdos de Confidencialidad (NDA)</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-[#00E5FF]">cloud_done</span> Infraestructura en la nube con respaldo diario</span>
+</div>
+</div>
+</section>
+</div>
+<script>
+  function toggleFaq(num) {
+    const ans = document.getElementById('faq-ans-' + num);
+    const icon = document.getElementById('faq-icon-' + num);
+    if (!ans) return;
+
+    const isHidden = ans.classList.contains('hidden');
+    // Cerrar todos
+    for (let i = 1; i <= 5; i++) {
+      const a = document.getElementById('faq-ans-' + i);
+      const ic = document.getElementById('faq-icon-' + i);
+      if (a) a.classList.add('hidden');
+      if (ic) ic.classList.remove('rotate-180');
+    }
+
+    if (isHidden) {
+      ans.classList.remove('hidden');
+      if (icon) icon.classList.add('rotate-180');
+    }
+  }
+</script></main>
+<!-- FOOTER -->
+<footer class="border-t border-slate-800/80 bg-[#070D1E] py-12 relative z-10 text-slate-400 text-xs font-mono">
+<div class="max-w-[1440px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded bg-[#FF5A1F]/20 text-[#FF5A1F] flex items-center justify-center font-bold">
+<svg class="w-4 h-4 stroke-[#FF5A1F]" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"></path>
+<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"></path>
+<path d="M4 15v-3a8 8 0 0 1 16 0v3"></path>
+</svg>
+</div>
+<span class="text-white font-title font-semibold text-sm">ProjectWeb</span>
+<span class="text-slate-600">|</span>
+<span>© 2025 Vanguard CivilTech. Todos los derechos reservados.</span>
+</div>
+<div class="flex items-center gap-6">
+<a class="hover:text-slate-200 transition" href="#privacidad">Aviso de Privacidad</a>
+<a class="hover:text-slate-200 transition" href="#terminos">Términos de Servicio</a>
+<a class="hover:text-slate-200 transition" href="#seguridad">Seguridad &amp; Cumplimiento</a>
+<span class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] text-[#00B4D8]">ISO 27001 Ready</span>
+</div>
+</div>
+</footer>
+</body></html>

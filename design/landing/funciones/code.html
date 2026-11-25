@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProjectWeb - Funciones y 5 Frentes de Obra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#FF5A1F',
+              cyan: '#00E5FF',
+              dark: '#080C14',
+              surface: '#0E1424',
+              panel: 'rgba(16, 24, 40, 0.75)',
+              border: 'rgba(255, 255, 255, 0.08)'
+            }
+          },
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            body: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #060911;
+      color: #E2E8F0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    .grid-glow {
+      background-image: radial-gradient(rgba(0, 229, 255, 0.08) 1px, transparent 1px),
+                        radial-gradient(rgba(255, 90, 31, 0.05) 1px, transparent 1px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+    }
+    .glass-card {
+      background: rgba(14, 20, 36, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(0, 229, 255, 0.4);
+      background: rgba(20, 30, 52, 0.85);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(0, 229, 255, 0.15);
+    }
+    .pill-active {
+      background: #FF5A1F;
+      color: #FFFFFF;
+      box-shadow: 0 4px 16px -2px rgba(255, 90, 31, 0.4);
+    }
+    .pill-inactive {
+      background: rgba(255, 255, 255, 0.04);
+      color: #94A3B8;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .pill-inactive:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body class="w-[1440px] mx-auto min-h-screen bg-[#060911] relative text-slate-200 antialiased selection:bg-[#FF5A1F] selection:text-white">
+
+  <!-- Ambient Glow Effects -->
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-gradient-to-b from-[#00E5FF]/10 via-[#FF5A1F]/5 to-transparent blur-[140px] pointer-events-none -z-10"></div>
+  <div class="absolute top-[800px] left-1/3 w-[850px] h-[600px] bg-gradient-to-br from-[#FF5A1F]/8 via-[#00E5FF]/5 to-transparent blur-[160px] pointer-events-none -z-10"></div>
+
+  <!-- Global Header Bar Minimal for Desktop 1440 -->
+  <header class="w-full border-b border-white/5 bg-[#060911]/80 backdrop-blur-md px-12 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF5A1F] to-[#FF8743] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30">
+        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div class="flex items-baseline gap-1.5">
+        <span class="font-display font-bold text-lg tracking-tight text-white">Project<span class="text-[#00E5FF]">Web</span></span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10">v3.4</span>
+      </div>
+    </div>
+    <nav class="flex items-center gap-8 text-sm font-medium text-slate-400">
+      <a href="#" class="text-white hover:text-[#00E5FF] transition-colors flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#00E5FF]"></span> Funciones
+      </a>
+      <a href="#" class="hover:text-white transition-colors">5 Frentes</a>
+      <a href="#" class="hover:text-white transition-colors">Calculadora ROI</a>
+      <a href="#" class="hover:text-white transition-colors">Planes</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <button class="text-xs font-mono px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors">
+        Iniciar Sesión
+      </button>
+      <button class="text-xs font-medium px-4 py-2 rounded-lg bg-[#FF5A1F] hover:bg-[#ff6d38] text-white shadow-lg shadow-[#FF5A1F]/25 transition-all">
+        Agendar Demo
+      </button>
+    </div>
+  </header>
+
+  <main class="w-full relative px-16 pt-16 pb-24 grid-glow">
+
+    <!-- ========================================== -->
+    <!-- BANDA 1: FUNCIONES                         -->
+    <!-- ========================================== -->
+    <section class="max-w-[1312px] mx-auto">
+      
+      <!-- Titulillar, Titular y Subtítulo -->
+      <div class="max-w-4xl mb-12">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-[#00E5FF] text-[11px] font-mono uppercase tracking-widest mb-4">
+          <span class="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse"></span>
+          FUNCIONES
+        </div>
+        <h1 class="text-[44px] leading-[1.15] font-display font-bold text-white tracking-tight mb-4">
+          Todo lo que tu obra necesita, <br>
+          <span class="bg-gradient-to-r from-white via-[#00E5FF] to-[#00E5FF] bg-clip-text text-transparent">conectado entre sí</span>.
+        </h1>
+        <p class="text-lg text-slate-400 font-normal leading-relaxed max-w-3xl">
+          Un solo programa alimenta el Gantt, el lookahead, los post-its, el vPlan y los reportes.
+        </p>
+      </div>
+
+      <!-- Filtros / Pestañas con Contadores + Buscador -->
+      <div class="flex items-center justify-between gap-4 mb-8 pb-5 border-b border-white/10">
+        
+        <!-- Pestañas -->
+        <div class="flex items-center gap-2" id="filter-tabs">
+          <!-- Todas -->
+          <button class="pill-active px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
+            <span>Todas</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-black/20 text-[11px] font-mono">54</span>
+          </button>
+          <!-- Planeación -->
+          <button class="pill-inactive px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all">
+            <span>Planeación</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-white/10 text-[11px] font-mono text-slate-300">11</span>
+          </button>
+          <!-- Campo -->
+          <button class="pill-inactive px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all">
+            <span>Campo</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-white/10 text-[11px] font-mono text-slate-300">10</span>
+          </button>
+          <!-- Materiales -->
+          <button class="pill-inactive px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all">
+            <span>Materiales</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-white/10 text-[11px] font-mono text-slate-300">5</span>
+          </button>
+          <!-- Documentos -->
+          <button class="pill-inactive px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all">
+            <span>Documentos</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-white/10 text-[11px] font-mono text-slate-300">12</span>
+          </button>
+          <!-- Control -->
+          <button class="pill-inactive px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all">
+            <span>Control</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-white/10 text-[11px] font-mono text-slate-300">16</span>
+          </button>
+        </div>
+
+        <!-- Buscador -->
+        <div class="relative w-80">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            placeholder="Buscar herramienta o módulo..." 
+            class="w-full bg-[#0E1424]/90 border border-white/10 rounded-xl pl-10 pr-12 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-all"
+          >
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] font-mono text-slate-400 pointer-events-none">
+            <kbd class="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-slate-400">⌘K</kbd>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Rejilla de 18 Tarjetas Compactas (3 columnas x 6 filas) -->
+      <div class="grid grid-cols-3 gap-3.5 mb-24">
+
+        <!-- 1. Programa y Gantt -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-[#00E5FF]/10 text-[#00E5FF] flex items-center justify-center shrink-0 border border-[#00E5FF]/20 group-hover:bg-[#00E5FF] group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-[#00E5FF] transition-colors">Programa y Gantt</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Planeación</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Ruta crítica y holguras dinámicas en tiempo real.</p>
+          </div>
+        </div>
+
+        <!-- 2. Lookahead 4S -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-[#00E5FF]/10 text-[#00E5FF] flex items-center justify-center shrink-0 border border-[#00E5FF]/20 group-hover:bg-[#00E5FF] group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-[#00E5FF] transition-colors">Lookahead 4S</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Planeación</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Anticipación y mitigación sistemática de restricciones a 4 semanas.</p>
+          </div>
+        </div>
+
+        <!-- 3. Last Planner -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-[#FF5A1F]/10 text-[#FF5A1F] flex items-center justify-center shrink-0 border border-[#FF5A1F]/20 group-hover:bg-[#FF5A1F] group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-[#FF5A1F] transition-colors">Last Planner</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Planeación</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Tablero colaborativo de post-its y compromisos con subcontratistas.</p>
+          </div>
+        </div>
+
+        <!-- 4. vPlan -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-[#00E5FF]/10 text-[#00E5FF] flex items-center justify-center shrink-0 border border-[#00E5FF]/20 group-hover:bg-[#00E5FF] group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-[#00E5FF] transition-colors">vPlan</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Planeación</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Compromiso semanal de producción y porcentaje de plan cumplido (PPC).</p>
+          </div>
+        </div>
+
+        <!-- 5. Líneas base -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-[#00E5FF]/10 text-[#00E5FF] flex items-center justify-center shrink-0 border border-[#00E5FF]/20 group-hover:bg-[#00E5FF] group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-[#00E5FF] transition-colors">Líneas base</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Planeación</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Congelamiento de versiones y trazabilidad de desvíos contractuales.</p>
+          </div>
+        </div>
+
+        <!-- 6. Reporte diario -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Reporte diario</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Captura móvil de personal, clima, maquinaria y colados del día.</p>
+          </div>
+        </div>
+
+        <!-- 7. Bitácora -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Bitácora</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Registro de notas oficiales con validez legal y firma electrónica.</p>
+          </div>
+        </div>
+
+        <!-- 8. Minutas -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Minutas</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Acuerdos de coordinación con asignación directa de responsables.</p>
+          </div>
+        </div>
+
+        <!-- 9. Evidencias -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Evidencias</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Fotografías 360° y georreferenciadas ancladas a ejes de plano.</p>
+          </div>
+        </div>
+
+        <!-- 10. Punch list -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Punch list</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Levantamiento de detalles antes de entrega con cierre fotográfico.</p>
+          </div>
+        </div>
+
+        <!-- 11. Calidad -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">Calidad</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Campo</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Protocolos de liberación, pruebas de concreto y ensayos de laboratorio.</p>
+          </div>
+        </div>
+
+        <!-- 12. Catálogo de materiales -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-amber-400 transition-colors">Catálogo de materiales</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Materiales</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Control de insumos críticos, existencias en almacén y mermas.</p>
+          </div>
+        </div>
+
+        <!-- 13. Submittals -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-black transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-amber-400 transition-colors">Submittals</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Materiales</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Fichas técnicas y muestras con flujo formal de aprobación.</p>
+          </div>
+        </div>
+
+        <!-- 14. RFI -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-purple-400 transition-colors">RFI</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Documentos</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Consultas técnicas de ingeniería con plazos contractuales y trazabilidad.</p>
+          </div>
+        </div>
+
+        <!-- 15. Archivo -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-purple-400 transition-colors">Archivo</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Documentos</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Repositorio centralizado con control estricto de versiones y planos.</p>
+          </div>
+        </div>
+
+        <!-- 16. Redactor -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-purple-400 transition-colors">Redactor</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Documentos</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Generación automatizada de cartas contractuales y oficios.</p>
+          </div>
+        </div>
+
+        <!-- 17. SheetFlow -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-purple-400 transition-colors">SheetFlow</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Documentos</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Hojas de cálculo vivas sincronizadas con metrados del modelo.</p>
+          </div>
+        </div>
+
+        <!-- 18. Comparador -->
+        <div class="glass-card rounded-xl p-3.5 flex items-start gap-3 group cursor-pointer">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold text-white truncate group-hover:text-purple-400 transition-colors">Comparador</h3>
+              <span class="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Documentos</span>
+            </div>
+            <p class="text-xs text-slate-400 truncate">Detección visual de diferencias entre revisiones de planos en segundos.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- BANDA 2: TODO EN UNO (5 FRENTES DE OBRA)   -->
+    <!-- ========================================== -->
+    <section class="max-w-[1312px] mx-auto pt-16 border-t border-white/10 relative">
+
+      <!-- Glow decorativo superior para esta banda -->
+      <div class="absolute -top-px left-1/2 -translate-x-1/2 w-96 h-px bg-gradient-to-r from-transparent via-[#00E5FF] to-transparent"></div>
+
+      <!-- Cabecera de Banda -->
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 text-[#FF5A1F] text-[11px] font-mono uppercase tracking-widest mb-4">
+          <span class="w-2 h-2 rounded-full bg-[#FF5A1F]"></span>
+          TODO EN UNO
+        </div>
+        <h2 class="text-3xl md:text-[38px] font-display font-bold text-white tracking-tight leading-tight mb-3">
+          Cinco frentes de obra. 54 herramientas. <br>
+          <span class="text-[#00E5FF]">Una sola fuente de verdad</span>.
+        </h2>
+        <p class="text-slate-400 text-sm max-w-xl mx-auto">
+          Arquitectura conectada para erradicar silos entre gabinete, compras, residencia técnica y gerencia de proyecto.
+        </p>
+      </div>
+
+      <!-- Contenedor con la Línea de Flujo Horizontal que Conecta las 5 Columnas -->
+      <div class="relative">
+        
+        <!-- Línea de flujo horizontal continua con gradiente cian a naranja -->
+        <div class="absolute top-[32px] left-8 right-8 h-[2px] bg-gradient-to-r from-[#00E5FF] via-[#00E5FF]/70 to-[#FF5A1F] -z-0 opacity-40"></div>
+        
+        <!-- Marcadores de flujo con flechas sutiles -->
+        <div class="absolute top-[26px] left-[20%] -translate-x-1/2 z-10 w-3.5 h-3.5 rounded-full bg-[#060911] border-2 border-[#00E5FF] flex items-center justify-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-[#00E5FF]"></div>
+        </div>
+        <div class="absolute top-[26px] left-[40%] -translate-x-1/2 z-10 w-3.5 h-3.5 rounded-full bg-[#060911] border-2 border-[#00E5FF] flex items-center justify-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-[#00E5FF]"></div>
+        </div>
+        <div class="absolute top-[26px] left-[60%] -translate-x-1/2 z-10 w-3.5 h-3.5 rounded-full bg-[#060911] border-2 border-[#00E5FF] flex items-center justify-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-[#00E5FF]"></div>
+        </div>
+        <div class="absolute top-[26px] left-[80%] -translate-x-1/2 z-10 w-3.5 h-3.5 rounded-full bg-[#060911] border-2 border-[#FF5A1F] flex items-center justify-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-[#FF5A1F]"></div>
+        </div>
+
+        <!-- Las 5 Columnas de Frentes -->
+        <div class="grid grid-cols-5 gap-4 relative z-10">
+
+          <!-- Columna 1: Planear (11) -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 hover:border-[#00E5FF]/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-[#00E5FF] flex items-center justify-center shadow-lg shadow-[#00E5FF]/10">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-mono font-bold text-[#00E5FF] block">01</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">11 tools</span>
+                </div>
+              </div>
+              
+              <h3 class="text-base font-display font-bold text-white mb-1.5">Planear</h3>
+              <p class="text-xs text-slate-400 mb-5 leading-relaxed min-h-[40px]">
+                Estructura de descomposición del trabajo, ruta crítica y mitigación anticipada.
+              </p>
+
+              <!-- 6 Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">Gantt CPM</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">Lookahead 4S</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">Last Planner</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">vPlan</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">Líneas Base</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white hover:border-[#00E5FF]/40 transition-colors">WBS / EDT</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Sincronización</span>
+              <span class="text-[#00E5FF] font-medium">Bimestral + 4S</span>
+            </div>
+          </div>
+
+          <!-- Columna 2: Ejecutar (10) -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 hover:border-emerald-500/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-mono font-bold text-emerald-400 block">02</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">10 tools</span>
+                </div>
+              </div>
+              
+              <h3 class="text-base font-display font-bold text-white mb-1.5">Ejecutar</h3>
+              <p class="text-xs text-slate-400 mb-5 leading-relaxed min-h-[40px]">
+                Operación en frente de obra, productividad de cuadrillas y bitácora técnica legal.
+              </p>
+
+              <!-- 6 Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Reporte Diario</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Bitácora Oficial</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Evidencias 360°</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Punch List</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Control Calidad</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Seguridad HSE</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Captura</span>
+              <span class="text-emerald-400 font-medium">100% Offline Móvil</span>
+            </div>
+          </div>
+
+          <!-- Columna 3: Abastecer (5) -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 hover:border-amber-500/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/10">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-mono font-bold text-amber-400 block">03</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">5 tools</span>
+                </div>
+              </div>
+              
+              <h3 class="text-base font-display font-bold text-white mb-1.5">Abastecer</h3>
+              <p class="text-xs text-slate-400 mb-5 leading-relaxed min-h-[40px]">
+                Cadena de suministro justa a tiempo, control de almacén y maquinaria pesada.
+              </p>
+
+              <!-- 6 Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Submittals</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Requisiciones</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Almacén Físico</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Maquinaria</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Remisiones QR</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Mermas y Stock</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Suministros</span>
+              <span class="text-amber-400 font-medium">Just-in-Time</span>
+            </div>
+          </div>
+
+          <!-- Columna 4: Documentar (12) -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 hover:border-purple-500/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-lg shadow-purple-500/10">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-mono font-bold text-purple-400 block">04</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">12 tools</span>
+                </div>
+              </div>
+              
+              <h3 class="text-base font-display font-bold text-white mb-1.5">Documentar</h3>
+              <p class="text-xs text-slate-400 mb-5 leading-relaxed min-h-[40px]">
+                Expediente unitario, control de planos federados y resolución formal de consultas.
+              </p>
+
+              <!-- 6 Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Visor de Planos</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">RFI Oficiales</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Minutas</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Comparador CAD</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">SheetFlow</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Expediente As-Built</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Auditoría</span>
+              <span class="text-purple-400 font-medium">Audit-Ready</span>
+            </div>
+          </div>
+
+          <!-- Columna 5: Controlar (16) -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 hover:border-[#FF5A1F]/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-[#FF5A1F]/10 border border-[#FF5A1F]/20 text-[#FF5A1F] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/10">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-mono font-bold text-[#FF5A1F] block">05</span>
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">16 tools</span>
+                </div>
+              </div>
+              
+              <h3 class="text-base font-display font-bold text-white mb-1.5">Controlar</h3>
+              <p class="text-xs text-slate-400 mb-5 leading-relaxed min-h-[40px]">
+                Valor ganado (EVM), curvas S, órdenes de cambio y pronósticos financieros.
+              </p>
+
+              <!-- 6 Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Curva S Real</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">SPI & CPI Real</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Órdenes Cambio</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Estimaciones</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">Matriz Riesgos</span>
+                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[11px] text-slate-300 hover:text-white transition-colors">MSR Ejecutivo</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Precisión EVM</span>
+              <span class="text-[#FF5A1F] font-medium">±0.2% Varianza</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- BANDA INFERIOR CON ADMINISTRACIÓN          -->
+      <!-- ========================================== -->
+      <div class="mt-8 rounded-2xl bg-gradient-to-r from-[#0E1424] via-[#111A30] to-[#0E1424] border border-white/10 p-5 flex items-center justify-between">
+        
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+            <svg class="w-5 h-5 text-[#00E5FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-white">Módulo Transversal de Administración</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/20">Gobernanza Central</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Costos, contratos, estimaciones a subcontratistas, gestión de riesgos, equipo de residentes y directorio unificado.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="#" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-white border border-white/10 hover:border-[#00E5FF]/40 transition-all group">
+            <span>Ver las 16 de control</span>
+            <svg class="w-4 h-4 text-[#00E5FF] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer discreto de página -->
+  <footer class="w-full border-t border-white/5 py-6 px-16 text-center text-xs text-slate-400 font-mono">
+    ProjectWeb © 2025 Vanguard CivilTech · Plataforma Integral de Control y Seguimiento de Obra Civil
+  </footer>
+
+</body>
+</html>

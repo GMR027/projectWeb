@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProjectWeb - Sistema de Gestión de Obra</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0B132B',
+              surface: 'rgba(18, 30, 61, 0.7)',
+              surfaceBorder: 'rgba(0, 180, 216, 0.22)',
+              orange: '#FF5A1F',
+              orangeHover: '#E04B14',
+              cyan: '#00B4D8',
+              cyanGlow: 'rgba(0, 180, 216, 0.25)',
+              navyLight: '#1C2A4A',
+              navyCard: 'rgba(23, 37, 73, 0.82)'
+            }
+          },
+          fontFamily: {
+            title: ['Space Grotesk', 'sans-serif'],
+            body: ['Manrope', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #0B132B;
+      color: #E2E8F0;
+      font-family: 'Manrope', sans-serif;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      background-image: 
+        linear-gradient(to right, rgba(0, 180, 216, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 180, 216, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .radial-glow {
+      background: radial-gradient(circle at 50% 20%, rgba(0, 180, 216, 0.12) 0%, rgba(255, 90, 31, 0.06) 45%, transparent 75%);
+    }
+    .glass-panel {
+      background: rgba(16, 26, 53, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 180, 216, 0.2);
+      box-shadow: 0 16px 36px -10px rgba(5, 10, 24, 0.75);
+    }
+    .text-gradient {
+      background: linear-gradient(105deg, #FF5A1F 15%, #00B4D8 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .badge-glow {
+      box-shadow: 0 0 15px rgba(255, 90, 31, 0.25);
+    }
+  </style>
+<meta content="web_standard" name="shell-type"/></head>
+<body class="grid-bg min-h-screen relative selection:bg-[#FF5A1F]/30 selection:text-white">
+<!-- Glow Ambient layer -->
+<div class="fixed inset-0 radial-glow pointer-events-none z-0"></div>
+<!-- FIXED TOPBAR -->
+<header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-[#00B4D8]/20 bg-[#0B132B]/85 backdrop-blur-md">
+<div class="max-w-[1440px] mx-auto px-6 h-18 flex items-center justify-between py-3.5">
+<!-- LOGO: ProjectWeb (Casco) -->
+<a class="flex items-center gap-3 group" href="#">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF5A1F] to-[#00B4D8] p-0.5 shadow-[0_0_15px_rgba(255,90,31,0.35)] transition group-hover:scale-105">
+<div class="w-full h-full bg-[#0B132B] rounded-[6px] flex items-center justify-center text-[#FF5A1F]">
+<!-- Hardhat SVG icon -->
+<svg class="w-6 h-6 stroke-[#FF5A1F]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"></path>
+<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"></path>
+<path d="M4 15v-3a8 8 0 0 1 16 0v3"></path>
+</svg>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-title text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+            Project<span class="text-[#00B4D8]">Web</span>
+<span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#00B4D8]/10 text-[#00B4D8] border border-[#00B4D8]/30">v3.2</span>
+</span>
+<span class="text-[11px] font-mono text-slate-400 tracking-wider">CIVIL TECH CONTROL</span>
+</div>
+</a>
+<!-- NAVIGATION LINKS -->
+<nav class="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
+<a class="hover:text-[#00B4D8] transition-colors" href="#funciones">Funciones</a>
+<a class="hover:text-[#00B4D8] transition-colors" href="#servicios">Servicios</a>
+<a class="hover:text-[#00B4D8] transition-colors" href="#piloto">Piloto</a>
+<a class="hover:text-[#00B4D8] transition-colors" href="#planes">Planes</a>
+<a class="hover:text-[#00B4D8] transition-colors" href="#contacto">Contacto</a>
+</nav>
+<!-- TOP ACTIONS -->
+<div class="flex items-center gap-3">
+<!-- WhatsApp Button -->
+<a class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/30 text-xs font-mono font-medium transition" href="https://wa.me/" rel="noopener noreferrer" target="_blank">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24">
+<path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.592 2.654-.696c1.004.573 1.944.896 2.806.897h.005c3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.768-5.773-5.78zm0 10.37c-.777 0-1.58-.225-2.29-.652l-.164-.098-1.543.405.412-1.503-.108-.172c-.477-.761-.729-1.516-.728-2.35 0-2.536 2.063-4.6 4.601-4.601 2.538 0 4.602 2.064 4.602 4.6 0 2.538-2.064 4.601-4.602 4.601z"></path>
+<path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.353 5.011L2 22l5.12-1.341a9.98 9.98 0 004.887 1.282h.005c5.507 0 9.99-4.479 9.99-9.986 0-5.507-4.482-9.955-9.99-9.955zm0 18.232c-1.574 0-3.113-.422-4.455-1.222l-.32-.191-3.313.869.884-3.23-.209-.333a8.214 8.214 0 01-1.26-4.379c.002-4.561 3.712-8.272 8.275-8.272 4.563 0 8.273 3.711 8.274 8.272-.001 4.561-3.713 8.273-8.276 8.273z"></path>
+</svg>
+<span>WhatsApp</span>
+</a>
+<!-- Iniciar Sesion Button -->
+<a class="px-4 py-2 rounded-lg bg-[#172549] hover:bg-[#1E305C] border border-[#00B4D8]/30 text-white font-mono text-xs font-semibold tracking-wide transition shadow-sm" href="#login">
+          Iniciar sesión
+        </a>
+</div>
+</div>
+</header>
+<!-- MAIN WRAPPER -->
+<main class="relative z-10 pt-28 pb-20 max-w-[1440px] mx-auto px-6 space-y-24"><div class="flex flex-col w-full space-y-32">
+<!-- ========================================== -->
+<!-- 1. ENCABEZADO Y TRES PILARES PRINCIPALES -->
+<!-- ========================================== -->
+<section class="relative w-full">
+<!-- Luces decorativas ambientales locales -->
+<div class="absolute -top-24 left-1/4 w-96 h-96 bg-brand-cyan/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute top-1/2 right-10 w-80 h-80 bg-brand-orange/10 rounded-full blur-[140px] pointer-events-none"></div>
+<div class="flex flex-col items-start max-w-4xl space-y-6">
+<!-- Badge Pill -->
+<div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-brand-navyCard/90 border border-brand-cyan/30 backdrop-blur-md shadow-lg shadow-brand-cyan/5">
+<span class="w-2 h-2 rounded-full bg-brand-orange animate-pulse"></span>
+<span class="font-mono text-xs uppercase tracking-widest text-brand-cyan font-semibold">
+          • ¿POR QUÉ PROJECTWEB? / CONSOLIDACIÓN DE SOFTWARE
+        </span>
+</div>
+<!-- Headline -->
+<h1 class="font-headline text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.08]">
+        Menos programas, <br class="hidden sm:inline"/>
+<span class="text-gradient">menos costo, menos estrés</span>
+</h1>
+<!-- Subtítulo -->
+<p class="font-body text-slate-300 text-lg sm:text-xl font-normal leading-relaxed max-w-2xl">
+        Todo lo que antes se repartía entre varios programas y archivos sueltos, ahora vive junto y disponible donde lo necesites.
+      </p>
+</div>
+<!-- Grid 3 Pilares -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-14">
+<!-- Pilar 1 -->
+<div class="relative group p-8 rounded-xl bg-brand-navyCard/70 backdrop-blur-xl border border-brand-surfaceBorder hover:border-brand-cyan/50 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between min-h-[290px]">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-brand-navyLight text-[11px] font-mono tracking-wider text-brand-cyan uppercase font-medium">
+            Arquitectura unificada
+          </span>
+<span class="material-symbols-outlined text-brand-cyan text-2xl opacity-75">hub</span>
+</div>
+<div class="space-y-3 my-6">
+<div class="font-headline text-5xl sm:text-6xl font-bold tracking-tight text-white group-hover:text-brand-cyan transition-colors">
+            1 <span class="text-2xl font-light text-slate-400">plataforma</span>
+</div>
+<p class="font-body text-slate-300 text-base leading-snug">
+            en lugar de hasta <span class="text-white font-semibold">8 tipos de software</span> aislados para gestionar la misma obra.
+          </p>
+</div>
+<div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+<span>Sincronización central</span>
+<span class="text-brand-cyan font-semibold">100% Nativo Web</span>
+</div>
+</div>
+<!-- Pilar 2 (Destacado naranja) -->
+<div class="relative group p-8 rounded-xl bg-brand-navyCard/90 backdrop-blur-xl border border-brand-orange/40 hover:border-brand-orange transition-all duration-300 shadow-2xl shadow-brand-orange/10 overflow-hidden flex flex-col justify-between min-h-[290px]">
+<div class="absolute -bottom-10 -right-10 w-36 h-36 bg-brand-orange/15 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-brand-orange/15 text-[11px] font-mono tracking-wider text-brand-orange uppercase font-semibold">
+            Ahorro directo medible
+          </span>
+<span class="material-symbols-outlined text-brand-orange text-2xl">trending_down</span>
+</div>
+<div class="space-y-3 my-6">
+<div class="font-headline text-5xl sm:text-6xl font-bold tracking-tight text-brand-orange">
+            65–87% <span class="text-2xl font-light text-white">menos</span>
+</div>
+<p class="font-body text-slate-200 text-base leading-snug">
+            en costo recurrente de software, ajustado de acuerdo al tamaño del equipo y proyectos.
+          </p>
+</div>
+<div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-300">
+<span>ROI promedio</span>
+<span class="text-emerald-400 font-semibold">&lt; 45 días</span>
+</div>
+</div>
+<!-- Pilar 3 -->
+<div class="relative group p-8 rounded-xl bg-brand-navyCard/70 backdrop-blur-xl border border-brand-surfaceBorder hover:border-brand-cyan/50 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between min-h-[290px]">
+<div class="absolute -top-12 -left-12 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-brand-navyLight text-[11px] font-mono tracking-wider text-brand-cyan uppercase font-medium">
+            Propagación en tiempo real
+          </span>
+<span class="material-symbols-outlined text-brand-cyan text-2xl opacity-75">sync_alt</span>
+</div>
+<div class="space-y-3 my-6">
+<div class="font-headline text-4xl sm:text-5xl font-bold tracking-tight text-white group-hover:text-brand-cyan transition-colors">
+            1 captura, <span class="text-brand-cyan font-light">7 vistas</span>
+</div>
+<p class="font-body text-slate-300 text-base leading-snug">
+            un único dato capturado en campo o gabinete alimenta en cascada toda la obra sin retrabajos.
+          </p>
+</div>
+<div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+<span>Latencia de propagación</span>
+<span class="text-brand-cyan font-semibold">0.4 seg</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 2. SEIS TARJETAS COMPACTAS DE BENEFICIOS -->
+<!-- ========================================== -->
+<section class="space-y-8">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800/80 pb-6">
+<div>
+<span class="text-xs font-mono text-brand-cyan uppercase tracking-widest block mb-2 font-semibold">• ECOSISTEMA INTEGRAL</span>
+<h2 class="font-headline text-3xl sm:text-4xl font-bold text-white tracking-tight">Diseñado para erradicar la dispersión técnica</h2>
+</div>
+<p class="text-sm font-mono text-slate-400 max-w-md sm:text-right">
+        6 certezas operativas contra la fricción administrativa en obras de infraestructura y edificación.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+<!-- Beneficio 1 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-cyan/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-cyan mb-4 group-hover:bg-brand-cyan group-hover:text-brand-bg transition-colors">
+<span class="material-symbols-outlined text-xl">layers</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">Una plataforma, no tres o cuatro programas</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          Elimina la dispersión de compras, facturas aisladas, múltiples renovaciones anuales y tratos con proveedores descoordinados.
+        </p>
+</div>
+<!-- Beneficio 2 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-cyan/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-cyan mb-4 group-hover:bg-brand-cyan group-hover:text-brand-bg transition-colors">
+<span class="material-symbols-outlined text-xl">verified</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">Información que cuadra</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          Cero discrepancias de saldos o avances entre oficina técnica, residentes de frente y contabilidad general de la constructora.
+        </p>
+</div>
+<!-- Beneficio 3 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-cyan/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-cyan mb-4 group-hover:bg-brand-cyan group-hover:text-brand-bg transition-colors">
+<span class="material-symbols-outlined text-xl">devices</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">En cualquier equipo sin reinstalar</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          100% web vía navegador seguro en laptop de gabinete, tablet robusta de supervisión o smartphone a pie de colado.
+        </p>
+</div>
+<!-- Beneficio 4 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-orange/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-orange mb-4 group-hover:bg-brand-orange group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">construction</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">Hecha para control de obra</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          Procesos, matrices de estimación, catálogos de conceptos y terminología nativa de ingeniería civil y superintendencia.
+        </p>
+</div>
+<!-- Beneficio 5 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-cyan/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-cyan mb-4 group-hover:bg-brand-cyan group-hover:text-brand-bg transition-colors">
+<span class="material-symbols-outlined text-xl">admin_panel_settings</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">Control de quién ve qué</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          Permisos granulares por rol operativo, frente de trabajo asignado, contratista externo y estricto nivel jerárquico.
+        </p>
+</div>
+<!-- Beneficio 6 -->
+<div class="p-6 rounded-xl bg-brand-surface border border-brand-surfaceBorder hover:border-brand-orange/40 transition-all duration-300 group hover:-translate-y-1">
+<div class="w-10 h-10 rounded-lg bg-brand-navyLight flex items-center justify-center text-brand-orange mb-4 group-hover:bg-brand-orange group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">all_inclusive</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-white mb-2">Todo en uno de verdad</h3>
+<p class="text-sm font-body text-slate-300 leading-relaxed">
+          Desde el Gantt de ruta crítica y Lookahead hasta bitácora electrónica, planos federados, estimaciones y almacén físico.
+        </p>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 3. SECCIÓN DE AHORRO Y CALCULADORA INTERACTIVA -->
+<!-- ========================================== -->
+<section class="space-y-10" id="calculadora">
+<div class="max-w-3xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-brand-orange/10 border border-brand-orange/30 text-brand-orange font-mono text-xs uppercase tracking-wider mb-3">
+        • RETORNO DE INVERSIÓN / AUDITORÍA DE COSTOS
+      </div>
+<h2 class="font-headline text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
+        Cuánto te ahorras al cambiar varios programas por una plataforma
+      </h2>
+<p class="font-body text-slate-300 text-lg mt-3">
+        Calculado con las licencias estándar que ProjectWeb reemplaza directamente, no con proyecciones abstractas.
+      </p>
+</div>
+<!-- Layout 2 Columnas -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+<!-- COLUMNA IZQUIERDA: CONTROLES INTERACTIVOS -->
+<div class="lg:col-span-7 bg-brand-navyCard/80 backdrop-blur-xl border border-brand-surfaceBorder rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl space-y-8">
+<!-- Toggle Facturación -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+<span class="text-sm font-mono text-slate-300 font-medium">Ciclo de facturación preferente:</span>
+<div class="inline-flex p-1 rounded-xl bg-brand-bg border border-slate-700/80 max-w-max">
+<button class="px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-brand-cyan text-brand-bg shadow" id="btn-annual">
+              Anual <span class="ml-1 text-[10px] px-1.5 py-0.2 rounded bg-black/20 text-brand-bg font-extrabold">-20%</span>
+</button>
+<button class="px-4 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition-all" id="btn-monthly">
+              Mensual
+            </button>
+</div>
+</div>
+<!-- Steppers Grid -->
+<div class="space-y-4">
+<p class="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold mb-2">Composición del equipo técnico</p>
+<!-- Control 1: Dirección / PM -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg/70 border border-slate-800/90 hover:border-slate-700">
+<div>
+<div class="text-sm font-bold text-white">Dirección / Project Manager</div>
+<div class="text-xs font-mono text-slate-400">Gantt ejecutivo, finanzas y control gerencial</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('pm', -1)">-</button>
+<span class="w-7 text-center font-mono font-bold text-base text-white" id="val-pm">2</span>
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('pm', 1)">+</button>
+</div>
+</div>
+<!-- Control 2: Residentes de Obra -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg/70 border border-slate-800/90 hover:border-slate-700">
+<div>
+<div class="text-sm font-bold text-white">Residentes de Obra</div>
+<div class="text-xs font-mono text-slate-400">Planos, bitácoras, estimaciones y avance físico</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('res', -1)">-</button>
+<span class="w-7 text-center font-mono font-bold text-base text-white" id="val-res">5</span>
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('res', 1)">+</button>
+</div>
+</div>
+<!-- Control 3: Administración y Costos -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg/70 border border-slate-800/90 hover:border-slate-700">
+<div>
+<div class="text-sm font-bold text-white">Administración y Costos</div>
+<div class="text-xs font-mono text-slate-400">Presupuestos, almacén y pagos a subcontratos</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('admin', -1)">-</button>
+<span class="w-7 text-center font-mono font-bold text-base text-white" id="val-admin">3</span>
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('admin', 1)">+</button>
+</div>
+</div>
+<!-- Control 4: Supervisores de Campo -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg/70 border border-slate-800/90 hover:border-slate-700">
+<div>
+<div class="text-sm font-bold text-white">Supervisores de Campo</div>
+<div class="text-xs font-mono text-slate-400">Captura de incidencias, fotos y reportes diarios</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('field', -1)">-</button>
+<span class="w-7 text-center font-mono font-bold text-base text-white" id="val-field">6</span>
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-cyan hover:text-brand-bg text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('field', 1)">+</button>
+</div>
+</div>
+<!-- Control 5: Obras Activas -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg/70 border border-slate-800/90 hover:border-slate-700">
+<div>
+<div class="text-sm font-bold text-brand-orange">Obras Activas Simultáneas</div>
+<div class="text-xs font-mono text-slate-400">Frentes ejecutándose concurrentemente</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-orange hover:text-white text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('projects', -1)">-</button>
+<span class="w-7 text-center font-mono font-bold text-base text-brand-orange" id="val-projects">3</span>
+<button class="w-8 h-8 rounded-lg bg-brand-navyLight hover:bg-brand-orange hover:text-white text-slate-200 border border-slate-700 font-mono flex items-center justify-center text-base transition-colors" onclick="adjustValue('projects', 1)">+</button>
+</div>
+</div>
+</div>
+<!-- Botón Acción Primario -->
+<div class="pt-2">
+<button class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-brand-orange to-brand-orangeHover hover:brightness-110 text-white font-mono font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-lg shadow-brand-orange/20 transition-all active:scale-[0.99]" onclick="recalculateSavings()">
+<span class="material-symbols-outlined text-xl">calculate</span>
+            Calcular mi ahorro
+          </button>
+</div>
+</div>
+<!-- COLUMNA DERECHA: PANEL DE RESULTADOS DE ALTO IMPACTO -->
+<div class="lg:col-span-5 rounded-2xl bg-gradient-to-b from-[#131F3F] to-[#0A1024] border border-brand-cyan/30 p-7 sm:p-9 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+<!-- Elemento de fondo sutil -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="space-y-6 relative z-10">
+<!-- Badge Plan Recomendado -->
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase tracking-wider text-slate-400">Auditoría Estimada</span>
+<span class="px-3 py-1 rounded-full bg-brand-cyan/15 border border-brand-cyan/40 text-brand-cyan text-xs font-mono font-bold tracking-wide" id="plan-badge">
+              Plan recomendado: Pro
+            </span>
+</div>
+<!-- Comparativa Directa de Costos -->
+<div class="space-y-4 pt-2">
+<div class="flex flex-col">
+<span class="text-xs font-mono text-slate-400 uppercase">Gasto tradicional en 6-8 licencias:</span>
+<div class="flex items-baseline gap-2 mt-0.5">
+<span class="font-mono text-2xl font-semibold text-slate-400 line-through tracking-tight" id="trad-cost">$145,800 MXN</span>
+<span class="text-xs font-mono text-slate-500">/ año</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-mono text-brand-cyan uppercase font-semibold">Inversión consolidada con ProjectWeb:</span>
+<div class="flex items-baseline gap-2 mt-0.5">
+<span class="font-mono text-4xl font-extrabold text-white tracking-tight" id="pw-cost">$26,900 MXN</span>
+<span class="text-xs font-mono text-slate-300">/ año</span>
+</div>
+</div>
+</div>
+<!-- Gran Bloque Verde Ahorro -->
+<div class="p-6 rounded-xl bg-gradient-to-r from-emerald-950/60 via-emerald-900/40 to-emerald-950/60 border border-emerald-500/40 shadow-inner">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-400">Ahorro Neto Directo</span>
+<span class="px-2.5 py-0.5 rounded bg-emerald-500 text-brand-bg font-mono text-xs font-black" id="perc-badge">
+                82% MENOS
+              </span>
+</div>
+<div class="font-headline text-3xl sm:text-4xl font-black text-emerald-300 tracking-tight" id="net-savings">
+              Ahorras $118,900 MXN
+            </div>
+<div class="text-[11px] font-mono text-emerald-400/80 mt-1">al año en presupuesto de licencias IT</div>
+</div>
+<!-- Desglose por Rol / Software Reemplazado -->
+<div class="space-y-2.5 pt-2 border-t border-slate-800">
+<span class="text-xs font-mono text-slate-400 uppercase tracking-wider block font-semibold">Desglose de reemplazo:</span>
+<div class="flex justify-between items-center text-xs font-mono text-slate-300">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand-cyan"></span> Gantt &amp; Cronogramas</span>
+<span class="text-slate-400">-$42,000 MXN</span>
+</div>
+<div class="flex justify-between items-center text-xs font-mono text-slate-300">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand-cyan"></span> Visores CAD / Planos PDF</span>
+<span class="text-slate-400">-$36,500 MXN</span>
+</div>
+<div class="flex justify-between items-center text-xs font-mono text-slate-300">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand-cyan"></span> Bitácoras &amp; Formularios de Obra</span>
+<span class="text-slate-400">-$24,400 MXN</span>
+</div>
+<div class="flex justify-between items-center text-xs font-mono text-slate-300">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand-cyan"></span> Almacenamiento &amp; Trazabilidad Cloud</span>
+<span class="text-slate-400">-$16,000 MXN</span>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+<span class="flex items-center gap-1 text-slate-300">
+<span class="material-symbols-outlined text-sm text-emerald-400">check_circle</span> Sin cobro por usuario pasivo
+          </span>
+<span class="text-brand-cyan">Migración guiada</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 4. TABLA DE ESCENARIOS DE EQUIPO -->
+<!-- ========================================== -->
+<section class="space-y-6">
+<div class="flex flex-col space-y-2">
+<span class="text-xs font-mono text-brand-cyan uppercase tracking-widest font-semibold">• COMPARATIVA DE MERCADO</span>
+<h2 class="font-headline text-3xl font-bold text-white tracking-tight">Escenarios por tamaño de constructora</h2>
+<p class="font-body text-slate-300 text-sm max-w-2xl">
+        Evaluación anualizada comparativa entre suites convencionales fragmentadas versus el despliegue integrado de ProjectWeb.
+      </p>
+</div>
+<!-- Contenedor Tabla Responsive -->
+<div class="overflow-x-auto rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/60 backdrop-blur-md shadow-xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-slate-800 bg-[#0E1730] text-xs font-mono uppercase tracking-wider text-slate-400">
+<th class="py-4 px-5 font-semibold text-white">Escenario</th>
+<th class="py-4 px-4 font-semibold">Tamaño equipo</th>
+<th class="py-4 px-4 font-semibold">Obras activas</th>
+<th class="py-4 px-4 font-semibold">Costo tradicional</th>
+<th class="py-4 px-4 font-semibold text-brand-cyan">Con ProjectWeb</th>
+<th class="py-4 px-4 font-semibold text-emerald-400">Ahorro anual neto</th>
+<th class="py-4 px-5 font-semibold text-right">% Ahorro</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-800/60 font-mono text-sm">
+<!-- Fila 1: Pequeño -->
+<tr class="hover:bg-slate-800/30 transition-colors">
+<td class="py-4 px-5">
+<div class="font-bold text-white font-headline">Pequeño</div>
+<div class="text-xs text-slate-400">Despacho / Contratista</div>
+</td>
+<td class="py-4 px-4 text-slate-300">3–5 licencias</td>
+<td class="py-4 px-4 text-slate-300">1–2 obras</td>
+<td class="py-4 px-4 text-slate-400 line-through">$48,000 MXN</td>
+<td class="py-4 px-4 font-bold text-white bg-brand-cyan/5">$16,800 MXN</td>
+<td class="py-4 px-4 font-bold text-emerald-400">$31,200 MXN</td>
+<td class="py-4 px-5 text-right font-black text-brand-orange">65% menos</td>
+</tr>
+<!-- Fila 2: Medio (Destacada) -->
+<tr class="bg-brand-navyLight/40 hover:bg-brand-navyLight/60 transition-colors border-l-2 border-l-brand-orange">
+<td class="py-4 px-5">
+<div class="font-bold text-white font-headline flex items-center gap-2">
+                Medio
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-brand-orange/20 text-brand-orange border border-brand-orange/30 uppercase">Más común</span>
+</div>
+<div class="text-xs text-slate-400">Constructora mediana</div>
+</td>
+<td class="py-4 px-4 text-slate-200">8–15 licencias</td>
+<td class="py-4 px-4 text-slate-200">3–5 obras</td>
+<td class="py-4 px-4 text-slate-400 line-through">$145,800 MXN</td>
+<td class="py-4 px-4 font-bold text-white bg-brand-cyan/10">$26,900 MXN</td>
+<td class="py-4 px-4 font-bold text-emerald-400 text-base">$118,900 MXN</td>
+<td class="py-4 px-5 text-right font-black text-brand-orange text-base">82% menos</td>
+</tr>
+<!-- Fila 3: Constructora -->
+<tr class="hover:bg-slate-800/30 transition-colors">
+<td class="py-4 px-5">
+<div class="font-bold text-white font-headline">Constructora</div>
+<div class="text-xs text-slate-400">Múltiples frentes</div>
+</td>
+<td class="py-4 px-4 text-slate-300">16–30 licencias</td>
+<td class="py-4 px-4 text-slate-300">6–10 obras</td>
+<td class="py-4 px-4 text-slate-400 line-through">$320,000 MXN</td>
+<td class="py-4 px-4 font-bold text-white bg-brand-cyan/5">$48,000 MXN</td>
+<td class="py-4 px-4 font-bold text-emerald-400">$272,000 MXN</td>
+<td class="py-4 px-5 text-right font-black text-brand-orange">85% menos</td>
+</tr>
+<!-- Fila 4: Corporativo -->
+<tr class="hover:bg-slate-800/30 transition-colors">
+<td class="py-4 px-5">
+<div class="font-bold text-white font-headline">Corporativo</div>
+<div class="text-xs text-slate-400">Desarrollador / EPC</div>
+</td>
+<td class="py-4 px-4 text-slate-300">31–70+ licencias</td>
+<td class="py-4 px-4 text-slate-300">10+ obras</td>
+<td class="py-4 px-4 text-slate-400 line-through">$740,000 MXN</td>
+<td class="py-4 px-4 font-bold text-white bg-brand-cyan/5">$96,200 MXN</td>
+<td class="py-4 px-4 font-bold text-emerald-400 text-base">$643,800 MXN</td>
+<td class="py-4 px-5 text-right font-black text-brand-orange text-base">87% menos</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 5. DETALLE COLAPSABLE "¿QUÉ REEMPLAZA?" -->
+<!-- ========================================== -->
+<section class="space-y-6">
+<div class="flex flex-col space-y-2">
+<span class="text-xs font-mono text-brand-cyan uppercase tracking-widest font-semibold">• MAPA DE REEMPLAZO TECNOLÓGICO</span>
+<h2 class="font-headline text-3xl font-bold text-white tracking-tight">¿Qué herramientas sustituye ProjectWeb?</h2>
+<p class="font-body text-slate-300 text-sm max-w-2xl">
+        Centraliza los 6 silos informáticos que usualmente fragmentan la gestión técnica y aumentan los costos operativos.
+      </p>
+</div>
+<!-- Acordeones Interactivos en Grid de 2 columnas -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Acordeón 1 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-1')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-orange">timeline</span>
+<span class="font-headline text-base font-bold text-white">Programación y Gantt</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-1">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-1">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> MS Project y licencias standalone de Primavera P6.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Ofrece cronograma interactivo, ruta crítica automática, Lookahead a 4 semanas y seguimiento porcentual sin requerir que cada ingeniero compre una costosa licencia individual.
+          </p>
+</div>
+</div>
+<!-- Acordeón 2 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-2')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-cyan">table_chart</span>
+<span class="font-headline text-base font-bold text-white">Ofimática y Hojas de Cálculo</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-2">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-2">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> Cientos de archivos Excel desconectados y macros frágiles.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Evita fórmulas rotas y versiones duplicadas como "Presupuesto_FINAL_v2_esteSi.xlsx". La base de datos relacional valida montos, volumetrías y números generadores.
+          </p>
+</div>
+</div>
+<!-- Acordeón 3 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-3')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-orange">architecture</span>
+<span class="font-headline text-base font-bold text-white">Visores de PDF y Planos</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-3">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-3">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> Bluebeam y visores de planos aislados en estaciones de trabajo.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Control de versiones en vivo, comparación visual de planos superpuestos y marcas de revisión accesibles inmediatamente por la cuadrilla en campo.
+          </p>
+</div>
+</div>
+<!-- Acordeón 4 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-4')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-cyan">edit_note</span>
+<span class="font-headline text-base font-bold text-white">Campo y Reportes</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-4">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-4">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> Apps de bitácora separadas, grupos de WhatsApp informal y formularios sueltos.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Bitácora de obra con validez legal, reportes fotográficos geolocalizados y registro de clima sin perder evidencias entre conversaciones de chat personal.
+          </p>
+</div>
+</div>
+<!-- Acordeón 5 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-5')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-orange">monitoring</span>
+<span class="font-headline text-base font-bold text-white">Tablero de Control y EVM</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-5">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-5">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> Dashboards externos desactualizados de PowerBI.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Indicadores de Valor Ganado (SPI/CPI), proyección de flujo de caja y estatus de estimaciones generados en tiempo real con datos directos de obra.
+          </p>
+</div>
+</div>
+<!-- Acordeón 6 -->
+<div class="rounded-xl border border-brand-surfaceBorder bg-brand-navyCard/70 overflow-hidden transition-all">
+<button class="w-full p-5 text-left flex items-center justify-between hover:bg-slate-800/40 transition" onclick="toggleAccordion('acc-6')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-cyan">cloud_sync</span>
+<span class="font-headline text-base font-bold text-white">Almacenamiento en la Nube</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 transition-transform" id="icon-acc-6">expand_more</span>
+</button>
+<div class="px-5 pb-5 pt-1 text-sm font-body text-slate-300 space-y-2 border-t border-slate-800/50" id="acc-6">
+<p><strong class="text-brand-cyan font-mono">Sustituye:</strong> Dropbox o Google Drive dispersos sin trazabilidad técnica.</p>
+<p class="text-xs text-slate-400 leading-relaxed">
+            Estructura estandarizada por obra, expedientes de estimación blindados con hash criptográfico y archivo histórico listo para auditorías gubernamentales o privadas.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 6. NOTA DE SUPUESTOS LEGALES / TRANSPARENCIA -->
+<!-- ========================================== -->
+<section class="border-t border-slate-800/80 pt-8 pb-4">
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-slate-400 text-xs font-mono">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-brand-cyan">info</span>
+<span>Cifras en MXN, planes anuales, una licencia por rol; no incluye hardware, internet, implementación ni impuestos aplicables.</span>
+</div>
+<div class="text-[11px] text-slate-400">
+        Revisión tarifaria: Q1 2025 • Vanguard CivilTech Systems
+      </div>
+</div>
+</section>
+<!-- Script interactivo de cálculo y acordeón -->
+<script>
+    const state = {
+      pm: 2,
+      res: 5,
+      admin: 3,
+      field: 6,
+      projects: 3,
+      isAnnual: true
+    };
+
+    function adjustValue(key, delta) {
+      if (key === 'projects') {
+        state[key] = Math.max(1, state[key] + delta);
+      } else {
+        state[key] = Math.max(0, state[key] + delta);
+      }
+      document.getElementById('val-' + key).innerText = state[key];
+      recalculateSavings();
+    }
+
+    function toggleBilling(annual) {
+      state.isAnnual = annual;
+      const btnA = document.getElementById('btn-annual');
+      const btnM = document.getElementById('btn-monthly');
+      if (annual) {
+        btnA.className = "px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-brand-cyan text-brand-bg shadow";
+        btnM.className = "px-4 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition-all";
+      } else {
+        btnM.className = "px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-brand-cyan text-brand-bg shadow";
+        btnA.className = "px-4 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition-all";
+      }
+      recalculateSavings();
+    }
+
+    document.getElementById('btn-annual').addEventListener('click', () => toggleBilling(true));
+    document.getElementById('btn-monthly').addEventListener('click', () => toggleBilling(false));
+
+    function recalculateSavings() {
+      const totalUsers = state.pm + state.res + state.admin + state.field;
+      
+      // Costo tradicional promedio por usuario (~$8,500/año en suite de 6 softwares)
+      let tradAnnual = (state.pm * 14000) + (state.res * 11500) + (state.admin * 9000) + (state.field * 4500) + (state.projects * 4000);
+      tradAnnual = Math.max(25000, tradAnnual);
+
+      // Costo ProjectWeb
+      let pwAnnual = 0;
+      let planName = "Starter";
+
+      if (totalUsers <= 5 && state.projects <= 2) {
+        pwAnnual = 16800;
+        planName = "Starter";
+      } else if (totalUsers <= 16 && state.projects <= 5) {
+        pwAnnual = 26900;
+        planName = "Pro";
+      } else if (totalUsers <= 32 && state.projects <= 10) {
+        pwAnnual = 48000;
+        planName = "Enterprise";
+      } else {
+        pwAnnual = 96200;
+        planName = "Corporativo";
+      }
+
+      if (!state.isAnnual) {
+        pwAnnual = Math.round(pwAnnual * 1.25);
+      }
+
+      const savings = Math.max(0, tradAnnual - pwAnnual);
+      const percentage = Math.round((savings / tradAnnual) * 100);
+
+      document.getElementById('plan-badge').innerText = "Plan recomendado: " + planName;
+      document.getElementById('trad-cost').innerText = "$" + tradAnnual.toLocaleString('es-MX') + " MXN";
+      document.getElementById('pw-cost').innerText = "$" + pwAnnual.toLocaleString('es-MX') + " MXN";
+      document.getElementById('net-savings').innerText = "Ahorras $" + savings.toLocaleString('es-MX') + " MXN";
+      document.getElementById('perc-badge').innerText = percentage + "% MENOS";
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      const icon = document.getElementById('icon-' + id);
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        el.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
+</div></main>
+<!-- FOOTER -->
+<footer class="border-t border-slate-800/80 bg-[#070D1E] py-12 relative z-10 text-slate-400 text-xs font-mono">
+<div class="max-w-[1440px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-3">
+<!-- Mini hardhat -->
+<div class="w-6 h-6 rounded bg-[#FF5A1F]/20 text-[#FF5A1F] flex items-center justify-center font-bold">
+<svg class="w-4 h-4 stroke-[#FF5A1F]" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"></path>
+<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"></path>
+<path d="M4 15v-3a8 8 0 0 1 16 0v3"></path>
+</svg>
+</div>
+<span class="text-white font-title font-semibold text-sm">ProjectWeb</span>
+<span class="text-slate-600">|</span>
+<span>© 2025 Vanguard CivilTech. Todos los derechos reservados.</span>
+</div>
+<div class="flex items-center gap-6">
+<a class="hover:text-slate-200 transition" href="#privacidad">Aviso de Privacidad</a>
+<a class="hover:text-slate-200 transition" href="#terminos">Términos de Servicio</a>
+<a class="hover:text-slate-200 transition" href="#seguridad">Seguridad &amp; Cumplimiento</a>
+<span class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] text-[#00B4D8]">ISO 27001 Ready</span>
+</div>
+</div>
+</footer>
+</body></html>

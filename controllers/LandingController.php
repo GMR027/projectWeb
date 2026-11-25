@@ -2,6 +2,8 @@
 
 namespace Controllers;
 
+use Classes\Ahorro;
+use Classes\LandingContenido;
 use MVC\Router;
 use Model\Proyecto;
 use Model\Usuario;
@@ -27,7 +29,13 @@ class LandingController
     /** Términos y condiciones de uso (página pública) */
     public static function terminos(Router $router)
     {
-        $router->render('landing/terminos', ['titulo' => 'Términos y condiciones', 'landingLayout' => true, 'actualizado' => '14 de octubre de 2026']);
+        $router->render('landing/terminos', [
+            'titulo' => 'Términos y condiciones',
+            'landingLayout' => true,
+            'actualizado' => '14 de octubre de 2026',
+            'descripcion' => 'Términos y condiciones de uso de ProjectWeb, sistema de programas de obra.',
+            'ogImage' => '/build/img/landing/hero.jpg',
+        ]);
     }
 
     /** Servicios administrativos de seguimiento de obra (página pública) */
@@ -35,8 +43,19 @@ class LandingController
     {
         $router->render('landing/servicios', [
             'titulo' => 'Servicios de seguimiento de obra',
+            'descripcion' => 'Servicios administrativos de seguimiento de obra: programa, materiales, reportes, cambios y documentación al día. La experiencia técnica de cada disciplina sigue siendo tuya.',
+            'ogImage' => '/build/img/landing/campo.jpg',
             'landingLayout' => true,
             'demoDisponible' => (bool)self::proyectoDemo(),
+            'whatsapp' => LandingContenido::whatsappFormateado(),
+            'whatsappUrl' => LandingContenido::whatsappEnlace('Hola, quiero información sobre el servicio de seguimiento de obra de ProjectWeb.'),
+            'precios' => [
+                'piloto' => LandingContenido::precioServicio('piloto'),
+                'diagnostico' => LandingContenido::precioServicio('diagnostico'),
+                'quincenal' => LandingContenido::precioServicio('quincenal'),
+                'semanal' => LandingContenido::precioServicio('semanal'),
+                'oficina' => LandingContenido::precioServicio('oficina'),
+            ],
         ]);
     }
 
@@ -44,9 +63,19 @@ class LandingController
     {
         $router->render('landing/index', [
             'titulo' => 'Programas de obra bajo control',
+            'descripcion' => 'ProjectWeb reúne programa, Gantt, lookahead, Last Planner, vPlan, materiales, reportes diarios, documentos y control de cambios en una sola plataforma. Menos programas, menos costo y una sola fuente de verdad.',
+            'ogImage' => '/build/img/landing/hero.jpg',
             'landingLayout' => true,
             'demoDisponible' => (bool)self::proyectoDemo(),
-            'contacto' => trim($_ENV['CONTACT_EMAIL'] ?? ''),
+            'contacto' => LandingContenido::contacto(),
+            'whatsapp' => LandingContenido::whatsappFormateado(),
+            'whatsappUrl' => LandingContenido::whatsappEnlace(),
+            'frentes' => LandingContenido::frentes(),
+            'totalHerramientas' => LandingContenido::total(),
+            'ahorroEscenarios' => Ahorro::escenarios(),
+            'ahorroRoles' => Ahorro::roles(),
+            'ahorroReemplazos' => Ahorro::reemplazos(),
+            'ahorroSupuestos' => Ahorro::supuestos(),
         ]);
     }
 

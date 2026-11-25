@@ -1626,6 +1626,26 @@ $ok('el token se guarda como SHA-256, nunca en claro', strlen(\Classes\Sesiones:
 $ok('las rutas de sesiones están registradas', str_contains($asset('public/index.php'), "/cuenta/sesiones") && str_contains($asset('public/index.php'), "/cuenta/sesiones/cerrar-otras") && str_contains($asset('public/index.php'), "/sistema/sesiones/cerrar"));
 $ok('la cuenta es una ruta general para visitantes', str_contains($asset('models/Usuario.php'), "'/cuenta'"));
 
+echo "Landing: catálogo y ahorro\n";
+$frentesLanding = \Classes\LandingContenido::frentes();
+$ok('el catálogo público tiene cinco frentes', count($frentesLanding) === 5);
+$ok('cada frente tiene al menos cinco herramientas', count(array_filter($frentesLanding, fn($f) => count($f['herramientas']) >= 5)) === 5);
+$ok('el total del catálogo es la suma de los frentes', \Classes\LandingContenido::total() === array_sum(array_map(fn($f) => count($f['herramientas']), $frentesLanding)));
+$ok('el catálogo público no muestra herramientas exclusivas del admin', !preg_match('/Programador|Centro de IA|Revisiones|Normativa|Ajustes|Sistema|Acciones rápidas/i', implode(' ', array_column(\Classes\LandingContenido::todos(), 'nombre'))));
+putenv('CONTACT_WHATSAPP=526122913090');
+$ok('el WhatsApp se arma en formato internacional', \Classes\LandingContenido::whatsappEnlace('Hola') === 'https://wa.me/526122913090?text=Hola');
+$ok('el WhatsApp se muestra con lada y separadores', \Classes\LandingContenido::whatsappFormateado() === '+52 612 291 3090');
+putenv('CONTACT_WHATSAPP');
+$ok('los precios de servicios tienen valores por defecto', \Classes\LandingContenido::precioServicio('piloto') === 3900 && \Classes\LandingContenido::precioServicio('semanal') === 6900);
+$cAhorro = \Classes\Ahorro::calcular(['direccion' => 1, 'residente' => 2, 'administracion' => 1, 'campo' => 2], 3);
+$ok('el escenario medio recomienda el Plan Pro', $cAhorro['plan']['clave'] === 'pro');
+$ok('el costo tradicional del escenario medio es $55,800', $cAhorro['tradicional_anio'] === 55800);
+$ok('el ahorro del escenario medio es $45,900', $cAhorro['ahorro_anio'] === 45900);
+$ok('el porcentaje de ahorro del escenario medio es 82%', $cAhorro['ahorro_pct'] === 82);
+$ok('quince personas y diez obras recomiendan Constructora', \Classes\Ahorro::planPara(15, 10)['clave'] === 'constructora');
+$ok('veinte personas y treinta obras recomiendan Corporativo', \Classes\Ahorro::planPara(20, 30)['clave'] === 'corporativo');
+$ok('un equipo vacío se normaliza a una dirección', \Classes\Ahorro::normalizarRoles([])['direccion'] === 1);
+
 echo "App Android: APK y logo\n";
 $ok('el nombre del APK lleva versión', \Classes\ApkAndroid::nombreValido('projectweb-android-0.1.0.apk') === 'projectweb-android-0.1.0.apk');
 $ok('la versión se extrae del nombre', \Classes\ApkAndroid::versionDeNombre('projectweb-android-1.2.3.apk') === '1.2.3');
