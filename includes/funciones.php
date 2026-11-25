@@ -1103,7 +1103,7 @@ function css_paginas_de_vista(?string $vista): ?array
         'novedades' => [],
         'buscar' => [],
     ];
-    if (array_key_exists($v, $mapa)) return $mapa[$v];
-    $prefijo = explode('/', $v)[0];
-    return $mapa[$prefijo] ?? null;
+    $hojas = array_key_exists($v, $mapa) ? $mapa[$v] : ($mapa[explode('/', $v)[0]] ?? null);
+    if ($hojas !== null && !in_array('ventanas', $hojas, true)) $hojas[] = 'ventanas';   // acabado común de ventanas, siempre al final
+    return $hojas;
 }

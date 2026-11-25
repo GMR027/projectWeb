@@ -44,7 +44,7 @@ El editor Konva (`vplan-editor.js`) conserva su propio historial por *commits* (
 
 ## SCSS (`src/scss/componentes/`)
 
-Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`). `app.scss` los carga **antes** de `paginas/`, así que cada herramienta puede ajustarlos encima.
+Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`). `app.scss` los carga **antes** de `paginas/`, así que cada herramienta puede ajustarlos encima. La excepción es `paginas/_ventanas.scss`, que se carga **al final** de cada vista porque afina los diálogos propios.
 
 | Pieza | Clases | Para qué | Quién la usa |
 |---|---|---|---|
@@ -58,6 +58,7 @@ Estilos que comparten varias herramientas (antes, copias en `src/scss/paginas/`)
 | | `.pn-secc`, `.pn-tit` (alias `.vp-cap-tit`), `.pn-vacio` | Sección plegable (`[hidden]`), título de sección y estado vacío | vPlan |
 | | `.pn-abrir` (`data-etq` = rótulo vertical) | Pestaña lateral que reabre un panel oculto | vPlan y Editor de marcas |
 | `_hoja-inferior.scss` | `.hi`, `.hi-fondo`, `.hi-caja`, `.hi-asa`, `.hi-cab`, `.hi-cuerpo`, `.hi-acc` | Hoja inferior compartida (arrastre peek/media/completa, foco atrapado); combina con `.pn-*` dentro | vPlan y editor de marcas (paneles táctiles y ficha de tarea) |
+| `paginas/_ventanas.scss` | `.ventana-cab`, `.ventana-icono`, `.ventana-cab-txt`, `.ventana-eyebrow`, `.ventana-cuerpo`, `.ventana-pie`, `.ventana-x`; refina `.modal-overlay`/`.modal-card` y todos los `dialog` | Capa común de ventanas: cabeceras, cuerpos con scroll, pies de acciones, foco, animación, fondo difuminado y hoja inferior en móvil. Se carga **al final** de cada vista (`css_paginas_de_vista()` añade `ventanas`), para poder afinar los diálogos propios de cada herramienta sin romperlos | Toda la app |
 
 **Patrón de panel ocultable** (vPlan y Editor de marcas): la cabecera lleva un botón que esconde el panel, agrega una clase a la retícula (`vp-dis-fuera` en `.vp-dis-wrap` / `ve-sin-lateral` en `.ve-area`), muestra `.pn-abrir` y guarda la decisión en `localStorage` (`vp-dis-panel` / `ve-panel`); al elegir un elemento en la hoja el panel se reabre solo (`seleccionar()` en `vplan-diseno.js`).
 

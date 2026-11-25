@@ -285,7 +285,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
         <label>Nombre
             <input type="text" id="cmp-nombre" maxlength="150" required placeholder="Ej. Plano eléctrico · Rev. A vs Rev. B">
         </label>
-        <label>Nota <small class="text-muted">(opcional)</small>
+        <label><span>Nota <small class="text-muted">(opcional)</small></span>
             <textarea id="cmp-desc" rows="2" maxlength="500" placeholder="Qué se está revisando"></textarea>
         </label>
         <label id="cmp-copia-l" hidden><input type="checkbox" id="cmp-copia"> Guardar como copia nueva</label>
@@ -312,7 +312,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
             <button type="button" class="btn btn-sm btn-ghost" id="cmp-revocar-enlace"><i class="fa-solid fa-link-slash"></i> Revocar</button>
         </div>
         <hr>
-        <label>Mensaje para Telegram <small class="text-muted">(opcional)</small>
+        <label><span>Mensaje para Telegram <small class="text-muted">(opcional)</small></span>
             <textarea id="cmp-tg-mensaje" rows="2" maxlength="600" placeholder="Ej. Revisen el cambio de la columna B antes del viernes."></textarea>
         </label>
         <label class="cmp-mini"><input type="checkbox" id="cmp-tg-pdf" checked> Adjuntar el PDF de la comparación</label>

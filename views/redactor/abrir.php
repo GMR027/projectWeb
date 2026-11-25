@@ -439,7 +439,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 </div>
 
 <dialog id="rd-dlg-firma" class="rd-dialogo">
-    <h3>Nueva firma</h3>
+    <h3><i class="fa-solid fa-signature"></i> Nueva firma</h3>
     <div class="rd-tabs"><button type="button" class="activo" data-fp="dibujar">Dibujar</button><button type="button" data-fp="escribir">Escribir</button></div>
     <div id="rd-fp-dibujar"><canvas id="rd-firma-canvas" width="560" height="200" aria-label="Área para dibujar la firma"></canvas><p class="text-sm text-muted">Dibuja con el mouse o el dedo.</p></div>
     <div id="rd-fp-escribir" hidden><input type="text" id="rd-firma-texto" maxlength="40" placeholder="Escribe tu nombre"><canvas id="rd-firma-vista" width="560" height="200"></canvas></div>
@@ -449,7 +449,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 </dialog>
 
 <dialog id="rd-dlg-dibujo" class="rd-dialogo rd-dlg-dibujo">
-    <h3>Dibujo</h3>
+    <h3><i class="fa-solid fa-pen"></i> Dibujo</h3>
     <div class="rd-dib-barra">
         <div class="rd-dib-herr" id="rd-dib-herr" role="group" aria-label="Herramientas de dibujo">
             <button type="button" class="activo" data-dib="lapiz" title="Lápiz"><i class="fa-solid fa-pencil"></i></button>
@@ -475,7 +475,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 
 <dialog id="rd-dlg-enlace" class="rd-dialogo">
     <form method="dialog" id="rd-f-enlace">
-        <h3>Hipervínculo</h3>
+        <h3><i class="fa-solid fa-link"></i> Hipervínculo</h3>
         <label>Texto <input type="text" id="rd-e-texto" maxlength="200" placeholder="Texto que se mostrará"></label>
         <label>Destino
             <select id="rd-e-tipo"><option value="ext">Página web</option><option value="int">Dentro de la plataforma</option><option value="mail">Correo electrónico</option></select>
@@ -496,7 +496,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 </dialog>
 
 <dialog id="rd-dlg-comparar" class="rd-dialogo rd-dlg-ancho">
-    <h3 id="rd-x-cmp-tit">Comparación</h3>
+    <h3 id="rd-x-cmp-tit"><i class="fa-solid fa-code-compare"></i> Comparación</h3>
     <p class="text-sm text-muted"><span class="rd-dif-del">Rojo tachado</span>: estaba en la versión y ya no está. <span class="rd-dif-ins">Verde</span>: es nuevo en el documento actual.</p>
     <div id="rd-x-cmp-cuerpo" class="rd-cmp-cuerpo"></div>
     <div class="rd-dlg-acciones"><button type="button" class="btn btn-primary" id="rd-x-cmp-cerrar">Cerrar</button></div>

@@ -221,9 +221,14 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php if ($puedeGestionar): ?>
 <div class="modal-overlay" id="cal-modal" aria-hidden="true">
     <div class="modal-card cal-modal-card" role="dialog" aria-modal="true" aria-labelledby="cal-modal-titulo">
-        <div class="cal-modal-cab">
-            <h3 id="cal-modal-titulo">Actividad</h3>
-            <button type="button" class="btn btn-sm btn-ghost" id="cal-modal-cerrar" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <div class="cal-modal-cab ventana-cab">
+            <span class="ventana-icono" aria-hidden="true"><i class="fa-solid fa-calendar-plus"></i></span>
+            <div class="ventana-cab-txt">
+                <span class="ventana-eyebrow">Calendario</span>
+                <h3 id="cal-modal-titulo">Actividad</h3>
+                <p>Captura o ajusta la actividad sin salir del calendario.</p>
+            </div>
+            <button type="button" class="ventana-x" id="cal-modal-cerrar" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <p class="text-muted text-sm" id="cal-modal-cargando">Cargando…</p>
         <iframe id="cal-modal-frame" title="Formulario de actividad"></iframe>

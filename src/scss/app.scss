@@ -61,4 +61,5 @@
 @use 'componentes/workspace';
 @use 'componentes/suite';
 @use 'layout/notificaciones';
+@use 'paginas/ventanas';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

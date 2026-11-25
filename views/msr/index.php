@@ -218,34 +218,53 @@ foreach ($items as $it) {
 </div>
 
 <?php if ($puedeEditar): ?>
-<dialog id="msr-col-dlg" class="rd-dialogo no-print">
+<dialog id="msr-col-dlg" class="rd-dialogo no-print ventana-dialogo">
     <form method="dialog" id="msr-col-form">
-        <h3>Columna</h3>
-        <label for="msr-col-n">Título</label>
-        <input type="text" id="msr-col-n" maxlength="60" autocomplete="off">
-        <label for="msr-col-g">Grupo (barra superior; vacío = sin barra)</label>
-        <input type="text" id="msr-col-g" maxlength="60" autocomplete="off" list="msr-grupos-lista" placeholder="Elige un grupo o escribe uno nuevo">
-        <datalist id="msr-grupos-lista"><?php foreach (array_unique(array_filter(array_column($columnas, 'g'))) as $gn): ?><option value="<?php echo s($gn); ?>"><?php endforeach; ?></datalist>
-        <label for="msr-col-c">Color del encabezado</label>
-        <input type="color" id="msr-col-c">
-        <div class="acciones rd-dlg-acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-col-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
+        <header class="ventana-cab">
+            <span class="ventana-icono" aria-hidden="true"><i class="fa-solid fa-table-columns"></i></span>
+            <div class="ventana-cab-txt">
+                <span class="ventana-eyebrow">MSR</span>
+                <h3>Columna</h3>
+                <p>Cambia el título, el grupo de la barra superior y el color del encabezado.</p>
+            </div>
+            <button type="button" class="ventana-x" data-cerrar-dialogo aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </header>
+        <div class="ventana-cuerpo">
+            <label for="msr-col-n">Título</label>
+            <input type="text" id="msr-col-n" maxlength="60" autocomplete="off">
+            <label for="msr-col-g">Grupo (barra superior; vacío = sin barra)</label>
+            <input type="text" id="msr-col-g" maxlength="60" autocomplete="off" list="msr-grupos-lista" placeholder="Elige un grupo o escribe uno nuevo">
+            <datalist id="msr-grupos-lista"><?php foreach (array_unique(array_filter(array_column($columnas, 'g'))) as $gn): ?><option value="<?php echo s($gn); ?>"><?php endforeach; ?></datalist>
+            <label for="msr-col-c">Color del encabezado</label>
+            <input type="color" id="msr-col-c">
+        </div>
+        <div class="modal-acciones ventana-pie"><button type="button" class="btn btn-ghost btn-sm" id="msr-col-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
     </form>
 </dialog>
-<dialog id="msr-sec-dlg" class="rd-dialogo no-print">
+<dialog id="msr-sec-dlg" class="rd-dialogo no-print ventana-dialogo">
     <form method="dialog" id="msr-sec-form">
-        <h3>Editar partida</h3>
-        <p class="msr-sec-sub" id="msr-sec-sub"></p>
-        <div class="msr-sec-prev" id="msr-sec-prev"></div>
-        <label for="msr-sec-n">Título</label>
-        <input type="text" id="msr-sec-n" maxlength="200" autocomplete="off" required>
-        <label for="msr-sec-c">Color de la barra</label>
-        <div class="msr-sec-colores" id="msr-sec-colores">
-            <?php foreach (['#3F3F3F', '#17365D', '#0070C0', '#00B050', '#C0504D', '#E46C0A', '#7030A0', '#7F7F7F'] as $sw): ?><button type="button" class="msr-sw" data-c="<?php echo $sw; ?>" style="background:<?php echo $sw; ?>" aria-label="Color <?php echo $sw; ?>"></button><?php endforeach; ?>
-            <input type="color" id="msr-sec-c" value="#3f3f3f">
-            <button type="button" class="btn btn-ghost btn-sm" id="msr-sec-quitar">Sin color</button>
+        <header class="ventana-cab">
+            <span class="ventana-icono" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
+            <div class="ventana-cab-txt">
+                <span class="ventana-eyebrow">MSR</span>
+                <h3>Editar partida</h3>
+                <p class="msr-sec-sub" id="msr-sec-sub"></p>
+            </div>
+            <button type="button" class="ventana-x" data-cerrar-dialogo aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </header>
+        <div class="ventana-cuerpo">
+            <div class="msr-sec-prev" id="msr-sec-prev"></div>
+            <label for="msr-sec-n">Título</label>
+            <input type="text" id="msr-sec-n" maxlength="200" autocomplete="off" required>
+            <label for="msr-sec-c">Color de la barra</label>
+            <div class="msr-sec-colores" id="msr-sec-colores">
+                <?php foreach (['#3F3F3F', '#17365D', '#0070C0', '#00B050', '#C0504D', '#E46C0A', '#7030A0', '#7F7F7F'] as $sw): ?><button type="button" class="msr-sw" data-c="<?php echo $sw; ?>" style="background:<?php echo $sw; ?>" aria-label="Color <?php echo $sw; ?>"></button><?php endforeach; ?>
+                <input type="color" id="msr-sec-c" value="#3f3f3f">
+                <button type="button" class="btn btn-ghost btn-sm" id="msr-sec-quitar">Sin color</button>
+            </div>
+            <p class="msr-sec-err" id="msr-sec-err" role="alert"></p>
         </div>
-        <p class="msr-sec-err" id="msr-sec-err" role="alert"></p>
-        <div class="acciones rd-dlg-acciones"><button type="button" class="btn btn-ghost btn-sm" id="msr-sec-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Guardar</button></div>
+        <div class="modal-acciones ventana-pie"><button type="button" class="btn btn-ghost btn-sm" id="msr-sec-cancelar">Cancelar</button><button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
     </form>
 </dialog>
 <?php endif; ?>

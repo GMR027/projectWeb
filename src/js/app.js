@@ -185,6 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
   //  - window.confirmarModal({ titulo, mensaje, aceptar, icono, tono: 'peligro'|'aviso'|'info', extra: 'Texto' }) -> Promise<true|false|'extra'>
   //    (con `extra` aparece un tercer botón que resuelve 'extra', p. ej. «Guardar y salir»)
   //  - window.avisoModal(titulo, mensaje) -> Promise (solo botón "Entendido")
+  // Cierra cualquier diálogo nativo desde su botón de cabecera
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cerrar-dialogo]');
+    if (!b) return;
+    const d = b.closest('dialog');
+    if (!d) return;
+    e.preventDefault();
+    d.close();
+  });
+
   const modal = document.getElementById('modal-confirm');
   const modalTitulo = document.getElementById('modal-confirm-titulo');
   const modalMensaje = document.getElementById('modal-confirm-mensaje');

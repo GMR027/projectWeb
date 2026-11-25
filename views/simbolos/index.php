@@ -267,7 +267,7 @@ $pestanas = [
 <?php if (!empty($laminasProbar)): ?>
 <!-- Modal «Probar en una lámina»: inserta la estampa en la lámina elegida (modo diseño) -->
 <div class="modal-overlay" id="est-probar-modal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="est-probar-titulo" style="max-width:44rem">
+    <div class="modal-card bj-card" role="dialog" aria-modal="true" aria-labelledby="est-probar-titulo" style="max-width:44rem">
         <div class="bj-cab"><h3 id="est-probar-titulo">Probar en una lámina</h3><button type="button" class="btn btn-sm btn-ghost" id="est-probar-x" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
         <p class="text-sm text-muted" style="margin:0 1.6rem .6rem">Se abre la lámina en «Acomodar bloques» con <b id="est-probar-nombre"></b> ya insertada: colócala donde quieras y guarda.</p>
         <ul class="est-probar-lista" id="est-probar-lista"></ul>
@@ -298,7 +298,7 @@ $pestanas = [
 <?php if ($puedeEditar): ?>
 <!-- Modal de edición de símbolo (la tarjeta ya no despliega un formulario: se edita aquí) -->
 <div class="modal-overlay" id="sim-modal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="sim-modal-titulo" style="max-width:46rem">
+    <div class="modal-card bj-card" role="dialog" aria-modal="true" aria-labelledby="sim-modal-titulo" style="max-width:46rem">
         <div class="bj-cab"><h3 id="sim-modal-titulo">Editar símbolo</h3><button type="button" class="btn btn-sm btn-ghost" id="sim-modal-x" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
         <form method="POST" action="/simbolos/guardar" enctype="multipart/form-data" class="formulario" id="sim-modal-form">
             <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">

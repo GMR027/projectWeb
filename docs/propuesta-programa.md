@@ -155,3 +155,30 @@ pantallas de detalle).
 (estatus de submittals, filtros del MSR, pestañas del Almacén, modales de carpetas, guardado del
 Comparador y Anotador). Para revisar: `npx gulp`, abrir cada herramienta con un proyecto con datos
 y probar escritorio/móvil y tema claro/oscuro.
+
+
+## Ventanas y diálogos: capa común
+
+Se añadió `src/scss/paginas/_ventanas.scss`, cargada **al final** de cada vista porque
+`css_paginas_de_vista()` agrega `ventanas` a todas las herramientas. Así puede afinar los
+diálogos propios de cada página sin pelearse con sus estilos.
+
+- **Estructura reutilizable**: `.ventana-cab` (icono, eyebrow, título, descripción y cierre),
+  `.ventana-cuerpo` con scroll y `.ventana-pie` para acciones. Se usa en la confirmación global,
+  el modal de dato, Archivo (carpetas), MSR (columna/partida), Calendario, notas de vPlan/View360
+  y el asistente Por dónde empezar.
+- **Modales superpuestos**: fondo con degradado y desenfoque, borde/radio/sombra comunes,
+  cabeceras a sangre en `.bj-card`, animación de entrada y scroll interno controlado.
+- **Diálogos nativos**: `margin:auto` (el reset global lo anulaba y algunos aparecían pegados
+  arriba a la izquierda), `max-height`, borde/radio/sombra, `::backdrop` común, cabeceras con
+  icono en chip, foco visible y pie de acciones con separador. Se conservan los tamaños y
+  posiciones propios de Programa, Calendario, Comparador, Anotador, Redactor y Editor.
+- **Móvil**: modales y diálogos se convierten en hoja inferior (ancho completo, esquinas
+  superiores redondeadas, máximo 92 dvh), con las acciones apiladas y el contenido desplazable.
+- **Formularios embebidos (`?modal=1`)**: `body.body-modal` gana ancho máximo y padding común
+  para que el iframe de Programa/Calendario use mejor el alto disponible.
+- **Cierre**: los botones `.ventana-x` y `[data-cerrar-dialogo]` cierran su `dialog` mediante un
+  listener delegado en `src/js/app.js`.
+
+**Sin cambios de rutas ni APIs.** Se conservan todos los `id`, `name` y selectores que usan los
+JavaScript de cada herramienta.
