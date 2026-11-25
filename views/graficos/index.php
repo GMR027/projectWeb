@@ -1,11 +1,14 @@
-<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('planos', '/graficos', $proyecto); ?>
+<?php
+$nGraficos = count($graficos);
+$nLaminas = 0; foreach ($graficos as $g) $nLaminas += max(1, (int)$g->num_laminas);
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo s(t('Editor')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s(t('dibuja croquis, diagramas, leyendas y planos libres')); ?></p>
         <div class="herr-meta">
-            <span class="herr-chip"><i class="fa-solid fa-pen-ruler"></i><b><?php echo count($graficos); ?></b> <?php echo count($graficos) === 1 ? 'gráfico' : 'gráficos'; ?></span>
-            <span class="herr-chip"><i class="fa-solid fa-shapes"></i> símbolos y estampas</span>
+            <span class="herr-chip"><i class="fa-solid fa-pen-ruler"></i><b><?php echo $nGraficos; ?></b> <?php echo $nGraficos === 1 ? 'gráfico' : 'gráficos'; ?></span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-layer-group"></i><b><?php echo $nLaminas; ?></b> láminas</span>
             <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-export"></i> PNG · PDF · ODP</span>
         </div>
     </div>
@@ -19,11 +22,32 @@
     </div>
 </div>
 
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('planos', '/graficos', $proyecto); ?>
+
 <?php if (!$graficos): ?>
-    <div class="card"><?php echo estado_vacio('fa-pen-ruler', 'Aún no hay gráficos', 'Croquis, diagramas de conexiones, leyendas y planos que se dibujan con formas, líneas, textos y símbolos. Se exportan a PNG, PDF o presentación.',
+    <div class="suite-panel"><?php echo estado_vacio('fa-pen-ruler', 'Aún no hay gráficos', 'Croquis, diagramas de conexiones, leyendas y planos que se dibujan con formas, líneas, textos y símbolos. Se exportan a PNG, PDF o presentación.',
         $puedeEditar ? ['texto' => 'Dibujar el primer gráfico', 'url' => '/graficos/crear?proyecto=' . s($proyecto->id), 'icono' => 'fa-plus'] : null,
         ['texto' => 'Biblioteca de símbolos', 'url' => '/simbolos?proyecto=' . s($proyecto->id), 'icono' => 'fa-shapes']); ?></div>
 <?php else: ?>
+
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-pen-ruler" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Gráficos</small><strong><?php echo $nGraficos; ?></strong><span>croquis, diagramas y planos</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Láminas</small><strong><?php echo $nLaminas; ?></strong><span>hojas dentro de los gráficos</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $categorias ? '' : 'is-warning'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-tags" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Categorías</small><strong><?php echo count($categorias); ?></strong><span>filtros de la galería</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-export" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Exportación</small><strong>PNG · PDF</strong><span>también presentación .odp</span></span>
+    </div>
+</div>
 
 <?php if (!empty($categorias)): ?>
 <?php // ---- Chips de categoría: filtran la galería y la lista sin recargar ---- ?>
@@ -70,7 +94,7 @@
 </div>
 
 <?php // ---- Lista detallada (vista alternativa) ---- ?>
-<div class="card" id="gr-tabla" hidden>
+<div class="suite-panel" id="gr-tabla" hidden>
         <div class="tabla-wrapper">
         <table class="tabla tabla-editor" <?php echo pag_attr($proyecto); ?>>
             <thead><tr><th><?php echo s(t('Fecha')); ?></th><th><?php echo s(t('Nombre')); ?></th><th class="hide-m"><?php echo s(t('Categoría')); ?></th><th class="hide-m"><?php echo s(t('Tamaño')); ?></th><th><?php echo s(t('Acciones')); ?></th></tr></thead>

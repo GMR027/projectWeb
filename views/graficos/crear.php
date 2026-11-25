@@ -4,12 +4,17 @@ $esSimb = ($grafico->tipo ?? '') === 'simbologia';   // «Tamaño y fondo» de u
 $enModal = $edicion && es_modal();   // abierto desde el propio editor, en un diálogo ?>
 <?php if (!$enModal): ?>
 <div class="page-header">
-    <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo $edicion ? 'Tamaño y fondo · ' . s($grafico->nombre) : ($esSimb ? 'Nueva simbología' : 'Nuevo gráfico'); ?></h2>
+    <div>
+        <h2><i class="fa-solid fa-pen-ruler"></i> <?php echo $edicion ? 'Tamaño y fondo · ' . s($grafico->nombre) : ($esSimb ? 'Nueva simbología' : 'Nuevo gráfico'); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · nombre, tamaño de hoja y fondo del lienzo.</p>
+    </div>
     <a href="<?php echo $edicion ? '/graficos/abrir?proyecto=' . s($proyecto->id) . '&id=' . (int)$grafico->id : ($esSimb ? '/simbolos?proyecto=' . s($proyecto->id) . '#simbologias' : '/graficos?proyecto=' . s($proyecto->id)); ?>" class="btn btn-ghost">← Volver</a>
 </div>
 <?php endif; ?>
 
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-wand-magic-sparkles"></i> <?php echo $edicion ? 'Tamaño y fondo' : 'Asistente del gráfico'; ?></h3><p class="text-muted text-sm">Tres pasos: nombre, tamaño y fondo. Después se abre el lienzo.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/graficos/<?php echo $edicion ? 'fondo' : 'crear'; ?><?php echo $enModal ? '?modal=1' : ''; ?>" class="formulario" id="gr-form" enctype="multipart/form-data">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if ($edicion): ?><input type="hidden" name="id" value="<?php echo (int)$grafico->id; ?>"><?php endif; ?>
@@ -198,6 +203,7 @@ $enModal = $edicion && es_modal();   // abierto desde el propio editor, en un di
         <?php endif; ?>
         <?php endif; ?>
     </form>
+    </div>
 </div>
 
 <script src="/vendor/editor-fondos.js"></script>

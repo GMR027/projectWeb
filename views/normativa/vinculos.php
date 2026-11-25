@@ -6,21 +6,25 @@ $est = $filtros['estado'] ?? 'propuesta';
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-link"></i> <?php echo s(t('Vínculos de normativa')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué cláusulas aplican a qué materiales y actividades. Las propuestas (por sección CSI, palabras o IA) se aceptan o rechazan aquí; los aceptados aparecen en el formulario de cada elemento.</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué cláusulas aplican a qué materiales y actividades. Las propuestas se aceptan o rechazan aquí.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-link"></i><b><?php echo count($lista); ?></b> vínculos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-filter"></i> <?php echo s(['propuesta' => 'por revisar', 'aceptada' => 'aceptados', 'rechazada' => 'rechazados'][$est] ?? $est); ?></span>
+        </div>
     </div>
     <div class="inc-acciones">
         <a href="/normativa/por-elemento?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-list-check"></i> Por material y actividad</a>
         <a href="/normativa?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">← Documentos</a>
     </div>
 </div>
-<form method="get" action="/normativa/vinculos" class="card inc-filtros">
+<form method="get" action="/normativa/vinculos" class="suite-toolbar">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <label>Estado <select name="estado" onchange="this.form.submit()"><?php foreach (['propuesta' => 'Por revisar', 'aceptada' => 'Aceptados', 'rechazada' => 'Rechazados'] as $k => $n): ?><option value="<?php echo $k; ?>"<?php echo $est === $k ? ' selected' : ''; ?>><?php echo $n; ?></option><?php endforeach; ?></select></label>
     <label>Elemento <select name="tipo" onchange="this.form.submit()"><option value="">Todos</option><option value="material"<?php echo $filtros['entidad_tipo'] === 'material' ? ' selected' : ''; ?>>Materiales</option><option value="actividad"<?php echo $filtros['entidad_tipo'] === 'actividad' ? ' selected' : ''; ?>>Actividades</option></select></label>
     <input type="search" data-filtra=".inc-lista" placeholder="Buscar…" autocomplete="off">
 </form>
 <?php if (!$lista): ?>
-    <div class="card prg-vacio"><h3>Nada en esta vista</h3><p class="text-muted">Las propuestas aparecen al cargar documentos y ejecutar «Aplicar normativa y especificaciones» en la app de escritorio (con IA), o al pulsar «Sugerir» en el formulario de un material o actividad.</p></div>
+    <div class="suite-panel"><?php echo estado_vacio('fa-link-slash', 'Nada en esta vista', 'Las propuestas aparecen al cargar documentos y ejecutar «Aplicar normativa y especificaciones» en la app de escritorio, o al pulsar «Sugerir» en el formulario de un material o actividad.'); ?></div>
 <?php else: ?>
     <ul class="inc-lista" data-norm-raiz data-proyecto="<?php echo $pid; ?>"><?php foreach ($lista as $x): $c = \Classes\Normativa::cita($x); ?>
         <li class="card inc-item norm-vinculo sev-<?php echo $x['origen'] === 'csi' ? 'media' : 'baja'; ?> est-<?php echo $x['estado'] === 'propuesta' ? 'pendiente' : s($x['estado']); ?>" data-id="<?php echo (int)$x['id']; ?>" data-estado="<?php echo s($x['estado']); ?>">

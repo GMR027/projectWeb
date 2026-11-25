@@ -8,7 +8,14 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
     <div>
         <h2><i class="fa-solid fa-code-compare"></i> <?php echo s($publico ? 'Comparación de documentos' : t('Comparador de documentos')); ?></h2>
         <?php if (!$publico): ?>
-            <p class="text-muted"><?php echo s($proyecto->nombre); ?> · compara dos documentos: PDF o imágenes del Archivo, láminas de vPlan y del Editor, y documentos del Redactor (en PDF), además de archivos externos. Anota, mide, revisa diferencias y guarda o comparte la comparación.</p>
+            <p class="text-muted"><?php echo s($proyecto->nombre); ?> · compara dos documentos: PDF o imágenes del Archivo, láminas de vPlan y del Editor, y documentos del Redactor (en PDF), además de archivos externos.</p>
+            <?php if ($puedeGuardar): $nGuardados = count($guardados); $nAnot = array_sum(array_map(fn($x) => (int)$x['anotaciones'], $guardados)); $nAbiertas = array_sum(array_map(fn($x) => (int)$x['abiertas'], $guardados)); ?>
+            <div class="herr-meta">
+                <span class="herr-chip"><i class="fa-solid fa-code-compare"></i><b><?php echo $nGuardados; ?></b> comparaciones</span>
+                <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-pen-to-square"></i><b><?php echo $nAnot; ?></b> anotaciones</span>
+                <?php if ($nAbiertas): ?><span class="herr-chip"><i class="fa-solid fa-circle-exclamation"></i><b><?php echo $nAbiertas; ?></b> abiertas</span><?php endif; ?>
+            </div>
+            <?php endif; ?>
         <?php else: ?>
             <p class="text-muted"><?php echo s($proyecto->nombre); ?> · vista de solo lectura de «<?php echo s($abrir['nombre'] ?? 'comparación'); ?>». Las anotaciones se ven, pero no se pueden modificar.</p>
         <?php endif; ?>
@@ -56,7 +63,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
 <?php endif; ?>
 
 <?php if (!$publico): ?>
-<div class="card cmp-fuentes">
+<div class="suite-panel cmp-fuentes">
     <?php foreach (['a' => ['Documento A', 'base (fondo)'], 'b' => ['Documento B', 'el que se superpone y se mueve']] as $k => [$nombreCampo, $nota]): ?>
         <fieldset class="cmp-fuente" data-slot="<?php echo $k; ?>">
             <legend><?php echo s($nombreCampo); ?> <small class="text-muted">· <?php echo s($nota); ?></small></legend>
@@ -95,14 +102,14 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
     <?php endforeach; ?>
 </div>
 <?php else: ?>
-<div class="card cmp-publico-fuentes">
+<div class="suite-panel cmp-publico-fuentes">
     <span><strong>A</strong> <?php echo s($abrir['a']['nombre'] ?? '—'); ?></span>
     <i class="fa-solid fa-arrow-right"></i>
     <span><strong>B</strong> <?php echo s($abrir['b']['nombre'] ?? '—'); ?></span>
 </div>
 <?php endif; ?>
 
-<div class="card cmp-panel" id="cmp" hidden>
+<div class="suite-panel cmp-panel" id="cmp" hidden>
     <div class="cmp-barra">
         <div class="cmp-grupo" role="group" aria-label="Modo de comparación">
             <button type="button" class="btn btn-sm btn-primary" data-modo="slider" title="Deslizador: A a un lado y B al otro"><i class="fa-solid fa-arrows-left-right-to-line"></i> Deslizador</button>

@@ -114,6 +114,7 @@ return [
     '+ Nuevo registro' => '+ New entry',
     'Nuevo registro' => 'New entry',
     '+ Nuevo paquete' => '+ New package',
+    'Nuevo paquete' => 'New package',
     'Mapa de avance' => 'Progress map',
     'Panel de control de programas de obra' => 'Construction schedule control panel',
     'Personalizar inicio' => 'Customize home',

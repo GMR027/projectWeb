@@ -7,18 +7,21 @@
 </div>
 
 <?php if (empty($previa)): ?>
-<div class="card">
-    <p class="text-muted text-sm">Sube un MSR en .xlsx con el formato estándar (encabezado «Spec Number» en la columna C). Se crean los materiales con su foto en miniatura, un paquete por número de submittal y los renglones del MSR. Antes de guardar verás una vista previa.</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-import"></i> Analizar el archivo</h3><p class="text-muted text-sm">Sube un MSR en .xlsx con el encabezado «Spec Number» en la columna C. Antes de guardar verás una vista previa.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/msr/importar?proyecto=<?php echo s($proyecto->id); ?>&msr=<?php echo s($msr->id); ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <input type="hidden" name="msr" value="<?php echo s($msr->id); ?>">
         <div class="campo"><label for="archivo">Archivo .xlsx</label><input type="file" id="archivo" name="archivo" accept=".xlsx" required></div>
-        <button type="submit" class="btn btn-primary">Analizar archivo</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass-chart"></i> Analizar archivo</button>
     </form>
+    </div>
 </div>
 <?php else: $r = $previa['resumen']; ?>
-<div class="card">
-    <h3>Vista previa</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-eye"></i> Vista previa</h3><p class="text-muted text-sm">Revisa lo detectado antes de confirmar; todavía no se guarda nada.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <p><strong><?php echo $r['renglones']; ?></strong> renglones · <strong><?php echo $r['submittals']; ?></strong> submittal(s) · <strong><?php echo $r['materiales']; ?></strong> materiales · <strong><?php echo $r['imagenes']; ?></strong> fotos detectadas</p>
     <?php if ($previa['avisos']): ?>
         <details><summary class="text-sm"><?php echo count($previa['avisos']); ?> aviso(s)</summary>
@@ -26,7 +29,7 @@
         </details>
     <?php endif; ?>
     <?php if (!empty($nuevas)): ?>
-    <div class="card" style="margin:1rem 0">
+    <div class="suite-panel" style="margin:1rem 0">
         <strong>Partidas del Excel que no existen en este MSR</strong>
         <p class="text-muted text-sm">Por defecto se crean como partidas nuevas. Si ya tienes una con otro nombre (por ejemplo, la renombraste), elige a cuál unir sus materiales.</p>
         <?php foreach ($nuevas as $i => $nombre): ?>
@@ -73,5 +76,6 @@
     </table>
     </div>
     <?php if (count($previa['filas']) > 40): ?><p class="text-muted text-sm">Mostrando 40 de <?php echo count($previa['filas']); ?> renglones.</p><?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>

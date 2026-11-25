@@ -9,7 +9,9 @@
         <?php if ($puede): ?><a href="/graficos/categorias/crear?proyecto=<?php echo $id; ?>" class="btn btn-primary">+ Nueva categoría</a><?php endif; ?>
     </div>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-tags"></i> Categorías <span class="suite-chip"><?php echo count($lista); ?></span></h3><p class="text-muted text-sm">Filtran la galería de gráficos.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (empty($lista)): ?>
         <p class="text-muted">Aún no hay categorías.<?php echo $puede ? ' Crea la primera con «Nueva categoría».' : ''; ?></p>
     <?php else: ?>
@@ -35,4 +37,5 @@
             </tbody>
         </table>
     <?php endif; ?>
+    </div>
 </div>

@@ -1,9 +1,16 @@
 <?php $esNuevo = !$submittal->id; ?>
 <div class="page-header">
-    <h2><?php echo $esNuevo ? 'Nuevo paquete de submittal' : 'Editar submittal ' . s($submittal->numero_submittal); ?></h2>
-    <a href="/submittals?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <div>
+        <h2><i class="fa-solid fa-boxes-packing"></i> <?php echo $esNuevo ? 'Nuevo paquete de submittal' : 'Editar submittal ' . s($submittal->numero_submittal); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · datos del paquete, materiales y láminas que se adjuntan al PDF.</p>
+    </div>
+    <a href="/submittals?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div><h3><i class="fa-solid fa-pen"></i> Datos del paquete</h3><p class="text-muted text-sm">El número de submittal y el MSR identifican el paquete en el reporte.</p></div>
+    </div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/submittals/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if (!$esNuevo): ?><input type="hidden" name="id" value="<?php echo s($submittal->id); ?>"><?php endif; ?>
@@ -70,8 +77,9 @@
                 <?php endif; ?>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar paquete</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar paquete</button>
     </form>
+    </div>
 </div>
 <?php if (!empty($laminasDisponibles)): ?>
 <script>

@@ -1,12 +1,17 @@
 <?php $esNuevo = !$archivo->id; $id = s($proyecto->id); ?>
 <div class="page-header">
-    <h2><?php echo $esNuevo ? 'Subir archivo' : 'Editar archivo'; ?></h2>
+    <div>
+        <h2><i class="fa-solid fa-folder-open"></i> <?php echo $esNuevo ? 'Subir archivo' : 'Editar archivo'; ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo $esNuevo ? 'se revisa antes de guardarse y queda en el archivero.' : 'cambia metadatos o reemplaza el archivo.'; ?></p>
+    </div>
     <div class="la-controles">
         <?php if ($esNuevo): ?><a href="/archivos/lote?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-layer-group"></i> Subir varios</a><?php endif; ?>
         <a href="/archivos?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Volver</a>
     </div>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-circle-plus"></i> Datos del archivo</h3><p class="text-muted text-sm">Fecha, categoría, carpeta y revisión.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/archivos/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
         <?php if (!$esNuevo): ?><input type="hidden" name="id" value="<?php echo s($archivo->id); ?>"><?php endif; ?>
@@ -36,6 +41,7 @@
                 <?php if (!$esNuevo): ?><div class="text-sm" style="margin-top:.5rem">Actual: <span class="mono"><?php echo s($archivo->archivo_original); ?></span> · <?php echo s($archivo->tamanoLegible()); ?></div><?php endif; ?>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
     </form>
+    </div>
 </div>

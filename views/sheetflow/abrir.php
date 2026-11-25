@@ -41,7 +41,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 </div>
 <?php endif; ?>
 
-<div class="card rd-datos">
+<div class="suite-panel rd-datos">
     <label>Nombre <input type="text" id="sf-nombre" maxlength="150" value="<?php echo s($hoja->nombre); ?>"></label>
     <label>Fecha <input type="date" id="sf-fecha" value="<?php echo s($hoja->fecha); ?>"></label>
     <label>Departamento <input type="text" id="sf-depto" maxlength="100" list="sf-deptos" value="<?php echo s($hoja->departamento); ?>" autocomplete="off"></label>
@@ -357,7 +357,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 <div class="sf-estadistica" id="sf-estadistica" aria-live="polite"></div>
 <p class="text-muted text-sm sf-ayuda">Clic para elegir · arrastra, Mayús+clic o Mayús+flechas para varias celdas · <strong>Ctrl/⌘+clic</strong> añade celdas sueltas (la barra de abajo muestra la <strong>suma</strong> de lo elegido) · en pantalla táctil, <strong>mantén pulsada una celda y arrastra</strong> para elegir el rango · Enter o doble clic para editar · <strong>Alt+Enter</strong> parte el texto en varias líneas · Supr borra · Ctrl+C / Ctrl+V copian y pegan desde Excel (las fórmulas ajustan sus referencias; el asa de la esquina rellena series y con <strong>doble clic</strong> baja hasta el final de los datos) · <strong>Ctrl+flechas</strong> salta al borde de los datos, <strong>Mayús+Espacio</strong> elige el renglón y <strong>Ctrl+Espacio</strong> la columna · <strong>clic derecho</strong> abre el menú de insertar, eliminar, combinar y formato · arrastra el borde del <strong>número de fila</strong> para cambiar el alto (doble clic: automático; escribe en el cuadro de la izquierda <code>C5</code> o <code>A1:C10</code> para saltar) · Ctrl+F busca y reemplaza · Fórmulas: empieza con <code>=</code> y aparecen <strong>sugerencias</strong>; <strong>F4</strong> fija la referencia; el resultado se ve junto a la barra; «Funciones…» abre el catálogo con sintaxis. Al insertar una función de la lista, sus referencias se adaptan a la columna y el renglón elegidos. Hay funciones de matemáticas, estadística, texto, búsqueda, fechas, finanzas y del proyecto (<code>AVANCE("1.2.3")</code>, <code>FIN(…)</code>). <strong>Combinar</strong>/<strong>Separar</strong>, el formato condicional y los gráficos están en la cinta; el embudo de cada columna filtra. El encabezado es la fila 1.</p>
 
-<div class="card sf-usos">
+<div class="suite-panel sf-usos">
     <h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla</h3>
     <ul class="sf-lista-usos">
         <li><strong>vPlan:</strong>

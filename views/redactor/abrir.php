@@ -33,7 +33,7 @@ $btn = fn(string $cmd, string $icono, string $titulo) => '<button type="button" 
 </div>
 
 
-<div class="card rd-datos">
+<div class="suite-panel rd-datos">
     <label>Nombre <input type="text" id="rd-nombre" maxlength="150" value="<?php echo s($documento->nombre); ?>"></label>
     <label>Fecha <input type="date" id="rd-fecha" value="<?php echo s($documento->fecha); ?>"></label>
     <label>Departamento <input type="text" id="rd-depto" maxlength="100" list="rd-deptos" value="<?php echo s($documento->departamento); ?>" autocomplete="off"></label>

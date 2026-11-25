@@ -1,8 +1,17 @@
-<?php $id = (int)$proyecto->id; ?>
+<?php
+$id = (int)$proyecto->id;
+$nDocs = 0; $nDeptos = 0; $ultimoDoc = null;
+foreach ($porDepto as $depto => $docs) { $nDocs += count($docs); if ($depto !== \Classes\Carpetas::SIN) $nDeptos++; if (!$ultimoDoc && $docs) $ultimoDoc = $docs[0]; }
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-file-pen"></i> Redactor</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · documentos de texto del proyecto, agrupados por departamento</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · documentos de texto del proyecto, agrupados por departamento.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-file-lines"></i><b><?php echo $nDocs; ?></b> documentos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-folder-open"></i><b><?php echo $nDeptos; ?></b> departamentos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-export"></i> DOCX · ODT · PDF</span>
+        </div>
     </div>
     <div class="la-controles">
         <button type="button" class="btn btn-ghost" data-tour="redactor-lista" title="Recorrer el Redactor paso a paso (se muestra solo la primera vez)"><i class="fa-solid fa-circle-play"></i> Guía rápida</button>
@@ -10,14 +19,33 @@
     </div>
 </div>
 
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Documentos</small><strong><?php echo $nDocs; ?></strong><span>oficios, informes y memorias</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-folder-open" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Carpetas</small><strong><?php echo max(1, count($porDepto)); ?></strong><span>agrupadas por departamento</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-spell-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Corrector</small><strong>ES · EN</strong><span>y plantillas de obra listas</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-export" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Exportación</small><strong>Word · PDF</strong><span>también LibreOffice (.odt)</span></span>
+    </div>
+</div>
+
 <?php if (!$porDepto): ?>
-    <div class="card"><?php echo estado_vacio('fa-file-pen', 'Aún no hay documentos', 'Oficios, minutas, RFIs, informes… con plantillas de obra listas, corrector ortográfico y exportación a Word, LibreOffice o PDF.',
+    <div class="suite-panel"><?php echo estado_vacio('fa-file-pen', 'Aún no hay documentos', 'Oficios, minutas, RFIs, informes… con plantillas de obra listas, corrector ortográfico y exportación a Word, LibreOffice o PDF.',
         $puedeEditar ? ['texto' => 'Escribir el primer documento', 'url' => '/redactor/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null); ?></div>
 <?php endif; ?>
 
 <?php $carpetas = array_values(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN])); ?>
 <?php foreach ($porDepto as $depto => $docs): ?>
-    <div class="card rd-grupo">
+    <div class="suite-panel rd-grupo">
         <h3<?php echo glosario('departamento'); ?>><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($docs); ?>)</small>
             <?php if ($puedeEditar && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
         <div class="tabla-wrapper">

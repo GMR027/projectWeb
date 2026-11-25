@@ -12,8 +12,9 @@ $verif = $verificacion ?? null;
 if (is_admin() && ($verif || ($inteligentes ?? false))):
     $vigente = $verif && \Classes\MaterialesInteligentes::vigente($verif, $material);
 ?>
-<div class="card norma-detalle" id="normativas-especificaciones">
-    <h3><i class="fa-solid fa-scale-balanced"></i> Normativas y especificaciones <?php echo \Classes\MaterialesInteligentes::badge($verif, $vigente, $inteligentes ?? false); ?></h3>
+<div class="suite-panel norma-detalle" id="normativas-especificaciones">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-scale-balanced"></i> Normativas y especificaciones <?php echo \Classes\MaterialesInteligentes::badge($verif, $vigente, $inteligentes ?? false); ?></h3></div>
+    <div class="suite-panel-cuerpo">
     <?php if (!$verif): ?>
         <p class="text-muted">Materiales inteligentes está activo: al guardar, la app de escritorio comparará este material con la normativa y especificaciones del proyecto y aquí aparecerá el resultado. Esta información solo se escribe desde la app de escritorio.</p>
     <?php else: ?>
@@ -29,9 +30,12 @@ if (is_admin() && ($verif || ($inteligentes ?? false))):
         <?php endif; ?>
         <small class="text-muted">Verificado el <?php echo s(formatear_fecha(substr((string)$verif['verificado'], 0, 10))); ?><?php echo $verif['modelo'] !== '' ? ' con ' . s($verif['modelo']) : ''; ?>.</small>
     <?php endif; ?>
+    </div>
 </div>
 <?php endif; ?>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-cubes"></i> Datos del material</h3><p class="text-muted text-sm">Nombre, marca, modelo, especialidad y documentos de respaldo.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/materiales/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <?php if (!$esNuevo): ?><input type="hidden" name="id" value="<?php echo s($material->id); ?>"><?php endif; ?>
@@ -174,8 +178,9 @@ if (is_admin() && ($verif || ($inteligentes ?? false))):
                 </table>
             </div>
             <?php $tipoEntidad = 'material'; $entidadId = $esNuevo ? null : $material->id; include __DIR__ . '/../normativa/_seccion.php'; ?>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
     </form>
+    </div>
 </div>
 <script>
 (function () {

@@ -12,7 +12,9 @@ $maxLoteMb = (int)round($maxLoteBytes / 1048576);
     </div>
     <a href="/archivos?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Volver a Archivo</a>
 </div>
-<div class="card arch-lote">
+<div class="suite-panel arch-lote">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-layer-group"></i> Archivos del lote</h3><p class="text-muted text-sm">Los valores comunes se aplican a todos; después puedes ajustar cada renglón.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/archivos/lote?proyecto=<?php echo $id; ?>" enctype="multipart/form-data" id="arch-lote-form">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
 
@@ -75,6 +77,7 @@ $maxLoteMb = (int)round($maxLoteBytes / 1048576);
             <button type="submit" class="btn btn-primary" id="arch-lote-subir"><i class="fa-solid fa-upload"></i> Subir archivos</button>
         </div>
     </form>
+    </div>
 </div>
 <?php if (!$categorias || !$carpetas): ?>
 <div class="alerta alerta-info text-sm">

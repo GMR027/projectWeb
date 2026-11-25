@@ -21,11 +21,25 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
         ? '<input type="text" class="msr-input msr-texto" data-id="' . (int)$it->id . '" data-campo="' . $c . '" value="' . s($it->$c) . '">'
         : s($it->$c);
 };
+$nItems = count($items);
+$nRevision = 0; $nAprobados = 0; $nCriticos = 0; $nAtrasados = 0;
+foreach ($items as $it) {
+    if (in_array($it->status, ['A', 'AN'], true)) $nAprobados++;
+    if ($it->status === 'P') $nRevision++;
+    if ($it->esCritico($umbral)) $nCriticos++;
+    if ($it->compraAtrasada() || $it->entregaAtrasada()) $nAtrasados++;
+}
 ?>
 <div class="page-header no-print">
     <div>
         <h2><i class="fa-solid fa-truck-ramp-box"></i> <?php echo s($msr->nombre); ?></h2>
-        <p class="text-muted"><?php echo count($items); ?> renglón(es) · <?php echo s($proyecto->nombre); ?><?php echo $msr->descripcion ? ' · ' . s($msr->descripcion) : ''; ?></p>
+        <p class="text-muted"><?php echo $nItems; ?> renglón(es) · <?php echo s($proyecto->nombre); ?><?php echo $msr->descripcion ? ' · ' . s($msr->descripcion) : ''; ?></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-list"></i><b><?php echo $nItems; ?></b> renglones</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-hourglass-half"></i><b><?php echo $nRevision; ?></b> en revisión</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-circle-check"></i><b><?php echo $nAprobados; ?></b> aprobados</span>
+            <?php if ($nCriticos): ?><span class="herr-chip"><i class="fa-solid fa-triangle-exclamation"></i><b><?php echo $nCriticos; ?></b> críticos</span><?php endif; ?>
+        </div>
     </div>
     <div class="la-controles msr-acciones">
         <a href="/msr?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">← Mis MSR</a>
@@ -52,6 +66,25 @@ $celdaTexto = function ($it, $c) use ($puedeEditar) {
             <a href="/msr/importar?proyecto=<?php echo s($proyecto->id); ?>&msr=<?php echo s($msr->id); ?>" class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-import"></i> Importar Excel</a>
             <a href="/submittals/crear?proyecto=<?php echo s($proyecto->id); ?>&msr=<?php echo s($msr->id); ?>" class="btn btn-primary btn-sm">+ Submittal</a>
         <?php endif; ?>
+    </div>
+</div>
+
+<div class="suite-kpis no-print">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Renglones</small><strong><?php echo $nItems; ?></strong><span>materiales en este MSR</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nRevision ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>En revisión</small><strong><?php echo $nRevision; ?></strong><span>esperando respuesta del submittal</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Aprobados</small><strong><?php echo $nAprobados; ?></strong><span>A o AN</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nAtrasados ? 'is-danger' : ($nCriticos ? 'is-warning' : ''); ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Alertas</small><strong><?php echo $nAtrasados; ?></strong><span><?php echo $nCriticos; ?> entrega(s) crítica(s) · <?php echo $nAtrasados; ?> fecha(s) atrasada(s)</span></span>
     </div>
 </div>
 

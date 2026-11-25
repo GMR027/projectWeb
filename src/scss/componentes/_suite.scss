@@ -7,7 +7,7 @@
 // proyecto y el modo claro/oscuro.
 // ============================================================
 
-$suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body[data-vista^="balance"], body[data-vista^="vplan"], body[data-vista^="calendario"], body[data-vista^="lineas-base"], body[data-vista^="plantillas"], body[data-vista^="reportes"], body[data-vista^="bitacora"], body[data-vista^="minutas"], body[data-vista^="evidencias"], body[data-vista^="seguridad"], body[data-vista^="punch"], body[data-vista^="calidad"], body[data-vista^="rfi"], body[data-vista^="mapa-avance"]';
+$suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body[data-vista^="balance"], body[data-vista^="vplan"], body[data-vista^="calendario"], body[data-vista^="lineas-base"], body[data-vista^="plantillas"], body[data-vista^="reportes"], body[data-vista^="bitacora"], body[data-vista^="minutas"], body[data-vista^="evidencias"], body[data-vista^="seguridad"], body[data-vista^="punch"], body[data-vista^="calidad"], body[data-vista^="rfi"], body[data-vista^="mapa-avance"], body[data-vista^="msr"], body[data-vista^="submittals"], body[data-vista^="materiales"], body[data-vista^="almacen"], body[data-vista^="archivos"], body[data-vista^="visor"], body[data-vista^="graficos"], body[data-vista^="redactor"], body[data-vista^="sheetflow"], body[data-vista^="view360"], body[data-vista^="ensamblador-documentos"], body[data-vista^="comparador"], body[data-vista^="anotador"], body[data-vista^="traductor"], body[data-vista^="normativa"]';
 
 #{$suite} {
   // Cabecera más compacta y precisa que el hero genérico del workspace.
@@ -151,6 +151,13 @@ $suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body
       font-size: 1.15rem;
 
       &:focus { outline: 0; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); }
+    }
+
+    .suite-busca {
+      flex: 1 1 30rem;
+      min-width: 0;
+
+      input { width: 100%; }
     }
 
     .campo-check {
@@ -426,6 +433,39 @@ $suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body
   // Botones de icono y acciones
   .vp-ib, .btn-action {
     transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+  }
+
+  // Ventanas modales con formulario: alineadas a la izquierda y con aire
+  form.modal-card {
+    max-width: 56rem;
+    padding: 2rem 2.2rem;
+    text-align: left;
+
+    .modal-titulo { text-align: left; }
+    .modal-acciones { justify-content: flex-end; }
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      margin: 1rem 0;
+
+      label { font-size: 1.2rem; color: var(--text-muted); }
+      input, select, textarea { width: 100%; }
+    }
+  }
+
+  .modal-overlay {
+    .modal-card { border-color: color-mix(in srgb, var(--primary-line) 40%, var(--border)); }
+    .modal-titulo { letter-spacing: -.01em; }
+  }
+
+  // Diálogos nativos (MSR y otros) con el mismo lenguaje
+  dialog.rd-dialogo {
+    border-radius: 1.1rem;
+    box-shadow: 0 24px 60px -20px rgba(2, 6, 23, .6);
+
+    h3 { margin: 0 0 .4rem; font-size: 1.7rem; }
+    &::backdrop { background: rgba(2, 6, 23, .62); backdrop-filter: blur(3px); }
   }
 
   @media (max-width: 80rem) {

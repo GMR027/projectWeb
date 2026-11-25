@@ -4,10 +4,20 @@ use Classes\Normativa;
 $pid = (int)$proyecto->id;
 $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 'error' => 'No se pudo leer'];
 ?>
+<?php
+$nDocs = count($documentos);
+$nIndexados = count(array_filter($documentos, fn($d) => $d['estado'] === 'indexado'));
+$nClausulas = array_sum(array_map(fn($d) => (int)$d['fragmentos'], $documentos));
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-scale-balanced"></i> <?php echo s(t('Normativa y especificaciones')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · carga normas y especificaciones en PDF o Word (español o inglés, o mezclados). El sistema las lee, las parte por cláusulas y propone en qué materiales y actividades aplica cada una. Tú decides.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-file-pdf"></i><b><?php echo $nDocs; ?></b> documentos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-list-check"></i><b><?php echo $nClausulas; ?></b> cláusulas</span>
+            <?php if ($pendientes): ?><span class="herr-chip"><i class="fa-solid fa-link"></i><b><?php echo (int)$pendientes; ?></b> vínculos por revisar</span><?php endif; ?>
+        </div>
     </div>
     <div class="inc-acciones">
         <a href="/normativa/por-elemento?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-list-check"></i> Por material y actividad</a>
@@ -16,9 +26,29 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
 </div>
 <?php if (!empty($mensaje)): ?><div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>"><?php echo s($mensaje['texto']); ?></div><?php endif; ?>
 
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Documentos</small><strong><?php echo $nDocs; ?></strong><span>normas y especificaciones</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Indexados</small><strong><?php echo $nIndexados; ?></strong><span>leídos y partidos por cláusulas</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-list-ol" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Cláusulas</small><strong><?php echo $nClausulas; ?></strong><span>disponibles para buscar y vincular</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $pendientes ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-link" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Vínculos por revisar</small><strong><?php echo (int)$pendientes; ?></strong><span>propuestas de materiales y actividades</span></span>
+    </div>
+</div>
+
 <?php if ($puede): ?>
-<div class="card prg-seccion">
-    <h3>Cargar documentos</h3>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-upload"></i> Cargar documentos</h3><p class="text-muted text-sm">Máximo <?php echo s(Almacenamiento::formato(Normativa::MAX_PDF)); ?> por archivo; el PDF debe tener texto seleccionable.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <form method="post" action="/normativa/subir" enctype="multipart/form-data" id="norm-lote">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <label>Archivos PDF o Word (puedes elegir varios) <input type="file" id="norm-archivos" name="archivos[]" multiple required accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"></label>
@@ -51,29 +81,33 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
         });
     })();
     </script>
+    </div>
 </div>
 <?php endif; ?>
 
-<form method="get" action="/normativa" class="card inc-filtros">
+<form method="get" action="/normativa" class="suite-toolbar">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
-    <label class="flex-1">Buscar en todos los documentos (cruza español e inglés) <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Ej. cable de cobre categoría 6A, canalización, concreto…"></label>
+    <label class="suite-busca"><i class="fa-solid fa-magnifying-glass"></i><input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Buscar en todos los documentos (español e inglés)…"></label>
     <button class="btn btn-ghost" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
 </form>
 <?php if ($q !== ''): ?>
-    <div class="card prg-seccion"><h3>Resultados para «<?php echo s($q); ?>»</h3>
+    <div class="suite-panel"><div class="suite-panel-cab"><h3><i class="fa-solid fa-magnifying-glass"></i> Resultados para «<?php echo s($q); ?>»</h3></div><div class="suite-panel-cuerpo">
         <?php if (!$resultados): ?><p class="text-muted">Sin coincidencias suficientes.</p><?php else: ?>
             <ul class="inc-lista"><?php foreach ($resultados as $r): ?>
                 <li class="card inc-item sev-baja"><div class="inc-cab"><strong><?php echo archivo_icono_html('pdf'); ?> <?php echo s($r['doc']); ?></strong><small class="text-muted"><?php echo s(($r['clausula'] !== '' ? $r['clausula'] . ' · ' : '') . 'pág. ' . $r['pagina'] . ' · ' . strtoupper($r['idioma']) . ' · coincidencia ' . $r['puntaje'] . '%'); ?></small></div>
                     <p><?php echo s(mb_substr(trim($r['titulo'] . '. ' . $r['texto']), 0, 420)); ?>…</p>
                     <a class="btn btn-sm btn-ghost" href="/normativa/pdf?proyecto=<?php echo $pid; ?>&id=<?php echo (int)$r['documento_id']; ?>#page=<?php echo (int)$r['pagina']; ?>" target="_blank" rel="noopener">Abrir el PDF en la página <?php echo (int)$r['pagina']; ?></a></li>
             <?php endforeach; ?></ul>
-        <?php endif; ?></div>
+        <?php endif; ?></div></div>
 <?php endif; ?>
 
 <?php if (!$documentos): ?>
-    <div class="card prg-vacio"><h3>Aún no hay documentos</h3><p class="text-muted">Sube las normas y especificaciones del proyecto (por ejemplo la especificación de comunicaciones o la norma eléctrica). Después, la app de escritorio puede revisar los materiales y actividades con IA y proponer a cuáles aplican.</p></div>
+    <div class="suite-panel"><?php echo estado_vacio('fa-scale-balanced', 'Aún no hay documentos', 'Sube las normas y especificaciones del proyecto. Después, la app de escritorio puede revisar los materiales y actividades con IA y proponer a cuáles aplican.'); ?></div>
 <?php else: ?>
-    <div class="card prg-tabla-wrap"><table class="prg-tabla">
+    <div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-book"></i> Documentos <span class="suite-chip"><?php echo $nDocs; ?></span></h3><p class="text-muted text-sm">Abre un documento para buscar en sus cláusulas.</p></div></div>
+    <div class="suite-panel-cuerpo">
+    <div class="prg-tabla-wrap"><table class="prg-tabla">
         <thead><tr><th>Documento</th><th>Tipo</th><th>Idioma</th><th class="num">Páginas</th><th class="num">Cláusulas</th><th>Estado</th><th></th></tr></thead>
         <tbody><?php foreach ($documentos as $d): ?>
             <tr>
@@ -90,4 +124,6 @@ $estadoTxt = ['indexado' => 'Indexado', 'sin_texto' => 'Sin texto (escaneado)', 
                 </td>
             </tr>
         <?php endforeach; ?></tbody></table></div>
+    </div>
+    </div>
 <?php endif; ?>

@@ -114,3 +114,44 @@ La misma capa visual se aplicó a **Calendario**, **Líneas base**, **Tipo de ob
 **Sin cambios de rutas, permisos, selectores ni esquema.** Las vistas conservan sus formularios,
 IDs, APIs y comportamiento; el cambio es de marcado y estilos. Para revisar: `npx gulp`, abrir cada
 herramienta con un proyecto con datos y probar escritorio/móvil y tema claro/oscuro.
+
+
+## Fase 4: Materiales y compras · Documentos y diseño
+
+La misma capa visual se aplicó a **Materiales y compras** (MSR, Submittals, Catálogo de materiales,
+Almacén, Dependencias de materiales) y a **Documentos y diseño** (Archivo, Visor, Editor, Redactor,
+SheetFlow, View360, Ensamblador de documentos, Comparador, Anotador, Traductor, Normativa y sus
+pantallas de detalle).
+
+- **Capa compartida** `src/scss/componentes/_suite.scss`: se amplió la lista de `body[data-vista^=…]`
+  a las 16 herramientas, se añadieron buscadores fluidos (`.suite-busca`) y estilos comunes para
+  **ventanas modales con formulario** (`form.modal-card`) y diálogos nativos (`dialog.rd-dialogo`).
+- **Hoja de página** `src/scss/paginas/_documentos.scss` (se carga con `css_paginas_de_vista()`):
+  barra y resumen del MSR, tablas de Submittals y materiales, badges del Almacén, archivero y visor,
+  grupos de documentos, galería del Editor, View360, listas del Ensamblador, paneles del Traductor
+  y de Normativa, y detalles del Comparador/Anotador.
+- **MSR**: hero con conteo de renglones, en revisión, aprobados y alertas; barra de filtros y
+  acciones; tabla del reporte intacta (se sigue imprimiendo igual); lista de MSR con KPIs y panel.
+- **Submittals**: KPIs por estatus, panel de paquetes con cambio de estatus en línea, ficha del
+  paquete con materiales y láminas, y formulario en dos secciones.
+- **Catálogo de materiales**: KPIs de compra y entrega, barra de búsqueda y filtros, tabla legible
+  y formulario con secciones de datos, logística y normativa.
+- **Almacén**: KPIs de existencias, mínimo, órdenes y valor; pestañas compartidas; formularios de
+  salida, ajuste, recepción y orden dentro de paneles.
+- **Dependencias de materiales**: hero con relaciones y bloqueos; el tablero, la lista, el panel y
+  los modales conservan su comportamiento y ganan el lenguaje visual común.
+- **Archivo y Visor**: KPIs de archivos, carpetas, categorías y pendientes; archivero con paneles
+  y modales de carpeta alineados a la izquierda, y visor con barra de filtros a ancho completo.
+- **Editor, Redactor y SheetFlow**: galería con KPIs y chips, listas por departamento como paneles,
+  asistentes de creación y visores de documento/tabla con cabecera consistente.
+- **View360 y Ensamblador**: KPIs de recorridos, documentos y ensambles; paneles de lista y
+  formularios; el Ensamblador mejora el ancho de la columna de documentos y el ajuste de acciones.
+- **Comparador y Anotador**: hero con conteo de comparaciones/anotaciones; paneles de fuentes,
+  guardados y documentos; las herramientas de dibujo y los diálogos mantienen su comportamiento.
+- **Traductor y Normativa**: paneles de traducción, KPIs de documentos/cláusulas/vínculos,
+  carga de archivos, búsqueda unificada, resultados y tablas dentro de paneles.
+
+**Sin cambios de rutas, permisos, selectores, APIs ni esquema.** Se conservan las interacciones
+(estatus de submittals, filtros del MSR, pestañas del Almacén, modales de carpetas, guardado del
+Comparador y Anotador). Para revisar: `npx gulp`, abrir cada herramienta con un proyecto con datos
+y probar escritorio/móvil y tema claro/oscuro.

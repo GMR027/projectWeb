@@ -3,17 +3,24 @@
     <div>
         <h2><i class="fa-solid fa-language"></i> <?php echo s(t('Traductor')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · traduce de español a inglés o de inglés a español lo que escribas o un documento completo.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-right-left"></i> ES ↔ EN</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-arrow-up"></i> documentos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-sheet-plastic"></i> planos en el lugar</span>
+        </div>
     </div>
 </div>
 
 <?php if (!$configurado): ?>
-    <div class="card trd-aviso">
+    <div class="suite-panel trd-aviso">
         <h3 class="card-titulo"><i class="fa-solid fa-plug-circle-xmark"></i> Traductor no disponible</h3>
-        <p>Este servidor no tiene instalado el motor de traducción. <?php echo is_admin() ? 'Ejecuta <code>bin/instalar_traductor.sh</code> (descarga unos 400 MB una sola vez) o define <code>TRADUCTOR_URL</code> apuntando a un servidor LibreTranslate. Más detalle en <code>docs/traductor.md</code>.' : 'Avisa al administrador.'; ?></p>
+        <div class="suite-panel-cuerpo">
+    <p>Este servidor no tiene instalado el motor de traducción. <?php echo is_admin() ? 'Ejecuta <code>bin/instalar_traductor.sh</code> (descarga unos 400 MB una sola vez) o define <code>TRADUCTOR_URL</code> apuntando a un servidor LibreTranslate. Más detalle en <code>docs/traductor.md</code>.' : 'Avisa al administrador.'; ?></p>
+    </div>
     </div>
 <?php endif; ?>
 
-<div class="card trd" id="trd" data-proyecto="<?php echo (int)$proyecto->id; ?>" data-max="<?php echo \Classes\Traductor::MAX_TEXTO; ?>">
+<div class="suite-panel trd" id="trd" data-proyecto="<?php echo (int)$proyecto->id; ?>" data-max="<?php echo \Classes\Traductor::MAX_TEXTO; ?>">
     <div class="trd-direccion">
         <select id="trd-de" aria-label="Idioma de origen"><option value="es">Español</option><option value="en">English</option></select>
         <button type="button" class="btn btn-sm btn-ghost" id="trd-cambiar" title="Intercambiar idiomas" aria-label="Intercambiar idiomas"><i class="fa-solid fa-right-left"></i></button>

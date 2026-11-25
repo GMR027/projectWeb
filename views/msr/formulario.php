@@ -1,9 +1,16 @@
 <?php $esNuevo = !$msr->id; ?>
 <div class="page-header">
-    <h2><?php echo $esNuevo ? 'Nuevo MSR' : 'Editar ' . s($msr->nombre); ?></h2>
-    <a href="/msr?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <div>
+        <h2><i class="fa-solid fa-truck-ramp-box"></i> <?php echo $esNuevo ? 'Nuevo MSR' : 'Editar ' . s($msr->nombre); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · arma las columnas, las partidas y el encabezado del reporte.</p>
+    </div>
+    <a href="/msr?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div><h3><i class="fa-solid fa-pen"></i> Datos del reporte</h3><p class="text-muted text-sm">El nombre y la descripción identifican el MSR en la lista y en el PDF.</p></div>
+    </div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/msr/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
         <input type="hidden" name="modo" value="personalizado">
@@ -34,8 +41,9 @@
         <div id="partidas"></div>
         <button type="button" id="add-partida" class="btn btn-ghost btn-sm" style="margin:1rem 0">+ Agregar partida</button>
         <br>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
     </form>
+    </div>
 </div>
 <script>
 (function () {

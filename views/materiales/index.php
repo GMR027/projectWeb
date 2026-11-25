@@ -1,34 +1,26 @@
+<?php
+$nMateriales = count($materiales);
+$nEntregados = count(array_filter($materiales, fn($m) => $m->entregado()));
+$nComprados = count(array_filter($materiales, fn($m) => $m->compra === 'comprado'));
+$nSinEsp = count(array_filter($materiales, fn($m) => trim((string)$m->especialidad) === ''));
+$qExp = http_build_query(array_filter([
+    'proyecto' => (int)$proyecto->id, 'q' => $q, 'especialidad' => $fEsp, 'entrega' => $fEntrega, 'compra' => $fCompra,
+], fn($v) => $v !== '' && $v !== null));
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-cubes"></i> Catálogo de materiales</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($materiales); ?> material(es)</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · la base de los submittals, el MSR y el almacén.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-cubes"></i><b><?php echo $nMateriales; ?></b> materiales</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-truck-ramp-box"></i><b><?php echo $nEntregados; ?></b> entregados</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-tags"></i><b><?php echo count($especialidades); ?></b> especialidades</span>
+        </div>
     </div>
     <div class="la-controles">
-        <form method="GET" class="buscador-inline">
-            <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
-            <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Buscar material, referencia…" data-filtra=".main-content table.tabla" autocomplete="off">
-            <select name="especialidad" class="btn btn-ghost btn-sm" aria-label="Filtrar por especialidad" onchange="this.form.submit()">
-                <option value="">Todas las especialidades</option>
-                <option value="__sin"<?php echo $fEsp === '__sin' ? ' selected' : ''; ?>>Sin especialidad</option>
-                <?php foreach ($especialidades as $e): ?><option value="<?php echo s($e); ?>"<?php echo $fEsp === $e ? ' selected' : ''; ?>><?php echo s($e); ?></option><?php endforeach; ?>
-            </select>
-            <select name="entrega" class="btn btn-ghost btn-sm" aria-label="Filtrar por estatus de entrega" onchange="this.form.submit()">
-                <option value="">Toda entrega</option>
-                <option value="pendiente"<?php echo $fEntrega === 'pendiente' ? ' selected' : ''; ?>>Entrega pendiente</option>
-                <option value="entregado"<?php echo $fEntrega === 'entregado' ? ' selected' : ''; ?>>Entregado</option>
-            </select>
-            <select name="compra" class="btn btn-ghost btn-sm" aria-label="Filtrar por compra" onchange="this.form.submit()">
-                <option value="">Toda compra</option>
-                <?php foreach (\Model\Material::COMPRA as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo $fCompra === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option><?php endforeach; ?>
-            </select>
-            <?php if ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== ''): ?><a href="/materiales?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost btn-sm">Limpiar</a><?php endif; ?>
-        </form>
         <a href="/materiales/dependencias?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-link"></i> Dependencias</a>
         <a href="/especialidades?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Especialidades</a>
-        <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary">+ Nuevo material</a>
-        <?php if (puede_descargar() || is_admin()): $qExp = http_build_query(array_filter([
-            'proyecto' => (int)$proyecto->id, 'q' => $q, 'especialidad' => $fEsp, 'entrega' => $fEntrega, 'compra' => $fCompra,
-        ], fn($v) => $v !== '' && $v !== null)); ?>
+        <?php if (puede_descargar() || is_admin()): ?>
         <details class="gr-descargar" data-ayuda="Descarga el catálogo con los filtros actuales, agrupado por especialidad, con imagen, referencia, material, status de compra y fechas. PDF para imprimir o .ods para editarlo en LibreOffice." data-manual="/manual#materiales">
             <summary class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Exportar</summary>
             <div class="gr-descargar-menu">
@@ -37,11 +29,60 @@
             </div>
         </details>
         <?php endif; ?>
+        <a href="/materiales/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo material</a>
     </div>
 </div>
+
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-cubes" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Materiales</small><strong><?php echo $nMateriales; ?></strong><span>en el catálogo del proyecto</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Comprados</small><strong><?php echo $nComprados; ?></strong><span>de <?php echo $nMateriales; ?> con compra registrada</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-truck-ramp-box" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Entregados</small><strong><?php echo $nEntregados; ?></strong><span>con fecha de entrega real</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nSinEsp ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-tags" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Sin especialidad</small><strong><?php echo $nSinEsp; ?></strong><span>por clasificar en el catálogo</span></span>
+    </div>
+</div>
+
 <?php if (!empty($_GET['error'])): ?><div class="alerta alerta-error" role="alert"><?php echo s((string)$_GET['error']); ?></div><?php endif; ?>
 
+
 <?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('materiales', '/materiales', $proyecto); ?>
+<form method="GET" class="suite-toolbar">
+    <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
+    <label class="suite-busca"><i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="<?php echo s($q); ?>" placeholder="Buscar material, referencia…" data-filtra=".main-content table.tabla" autocomplete="off">
+    </label>
+    <label><i class="fa-solid fa-tags"></i>
+        <select name="especialidad" aria-label="Filtrar por especialidad" onchange="this.form.submit()">
+            <option value="">Todas las especialidades</option>
+            <option value="__sin"<?php echo $fEsp === '__sin' ? ' selected' : ''; ?>>Sin especialidad</option>
+            <?php foreach ($especialidades as $e): ?><option value="<?php echo s($e); ?>"<?php echo $fEsp === $e ? ' selected' : ''; ?>><?php echo s($e); ?></option><?php endforeach; ?>
+        </select>
+    </label>
+    <label><i class="fa-solid fa-truck-ramp-box"></i>
+        <select name="entrega" aria-label="Filtrar por estatus de entrega" onchange="this.form.submit()">
+            <option value="">Toda entrega</option>
+            <option value="pendiente"<?php echo $fEntrega === 'pendiente' ? ' selected' : ''; ?>>Entrega pendiente</option>
+            <option value="entregado"<?php echo $fEntrega === 'entregado' ? ' selected' : ''; ?>>Entregado</option>
+        </select>
+    </label>
+    <label><i class="fa-solid fa-cart-shopping"></i>
+        <select name="compra" aria-label="Filtrar por compra" onchange="this.form.submit()">
+            <option value="">Toda compra</option>
+            <?php foreach (\Model\Material::COMPRA as $k => $etq): ?><option value="<?php echo $k; ?>"<?php echo $fCompra === $k ? ' selected' : ''; ?>><?php echo $etq; ?></option><?php endforeach; ?>
+        </select>
+    </label>
+    <?php if ($q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== ''): ?><a href="/materiales?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost">Limpiar</a><?php endif; ?>
+</form>
 <?php
 $verif = is_admin() ? ($verificaciones ?? []) : [];   // Materiales inteligentes: solo el administrador ve el resultado de la IA
 $inteligentes = is_admin() && ($inteligentes ?? false);
@@ -55,7 +96,9 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
     </div>
 <?php endif; ?>
 <?php if ($inteligentes ?? false): ?><p class="text-muted text-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Materiales inteligentes activo: cada material nuevo o modificado se verifica contra las normativas y especificaciones del proyecto desde la app de escritorio.</p><?php endif; ?>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-list"></i> Materiales <span class="suite-chip"><?php echo $nMateriales; ?></span></h3><p class="text-muted text-sm">Compra y entrega se cambian desde la misma tabla.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (empty($materiales)): ?>
         <?php $__filtra = $q !== '' || $fEsp !== '' || $fEntrega !== '' || $fCompra !== '';
         echo estado_vacio('fa-boxes-stacked', $__filtra ? 'Ningún material coincide con los filtros' : 'Aún no hay materiales',
@@ -103,6 +146,7 @@ $malos = array_filter($materiales, fn($m) => ($v = $verif[(int)$m->id] ?? null) 
             </tbody>
         </table></div>
     <?php endif; ?>
+    </div>
 </div>
 <script>
 (() => {

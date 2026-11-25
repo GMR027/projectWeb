@@ -1,9 +1,14 @@
 <?php $esNuevo = !$grafico->id; // Variables: $proyecto, $grafico, $alertas ?>
 <div class="page-header">
-    <h2><i class="fa-solid fa-street-view"></i> <?php echo $esNuevo ? 'Crear gráfico interactivo' : 'Editar gráfico interactivo'; ?></h2>
+    <div>
+        <h2><i class="fa-solid fa-street-view"></i> <?php echo $esNuevo ? 'Crear gráfico interactivo' : 'Editar gráfico interactivo'; ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · el fondo se convierte en un recorrido 360° sobre el que se abren vistas.</p>
+    </div>
     <a href="/view360?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-street-view"></i> Datos del recorrido</h3></div>
+    <div class="suite-panel-cuerpo">
     <form method="POST" action="/view360/<?php echo $esNuevo ? 'crear' : 'editar'; ?>" class="formulario" enctype="multipart/form-data">
         <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>">
         <?php if (!$esNuevo): ?><input type="hidden" name="id" value="<?php echo (int)$grafico->id; ?>"><?php endif; ?>
@@ -19,6 +24,7 @@
             <div class="campo campo-full"><a href="/graficos/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$grafico->grafico_id; ?>" class="btn btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Abrir en el editor</a></div>
             <?php endif; ?>
         </div>
-        <button type="submit" class="btn btn-primary"><?php echo $esNuevo ? 'Crear gráfico' : 'Guardar cambios'; ?></button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <?php echo $esNuevo ? 'Crear gráfico' : 'Guardar cambios'; ?></button>
     </form>
+    </div>
 </div>

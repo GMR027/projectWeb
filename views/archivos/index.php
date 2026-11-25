@@ -5,7 +5,6 @@ $carpetaActual = null;
 foreach ($carpetas as $k) if ($carpeta && (int)$k->id === (int)$carpeta) $carpetaActual = $k;
 $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta=' . $c : '') . ($filtro ? '&categoria=' . (int)$filtro : '');
 ?>
-<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('archivo', '/archivos', $proyecto); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-folder-open"></i> Archivo</h2>
@@ -33,6 +32,28 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
         <?php endif; ?>
     </div>
 </div>
+
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Archivos</small><strong><?php echo (int)$totalArchivos; ?></strong><span>documentos del proyecto</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-folder" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Carpetas</small><strong><?php echo count($carpetas); ?></strong><span>para organizar el archivero</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-tags" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Categorías</small><strong><?php echo count($categorias); ?></strong><span>clasificación de documentos</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $sinCarpeta ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-regular fa-file" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Sin carpeta</small><strong><?php echo (int)$sinCarpeta; ?></strong><span>archivos por clasificar</span></span>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('archivo', '/archivos', $proyecto); ?>
+
 <?php if (!empty($mensaje)): ?>
 <div class="alerta <?php echo $mensaje['ok'] ? 'alerta-exito' : 'alerta-error'; ?>" role="status">
     <p><?php echo s($mensaje['texto']); ?></p>
@@ -43,7 +64,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
 <?php endif; ?>
 <?php $nombresCarpeta = []; foreach ($carpetas as $k) $nombresCarpeta[(int)$k->id] = $k->nombre; ?>
 <div class="archivero">
-    <aside class="archivero-lateral card">
+    <aside class="archivero-lateral suite-panel">
         <div class="archivero-titulo">
             <span><i class="fa-solid fa-box-archive"></i> Archivero</span>
             <?php if ($puede): ?><button type="button" class="btn btn-sm btn-primary" id="arch-nueva" title="Nueva carpeta"><i class="fa-solid fa-folder-plus"></i></button><?php endif; ?>
@@ -75,7 +96,7 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
             <button type="submit" class="btn btn-sm btn-primary" id="arch-mover-btn" disabled><i class="fa-solid fa-folder-tree"></i> Mover a la carpeta</button>
         </form>
         <?php endif; ?>
-<div class="card archivero-lista">
+<div class="suite-panel archivero-lista">
     <?php if (empty($archivos)): ?>
         <?php $__donde = $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; $__cat = $filtro ? ' en esta categoría' : '';
         echo estado_vacio('fa-folder-open',

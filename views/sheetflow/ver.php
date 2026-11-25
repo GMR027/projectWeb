@@ -26,10 +26,11 @@
         <a href="/sheetflow?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost">← Tablas</a>
     </div>
 </div>
-<div class="card sf-ver"><div class="tabla-wrapper"><?php echo $tabla; ?></div></div>
+<div class="suite-panel sf-ver"><div class="suite-panel-cuerpo"><div class="tabla-wrapper"><?php echo $tabla; ?></div></div></div>
 <?php if ($puedeEditar): ?>
-<div class="card sf-usos hide-m">
-    <h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla en otras herramientas</h3>
+<div class="suite-panel sf-usos hide-m">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla en otras herramientas</h3></div>
+    <div class="suite-panel-cuerpo">
     <ul class="sf-lista-usos">
         <li><strong>vPlan:</strong> crea una tabla vinculada del catálogo de vPlan (en vivo, hasta 8 columnas y 200 renglones).
             <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en vPlan</button></form>
@@ -40,6 +41,7 @@
         <li><strong>Editor:</strong> en el panel <em>Símbolos</em> de cualquier gráfico, sección «Tablas de SheetFlow».</li>
         <li><strong>Redactor:</strong> <em>Insertar › Tabla › Origen › SheetFlow</em>.<?php foreach ($redactor as $d): ?> <a class="btn btn-sm btn-ghost" href="/redactor/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&amp;id=<?php echo (int)$d['id']; ?>"><i class="fa-solid fa-file-lines"></i> Usada en «<?php echo s($d['nombre']); ?>»</a><?php endforeach; ?></li>
     </ul>
+    </div>
 </div>
 <?php endif; ?>
 

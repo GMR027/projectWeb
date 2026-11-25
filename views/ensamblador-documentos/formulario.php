@@ -16,10 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$inicial) $inicial = [];
 .ens-vacio{padding:1.2rem;color:var(--text-muted,#94a3b8)}
 </style>
 <div class="page-header">
-    <h2><i class="fa-solid fa-object-group"></i> <?php echo $ensamble->id ? 'Editar ensamble' : 'Nuevo ensamble'; ?></h2>
+    <div>
+        <h2><i class="fa-solid fa-object-group"></i> <?php echo $ensamble->id ? 'Editar ensamble' : 'Nuevo ensamble'; ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · elige los documentos y su orden; el PDF se arma con la versión actual.</p>
+    </div>
     <a href="/ensamblador-documentos?proyecto=<?php echo $id; ?>" class="btn btn-ghost">← Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-object-group"></i> Documentos del ensamble</h3></div>
+    <div class="suite-panel-cuerpo">
     <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
     <form method="POST" action="/ensamblador-documentos/<?php echo $ensamble->id ? 'editar' : 'crear'; ?>" class="formulario" id="ens-form">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
@@ -55,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$inicial) $inicial = [];
         <p class="text-sm text-muted mt-2">El resultado es un PDF no editable. Si después cambias un documento original, el PDF guardado en Archivo se actualiza solo; el que descargas ya no.</p>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar ensamble</button>
     </form>
+    </div>
 </div>
 <script>
 (() => {

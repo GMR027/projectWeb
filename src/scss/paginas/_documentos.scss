@@ -1,0 +1,470 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Materiales y compras · Documentos y diseño
+// Ajustes propios de las pantallas que no son lienzo (MSR,
+// catálogo, almacén, archivo, listas de documentos, View360,
+// ensamblador, traductor y normativa). La base (hero, KPIs,
+// paneles, pestañas y formularios) vive en componentes/_suite.scss.
+// Se carga con css_paginas_de_vista() y se scopea por body[data-vista].
+// ============================================================
+
+// ---------- MSR ----------
+body[data-vista^="msr"] {
+  .msr-acciones {
+    gap: .45rem;
+    align-items: center;
+
+    select { min-width: 14rem; }
+    .btn { white-space: nowrap; }
+  }
+
+  .msr-cabecera {
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  }
+
+  .msr-leyendas {
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface) 90%, var(--bg-tertiary));
+  }
+
+  .msr-wrap {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .msr-tabla {
+    thead th { border-bottom: 1px solid rgba(0, 0, 0, .25); }
+    tbody tr:hover td { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+  }
+
+  .msr-seccion td { letter-spacing: .04em; }
+
+  .msr-input:focus {
+    outline: none;
+    border-color: var(--primary-line);
+    background: var(--primary-soft);
+  }
+
+  .msr-cols li {
+    border-radius: .7rem;
+    border-color: var(--border);
+    background: var(--surface);
+  }
+
+  .msr-partida {
+    border-radius: 1rem;
+    border-color: var(--primary-line);
+    background: color-mix(in srgb, var(--surface) 94%, var(--primary) 6%);
+  }
+
+  .msr-umbral { padding: .55rem .8rem; border: 1px dashed var(--border); border-radius: .7rem; }
+}
+
+// ---------- Submittals ----------
+body[data-vista^="submittals"] {
+  .tabla-submittals .toggle-estatus { min-width: 24rem; }
+
+  .sub-ficha {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: 1rem 2rem;
+
+    div { display: flex; flex-direction: column; gap: .2rem; }
+    dt { color: var(--text-muted); font-family: $font-mono; font-size: 1rem; letter-spacing: .05em; text-transform: uppercase; }
+    dd { margin: 0; font-weight: 600; }
+  }
+}
+
+// ---------- Catálogo de materiales ----------
+body[data-vista^="materiales"] {
+  .tabla-materiales {
+    .col-mat { font-weight: 600; }
+    td { vertical-align: middle; }
+  }
+
+  .toggle-estatus { border-radius: .7rem; }
+
+  .mat-thumb {
+    width: 5.2rem;
+    height: 5.2rem;
+    border: 1px solid var(--border);
+  }
+
+  .norma-aviso {
+    border-radius: 1rem;
+    border-left: 4px solid var(--danger);
+  }
+
+  .norma-detalle {
+    border-radius: 1rem;
+    border-left: 4px solid var(--primary);
+  }
+
+  .tabla-atributos {
+    border: 1px solid var(--border);
+    border-radius: .8rem;
+    overflow: hidden;
+  }
+}
+
+// ---------- Almacén ----------
+body[data-vista^="almacen"] {
+  .al-kpis { display: none; } // el resumen usa .suite-kpis
+
+  .al-tabla tr.al-bajo td { background: color-mix(in srgb, var(--warning) 8%, transparent); }
+
+  .al-badge {
+    padding: .28rem .75rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+
+    &.al-badge-bajo { background: color-mix(in srgb, var(--warning) 12%, transparent); }
+    &.al-badge-ok { background: color-mix(in srgb, var(--success) 10%, transparent); }
+  }
+
+  .barra-progreso {
+    height: .7rem;
+    border-radius: 99rem;
+    background: var(--bg-tertiary);
+    overflow: hidden;
+
+    .barra-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+  }
+}
+
+// ---------- Archivo y Visor ----------
+body[data-vista^="archivos"],
+body[data-vista^="visor"] {
+  .archivero-lateral,
+  .archivero-lista,
+  .visor-lateral {
+    border-radius: 1.1rem;
+    border-color: color-mix(in srgb, var(--primary-line) 40%, var(--border));
+    background: var(--surface);
+  }
+
+  .archivero-titulo {
+    padding: .9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 6%, var(--surface)), var(--surface));
+
+    span { font-size: 1.4rem; font-weight: 700; i { color: var(--primary-ink); } }
+  }
+
+  .archivero-carpetas {
+    padding: .6rem;
+
+    a {
+      border-radius: .6rem;
+      padding: .6rem .7rem;
+
+      &.activa {
+        background: var(--primary-soft);
+        color: var(--primary-ink);
+        border: 1px solid var(--primary-line);
+      }
+    }
+  }
+
+  .archivero-mover {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem .9rem;
+    margin-bottom: .8rem;
+    border: 1px solid var(--primary-line);
+    border-radius: .8rem;
+    background: var(--primary-soft);
+  }
+
+  .tabla-archivos .arch-nombre { font-weight: 600; }
+
+  .badge-carpeta {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .15rem .6rem;
+    border: 1px solid var(--border);
+    border-radius: 99rem;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-size: 1.02rem;
+  }
+
+  .visor-filtros {
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+    padding: 1rem;
+
+    .campo { margin: 0; }
+    .btn { width: 100%; justify-content: center; }
+  }
+
+  .visor-carpetas {
+    padding: .5rem;
+
+    a { border-radius: .6rem; }
+    a.activa { background: var(--primary-soft); border: 1px solid var(--primary-line); color: var(--primary-ink); }
+  }
+
+  .arch-lote-comun {
+    border: 1px solid var(--primary-line);
+    border-radius: 1rem;
+    background: var(--primary-soft);
+  }
+
+  .arch-lote-regla {
+    border-radius: .6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+}
+
+// ---------- Listas de documentos (Redactor, SheetFlow, Ensamblador) ----------
+body[data-vista^="redactor"],
+body[data-vista^="sheetflow"],
+body[data-vista^="ensamblador-documentos"] {
+  .rd-grupo {
+    border-radius: 1.1rem;
+    border-color: color-mix(in srgb, var(--primary-line) 40%, var(--border));
+    background: var(--surface);
+    overflow: hidden;
+
+    > h3 {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin: 0;
+      padding: .85rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)), var(--surface));
+      font-size: 1.5rem;
+
+      i { color: var(--primary-ink); }
+    }
+
+    .tabla-wrapper { padding: 0; }
+  }
+
+  .rd-plantillas { gap: .8rem; }
+
+  .rd-plantilla {
+    border-radius: .9rem;
+    border-color: var(--border);
+    background: var(--surface);
+
+    &:hover { border-color: var(--primary-line); }
+    &:has(input:checked) {
+      border-color: var(--primary-line);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px var(--primary-line);
+    }
+  }
+
+  .ens-lista {
+    border-radius: .9rem;
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  .ens-lista li:hover { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+
+  .tabla-ensambles {
+    td:nth-child(2) { min-width: 34rem; }
+    .acciones { min-width: 28rem; flex-wrap: wrap; white-space: normal; }
+    .acciones form { display: inline-flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  }
+
+  .ens-subir {
+    padding: .7rem;
+    border: 1px dashed var(--border);
+    border-radius: .8rem;
+  }
+}
+
+// ---------- Editor ----------
+body[data-vista^="graficos"] {
+  .gr-gal-card {
+    border-radius: 1.1rem;
+    border-color: color-mix(in srgb, var(--primary-line) 35%, var(--border));
+    background: var(--surface);
+  }
+
+  .gr-cat-chips { margin-bottom: 1rem; }
+
+  .gr-gal-img { background: color-mix(in srgb, var(--bg-tertiary) 80%, var(--surface)); }
+
+  .gr-gal-titulo:hover { color: var(--primary-ink); }
+
+  #gr-tabla { border-radius: 1.1rem; }
+
+  .fi-card { border-radius: 1.1rem; }
+}
+
+// ---------- View360 ----------
+body[data-vista^="view360"] {
+  .v360-area {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28rem;
+    gap: 1.2rem;
+    align-items: start;
+  }
+
+  .v360-lienzo { display: grid; gap: 1rem; }
+
+  .v360-panel {
+    position: sticky;
+    top: 2rem;
+    border-radius: 1rem;
+    border-color: var(--primary-line);
+  }
+
+  .v360-pantalla {
+    backdrop-filter: blur(6px);
+    background: rgba(2, 6, 23, .9);
+  }
+
+  .gr-vista { border-radius: 1rem; overflow: hidden; }
+
+  @media (max-width: 80rem) {
+    .v360-area { grid-template-columns: 1fr; }
+    .v360-panel { position: static; }
+  }
+}
+
+// ---------- Comparador y Anotador ----------
+body[data-vista^="comparador"],
+body[data-vista^="anotador"] {
+  .cmp-guardados,
+  .cmp-fuentes,
+  .ant-fuentes {
+    border-radius: 1.1rem;
+    border-color: color-mix(in srgb, var(--primary-line) 40%, var(--border));
+    background: var(--surface);
+  }
+
+  .cmp-guardados-cab h3 { font-size: 1.5rem; }
+  .cmp-guardado { border-radius: .9rem; border-color: var(--border); background: var(--surface); }
+
+  .cmp-fuente {
+    border-radius: 1rem;
+    border-color: var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, var(--bg-tertiary));
+  }
+
+  .ant-badge { border-color: var(--primary-line); background: var(--primary-soft); }
+  .ant-fuentes { padding: 1.1rem 1.4rem; }
+}
+
+// ---------- Traductor ----------
+body[data-vista^="traductor"] {
+  .trd {
+    padding: 1.2rem 1.4rem;
+    border-radius: 1.1rem;
+    border-color: color-mix(in srgb, var(--primary-line) 40%, var(--border));
+    background: var(--surface);
+  }
+
+  .trd-direccion select { min-width: 15rem; }
+
+  .trd-pestanas {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    padding: .3rem;
+    border: 1px solid var(--border);
+    border-radius: .8rem;
+    background: color-mix(in srgb, var(--surface) 85%, var(--bg-tertiary));
+    align-self: flex-start;
+  }
+
+  .trd-cajas textarea {
+    border-radius: .8rem;
+    border-color: var(--border);
+    background: var(--bg-secondary);
+    color: var(--text);
+  }
+
+  .trd-acciones {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .trd-aviso {
+    border-radius: 1rem;
+    border-left-width: 4px;
+  }
+
+  .trd-archivo {
+    padding: .8rem;
+    border: 1px dashed var(--border);
+    border-radius: .8rem;
+    background: var(--bg-secondary);
+  }
+}
+
+// ---------- Normativa ----------
+body[data-vista^="normativa"] {
+  .norm-vinculo {
+    border-radius: .9rem;
+    border-left: 4px solid var(--border);
+    background: var(--surface);
+
+    &.est-propuesta { border-left-color: var(--warning); }
+    &.est-aceptada { border-left-color: var(--success); }
+    &.est-rechazada { border-left-color: var(--danger); }
+  }
+
+  .norm-check {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding-bottom: 1rem;
+    font-size: 1.2rem;
+    white-space: nowrap;
+  }
+
+  .norm-msg { align-self: center; }
+
+  #norm-filas {
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: .8rem;
+    overflow: auto;
+  }
+
+  .nombre-archivo { display: inline-flex; align-items: center; gap: .5rem; }
+}
+
+// ---------- Ventanas con formulario ----------
+body[data-vista^="archivos"],
+body[data-vista^="msr"],
+body[data-vista^="materiales"],
+body[data-vista^="almacen"] {
+  form.modal-card {
+    max-width: 52rem;
+
+    h3 { text-align: left; }
+    .campo { margin: 1rem 0; }
+  }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista^="msr"] .msr-acciones { width: 100%; }
+  body[data-vista^="msr"] .msr-acciones select { flex: 1 1 14rem; min-width: 0; }
+
+  body[data-vista^="archivos"] .archivero-lateral,
+  body[data-vista^="visor"] .visor-lateral { border-radius: .9rem; }
+
+  body[data-vista^="traductor"] .trd { padding: .9rem; }
+  body[data-vista^="traductor"] .trd-direccion select { min-width: 0; flex: 1; }
+}

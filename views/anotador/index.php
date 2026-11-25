@@ -86,7 +86,7 @@ $herramientas = [
 <?php if (!$abrir): ?>
 <div class="ant-inicio">
     <?php if ($puedeGuardar): ?>
-    <section class="card ant-fuentes" id="ant-fuentes" aria-labelledby="ant-fuentes-tit">
+    <section class="suite-panel ant-fuentes" id="ant-fuentes" aria-labelledby="ant-fuentes-tit">
         <div class="ant-secc-cab">
             <h3 id="ant-fuentes-tit"><i class="fa-solid fa-file-circle-plus"></i> Abrir o crear un documento</h3>
             <span class="text-sm text-muted">Elige una fuente del proyecto o sube un archivo nuevo</span>
@@ -118,7 +118,7 @@ $herramientas = [
     </section>
     <?php endif; ?>
 
-    <section class="card ant-lista" aria-labelledby="ant-lista-tit">
+    <section class="suite-panel ant-lista" aria-labelledby="ant-lista-tit">
         <div class="ant-lista-cab">
             <h3 id="ant-lista-tit"><i class="fa-solid fa-folder-open"></i> Documentos guardados <span class="ant-cuenta"><?php echo $totalDocs; ?></span></h3>
             <?php if ($totalDocs > 0): ?>

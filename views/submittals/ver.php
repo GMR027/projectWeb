@@ -1,7 +1,13 @@
+<?php $nMat = count($materiales); $nLam = count($laminas); ?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-boxes-packing"></i> Submittal <?php echo s($submittal->numero_submittal); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?></p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s(\Model\Submittal::ESTATUS[$submittal->estatus] ?? $submittal->estatus); ?></p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-calendar"></i><?php echo formatear_fecha($submittal->fecha); ?></span>
+            <span class="herr-chip"><i class="fa-solid fa-cubes"></i><b><?php echo $nMat; ?></b> materiales</span>
+            <?php if ($nLam): ?><span class="herr-chip herr-chip-suave"><i class="fa-solid fa-pen-ruler"></i><b><?php echo $nLam; ?></b> láminas</span><?php endif; ?>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/submittals/editar?proyecto=<?php echo s($proyecto->id); ?>&id=<?php echo s($submittal->id); ?>" class="btn btn-ghost">Editar</a>
@@ -22,10 +28,32 @@
                 <i class="fa-solid fa-table-cells"></i> Generar tabla de materiales
             </button>
         <?php endif; ?>
-        <a href="/submittals?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Paquetes</a>
+        <a href="/submittals?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Paquetes</a>
     </div>
 </div>
-<div class="card">
+
+<div class="suite-kpis">
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-cubes" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Materiales</small><strong><?php echo $nMat; ?></strong><span>en el paquete</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-pen-ruler" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Láminas adjuntas</small><strong><?php echo $nLam; ?></strong><span>se incluyen en el PDF</span></span>
+    </div>
+    <div class="suite-kpi <?php echo \Model\Submittal::esAprobado($submittal->estatus) ? 'is-success' : 'is-warning'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Estatus</small><strong><?php echo s(\Model\Submittal::ESTATUS[$submittal->estatus] ?? $submittal->estatus); ?></strong><span>se sincroniza con el MSR</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-calendar" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Fecha</small><strong><?php echo formatear_fecha($submittal->fecha); ?></strong><span>del paquete</span></span>
+    </div>
+</div>
+
+<div class="suite-panel">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-circle-info"></i> Datos del paquete</h3></div>
+    <div class="suite-panel-cuerpo">
     <dl class="ficha-datos">
         <div><dt>Fecha</dt><dd><?php echo formatear_fecha($submittal->fecha); ?></dd></div>
         <div><dt>Número de trabajo</dt><dd><?php echo s($submittal->numero_trabajo); ?></dd></div>
@@ -34,8 +62,11 @@
         <div><dt>Para</dt><dd><?php echo s($submittal->para); ?></dd></div>
         <div><dt>Especialidad</dt><dd><?php echo s($submittal->especialidad); ?></dd></div>
     </dl>
+    </div>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-cubes"></i> Materiales del paquete <span class="suite-chip"><?php echo $nMat; ?></span></h3><p class="text-muted text-sm">Cada material genera su renglón en el MSR.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <table class="tabla">
         <thead><tr><th>Imagen</th><th>Material</th><th>Especialidad</th></tr></thead>
         <tbody>
@@ -49,11 +80,12 @@
         <?php if (!$materiales): ?><tr><td colspan="3" class="text-muted">Sin materiales.</td></tr><?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 <?php if (!empty($laminas)): ?>
-<div class="card">
-    <h3><i class="fa-solid fa-pen-ruler"></i> Láminas adjuntas</h3>
-    <p class="text-muted text-sm">Láminas del Editor (/graficos) que se incluyen debajo de los materiales en el PDF exportado.</p>
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-pen-ruler"></i> Láminas adjuntas <span class="suite-chip"><?php echo $nLam; ?></span></h3><p class="text-muted text-sm">Láminas del Editor que se incluyen debajo de los materiales en el PDF exportado.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <div class="gr-laminas-galeria">
         <?php foreach ($laminas as $l): ?>
             <figure>
@@ -65,6 +97,7 @@
                 <figcaption><?php echo s($l->grafico_nombre . ' · ' . $l->titulo((int)$l->orden)); ?><?php echo $l->categoria_nombre ? ' · ' . s($l->categoria_nombre) : ''; ?></figcaption>
             </figure>
         <?php endforeach; ?>
+    </div>
     </div>
 </div>
 <?php endif; ?>

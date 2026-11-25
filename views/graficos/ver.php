@@ -23,7 +23,7 @@ $lz = [
 ];
 include __DIR__ . '/../lienzo/_cabecera.php';
 ?>
-<div class="card gr-vista">
+<div class="suite-panel gr-vista">
     <?php if ($hayPng): ?>
         <div class="gr-laminas-galeria" style="<?php echo count($hayPng) === 1 ? 'display:block' : ''; ?>">
         <?php foreach ($laminas as $i => $l): if (!$l->marcas_png) continue; ?>

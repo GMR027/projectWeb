@@ -9,7 +9,9 @@
         <?php if ($puede): ?><a href="/archivos/categorias/crear?proyecto=<?php echo $id; ?>" class="btn btn-primary">+ Nueva categoría</a><?php endif; ?>
     </div>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-tags"></i> Categorías <span class="suite-chip"><?php echo count($lista); ?></span></h3><p class="text-muted text-sm">Clasifican los documentos del archivo y alimentan los filtros.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php if (empty($lista)): ?>
         <?php echo estado_vacio('fa-tags', 'Aún no hay categorías',
             $puede ? 'Crea la primera para clasificar los documentos del archivo.' : 'Cuando el equipo cree categorías aparecerán aquí.',
@@ -38,4 +40,5 @@
             </tbody>
         </table>
     <?php endif; ?>
+    </div>
 </div>

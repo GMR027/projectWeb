@@ -1,13 +1,48 @@
-<?php $puede = puede_gestionar_proyecto($proyecto); $pid = (int)$proyecto->id; $cols = $diseno['cols']; $nCols = count($cols); $grupoActual = null; ?>
+<?php
+$puede = puede_gestionar_proyecto($proyecto); $pid = (int)$proyecto->id; $cols = $diseno['cols']; $nCols = count($cols); $grupoActual = null;
+$nPaquetes = count($paquetes);
+$nAprobados = count(array_filter($paquetes, fn($p) => in_array($p->estatus, ['aprobado', 'aprobado_an'], true)));
+$nRevision = count(array_filter($paquetes, fn($p) => $p->estatus === 'enviado'));
+$nRechazados = count(array_filter($paquetes, fn($p) => $p->estatus === 'rechazado'));
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-boxes-packing"></i> <?php echo s(t('Submittals')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($paquetes); ?> paquete(s)</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · paquetes de materiales con su estatus de revisión y su reflejo en el MSR.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-boxes-packing"></i><b><?php echo $nPaquetes; ?></b> paquetes</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-hourglass-half"></i><b><?php echo $nRevision; ?></b> en revisión</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-circle-check"></i><b><?php echo $nAprobados; ?></b> aprobados</span>
+        </div>
     </div>
-    <a href="/submittals/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary"><?php echo s(t('+ Nuevo paquete')); ?></a>
+    <a href="/submittals/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> <?php echo s(t('Nuevo paquete')); ?></a>
 </div>
+
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-boxes-packing" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Paquetes</small><strong><?php echo $nPaquetes; ?></strong><span>submittals del proyecto</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nRevision ? 'is-warning' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>En revisión</small><strong><?php echo $nRevision; ?></strong><span>esperando respuesta</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Aprobados</small><strong><?php echo $nAprobados; ?></strong><span>incluye aprobados con anotaciones</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $nRechazados ? 'is-danger' : ''; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Por resubmitir</small><strong><?php echo $nRechazados; ?></strong><span>requieren corrección y reenvío</span></span>
+    </div>
+</div>
+
 <?php $herramienta = 'submittals'; $puedeDisenar = $puede; include __DIR__ . '/../listas/_barra.php'; ?>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab">
+        <div><h3><i class="fa-solid fa-list"></i> Paquetes <span class="suite-chip"><?php echo $nPaquetes; ?></span></h3><p class="text-muted text-sm">Cambia el estatus con un clic: el MSR se actualiza solo.</p></div>
+    </div>
+    <div class="suite-panel-cuerpo">
     <?php if (empty($paquetes)): ?>
         <?php echo estado_vacio('fa-file-circle-check',
             $cp['filtros'] ? 'Ningún paquete coincide con el filtro' : 'Aún no hay paquetes',
@@ -63,6 +98,7 @@
             </tbody>
         </table></div>
     <?php endif; ?>
+    </div>
 </div>
 <script>
 document.querySelectorAll('.toggle-estatus').forEach(g => g.addEventListener('click', async e => {

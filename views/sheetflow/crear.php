@@ -1,8 +1,13 @@
 <div class="page-header">
-    <h2><i class="fa-solid fa-table-cells"></i> Nueva tabla</h2>
-    <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <div>
+        <h2><i class="fa-solid fa-table-cells"></i> Nueva tabla</h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · en blanco, inteligente, con plantilla de obra o importando un archivo.</p>
+    </div>
+    <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-circle-plus"></i> Datos de la tabla</h3><p class="text-muted text-sm">Nombre, fecha, departamento y cómo quieres empezar.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
     <form method="POST" action="/sheetflow/crear" enctype="multipart/form-data" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -42,6 +47,7 @@
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-table-cells"></i> Crear y abrir</button>
     </form>
+    </div>
 </div>
 <script>
 (function () {

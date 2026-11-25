@@ -27,18 +27,21 @@
     </article>
 </div>
 <?php if ($sellos): ?>
-<div class="card rd-sellos-ver">
-    <h3><i class="fa-solid fa-stamp"></i> Firmas electrónicas</h3>
+<div class="suite-panel rd-sellos-ver">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-stamp"></i> Firmas electrónicas</h3></div>
+    <div class="suite-panel-cuerpo">
     <?php foreach ($sellos as $f): ?>
         <p><strong><?php echo s($f['nombre']); ?></strong><?php echo $f['cargo'] !== '' ? ' · ' . s($f['cargo']) : ''; ?> · <?php echo s(date('d/m/Y H:i', strtotime($f['firmado']))); ?>
             <span class="<?php echo $f['valido'] ? 'rd-sello-ok' : 'rd-sello-mal'; ?>"><?php echo $f['valido'] ? '✔ Íntegro' : '⚠ Modificado después de firmar'; ?></span>
             <small class="text-muted mono">huella <?php echo s(substr($f['huella'], 0, 16)); ?>…</small></p>
     <?php endforeach; ?>
+    </div>
 </div>
 <?php endif; ?>
 <?php if ($comentarios): ?>
-<div class="card rd-comentarios-ver">
-    <h3><i class="fa-regular fa-comments"></i> Comentarios (<?php echo count($comentarios); ?>)</h3>
+<div class="suite-panel rd-comentarios-ver">
+    <div class="suite-panel-cab"><h3><i class="fa-regular fa-comments"></i> Comentarios (<?php echo count($comentarios); ?>)</h3></div>
+    <div class="suite-panel-cuerpo">
     <?php foreach ($comentarios as $c): ?>
         <div class="rd-com-item<?php echo !empty($c['resuelto']) ? ' resuelto' : ''; ?>">
             <?php if (!empty($c['cita'])): ?><blockquote>«<?php echo s($c['cita']); ?>»</blockquote><?php endif; ?>
@@ -47,6 +50,7 @@
             <?php foreach ($c['respuestas'] ?? [] as $r): ?><p class="rd-resp">↳ <strong><?php echo s($r['autor']); ?></strong>: <?php echo s($r['texto']); ?></p><?php endforeach; ?>
         </div>
     <?php endforeach; ?>
+    </div>
 </div>
 <?php endif; ?>
 <script>

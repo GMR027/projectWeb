@@ -1,8 +1,11 @@
-<?php $id = (int)$proyecto->id; $totalHojas = 0; foreach ($porDepto as $hh) $totalHojas += count($hh); ?>
+<?php
+$id = (int)$proyecto->id; $totalHojas = 0; foreach ($porDepto as $hh) $totalHojas += count($hh);
+$nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-table-cells"></i> SheetFlow</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · tablas del proyecto que se usan en vPlan, Editor y Redactor</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · tablas del proyecto que se usan en vPlan, Editor y Redactor.</p>
         <div class="herr-meta">
             <span class="herr-chip"><i class="fa-solid fa-table-list"></i><b><?php echo $totalHojas; ?></b> <?php echo $totalHojas === 1 ? 'tabla' : 'tablas'; ?></span>
             <span class="herr-chip"><i class="fa-solid fa-folder-open"></i><b><?php echo count($porDepto); ?></b> <?php echo count($porDepto) === 1 ? 'carpeta' : 'carpetas'; ?></span>
@@ -15,14 +18,33 @@
     </div>
 </div>
 
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-table-list" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Tablas</small><strong><?php echo $totalHojas; ?></strong><span>hojas de cálculo del proyecto</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-folder-open" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Carpetas</small><strong><?php echo max(1, $nDeptos); ?></strong><span>agrupadas por departamento</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Vinculadas</small><strong>vPlan</strong><span>las tablas en vivo se actualizan solas</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-export" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Salida</small><strong>XLSX · CSV</strong><span>también PDF y .sheetflow</span></span>
+    </div>
+</div>
+
 <?php if (!$porDepto): ?>
-    <div class="card"><?php echo estado_vacio('fa-table-cells', 'Aún no hay tablas', 'Hojas de cálculo del proyecto que se reutilizan en vPlan, Editor y Redactor: en blanco, desde una plantilla de obra o importando tu Excel.',
+    <div class="suite-panel"><?php echo estado_vacio('fa-table-cells', 'Aún no hay tablas', 'Hojas de cálculo del proyecto que se reutilizan en vPlan, Editor y Redactor: en blanco, desde una plantilla de obra o importando tu Excel.',
         $puedeEditar ? ['texto' => 'Crear la primera tabla', 'url' => '/sheetflow/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null); ?></div>
 <?php endif; ?>
 
 <?php $carpetas = array_values(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN])); ?>
 <?php foreach ($porDepto as $depto => $hojas): ?>
-    <div class="card rd-grupo">
+    <div class="suite-panel rd-grupo">
         <h3<?php echo glosario('departamento'); ?>><i class="fa-solid fa-folder-open"></i> <?php echo s($depto); ?> <small class="text-muted">(<?php echo count($hojas); ?>)</small>
             <?php if ($puedeEditar && $depto !== \Classes\Carpetas::SIN): ?><button type="button" class="btn btn-sm btn-ghost" data-carpeta-renombrar="<?php echo s($depto); ?>" title="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button><?php endif; ?></h3>
         <div class="tabla-wrapper">

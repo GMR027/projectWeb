@@ -1,9 +1,14 @@
 <?php use Model\RedactorDocumento; ?>
 <div class="page-header">
-    <h2><i class="fa-solid fa-file-pen"></i> Nuevo documento</h2>
-    <a href="/redactor?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost">← Volver</a>
+    <div>
+        <h2><i class="fa-solid fa-file-pen"></i> Nuevo documento</h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · empieza en blanco o con una plantilla de obra.</p>
+    </div>
+    <a href="/redactor?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Volver</a>
 </div>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-circle-plus"></i> Datos del documento</h3><p class="text-muted text-sm">Nombre, fecha, departamento, hoja y corrector ortográfico.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <?php foreach (($alertas['error'] ?? []) as $e): ?><div class="alerta alerta-error"><?php echo s($e); ?></div><?php endforeach; ?>
     <form method="POST" action="/redactor/crear" class="formulario">
         <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>">
@@ -37,4 +42,5 @@
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Crear y abrir</button>
     </form>
+    </div>
 </div>

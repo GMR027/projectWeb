@@ -18,22 +18,24 @@ foreach ($laminas as $i => $l) {
 }
 ?>
 <?php if (!$hojas): ?>
-    <div class="card"><p class="text-muted">Este gráfico aún no tiene contenido.</p></div>
+    <div class="suite-panel"><div class="suite-panel-cuerpo"><p class="text-muted">Este gráfico aún no tiene contenido.</p></div></div>
 <?php else: ?>
 <div class="v360-area">
 <div class="v360-lienzo">
 <?php foreach ($hojas as [$l, $img, $i]): ?>
     <?php $lkW = $lkH = 0.0; $enl = $l->marcas_png ? \Classes\EnlacesLamina::de($l->marcas_json, $lkW, $lkH) : []; ?>
-    <div class="card gr-vista">
+    <div class="suite-panel gr-vista">
         <?php if (count($hojas) > 1): ?><h3 class="card-titulo"><?php echo s($l->titulo($i + 1)); ?></h3><?php endif; ?>
         <div class="vp-lk-wrap"><img src="/uploads/vplan/<?php echo s($img); ?>" alt="<?php echo s($grafico->nombre); ?>"><?php echo \Classes\EnlacesLamina::html($enl, $lkW, $lkH); ?></div>
     </div>
 <?php endforeach; ?>
 </div>
-<aside class="card v360-panel" id="v360-panel" aria-label="Vistas 360 abiertas">
-    <h3 class="card-titulo"><i class="fa-solid fa-street-view"></i> Vistas 360</h3>
+<aside class="suite-panel v360-panel" id="v360-panel" aria-label="Vistas 360 abiertas">
+    <div class="suite-panel-cab"><h3><i class="fa-solid fa-street-view"></i> Vistas 360</h3></div>
+    <div class="suite-panel-cuerpo">
     <p class="text-muted text-sm" id="v360-vacio">Haz clic en un hipervínculo de vista 360 del gráfico para abrirla aquí.</p>
     <div id="v360-lista"></div>
+    </div>
 </aside>
 </div>
 <div class="v360-pantalla" id="v360-pantalla" hidden role="dialog" aria-modal="true" aria-label="Vista 360 a pantalla completa">
@@ -92,7 +94,7 @@ document.addEventListener('fullscreenchange', () => { if (!document.fullscreenEl
 </script>
 <?php endif; ?>
 
-<section class="card vp-acciones no-print" id="v360-acciones">
+<section class="suite-panel vp-acciones no-print" id="v360-acciones">
     <h3>Acciones</h3>
     <div class="vp-acciones-menu">
         <?php if ($puedeEditar): ?><button type="button" class="btn btn-primary" id="vp-nota-nueva"><i class="fa-solid fa-note-sticky"></i> Crear nota</button><?php endif; ?>

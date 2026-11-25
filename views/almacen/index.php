@@ -39,11 +39,23 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
 
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
 
-<div class="al-kpis">
-    <div class="al-kpi"><small>Materiales</small><strong><?php echo (int)$resumen['materiales']; ?></strong><span>En el catálogo</span></div>
-    <div class="al-kpi <?php echo $resumen['bajos'] ? 'al-kpi-alerta' : ''; ?>"><small>Bajo mínimo</small><strong><?php echo (int)$resumen['bajos']; ?></strong><span>Requieren reposición</span></div>
-    <div class="al-kpi"><small>Órdenes abiertas</small><strong><?php echo (int)$resumen['abiertas']; ?></strong><span>Por recibir o parciales</span></div>
-    <div class="al-kpi"><small>Valor del inventario</small><strong class="mono"><?php echo $m($resumen['valor']); ?></strong><span><?php echo number_format((float)$resumen['movimientos']); ?> movimiento(s)</span></div>
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-cubes" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Materiales</small><strong><?php echo (int)$resumen['materiales']; ?></strong><span>en el catálogo</span></span>
+    </div>
+    <div class="suite-kpi <?php echo $resumen['bajos'] ? 'is-warning' : 'is-success'; ?>">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Bajo mínimo</small><strong><?php echo (int)$resumen['bajos']; ?></strong><span>requieren reposición</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Órdenes abiertas</small><strong><?php echo (int)$resumen['abiertas']; ?></strong><span>por recibir o parciales</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Valor del inventario</small><strong class="mono"><?php echo $m($resumen['valor']); ?></strong><span><?php echo number_format((float)$resumen['movimientos']); ?> movimiento(s)</span></span>
+    </div>
 </div>
 
 <nav class="centro-ia-tabs" aria-label="Almacén">
@@ -54,7 +66,7 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
 
 <?php if ($vista === 'existencias'): ?>
     <?php if ($puedeEditar && isset($_GET['salida'])): ?>
-    <form method="POST" action="/almacen/salida" class="card co-form">
+    <form method="POST" action="/almacen/salida" class="suite-panel co-form" style="padding:1.2rem 1.4rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <h3><i class="fa-solid fa-dolly"></i> Salida a actividad</h3>
         <p class="text-muted text-sm">El material sale del almacén y queda cargado a la actividad. No se permite sacar más de lo que hay.</p>
@@ -81,7 +93,7 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
     <?php endif; ?>
 
     <?php if ($puedeEditar && isset($_GET['ajuste'])): ?>
-    <form method="POST" action="/almacen/ajuste" class="card co-form">
+    <form method="POST" action="/almacen/ajuste" class="suite-panel co-form" style="padding:1.2rem 1.4rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <h3><i class="fa-solid fa-sliders"></i> Ajuste de inventario</h3>
         <p class="text-muted text-sm">Para corregir una diferencia física. El motivo es obligatorio y queda en el historial.</p>
@@ -97,8 +109,9 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
     </form>
     <?php endif; ?>
 
-    <div class="card">
-        <h3><i class="fa-solid fa-boxes-stacked"></i> Existencias · <?php echo s($almacen['nombre'] ?? 'Almacén'); ?></h3>
+    <div class="suite-panel">
+        <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-boxes-stacked"></i> Existencias · <?php echo s($almacen['nombre'] ?? 'Almacén'); ?></h3><p class="text-muted text-sm">La existencia sale de entradas, salidas y ajustes.</p></div></div>
+        <div class="suite-panel-cuerpo">
         <?php if (!$stock): ?><p class="text-muted">Aún no hay materiales en el catálogo.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla al-tabla">
             <thead><tr><th>Material</th><th>Unidad</th><th class="num">Existencia</th><th class="num">Mínimo</th><th>Estado</th><th class="num">Costo prom.</th><th class="num">Valor</th></tr></thead>
@@ -118,11 +131,12 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
         </table></div>
         <?php endif; ?>
         <p class="text-muted text-sm">El mínimo se configura en el material (<a href="/materiales?proyecto=<?php echo $pid; ?>">Catálogo de materiales</a>). La existencia es la suma de entradas menos salidas y ajustes.</p>
+        </div>
     </div>
 
 <?php elseif ($vista === 'ordenes'): ?>
     <?php if ($recibir): ?>
-    <form method="POST" action="/almacen/recibir" class="card co-form">
+    <form method="POST" action="/almacen/recibir" class="suite-panel co-form" style="padding:1.2rem 1.4rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <input type="hidden" name="id" value="<?php echo (int)$recibir['id']; ?>">
         <h3>Recibir orden <?php echo s($recibir['numero'] ?: '#' . $recibir['id']); ?></h3>
@@ -154,7 +168,7 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
     <?php endif; ?>
 
     <?php if ($puedeEditar && ($ordenEditar || isset($_GET['nueva']))): $o = $ordenEditar; ?>
-    <form method="POST" action="/almacen/orden" class="card co-form">
+    <form method="POST" action="/almacen/orden" class="suite-panel co-form" style="padding:1.2rem 1.4rem">
         <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
         <input type="hidden" name="id" value="<?php echo $o ? (int)$o['id'] : 0; ?>">
         <h3><?php echo $o ? 'Editar orden de compra' : 'Nueva orden de compra'; ?></h3>
@@ -187,8 +201,9 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
     </form>
     <?php endif; ?>
 
-    <div class="card">
-        <h3><i class="fa-solid fa-file-signature"></i> Órdenes de compra</h3>
+    <div class="suite-panel">
+        <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-file-signature"></i> Órdenes de compra</h3><p class="text-muted text-sm">Cada orden reserva presupuesto como compromiso; se recibe en partes.</p></div></div>
+        <div class="suite-panel-cuerpo">
         <?php if (!$ordenes): ?><p class="text-muted">Todavía no hay órdenes de compra con materiales.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla">
             <thead><tr><th>Orden</th><th>Partida</th><th class="num">Total</th><th>Recibido</th><th>Estado</th><th></th></tr></thead>
@@ -210,11 +225,13 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
         </table></div>
         <?php endif; ?>
         <p class="text-muted text-sm">Las órdenes también aparecen en <a href="/costos?proyecto=<?php echo $pid; ?>&pestana=compromisos">Costos → Compromisos</a>, donde se aplican las facturas y se controla el sobregiro.</p>
+        </div>
     </div>
 
 <?php else: ?>
-    <div class="card">
-        <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> Movimientos recientes</h3>
+    <div class="suite-panel">
+        <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-arrow-right-arrow-left"></i> Movimientos recientes</h3><p class="text-muted text-sm">Entradas, salidas y ajustes con su costo y destino.</p></div></div>
+        <div class="suite-panel-cuerpo">
         <?php if (!$movimientos): ?><p class="text-muted">Aún no hay entradas ni salidas.</p><?php else: ?>
         <div class="tabla-wrapper"><table class="tabla">
             <thead><tr><th>Fecha</th><th>Tipo</th><th>Material</th><th class="num">Cantidad</th><th class="num">Costo unit.</th><th class="num">Importe</th><th>Actividad / orden</th><th>Usuario</th></tr></thead>
@@ -234,5 +251,6 @@ $tabs = ['existencias' => ['fa-warehouse', 'Existencias'], 'ordenes' => ['fa-fil
             </tbody>
         </table></div>
         <?php endif; ?>
+        </div>
     </div>
 <?php endif; ?>

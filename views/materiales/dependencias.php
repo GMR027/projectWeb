@@ -12,6 +12,11 @@ $modos = [
     <div>
         <h2><i class="fa-solid fa-diagram-project"></i> Dependencias de materiales</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · conecta qué material necesita de otros antes de poder usarse o instalarse. Un material puede requerir varios a la vez.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-cubes"></i><b><?php echo count($datos['materiales']); ?></b> materiales</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-link"></i><b><?php echo (int)$datos['resumen']['relaciones']; ?></b> relaciones</span>
+            <span class="herr-chip<?php echo $datos['resumen']['materiales_bloqueados'] ? '' : ' herr-chip-suave'; ?>"><i class="fa-solid fa-lock"></i><b><?php echo (int)$datos['resumen']['materiales_bloqueados']; ?></b> bloqueados</span>
+        </div>
     </div>
     <div class="md-cab-acciones">
         <a href="/materiales?proyecto=<?php echo (int)$proyecto->id; ?>" class="btn btn-ghost"><i class="fa-solid fa-cubes"></i> Catálogo</a>
@@ -36,7 +41,7 @@ $modos = [
 <div id="md-aviso" class="md-aviso" hidden aria-live="polite"></div>
 <div id="md-kpis" class="md-kpis" aria-live="polite"></div>
 
-<div class="card md-barra">
+<div class="suite-panel md-barra">
     <div class="md-barra-filtros">
         <label class="md-busca"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="md-buscar" placeholder="Buscar material, referencia o especialidad…" aria-label="Buscar material" autocomplete="off"></label>
         <select id="md-esp" class="btn btn-ghost btn-sm" aria-label="Filtrar por especialidad"><option value="">Todas las especialidades</option></select>
@@ -59,7 +64,7 @@ $modos = [
 
 <div class="md-layout">
     <div class="md-main">
-        <div class="card md-tablero" id="md-tablero">
+        <div class="suite-panel md-tablero" id="md-tablero">
             <div class="md-tablero-cab">
                 <span class="md-leyenda"><i class="md-dot listo"></i> Disponible</span>
                 <span class="md-leyenda"><i class="md-dot justo"></i> Llega justo</span>
@@ -78,7 +83,7 @@ $modos = [
                 <?php if ($puedeEditar): ?><button type="button" class="btn btn-primary" id="md-vacio-conectar"><i class="fa-solid fa-link"></i> Conectar el primero</button><?php endif; ?>
             </div>
         </div>
-        <div class="card md-lista" id="md-lista" hidden>
+        <div class="suite-panel md-lista" id="md-lista" hidden>
             <div class="tabla-wrapper">
                 <table class="tabla tabla-md">
                     <thead><tr><th>Material</th><th class="hide-m">Especialidad</th><th>Compra</th><th class="hide-m">Entrega</th><th class="num">Requiere</th><th class="num hide-m">Requerido por</th><th>Disponible</th><th class="hide-m">Se necesita</th><th>Estado</th></tr></thead>
@@ -87,7 +92,7 @@ $modos = [
             </div>
         </div>
     </div>
-    <aside class="card md-panel" id="md-panel" aria-live="polite">
+    <aside class="suite-panel md-panel" id="md-panel" aria-live="polite">
         <p class="text-muted">Elige un material para ver qué requiere, quién lo requiere y qué actividades lo usan.</p>
     </aside>
 </div>

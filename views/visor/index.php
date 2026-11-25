@@ -22,7 +22,12 @@ $tipoVer = $ver ? \Classes\VistaArchivo::tipo($ver->extension()) : null;
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-eye"></i> <?php echo s(t('Visor')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · mira los archivos del Archivo sin salir de esta ventana</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · mira los archivos del Archivo sin salir de esta ventana.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-file-lines"></i><b><?php echo (int)$totalArchivos; ?></b> archivos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-folder"></i><b><?php echo count($carpetas); ?></b> carpetas</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-tags"></i><b><?php echo count($categorias); ?></b> categorías</span>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/archivos?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-folder-open"></i> <?php echo s(t('Ir al Archivo')); ?></a>
@@ -30,7 +35,7 @@ $tipoVer = $ver ? \Classes\VistaArchivo::tipo($ver->extension()) : null;
 </div>
 
 <div class="visor">
-    <aside class="visor-lateral card">
+    <aside class="visor-lateral suite-panel">
         <form method="GET" action="/visor" class="visor-filtros">
             <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
             <?php if ($carpeta !== null): ?><input type="hidden" name="carpeta" value="<?php echo s($valorCarpeta($carpeta)); ?>"><?php endif; ?>
@@ -73,7 +78,7 @@ $tipoVer = $ver ? \Classes\VistaArchivo::tipo($ver->extension()) : null;
         </div>
     </aside>
 
-    <section class="visor-principal card">
+    <section class="visor-principal suite-panel">
         <div class="visor-barra">
             <button type="button" class="btn btn-sm btn-ghost" id="vs-ant" title="Anterior" aria-label="Archivo anterior" disabled><i class="fa-solid fa-chevron-left"></i></button>
             <button type="button" class="btn btn-sm btn-ghost" id="vs-sig" title="Siguiente" aria-label="Archivo siguiente" disabled><i class="fa-solid fa-chevron-right"></i></button>

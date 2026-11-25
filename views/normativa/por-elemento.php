@@ -8,7 +8,12 @@ $sinFiltros = ($filtros['tipo'] ?? '') === '' && ($filtros['estado'] ?? '') === 
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-list-check"></i> Normativa por material y actividad</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué cláusulas aplican a cada material y a cada actividad, con el documento, la sección, la página y el requisito. Solo el administrador ve las propuestas y las sugerencias.</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · qué cláusulas aplican a cada material y a cada actividad, con el documento, la sección, la página y el requisito.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-list-check"></i><b><?php echo count($elementos); ?></b> elementos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-check"></i><b><?php echo $totalApl; ?></b> aplicables</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-wand-magic-sparkles"></i><b><?php echo $totalProp; ?></b> propuestas</span>
+        </div>
     </div>
     <div class="inc-acciones">
         <a href="/normativa?proyecto=<?php echo $pid; ?>" class="btn btn-ghost">← Documentos</a>
@@ -16,7 +21,7 @@ $sinFiltros = ($filtros['tipo'] ?? '') === '' && ($filtros['estado'] ?? '') === 
     </div>
 </div>
 
-<form method="get" action="/normativa/por-elemento" class="card inc-filtros">
+<form method="get" action="/normativa/por-elemento" class="suite-toolbar">
     <input type="hidden" name="proyecto" value="<?php echo $pid; ?>">
     <label>Elemento <select name="tipo" onchange="this.form.submit()">
         <option value="">Materiales y actividades</option>
@@ -37,9 +42,7 @@ $sinFiltros = ($filtros['tipo'] ?? '') === '' && ($filtros['estado'] ?? '') === 
 <p class="text-muted text-sm"><?php echo count($elementos); ?> elemento(s) · <?php echo $totalApl; ?> cláusula(s) aplicable(s) · <?php echo $totalProp; ?> propuesta(s). Se muestran hasta 200 elementos; usa los filtros para acotar.</p>
 
 <?php if (!$elementos): ?>
-    <div class="card prg-vacio"><h3>Nada que mostrar con estos filtros</h3>
-        <p class="text-muted"><?php echo !empty($filtros['sin']) ? 'Todos los elementos de esta vista ya tienen normativa aplicada.' : 'Carga documentos y ejecuta «Aplicar normativa y especificaciones», o quita los filtros.'; ?></p>
-    </div>
+    <div class="suite-panel"><?php echo estado_vacio('fa-filter-circle-xmark', 'Nada que mostrar con estos filtros', !empty($filtros['sin']) ? 'Todos los elementos de esta vista ya tienen normativa aplicada.' : 'Carga documentos y ejecuta «Aplicar normativa y especificaciones», o quita los filtros.'); ?></div>
 <?php else: ?>
     <div data-norm-raiz data-proyecto="<?php echo $pid; ?>" data-recargar="1">
     <ul class="inc-lista">

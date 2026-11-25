@@ -1,9 +1,18 @@
 <?php // Variables: $proyecto, $ensambles [['e' => Ensamble, 'fuentes' => [...]]], $puedeEditar, $puedeDescargar, $carpetas
-$id = (int)$proyecto->id; ?>
+$id = (int)$proyecto->id;
+$nEnsambles = count($ensambles);
+$nFuentes = 0; $nEnArchivo = 0;
+foreach ($ensambles as $x) { $nFuentes += count($x['fuentes']); if ($x['e']->archivo_id) $nEnArchivo++; }
+?>
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-object-group"></i> <?php echo s(t('Ensamblador de documentos')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · une documentos del Redactor y PDF del Archivo en un solo PDF no editable que se actualiza solo</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · une documentos del Redactor y PDF del Archivo en un solo PDF no editable que se actualiza solo.</p>
+        <div class="herr-meta">
+            <span class="herr-chip"><i class="fa-solid fa-object-group"></i><b><?php echo $nEnsambles; ?></b> ensambles</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-file-lines"></i><b><?php echo $nFuentes; ?></b> documentos</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-rotate"></i><b><?php echo $nEnArchivo; ?></b> en Archivo</span>
+        </div>
     </div>
     <div class="la-controles">
         <?php if ($puedeEditar): ?><a href="/ensamblador-documentos/crear?proyecto=<?php echo $id; ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo ensamble</a><?php endif; ?>
@@ -11,12 +20,33 @@ $id = (int)$proyecto->id; ?>
 </div>
 <?php if (isset($_GET['guardado'])): ?><div class="alerta alerta-exito">PDF guardado en Archivo. Se regenerará solo cuando cambie alguno de sus documentos.</div><?php endif; ?>
 
+<div class="suite-kpis">
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-object-group" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Ensamble</small><strong><?php echo $nEnsambles; ?></strong><span>PDF que unen varios documentos</span></span>
+    </div>
+    <div class="suite-kpi is-info">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Documentos</small><strong><?php echo $nFuentes; ?></strong><span>del Redactor y del Archivo</span></span>
+    </div>
+    <div class="suite-kpi is-success">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>En Archivo</small><strong><?php echo $nEnArchivo; ?></strong><span>se regeneran solos al cambiar</span></span>
+    </div>
+    <div class="suite-kpi">
+        <span class="suite-kpi-icono"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>
+        <span class="suite-kpi-txt"><small>Salida</small><strong>PDF</strong><span>no editable y siempre al día</span></span>
+    </div>
+</div>
+
 <?php if (!$ensambles): ?>
-    <div class="card"><p class="text-muted">Aún no hay ensambles. <?php echo $puedeEditar ? 'Crea el primero con «Nuevo ensamble»: elige los documentos y su orden.' : ''; ?></p></div>
+    <div class="suite-panel"><?php echo estado_vacio('fa-object-group', 'Aún no hay ensambles', $puedeEditar ? 'Crea el primero con «Nuevo ensamble»: elige los documentos y su orden.' : 'Cuando el equipo cree ensambles aparecerán aquí.', $puedeEditar ? ['texto' => 'Nuevo ensamble', 'url' => '/ensamblador-documentos/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null); ?></div>
 <?php else: ?>
-<div class="card">
+<div class="suite-panel">
+    <div class="suite-panel-cab"><div><h3><i class="fa-solid fa-list"></i> Ensambles <span class="suite-chip"><?php echo $nEnsambles; ?></span></h3><p class="text-muted text-sm">El PDF se arma con la versión actual de cada documento.</p></div></div>
+    <div class="suite-panel-cuerpo">
     <div class="tabla-wrapper">
-    <table class="tabla" data-sin-buscador>
+    <table class="tabla tabla-ensambles" data-sin-buscador>
         <thead><tr><th>Nombre</th><th>Documentos (en orden)</th><th class="hide-m">En Archivo</th><th>Acciones</th></tr></thead>
         <tbody>
         <?php foreach ($ensambles as ['e' => $e, 'fuentes' => $fuentes]): $q = 'proyecto=' . $id . '&id=' . (int)$e->id; ?>
@@ -55,6 +85,7 @@ $id = (int)$proyecto->id; ?>
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
     </div>
 </div>
 <p class="text-sm text-muted">El PDF siempre se arma con la versión actual de cada documento. El archivo que descargas ya es un PDF común: no conserva el vínculo ni se actualiza.</p>
