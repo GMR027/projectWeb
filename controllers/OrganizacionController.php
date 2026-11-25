@@ -39,11 +39,15 @@ class OrganizacionController
     {
         redirigir_si_no_admin();
         if (self::faltaMigracion($router)) return;
-        $verArchivadas = !empty($_GET['archivadas']);
-        $filas = [];
-        foreach (Organizacion::listado($verArchivadas) as $org) {
-            if ($verArchivadas && !$org->estaArchivada()) continue;
-            $filas[] = [
+        $q = trim((string)($_GET['q'] ?? ''));
+        $estadoFiltro = (string)($_GET['estado'] ?? '');
+        $estadosValidos = ['activo', 'trial', 'suspendido', 'cancelado', 'archivada'];
+        if (!in_array($estadoFiltro, $estadosValidos, true)) $estadoFiltro = '';
+        $verArchivadas = !empty($_GET['archivadas']) || $estadoFiltro === 'archivada';
+
+        $filasTodas = [];
+        foreach (Organizacion::listado(true) as $org) {
+            $filasTodas[] = [
                 'org' => $org,
                 'propietario' => $org->propietario(),
                 'plan' => $org->plan(),
@@ -55,11 +59,60 @@ class OrganizacionController
                 'limite_almacenamiento' => Almacenamiento::limiteCuenta((int)$org->id),
             ];
         }
+
+        $resumen = [
+            'total' => count($filasTodas),
+            'activas' => 0,
+            'trial' => 0,
+            'suspendidas' => 0,
+            'archivadas' => 0,
+            'obras' => 0,
+            'asientos' => 0,
+            'visitantes' => 0,
+            'almacenamiento' => 0,
+        ];
+        foreach ($filasTodas as $f) {
+            $estado = (string)($f['org']->estado_plan ?? 'activo');
+            if ($f['org']->estaArchivada()) $resumen['archivadas']++;
+            elseif ($estado === 'trial') $resumen['trial']++;
+            elseif (in_array($estado, ['suspendido', 'cancelado'], true)) $resumen['suspendidas']++;
+            else $resumen['activas']++;
+            $resumen['obras'] += (int)$f['obras'];
+            $resumen['asientos'] += (int)$f['asientos'];
+            $resumen['visitantes'] += (int)$f['visitantes'];
+            $resumen['almacenamiento'] += (int)$f['almacenamiento'];
+        }
+
+        $filas = array_values(array_filter($filasTodas, function (array $f) use ($verArchivadas, $estadoFiltro, $q): bool {
+            $org = $f['org'];
+            if ($verArchivadas) {
+                if (!$org->estaArchivada()) return false;
+            } elseif ($org->estaArchivada()) {
+                return false;
+            }
+            if ($estadoFiltro !== '' && $estadoFiltro !== 'archivada') {
+                if ((string)($org->estado_plan ?? 'activo') !== $estadoFiltro) return false;
+            }
+            if ($q !== '') {
+                $texto = mb_strtolower(implode(' ', [
+                    (string)$org->nombre,
+                    (string)$org->rfc,
+                    (string)($f['propietario']->nombre ?? ''),
+                    (string)($f['propietario']->email ?? ''),
+                ]));
+                if (!str_contains($texto, mb_strtolower($q))) return false;
+            }
+            return true;
+        }));
+
         $router->render('organizaciones/index', [
             'titulo' => 'Organizaciones',
             'filas' => $filas,
             'planes' => Plan::todos(),
             'verArchivadas' => $verArchivadas,
+            'q' => $q,
+            'estadoFiltro' => $estadoFiltro,
+            'resumen' => $resumen,
         ]);
     }
 

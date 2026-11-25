@@ -49,3 +49,101 @@
   .g { stroke: var(--border); stroke-width: 1; } .hoy { stroke: var(--warning); stroke-dasharray: 4 3; stroke-width: 1.2; }
   polyline { fill: none; stroke-width: 2.2; stroke-linejoin: round; } .actual { stroke: var(--text-dim); } .prop { stroke: var(--secondary); } .real { stroke: var(--success); } }
 .prg-leyenda .sw-real { background: var(--success); }
+
+// ============================================================
+// Consola de IA · Programador (scope de la vista)
+// Las reglas .prg-* de arriba siguen sirviendo a Programa y al resto.
+// ============================================================
+
+body[data-vista="programador-index"] {
+  .prg-guardar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .5rem;
+
+    input[type="text"] { min-width: 0; width: 100%; }
+    .btn { width: 100%; justify-content: center; }
+  }
+
+  .prg-seg {
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-top: .45rem;
+
+    select { flex: 1 1 9rem; }
+    input { flex: 1 1 12rem; width: auto; min-width: 0; }
+  }
+
+  .prg-acepta {
+    white-space: normal;
+
+    form { display: inline; }
+    .ia-chip { margin: 0 .35rem .3rem 0; }
+  }
+
+  .prg-gantt-th,
+  .prg-gantt { min-width: 24rem; }
+  .prg-curva { max-height: 32rem; }
+
+  .ia-command .prg-leyenda { margin-left: 0; }
+  .prg-cmp { max-width: none; }
+
+  #prg-comparativo.solo-cambios tr.igual { display: none; }
+  #prg-comparativo tr.fuera-partida { display: none; }
+
+  .ia-inspector {
+    .ia-finding { padding: .75rem .8rem; }
+    .ia-finding p { font-size: 1.1rem; }
+    .ia-finding .ia-finding-head strong { font-size: 1.2rem; }
+    .ia-legend { font-size: 1rem; }
+  }
+
+  .ia-tabla .prg-gantt {
+    .prg-barra-actual { top: .8rem; }
+    .prg-barra-prop { top: 2.2rem; }
+  }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista="programador-index"] {
+    .prg-gantt-th,
+    .prg-gantt { min-width: 18rem; }
+    .prg-acepta .btn { width: 100%; }
+    .prg-acepta form { display: block; }
+    .ia-inspector .prg-seg select,
+    .ia-inspector .prg-seg input { flex-basis: 100%; }
+  }
+}
+
+body[data-vista="programador-index"] {
+  .ia-tabla--partidas .prg-acepta .btn { white-space: nowrap; }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista="programador-index"] {
+    .ia-tabla--partidas td:first-child { min-width: 10rem; }
+    .ia-tabla--partidas .prg-acepta .btn { font-size: 1rem; padding: .35rem .5rem; }
+  }
+}
+
+body[data-vista="programador-index"] {
+  .ia-command .campo-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .6rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--surface);
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+
+  .ia-command .campo-check input[type="checkbox"] {
+    width: 1.6rem;
+    height: 1.6rem;
+    min-width: 0;
+    flex: none;
+    margin: 0;
+  }
+}

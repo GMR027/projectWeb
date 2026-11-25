@@ -652,7 +652,7 @@ $herr: 'body[data-vista]';
   // vPlan y Editor
   // ------------------------------------------------------------
   .vp-paquetes {
-    grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
     gap: 1.4rem;
   }
 

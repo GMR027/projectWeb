@@ -641,6 +641,27 @@ function archivo_icono_html(string $ext, string $titulo = ''): string
     return '<i class="fa-solid ' . archivo_icono($ext) . ' ico-archivo ' . archivo_icono_clase($ext) . '"' . ($titulo !== '' ? ' title="' . htmlspecialchars($titulo, ENT_QUOTES) . '"' : '') . ' aria-hidden="true"></i>';
 }
 
+/** Clave para agrupar revisiones del mismo documento (sin «Rev. A», «R2» ni sufijos de versión) */
+function archivo_clave_documento(string $nombre): string
+{
+    $k = mb_strtolower(trim($nombre));
+    $k = preg_replace('/\s*[·\-–|]?\s*rev\.?\s*[a-z0-9]+\.?\s*$/u', '', $k) ?? $k;
+    $k = preg_replace('/\s*[·\-–|]?\s*r\d+\s*$/u', '', $k) ?? $k;
+    $k = preg_replace('/\s+/u', ' ', $k) ?? $k;
+    return trim($k);
+}
+
+/** Iniciales para el avatar de un nombre («Laura Méndez» → «LM») */
+function iniciales_nombre(?string $nombre): string
+{
+    $partes = preg_split('/\s+/u', trim((string)$nombre)) ?: [];
+    $partes = array_values(array_filter($partes, fn($p) => $p !== ''));
+    if (!$partes) return '·';
+    $ini = mb_substr($partes[0], 0, 1);
+    if (count($partes) > 1) $ini .= mb_substr($partes[count($partes) - 1], 0, 1);
+    return mb_strtoupper($ini);
+}
+
 /** Proyecto indicado en la petición (campo "proyecto") validando permiso de ver o de gestionar */
 function proyecto_de_peticion(bool $gestionar = false): \Model\Proyecto
 {
@@ -1047,43 +1068,52 @@ function css_paginas_de_vista(?string $vista): ?array
         'calendario' => ['ajustes', 'campo'],
         'lineas-base' => ['cambios', 'programa', 'campo'],
         'punch' => ['inconsistencias', 'programador', 'campo'],
-        'riesgos' => ['fase3', 'riesgos'],
+        'riesgos' => ['fase3', 'riesgos', 'administracion'],
         'almacen' => ['fase3', 'almacen', 'documentos'],
-        'subcontratos' => ['fase3', 'subcontratos'],
+        'subcontratos' => ['fase3', 'subcontratos', 'administracion'],
+        'contratos' => ['fase3', 'administracion'],
+        'cierre' => ['fase3', 'administracion'],
         'transmittals' => ['fase3'],
         'balance' => ['fase3'],
-        'costos' => ['fase3', 'cambios'],
-        'conceptos' => ['fase3'],
-        'recursos' => ['fase3'],
+        'costos' => ['fase3', 'cambios', 'administracion'],
+        'conceptos' => ['fase3', 'administracion'],
+        'recursos' => ['fase3', 'administracion'],
+        'equipo' => ['fase3', 'administracion'],
+        'datos-obra' => ['administracion'],
+        'acciones' => ['administracion'],
         'rfi' => ['fase3', 'cambios', 'campo'],
         'compartir' => ['fase3'],
-        'cambios' => ['cambios'],
+        'cambios' => ['cambios', 'administracion'],
         'reportes' => ['reportes', 'campo'],
         'bitacora' => ['reportes', 'campo'],
-        'ajustes' => ['ajustes', 'personalizacion', 'dependencias-materiales', 'empezar'],
-        'centro-ia' => ['inconsistencias', 'personalizacion'],
-        'revisiones' => ['inconsistencias'],
+        'ajustes' => ['ajustes', 'personalizacion', 'dependencias-materiales', 'empezar', 'administracion', 'control'],
+        'sistema' => ['administracion', 'control'],
+        'organizaciones' => ['administracion', 'control'],
+        'bandeja' => ['administracion', 'control'],
+        'centro-ia' => ['inconsistencias', 'centro-ia', 'personalizacion'],
+        'revisiones' => ['inconsistencias', 'revisiones'],
         'seguridad' => ['inconsistencias', 'programador', 'fase3', 'riesgos', 'campo'],
         'inconsistencias' => ['inconsistencias', 'programador'],
-        'historial' => ['inconsistencias'],
+        'historial' => ['inconsistencias', 'administracion'],
         'usuarios' => ['personalizacion'],
-        'directorio' => ['personalizacion', 'reportes'],
+        'directorio' => ['personalizacion', 'reportes', 'administracion'],
         'plantillas' => ['personalizacion', 'campo'],
         'campos' => ['personalizacion'],
         'especialidades' => ['personalizacion'],
         'calidad' => ['fase3', 'riesgos', 'inconsistencias', 'campo'],
         'minutas' => ['reportes', 'campo'],
         'evidencias' => ['campo'],
-        'auth/listar' => [],
-        'auth/visitantes' => [],
-        'auth/crear' => [],
-        'auth/editar' => [],
-        'auth/password' => [],
+        'auth/listar' => ['administracion', 'control'],
+        'auth/visitantes' => ['administracion', 'control'],
+        'auth/crear' => ['administracion', 'control'],
+        'auth/editar' => ['administracion', 'control'],
+        'auth/visitante-form' => ['administracion', 'control'],
+        'auth/password' => ['administracion', 'control'],
         'materiales/dependencias' => ['dependencias-materiales', 'documentos'],
         'analisis-materiales' => ['dependencias-materiales', 'inconsistencias', 'programador'],
         'archivos' => ['archivero', 'documentos'],
         'visor' => ['visor', 'documentos'],
-        'dashboard' => ['dashboard', 'personalizacion'],
+        'dashboard' => ['dashboard', 'personalizacion', 'inicio'],
         'proyectos' => ['dashboard'],
         'portafolio' => [],
         'msr' => ['personalizacion', 'reportes', 'documentos'],

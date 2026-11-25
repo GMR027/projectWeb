@@ -19,8 +19,14 @@ foreach ($actividades as $a) $porPartida[$a['partida_codigo'] . ' · ' . $a['par
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Riesgos</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · lo que puede pasar y qué vamos a hacer al respecto</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-shield-halved"></i> <b><?php echo (int)($resumen['rojos'] ?? 0); ?></b> altos</span>
+            <span><i class="fa-solid fa-circle-half-stroke"></i> <b><?php echo (int)($resumen['amarillos'] ?? 0); ?></b> medios</span>
+            <span><i class="fa-solid fa-clock"></i> <b><?php echo (int)($resumen['vencidos'] ?? 0); ?></b> vencidos</span>
+        </div>
     </div>
     <?php if ($disponible): ?>
     <div>
@@ -47,16 +53,16 @@ foreach ($actividades as $a) $porPartida[$a['partida_codigo'] . ' · ' . $a['par
 
 <div class="rg-kpis">
     <a class="rg-kpi rg-kpi-rojo" href="<?php echo s($url(['sev' => 'rojo'])); ?>">
-        <small>Riesgos altos</small><strong><?php echo (int)$resumen['rojos']; ?></strong><span>Abiertos con severidad 7-9</span>
+        <span class="adm-kpi-icono"><i class="fa-solid fa-fire"></i></span><small>Riesgos altos</small><strong><?php echo (int)$resumen['rojos']; ?></strong><span>Abiertos con severidad 7-9</span>
     </a>
     <a class="rg-kpi rg-kpi-amarillo" href="<?php echo s($url(['sev' => 'amarillo'])); ?>">
-        <small>Riesgos medios</small><strong><?php echo (int)$resumen['amarillos']; ?></strong><span>Abiertos con severidad 4-6</span>
+        <span class="adm-kpi-icono"><i class="fa-solid fa-triangle-exclamation"></i></span><small>Riesgos medios</small><strong><?php echo (int)$resumen['amarillos']; ?></strong><span>Abiertos con severidad 4-6</span>
     </a>
     <a class="rg-kpi" href="<?php echo s($url(['estado' => 'en_tratamiento'])); ?>">
-        <small>En tratamiento</small><strong><?php echo (int)$resumen['tratamiento']; ?></strong><span>Con una acción en marcha</span>
+        <span class="adm-kpi-icono"><i class="fa-solid fa-person-digging"></i></span><small>En tratamiento</small><strong><?php echo (int)$resumen['tratamiento']; ?></strong><span>Con una acción en marcha</span>
     </a>
     <a class="rg-kpi <?php echo $resumen['vencidos'] ? 'rg-kpi-rojo' : ''; ?>" href="<?php echo s($url()); ?>">
-        <small>Compromisos vencidos</small><strong><?php echo (int)$resumen['vencidos']; ?></strong><span>La fecha ya pasó y sigue abierto</span>
+        <span class="adm-kpi-icono"><i class="fa-solid fa-calendar-xmark"></i></span><small>Compromisos vencidos</small><strong><?php echo (int)$resumen['vencidos']; ?></strong><span>La fecha ya pasó y sigue abierto</span>
     </a>
 </div>
 

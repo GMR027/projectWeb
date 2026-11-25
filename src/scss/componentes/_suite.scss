@@ -7,7 +7,7 @@
 // proyecto y el modo claro/oscuro.
 // ============================================================
 
-$suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body[data-vista^="balance"], body[data-vista^="vplan"], body[data-vista^="calendario"], body[data-vista^="lineas-base"], body[data-vista^="plantillas"], body[data-vista^="reportes"], body[data-vista^="bitacora"], body[data-vista^="minutas"], body[data-vista^="evidencias"], body[data-vista^="seguridad"], body[data-vista^="punch"], body[data-vista^="calidad"], body[data-vista^="rfi"], body[data-vista^="mapa-avance"], body[data-vista^="msr"], body[data-vista^="submittals"], body[data-vista^="materiales"], body[data-vista^="almacen"], body[data-vista^="archivos"], body[data-vista^="visor"], body[data-vista^="graficos"], body[data-vista^="redactor"], body[data-vista^="sheetflow"], body[data-vista^="view360"], body[data-vista^="ensamblador-documentos"], body[data-vista^="comparador"], body[data-vista^="anotador"], body[data-vista^="traductor"], body[data-vista^="normativa"]';
+$suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body[data-vista^="balance"], body[data-vista^="vplan"], body[data-vista^="calendario"], body[data-vista^="lineas-base"], body[data-vista^="plantillas"], body[data-vista^="reportes"], body[data-vista^="bitacora"], body[data-vista^="minutas"], body[data-vista^="evidencias"], body[data-vista^="seguridad"], body[data-vista^="punch"], body[data-vista^="calidad"], body[data-vista^="rfi"], body[data-vista^="mapa-avance"], body[data-vista^="msr"], body[data-vista^="submittals"], body[data-vista^="materiales"], body[data-vista^="almacen"], body[data-vista^="archivos"], body[data-vista^="visor"], body[data-vista^="graficos"], body[data-vista^="redactor"], body[data-vista^="sheetflow"], body[data-vista^="view360"], body[data-vista^="ensamblador-documentos"], body[data-vista^="comparador"], body[data-vista^="anotador"], body[data-vista^="traductor"], body[data-vista^="normativa"], body[data-vista="programador-index"], body[data-vista="inconsistencias-index"], body[data-vista="centro-ia-bandeja"], body[data-vista="revisiones-index"], body[data-vista="proyectos-listar"]';
 
 #{$suite} {
   // Cabecera más compacta y precisa que el hero genérico del workspace.
@@ -482,7 +482,7 @@ $suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body
       p { font-size: 1.05rem; }
     }
     .suite-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-    .suite-kpi { padding: .7rem .8rem; gap: .55rem; .suite-kpi-icono { width: 2.8rem; height: 2.8rem; font-size: 1.1rem; } .suite-kpi-txt strong { font-size: 1.8rem; } .suite-kpi-txt span { font-size: .95rem; } }
+    .suite-kpi { padding: .7rem .8rem; gap: .55rem; .suite-kpi-icono { width: 2.8rem; height: 2.8rem; font-size: 1.1rem; } .suite-kpi-txt strong { font-size: 1.8rem; line-height: 1.05; overflow-wrap: anywhere; } .suite-kpi-txt span { font-size: .95rem; } }
     .suite-toolbar { gap: .5rem; padding: .6rem; label { width: 100%; } select, input[type="search"] { width: 100%; } }
     .pestanas { flex-wrap: nowrap; overflow-x: auto; }
   }

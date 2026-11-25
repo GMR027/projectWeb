@@ -102,7 +102,7 @@
 
 @media print {
   @page { size: 17in 11in landscape; margin: 8mm; }
-  .sidebar, .topbar, .breadcrumb-nav, .no-print { display: none !important; }
+  .sidebar, .appbar, .nav-contexto, .nav-inferior, .no-print { display: none !important; }
   .main-content { margin: 0 !important; padding: 0 !important; }
   body { background: #fff; }
   .la-wrap { max-height: none; overflow: visible; border: 0; }
@@ -894,7 +894,7 @@ body.gr-editor-page {
 
 // vPlan como paquete de láminas (áreas): lista de vPlan, gestor y navegación entre áreas
 .vp-nuevo-paquete { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.6rem; input[type=text] { min-width: 24rem; flex: 1; max-width: 48rem; } }
-.vp-paquetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.6rem; }
+.vp-paquetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr)); gap: 1.6rem; }
 .vp-paquete { h3 { margin: .8rem 0 .2rem; } .acciones { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; } }
 .vp-paquete-portada { display: flex; gap: .4rem; align-items: center; justify-content: center; height: 13rem; background: var(--bg-tertiary); border-radius: .6rem; overflow: hidden; color: var(--text-muted, #94a3b8); font-size: 4rem; img { flex: 1; min-width: 0; height: 100%; object-fit: cover; background: #fff; } }
 .vp-grupo { margin-bottom: 1.6rem; }

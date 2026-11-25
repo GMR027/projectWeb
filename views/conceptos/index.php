@@ -18,8 +18,14 @@ $e = $editar ?? [];
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-list-check"></i> Catálogo de conceptos</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · conceptos con cantidad y precio unitario, ligados a partidas y actividades</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-rectangle-list"></i> <b><?php echo (int)$totConceptos; ?></b> conceptos</span>
+            <span><i class="fa-solid fa-building-columns"></i> <b><?php echo $moneda($totSuma); ?></b> directo</span>
+            <span><i class="fa-solid fa-diagram-project"></i> <b><?php echo count($partidas); ?></b> partidas</span>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/costos?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-sack-dollar"></i> Costos</a>
@@ -34,11 +40,11 @@ $e = $editar ?? [];
 <?php if (!Conceptos::disponible()): return; endif; ?>
 
 <div class="cb-kpis">
-    <div class="cb-kpi"><small>Conceptos</small><strong><?php echo (int)$totConceptos; ?></strong><span><?php echo count($partidas); ?> partida(s) en el programa</span></div>
-    <div class="cb-kpi"><small>Presupuesto directo</small><strong><?php echo $moneda($totSuma); ?></strong><span>cantidad × precio unitario</span></div>
-    <div class="cb-kpi"><small>Programado</small><strong><?php echo $moneda($totProg); ?></strong><span><?php echo $totSuma > 0 ? number_format($totProg / $totSuma * 100, 1) . ' % del catálogo' : 'sin cantidades ligadas'; ?></span></div>
-    <div class="cb-kpi <?php echo $totPend > 0 ? 'cb-kpi-alerta' : ''; ?>"><small title="Conceptos que todavía no se reparten en actividades del programa">Pendiente de programar</small><strong><?php echo $moneda($totPend); ?></strong><span>aún sin actividad que lo ejecute</span></div>
-    <div class="cb-kpi"><small>Cargos del proyecto</small><strong><?php echo $factor !== 1.0 ? number_format(($factor - 1) * 100, 2) . ' %' : '—'; ?></strong><span>indirectos <?php echo $n($cargos['indirectos'], 2); ?> % · utilidad <?php echo $n($cargos['utilidad'], 2); ?> % · IVA <?php echo $n($cargos['iva'], 2); ?> %<?php echo $cargos['iva_en_bac'] ? ' (en el BAC)' : ''; ?></span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-rectangle-list"></i></span><small>Conceptos</small><strong><?php echo (int)$totConceptos; ?></strong><span><?php echo count($partidas); ?> partida(s) en el programa</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-building-columns"></i></span><small>Presupuesto directo</small><strong><?php echo $moneda($totSuma); ?></strong><span>cantidad × precio unitario</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-list-check"></i></span><small>Programado</small><strong><?php echo $moneda($totProg); ?></strong><span><?php echo $totSuma > 0 ? number_format($totProg / $totSuma * 100, 1) . ' % del catálogo' : 'sin cantidades ligadas'; ?></span></div>
+    <div class="cb-kpi <?php echo $totPend > 0 ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-hourglass-half"></i></span><small title="Conceptos que todavía no se reparten en actividades del programa">Pendiente de programar</small><strong><?php echo $moneda($totPend); ?></strong><span>aún sin actividad que lo ejecute</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-percent"></i></span><small>Cargos del proyecto</small><strong><?php echo $factor !== 1.0 ? number_format(($factor - 1) * 100, 2) . ' %' : '—'; ?></strong><span>indirectos <?php echo $n($cargos['indirectos'], 2); ?> % · utilidad <?php echo $n($cargos['utilidad'], 2); ?> % · IVA <?php echo $n($cargos['iva'], 2); ?> %<?php echo $cargos['iva_en_bac'] ? ' (en el BAC)' : ''; ?></span></div>
 </div>
 
 <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.2rem">

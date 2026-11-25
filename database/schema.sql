@@ -195,7 +195,7 @@ CREATE TABLE proyectos (
     tema_halo_color VARCHAR(7) NOT NULL DEFAULT '',   -- vacío = color de acento de la paleta
     tema_halo_intensidad TINYINT UNSIGNED NOT NULL DEFAULT 45,   -- 0-100
     tema_halo_expansion SMALLINT UNSIGNED NOT NULL DEFAULT 100,   -- 50-250 (%)
-    nombres_herramientas TINYINT(1) NOT NULL DEFAULT 0,   -- barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
+    nombres_herramientas TINYINT(1) NOT NULL DEFAULT 1,   -- barra compacta: nombre junto al icono (Ajustes → Apariencia)
     menu_superior ENUM('clasico','panel','pestanas') NOT NULL DEFAULT 'clasico',   -- barra superior: clásico, panel fijo o pestañas por sección
     ayuda_burbujas TINYINT(1) NOT NULL DEFAULT 1,   -- mensajes emergentes de ayuda de la interfaz (Ajustes → Apariencia)
     clima_auto TINYINT(1) NOT NULL DEFAULT 0,     -- bitácora de clima automática + aviso del pronóstico (Telegram)

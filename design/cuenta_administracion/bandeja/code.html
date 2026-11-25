@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bandeja de Entrada - Centro de Mensajes | ProjectWeb</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              DEFAULT: '#0a122a',
+              dim: '#0a122a',
+              bright: '#313852',
+              lowest: '#050d25',
+              low: '#131a33',
+              card: '#171e37',
+              high: '#212942',
+              highest: '#2c344d',
+            },
+            primary: {
+              DEFAULT: '#ff5a1f',
+              hover: '#ff733f',
+              light: '#ffb59e'
+            },
+            secondary: {
+              DEFAULT: '#00b4d8',
+              glow: 'rgba(0, 180, 216, 0.25)',
+              dim: '#4cd6fb'
+            },
+            onSurface: {
+              DEFAULT: '#dbe1ff',
+              variant: '#9aa5c4',
+              muted: '#627094'
+            }
+          },
+          fontFamily: {
+            grotesk: ['"Space Grotesk"', 'sans-serif'],
+            manrope: ['Manrope', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a122a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #212942;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #313852;
+    }
+    .custom-glass {
+      background: rgba(23, 30, 55, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .custom-glass-card {
+      background: rgba(19, 26, 51, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .laser-border {
+      box-shadow: 0 0 15px -3px rgba(0, 180, 216, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-[#0a122a] text-[#dbe1ff] font-manrope antialiased h-screen flex flex-col overflow-hidden selection:bg-[#ff5a1f] selection:text-white">
+
+  <!-- TOP NAVIGATION BAR (56px) -->
+  <header class="h-[56px] min-h-[56px] bg-[#050d25] border-b border-white/10 px-4 flex items-center justify-between z-30 select-none">
+    <div class="flex items-center gap-6">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded bg-gradient-to-br from-[#ff5a1f] to-[#ae3200] flex items-center justify-center shadow-lg shadow-[#ff5a1f]/20">
+          <i class="fa-solid fa-cubes-stacked text-white text-sm"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 leading-none">
+            <span class="font-grotesk font-bold text-base tracking-tight text-white">ProjectWeb</span>
+            <span class="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-[#212942] text-[#00b4d8] border border-[#00b4d8]/30">V4.2</span>
+          </div>
+          <p class="text-[9px] font-mono tracking-widest text-[#9aa5c4] uppercase mt-0.5">CivilTech Infra-Platform</p>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-5 w-px bg-white/10 hidden md:block"></div>
+
+      <!-- Project Selector (Civil Infrastructure) -->
+      <div class="relative hidden sm:block">
+        <button class="flex items-center gap-2.5 px-3 py-1.5 rounded bg-[#131a33] hover:bg-[#171e37] border border-white/10 text-xs font-medium text-[#dbe1ff] transition-colors min-h-[44px]">
+          <i class="fa-solid fa-road text-[#00b4d8] text-xs"></i>
+          <span class="font-grotesk tracking-wide font-medium">Tramo 4 - Viaducto Elevado Oriente</span>
+          <span class="text-[10px] font-mono text-[#9aa5c4] px-1.5 py-0.5 rounded bg-[#0a122a] border border-white/5">PK 42+800</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-[#9aa5c4]"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Central Search Bar (Global) -->
+    <div class="hidden lg:flex items-center flex-1 max-w-md mx-6">
+      <div class="relative w-full">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#9aa5c4]"></i>
+        <input 
+          type="text" 
+          placeholder="Buscar incidencias, tickets BIM, contratistas o reportes... [Ctrl+K]" 
+          class="w-full h-8 pl-8 pr-12 text-xs bg-[#131a33] border border-white/10 rounded focus:outline-none focus:border-[#00b4d8] text-[#dbe1ff] placeholder-[#9aa5c4]/60 font-manrope transition-all"
+        >
+        <span class="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-[#9aa5c4] bg-[#0a122a] px-1.5 py-0.5 rounded border border-white/10">⌘K</span>
+      </div>
+    </div>
+
+    <!-- Actions & User Profile -->
+    <div class="flex items-center gap-3">
+      <!-- Quick Status -->
+      <div class="hidden xl:flex items-center gap-2 font-mono text-[11px] text-[#00b4d8] bg-[#00b4d8]/10 px-2.5 py-1 rounded border border-[#00b4d8]/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#00b4d8] animate-pulse"></span>
+        <span>GATEWAY C-14 ONLINE</span>
+      </div>
+
+      <!-- Notifications -->
+      <button class="relative w-9 h-9 rounded flex items-center justify-center bg-[#131a33] hover:bg-[#171e37] border border-white/10 text-[#dbe1ff] transition-colors focus:ring-2 focus:ring-[#00b4d8] min-w-[44px] min-h-[44px]" title="Notificaciones operativas">
+        <i class="fa-regular fa-bell text-sm"></i>
+        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ff5a1f] ring-2 ring-[#050d25]"></span>
+      </button>
+
+      <!-- User Avatar / Info -->
+      <div class="flex items-center gap-2.5 pl-2 border-l border-white/10">
+        <div class="w-9 h-9 rounded bg-[#212942] border border-[#00b4d8]/40 flex items-center justify-center font-grotesk font-semibold text-xs text-[#00b4d8] shadow-inner">
+          AR
+        </div>
+        <div class="hidden md:block text-left">
+          <div class="text-xs font-medium font-grotesk leading-tight text-white flex items-center gap-1.5">
+            Administrador Red
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          </div>
+          <div class="text-[10px] font-mono text-[#9aa5c4]">INFRA-CORP-01</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEXT & TELEMETRY SUB-BAR (40px) -->
+  <div class="h-[40px] min-h-[40px] bg-[#0d1633] border-b border-white/10 px-4 flex items-center justify-between text-xs font-mono select-none z-20">
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <span class="text-[#9aa5c4] flex items-center gap-1">
+        <i class="fa-solid fa-sitemap text-[10px]"></i>
+        <span>Control de Accesos</span>
+      </span>
+      <span class="text-[#627094]">/</span>
+      <span class="text-[#9aa5c4]">Comunicaciones de Obra</span>
+      <span class="text-[#627094]">/</span>
+      <span class="text-[#00b4d8] font-medium flex items-center gap-1 bg-[#00b4d8]/10 px-2 py-0.5 rounded">
+        <i class="fa-solid fa-inbox text-[10px]"></i>
+        Centro de Mensajes
+      </span>
+    </div>
+
+    <div class="flex items-center gap-5 text-[11px] text-[#9aa5c4]">
+      <div class="hidden sm:flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="text-white font-medium">EN VIVO</span>
+      </div>
+      <div class="hidden md:flex items-center gap-1.5">
+        <i class="fa-regular fa-clock text-[10px] text-[#00b4d8]"></i>
+        <span>Latencia: <strong class="text-white">18ms</strong></span>
+      </div>
+      <div class="hidden lg:flex items-center gap-1.5">
+        <i class="fa-solid fa-server text-[10px] text-[#9aa5c4]"></i>
+        <span>Nodo: <strong class="text-white">MX-CENTRAL-02</strong></span>
+      </div>
+      <div class="text-[10px] text-[#9aa5c4] px-1.5 py-0.5 bg-[#050d25] rounded border border-white/5">
+        SEG: TLS 1.3 / E2EE
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 flex flex-col overflow-hidden p-4 lg:p-6 gap-4 bg-[#0a122a]">
+
+    <!-- HERO SECTION & METRICS STRIP -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1 border-b border-white/5">
+      <!-- Title & Eyebrow -->
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[10px] font-mono tracking-widest text-[#00b4d8] font-semibold uppercase bg-[#00b4d8]/10 px-2 py-0.5 rounded border border-[#00b4d8]/20 flex items-center gap-1.5">
+            <i class="fa-solid fa-satellite-dish text-[9px]"></i> CENTRO DE MENSAJES
+          </span>
+          <span class="text-[10px] font-mono text-[#9aa5c4]">ID: MSG-HUB-2025</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-[#171e37] border border-white/10 flex items-center justify-center text-[#ff5a1f] shadow-inner">
+            <i class="fa-solid fa-inbox text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl lg:text-2xl font-bold font-grotesk tracking-tight text-white flex items-center gap-2">
+              Bandeja de entrada
+              <span class="text-xs font-mono font-normal text-[#9aa5c4] hidden sm:inline">(Canal Unificado)</span>
+            </h1>
+            <p class="text-xs text-[#9aa5c4] font-manrope">Contacto y soporte de tus clientes, contratistas y direcciones de obra civil</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chips de Resumen Operativo -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff5a1f]/15 border border-[#ff5a1f]/30 text-xs font-mono text-[#ffb59e]">
+          <span class="w-2 h-2 rounded-full bg-[#ff5a1f] animate-ping"></span>
+          <span class="font-semibold text-white">8</span> sin leer
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#131a33] border border-white/10 text-xs font-mono text-[#dbe1ff]">
+          <i class="fa-solid fa-envelopes-bulk text-[10px] text-[#00b4d8]"></i>
+          <span class="font-semibold text-white">24</span> mensajes totales
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#131a33] border border-white/10 text-xs font-mono text-[#dbe1ff]">
+          <i class="fa-regular fa-calendar-check text-[10px] text-emerald-400"></i>
+          <span class="font-semibold text-white">6</span> hoy
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 KPIS METRIC CARDS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <!-- KPI 1: Sin leer -->
+      <div class="custom-glass-card p-3 rounded-lg border-l-4 border-l-[#ff5a1f] flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-wider text-[#9aa5c4] flex items-center gap-1">
+            <i class="fa-regular fa-envelope-open text-[#ff5a1f]"></i> Sin leer
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-0.5">8</div>
+          <div class="text-[10px] font-mono text-[#ffb59e] mt-0.5 flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> 3 prioridad alta
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded bg-[#ff5a1f]/10 border border-[#ff5a1f]/20 flex items-center justify-center text-[#ff5a1f]">
+          <i class="fa-solid fa-bell-concierge"></i>
+        </div>
+      </div>
+
+      <!-- KPI 2: Contacto -->
+      <div class="custom-glass-card p-3 rounded-lg border-l-4 border-l-[#00b4d8] flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-wider text-[#9aa5c4] flex items-center gap-1">
+            <i class="fa-regular fa-envelope text-[#00b4d8]"></i> Contacto
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-0.5">15</div>
+          <div class="text-[10px] font-mono text-[#9aa5c4] mt-0.5">
+            Licitaciones y convenios
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded bg-[#00b4d8]/10 border border-[#00b4d8]/20 flex items-center justify-center text-[#00b4d8]">
+          <i class="fa-regular fa-address-book"></i>
+        </div>
+      </div>
+
+      <!-- KPI 3: Soporte -->
+      <div class="custom-glass-card p-3 rounded-lg border-l-4 border-l-purple-500 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-wider text-[#9aa5c4] flex items-center gap-1">
+            <i class="fa-solid fa-headset text-purple-400"></i> Soporte
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-0.5">9</div>
+          <div class="text-[10px] font-mono text-purple-300 mt-0.5">
+            Tickets técnicos BIM / IoT
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+      </div>
+
+      <!-- KPI 4: Últimos 7 días -->
+      <div class="custom-glass-card p-3 rounded-lg border-l-4 border-l-emerald-500 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-wider text-[#9aa5c4] flex items-center gap-1">
+            <i class="fa-regular fa-chart-bar text-emerald-400"></i> Últimos 7 días
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-0.5">21</div>
+          <div class="text-[10px] font-mono text-emerald-400 mt-0.5 flex items-center gap-1">
+            <i class="fa-solid fa-arrow-trend-up text-[9px]"></i> +14% vs sem. anterior
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <i class="fa-regular fa-calendar-days"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR (Búsqueda en vivo, Tabs y Casilla Solo sin leer) -->
+    <div class="custom-glass p-2.5 rounded-lg flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <!-- Tabs de Filtrado -->
+      <div class="flex items-center gap-1 bg-[#0a122a] p-1 rounded border border-white/5">
+        <button id="tab-all" class="px-3.5 py-1.5 rounded text-xs font-grotesk font-semibold bg-[#ff5a1f] text-white shadow-sm flex items-center gap-1.5 transition-all min-h-[36px]">
+          <i class="fa-solid fa-layer-group text-[11px]"></i> Todos
+          <span class="text-[10px] font-mono bg-black/30 px-1.5 py-0.2 rounded">24</span>
+        </button>
+        <button id="tab-contacto" class="px-3.5 py-1.5 rounded text-xs font-grotesk font-medium text-[#9aa5c4] hover:text-white hover:bg-[#171e37] flex items-center gap-1.5 transition-all min-h-[36px]">
+          <i class="fa-regular fa-envelope text-[11px] text-[#00b4d8]"></i> Contacto
+          <span class="text-[10px] font-mono bg-[#171e37] px-1.5 py-0.2 rounded text-[#00b4d8]">15</span>
+        </button>
+        <button id="tab-soporte" class="px-3.5 py-1.5 rounded text-xs font-grotesk font-medium text-[#9aa5c4] hover:text-white hover:bg-[#171e37] flex items-center gap-1.5 transition-all min-h-[36px]">
+          <i class="fa-solid fa-headset text-[11px] text-purple-400"></i> Soporte
+          <span class="text-[10px] font-mono bg-[#171e37] px-1.5 py-0.2 rounded text-purple-400">9</span>
+        </button>
+      </div>
+
+      <!-- Search & Checkbox -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Live Search -->
+        <div class="relative flex-1 sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#9aa5c4]"></i>
+          <input 
+            type="text" 
+            placeholder="Filtrar por remitente, obra o asunto..." 
+            class="w-full h-9 pl-8 pr-3 text-xs bg-[#0a122a] border border-white/10 rounded focus:outline-none focus:border-[#00b4d8] text-[#dbe1ff] placeholder-[#9aa5c4]/60 font-manrope transition-all"
+          >
+        </div>
+
+        <!-- Solo sin leer checkbox -->
+        <label class="flex items-center gap-2 cursor-pointer bg-[#0a122a] px-3 py-1.5 rounded border border-white/10 hover:border-white/20 select-none min-h-[36px]">
+          <input type="checkbox" checked class="w-4 h-4 rounded bg-[#131a33] border-white/20 text-[#ff5a1f] focus:ring-0 focus:ring-offset-0 accent-[#ff5a1f] cursor-pointer">
+          <span class="text-xs font-grotesk font-medium text-[#dbe1ff] flex items-center gap-1.5">
+            Solo sin leer
+            <span class="w-2 h-2 rounded-full bg-[#ff5a1f]"></span>
+          </span>
+        </label>
+
+        <!-- Botón Exportar / Refrescar -->
+        <button class="w-9 h-9 rounded bg-[#131a33] hover:bg-[#171e37] border border-white/10 text-[#9aa5c4] hover:text-white flex items-center justify-center transition-colors min-w-[36px]" title="Sincronizar bandeja">
+          <i class="fa-solid fa-arrows-rotate text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN INBOX SPLIT VIEW (Lista Alta Densidad + Panel de Lectura Ancho) -->
+    <div class="flex-1 flex flex-col lg:flex-row gap-4 overflow-hidden min-h-0">
+
+      <!-- LEFT: LISTA TIPO INBOX DE ALTA DENSIDAD -->
+      <section class="lg:w-[48%] xl:w-[45%] flex flex-col bg-[#131a33]/90 rounded-lg border border-white/10 overflow-hidden shadow-xl">
+        <!-- Inbox List Header -->
+        <div class="px-3.5 py-2.5 bg-[#0e1730] border-b border-white/10 flex items-center justify-between text-xs font-mono text-[#9aa5c4]">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-white font-grotesk tracking-wide uppercase text-[11px]">Mensajes Entrantes</span>
+            <span class="px-1.5 py-0.2 rounded bg-[#171e37] text-[10px] text-[#00b4d8]">8 Nuevos</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px]">
+            <span>Ordenar: Recientes</span>
+            <i class="fa-solid fa-arrow-down-short-wide text-[10px]"></i>
+          </div>
+        </div>
+
+        <!-- Scrollable Messages Container -->
+        <div class="flex-1 overflow-y-auto divide-y divide-white/5" id="inbox-list">
+
+          <!-- ROW 1 (ACTIVE / SELECTED) -->
+          <div class="p-3 bg-[#171e37] border-l-4 border-l-[#ff5a1f] hover:bg-[#1c2544] transition-colors cursor-pointer group relative">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <!-- Type Icon Badge (Headset - Soporte) -->
+                <span class="w-6 h-6 rounded flex items-center justify-center bg-purple-500/15 text-purple-400 border border-purple-500/30 text-xs" title="Ticket de Soporte">
+                  <i class="fa-solid fa-headset text-[10px]"></i>
+                </span>
+                <!-- Avatar Iniciales -->
+                <div class="w-6 h-6 rounded bg-[#212942] border border-[#00b4d8]/40 flex items-center justify-center font-grotesk text-[10px] font-bold text-[#00b4d8]">
+                  CR
+                </div>
+                <!-- Remitente & Empresa -->
+                <div class="leading-tight">
+                  <span class="text-xs font-semibold text-white font-grotesk group-hover:text-[#ffb59e] transition-colors">Ing. Carlos Roldán</span>
+                  <span class="text-[10px] font-mono text-[#9aa5c4] ml-1.5">Constructora del Bajío</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#00b4d8] font-medium">10:42 AM</span>
+                <!-- Punto no leído -->
+                <span class="w-2 h-2 rounded-full bg-[#ff5a1f]" title="No leído"></span>
+              </div>
+            </div>
+
+            <!-- Asunto y Preview -->
+            <div class="pl-8">
+              <div class="text-xs font-medium text-white mb-0.5 flex items-center gap-2">
+                <span>Discrepancia en topografía de zapatas Pila 14-B</span>
+                <span class="text-[9px] font-mono px-1 rounded bg-[#ff5a1f]/20 text-[#ffb59e] border border-[#ff5a1f]/40 uppercase">Urgente</span>
+              </div>
+              <p class="text-[11px] text-[#9aa5c4] line-clamp-1 font-manrope">
+                Los sensores piezométricos y las lecturas de estación total muestran un desfase de 14mm respecto al modelo BIM IFC...
+              </p>
+            </div>
+
+            <!-- Footer Fila: Acciones Rápidas (Abrir / Responder / Eliminar) -->
+            <div class="mt-2 pl-8 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-[10px] text-[#627094] flex items-center gap-1">
+                <i class="fa-solid fa-paperclip text-[9px]"></i> 2 adjuntos (.dwg, .pdf)
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button class="px-2 py-1 rounded bg-[#ff5a1f] hover:bg-[#ff733f] text-white text-[10px] font-grotesk font-semibold transition-colors flex items-center gap-1 min-h-[30px]" title="Abrir mensaje">
+                  <i class="fa-solid fa-envelope-open text-[9px]"></i> Abrir
+                </button>
+                <button class="px-2 py-1 rounded bg-[#212942] hover:bg-[#313852] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]" title="Responder de inmediato">
+                  <i class="fa-solid fa-reply text-[9px] text-[#00b4d8]"></i> Responder
+                </button>
+                <button class="w-7 h-7 rounded hover:bg-rose-500/20 text-[#9aa5c4] hover:text-rose-400 flex items-center justify-center transition-colors min-h-[30px]" title="Eliminar mensaje">
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 2 (Contacto - Sobre) -->
+          <div class="p-3 bg-[#131a33] hover:bg-[#171e37] transition-colors cursor-pointer group relative">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <!-- Type Icon Badge (Envelope - Contacto) -->
+                <span class="w-6 h-6 rounded flex items-center justify-center bg-[#00b4d8]/15 text-[#00b4d8] border border-[#00b4d8]/30 text-xs" title="Mensaje de Contacto">
+                  <i class="fa-regular fa-envelope text-[10px]"></i>
+                </span>
+                <!-- Avatar -->
+                <div class="w-6 h-6 rounded bg-[#212942] border border-white/20 flex items-center justify-center font-grotesk text-[10px] font-bold text-white">
+                  LM
+                </div>
+                <!-- Remitente & Empresa -->
+                <div class="leading-tight">
+                  <span class="text-xs font-semibold text-white font-grotesk group-hover:text-[#00b4d8] transition-colors">Laura Méndez</span>
+                  <span class="text-[10px] font-mono text-[#9aa5c4] ml-1.5">Directora de Operaciones</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#9aa5c4]">09:15 AM</span>
+                <span class="w-2 h-2 rounded-full bg-[#ff5a1f]" title="No leído"></span>
+              </div>
+            </div>
+
+            <!-- Asunto y Preview -->
+            <div class="pl-8">
+              <div class="text-xs font-medium text-white mb-0.5">
+                Solicitud de ampliación de licencias para equipo geotécnico
+              </div>
+              <p class="text-[11px] text-[#9aa5c4] line-clamp-1 font-manrope">
+                Requerimos 4 asientos adicionales de supervisores de campo para la fase de colado continuo en el estribo sur...
+              </p>
+            </div>
+
+            <!-- Footer Fila -->
+            <div class="mt-2 pl-8 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-[10px] text-[#00b4d8] bg-[#00b4d8]/10 px-1.5 py-0.5 rounded">
+                Plan Constructora
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button class="px-2 py-1 rounded bg-[#171e37] hover:bg-[#212942] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-envelope-open text-[9px]"></i> Abrir
+                </button>
+                <button class="px-2 py-1 rounded bg-[#212942] hover:bg-[#313852] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-reply text-[9px] text-[#00b4d8]"></i> Responder
+                </button>
+                <button class="w-7 h-7 rounded hover:bg-rose-500/20 text-[#9aa5c4] hover:text-rose-400 flex items-center justify-center transition-colors min-h-[30px]">
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 3 (Soporte - Auricular) -->
+          <div class="p-3 bg-[#131a33] hover:bg-[#171e37] transition-colors cursor-pointer group relative">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded flex items-center justify-center bg-purple-500/15 text-purple-400 border border-purple-500/30 text-xs">
+                  <i class="fa-solid fa-headset text-[10px]"></i>
+                </span>
+                <div class="w-6 h-6 rounded bg-[#212942] border border-white/20 flex items-center justify-center font-grotesk text-[10px] font-bold text-purple-300">
+                  MT
+                </div>
+                <div class="leading-tight">
+                  <span class="text-xs font-semibold text-white font-grotesk group-hover:text-purple-300 transition-colors">Arq. Mariana Torres</span>
+                  <span class="text-[10px] font-mono text-[#9aa5c4] ml-1.5">ICA Infraestructura</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#9aa5c4]">Ayer, 18:20</span>
+                <span class="w-2 h-2 rounded-full bg-[#ff5a1f]" title="No leído"></span>
+              </div>
+            </div>
+
+            <div class="pl-8">
+              <div class="text-xs font-medium text-white mb-0.5">
+                Error en sincronización de nubes de puntos LiDAR v4
+              </div>
+              <p class="text-[11px] text-[#9aa5c4] line-clamp-1 font-manrope">
+                El archivo LAS del vuelo de dron del jueves no termina de procesar la ortofoto georreferenciada en la bóveda BIM...
+              </p>
+            </div>
+
+            <div class="mt-2 pl-8 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-[10px] text-[#627094] flex items-center gap-1">
+                <i class="fa-solid fa-cube text-[9px]"></i> 1 modelo 3D (3.4 GB)
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button class="px-2 py-1 rounded bg-[#171e37] hover:bg-[#212942] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-envelope-open text-[9px]"></i> Abrir
+                </button>
+                <button class="px-2 py-1 rounded bg-[#212942] hover:bg-[#313852] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-reply text-[9px] text-[#00b4d8]"></i> Responder
+                </button>
+                <button class="w-7 h-7 rounded hover:bg-rose-500/20 text-[#9aa5c4] hover:text-rose-400 flex items-center justify-center transition-colors min-h-[30px]">
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 4 (Contacto - Sobre) -->
+          <div class="p-3 bg-[#131a33] hover:bg-[#171e37] transition-colors cursor-pointer group relative">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded flex items-center justify-center bg-[#00b4d8]/15 text-[#00b4d8] border border-[#00b4d8]/30 text-xs">
+                  <i class="fa-regular fa-envelope text-[10px]"></i>
+                </span>
+                <div class="w-6 h-6 rounded bg-[#212942] border border-white/20 flex items-center justify-center font-grotesk text-[10px] font-bold text-amber-300">
+                  SV
+                </div>
+                <div class="leading-tight">
+                  <span class="text-xs font-semibold text-white font-grotesk group-hover:text-amber-300 transition-colors">Ing. Sofía Villalpando</span>
+                  <span class="text-[10px] font-mono text-[#9aa5c4] ml-1.5">Grupo Carso Infra</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#9aa5c4]">Ayer, 16:45</span>
+                <span class="w-2 h-2 rounded-full bg-[#ff5a1f]" title="No leído"></span>
+              </div>
+            </div>
+
+            <div class="pl-8">
+              <div class="text-xs font-medium text-white mb-0.5">
+                Aprobación de estimación #12 y desglose de volumetría de acero
+              </div>
+              <p class="text-[11px] text-[#9aa5c4] line-clamp-1 font-manrope">
+                Adjuntamos las firmas electrónicas validadas con CFDI para la liberación del pago correspondiente al hito H-08...
+              </p>
+            </div>
+
+            <div class="mt-2 pl-8 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                Finanzas & Facturación
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button class="px-2 py-1 rounded bg-[#171e37] hover:bg-[#212942] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-envelope-open text-[9px]"></i> Abrir
+                </button>
+                <button class="px-2 py-1 rounded bg-[#212942] hover:bg-[#313852] text-[#dbe1ff] text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-reply text-[9px] text-[#00b4d8]"></i> Responder
+                </button>
+                <button class="w-7 h-7 rounded hover:bg-rose-500/20 text-[#9aa5c4] hover:text-rose-400 flex items-center justify-center transition-colors min-h-[30px]">
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 5 (Contacto - Leído / Opaco) -->
+          <div class="p-3 bg-[#0d152d]/60 hover:bg-[#131a33] transition-colors cursor-pointer group relative opacity-75 hover:opacity-100">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded flex items-center justify-center bg-white/5 text-[#9aa5c4] border border-white/10 text-xs">
+                  <i class="fa-regular fa-envelope text-[10px]"></i>
+                </span>
+                <div class="w-6 h-6 rounded bg-[#171e37] border border-white/10 flex items-center justify-center font-grotesk text-[10px] font-bold text-[#9aa5c4]">
+                  CM
+                </div>
+                <div class="leading-tight">
+                  <span class="text-xs font-semibold text-[#dbe1ff] font-grotesk">Lic. Carlos Mendoza B.</span>
+                  <span class="text-[10px] font-mono text-[#627094] ml-1.5">SEDATU Supervisión</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#627094]">24 Mar</span>
+                <!-- Leído (sin punto) -->
+              </div>
+            </div>
+
+            <div class="pl-8">
+              <div class="text-xs font-medium text-[#dbe1ff] mb-0.5">
+                Minuta de reunión de seguridad estructural e impacto ambiental
+              </div>
+              <p class="text-[11px] text-[#627094] line-clamp-1 font-manrope">
+                Se confirman los acuerdos de mitigación de polvo y monitoreo acústico en los kilómetros 40 al 44...
+              </p>
+            </div>
+
+            <div class="mt-2 pl-8 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-[10px] text-[#627094]">Auditoría Gubernamental</span>
+              <div class="flex items-center gap-1.5">
+                <button class="px-2 py-1 rounded bg-[#171e37] hover:bg-[#212942] text-[#9aa5c4] hover:text-white text-[10px] font-grotesk font-medium transition-colors flex items-center gap-1 min-h-[30px]">
+                  <i class="fa-solid fa-envelope-open text-[9px]"></i> Abrir
+                </button>
+                <button class="w-7 h-7 rounded hover:bg-rose-500/20 text-[#627094] hover:text-rose-400 flex items-center justify-center transition-colors min-h-[30px]">
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pagination / List Counter -->
+        <div class="p-2.5 bg-[#0e1730] border-t border-white/10 flex items-center justify-between text-xs font-mono text-[#9aa5c4]">
+          <span>Mostrando 1-5 de 24 registros</span>
+          <div class="flex items-center gap-1">
+            <button class="w-7 h-7 rounded bg-[#171e37] hover:bg-[#212942] text-white flex items-center justify-center disabled:opacity-30 min-h-[28px]" disabled>
+              <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            </button>
+            <span class="px-2 py-0.5 rounded bg-[#ff5a1f] text-white font-bold text-[11px]">1</span>
+            <span class="px-2 py-0.5 text-[#9aa5c4] text-[11px]">2</span>
+            <span class="px-2 py-0.5 text-[#9aa5c4] text-[11px]">3</span>
+            <button class="w-7 h-7 rounded bg-[#171e37] hover:bg-[#212942] text-white flex items-center justify-center min-h-[28px]">
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: PANEL DE LECTURA ANCHO (DETALLE DEL MENSAJE SELECCIONADO) -->
+      <section class="flex-1 flex flex-col bg-[#131a33]/95 rounded-lg border border-white/10 overflow-hidden shadow-2xl relative">
+        
+        <!-- CABECERA DEL PANEL (Tipo, Asunto, Fecha, Acciones Superiores) -->
+        <div class="p-4 bg-[#171e37] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                <i class="fa-solid fa-headset text-[9px]"></i> SOPORTE TÉCNICO ESTRUCTURAL
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#ff5a1f]/20 text-[#ffb59e] border border-[#ff5a1f]/40 flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation text-[9px]"></i> PRIORIDAD CRÍTICA
+              </span>
+              <span class="text-[11px] font-mono text-[#00b4d8] bg-[#00b4d8]/10 px-2 py-0.5 rounded border border-[#00b4d8]/20">
+                Ticket #TK-9042
+              </span>
+            </div>
+            <h2 class="text-base lg:text-lg font-bold font-grotesk text-white leading-tight">
+              Discrepancia en topografía de zapatas Pila 14-B
+            </h2>
+          </div>
+
+          <div class="flex items-center gap-2 self-end sm:self-center">
+            <!-- Botón Primario Responder (44px target) -->
+            <button class="px-4 py-2 rounded bg-[#ff5a1f] hover:bg-[#ff733f] text-white font-grotesk font-bold text-xs shadow-lg shadow-[#ff5a1f]/20 flex items-center gap-2 transition-all min-h-[44px]">
+              <i class="fa-solid fa-reply"></i>
+              Responder
+            </button>
+            <button class="w-10 h-10 rounded bg-[#212942] hover:bg-[#313852] border border-white/10 text-[#dbe1ff] flex items-center justify-center transition-colors min-h-[44px]" title="Marcar resuelto">
+              <i class="fa-solid fa-check text-emerald-400"></i>
+            </button>
+            <button class="w-10 h-10 rounded bg-[#212942] hover:bg-[#313852] border border-white/10 text-[#dbe1ff] flex items-center justify-center transition-colors min-h-[44px]" title="Reenviar ticket">
+              <i class="fa-solid fa-share text-[#00b4d8]"></i>
+            </button>
+            <button class="w-10 h-10 rounded hover:bg-rose-500/20 text-[#9aa5c4] hover:text-rose-400 border border-white/10 flex items-center justify-center transition-colors min-h-[44px]" title="Eliminar">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- REJILLA DE METADATOS TÉCNICOS (Estilo Instrumentación Vanguard CivilTech) -->
+        <div class="px-4 py-3 bg-[#0c142b] border-b border-white/10 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
+          <div class="flex flex-col">
+            <span class="text-[10px] text-[#9aa5c4] uppercase tracking-wider">Remitente</span>
+            <span class="font-medium text-white flex items-center gap-1.5 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Carlos Roldán (Residente)
+            </span>
+            <span class="text-[10px] text-[#00b4d8]">c.roldan@constructora-bajio.mx</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-[10px] text-[#9aa5c4] uppercase tracking-wider">Organización / Obra</span>
+            <span class="font-medium text-white mt-0.5">Constructora del Bajío S.A.</span>
+            <span class="text-[10px] text-[#9aa5c4]">Viaducto Oriente • Tramo 4</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-[10px] text-[#9aa5c4] uppercase tracking-wider">Coordenadas / PK</span>
+            <span class="font-medium text-[#00b4d8] mt-0.5">20°35'12.4"N 100°24'08.2"W</span>
+            <span class="text-[10px] text-[#9aa5c4]">Sub-nodo estructural SN-14</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-[10px] text-[#9aa5c4] uppercase tracking-wider">Fecha & Recepción</span>
+            <span class="font-medium text-white mt-0.5">Hoy, 27 Mar 2025</span>
+            <span class="text-[10px] text-[#9aa5c4]">10:42:18 CST (Hace 48m)</span>
+          </div>
+        </div>
+
+        <!-- CUERPO PRINCIPAL DEL MENSAJE (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+
+          <!-- Contenido del Mensaje -->
+          <div class="custom-glass p-4 rounded-lg border border-white/10 text-xs text-[#dbe1ff] leading-relaxed space-y-3 font-manrope">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10 text-[11px] font-mono text-[#9aa5c4]">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-message text-[#00b4d8]"></i>
+                <strong class="text-white">Mensaje original del contratista</strong>
+              </span>
+              <span class="bg-[#0a122a] px-2 py-0.5 rounded border border-white/10 text-[#00b4d8]">Hash SHA-256 Verificado</span>
+            </div>
+
+            <p>
+              Estimado equipo de soporte técnico y supervisión de ProjectWeb:
+            </p>
+            <p>
+              Durante el levantamiento topográfico de confirmación para el descabezado de pilotes y armado de la zapata <strong>Pila 14-B (Eje 4+240)</strong>, detectamos una desviación diferencial acumulada de <strong>14.2 mm</strong> en el vector norte respecto a los límites de tolerancia especificados en el modelo federado BIM IFC rev.4.
+            </p>
+            
+            <!-- Callout de Alerta Técnica -->
+            <div class="p-3 rounded bg-[#ff5a1f]/10 border-l-4 border-l-[#ff5a1f] text-[11px] font-mono text-white flex items-start gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-[#ff5a1f] mt-0.5"></i>
+              <div>
+                <strong class="text-[#ffb59e] uppercase">Alerta de Seguridad Estructural:</strong>
+                <p class="text-[#dbe1ff] mt-0.5 font-manrope">
+                  El colado de la losa cabezal está programado para mañana viernes a las 06:00 hrs. Requerimos la recalibración de coordenadas en el gemelo digital o la autorización de la Dirección de Obra para compensar el desplome en los pedestales de apoyo.
+                </p>
+              </div>
+            </div>
+
+            <p>
+              Hemos adjuntado los archivos brutos de la estación total Leica TS16 y el corte estructural en formato DWG para su cotejo con los sensores piezométricos instalados en el lecho rocoso. Quedamos a la espera de su resolución inmediata.
+            </p>
+            <p class="font-mono text-[11px] text-[#9aa5c4]">
+              Atentamente,<br>
+              <strong class="text-white font-grotesk">Ing. Carlos Roldán</strong> — Residente de Tramo Norte<br>
+              Cédula Prof. Civil: 8941209-GT
+            </p>
+          </div>
+
+          <!-- SECCIÓN DE ARCHIVOS ADJUNTOS -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-mono font-semibold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-paperclip text-[#00b4d8]"></i>
+                Documentos y Planos Adjuntos (2 Archivos • 18.6 MB)
+              </span>
+              <button class="text-[11px] font-mono text-[#00b4d8] hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Descargar lote (.zip)
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Adjunto 1: DWG CAD -->
+              <div class="p-3 rounded bg-[#0a122a] border border-white/10 hover:border-[#00b4d8]/50 flex items-center justify-between group transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded bg-[#ff5a1f]/10 border border-[#ff5a1f]/30 flex items-center justify-center text-[#ff5a1f] font-mono font-bold text-xs">
+                    DWG
+                  </div>
+                  <div>
+                    <div class="text-xs font-medium text-white group-hover:text-[#00b4d8] transition-colors">
+                      Pila14B_Levantamiento_Verif.dwg
+                    </div>
+                    <div class="text-[10px] font-mono text-[#9aa5c4]">14.2 MB • AutoCAD Civil 3D 2024</div>
+                  </div>
+                </div>
+                <button class="w-8 h-8 rounded bg-[#171e37] group-hover:bg-[#00b4d8] text-[#9aa5c4] group-hover:text-black flex items-center justify-center transition-colors min-h-[32px]" title="Descargar plano">
+                  <i class="fa-solid fa-download text-xs"></i>
+                </button>
+              </div>
+
+              <!-- Adjunto 2: Dictamen PDF -->
+              <div class="p-3 rounded bg-[#0a122a] border border-white/10 hover:border-[#00b4d8]/50 flex items-center justify-between group transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-mono font-bold text-xs">
+                    PDF
+                  </div>
+                  <div>
+                    <div class="text-xs font-medium text-white group-hover:text-[#00b4d8] transition-colors">
+                      Informe_Topografico_Desviacion.pdf
+                    </div>
+                    <div class="text-[10px] font-mono text-[#9aa5c4]">4.4 MB • Firma Electrónica FIEL</div>
+                  </div>
+                </div>
+                <button class="w-8 h-8 rounded bg-[#171e37] group-hover:bg-[#00b4d8] text-[#9aa5c4] group-hover:text-black flex items-center justify-center transition-colors min-h-[32px]" title="Ver informe">
+                  <i class="fa-solid fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTORIAL DE RESPUESTAS CON FOTOS / EVIDENCIAS DE CAMPO -->
+          <div>
+            <div class="flex items-center justify-between mb-3 pb-1 border-b border-white/10">
+              <span class="text-xs font-mono font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-timeline text-[#ff5a1f]"></i>
+                Historial de Respuestas y Trazabilidad (2 Eventos)
+              </span>
+              <span class="text-[10px] font-mono text-[#9aa5c4]">Auditoría ISO-19650</span>
+            </div>
+
+            <div class="space-y-4">
+
+              <!-- Entrada 1: Supervisión Central -->
+              <div class="relative pl-6 border-l-2 border-[#00b4d8] pb-1">
+                <div class="absolute -left-[7px] top-0 w-3 h-3 rounded-full bg-[#00b4d8] ring-4 ring-[#131a33]"></div>
+                
+                <div class="p-3.5 rounded-lg bg-[#0e1732] border border-white/10">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded bg-[#ff5a1f] flex items-center justify-center font-grotesk text-[10px] font-bold text-white">
+                        AR
+                      </div>
+                      <span class="text-xs font-semibold text-white font-grotesk">Administrador Red (ProjectWeb Central)</span>
+                      <span class="text-[10px] font-mono text-[#00b4d8] bg-[#00b4d8]/10 px-1.5 py-0.2 rounded">Soporte Nivel 2</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-[#9aa5c4]">Hoy, 11:05 AM (Hace 25m)</span>
+                  </div>
+
+                  <p class="text-xs text-[#dbe1ff] font-manrope leading-relaxed">
+                    Recibido Ing. Carlos. Hemos ejecutado la conciliación en el módulo de Nube de Puntos del Viaducto. La desviación de 14.2 mm está dentro de la tolerancia de ductilidad sísmica siempre que el acero longitudinal no sufra cizallamiento. El perito calculista ha subido la autorización fotográfica con sellado digital:
+                  </p>
+
+                  <!-- FOTOS / EVIDENCIAS DE CAMPO EN LA RESPUESTA -->
+                  <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <!-- Foto 1 -->
+                    <div class="relative group rounded overflow-hidden border border-white/10 bg-[#050d25]">
+                      <div class="h-24 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 relative">
+                        <!-- Simulación gráfica de inspección técnica civil -->
+                        <div class="absolute inset-0 bg-[#172242] flex items-center justify-center text-[#9aa5c4]">
+                          <i class="fa-solid fa-mountain-city text-2xl text-[#00b4d8]/40"></i>
+                        </div>
+                        <div class="relative z-10">
+                          <span class="text-[9px] font-mono text-[#ffb59e] font-semibold block">EVIDENCIA-F-01</span>
+                          <span class="text-[10px] font-manrope text-white font-medium">Inspección Zapata Pila 14-B</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Foto 2 -->
+                    <div class="relative group rounded overflow-hidden border border-white/10 bg-[#050d25]">
+                      <div class="h-24 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 relative">
+                        <div class="absolute inset-0 bg-[#172242] flex items-center justify-center text-[#9aa5c4]">
+                          <i class="fa-solid fa-draw-polygon text-2xl text-[#ff5a1f]/40"></i>
+                        </div>
+                        <div class="relative z-10">
+                          <span class="text-[9px] font-mono text-[#00b4d8] font-semibold block">EVIDENCIA-F-02</span>
+                          <span class="text-[10px] font-manrope text-white font-medium">Levantamiento Prisma Óptico</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Foto 3 -->
+                    <div class="relative group rounded overflow-hidden border border-white/10 bg-[#050d25] hidden sm:block">
+                      <div class="h-24 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 relative">
+                        <div class="absolute inset-0 bg-[#172242] flex items-center justify-center text-[#9aa5c4]">
+                          <i class="fa-solid fa-microchip text-2xl text-emerald-400/40"></i>
+                        </div>
+                        <div class="relative z-10">
+                          <span class="text-[9px] font-mono text-emerald-400 font-semibold block">TELEMETRÍA-S-09</span>
+                          <span class="text-[10px] font-manrope text-white font-medium">Piezómetro #34 Calibrado</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Entrada 2: Reclamación o confirmación en campo -->
+              <div class="relative pl-6 border-l-2 border-white/10">
+                <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-[#9aa5c4]"></div>
+                <div class="text-[11px] font-mono text-[#9aa5c4]">
+                  <span>El residente Ing. Carlos Roldán confirmó lectura del dictamen a las 11:18 AM</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- CAJA RÁPIDA DE RESPUESTA EN PANEL -->
+          <div class="p-3.5 rounded-lg bg-[#0a122a] border border-white/10 space-y-2.5">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="text-white font-grotesk font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square text-[#ff5a1f]"></i>
+                Redactar respuesta de seguimiento
+              </span>
+              <span class="text-[10px] text-[#9aa5c4]">Plantillas técnicas: <strong class="text-[#00b4d8] cursor-pointer hover:underline">Visto Bueno Estructural</strong></span>
+            </div>
+            <textarea 
+              rows="3" 
+              placeholder="Escribe una respuesta técnica, instrucciones de campo o adjunta nuevos archivos de telemetría..." 
+              class="w-full p-2.5 bg-[#131a33] border border-white/10 rounded text-xs text-[#dbe1ff] placeholder-[#9aa5c4]/60 font-manrope focus:outline-none focus:border-[#00b4d8] transition-all resize-none"
+            ></textarea>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <button class="px-2.5 py-1.5 rounded bg-[#171e37] hover:bg-[#212942] border border-white/10 text-xs text-[#9aa5c4] hover:text-white transition-colors flex items-center gap-1.5 min-h-[36px]" title="Adjuntar documento o plano">
+                  <i class="fa-solid fa-paperclip text-[10px]"></i> Adjuntar
+                </button>
+                <button class="px-2.5 py-1.5 rounded bg-[#171e37] hover:bg-[#212942] border border-white/10 text-xs text-[#9aa5c4] hover:text-white transition-colors flex items-center gap-1.5 min-h-[36px]" title="Cámara o captura fotográfica">
+                  <i class="fa-solid fa-camera text-[10px]"></i> Foto
+                </button>
+              </div>
+              <button class="px-4 py-2 rounded bg-[#ff5a1f] hover:bg-[#ff733f] text-white font-grotesk font-bold text-xs flex items-center gap-2 transition-all min-h-[44px]">
+                <i class="fa-solid fa-paper-plane text-xs"></i> Enviar respuesta
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</body>
+</html>

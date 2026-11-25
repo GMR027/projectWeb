@@ -78,37 +78,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============ TOGGLE DE TEMA ============
-  // El tema lo elige el usuario con el botón y se guarda en localStorage.
-  // Por defecto: oscuro.
-  const toggleTheme = document.getElementById('toggle-theme');
-  const themeIcon = toggleTheme?.querySelector('i');
-
-  // Si el proyecto fija el tema (Ajustes → Apariencia del proyecto) manda el proyecto
-  // y el botón de la barra superior se oculta para no tener dos controles.
+  // El tema lo elige el usuario con el botón (barra o menú de la cuenta) y se guarda en localStorage.
+  // Por defecto: oscuro. Si el proyecto fija el tema, los botones se ocultan.
+  const botonesTema = Array.from(document.querySelectorAll('[data-tema-toggle]'));
   const temaFijo = document.documentElement.getAttribute('data-tema-fijo');
 
   const savedTheme = temaFijo || localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
-  if (temaFijo && toggleTheme) toggleTheme.style.display = 'none';
+  if (temaFijo) botonesTema.forEach(b => {
+    b.style.display = 'none';
+    const fila = b.closest('.appbar-menu-tema');
+    if (fila) fila.style.display = 'none';
+  });
 
-  // Actualizar icono según tema actual
+  // Actualizar icono según tema actual (hay un botón en la barra y otro en el menú de la cuenta)
   const updateThemeIcon = () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    if (themeIcon) {
-      themeIcon.className = currentTheme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-    }
+    botonesTema.forEach(b => {
+      const icono = b.querySelector('i');
+      if (icono) icono.className = currentTheme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+    });
   };
   updateThemeIcon();
 
   // Toggle manual
-  toggleTheme?.addEventListener('click', () => {
+  botonesTema.forEach(btn => btn.addEventListener('click', () => {
     if (temaFijo) return;   // el tema lo fija el proyecto
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon();
-  });
+  }));
 
   // ============ HERRAMIENTAS RECIENTES ============
   // Las últimas 6 herramientas abiertas, sin configuración: aparece una sección «Recientes» en el menú.
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lista = [];
     try { lista = JSON.parse(localStorage.getItem(CLAVE_REC) || '[]'); } catch (e) { lista = []; }
     if (!Array.isArray(lista)) lista = [];
-    const activo = document.querySelector('.breadcrumb-item.active, .sidebar .nav-link.active');
+    const activo = document.querySelector('.nav-herramienta[aria-current="page"], .nav-global-item.activa, .sidebar .nav-link.active');
     if (activo) {
       const href = activo.getAttribute('href') || '';
       const icono = activo.querySelector('i');
@@ -818,8 +819,9 @@ document.addEventListener('click', (e) => {
 })();
 
 // ============ BOTONES FLOTANTES QUE NO TAPAN EL CONTENIDO ============
-// El menú y el divisor de ventanas se apartan al bajar por la página y vuelven
-// al subir, al llegar arriba o al acercarse al final. Así no cubren tablas largas.
+// El divisor de ventanas se aparta al bajar por la página y vuelve al subir,
+// al llegar arriba o al acercarse al final. Así no cubre tablas largas.
+// (El menú ya vive en la barra de aplicación y no flota sobre el contenido).
 (() => {
   const CLASE = 'flotantes-ocultas';
   const UMBRAL = 180;   // px de recorrido antes de apartarlos

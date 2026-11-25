@@ -48,9 +48,20 @@ class BandejaController
             }
         }
         usort($items, fn($a, $b) => strcmp($b['fecha'], $a['fecha']));
+        $contactoTotal = (int)Contacto::total();
+        $soporteTotal = (int)Soporte::total();
+        $conteos = [
+            'total' => $contactoTotal + $soporteTotal,
+            'contacto' => $contactoTotal,
+            'soporte' => $soporteTotal,
+            'sin_leer' => (int)bandeja_sin_leer(),
+            'hoy' => (int)Contacto::total('DATE(creado) = CURDATE()') + (int)Soporte::total('DATE(creado) = CURDATE()'),
+            'siete' => (int)Contacto::total('creado >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)') + (int)Soporte::total('creado >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)'),
+        ];
         $router->render('bandeja/index', [
             'titulo' => 'Bandeja de entrada', 'items' => $items, 'filtro' => $filtro,
             'sinLeer' => bandeja_sin_leer(),
+            'conteos' => $conteos,
         ]);
     }
 

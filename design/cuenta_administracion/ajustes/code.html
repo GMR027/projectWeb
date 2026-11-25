@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, initial-scale=1.0">
+  <title>Ajustes del proyecto | ProjectWeb - Vanguard CivilTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Custom CSS Tokens according to Vanguard CivilTech */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-base: #0a122a;
+      --bg-subsurface: #131a33;
+      --bg-surface-card: #171e37;
+      --bg-surface-elevated: #212942;
+      --bg-surface-overlay: rgba(28, 37, 65, 0.75);
+      --border-subtle: rgba(219, 225, 255, 0.08);
+      --border-medium: rgba(219, 225, 255, 0.16);
+      --border-accent-cyan: rgba(0, 180, 216, 0.35);
+      --border-accent-orange: rgba(255, 90, 31, 0.4);
+      --text-main: #dbe1ff;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-orange: #ff5a1f;
+      --accent-orange-hover: #ff733d;
+      --accent-cyan: #00b4d8;
+      --accent-cyan-glow: rgba(0, 180, 216, 0.2);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.5;
+      width: 1440px;
+      min-height: 1024px;
+      margin: 0 auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Standard SVG Icon Utility */
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      fill: currentColor;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 2px;
+    }
+
+    /* 1. Header Global (56px) */
+    .top-header {
+      height: 56px;
+      background: #080e22;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-orange), #c23b08);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(255, 90, 31, 0.3);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-version {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent-orange);
+      background: rgba(255, 90, 31, 0.12);
+      border: 1px solid var(--border-accent-orange);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .project-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-medium);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+      color: var(--text-main);
+      transition: border-color 0.15s;
+    }
+
+    .project-selector:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .project-selector .tag-pk {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      background: rgba(0, 180, 216, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 180, 216, 0.25);
+    }
+
+    .header-center {
+      flex: 1;
+      max-width: 420px;
+      margin: 0 24px;
+    }
+
+    .global-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .global-search input {
+      width: 100%;
+      height: 38px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0 40px 0 34px;
+      font-size: 13px;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .global-search input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 1px var(--accent-cyan);
+      background: #0d1633;
+    }
+
+    .global-search .search-icon {
+      position: absolute;
+      left: 10px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .global-search .shortcut {
+      position: absolute;
+      right: 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 2px 5px;
+      border-radius: 3px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gateway-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      background: rgba(0, 180, 216, 0.08);
+      border: 1px solid var(--border-accent-cyan);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .icon-action-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text-main);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s;
+    }
+
+    .icon-action-btn:hover {
+      background: var(--bg-subsurface);
+      border-color: var(--border-subtle);
+    }
+
+    .icon-action-btn .badge-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-orange);
+      border-radius: 50%;
+    }
+
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 10px 4px 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .user-avatar-tag {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      background: #1e293b;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-medium);
+    }
+
+    .user-info {
+      text-align: left;
+      line-height: 1.2;
+    }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      display: block;
+    }
+
+    .user-role {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* 2. Barra de Contexto (40px) */
+    .context-bar {
+      height: 40px;
+      background: #0e152d;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 12px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb a {
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.15s;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--accent-cyan);
+    }
+
+    .breadcrumb .sep {
+      color: var(--text-dim);
+      font-size: 10px;
+    }
+
+    .breadcrumb .current {
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .telemetry-strip {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .telemetry-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .telemetry-item .value-good {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* Main Container (Body + Sidebar) */
+    .app-workspace {
+      display: flex;
+      flex: 1;
+      width: 1440px;
+      position: relative;
+    }
+
+    /* 3. Riel Lateral Agrupado (260px) */
+    .sidebar-nav {
+      width: 260px;
+      background: #0c1329;
+      border-right: 1px solid var(--border-subtle);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-search-box {
+      position: relative;
+    }
+
+    .sidebar-search-box input {
+      width: 100%;
+      height: 36px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0 10px 0 32px;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+
+    .sidebar-search-box .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .nav-group-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 0 10px 6px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      min-height: 38px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .nav-item a:hover {
+      background: var(--bg-subsurface);
+      color: var(--text-main);
+    }
+
+    .nav-item.active a {
+      background: rgba(255, 90, 31, 0.12);
+      color: #fff;
+      font-weight: 600;
+      border-left: 3px solid var(--accent-orange);
+      padding-left: 9px;
+    }
+
+    .nav-item .nav-link-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-tag-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--bg-surface-elevated);
+      color: var(--text-muted);
+    }
+
+    /* 4. Main Work Area (1180px) */
+    .main-viewport {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: radial-gradient(circle at top right, rgba(0, 180, 216, 0.03), transparent 40%),
+                  radial-gradient(circle at bottom left, rgba(255, 90, 31, 0.02), transparent 40%);
+    }
+
+    /* Hero Section */
+    .project-hero {
+      background: var(--bg-surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 20px rgba(5, 13, 37, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .hero-title-area {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .hero-icon-plate {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #1f2a4d, #141b33);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-cyan);
+      box-shadow: 0 4px 12px rgba(0, 180, 216, 0.15);
+      flex-shrink: 0;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .hero-actions-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Button Variants */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent-orange);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(255, 90, 31, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-orange-hover);
+      box-shadow: 0 0 16px rgba(255, 90, 31, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(0, 180, 216, 0.1);
+      border-color: var(--border-accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 180, 216, 0.18);
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-outline {
+      background: var(--bg-subsurface);
+      border-color: var(--border-medium);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-surface-elevated);
+      border-color: var(--text-main);
+    }
+
+    .hero-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      color: var(--text-main);
+    }
+
+    .meta-chip.chip-cyan {
+      border-color: var(--border-accent-cyan);
+      background: rgba(0, 180, 216, 0.08);
+      color: var(--accent-cyan);
+    }
+
+    .meta-chip.chip-orange {
+      border-color: var(--border-accent-orange);
+      background: rgba(255, 90, 31, 0.08);
+      color: var(--accent-orange);
+    }
+
+    /* Content Layout (Forms Left 68% + Preview Right 32%) */
+    .layout-columns {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .config-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Generic Panel Card */
+    .card-panel {
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      background: var(--bg-surface-card);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Card 1: Jornada Semanal */
+    .workweek-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .day-column {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+
+    .day-column.active-day {
+      border-color: rgba(0, 180, 216, 0.3);
+      background: #0d152e;
+    }
+
+    .day-column.half-day {
+      border-color: rgba(255, 90, 31, 0.3);
+      background: #14132b;
+    }
+
+    .day-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .day-toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .day-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #232c49;
+      border-radius: 20px;
+      transition: .2s;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-main);
+      border-radius: 50%;
+      transition: .2s;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: var(--accent-cyan);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+      background-color: #050d25;
+    }
+
+    .factor-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .factor-input-group label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .factor-input-group input {
+      width: 100%;
+      height: 28px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .factor-input-group input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .workweek-summary {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .workweek-metric {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    /* Card 2: Días no laborables */
+    .holidays-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 16px;
+    }
+
+    .holidays-table-wrap {
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    .holidays-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .holidays-table th {
+      background: var(--bg-surface-card);
+      padding: 8px 12px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .holidays-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .holidays-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .holiday-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(255, 90, 31, 0.12);
+      color: var(--accent-orange);
+      border: 1px solid var(--border-accent-orange);
+    }
+
+    .btn-icon-danger {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 3px;
+    }
+
+    .btn-icon-danger:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .add-holiday-form {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .form-control {
+      height: 38px;
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      padding: 0 10px;
+      font-size: 12.5px;
+      color: var(--text-main);
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Card 3: Calendarios por cuadrilla */
+    .crews-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .crew-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .crew-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .crew-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #ffffff;
+    }
+
+    .crew-specialty {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .crew-stat {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-dim);
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border-subtle);
+    }
+
+    .crew-stat span:last-child {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Dual Grid for Card 4 & 5 (Registros + Subactividades e Idioma) */
+    .dual-cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .select-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .radio-pill-option {
+      position: relative;
+    }
+
+    .radio-pill-option input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .radio-pill-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .radio-pill-option input:checked + .radio-pill-label {
+      background: rgba(0, 180, 216, 0.12);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan-glow);
+    }
+
+    /* 5. Columna Derecha: Vista Previa de Apariencia (360px) */
+    .preview-sticky-col {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .preview-canvas-box {
+      background: var(--bg-base);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .preview-canvas-box::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(0, 180, 216, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .preview-badge-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .mockup-window {
+      background: #060b1b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .mockup-topbar {
+      height: 24px;
+      background: #0f1730;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 5px;
+    }
+
+    .mock-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #334155;
+    }
+
+    .mock-dot.active {
+      background: var(--accent-cyan);
+    }
+
+    .mockup-body {
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      min-height: 130px;
+    }
+
+    .mockup-nav-rail {
+      width: 44px;
+      background: #0c1328;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px 4px;
+    }
+
+    .mock-nav-block {
+      height: 8px;
+      border-radius: 2px;
+      background: #1e293b;
+    }
+
+    .mock-nav-block.active {
+      background: var(--accent-orange);
+    }
+
+    .mockup-content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mock-header-line {
+      height: 12px;
+      width: 60%;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+
+    .mock-kpi-row {
+      display: flex;
+      gap: 6px;
+      margin: 4px 0;
+    }
+
+    .mock-kpi-card {
+      flex: 1;
+      height: 32px;
+      background: #131b34;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    .mock-chart-line {
+      height: 38px;
+      background: linear-gradient(180deg, rgba(0, 180, 216, 0.2) 0%, transparent 100%);
+      border-top: 1.5px solid var(--accent-cyan);
+      border-radius: 2px;
+    }
+
+    /* Style Control Options */
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .control-label-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    .color-swatches-grid {
+      display: flex;
+      gap: 8px;
+    }
+
+    .color-swatch-item {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+    }
+
+    .color-swatch-item:hover {
+      transform: scale(1.05);
+    }
+
+    .color-swatch-item.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .segmented-switch {
+      display: flex;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .segment-btn {
+      flex: 1;
+      height: 34px;
+      background: transparent;
+      border: none;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .segment-btn.active {
+      background: var(--bg-surface-elevated);
+      color: #ffffff;
+      border: 1px solid var(--border-medium);
+    }
+
+    /* 6. Sticky Form Actions Footer */
+    .form-actions-footer {
+      background: var(--bg-subsurface);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+      margin-top: 10px;
+    }
+
+    .footer-audit-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-buttons-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+
+    input[type=range]:focus {
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: var(--bg-base);
+      border-radius: 3px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -5px;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. BARRA SUPERIOR DE 56 PX -->
+  <header class="top-header" role="banner">
+    <div class="header-left">
+      <a href="#inicio" class="brand-logo" aria-label="ProjectWeb Inicio">
+        <div class="logo-badge" aria-hidden="true">
+          <!-- Logo Civil Isometric Icon -->
+          <svg class="icon" viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #ffffff;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          ProjectWeb
+          <span class="brand-version">V4.2</span>
+        </div>
+      </a>
+
+      <!-- Selector de Proyecto -->
+      <button class="project-selector" type="button" aria-haspopup="listbox" aria-expanded="false" title="Cambiar proyecto en curso">
+        <!-- Icono Edificio / Obra -->
+        <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan);">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2h2v2h-2V5zm0 4h2v2h-2V9zm0 4h2v2h-2v-2zm-4-8h2v2H8V5zm0 4h2v2H8V9zm0 4h2v2H8v-2zm-4-8h2v2H4V5zm0 4h2v2H4V9zm0 4h2v2H4v-2zm14 8H4v-2h16v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2z"/>
+        </svg>
+        <span>Torre Altavista</span>
+        <span class="tag-pk">PRY-024</span>
+        <!-- Chevron abajo -->
+        <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px; color: var(--text-dim);">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Buscador Global -->
+    <div class="header-center">
+      <div class="global-search" role="search">
+        <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" placeholder="Buscar parámetros, frentes, normativas o folios..." aria-label="Búsqueda de parámetros de obra">
+        <span class="shortcut">⌘K</span>
+      </div>
+    </div>
+
+    <!-- Herramientas & Avatar -->
+    <div class="header-right">
+      <div class="gateway-status" title="Nodo operativo sincronizado">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>GATEWAY C-14 EN VIVO</span>
+      </div>
+
+      <!-- Campana Notificaciones -->
+      <button class="icon-action-btn" type="button" aria-label="Notificaciones del sistema (8 pendientes)">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+        </svg>
+        <span class="badge-dot" aria-hidden="true"></span>
+      </button>
+
+      <!-- Avatar Usuario -->
+      <div class="user-profile-badge" tabindex="0" role="button" aria-label="Perfil de usuario: Ing. Arcadio Rivas">
+        <div class="user-avatar-tag" aria-hidden="true">AR</div>
+        <div class="user-info">
+          <span class="user-name">Ing. Arcadio Rivas</span>
+          <span class="user-role">ADMIN INFRA-CORP-01</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. BARRA DE CONTEXTO DE 40 PX -->
+  <nav class="context-bar" aria-label="Ruta de navegación y telemetría de red">
+    <div class="breadcrumb">
+      <a href="#obra">
+        <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        <span>Torre Altavista</span>
+      </a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a href="#config">Configuración de Obra</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="current" aria-current="page">Ajustes del proyecto</span>
+    </div>
+
+    <div class="telemetry-strip" aria-label="Métricas de conexión">
+      <div class="telemetry-item">
+        <span>ESTADO:</span>
+        <span class="value-good">ENLACE NOMINAL</span>
+      </div>
+      <div class="telemetry-item">
+        <span>LATENCIA:</span>
+        <span style="color: var(--accent-cyan); font-weight: 600;">18 ms</span>
+      </div>
+      <div class="telemetry-item">
+        <span>NODO:</span>
+        <span style="color: var(--text-main);">MX-CENTRAL-02</span>
+      </div>
+      <div class="telemetry-item">
+        <span>CIFRADO:</span>
+        <span>TLS 1.3 · AES-256</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- WORKSPACE PRINCIPAL -->
+  <div class="app-workspace">
+
+    <!-- 3. RIEL LATERAL AGRUPADO (260 px) -->
+    <aside class="sidebar-nav" aria-label="Navegación de configuración">
+      <div class="sidebar-search-box">
+        <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" placeholder="Filtrar secciones..." aria-label="Filtrar secciones de configuración">
+      </div>
+
+      <!-- GRUPO: PROYECTO -->
+      <div class="nav-group">
+        <div class="nav-group-label">PROYECTO</div>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a href="#general" aria-current="page">
+              <span class="nav-link-left">
+                <!-- Icono Sliders / Ajustes -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+                </svg>
+                <span>General</span>
+              </span>
+              <span class="nav-tag-badge">ACTIVO</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#apariencia">
+              <span class="nav-link-left">
+                <!-- Icono Palette -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.47 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5 9c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3-4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm4 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3 4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                </svg>
+                <span>Apariencia</span>
+              </span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#novedades">
+              <span class="nav-link-left">
+                <!-- Icono Megaphone / News -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/>
+                </svg>
+                <span>Novedades</span>
+              </span>
+              <span class="nav-tag-badge" style="color: var(--accent-orange); background: rgba(255, 90, 31, 0.1);">v4.2</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#empezar">
+              <span class="nav-link-left">
+                <!-- Icono Guía / Compass -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                <span>Por dónde empezar</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- GRUPO: DATOS -->
+      <div class="nav-group">
+        <div class="nav-group-label">DATOS</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#datos">
+              <span class="nav-link-left">
+                <!-- Icono Base de datos -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 4.02 2 6.5s4.48 4.5 10 4.5 10-2.02 10-4.5S17.52 2 12 2zm0 7c-4.42 0-8-1.57-8-2.5S7.58 4 12 4s8 1.57 8 2.5S16.42 9 12 9zm8 2.5c0 .93-3.58 2.5-8 2.5s-8-1.57-8-2.5V13c0 2.48 4.48 4.5 10 4.5s10-2.02 10-4.5v-1.5zm0 5c0 .93-3.58 2.5-8 2.5s-8-1.57-8-2.5V18c0 2.48 4.48 4.5 10 4.5s10-2.02 10-4.5v-1.5z"/>
+                </svg>
+                <span>Datos</span>
+              </span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#android">
+              <span class="nav-link-left">
+                <!-- Icono Smartphone -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                </svg>
+                <span>App Android</span>
+              </span>
+              <span class="nav-tag-badge">0.2.19</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#equipo">
+              <span class="nav-link-left">
+                <!-- Icono Equipo / Casco -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+                <span>Equipo</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- GRUPO: PERSONAS -->
+      <div class="nav-group">
+        <div class="nav-group-label">PERSONAS</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#accesos">
+              <span class="nav-link-left">
+                <!-- Icono Candado / Accesos -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                </svg>
+                <span>Accesos</span>
+              </span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#cuenta">
+              <span class="nav-link-left">
+                <!-- Icono Cuenta / Empresa -->
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                <span>Cuenta</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 4. CONTENIDO PRINCIPAL: AJUSTES DEL PROYECTO -->
+    <main class="main-viewport" role="main">
+
+      <!-- HERO SECTION -->
+      <section class="project-hero" aria-labelledby="hero-title">
+        <div class="hero-top-row">
+          <div class="hero-title-area">
+            <div class="hero-icon-plate" aria-hidden="true">
+              <!-- Icono Obra Civil Engranaje / Blueprint -->
+              <svg class="icon" viewBox="0 0 24 24" style="width: 26px; height: 26px;">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+              </svg>
+            </div>
+            <div class="hero-text">
+              <span class="hero-eyebrow">
+                <span class="live-dot" style="width: 5px; height: 5px; background: var(--accent-orange); box-shadow: 0 0 5px var(--accent-orange);"></span>
+                CONFIGURACIÓN DE OBRA
+              </span>
+              <h1 class="hero-title" id="hero-title">Ajustes del proyecto</h1>
+              <div class="hero-subtitle">Torre Altavista · PRY-024 · Constructora del Bajío S.A. de C.V.</div>
+            </div>
+          </div>
+
+          <!-- Acciones Hero -->
+          <div class="hero-actions-toolbar">
+            <button type="button" class="btn btn-outline" title="Auditoría de consistencia de cronograma">
+              <svg class="icon" viewBox="0 0 24 24" style="color: var(--success);">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <span>Salud del proyecto</span>
+            </button>
+            <button type="button" class="btn btn-outline" title="Consultar cronograma base de hitos">
+              <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan);">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/>
+              </svg>
+              <span>Ver calendario</span>
+            </button>
+            <button type="button" class="btn btn-outline" title="Descargar paquete de configuración en JSON/CSV">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+              </svg>
+              <span>Exportar</span>
+            </button>
+            <button type="button" class="btn btn-primary" title="Abrir Gantt y curva de avances">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              </svg>
+              <span>Programa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chips de Telemetría Rápida -->
+        <div class="hero-chips-row" role="region" aria-label="Resumen operativo del proyecto">
+          <div class="meta-chip chip-cyan">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 13px; height: 13px;">
+              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+            <span>Jornada: <strong>5.5 días/sem</strong></span>
+          </div>
+          <div class="meta-chip chip-orange">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 13px; height: 13px;">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm0 16H5V8h14v11z"/>
+            </svg>
+            <span>Días no laborables: <strong>12 festivos</strong></span>
+          </div>
+          <div class="meta-chip">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 13px; height: 13px;">
+              <path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/>
+            </svg>
+            <span>Almacenamiento: <strong>42% (8.4 / 20 GB)</strong></span>
+          </div>
+          <div class="meta-chip">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 13px; height: 13px;">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            <span>Sesiones en línea: <strong>3 activas</strong></span>
+          </div>
+          <div class="meta-chip">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 13px; height: 13px; color: var(--success);">
+              <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+            </svg>
+            <span>App Android: <strong>v0.2.19 (Build 108)</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAYOUT FORMULARIOS + PREVIEW -->
+      <div class="layout-columns">
+
+        <!-- COLUMNA IZQUIERDA: CONFIGURACIÓN GENERAL -->
+        <div class="config-cards-container">
+
+          <!-- TARJETA 1: JORNADA SEMANAL -->
+          <article class="card-panel" aria-labelledby="card-jornada-title">
+            <header class="card-header">
+              <div class="card-title-wrap">
+                <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan); width: 18px; height: 18px;">
+                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                </svg>
+                <div>
+                  <h2 class="card-title" id="card-jornada-title">Jornada semanal de obra</h2>
+                  <p class="card-subtitle">Define los factores de disponibilidad (0 a 1) para el cálculo de rendimientos y ruta crítica</p>
+                </div>
+              </div>
+              <span class="meta-chip chip-cyan" style="font-size: 10px;">PROMEDIO: 44.0 HRS/SEM</span>
+            </header>
+
+            <div class="card-body">
+              <div class="workweek-grid" role="group" aria-label="Configuración de los 7 días de la semana">
+                <!-- LUNES -->
+                <div class="day-column active-day">
+                  <span class="day-name">LUN</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Lunes">
+                    <input type="checkbox" checked aria-label="Lunes laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-lun">FACTOR</label>
+                    <input type="number" id="factor-lun" value="1.0" min="0" max="1" step="0.1" aria-label="Factor de rendimiento Lunes">
+                  </div>
+                </div>
+
+                <!-- MARTES -->
+                <div class="day-column active-day">
+                  <span class="day-name">MAR</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Martes">
+                    <input type="checkbox" checked aria-label="Martes laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-mar">FACTOR</label>
+                    <input type="number" id="factor-mar" value="1.0" min="0" max="1" step="0.1" aria-label="Factor de rendimiento Martes">
+                  </div>
+                </div>
+
+                <!-- MIÉRCOLES -->
+                <div class="day-column active-day">
+                  <span class="day-name">MIÉ</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Miércoles">
+                    <input type="checkbox" checked aria-label="Miércoles laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-mie">FACTOR</label>
+                    <input type="number" id="factor-mie" value="1.0" min="0" max="1" step="0.1" aria-label="Factor de rendimiento Miércoles">
+                  </div>
+                </div>
+
+                <!-- JUEVES -->
+                <div class="day-column active-day">
+                  <span class="day-name">JUE</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Jueves">
+                    <input type="checkbox" checked aria-label="Jueves laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-jue">FACTOR</label>
+                    <input type="number" id="factor-jue" value="1.0" min="0" max="1" step="0.1" aria-label="Factor de rendimiento Jueves">
+                  </div>
+                </div>
+
+                <!-- VIERNES -->
+                <div class="day-column active-day">
+                  <span class="day-name">VIE</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Viernes">
+                    <input type="checkbox" checked aria-label="Viernes laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-vie">FACTOR</label>
+                    <input type="number" id="factor-vie" value="1.0" min="0" max="1" step="0.1" aria-label="Factor de rendimiento Viernes">
+                  </div>
+                </div>
+
+                <!-- SÁBADO (MEDIA JORNADA) -->
+                <div class="day-column half-day">
+                  <span class="day-name" style="color: var(--accent-orange);">SÁB</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Sábado">
+                    <input type="checkbox" checked aria-label="Sábado laborable media jornada">
+                    <span class="toggle-slider" style="background-color: var(--accent-orange);"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-sab" style="color: var(--accent-orange);">FACTOR</label>
+                    <input type="number" id="factor-sab" value="0.5" min="0" max="1" step="0.1" style="border-color: var(--border-accent-orange); color: var(--accent-orange);" aria-label="Factor de rendimiento Sábado">
+                  </div>
+                </div>
+
+                <!-- DOMINGO (NO LABORABLE) -->
+                <div class="day-column" style="opacity: 0.6;">
+                  <span class="day-name">DOM</span>
+                  <label class="day-toggle" title="Habilitar/Deshabilitar Domingo">
+                    <input type="checkbox" aria-label="Domingo no laborable">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="factor-input-group">
+                    <label for="factor-dom">FACTOR</label>
+                    <input type="number" id="factor-dom" value="0.0" min="0" max="1" step="0.1" disabled aria-label="Factor de rendimiento Domingo">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sumario de la jornada -->
+              <div class="workweek-summary">
+                <div style="display: flex; gap: 20px; align-items: center;">
+                  <div>Suma de jornada efectiva: <span class="workweek-metric">5.50 días equivalentes</span></div>
+                  <div style="color: var(--text-dim);">|</div>
+                  <div>Horas estándar: <span class="workweek-metric">8h lun-vie / 4h sáb</span></div>
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11.5px;">
+                  <input type="checkbox" checked style="accent-color: var(--accent-cyan);">
+                  <span>Ajustar automáticamente holguras de subcontratistas</span>
+                </label>
+              </div>
+            </div>
+          </article>
+
+          <!-- TARJETA 2: DÍAS NO LABORABLES Y FESTIVOS -->
+          <article class="card-panel" aria-labelledby="card-festivos-title">
+            <header class="card-header">
+              <div class="card-title-wrap">
+                <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-orange); width: 18px; height: 18px;">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm0 16H5V8h14v11z"/>
+                </svg>
+                <div>
+                  <h2 class="card-title" id="card-festivos-title">Días no laborables y festivos oficiales</h2>
+                  <p class="card-subtitle">Calendario de suspensiones obligatorias conforme a la Ley Federal del Trabajo y condiciones de sitio</p>
+                </div>
+              </div>
+              <span class="meta-chip chip-orange" style="font-size: 10px;">12 DÍAS PROGRAMADOS (2025)</span>
+            </header>
+
+            <div class="card-body">
+              <div class="holidays-layout">
+                <!-- Tabla de Festivos -->
+                <div class="holidays-table-wrap">
+                  <table class="holidays-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Descripción oficial</th>
+                        <th>Impacto en obra</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="font-family: var(--font-mono); font-weight: 600;">2025-05-01</td>
+                        <td>Día Internacional del Trabajo</td>
+                        <td><span class="holiday-badge">Suspensión Total</span></td>
+                        <td>
+                          <button type="button" class="btn-icon-danger" aria-label="Eliminar festivo 1 de mayo">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: var(--font-mono); font-weight: 600;">2025-05-03</td>
+                        <td>Día de la Santa Cruz (Gremio albañiles)</td>
+                        <td><span class="holiday-badge" style="background: rgba(0, 180, 216, 0.12); color: var(--accent-cyan); border-color: var(--border-accent-cyan);">Guardia Mínima</span></td>
+                        <td>
+                          <button type="button" class="btn-icon-danger" aria-label="Eliminar festivo 3 de mayo">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: var(--font-mono); font-weight: 600;">2025-09-16</td>
+                        <td>Día de la Independencia de México</td>
+                        <td><span class="holiday-badge">Suspensión Total</span></td>
+                        <td>
+                          <button type="button" class="btn-icon-danger" aria-label="Eliminar festivo 16 de septiembre">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: var(--font-mono); font-weight: 600;">2025-11-17</td>
+                        <td>Aniversario Revolución Mexicana (Puente)</td>
+                        <td><span class="holiday-badge">Suspensión Total</span></td>
+                        <td>
+                          <button type="button" class="btn-icon-danger" aria-label="Eliminar festivo 17 de noviembre">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Formulario Agregar Festivo -->
+                <div class="add-holiday-form">
+                  <div style="font-weight: 600; font-size: 13px; color: #ffffff; display: flex; align-items: center; gap: 6px;">
+                    <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-orange); width: 14px; height: 14px;">
+                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    <span>Agregar suspensión</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="new-holiday-date">Fecha no laborable</label>
+                    <input type="date" id="new-holiday-date" class="form-control" value="2025-12-25" style="font-family: var(--font-mono);">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="new-holiday-desc">Motivo o festividad</label>
+                    <input type="text" id="new-holiday-desc" class="form-control" placeholder="Ej. Navidad / Veda vial">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="new-holiday-impact">Impacto en colados</label>
+                    <select id="new-holiday-impact" class="form-control">
+                      <option value="total">Suspensión Total (Factor 0.0)</option>
+                      <option value="guardia">Guardia geotécnica (Factor 0.3)</option>
+                      <option value="nocturno">Turno nocturno habilitado</option>
+                    </select>
+                  </div>
+
+                  <button type="button" class="btn btn-secondary" style="margin-top: 4px; min-height: 40px; font-size: 12px;">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    <span>Registrar en calendario</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- TARJETA 3: CALENDARIOS POR CUADRILLA O SUBCONTRATISTA -->
+          <article class="card-panel" aria-labelledby="card-cuadrillas-title">
+            <header class="card-header">
+              <div class="card-title-wrap">
+                <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan); width: 18px; height: 18px;">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+                <div>
+                  <h2 class="card-title" id="card-cuadrillas-title">Calendarios por cuadrilla y subcontratistas</h2>
+                  <p class="card-subtitle">Excepciones de turno para frentes críticos: cimentación profunda, estructura metálica y MEP</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline" style="min-height: 34px; padding: 0 10px; font-size: 11.5px;">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                <span>Nueva cuadrilla</span>
+              </button>
+            </header>
+
+            <div class="card-body">
+              <div class="crews-grid">
+                <!-- Cuadrilla 1 -->
+                <div class="crew-card">
+                  <div class="crew-header">
+                    <div>
+                      <div class="crew-name">Cuadrilla Cimentación</div>
+                      <div class="crew-specialty">Pilas y Muros Milán · ICA Infra</div>
+                    </div>
+                    <span class="meta-chip chip-orange" style="font-size: 9px; padding: 2px 5px;">TURNO 24/7</span>
+                  </div>
+                  <div>
+                    <div class="crew-stat"><span>Jornada semanal:</span> <span>7 días (3 turnos)</span></div>
+                    <div class="crew-stat"><span>Factor dominical:</span> <span>1.0 (Rotativo)</span></div>
+                    <div class="crew-stat"><span>Personal asignado:</span> <span>34 operarios</span></div>
+                  </div>
+                </div>
+
+                <!-- Cuadrilla 2 -->
+                <div class="crew-card">
+                  <div class="crew-header">
+                    <div>
+                      <div class="crew-name">Montaje de Estructura</div>
+                      <div class="crew-specialty">Acero A992 · Grupo Carso</div>
+                    </div>
+                    <span class="meta-chip chip-cyan" style="font-size: 9px; padding: 2px 5px;">ESTÁNDAR</span>
+                  </div>
+                  <div>
+                    <div class="crew-stat"><span>Jornada semanal:</span> <span>5.5 días (L-S)</span></div>
+                    <div class="crew-stat"><span>Permiso grúas:</span> <span>07:00 a 19:00</span></div>
+                    <div class="crew-stat"><span>Personal asignado:</span> <span>22 montadores</span></div>
+                  </div>
+                </div>
+
+                <!-- Cuadrilla 3 -->
+                <div class="crew-card">
+                  <div class="crew-header">
+                    <div>
+                      <div class="crew-name">Topografía y Calidad</div>
+                      <div class="crew-specialty">Geotecnia y Nube LiDAR</div>
+                    </div>
+                    <span class="meta-chip" style="font-size: 9px; padding: 2px 5px;">SUPERVISIÓN</span>
+                  </div>
+                  <div>
+                    <div class="crew-stat"><span>Jornada semanal:</span> <span>6 días completos</span></div>
+                    <div class="crew-stat"><span>Sincronización:</span> <span>Diaria 18:00</span></div>
+                    <div class="crew-stat"><span>Personal asignado:</span> <span>8 ingenieros</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- DUAL ROW: REGISTROS POR PÁGINA + SUBACTIVIDADES E IDIOMA -->
+          <div class="dual-cards-row">
+
+            <!-- TARJETA 4: REGISTROS POR PÁGINA -->
+            <article class="card-panel" aria-labelledby="card-registros-title">
+              <header class="card-header">
+                <div class="card-title-wrap">
+                  <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan); width: 16px; height: 16px;">
+                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
+                  </svg>
+                  <div>
+                    <h2 class="card-title" id="card-registros-title" style="font-size: 14px;">Densidad de tablas</h2>
+                    <p class="card-subtitle">Registros por página en bitácora y desgloses</p>
+                  </div>
+                </div>
+              </header>
+              <div class="card-body">
+                <div class="select-grid" role="radiogroup" aria-label="Cantidad de registros por página">
+                  <div class="radio-pill-option">
+                    <input type="radio" name="paginacion" id="pag-25" value="25">
+                    <label class="radio-pill-label" for="pag-25">25</label>
+                  </div>
+                  <div class="radio-pill-option">
+                    <input type="radio" name="paginacion" id="pag-50" value="50" checked>
+                    <label class="radio-pill-label" for="pag-50">50</label>
+                  </div>
+                  <div class="radio-pill-option">
+                    <input type="radio" name="paginacion" id="pag-100" value="100">
+                    <label class="radio-pill-label" for="pag-100">100</label>
+                  </div>
+                  <div class="radio-pill-option">
+                    <input type="radio" name="paginacion" id="pag-250" value="250">
+                    <label class="radio-pill-label" for="pag-250">250</label>
+                  </div>
+                </div>
+                <div style="font-size: 11.5px; color: var(--text-dim); margin-top: 10px;">
+                  * Recomendado para monitores 1440px: <strong>50 filas</strong> con carga diferida virtualizada.
+                </div>
+              </div>
+            </article>
+
+            <!-- TARJETA 5: SUBACTIVIDADES E IDIOMA -->
+            <article class="card-panel" aria-labelledby="card-preferencias-title">
+              <header class="card-header">
+                <div class="card-title-wrap">
+                  <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-orange); width: 16px; height: 16px;">
+                    <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+                  </svg>
+                  <div>
+                    <h2 class="card-title" id="card-preferencias-title" style="font-size: 14px;">Subactividades e Idioma</h2>
+                    <p class="card-subtitle">Localización y niveles WBS / desglose</p>
+                  </div>
+                </div>
+              </header>
+              <div class="card-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label" for="subact-select">Niveles jerárquicos de subactividad</label>
+                  <select id="subact-select" class="form-control">
+                    <option value="4">Hasta 4 niveles (Fase / Frente / Partida / Tarea)</option>
+                    <option value="5" selected>Hasta 5 niveles (Con desglose de cuadrilla y pieza)</option>
+                    <option value="6">Hasta 6 niveles (Completo estándar BIM Level 3)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="lang-select">Idioma de la interfaz y términos técnicos</label>
+                  <select id="lang-select" class="form-control">
+                    <option value="es-MX" selected>Español (México / Términos Obra Civil SCT)</option>
+                    <option value="es-ES">Español (España / Código Técnico CTE)</option>
+                    <option value="en-US">English (US Engineering Specs / FIDIC)</option>
+                  </select>
+                </div>
+              </div>
+            </article>
+
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: VISTA PREVIA APARIENCIA DEL PROYECTO (360 px) -->
+        <aside class="preview-sticky-col" aria-label="Ajustes de apariencia y previsualización">
+
+          <article class="card-panel">
+            <header class="card-header">
+              <div class="card-title-wrap">
+                <!-- Icono Estilo / Apariencia -->
+                <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan); width: 18px; height: 18px;">
+                  <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.47 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/>
+                </svg>
+                <div>
+                  <h2 class="card-title" style="font-size: 14.5px;">Apariencia de obra</h2>
+                  <p class="card-subtitle">Vista previa de entorno visual</p>
+                </div>
+              </div>
+            </header>
+
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 16px;">
+
+              <!-- Mockup en Vivo -->
+              <div class="preview-canvas-box">
+                <div class="preview-badge-status">
+                  <span>PREVIEW: VANGUARD-DARK</span>
+                  <span style="color: var(--accent-cyan);">1440×1024</span>
+                </div>
+
+                <div class="mockup-window">
+                  <div class="mockup-topbar">
+                    <span class="mock-dot active"></span>
+                    <span class="mock-dot"></span>
+                    <span class="mock-dot"></span>
+                    <span style="font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); margin-left: 6px;">Torre Altavista · PRY-024</span>
+                  </div>
+                  <div class="mockup-body">
+                    <div class="mockup-nav-rail">
+                      <div class="mock-nav-block active"></div>
+                      <div class="mock-nav-block"></div>
+                      <div class="mock-nav-block"></div>
+                      <div class="mock-nav-block"></div>
+                    </div>
+                    <div class="mockup-content-area">
+                      <div class="mock-header-line"></div>
+                      <div class="mock-kpi-row">
+                        <div class="mock-kpi-card"></div>
+                        <div class="mock-kpi-card"></div>
+                      </div>
+                      <div class="mock-chart-line"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); text-align: center;">
+                  Paleta activa: <strong>Navy Profundo / Orange Civil / Laser Cyan</strong>
+                </div>
+              </div>
+
+              <!-- Control 1: Selector de Paleta -->
+              <div class="control-row">
+                <div class="control-label-wrap">
+                  <span class="form-label">Paleta de color corporativa</span>
+                  <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-orange);">CivilTech Safety</span>
+                </div>
+                <div class="color-swatches-grid" role="radiogroup" aria-label="Seleccionar paleta de color">
+                  <button type="button" class="color-swatch-item active" style="background: linear-gradient(135deg, #0a122a, #ff5a1f);" title="Vanguard CivilTech (Navy + Orange)" aria-label="Vanguard CivilTech"></button>
+                  <button type="button" class="color-swatch-item" style="background: linear-gradient(135deg, #0a122a, #00b4d8);" title="Geotechnical Cyan" aria-label="Geotechnical Cyan"></button>
+                  <button type="button" class="color-swatch-item" style="background: linear-gradient(135deg, #0b171f, #10b981);" title="Ambient BioInfra" aria-label="Ambient BioInfra"></button>
+                  <button type="button" class="color-swatch-item" style="background: linear-gradient(135deg, #171717, #f59e0b);" title="Heavy Machinery Yellow" aria-label="Heavy Machinery Yellow"></button>
+                  <button type="button" class="color-swatch-item" style="background: linear-gradient(135deg, #111827, #6366f1);" title="Spatial Telemetry Violet" aria-label="Spatial Telemetry Violet"></button>
+                </div>
+              </div>
+
+              <!-- Control 2: Textura de Superficie -->
+              <div class="control-row">
+                <div class="control-label-wrap">
+                  <span class="form-label">Textura de fondo y grilla</span>
+                  <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Trama técnica 16px</span>
+                </div>
+                <div class="segmented-switch" role="group" aria-label="Textura de fondo">
+                  <button type="button" class="segment-btn">Liso</button>
+                  <button type="button" class="segment-btn active">Cuadrícula CAD</button>
+                  <button type="button" class="segment-btn">Puntos LiDAR</button>
+                </div>
+              </div>
+
+              <!-- Control 3: Halo e Iluminación de Acento -->
+              <div class="control-row">
+                <div class="control-label-wrap">
+                  <span class="form-label">Halo y resplandor de telemetría</span>
+                  <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan);">65%</span>
+                </div>
+                <input type="range" min="0" max="100" value="65" aria-label="Intensidad de halo y resplandor">
+              </div>
+
+              <!-- Control 4: Modo de Navegación -->
+              <div class="control-row">
+                <div class="control-label-wrap">
+                  <span class="form-label">Modo de navegación lateral</span>
+                  <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Expandido 260px</span>
+                </div>
+                <div class="segmented-switch" role="group" aria-label="Comportamiento de barra de navegación">
+                  <button type="button" class="segment-btn active">Fijo expandido</button>
+                  <button type="button" class="segment-btn">Iconos colapsables</button>
+                </div>
+              </div>
+
+            </div>
+          </article>
+
+          <!-- Tarjeta Informativa de Integridad de Datos -->
+          <div class="card-panel" style="padding: 16px; background: rgba(0, 180, 216, 0.04); border-color: var(--border-accent-cyan);">
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <svg class="icon" viewBox="0 0 24 24" style="color: var(--accent-cyan); width: 20px; height: 20px; flex-shrink: 0;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <div style="font-size: 11.5px; line-height: 1.4;">
+                <strong style="color: var(--accent-cyan); display: block; margin-bottom: 2px;">Cálculo de Ruta Crítica Automático</strong>
+                Cualquier modificación a la jornada semanal o días festivos recalculará los diagramas de perturbación y fechas límite contractuales de Torre Altavista.
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+      <!-- 6. PIE DE ACCIONES Y CONFIRMACIÓN -->
+      <footer class="form-actions-footer" role="contentinfo">
+        <div class="footer-audit-note">
+          <svg class="icon" viewBox="0 0 24 24" style="color: var(--text-muted); width: 16px; height: 16px;">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+          </svg>
+          <span>Último guardado automático registrado: Hoy a las 11:42 CST · Checksum SHA-256 verificado</span>
+        </div>
+
+        <div class="footer-buttons-group">
+          <button type="button" class="btn btn-outline" style="min-height: 44px;">
+            Descartar cambios
+          </button>
+          <button type="button" class="btn btn-secondary" style="min-height: 44px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            <span>Simular holguras</span>
+          </button>
+          <button type="submit" class="btn btn-primary" style="min-height: 44px; padding: 0 24px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            <span>Guardar configuración de obra</span>
+          </button>
+        </div>
+      </footer>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

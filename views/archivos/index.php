@@ -1,56 +1,43 @@
 <?php
-$puede = puede_gestionar_proyecto($proyecto); $desc = puede_descargar(); $id = s($proyecto->id);
+$puede = puede_gestionar_proyecto($proyecto);
+$desc = puede_descargar();
+$id = s($proyecto->id);
 $borra = puede_eliminar_contenido($proyecto);   // admin y cliente que gestiona; el colaborador no borra
 $carpetaActual = null;
 foreach ($carpetas as $k) if ($carpeta && (int)$k->id === (int)$carpeta) $carpetaActual = $k;
-$urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta=' . $c : '') . ($filtro ? '&categoria=' . (int)$filtro : '');
-?>
-<div class="page-header">
-    <div>
-        <h2><i class="fa-solid fa-folder-open"></i> Archivo</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo count($archivos); ?> archivo(s)</p>
-        <div class="herr-meta">
-            <span class="herr-chip"><i class="fa-solid fa-file-lines"></i><b><?php echo (int)$totalArchivos; ?></b> archivos</span>
-            <span class="herr-chip"><i class="fa-solid fa-folder"></i><b><?php echo count($carpetas); ?></b> carpetas</span>
-            <span class="herr-chip"><i class="fa-solid fa-tags"></i><b><?php echo count($categorias); ?></b> categorías</span>
-            <?php if ($sinCarpeta): ?><span class="herr-chip herr-chip-suave"><i class="fa-regular fa-file"></i><b><?php echo (int)$sinCarpeta; ?></b> sin carpeta</span><?php endif; ?>
-        </div>
-    </div>
-    <div class="la-controles">
-        <form method="GET" class="buscador-inline">
-            <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
-            <?php if ($carpeta !== null): ?><input type="hidden" name="carpeta" value="<?php echo $carpeta === 0 ? 'sin' : (int)$carpeta; ?>"><?php endif; ?>
-            <select name="categoria" onchange="this.form.submit()" aria-label="Filtrar por categoría">
-                <option value="">Todas las categorías</option>
-                <?php foreach ($categorias as $c): ?><option value="<?php echo s($c->id); ?>" <?php echo (int)$filtro === (int)$c->id ? 'selected' : ''; ?>><?php echo s($c->nombre); ?></option><?php endforeach; ?>
-            </select>
-        </form>
-        <a href="/archivos/categorias?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-tags"></i> Categorías</a>
-        <?php if ($puede): ?>
-            <a href="/archivos/lote?proyecto=<?php echo $id; ?><?php echo $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''; ?>" class="btn btn-ghost"><i class="fa-solid fa-layer-group"></i> Subir varios</a>
-            <a href="/archivos/crear?proyecto=<?php echo $id; ?><?php echo $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''; ?>" class="btn btn-primary">+ Subir archivo</a>
-        <?php endif; ?>
-    </div>
-</div>
 
-<div class="suite-kpis">
-    <div class="suite-kpi">
-        <span class="suite-kpi-icono"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></span>
-        <span class="suite-kpi-txt"><small>Archivos</small><strong><?php echo (int)$totalArchivos; ?></strong><span>documentos del proyecto</span></span>
-    </div>
-    <div class="suite-kpi is-info">
-        <span class="suite-kpi-icono"><i class="fa-solid fa-folder" aria-hidden="true"></i></span>
-        <span class="suite-kpi-txt"><small>Carpetas</small><strong><?php echo count($carpetas); ?></strong><span>para organizar el archivero</span></span>
-    </div>
-    <div class="suite-kpi">
-        <span class="suite-kpi-icono"><i class="fa-solid fa-tags" aria-hidden="true"></i></span>
-        <span class="suite-kpi-txt"><small>Categorías</small><strong><?php echo count($categorias); ?></strong><span>clasificación de documentos</span></span>
-    </div>
-    <div class="suite-kpi <?php echo $sinCarpeta ? 'is-warning' : 'is-success'; ?>">
-        <span class="suite-kpi-icono"><i class="fa-regular fa-file" aria-hidden="true"></i></span>
-        <span class="suite-kpi-txt"><small>Sin carpeta</small><strong><?php echo (int)$sinCarpeta; ?></strong><span>archivos por clasificar</span></span>
-    </div>
-</div>
+$recientes = ($vista ?? null) === 'recientes';
+$carpetasStats = $carpetasStats ?? [];
+$sinCarpetaStats = $sinCarpetaStats ?? ['total' => 0, 'bytes' => 0, 'ultima' => null];
+$totalBytes = (int)($totalBytes ?? 0);
+$limiteBytes = (int)($limiteBytes ?? 0);
+$pct = $limiteBytes > 0 ? min(100, round($totalBytes / $limiteBytes * 100, 1)) : 0;
+$ordenActual = $orden ?? 'fecha_desc';
+$vistaInicial = ($carpeta !== null || $recientes) ? 'lista' : 'cuadricula';
+$nombresCarpeta = [];
+foreach ($carpetas as $k) $nombresCarpeta[(int)$k->id] = $k->nombre;
+$carpetaParam = $carpeta === null ? null : ($carpeta === 0 ? 'sin' : (string)$carpeta);
+$vistaParam = $recientes ? 'recientes' : null;
+
+/** URL del archivo conservando proyecto, carpeta, categoría, orden y vista rápida. */
+$urlArchivo = function (array $over = []) use ($id, $carpetaParam, $filtro, $ordenActual, $vistaParam) {
+    $base = [
+        'proyecto' => $id,
+        'carpeta' => $carpetaParam,
+        'categoria' => $filtro ? (string)$filtro : null,
+        'orden' => $ordenActual !== 'fecha_desc' ? $ordenActual : null,
+        'vista' => $vistaParam,
+    ];
+    $params = array_filter(array_merge($base, $over), fn($v) => $v !== null && $v !== '');
+    return '/archivos?' . http_build_query($params);
+};
+$urlCarpeta = fn($c) => $urlArchivo(['carpeta' => $c === null ? null : ($c === 0 ? 'sin' : (string)$c), 'vista' => null]);
+
+$mostrarCarpetas = $carpeta === null && !$recientes && !$filtro;
+$mostrarContexto = $carpeta !== null || $recientes || (bool)$filtro;
+$carpetaSubida = $carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : '';
+?>
+<?php require __DIR__ . '/_hero.php'; ?>
 
 <?php require_once __DIR__ . '/../templates/herramientas-proyecto.php'; pestanas_herramienta('archivo', '/archivos', $proyecto); ?>
 
@@ -62,179 +49,26 @@ $urlCarpeta = fn($c) => '/archivos?proyecto=' . $id . ($c !== null ? '&carpeta='
     <?php endif; ?>
 </div>
 <?php endif; ?>
-<?php $nombresCarpeta = []; foreach ($carpetas as $k) $nombresCarpeta[(int)$k->id] = $k->nombre; ?>
-<div class="archivero">
-    <aside class="archivero-lateral suite-panel">
-        <div class="archivero-titulo">
-            <span><i class="fa-solid fa-box-archive"></i> Archivero</span>
-            <?php if ($puede): ?><button type="button" class="btn btn-sm btn-primary" id="arch-nueva" title="Nueva carpeta"><i class="fa-solid fa-folder-plus"></i></button><?php endif; ?>
+
+<div class="archivo-page" data-vista-inicial="<?php echo s($vistaInicial); ?>">
+    <div class="archivo-cuerpo">
+        <?php require __DIR__ . '/_rail.php'; ?>
+        <div class="archivo-principal">
+            <?php if ($mostrarContexto): ?>
+                <?php require __DIR__ . '/_contexto.php'; ?>
+            <?php endif; ?>
+            <?php require __DIR__ . '/_barra.php'; ?>
+            <?php if ($mostrarCarpetas): ?>
+                <?php require __DIR__ . '/_carpetas.php'; ?>
+            <?php endif; ?>
+            <?php require __DIR__ . '/_lista.php'; ?>
         </div>
-        <ul class="archivero-carpetas">
-            <li><a href="<?php echo s($urlCarpeta(null)); ?>" class="<?php echo $carpeta === null ? 'activa' : ''; ?>"><i class="fa-solid fa-layer-group"></i> <span>Todos</span> <em><?php echo (int)$totalArchivos; ?></em></a></li>
-            <li><a href="<?php echo s($urlCarpeta('sin')); ?>" class="<?php echo $carpeta === 0 ? 'activa' : ''; ?>"><i class="fa-regular fa-file"></i> <span>Sin carpeta</span> <em><?php echo (int)$sinCarpeta; ?></em></a></li>
-            <?php foreach ($carpetas as $k): ?>
-                <li>
-                    <a href="<?php echo s($urlCarpeta((int)$k->id)); ?>" class="<?php echo $carpetaActual && (int)$carpetaActual->id === (int)$k->id ? 'activa' : ''; ?>"><i class="fa-solid fa-folder"></i> <span><?php echo s($k->nombre); ?></span> <em><?php echo (int)$k->total; ?></em></a>
-                    <?php if ($puede): ?>
-                        <button type="button" class="btn-icono arch-renombrar" data-id="<?php echo s($k->id); ?>" data-nombre="<?php echo s($k->nombre); ?>" title="Renombrar" aria-label="Renombrar carpeta"><i class="fa-solid fa-pen"></i></button>
-                        <?php if ($borra): ?><button type="button" class="btn-icono arch-borrar" data-id="<?php echo s($k->id); ?>" data-nombre="<?php echo s($k->nombre); ?>" data-total="<?php echo (int)$k->total; ?>" title="Eliminar" aria-label="Eliminar carpeta"><i class="fa-solid fa-trash"></i></button><?php endif; ?>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-        <?php if (!$carpetas): ?><p class="text-sm text-muted">Crea carpetas (compras, ingeniería, calidad…) para organizar tus archivos.</p><?php endif; ?>
-    </aside>
-    <div class="archivero-principal">
-        <?php if ($puede && $archivos): ?>
-        <form method="POST" action="/archivos/mover" class="archivero-mover hide-m" id="arch-mover">
-            <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
-            <span class="text-sm text-muted"><strong id="arch-n">0</strong> seleccionado(s)</span>
-            <select name="carpeta_id" aria-label="Mover a">
-                <option value="">— Sin carpeta —</option>
-                <?php foreach ($carpetas as $k): ?><option value="<?php echo s($k->id); ?>"><?php echo s($k->nombre); ?></option><?php endforeach; ?>
-            </select>
-            <button type="submit" class="btn btn-sm btn-primary" id="arch-mover-btn" disabled><i class="fa-solid fa-folder-tree"></i> Mover a la carpeta</button>
-        </form>
-        <?php endif; ?>
-<div class="suite-panel archivero-lista">
-    <?php if (empty($archivos)): ?>
-        <?php $__donde = $carpeta !== null ? ($carpeta === 0 ? ' sin carpeta' : ' en esta carpeta') : ''; $__cat = $filtro ? ' en esta categoría' : '';
-        echo estado_vacio('fa-folder-open',
-            'No hay archivos' . $__donde . $__cat,
-            $puede ? 'Sube el primero con «Subir archivo» o crea una carpeta para organizarlos.' : 'Cuando el equipo suba documentos aparecerán aquí.',
-            $puede ? ['texto' => 'Subir archivo', 'url' => '/archivos/crear?proyecto=' . $id . ($carpetaActual ? '&carpeta=' . (int)$carpetaActual->id : ''), 'icono' => 'fa-upload'] : null,
-            null, '', 'estado-vacio-sm'); ?>
-    <?php else: ?>
-        <div class="tabla-wrapper"><table class="tabla tabla-archivos" <?php echo pag_attr($proyecto); ?>>
-            <thead><tr><?php if ($puede): ?><th class="col-sel hide-m"><input type="checkbox" id="arch-todos" aria-label="Seleccionar todos"></th><?php endif; ?><th class="hide-m">Fecha</th><th class="hide-m">Categoría</th><th>Nombre del archivo</th><th class="hide-m">Rev.</th><th>Acciones</th></tr></thead>
-            <tbody>
-            <?php foreach ($archivos as $a): ?>
-                <tr>
-                    <?php if ($puede): ?><td class="col-sel hide-m"><input type="checkbox" class="arch-sel" value="<?php echo s($a->id); ?>" aria-label="Seleccionar <?php echo s($a->nombre); ?>"></td><?php endif; ?>
-                    <td class="mono hide-m nowrap"><?php echo s(fecha_corta_es($a->fecha)); ?></td>
-                    <td class="hide-m"><?php echo s($a->categoria_nombre ?: '—'); ?></td>
-                    <td class="arch-nombre">
-                        <?php echo archivo_icono_html($a->extension()); ?> <?php echo s($a->nombre); ?>
-                        <div class="text-sm text-muted mono"><span class="hide-m"><?php echo s($a->archivo_original); ?> · </span><?php echo s($a->tamanoLegible()); ?><?php echo !empty($a->subido_por_nombre) ? ' · ' . s($a->subido_por_nombre) : ''; ?></div>
-                        <?php if (isset($ensamblados[(int)$a->id])): ?><div class="text-sm"><span class="badge-carpeta" title="Se regenera sola cuando cambia alguno de sus documentos"><i class="fa-solid fa-object-group"></i> Ensamblado · se actualiza solo</span></div><?php endif; ?>
-                        <?php if ($carpeta === null && $a->carpeta_id && isset($nombresCarpeta[(int)$a->carpeta_id])): ?><div class="text-sm"><span class="badge-carpeta"><i class="fa-solid fa-folder"></i> <?php echo s($nombresCarpeta[(int)$a->carpeta_id]); ?></span></div><?php endif; ?>
-                        <div class="solo-movil text-sm text-muted"><?php echo s(fecha_corta_es($a->fecha)); ?><?php echo $a->categoria_nombre ? ' · ' . s($a->categoria_nombre) : ''; ?><?php echo $a->numero_revision ? ' · Rev. ' . s($a->numero_revision) : ''; ?></div>
-                    </td>
-                    <td class="mono hide-m"><?php echo s($a->numero_revision ?: '—'); ?></td>
-                    <td class="acciones">
-                        <?php if ($desc && \Classes\VistaArchivo::tipo($a->extension())): ?><a href="/visor?proyecto=<?php echo $id; ?>&archivo=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost"><i class="fa-regular fa-eye"></i> Ver</a><?php endif; ?>
-                        <?php if ($desc): ?><a href="/archivos/descargar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-download"></i> Descargar</a><?php endif; ?>
-                        <?php $puedeFila = puede_gestionar_archivo($a, $proyecto); ?>
-                        <?php if ($puedeFila): ?>
-                            <a href="/archivos/editar?proyecto=<?php echo $id; ?>&id=<?php echo s($a->id); ?>" class="btn btn-sm btn-ghost hide-m">Editar</a>
-                        <?php endif; ?>
-                        <?php if ($borra && $puedeFila): ?>
-                            <span class="hide-m"><form method="POST" action="/archivos/eliminar" style="display:inline" data-confirm="¿Eliminar archivo?|Se borrará «<?php echo s($a->nombre); ?>» del servidor. Esta acción no se puede deshacer.|Eliminar">
-                                <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
-                                <input type="hidden" name="id" value="<?php echo s($a->id); ?>">
-                                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                            </form></span>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table></div>
+    </div>
+
+    <?php require __DIR__ . '/_detalle.php'; ?>
+    <?php if ($puede): ?>
+        <?php require __DIR__ . '/_modales.php'; ?>
     <?php endif; ?>
 </div>
-    </div>
-</div>
-<?php if ($puede): ?>
-<div class="modal-overlay" id="arch-modal-carpeta" aria-hidden="true">
-    <form class="modal-card ventana-modal" method="POST" action="/archivos/carpetas/guardar" role="dialog" aria-modal="true" aria-labelledby="arch-carpeta-titulo">
-        <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
-        <input type="hidden" name="id" id="arch-carpeta-id" value="">
-        <header class="ventana-cab">
-            <span class="ventana-icono" aria-hidden="true"><i class="fa-solid fa-folder-plus"></i></span>
-            <div class="ventana-cab-txt">
-                <span class="ventana-eyebrow">Archivero</span>
-                <h3 class="modal-titulo" id="arch-carpeta-titulo">Nueva carpeta</h3>
-                <p>Organiza los documentos por disciplina, etapa o proveedor.</p>
-            </div>
-            <button type="button" class="ventana-x" data-cerrar aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        </header>
-        <div class="ventana-cuerpo">
-            <div class="campo"><label for="arch-carpeta-nombre">Nombre *</label><input type="text" id="arch-carpeta-nombre" name="nombre" maxlength="100" required placeholder="Ej: Compras, Ingeniería, Calidad"></div>
-        </div>
-        <div class="modal-acciones ventana-pie">
-            <button type="button" class="btn btn-ghost" data-cerrar><i class="fa-solid fa-xmark"></i> Cancelar</button>
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar carpeta</button>
-        </div>
-    </form>
-</div>
-<div class="modal-overlay" id="arch-modal-borrar" aria-hidden="true">
-    <form class="modal-card ventana-modal" method="POST" action="/archivos/carpetas/eliminar" role="dialog" aria-modal="true" aria-labelledby="arch-borrar-titulo">
-        <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
-        <input type="hidden" name="id" id="arch-borrar-id" value="">
-        <header class="ventana-cab">
-            <span class="ventana-icono" aria-hidden="true"><i class="fa-solid fa-folder-minus"></i></span>
-            <div class="ventana-cab-txt">
-                <span class="ventana-eyebrow">Archivero</span>
-                <h3 class="modal-titulo" id="arch-borrar-titulo">Eliminar carpeta</h3>
-                <p>Elige si quieres conservar los archivos o borrarlos también.</p>
-            </div>
-            <button type="button" class="ventana-x" data-cerrar aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        </header>
-        <div class="ventana-cuerpo">
-            <p class="text-muted" id="arch-borrar-msg"></p>
-            <div class="archivero-opciones">
-                <label><input type="radio" name="modo" value="solo" checked> <span><strong>Solo la carpeta</strong><br><small class="text-muted">Los archivos no se borran: vuelven a «Sin carpeta».</small></span></label>
-                <label id="arch-borrar-todo"><input type="radio" name="modo" value="todo"> <span><strong>La carpeta y su contenido</strong><br><small class="text-muted">Se borran también sus <span id="arch-borrar-n"></span> archivo(s) del servidor. No se puede deshacer.</small></span></label>
-            </div>
-        </div>
-        <div class="modal-acciones ventana-pie">
-            <button type="button" class="btn btn-ghost" data-cerrar><i class="fa-solid fa-xmark"></i> Cancelar</button>
-            <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Eliminar carpeta</button>
-        </div>
-    </form>
-</div>
-<script>
-(() => {
-    const $ = (id) => document.getElementById(id);
-    const abrir = (m) => { m.classList.add('abierto'); m.setAttribute('aria-hidden', 'false'); };
-    const cerrar = (m) => { m.classList.remove('abierto'); m.setAttribute('aria-hidden', 'true'); };
-    document.querySelectorAll('#arch-modal-carpeta, #arch-modal-borrar').forEach((m) => {
-        m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-cerrar]')) cerrar(m); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(m); });
-    });
-    const mc = $('arch-modal-carpeta');
-    const abrirCarpeta = (id, nombre) => {
-        $('arch-carpeta-id').value = id;
-        $('arch-carpeta-nombre').value = nombre;
-        $('arch-carpeta-titulo').textContent = id ? 'Renombrar carpeta' : 'Nueva carpeta';
-        abrir(mc);
-        $('arch-carpeta-nombre').focus();
-    };
-    $('arch-nueva')?.addEventListener('click', () => abrirCarpeta('', ''));
-    document.querySelectorAll('.arch-renombrar').forEach((b) => b.addEventListener('click', () => abrirCarpeta(b.dataset.id, b.dataset.nombre)));
-    const mb = $('arch-modal-borrar');
-    document.querySelectorAll('.arch-borrar').forEach((b) => b.addEventListener('click', () => {
-        const n = parseInt(b.dataset.total, 10) || 0;
-        $('arch-borrar-id').value = b.dataset.id;
-        $('arch-borrar-msg').textContent = `¿Qué hacer con la carpeta «${b.dataset.nombre}»?` + (n ? '' : ' Está vacía.');
-        $('arch-borrar-n').textContent = n;
-        $('arch-borrar-todo').style.display = n ? '' : 'none';
-        mb.querySelector('input[value="solo"]').checked = true;
-        abrir(mb);
-    }));
-    // selección múltiple para mover
-    const checks = [...document.querySelectorAll('.arch-sel')], todos = $('arch-todos'), form = $('arch-mover');
-    const actualizar = () => {
-        const sel = checks.filter((c) => c.checked);
-        if (!form) return;
-        $('arch-n').textContent = sel.length;
-        $('arch-mover-btn').disabled = !sel.length;
-        form.querySelectorAll('input[name="ids[]"]').forEach((i) => i.remove());
-        sel.forEach((c) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = 'ids[]'; i.value = c.value; form.appendChild(i); });
-        if (todos) todos.checked = sel.length === checks.length && checks.length > 0;
-    };
-    checks.forEach((c) => c.addEventListener('change', actualizar));
-    todos?.addEventListener('change', () => { checks.forEach((c) => { if (c.closest('tr').style.display !== 'none') c.checked = todos.checked; }); actualizar(); });
-})();
-</script>
-<?php endif; ?>
+
+<?php require __DIR__ . '/_scripts.php'; ?>

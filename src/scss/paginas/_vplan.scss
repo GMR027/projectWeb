@@ -762,7 +762,10 @@ body.vp-paneando, body.vp-paneando * { cursor: grabbing !important; user-select:
 
   @media (max-width: 48rem) {
     .vp-nuevo-paquete { label { width: auto; } input { flex-basis: 100%; } }
-    .vp-paquetes { grid-template-columns: 1fr; }
+    .vp-paquetes { grid-template-columns: minmax(0, 1fr); }
+    .vp-paquete,
+    .vp-paquete-crear { min-width: 0; }
+    .vp-paquete .vp-acc { flex-wrap: wrap; }
     .vp-paquete .vp-paquete-portada { height: 12rem; }
     .vplan-hub-aside { grid-template-columns: 1fr; }
   }

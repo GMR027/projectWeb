@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyectos - ProjectWeb</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0b1326',
+              surface: '#171f33',
+              surfaceHigh: '#1f2942',
+              surfaceMuted: '#101728',
+              border: '#2d3449',
+              borderLight: 'rgba(255, 255, 255, 0.08)',
+              orange: '#f97316',
+              cyan: '#38bdf8',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              rose: '#f43f5e',
+              textPrimary: '#e2e8f0',
+              textSecondary: '#94a3b8',
+              textMuted: '#64748b'
+            }
+          },
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b1326;
+      color: #e2e8f0;
+      font-family: 'Manrope', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b1326;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #2d3449;
+      border-radius: 3px;
+    }
+    .card-glass {
+      background: #171f33;
+      border: 1px solid #2d3449;
+      backdrop-filter: blur(12px);
+    }
+    .card-glass:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0b1326] text-slate-200 antialiased selection:bg-orange-500/30 selection:text-orange-200">
+
+  <!-- BARRA SUPERIOR (56px) -->
+  <header class="h-14 border-b border-brand-border bg-[#0b1326]/95 backdrop-blur sticky top-0 z-40 px-6 flex items-center justify-between">
+    <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-7 h-7 rounded bg-brand-orange/15 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-mono font-bold text-xs tracking-wider">
+          PW
+        </div>
+        <span class="font-display font-bold text-slate-100 tracking-tight text-sm">PROJECTWEB</span>
+        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-brand-orange/10 text-brand-orange border border-brand-orange/30 font-medium">CivilTech</span>
+      </div>
+
+      <div class="h-4 w-px bg-brand-border"></div>
+
+      <!-- Selector de obra contextual / global -->
+      <div class="flex items-center space-x-2 text-xs text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-medium text-slate-200">Constructora del Norte</span>
+        <span class="text-slate-500 font-mono text-[11px]">(Modo Maestro)</span>
+      </div>
+    </div>
+
+    <!-- Buscador global y telemetría de usuario -->
+    <div class="flex items-center space-x-4">
+      <div class="relative w-80">
+        <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" placeholder="Buscar obras, partidas, códigos..." class="w-full bg-[#131b2e] border border-brand-border rounded-md pl-9 pr-8 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-cyan/60 transition-colors" readonly value="">
+        <kbd class="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] text-slate-500 bg-[#1c2438] px-1.5 py-0.5 rounded border border-brand-border">⌘K</kbd>
+      </div>
+
+      <div class="h-4 w-px bg-brand-border"></div>
+
+      <div class="flex items-center space-x-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span>SYNC 100%</span>
+      </div>
+
+      <!-- Avatar & Perfil -->
+      <div class="flex items-center space-x-2 pl-1">
+        <div class="w-7 h-7 rounded bg-[#212b45] border border-brand-border flex items-center justify-center font-mono text-xs font-semibold text-slate-200">
+          EA
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BARRA DE CONTEXTO DE NAVEGACIÓN (40px) -->
+  <nav class="h-10 border-b border-brand-border bg-[#0f172a]/80 backdrop-blur px-6 flex items-center justify-between text-xs">
+    <div class="flex items-center space-x-1">
+      <a href="#" class="px-3 py-1.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Inicio / Dashboard</a>
+      <a href="#" class="px-3 py-1.5 rounded bg-brand-orange/10 text-brand-orange border border-brand-orange/30 font-medium">Portafolio de Obras</a>
+      <a href="#" class="px-3 py-1.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Gantt Maestro</a>
+      <a href="#" class="px-3 py-1.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Cuadrillas & Recursos</a>
+      <a href="#" class="px-3 py-1.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Control de Estimaciones</a>
+    </div>
+
+    <div class="flex items-center space-x-3 text-[11px] font-mono text-slate-400">
+      <span class="text-slate-500">ZONA HORARIA:</span>
+      <span class="text-slate-300">UTC-6 (CDMX)</span>
+      <span class="text-slate-600">|</span>
+      <span class="text-slate-400">v3.4.12-rc</span>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL: ANCHO 1440px MÁXIMO -->
+  <main class="max-w-[1440px] mx-auto px-6 py-6 space-y-6">
+
+    <!-- 1) CABECERA DE PÁGINA -->
+    <section class="relative rounded-xl border border-brand-border bg-gradient-to-r from-[#171f33] via-[#141c30] to-[#12192c] p-6 shadow-xl overflow-hidden">
+      <!-- Línea decorativa sutil de acento superior -->
+      <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-orange via-brand-cyan to-transparent"></div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <!-- Lado izquierdo: Placa con icono + Título + Subtítulo + Chips -->
+        <div class="flex items-start space-x-4">
+          <div class="w-12 h-12 rounded-lg bg-[#1f2942] border border-brand-border flex items-center justify-center shrink-0 shadow-inner">
+            <svg class="w-6 h-6 text-brand-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center space-x-3">
+              <h1 class="text-2xl font-display font-bold text-white tracking-tight">Proyectos</h1>
+              <span class="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20">PORTAFOLIO GLOBAL</span>
+            </div>
+            
+            <p class="text-xs text-slate-300 font-medium flex items-center space-x-2">
+              <span>12 obras registradas</span>
+              <span class="text-slate-500">·</span>
+              <span class="text-emerald-400 font-semibold">10 activas en ejecución</span>
+              <span class="text-slate-500">·</span>
+              <span class="text-slate-400">2 archivadas / cerradas</span>
+            </p>
+
+            <!-- Chips de resumen estadístico -->
+            <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono">
+              <div class="px-2.5 py-1 rounded bg-[#101726] border border-brand-border text-slate-300 flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>8 En orden</span>
+              </div>
+              <div class="px-2.5 py-1 rounded bg-[#101726] border border-amber-500/30 text-amber-300 flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>2 En riesgo de ruta crítica</span>
+              </div>
+              <div class="px-2.5 py-1 rounded bg-[#101726] border border-brand-border text-slate-400 flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                <span>Inversión global: $842.5M MXN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lado derecho: Botonera de acciones -->
+        <div class="flex items-center space-x-3 shrink-0">
+          <button class="px-3.5 py-2 rounded-md bg-[#1d263b] hover:bg-[#25314c] border border-brand-border text-xs font-medium text-slate-200 transition-colors flex items-center space-x-2">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Portafolio</span>
+          </button>
+
+          <button class="px-3.5 py-2 rounded-md bg-[#1d263b] hover:bg-[#25314c] border border-brand-border text-xs font-medium text-slate-200 transition-colors flex items-center space-x-2">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+            </svg>
+            <span>Plantillas</span>
+          </button>
+
+          <button class="px-4 py-2 rounded-md bg-brand-orange hover:bg-[#ea580c] active:scale-[0.98] text-white text-xs font-semibold tracking-wide transition-all shadow-lg shadow-orange-900/30 flex items-center space-x-2">
+            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Nuevo proyecto</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2) LÍNEA DE CONTEXTO COMPACTA (SOLO LECTURA VISUAL) -->
+    <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2 py-1 text-xs">
+      <div class="flex items-center space-x-3 text-slate-300">
+        <div class="flex items-center space-x-2 font-medium">
+          <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+          <span>Mostrando todas las obras</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <span class="font-mono text-[11px] text-slate-400">Total: <strong class="text-slate-200 font-bold">12 registros</strong> (10 activas / 2 históricas)</span>
+      </div>
+
+      <!-- Buscador visual discreto / no disruptivo -->
+      <div class="flex items-center space-x-3">
+        <div class="relative w-64">
+          <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" placeholder="Filtrar por nombre o clave..." class="w-full bg-[#12192c] border border-brand-border/70 rounded px-8 py-1 text-xs text-slate-300 placeholder-slate-500 focus:outline-none" readonly>
+          <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500">12/12</span>
+        </div>
+        
+        <div class="hidden sm:flex items-center space-x-1 text-[11px] font-mono text-slate-400 bg-[#12192c] px-2.5 py-1 rounded border border-brand-border/50">
+          <span class="text-slate-500">ORDEN:</span>
+          <span class="text-slate-200">RECIENTES</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3) GRID DE TARJETAS DE OBRA EN 3 COLUMNAS (12 OBRAS) -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- TARJETA 1: Autopista Central Tranche II (En ejecución / En orden) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <!-- Cabecera de tarjeta: Código y Estado -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              OBR-2026-088
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <!-- Nombre y Ubicación -->
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Autopista Central Tranche II
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Tramo Km 42+000 al 68+500, Querétaro</span>
+          </div>
+
+          <!-- Bloque de Avance Físico y Progreso -->
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">68.4%</span>
+                <span class="font-mono text-xs text-slate-400"> / 70% Prog.</span>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso -->
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500" style="width: 68.4%"></div>
+            </div>
+
+            <!-- Fechas de inicio y entrega -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 15 ENE 2026</span>
+              <span class="text-slate-300">ENTREGA: 14 DIC 2026</span>
+            </div>
+          </div>
+
+          <!-- Dos mini-cajas de metadatos -->
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Salud operativa</span>
+              <span class="font-medium text-emerald-400 flex items-center space-x-1 mt-0.5">
+                <span>Todo en orden</span>
+              </span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Cuadrillas / Frente</span>
+              <span class="font-medium text-slate-200 font-mono mt-0.5">4 Activas (86 pers)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de acciones -->
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 2: Torre Corporativa Norte (En riesgo de ruta crítica) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+
+        <div>
+          <!-- Cabecera de tarjeta: Código y Estado -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              OBR-2026-104
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span>En riesgo</span>
+            </span>
+          </div>
+
+          <!-- Nombre y Ubicación -->
+          <h2 class="text-base font-display font-bold text-white group-hover:text-amber-400 transition-colors leading-snug">
+            Torre Corporativa Norte
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Av. de los Industriales 402, Monterrey</span>
+          </div>
+
+          <!-- Bloque de Avance Físico y Progreso -->
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-amber-400">41.2%</span>
+                <span class="font-mono text-xs text-rose-400"> / 50% (-8.8%)</span>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso -->
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-amber-500 to-orange-400 h-2 rounded-full transition-all duration-500" style="width: 41.2%"></div>
+            </div>
+
+            <!-- Fechas de inicio y entrega -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 01 MAR 2026</span>
+              <span class="text-amber-400 font-semibold">ENTREGA: 30 MAR 2027</span>
+            </div>
+          </div>
+
+          <!-- Dos mini-cajas de metadatos -->
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-amber-500/30 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Bloqueo activo</span>
+              <span class="font-medium text-amber-300 truncate block mt-0.5">Acero Estructural N14</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Desvío financiero</span>
+              <span class="font-medium text-rose-400 font-mono mt-0.5">+3.1% Sobrecosto</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de acciones -->
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 3: Planta de Tratamiento Sur (En ejecución / Avanzada) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-400"></div>
+
+        <div>
+          <!-- Cabecera de tarjeta: Código y Estado -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+              OBR-2025-042
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <!-- Nombre y Ubicación -->
+          <h2 class="text-base font-display font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug">
+            Planta de Tratamiento Sur
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Parque Industrial Cuautitlán, EdoMex</span>
+          </div>
+
+          <!-- Bloque de Avance Físico y Progreso -->
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">89.1%</span>
+                <span class="font-mono text-xs text-emerald-400"> / 88% Prog. (+1.1%)</span>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso -->
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full transition-all duration-500" style="width: 89.1%"></div>
+            </div>
+
+            <!-- Fechas de inicio y entrega -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 10 NOV 2025</span>
+              <span class="text-slate-300">ENTREGA: 20 ENE 2027</span>
+            </div>
+          </div>
+
+          <!-- Dos mini-cajas de metadatos -->
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Fase actual</span>
+              <span class="font-medium text-slate-200 truncate block mt-0.5">Pruebas Hidrostáticas</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Calidad QA/QC</span>
+              <span class="font-medium text-emerald-400 font-mono mt-0.5">99.4% Aprobado</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de acciones -->
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 4: Viaducto Elevado Tramo 4 -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              OBR-2024-08
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Viaducto Elevado Tramo 4
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Monterrey, N.L. · PK 14+200</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">68.4%</span>
+                <span class="font-mono text-xs text-slate-400"> / 74% (-5.6%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2 rounded-full" style="width: 68.4%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 12 FEB 2024</span>
+              <span class="text-slate-300">ENTREGA: 15 MAR 2025</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Hito clave</span>
+              <span class="font-medium text-slate-200 truncate block mt-0.5">Montaje trabes C-4</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Bitácora</span>
+              <span class="font-medium text-emerald-400 font-mono mt-0.5">Al día (Firma e-FIEL)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 5: Edificio Comercial Titanium -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              EDF-2024-12
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Edificio Comercial Titanium
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Guadalajara, Jal. · Zona Financiera</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">77.8%</span>
+                <span class="font-mono text-xs text-slate-400"> / 76% (+1.8%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full" style="width: 77.8%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 04 JUN 2024</span>
+              <span class="text-slate-300">ENTREGA: 28 ENE 2025</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Fachada</span>
+              <span class="font-medium text-slate-200 truncate block mt-0.5">Muro cortina 88%</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Actividades hoy</span>
+              <span class="font-medium text-brand-cyan font-mono mt-0.5">6 frentes activos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 6: Puente Vehicular Río Verde -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              PVR-02
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Puente Vehicular Río Verde
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">San Luis Potosí · Infraestructura Vial</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">82.5%</span>
+                <span class="font-mono text-xs text-slate-400"> / 80% (+2.5%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full" style="width: 82.5%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 05 AGO 2025</span>
+              <span class="text-slate-300">ENTREGA: 15 MAY 2026</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Condición climática</span>
+              <span class="font-medium text-amber-300 truncate block mt-0.5">Viento &gt; 38 km/h</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Grúa principal</span>
+              <span class="font-medium text-slate-200 font-mono mt-0.5">Liebherr 400T Op.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 7: Subestación Eléctrica Nor-Oeste 230kV (En inicio / preparativos) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-orange"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded border border-brand-orange/30">
+              SNO-01
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-brand-orange/10 text-brand-orange border border-brand-orange/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-brand-orange"></span>
+              <span>Por iniciar</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-orange transition-colors leading-snug">
+            Subestación Nor-Oeste 230kV
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Sonora · Energía e infraestructura</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-slate-200">0.0%</span>
+                <span class="font-mono text-xs text-slate-400"> / Replanteo</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-brand-orange h-2 rounded-full" style="width: 2%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 01 MAR 2026</span>
+              <span class="text-slate-300">ENTREGA: 15 DIC 2026</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-amber-500/30 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Restricción activa</span>
+              <span class="font-medium text-amber-300 truncate block mt-0.5">Permiso SEMARNAT</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Ingeniería</span>
+              <span class="font-medium text-emerald-400 font-mono mt-0.5">BIM LOD 400 OK</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 8: Túnel Ferroviario Sierra Madre (En riesgo) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              OBR-2025-091
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span>En riesgo</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-amber-400 transition-colors leading-snug">
+            Túnel Ferroviario Sierra Madre
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Saltillo, Coah. · Portal Norte Km 18</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-amber-400">33.5%</span>
+                <span class="font-mono text-xs text-rose-400"> / 42% (-8.5%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full" style="width: 33.5%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 10 MAY 2025</span>
+              <span class="text-amber-400 font-semibold">ENTREGA: 14 NOV 2027</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-amber-500/30 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Geotecnia</span>
+              <span class="font-medium text-amber-300 truncate block mt-0.5">Falla geológica PK2</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Tuneladora TBM</span>
+              <span class="font-medium text-slate-200 font-mono mt-0.5">Avance 14.2 m/día</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 9: Centro Logístico Bajío Tranche 1 -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              LOG-2025-15
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Centro Logístico Bajío Tranche 1
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Silao, Gto. · Corredor Automotriz</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">54.0%</span>
+                <span class="font-mono text-xs text-slate-400"> / 52% (+2.0%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full" style="width: 54%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 18 FEB 2025</span>
+              <span class="text-slate-300">ENTREGA: 30 SEP 2026</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Pisos Industriales</span>
+              <span class="font-medium text-slate-200 truncate block mt-0.5">Laser Screed FF60</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Nave A y B</span>
+              <span class="font-medium text-emerald-400 font-mono mt-0.5">Techumbre al 100%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 10: Presa Reguladora San Jerónimo -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-cyan"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/30">
+              HID-2024-03
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>En ejecución</span>
+            </span>
+          </div>
+
+          <h2 class="text-base font-display font-bold text-white group-hover:text-brand-cyan transition-colors leading-snug">
+            Presa Reguladora San Jerónimo
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Guerrero · Obra de Control Hidráulico</span>
+          </div>
+
+          <div class="space-y-1.5 mb-4 bg-[#101728] p-3 rounded-lg border border-brand-border/60">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-400 tracking-wider">Avance físico real</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-emerald-400">92.0%</span>
+                <span class="font-mono text-xs text-slate-400"> / 91% (+1.0%)</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-[#1e273d] h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full" style="width: 92%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>INICIO: 10 ENE 2024</span>
+              <span class="text-slate-300">ENTREGA: 30 ABR 2025</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Vertedor de excedencias</span>
+              <span class="font-medium text-emerald-400 truncate block mt-0.5">Colados concluidos</span>
+            </div>
+            <div class="bg-[#12192b] border border-brand-border/70 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Cresta de cortina</span>
+              <span class="font-medium text-slate-200 font-mono mt-0.5">Cota 1,240 msnm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-brand-border/80">
+          <button class="px-3.5 py-1.5 rounded bg-brand-cyan/15 hover:bg-brand-cyan/25 border border-brand-cyan/40 text-xs font-semibold text-brand-cyan transition-colors flex items-center space-x-1.5">
+            <span>Ver proyecto</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="px-2.5 py-1.5 rounded hover:bg-[#1f2942] text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">
+            Editar
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 11: Distribuidor Vial Aeropuerto (ARCHIVADA / CERRADA) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group bg-[#131a2c]/80 border-dashed border-slate-700/80">
+        <!-- Borde superior gris tenue / archivado -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-600"></div>
+
+        <div>
+          <!-- Cabecera de tarjeta: Código y Estado -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+              OBR-2023-018
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+              <span>Archivada</span>
+            </span>
+          </div>
+
+          <!-- Nombre y Ubicación -->
+          <h2 class="text-base font-display font-bold text-slate-300 group-hover:text-white transition-colors leading-snug">
+            Distribuidor Vial Aeropuerto
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-500 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Toluca, EdoMex · Blvd. Aeropuerto</span>
+          </div>
+
+          <!-- Bloque de Avance Físico y Progreso -->
+          <div class="space-y-1.5 mb-4 bg-[#0d1424] p-3 rounded-lg border border-slate-800">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Avance final de entrega</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-slate-400">100.0%</span>
+                <span class="font-mono text-xs text-emerald-500/80"> / Finiquito</span>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso cerrada -->
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div class="bg-slate-500 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+
+            <!-- Fechas de inicio y entrega -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+              <span>INICIO: 01 MAR 2023</span>
+              <span class="text-slate-400">ENTREGADA: 15 NOV 2024</span>
+            </div>
+          </div>
+
+          <!-- Dos mini-cajas de metadatos archivados -->
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#0f1627] border border-slate-800 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Acta de entrega</span>
+              <span class="font-medium text-emerald-400/90 truncate block mt-0.5">Firmada por SCT</span>
+            </div>
+            <div class="bg-[#0f1627] border border-slate-800 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Garantía vicios</span>
+              <span class="font-medium text-slate-400 font-mono mt-0.5">Vigente (Fianza 2a)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de acciones ARCHIVADA: Desarchivar y Eliminar en rojo -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button class="px-3.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition-colors flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            <span>Desarchivar</span>
+          </button>
+          
+          <button class="px-3 py-1.5 rounded hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Eliminar</span>
+          </button>
+        </div>
+      </article>
+
+      <!-- TARJETA 12: Hospital General Regional Zona 3 (ARCHIVADA / CERRADA) -->
+      <article class="card-glass rounded-xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 group bg-[#131a2c]/80 border-dashed border-slate-700/80">
+        <!-- Borde superior gris tenue / archivado -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-600"></div>
+
+        <div>
+          <!-- Cabecera de tarjeta: Código y Estado -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-mono text-xs font-semibold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+              HGR-2022-09
+            </span>
+            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+              <span>Archivada</span>
+            </span>
+          </div>
+
+          <!-- Nombre y Ubicación -->
+          <h2 class="text-base font-display font-bold text-slate-300 group-hover:text-white transition-colors leading-snug">
+            Hospital General Regional Z-3
+          </h2>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-500 mt-1 mb-4">
+            <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">Hermosillo, Sonora · Sector Poniente</span>
+          </div>
+
+          <!-- Bloque de Avance Físico y Progreso -->
+          <div class="space-y-1.5 mb-4 bg-[#0d1424] p-3 rounded-lg border border-slate-800">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] uppercase font-mono text-slate-500 tracking-wider">Avance final de entrega</span>
+              <div class="text-right">
+                <span class="font-mono text-xl font-bold text-slate-400">100.0%</span>
+                <span class="font-mono text-xs text-emerald-500/80"> / Liquidado</span>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso cerrada -->
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div class="bg-slate-500 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+
+            <!-- Fechas de inicio y entrega -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+              <span>INICIO: 10 ENE 2022</span>
+              <span class="text-slate-400">ENTREGADA: 22 DIC 2024</span>
+            </div>
+          </div>
+
+          <!-- Dos mini-cajas de metadatos archivados -->
+          <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div class="bg-[#0f1627] border border-slate-800 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Equipamiento biomédico</span>
+              <span class="font-medium text-slate-300 truncate block mt-0.5">Recepción conforme</span>
+            </div>
+            <div class="bg-[#0f1627] border border-slate-800 rounded p-2">
+              <span class="block text-[10px] font-mono text-slate-500 uppercase">Auditoría ASF</span>
+              <span class="font-medium text-emerald-400/90 font-mono mt-0.5">Solventada 100%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de acciones ARCHIVADA: Desarchivar y Eliminar en rojo -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button class="px-3.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition-colors flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            <span>Desarchivar</span>
+          </button>
+          
+          <button class="px-3 py-1.5 rounded hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Eliminar</span>
+          </button>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- 4) FILA DE PAGINACIÓN DISCRETA Y TELEMETRÍA INFERIOR -->
+    <section class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-8 border-t border-brand-border/70 text-xs">
+      <div class="text-slate-400 font-mono text-[11px] flex items-center space-x-2">
+        <span>Mostrando 12 de 12 obras registradas</span>
+        <span class="text-slate-600">·</span>
+        <span class="text-slate-500">Capacidad asignada: 12/25 contratos activos</span>
+      </div>
+
+      <!-- Paginador discreto -->
+      <div class="flex items-center space-x-2">
+        <button class="px-2.5 py-1 rounded bg-[#131b2e] border border-brand-border text-slate-500 cursor-not-allowed text-xs font-mono" disabled>
+          &lt; Anterior
+        </button>
+        
+        <div class="flex items-center space-x-1 font-mono text-xs">
+          <span class="w-7 h-7 rounded bg-brand-orange/20 border border-brand-orange/40 text-brand-orange font-bold flex items-center justify-center">1</span>
+          <button class="w-7 h-7 rounded hover:bg-[#1c253d] text-slate-400 flex items-center justify-center transition-colors">2</button>
+        </div>
+
+        <button class="px-2.5 py-1 rounded bg-[#131b2e] hover:bg-[#1a233b] border border-brand-border text-slate-300 text-xs font-mono transition-colors">
+          Siguiente &gt;
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER TÉCNICO VANGUARD CIVILTECH -->
+  <footer class="border-t border-brand-border bg-[#090f1f] text-[11px] font-mono text-slate-500 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
+    <div class="flex items-center space-x-3">
+      <span class="text-brand-orange font-semibold tracking-wider">PROJECTWEB CIVIL ENGINE</span>
+      <span>·</span>
+      <span>LATENCIA BIM: 24 ms</span>
+      <span>·</span>
+      <span class="text-emerald-400/90">SINCRONIZACIÓN AUTOMÁTICA CADA 60s</span>
+    </div>
+    <div class="flex items-center space-x-4 text-slate-400">
+      <span>Términos Operativos</span>
+      <span>Auditoría de Obra</span>
+      <span>Soporte BIM/GIS</span>
+      <span class="text-slate-600">© 2026 Vanguard CivilTech</span>
+    </div>
+  </footer>
+
+</body>
+</html>

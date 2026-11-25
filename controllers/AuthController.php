@@ -343,16 +343,20 @@ class AuthController
         }
         redirigir_si_no_admin();
         $q = trim($_GET['q'] ?? '');
+        $rol = in_array($_GET['rol'] ?? '', ['admin', 'cliente', 'visitante'], true) ? (string)$_GET['rol'] : '';
         $porPagina = 25;
         $pagina = max(1, (int)($_GET['pagina'] ?? 1));
-        $r = Usuario::buscar($q, $porPagina, ($pagina - 1) * $porPagina);
+        $r = Usuario::buscar($q, $porPagina, ($pagina - 1) * $porPagina, $rol !== '' ? $rol : null);
         $router->render('auth/listar', [
             'titulo' => 'Usuarios',
             'usuarios' => $r['usuarios'],
             'q' => $q,
+            'rol' => $rol,
+            'conteos' => Usuario::conteosPorRol(),
             'total' => $r['total'],
             'pagina' => $pagina,
             'paginas' => max(1, (int)ceil($r['total'] / $porPagina)),
+            'organizaciones' => \Model\Organizacion::disponible() ? count(\Model\Organizacion::activas()) : 0,
         ]);
     }
 

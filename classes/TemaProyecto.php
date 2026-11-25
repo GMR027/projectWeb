@@ -71,22 +71,21 @@ class TemaProyecto
 
     /**
      * Apariencia de la barra superior de herramientas (proyectos.menu_superior):
-     * clásico (iconos por sección), panel (sin barra, menú lateral fijo) o pestañas (una pestaña por sección).
+     * clásico = barra compacta de dos filas (96 px); panel = riel lateral de 64 px.
+     * El valor antiguo «pestanas» se conserva en la BD y se muestra como barra compacta.
      */
     public const MENUS = [
-        'clasico'  => 'Modo clásico',
-        'panel'    => 'Modo panel',
-        'pestanas' => 'Modo pestaña',
+        'clasico' => 'Barra compacta (recomendado)',
+        'panel'   => 'Riel lateral',
     ];
 
     /** Texto de ayuda de cada modo (bajo el selector de Apariencia del proyecto) */
     public const MENUS_AYUDA = [
-        'clasico'  => 'Los iconos de las herramientas se agrupan por sección en una sola barra, como hasta ahora.',
-        'panel'    => 'Oculta la barra de iconos y deja fijo el menú lateral con todas las herramientas del proyecto.',
-        'pestanas' => 'Los iconos se acomodan por sección en pestañas: eliges la sección y ves sus herramientas.',
+        'clasico' => 'Dos filas finas: proyecto, búsqueda y cuenta arriba; herramientas de la sección activa abajo. Ocupa 96 px y deja el contenido a la vista.',
+        'panel'   => 'Mueve las secciones a un riel lateral de 64 px y deja la barra superior en 56 px. El panel de herramientas se abre sobre el contenido.',
     ];
 
-    /** Modo válido o 'clasico' */
+    /** Modo válido o 'clasico' (incluye el antiguo 'pestanas') */
     public static function normMenu($menu): string
     {
         $menu = (string)$menu;
@@ -98,9 +97,10 @@ class TemaProyecto
         return self::normMenu($valor) === 'panel';
     }
 
+    /** Compatibilidad: el antiguo modo pestaña ahora usa la barra compacta. */
     public static function esPestanas($valor): bool
     {
-        return self::normMenu($valor) === 'pestanas';
+        return false;
     }
 
     /** id => [nombre, tono para tema claro, tono para tema oscuro] */

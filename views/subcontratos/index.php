@@ -11,8 +11,13 @@ $hoy = date('Y-m-d');
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-handshake"></i> Subcontratos</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · alcance, monto, documentos obligatorios y estimaciones</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-file-contract"></i> <b><?php echo (int)($resumen['total'] ?? 0); ?></b> subcontratos</span>
+            <?php if (!empty($resumen['con_faltantes'])): ?><span><i class="fa-solid fa-triangle-exclamation"></i> <b><?php echo (int)($resumen['con_faltantes'] ?? 0); ?></b> con documentos faltantes</span><?php endif; ?>
+        </div>
     </div>
     <?php if ($disponible && $puedeEditar && !$s): ?><a class="btn btn-primary" href="<?php echo s($url(['nuevo' => 1])); ?>">+ Nuevo subcontrato</a><?php endif; ?>
 </div>
@@ -32,10 +37,10 @@ $hoy = date('Y-m-d');
 
 <?php if (!$s): ?>
 <div class="cb-kpis" style="margin-bottom:1.4rem">
-    <div class="cb-kpi"><small>Subcontratos</small><strong><?php echo (int)$resumen['total']; ?></strong><span>Con alcance y monto</span></div>
-    <div class="cb-kpi"><small>Monto contratado</small><strong class="mono"><?php echo $m($resumen['monto']); ?></strong><span>Pagado <?php echo $m($resumen['pagado']); ?></span></div>
-    <div class="cb-kpi"><small>Saldo por pagar</small><strong class="mono"><?php echo $m($resumen['saldo']); ?></strong><span>Según estimaciones aprobadas</span></div>
-    <div class="cb-kpi <?php echo $resumen['con_faltantes'] ? 'cb-kpi-alerta' : ''; ?>"><small>Con documentos faltantes</small><strong><?php echo (int)$resumen['con_faltantes']; ?></strong><span><?php echo (int)$resumen['por_vencer']; ?> por vencer</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-file-contract"></i></span><small>Subcontratos</small><strong><?php echo (int)$resumen['total']; ?></strong><span>Con alcance y monto</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-sack-dollar"></i></span><small>Monto contratado</small><strong class="mono"><?php echo $m($resumen['monto']); ?></strong><span>Pagado <?php echo $m($resumen['pagado']); ?></span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-scale-balanced"></i></span><small>Saldo por pagar</small><strong class="mono"><?php echo $m($resumen['saldo']); ?></strong><span>Según estimaciones aprobadas</span></div>
+    <div class="cb-kpi <?php echo $resumen['con_faltantes'] ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-folder-open"></i></span><small>Con documentos faltantes</small><strong><?php echo (int)$resumen['con_faltantes']; ?></strong><span><?php echo (int)$resumen['por_vencer']; ?> por vencer</span></div>
 </div>
 <?php endif; ?>
 

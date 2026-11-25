@@ -8,8 +8,14 @@ $e = $editar;
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-truck"></i> Equipo y maquinaria</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · horas, costo por actividad y servicios preventivos</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-truck-fast"></i> <b><?php echo (int)($resumen['total'] ?? 0); ?></b> equipos</span>
+            <span><i class="fa-solid fa-screwdriver-wrench"></i> <b><?php echo (int)($resumen['mantenimiento'] ?? 0); ?></b> en mantenimiento</span>
+            <span><i class="fa-solid fa-clock"></i> <b><?php echo number_format((float)($resumen['horas_mes'] ?? 0), 1); ?></b> h este mes</span>
+        </div>
     </div>
     <?php if ($puedeEditar && $disponible): ?><div><a href="<?php echo s($url(['nuevo' => 1])); ?>" class="btn btn-primary">+ Nuevo equipo</a> <a href="<?php echo s($url(['registrar' => 1])); ?>" class="btn btn-ghost">Registrar horas</a></div><?php endif; ?>
 </div>
@@ -29,9 +35,9 @@ $e = $editar;
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
 
 <div class="cb-kpis">
-    <div class="cb-kpi"><small>Equipo registrado</small><strong><?php echo (int)$resumen['total']; ?></strong><span><?php echo (int)$resumen['operativos']; ?> operativo(s) · <?php echo (int)$resumen['mantenimiento']; ?> en mantenimiento</span></div>
-    <div class="cb-kpi"><small>Horas este mes</small><strong><?php echo number_format($resumen['horas_mes'], 1); ?></strong><span>Costo: <?php echo \Classes\Costos::moneda($resumen['costo_mes']); ?></span></div>
-    <div class="cb-kpi <?php echo $servicios ? 'cb-kpi-alerta' : ''; ?>"><small>Servicios próximos</small><strong><?php echo count($servicios); ?></strong><span>Por fecha o por horas acumuladas</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-truck-fast"></i></span><small>Equipo registrado</small><strong><?php echo (int)$resumen['total']; ?></strong><span><?php echo (int)$resumen['operativos']; ?> operativo(s) · <?php echo (int)$resumen['mantenimiento']; ?> en mantenimiento</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-clock"></i></span><small>Horas este mes</small><strong><?php echo number_format($resumen['horas_mes'], 1); ?></strong><span>Costo: <?php echo \Classes\Costos::moneda($resumen['costo_mes']); ?></span></div>
+    <div class="cb-kpi <?php echo $servicios ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-screwdriver-wrench"></i></span><small>Servicios próximos</small><strong><?php echo count($servicios); ?></strong><span>Por fecha o por horas acumuladas</span></div>
 </div>
 
 <?php if ($servicios): ?>

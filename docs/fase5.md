@@ -24,7 +24,7 @@ Migración: `database/migracion_fase5.sql` (crea `api_tokens`, `webhooks` y `web
 - Eventos: `Webhooks::EVENTOS` (actividad, restricción, bitácora, reporte, submittal, punch, RFI). El subconjunto que escucha Telegram está en `Telegram::EVENTOS` (`docs/telegram.md`).
 
 ## 5.2 Multi-idioma
-- El idioma (cookie `idioma`, selector ES/EN en la barra superior y en Ajustes) ya existía; esta fase cubrió las pantallas principales: inicio, proyectos, login, programa, Submittals, Bitácora, Reporte diario, Punch, Lookahead (columnas), diseño de listas, campos, plantillas, marca e integraciones.
+- El idioma (cookie `idioma`, selector ES/EN en el menú de la cuenta y en Ajustes) ya existía; esta fase cubrió las pantallas principales: inicio, proyectos, login, programa, Submittals, Bitácora, Reporte diario, Punch, Lookahead (columnas), diseño de listas, campos, plantillas, marca e integraciones.
 - **Para traducir una pantalla:** envuelve el texto en `t('Texto en español')` y agrega `'Texto en español' => 'English text'` a `includes/lang/en.php`. `t('Hola {n}', ['n' => 3])` sustituye variables. El texto original (español) es la clave.
 - `php bin/idioma_cobertura.php [--lista]` lista los `t()` sin traducción (falla si falta alguno; también lo corre `tests/run.php`). Los nombres genéricos de columnas (`ListaDiseno`, `ProgramaColumnas`) pasan por `t()` salvo que el usuario les haya puesto nombre propio.
 - **No se traducen todavía:** manual, correos, PDF, exportaciones, mensajes de error de controladores y la app de escritorio. Las pantallas sin `t()` siguen en español.

@@ -32,9 +32,11 @@
 @use 'componentes/divisor';
 @use 'componentes/workspace';
 @use 'componentes/suite';
+@use 'componentes/ia';
 
 // Layout
 @use 'layout/layout';
+@use 'layout/navegacion';
 @use 'layout/notificaciones';
 
 // Estilos compartidos entre herramientas (menú de descarga, Gantt de

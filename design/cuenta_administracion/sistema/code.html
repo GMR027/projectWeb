@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, initial-scale=1.0">
+  <title>Sistema - Operación de la Plataforma | ProjectWeb</title>
+  <!-- Google Fonts: Space Grotesk, Manrope, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS via script CDN with custom theme config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#0a122a',
+              surface: '#131a33',
+              card: '#171e37',
+              cardHigh: '#212942',
+              cardHighest: '#2c344d',
+              orange: '#ff5a1f',
+              orangeHover: '#ff6e38',
+              orangeMuted: 'rgba(255, 90, 31, 0.15)',
+              cyan: '#00b4d8',
+              cyanMuted: 'rgba(0, 180, 216, 0.15)',
+              text: '#dbe1ff',
+              textMuted: '#94a3b8',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderActive: 'rgba(0, 180, 216, 0.4)',
+              borderOrange: 'rgba(255, 90, 31, 0.4)'
+            }
+          },
+          fontFamily: {
+            display: ['"Space Grotesk"', 'sans-serif'],
+            body: ['Manrope', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0a122a;
+      color: #dbe1ff;
+      font-family: 'Manrope', sans-serif;
+      overflow-x: hidden;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a122a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #212942;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #00b4d8;
+    }
+    /* SVG Icons standard sizing & alignment */
+    .icon-ui {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .icon-ui-lg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+    .glass-panel {
+      background: rgba(23, 30, 55, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-panel-elevated {
+      background: rgba(33, 41, 66, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0a122a] text-[#dbe1ff] flex flex-col selection:bg-[#ff5a1f] selection:text-white antialiased">
+
+  <!-- ========================================================================= -->
+  <!-- 1. BARRA SUPERIOR (56px) -->
+  <!-- ========================================================================= -->
+  <header class="h-14 bg-[#070d20] border-b border-brand-border px-4 flex items-center justify-between sticky top-0 z-50 select-none">
+    <div class="flex items-center space-x-4">
+      <!-- Logo ProjectWeb -->
+      <a href="#" class="flex items-center space-x-2.5 focus:outline-none focus:ring-2 focus:ring-brand-cyan rounded p-1">
+        <div class="w-7 h-7 rounded bg-[#ff5a1f] flex items-center justify-center shadow-lg shadow-orange-950/40">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <div class="flex items-center space-x-1.5">
+            <span class="font-display font-bold text-base tracking-tight text-white">ProjectWeb</span>
+            <span class="px-1.5 py-0.2 bg-[#ff5a1f]/20 text-[#ff5a1f] border border-[#ff5a1f]/40 text-[10px] font-mono-num font-semibold rounded">V4.2</span>
+          </div>
+          <span class="text-[9px] uppercase tracking-wider text-slate-400 font-mono-num -mt-0.5">CIVILTECH INFRA-PLATFORM</span>
+        </div>
+      </a>
+
+      <!-- Selector de proyecto (PK / Tramo) -->
+      <div class="h-5 w-px bg-brand-border mx-1"></div>
+      <div class="relative">
+        <button class="h-9 px-3 rounded bg-brand-surface border border-brand-border hover:border-brand-borderActive flex items-center space-x-2.5 text-xs text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <svg class="icon-ui text-brand-cyan" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <span class="font-medium">Tramo 4 - Viaducto Elevado Oriente</span>
+          <span class="font-mono-num text-[11px] text-brand-textMuted bg-[#0a122a] px-1.5 py-0.5 rounded border border-brand-border">PK 42+800</span>
+          <svg class="icon-ui text-brand-textMuted w-3 h-3" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Centro: Buscador Global con atajo de teclado -->
+    <div class="flex-1 max-w-lg mx-6">
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="icon-ui" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </span>
+        <input type="text" placeholder="Buscar parámetros, respaldos, nodos, logs o usuarios del sistema..." 
+               class="w-full h-9 pl-9 pr-12 text-xs bg-[#0b132a] border border-brand-border rounded text-brand-text placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-cyan focus:border-brand-cyan transition-colors">
+        <kbd class="absolute right-2.5 top-2 text-[10px] font-mono-num bg-brand-surface text-slate-400 px-1.5 py-0.5 rounded border border-brand-border">⌘K</kbd>
+      </div>
+    </div>
+
+    <!-- Derecha: Gateway status, Campana, Avatar & Tenant -->
+    <div class="flex items-center space-x-3">
+      <!-- Gateway status badge -->
+      <div class="hidden xl:flex items-center space-x-2 px-2.5 py-1 rounded bg-brand-surface border border-brand-border">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+        <span class="text-[11px] font-mono-num text-cyan-300 font-medium">GATEWAY C-14 ONLINE</span>
+      </div>
+
+      <!-- Campana de alertas (Objetivo táctil 44px) -->
+      <button aria-label="Notificaciones del sistema" class="w-11 h-11 flex items-center justify-center rounded-lg text-brand-text hover:bg-brand-surface border border-transparent hover:border-brand-border relative focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+        <svg class="icon-ui-lg text-slate-300" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#ff5a1f] ring-2 ring-[#070d20]"></span>
+      </button>
+
+      <!-- Perfil de Administrador (Objetivo táctil 44px) -->
+      <div class="flex items-center pl-2 border-l border-brand-border">
+        <button class="h-11 px-2 flex items-center space-x-2.5 rounded-lg hover:bg-brand-surface focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-colors">
+          <div class="w-8 h-8 rounded bg-brand-cardHigh border border-brand-cyan/40 flex items-center justify-center text-xs font-mono-num font-bold text-brand-cyan shadow-sm">
+            AR
+          </div>
+          <div class="text-left hidden md:block">
+            <div class="text-xs font-semibold leading-tight text-white">Administrador Red</div>
+            <div class="text-[10px] font-mono-num text-slate-400">INFRA-CORP-01</div>
+          </div>
+          <svg class="icon-ui w-3 h-3 text-slate-400" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. BARRA DE CONTEXTO (40px) -->
+  <!-- ========================================================================= -->
+  <nav aria-label="Barra de contexto de telemetría" class="h-10 bg-[#0c142e] border-b border-brand-border px-6 flex items-center justify-between text-xs select-none">
+    <!-- Migas de pan estructurales -->
+    <div class="flex items-center space-x-2 font-mono-num text-[11px] text-slate-400">
+      <span class="hover:text-brand-text cursor-pointer flex items-center gap-1">
+        <svg class="w-3 h-3 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Configuración
+      </span>
+      <span>/</span>
+      <span class="hover:text-brand-text cursor-pointer">Administración del Núcleo</span>
+      <span>/</span>
+      <span class="text-brand-cyan font-semibold flex items-center gap-1">
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Sistema
+      </span>
+    </div>
+
+    <!-- Indicadores de Telemetría en Vivo -->
+    <div class="flex items-center space-x-5 font-mono-num text-[11px]">
+      <div class="flex items-center space-x-1.5">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+        <span class="font-bold tracking-wider text-emerald-400">EN VIVO</span>
+      </div>
+      <div class="text-slate-400 flex items-center space-x-1">
+        <span>Latencia:</span>
+        <span class="text-slate-200 font-semibold">18ms</span>
+      </div>
+      <div class="text-slate-400 flex items-center space-x-1">
+        <span>Nodo:</span>
+        <span class="text-cyan-300 font-semibold">MX-CENTRAL-02</span>
+      </div>
+      <div class="text-slate-400 flex items-center space-x-1">
+        <span>Cifrado:</span>
+        <span class="text-slate-200">TLS 1.3 / AES-256</span>
+      </div>
+      <div class="text-slate-400 flex items-center space-x-1">
+        <span>Uptime:</span>
+        <span class="text-emerald-300 font-semibold">99.98%</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- 3. CUERPO PRINCIPAL: RIEL LATERAL + CONTENIDO OPERATIVO -->
+  <!-- ========================================================================= -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- RIEL LATERAL DE SECCIONES (240px) -->
+    <aside aria-label="Navegación de secciones de Sistema" class="w-60 bg-[#090f23] border-r border-brand-border flex flex-col justify-between p-3 select-none flex-shrink-0">
+      <div>
+        <div class="px-3 py-2 text-[10px] font-mono-num uppercase tracking-widest text-slate-500 font-semibold">
+          Módulos del Sistema
+        </div>
+        <nav class="space-y-1 mt-1">
+          <!-- 1. Resumen -->
+          <a href="#resumen" class="flex items-center space-x-3 px-3 py-2.5 rounded-md text-xs font-medium text-white bg-brand-surface border-l-2 border-brand-cyan shadow-sm">
+            <svg class="icon-ui text-brand-cyan" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span class="flex-1">Resumen</span>
+            <span class="text-[10px] font-mono-num bg-[#0a122a] text-cyan-300 px-1.5 py-0.2 rounded border border-brand-border">OK</span>
+          </a>
+          <!-- 2. Almacenamiento -->
+          <a href="#almacenamiento" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+            <span class="flex-1">Almacenamiento</span>
+            <span class="text-[10px] font-mono-num text-orange-400">62%</span>
+          </a>
+          <!-- 3. Respaldos -->
+          <a href="#respaldos" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <span class="flex-1">Respaldos</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          </a>
+          <!-- 4. Sesiones y dispositivos -->
+          <a href="#sesiones" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg>
+            <span class="flex-1">Sesiones y dispositivos</span>
+            <span class="text-[10px] font-mono-num text-cyan-300">12</span>
+          </a>
+          <!-- 5. App de escritorio -->
+          <a href="#publicaciones" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+            <span class="flex-1">App de escritorio</span>
+            <span class="text-[9px] font-mono-num text-slate-500">v2.4.1</span>
+          </a>
+          <!-- 6. App Android -->
+          <a href="#publicaciones" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+            <span class="flex-1">App Android</span>
+            <span class="text-[9px] font-mono-num text-slate-500">0.2.19</span>
+          </a>
+          <!-- 7. IA conectada -->
+          <a href="#ia-conectada" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9.5C4.8 8.8 4 7.5 4 6a4 4 0 0 1 8-4z"/><circle cx="12" cy="18" r="4"/><path d="M8 18h8"/></svg>
+            <span class="flex-1">IA conectada</span>
+            <span class="text-[10px] font-mono-num text-emerald-400">3 Activas</span>
+          </a>
+          <!-- 8. Accesos -->
+          <a href="#accesos" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="flex-1">Accesos</span>
+          </a>
+          <!-- 9. Idioma -->
+          <a href="#idioma-seccion" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            <span class="flex-1">Idioma</span>
+            <span class="text-[10px] font-mono-num text-slate-400">ES-MX</span>
+          </a>
+          <!-- 10. Manual -->
+          <a href="#manual" class="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-brand-surface/60 transition-colors">
+            <svg class="icon-ui text-slate-400" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+            <span class="flex-1">Manual</span>
+            <svg class="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Telemetría de Servidor en Riel Inferior -->
+      <div class="p-3 bg-[#0c142e] rounded-lg border border-brand-border space-y-2">
+        <div class="flex items-center justify-between text-[11px] font-mono-num">
+          <span class="text-slate-400">CPU Load</span>
+          <span class="text-cyan-300 font-semibold">24.6%</span>
+        </div>
+        <div class="w-full bg-[#171e37] h-1.5 rounded-full overflow-hidden">
+          <div class="bg-cyan-400 h-full rounded-full" style="width: 24.6%"></div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] font-mono-num text-slate-500 pt-1">
+          <span>Mem: 18.2 / 32 GB</span>
+          <span>Temp: 44°C</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO OPERATIVO SCROLLABLE -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+
+      <!-- ===================================================================== -->
+      <!-- A. HERO DE SISTEMA -->
+      <!-- ===================================================================== -->
+      <section id="resumen" class="glass-panel p-5 rounded-lg border border-brand-border relative overflow-hidden">
+        <!-- Glow ambiental sutil civiltech -->
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-brand-cyan/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+          <div class="space-y-1.5">
+            <!-- Eyebrow -->
+            <div class="flex items-center space-x-2">
+              <span class="w-1.5 h-1.5 rounded-sm bg-[#ff5a1f]"></span>
+              <span class="text-[11px] font-mono-num font-semibold text-[#ff5a1f] tracking-widest uppercase">
+                OPERACIÓN DE LA PLATAFORMA :: SYS-MASTER-NODE
+              </span>
+            </div>
+
+            <!-- Título con placa de icono -->
+            <div class="flex items-center space-x-3">
+              <div class="w-11 h-11 rounded bg-brand-surface border border-brand-borderActive flex items-center justify-center text-brand-cyan shadow-inner">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="18" height="18" x="3" y="3" rx="2"/>
+                  <path d="M3 9h18M9 21V9"/>
+                </svg>
+              </div>
+              <div>
+                <h1 class="text-2xl font-display font-bold text-white tracking-tight">Sistema</h1>
+                <p class="text-xs text-brand-textMuted">Almacenamiento, respaldos, sesiones y publicaciones</p>
+              </div>
+            </div>
+
+            <!-- Chips de estado operativo requeridos -->
+            <div class="flex flex-wrap items-center gap-2 pt-2">
+              <!-- Chip 1: Disco 62% -->
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#ff5a1f]/10 border border-[#ff5a1f]/30 text-xs font-mono-num text-[#ff5a1f] font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ff5a1f]"></span>
+                Disco 62%
+              </span>
+              <!-- Chip 2: 5 respaldos -->
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-xs font-mono-num text-cyan-300 font-medium">
+                <svg class="w-3 h-3 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                5 respaldos
+              </span>
+              <!-- Chip 3: 12 sesiones -->
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-xs font-mono-num text-emerald-300 font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                12 sesiones
+              </span>
+              <!-- Chip 4: APK 0.2.19 -->
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-xs font-mono-num text-slate-300 font-medium">
+                <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="14" height="20" x="5" y="2" rx="2"/></svg>
+                APK 0.2.19 (Build 108)
+              </span>
+              <!-- Chip Extra: Integridad SHA -->
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-surface/40 border border-brand-border text-[11px] font-mono-num text-slate-400">
+                <svg class="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6 9 17l-5-5"/></svg>
+                SHA-256 Verificado
+              </span>
+            </div>
+          </div>
+
+          <!-- Acción Principal: Manual del Administrador (Objetivo táctil 44px) -->
+          <div class="flex items-center space-x-3 self-start lg:self-center">
+            <a href="#manual" class="h-11 px-4 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-border hover:border-brand-cyan text-xs font-semibold text-white flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+              <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+              <span>Manual del administrador</span>
+              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+            <button class="h-11 px-4 rounded bg-[#ff5a1f] hover:bg-[#ff6e38] text-xs font-semibold text-white flex items-center space-x-2 shadow-lg shadow-orange-950/40 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+              <span>Sincronizar Nodo</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- B. BLOQUE DE KPIS CRÍTICOS -->
+      <!-- ===================================================================== -->
+      <section aria-label="KPIs del Sistema" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <!-- KPI 1: Disco libre 38 GB -->
+        <div class="glass-panel p-3.5 rounded-lg border border-brand-border hover:border-brand-borderActive transition-all relative">
+          <div class="flex items-center justify-between text-xs text-brand-textMuted font-mono-num mb-1">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              Disco libre
+            </span>
+            <span class="text-[10px] text-cyan-300 bg-cyan-950/40 px-1 rounded">38% libre</span>
+          </div>
+          <div class="text-2xl font-mono-num font-bold text-white tracking-tight">38 <span class="text-sm font-normal text-slate-400">GB</span></div>
+          <div class="text-[11px] font-mono-num text-slate-400 mt-1 flex items-center justify-between">
+            <span>De 100 GB partición</span>
+            <span class="text-emerald-400 font-medium">+2.1 GB trim.</span>
+          </div>
+        </div>
+
+        <!-- KPI 2: Archivos 12.4 GB -->
+        <div class="glass-panel p-3.5 rounded-lg border border-brand-border hover:border-brand-borderActive transition-all">
+          <div class="flex items-center justify-between text-xs text-brand-textMuted font-mono-num mb-1">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Archivos obra
+            </span>
+            <span class="text-[10px] text-orange-300 bg-orange-950/40 px-1 rounded">BIM / DWG</span>
+          </div>
+          <div class="text-2xl font-mono-num font-bold text-white tracking-tight">12.4 <span class="text-sm font-normal text-slate-400">GB</span></div>
+          <div class="text-[11px] font-mono-num text-slate-400 mt-1 flex items-center justify-between">
+            <span>3,842 archivos CAD/LAS</span>
+            <span class="text-orange-400">+450 MB hoy</span>
+          </div>
+        </div>
+
+        <!-- KPI 3: Base de datos 1.8 GB -->
+        <div class="glass-panel p-3.5 rounded-lg border border-brand-border hover:border-brand-borderActive transition-all">
+          <div class="flex items-center justify-between text-xs text-brand-textMuted font-mono-num mb-1">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/><path d="M3 19c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+              Base de datos
+            </span>
+            <span class="text-[10px] text-cyan-300 bg-cyan-950/40 px-1 rounded">Postgres 16</span>
+          </div>
+          <div class="text-2xl font-mono-num font-bold text-white tracking-tight">1.8 <span class="text-sm font-normal text-slate-400">GB</span></div>
+          <div class="text-[11px] font-mono-num text-slate-400 mt-1 flex items-center justify-between">
+            <span>Telemetría & Registros</span>
+            <span class="text-slate-300">Índices óptimos</span>
+          </div>
+        </div>
+
+        <!-- KPI 4: Sesiones activas 12 -->
+        <div class="glass-panel p-3.5 rounded-lg border border-brand-border hover:border-brand-borderActive transition-all">
+          <div class="flex items-center justify-between text-xs text-brand-textMuted font-mono-num mb-1">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Sesiones activas
+            </span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <div class="text-2xl font-mono-num font-bold text-white tracking-tight">12 <span class="text-sm font-normal text-slate-400">conectados</span></div>
+          <div class="text-[11px] font-mono-num text-slate-400 mt-1 flex items-center justify-between">
+            <span>6 Web, 4 Android, 2 Desk</span>
+            <span class="text-emerald-300 font-semibold">0 bloqueos</span>
+          </div>
+        </div>
+
+        <!-- KPI 5: Último respaldo hoy 03:00 -->
+        <div class="glass-panel p-3.5 rounded-lg border border-brand-border hover:border-brand-borderActive transition-all">
+          <div class="flex items-center justify-between text-xs text-brand-textMuted font-mono-num mb-1">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Último respaldo
+            </span>
+            <span class="text-[10px] text-emerald-400 bg-emerald-950/40 px-1 rounded">Exitoso</span>
+          </div>
+          <div class="text-2xl font-mono-num font-bold text-white tracking-tight">Hoy, 03:00 <span class="text-sm font-normal text-slate-400">CST</span></div>
+          <div class="text-[11px] font-mono-num text-slate-400 mt-1 flex items-center justify-between">
+            <span>Snapshot automático</span>
+            <span class="text-cyan-300">14.2 GB zip</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- C. ALMACENAMIENTO: TARJETAS DE VOLUMEN, PRONÓSTICO & GRÁFICA DE EVOLUCIÓN -->
+      <!-- ===================================================================== -->
+      <section id="almacenamiento" class="space-y-4">
+        <div class="flex items-center justify-between border-b border-brand-border pb-2">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+            <h2 class="text-base font-display font-bold text-white">Almacenamiento y Topes de Servidor</h2>
+          </div>
+          <span class="text-xs font-mono-num text-slate-400">NVMe SSD Array en RAID-10 (4× 2TB Enterprise)</span>
+        </div>
+
+        <!-- Dos tarjetas de volumen con barra, porcentaje y pronóstico -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Tarjeta de Volumen 1: Archivos de Obra y Geotecnia -->
+          <div class="glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-sm bg-cyan-400"></span>
+                  <h3 class="text-sm font-bold text-white font-display">Volumen A: Archivos de Obra y BIM</h3>
+                </div>
+                <p class="text-xs text-brand-textMuted mt-0.5">Planos IFC, levantamientos LiDAR, nubes de puntos y ortofotos</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-mono-num bg-cyan-950/60 border border-cyan-800 text-cyan-300 font-bold">
+                62% ocupado
+              </span>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-mono-num">
+                <span class="text-slate-300">12.4 GB utilizados</span>
+                <span class="text-slate-400">Tope: 20.0 GB</span>
+              </div>
+              <div class="w-full bg-[#0a122a] h-2.5 rounded-full overflow-hidden p-0.5 border border-brand-border">
+                <div class="bg-gradient-to-r from-cyan-500 to-cyan-300 h-full rounded-full" style="width: 62%"></div>
+              </div>
+            </div>
+
+            <!-- Pronóstico de saturación -->
+            <div class="p-2.5 rounded bg-brand-surface/70 border border-brand-border flex items-center justify-between text-xs font-mono-num">
+              <div class="flex items-center space-x-2 text-slate-300">
+                <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                <span>Pronóstico de saturación:</span>
+              </div>
+              <div class="text-right">
+                <span class="text-emerald-400 font-bold">114 días</span>
+                <span class="text-[11px] text-slate-400"> (Tasa media: +68 MB/día)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Volumen 2: Base de Datos Relacional y Telemetría IoT -->
+          <div class="glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-sm bg-[#ff5a1f]"></span>
+                  <h3 class="text-sm font-bold text-white font-display">Volumen B: Base de Datos y Logs IoT</h3>
+                </div>
+                <p class="text-xs text-brand-textMuted mt-0.5">Piezómetros, celdas de carga de pilotes, inclinómetros y accesos</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-mono-num bg-orange-950/60 border border-orange-800 text-orange-300 font-bold">
+                18% ocupado
+              </span>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-mono-num">
+                <span class="text-slate-300">1.8 GB utilizados</span>
+                <span class="text-slate-400">Tope: 10.0 GB</span>
+              </div>
+              <div class="w-full bg-[#0a122a] h-2.5 rounded-full overflow-hidden p-0.5 border border-brand-border">
+                <div class="bg-gradient-to-r from-orange-600 to-[#ff5a1f] h-full rounded-full" style="width: 18%"></div>
+              </div>
+            </div>
+
+            <!-- Pronóstico de saturación -->
+            <div class="p-2.5 rounded bg-brand-surface/70 border border-brand-border flex items-center justify-between text-xs font-mono-num">
+              <div class="flex items-center space-x-2 text-slate-300">
+                <svg class="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                <span>Pronóstico de saturación:</span>
+              </div>
+              <div class="text-right">
+                <span class="text-cyan-300 font-bold">&gt; 380 días</span>
+                <span class="text-[11px] text-slate-400"> (Tasa media: +21 MB/día)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfica de evolución del espacio y Disco del Servidor -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Gráfica de Evolución (2 cols) -->
+          <div class="lg:col-span-2 glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono-num">Evolución del Espacio en Disco (Últimos 30 días)</h3>
+                <p class="text-[11px] text-slate-500 font-mono-num">Incremento neto acumulado: +2.4 GB</p>
+              </div>
+              <div class="flex items-center space-x-2 text-xs font-mono-num">
+                <span class="flex items-center gap-1 text-cyan-300"><span class="w-2 h-0.5 bg-cyan-400"></span> Archivos</span>
+                <span class="flex items-center gap-1 text-orange-400"><span class="w-2 h-0.5 bg-[#ff5a1f]"></span> DB/Logs</span>
+              </div>
+            </div>
+
+            <!-- SVG Data Chart CivilTech (Estilo Osciloscopio / Telemetría) -->
+            <div class="h-44 w-full bg-[#0c142e] rounded border border-brand-border relative p-2 flex flex-col justify-between">
+              <!-- Rejilla de fondo -->
+              <svg class="w-full h-full" viewBox="0 0 600 140" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00b4d8" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#00b4d8" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                <!-- Guías horizontales -->
+                <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
+                <line x1="0" y1="60" x2="600" y2="60" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
+                <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
+
+                <!-- Área rellenada Archivos -->
+                <path d="M 0 120 Q 80 115 150 108 T 300 95 T 450 82 T 600 70 L 600 140 L 0 140 Z" fill="url(#cyanGrad)"/>
+                <!-- Línea Archivos -->
+                <path d="M 0 120 Q 80 115 150 108 T 300 95 T 450 82 T 600 70" fill="none" stroke="#00b4d8" stroke-width="2.5"/>
+
+                <!-- Línea Base de datos -->
+                <path d="M 0 135 Q 100 134 200 132 T 400 128 T 600 122" fill="none" stroke="#ff5a1f" stroke-width="2" stroke-dasharray="4 2"/>
+
+                <!-- Puntos de muestreo -->
+                <circle cx="150" cy="108" r="3.5" fill="#00b4d8" stroke="#0a122a" stroke-width="1.5"/>
+                <circle cx="300" cy="95" r="3.5" fill="#00b4d8" stroke="#0a122a" stroke-width="1.5"/>
+                <circle cx="450" cy="82" r="3.5" fill="#00b4d8" stroke="#0a122a" stroke-width="1.5"/>
+                <circle cx="600" cy="70" r="4.5" fill="#00b4d8" stroke="#ffffff" stroke-width="2"/>
+              </svg>
+
+              <!-- Eje X Fechas -->
+              <div class="flex justify-between text-[10px] font-mono-num text-slate-500 pt-1 border-t border-brand-border">
+                <span>01 Feb</span>
+                <span>08 Feb</span>
+                <span>15 Feb</span>
+                <span>22 Feb</span>
+                <span>01 Mar (Hoy)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disco del Servidor (1 col) -->
+          <div class="glass-panel p-4 rounded-lg border border-brand-border space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono-num">Disco del Servidor</h3>
+                <span class="text-[10px] font-mono-num text-emerald-400 bg-emerald-950/40 px-1.5 py-0.2 rounded">S.M.A.R.T. OK</span>
+              </div>
+              <p class="text-xs text-brand-textMuted mt-1">Partición raíz principal `/dev/nvme0n1p2` montada en `/`</p>
+            </div>
+
+            <div class="p-3 bg-[#0a122a] rounded border border-brand-border space-y-2">
+              <div class="flex justify-between text-xs font-mono-num">
+                <span class="text-slate-400">Total asignado</span>
+                <span class="text-white font-bold">100.00 GB</span>
+              </div>
+              <div class="flex justify-between text-xs font-mono-num">
+                <span class="text-slate-400">Usado (Archivos + DB + OS)</span>
+                <span class="text-orange-400 font-bold">62.00 GB (62%)</span>
+              </div>
+              <div class="flex justify-between text-xs font-mono-num">
+                <span class="text-slate-400">Disponible neto</span>
+                <span class="text-cyan-300 font-bold">38.00 GB (38%)</span>
+              </div>
+              <div class="w-full bg-[#171e37] h-2 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-cyan-400 to-[#ff5a1f] h-full" style="width: 62%"></div>
+              </div>
+            </div>
+
+            <div class="text-[11px] font-mono-num text-slate-400 flex items-center justify-between">
+              <span>I/O Speed: 2,450 MB/s</span>
+              <button class="text-brand-cyan hover:underline text-xs flex items-center gap-1 focus:outline-none">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                Ver diagnóstico
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- D. RESPALDOS: PANEL DE RESPALDO DIARIO AUTOMÁTICO, ACCIONES & TABLA -->
+      <!-- ===================================================================== -->
+      <section id="respaldos" class="space-y-4">
+        <div class="flex items-center justify-between border-b border-brand-border pb-2">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <h2 class="text-base font-display font-bold text-white">Respaldos del Sistema y Restauración</h2>
+          </div>
+          <span class="text-xs font-mono-num text-slate-400">5 Respaldos vigentes en repositorio frío S3 + Local</span>
+        </div>
+
+        <!-- Panel de respaldo diario automático con hora y retención -->
+        <div class="glass-panel p-4 rounded-lg border border-brand-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 rounded bg-cyan-950/60 border border-brand-cyan/40 flex items-center justify-center text-brand-cyan">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-sm font-bold text-white">Respaldo Diario Automático</h3>
+                <span class="px-2 py-0.2 rounded text-[10px] font-mono-num bg-emerald-950/60 border border-emerald-700 text-emerald-400 font-bold">ACTIVO</span>
+              </div>
+              <p class="text-xs text-brand-textMuted mt-0.5">
+                Hora programada: <span class="font-mono-num text-cyan-300 font-semibold">03:00 hrs CST</span> | Política de retención: <span class="font-mono-num text-slate-200 font-semibold">30 días consecutivos</span> (Rotación FIFO)
+              </p>
+            </div>
+          </div>
+
+          <!-- Acciones de generar y restaurar (Objetivo táctil 44px) -->
+          <div class="flex items-center space-x-3 w-full md:w-auto">
+            <button class="h-11 px-4 rounded bg-[#ff5a1f] hover:bg-[#ff6e38] text-xs font-semibold text-white flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-orange-400 shadow-sm transition-all flex-1 md:flex-initial">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              <span>Generar respaldo manual</span>
+            </button>
+            <button class="h-11 px-4 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-border hover:border-brand-borderActive text-xs font-semibold text-slate-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all flex-1 md:flex-initial">
+              <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+              <span>Restaurar punto...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de Respaldos Recientes -->
+        <div class="glass-panel rounded-lg border border-brand-border overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0b132a] text-slate-400 font-mono-num uppercase text-[10px] tracking-wider border-b border-brand-border">
+                <tr>
+                  <th class="py-3 px-4">Identificador / Snapshot</th>
+                  <th class="py-3 px-4">Fecha y Hora</th>
+                  <th class="py-3 px-4">Tamaño</th>
+                  <th class="py-3 px-4">Tipo</th>
+                  <th class="py-3 px-4">Estado</th>
+                  <th class="py-3 px-4">Checksum SHA-256</th>
+                  <th class="py-3 px-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-border font-mono-num">
+                <!-- Fila 1 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4 text-white font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>BKP-20250301-0300-AUTO</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">Hoy, 01 Mar 03:00 CST</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">14.2 GB</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-brand-surface text-slate-300 border border-brand-border">Completo (BIM+DB)</span></td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Verificado</span></td>
+                  <td class="py-3 px-4 text-[11px] text-slate-400">9f8e...72a1</td>
+                  <td class="py-3 px-4 text-right space-x-2">
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border hover:border-brand-cyan transition-colors" title="Descargar paquete">Descargar</button>
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-slate-300 border border-brand-border hover:border-brand-borderActive transition-colors" title="Restaurar a este punto">Restaurar</button>
+                  </td>
+                </tr>
+                <!-- Fila 2 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4 text-white font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>BKP-20250228-0300-AUTO</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">Ayer, 28 Feb 03:00 CST</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">14.0 GB</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-brand-surface text-slate-300 border border-brand-border">Completo (BIM+DB)</span></td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Verificado</span></td>
+                  <td class="py-3 px-4 text-[11px] text-slate-400">4c1a...99b0</td>
+                  <td class="py-3 px-4 text-right space-x-2">
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border hover:border-brand-cyan transition-colors">Descargar</button>
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-slate-300 border border-brand-border hover:border-brand-borderActive transition-colors">Restaurar</button>
+                  </td>
+                </tr>
+                <!-- Fila 3 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4 text-white font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <span>BKP-20250227-1645-MANUAL</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">27 Feb 16:45 CST</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">1.8 GB</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-brand-surface text-cyan-300 border border-brand-border">Diferencial (Solo DB)</span></td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Verificado</span></td>
+                  <td class="py-3 px-4 text-[11px] text-slate-400">88d2...31e4</td>
+                  <td class="py-3 px-4 text-right space-x-2">
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border hover:border-brand-cyan transition-colors">Descargar</button>
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-slate-300 border border-brand-border hover:border-brand-borderActive transition-colors">Restaurar</button>
+                  </td>
+                </tr>
+                <!-- Fila 4 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4 text-white font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>BKP-20250227-0300-AUTO</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">27 Feb 03:00 CST</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">13.8 GB</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-brand-surface text-slate-300 border border-brand-border">Completo (BIM+DB)</span></td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Verificado</span></td>
+                  <td class="py-3 px-4 text-[11px] text-slate-400">e217...005f</td>
+                  <td class="py-3 px-4 text-right space-x-2">
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border hover:border-brand-cyan transition-colors">Descargar</button>
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-slate-300 border border-brand-border hover:border-brand-borderActive transition-colors">Restaurar</button>
+                  </td>
+                </tr>
+                <!-- Fila 5 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4 text-white font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>BKP-20250226-0300-AUTO</span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">26 Feb 03:00 CST</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">13.7 GB</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-brand-surface text-slate-300 border border-brand-border">Completo (BIM+DB)</span></td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Verificado</span></td>
+                  <td class="py-3 px-4 text-[11px] text-slate-400">110f...87cd</td>
+                  <td class="py-3 px-4 text-right space-x-2">
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border hover:border-brand-cyan transition-colors">Descargar</button>
+                    <button class="h-9 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-slate-300 border border-brand-border hover:border-brand-borderActive transition-colors">Restaurar</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- E. SESIONES Y DISPOSITIVOS: TABLA CON FILTROS Y BADGE «TU SESIÓN» -->
+      <!-- ===================================================================== -->
+      <section id="sesiones" class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-border pb-2">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg>
+            <h2 class="text-base font-display font-bold text-white">Sesiones Activas y Dispositivos de Supervisión</h2>
+            <span class="px-2 py-0.2 bg-emerald-950/60 border border-emerald-700 text-emerald-400 text-xs font-mono-num font-bold rounded">12 Activas</span>
+          </div>
+
+          <!-- Filtros de sesiones -->
+          <div class="flex items-center space-x-2">
+            <button class="px-3 py-1.5 rounded bg-brand-surface text-white border border-brand-cyan text-xs font-medium focus:outline-none">Todas (12)</button>
+            <button class="px-3 py-1.5 rounded bg-[#0b132a] text-slate-400 hover:text-white border border-brand-border text-xs font-medium transition-colors">Web (6)</button>
+            <button class="px-3 py-1.5 rounded bg-[#0b132a] text-slate-400 hover:text-white border border-brand-border text-xs font-medium transition-colors">Android (4)</button>
+            <button class="px-3 py-1.5 rounded bg-[#0b132a] text-slate-400 hover:text-white border border-brand-border text-xs font-medium transition-colors">Escritorio (2)</button>
+            <button class="h-9 px-3 rounded bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800 text-xs font-medium flex items-center space-x-1.5 focus:outline-none transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
+              <span>Cerrar otras sesiones</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-lg border border-brand-border overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0b132a] text-slate-400 font-mono-num uppercase text-[10px] tracking-wider border-b border-brand-border">
+                <tr>
+                  <th class="py-3 px-4">Usuario / Operador</th>
+                  <th class="py-3 px-4">Dispositivo / Cliente</th>
+                  <th class="py-3 px-4">Dirección IP y Nodo</th>
+                  <th class="py-3 px-4">Ubicación Obra</th>
+                  <th class="py-3 px-4">Inicio de Sesión</th>
+                  <th class="py-3 px-4">Última Actividad</th>
+                  <th class="py-3 px-4 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-border font-mono-num">
+                <!-- Sesión 1: Tu sesión actual -->
+                <tr class="bg-cyan-950/20 hover:bg-cyan-950/30 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center space-x-2">
+                      <div class="font-bold text-white font-body">Administrador Red (Tú)</div>
+                      <span class="px-2 py-0.5 rounded bg-brand-cyan/20 border border-brand-cyan text-brand-cyan text-[10px] font-bold">
+                        ★ Tu sesión
+                      </span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">admin.infra@projectweb.mx</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="text-slate-200 font-semibold">Chrome 122 / macOS (Escritorio)</div>
+                    <div class="text-[10px] text-slate-500">ID: SES-ROOT-8812</div>
+                  </td>
+                  <td class="py-3 px-4 text-cyan-300">187.190.24.12 <span class="text-slate-500">(MX-CENTRAL)</span></td>
+                  <td class="py-3 px-4 text-slate-300">Oficina Central CDMX</td>
+                  <td class="py-3 px-4 text-slate-400">Hoy, 08:15 CST</td>
+                  <td class="py-3 px-4 text-emerald-400 font-semibold">Hace 18 seg</td>
+                  <td class="py-3 px-4 text-right">
+                    <span class="text-slate-500 text-[11px]">En uso</span>
+                  </td>
+                </tr>
+
+                <!-- Sesión 2 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Ing. Carlos Roldán</div>
+                    <div class="text-[11px] text-slate-400">c.roldan@constructora-bajio.mx</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="text-slate-200">App Android 0.2.19 (Rugged Tablet)</div>
+                    <div class="text-[10px] text-slate-500">Samsung Tab Active4 Pro</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">201.144.92.5 <span class="text-slate-500">(Nodo Celular 5G)</span></td>
+                  <td class="py-3 px-4 text-slate-300">Pila 14-B (Viaducto Ote)</td>
+                  <td class="py-3 px-4 text-slate-400">Hoy, 09:12 CST</td>
+                  <td class="py-3 px-4 text-emerald-400 font-semibold">Hace 2 min</td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-9 px-3 rounded bg-brand-surface hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-brand-border hover:border-red-800 transition-colors">Revocar</button>
+                  </td>
+                </tr>
+
+                <!-- Sesión 3 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Arq. Mariana Torres</div>
+                    <div class="text-[11px] text-slate-400">m.torres@constructora-bajio.mx</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="text-slate-200">App Escritorio v2.4.1 (Windows 11)</div>
+                    <div class="text-[10px] text-slate-500">Estación BIM Dell Precision</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">189.201.12.88 <span class="text-slate-500">(VPN Infra)</span></td>
+                  <td class="py-3 px-4 text-slate-300">Campamento Central Tramo 4</td>
+                  <td class="py-3 px-4 text-slate-400">Hoy, 07:45 CST</td>
+                  <td class="py-3 px-4 text-emerald-400 font-semibold">Hace 5 min</td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-9 px-3 rounded bg-brand-surface hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-brand-border hover:border-red-800 transition-colors">Revocar</button>
+                  </td>
+                </tr>
+
+                <!-- Sesión 4 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Laura Méndez</div>
+                    <div class="text-[11px] text-slate-400">l.mendez@constructora-bajio.mx</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="text-slate-200">Safari 17 / iOS (iPhone 15 Pro)</div>
+                    <div class="text-[10px] text-slate-500">ID: SES-MOB-4109</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300">187.190.11.45 <span class="text-slate-500">(Nodo GDL)</span></td>
+                  <td class="py-3 px-4 text-slate-300">Dirección de Operaciones</td>
+                  <td class="py-3 px-4 text-slate-400">Hoy, 09:30 CST</td>
+                  <td class="py-3 px-4 text-emerald-400 font-semibold">Hace 12 min</td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-9 px-3 rounded bg-brand-surface hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-brand-border hover:border-red-800 transition-colors">Revocar</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- F. PUBLICACIONES DE APPS: VERSIÓN, TAMAÑO, SHA-256 Y ACCIONES -->
+      <!-- ===================================================================== -->
+      <section id="publicaciones" class="space-y-4">
+        <div class="flex items-center justify-between border-b border-brand-border pb-2">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+            <h2 class="text-base font-display font-bold text-white">Publicaciones de Apps para Campo y Gabinete</h2>
+          </div>
+          <span class="text-xs font-mono-num text-slate-400">Canal de Distribución Privado Enterprise</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- App 1: App Android (Campo) -->
+          <div class="glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded bg-[#ff5a1f]/10 border border-[#ff5a1f]/30 flex items-center justify-center text-[#ff5a1f]">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993 0 .5511-.4483.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4126 13.8533 8.125 12 8.125s-3.5902.2876-5.1368.8297L4.8409 5.4517a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white font-display">ProjectWeb Mobile (Android APK)</h3>
+                  <p class="text-xs text-brand-textMuted">Para tablets rugerizadas y smartphones de residentes de obra</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-mono-num bg-emerald-950/60 border border-emerald-700 text-emerald-400 font-bold">PRODUCCIÓN</span>
+            </div>
+
+            <div class="p-3 bg-[#0a122a] rounded border border-brand-border space-y-1.5 font-mono-num text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Versión:</span>
+                <span class="text-white font-bold">v0.2.19 (Build 108)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Tamaño del paquete:</span>
+                <span class="text-cyan-300 font-bold">48.6 MB</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Fecha de compilación:</span>
+                <span class="text-slate-300">26 Feb 2025, 18:20 CST</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-brand-border">
+                <span class="text-slate-400 text-[11px]">SHA-256:</span>
+                <span class="text-[11px] text-slate-300 select-all font-mono">e7b39f1c42...9a04bb12</span>
+              </div>
+            </div>
+
+            <!-- Acciones requeridas (Objetivo táctil 44px) -->
+            <div class="flex items-center space-x-2 pt-1">
+              <button class="h-11 px-4 rounded bg-[#ff5a1f] hover:bg-[#ff6e38] text-xs font-semibold text-white flex-1 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                <span>Descargar APK</span>
+              </button>
+              <button class="h-11 px-3 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-border text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center space-x-1.5 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+                <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                <span>Subir nueva versión</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- App 2: App de Escritorio (Windows / Mac) -->
+          <div class="glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded bg-cyan-950/60 border border-brand-cyan/40 flex items-center justify-center text-brand-cyan">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white font-display">ProjectWeb Desktop Workstation</h3>
+                  <p class="text-xs text-brand-textMuted">Visor BIM 3D nativo de alto rendimiento y sincronización offline</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-mono-num bg-cyan-950/60 border border-cyan-700 text-cyan-300 font-bold">ESTABLE</span>
+            </div>
+
+            <div class="p-3 bg-[#0a122a] rounded border border-brand-border space-y-1.5 font-mono-num text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Versión:</span>
+                <span class="text-white font-bold">v2.4.1 (x64 / ARM64)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Tamaño del instalador:</span>
+                <span class="text-cyan-300 font-bold">114.2 MB</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Fecha de compilación:</span>
+                <span class="text-slate-300">22 Feb 2025, 11:40 CST</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-brand-border">
+                <span class="text-slate-400 text-[11px]">SHA-256:</span>
+                <span class="text-[11px] text-slate-300 select-all font-mono">33fa8802d1...b0188ef3</span>
+              </div>
+            </div>
+
+            <!-- Acciones requeridas (Objetivo táctil 44px) -->
+            <div class="flex items-center space-x-2 pt-1">
+              <button class="h-11 px-4 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-cyan text-xs font-semibold text-cyan-300 hover:text-white flex-1 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                <span>Descargar (.exe / .dmg)</span>
+              </button>
+              <button class="h-11 px-3 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-border text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center space-x-1.5 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-all">
+                <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                <span>Notas de versión</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- G. CONEXIONES DE IA: TABLA DE MODELOS CONECTADOS -->
+      <!-- ===================================================================== -->
+      <section id="ia-conectada" class="space-y-4">
+        <div class="flex items-center justify-between border-b border-brand-border pb-2">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9.5C4.8 8.8 4 7.5 4 6a4 4 0 0 1 8-4z"/><circle cx="12" cy="18" r="4"/><path d="M8 18h8"/></svg>
+            <h2 class="text-base font-display font-bold text-white">IA Conectada y Motores de Inferencia Estructural</h2>
+          </div>
+          <span class="text-xs font-mono-num text-emerald-400">3 Motores activos para auditoría de planos y geotecnia</span>
+        </div>
+
+        <div class="glass-panel rounded-lg border border-brand-border overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0b132a] text-slate-400 font-mono-num uppercase text-[10px] tracking-wider border-b border-brand-border">
+                <tr>
+                  <th class="py-3 px-4">Motor / Modelo IA</th>
+                  <th class="py-3 px-4">Propósito en Obra</th>
+                  <th class="py-3 px-4">Endpoint / Gateway</th>
+                  <th class="py-3 px-4">Latencia Inferencia</th>
+                  <th class="py-3 px-4">Cuota Consumida (Mes)</th>
+                  <th class="py-3 px-4">Estado</th>
+                  <th class="py-3 px-4 text-right">Configuración</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-border font-mono-num">
+                <!-- Modelo 1 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Gemini 1.5 Pro Civil Vision</div>
+                    <div class="text-[10px] text-slate-400">Google Cloud Vertex AI</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300 font-body">Detección de fisuras, cotejo de armado de acero y nubes de puntos</td>
+                  <td class="py-3 px-4 text-cyan-300">vertex-mx.internal/v1</td>
+                  <td class="py-3 px-4 text-emerald-400 font-bold">340 ms</td>
+                  <td class="py-3 px-4 text-slate-200">142k tokens / 1,200 imgs</td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Activo</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-8 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border transition-colors">Ajustes</button>
+                  </td>
+                </tr>
+
+                <!-- Modelo 2 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Claude 3.5 Sonnet Geotech</div>
+                    <div class="text-[10px] text-slate-400">Anthropic Enterprise Bedrock</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300 font-body">Interpretación de piezómetros, bitácoras y normas SCT/NOM</td>
+                  <td class="py-3 px-4 text-cyan-300">bedrock-us-east.api/claude</td>
+                  <td class="py-3 px-4 text-emerald-400 font-bold">420 ms</td>
+                  <td class="py-3 px-4 text-slate-200">890k tokens</td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Activo</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-8 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border transition-colors">Ajustes</button>
+                  </td>
+                </tr>
+
+                <!-- Modelo 3 -->
+                <tr class="hover:bg-brand-surface/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-white font-body">Llama 3 70B Local Edge</div>
+                    <div class="text-[10px] text-slate-400">Servidor On-Premise Campamento</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-300 font-body">Resumen de estimaciones y validación sin conexión a internet</td>
+                  <td class="py-3 px-4 text-cyan-300">192.168.10.240:8000/v1</td>
+                  <td class="py-3 px-4 text-cyan-300 font-bold">95 ms</td>
+                  <td class="py-3 px-4 text-slate-200">Ilimitado (Local GPU)</td>
+                  <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">● Activo</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="h-8 px-2.5 rounded bg-brand-surface hover:bg-brand-cardHigh text-cyan-300 border border-brand-border transition-colors">Ajustes</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- H. ACCESOS RECIENTES Y CONFIGURACIÓN REGIONAL / IDIOMA (ÚNICA TARJETA) -->
+      <!-- ===================================================================== -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Accesos Recientes (2 cols) -->
+        <section id="accesos" class="lg:col-span-2 glass-panel p-4 rounded-lg border border-brand-border space-y-3">
+          <div class="flex items-center justify-between border-b border-brand-border pb-2">
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <h2 class="text-sm font-display font-bold text-white">Accesos Recientes y Auditoría de Seguridad</h2>
+            </div>
+            <a href="#" class="text-xs text-brand-cyan hover:underline font-mono-num">Ver log completo</a>
+          </div>
+
+          <div class="space-y-2">
+            <!-- Evento 1 -->
+            <div class="p-2.5 bg-[#0a122a] rounded border border-brand-border flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <div>
+                  <span class="text-white font-semibold">Autenticación exitosa (2FA / Llave de seguridad)</span>
+                  <div class="text-[11px] font-mono-num text-slate-400">Usuario: admin.infra@projectweb.mx · IP 187.190.24.12</div>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono-num text-slate-400">Hoy, 08:15 CST</span>
+            </div>
+
+            <!-- Evento 2 -->
+            <div class="p-2.5 bg-[#0a122a] rounded border border-brand-border flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-3">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <div>
+                  <span class="text-white font-semibold">Generación de Token API para Estación Total Leica</span>
+                  <div class="text-[11px] font-mono-num text-slate-400">Operador: c.roldan@constructora-bajio.mx · Tramo 4 PK 42+800</div>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono-num text-slate-400">Hoy, 09:14 CST</span>
+            </div>
+
+            <!-- Evento 3 -->
+            <div class="p-2.5 bg-[#0a122a] rounded border border-brand-border flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-3">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                <div>
+                  <span class="text-white font-semibold">Modificación de topes de almacenamiento de organización</span>
+                  <div class="text-[11px] font-mono-num text-slate-400">Constructora del Bajío S.A. de C.V. (Tope ajustado a 20 GB)</div>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono-num text-slate-400">Ayer, 18:30 CST</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- UNA ÚNICA TARJETA DE IDIOMA Y REGIONALIZACIÓN (1 col) -->
+        <section id="idioma-seccion" class="glass-panel p-4 rounded-lg border border-brand-border space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 border-b border-brand-border pb-2">
+              <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              <h2 class="text-sm font-display font-bold text-white">Idioma y Ajustes Regionales</h2>
+            </div>
+            <p class="text-xs text-brand-textMuted mt-2">Configuración predeterminada del entorno y formatos métricos de ingeniería.</p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label for="select-idioma" class="block text-xs font-mono-num text-slate-400 mb-1">Idioma de la interfaz</label>
+              <select id="select-idioma" class="w-full h-11 px-3 bg-[#0a122a] border border-brand-border rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-cyan">
+                <option value="es-MX" selected>Español (México / Obra Civil SCT) - Predeterminado</option>
+                <option value="es-ES">Español (España / Eurocódigo)</option>
+                <option value="en-US">English (US Engineering Standards)</option>
+                <option value="pt-BR">Português (Brasil)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono-num">
+              <div>
+                <label class="block text-slate-400 text-[11px] mb-1">Zona Horaria</label>
+                <div class="p-2 bg-[#0a122a] border border-brand-border rounded text-slate-200">
+                  America/Mexico_City (CST -06:00)
+                </div>
+              </div>
+              <div>
+                <label class="block text-slate-400 text-[11px] mb-1">Unidades</label>
+                <div class="p-2 bg-[#0a122a] border border-brand-border rounded text-slate-200">
+                  Métrico (m, kN, MPa, °C)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="h-11 w-full rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-cyan text-xs font-semibold text-cyan-300 hover:text-white flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Guardar preferencias regionales</span>
+          </button>
+        </section>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- I. SECCIÓN DE MANUAL DEL ADMINISTRADOR -->
+      <!-- ===================================================================== -->
+      <section id="manual" class="glass-panel p-4 rounded-lg border border-brand-border flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded bg-brand-surface border border-brand-border flex items-center justify-center text-slate-300">
+            <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white font-display">Documentación y Manual Operativo de Infraestructura v4.2</h3>
+            <p class="text-xs text-brand-textMuted">Guía técnica sobre topes computacionales, balanceo de carga, restauración ante desastres y configuración de nodos IoT.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button class="h-11 px-4 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-border text-xs font-semibold text-slate-200 flex items-center space-x-1.5 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-colors">
+            <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            <span>Descargar PDF</span>
+          </button>
+          <button class="h-11 px-4 rounded bg-brand-surface hover:bg-brand-cardHigh border border-brand-borderActive text-xs font-semibold text-cyan-300 flex items-center space-x-1.5 focus:outline-none focus:ring-2 focus:ring-brand-cyan transition-colors">
+            <span>Abrir en visor web</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+          </button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>

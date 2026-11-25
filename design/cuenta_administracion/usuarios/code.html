@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@400;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"surface-container":"#241e1d","inverse-surface":"#ece0dd","outline":"#ab897f","surface-container-lowest":"#120d0b","surface-bright":"#313852","surface":"#0a122a","on-primary-fixed-variant":"#6c3928","inverse-on-surface":"#362f2d","primary-container":"#ff5a1f","on-tertiary-fixed":"#00201e","surface-container-low":"#131a33","on-secondary-container":"#004150","secondary-fixed":"#b3ebff","outline-variant":"#5b4038","inverse-primary":"#88503d","surface-variant":"#3a3331","on-surface":"#dbe1ff","surface-container-highest":"#3a3331","on-primary":"#512314","primary-fixed-dim":"#ffb59e","surface-container-high":"#212942","on-secondary":"#003642","tertiary":"#b2c8e8","secondary-fixed-dim":"#4cd6fb","surface-dim":"#181211","secondary-container":"#00b2d6","primary":"#ffdbd0","on-background":"#ece0dd","on-error":"#690005","on-error-container":"#ffdad6","on-surface-variant":"#d7c2bc","on-tertiary-fixed-variant":"#02504b","tertiary-container":"#93d2cb","error-container":"#93000a","on-primary-container":"#7a4433","on-tertiary-container":"#185c57","error":"#ffb4ab","primary-fixed":"#ffdbd0","tertiary-fixed":"#afefe7","surface-tint":"#ffb59e","tertiary-fixed-dim":"#93d2cb","on-secondary-fixed":"#001f27","on-secondary-fixed-variant":"#004e5f","on-primary-fixed":"#360f03","secondary":"#4cd6fb","background":"#181211","on-tertiary":"#003733"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter-mobile":"1rem","space-md":"1rem","margin-mobile":"1rem","space-xl":"2.5rem","space-lg":"1.5rem","space-sm":"0.5rem","gutter":"1.5rem","margin":"2.5rem","space-xs":"0.25rem"},"fontFamily":{"body-lg":["Manrope"],"body-md":["Manrope"],"body-sm":["Manrope"],"headline-xl":["Space Grotesk"],"label-code-sm":["JetBrains Mono"],"display-hero":["Space Grotesk"],"headline-xl-mobile":["Space Grotesk"],"headline-md":["Space Grotesk"],"display-hero-mobile":["Space Grotesk"],"title-md":["Manrope"],"label-telemetry":["JetBrains Mono"],"headline-lg":["Space Grotesk"]},"fontSize":{"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"0.01em","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0.01em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"400"}],"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-code-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"400"}],"display-hero":["56px",{"lineHeight":"64px","letterSpacing":"-0.03em","fontWeight":"700"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"30px","letterSpacing":"0em","fontWeight":"500"}],"display-hero-mobile":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"title-md":["18px",{"lineHeight":"26px","letterSpacing":"0em","fontWeight":"600"}],"label-telemetry":["13px",{"lineHeight":"18px","letterSpacing":"0.04em","fontWeight":"500"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container"><header class="fixed top-0 left-0 right-0 z-50 flex flex-col shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 bg-surface border-b border-surface-container-high px-gutter flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary text-[24px]">engineering</span><span class="font-headline-md text-headline-md tracking-tight text-on-surface">Project<span class="text-secondary">Web</span></span></div><div class="hidden lg:flex items-center bg-surface-container-low border border-surface-container-high rounded px-space-sm py-space-xs gap-space-xs text-on-surface"><span class="material-symbols-outlined text-secondary text-[18px]">domain</span><select class="bg-transparent font-label-telemetry text-label-telemetry text-on-surface focus:outline-none cursor-pointer pr-space-xs"><option class="bg-surface-container-high text-on-surface" selected="" value="t4-veo">Tramo 4 - Viaducto Elevado Oriente</option><option class="bg-surface-container-high text-on-surface" value="t2-tn">Tramo 2 - Túnel Norte</option><option class="bg-surface-container-high text-on-surface" value="t1-pc">Tramo 1 - Puente Central</option></select></div></div><div class="flex-1 max-w-xl mx-space-md hidden md:block"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full bg-surface-container-low border border-surface-container-high rounded pl-9 pr-space-md py-1.5 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary transition-colors" placeholder="Buscar unidades de obra, planos, sensores o personal..." type="search"/></div></div><div class="flex items-center gap-space-md"><button class="relative p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface"></span></button><div class="flex items-center gap-space-sm pl-space-xs border-l border-surface-container-high"><div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-label-telemetry text-label-telemetry text-secondary font-semibold">AR</div><div class="hidden xl:flex flex-col"><span class="font-body-sm text-body-sm text-on-surface font-medium leading-tight">Administrador Red</span><span class="font-label-code-sm text-label-code-sm text-outline leading-tight">INFRA-CORP-01</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div><div class="h-10 bg-surface-container-low border-b border-surface-container-high px-gutter flex items-center justify-between text-body-sm"><nav aria-label="Breadcrumb" class="flex items-center gap-space-xs overflow-x-auto text-outline"><span class="font-body-sm hover:text-on-surface cursor-pointer transition-colors">Configuración</span><span class="material-symbols-outlined text-[14px]">chevron_right</span><span class="font-body-sm hover:text-on-surface cursor-pointer transition-colors">Control de Accesos</span><span class="material-symbols-outlined text-[14px]">chevron_right</span><span class="font-body-sm text-on-surface font-medium">Usuarios y accesos</span></nav><div class="flex items-center gap-space-sm pl-space-md"><div class="flex items-center gap-space-xs"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span></span><span class="font-label-telemetry text-label-telemetry text-secondary font-medium uppercase">EN VIVO</span></div><span class="text-outline-variant font-label-code-sm">|</span><span class="font-label-telemetry text-label-telemetry text-outline flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-tertiary">sensors</span>24ms - Servidor Central</span></div></div></header><aside class="fixed left-0 top-24 bottom-0 w-64 bg-surface-container-low border-r border-surface-container-high z-40 flex flex-col justify-between py-space-md"><div class="flex flex-col gap-space-md px-space-sm"><div class="px-space-sm text-outline font-label-code-sm text-label-code-sm uppercase tracking-wider">Módulos de Obra</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container-high text-secondary font-semibold"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 rounded transition-colors bg-surface-container-high text-secondary font-semibold" data-path="usuarios-y-accesos" href="#"><span class="material-symbols-outlined text-[18px]">manage_accounts</span><span class="font-body-sm">Usuarios y Accesos</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="monitoreo-telemetria" href="#"><span class="material-symbols-outlined text-[18px]">monitoring</span><span class="font-body-sm">Telemetría Estructural</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="planos-y-bim" href="#"><span class="material-symbols-outlined text-[18px]">layers</span><span class="font-body-sm">Planos y Modelos BIM</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="registro-sensores" href="#"><span class="material-symbols-outlined text-[18px]">developer_board</span><span class="font-body-sm">Registro de Sensores</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="auditoria-seguridad" href="#"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-body-sm">Auditoría y Seguridad</span></a></nav></div><div class="px-space-md pt-space-sm border-t border-surface-container-high flex flex-col gap-1 font-label-code-sm text-label-code-sm text-outline"><div>OBRA: <span class="text-on-surface">T4-VEO</span></div><div>NODO: <span class="text-secondary">SEC-INFRA-88</span></div></div></aside><div class="pl-64"><main class="relative pt-24 min-h-screen bg-surface px-gutter py-space-lg text-on-surface"><div class="flex flex-col w-full gap-space-lg">
+<!-- 1. HERO COMPACTO -->
+<section class="relative bg-surface-container-low/80 backdrop-blur-md rounded-xl p-space-lg shadow-xl overflow-hidden">
+<!-- Luz técnica decorativa sutil -->
+<div class="absolute -right-24 -top-24 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -left-16 -bottom-16 w-64 h-64 bg-primary-container/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative flex flex-col gap-space-md">
+<!-- Fila superior: Eyebrow + Link discreto -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(76,214,251,0.6)]"></span>
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-widest text-secondary font-medium">ADMINISTRACIÓN DE CUENTAS</span>
+<span class="font-label-code-sm text-label-code-sm text-outline-variant">::</span>
+<span class="font-label-code-sm text-label-code-sm text-outline">SEC-AUTH-09</span>
+</div>
+<a class="group inline-flex items-center gap-1.5 font-body-sm text-body-sm text-secondary hover:text-on-surface transition-colors py-1 px-2.5 rounded bg-surface-container-high/40 hover:bg-surface-container-high" href="#mi-equipo">
+<span>Vista de cliente: Mi equipo</span>
+<svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</a>
+</div>
+<!-- Fila media: Título con placa técnica y Acciones primarias -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex items-start sm:items-center gap-space-md">
+<!-- Placa de icono técnico 40px con borde cian -->
+<div class="w-10 h-10 min-w-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary shadow-[inset_0_0_0_1px_rgba(76,214,251,0.5)]">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+<circle cx="9" cy="7" r="4"></circle>
+<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Usuarios y accesos</h1>
+<p class="font-body-md text-body-md text-outline">Cuentas, roles y organizaciones; quién entra y con qué permisos en obra.</p>
+</div>
+</div>
+<!-- Botones de Acción -->
+<div class="flex items-center gap-space-sm self-start lg:self-auto">
+<button class="h-11 px-space-md rounded bg-surface-container-high hover:bg-surface-bright text-secondary font-label-telemetry text-label-telemetry font-medium shadow-[inset_0_0_0_1px_rgba(76,214,251,0.6)] flex items-center gap-2 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="14" rx="2" ry="2" width="20" x="2" y="7"></rect>
+<path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+</svg>
+<span>Organizaciones</span>
+</button>
+<button class="h-11 px-space-lg rounded bg-primary-container hover:bg-primary-container/90 text-inverse-surface font-label-telemetry text-label-telemetry font-semibold flex items-center gap-2 shadow-lg shadow-primary-container/20 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+<span>Nuevo usuario</span>
+</button>
+</div>
+</div>
+<!-- Fila inferior: Chips de estado de inventario -->
+<div class="flex flex-wrap items-center gap-space-xs pt-space-xs">
+<span class="inline-flex items-center gap-2 px-space-sm py-1 rounded bg-surface-container-high/60 text-on-surface font-label-telemetry text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>128 usuarios</span>
+</span>
+<span class="inline-flex items-center gap-2 px-space-sm py-1 rounded bg-surface-container-high/60 text-on-surface font-label-telemetry text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>24 organizaciones</span>
+</span>
+<span class="inline-flex items-center gap-2 px-space-sm py-1 rounded bg-surface-container-high/60 text-on-surface font-label-telemetry text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span>88 visitantes y colaboradores</span>
+</span>
+</div>
+</div>
+</section>
+<!-- 2. FRANJA DE KPIS -->
+<section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- KPI 1 -->
+<div class="bg-surface-container-low/90 backdrop-blur-sm rounded-lg p-space-md shadow-md flex flex-col justify-between gap-space-sm relative overflow-hidden group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider">Total Cuentas</span>
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-secondary">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="2" x2="22" y1="12" y2="12"></line>
+<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+</div>
+</div>
+<div>
+<div class="font-label-telemetry text-headline-xl text-on-surface leading-none tracking-tight">128</div>
+<p class="font-body-sm text-body-sm text-secondary flex items-center gap-1 mt-1.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="18 15 12 9 6 15"></polyline>
+</svg>
+<span>+12 nuevas este mes</span>
+</p>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-1">
+<div class="h-full bg-secondary w-4/5 rounded-full"></div>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-low/90 backdrop-blur-sm rounded-lg p-space-md shadow-md flex flex-col justify-between gap-space-sm relative overflow-hidden group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider">Administradores</span>
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+</svg>
+</div>
+</div>
+<div>
+<div class="font-label-telemetry text-headline-xl text-on-surface leading-none tracking-tight">4</div>
+<p class="font-body-sm text-body-sm text-outline mt-1.5">Acceso total a infraestructura</p>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-1">
+<div class="h-full bg-primary-container w-1/4 rounded-full"></div>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-low/90 backdrop-blur-sm rounded-lg p-space-md shadow-md flex flex-col justify-between gap-space-sm relative overflow-hidden group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider">Clientes &amp; Supervisores</span>
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-tertiary">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="14" rx="2" ry="2" width="20" x="2" y="7"></rect>
+<path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+</svg>
+</div>
+</div>
+<div>
+<div class="font-label-telemetry text-headline-xl text-on-surface leading-none tracking-tight">36</div>
+<p class="font-body-sm text-body-sm text-outline mt-1.5">Supervisores y auditores BIM</p>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-1">
+<div class="h-full bg-tertiary w-3/6 rounded-full"></div>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-low/90 backdrop-blur-sm rounded-lg p-space-md shadow-md flex flex-col justify-between gap-space-sm relative overflow-hidden group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider">Visitantes / Ensayos</span>
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="16" rx="2" width="18" x="3" y="4"></rect>
+<line x1="7" x2="17" y1="8" y2="8"></line>
+<line x1="7" x2="13" y1="12" y2="12"></line>
+<circle cx="15.5" cy="14.5" r="1.5"></circle>
+</svg>
+</div>
+</div>
+<div>
+<div class="font-label-telemetry text-headline-xl text-on-surface leading-none tracking-tight">88</div>
+<p class="font-body-sm text-body-sm text-outline mt-1.5">Acceso restringido a reportes</p>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-1">
+<div class="h-full bg-outline w-5/6 rounded-full"></div>
+</div>
+</div>
+</section>
+<!-- 3. BARRA DE CONTROL Y FILTRADO -->
+<section class="bg-surface-container-low/70 backdrop-blur-sm rounded-lg p-space-sm shadow-md flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-space-sm">
+<!-- Buscador -->
+<div class="relative flex-1 min-w-[280px]">
+<svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-outline" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="8"></circle>
+<line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+</svg>
+<input class="w-full h-11 pl-10 pr-space-md rounded bg-surface-container-high text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary transition-all" placeholder="Buscar por nombre o correo institucional..." type="text"/>
+</div>
+<!-- Segmented Control (Píldoras) -->
+<div class="flex items-center gap-1 bg-surface-container-high p-1 rounded overflow-x-auto">
+<button class="px-space-md h-9 rounded bg-surface-bright text-secondary font-label-telemetry text-label-code-sm font-semibold whitespace-nowrap shadow-sm" type="button">Todos (128)</button>
+<button class="px-space-md h-9 rounded hover:bg-surface-container text-outline hover:text-on-surface font-label-telemetry text-label-code-sm whitespace-nowrap transition-colors" type="button">Admin (4)</button>
+<button class="px-space-md h-9 rounded hover:bg-surface-container text-outline hover:text-on-surface font-label-telemetry text-label-code-sm whitespace-nowrap transition-colors" type="button">Clientes (36)</button>
+<button class="px-space-md h-9 rounded hover:bg-surface-container text-outline hover:text-on-surface font-label-telemetry text-label-code-sm whitespace-nowrap transition-colors" type="button">Visitantes (88)</button>
+</div>
+<!-- Botones auxiliares -->
+<div class="flex items-center gap-2 self-end xl:self-auto">
+<button class="h-11 px- space-sm px-3 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm flex items-center gap-2 transition-colors" type="button">
+<svg class="w-4 h-4 text-outline" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+</svg>
+<span>Filtro avanzado</span>
+</button>
+<button class="h-11 px- space-sm px-3 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm flex items-center gap-2 transition-colors" type="button">
+<svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+<polyline points="7 10 12 15 17 10"></polyline>
+<line x1="12" x2="12" y1="15" y2="3"></line>
+</svg>
+<span>Exportar CSV</span>
+</button>
+</div>
+</section>
+<!-- 4. TABLA OPERATIVA DE ALTA DENSIDAD -->
+<section class="bg-surface-container-low rounded-xl shadow-xl overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/70 text-outline font-label-code-sm text-label-code-sm uppercase tracking-wider">
+<th class="py-3 px-space-md font-medium">Usuario / Credenciales</th>
+<th class="py-3 px-space-sm font-medium">Rol Asignado</th>
+<th class="py-3 px-space-sm font-medium">Organización &amp; Plan</th>
+<th class="py-3 px-space-sm font-medium">Último Acceso</th>
+<th class="py-3 px-space-sm font-medium">Cuota Obras Asignadas</th>
+<th class="py-3 px-space-md font-medium text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40 text-body-sm font-body-sm">
+<!-- FILA 1 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-primary-container">
+                  MH
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Arq. Mateo Hernández C.</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">mateo.hernandez@ica-infra.mx</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary-container/20 text-primary-fixed-dim font-label-code-sm text-label-code-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                Administrador
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>ICA Infraestructura</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Enterprise Civil</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-secondary">Hoy, 14:32:05</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">12 / 12</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-full rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Mateo Hernández" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Mateo Hernández" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 2 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-secondary">
+                  SV
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Ing. Sofía Villalpando R.</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">sofia.v@carso.com.mx</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary/15 text-secondary font-label-code-sm text-label-code-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Cliente
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Grupo Carso Infra</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Pro Obra</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-on-surface">Hoy, 11:18:42</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">5 / 8</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[62%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Sofía Villalpando" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Sofía Villalpando" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 3 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-tertiary">
+                  CM
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Lic. Carlos Mendoza Bazán</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">carlos.mendoza@sedatu.gob.mx</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary/15 text-secondary font-label-code-sm text-label-code-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Cliente
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>SEDATU Supervisión</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Enterprise Civil</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-on-surface">Hoy, 09:44:11</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">8 / 10</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-4/5 rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Carlos Mendoza" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Carlos Mendoza" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 4 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-outline">
+                  VG
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Dra. Valeria Gómez Pineda</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">valeria.gomez@geotecnia-mx.org</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                Visitante
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Consorcio Geotécnico</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Básico</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-outline">Ayer, 18:20:00</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">2 / 4</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-1/2 rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Valeria Gómez" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Valeria Gómez" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 5 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-primary-container">
+                  AR
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Ing. Alejandro Rivas Soto</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">arivas@prodemex.mx</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary-container/20 text-primary-fixed-dim font-label-code-sm text-label-code-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                Administrador
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>PRODEMEX Civil</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Enterprise Civil</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-secondary">Hoy, 08:12:30</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">10 / 10</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-full rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Alejandro Rivas" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Alejandro Rivas" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 6 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-outline">
+                  DM
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Téc. Daniela Morales Tagle</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">dmorales@vanguard-lab.mx</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                Visitante
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span>Vanguard Ensayos</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Básico (En pausa)</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-outline">03 Mar, 16:45:10</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">1 / 2</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-outline w-1/2 rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Daniela Morales" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Daniela Morales" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- FILA 7 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-label-telemetry text-label-code-sm font-bold text-secondary">
+                  RE
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-semibold truncate">Ing. Rodrigo Estrada Garza</span>
+<span class="font-label-code-sm text-label-code-sm text-outline truncate">rodrigo.estrada@pinfra.com</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary/15 text-secondary font-label-code-sm text-label-code-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Cliente
+              </span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>PINFRA Concesiones</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Plan Pro Obra</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="font-label-telemetry text-label-telemetry text-on-surface">28 Feb, 10:02:18</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>Asignadas</span>
+<span class="font-label-telemetry text-on-surface">4 / 6</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-2/3 rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="inline-flex items-center justify-end gap-1">
+<button aria-label="Editar Rodrigo Estrada" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-secondary hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</button>
+<button aria-label="Revocar acceso Rodrigo Estrada" class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="4.93" x2="19.07" y1="4.93" y2="19.07"></line>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- 5. PIE DE PAGINACIÓN TÉCNICO -->
+<div class="bg-surface-container-high/40 px-space-md py-space-sm flex flex-col md:flex-row items-center justify-between gap-space-sm text-body-sm">
+<div class="flex items-center gap-space-md">
+<span class="font-label-code-sm text-label-code-sm text-outline">
+          Mostrando <strong class="text-on-surface font-semibold font-label-telemetry">1–7</strong> de <strong class="text-on-surface font-semibold font-label-telemetry">128</strong> usuarios registrados
+        </span>
+<div class="hidden sm:flex items-center gap-2 font-label-code-sm text-label-code-sm text-outline">
+<span>Mostrar:</span>
+<button class="px-2 py-0.5 rounded bg-secondary/15 text-secondary font-semibold font-label-telemetry" type="button">10</button>
+<button class="px-2 py-0.5 rounded hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors font-label-telemetry" type="button">25</button>
+<button class="px-2 py-0.5 rounded hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors font-label-telemetry" type="button">50</button>
+</div>
+</div>
+<!-- Navegación de páginas accesible (Touch target 44px) -->
+<nav aria-label="Paginación" class="flex items-center gap-1 font-label-telemetry">
+<button class="w-11 h-11 flex items-center justify-center rounded text-outline-variant cursor-not-allowed" disabled="" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+</button>
+<button class="w-11 h-11 flex items-center justify-center rounded bg-secondary text-on-secondary font-semibold" type="button">1</button>
+<button class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button">2</button>
+<button class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button">3</button>
+<span class="w-8 flex items-center justify-center text-outline">…</span>
+<button class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button">19</button>
+<button class="w-11 h-11 flex items-center justify-center rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</button>
+</nav>
+</div>
+</section>
+</div></main></div></body></html>

@@ -58,7 +58,8 @@
   &.pd-chip-cerrado { background: rgba(107,114,128,.16); color: var(--text-muted); }
   &.pd-chip-min { margin-left: auto; padding: .2rem .7rem; font-size: 1.05rem; }
 }
-.pd-form { display: grid; gap: 1.6rem; padding-bottom: 12rem; }
+.pd-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.6rem; padding-bottom: 12rem; }
+.pd-form > * { min-width: 0; }
 .pd-seccion { background: var(--card, rgba(255,255,255,.03)); border: 1px solid $border; border-radius: $radius-lg; padding: 0;
   > summary { display: flex; align-items: center; gap: 1rem; padding: 1.4rem 1.8rem; cursor: pointer; font-weight: 700; font-size: 1.5rem; list-style: none;
     &::-webkit-details-marker { display: none; }

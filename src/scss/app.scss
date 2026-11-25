@@ -32,6 +32,7 @@
 
 // Layout
 @use 'layout/layout';
+@use 'layout/navegacion';
 
 // Páginas
 @use 'paginas/dashboard';
@@ -55,11 +56,15 @@
 @use 'paginas/simbolos';
 @use 'paginas/cambios';
 @use 'paginas/fase3';
+@use 'paginas/administracion';
 @use 'paginas/personalizacion';
+@use 'paginas/inicio';
 @use 'paginas/empezar';
+@use 'paginas/control';
 @use 'componentes/divisor';
 @use 'componentes/workspace';
 @use 'componentes/suite';
+@use 'componentes/ia';
 @use 'layout/notificaciones';
 @use 'paginas/ventanas';
 @use 'layout/movil';   // siempre al final: sobrescribe lo anterior solo en pantallas pequeñas

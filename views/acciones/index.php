@@ -1,9 +1,20 @@
-<?php $totalGeneral = array_sum(array_column($secciones, 'total')); ?>
+<?php $totalGeneral = array_sum(array_column($secciones, 'total')); $secActivas = count(array_filter($secciones, fn($s) => (int)$s['total'] > 0)); ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-bolt"></i> Acciones rápidas</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo (int)$totalGeneral; ?> pendiente(s) en total</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-list-check"></i> <b><?php echo count($secciones); ?></b> frentes</span>
+            <span><i class="fa-solid fa-circle-exclamation"></i> <b><?php echo $secActivas; ?></b> con pendientes</span>
+        </div>
     </div>
+</div>
+<div class="cb-kpis">
+    <div class="cb-kpi <?php echo $totalGeneral ? 'is-warning' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-bolt"></i></span><small>Pendientes totales</small><strong><?php echo (int)$totalGeneral; ?></strong><span>En todos los frentes de la obra</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-list-check"></i></span><small>Frentes revisados</small><strong><?php echo count($secciones); ?></strong><span><?php echo $secActivas; ?> con algo por hacer</span></div>
+    <div class="cb-kpi is-success"><span class="adm-kpi-icono"><i class="fa-solid fa-circle-check"></i></span><small>Sin pendientes</small><strong><?php echo count($secciones) - $secActivas; ?></strong><span>Frentes al día</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-arrows-rotate"></i></span><small>Actualización</small><strong><?php echo $gestiona ? 'Sí' : 'No'; ?></strong><span><?php echo $gestiona ? 'Puedes resolver desde aquí' : 'Solo lectura para tu acceso'; ?></span></div>
 </div>
 <div class="acc-pag-nav">
     <?php foreach ($secciones as $sec): ?>

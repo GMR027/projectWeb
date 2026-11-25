@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>ProjectWeb - Civil &amp; Industrial Infrastructure</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"secondary-fixed":"#b3ebff","on-surface":"#dbe1ff","on-surface-variant":"#e4beb3","surface-dim":"#0a122a","surface-bright":"#313852","on-secondary":"#003642","tertiary-fixed-dim":"#b2c8e8","surface-variant":"#2c344d","on-primary-fixed":"#3a0b00","inverse-on-surface":"#282f49","on-secondary-fixed-variant":"#004e5f","secondary-fixed-dim":"#4cd6fb","secondary-container":"#00b2d6","primary-fixed-dim":"#ffb59e","tertiary":"#b2c8e8","outline-variant":"#5b4038","surface-container-lowest":"#050d25","surface-container-highest":"#2c344d","secondary":"#4cd6fb","inverse-primary":"#ae3200","primary-fixed":"#ffdbd0","on-error":"#690005","surface-container-low":"#131a33","on-tertiary-fixed":"#021d35","outline":"#ab897f","on-error-container":"#ffdad6","tertiary-container":"#7e94b2","on-tertiary-container":"#152c45","surface-tint":"#ffb59e","primary-container":"#ff5a1f","on-primary-container":"#541400","background":"#0a122a","error":"#ffb4ab","surface-container-high":"#212942","on-primary-fixed-variant":"#852400","error-container":"#93000a","on-secondary-fixed":"#001f27","on-secondary-container":"#003f4e","on-tertiary":"#1b324b","tertiary-fixed":"#d2e4ff","surface-container":"#171e37","on-tertiary-fixed-variant":"#324863","on-primary":"#5e1700","on-background":"#dbe1ff","inverse-surface":"#dbe1ff","primary":"#ffb59e","surface":"#0a122a"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter-mobile":"1rem","space-lg":"1.5rem","space-xs":"0.25rem","space-md":"1rem","margin":"2.5rem","space-xl":"2.5rem","margin-mobile":"1rem","gutter":"1.5rem"},fontFamily:{"label-code-sm":["JetBrains Mono"],"body-sm":["Manrope"],"display-hero-mobile":["Space Grotesk"],"headline-md":["Space Grotesk"],"body-lg":["Manrope"],"headline-xl":["Space Grotesk"],"label-telemetry":["JetBrains Mono"],"display-hero":["Space Grotesk"],"headline-xl-mobile":["Space Grotesk"],"title-md":["Manrope"],"body-md":["Manrope"],"headline-lg":["Space Grotesk"]},fontSize:{"label-code-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"400"}],"display-hero-mobile":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["22px",{"lineHeight":"30px","letterSpacing":"0em","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-telemetry":["13px",{"lineHeight":"18px","letterSpacing":"0.04em","fontWeight":"500"}],"display-hero":["56px",{"lineHeight":"64px","letterSpacing":"-0.03em","fontWeight":"700"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"title-md":["18px",{"lineHeight":"26px","letterSpacing":"0em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen"><header class="fixed top-0 left-0 right-0 z-50"><div class="h-14 bg-surface border-b border-white/[0.08] px-space-md"><div class="max-w-[1440px] mx-auto h-full flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md shrink-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary-container text-[24px]">engineering</span><span class="font-headline-md text-title-md tracking-tight text-on-surface">ProjectWeb</span></div><div class="h-4 w-[1px] bg-white/[0.08]"></div><button class="flex items-center gap-space-xs px-space-sm py-1 rounded bg-surface-container-low border border-white/[0.08] hover:bg-surface-container-high transition-colors text-left" type="button"><span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97] animate-pulse"></span><span class="font-label-telemetry text-body-sm text-on-surface truncate max-w-[200px]">Torre Corporativa Norte · TCN-04</span><span class="material-symbols-outlined text-on-surface-variant text-[16px]">expand_more</span></button></div><div class="flex-1 max-w-lg hidden md:block"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">search</span><input class="w-full h-8 pl-9 pr-14 rounded bg-surface-container-low border border-white/[0.08] text-on-surface placeholder:text-on-surface-variant font-body-sm text-body-sm focus:outline-none focus:border-secondary transition-colors" placeholder="Buscar en el proyecto…" type="text"/><div class="absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-code-sm text-label-code-sm border border-white/[0.04] pointer-events-none">⌘K</div></div></div><div class="flex items-center gap-space-sm shrink-0"><button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Manual de Operaciones" type="button"><span class="material-symbols-outlined text-[20px]">help_outline</span></button><button class="relative w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Notificaciones" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary-container text-on-primary-container font-label-code-sm text-label-code-sm leading-none">5</span></button><button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Modo de Visualización" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="h-4 w-[1px] bg-white/[0.08] mx-1"></div><div class="w-8 h-8 rounded-full bg-surface-container border border-secondary flex items-center justify-center cursor-pointer select-none ring-offset-2 ring-offset-surface hover:ring-1 hover:ring-secondary transition-all"><span class="font-label-code-sm text-label-code-sm font-semibold text-secondary">EV</span></div></div></div></div><div class="h-10 bg-surface-container-low border-b border-white/[0.08] px-space-md"><div class="max-w-[1440px] mx-auto h-full flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg h-full"><button class="flex items-center gap-1 text-on-surface font-title-md text-body-sm hover:text-primary transition-colors py-1" type="button"><span class="font-medium">Inicio</span><span class="material-symbols-outlined text-[16px]">arrow_drop_down</span></button><div class="h-3.5 w-[1px] bg-white/[0.08]"></div><nav class="flex items-center gap-space-md h-full" data-active-classes="text-on-surface border-b-2 border-primary-container font-medium"><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="inicio" href="#">Inicio</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="proyectos" href="#">Proyectos</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="portafolio" href="#">Portafolio</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="usuarios" href="#">Usuarios</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="sistema" href="#">Sistema</a></nav></div><div class="flex items-center gap-space-xs shrink-0"><button class="flex items-center gap-space-xs px-2 py-1 rounded bg-surface border border-white/[0.08] hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface" type="button"><span class="material-symbols-outlined text-[16px] text-secondary">apps</span><span class="font-body-sm text-body-sm">Todas las herramientas</span><span class="px-1.5 py-0.2 rounded bg-surface-container font-label-code-sm text-label-code-sm text-on-surface-variant border border-white/[0.04]">⌘K</span></button></div></div></div></header><main class="w-full pt-24 bg-surface min-h-screen"><div class="flex flex-col w-full relative">
+<!-- DASHBOARD BACKGROUND (FROSTED / TELEMETRY BEDROCK) -->
+<div class="w-full max-w-[1440px] mx-auto px-space-md py-space-md opacity-40 blur-[5px] pointer-events-none select-none transition-all duration-300">
+<!-- CONTEXT BAR & TELEMETRY STRIP -->
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md mb-space-lg bg-surface-container-low p-space-md rounded-xl shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[28px]">apartment</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">Torre Corporativa Norte</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 text-primary-fixed-dim font-label-code-sm text-label-code-sm">TCN-04 // FASE 3</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">42 Niveles · Sistema Estructural Núcleo Mixto · Santiago de Querétaro</p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg">
+<div class="text-right">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant block uppercase tracking-wider">Avance Físico SPI</span>
+<span class="font-headline-md text-headline-md text-secondary">0.984 <span class="text-body-sm font-body-sm text-on-surface-variant">/ 1.00</span></span>
+</div>
+<div class="w-px h-8 bg-surface-container-highest"></div>
+<div class="text-right">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant block uppercase tracking-wider">Índice Costo CPI</span>
+<span class="font-headline-md text-headline-md text-primary-container">1.021 <span class="text-body-sm font-body-sm text-on-surface-variant">Opt</span></span>
+</div>
+</div>
+</div>
+<!-- METRICS STRIP -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-md mb-space-lg">
+<div class="bg-surface-container p-space-md rounded-xl flex items-center justify-between">
+<div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Proyectos Activos</span>
+<div class="font-headline-xl text-headline-xl text-on-surface">12</div>
+</div>
+<span class="material-symbols-outlined text-[32px] text-tertiary-fixed-dim">domain_verification</span>
+</div>
+<div class="bg-surface-container p-space-md rounded-xl flex items-center justify-between">
+<div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Actividades Hoy</span>
+<div class="font-headline-xl text-headline-xl text-secondary">8</div>
+</div>
+<span class="material-symbols-outlined text-[32px] text-secondary">checklist</span>
+</div>
+<div class="bg-surface-container p-space-md rounded-xl flex items-center justify-between">
+<div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Atrasadas (Críticas)</span>
+<div class="font-headline-xl text-headline-xl text-primary-container">3</div>
+</div>
+<span class="material-symbols-outlined text-[32px] text-primary-container">warning</span>
+</div>
+<div class="bg-surface-container p-space-md rounded-xl flex items-center justify-between">
+<div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Restricciones Abiertas</span>
+<div class="font-headline-xl text-headline-xl text-tertiary">5</div>
+</div>
+<span class="material-symbols-outlined text-[32px] text-tertiary">lock_clock</span>
+</div>
+</div>
+<!-- MAIN DASHBOARD CONTENT: 2/3 WORKFLOW + 1/3 SPATIAL RADAR -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+<!-- TABLE: REQUIERE ATENCION -->
+<div class="lg:col-span-2 bg-surface-container-low p-space-lg rounded-xl">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container">emergency_home</span>
+<span class="font-headline-md text-title-md text-on-surface">Requiere Atención Operativa Inmediata</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">3 Items con desvío &gt; 48h</span>
+</div>
+<div class="space-y-space-sm">
+<div class="bg-surface-container p-space-md rounded flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<div>
+<div class="font-title-md text-body-md text-on-surface">Armado de Losas Nivel +14 · Ejes C-G</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Falta liberación de interferencia MEP vs Pandeo Sísmico</div>
+</div>
+</div>
+<span class="font-label-telemetry text-body-sm text-primary-container">-4 Días de Holgura</span>
+</div>
+<div class="bg-surface-container p-space-md rounded flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<div>
+<div class="font-title-md text-body-md text-on-surface">Vaciado Concreto f'c=350 MPa Muros de Cortante</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Ensayos de laboratorio pendientes para revenimiento</div>
+</div>
+</div>
+<span class="font-label-telemetry text-body-sm text-secondary">Pendiente Laboratorio</span>
+</div>
+</div>
+</div>
+<!-- SPATIAL GEODATA CARD -->
+<div class="bg-surface-container-low p-space-lg rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-headline-md text-title-md text-on-surface">Telemetría Geotécnica</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-code-sm text-label-code-sm">GNSS ONLINE</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">Sensores de inclinación y piezómetros en zapatas este.</p>
+<div class="h-32 bg-surface-container-high rounded relative overflow-hidden flex items-center justify-center">
+<!-- Simulated displacement wave -->
+<svg class="w-full h-full text-secondary opacity-60" fill="none" preserveaspectratio="none" viewbox="0 0 300 100">
+<path d="M0,50 Q45,20 90,50 T180,50 T270,30 T360,50" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path d="M0,50 Q45,70 90,50 T180,60 T270,70 T360,50" fill="none" stroke="#ff5a1f" stroke-dasharray="4 4" stroke-width="1.5"></path>
+</svg>
+<div class="absolute bottom-2 left-2 font-label-code-sm text-label-code-sm text-on-surface bg-surface-container-lowest/80 px-1.5 py-0.5 rounded">
+              Δx: +0.42mm | Δy: -0.11mm
+            </div>
+</div>
+</div>
+<div class="pt-space-md flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant">
+<span>Estabilidad Global: 99.8%</span>
+<span class="text-secondary font-medium">BIM v8.4 Vinculado</span>
+</div>
+</div>
+</div>
+</div>
+<!-- MODAL OVERLAY WRAPPER -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md bg-surface-container-lowest/80 backdrop-blur-md transition-opacity duration-200" id="modal-container">
+<!-- CENTRAL MODAL WINDOW -->
+<div class="relative w-full max-w-[1040px] h-[720px] max-h-[942px] bg-surface-container rounded-xl flex flex-col overflow-hidden shadow-2xl shadow-surface-container-lowest/90">
+<!-- SUBTLE INNER AMBIENT HIGHLIGHT -->
+<div class="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-secondary/5 blur-3xl pointer-events-none"></div>
+<div class="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-primary-container/10 blur-3xl pointer-events-none"></div>
+<!-- MODAL HEADER -->
+<div class="relative z-10 px-space-lg pt-space-lg pb-space-md bg-surface-container-high/80 flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-11 h-11 rounded-lg bg-primary-container/15 flex items-center justify-center text-primary-container shadow-inner">
+<span class="material-symbols-outlined text-[24px]">explore</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-primary">NAVEGACIÓN SISTÉMICA</span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span class="font-label-telemetry text-label-code-sm text-on-surface-variant">TCN-04</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<h3 class="font-headline-md text-headline-md text-on-surface">Todas las herramientas</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant hidden sm:inline">Torre Corporativa Norte · TCN-04</span>
+</div>
+</div>
+</div>
+<!-- CLOSE BUTTON -->
+<button class="w-9 h-9 rounded bg-surface-container-low hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all cursor-pointer" id="modal-close-btn" title="Cerrar modal (Esc)">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- FILTER & SEARCH HUD STRIP -->
+<div class="relative z-10 px-space-lg py-space-sm bg-surface-container-low/95 flex flex-col gap-space-sm">
+<!-- SEARCH INPUT -->
+<div class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-3.5 text-secondary text-[20px] pointer-events-none">search</span>
+<input autofocus="" class="w-full h-11 pl-11 pr-24 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant font-body-md text-body-md focus:outline-none focus:ring-1 focus:ring-secondary transition-all" id="tool-search-input" placeholder="Filtrar 62 herramientas del ecosistema..." type="text" value="Plan"/>
+<div class="absolute right-3 flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-code-sm text-label-code-sm">ESC</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-secondary font-label-code-sm text-label-code-sm">⌘K</span>
+</div>
+</div>
+<!-- CATEGORY CHIP CAROUSEL -->
+<div class="flex items-center gap-space-xs overflow-x-auto py-1 scrollbar-none no-scrollbar">
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-primary-container text-on-primary font-semibold flex items-center gap-1.5 shadow-sm">
+<span>Todas</span>
+<span class="px-1.5 py-0.2 rounded-full bg-on-primary/20 font-label-code-sm text-label-code-sm">62</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container-high hover:bg-surface-bright text-on-surface transition-colors flex items-center gap-1.5">
+<span>Planeación</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">11</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>Campo y ejecución</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">10</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>Materiales y compras</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">6</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>Documentos y diseño BIM</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">13</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>IA Generativa</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">8</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>Administración</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">9</span>
+</button>
+<button class="px-3 py-1 rounded font-body-sm text-body-sm whitespace-nowrap bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5">
+<span>Proyecto General</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">5</span>
+</button>
+</div>
+</div>
+<!-- MODAL BODY: 2-COLUMN VIEWPORT -->
+<div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+<!-- INTERNAL SIDEBAR: PINNED & RECENTS (WIDTH ~260px) -->
+<div class="w-full md:w-[260px] shrink-0 bg-surface-container-low p-space-md overflow-y-auto space-y-space-lg">
+<!-- PINNED SECTION -->
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-code-sm text-label-code-sm tracking-widest uppercase text-on-surface-variant">FIJADAS EN PANEL</span>
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between p-2 rounded bg-surface-container-high hover:bg-surface-bright group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-secondary">calendar_month</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">Programa</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Planeación 4D</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">assignment_turned_in</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">Reporte diario</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Bitácora de campo</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">folder_zip</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">Archivo</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Planos e IFC 3D</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">monetization_on</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">Costos</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Control presupuestal</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</a>
+</div>
+</div>
+<!-- RECENT SECTION -->
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-code-sm text-label-code-sm tracking-widest uppercase text-on-surface-variant">RECIENTES</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">history</span>
+</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">contact_support</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">RFI</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Aclaraciones MEP</span>
+</div>
+</div>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">verified</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">Calidad</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Inspección estructural</span>
+</div>
+</div>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">local_shipping</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">MSR</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Suministros acero</span>
+</div>
+</div>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-container-high group transition-colors" href="#">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary">view_kanban</span>
+<div class="truncate">
+<span class="font-title-md text-body-sm text-on-surface block truncate">vPlan</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">Revisión semanal LPS</span>
+</div>
+</div>
+</a>
+</div>
+</div>
+<!-- MINI STATUS HUD -->
+<div class="p-space-sm rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="w-2 h-2 rounded-full bg-[#3ddc97]"></span>
+<div class="leading-tight">
+<span class="font-label-code-sm text-label-code-sm text-on-surface block">BIM Server v4</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant block">Latencia 18ms</span>
+</div>
+</div>
+</div>
+<!-- RIGHT SCROLLABLE TOOLS DIRECTORY (TILES) -->
+<div class="flex-1 p-space-lg overflow-y-auto bg-surface-container/70">
+<!-- CATEGORY SUBHEADER -->
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<h4 class="font-headline-md text-title-md text-on-surface">PLANEACIÓN</h4>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-secondary font-label-code-sm text-label-code-sm">11 HERRAMIENTAS</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span>ORDEN: RELEVANCIA</span>
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</div>
+</div>
+<!-- TOOL CARDS GRID: 3 COLUMNS -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-sm">
+<!-- TILE 1: PROGRAMA (FOCUSED / ACTIVE STATE) -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-md group cursor-pointer ring-2 ring-secondary ring-offset-2 ring-offset-surface-container">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-primary-container text-on-primary font-label-code-sm text-label-code-sm font-semibold">ACTUAL</span>
+<button class="text-primary-container p-1 rounded hover:bg-surface-container-lowest" title="Fijada">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</button>
+</div>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Programa</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Gantt maestro, hitos contractuales y trazabilidad de ruta crítica.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="text-secondary font-mono">ID: PLN-01</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 2: DEPENDENCIAS -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Dependencias</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Vínculos de precedencia espacial y restricciones críticas estructurales.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-02</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 3: LINEA DE TIEMPO -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-tertiary-container/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">timeline</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Línea de tiempo</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Visualización temporal 4D sincronizada con el gemelo digital IFC.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-03</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 4: LINEA DE BALANCE -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[20px]">stacked_line_chart</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Línea de balance</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Flujo continuo de cuadrillas especializadas por niveles repetitivos.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-04</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 5: LOOKAHEAD -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">fast_forward</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Lookahead (6 sem)</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Planificación intermedia para mitigación proactiva de restricciones.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-05</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 6: vPLAN SEMANAL -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">view_kanban</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">vPlan Semanal</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Compromisos Last Planner System y porcentaje de asignación diaria.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-06</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 7: LAST PLANNER INDICADORES -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Last Planner</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Cálculo PPC, causas de no cumplimiento y varianza de subcontratos.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-07</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 8: CALENDARIO DE COLADOS -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[20px]">precision_manufacturing</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Calendario de colados</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Ventanas operativas, logística de ollas y entrega en bomba pluma.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-08</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+<!-- TILE 9: LINEAS BASE -->
+<div class="relative bg-surface-container-low p-3.5 rounded-lg flex flex-col justify-between hover:bg-surface-container-high transition-all shadow-sm group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-2.5">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">difference</span>
+</div>
+<button class="text-on-surface-variant/40 hover:text-on-surface p-1 rounded hover:bg-surface-container-lowest" title="Fijar">
+<span class="material-symbols-outlined text-[16px]">push_pin</span>
+</button>
+</div>
+<h5 class="font-title-md text-body-md font-semibold text-on-surface group-hover:text-secondary transition-colors">Líneas base</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">Histórico comparativo de versiones contractuales aprobadas.</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="font-mono">ID: PLN-09</span>
+<span class="material-symbols-outlined text-[16px] text-secondary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- MODAL FOOTER DOCK -->
+<div class="relative z-10 px-space-lg py-3 bg-surface-container-high/90 flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-md text-body-sm font-body-sm text-on-surface-variant">
+<a class="hover:text-secondary flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>Manual de usuario de obra</span>
+</a>
+<span class="text-outline">·</span>
+<a class="hover:text-primary-container flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+<span>Acciones rápidas de cuadrilla</span>
+</a>
+</div>
+<div class="flex items-center gap-space-xs font-label-code-sm text-label-code-sm text-on-surface-variant">
+<span>Navegar con</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest text-on-surface">↑</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest text-on-surface">↓</span>
+<span>· Abrir</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-lowest text-secondary">ENTER</span>
+<span class="text-outline">· Cerrar</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-lowest text-on-surface">ESC</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Micro-interaction handlers for modal dismissal and keyboard shortcuts
+  (function() {
+    const modal = document.getElementById('modal-container');
+    const closeBtn = document.getElementById('modal-close-btn');
+    const searchInput = document.getElementById('tool-search-input');
+
+    function closeModal() {
+      if (!modal) return;
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        // Toggle view logic or allow background click-through
+        modal.style.display = 'none';
+      }, 150);
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
+
+    if (modal) {
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (modal.style.display === 'none' || modal.classList.contains('opacity-0')) {
+          modal.style.display = 'flex';
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          if (searchInput) searchInput.focus();
+        } else {
+          closeModal();
+        }
+      }
+    });
+  })();
+</script></main><footer class="w-full bg-surface-container-low border-t border-white/[0.08] py-space-lg"><div class="max-w-[1440px] mx-auto px-space-md flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-primary-container text-[18px]">token</span><span class="font-label-telemetry text-body-sm text-on-surface-variant">ProjectWeb Core v4.12.0-spatial // Telemetría Activa</span></div><div class="flex items-center gap-space-lg font-body-sm text-body-sm text-on-surface-variant"><a class="hover:text-on-surface transition-colors" href="#">Términos Operativos</a><a class="hover:text-on-surface transition-colors" href="#">Auditoría de Obra</a><a class="hover:text-on-surface transition-colors" href="#">Soporte BIM/GIS</a><span>© 2025 ProjectWeb Infrastructure Systems</span></div></div></footer></body></html>

@@ -435,19 +435,48 @@ class Usuario extends ActiveRecord
         }
     }
 
-    /** Búsqueda por nombre o correo con paginación. Devuelve ['usuarios' => [...], 'total' => n] */
-    public static function buscar(string $q, int $limite, int $desplazamiento): array
+    /**
+     * Búsqueda por nombre o correo con paginación y filtro opcional por rol.
+     * Devuelve ['usuarios' => [...], 'total' => n]
+     */
+    public static function buscar(string $q, int $limite, int $desplazamiento, ?string $rol = null): array
     {
         $q = trim($q);
-        $donde = '';
+        $condiciones = [];
         if ($q !== '') {
             // Se escapan también los comodines de LIKE para que % y _ se busquen como texto
             $like = self::escapar(addcslashes(mb_substr($q, 0, 100), '%_\\'));
-            $donde = "WHERE nombre LIKE '%$like%' OR email LIKE '%$like%'";
+            $condiciones[] = "(nombre LIKE '%$like%' OR email LIKE '%$like%')";
         }
-        $total = self::total($donde ? substr($donde, 6) : null);
+        if ($rol !== null && in_array($rol, ['admin', 'cliente', 'visitante'], true)) {
+            $condiciones[] = "rol = '$rol'";
+        }
+        $donde = $condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '';
+        $total = self::total($condiciones ? implode(' AND ', $condiciones) : null);
         $usuarios = self::consultarSQL("SELECT * FROM usuarios $donde ORDER BY id ASC LIMIT " . (int)$limite . ' OFFSET ' . (int)$desplazamiento);
         return ['usuarios' => $usuarios, 'total' => $total];
+    }
+
+    /** Conteos de cuentas por rol para la cabecera de Usuarios */
+    public static function conteosPorRol(): array
+    {
+        $conteos = ['total' => 0, 'admin' => 0, 'cliente' => 0, 'visitante' => 0, 'colaborador' => 0];
+        $res = self::$db->query("SELECT rol, COUNT(*) AS n FROM usuarios GROUP BY rol");
+        if ($res) {
+            while ($fila = $res->fetch_assoc()) {
+                $clave = (string)($fila['rol'] ?? '');
+                if (isset($conteos[$clave])) $conteos[$clave] = (int)$fila['n'];
+                $conteos['total'] += (int)$fila['n'];
+            }
+            $res->free();
+        }
+        $colab = self::$db->query("SELECT COUNT(*) FROM usuarios WHERE rol = 'visitante' AND nivel_acceso = 'editar'");
+        if ($colab) {
+            $n = $colab->fetch_array();
+            $conteos['colaborador'] = (int)array_shift($n);
+            $colab->free();
+        }
+        return $conteos;
     }
 
     /** Visitantes creados por un cliente */

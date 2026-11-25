@@ -4,13 +4,30 @@ $n = fn($v, int $d = 2) => $v === null ? '—' : number_format((float)$v, $d);
 $total = array_sum(array_map(fn($c) => (float)$c['importe'], $cantidades));
 $icono = ['critica' => 'fa-circle-exclamation', 'aviso' => 'fa-triangle-exclamation', 'info' => 'fa-circle-info'];
 $tipos = ['inicio' => 'Inicio', 'fin' => 'Término', 'hito' => 'Hito'];
+$nFechas = count($fechas);
+$nResp = count($responsables);
+$nCant = count($cantidades);
+$nAlertas = count($alertas);
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-file-contract"></i> Datos de obra</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · lo que el Ensamblador guardó de los documentos del proyecto</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-calendar-days"></i> <b><?php echo $nFechas; ?></b> fechas contractuales</span>
+            <span><i class="fa-solid fa-user-check"></i> <b><?php echo $nResp; ?></b> responsables</span>
+            <span><i class="fa-solid fa-rectangle-list"></i> <b><?php echo $nCant; ?></b> conceptos</span>
+        </div>
     </div>
     <div class="la-controles"><a href="/lineas-base?proyecto=<?php echo $id; ?>" class="btn btn-ghost"><i class="fa-solid fa-timeline"></i> Líneas base</a></div>
+</div>
+
+<div class="cb-kpis">
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-calendar-days"></i></span><small>Fechas contractuales</small><strong><?php echo $nFechas; ?></strong><span>Inicio, término e hitos del contrato</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-user-check"></i></span><small>Responsables</small><strong><?php echo $nResp; ?></strong><span>Asignados desde documentos</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-rectangle-list"></i></span><small>Cantidades de obra</small><strong><?php echo $nCant; ?></strong><span>Importe total $<?php echo $n($total); ?></span></div>
+    <div class="cb-kpi <?php echo $nAlertas ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-triangle-exclamation"></i></span><small>Alertas</small><strong><?php echo $nAlertas; ?></strong><span>Fechas y datos por revisar</span></div>
 </div>
 
 <?php foreach ($alertas as $a): ?>

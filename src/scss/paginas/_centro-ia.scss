@@ -1,0 +1,140 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Centro de IA · Bandeja de propuestas
+// ============================================================
+
+body[data-vista="centro-ia-bandeja"] {
+  .inc-lista { gap: .8rem; }
+
+  .inc-item {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-left: .4rem solid var(--border);
+    border-radius: .85rem;
+    background: var(--surface);
+
+    &.sev-critica { border-left-color: var(--danger); }
+    &.sev-alta { border-left-color: var(--primary); }
+    &.sev-media { border-left-color: var(--warning); }
+    &.sev-baja { border-left-color: var(--secondary); }
+  }
+
+  .inc-cab {
+    align-items: flex-start;
+    gap: .45rem .8rem;
+
+    strong {
+      font-size: 1.35rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .inc-solucion {
+    align-items: baseline;
+    padding: .7rem .85rem;
+    border: 1px solid var(--primary-line);
+    border-radius: .6rem;
+    background: var(--primary-soft);
+    font-size: 1.16rem;
+    line-height: 1.45;
+  }
+
+  .inc-botones {
+    gap: .5rem;
+    margin-top: .15rem;
+  }
+
+  .ia-lote {
+    padding: 1.1rem 1.2rem;
+    border-left: .4rem solid var(--primary);
+
+    p { margin: .35rem 0 0; }
+    .btn { flex: none; }
+  }
+
+  .ia-riesgos {
+    > summary {
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1.4;
+    }
+
+    form { margin-top: .8rem; }
+  }
+
+  .ia-riesgos__lista {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    margin: .8rem 0 1rem;
+  }
+
+  .ia-riesgos__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.1rem;
+
+    &:last-child { border-bottom: 0; }
+    span { min-width: 0; }
+    select { max-width: 15rem; }
+  }
+
+  .ia-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.1rem;
+      line-height: 1.45;
+
+      &:last-child { border-bottom: 0; }
+      i { margin-top: .25rem; color: var(--primary-ink); }
+    }
+  }
+
+  .ia-inspector .ia-lista { margin-top: .2rem; }
+
+  .ia-command label { white-space: nowrap; }
+  .ia-command select { min-width: 11rem; }
+
+  .ia-inspector .ia-legend + .ia-legend { margin-top: .4rem; }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista="centro-ia-bandeja"] {
+    .inc-item { padding: .8rem .85rem; }
+    .ia-lote { align-items: stretch; }
+    .ia-lote .btn { width: 100%; }
+    .ia-riesgos__fila { align-items: flex-start; flex-direction: column; gap: .3rem; }
+    .ia-riesgos__fila select { max-width: 100%; width: 100%; }
+    .inc-botones .btn { flex: 1 1 12rem; justify-content: center; }
+  }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista="centro-ia-bandeja"] {
+    .centro-ia-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: .6rem;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar { display: none; }
+    }
+
+    .centro-ia-tabs__titulo { display: none; }
+    .centro-ia-tabs__tab { flex: none; white-space: nowrap; }
+  }
+}

@@ -24,8 +24,12 @@ class SistemaController
         }
         unset($s);
 
+        $accesosDisponibles = \Classes\Accesos::disponible();
         $router->render('sistema/ajustes', [
-            'titulo' => 'Ajustes',
+            'titulo' => 'Sistema',
+            'accesosDisponibles' => $accesosDisponibles,
+            'accesosResumen' => $accesosDisponibles ? \Classes\Accesos::resumen() : null,
+            'accesosLista' => $accesosDisponibles ? \Classes\Accesos::recientes(30) : [],
             'archivos' => $archivos,
             'bd' => $bd,
             'disco' => Volumen::discoServidor(),

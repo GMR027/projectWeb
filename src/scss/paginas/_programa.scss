@@ -1760,3 +1760,14 @@ body.body-modal {
     font-family: $font-mono;
   }
 }
+
+// Móvil: los chips del hero pueden envolver; el nombre de la ubicación es largo
+// y no debe arrastrar el ancho de la cabecera.
+@media (max-width: $bp-mobile) {
+  .prg-hero .prg-chip {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

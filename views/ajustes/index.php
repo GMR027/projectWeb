@@ -1,9 +1,25 @@
+<?php
+$diasHabilesSemana = array_sum(array_map(fn($j) => (float)$j->factor, $jornada));
+$festivosCount = count($festivos);
+$nSesiones = count($sesiones);
+$usadoAlm = array_sum($almacenamiento['desglose']);
+$limiteAlm = \Classes\Almacenamiento::limite((int)$proyecto->id);
+$pctAlm = $limiteAlm > 0 ? min(100, $usadoAlm / $limiteAlm * 100) : 0;
+?>
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-gear"></i> <?php echo s(t('Ajustes del Proyecto')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo s($proyecto->codigo); ?></p>
+        <span class="adm-eyebrow">Configuración de obra</span>
+        <h2><i class="fa-solid fa-sliders"></i> <?php echo s(t('Ajustes del Proyecto')); ?></h2>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <span class="mono"><?php echo s($proyecto->codigo); ?></span></p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-clock"></i> Jornada de <b><?php echo number_format($diasHabilesSemana, 1, '.', ''); ?></b> días</span>
+            <span><i class="fa-solid fa-calendar-xmark"></i> <b><?php echo (int)$festivosCount; ?></b> festivos</span>
+            <span><i class="fa-solid fa-hard-drive"></i> <b><?php echo number_format($pctAlm, 0); ?>%</b> de almacenamiento</span>
+            <span><i class="fa-solid fa-shield-halved"></i> <b><?php echo (int)$nSesiones; ?></b> sesiones</span>
+            <?php if (!empty($apk['version'])): ?><span><i class="fab fa-android"></i> App <b><?php echo s($apk['version']); ?></b></span><?php endif; ?>
+        </div>
     </div>
-    <div>
+    <div class="la-controles">
         <a href="/proyectos/ver?id=<?php echo s($proyecto->id); ?>" class="btn btn-secondary">
             <i class="fa-solid fa-heart-pulse"></i> Salud del proyecto
         </a>
@@ -49,30 +65,48 @@ $esElectron = str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'Electron/');
 $novedadesPlataforma = \Classes\Novedades::para($_SESSION['rol'] ?? 'visitante', (int)($_SESSION['id'] ?? 0));
 $novedadesSinVer = \Classes\Novedades::sinVer($novedadesPlataforma);
 $secNav = [
-    ['general', 'fa-sliders', 'General', 'Jornada, festivos e idioma'],
-    ['novedades', 'fa-bullhorn', 'Novedades', 'Lo último de la plataforma'],
-    ['empezar', 'fa-flag-checkered', 'Por dónde empezar', 'Ruta de arranque'],
-    ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
+    'Proyecto' => [
+        ['general', 'fa-sliders', 'General', 'Jornada, festivos e idioma'],
+        ['apariencia', 'fa-palette', 'Apariencia', 'Tema, color y textura'],
+        ['novedades', 'fa-bullhorn', 'Novedades', 'Lo último de la plataforma'],
+        ['empezar', 'fa-flag-checkered', 'Por dónde empezar', 'Ruta de arranque'],
+    ],
+    'Datos' => [
+        ['datos', 'fa-database', 'Datos', 'Almacenamiento y respaldos'],
+        ['android', 'fa-mobile-screen', 'App Android', 'Descargar e instalar'],
+    ],
 ];
-$secNav[] = ['android', 'fa-mobile-screen', 'App Android', 'Descargar e instalar'];
-if (is_admin() || $esElectron) $secNav[] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
-if ($esCliente) $secNav[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra al proyecto'];
-if ($esCliente || is_admin()) $secNav[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Contraseña y soporte'];
+if (is_admin() || $esElectron) $secNav['Datos'][] = ['equipo', 'fa-desktop', 'Equipo', 'App y modo sin conexión'];
+$personas = [];
+if ($esCliente) $personas[] = ['accesos', 'fa-user-lock', 'Accesos', 'Quién entra al proyecto'];
+if ($esCliente || is_admin()) $personas[] = ['cuenta-sec', 'fa-user-shield', 'Cuenta', 'Contraseña y soporte'];
+if ($personas) $secNav['Personas'] = $personas;
 ?>
-<div class="ajustes-layout">
-<nav class="ajustes-nav" aria-label="Secciones de ajustes">
-<div class="ajustes-busca">
+<div class="ctl-layout">
+<aside class="ctl-rail">
+<nav class="ctl-rail-nav" data-control-nav data-modo="tabs" aria-label="Secciones de ajustes">
+<div class="ctl-rail-busca">
     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-    <input type="search" id="ajustes-busca" placeholder="<?php echo s(t('Buscar en los ajustes…')); ?>" aria-label="<?php echo s(t('Buscar en los ajustes')); ?>" autocomplete="off">
+    <input type="search" id="ajustes-busca" data-control-busca placeholder="<?php echo s(t('Buscar en los ajustes…')); ?>" aria-label="<?php echo s(t('Buscar en los ajustes')); ?>" autocomplete="off">
 </div>
-<?php foreach ($secNav as [$sid, $ico, $tit, $sub]): ?>
-    <a href="#<?php echo $sid; ?>" data-sec="<?php echo $sid; ?>"><i class="fa-solid <?php echo $ico; ?>"></i><span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span></a>
+<?php foreach ($secNav as $grupo => $items): ?>
+    <div class="ctl-rail-grupo">
+        <p class="ctl-rail-titulo"><?php echo s($grupo); ?></p>
+        <?php foreach ($items as [$sid, $ico, $tit, $sub]): ?>
+            <a href="#<?php echo $sid; ?>" class="ctl-rail-link" data-sec="<?php echo $sid; ?>">
+                <i class="fa-solid <?php echo $ico; ?>"></i>
+                <span><strong><?php echo s($tit); ?></strong><small><?php echo s($sub); ?></small></span>
+                <?php if ($sid === 'novedades' && $novedadesSinVer > 0): ?><span class="ctl-rail-contador"><?php echo (int)$novedadesSinVer; ?></span><?php endif; ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
 <?php endforeach; ?>
-<p class="ajustes-busca-vacio" id="ajustes-busca-vacio" hidden><?php echo s(t('Ninguna sección coincide.')); ?></p>
+<p class="ctl-rail-vacio" data-control-vacio hidden><?php echo s(t('Ninguna sección coincide.')); ?></p>
 </nav>
-<div class="ajustes-contenido">
+</aside>
+<div class="ctl-contenido">
 
-<section class="ajustes-seccion" id="general">
+<section class="ajustes-seccion ctl-seccion" id="general">
     <h3 class="seccion-titulo"><i class="fa-solid fa-sliders"></i> General</h3>
     <div class="ajustes-grid">
     <!-- Configuración de jornada semanal -->
@@ -272,6 +306,10 @@ $hayTexturas = \Classes\TemaProyecto::disponibleTexturas();
 $paletaActual = \Classes\TemaProyecto::PALETAS[$temaPaleta];
 $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $paletaActual[2];
 ?>
+</section>
+
+<section class="ajustes-seccion ctl-seccion" id="apariencia">
+    <h3 class="seccion-titulo"><i class="fa-solid fa-palette"></i> Apariencia</h3>
 <div class="card" id="tema">
     <h3 class="card-titulo"><i class="fa-solid fa-palette"></i> Apariencia del proyecto</h3>
     <?php if (($_GET['tema'] ?? '') === 'ok'): ?><div class="alerta alerta-exito">Guardado.</div><?php endif; ?>
@@ -361,7 +399,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
                     </label>
                 <?php endforeach; ?>
             </div>
-            <p class="text-muted text-sm" style="margin:.6rem 0 0">Escribe el nombre debajo de cada icono en la barra superior de herramientas del proyecto (Planeación, Campo, Materiales…). Con «No» queda solo el icono.</p>
+            <p class="text-muted text-sm" style="margin:.6rem 0 0">En la barra compacta, muestra el nombre junto al icono de cada herramienta. Con «No» queda solo el icono y el nombre aparece al pasar el puntero. En el panel «Todas las herramientas» y en el riel lateral los nombres siempre se ven.</p>
         </div>
 
         <div class="tema-bloque">
@@ -598,9 +636,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
                 if (nombres) raiz.classList.toggle('herr-con-nombres', nombres.value === '1');
 
                 const menu = card.querySelector('#tema-menu');
-                if (menu) {   // vista previa de la barra superior (clásico, panel o pestañas)
-                    raiz.classList.remove('menu-panel', 'menu-pestanas');
-                    if (menu.value !== 'clasico') raiz.classList.add('menu-' + menu.value);
+                if (menu) {   // el modo se aplica al guardar; aquí solo se explica
                     const ayuda = document.getElementById('tema-menu-ayuda');
                     if (ayuda && AYUDA_MENU[menu.value]) ayuda.textContent = AYUDA_MENU[menu.value];
                 }
@@ -674,7 +710,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 
 </section>
 
-<section class="ajustes-seccion" id="novedades">
+<section class="ajustes-seccion ctl-seccion" id="novedades">
     <h3 class="seccion-titulo"><i class="fa-solid fa-bullhorn"></i> <?php echo s(t('Novedades de la plataforma')); ?></h3>
     <div class="card">
         <p class="text-muted text-sm">Lo que se publica aquí es lo mismo que avisa la campana de la barra superior.<?php if ($novedadesSinVer > 0): ?> Tienes <strong><?php echo (int)$novedadesSinVer; ?></strong> sin ver.<?php endif; ?></p>
@@ -688,7 +724,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
     </div>
 </section>
 
-<section class="ajustes-seccion" id="empezar">
+<section class="ajustes-seccion ctl-seccion" id="empezar">
 <div class="card" id="por-donde-empezar">
     <h3 class="card-titulo"><i class="fa-solid fa-flag-checkered"></i> Por dónde empezar</h3>
     <p class="text-muted text-sm">Ruta recomendada para arrancar el proyecto. Lo que captures aquí se guarda en la herramienta correspondiente.</p>
@@ -697,7 +733,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 
 </section>
 
-<section class="ajustes-seccion" id="datos">
+<section class="ajustes-seccion ctl-seccion" id="datos">
     <h3 class="seccion-titulo"><i class="fa-solid fa-database"></i> Datos</h3>
 <div class="card" id="almacenamiento">
     <h3 class="card-titulo"><i class="fa-solid fa-database"></i> <?php echo s(t('Almacenamiento')); ?></h3>
@@ -806,7 +842,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 
 </section>
 
-<section class="ajustes-seccion" id="android">
+<section class="ajustes-seccion ctl-seccion" id="android">
     <h3 class="seccion-titulo"><i class="fa-solid fa-mobile-screen"></i> <?php echo s(t('App Android')); ?></h3>
     <div class="card">
         <h3 class="card-titulo"><i class="fa-brands fa-android"></i> <?php echo s(t('Project Web para Android')); ?><?php echo !empty($apk['version']) ? ' · v' . s($apk['version']) : ''; ?></h3>
@@ -839,7 +875,7 @@ $haloColorVista = $temaFondo['halo_color'] !== '' ? $temaFondo['halo_color'] : $
 </section>
 
 <?php if (is_admin() || $esElectron): ?>
-<section class="ajustes-seccion" id="equipo">
+<section class="ajustes-seccion ctl-seccion" id="equipo">
     <h3 class="seccion-titulo"><i class="fa-solid fa-desktop"></i> Equipo</h3>
 <?php if (is_admin()): $instaladores = \Classes\Instaladores::listar(); $verInst = \Classes\Instaladores::version(); ?>
 <div class="card" id="app-escritorio">
@@ -895,7 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
 <?php endif; ?>
 
 <?php if ($esCliente): ?>
-<section class="ajustes-seccion" id="accesos">
+<section class="ajustes-seccion ctl-seccion" id="accesos">
     <h3 class="seccion-titulo"><i class="fa-solid fa-user-lock"></i> Accesos al proyecto</h3>
     <div class="card">
         <h3 class="card-titulo"><i class="fa-solid fa-user-group"></i> Quién entra a «<?php echo s($proyecto->nombre); ?>»</h3>
@@ -926,7 +962,7 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
 <?php endif; ?>
 
 <?php if ($esCliente || is_admin()): ?>
-<section class="ajustes-seccion" id="cuenta-sec">
+<section class="ajustes-seccion ctl-seccion" id="cuenta-sec">
     <h3 class="seccion-titulo"><i class="fa-solid fa-user-shield"></i> Cuenta</h3>
 <?php if ($esCliente): ?>
 <div class="card">
@@ -974,50 +1010,4 @@ document.addEventListener('DOMContentLoaded', () => {   // el bundle (POOffline)
 
 </div>
 </div>
-<script>
-(() => {
-    const links = [...document.querySelectorAll('.ajustes-nav a')];
-    const secs = [...document.querySelectorAll('.ajustes-seccion[id]')];
-    const ids = links.map(a => a.dataset.sec);
-    const mostrar = id => {
-        if (!ids.includes(id)) id = ids[0];
-        secs.forEach(x => { x.hidden = x.id !== id; });
-        links.forEach(a => { const on = a.dataset.sec === id; a.classList.toggle('activo', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
-        try { sessionStorage.setItem('ajustes-tab', id); } catch (e) {}
-    };
-    const desdeHash = () => {
-        const el = location.hash.length > 1 ? document.getElementById(location.hash.slice(1)) : null;
-        const sec = el && el.closest('.ajustes-seccion[id]');
-        if (sec) { mostrar(sec.id); if (el !== sec) el.scrollIntoView(); return true; }
-        return false;
-    };
-    links.forEach(a => a.addEventListener('click', e => { e.preventDefault(); mostrar(a.dataset.sec); history.replaceState(null, '', '#' + a.dataset.sec); }));
-    window.addEventListener('hashchange', desdeHash);
-    if (!desdeHash()) { let g = null; try { g = sessionStorage.getItem('ajustes-tab'); } catch (e) {} mostrar(g); }
-})();
-</script>
-<script>
-// Buscador de secciones de ajustes (filtra la barra lateral mientras se escribe)
-(function () {
-    const inp = document.getElementById('ajustes-busca');
-    const vacio = document.getElementById('ajustes-busca-vacio');
-    if (!inp) return;
-    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const links = [...document.querySelectorAll('.ajustes-nav a')];
-    const filtrar = () => {
-        const q = norm(inp.value.trim());
-        let n = 0;
-        links.forEach((a) => {
-            const on = !q || norm(a.textContent).includes(q);
-            a.hidden = !on;
-            if (on) n++;
-        });
-        if (vacio) vacio.hidden = n > 0;
-    };
-    inp.addEventListener('input', filtrar);
-    inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { inp.value = ''; filtrar(); }
-        if (e.key === 'Enter') { const a = links.find((x) => !x.hidden); if (a) a.click(); }
-    });
-})();
-</script>
+<script src="/vendor/control.js" defer></script>

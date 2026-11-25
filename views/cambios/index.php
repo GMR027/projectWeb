@@ -1,8 +1,14 @@
 <?php $pid = s($proyecto->id); ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-file-circle-exclamation"></i> Órdenes de cambio</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · <?php echo (int)$resumen['total']; ?> orden(es)</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-dollar-sign"></i> <b>$<?php echo number_format((float)($resumen['costo_autorizado'] ?? 0), 2); ?></b> autorizado</span>
+            <span><i class="fa-solid fa-clock"></i> <b><?php echo (int)($resumen['por_estado']['solicitada'] ?? 0); ?></b> por autorizar</span>
+            <span><i class="fa-solid fa-person-digging"></i> <b><?php echo (int)($resumen['retiros_pendientes'] ?? 0); ?></b> retiros pendientes</span>
+        </div>
     </div>
     <div class="cb-acciones">
         <a href="/lineas-base?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-timeline"></i> Líneas base</a>
@@ -28,10 +34,10 @@
     <div class="card"><p>Falta aplicar la migración <code>database/migracion_cambios.sql</code> para usar las órdenes de cambio y las líneas base.</p></div>
 <?php else: ?>
 <div class="cb-kpis">
-    <div class="cb-kpi"><small>Costo autorizado</small><strong>$<?php echo number_format($resumen['costo_autorizado'], 2); ?></strong><span><?php echo (int)$resumen['dias_autorizados']; ?> día(s) en órdenes aprobadas</span></div>
-    <div class="cb-kpi"><small>Por autorizar</small><strong>$<?php echo number_format($resumen['costo_por_autorizar'], 2); ?></strong><span><?php echo (int)$resumen['por_estado']['solicitada']; ?> solicitada(s) · <?php echo (int)$resumen['dias_por_autorizar']; ?> día(s)</span></div>
-    <div class="cb-kpi <?php echo $resumen['retiros_pendientes'] ? 'cb-kpi-alerta' : ''; ?>"><small>Retiros pendientes</small><strong><?php echo (int)$resumen['retiros_pendientes']; ?></strong><span><?php echo (int)$resumen['retiros_vencidos']; ?> vencido(s)</span></div>
-    <div class="cb-kpi"><small>Ejecutadas</small><strong><?php echo (int)$resumen['por_estado']['ejecutada'] + (int)$resumen['por_estado']['cerrada']; ?></strong><span><?php echo (int)$resumen['por_estado']['aprobada']; ?> aprobada(s) por ejecutar</span></div>
+    <div class="cb-kpi is-success"><span class="adm-kpi-icono"><i class="fa-solid fa-circle-check"></i></span><small>Costo autorizado</small><strong>$<?php echo number_format((float)($resumen['costo_autorizado'] ?? 0), 2); ?></strong><span><?php echo (int)$resumen['dias_autorizados']; ?> día(s) en órdenes aprobadas</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-hourglass-half"></i></span><small>Por autorizar</small><strong>$<?php echo number_format($resumen['costo_por_autorizar'], 2); ?></strong><span><?php echo (int)($resumen['por_estado']['solicitada'] ?? 0); ?> solicitada(s) · <?php echo (int)$resumen['dias_por_autorizar']; ?> día(s)</span></div>
+    <div class="cb-kpi <?php echo $resumen['retiros_pendientes'] ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-person-digging"></i></span><small>Retiros pendientes</small><strong><?php echo (int)($resumen['retiros_pendientes'] ?? 0); ?></strong><span><?php echo (int)$resumen['retiros_vencidos']; ?> vencido(s)</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-check-double"></i></span><small>Ejecutadas</small><strong><?php echo (int)$resumen['por_estado']['ejecutada'] + (int)$resumen['por_estado']['cerrada']; ?></strong><span><?php echo (int)$resumen['por_estado']['aprobada']; ?> aprobada(s) por ejecutar</span></div>
 </div>
 
 <?php if ($retiros): ?>

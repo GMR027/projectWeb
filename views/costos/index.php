@@ -12,8 +12,14 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-sack-dollar"></i> Costos y presupuesto</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · presupuesto por partida, costo real, valor ganado y estimaciones</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-layer-group"></i> <b><?php echo count($resumen['partidas'] ?? []); ?></b> partidas</span>
+            <span><i class="fa-solid fa-file-invoice-dollar"></i> valor ganado y costo real</span>
+            <span><i class="fa-solid fa-percent"></i> cargos del proyecto</span>
+        </div>
     </div>
     <div class="la-controles">
         <a href="/conceptos?proyecto=<?php echo $pid; ?>" class="btn btn-ghost"><i class="fa-solid fa-rectangle-list"></i> Catálogo de conceptos</a>
@@ -36,15 +42,15 @@ $clsVar = fn($v) => $v === null ? '' : ($v < 0 ? 'cs-mal' : 'cs-bien');
 
 <?php if ($pestana === 'resumen'): $t = $resumen['total']; $cargos = $resumen['cargos'] ?? \Classes\CargosProyecto::deProyecto($pid); ?>
     <div class="cb-kpis">
-        <div class="cb-kpi"><small title="Catálogo + ajustes + cambios + cargos del proyecto">Presupuesto vigente</small><strong><?php echo $m($t['bac']); ?></strong><span><?php echo $m($t['presupuesto']); ?> directo<?php echo $t['ajuste'] ? ' + ' . $m($t['ajuste']) . ' ajuste' : ''; ?><?php echo $t['cambios'] ? ' ' . ($t['cambios'] > 0 ? '+' : '−') . ' ' . $m(abs($t['cambios'])) . ' en cambios' : ''; ?><?php echo $t['cargos_total'] ? ' + ' . $m($t['cargos_total']) . ' cargos' : ''; ?></span></div>
-        <div class="cb-kpi"><small>Catálogo programado</small><strong><?php echo $m($t['programado']); ?></strong><span>Pendiente de programar: <?php echo $m($t['pendiente']); ?></span></div>
-        <div class="cb-kpi"><small>Valor ganado (EV)</small><strong><?php echo $m($t['ev']); ?></strong><span>Programado a hoy (PV): <?php echo $m($t['pv']); ?></span></div>
-        <div class="cb-kpi"><small>Costo real (AC)</small><strong><?php echo $m($t['ac']); ?></strong><span class="<?php echo $clsVar($t['cv']); ?>">Variación de costo: <?php echo $m($t['cv']); ?></span></div>
-        <div class="cb-kpi"><small title="Órdenes de compra, subcontratos y servicios vigentes que aún no se facturan">Comprometido</small><strong><?php echo $m($t['comprometido']); ?></strong><span>Prometido, aún sin factura</span></div>
-        <div class="cb-kpi <?php echo $t['disponible'] < 0 ? 'cb-kpi-alerta' : ''; ?>"><small title="Presupuesto vigente − costo real − comprometido">Disponible</small><strong class="<?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></strong><span><?php echo $t['disponible'] < 0 ? 'La obra ya debe más de lo presupuestado' : 'Lo que queda por gastar o comprometer'; ?></span></div>
-        <div class="cb-kpi"><small title="Valor ganado ÷ costo real. Menor a 1 = se gasta más de lo avanzado">CPI · costo</small><strong class="<?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></strong><span>SPI · tiempo: <b class="<?php echo $clsIdx($t['spi']); ?>"><?php echo $ind($t['spi']); ?></b></span></div>
-        <div class="cb-kpi"><small title="Presupuesto ÷ CPI">Costo final estimado (EAC)</small><strong><?php echo $t['eac'] !== null ? $m($t['eac']) : '—'; ?></strong><span class="<?php echo $clsVar($t['vac']); ?>"><?php echo $t['vac'] !== null ? 'Variación al final: ' . $m($t['vac']) : 'Se calcula con el primer costo real'; ?></span></div>
-        <div class="cb-kpi"><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Neto a cobrar: <?php echo $m($t['estimado_neto']); ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-building-columns"></i></span><small title="Catálogo + ajustes + cambios + cargos del proyecto">Presupuesto vigente</small><strong><?php echo $m($t['bac']); ?></strong><span><?php echo $m($t['presupuesto']); ?> directo<?php echo $t['ajuste'] ? ' + ' . $m($t['ajuste']) . ' ajuste' : ''; ?><?php echo $t['cambios'] ? ' ' . ($t['cambios'] > 0 ? '+' : '−') . ' ' . $m(abs($t['cambios'])) . ' en cambios' : ''; ?><?php echo $t['cargos_total'] ? ' + ' . $m($t['cargos_total']) . ' cargos' : ''; ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-list-check"></i></span><small>Catálogo programado</small><strong><?php echo $m($t['programado']); ?></strong><span>Pendiente de programar: <?php echo $m($t['pendiente']); ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-chart-line"></i></span><small>Valor ganado (EV)</small><strong><?php echo $m($t['ev']); ?></strong><span>Programado a hoy (PV): <?php echo $m($t['pv']); ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-receipt"></i></span><small>Costo real (AC)</small><strong><?php echo $m($t['ac']); ?></strong><span class="<?php echo $clsVar($t['cv']); ?>">Variación de costo: <?php echo $m($t['cv']); ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-file-signature"></i></span><small title="Órdenes de compra, subcontratos y servicios vigentes que aún no se facturan">Comprometido</small><strong><?php echo $m($t['comprometido']); ?></strong><span>Prometido, aún sin factura</span></div>
+        <div class="cb-kpi <?php echo $t['disponible'] < 0 ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-wallet"></i></span><small title="Presupuesto vigente − costo real − comprometido">Disponible</small><strong class="<?php echo $t['disponible'] < 0 ? 'text-danger' : ''; ?>"><?php echo $m($t['disponible']); ?></strong><span><?php echo $t['disponible'] < 0 ? 'La obra ya debe más de lo presupuestado' : 'Lo que queda por gastar o comprometer'; ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-gauge-high"></i></span><small title="Valor ganado ÷ costo real. Menor a 1 = se gasta más de lo avanzado">CPI · costo</small><strong class="<?php echo $clsIdx($t['cpi']); ?>"><?php echo $ind($t['cpi']); ?></strong><span>SPI · tiempo: <b class="<?php echo $clsIdx($t['spi']); ?>"><?php echo $ind($t['spi']); ?></b></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-chart-pie"></i></span><small title="Presupuesto ÷ CPI">Costo final estimado (EAC)</small><strong><?php echo $t['eac'] !== null ? $m($t['eac']) : '—'; ?></strong><span class="<?php echo $clsVar($t['vac']); ?>"><?php echo $t['vac'] !== null ? 'Variación al final: ' . $m($t['vac']) : 'Se calcula con el primer costo real'; ?></span></div>
+        <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-file-invoice-dollar"></i></span><small>Estimado al cliente</small><strong><?php echo $m($t['estimado']); ?></strong><span>Neto a cobrar: <?php echo $m($t['estimado_neto']); ?></span></div>
     </div>
 
     <?php if (\Classes\CargosProyecto::disponible()): ?>

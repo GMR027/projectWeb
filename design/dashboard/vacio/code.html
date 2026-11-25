@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "error": "#ffb4ab", "surface-tint": "#ffb59e", "outline-variant": "#5b4038", "surface-container-high": "#212942", "surface-dim": "#0a122a", "surface-container-lowest": "#050d25", "secondary-container": "#00b2d6", "surface-container-highest": "#2c344d", "surface-container-low": "#131a33", "on-primary-container": "#541400", "inverse-primary": "#ae3200", "on-secondary-container": "#003f4e", "on-background": "#dbe1ff", "primary-fixed": "#ffdbd0", "surface-container": "#171e37", "primary": "#ffb59e", "surface-bright": "#313852", "secondary-fixed": "#b3ebff", "surface": "#0a122a", "inverse-surface": "#dbe1ff", "background": "#0a122a", "tertiary-fixed-dim": "#b2c8e8", "on-primary-fixed": "#3a0b00", "on-error-container": "#ffdad6", "on-tertiary-fixed-variant": "#324863", "on-surface": "#dbe1ff", "on-secondary-fixed-variant": "#004e5f", "primary-fixed-dim": "#ffb59e", "on-tertiary-fixed": "#021d35", "secondary": "#4cd6fb", "on-primary": "#5e1700", "error-container": "#93000a", "on-tertiary": "#1b324b", "tertiary-fixed": "#d2e4ff", "primary-container": "#ff5a1f", "on-error": "#690005", "on-surface-variant": "#e4beb3", "on-secondary-fixed": "#001f27", "inverse-on-surface": "#282f49", "tertiary-container": "#7e94b2", "on-tertiary-container": "#152c45", "on-secondary": "#003642", "outline": "#ab897f", "surface-variant": "#2c344d", "on-primary-fixed-variant": "#852400", "secondary-fixed-dim": "#4cd6fb", "tertiary": "#b2c8e8" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-md": "1rem", "space-sm": "0.5rem", "gutter": "1.5rem", "space-xs": "0.25rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "gutter-mobile": "1rem", "margin": "2.5rem", "margin-mobile": "1rem" }, "fontFamily": { "display-hero": [ "Space Grotesk" ], "headline-xl-mobile": [ "Space Grotesk" ], "headline-md": [ "Space Grotesk" ], "label-code-sm": [ "JetBrains Mono" ], "body-sm": [ "Manrope" ], "headline-lg": [ "Space Grotesk" ], "label-telemetry": [ "JetBrains Mono" ], "body-lg": [ "Manrope" ], "headline-xl": [ "Space Grotesk" ], "display-hero-mobile": [ "Space Grotesk" ], "body-md": [ "Manrope" ], "title-md": [ "Manrope" ] }, "fontSize": { "display-hero": [ "56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" } ], "headline-xl-mobile": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-md": [ "22px", { "lineHeight": "30px", "letterSpacing": "0em", "fontWeight": "500" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "400" } ], "body-sm": [ "12px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "400" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "label-telemetry": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.04em", "fontWeight": "500" } ], "body-lg": [ "16px", { "lineHeight": "26px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "display-hero-mobile": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "22px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "title-md": [ "18px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "600" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 flex flex-col bg-surface shadow-[0_4px_24px_rgba(5,13,37,0.7)]"><div class="h-14 w-full bg-surface-dim px-gutter border-b border-white/[0.08] flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg flex-shrink-0"><div class="flex items-center gap-space-sm"><span class="font-headline-md text-headline-md tracking-tight font-bold text-on-surface">Project<span class="text-primary">Web</span></span><span class="px-1.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-code-sm text-label-code-sm font-semibold tracking-wider">CIVILTECH</span></div><div class="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container border border-white/[0.06]"><span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#4cd6fb] animate-pulse"></span><span class="font-label-code-sm text-label-code-sm text-secondary font-medium tracking-wide">SYNC 100%</span></div></div><div class="flex-1 max-w-xl mx-auto px-space-sm"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-[18px] text-tertiary-container pointer-events-none">search</span><input class="w-full h-9 pl-9 pr-14 bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded border border-white/[0.08] focus:border-secondary focus:outline-none placeholder-tertiary-container transition-colors" placeholder="Buscar proyectos, partidas, códigos..." type="text"/><kbd class="absolute right-2 px-1.5 py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-tertiary border border-white/[0.08]">⌘K</kbd></div></div><div class="flex items-center gap-space-sm flex-shrink-0"><button aria-label="Notificaciones" class="w-9 h-9 flex items-center justify-center rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors relative"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary-container"></span></button><button aria-label="Cambiar Tema" class="w-9 h-9 flex items-center justify-center rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="h-4 w-px bg-white/[0.08] mx-1"></div><div class="flex items-center gap-2 pl-1"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_0_12px_rgba(255,181,158,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center font-label-code-sm text-label-code-sm font-semibold text-on-surface border border-white/[0.08]">EA</div></div></div></div><div class="h-10 w-full bg-surface-container-lowest px-gutter border-b border-white/[0.08] flex items-center justify-between overflow-x-auto"><nav class="flex items-center gap-1 h-full flex-shrink-0" data-active-classes="bg-surface-container-high text-secondary border-b-2 border-secondary font-medium"><a class="h-full px-3.5 flex items-center font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" data-path="inicio-primeros-pasos" href="#">Inicio / Primeros Pasos</a><a class="h-full px-3.5 flex items-center font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" data-path="portafolio-de-obras" href="#">Portafolio de Obras</a><a class="h-full px-3.5 flex items-center font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" data-path="gantt-maestro" href="#">Gantt Maestro</a><a class="h-full px-3.5 flex items-center font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" data-path="cuadrillas-recursos" href="#">Cuadrillas &amp; Recursos</a><a class="h-full px-3.5 flex items-center font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" data-path="control-de-estimaciones" href="#">Control de Estimaciones</a></nav><div class="hidden md:flex items-center gap-space-md flex-shrink-0 pl-4 font-label-code-sm text-label-code-sm text-tertiary-container"><span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">schedule</span>ZONA HORARIA: UTC-6 (CDMX)</span><span class="text-white/20">//</span><span class="px-2 py-0.5 rounded bg-surface-container text-tertiary border border-white/[0.05]">v3.4.12-rc</span></div></div></header><main class="w-full max-w-[1440px] mx-auto px-gutter pt-24 bg-surface flex-1"><div class="flex flex-col w-full gap-y-8 pb-12">
+<!-- 1. Encabezado de Página (Hero Bar) -->
+<header class="w-full flex flex-col md:flex-row md:items-end justify-between gap-6 pt-2">
+<div class="flex flex-col gap-2 max-w-3xl">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#4cd6fb] animate-pulse"></span>
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-secondary">
+          INICIO // CENTRO DE MANDO CIVILTECH · SYS.PORTAL-V4
+        </span>
+</div>
+<h1 class="font-headline-xl text-headline-xl font-bold tracking-tight text-on-surface">
+        Tu primera obra empieza aquí
+      </h1>
+<p class="font-body-lg text-body-lg text-tertiary-container max-w-2xl">
+        Crea un proyecto para programar actividades, reportar desde campo y controlar el avance físico y financiero en tiempo real.
+      </p>
+</div>
+<!-- Acciones Hero -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
+<div class="flex flex-col items-end group relative">
+<button aria-disabled="true" class="h-10 px-4 rounded bg-surface-container-high/60 text-outline-variant font-body-sm text-body-sm flex items-center gap-2 cursor-not-allowed select-none shadow-sm transition-all" disabled="">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Personalizar inicio</span>
+</button>
+<span class="font-label-code-sm text-label-code-sm text-tertiary-container pt-1 opacity-80 group-hover:opacity-100 transition-opacity">
+          Disponible con proyectos activos
+        </span>
+</div>
+<button class="h-10 px-5 rounded bg-primary-container text-white font-title-md text-body-md font-semibold flex items-center gap-2 shadow-[0_4px_16px_rgba(255,90,31,0.35)] hover:bg-[#ff6e38] hover:shadow-[0_4px_22px_rgba(255,90,31,0.5)] transition-all cursor-pointer transform active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>+ Nuevo proyecto</span>
+</button>
+</div>
+</header>
+<!-- 2. Panel Principal de Onboarding (Split 12 columnas: 55% / 45%) -->
+<section class="w-full rounded-xl bg-surface-container-low shadow-[0_12px_32px_rgba(5,13,37,0.5)] overflow-hidden relative">
+<!-- Radial Halos Decorativos -->
+<div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-secondary/5 blur-[90px] pointer-events-none"></div>
+<div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary-container/5 blur-[90px] pointer-events-none"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[520px]">
+<!-- Columna Izquierda: Ilustración Isométrica CAD / Grúa Torre (7 de 12 cols ~ 58%) -->
+<div class="lg:col-span-7 relative p-space-lg flex flex-col justify-between overflow-hidden bg-gradient-to-br from-surface-container/60 via-surface-container-low to-surface-container-lowest">
+<!-- Floating Telemetry Badge -->
+<div class="flex items-center justify-between w-full z-10">
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container-high/90 shadow-md">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-medium tracking-wide">
+              ARQUITECTURA DE DATOS CIVIL // LISTA PARA INICIALIZAR
+            </span>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-tertiary-container hidden sm:block">
+            GRID: UTM-14N • WGS84
+          </div>
+</div>
+<!-- Technical Vector Display: Grúa Torre e Isometría Cimentación -->
+<div class="w-full my-auto py-6 flex items-center justify-center relative select-none">
+<svg class="w-full max-w-[580px] h-[340px]" fill="none" viewbox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="grid-grad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#4cd6fb" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#ff5a1f" stop-opacity="0.1"></stop>
+</lineargradient>
+<lineargradient id="crane-glow" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ff5a1f" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#4cd6fb" stop-opacity="0.7"></stop>
+</lineargradient>
+</defs>
+<!-- CAD Ground Grid Isometric Base -->
+<g opacity="0.35">
+<path d="M 60 270 L 300 190 L 540 270 L 300 350 Z" fill="none" stroke="#4cd6fb" stroke-width="1.2"></path>
+<path d="M 120 250 L 360 170" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+<path d="M 180 230 L 420 150" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+<path d="M 240 210 L 480 130" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+<path d="M 480 250 L 240 170" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+<path d="M 420 230 L 180 150" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+<path d="M 360 210 L 120 130" stroke="#4cd6fb" stroke-dasharray="3 3" stroke-width="0.75"></path>
+</g>
+<!-- Foundation Footing Blocks -->
+<polygon fill="#171e37" points="260,285 300,270 340,285 300,300" stroke="#4cd6fb" stroke-width="1.5"></polygon>
+<polygon fill="#212942" points="260,285 260,295 300,310 300,300" stroke="#4cd6fb" stroke-width="1.2"></polygon>
+<polygon fill="#2c344d" points="340,285 340,295 300,310 300,300" stroke="#4cd6fb" stroke-width="1.2"></polygon>
+<!-- Crane Mast (Torre Celosía) -->
+<g stroke="#ff5a1f" stroke-width="1.5">
+<!-- Vertical Legs -->
+<line x1="288" x2="288" y1="280" y2="80"></line>
+<line x1="312" x2="312" y1="280" y2="80"></line>
+<!-- X Bracing -->
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="280" y2="255"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="280" y2="255"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="255" y2="230"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="255" y2="230"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="230" y2="205"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="230" y2="205"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="205" y2="180"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="205" y2="180"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="180" y2="155"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="180" y2="155"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="155" y2="130"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="155" y2="130"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="130" y2="105"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="130" y2="105"></line>
+<line opacity="0.8" stroke-width="0.9" x1="288" x2="312" y1="105" y2="80"></line>
+<line opacity="0.8" stroke-width="0.9" x1="312" x2="288" y1="105" y2="80"></line>
+</g>
+<!-- Cabin & Slewing Ring -->
+<rect fill="#171e37" height="14" rx="1" stroke="#4cd6fb" stroke-width="1.2" width="36" x="282" y="72"></rect>
+<rect fill="#212942" height="18" rx="1" stroke="#ff5a1f" stroke-width="1" width="16" x="312" y="65"></rect>
+<!-- Tower Apex (Cúspide) -->
+<polygon fill="none" points="300,32 292,72 308,72" stroke="#ff5a1f" stroke-width="1.2"></polygon>
+<!-- Counter-Jib (Contrapluma con contrapeso) -->
+<line stroke="#4cd6fb" stroke-width="1.5" x1="292" x2="160" y1="72" y2="72"></line>
+<line stroke="#4cd6fb" stroke-dasharray="2 2" stroke-width="0.9" x1="300" x2="175" y1="32" y2="72"></line>
+<rect fill="#ff5a1f" height="16" opacity="0.9" rx="1" stroke="#ffffff" stroke-width="0.8" width="28" x="160" y="66"></rect>
+<!-- Working Jib (Pluma principal de celosía) -->
+<line stroke="#4cd6fb" stroke-width="1.8" x1="308" x2="520" y1="72" y2="72"></line>
+<line stroke="#4cd6fb" stroke-dasharray="3 2" stroke-width="1" x1="300" x2="430" y1="32" y2="72"></line>
+<line stroke="#4cd6fb" stroke-dasharray="3 2" stroke-width="0.75" x1="300" x2="515" y1="32" y2="72"></line>
+<!-- Jib Trusses -->
+<g opacity="0.7" stroke="#4cd6fb" stroke-width="0.8">
+<line x1="325" x2="335" y1="72" y2="60"></line>
+<line x1="335" x2="345" y1="60" y2="72"></line>
+<line x1="345" x2="355" y1="72" y2="60"></line>
+<line x1="355" x2="365" y1="60" y2="72"></line>
+<line x1="365" x2="375" y1="72" y2="60"></line>
+<line x1="375" x2="385" y1="60" y2="72"></line>
+<line x1="385" x2="395" y1="72" y2="60"></line>
+<line x1="395" x2="405" y1="60" y2="72"></line>
+<line x1="405" x2="415" y1="72" y2="60"></line>
+<line x1="415" x2="425" y1="60" y2="72"></line>
+<line x1="425" x2="435" y1="72" y2="60"></line>
+<line x1="435" x2="445" y1="60" y2="72"></line>
+<line x1="445" x2="455" y1="72" y2="60"></line>
+<line x1="455" x2="465" y1="60" y2="72"></line>
+<line x1="465" x2="475" y1="72" y2="60"></line>
+<line x1="475" x2="485" y1="60" y2="72"></line>
+<line x1="485" x2="495" y1="72" y2="60"></line>
+<line x1="495" x2="505" y1="60" y2="72"></line>
+<!-- Top Chord -->
+<line x1="312" x2="510" y1="60" y2="60"></line>
+</g>
+<!-- Trolley & Hoist Cable (Carro y gancho) -->
+<rect fill="#ff5a1f" height="8" width="16" x="420" y="69"></rect>
+<line stroke="#ffffff" stroke-dasharray="4 2" stroke-width="1" x1="428" x2="428" y1="77" y2="185"></line>
+<!-- Hook Block -->
+<polygon fill="#ff5a1f" points="423,185 433,185 431,196 425,196"></polygon>
+<path d="M 428 196 Q 428 206 433 206 Q 438 206 437 200" fill="none" stroke="#4cd6fb" stroke-width="1.8"></path>
+<!-- Civil Engineering Dimension Lines & Annotations -->
+<!-- Jib Radius Dim -->
+<g opacity="0.85">
+<line stroke="#4cd6fb" stroke-width="0.8" x1="300" x2="520" y1="16" y2="16"></line>
+<line stroke="#4cd6fb" stroke-width="0.8" x1="300" x2="300" y1="12" y2="20"></line>
+<line stroke="#4cd6fb" stroke-width="0.8" x1="520" x2="520" y1="12" y2="20"></line>
+<text fill="#4cd6fb" font-family="JetBrains Mono" font-size="10" letter-spacing="0.05em" x="375" y="12">RADIO GIRO 45.0m</text>
+</g>
+<!-- Height Elevation Dim -->
+<g opacity="0.85">
+<line stroke="#ffb59e" stroke-width="0.8" x1="264" x2="264" y1="32" y2="280"></line>
+<line stroke="#ffb59e" stroke-width="0.8" x1="260" x2="268" y1="32" y2="32"></line>
+<line stroke="#ffb59e" stroke-width="0.8" x1="260" x2="268" y1="280" y2="280"></line>
+<text fill="#ffb59e" font-family="JetBrains Mono" font-size="10" letter-spacing="0.05em" x="170" y="160">ELEV +42.50m</text>
+</g>
+<!-- Ground BenchMark BM-01 -->
+<g>
+<circle cx="140" cy="285" fill="none" r="4" stroke="#4cd6fb" stroke-width="1.5"></circle>
+<circle cx="140" cy="285" fill="#ff5a1f" r="1.5"></circle>
+<line stroke="#4cd6fb" stroke-width="0.75" x1="140" x2="140" y1="277" y2="293"></line>
+<line stroke="#4cd6fb" stroke-width="0.75" x1="132" x2="148" y1="285" y2="285"></line>
+<text fill="#dbe1ff" font-family="JetBrains Mono" font-size="10" x="80" y="310">BM-01 // ELEV +18.40m</text>
+</g>
+<!-- Capacity Spec Label -->
+<g>
+<rect fill="#171e37" height="22" opacity="0.95" rx="2" stroke="#4cd6fb" stroke-width="0.8" width="115" x="430" y="125"></rect>
+<text fill="#4cd6fb" font-family="JetBrains Mono" font-size="10" font-weight="600" x="438" y="140">CAP. MÁX 12.0T</text>
+</g>
+</svg>
+</div>
+<!-- Geotechnical Strip Footer Inside Visual -->
+<div class="grid grid-cols-3 gap-2 p-3 rounded bg-surface-container-high/80 text-on-surface">
+<div>
+<span class="block font-label-code-sm text-label-code-sm text-tertiary-container">SISTEMA COORD.</span>
+<span class="font-label-telemetry text-label-telemetry text-on-surface font-semibold">19°24'11"N 99°11'44"W</span>
+</div>
+<div>
+<span class="block font-label-code-sm text-label-code-sm text-tertiary-container">CAPACIDAD PORTANTE</span>
+<span class="font-label-telemetry text-label-telemetry text-secondary font-semibold">28.4 ton/m² [OK]</span>
+</div>
+<div>
+<span class="block font-label-code-sm text-label-code-sm text-tertiary-container">ESTADO NÚCLEO</span>
+<span class="font-label-telemetry text-label-telemetry text-primary font-semibold">STANDBY (0 FRENTES)</span>
+</div>
+</div>
+</div>
+<!-- Columna Derecha: Ruta de Configuración Inicial (5 de 12 cols ~ 42%) -->
+<div class="lg:col-span-5 p-space-lg lg:p-8 flex flex-col justify-between bg-surface-container/70">
+<div class="flex items-center justify-between pb-4">
+<div class="flex flex-col">
+<span class="font-label-code-sm text-label-code-sm text-secondary font-medium tracking-wider uppercase">SECUENCIA MAESTRA</span>
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface">Ruta de configuración inicial</h2>
+</div>
+<span class="px-2.5 py-1 rounded bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm font-semibold tracking-wide">
+            3 pasos clave
+          </span>
+</div>
+<!-- Lista de 3 Pasos -->
+<div class="flex flex-col gap-6 my-auto py-2">
+<!-- Paso 01 -->
+<div class="flex items-start gap-4 group">
+<div class="flex-shrink-0 w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center font-label-code-sm text-label-code-sm font-bold text-primary shadow-[0_0_12px_rgba(255,90,31,0.25)]">
+              01
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface">Crea tu proyecto</h3>
+<span class="font-label-code-sm text-label-code-sm text-primary uppercase">Prioritario</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+                Define nombre de la obra, ubicación geográfica, fechas contractuales y tipo de jornada operativa.
+              </p>
+<div class="mt-3">
+<button class="h-8 px-3.5 rounded bg-primary-container text-white font-label-code-sm text-label-code-sm font-semibold flex items-center gap-1.5 shadow-[0_2px_10px_rgba(255,90,31,0.3)] hover:bg-[#ff6e38] transition-colors cursor-pointer" type="button">
+<span>Nuevo proyecto</span>
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Paso 02 -->
+<div class="flex items-start gap-4 group">
+<div class="flex-shrink-0 w-9 h-9 rounded-full bg-secondary-container/20 flex items-center justify-center font-label-code-sm text-label-code-sm font-bold text-secondary shadow-[0_0_12px_rgba(76,214,251,0.2)]">
+              02
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface">Carga tu programa</h3>
+<span class="font-label-code-sm text-label-code-sm text-tertiary">P6 • Neodata</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+                Comienza desde una plantilla especializada por tipo de obra (Vial, Edificación, Hidráulica) o importa archivos directos de Primavera P6 (XML/XER) y Neodata.
+              </p>
+<div class="mt-3">
+<button class="h-8 px-3.5 rounded bg-surface-container-high hover:bg-surface-bright text-secondary font-label-code-sm text-label-code-sm font-medium flex items-center gap-1.5 transition-colors cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[15px]">view_quilt</span>
+<span>Explorar plantillas</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Paso 03 -->
+<div class="flex items-start gap-4 group">
+<div class="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center font-label-code-sm text-label-code-sm font-bold text-tertiary">
+              03
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface">Invita a tu equipo de frente y oficina</h3>
+<span class="font-label-code-sm text-label-code-sm text-tertiary-container">Roles</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+                Asigna residentes de obra, supervisores de calidad y contratistas con permisos granulares de captura y validación.
+              </p>
+<div class="mt-3">
+<button class="h-8 px-3.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-code-sm text-label-code-sm font-medium flex items-center gap-1.5 transition-colors cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[15px]">group_add</span>
+<span>Gestionar equipo</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Base Telemetry Info -->
+<div class="pt-4 flex items-center justify-between text-tertiary-container font-label-code-sm text-label-code-sm">
+<span>TIEMPO ESTIMADO TOTAL: ~8 MIN</span>
+<span class="text-secondary font-medium">GUÍA ASISTIDA ACTIVA</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Fila de 4 Tarjetas de Acceso Rápido (Quick Start Grid) -->
+<section class="w-full">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">explore</span>
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface">Por dónde empezar</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-tertiary-container">RECURSOS TÉCNICOS OFICIALES</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Por dónde empezar -->
+<a class="group p-5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all shadow-md flex flex-col justify-between min-h-[170px]" href="#">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">explore</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-container group-hover:text-secondary group-hover:translate-x-1 transition-all text-[18px]">arrow_forward</span>
+</div>
+<h3 class="font-title-md text-title-md font-semibold text-on-surface group-hover:text-secondary transition-colors">
+            Por dónde empezar
+          </h3>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+            Guía rápida de 5 minutos sobre la metodología de control de frentes y bitácora.
+          </p>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-secondary pt-3 flex items-center gap-1 font-medium">
+<span>Abrir recorrido</span>
+<span class="material-symbols-outlined text-[13px]">arrow_outward</span>
+</div>
+</a>
+<!-- Card 2: Manual de usuario -->
+<a class="group p-5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all shadow-md flex flex-col justify-between min-h-[170px]" href="#">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-container group-hover:text-primary group-hover:translate-x-1 transition-all text-[18px]">arrow_forward</span>
+</div>
+<h3 class="font-title-md text-title-md font-semibold text-on-surface group-hover:text-primary transition-colors">
+            Manual de usuario
+          </h3>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+            Documentación oficial, estándares SCT, fichas técnicas y protocolos de calidad.
+          </p>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-primary pt-3 flex items-center gap-1 font-medium">
+<span>Consultar wikidoc</span>
+<span class="material-symbols-outlined text-[13px]">arrow_outward</span>
+</div>
+</a>
+<!-- Card 3: Centro de exportación -->
+<a class="group p-5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all shadow-md flex flex-col justify-between min-h-[170px]" href="#">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">download_for_offline</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-container group-hover:text-secondary group-hover:translate-x-1 transition-all text-[18px]">arrow_forward</span>
+</div>
+<h3 class="font-title-md text-title-md font-semibold text-on-surface group-hover:text-secondary transition-colors">
+            Centro de exportación
+          </h3>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+            Descarga plantillas de catálogo de conceptos en Excel y especificaciones BIM IFC.
+          </p>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-secondary pt-3 flex items-center gap-1 font-medium">
+<span>Descargar assets</span>
+<span class="material-symbols-outlined text-[13px]">arrow_outward</span>
+</div>
+</a>
+<!-- Card 4: Novedades v3.4 -->
+<a class="group p-5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all shadow-md flex flex-col justify-between min-h-[170px] relative overflow-hidden" href="#">
+<div class="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-secondary-container/10 blur-xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-primary-container text-white font-label-code-sm text-label-code-sm font-semibold tracking-wider">
+              NUEVO
+            </span>
+</div>
+<h3 class="font-title-md text-title-md font-semibold text-on-surface group-hover:text-secondary transition-colors">
+            Novedades v3.4
+          </h3>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+            Conoce la sincronización offline en campo y el visor 3D de modelos estructurales.
+          </p>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-on-surface pt-3 flex items-center gap-1 font-medium">
+<span>Ver changelog</span>
+<span class="material-symbols-outlined text-[13px]">arrow_outward</span>
+</div>
+</a>
+</div>
+</section>
+<!-- 4. Sección Inferior: Tarjeta de Proyecto Asignado + Banner Campo APK -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+<!-- Izquierda: Proyecto Existente / Corporativo (7 cols) -->
+<div class="lg:col-span-7 p-6 rounded-xl bg-surface-container-low shadow-md flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">corporate_fare</span>
+<h3 class="font-title-md text-title-md font-semibold text-on-surface">
+            ¿Ya tienes un proyecto existente o asignado por corporativo?
+          </h3>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary-container max-w-xl">
+          Si tu empresa u organización ya te dio de alta en una obra existente, selecciónala para sincronizar frentes, partidas asignadas y órdenes de cambio.
+        </p>
+</div>
+<div class="mt-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-tertiary-container text-[18px] pointer-events-none">domain</span>
+<select aria-label="Seleccionar obra asignada" class="w-full h-10 pl-9 pr-8 rounded bg-surface-dim text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-1 focus:ring-secondary transition-all cursor-pointer shadow-inner">
+<option disabled="" selected="" value="">Seleccionar obra asignada (ej. Consorcio Vial Monterrey...)</option>
+<option value="obra-1">CV-2026 // Autopista Siglo XXI Tramo IV (Consorcio Vial)</option>
+<option value="obra-2">TORRE-09 // Complejo Mitikah Fase C (Inmobiliaria Urbana)</option>
+<option value="obra-3">HIDRO-14 // Planta Potabilizadora Lerma (Comisión Hidráulica)</option>
+<option value="obra-4">PUERTO-02 // Muelle Cimentación Profunda Lázaro Cárdenas</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-tertiary-container text-[18px] pointer-events-none">expand_more</span>
+</div>
+<button class="h-10 px-5 rounded bg-surface-container-high hover:bg-secondary hover:text-on-secondary font-label-code-sm text-label-code-sm font-semibold text-secondary flex items-center justify-center gap-2 transition-colors cursor-pointer flex-shrink-0" type="button">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+<span>Abrir proyecto</span>
+</button>
+</div>
+</div>
+<!-- Derecha: Banner ProjectWeb Campo APK (5 cols) -->
+<div class="lg:col-span-5 p-6 rounded-xl bg-gradient-to-br from-surface-container to-surface-container-high shadow-md flex flex-col justify-between relative overflow-hidden">
+<!-- Glow Decorativo -->
+<div class="absolute -bottom-10 -right-10 w-44 h-44 rounded-full bg-secondary/10 blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center flex-shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-secondary text-[26px]">devices</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface">Lleva ProjectWeb a la obra</h3>
+<span class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm">OFFLINE</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary-container mt-1">
+            Reporta avance diario, firmas de bitácora y fotografías georreferenciadas sin conexión de red.
+          </p>
+</div>
+</div>
+<div class="mt-5 flex items-center justify-between pt-3">
+<span class="font-label-code-sm text-label-code-sm text-tertiary-container flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#3ddc97]"></span>
+<span>BUILD COMPATIBLE ANDROID 11+</span>
+</span>
+<button class="h-9 px-4 rounded bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-medium flex items-center gap-2 transition-colors cursor-pointer" type="button">
+<span class="material-symbols-outlined text-secondary text-[16px]">android</span>
+<span>Descargar APK v0.2.19</span>
+</button>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-white/[0.08] py-space-md mt-auto"><div class="max-w-[1440px] mx-auto px-gutter flex flex-col md:flex-row items-center justify-between gap-space-sm font-label-code-sm text-label-code-sm text-tertiary-container"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span><span class="text-on-surface font-medium">ProjectWeb Civil Engine</span><span class="text-white/20">//</span><span>Telemetría Activa</span></div><div class="flex items-center gap-space-md"><a class="hover:text-on-surface transition-colors" data-path="terminos-operativos" href="#">Términos Operativos</a><span class="text-white/20">•</span><a class="hover:text-on-surface transition-colors" data-path="auditoria-de-obra" href="#">Auditoría de Obra</a><span class="text-white/20">•</span><a class="hover:text-on-surface transition-colors" data-path="soporte-bim-gis" href="#">Soporte BIM/GIS</a></div><div class="text-outline">© 2026 Vanguard CivilTech</div></div></footer></body></html>

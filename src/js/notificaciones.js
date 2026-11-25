@@ -1,5 +1,5 @@
 // Campana de notificaciones de la barra superior (novedades, actividades de hoy y acciones rápidas).
-// El contenido lo pinta el servidor (views/templates/topbar.php); aquí solo se abre y se cierra,
+// El contenido lo pinta el servidor (views/templates/appbar.php); aquí solo se abre y se cierra,
 // y al abrirla se marcan las novedades como vistas para que el contador quede al día.
 (() => {
   const raiz = document.getElementById('notif');

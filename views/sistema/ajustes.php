@@ -4,38 +4,106 @@ $vols = [
     ['nombre' => 'Volumen de archivos', 'icono' => 'fa-folder-open', 'v' => $archivos, 'pron' => $pronArchivos, 'col' => 'Carpeta'],
     ['nombre' => 'Volumen de base de datos', 'icono' => 'fa-database', 'v' => $bd, 'pron' => $pronBd, 'col' => 'Tabla'],
 ];
+$discoPct = $disco['total'] > 0 ? 100 - $disco['libre'] / $disco['total'] * 100 : 0;
+$pctArchivos = $archivos['capacidad'] > 0 ? min(100, $archivos['usado'] / $archivos['capacidad'] * 100) : 0;
+$pctBd = $bd['capacidad'] > 0 ? min(100, $bd['usado'] / $bd['capacidad'] * 100) : 0;
+$volsUsados = (int)$archivos['usado'] + (int)$bd['usado'];
 ?>
+<div id="resumen" class="ctl-seccion">
 <div class="page-header">
     <div>
-        <h2><i class="fa-solid fa-gear"></i> <?php echo s(t('Ajustes')); ?></h2>
-        <p class="text-muted">Almacenamiento del servidor · se guarda una foto diaria para estimar cuándo se llenará cada volumen</p>
+        <span class="adm-eyebrow">Operación de la plataforma</span>
+        <h2><i class="fa-solid fa-server"></i> Sistema</h2>
+        <p class="text-muted">Almacenamiento, respaldos, sesiones y publicaciones de la plataforma.</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-hard-drive"></i> <b><?php echo number_format($discoPct, 0); ?>%</b> del disco</span>
+            <span><i class="fa-solid fa-box-archive"></i> <b><?php echo count($respaldos); ?></b> respaldos</span>
+            <span><i class="fa-solid fa-shield-halved"></i> <b><?php echo (int)$sesionesTotal; ?></b> sesiones activas</span>
+            <?php if ($apkVersion): ?><span><i class="fa-brands fa-android"></i> <b>APK <?php echo s($apkVersion); ?></b></span><?php endif; ?>
+        </div>
+    </div>
+    <div class="la-controles">
+        <a href="#respaldo" class="btn btn-secondary"><i class="fa-solid fa-box-archive"></i> Respaldos</a>
+        <a href="/manual#admin-guia" class="btn btn-ghost"><i class="fa-solid fa-book-open"></i> Manual del administrador</a>
     </div>
 </div>
 
-<div class="card" id="manual-admin" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-book-open"></i> Manual del administrador</h3>
-    <p class="text-muted text-sm" style="margin-bottom:1rem">Guía detallada, con ilustraciones, de cada sección: usuarios, respaldos, programa, app de escritorio, Centro de IA, Ensamblador, órdenes de cambio, líneas base y más.</p>
-    <a class="btn btn-primary" href="/manual#admin-guia"><i class="fa-solid fa-book-open"></i> Abrir el manual</a>
-    <a class="btn btn-ghost" href="/manual#escritorio">App de escritorio</a>
-    <a class="btn btn-ghost" href="/manual#centro-ia">Centro de IA</a>
+<?php if ($ok): ?><div class="alerta alerta-exito" role="status"><i class="fa-solid fa-circle-check"></i> <?php echo s($ok); ?></div><?php endif; ?>
+<?php if ($error): ?><div class="alerta alerta-error" role="alert"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo s($error); ?></div><?php endif; ?>
+
+<div class="cb-kpis">
+    <div class="cb-kpi <?php echo $discoPct >= 90 ? 'cb-kpi-alerta' : ''; ?>">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-hard-drive"></i></span>
+        <small>Disco libre</small>
+        <strong class="mono"><?php echo $fmt($disco['libre']); ?></strong>
+        <span>de <?php echo $fmt($disco['total']); ?> · <?php echo number_format($discoPct, 1); ?>% usado</span>
+    </div>
+    <div class="cb-kpi <?php echo $pctArchivos >= 90 ? 'cb-kpi-alerta' : ''; ?>">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-folder-open"></i></span>
+        <small>Archivos</small>
+        <strong class="mono"><?php echo $fmt($archivos['usado']); ?></strong>
+        <span>de <?php echo $fmt($archivos['capacidad']); ?></span>
+    </div>
+    <div class="cb-kpi <?php echo $pctBd >= 90 ? 'cb-kpi-alerta' : ''; ?>">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-database"></i></span>
+        <small>Base de datos</small>
+        <strong class="mono"><?php echo $fmt($bd['usado']); ?></strong>
+        <span>de <?php echo $fmt($bd['capacidad']); ?></span>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-shield-halved"></i></span>
+        <small>Sesiones activas</small>
+        <strong><?php echo (int)$sesionesTotal; ?></strong>
+        <span>En navegador y app Android</span>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        <small>Último respaldo</small>
+        <strong class="mono"><?php echo $ultimoAuto ? date('d/m H:i', $ultimoAuto) : '—'; ?></strong>
+        <span><?php echo $programado['activo'] ? 'Automático a las ' . s(substr($programado['hora'], 0, 5)) : 'Sin programar'; ?></span>
+    </div>
+</div>
 </div>
 
+<div class="ctl-layout">
+<aside class="ctl-rail">
+    <nav class="ctl-rail-nav" data-control-nav data-modo="scroll" aria-label="Secciones de Sistema">
+        <div class="ctl-rail-busca">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" data-control-busca placeholder="Buscar sección…" aria-label="Buscar sección de Sistema" autocomplete="off">
+        </div>
+        <div class="ctl-rail-grupo">
+            <p class="ctl-rail-titulo">Operación</p>
+            <a href="#resumen" class="ctl-rail-link" data-sec="resumen"><i class="fa-solid fa-gauge-high"></i><span><strong>Resumen</strong><small>Salud del sistema</small></span></a>
+            <a href="#almacenamiento" class="ctl-rail-link" data-sec="almacenamiento"><i class="fa-solid fa-hard-drive"></i><span><strong>Almacenamiento</strong><small>Volúmenes y pronóstico</small></span></a>
+        </div>
+        <div class="ctl-rail-grupo">
+            <p class="ctl-rail-titulo">Publicaciones</p>
+            <a href="#escritorio" class="ctl-rail-link" data-sec="escritorio"><i class="fa-solid fa-desktop"></i><span><strong>App de escritorio</strong><small>Instaladores Linux</small></span></a>
+            <a href="#android" class="ctl-rail-link" data-sec="android"><i class="fa-brands fa-android"></i><span><strong>App Android</strong><small>APK y versiones</small></span></a>
+        </div>
+        <div class="ctl-rail-grupo">
+            <p class="ctl-rail-titulo">Control</p>
+            <a href="#sesiones" class="ctl-rail-link" data-sec="sesiones"><i class="fa-solid fa-shield-halved"></i><span><strong>Sesiones y dispositivos</strong><small>Quién está conectado</small></span><span class="ctl-rail-contador"><?php echo (int)$sesionesTotal; ?></span></a>
+            <a href="#herramientas" class="ctl-rail-link" data-sec="herramientas"><i class="fa-solid fa-plug"></i><span><strong>IA conectada</strong><small>Herramientas locales y API</small></span></a>
+            <a href="#accesos" class="ctl-rail-link" data-sec="accesos"><i class="fa-solid fa-key"></i><span><strong>Accesos</strong><small>Entradas y fallos</small></span></a>
+            <a href="#respaldo" class="ctl-rail-link" data-sec="respaldo"><i class="fa-solid fa-box-archive"></i><span><strong>Respaldos</strong><small>Automático y manual</small></span><span class="ctl-rail-contador"><?php echo count($respaldos); ?></span></a>
+            <a href="#idioma" class="ctl-rail-link" data-sec="idioma"><i class="fa-solid fa-language"></i><span><strong>Idioma</strong><small>Interfaz ES/EN</small></span></a>
+            <a href="#manual-admin" class="ctl-rail-link" data-sec="manual-admin"><i class="fa-solid fa-book-open"></i><span><strong>Manual</strong><small>Guía del administrador</small></span></a>
+        </div>
+        <p class="ctl-rail-vacio" data-control-vacio hidden>Ninguna sección coincide.</p>
+    </nav>
+</aside>
+<div class="ctl-contenido">
+
+
+<section class="ctl-seccion" id="almacenamiento">
 <?php foreach ($vols as $i => $vol):
     $v = $vol['v'];
     $pct = $v['capacidad'] > 0 ? min(100, $v['usado'] / $v['capacidad'] * 100) : 0;
     $clase = $pct >= 90 ? 'alm-rojo' : ($pct >= 70 ? 'alm-amarillo' : '');
     $p = $vol['pron'];
 ?>
-<div class="card" id="idioma" style="margin-bottom:2rem">
-    <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
-    <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
-        <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>#idioma">
-        <select name="idioma" aria-label="<?php echo s(t('Idioma')); ?>"><?php foreach (IDIOMAS as $cod => $nom): ?><option value="<?php echo $cod; ?>"<?php echo idioma_actual() === $cod ? ' selected' : ''; ?>><?php echo s($nom); ?></option><?php endforeach; ?></select>
-        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
-    </form>
-    <p class="text-muted text-sm" style="margin-top:.8rem">Español / English · <?php echo idioma_actual() === 'en' ? 'Menus and the main screens are translated; the rest of the app keeps showing Spanish for now.' : 'Menús y pantallas principales traducidos; el resto de la aplicación sigue en español por ahora.'; ?></p>
-</div>
-
 <div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid <?php echo $vol['icono']; ?>"></i> <?php echo s($vol['nombre']); ?></h3>
     <div class="alm-barra" title="<?php echo number_format($pct, 2); ?> %"><span class="<?php echo $clase; ?>" style="width: <?php echo number_format($pct, 2, '.', ''); ?>%"></span></div>
@@ -77,13 +145,14 @@ $vols = [
     <div class="alm-barra"><span class="<?php echo $dp >= 90 ? 'alm-rojo' : ($dp >= 70 ? 'alm-amarillo' : ''); ?>" style="width: <?php echo number_format($dp, 2, '.', ''); ?>%"></span></div>
     <p><strong><?php echo $fmt($disco['libre']); ?></strong> libres de <?php echo $fmt($disco['total']); ?> · <?php echo number_format($dp, 1); ?> % usado</p>
 </div>
+</section>
 
-<div class="card" id="escritorio" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="escritorio">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-desktop"></i> App de escritorio · Project Web Desktop (Linux)</h3>
     <p class="text-muted text-sm">Solo el administrador ve, sube y descarga estos instaladores; clientes y visitantes no tienen acceso. Se guardan en el volumen del clúster. Para actualizar, usa «Reemplazar» en la fila: se sustituye el archivo y se avisa si el contenido cambió.</p>
-    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
     <?php if ($instaladores): ?>
+        <div class="tabla-wrapper">
         <table class="tabla"><thead><tr><th>Archivo</th><th>Tamaño</th><th>Subido</th><th>SHA-256</th><th></th></tr></thead><tbody>
         <?php foreach ($instaladores as $a): ?>
             <tr><td><code><?php echo s($a['nombre']); ?></code></td><td><?php echo s($fmt($a['tam'])); ?></td><td><?php echo s(date('Y-m-d H:i', $a['fecha'])); ?></td>
@@ -99,6 +168,7 @@ $vols = [
                 </td></tr>
         <?php endforeach; ?>
         </tbody></table>
+        </div>
         <p class="text-muted text-sm" style="margin-top:1rem">Debian/Ubuntu/Zorin: <code>sudo apt install ./projectweb-desktop-linux-amd64.deb</code> · Cualquier distro: <code>chmod +x projectweb-desktop-linux-x86_64.AppImage &amp;&amp; ./projectweb-desktop-linux-x86_64.AppImage</code> · Verifica con <code>sha256sum -c SHA256SUMS.txt</code>.</p>
     <?php else: ?>
         <p class="text-muted">Aún no hay instaladores.</p>
@@ -112,12 +182,12 @@ $vols = [
         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Subir</button>
     </form>
 </div>
+</section>
 
-<div class="card" id="android" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="android">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-brands fa-android"></i> <?php echo s(t('App Android')); ?><?php echo $apkVersion ? ' · v' . s($apkVersion) : ''; ?></h3>
     <p class="text-muted text-sm"><?php echo s(t('Solo el administrador publica versiones. Los clientes y el admin las descargan desde Ajustes → App Android.')); ?></p>
-    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
     <?php if ($apks): ?>
     <div class="tabla-wrapper">
     <table class="tabla">
@@ -152,14 +222,14 @@ $vols = [
     </form>
     <p class="text-muted text-sm" style="margin-top:.8rem"><?php echo s(t('El archivo debe llamarse projectweb-android-<versión>.apk. Si subes el mismo nombre, se reemplaza y se avisa si el contenido cambió.')); ?></p>
 </div>
+</section>
 
-<div class="card" id="sesiones" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="sesiones">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-shield-halved"></i> <?php echo s(t('Sesiones y dispositivos')); ?></h3>
     <p class="text-muted text-sm">
         <?php echo s(t('Sesiones activas en toda la plataforma: {n}. Cada usuario ve las suyas en Ajustes → Cuenta; aquí el administrador puede cerrar cualquiera.', ['n' => (int)$sesionesTotal])); ?>
     </p>
-    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
     <form method="GET" action="/sistema#sesiones" class="filtros" style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin:1.2rem 0">
         <label><?php echo s(t('Buscar')); ?><input type="search" name="q" value="<?php echo s($sesionesFiltro['q']); ?>" placeholder="<?php echo s(t('Nombre, correo, IP o dispositivo')); ?>"></label>
         <label><?php echo s(t('Tipo')); ?>
@@ -202,13 +272,14 @@ $vols = [
         <p class="text-muted"><?php echo s(t('No hay sesiones activas con ese filtro.')); ?></p>
     <?php endif; ?>
 </div>
+</section>
 
-<div class="card" id="herramientas" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="herramientas">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-plug"></i> Conectar herramientas de IA</h3>
     <p class="text-muted text-sm">Registro de las IA que usas desde la app de escritorio (local, CLI o API). <strong>Aquí no se guardan API keys</strong>: escríbelas solo en la app de escritorio (Ajustes → proveedores) para que no queden en el servidor ni en los respaldos.</p>
-    <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
     <?php if ($herramientas): ?>
+        <div class="tabla-wrapper">
         <table class="tabla"><thead><tr><th>Nombre</th><th>Tipo</th><th>URL / modelo</th><th>Estado</th><th></th></tr></thead><tbody>
         <?php foreach ($herramientas as $h): ?>
             <tr><td><?php echo s($h->nombre); ?><?php if ($h->notas): ?><br><small class="text-muted"><?php echo s($h->notas); ?></small><?php endif; ?></td>
@@ -218,6 +289,7 @@ $vols = [
                 <td><form method="POST" action="/sistema/herramienta/eliminar" data-confirmar="¿Eliminar esta conexión?"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button class="btn btn-sm btn-ghost" aria-label="Eliminar"><i class="fa-solid fa-trash"></i></button></form></td></tr>
         <?php endforeach; ?>
         </tbody></table>
+        </div>
     <?php endif; ?>
     <form method="POST" action="/sistema/herramienta" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.4rem">
         <label>Nombre <input name="nombre" required maxlength="100" placeholder="Ollama del equipo"></label>
@@ -229,12 +301,14 @@ $vols = [
         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Conectar</button>
     </form>
 </div>
+</section>
 
-<div class="card" id="accesos" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="accesos">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-key"></i> <?php echo s(t('Accesos recientes')); ?></h3>
-    <?php if (!\Classes\Accesos::disponible()): ?>
+    <?php if (empty($accesosDisponibles)): ?>
         <p class="text-muted text-sm">Falta aplicar <code>database/migracion_accesos.sql</code> para registrar quién entra y desde dónde.</p>
-    <?php else: $acRes = \Classes\Accesos::resumen(); $acLista = \Classes\Accesos::recientes(30); ?>
+    <?php else: $acRes = $accesosResumen; $acLista = $accesosLista; ?>
         <p class="text-muted text-sm">
             Últimas 24 h: <strong><?php echo (int)$acRes['ok']; ?></strong> accesos correctos ·
             <strong><?php echo (int)$acRes['fallo']; ?></strong> fallidos ·
@@ -268,12 +342,12 @@ $vols = [
         <?php endif; ?>
     <?php endif; ?>
 </div>
+</section>
 
-<div class="card" id="respaldo" style="margin-bottom:2rem">
+<section class="ctl-seccion" id="respaldo">
+<div class="card" style="margin-bottom:2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-box-archive"></i> <?php echo s(t('Respaldo')); ?></h3>
     <p class="text-muted text-sm">Cada respaldo es un .zip con la base de datos completa (incluye usuarios y contraseñas) y todo el volumen de archivos. Al restaurar se reemplaza todo el sistema y se cierra tu sesión; antes se guarda un respaldo automático «antes_de_restaurar».</p>
-    <?php if ($ok): ?><div class="alerta alerta-exito" style="margin-bottom:1rem"><?php echo s($ok); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alerta alerta-error" style="margin-bottom:1rem"><?php echo s($error); ?></div><?php endif; ?>
 
     <div class="alm-prog" style="border:1px solid var(--border);border-radius:1rem;padding:1.4rem;margin-bottom:2rem">
         <h4 style="margin-bottom:.8rem"><i class="fa-solid fa-clock"></i> <?php echo s(t('Respaldo diario automático')); ?></h4>
@@ -306,6 +380,7 @@ $vols = [
         </form>
     </div>
 
+    <div class="tabla-wrapper">
     <table class="tabla">
         <thead><tr><th><?php echo s(t('Fecha')); ?></th><th>Nombre del respaldo</th><th class="text-right">Almacenamiento ocupado</th><th><?php echo s(t('Acciones')); ?></th></tr></thead>
         <tbody>
@@ -332,6 +407,31 @@ $vols = [
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
+</div>
+</section>
+
+<section class="ctl-seccion" id="idioma">
+<div class="card" style="margin-bottom:2rem">
+    <h3 class="card-titulo"><i class="fa-solid fa-language"></i> <?php echo s(t('Idioma de la interfaz')); ?> · Language</h3>
+    <form method="POST" action="/idioma" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <input type="hidden" name="volver" value="<?php echo s($_SERVER['REQUEST_URI'] ?? '/'); ?>#idioma">
+        <select name="idioma" aria-label="<?php echo s(t('Idioma')); ?>"><?php foreach (IDIOMAS as $cod => $nom): ?><option value="<?php echo $cod; ?>"<?php echo idioma_actual() === $cod ? ' selected' : ''; ?>><?php echo s($nom); ?></option><?php endforeach; ?></select>
+        <button type="submit" class="btn btn-primary"><?php echo s(t('Guardar')); ?></button>
+    </form>
+    <p class="text-muted text-sm" style="margin-top:.8rem">Español / English · <?php echo idioma_actual() === 'en' ? 'Menus and the main screens are translated; the rest of the app keeps showing Spanish for now.' : 'Menús y pantallas principales traducidos; el resto de la aplicación sigue en español por ahora.'; ?></p>
+</div>
+</section>
+<section class="ctl-seccion" id="manual-admin">
+    <div class="card">
+        <h3 class="card-titulo"><i class="fa-solid fa-book-open"></i> Manual del administrador</h3>
+        <p class="text-muted text-sm" style="margin-bottom:1rem">Guía detallada, con ilustraciones, de cada sección: usuarios, respaldos, programa, app de escritorio, Centro de IA, Ensamblador, órdenes de cambio, líneas base y más.</p>
+        <a class="btn btn-primary" href="/manual#admin-guia"><i class="fa-solid fa-book-open"></i> Abrir el manual</a>
+        <a class="btn btn-ghost" href="/manual#escritorio">App de escritorio</a>
+        <a class="btn btn-ghost" href="/manual#centro-ia">Centro de IA</a>
+    </div>
+</section>
+</div>
 </div>
 
 <?php if (count($historial) >= 2): ?>
@@ -362,3 +462,4 @@ $vols = [
 })();
 </script>
 <?php endif; ?>
+<script src="/vendor/control.js" defer></script>

@@ -1,54 +1,148 @@
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Centro de mensajes</span>
         <h2><i class="fa-solid fa-inbox"></i> Bandeja de entrada</h2>
-        <p class="text-muted">Mensajes de contacto de la página principal y de soporte de tus clientes · <strong><?php echo (int)$sinLeer; ?></strong> sin leer</p>
+        <p class="text-muted">Mensajes de contacto de la página principal y de soporte de tus clientes.</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-envelope-open-text"></i> <b><?php echo (int)$conteos['sin_leer']; ?></b> sin leer</span>
+            <span><i class="fa-solid fa-envelope"></i> <b><?php echo (int)$conteos['contacto']; ?></b> contacto</span>
+            <span><i class="fa-solid fa-headset"></i> <b><?php echo (int)$conteos['soporte']; ?></b> soporte</span>
+            <span><i class="fa-solid fa-calendar-day"></i> <b><?php echo (int)$conteos['hoy']; ?></b> hoy</span>
+        </div>
     </div>
 </div>
 
-<div class="msg-tabs">
-    <a href="/bandeja" class="<?php echo $filtro === 'todos' ? 'activo' : ''; ?>">Todos</a>
-    <a href="/bandeja?tipo=contacto" class="<?php echo $filtro === 'contacto' ? 'activo' : ''; ?>"><i class="fa-solid fa-envelope"></i> Contacto</a>
-    <a href="/bandeja?tipo=soporte" class="<?php echo $filtro === 'soporte' ? 'activo' : ''; ?>"><i class="fa-solid fa-headset"></i> Soporte</a>
+<div class="cb-kpis">
+    <div class="cb-kpi <?php echo $conteos['sin_leer'] > 0 ? 'cb-kpi-alerta' : ''; ?>">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-envelope-open-text"></i></span>
+        <small>Sin leer</small>
+        <strong><?php echo (int)$conteos['sin_leer']; ?></strong>
+        <span>Requieren tu respuesta o revisión</span>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-envelope"></i></span>
+        <small>Contacto</small>
+        <strong><?php echo (int)$conteos['contacto']; ?></strong>
+        <span>Mensajes de la página principal</span>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-headset"></i></span>
+        <small>Soporte</small>
+        <strong><?php echo (int)$conteos['soporte']; ?></strong>
+        <span>Consultas de tus clientes</span>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-calendar-week"></i></span>
+        <small>Últimos 7 días</small>
+        <strong><?php echo (int)$conteos['siete']; ?></strong>
+        <span><?php echo (int)$conteos['hoy']; ?> recibidos hoy</span>
+    </div>
 </div>
 
-<div class="card">
-    <table class="tabla">
-        <thead><tr><th>Tipo</th><th>De</th><th class="hide-m">Asunto</th><th class="hide-m">Fecha</th><th>Acciones</th></tr></thead>
-        <tbody>
-        <?php foreach ($items as $it): $url = '/bandeja/ver?tipo=' . $it['tipo'] . '&id=' . (int)$it['id']; ?>
-            <tr class="msg-fila <?php echo $it['leido'] ? '' : 'sin-leer'; ?>" data-tipo="<?php echo s($it['tipo']); ?>" data-id="<?php echo (int)$it['id']; ?>">
-                <td><span class="badge <?php echo $it['tipo'] === 'contacto' ? 'badge-admin' : 'badge-cliente'; ?>"><?php echo $it['tipo'] === 'contacto' ? 'Contacto' : 'Soporte'; ?></span></td>
-                <td><?php echo s($it['de']); ?></td>
-                <td class="hide-m"><?php echo s($it['asunto']); ?></td>
-                <td class="mono hide-m"><?php echo s(substr($it['fecha'], 0, 16)); ?></td>
-                <td class="acciones">
-                    <button type="button" class="btn btn-sm btn-ghost" data-abrir><i class="fa-regular fa-envelope-open"></i> Abrir</button>
-                    <?php if ($it['tipo'] === 'soporte'): ?>
-                        <button type="button" class="btn btn-sm btn-primary" data-responder><i class="fa-solid fa-reply"></i> Responder<?php echo !empty($it['respuestas']) ? ' (' . count($it['respuestas']) . ')' : ''; ?></button>
-                    <?php elseif ($it['correo']): ?>
-                        <a class="btn btn-sm btn-primary" href="mailto:<?php echo s($it['correo']); ?>?subject=<?php echo rawurlencode('Re: Tu mensaje a ProjectWeb'); ?>"><i class="fa-solid fa-reply"></i> Responder</a>
-                    <?php endif; ?>
-                    <form class="inline" method="POST" action="/bandeja/accion" data-confirm="¿Eliminar mensaje?|Esta acción no se puede deshacer.">
-                        <input type="hidden" name="tipo" value="<?php echo s($it['tipo']); ?>"><input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
-                        <input type="hidden" name="accion" value="eliminar"><input type="hidden" name="volver" value="<?php echo s($filtro); ?>">
-                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        <?php if (!$items): ?><tr><td colspan="5" class="text-muted">No hay mensajes todavía.</td></tr><?php endif; ?>
-        </tbody>
-    </table>
+<div class="ctl-toolbar">
+    <div class="ctl-busca">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="bj-busca" placeholder="Buscar por remitente o asunto…" autocomplete="off" aria-label="Buscar en la bandeja">
+    </div>
+    <nav class="ctl-pills" aria-label="Filtrar mensajes">
+        <a href="/bandeja" class="<?php echo $filtro === 'todos' ? 'activo' : ''; ?>"<?php echo $filtro === 'todos' ? ' aria-current="page"' : ''; ?>>Todos <span class="ctl-pill-n"><?php echo (int)$conteos['total']; ?></span></a>
+        <a href="/bandeja?tipo=contacto" class="<?php echo $filtro === 'contacto' ? 'activo' : ''; ?>"<?php echo $filtro === 'contacto' ? ' aria-current="page"' : ''; ?>>Contacto <span class="ctl-pill-n"><?php echo (int)$conteos['contacto']; ?></span></a>
+        <a href="/bandeja?tipo=soporte" class="<?php echo $filtro === 'soporte' ? 'activo' : ''; ?>"<?php echo $filtro === 'soporte' ? ' aria-current="page"' : ''; ?>>Soporte <span class="ctl-pill-n"><?php echo (int)$conteos['soporte']; ?></span></a>
+    </nav>
+    <label class="ctl-check"><input type="checkbox" id="bj-solo-sin-leer"> Solo sin leer</label>
 </div>
+
+<div class="card ctl-bandeja">
+    <div class="tabla-wrapper">
+        <table class="tabla">
+            <thead><tr><th>Tipo</th><th>De</th><th class="hide-m">Asunto</th><th class="hide-m">Fecha</th><th>Acciones</th></tr></thead>
+            <tbody>
+            <?php foreach ($items as $it): $textoBusqueda = mb_strtolower($it['de'] . ' ' . $it['asunto'] . ' ' . ($it['cuerpo'] ?? '')); ?>
+                <tr class="msg-fila <?php echo $it['leido'] ? '' : 'sin-leer'; ?>" data-tipo="<?php echo s($it['tipo']); ?>" data-id="<?php echo (int)$it['id']; ?>" data-leido="<?php echo $it['leido'] ? '1' : '0'; ?>" data-texto="<?php echo s($textoBusqueda); ?>">
+                    <td>
+                        <span class="ctl-msg-tipo <?php echo $it['tipo'] === 'soporte' ? 'tipo-soporte' : ''; ?>"><i class="fa-solid <?php echo $it['tipo'] === 'contacto' ? 'fa-envelope' : 'fa-headset'; ?>"></i></span>
+                        <span class="solo-movil text-sm text-muted"><?php echo $it['tipo'] === 'contacto' ? 'Contacto' : 'Soporte'; ?></span>
+                    </td>
+                    <td>
+                        <div class="ctl-identidad">
+                            <?php if (!$it['leido']): ?><span class="ctl-punto" aria-label="Sin leer"></span><?php endif; ?>
+                            <div class="ctl-id-txt">
+                                <strong><?php echo s($it['de']); ?></strong>
+                                <span class="ctl-id-sub"><?php echo $it['tipo'] === 'contacto' ? 'Formulario de contacto' : 'Soporte de cliente'; ?></span>
+                            </div>
+                        </div>
+                        <div class="solo-movil text-sm" style="margin-top:.25rem">
+                            <strong><?php echo s($it['asunto']); ?></strong><br>
+                            <span class="text-muted"><?php echo s(substr($it['fecha'], 0, 16)); ?></span>
+                        </div>
+                    </td>
+                    <td class="hide-m">
+                        <div class="ctl-msg-principal">
+                            <strong><?php echo s($it['asunto']); ?></strong>
+                            <span class="ctl-msg-preview"><?php echo s(mb_strimwidth((string)($it['cuerpo'] ?? ''), 0, 110, '…')); ?></span>
+                        </div>
+                    </td>
+                    <td class="mono hide-m"><?php echo s(substr($it['fecha'], 0, 16)); ?></td>
+                    <td class="acciones">
+                        <button type="button" class="btn btn-sm btn-ghost" data-abrir><i class="fa-regular fa-envelope-open"></i> Abrir</button>
+                        <?php if ($it['tipo'] === 'soporte'): ?>
+                            <button type="button" class="btn btn-sm btn-primary" data-responder><i class="fa-solid fa-reply"></i> Responder<?php echo !empty($it['respuestas']) ? ' (' . count($it['respuestas']) . ')' : ''; ?></button>
+                        <?php elseif ($it['correo']): ?>
+                            <a class="btn btn-sm btn-primary" href="mailto:<?php echo s($it['correo']); ?>?subject=<?php echo rawurlencode('Re: Tu mensaje a ProjectWeb'); ?>"><i class="fa-solid fa-reply"></i> Responder</a>
+                        <?php endif; ?>
+                        <form class="inline" method="POST" action="/bandeja/accion" data-confirm="¿Eliminar mensaje?|Esta acción no se puede deshacer.">
+                            <input type="hidden" name="tipo" value="<?php echo s($it['tipo']); ?>"><input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
+                            <input type="hidden" name="accion" value="eliminar"><input type="hidden" name="volver" value="<?php echo s($filtro); ?>">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!$items): ?>
+                <tr><td colspan="5">
+                    <div class="ctl-empty">
+                        <i class="fa-solid fa-inbox"></i>
+                        <strong>No hay mensajes en esta bandeja</strong>
+                        <p>Cuando alguien escriba desde la página principal o abra un ticket de soporte, aparecerá aquí.</p>
+                    </div>
+                </td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted text-sm" id="bj-sin-resultados" hidden>No hay mensajes que coincidan con la búsqueda.</p>
+</div>
+
+<script>
+(function () {
+    const busca = document.getElementById('bj-busca');
+    const solo = document.getElementById('bj-solo-sin-leer');
+    const vacio = document.getElementById('bj-sin-resultados');
+    if (!busca) return;
+    const filas = () => [...document.querySelectorAll('.ctl-bandeja tbody tr.msg-fila')];
+    const filtrar = () => {
+        const q = busca.value.trim().toLowerCase();
+        let visibles = 0;
+        filas().forEach(tr => {
+            const coincide = (!q || (tr.dataset.texto || '').includes(q)) && (!solo.checked || tr.dataset.leido === '0');
+            tr.hidden = !coincide;
+            if (coincide) visibles++;
+        });
+        if (vacio) vacio.hidden = visibles > 0;
+    };
+    busca.addEventListener('input', filtrar);
+    solo.addEventListener('change', filtrar);
+})();
+</script>
 
 <!-- Modal: ver el mensaje -->
 <div class="modal-overlay" id="bj-ver" aria-hidden="true">
-    <div class="modal-card bj-card" role="dialog" aria-modal="true" aria-labelledby="bj-ver-titulo">
+    <div class="modal-card bj-card ctl-lectura" role="dialog" aria-modal="true" aria-labelledby="bj-ver-titulo">
         <div class="bj-cab"><h3 id="bj-ver-titulo">Mensaje</h3><button type="button" class="btn btn-sm btn-ghost" data-cerrar aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
         <p class="text-muted text-sm" id="bj-ver-fecha"></p>
-        <dl class="msg-meta" id="bj-ver-meta"></dl>
+        <dl class="msg-meta ctl-lectura-meta" id="bj-ver-meta"></dl>
         <h4 id="bj-ver-cuerpo-titulo" class="card-titulo"></h4>
-        <div class="msg-cuerpo" id="bj-ver-cuerpo"></div>
+        <div class="msg-cuerpo ctl-lectura-cuerpo" id="bj-ver-cuerpo"></div>
         <div class="modal-acciones bj-pie">
             <span id="bj-ver-responder"></span>
             <button type="button" class="btn btn-ghost" data-cerrar><i class="fa-solid fa-xmark"></i> Cerrar</button>

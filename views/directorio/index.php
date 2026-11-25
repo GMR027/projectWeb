@@ -5,9 +5,22 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-address-book"></i> Directorio</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?><span class="hide-m"> · captura aquí una vez; Bitácora, Minutas, Redactor, SheetFlow, Submittals, Evidencias, Punch, Archivo y Materiales ofrecen estas listas</span></p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-users"></i> <b><?php echo (int)$conteos['personal']; ?></b> personas</span>
+            <span><i class="fa-solid fa-helmet-safety"></i> <b><?php echo (int)$conteos['contratista']; ?></b> contratista</span>
+            <span><i class="fa-solid fa-sitemap"></i> <b><?php echo (int)$conteos['departamentos']; ?></b> departamentos</span>
+        </div>
     </div>
+</div>
+<div class="cb-kpis">
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-users"></i></span><small>Personal del proyecto</small><strong><?php echo (int)$conteos['personal']; ?></strong><span>Elegibles como responsable y en el reporte diario</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-helmet-safety"></i></span><small>Personal del contratista</small><strong><?php echo (int)$conteos['contratista']; ?></strong><span>Asistentes a juntas y minutas</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-sitemap"></i></span><small>Departamentos</small><strong><?php echo (int)$conteos['departamentos']; ?></strong><span>Carpetas y filtros compartidos</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-tags"></i></span><small>Categorías</small><strong><?php echo (int)$conteos['categorias']; ?></strong><span>Archivo, punch y evidencias</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-screwdriver-wrench"></i></span><small>Especialidades</small><strong><?php echo (int)$conteos['especialidades']; ?></strong><span>Materiales y submittals</span></div>
 </div>
 <nav class="centro-ia-tabs dir-tabs no-print" aria-label="Directorio">
     <?php foreach ($tabs as $k => [$nombre, $ic]): ?>
@@ -17,8 +30,10 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 <?php if ($ok): ?><div class="alerta alerta-exito"><?php echo s($ok); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alerta alerta-error"><?php echo s($error); ?></div><?php endif; ?>
 
+<div class="adm-split">
+<div class="adm-stack">
 <?php if ($tab === 'personal'): ?>
-<div class="card">
+<div class="card adm-panel">
     <div class="la-controles" style="margin-bottom:1.2rem"><a href="/reportes/personal/crear?proyecto=<?php echo $id; ?>&volver=directorio" class="btn btn-primary">+ Nueva persona</a>
         <span class="text-muted text-sm">Se elige en Reporte diario, Minutas y como responsable de actividades.</span></div>
     <?php if (!$datos['personal']): ?><p class="text-muted">Aún no hay personal del proyecto.</p><?php else: ?>
@@ -43,7 +58,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 </div>
 
 <?php elseif ($tab === 'contratista'): ?>
-<div class="card">
+<div class="card adm-panel">
     <div class="la-controles" style="margin-bottom:1.2rem"><a href="/minutas/contratista/crear?proyecto=<?php echo $id; ?>&volver=directorio" class="btn btn-primary">+ Nueva persona</a>
         <span class="text-muted text-sm">Contratista o cliente: gente de otras empresas que asiste a las juntas.</span></div>
     <?php if (!$datos['contratista']): ?><p class="text-muted">Aún no hay personal del contratista.</p><?php else: ?>
@@ -63,7 +78,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 </div>
 
 <?php elseif ($tab === 'departamentos'): ?>
-<div class="card">
+<div class="card adm-panel">
     <p class="text-muted text-sm">Un mismo departamento sirve de carpeta en Minutas, Redactor y SheetFlow, y de filtro en Bitácora, Submittals, Evidencias y Personal. Al renombrarlo cambia en todas; si escribes el nombre de otro existente, se unen.</p>
     <form method="POST" action="/directorio/departamento" class="la-controles" style="margin:1.2rem 0">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>">
@@ -91,7 +106,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 
 <?php elseif ($tab === 'categorias'): ?>
 <?php foreach ($datos['categorias'] as $ambito => $c): ?>
-<div class="card">
+<div class="card adm-panel">
     <h3><?php echo s($c['titulo']); ?></h3>
     <form method="POST" action="/directorio/categoria" class="la-controles" style="margin:1rem 0">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="ambito" value="<?php echo s($ambito); ?>">
@@ -121,7 +136,7 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
 <?php endforeach; ?>
 
 <?php else: ?>
-<div class="card">
+<div class="card adm-panel">
     <p class="text-muted text-sm">Se eligen en Materiales y Submittals.</p>
     <form method="POST" action="/especialidades/guardar" class="la-controles" style="margin:1.2rem 0">
         <input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="volver" value="directorio">
@@ -147,3 +162,41 @@ $sinUso = fn(array $usos) => $usos ? implode(' · ', array_map(fn($h, $n) => s($
     <?php endforeach; ?></tbody></table></div><?php endif; ?>
 </div>
 <?php endif; ?>
+</div>
+<aside class="adm-stack directorio-rail" aria-label="Uso del directorio">
+    <div class="card adm-panel">
+        <div class="adm-panel-cab">
+            <div>
+                <h3><i class="fa-solid fa-share-nodes"></i> Uso del directorio</h3>
+                <p>Una sola captura alimenta todas las herramientas del proyecto.</p>
+            </div>
+        </div>
+        <div class="adm-panel-cuerpo">
+            <ul class="dir-uso">
+                <?php foreach ($tabs as $k => [$nombre, $ic]): ?>
+                    <li>
+                        <a href="/directorio?proyecto=<?php echo $id; ?>&tab=<?php echo $k; ?>" class="<?php echo $k === $tab ? 'activo' : ''; ?>"<?php echo $k === $tab ? ' aria-current="page"' : ''; ?>>
+                            <i class="fa-solid <?php echo $ic; ?>"></i>
+                            <span><?php echo s($nombre); ?></span>
+                            <b><?php echo (int)($conteos[$k] ?? 0); ?></b>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+    <div class="card adm-panel">
+        <div class="adm-panel-cab">
+            <div><h3><i class="fa-solid fa-lightbulb"></i> Buenas prácticas</h3></div>
+        </div>
+        <div class="adm-panel-cuerpo">
+            <ul class="dir-tips">
+                <li><i class="fa-solid fa-check"></i> Una persona, un registro: evita duplicar nombres con distinto acento.</li>
+                <li><i class="fa-solid fa-check"></i> Usa los departamentos como carpetas; se comparten con Minutas, Redactor y SheetFlow.</li>
+                <li><i class="fa-solid fa-check"></i> Las especialidades conectan Materiales y Submittals; mantenlas cortas y consistentes.</li>
+                <li><i class="fa-solid fa-check"></i> Al renombrar un valor se actualiza en todas las herramientas que lo usan.</li>
+            </ul>
+        </div>
+    </div>
+</aside>
+</div>

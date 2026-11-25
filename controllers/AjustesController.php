@@ -304,8 +304,8 @@ class AjustesController
         // Los dos valores se validan contra la lista blanca de TemaProyecto
         $modo = TemaProyecto::normModo($_POST['tema_modo'] ?? 'usuario');
         $paleta = TemaProyecto::normPaleta($_POST['tema_paleta'] ?? 'naranja');
-        $nombres = TemaProyecto::nombresHerramientas($_POST['nombres_herramientas'] ?? 0) ? 1 : 0;   // barra superior: nombre bajo el icono
-        $menu = TemaProyecto::normMenu($_POST['menu_superior'] ?? 'clasico');   // clásico, panel o pestañas
+        $nombres = TemaProyecto::nombresHerramientas($_POST['nombres_herramientas'] ?? 0) ? 1 : 0;   // barra compacta: nombre junto al icono
+        $menu = TemaProyecto::normMenu($_POST['menu_superior'] ?? 'clasico');   // barra compacta o riel lateral
         $ayuda = TemaProyecto::ayudasVisibles($_POST['ayuda_burbujas'] ?? 1) ? 1 : 0;   // burbujas de ayuda de la interfaz
         $color = TemaProyecto::colorCaratula($paleta);   // la carátula del portafolio usa el mismo acento
         // Fondo: textura + halo radial. El color del halo vacío significa «usa el acento de la paleta».

@@ -1,0 +1,99 @@
+@use '../base/variables' as *;
+
+// ============================================================
+// Consola de IA · Revisiones del proyecto
+// ============================================================
+
+body[data-vista="revisiones-index"] {
+  .ia-dominios {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
+  }
+
+  .ia-dominios .rev-resumen {
+    min-width: 0;
+    height: 100%;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      margin: 0 0 .8rem;
+      font-size: 1.45rem;
+
+      i { color: var(--primary-ink); }
+      small { font-size: 1.1rem; }
+    }
+  }
+
+  .rev-barra {
+    height: .6rem;
+    margin-bottom: .5rem;
+  }
+
+  .rev-cifras {
+    gap: .45rem;
+    margin: .75rem 0 0;
+  }
+
+  .rev-chip {
+    font-size: 1.02rem;
+  }
+
+  .rev-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+
+    .btn { flex: none; }
+  }
+
+  .rev-leyenda {
+    margin-top: .4rem;
+  }
+
+  .ia-score-caja {
+    .ia-metrics { margin-top: .7rem; }
+    .ia-metric strong { font-size: 1.45rem; }
+  }
+
+  .ia-panel-head + .ia-tabla-wrap { margin-top: .2rem; }
+
+  .ia-tabla .rev-chip {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+
+  .ia-tabla td .btn[title="Abrir"] {
+    padding: .3rem .55rem;
+  }
+
+  .ia-inspector .ia-card {
+    .ia-legend { gap: .4rem .7rem; }
+    .rev-chip { font-size: .98rem; }
+  }
+}
+
+@media (max-width: 80rem) {
+  body[data-vista="revisiones-index"] {
+    .ia-dominios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+
+@media (max-width: 48rem) {
+  body[data-vista="revisiones-index"] {
+    .ia-dominios { grid-template-columns: minmax(0, 1fr); }
+    .ia-score-caja { gap: .8rem; }
+    .ia-score { width: 9.5rem; height: 9.5rem; }
+    .ia-score strong { font-size: 2rem; }
+    .rev-filtros { gap: .35rem; }
+    .rev-filtros .btn { flex: 1 1 auto; justify-content: center; }
+  }
+}

@@ -158,6 +158,26 @@ function herramientas_proyecto($proyecto): array
         ['Proyecto', '/exportar', 'fa-file-export', 'Exportar', !is_visitante() || (function_exists('es_colaborador') && es_colaborador())],
     ];
     $ayudas = ayudas_herramientas();
+    // Etiqueta corta para la barra compacta: el nombre completo sigue en el menú y en la ayuda.
+    $cortos = [
+        '/programa' => 'Programa', '/dependencias' => 'Dependencias', '/lineatiempo' => 'Línea tiempo',
+        '/balance' => 'Balance', '/lookahead' => 'Lookahead', '/vplan' => 'vPlan', '/lastplanner' => 'Last Planner',
+        '/calendario' => 'Calendario', '/lineas-base' => 'L. base', '/plantillas' => 'Tipo obra',
+        '/reportes' => 'Reporte', '/bitacora' => 'Bitácora', '/minutas' => 'Minutas', '/evidencias' => 'Evidencias',
+        '/curvas' => 'Curvas', '/seguridad' => 'Seguridad', '/punch' => 'Punch', '/calidad' => 'Calidad', '/rfi' => 'RFI',
+        '/mapa-avance' => 'Mapa', '/msr' => 'MSR', '/submittals' => 'Submittals', '/materiales' => 'Materiales',
+        '/almacen' => 'Almacén', '/materiales/dependencias' => 'Deps. mat.', '/archivos' => 'Archivo',
+        '/graficos' => 'Editor', '/redactor' => 'Redactor', '/sheetflow' => 'SheetFlow', '/view360' => 'View360',
+        '/ensamblador-documentos' => 'Unir PDF', '/comparador' => 'Comparador', '/anotador' => 'Anotador',
+        '/traductor' => 'Traductor', '/normativa' => 'Normativa', '/programador' => 'Programador',
+        '/inconsistencias' => 'Revisión', '/propuestas-ia' => 'Centro IA', '/revisiones' => 'Revisiones',
+        '/directorio' => 'Directorio', '/contratos' => 'Contratos', '/subcontratos' => 'Subcontratos',
+        '/cierre' => 'Cierre', '/costos' => 'Costos', '/conceptos' => 'Conceptos', '/cambios' => 'Cambios',
+        '/riesgos' => 'Riesgos', '/recursos' => 'Recursos', '/equipo' => 'Equipo', '/datos-obra' => 'Datos obra',
+        '/historial' => 'Historial', '/acciones' => 'Acciones', '/proyectos/ver' => 'Salud', '/campos' => 'Campos',
+        '/plantillas-proyecto' => 'Plantillas', '/marca' => 'Marca', '/integraciones' => 'Integraciones',
+        '/compartir' => 'Compartir', '/ajustes' => 'Ajustes', '/exportar' => 'Exportar',
+    ];
     static $nombreLookahead = [];   // nombre propio del Lookahead por proyecto (Ajustes del Lookahead)
     $nombreLookahead[$id] ??= \Model\LookaheadConfig::deProyecto($id)->nombre;
     $grupos = [];
@@ -170,7 +190,8 @@ function herramientas_proyecto($proyecto): array
         $permitidas = array_values(array_filter(array_merge([$ruta], $tambien), fn($r) => herramienta_permitida(herramienta_de_ruta($r))));
         if ($visible === false || !$permitidas) continue;
         $destino = $permitidas[0];
-        $grupos[$cat][] = ['url' => "$destino?proyecto=$id", 'icon' => $icono, 'label' => $etiqueta, 'match' => $ruta, 'key' => ltrim($ruta, '/'), 'tambien' => $tambien, 'ayuda' => $ayudas[$ruta][0] ?? '', 'manual' => $ayudas[$ruta][1] ?? ''];
+        $corto = $ruta === '/lookahead' ? ($nombreLookahead[$id] !== '' ? $nombreLookahead[$id] : 'Lookahead') : ($cortos[$ruta] ?? $etiqueta);
+        $grupos[$cat][] = ['url' => "$destino?proyecto=$id", 'icon' => $icono, 'label' => $etiqueta, 'corto' => $corto, 'match' => $ruta, 'key' => ltrim($ruta, '/'), 'tambien' => $tambien, 'ayuda' => $ayudas[$ruta][0] ?? '', 'manual' => $ayudas[$ruta][1] ?? ''];
     }
     return $grupos;
 }

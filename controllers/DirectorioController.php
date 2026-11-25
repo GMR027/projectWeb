@@ -47,6 +47,8 @@ class DirectorioController
             'personal' => count($datos['personal'] ?? Personal::deProyecto($pid)),
             'contratista' => count($datos['contratista'] ?? PersonalContratista::deProyecto($pid)),
             'departamentos' => count($datos['departamentos'] ?? Catalogo::departamentos($pid)),
+            'categorias' => array_sum(array_map(fn($a) => count(Catalogo::categorias($pid, $a)), array_keys(Catalogo::AMBITOS))),
+            'especialidades' => count($datos['especialidades'] ?? Especialidad::deProyecto($pid)),
         ];
         $router->render('directorio/index', [
             'titulo' => 'Directorio - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'tab' => $tab, 'datos' => $datos, 'conteos' => $conteos,

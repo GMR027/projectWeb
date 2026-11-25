@@ -1,3 +1,5 @@
+@use '../base/variables' as *;
+
 // Semáforo de salud del proyecto y marca «En riesgo» de las actividades
 .salud {
   --salud-color: var(--success);
@@ -39,9 +41,25 @@
 }
 
 // Buscador global
-.topbar-buscar input { width: 18rem; padding: 0.5rem 1rem; border-radius: 0.8rem; border: 1px solid var(--border); background: transparent; color: inherit; font-size: 1.3rem; }
-.topbar-buscar input:focus { outline: none; border-color: var(--primary-ink); }
-.buscar-form { display: flex; gap: 1rem; margin-bottom: 1.6rem; input { flex: 1; padding: 0.9rem 1.2rem; border-radius: 0.8rem; border: 1px solid var(--border); background: transparent; color: inherit; font-size: 1.5rem; } }
+.buscar-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+  input {
+    flex: 1 1 18rem;
+    min-width: 0;
+    padding: 0.9rem 1.2rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+  }
+  .btn { flex: 0 0 auto; }
+}
+@media (max-width: $bp-mobile) {
+  .buscar-form .btn { flex: 1 1 100%; }
+}
 .buscar-grupo { margin-bottom: 1.2rem; h3 { margin-bottom: 0.8rem; } }
 .buscar-lista { list-style: none; margin: 0; padding: 0; li a { display: flex; flex-direction: column; padding: 0.6rem 0; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; &:hover strong { color: var(--primary-ink); } } li:last-child a { border-bottom: 0; } }
-@media (max-width: 48rem) { .topbar-buscar input { width: 10rem; } }

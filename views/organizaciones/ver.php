@@ -10,9 +10,26 @@ $sinPropietario = !$propietario;
 $permiteGestores = !empty($plan['permite_gestores']);
 $equipoLleno = $limVisitantes !== null && count($equipo) >= (int)$limVisitantes;
 $gestores = array_values(array_filter($clientes, fn($u) => (string)$u->rol_org === 'gestor'));
+$activa = ($org->estado_plan ?? '') === 'activo';
+$enPrueba = ($org->estado_plan ?? '') === 'trial';
+$diasPrueba = $org->diasTrial();
+$tope = fn(string $k) => ($limites[$k] ?? null) === null ? '' : (string)(int)$limites[$k];
+$porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
+$pctObras = $limites['obras'] ? min(100, (int)$obras_activas / max(1, (int)$limites['obras']) * 100) : 0;
+$pctAsientos = $limUsuarios ? min(100, (int)$asientos / max(1, (int)$limUsuarios) * 100) : 0;
+$pctVisitantes = $limVisitantes ? min(100, (int)$visitantes / max(1, (int)$limVisitantes) * 100) : 0;
+$pctAlm = $limite_almacenamiento ? min(100, (int)$almacenamiento / max(1, (int)$limite_almacenamiento) * 100) : 0;
+$riesgos = [];
+if ($sinPropietario) $riesgos[] = ['warning', 'fa-user-slash', 'La organización no tiene cliente propietario. Agrégalo para que pueda administrar su equipo y facturación.'];
+if ($enPrueba && $diasPrueba !== null && $diasPrueba <= 7) $riesgos[] = ['warning', 'fa-hourglass-half', 'Quedan ' . max(0, (int)$diasPrueba) . ' día(s) de prueba. Activa el plan antes de que termine.'];
+if ($pctAsientos >= 90) $riesgos[] = ['danger', 'fa-users', 'Los asientos están al ' . number_format($pctAsientos, 0) . ' % del tope. Revisa el plan o libera asientos.'];
+if ($pctObras >= 90) $riesgos[] = ['danger', 'fa-building', 'Las obras activas están al ' . number_format($pctObras, 0) . ' % del tope.'];
+if ($pctAlm >= 90) $riesgos[] = ['danger', 'fa-hard-drive', 'El almacenamiento está al ' . number_format($pctAlm, 0) . ' % del tope de la empresa.'];
+if ($org->estaArchivada()) $riesgos[] = ['info', 'fa-box-archive', 'Esta organización está archivada: no aparece en selectores, pero conserva obras, usuarios y pagos.'];
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Ficha de organización</span>
         <h2><i class="fa-solid fa-building"></i> <?php echo s($org->nombre); ?></h2>
         <p class="text-muted">
             <?php echo s($plan['nombre']); ?> ·
@@ -20,27 +37,70 @@ $gestores = array_values(array_filter($clientes, fn($u) => (string)$u->rol_org =
             <?php if ($org->estaArchivada()): ?> · <span class="badge">Archivada</span><?php endif; ?>
             <?php if ($org->rfc): ?> · <span class="mono"><?php echo s($org->rfc); ?></span><?php endif; ?>
         </p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-user-tie"></i> <b><?php echo $propietario ? s($propietario->nombre) : 'Sin propietario'; ?></b></span>
+            <span><i class="fa-solid fa-helmet-safety"></i> <b><?php echo (int)$obras_activas; ?></b> obras activas</span>
+            <span><i class="fa-solid fa-users"></i> <b><?php echo (int)$asientos; ?></b> asientos</span>
+            <span><i class="fa-solid fa-eye"></i> <b><?php echo (int)$visitantes; ?></b> visitantes</span>
+            <span><i class="fa-solid fa-hard-drive"></i> <b><?php echo \Classes\Almacenamiento::formato((int)$almacenamiento); ?></b></span>
+        </div>
     </div>
-    <div class="acciones">
-        <a href="/organizaciones/editar?id=<?php echo (int)$org->id; ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-id-card"></i> Datos de la empresa</a>
-        <a href="/organizaciones" class="btn btn-sm btn-ghost">← Volver</a>
+    <div class="la-controles">
+        <a href="/organizaciones/editar?id=<?php echo (int)$org->id; ?>" class="btn btn-secondary"><i class="fa-solid fa-id-card"></i> Datos de la empresa</a>
+        <a href="/organizaciones" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Volver</a>
     </div>
 </div>
 
 <?php if (!empty($_GET['guardado'])): ?>
-    <p class="text-sm" style="color:var(--primary)" role="status"><i class="fa-solid fa-circle-check"></i> Cambios guardados.</p>
+    <div class="alerta alerta-exito" role="status"><i class="fa-solid fa-circle-check"></i> Cambios guardados.</div>
 <?php endif; ?>
 <?php $msgError = $_GET['error'] ?? ''; if (is_string($msgError) && $msgError !== ''): ?>
-    <p class="text-sm" role="alert" style="color:var(--danger, #ef4444)"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo s($msgError); ?></p>
+    <div class="alerta alerta-error" role="alert"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo s($msgError); ?></div>
 <?php endif; ?>
 
-<?php
-$activa = ($org->estado_plan ?? '') === 'activo';
-$enPrueba = ($org->estado_plan ?? '') === 'trial';
-$diasPrueba = $org->diasTrial();
-$tope = fn(string $k) => ($limites[$k] ?? null) === null ? '' : (string)(int)$limites[$k];
-$porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
-?>
+<?php foreach ($riesgos as [$tono, $icono, $texto]): ?>
+    <div class="ctl-riesgo <?php echo $tono === 'danger' ? 'es-peligro' : ''; ?>" <?php echo $tono === 'info' ? 'style="border-left-color:var(--secondary);background:color-mix(in srgb, var(--secondary) 7%, var(--surface))"' : ''; ?>>
+        <i class="fa-solid <?php echo $icono; ?>"></i>
+        <div><strong><?php echo $tono === 'danger' ? 'Atención' : ($tono === 'info' ? 'Información' : 'Por revisar'); ?>:</strong> <?php echo s($texto); ?></div>
+    </div>
+<?php endforeach; ?>
+
+<div class="cb-kpis">
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-helmet-safety"></i></span>
+        <small>Obras activas</small>
+        <strong><?php echo (int)$obras_activas; ?><span class="text-muted" style="font-size:1.4rem">/<?php echo $limites['obras'] === null ? '∞' : (int)$limites['obras']; ?></span></strong>
+        <div class="ctl-uso-barra <?php echo $pctObras >= 90 ? 'es-alerta' : ($pctObras >= 70 ? 'es-aviso' : ''); ?>"><span style="width:<?php echo number_format($pctObras, 1, '.', ''); ?>%"></span></div>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-users"></i></span>
+        <small>Asientos usados</small>
+        <strong><?php echo (int)$asientos; ?><span class="text-muted" style="font-size:1.4rem">/<?php echo $limUsuarios === null ? '∞' : (int)$limUsuarios; ?></span></strong>
+        <div class="ctl-uso-barra <?php echo $pctAsientos >= 90 ? 'es-alerta' : ($pctAsientos >= 70 ? 'es-aviso' : ''); ?>"><span style="width:<?php echo number_format($pctAsientos, 1, '.', ''); ?>%"></span></div>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-eye"></i></span>
+        <small>Visitantes</small>
+        <strong><?php echo (int)$visitantes; ?><span class="text-muted" style="font-size:1.4rem">/<?php echo $limVisitantes === null ? '∞' : (int)$limVisitantes; ?></span></strong>
+        <div class="ctl-uso-barra <?php echo $pctVisitantes >= 90 ? 'es-alerta' : ($pctVisitantes >= 70 ? 'es-aviso' : ''); ?>"><span style="width:<?php echo number_format($pctVisitantes, 1, '.', ''); ?>%"></span></div>
+    </div>
+    <div class="cb-kpi">
+        <span class="adm-kpi-icono"><i class="fa-solid fa-hard-drive"></i></span>
+        <small>Almacenamiento</small>
+        <strong class="mono"><?php echo \Classes\Almacenamiento::formato((int)$almacenamiento); ?></strong>
+        <div class="ctl-uso-barra es-info <?php echo $pctAlm >= 90 ? 'es-alerta' : ($pctAlm >= 70 ? 'es-aviso' : ''); ?>"><span style="width:<?php echo number_format($pctAlm, 1, '.', ''); ?>%"></span></div>
+        <span><?php echo $limite_almacenamiento === null ? 'Sin tope total' : 'de ' . \Classes\Almacenamiento::formato((int)$limite_almacenamiento); ?></span>
+    </div>
+</div>
+<div class="pestanas" role="tablist" aria-label="Secciones de la organización">
+    <a href="#plan" class="activo"><i class="fa-solid fa-layer-group"></i> Plan y estado</a>
+    <a href="#resumen"><i class="fa-solid fa-chart-pie"></i> Resumen</a>
+    <a href="#clientes"><i class="fa-solid fa-user-tie"></i> Clientes</a>
+    <a href="#equipo"><i class="fa-solid fa-user-group"></i> Visitantes y colaboradores</a>
+    <a href="#obras"><i class="fa-solid fa-building"></i> Obras</a>
+    <a href="#pagos"><i class="fa-solid fa-receipt"></i> Pagos</a>
+</div>
+
 <section id="plan" class="card" style="margin-top:1.2rem" <?php echo atributos_ayuda(['ayuda' => 'Activa o suspende la empresa y cambia su plan y sus topes. Suspender deja toda la empresa en solo lectura.', 'manual' => 'organizaciones', 'label' => 'Plan y estado'], true); ?>>
     <h3 class="card-titulo"><i class="fa-solid fa-layer-group"></i> Plan y estado</h3>
 
@@ -64,7 +124,7 @@ $porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
         <span class="text-muted text-sm">Suspender no borra nada. Al activar se quitan la prueba y las fechas de vencimiento.</span>
     </div>
 
-    <form method="POST" action="/organizaciones/plan" class="formulario" id="org-plan-form">
+    <form method="POST" action="/organizaciones/plan" class="formulario ctl-form" id="org-plan-form">
         <input type="hidden" name="id" value="<?php echo (int)$org->id; ?>">
         <div class="form-grid">
             <div class="campo">
@@ -115,7 +175,7 @@ $porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
                 <small class="text-muted">Espacio de cada obra (archivos, fotos, planos y fichas).</small>
             </div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1.2rem">
+        <div class="ctl-form-pie" style="display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1.2rem">
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar plan y topes</button>
             <button type="button" class="btn btn-ghost" id="org-plan-aplicar"><i class="fa-solid fa-wand-magic-sparkles"></i> Aplicar límites del plan</button>
         </div>
@@ -145,28 +205,33 @@ $porObra = (int)($limites['almacenamiento_por_obra_mb'] ?? 300);
 })();
 </script>
 
-<div class="pestanas" role="tablist" aria-label="Secciones de la organización">
-    <a href="#resumen" class="activo"><i class="fa-solid fa-chart-pie"></i> Resumen</a>
-    <a href="#clientes"><i class="fa-solid fa-user-tie"></i> Clientes</a>
-    <a href="#equipo"><i class="fa-solid fa-user-group"></i> Visitantes y colaboradores</a>
-    <a href="#obras"><i class="fa-solid fa-building"></i> Obras</a>
-    <a href="#pagos"><i class="fa-solid fa-receipt"></i> Pagos</a>
-</div>
-
 <section id="resumen" class="card" style="margin-top:1.2rem">
     <h3 class="card-titulo"><i class="fa-solid fa-chart-pie"></i> Resumen</h3>
-    <div class="grid-proyectos">
-        <div><span class="text-muted text-sm">Propietario</span><br>
-            <strong><?php echo $propietario ? s($propietario->nombre) : '—'; ?></strong>
-            <?php if ($propietario): ?><br><span class="text-muted text-sm"><?php echo s($propietario->email); ?></span><?php endif; ?>
+    <div class="ctl-grid">
+        <div class="ctl-aside-card">
+            <h4><i class="fa-solid fa-user-tie"></i> Propietario</h4>
+            <?php if ($propietario): ?>
+                <div class="ctl-identidad">
+                    <span class="ctl-avatar"><?php echo s(iniciales_nombre($propietario->nombre)); ?></span>
+                    <div class="ctl-id-txt"><strong><?php echo s($propietario->nombre); ?></strong><span class="ctl-id-sub"><?php echo s($propietario->email); ?></span></div>
+                </div>
+            <?php else: ?>
+                <p class="text-muted text-sm">Sin propietario asignado.</p>
+            <?php endif; ?>
+            <div class="ctl-resumen-linea"><span>Gestores</span><strong><?php echo count($gestores); ?></strong></div>
         </div>
-        <div><span class="text-muted text-sm">Obras activas</span><br><strong><?php echo (int)$obras_activas; ?> / <?php echo $limites['obras'] === null ? '∞' : (int)$limites['obras']; ?></strong></div>
-        <div><span class="text-muted text-sm">Asientos usados</span><br><strong><?php echo (int)$asientos; ?> / <?php echo $limUsuarios === null ? '∞' : (int)$limUsuarios; ?></strong></div>
-        <div><span class="text-muted text-sm">Visitantes</span><br><strong><?php echo (int)$visitantes; ?> / <?php echo $limVisitantes === null ? '∞' : (int)$limVisitantes; ?></strong></div>
-        <div><span class="text-muted text-sm">Almacenamiento</span><br><strong><?php echo \Classes\Almacenamiento::formato((int)$almacenamiento); ?> / <?php echo $limite_almacenamiento === null ? 'sin tope' : \Classes\Almacenamiento::formato((int)$limite_almacenamiento); ?></strong></div>
-        <div><span class="text-muted text-sm">Facturación</span><br>
-            <span class="text-sm"><?php echo s($org->correo_facturacion ?: '—'); ?></span><br>
-            <?php if ($org->telefono): ?><span class="text-muted text-sm"><?php echo s($org->telefono); ?></span><?php endif; ?>
+        <div class="ctl-aside-card">
+            <h4><i class="fa-solid fa-chart-simple"></i> Uso de la empresa</h4>
+            <div class="ctl-resumen-linea"><span>Obras activas</span><strong><?php echo (int)$obras_activas; ?> / <?php echo $limites['obras'] === null ? '∞' : (int)$limites['obras']; ?></strong></div>
+            <div class="ctl-resumen-linea"><span>Asientos</span><strong><?php echo (int)$asientos; ?> / <?php echo $limUsuarios === null ? '∞' : (int)$limUsuarios; ?></strong></div>
+            <div class="ctl-resumen-linea"><span>Visitantes</span><strong><?php echo (int)$visitantes; ?> / <?php echo $limVisitantes === null ? '∞' : (int)$limVisitantes; ?></strong></div>
+            <div class="ctl-resumen-linea"><span>Almacenamiento</span><strong class="mono"><?php echo \Classes\Almacenamiento::formato((int)$almacenamiento); ?></strong></div>
+        </div>
+        <div class="ctl-aside-card">
+            <h4><i class="fa-solid fa-receipt"></i> Facturación</h4>
+            <p class="text-sm"><?php echo s($org->correo_facturacion ?: 'Sin correo de facturación'); ?></p>
+            <?php if ($org->telefono): ?><p class="text-sm mono"><?php echo s($org->telefono); ?></p><?php endif; ?>
+            <div class="ctl-resumen-linea"><span>Plan</span><strong><?php echo s($plan['nombre']); ?></strong></div>
         </div>
     </div>
     <?php if (($org->estado_plan ?? '') === 'trial' && $org->diasTrial() !== null): ?>

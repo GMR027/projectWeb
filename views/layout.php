@@ -1,25 +1,45 @@
 <?php
-// Incluir helper de breadcrumb
-require_once __DIR__ . '/templates/breadcrumb.php';
+// Navegación: datos una sola vez por página (barra, riel, panel y menú lateral).
+require_once __DIR__ . '/templates/herramientas-proyecto.php';
+require_once __DIR__ . '/templates/navegacion-global.php';
+require_once __DIR__ . '/templates/nav-contexto.php';
+require_once __DIR__ . '/templates/nav-riel.php';
+require_once __DIR__ . '/templates/nav-panel.php';
+require_once __DIR__ . '/templates/nav-inferior.php';
+
+// Proyecto de la barra: el de la vista o el ?proyecto= (se consulta una sola vez).
+$proyectoCtx = filter_var($_GET['proyecto'] ?? null, FILTER_VALIDATE_INT);
+$proyectoSidebar = null;
+if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
+    $proyectoSidebar = $proyecto;
+} elseif ($proyectoCtx) {
+    $pNav = \Model\Proyecto::find($proyectoCtx);
+    if ($pNav && puede_ver_proyecto($pNav)) $proyectoSidebar = $pNav;
+}
 
 // Tema del proyecto (Ajustes → Apariencia del proyecto). Sin proyecto manda la preferencia del usuario.
 $temaModoProyecto = null;   // 'light' | 'dark' | null (el que elige cada usuario)
 $temaPaletaProyecto = \Classes\TemaProyecto::POR_DEFECTO;
 $temaCssProyecto = '';
-$nombresHerramientas = false;   // barra superior de herramientas: nombre bajo cada icono (Ajustes → Apariencia)
-$menuModoProyecto = 'clasico';  // barra superior: clásico, panel (menú lateral fijo) o pestañas
+$nombresHerramientas = false;   // barra compacta: nombre junto al icono (Ajustes → Apariencia)
+$menuModoProyecto = 'clasico';  // clasico = barra compacta; panel = riel lateral
 $ayudaBurbujas = true;          // mensajes emergentes de ayuda (Ajustes → Apariencia)
-if (isset($proyecto) && $proyecto instanceof \Model\Proyecto) {
-    $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyecto->tema_modo ?? 'usuario');
-    $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyecto->tema_paleta ?? 'naranja');
-    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto, \Classes\TemaProyecto::opciones($proyecto));
-    $nombresHerramientas = \Classes\TemaProyecto::nombresHerramientas($proyecto->nombres_herramientas ?? 0);
-    $menuModoProyecto = \Classes\TemaProyecto::normMenu($proyecto->menu_superior ?? 'clasico');
-    $ayudaBurbujas = \Classes\TemaProyecto::ayudasVisibles($proyecto->ayuda_burbujas ?? 1);
+if ($proyectoSidebar) {
+    $temaModoProyecto = \Classes\TemaProyecto::temaForzado($proyectoSidebar->tema_modo ?? 'usuario');
+    $temaPaletaProyecto = \Classes\TemaProyecto::normPaleta($proyectoSidebar->tema_paleta ?? 'naranja');
+    $temaCssProyecto = \Classes\TemaProyecto::css($temaPaletaProyecto, \Classes\TemaProyecto::opciones($proyectoSidebar));
+    $nombresHerramientas = \Classes\TemaProyecto::nombresHerramientas($proyectoSidebar->nombres_herramientas ?? 0);
+    $menuModoProyecto = \Classes\TemaProyecto::normMenu($proyectoSidebar->menu_superior ?? 'clasico');
+    $ayudaBurbujas = \Classes\TemaProyecto::ayudasVisibles($proyectoSidebar->ayuda_burbujas ?? 1);
 }
+$menuGlobal = menu_global_nav();
+$gruposHerramientasProyecto = $proyectoSidebar ? herramientas_proyecto($proyectoSidebar) : [];
+$navActiva = nav_activa($gruposHerramientasProyecto);
+$navClaveActiva = $navActiva[0];
+$navGrupoActivo = (int)($navActiva[2] ?? 0);
 $clasesHtml = [];
 if ($nombresHerramientas) $clasesHtml[] = 'herr-con-nombres';
-if ($menuModoProyecto !== 'clasico') $clasesHtml[] = 'menu-' . $menuModoProyecto;
+$clasesHtml[] = $menuModoProyecto === 'panel' ? 'menu-panel' : 'menu-compacto';
 if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
 ?>
 <!DOCTYPE html>
@@ -116,66 +136,31 @@ if (!$ayudaBurbujas) $clasesHtml[] = 'sin-ayuda-burbujas';
     <?php endif; ?>
     <?php endif; ?>
     <div class="app-container">
+        <?php include_once __DIR__ . '/templates/appbar.php'; ?>
         <?php include_once __DIR__ . '/templates/sidebar.php'; ?>
-        <main class="main-content" id="contenido-principal">
-            <?php include_once __DIR__ . '/templates/topbar.php'; ?>
-            <?php if (isset($proyecto)): ?>
-                <?php
-                $pagina_actual = '';
-                $uri = $_SERVER['REQUEST_URI'] ?? '';
-                if (str_contains($uri, '/dependencias')) $pagina_actual = 'dependencias';
-                elseif (str_contains($uri, '/programa')) $pagina_actual = 'programa';
-                elseif (str_contains($uri, '/lookahead')) $pagina_actual = 'lookahead';
-                elseif (str_contains($uri, '/vplan')) $pagina_actual = 'vplan';
-                elseif (str_contains($uri, '/lastplanner')) $pagina_actual = 'lastplanner';
-                elseif (str_contains($uri, '/reportes')) $pagina_actual = 'reportes';
-                elseif (str_contains($uri, '/bitacora')) $pagina_actual = 'bitacora';
-                elseif (str_contains($uri, '/minutas')) $pagina_actual = 'minutas';
-                elseif (str_contains($uri, '/archivos')) $pagina_actual = 'archivos';
-                elseif (str_contains($uri, '/curvas')) $pagina_actual = 'curvas';
-                elseif (str_contains($uri, '/msr')) $pagina_actual = 'msr';
-                elseif (str_contains($uri, '/datos-obra')) $pagina_actual = 'datos-obra';
-                elseif (str_contains($uri, '/historial-cambios')) $pagina_actual = 'historial-cambios';
-                elseif (str_contains($uri, '/lineas-base')) $pagina_actual = 'lineas-base';
-                elseif (str_contains($uri, '/cambios')) $pagina_actual = 'cambios';
-                elseif (str_contains($uri, '/planificador')) $pagina_actual = 'planificador';
-                elseif (str_contains($uri, '/seguridad')) $pagina_actual = 'seguridad';
-                elseif (str_contains($uri, '/punch')) $pagina_actual = 'punch';
-                elseif (str_contains($uri, '/mapa-avance')) $pagina_actual = 'mapa-avance';
-                elseif (str_contains($uri, '/plantillas')) $pagina_actual = 'plantillas';
-                elseif (str_contains($uri, '/normativa')) $pagina_actual = 'normativa';
-                elseif (str_contains($uri, '/programador')) $pagina_actual = 'programador';
-                elseif (str_contains($uri, '/inconsistencias')) $pagina_actual = 'inconsistencias';
-                elseif (str_contains($uri, '/analisis-materiales')) $pagina_actual = 'analisis-materiales';
-                elseif (str_contains($uri, '/propuestas-ia')) $pagina_actual = 'propuestas-ia';
-                elseif (str_contains($uri, '/revisiones')) $pagina_actual = 'revisiones';
-                elseif (str_contains($uri, '/especialidades')) $pagina_actual = 'especialidades';
-                elseif (str_contains($uri, '/informes-ia')) $pagina_actual = 'informes-ia';
-                elseif (str_contains($uri, '/grabaciones')) $pagina_actual = 'grabaciones';
-                elseif (str_contains($uri, '/historial-cambios')) $pagina_actual = 'historial-cambios';
-                elseif (str_contains($uri, '/biblioteca-ia')) $pagina_actual = 'biblioteca-ia';
-                elseif (str_contains($uri, '/acciones')) $pagina_actual = 'acciones';
-                elseif (str_contains($uri, '/submittals')) $pagina_actual = 'submittals';
-                elseif (str_contains($uri, '/materiales')) $pagina_actual = 'materiales';
-                elseif (str_contains($uri, '/calendario')) $pagina_actual = 'calendario';
-                elseif (str_contains($uri, '/graficos')) $pagina_actual = 'editor';
-                elseif (str_contains($uri, '/redactor')) $pagina_actual = 'redactor';
-                elseif (str_contains($uri, '/sheetflow')) $pagina_actual = 'sheetflow';
-                elseif (str_contains($uri, '/simbolos')) $pagina_actual = 'simbolos';
-                elseif (str_contains($uri, '/view360')) $pagina_actual = 'view360';
-                elseif (str_contains($uri, '/comparador')) $pagina_actual = 'comparador';
-                elseif (str_contains($uri, '/traductor')) $pagina_actual = 'traductor';
-                elseif (str_contains($uri, '/evidencias')) $pagina_actual = 'evidencias';
-                elseif (str_contains($uri, '/ajustes')) $pagina_actual = 'ajustes';
-                elseif (str_contains($uri, '/exportar')) $pagina_actual = 'exportar';
-                breadcrumb_proyecto($proyecto, $pagina_actual, $menuModoProyecto);
-                ?>
+        <div class="app-cuerpo">
+            <?php if ($menuModoProyecto === 'panel' && $proyectoSidebar && $gruposHerramientasProyecto): ?>
+                <?php navegacion_riel($gruposHerramientasProyecto, $navClaveActiva, $navGrupoActivo, $proyectoSidebar); ?>
             <?php endif; ?>
-            <?php include_once __DIR__ . '/templates/alertas.php'; ?>
-            <?php echo $contenido; ?>
-        </main>
+            <div class="app-principal">
+                <?php if ($menuModoProyecto !== 'panel'): ?>
+                    <?php if ($proyectoSidebar && $gruposHerramientasProyecto): ?>
+                        <?php navegacion_proyecto($proyectoSidebar, $gruposHerramientasProyecto, $navClaveActiva, $navGrupoActivo); ?>
+                    <?php else: ?>
+                        <?php navegacion_global($menuGlobal); ?>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <main class="main-content" id="contenido-principal">
+                    <?php include_once __DIR__ . '/templates/alertas.php'; ?>
+                    <?php echo $contenido; ?>
+                </main>
+            </div>
+        </div>
     </div>
-    <button type="button" id="btn-menu" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    <?php if ($proyectoSidebar && $gruposHerramientasProyecto): ?>
+        <?php navegacion_panel($gruposHerramientasProyecto, $navClaveActiva, $proyectoSidebar); ?>
+    <?php endif; ?>
+    <?php navegacion_inferior($proyectoSidebar); ?>
     <div id="sidebar-fondo" class="sidebar-fondo"></div>
     <?php include_once __DIR__ . '/templates/modal-confirm.php'; ?>
     <?php include __DIR__ . '/templates/pde-modal.php'; ?>

@@ -10,11 +10,20 @@ $situaciones = [
     'vencido' => ['Vencido', 'admin'], 'cerrado' => ['Cerrado', 'visitante'],
 ];
 $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
+$proximos = array_values(array_filter($lista, fn($c) => !empty($c['vencimiento']) && $c['situacion'] !== 'cerrado'));
+usort($proximos, fn($a, $b) => (int)$a['dias'] <=> (int)$b['dias']);
+$proximos = array_slice($proximos, 0, 5);
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-file-signature"></i> Contratos, fianzas y seguros</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · vencimientos, montos y documentos</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-circle-check"></i> <b><?php echo (int)($resumen['vigente'] ?? 0); ?></b> vigentes</span>
+            <span><i class="fa-solid fa-clock"></i> <b><?php echo (int)($resumen['por_vencer'] ?? 0); ?></b> por vencer</span>
+            <span><i class="fa-solid fa-triangle-exclamation"></i> <b><?php echo (int)($resumen['vencido'] ?? 0); ?></b> vencidos</span>
+        </div>
     </div>
     <?php if ($puedeEditar && $disponible): ?><a href="<?php echo s($url(['nuevo' => 1])); ?>" class="btn btn-primary">+ Nuevo registro</a><?php endif; ?>
 </div>
@@ -34,9 +43,10 @@ $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
 
 <div class="cb-kpis">
-    <div class="cb-kpi"><small>Vigentes</small><strong><?php echo (int)$resumen['vigente']; ?></strong><span>Sin vencimiento próximo</span></div>
-    <div class="cb-kpi <?php echo $resumen['por_vencer'] ? 'cb-kpi-alerta' : ''; ?>"><small>Por vencer</small><strong><?php echo (int)$resumen['por_vencer']; ?></strong><span>Dentro del aviso configurado</span></div>
-    <div class="cb-kpi <?php echo $resumen['vencido'] ? 'cb-kpi-alerta' : ''; ?>"><small>Vencidos</small><strong><?php echo (int)$resumen['vencido']; ?></strong><span>Requieren renovación o cierre</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-circle-check"></i></span><small>Vigentes</small><strong><?php echo (int)$resumen['vigente']; ?></strong><span>Sin vencimiento próximo</span></div>
+    <div class="cb-kpi <?php echo $resumen['por_vencer'] ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-clock"></i></span><small>Por vencer</small><strong><?php echo (int)$resumen['por_vencer']; ?></strong><span>Dentro del aviso configurado</span></div>
+    <div class="cb-kpi <?php echo $resumen['vencido'] ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-triangle-exclamation"></i></span><small>Vencidos</small><strong><?php echo (int)$resumen['vencido']; ?></strong><span>Requieren renovación o cierre</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-layer-group"></i></span><small>Registros</small><strong><?php echo (int)$resumen['vigente'] + (int)$resumen['por_vencer'] + (int)$resumen['vencido'] + (int)$resumen['cerrado']; ?></strong><span>Contratos, fianzas, seguros y licencias</span></div>
 </div>
 
 <?php if ($puedeEditar && $abrirForm): ?>
@@ -68,7 +78,16 @@ $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
     <?php foreach ($situaciones as $k => [$etq, ]): ?><a href="<?php echo s($url(['situacion' => $k])); ?>" class="cb-chip<?php echo $filtro === $k ? ' activo' : ''; ?>"><?php echo s($etq); ?> <b><?php echo (int)$resumen[$k]; ?></b></a><?php endforeach; ?>
 </div>
 
-<div class="card">
+<div class="adm-split">
+<div class="card adm-panel">
+    <div class="adm-panel-cab">
+        <div>
+            <h3><i class="fa-solid fa-table-list"></i> Registros</h3>
+            <p><?php echo count($lista); ?> registro(s)<?php echo $filtro !== '' ? ' con el filtro activo' : ' en total'; ?> · vencimientos, montos y documentos.</p>
+        </div>
+        <span class="cb-tag"><?php echo count($situaciones); ?> situaciones</span>
+    </div>
+    <div class="adm-panel-cuerpo">
     <?php if (!$lista): ?><?php echo estado_vacio('fa-file-signature',
         $filtro !== '' ? 'Ningún registro coincide con el filtro' : 'Aún no hay contratos, fianzas ni seguros',
         $filtro !== '' ? 'Prueba con otro tipo o situación.' : 'Registra los contratos, fianzas, seguros y licencias con sus vencimientos.',
@@ -100,4 +119,50 @@ $dinero = fn($m, $mon) => number_format((float)$m, 2) . ' ' . s($mon);
         </tbody>
     </table></div>
     <?php endif; ?>
+    </div>
+</div>
+<aside class="adm-stack" aria-label="Vencimientos y cumplimiento">
+    <div class="card adm-panel">
+        <div class="adm-panel-cab">
+            <div>
+                <h3><i class="fa-solid fa-calendar-days"></i> Próximos vencimientos</h3>
+                <p>Los registros abiertos que primero pierden vigencia.</p>
+            </div>
+        </div>
+        <div class="adm-panel-cuerpo">
+            <?php if (!$proximos): ?>
+                <p class="text-muted text-sm m-0">No hay vencimientos próximos con el filtro actual.</p>
+            <?php else: ?>
+                <ul class="co-venc">
+                    <?php foreach ($proximos as $c): ?>
+                        <li class="<?php echo $c['situacion'] === 'vencido' ? 'es-vencido' : ($c['situacion'] === 'por_vencer' ? 'es-aviso' : ''); ?>">
+                            <div>
+                                <strong><?php echo s($c['contraparte'] ?: Contratos::TIPOS[$c['tipo']] ?? $c['tipo']); ?></strong>
+                                <small><?php echo s(Contratos::TIPOS[$c['tipo']] ?? $c['tipo']); ?><?php echo $c['numero'] ? ' · ' . s($c['numero']) : ''; ?></small>
+                            </div>
+                            <span>
+                                <b class="mono"><?php echo s(formatear_fecha($c['vencimiento'], 'd/m/Y')); ?></b>
+                                <small><?php echo (int)$c['dias'] < 0 ? abs((int)$c['dias']) . ' días vencido' : (int)$c['dias'] . ' días'; ?></small>
+                            </span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="card adm-panel">
+        <div class="adm-panel-cab">
+            <div><h3><i class="fa-solid fa-shield-halved"></i> Cobertura</h3></div>
+        </div>
+        <div class="adm-panel-cuerpo">
+            <div class="adm-dato-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0">
+                <div><small>Vigentes</small><b><?php echo (int)($resumen['vigente'] ?? 0); ?></b></div>
+                <div><small>Por vencer</small><b><?php echo (int)($resumen['por_vencer'] ?? 0); ?></b></div>
+                <div><small>Vencidos</small><b><?php echo (int)($resumen['vencido'] ?? 0); ?></b></div>
+                <div><small>Cerrados</small><b><?php echo (int)$resumen['cerrado']; ?></b></div>
+            </div>
+            <p class="text-sm text-muted" style="margin:.9rem 0 0">Los documentos se enlazan desde el Archivo; el aviso previo de cada registro decide cuándo aparece «Por vencer».</p>
+        </div>
+    </div>
+</aside>
 </div>

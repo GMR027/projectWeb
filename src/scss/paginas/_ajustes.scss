@@ -410,12 +410,6 @@
 }
 @media (max-width: 80rem) { .exportar-todo { grid-template-columns: 1fr; } }
 
-.alm-barra { height: 1.4rem; border-radius: 1rem; background: rgba(255,255,255,.08); overflow: hidden; margin: 1.2rem 0;
-  span { display: block; height: 100%; background: $secondary; border-radius: 1rem; min-width: .3rem; }
-  .alm-amarillo { background: var(--warning); }
-  .alm-rojo { background: var(--danger); }
-}
-
 // Calendario: formulario de actividad en modal (iframe)
 .cal-modal-card { text-align: left; max-width: 90rem; width: 100%; height: min(90vh, 80rem); display: flex; flex-direction: column; padding: 1.6rem 2rem;
   iframe { flex: 1; width: 100%; border: 0; border-radius: .6rem; background: transparent; }

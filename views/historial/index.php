@@ -19,8 +19,14 @@ $vacio = match ($pestana) {
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-clock-rotate-left"></i> <?php echo s(t('Historial de cambios')); ?></h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · los cambios hechos en el proyecto con las herramientas, con su fecha, su descripción y la herramienta donde ocurrieron. <strong>El registro no se puede editar.</strong><?php if (is_admin()): ?> Lo que hizo la IA está en <a href="/historial-cambios?proyecto=<?php echo $pid; ?>">Auditoría de la IA</a>.<?php endif; ?></p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-inbox"></i> <b><?php echo (int)$conteos['pendiente']; ?></b> pendientes</span>
+            <span><i class="fa-solid fa-circle-check"></i> <b><?php echo (int)$conteos['aceptado']; ?></b> aceptados</span>
+            <span><i class="fa-solid fa-rotate-left"></i> <b><?php echo (int)$conteos['revertido']; ?></b> revertidos</span>
+        </div>
     </div>
     <div class="inc-acciones">
         <?php if ($puede && $pestana === 'pendiente' && $conteos['pendiente']): ?>
@@ -40,6 +46,13 @@ $vacio = match ($pestana) {
         </a>
     <?php endforeach; ?>
 </nav>
+
+<div class="cb-kpis">
+    <div class="cb-kpi <?php echo $conteos['pendiente'] ? 'is-warning' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-inbox"></i></span><small>Cambios pendientes</small><strong><?php echo (int)$conteos['pendiente']; ?></strong><span>Esperan aceptación o cancelación</span></div>
+    <div class="cb-kpi is-success"><span class="adm-kpi-icono"><i class="fa-solid fa-circle-check"></i></span><small>Cambios aceptados</small><strong><?php echo (int)$conteos['aceptado']; ?></strong><span>Guardados como parte del proyecto</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-rotate-left"></i></span><small>Cambios revertidos</small><strong><?php echo (int)$conteos['revertido']; ?></strong><span>Datos devueltos a su estado anterior</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-list-check"></i></span><small><?php echo s(t('Herramienta')); ?></small><strong><?php echo count($herramientas); ?></strong><span>Herramientas con historial</span></div>
+</div>
 
 <div id="hist-msg" class="alerta alerta-exito" hidden></div>
 

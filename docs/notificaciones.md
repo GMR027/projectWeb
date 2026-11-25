@@ -1,11 +1,11 @@
 # Notificaciones y novedades de la plataforma
 
-Campana de la barra superior (`views/templates/topbar.php`) y sección **Ajustes → Novedades**
+Campana de la barra superior (`views/templates/appbar.php`) y sección **Ajustes → Novedades**
 (`views/ajustes/index.php`), más la página `/novedades`.
 
 ## Qué muestra la campana
 
-Se calcula en el propio `topbar.php` en cada página:
+Se calcula en el propio `appbar.php` en cada página:
 
 | Bloque | De dónde sale |
 |---|---|
@@ -54,7 +54,7 @@ No hay tabla: el historial vive en `classes/Novedades.php` (`ENTRADAS`), la más
 |---|---|
 | `classes/Novedades.php` | Entradas, tipos, filtro por rol y estado leído |
 | `controllers/NovedadesController.php` | `/novedades` y `POST /novedades/vistas` |
-| `views/templates/topbar.php` | Campana y panel |
+| `views/templates/appbar.php` | Campana y panel |
 | `views/templates/novedades-lista.php` | Lista compartida (página y Ajustes) |
 | `views/novedades/index.php` | Historial completo |
 | `src/js/notificaciones.js` | Abrir/cerrar el panel y marcar leídas |

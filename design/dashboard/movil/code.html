@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ProjectWeb - Dashboard Móvil</title>
+  <!-- Google Fonts: Space Grotesk, Manrope, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0a122a',
+              surface: '#131a33',
+              raised: '#171e37',
+              container: '#1c2541',
+              high: '#212942',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderFocus: 'rgba(76, 214, 251, 0.4)',
+              primary: '#ff5a1f',
+              primaryHover: '#ff6e38',
+              cyan: '#4cd6fb',
+              cyanDim: 'rgba(76, 214, 251, 0.15)',
+              danger: '#ff6b6b',
+              dangerDim: 'rgba(255, 107, 107, 0.15)',
+              success: '#3ddc97',
+              successDim: 'rgba(61, 220, 151, 0.15)',
+              warning: '#ffb020',
+              warningDim: 'rgba(255, 176, 32, 0.15)',
+              text: '#dbe1ff',
+              textMuted: '#93a0c0',
+            }
+          },
+          fontFamily: {
+            headline: ['"Space Grotesk"', 'sans-serif'],
+            body: ['Manrope', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0a122a;
+      color: #dbe1ff;
+      font-family: 'Manrope', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .glass-card {
+      background: rgba(19, 26, 51, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 20px -2px rgba(3, 7, 18, 0.5);
+    }
+    .glass-card-raised {
+      background: rgba(23, 30, 55, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    }
+    .glass-header {
+      background: rgba(10, 18, 42, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-sheet {
+      background: #111827;
+      background: linear-gradient(180deg, #171f38 0%, #0d142c 100%);
+      box-shadow: 0 -12px 40px rgba(0,0,0,0.85);
+      border-top: 1px solid rgba(76, 214, 251, 0.25);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="flex justify-center bg-black min-h-screen py-0 sm:py-6 selection:bg-[#ff5a1f]/30">
+
+  <!-- Mobile Viewport Container 390px wide -->
+  <div class="relative w-[390px] min-h-[1500px] bg-[#0a122a] overflow-hidden flex flex-col border border-white/10 sm:rounded-[36px] shadow-2xl">
+    
+    <!-- TOP APP BAR (56px) -->
+    <header class="sticky top-0 z-40 h-[56px] w-full glass-header px-4 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <!-- Construction Helmet Logo Icon -->
+        <div class="w-8 h-8 rounded-lg bg-[#ff5a1f]/15 border border-[#ff5a1f]/40 flex items-center justify-center text-[#ff5a1f] shadow-[0_0_12px_rgba(255,90,31,0.25)]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 00-9 9c0 2.22 1.21 4.15 3 5.19V19a2 2 0 002 2h8a2 2 0 002-2v-2.81c1.79-1.04 3-2.97 3-5.19a9 9 0 00-9-9zM4 14h16M12 2v6" />
+          </svg>
+        </div>
+        <div class="flex items-center">
+          <span class="font-headline font-bold text-[15px] tracking-tight text-white">Project<span class="text-[#ff5a1f]">Web</span></span>
+        </div>
+
+        <!-- Project Selector Chip -->
+        <div class="flex items-center bg-[#171e37] border border-white/10 rounded-md px-2 py-0.5 ml-1 space-x-1.5 cursor-pointer active:scale-95 transition-transform">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97] shadow-[0_0_6px_#3ddc97]"></span>
+          <span class="font-mono text-[11px] font-semibold text-[#dbe1ff]">TCN-04</span>
+          <svg class="w-3 h-3 text-[#93a0c0]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+        </div>
+      </div>
+
+      <!-- Action Icons + Avatar -->
+      <div class="flex items-center space-x-1.5">
+        <!-- Search icon -->
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-[#93a0c0] hover:text-white hover:bg-white/5 active:scale-90 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </button>
+
+        <!-- Notification Bell with badge -->
+        <button class="relative w-8 h-8 flex items-center justify-center rounded-lg text-[#93a0c0] hover:text-white hover:bg-white/5 active:scale-90 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#ff5a1f] rounded-full ring-2 ring-[#0a122a]"></span>
+        </button>
+
+        <!-- User Avatar -->
+        <div class="w-7 h-7 rounded-md bg-[#212942] border border-[#4cd6fb]/40 flex items-center justify-center text-[11px] font-mono font-bold text-[#4cd6fb] ml-1">
+          EV
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEXT BAR (40px) -->
+    <div class="sticky top-[56px] z-30 h-[40px] w-full bg-[#0d152f]/95 border-b border-white/5 px-4 flex items-center justify-between backdrop-blur-md">
+      <div class="flex items-center space-x-1.5">
+        <button class="flex items-center space-x-1 text-[13px] font-semibold text-white hover:text-[#4cd6fb] transition">
+          <span>Inicio</span>
+          <svg class="w-3.5 h-3.5 text-[#93a0c0]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <span class="text-white/20 text-xs">/</span>
+        <span class="font-mono text-[11px] text-[#93a0c0] truncate max-w-[170px]">Torre Corporativa Norte</span>
+      </div>
+      <button class="w-7 h-7 flex items-center justify-center rounded bg-white/5 border border-white/10 text-[#4cd6fb] hover:bg-white/10 active:scale-95 transition" title="Herramientas rápidas">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+      </button>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main class="flex-1 px-4 pt-4 pb-28 space-y-4">
+
+      <!-- HERO SECTION -->
+      <section class="glass-card rounded-xl p-3.5 space-y-3 relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-28 h-28 bg-[#ff5a1f]/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] tracking-wider text-[#4cd6fb] font-semibold uppercase flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#4cd6fb] animate-pulse"></span>
+              INICIO / CENTRO DE MANDO
+            </span>
+            <span class="bg-[#ff5a1f]/15 border border-[#ff5a1f]/30 text-[#ff5a1f] font-mono text-[10px] font-bold px-2 py-0.5 rounded">
+              Plan Pro Civil
+            </span>
+          </div>
+          <h1 class="font-headline text-[24px] font-bold text-white leading-tight">
+            Buenos días, Edgar
+          </h1>
+          <p class="text-[12px] text-[#93a0c0] leading-snug">
+            Control operativo de frentes activos, bitácora y desvíos en ruta crítica para hoy.
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2 pt-1">
+          <button class="w-full h-11 bg-[#ff5a1f] hover:bg-[#ff6e38] active:scale-[0.98] transition-all rounded-lg font-headline font-semibold text-[13px] text-white flex items-center justify-center space-x-2 shadow-[0_4px_16px_rgba(255,90,31,0.35)]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+            <span>+ Nuevo proyecto</span>
+          </button>
+          
+          <div class="flex items-center space-x-2">
+            <button class="flex-1 h-9 bg-[#171e37] hover:bg-[#212942] active:scale-[0.98] transition border border-white/10 rounded-lg text-[12px] font-medium text-[#dbe1ff] flex items-center justify-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 text-[#93a0c0]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+              <span>Personalizar inicio</span>
+            </button>
+            <button class="w-9 h-9 bg-[#171e37] hover:bg-[#212942] active:scale-95 transition border border-white/10 rounded-lg text-[#93a0c0] flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI GRID 2x2 -->
+      <section class="grid grid-cols-2 gap-2.5">
+        <!-- KPI 1: Proyectos -->
+        <div class="glass-card rounded-lg p-3 relative flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-[#93a0c0] tracking-wider uppercase font-semibold">PROYECTOS</span>
+            <div class="w-6 h-6 rounded bg-[#4cd6fb]/10 flex items-center justify-center text-[#4cd6fb]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="font-mono text-[24px] font-bold text-white tracking-tight">12</span>
+            <span class="font-mono text-[11px] text-[#3ddc97] font-medium">+2 este mes</span>
+          </div>
+          <div class="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div class="bg-[#4cd6fb] h-full rounded-full" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Actividades Hoy -->
+        <div class="glass-card rounded-lg p-3 relative flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-[#93a0c0] tracking-wider uppercase font-semibold">HOY</span>
+            <div class="w-6 h-6 rounded bg-white/5 flex items-center justify-center text-white/70">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="font-mono text-[24px] font-bold text-white tracking-tight">8</span>
+            <span class="font-mono text-[11px] text-[#4cd6fb] font-medium">3 en ruta</span>
+          </div>
+          <div class="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div class="bg-[#3ddc97] h-full rounded-full" style="width: 65%"></div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Atrasadas (Danger) -->
+        <div class="glass-card rounded-lg p-3 relative flex flex-col justify-between border-l-2 border-l-[#ff6b6b]">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-[#ff6b6b] tracking-wider uppercase font-semibold">ATRASADAS</span>
+            <div class="w-6 h-6 rounded bg-[#ff6b6b]/15 flex items-center justify-center text-[#ff6b6b]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="font-mono text-[24px] font-bold text-[#ff6b6b] tracking-tight">3</span>
+            <span class="font-mono text-[11px] text-[#ff6b6b] font-medium">Críticas</span>
+          </div>
+          <div class="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div class="bg-[#ff6b6b] h-full rounded-full" style="width: 80%"></div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Restricciones (Warning) -->
+        <div class="glass-card rounded-lg p-3 relative flex flex-col justify-between border-l-2 border-l-[#ffb020]">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-[#ffb020] tracking-wider uppercase font-semibold">RESTRICCIONES</span>
+            <div class="w-6 h-6 rounded bg-[#ffb020]/15 flex items-center justify-center text-[#ffb020]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="font-mono text-[24px] font-bold text-[#ffb020] tracking-tight">5</span>
+            <span class="font-mono text-[11px] text-[#ffb020] font-medium">2 sin liberar</span>
+          </div>
+          <div class="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div class="bg-[#ffb020] h-full rounded-full" style="width: 50%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD: REQUIERE ATENCIÓN -->
+      <section class="glass-card rounded-xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-[#ff5a1f]"></span>
+            <h2 class="font-headline text-[15px] font-bold text-white tracking-tight">Requiere atención</h2>
+          </div>
+          <a href="#" class="font-mono text-[11px] text-[#4cd6fb] hover:underline flex items-center space-x-0.5">
+            <span>Ver en Programa</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </a>
+        </div>
+
+        <!-- Segmented Tabs -->
+        <div class="flex bg-[#0a122a] p-1 rounded-lg border border-white/10">
+          <button class="flex-1 py-1.5 rounded-md font-mono text-[11px] font-semibold bg-[#171e37] text-white shadow-sm flex items-center justify-center space-x-1.5">
+            <span>Hoy</span>
+            <span class="bg-[#4cd6fb]/20 text-[#4cd6fb] px-1.5 py-0.2 rounded text-[10px]">8</span>
+          </button>
+          <button class="flex-1 py-1.5 rounded-md font-mono text-[11px] font-semibold text-[#93a0c0] hover:text-white flex items-center justify-center space-x-1.5">
+            <span>Atrasadas</span>
+            <span class="bg-[#ff6b6b]/20 text-[#ff6b6b] px-1.5 py-0.2 rounded text-[10px]">3</span>
+          </button>
+        </div>
+
+        <!-- 4 Stacked Mini-cards -->
+        <div class="space-y-2">
+          <!-- Item 1 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] text-[#4cd6fb] font-semibold bg-[#4cd6fb]/10 px-1.5 py-0.5 rounded">ACT-104</span>
+              <div class="flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ff6b6b]"></span>
+                <span class="font-mono text-[10px] text-[#ff6b6b] font-medium">Retraso mixer</span>
+              </div>
+            </div>
+            <div class="text-[12px] font-semibold text-white leading-tight">
+              Colado de losa Nivel 5 (Sector Ejes 14-22)
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-[#93a0c0]">
+              <span class="truncate max-w-[190px]">Torre Corporativa Norte</span>
+              <span class="font-mono text-[10px] text-white/70">Hoy, 14:00</span>
+            </div>
+            <div class="flex items-center space-x-2 pt-0.5">
+              <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#ff5a1f] h-full rounded-full" style="width: 75%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-white font-medium">75%</span>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] text-[#4cd6fb] font-semibold bg-[#4cd6fb]/10 px-1.5 py-0.5 rounded">ACT-089</span>
+              <div class="flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ffb020]"></span>
+                <span class="font-mono text-[10px] text-[#ffb020] font-medium">Viento &gt; 38 km/h</span>
+              </div>
+            </div>
+            <div class="text-[12px] font-semibold text-white leading-tight">
+              Montaje de trabes principales (Grúa Liebherr 400T)
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-[#93a0c0]">
+              <span class="truncate max-w-[190px]">Puente Vehicular Río Verde</span>
+              <span class="font-mono text-[10px] text-white/70">Hoy, 17:30</span>
+            </div>
+            <div class="flex items-center space-x-2 pt-0.5">
+              <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#ffb020] h-full rounded-full" style="width: 40%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-white font-medium">40%</span>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] text-[#4cd6fb] font-semibold bg-[#4cd6fb]/10 px-1.5 py-0.5 rounded">ACT-112</span>
+              <div class="flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97]"></span>
+                <span class="font-mono text-[10px] text-[#3ddc97] font-medium">En curso normal</span>
+              </div>
+            </div>
+            <div class="text-[12px] font-semibold text-white leading-tight">
+              Prueba de aislamiento en celdas de media tensión
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-[#93a0c0]">
+              <span class="truncate max-w-[190px]">Subestación Nor-Oeste</span>
+              <span class="font-mono text-[10px] text-white/70">Hoy, 18:00</span>
+            </div>
+            <div class="flex items-center space-x-2 pt-0.5">
+              <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#3ddc97] h-full rounded-full" style="width: 90%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-white font-medium">90%</span>
+            </div>
+          </div>
+
+          <!-- Item 4 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] text-[#4cd6fb] font-semibold bg-[#4cd6fb]/10 px-1.5 py-0.5 rounded">ACT-045</span>
+              <div class="flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ff6b6b]"></span>
+                <span class="font-mono text-[10px] text-[#ff6b6b] font-medium">Falta conectores IP67</span>
+              </div>
+            </div>
+            <div class="text-[12px] font-semibold text-white leading-tight">
+              Instalación de tablero de distribución bombas
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-[#93a0c0]">
+              <span class="truncate max-w-[190px]">Planta de Tratamiento Sur</span>
+              <span class="font-mono text-[10px] text-white/70">15 Feb, 10:00</span>
+            </div>
+            <div class="flex items-center space-x-2 pt-0.5">
+              <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#ff6b6b] h-full rounded-full" style="width: 20%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-white font-medium">20%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD: PROYECTOS RECIENTES -->
+      <section class="glass-card rounded-xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-[#4cd6fb]"></span>
+            <h2 class="font-headline text-[15px] font-bold text-white tracking-tight">Proyectos recientes</h2>
+          </div>
+          <span class="font-mono text-[10px] text-[#93a0c0]">3 de 12 obras</span>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Project 1 -->
+          <div class="bg-[#171e37] border border-white/10 rounded-xl overflow-hidden relative">
+            <div class="h-1 w-full bg-[#ff5a1f]"></div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-mono text-[10px] font-bold text-[#ff5a1f] bg-[#ff5a1f]/10 px-1.5 py-0.2 rounded">TCN-04</span>
+                    <span class="bg-[#3ddc97]/15 text-[#3ddc97] font-mono text-[9px] px-1.5 py-0.2 rounded font-semibold">En ejecución</span>
+                  </div>
+                  <h3 class="font-headline font-bold text-[14px] text-white mt-1">Torre Corporativa Norte</h3>
+                  <p class="text-[11px] text-[#93a0c0] flex items-center space-x-1">
+                    <svg class="w-3 h-3 text-[#93a0c0]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                    <span>Monterrey, N.L. • Edificación vertical</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Progress bar & metrics -->
+              <div class="space-y-1">
+                <div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-[#93a0c0]">Curva S / Avance real</span>
+                  <span class="text-[#4cd6fb] font-bold">64.2%</span>
+                </div>
+                <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                  <div class="bg-gradient-to-r from-[#4cd6fb] to-[#ff5a1f] h-full rounded-full" style="width: 64.2%"></div>
+                </div>
+              </div>
+
+              <!-- Dates and Health Row -->
+              <div class="pt-1 flex items-center justify-between border-t border-white/5 text-[11px]">
+                <div class="flex items-center space-x-1 text-[#ffb020] font-mono text-[10px]">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  <span>2 avisos • 1 crítico</span>
+                </div>
+                <button class="bg-[#ff5a1f] hover:bg-[#ff6e38] text-white px-3 py-1 rounded font-semibold text-[11px] shadow-sm active:scale-95 transition">
+                  Abrir
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 2 -->
+          <div class="bg-[#171e37] border border-white/10 rounded-xl overflow-hidden relative">
+            <div class="h-1 w-full bg-[#4cd6fb]"></div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-mono text-[10px] font-bold text-[#4cd6fb] bg-[#4cd6fb]/10 px-1.5 py-0.2 rounded">PVR-02</span>
+                    <span class="bg-[#3ddc97]/15 text-[#3ddc97] font-mono text-[9px] px-1.5 py-0.2 rounded font-semibold">En ejecución</span>
+                  </div>
+                  <h3 class="font-headline font-bold text-[14px] text-white mt-1">Puente Vehicular Río Verde</h3>
+                  <p class="text-[11px] text-[#93a0c0] flex items-center space-x-1">
+                    <svg class="w-3 h-3 text-[#93a0c0]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                    <span>San Luis Potosí • Infraestructura vial</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Progress bar & metrics -->
+              <div class="space-y-1">
+                <div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-[#93a0c0]">Curva S / Avance real</span>
+                  <span class="text-[#3ddc97] font-bold">82.5%</span>
+                </div>
+                <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                  <div class="bg-[#3ddc97] h-full rounded-full" style="width: 82.5%"></div>
+                </div>
+              </div>
+
+              <!-- Dates and Health Row -->
+              <div class="pt-1 flex items-center justify-between border-t border-white/5 text-[11px]">
+                <div class="flex items-center space-x-1 text-[#3ddc97] font-mono text-[10px]">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                  <span>Salud óptima • En tiempo</span>
+                </div>
+                <button class="bg-[#ff5a1f] hover:bg-[#ff6e38] text-white px-3 py-1 rounded font-semibold text-[11px] shadow-sm active:scale-95 transition">
+                  Abrir
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 3 -->
+          <div class="bg-[#171e37] border border-white/10 rounded-xl overflow-hidden relative">
+            <div class="h-1 w-full bg-[#ffb020]"></div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-mono text-[10px] font-bold text-[#ffb020] bg-[#ffb020]/10 px-1.5 py-0.2 rounded">SNO-01</span>
+                    <span class="bg-[#ffb020]/15 text-[#ffb020] font-mono text-[9px] px-1.5 py-0.2 rounded font-semibold">Por iniciar</span>
+                  </div>
+                  <h3 class="font-headline font-bold text-[14px] text-white mt-1">Subestación Nor-Oeste 230kV</h3>
+                  <p class="text-[11px] text-[#93a0c0] flex items-center space-x-1">
+                    <svg class="w-3 h-3 text-[#93a0c0]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                    <span>Sonora • Red eléctrica</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Progress bar & metrics -->
+              <div class="space-y-1">
+                <div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-[#93a0c0]">Curva S / Avance real</span>
+                  <span class="text-[#93a0c0] font-bold">0.0%</span>
+                </div>
+                <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                  <div class="bg-[#ffb020] h-full rounded-full" style="width: 5%"></div>
+                </div>
+              </div>
+
+              <!-- Dates and Health Row -->
+              <div class="pt-1 flex items-center justify-between border-t border-white/5 text-[11px]">
+                <div class="flex items-center space-x-1 text-[#ffb020] font-mono text-[10px]">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  <span>1 restricción de permiso</span>
+                </div>
+                <button class="bg-[#212942] hover:bg-[#2c344d] text-white px-3 py-1 rounded font-semibold text-[11px] border border-white/10 active:scale-95 transition">
+                  Abrir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD: HERRAMIENTAS (HUB DE CAMPO) -->
+      <section class="glass-card rounded-xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-[#ff5a1f]"></span>
+            <h2 class="font-headline text-[15px] font-bold text-white tracking-tight">Herramientas</h2>
+          </div>
+          <span class="font-mono text-[10px] text-[#4cd6fb] uppercase">Hub de campo</span>
+        </div>
+
+        <!-- Project select -->
+        <div class="relative">
+          <select class="w-full bg-[#0a122a] border border-white/15 rounded-lg text-[12px] text-white font-mono py-2 px-3 appearance-none focus:outline-none focus:border-[#4cd6fb]">
+            <option>Torre Corporativa Norte (TCN-04)</option>
+            <option>Puente Vehicular Río Verde (PVR-02)</option>
+            <option>Subestación Nor-Oeste (SNO-01)</option>
+          </select>
+          <svg class="w-4 h-4 text-[#93a0c0] absolute right-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </div>
+
+        <!-- Horizontal chips of sections -->
+        <div class="flex space-x-1.5 overflow-x-auto pb-1 custom-scroll">
+          <button class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[#4cd6fb]/20 border border-[#4cd6fb]/40 text-[#4cd6fb] whitespace-nowrap">Planeación</button>
+          <button class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#171e37] border border-white/10 text-[#93a0c0] whitespace-nowrap">Campo</button>
+          <button class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#171e37] border border-white/10 text-[#93a0c0] whitespace-nowrap">Materiales</button>
+          <button class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#171e37] border border-white/10 text-[#93a0c0] whitespace-nowrap">Documentos</button>
+          <button class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#171e37] border border-white/10 text-[#93a0c0] whitespace-nowrap">Costos</button>
+        </div>
+
+        <!-- 2-column grid of 6 tool tiles -->
+        <div class="grid grid-cols-2 gap-2">
+          <!-- 1: Programa -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#4cd6fb]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-[#4cd6fb]/15 text-[#4cd6fb] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">Programa</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Planeación 4D</div>
+            </div>
+          </div>
+
+          <!-- 2: Reporte diario -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#ff5a1f]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">Reporte diario</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Bitácora campo</div>
+            </div>
+          </div>
+
+          <!-- 3: Archivo -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#4cd6fb]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-white/10 text-white flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">Archivo</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Planos e IFC 3D</div>
+            </div>
+          </div>
+
+          <!-- 4: Costos -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#3ddc97]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-[#3ddc97]/15 text-[#3ddc97] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">Costos</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Presupuesto</div>
+            </div>
+          </div>
+
+          <!-- 5: RFI -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#4cd6fb]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-[#4cd6fb]/15 text-[#4cd6fb] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">RFI</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Aclaraciones</div>
+            </div>
+          </div>
+
+          <!-- 6: Calidad -->
+          <div class="bg-[#171e37] border border-white/5 hover:border-[#ffb020]/30 p-2.5 rounded-lg flex items-center space-x-2.5 active:scale-95 transition cursor-pointer">
+            <div class="w-8 h-8 rounded-md bg-[#ffb020]/15 text-[#ffb020] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+            </div>
+            <div class="truncate">
+              <div class="text-[12px] font-semibold text-white truncate">Calidad</div>
+              <div class="text-[10px] text-[#93a0c0] font-mono truncate">Control y QA/QC</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ver todas botón sugerente de bottom sheet -->
+        <button class="w-full py-2 bg-[#171e37] hover:bg-[#212942] active:scale-[0.98] transition border border-white/10 rounded-lg text-[12px] font-semibold text-[#4cd6fb] flex items-center justify-center space-x-1.5 shadow-sm">
+          <span>Ver todas las 62 herramientas</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+        </button>
+      </section>
+
+      <!-- CARD: NOVEDADES -->
+      <section class="glass-card rounded-xl p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-[#3ddc97]"></span>
+            <h2 class="font-headline text-[14px] font-bold text-white tracking-tight">Novedades</h2>
+          </div>
+          <span class="font-mono text-[10px] text-[#93a0c0]">v3.4.12</span>
+        </div>
+
+        <div class="space-y-2">
+          <!-- Item 1 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-[#4cd6fb] bg-[#4cd6fb]/15 px-1.5 py-0.2 rounded">NUEVO</span>
+              <span class="font-mono text-[10px] text-[#93a0c0]">Hace 2 horas</span>
+            </div>
+            <div class="text-[12px] font-semibold text-white">Importador directo Primavera P6 (XML/XER)</div>
+            <p class="text-[11px] text-[#93a0c0] leading-snug">Sincroniza cronogramas de obra complejos con vinculación automática de predecesoras.</p>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="bg-[#171e37]/70 border border-white/5 rounded-lg p-2.5 space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-[#3ddc97] bg-[#3ddc97]/15 px-1.5 py-0.2 rounded">MEJORA</span>
+              <span class="font-mono text-[10px] text-[#93a0c0]">Ayer</span>
+            </div>
+            <div class="text-[12px] font-semibold text-white">Cálculo de curva S ponderada por valor ganado</div>
+            <p class="text-[11px] text-[#93a0c0] leading-snug">Ajuste automático de holguras operativas con despiece presupuestal Neodata/Opus.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Spacer for bottom elements -->
+      <div class="h-28"></div>
+    </main>
+
+    <!-- BACKDROP FOR BOTTOM SHEET (Dimmed layer) -->
+    <div class="absolute inset-x-0 bottom-0 top-[600px] bg-black/60 backdrop-blur-sm z-40 pointer-events-none"></div>
+
+    <!-- BOTTOM SHEET: TODAS LAS HERRAMIENTAS (Partially Open) -->
+    <div class="absolute bottom-[64px] inset-x-0 z-45 glass-sheet rounded-t-[24px] pt-2 pb-5 px-4 shadow-[0_-12px_40px_rgba(0,0,0,0.85)] border-t border-[#4cd6fb]/30 max-h-[460px] flex flex-col">
+      <!-- Grab Handle -->
+      <div class="w-12 h-1.5 bg-white/30 rounded-full mx-auto my-1.5"></div>
+
+      <!-- Sheet Header -->
+      <div class="flex items-center justify-between pb-2 pt-1 border-b border-white/10">
+        <div class="flex items-center space-x-2">
+          <div class="w-6 h-6 rounded bg-[#4cd6fb]/20 text-[#4cd6fb] flex items-center justify-center">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+          </div>
+          <div>
+            <h3 class="font-headline font-bold text-[14px] text-white">Todas las herramientas</h3>
+            <p class="text-[10px] text-[#93a0c0] font-mono">62 módulos de obra activos</p>
+          </div>
+        </div>
+        <button class="w-7 h-7 rounded-full bg-white/10 text-[#93a0c0] flex items-center justify-center hover:text-white">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Sheet Search Bar -->
+      <div class="mt-2.5 relative">
+        <input type="text" placeholder="Buscar herramienta (ej. Gantt, BIM, RFI)..." class="w-full bg-[#0a122a] border border-white/15 rounded-lg py-1.5 pl-8 pr-3 text-[12px] text-white placeholder-[#93a0c0]/60 focus:outline-none focus:border-[#4cd6fb] font-mono">
+        <svg class="w-3.5 h-3.5 text-[#93a0c0] absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      </div>
+
+      <!-- Pinned Tools Strip -->
+      <div class="mt-2 flex items-center space-x-1.5 overflow-x-auto pb-1 custom-scroll">
+        <span class="font-mono text-[9px] text-[#ff5a1f] uppercase font-bold shrink-0">Fijadas:</span>
+        <span class="bg-[#171e37] border border-white/10 text-white font-mono text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+          <span>📌 Programa 4D</span>
+        </span>
+        <span class="bg-[#171e37] border border-white/10 text-white font-mono text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+          <span>📌 Bitácora</span>
+        </span>
+        <span class="bg-[#171e37] border border-white/10 text-white font-mono text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+          <span>📌 RFI</span>
+        </span>
+        <span class="bg-[#171e37] border border-white/10 text-white font-mono text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+          <span>📌 Visor IFC</span>
+        </span>
+      </div>
+
+      <!-- Grid of 8 tools -->
+      <div class="grid grid-cols-4 gap-2 mt-2.5 pt-1 overflow-y-auto max-h-[220px]">
+        <!-- 1 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Gantt 4D</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">PLN-01</span>
+        </div>
+
+        <!-- 2 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#4cd6fb]/15 text-[#4cd6fb] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Ruta Crítica</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">PLN-02</span>
+        </div>
+
+        <!-- 3 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#3ddc97]/15 text-[#3ddc97] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Bitácora</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">CMP-01</span>
+        </div>
+
+        <!-- 4 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">BIM / IFC</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">DOC-04</span>
+        </div>
+
+        <!-- 5 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#ffb020]/15 text-[#ffb020] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Estimaciones</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">CST-02</span>
+        </div>
+
+        <!-- 6 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#4cd6fb]/15 text-[#4cd6fb] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Aclaraciones</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">ING-03</span>
+        </div>
+
+        <!-- 7 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#ff6b6b]/15 text-[#ff6b6b] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Restricciones</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">PLN-06</span>
+        </div>
+
+        <!-- 8 -->
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-[#171e37]/90 border border-white/5 active:scale-95 transition">
+          <div class="w-9 h-9 rounded-lg bg-[#3ddc97]/15 text-[#3ddc97] flex items-center justify-center mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+          </div>
+          <span class="text-[10px] font-semibold text-white truncate w-full">Seguridad/EPP</span>
+          <span class="text-[8px] font-mono text-[#93a0c0]">SEG-01</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIXED BOTTOM NAVIGATION BAR (64px) with safe-area -->
+    <nav class="fixed bottom-0 sm:absolute sm:bottom-0 w-[390px] h-[64px] bg-[#0c142c] border-t border-white/10 px-4 flex items-center justify-around z-50 backdrop-blur-xl">
+      <!-- 1: Inicio (Active) -->
+      <a href="#" class="flex flex-col items-center space-y-1 text-[#ff5a1f] min-w-[56px] min-h-[44px] justify-center">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+          <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#ff5a1f] rounded-full shadow-[0_0_6px_#ff5a1f]"></span>
+        </div>
+        <span class="text-[10px] font-headline font-bold">Inicio</span>
+      </a>
+
+      <!-- 2: Programa -->
+      <a href="#" class="flex flex-col items-center space-y-1 text-[#93a0c0] hover:text-white min-w-[56px] min-h-[44px] justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        <span class="text-[10px] font-headline font-medium">Programa</span>
+      </a>
+
+      <!-- 3: Reporte -->
+      <a href="#" class="flex flex-col items-center space-y-1 text-[#93a0c0] hover:text-white min-w-[56px] min-h-[44px] justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <span class="text-[10px] font-headline font-medium">Reporte</span>
+      </a>
+
+      <!-- 4: Más (Grid icon) -->
+      <a href="#" class="flex flex-col items-center space-y-1 text-[#93a0c0] hover:text-white min-w-[56px] min-h-[44px] justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+        <span class="text-[10px] font-headline font-medium">Más</span>
+      </a>
+    </nav>
+
+  </div>
+</body>
+</html>

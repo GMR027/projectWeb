@@ -5,11 +5,20 @@ use Classes\Recursos;
 $pid = (int)$proyecto->id;
 $url = fn(array $q = []) => '/recursos?' . http_build_query(['proyecto' => $pid] + $q);
 $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-people-group', 'Personas y cuadrillas'], 'asignaciones' => ['fa-link', 'Asignaciones']];
+$nRecursos = count($carga['recursos'] ?? []);
+$nSobre = count($carga['sobrecargas'] ?? []);
+$nAsig = array_sum(array_column($carga['recursos'] ?? [], 'asignaciones'));
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-people-group"></i> Recursos y cuadrillas</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · quién trabaja en qué actividad y cuándo se sobrecarga</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-user-group"></i> <b><?php echo $nRecursos; ?></b> recursos</span>
+            <span><i class="fa-solid fa-link"></i> <b><?php echo (int)$nAsig; ?></b> asignaciones</span>
+            <span><i class="fa-solid fa-gauge-high"></i> <b><?php echo $nSobre; ?></b> sobrecargas</span>
+        </div>
     </div>
 </div>
 
@@ -22,6 +31,12 @@ $tabs = ['carga' => ['fa-chart-gantt', 'Carga semanal'], 'recursos' => ['fa-peop
         <a href="<?php echo s($url(['pestana' => $k])); ?>" class="centro-ia-tabs__tab<?php echo $k === $pestana ? ' activa' : ''; ?>"<?php echo $k === $pestana ? ' aria-current="page"' : ''; ?>><i class="fa-solid <?php echo $icono; ?>"></i> <?php echo s($nombre); ?></a>
     <?php endforeach; ?>
 </nav>
+<div class="cb-kpis">
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-user-group"></i></span><small>Personas y cuadrillas</small><strong><?php echo $nRecursos; ?></strong><span><?php echo count(array_filter($carga['recursos'] ?? [], fn($r) => ($r['tipo'] ?? '') === 'cuadrilla')); ?> cuadrilla(s) registradas</span></div>
+    <div class="cb-kpi"><span class="adm-kpi-icono"><i class="fa-solid fa-link"></i></span><small>Asignaciones</small><strong><?php echo (int)$nAsig; ?></strong><span>Actividades con recursos ligados</span></div>
+    <div class="cb-kpi <?php echo $nSobre ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-triangle-exclamation"></i></span><small>Sobrecargas</small><strong><?php echo $nSobre; ?></strong><span>En las <?php echo (int)$nSemanas; ?> semanas visibles</span></div>
+    <div class="cb-kpi is-info"><span class="adm-kpi-icono"><i class="fa-solid fa-calendar-week"></i></span><small>Periodo</small><strong><?php echo (int)$nSemanas; ?></strong><span>Semanas de carga analizadas</span></div>
+</div>
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok === '1' ? 'Guardado.' : $ok); ?></div><?php endif; ?>
 
 <?php if ($pestana === 'carga'): $sem = $carga['semanas']; $rec = $carga['recursos']; $sob = $carga['sobrecargas']; ?>

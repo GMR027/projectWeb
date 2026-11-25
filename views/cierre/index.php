@@ -9,8 +9,14 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
 ?>
 <div class="page-header">
     <div>
+        <span class="adm-eyebrow">Administración de obra</span>
         <h2><i class="fa-solid fa-flag-checkered"></i> Cierre de obra</h2>
         <p class="text-muted"><?php echo s($proyecto->nombre); ?> · entrega-recepción, documentos y pendientes</p>
+        <div class="adm-meta">
+            <span><i class="fa-solid fa-list-check"></i> <b><?php echo (int)($resumen['total'] ?? 0); ?></b> puntos</span>
+            <span><i class="fa-solid fa-percent"></i> <b><?php echo (int)($resumen['pct'] ?? 0); ?>%</b> de avance</span>
+            <?php if (!empty($resumen['bloqueado'])): ?><span><i class="fa-solid fa-lock"></i> entrega detenida por punch</span><?php endif; ?>
+        </div>
     </div>
     <?php if ($disponible): ?>
     <div>
@@ -33,6 +39,13 @@ $badge = ['pendiente' => 'admin', 'en_proceso' => 'visitante', 'completado' => '
 <?php return; endif; ?>
 
 <?php if ($error !== ''): ?><div class="alerta alerta-error" role="alert"><?php echo s($error); ?></div><?php elseif ($ok !== ''): ?><div class="alerta alerta-exito" role="status"><?php echo s($ok); ?></div><?php endif; ?>
+
+<div class="cb-kpis">
+    <div class="cb-kpi is-success"><span class="adm-kpi-icono"><i class="fa-solid fa-circle-check"></i></span><small>Completados</small><strong><?php echo (int)$resumen['completados']; ?></strong><span>Puntos entregados y aceptados</span></div>
+    <div class="cb-kpi is-warning"><span class="adm-kpi-icono"><i class="fa-solid fa-person-digging"></i></span><small>En proceso</small><strong><?php echo (int)$resumen['en_proceso']; ?></strong><span>Con trabajo en marcha</span></div>
+    <div class="cb-kpi <?php echo $resumen['pendientes'] ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-hourglass-half"></i></span><small>Pendientes</small><strong><?php echo (int)$resumen['pendientes']; ?></strong><span>Sin iniciar o esperando documento</span></div>
+    <div class="cb-kpi <?php echo !empty($resumen['bloqueado']) ? 'cb-kpi-alerta' : ''; ?>"><span class="adm-kpi-icono"><i class="fa-solid fa-percent"></i></span><small>Avance de entrega</small><strong><?php echo (int)$resumen['pct']; ?>%</strong><span><?php echo (int)$resumen['total']; ?> punto(s) en la lista</span></div>
+</div>
 
 <div class="card" style="margin-bottom:1.4rem">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem">

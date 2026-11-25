@@ -525,7 +525,13 @@ $ok('sin filtros todo coincide', CPz::coincide([], [], $campos));
 $ok('claves cp_ del programa', Classes\ProgramaColumnas::esCp('cp_12') && !Classes\ProgramaColumnas::esCp('cp_x') && !Classes\ProgramaColumnas::esCp('nombre'));
 $ok('colores de la marca: solo #rrggbb', Classes\Marca::colorValido('#0B6FC0') === '#0b6fc0' && Classes\Marca::colorValido('rojo') === null && Classes\Marca::colorValido('#fff') === null);
 $ok('el texto de la marca contrasta con el fondo', Classes\Marca::contraste('#ffffff') === '#111111' && Classes\Marca::contraste('#0b132b') === '#ffffff');
-$ok('inicio: solo bloques conocidos y sin repetir', array_keys(Classes\InicioUsuario::BLOQUES) === ['resumen', 'hoy', 'atrasadas', 'proyectos', 'novedades', 'atajos'] && array_diff(Classes\InicioUsuario::DEFECTO, array_keys(Classes\InicioUsuario::BLOQUES)) === []);
+$ok('inicio: solo bloques conocidos y sin repetir', array_keys(Classes\InicioUsuario::BLOQUES) === ['resumen', 'atencion', 'proyectos', 'herramientas', 'novedades', 'atajos'] && array_diff(Classes\InicioUsuario::DEFECTO, array_keys(Classes\InicioUsuario::BLOQUES)) === []);
+$ok('inicio: anchos válidos y valores por defecto', Classes\InicioUsuario::ancho('herramientas', 6) === 6 && Classes\InicioUsuario::ancho('herramientas', 99) === 4 && Classes\InicioUsuario::ancho('resumen', null) === 12);
+$ok('el inicio usa la rejilla de widgets y carga su hoja y su JS',
+    str_contains($asset('views/dashboard/index.php'), 'inicio-rejilla')
+    && str_contains($asset('views/dashboard/index.php'), 'data-inicio-bloque')
+    && str_contains($asset('includes/funciones.php'), "'dashboard' => ['dashboard', 'personalizacion', 'inicio']")
+    && is_file(__DIR__ . '/../public/vendor/inicio.js'));
 
 echo "Pruebas de calidad de la IA (Fase 5.3)\n";
 use Classes\PruebasIA as PIA;
@@ -989,8 +995,20 @@ $ok('las rutas de envíos y acuse público están registradas', (function () {
 $ok('Archivo permite subir varios archivos con fecha, categoría, carpeta, nombre y revisión comunes', (function () {
     $r = fn($p) => (string)@file_get_contents(__DIR__ . '/../' . $p);
     return str_contains($r('public/index.php'), "/archivos/lote") && str_contains($r('controllers/ArchivoController.php'), 'function guardarLote')
-        && str_contains($r('views/archivos/index.php'), 'Subir varios') && str_contains($r('views/archivos/lote.php'), 'arch-lote-form')
+        && str_contains($r('views/archivos/_hero.php'), 'Subir varios') && str_contains($r('views/archivos/lote.php'), 'arch-lote-form')
         && str_contains($r('public/vendor/archivo-lote.js'), 'DataTransfer') && str_contains($r('public/build/css/paginas/archivero.css'), '.arch-lote-tabla');
+})());
+$ok('Archivo es un explorador con carpetas, búsqueda, vista y detalles', (function () {
+    $r = fn($p) => (string)@file_get_contents(__DIR__ . '/../' . $p);
+    return str_contains($r('views/archivos/index.php'), "_rail.php") && str_contains($r('views/archivos/index.php'), "_lista.php")
+        && str_contains($r('views/archivos/_barra.php'), 'arch-buscar') && str_contains($r('views/archivos/_lista.php'), 'archivo-card')
+        && str_contains($r('views/archivos/_lista.php'), 'pag_attr($proyecto)') && str_contains($r('views/archivos/_detalle.php'), 'archivo-detalle')
+        && str_contains($r('public/vendor/archivos.js'), 'drop-activo') && str_contains($r('src/scss/paginas/_archivero.scss'), '.archivo-card');
+})());
+$ok('Archivo agrupa revisiones por nombre y genera iniciales', (function () {
+    $a = archivo_clave_documento('Planta de sala blanca Nave A · Rev. B');
+    $b = archivo_clave_documento('Planta de sala blanca Nave A · Rev. A');
+    return $a === $b && $a !== archivo_clave_documento('Otra planta') && iniciales_nombre('Laura Méndez') === 'LM';
 })());
 $ok('Archivo incluye la pestaña de envíos y la herramienta los reconoce', str_contains((string)@file_get_contents(__DIR__ . '/../models/Usuario.php'), "'/transmittals'")
     && str_contains((string)@file_get_contents(__DIR__ . '/../views/templates/herramientas-proyecto.php'), "'/transmittals'"));
@@ -1238,13 +1256,13 @@ $ok('las rutas, el menú y la vista del portafolio están registradas', (functio
     $r = (string)@file_get_contents(__DIR__ . '/../public/index.php');
     $v = (string)@file_get_contents(__DIR__ . '/../views/portafolio/index.php');
     $u = (string)@file_get_contents(__DIR__ . '/../models/Usuario.php');
-    $s = (string)@file_get_contents(__DIR__ . '/../views/templates/sidebar.php');
+    $s = (string)@file_get_contents(__DIR__ . '/../views/templates/navegacion-global.php');
     return str_contains($r, "'/portafolio'") && str_contains($r, "'/portafolio/exportar'")
         && str_contains($u, "'/portafolio'") && str_contains($s, "'/portafolio'")
         && str_contains($v, 'Comparativa de obras') && str_contains($v, 'portafolio/exportar');
 })());
 $ok('la campana muestra las alertas de portafolio', (function () {
-    $t = (string)@file_get_contents(__DIR__ . '/../views/templates/topbar.php');
+    $t = (string)@file_get_contents(__DIR__ . '/../views/templates/appbar.php');
     return str_contains($t, 'alertasRecientes') && str_contains($t, 'Alertas de portafolio');
 })());
 $ok('el tablero exporta PDF y hoja de cálculo', (function () {
@@ -1319,6 +1337,56 @@ $ok('el Anotador pide los símbolos con permiso del proyecto', str_contains($ass
 $menuHerramientas = $asset('views/templates/herramientas-proyecto.php');
 $ok('el menú recategoriza costos, cambios, riesgos y recursos en Administración', str_contains($menuHerramientas, "['Administración', '/costos'") && str_contains($menuHerramientas, "['Administración', '/cambios'") && str_contains($menuHerramientas, "['Administración', '/riesgos'") && str_contains($menuHerramientas, "['Administración', '/recursos'"));
 $ok('el menú recategoriza líneas base en Planeación y separa Materiales y compras', str_contains($menuHerramientas, "['Planeación', '/lineas-base'") && str_contains($menuHerramientas, "['Materiales y compras', '/materiales'") && !str_contains($menuHerramientas, "['Materiales y cambios'"));
+
+echo "Navegación compacta\n";
+$layoutNav = $asset('views/layout.php');
+$ok('el layout usa la barra de aplicación, la barra de contexto, el riel, el panel y la barra móvil',
+    str_contains($layoutNav, 'templates/appbar.php')
+    && str_contains($layoutNav, 'navegacion_proyecto(')
+    && str_contains($layoutNav, 'navegacion_riel(')
+    && str_contains($layoutNav, 'navegacion_panel(')
+    && str_contains($layoutNav, 'navegacion_inferior(')
+    && !str_contains($layoutNav, 'templates/topbar.php'));
+$ok('la barra compacta es el modo predeterminado y el antiguo pestaña se muestra como compacta',
+    \Classes\TemaProyecto::normMenu('pestanas') === 'clasico'
+    && count(\Classes\TemaProyecto::MENUS) === 2
+    && isset(\Classes\TemaProyecto::MENUS['clasico'], \Classes\TemaProyecto::MENUS['panel']));
+$ok('la herramienta activa se deduce por la ruta y sus alias', (function () {
+    require_once __DIR__ . '/../views/templates/nav-contexto.php';
+    $grupos = [
+        'Planeación' => [
+            ['key' => 'programa', 'match' => '/programa', 'tambien' => []],
+            ['key' => 'lookahead', 'match' => '/lookahead', 'tambien' => ['/planificador']],
+        ],
+        'Campo y ejecución' => [
+            ['key' => 'reportes', 'match' => '/reportes', 'tambien' => []],
+        ],
+    ];
+    $anterior = $_SERVER['REQUEST_URI'] ?? '/';
+    $_SERVER['REQUEST_URI'] = '/planificador?proyecto=1';
+    $a = nav_activa($grupos);
+    $_SERVER['REQUEST_URI'] = '/reportes/parte/12?proyecto=1';
+    $b = nav_activa($grupos);
+    $_SERVER['REQUEST_URI'] = $anterior;
+    return $a[0] === 'lookahead' && $a[2] === 0 && $b[0] === 'reportes' && $b[2] === 1;
+})());
+$ok('las herramientas traen etiqueta corta para el dock', str_contains($menuHerramientas, "'corto' => \$corto") && str_contains($menuHerramientas, "'/lineatiempo' => 'Línea tiempo'"));
+$ok('la barra de aplicación concentra tema, cuenta y proyecto y ya no pinta el título de la página',
+    str_contains($asset('views/templates/appbar.php'), 'data-tema-toggle')
+    && str_contains($asset('views/templates/appbar.php'), 'appbar-proyecto')
+    && str_contains($asset('views/templates/appbar.php'), 'appbar-avatar')
+    && !str_contains($asset('views/templates/appbar.php'), 'page-title')
+    && !str_contains($asset('views/templates/appbar.php'), 'proyecto-periodo'));
+$ok('la navegación nueva se compila en la base compartida y oculta el antiguo topbar',
+    str_contains($asset('src/scss/app.scss'), "layout/navegacion")
+    && str_contains($asset('src/scss/app-base.scss'), "layout/navegacion")
+    && !str_contains($asset('src/scss/layout/_layout.scss'), '.breadcrumb-item')
+    && !str_contains($asset('src/scss/layout/_layout.scss'), '.topbar-right'));
+$ok('el panel de herramientas busca, fija y recuerda recientes',
+    str_contains($asset('views/templates/nav-panel.php'), 'data-nav-pin')
+    && str_contains($asset('views/templates/nav-panel.php'), 'nav-panel-q')
+    && str_contains($asset('src/js/menu-proyecto.js'), 'pw-nav-fijadas')
+    && str_contains($asset('src/js/menu-proyecto.js'), 'pw-recientes'));
 
 echo "Seguridad: control de acceso del visitante\n";
 $ok('las rutas de las herramientas del menú están declaradas en Usuario::HERRAMIENTAS', (function () {
@@ -1489,7 +1557,13 @@ $ok('el tablero de portafolio carga solo el CSS compartido', str_contains($asset
 $ok('calidad libera el avance con un formulario plegable', str_contains($asset('views/calidad/index.php'), '<details class="cal-liberar">') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.cal-liberar'));
 $ok('los filtros del portafolio usan la barra compartida', str_contains($asset('views/portafolio/index.php'), 'class="card inc-filtros"') && str_contains($asset('views/portafolio/index.php'), 'tabla-ancha-xl'));
 $ok('la tabla de tipos de frente conserva el ancho del nombre', str_contains($asset('views/balance/index.php'), 'tabla-ancha bal-tipos') && str_contains($asset('src/scss/paginas/_fase3.scss'), '.bal-tipos'));
-$ok('los botones flotantes se apartan al bajar y vuelven al subir', str_contains($asset('src/js/app.js'), "CLASE = 'flotantes-ocultas'") && str_contains($asset('src/scss/layout/_layout.scss'), 'body.flotantes-ocultas .btn-menu-movil') && str_contains($asset('src/scss/layout/_layout.scss'), 'body.flotantes-ocultas .dv-boton'));
+$ok('el divisor flotante se aparta al bajar y vuelve al subir', str_contains($asset('src/js/app.js'), "CLASE = 'flotantes-ocultas'") && str_contains($asset('src/scss/layout/_layout.scss'), 'body.flotantes-ocultas .dv-boton'));
+
+echo "Administración de obra: rediseño compartido\n";
+$admCss = $asset('src/scss/paginas/_administracion.scss');
+$ok('la hoja de administración cubre las trece herramientas', str_contains($admCss, 'data-vista^="directorio"') && str_contains($admCss, 'data-vista^="contratos"') && str_contains($admCss, 'data-vista^="datos-obra"') && str_contains($admCss, 'data-vista^="acciones"'));
+$ok('las vistas de administración cargan su hoja al final', str_contains($asset('includes/funciones.php'), "'directorio' => ['personalizacion', 'reportes', 'administracion']") && str_contains($asset('includes/funciones.php'), "'historial' => ['inconsistencias', 'administracion']") && str_contains($asset('includes/funciones.php'), "'equipo' => ['fase3', 'administracion']"));
+$ok('las cabeceras de administración usan el hero y los KPIs', str_contains($asset('views/directorio/index.php'), 'adm-eyebrow') && str_contains($asset('views/contratos/index.php'), 'adm-kpi-icono') && str_contains($asset('views/historial/index.php'), 'adm-meta'));
 
 echo "Hallazgos de IA: corrección en línea y reporte por problema\n";
 $incPhp = $asset('classes/Inconsistencias.php');

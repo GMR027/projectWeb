@@ -28,29 +28,10 @@
   }
   body.menu-abierto .sidebar-fondo { opacity: 1; pointer-events: auto; }
   body.menu-abierto { overflow: hidden; }
-  .btn-menu-movil {
-    display: flex; align-items: center; justify-content: center;
-    position: fixed; left: 1.6rem; bottom: 1.6rem; z-index: 1001;
-    width: 5.6rem; height: 5.6rem; border-radius: 50%; border: 0; cursor: pointer;
-    background: $primary; color: #fff; font-size: 2.4rem; box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .45);
-  }
-  .main-content { padding: 1.4rem 1.2rem 9rem; }
-
-  // La barra de herramientas del proyecto se sustituye por el menú
-  .breadcrumb-nav { display: none; }
+  .main-content { padding: 1.4rem 1.2rem calc(9rem + env(safe-area-inset-bottom, 0px)); }
 
   // ---------- Encabezado de página ----------
-  .topbar { flex-direction: column; align-items: stretch; gap: 1rem; padding-bottom: 1.2rem; margin-bottom: 1.4rem; }
-  .page-title { font-size: 2.1rem; margin-bottom: 0; overflow-wrap: anywhere; }
-  .proyecto-periodo { display: none; }
-  .topbar-right { justify-content: space-between; gap: 1rem; }
-  .topbar-right { flex-wrap: wrap; align-items: center; }
-  .user-info { flex-direction: row; align-items: center; gap: .6rem; flex-wrap: wrap; min-width: 0; }
   .idioma-sel { flex: 0 0 auto; margin-right: 0; button { padding: .5rem .9rem; } }
-  .topbar-right .btn { flex: 0 0 auto; }
-  .topbar-right .topbar-salir { width: 3.6rem; padding: 0; }
-  .topbar-buscar { flex: 1 1 100%; order: -1; }
-  .topbar-buscar input { width: 100%; }
   .programa-filtros .form-grid-inline { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
   .programa-filtros .form-grid-inline .campo { min-width: 0; }
   .programa-filtros .form-grid-inline .campo:last-child, .programa-filtros .form-grid-inline > :not(.campo) { grid-column: 1 / -1; }
@@ -89,7 +70,6 @@
   .btn-sm, .btn-xs, .tabla .acciones .btn, .acciones .btn { min-height: 4.4rem; padding-top: .8rem; padding-bottom: .8rem; }
   .nav-link { min-height: 4.4rem; }
   .idioma-sel button { min-height: 4rem; padding: .5rem 1rem; }
-  .topbar-right .topbar-salir { width: 4.4rem; height: 4.4rem; }
   .tabla .acciones form { display: block !important; margin: 0 !important; }
   .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
@@ -125,6 +105,12 @@
   // Editores de lienzo: el Editor de gráficos y el editor de marcas del vPlan ya funcionan en el
   // celular (dock inferior + hoja de propiedades); el resto conserva el aviso de consulta.
   body.gr-editor-page .aviso-escritorio { display: none !important; }
+
+  // Mientras el dock del lienzo está abierto, la barra inferior global queda debajo:
+  // se oculta para no duplicar barras ni dejar botones tabulables detrás.
+  body.ve-con-dock .nav-inferior,
+  body.gr-editor-page .nav-inferior,
+  body.rd-movil-dock .nav-inferior { display: none !important; }
 
   // El modo diseño del vPlan conserva su barra en el celular: una sola fila que se desliza.
   .vp-dis-barra { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: .6rem .8rem; gap: .6rem;

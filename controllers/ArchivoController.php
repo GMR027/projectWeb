@@ -20,26 +20,94 @@ class ArchivoController
         return filter_var((self::esPost() ? $_POST : $_GET)['id'] ?? null, FILTER_VALIDATE_INT) ?: null;
     }
 
+    /** Cuántos archivos entran en la vista rápida «Recientes» (los últimos subidos, por id) */
+    private const RECIENTES = 30;
+
+    /** Órdenes válidos de la lista de archivos */
+    private const ORDENES = ['fecha_desc', 'fecha_asc', 'nombre_asc', 'nombre_desc', 'tamano_desc', 'tamano_asc', 'subida_desc'];
+
+    private static function ordenArchivo($orden): string
+    {
+        return in_array($orden, self::ORDENES, true) ? $orden : 'fecha_desc';
+    }
+
+    /** Compara dos archivos según el orden elegido (el desempate siempre es estable) */
+    private static function compararArchivos($a, $b, string $orden): int
+    {
+        $r = match ($orden) {
+            'fecha_asc' => strcmp((string)$a->fecha, (string)$b->fecha),
+            'nombre_asc' => strnatcasecmp((string)$a->nombre, (string)$b->nombre),
+            'nombre_desc' => strnatcasecmp((string)$b->nombre, (string)$a->nombre),
+            'tamano_desc' => (int)$b->tamano <=> (int)$a->tamano,
+            'tamano_asc' => (int)$a->tamano <=> (int)$b->tamano,
+            'subida_desc' => (int)$b->id <=> (int)$a->id,
+            default => strcmp((string)$b->fecha, (string)$a->fecha),
+        };
+        if ($r !== 0) return $r;
+        $r = strcmp((string)$b->fecha, (string)$a->fecha);
+        return $r !== 0 ? $r : ((int)$b->id <=> (int)$a->id);
+    }
+
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
-        $categorias = ArchivoCategoria::deProyecto((int)$proyecto->id);
+        $pid = (int)$proyecto->id;
+        $categorias = ArchivoCategoria::deProyecto($pid);
         $filtro = filter_var($_GET['categoria'] ?? null, FILTER_VALIDATE_INT) ?: null;
         if ($filtro && !in_array($filtro, array_map(fn($c) => (int)$c->id, $categorias), true)) $filtro = null;
-        $carpetas = ArchivoCarpeta::deProyecto((int)$proyecto->id);
+        $carpetas = ArchivoCarpeta::deProyecto($pid);
         // carpeta: vacío = todas, 'sin' = sin carpeta, número = esa carpeta
         $carpeta = null;
         if (($_GET['carpeta'] ?? '') === 'sin') $carpeta = 0;
         elseif ($c = filter_var($_GET['carpeta'] ?? null, FILTER_VALIDATE_INT)) {
             if (in_array($c, array_map(fn($x) => (int)$x->id, $carpetas), true)) $carpeta = $c;
         }
+        $vista = ($_GET['vista'] ?? '') === 'recientes' ? 'recientes' : null;
+        $orden = self::ordenArchivo($_GET['orden'] ?? null);
+        if ($vista === 'recientes' && !isset($_GET['orden'])) $orden = 'subida_desc';
+
+        // Una sola lectura del proyecto: alimenta la lista, los totales y las métricas de cada carpeta.
+        $todos = Archivo::deProyecto($pid);
+        $carpetasStats = [];
+        $sinCarpetaStats = ['total' => 0, 'bytes' => 0, 'ultima' => null];
+        foreach ($todos as $a) {
+            $cid = (int)($a->carpeta_id ?? 0);
+            if ($cid > 0) {
+                if (!isset($carpetasStats[$cid])) $carpetasStats[$cid] = ['total' => 0, 'bytes' => 0, 'ultima' => null];
+                $carpetasStats[$cid]['total']++;
+                $carpetasStats[$cid]['bytes'] += (int)$a->tamano;
+                if (!$carpetasStats[$cid]['ultima'] || strcmp((string)$a->fecha, (string)$carpetasStats[$cid]['ultima']) > 0) $carpetasStats[$cid]['ultima'] = $a->fecha;
+            } else {
+                $sinCarpetaStats['total']++;
+                $sinCarpetaStats['bytes'] += (int)$a->tamano;
+                if (!$sinCarpetaStats['ultima'] || strcmp((string)$a->fecha, (string)$sinCarpetaStats['ultima']) > 0) $sinCarpetaStats['ultima'] = $a->fecha;
+            }
+        }
+        $base = $todos;
+        if ($vista === 'recientes') {
+            usort($base, fn($a, $b) => (int)$b->id <=> (int)$a->id);
+            $base = array_slice($base, 0, self::RECIENTES);
+        }
+        $archivos = array_values(array_filter($base, function ($a) use ($filtro, $carpeta) {
+            if ($filtro && (int)$a->categoria_id !== (int)$filtro) return false;
+            if ($carpeta === 0 && !empty($a->carpeta_id)) return false;
+            if ($carpeta && (int)$a->carpeta_id !== (int)$carpeta) return false;
+            return true;
+        }));
+        usort($archivos, fn($a, $b) => self::compararArchivos($a, $b, $orden));
+        $totalBytes = array_sum(array_map(fn($a) => (int)$a->tamano, $todos));
+        $limiteBytes = \Classes\Almacenamiento::limite($pid);
         $mensaje = $_SESSION['archivo_msg'] ?? null;
         unset($_SESSION['archivo_msg']);
         $router->render('archivos/index', [
-            'titulo' => 'Archivo - ' . $proyecto->nombre, 'proyecto' => $proyecto,
-            'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => Archivo::deProyecto((int)$proyecto->id, $filtro, $carpeta),
-            'carpetas' => $carpetas, 'carpeta' => $carpeta, 'sinCarpeta' => ArchivoCarpeta::sinCarpeta((int)$proyecto->id),
-            'totalArchivos' => count(Archivo::deProyecto((int)$proyecto->id)), 'ensamblados' => \Model\Ensamble::archivosVivos((int)$proyecto->id),
+            'titulo' => 'Archivo', 'proyecto' => $proyecto,
+            'categorias' => $categorias, 'filtro' => $filtro, 'archivos' => $archivos,
+            'carpetas' => $carpetas, 'carpeta' => $carpeta, 'sinCarpeta' => $sinCarpetaStats['total'],
+            'vista' => $vista, 'orden' => $orden,
+            'carpetasStats' => $carpetasStats, 'sinCarpetaStats' => $sinCarpetaStats,
+            'totalArchivos' => count($todos), 'totalBytes' => $totalBytes, 'limiteBytes' => $limiteBytes,
+            'totalRecientes' => min(count($todos), self::RECIENTES),
+            'ensamblados' => \Model\Ensamble::archivosVivos($pid),
             'mensaje' => $mensaje,
         ]);
     }

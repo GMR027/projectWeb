@@ -41,7 +41,7 @@ class Proyecto extends ActiveRecord
     public $tema_halo_expansion;
     // Barra superior de herramientas: escribe el nombre debajo de cada icono (Ajustes → Apariencia)
     public $nombres_herramientas;
-    // Apariencia de la barra superior: clasico | panel | pestanas (Ajustes → Apariencia)
+    // Apariencia de la barra superior: clasico (barra compacta) | panel (riel lateral); 'pestanas' antiguo se muestra compacto (Ajustes → Apariencia)
     public $menu_superior;
     // Mostrar los mensajes emergentes de ayuda de la interfaz (Ajustes → Apariencia)
     public $ayuda_burbujas;

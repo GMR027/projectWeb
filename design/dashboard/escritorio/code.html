@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>ProjectWeb - Civil &amp; Industrial Infrastructure</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"secondary-fixed":"#b3ebff","on-surface":"#dbe1ff","on-surface-variant":"#e4beb3","surface-dim":"#0a122a","surface-bright":"#313852","on-secondary":"#003642","tertiary-fixed-dim":"#b2c8e8","surface-variant":"#2c344d","on-primary-fixed":"#3a0b00","inverse-on-surface":"#282f49","on-secondary-fixed-variant":"#004e5f","secondary-fixed-dim":"#4cd6fb","secondary-container":"#00b2d6","primary-fixed-dim":"#ffb59e","tertiary":"#b2c8e8","outline-variant":"#5b4038","surface-container-lowest":"#050d25","surface-container-highest":"#2c344d","secondary":"#4cd6fb","inverse-primary":"#ae3200","primary-fixed":"#ffdbd0","on-error":"#690005","surface-container-low":"#131a33","on-tertiary-fixed":"#021d35","outline":"#ab897f","on-error-container":"#ffdad6","tertiary-container":"#7e94b2","on-tertiary-container":"#152c45","surface-tint":"#ffb59e","primary-container":"#ff5a1f","on-primary-container":"#541400","background":"#0a122a","error":"#ffb4ab","surface-container-high":"#212942","on-primary-fixed-variant":"#852400","error-container":"#93000a","on-secondary-fixed":"#001f27","on-secondary-container":"#003f4e","on-tertiary":"#1b324b","tertiary-fixed":"#d2e4ff","surface-container":"#171e37","on-tertiary-fixed-variant":"#324863","on-primary":"#5e1700","on-background":"#dbe1ff","inverse-surface":"#dbe1ff","primary":"#ffb59e","surface":"#0a122a"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter-mobile":"1rem","space-lg":"1.5rem","space-xs":"0.25rem","space-md":"1rem","margin":"2.5rem","space-xl":"2.5rem","margin-mobile":"1rem","gutter":"1.5rem"},fontFamily:{"label-code-sm":["JetBrains Mono"],"body-sm":["Manrope"],"display-hero-mobile":["Space Grotesk"],"headline-md":["Space Grotesk"],"body-lg":["Manrope"],"headline-xl":["Space Grotesk"],"label-telemetry":["JetBrains Mono"],"display-hero":["Space Grotesk"],"headline-xl-mobile":["Space Grotesk"],"title-md":["Manrope"],"body-md":["Manrope"],"headline-lg":["Space Grotesk"]},fontSize:{"label-code-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"400"}],"display-hero-mobile":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["22px",{"lineHeight":"30px","letterSpacing":"0em","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-telemetry":["13px",{"lineHeight":"18px","letterSpacing":"0.04em","fontWeight":"500"}],"display-hero":["56px",{"lineHeight":"64px","letterSpacing":"-0.03em","fontWeight":"700"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"title-md":["18px",{"lineHeight":"26px","letterSpacing":"0em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen"><header class="fixed top-0 left-0 right-0 z-50"><div class="h-14 bg-surface border-b border-white/[0.08] px-space-md"><div class="max-w-[1440px] mx-auto h-full flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md shrink-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary-container text-[24px]">engineering</span><span class="font-headline-md text-title-md tracking-tight text-on-surface">ProjectWeb</span></div><div class="h-4 w-[1px] bg-white/[0.08]"></div><button class="flex items-center gap-space-xs px-space-sm py-1 rounded bg-surface-container-low border border-white/[0.08] hover:bg-surface-container-high transition-colors text-left" type="button"><span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97] animate-pulse"></span><span class="font-label-telemetry text-body-sm text-on-surface truncate max-w-[200px]">Torre Corporativa Norte · TCN-04</span><span class="material-symbols-outlined text-on-surface-variant text-[16px]">expand_more</span></button></div><div class="flex-1 max-w-lg hidden md:block"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">search</span><input class="w-full h-8 pl-9 pr-14 rounded bg-surface-container-low border border-white/[0.08] text-on-surface placeholder:text-on-surface-variant font-body-sm text-body-sm focus:outline-none focus:border-secondary transition-colors" placeholder="Buscar en el proyecto…" type="text"/><div class="absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-code-sm text-label-code-sm border border-white/[0.04] pointer-events-none">⌘K</div></div></div><div class="flex items-center gap-space-sm shrink-0"><button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Manual de Operaciones" type="button"><span class="material-symbols-outlined text-[20px]">help_outline</span></button><button class="relative w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Notificaciones" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary-container text-on-primary-container font-label-code-sm text-label-code-sm leading-none">5</span></button><button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Modo de Visualización" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="h-4 w-[1px] bg-white/[0.08] mx-1"></div><div class="w-8 h-8 rounded-full bg-surface-container border border-secondary flex items-center justify-center cursor-pointer select-none ring-offset-2 ring-offset-surface hover:ring-1 hover:ring-secondary transition-all"><span class="font-label-code-sm text-label-code-sm font-semibold text-secondary">EV</span></div></div></div></div><div class="h-10 bg-surface-container-low border-b border-white/[0.08] px-space-md"><div class="max-w-[1440px] mx-auto h-full flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg h-full"><button class="flex items-center gap-1 text-on-surface font-title-md text-body-sm hover:text-primary transition-colors py-1" type="button"><span class="font-medium">Inicio</span><span class="material-symbols-outlined text-[16px]">arrow_drop_down</span></button><div class="h-3.5 w-[1px] bg-white/[0.08]"></div><nav class="flex items-center gap-space-md h-full" data-active-classes="text-on-surface border-b-2 border-primary-container font-medium"><a aria-current="page" class="h-full flex items-center px-space-xs transition-colors text-on-surface border-b-2 border-primary-container font-medium" data-path="inicio" href="#">Inicio</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="proyectos" href="#">Proyectos</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="portafolio" href="#">Portafolio</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="usuarios" href="#">Usuarios</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-colors border-b-2 border-transparent" data-path="sistema" href="#">Sistema</a></nav></div><div class="flex items-center gap-space-xs shrink-0"><button class="flex items-center gap-space-xs px-2 py-1 rounded bg-surface border border-white/[0.08] hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface" type="button"><span class="material-symbols-outlined text-[16px] text-secondary">apps</span><span class="font-body-sm text-body-sm">Todas las herramientas</span><span class="px-1.5 py-0.2 rounded bg-surface-container font-label-code-sm text-label-code-sm text-on-surface-variant border border-white/[0.04]">⌘K</span></button></div></div></div></header><main class="w-full pt-24 bg-surface min-h-screen"><div class="max-w-[1440px] mx-auto px-space-md py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<!-- 1. FILA HERO / CABECERA DE BIENVENIDA -->
+<header class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md p-space-lg rounded-xl bg-surface-container-low/80 backdrop-blur-md shadow-md relative overflow-hidden">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-secondary/5 blur-3xl pointer-events-none"></div>
+<div class="absolute left-1/3 -bottom-24 w-64 h-64 rounded-full bg-primary-container/5 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-xs z-10">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-code-sm text-label-code-sm text-secondary uppercase tracking-widest font-semibold">INICIO // CENTRO DE MANDO CIVILTECH</span>
+<span class="text-white/20">|</span>
+<span class="font-label-code-sm text-label-code-sm text-tertiary">SYS.PORTAL-V4</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">
+        Buenos días, Edgar
+      </h1>
+<div class="flex flex-wrap items-center gap-space-sm pt-1">
+<p class="font-body-md text-body-md text-on-surface/80">
+          Tu cartera de obras, lo que requiere atención inmediata y el acceso a cada subsistema operativo.
+        </p>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface text-label-code-sm font-label-code-sm shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Constructora Delta</span>
+<span class="text-white/30">•</span>
+<span class="text-secondary font-medium">Plan Pro Infra</span>
+</div>
+</div>
+</div>
+<!-- Acciones Hero -->
+<div class="flex items-center flex-wrap gap-space-sm z-10 shrink-0">
+<button class="flex items-center justify-center w-10 h-10 rounded bg-surface-container hover:bg-surface-container-highest text-on-surface transition-all shadow-sm" title="Búsqueda rápida en cartera" type="button">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+<button class="flex items-center gap-space-xs px-3.5 h-10 rounded bg-surface-container hover:bg-surface-container-highest text-on-surface font-title-md text-body-sm transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-tertiary">tune</span>
+<span>Personalizar inicio</span>
+</button>
+<button class="flex items-center gap-space-xs px-4 h-10 rounded bg-primary-container text-on-primary-container font-title-md text-body-sm hover:brightness-110 active:scale-95 transition-all shadow-md" type="button">
+<span class="material-symbols-outlined text-[20px] font-bold">add</span>
+<span class="font-semibold tracking-wide">+ Nuevo proyecto</span>
+</button>
+</div>
+</header>
+<!-- 2. FRANJA DE KPIS OPERATIVOS -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- KPI 1: Proyectos -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-secondary"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-secondary uppercase font-semibold">PROYECTOS</span>
+<div class="w-8 h-8 rounded flex items-center justify-center bg-secondary/10 text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">domain</span>
+</div>
+</div>
+<div class="mt-space-md flex items-baseline justify-between">
+<span class="font-headline-xl text-display-hero-mobile text-on-surface font-label-telemetry font-bold">12</span>
+<span class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          12 activos en curso
+        </span>
+</div>
+</div>
+<!-- KPI 2: Actividades Hoy -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-primary-container"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-primary uppercase font-semibold">ACTIVIDADES DE HOY</span>
+<div class="w-8 h-8 rounded flex items-center justify-center bg-primary-container/20 text-primary-container group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+</div>
+</div>
+<div class="mt-space-md flex items-baseline justify-between">
+<span class="font-headline-xl text-display-hero-mobile text-on-surface font-label-telemetry font-bold">8</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/15 text-primary-container font-label-code-sm text-label-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+          3 en riesgo
+        </span>
+</div>
+</div>
+<!-- KPI 3: Atrasadas -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-error"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-error uppercase font-semibold">ATRASADAS</span>
+<div class="w-8 h-8 rounded flex items-center justify-center bg-error-container/40 text-error group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">pending_actions</span>
+</div>
+</div>
+<div class="mt-space-md flex items-baseline justify-between">
+<span class="font-headline-xl text-display-hero-mobile text-error font-label-telemetry font-bold">3</span>
+<span class="flex items-center gap-0.5 font-label-code-sm text-label-code-sm text-tertiary">
+<span class="material-symbols-outlined text-[16px] text-secondary">trending_down</span>
+          -2 vs ayer
+        </span>
+</div>
+</div>
+<!-- KPI 4: Restricciones -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-[#ffb020]"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-[#ffb020] uppercase font-semibold">RESTRICCIONES ACTIVAS</span>
+<div class="w-8 h-8 rounded flex items-center justify-center bg-[#ffb020]/10 text-[#ffb020] group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+</div>
+<div class="mt-space-md flex items-baseline justify-between">
+<span class="font-headline-xl text-display-hero-mobile text-[#ffb020] font-label-telemetry font-bold">5</span>
+<span class="font-label-code-sm text-label-code-sm text-[#ffb020] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ffb020] animate-ping"></span>
+          2 críticas sin liberar
+        </span>
+</div>
+</div>
+</section>
+<!-- 3. GRID PRINCIPAL DE 12 COLUMNAS -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- A) COLUMNA IZQUIERDA (8 COLUMNAS) -->
+<div class="lg:col-span-8 flex flex-col gap-space-lg">
+<!-- Módulo Requiere Atención -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-sm flex flex-col">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md gap-space-sm">
+<div class="flex items-center gap-space-md">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Requiere atención</h2>
+<div class="flex items-center gap-1 bg-surface-container p-0.5 rounded">
+<button class="px-2.5 py-1 rounded bg-secondary-container text-on-secondary-container font-label-code-sm text-label-code-sm font-semibold flex items-center gap-1.5 shadow-sm" type="button">
+<span>Hoy</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-container-lowest text-secondary font-bold">8</span>
+</button>
+<button class="px-2.5 py-1 rounded hover:bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center gap-1.5 transition-colors" type="button">
+<span>Atrasadas</span>
+<span class="px-1.5 py-0.2 rounded-full bg-error-container text-error font-bold">3</span>
+</button>
+</div>
+</div>
+<a class="inline-flex items-center gap-1 text-secondary font-body-sm text-body-sm hover:underline" href="#">
+<span>Ver en Programa</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Tabla Operativa de Tareas de Alta Densidad -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[620px]">
+<thead>
+<tr class="bg-surface-container-lowest/40 text-tertiary font-label-code-sm text-label-code-sm">
+<th class="py-2.5 px-3 uppercase">CÓDIGO</th>
+<th class="py-2.5 px-3 uppercase">ACTIVIDAD / ELEMENTO</th>
+<th class="py-2.5 px-3 uppercase">PROYECTO</th>
+<th class="py-2.5 px-3 uppercase">VENTANA</th>
+<th class="py-2.5 px-3 uppercase">AVANCE</th>
+<th class="py-2.5 px-3 uppercase">ESTADO DE OPERACIÓN</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/[0.04] font-body-sm text-body-sm text-on-surface">
+<!-- Fila 1 -->
+<tr class="hover:bg-surface-container/60 transition-colors group">
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm text-secondary font-semibold">ACT-104</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Colado de losa nivel 5</div>
+<div class="text-[11px] text-tertiary">Sector Ejes 14-22 · Bomba 02</div>
+</td>
+<td class="py-3 px-3 text-tertiary">Torre Corporativa Norte</td>
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm">Hoy, 14:00</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 75%"></div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">75%</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                    Retraso de mixer
+                  </span>
+</td>
+</tr>
+<!-- Fila 2 -->
+<tr class="hover:bg-surface-container/60 transition-colors group">
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm text-secondary font-semibold">ACT-089</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Montaje de trabes principales</div>
+<div class="text-[11px] text-tertiary">Grúa Liebherr 400T · Claros 3-4</div>
+</td>
+<td class="py-3 px-3 text-tertiary">Puente Vehicular Río Verde</td>
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm">Hoy, 17:30</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#ffb020] rounded-full" style="width: 40%"></div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">40%</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#ffb020]/20 text-[#ffb020] font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ffb020]"></span>
+                    Viento &gt; 38 km/h
+                  </span>
+</td>
+</tr>
+<!-- Fila 3 -->
+<tr class="hover:bg-surface-container/60 transition-colors group">
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm text-secondary font-semibold">ACT-112</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Prueba de aislamiento en celdas</div>
+<div class="text-[11px] text-tertiary">Bahía de Media Tensión B-01</div>
+</td>
+<td class="py-3 px-3 text-tertiary">Subestación Nor-Oeste</td>
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm">Hoy, 18:00</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#3ddc97] rounded-full" style="width: 90%"></div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">90%</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#3ddc97]/15 text-[#3ddc97] font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97]"></span>
+                    En curso normal
+                  </span>
+</td>
+</tr>
+<!-- Fila 4 -->
+<tr class="hover:bg-surface-container/60 transition-colors group">
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm text-secondary font-semibold">ACT-045</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Instalación de tablero de distribución</div>
+<div class="text-[11px] text-tertiary">Edificio de Control de Motores</div>
+</td>
+<td class="py-3 px-3 text-tertiary">Planta de Tratamiento Sur</td>
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm">15 Feb, 10:00</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 20%"></div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">20%</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#ffb020]/20 text-[#ffb020] font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ffb020]"></span>
+                    Falta conectores IP67
+                  </span>
+</td>
+</tr>
+<!-- Fila 5 -->
+<tr class="hover:bg-surface-container/60 transition-colors group">
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm text-secondary font-semibold">ACT-120</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Habilitado de acero en zapatas Z-4</div>
+<div class="text-[11px] text-tertiary">Eje A bis · Armado varilla #8</div>
+</td>
+<td class="py-3 px-3 text-tertiary">Torre Corporativa Norte</td>
+<td class="py-3 px-3 font-label-code-sm text-label-code-sm">Hoy, 19:00</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#3ddc97] rounded-full" style="width: 60%"></div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">60%</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#3ddc97]/15 text-[#3ddc97] font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3ddc97]"></span>
+                    Turno vespertino OK
+                  </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="pt-space-md mt-space-sm flex items-center justify-between border-t border-white/[0.04]">
+<a class="font-body-md text-body-sm text-secondary hover:text-secondary-fixed transition-colors inline-flex items-center gap-1" href="#">
+<span>Ver las 12 actividades de hoy</span>
+<span class="material-symbols-outlined text-[16px]">arrow_right_alt</span>
+</a>
+<span class="font-label-code-sm text-label-code-sm text-tertiary">Última sync: hace 4 min</span>
+</div>
+</section>
+<!-- Sección Proyectos Recientes -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-md flex-wrap">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Proyectos recientes</h2>
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-md">
+<button class="px-2.5 py-0.5 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-semibold shadow-sm" type="button">Todos 12</button>
+<button class="px-2.5 py-0.5 rounded hover:bg-surface-container text-tertiary font-label-code-sm text-label-code-sm transition-colors" type="button">En ejecución 8</button>
+<button class="px-2.5 py-0.5 rounded hover:bg-surface-container text-tertiary font-label-code-sm text-label-code-sm transition-colors" type="button">Por iniciar 2</button>
+<button class="px-2.5 py-0.5 rounded hover:bg-surface-container text-tertiary font-label-code-sm text-label-code-sm transition-colors" type="button">Finalizadas 2</button>
+</div>
+</div>
+<a class="text-secondary font-body-sm text-body-sm hover:underline self-start sm:self-auto" href="#">Ver todos (12) →</a>
+</div>
+<!-- Rejilla 2x2 Tarjetas de Proyecto -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Proyecto 1: TCN-04 -->
+<article class="rounded-xl bg-surface-container-low p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="flex flex-col gap-space-xs pl-2">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-secondary font-bold tracking-wider">TCN-04</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary/15 text-secondary font-label-code-sm text-label-code-sm">En ejecución</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface font-semibold group-hover:text-secondary transition-colors">Torre Corporativa Norte</h3>
+<p class="font-body-sm text-body-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                Monterrey, N.L. · Edificación vertical (38 niveles)
+              </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-white/[0.04] pl-2 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-code-sm text-label-code-sm">
+<span class="text-tertiary">Curva S / Avance real</span>
+<span class="text-on-surface font-semibold">64.2%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 64%"></div>
+</div>
+<div class="flex items-center justify-between text-tertiary font-label-code-sm text-[11px] mt-1">
+<span>12/02/2026</span>
+<span class="text-white/20">→</span>
+<span>30/11/2026</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+<div class="flex items-center gap-1 text-[11px] font-label-code-sm text-error">
+<span class="material-symbols-outlined text-[14px]">report_problem</span>
+<span>Salud: 2 avisos · 1 crítico</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm transition-colors" type="button">Programa</button>
+<button class="px-3 py-1 rounded bg-secondary text-on-secondary font-label-code-sm text-label-code-sm font-semibold hover:brightness-105 transition-all" type="button">Abrir</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Proyecto 2: PVR-02 -->
+<article class="rounded-xl bg-surface-container-low p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex flex-col gap-space-xs pl-2">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-primary-container font-bold tracking-wider">PVR-02</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-label-code-sm text-label-code-sm">En ejecución</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface font-semibold group-hover:text-primary transition-colors">Puente Vehicular Río Verde</h3>
+<p class="font-body-sm text-body-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                San Luis Potosí · Infraestructura vial y puentes
+              </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-white/[0.04] pl-2 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-code-sm text-label-code-sm">
+<span class="text-tertiary">Curva S / Avance real</span>
+<span class="text-on-surface font-semibold">82.5%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 82%"></div>
+</div>
+<div class="flex items-center justify-between text-tertiary font-label-code-sm text-[11px] mt-1">
+<span>05/08/2025</span>
+<span class="text-white/20">→</span>
+<span>15/05/2026</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+<div class="flex items-center gap-1 text-[11px] font-label-code-sm text-[#3ddc97]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Salud: 0 avisos · En tiempo</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm transition-colors" type="button">Programa</button>
+<button class="px-3 py-1 rounded bg-primary-container text-on-primary-container font-label-code-sm text-label-code-sm font-semibold hover:brightness-105 transition-all" type="button">Abrir</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Proyecto 3: SNO-01 -->
+<article class="rounded-xl bg-surface-container-low p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#ffb020]"></div>
+<div class="flex flex-col gap-space-xs pl-2">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-[#ffb020] font-bold tracking-wider">SNO-01</span>
+<span class="px-2 py-0.5 rounded-full bg-[#ffb020]/15 text-[#ffb020] font-label-code-sm text-label-code-sm">Por iniciar</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface font-semibold group-hover:text-[#ffb020] transition-colors">Subestación Nor-Oeste 230kV</h3>
+<p class="font-body-sm text-body-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                Sonora · Energía e infraestructura industrial
+              </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-white/[0.04] pl-2 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-code-sm text-label-code-sm">
+<span class="text-tertiary">Curva S / Avance real</span>
+<span class="text-on-surface font-semibold">0.0%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#ffb020] rounded-full" style="width: 0%"></div>
+</div>
+<div class="flex items-center justify-between text-tertiary font-label-code-sm text-[11px] mt-1">
+<span>01/03/2026</span>
+<span class="text-white/20">→</span>
+<span>15/12/2026</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+<div class="flex items-center gap-1 text-[11px] font-label-code-sm text-[#ffb020]">
+<span class="material-symbols-outlined text-[14px]">gavel</span>
+<span>1 restricción de permiso SEMARNAT</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm transition-colors" type="button">Programa</button>
+<button class="px-3 py-1 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-semibold hover:bg-surface-bright transition-all" type="button">Abrir</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Proyecto 4: PTS-08 -->
+<article class="rounded-xl bg-surface-container-low p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#3ddc97]"></div>
+<div class="flex flex-col gap-space-xs pl-2">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-[#3ddc97] font-bold tracking-wider">PTS-08</span>
+<span class="px-2 py-0.5 rounded-full bg-[#3ddc97]/15 text-[#3ddc97] font-label-code-sm text-label-code-sm">Finalizada</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface font-semibold group-hover:text-[#3ddc97] transition-colors">Planta de Tratamiento Sur</h3>
+<p class="font-body-sm text-body-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                Querétaro · Hidráulica y saneamiento
+              </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-white/[0.04] pl-2 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-code-sm text-label-code-sm">
+<span class="text-tertiary">Curva S / Avance real</span>
+<span class="text-on-surface font-semibold">100.0%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#3ddc97] rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex items-center justify-between text-tertiary font-label-code-sm text-[11px] mt-1">
+<span>10/01/2025</span>
+<span class="text-white/20">→</span>
+<span>28/01/2026</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+<div class="flex items-center gap-1 text-[11px] font-label-code-sm text-[#3ddc97]">
+<span class="material-symbols-outlined text-[14px]">task_alt</span>
+<span>Acta de entrega recepcionada</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm transition-colors" type="button">Bitácora</button>
+<button class="px-3 py-1 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm font-semibold hover:bg-surface-bright transition-all" type="button">Abrir</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+</section>
+</div>
+<!-- B) COLUMNA DERECHA (4 COLUMNAS) -->
+<div class="lg:col-span-4 flex flex-col gap-space-lg">
+<!-- Módulo Herramientas -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">apps</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Herramientas</h2>
+</div>
+<span class="font-label-code-sm text-[11px] text-tertiary uppercase">HUB DE CAMPO</span>
+</div>
+<!-- Selector Desplegable de Obra Activa -->
+<div class="flex flex-col gap-1">
+<label class="font-label-code-sm text-[11px] text-tertiary uppercase tracking-wider">Proyecto en foco</label>
+<div class="relative">
+<select class="w-full h-10 px-3 pr-8 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-1 focus:ring-secondary transition-all cursor-pointer">
+<option selected="">Torre Corporativa Norte (TCN-04)</option>
+<option>Puente Vehicular Río Verde (PVR-02)</option>
+<option>Subestación Nor-Oeste 230kV (SNO-01)</option>
+<option>Planta de Tratamiento Sur (PTS-08)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-tertiary pointer-events-none text-[18px]">unfold_more</span>
+</div>
+</div>
+<!-- Categorías de Especialidad en Chips -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px] font-label-code-sm">
+<span class="px-2 py-0.5 rounded bg-secondary/15 text-secondary font-semibold shrink-0 cursor-pointer">Planeación</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary hover:text-on-surface shrink-0 cursor-pointer">Campo</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary hover:text-on-surface shrink-0 cursor-pointer">Materiales</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary hover:text-on-surface shrink-0 cursor-pointer">Documentos</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary hover:text-on-surface shrink-0 cursor-pointer">IA</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary hover:text-on-surface shrink-0 cursor-pointer">Admin</span>
+</div>
+<!-- Rejilla 3x3 de 9 Losetas de Herramientas -->
+<div class="grid grid-cols-3 gap-2">
+<!-- Tool 1: Programa -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-secondary/15 text-secondary group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">view_timeline</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Programa</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Planeación</span>
+</a>
+<!-- Tool 2: Reporte diario -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-primary-container/20 text-primary-container group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Reporte diario</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Campo</span>
+</a>
+<!-- Tool 3: Archivo -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-tertiary-container/30 text-tertiary-fixed group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">folder</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Archivo</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Documentos</span>
+</a>
+<!-- Tool 4: Costos -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-[#3ddc97]/15 text-[#3ddc97] group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">monetization_on</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Costos</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Admin</span>
+</a>
+<!-- Tool 5: RFI -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-secondary/15 text-secondary group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">RFI</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Ingeniería</span>
+</a>
+<!-- Tool 6: Calidad -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-[#ffb020]/15 text-[#ffb020] group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Calidad</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Control</span>
+</a>
+<!-- Tool 7: MSR -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-primary-container/20 text-primary-container group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">MSR</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Logística</span>
+</a>
+<!-- Tool 8: vPlan -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-secondary/15 text-secondary group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">splitscreen</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">vPlan</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Planeación</span>
+</a>
+<!-- Tool 9: Líneas base -->
+<a class="flex flex-col items-center justify-center p-3 rounded-lg bg-surface-container hover:bg-surface-container-highest transition-all group text-center" href="#">
+<div class="w-9 h-9 rounded flex items-center justify-center bg-tertiary-container/30 text-tertiary group-hover:scale-110 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[20px]">straighten</span>
+</div>
+<span class="font-title-md text-[13px] text-on-surface font-medium leading-tight">Líneas base</span>
+<span class="font-label-code-sm text-[10px] text-tertiary">Control</span>
+</a>
+</div>
+<button class="w-full py-2.5 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">grid_view</span>
+<span>Ver todas las herramientas</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-lowest font-label-code-sm text-[10px] text-tertiary">⌘K</span>
+</button>
+</section>
+<!-- Módulo Novedades -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">campaign</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Novedades</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary/15 text-secondary font-label-code-sm text-[11px] font-semibold">Changelog</span>
+</div>
+<div class="flex flex-col gap-space-sm divide-y divide-white/[0.04]">
+<!-- Novedad 1 -->
+<div class="flex items-start gap-3 pt-space-xs first:pt-0">
+<div class="w-7 h-7 rounded flex items-center justify-center bg-secondary/15 text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">view_in_ar</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="font-title-md text-[13px] text-on-surface font-medium truncate">Nuevo visor BIM IFC en Archivo</span>
+<span class="px-1.5 py-0.2 rounded bg-secondary text-on-secondary font-label-code-sm text-[10px] font-bold uppercase shrink-0">Nueva</span>
+</div>
+<p class="font-body-sm text-[12px] text-tertiary leading-snug mt-0.5">Navegación 3D fluida, cortes por nivel y vinculación con partidas del presupuesto.</p>
+<span class="font-label-code-sm text-[10px] text-tertiary/70 mt-1">hace 2 horas</span>
+</div>
+</div>
+<!-- Novedad 2 -->
+<div class="flex items-start gap-3 pt-space-sm">
+<div class="w-7 h-7 rounded flex items-center justify-center bg-primary-container/20 text-primary-container shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">stacked_line_chart</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-title-md text-[13px] text-on-surface font-medium truncate">Cálculo de curva S mejorado</span>
+<p class="font-body-sm text-[12px] text-tertiary leading-snug mt-0.5">Ajuste automático de ponderaciones por valor ganado (EVM) para reportes de avance.</p>
+<span class="font-label-code-sm text-[10px] text-tertiary/70 mt-1">Ayer</span>
+</div>
+</div>
+<!-- Novedad 3 -->
+<div class="flex items-start gap-3 pt-space-sm">
+<div class="w-7 h-7 rounded flex items-center justify-center bg-[#3ddc97]/15 text-[#3ddc97] shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">cloud_sync</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-title-md text-[13px] text-on-surface font-medium truncate">Sincronización de campo offline</span>
+<p class="font-body-sm text-[12px] text-tertiary leading-snug mt-0.5">Captura fotos georreferenciadas y bitácoras sin cobertura de red en obra.</p>
+<span class="font-label-code-sm text-[10px] text-tertiary/70 mt-1">hace 3 días</span>
+</div>
+</div>
+</div>
+<a class="font-body-sm text-body-sm text-secondary hover:underline inline-flex items-center gap-1 pt-1" href="#">
+<span>Ver todas las novedades</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</section>
+</div>
+</div>
+<!-- 4. TARJETA PROMO ANDROID DE CAMPO -->
+<section class="w-full p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md relative overflow-hidden">
+<div class="absolute -left-10 -bottom-10 w-48 h-48 bg-[#3ddc97]/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="absolute right-1/4 top-0 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center gap-space-md z-10 w-full md:w-auto">
+<div class="w-12 h-12 rounded-xl bg-[#3ddc97]/15 text-[#3ddc97] flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[28px]">android</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-title-md text-on-surface font-bold">Lleva ProjectWeb a la obra</h3>
+<span class="px-2 py-0.2 rounded bg-surface-container text-secondary font-label-code-sm text-[11px]">APK v0.2.19</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary truncate">
+          Reporta desde campo incluso sin conexión activa · Sincronizada con <strong class="text-on-surface">Torre Corporativa Norte</strong>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm z-10 w-full md:w-auto justify-end shrink-0">
+<button class="flex items-center gap-2 px-4 py-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-title-md text-body-sm transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-[#3ddc97]">download</span>
+<span>Descargar APK / Play Store</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-tertiary hover:text-on-surface hover:bg-surface-container transition-colors" title="Descartar anuncio" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</section>
+<!-- 5. FILA INFERIOR DE ACCESOS RÁPIDOS -->
+<nav class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-space-sm pt-space-xs">
+<a class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all group shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-secondary group-hover:scale-110 transition-transform">dashboard_customize</span>
+<span class="font-body-sm text-body-sm truncate">Plantillas de obra</span>
+</a>
+<a class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all group shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-tertiary group-hover:scale-110 transition-transform">folder_shared</span>
+<span class="font-body-sm text-body-sm truncate">Todos los proyectos</span>
+</a>
+<a class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all group shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:scale-110 transition-transform">ios_share</span>
+<span class="font-body-sm text-body-sm truncate">Centro de exportación</span>
+</a>
+<a class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all group shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-secondary-container group-hover:scale-110 transition-transform">menu_book</span>
+<span class="font-body-sm text-body-sm truncate">Manual operativo</span>
+</a>
+<a class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all group shadow-sm col-span-2 sm:col-span-1" href="#">
+<span class="material-symbols-outlined text-[18px] text-[#3ddc97] group-hover:scale-110 transition-transform">update</span>
+<span class="font-body-sm text-body-sm truncate">Novedades del sistema</span>
+</a>
+</nav>
+</div></div></main><footer class="w-full bg-surface-container-low border-t border-white/[0.08] py-space-lg"><div class="max-w-[1440px] mx-auto px-space-md flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-primary-container text-[18px]">token</span><span class="font-label-telemetry text-body-sm text-on-surface-variant">ProjectWeb Core v4.12.0-spatial // Telemetría Activa</span></div><div class="flex items-center gap-space-lg font-body-sm text-body-sm text-on-surface-variant"><a class="hover:text-on-surface transition-colors" href="#">Términos Operativos</a><a class="hover:text-on-surface transition-colors" href="#">Auditoría de Obra</a><a class="hover:text-on-surface transition-colors" href="#">Soporte BIM/GIS</a><span>© 2025 ProjectWeb Infrastructure Systems</span></div></div></footer></body></html>
