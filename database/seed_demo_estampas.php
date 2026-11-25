@@ -50,7 +50,7 @@ $cajDin = (int)$q("INSERT INTO cajetines (proyecto_id, nombre, orientacion, anch
 ], JSON_UNESCAPED_UNICODE))})");
 
 // Lámina «Last Planner del día» en el mismo vPlan que las láminas libres del demo
-$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre = 'vPlan · Sala blanca y patio de equipos' LIMIT 1")[0]['id'] ?? 0);
+$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('vPlan · NEXO Data Campus · Nave A', 'vPlan · Sala blanca y patio de equipos') ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
 if (!$paquete) $paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
 $orden = 1 + (int)($rows("SELECT COALESCE(MAX(orden),0) m FROM vplan_laminas WHERE paquete_id = $paquete")[0]['m'] ?? 0);
 $actEjemplo = (int)($rows("SELECT a.id FROM actividades a JOIN partidas p ON p.id = a.partida_id JOIN restricciones r ON r.actividad_id = a.id AND r.estado = 'activa'

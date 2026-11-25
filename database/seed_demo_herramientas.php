@@ -282,8 +282,9 @@ if ($tabla('subactividades')) {
             ['Colado y curado de losa de cubierta', -2, 2, max(0, min(90, $base - 20))],
         ];
         foreach ($hitos as [$nombre, $ini, $fin, $status]) {
-            $sql("INSERT INTO subactividades (actividad_id, nombre, fecha_inicio, fecha_fin, status)
-                VALUES ($a, {$S($nombre)}, '{$dia($ini)}', '{$dia($fin)}', " . (int)$status . ')');
+            $estado = $status >= 100 ? 'completada' : ($status > 0 ? 'en_proceso' : 'no_iniciada');
+            $sql("INSERT INTO subactividades (actividad_id, nombre, fecha_inicio, fecha_fin, progreso, status)
+                VALUES ($a, {$S($nombre)}, '{$dia($ini)}', '{$dia($fin)}', " . (int)$status . ", '$estado')");
         }
         if ($tabla('subactividad_hojas')) {
             try {
@@ -384,14 +385,14 @@ if ($tabla('redactor_plantillas')) {
 // ---------------------------------------------------------------- vPlan: notas y mapa de avance
 echo "vPlan (notas y mapa de avance)...\n";
 $laminas = [];
-foreach ($rg("SELECT l.id, l.titulo FROM vplan_laminas l JOIN vplan_paquetes p ON p.id = l.paquete_id WHERE l.proyecto_id = $pid AND p.nombre = 'vPlan · Sala blanca y patio de equipos' ORDER BY l.orden") as $l) $laminas[] = $l;
+foreach ($rg("SELECT l.id, l.titulo FROM vplan_laminas l JOIN vplan_paquetes p ON p.id = l.paquete_id WHERE l.proyecto_id = $pid AND p.nombre = 'vPlan · NEXO Data Campus · Nave A' ORDER BY l.orden") as $l) $laminas[] = $l;
 if ($laminas && $tabla('vplan_notas')) {
     $notas = [
         [0, -2, 'Se liberó el armado de acero de la losa de cubierta; falta la revisión de instalaciones ahogadas antes del colado.'],
-        [0, -1, 'Retirar el material sobrante del pasillo caliente y proteger el piso técnico recién colocado.'],
-        [1, -2, 'La muestra de cristal templado fue aprobada por el cliente; el proveedor confirma entrega en 12 días.'],
-        [1, 0, 'Coordinar el retiro del andamio de la fachada oriente con la instalación de cancelería (OC-002).'],
-        [2, -1, 'Las soldaduras de la cubierta pasaron la inspección con líquidos penetrantes; no hay hallazgos mayores.'],
+        [2, -2, 'La muestra de cristal templado fue aprobada por el cliente; el proveedor confirma entrega en 12 días.'],
+        [4, -1, 'Retirar el material sobrante del pasillo caliente y proteger el piso técnico recién colocado.'],
+        [5, -1, 'Las soldaduras de la cubierta pasaron la inspección con líquidos penetrantes; no hay hallazgos mayores.'],
+        [7, 0, 'Coordinar el retiro del andamio de la fachada oriente con la instalación de cancelería (OC-002).'],
     ];
     foreach ($notas as [$idx, $off, $texto]) {
         if (!isset($laminas[$idx])) continue;
@@ -421,7 +422,7 @@ if ($tabla('mapa_avance_capas') && $tabla('mapa_avance_instantaneas')) {
         ],
     ];
     $mapa = [];
-    foreach ([2 => 'estructura', 1 => 'fachada'] as $idx => $capa) {
+    foreach ([4 => 'estructura', 3 => 'fachada'] as $idx => $capa) {
         if (!isset($laminas[$idx])) continue;
         $lid = (int)$laminas[$idx]['id'];
         $json = json_encode(['v' => 2, 'w' => 1920, 'h' => 1080, 'shapes' => $marcas[$capa]['shapes'], 'layers' => $marcas[$capa]['layers'], 'escala' => null], JSON_UNESCAPED_UNICODE);

@@ -29,6 +29,8 @@ use Model\Actividad;
 use Model\Partida;
 use Model\Proyecto;
 
+require_once __DIR__ . '/seed_demo_materiales.php';
+
 global $db;
 $esc = fn($v) => $db->real_escape_string((string)$v);
 $q = function (string $sql) use ($db) {
@@ -361,24 +363,24 @@ $q("INSERT INTO minutas (proyecto_id, fecha, nombre, importancia, contratista_js
 
 // ---------------------------------------------------------------- materiales, submittals y MSR
 $mats = [
-    ['EST-VAR-8', 'Varilla corrugada #8 fy 4200 kg/cm²', 'Estructura', '1504307651254-35680f356dfd', 'NMX-B-457 · Certificado de molino'],
-    ['EST-IPR-01', 'Perfil estructural IPR A992 (cubierta)', 'Estructura', '1590069261209-f8e9b8642343', 'ASTM A992'],
-    ['CIV-CON-35', 'Concreto premezclado f\'c 350 kg/cm²', 'Obra civil', '1580901368919-7738efb0f87e', 'NMX-C-155 · Pruebas de cilindro'],
-    ['ELE-TAB-01', 'Tablero de distribución general 800 A', 'Instalación eléctrica', '1544724569-5f546fd6f2b5', 'NOM-001-SEDE'],
-    ['ELE-MT-15', 'Cable de media tensión 34.5 kV (acometida)', 'Instalación eléctrica', '1473341304170-971dccb5ac1e', 'NMX-J-142 · UL'],
-    ['HID-BOM-02', 'Equipo de bombeo hidroneumático', 'Hidrosanitaria', '1513828583688-c52646db42da', 'Hydraulic Institute · NOM-006'],
-    ['HID-SAN-01', 'Muebles sanitarios y grifería (juego)', 'Hidrosanitaria', '1584622650111-993a426fbf0a', 'NMX-C-407'],
-    ['VOZ-FO-12', 'Fibra óptica monomodo 12 hilos', 'Voz y datos', '1597733336794-12d05021d510', 'ITU-T G.652.D'],
-    ['VOZ-RACK-42', 'Gabinete de comunicaciones 42U', 'Voz y datos', '1558494949-ef010cbdcc31', 'EIA-310-D'],
-    ['SEG-CAM-01', 'Cámara IP domo 4MP', 'Seguridad electrónica', '1557597774-9d273605dfa9', 'UL Listed · IK10'],
-    ['SEG-ACC-01', 'Cerradura electrónica con lector de proximidad', 'Seguridad electrónica', '1558002038-1055907df827', 'FCC · CE'],
-    ['ACA-PIS-60', 'Porcelanato técnico 60x60 cm alto tránsito', 'Acabados', '1581858726788-75bc0f6a952d', 'NMX-C-358 · PEI 4'],
-    ['ACA-FAC-01', 'Cancelería de aluminio y cristal templado', 'Acabados', '1511818966892-d7d671e672a2', 'AAMA 2605'],
-    ['ENE-SOL-01', 'Paneles solares fotovoltaicos 550 W (marquesina)', 'Instalación eléctrica', '1497435334941-8c899ee9e8e9', 'IEC 61215'],
+    ['EST-VAR-8', 'Varilla corrugada #8 fy 4200 kg/cm²', 'Estructura', 'varilla', 'NMX-B-457 · Certificado de molino'],
+    ['EST-IPR-01', 'Perfil estructural IPR A992 (cubierta)', 'Estructura', 'perfil-ipr', 'ASTM A992'],
+    ['CIV-CON-35', 'Concreto premezclado f\'c 350 kg/cm²', 'Obra civil', 'concreto', 'NMX-C-155 · Pruebas de cilindro'],
+    ['ELE-TAB-01', 'Tablero de distribución general 800 A', 'Instalación eléctrica', 'tablero', 'NOM-001-SEDE'],
+    ['ELE-MT-15', 'Cable de media tensión 34.5 kV (acometida)', 'Instalación eléctrica', 'cable-mt', 'NMX-J-142 · UL'],
+    ['HID-BOM-02', 'Equipo de bombeo hidroneumático', 'Hidrosanitaria', 'bombeo', 'Hydraulic Institute · NOM-006'],
+    ['HID-SAN-01', 'Muebles sanitarios y grifería (juego)', 'Hidrosanitaria', 'sanitarios', 'NMX-C-407'],
+    ['VOZ-FO-12', 'Fibra óptica monomodo 12 hilos', 'Voz y datos', 'fibra', 'ITU-T G.652.D'],
+    ['VOZ-RACK-42', 'Gabinete de comunicaciones 42U', 'Voz y datos', 'gabinete', 'EIA-310-D'],
+    ['SEG-CAM-01', 'Cámara IP domo 4MP', 'Seguridad electrónica', 'camara', 'UL Listed · IK10'],
+    ['SEG-ACC-01', 'Cerradura electrónica con lector de proximidad', 'Seguridad electrónica', 'cerradura', 'FCC · CE'],
+    ['ACA-PIS-60', 'Porcelanato técnico 60x60 cm alto tránsito', 'Acabados', 'porcelanato', 'NMX-C-358 · PEI 4'],
+    ['ACA-FAC-01', 'Cancelería de aluminio y cristal templado', 'Acabados', 'canceleria', 'AAMA 2605'],
+    ['ENE-SOL-01', 'Paneles solares fotovoltaicos 550 W (marquesina)', 'Instalación eléctrica', 'solar', 'IEC 61215'],
 ];
 $mid = [];
-foreach ($mats as [$ref, $nombre, $esp, $imgId, $cert]) {
-    $f = $foto($imgId, 800);
+foreach ($mats as [$ref, $nombre, $esp, $clave, $cert]) {
+    $f = demo_material_imagen($clave);
     $img = $f ? Imagenes::miniatura($f) : null;
     $mid[$ref] = (int)$q("INSERT INTO materiales (proyecto_id, referencia, nombre, especialidad, imagen, certificado_calidad) VALUES ($pid, {$str($ref)}, {$str($nombre)}, {$str($esp)}, {$str($img)}, {$str($cert)})");
 }

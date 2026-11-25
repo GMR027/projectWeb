@@ -23,6 +23,8 @@
  */
 
 require_once __DIR__ . '/../includes/app.php';
+require_once __DIR__ . '/seed_demo_planos.php';
+require_once __DIR__ . '/seed_demo_materiales.php';
 if (PHP_SAPI === 'cli' && session_status() === PHP_SESSION_NONE && !headers_sent()) @session_start();   // usuario_actual() la pide al capturar líneas base
 
 use Classes\Calendario;
@@ -104,7 +106,7 @@ $q("DELETE FROM sheetflow_hojas WHERE proyecto_id = $pid");
 $q("DELETE FROM ordenes_cambio WHERE proyecto_id = $pid");
 $q("DELETE FROM lineas_base WHERE proyecto_id = $pid");
 $q("DELETE FROM msrs WHERE proyecto_id = $pid AND nombre LIKE 'MSR 2%'");
-foreach ($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre = 'vPlan · Sala blanca y patio de equipos'") as $paq) {
+foreach ($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('vPlan · Sala blanca y patio de equipos', 'vPlan · NEXO Data Campus · Nave A')") as $paq) {
     foreach ($rows("SELECT id, plano FROM vplan_laminas WHERE paquete_id = " . (int)$paq['id']) as $l) {
         Imagenes::eliminarVplan($l['plano']);
         foreach ($rows("SELECT config_json FROM vplan_bloques WHERE lamina_id = " . (int)$l['id'] . " AND tipo = 'imagen'") as $b) {
@@ -115,6 +117,7 @@ foreach ($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombr
     $q("DELETE FROM vplan_paquetes WHERE id = " . (int)$paq['id']);
 }
 $q("DELETE FROM vplan_tablas WHERE proyecto_id = $pid AND nombre_interno LIKE 'Demo · %'");
+foreach ($rows("SELECT imagen FROM materiales WHERE proyecto_id = $pid AND referencia LIKE 'NUE-%'") as $mi) if (!empty($mi['imagen'])) Imagenes::eliminar($mi['imagen']);
 $q("DELETE FROM materiales WHERE proyecto_id = $pid AND referencia LIKE 'NUE-%'");
 $q("DELETE FROM actividad_materiales WHERE material_id IN (SELECT id FROM materiales WHERE proyecto_id = $pid)");
 $nombresArchivo = ['Planta de sala blanca Nave A · Rev. A', 'Planta de sala blanca Nave A · Rev. B', 'Avance de estructura metálica · Fotografía'];
@@ -158,8 +161,18 @@ $logo = function (string $nombre, string $hexA, string $hexB, string $sub) use (
     imagepng($im, $f);
     return $f;
 };
-$logoNexo = $guardarImg($logo('NEXO', '#06b6d4', '#0e7490', 'DATA CAMPUS'), 640);
-$logoMeridian = $guardarImg($logo('MERIDIAN', '#0ea5e9', '#0f172a', 'CONSTRUCTORA'), 640);
+$logoNexoTmp = $logo('NEXO', '#06b6d4', '#0e7490', 'DATA CAMPUS');
+$logoMeridianTmp = $logo('MERIDIAN', '#0ea5e9', '#0f172a', 'CONSTRUCTORA');
+$logoNexo = $guardarImg($logoNexoTmp, 640);
+$logoMeridian = $guardarImg($logoMeridianTmp, 640);
+$logosDir = __DIR__ . '/../public/build/img/logos';
+@mkdir($logosDir, 0775, true);
+if ($logoNexoTmp && is_file($logoNexoTmp) && @copy($logoNexoTmp, $logosDir . '/demo-nexo.png')) {
+    $q("UPDATE proyectos SET contratista_logo = 'demo-nexo.png' WHERE id = $pid");
+}
+if ($logoMeridianTmp && is_file($logoMeridianTmp) && @copy($logoMeridianTmp, $logosDir . '/demo-meridian.png')) {
+    $q("UPDATE proyectos SET logo = 'demo-meridian.png' WHERE id = $pid");
+}
 
 // Planta de la sala blanca (dibujada con GD: racks, pasillos fríos/calientes, sala eléctrica y UPS) con cajetín,
 // en dos revisiones: R1 de emisión inicial y R2 con la fila nueva de racks marcada para el Comparador
@@ -252,8 +265,8 @@ if (function_exists('imagecreatetruecolor')) {
         imagedestroy($im);
         return $ruta;
     };
-    $plantaR1 = $planta('A', $GLOBALS['hoy']->format('d/m/Y'), '');
-    $plantaR2 = $planta('B', (clone $GLOBALS['hoy'])->modify('+6 days')->format('d/m/Y'), 'nota');
+    $plantaR1 = demo_plano('sala-blanca', 'A', $GLOBALS['hoy']->format('d/m/Y'));
+    $plantaR2 = demo_plano('sala-blanca', 'B', (clone $GLOBALS['hoy'])->modify('+6 days')->format('d/m/Y'));
 }
 
 // ---------------------------------------------------------------- calendario: más festivos, paros y clima
@@ -267,18 +280,20 @@ $q("INSERT INTO calendario_festivos (proyecto_id, fecha, motivo, tipo) VALUES
 // ---------------------------------------------------------------- materiales nuevos y vínculos con actividades (Planificador y cruce con el cronograma)
 echo "Materiales y cruce con el cronograma...\n";
 $nuevos = [
-    // [ref, nombre, especialidad, compra, compra_prog, compra_real, entrega_prog, entrega_real, cantidad, unidad]
-    ['NUE-CHI-250', 'Chiller enfriado por agua 250 TR', 'Aire acondicionado', 'pendiente', $dia(-9), null, '2026-12-20', null, 3, 'pza'],
-    ['NUE-ROC-01', 'Rociadores y tubería de acero cédula 40', 'Hidrosanitaria', 'comprado', $dia(-30), $dia(-28), $dia(24), null, 3200, 'm'],
-    ['NUE-CAN-01', 'Charola portacable tipo malla galvanizada', 'Voz y datos', 'comprado', $dia(-6), $dia(-5), $dia(3), null, 1450, 'm'],
-    ['NUE-LUM-01', 'Luminaria LED panel 60x60 regulable', 'Instalación eléctrica', 'pendiente', null, null, null, null, 860, 'pza'],
-    ['NUE-RACK-01', 'Rack de cómputo 42U con PDU monitoreado', 'Sala blanca', 'pendiente', $dia(12), null, '2027-01-04', null, 48, 'pza'],
-    ['NUE-DUC-01', 'Ducto de lámina galvanizada cal. 24', 'Aire acondicionado', 'comprado', $dia(-45), $dia(-44), $dia(-14), $dia(-13), 5200, 'kg'],
+    // [ref, nombre, especialidad, compra, compra_prog, compra_real, entrega_prog, entrega_real, cantidad, unidad, clave de imagen]
+    ['NUE-CHI-250', 'Chiller enfriado por agua 250 TR', 'Aire acondicionado', 'pendiente', $dia(-9), null, '2026-12-20', null, 3, 'pza', 'chiller'],
+    ['NUE-ROC-01', 'Rociadores y tubería de acero cédula 40', 'Hidrosanitaria', 'comprado', $dia(-30), $dia(-28), $dia(24), null, 3200, 'm', 'rociadores'],
+    ['NUE-CAN-01', 'Charola portacable tipo malla galvanizada', 'Voz y datos', 'comprado', $dia(-6), $dia(-5), $dia(3), null, 1450, 'm', 'charola'],
+    ['NUE-LUM-01', 'Luminaria LED panel 60x60 regulable', 'Instalación eléctrica', 'pendiente', null, null, null, null, 860, 'pza', 'luminaria'],
+    ['NUE-RACK-01', 'Rack de cómputo 42U con PDU monitoreado', 'Sala blanca', 'pendiente', $dia(12), null, '2027-01-04', null, 48, 'pza', 'rack'],
+    ['NUE-DUC-01', 'Ducto de lámina galvanizada cal. 24', 'Aire acondicionado', 'comprado', $dia(-45), $dia(-44), $dia(-14), $dia(-13), 5200, 'kg', 'ducto'],
 ];
 $mn = [];
-foreach ($nuevos as [$ref, $nom, $esp, $compra, $cp, $cr, $ep, $er, $cant, $uni]) {
-    $mn[$ref] = (int)$q("INSERT INTO materiales (proyecto_id, referencia, nombre, especialidad, compra, fecha_compra_prog, fecha_compra_real, fecha_entrega_prog, fecha_entrega_real, cantidad, unidad)
-        VALUES ($pid, {$str($ref)}, {$str($nom)}, {$str($esp)}, '$compra', {$str($cp)}, {$str($cr)}, {$str($ep)}, {$str($er)}, $cant, {$str($uni)})");
+foreach ($nuevos as [$ref, $nom, $esp, $compra, $cp, $cr, $ep, $er, $cant, $uni, $claveImg]) {
+    $fImg = demo_material_imagen($claveImg);
+    $imgMat = $fImg ? Imagenes::miniatura($fImg) : null;
+    $mn[$ref] = (int)$q("INSERT INTO materiales (proyecto_id, referencia, nombre, especialidad, compra, fecha_compra_prog, fecha_compra_real, fecha_entrega_prog, fecha_entrega_real, cantidad, unidad, imagen)
+        VALUES ($pid, {$str($ref)}, {$str($nom)}, {$str($esp)}, '$compra', {$str($cp)}, {$str($cr)}, {$str($ep)}, {$str($er)}, $cant, {$str($uni)}, {$str($imgMat)})");
 }
 $q("INSERT IGNORE INTO especialidades (proyecto_id, nombre) SELECT DISTINCT proyecto_id, especialidad FROM materiales WHERE proyecto_id = $pid AND especialidad <> ''");
 // La cancelería de fachada (ya en el catálogo) tiene la compra vencida: arrastra el inicio de la fachada
@@ -638,65 +653,215 @@ $vincular('CSI 08 44 00', 'Muestras', 'actividad', $act('4.4'), 'Muestra física
 $vincular('PRO-SEG-01', 'Permisos', 'actividad', $act('3.5'), 'Permiso de trabajo en altura firmado y vigente para cada turno.', 'manual', 'aceptada');
 $vincular('PRO-SEG-01', 'Andamios', 'actividad', $act('4.4'), 'Andamios con barandales y tarjeta verde; redes revisadas a diario.', 'manual', 'aceptada');
 
-// ---------------------------------------------------------------- vPlan: láminas libres de un paquete propio
-echo "vPlan...\n";
-$paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'vPlan · Sala blanca y patio de equipos', 1)");
-$planoL1 = $guardarImg($plantaR2 ?: $fotoPlanos, 2400);
-$planoL2 = $guardarImg($fotoEstr ?: $fotoGrua, 2400);
-$planoL3 = $guardarImg($fotoAcero ?: $fotoCampo, 2400);
-$laminas = [
-    ['SALA BLANCA · PLANTA DE RACKS Y PASILLOS', '3.0', $planoL1, 'Sala blanca', 2, [['3.3'], ['3.4']]],
-    ['PATIO DE EQUIPOS · CHILLERS Y GENERADORES', '7.0', $planoL2, 'Enfriamiento', 2, [['7.3', '7.4']]],
-    ['CUBIERTA TÉCNICA · DUCTERÍA Y CHAROLAS', '3.0', $planoL3, 'Estructura', 1, [['3.5', '3.6', '8.1']]],
-];
-$tPunch = (int)$q("INSERT INTO vplan_tablas (proyecto_id, titulo, nombre_interno, tipo) VALUES ($pid, 'PUNCH LIST · SALA BLANCA', 'Demo · Punch list sala blanca', 'punch')");
-foreach ([['Corregir nivelación de piso técnico en pasillo frío A-3', -4, 2, 60], ['Resanar y pintar muro cortafuego del eje C', -1, 4, 25], ['Ajustar puertas cortafuego del cuarto de UPS', 0, 6, 0], ['Limpieza y retiro de escombro de la Nave A', 1, 3, 10]] as $i => [$d, $o, $f, $pct])
-    $q("INSERT INTO vplan_tabla_filas (tabla_id, orden, datos) VALUES ($tPunch, $i, {$str(json_encode(['descripcion' => $d, 'inicio' => $dia($o), 'fin' => $dia($o + $f), 'pct' => $pct], JSON_UNESCAPED_UNICODE))})");
-$tSec = (int)$q("INSERT INTO vplan_tablas (proyecto_id, titulo, nombre_interno, tipo) VALUES ($pid, 'ACTIVIDADES SECUNDARIAS', 'Demo · Secundarias patio de equipos', 'secundarias')");
-foreach ([['Anclaje de chillers en plataforma', $dia(40), $dia(46), 'espera'], ['Prueba de estanqueidad de agua helada', $dia(48), $dia(50), 'espera'], ['Montaje de torres de enfriamiento', $dia(30), $dia(36), 'proceso']] as $i => [$e, $f, $r, $est])
-    $q("INSERT INTO vplan_tabla_filas (tabla_id, orden, datos) VALUES ($tSec, $i, {$str(json_encode(['elemento' => $e, 'fecha' => $f, 'recovery' => $r, 'estado' => $est], JSON_UNESCAPED_UNICODE))})");
-$tRestr = (int)($rows("SELECT id FROM vplan_tablas WHERE proyecto_id = $pid AND tipo = 'restricciones' LIMIT 1")[0]['id'] ?? 0);
-$orden = 0;
-foreach ($laminas as $i => [$titulo, $codPartida, $plano, $grupo, $recN, $fuentes]) {
-    $l = (int)$q("INSERT INTO vplan_laminas (proyecto_id, paquete_id, partida_id, titulo, supervisor, ancho_mm, alto_mm, preset, recovery_n, restr_auto, plano, orden, grupo)
-        VALUES ($pid, $paquete, {$partidaId($codPartida)}, {$str($titulo)}, 'Valeria Sotomayor', 432, 279, 'tabloide', $recN, 1, {$str($plano)}, " . (++$orden) . ", {$str($grupo)})");
-    foreach (array_merge(...$fuentes) as $cod) if ($a = $act($cod)) $q("INSERT IGNORE INTO vplan_lamina_actividades (lamina_id, actividad_id) VALUES ($l, $a)");
-    if ($i < 2) $q("INSERT INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($l, $tPunch, 1)");
-    if ($i === 1) $q("INSERT INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($l, $tSec, 2)");
-    if ($i === 0 && $tRestr) $q("INSERT IGNORE INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($l, $tRestr, 2)");
-}
-// Lámina 3: la tabla de colados sale en vivo de SheetFlow
-$lam3 = (int)$rows("SELECT id FROM vplan_laminas WHERE paquete_id = $paquete ORDER BY orden DESC LIMIT 1")[0]['id'];
-$vt = Sheetflow::aVplan($sfCol);
-$q("INSERT IGNORE INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($lam3, " . (int)$vt->id . ', 1)');
-$q("UPDATE vplan_tablas SET nombre_interno = 'Demo · Control de colados' WHERE id = " . (int)$vt->id);
-foreach ($rows("SELECT id FROM vplan_laminas WHERE paquete_id = $paquete ORDER BY orden") as $l) {
-    \Model\VplanLamina::find((int)$l['id'])->bloques();   // arma el diseño libre de bloques (títulos, plano, tareas, tablas, simbología, supervisor…)
-}
+// ---------------------------------------------------------------- vPlan: paquete técnico del demo
+echo "vPlan técnico...\n";
+$paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'vPlan · NEXO Data Campus · Nave A', 1)");
+$fechaPlan = $hoy->format('d/m/Y');
 
-// Lámina libre con cajetín, texto y plano de localización (bloques colocados a mano, en % de la hoja)
-$l4 = (int)$q("INSERT INTO vplan_laminas (proyecto_id, paquete_id, partida_id, titulo, supervisor, ancho_mm, alto_mm, preset, recovery_n, restr_auto, plano, orden, grupo)
-    VALUES ($pid, $paquete, NULL, 'PLANO DE LOCALIZACIÓN Y LOGÍSTICA', 'Valeria Sotomayor', 432, 279, 'tabloide', 0, 0, {$str($guardarImg($fotoGrua, 2400))}, 4, 'Obra')");
+// Planos (GD, sin red). Los mismos de Rev. A/B alimentan el Comparador del Archivo.
+$imgSala = $guardarImg(demo_plano('sala-blanca', 'B', $fechaPlan), 2400);
+$imgCorte = $guardarImg(demo_plano('corte', 'B', $fechaPlan), 2400);
+$imgAlzado = $guardarImg(demo_plano('alzado', 'B', $fechaPlan), 2400);
+$imgPatio = $guardarImg(demo_plano('patio', 'B', $fechaPlan), 2400);
+$imgInst = $guardarImg(demo_plano('instalaciones', 'B', $fechaPlan), 2400);
+$imgDet = $guardarImg(demo_plano('detalles', 'B', $fechaPlan), 2400);
+$imgAcab = $guardarImg(demo_plano('acabados', 'B', $fechaPlan), 2400);
+$imgLoc = $guardarImg(demo_plano('localizacion', 'B', $fechaPlan), 2400);
+
 $cmX = fn(float $cm) => round($cm / 43.2 * 100, 3);
 $cmY = fn(float $cm) => round($cm / 27.9 * 100, 3);
-$bl = [
-    ['logo', 1.0, 0.9, 8.2, 3.0, ['cual' => 'contratista', 'alinear' => 'izquierda']],
-    ['titulo', 9.2, 0.9, 24.7, 3.0, []],
-    ['logo', 33.9, 0.9, 8.2, 3.0, ['cual' => 'empresa', 'alinear' => 'derecha']],
-    ['plano', 1.0, 4.1, 30.5, 21.4, []],
-    ['cajetin', 32.2, 4.1, 9.9, 13.5, ['cajetin_id' => $cajetinVert]],
-    ['texto', 32.2, 18.2, 9.9, 7.3, ['texto' => "Notas de logística\n• Acceso de camiones por la calle norte.\n• Zona de acopio de acero junto a la grúa.\n• Descarga de equipos solo de 6:00 a 9:00.\n• Punto de reunión en el estacionamiento.", 'tamano' => 10, 'negrita' => false, 'color' => '#0f172a', 'alinear' => 'izquierda']],
-    ['supervisor', 1.0, 26.35, 20.0, 0.7, []],
-    ['fecha', 21.2, 26.35, 20.9, 0.7, []],
-];
-foreach ($bl as $z => [$tipo, $x, $y, $w, $h, $cfg]) {
-    $b = new \Model\VplanBloque(['lamina_id' => $l4, 'tipo' => $tipo, 'x' => $cmX($x), 'y' => $cmY($y), 'w' => $cmX($w), 'h' => $cmY($h), 'z' => $z]);
+$blk = function (int $lam, string $tipo, float $x, float $y, float $w, float $h, array $cfg = [], int $z = 0) use ($cmX, $cmY): void {
+    $b = new \Model\VplanBloque(['lamina_id' => $lam, 'tipo' => $tipo, 'x' => $cmX($x), 'y' => $cmY($y), 'w' => $cmX($w), 'h' => $cmY($h), 'z' => $z]);
     $b->setConfig($cfg);
     $b->guardar();
-}
+};
+$cab = function (int $lam, string $titulo) use ($blk): void {
+    $blk($lam, 'logo', 1.0, 0.8, 8.2, 2.6, ['cual' => 'contratista', 'alinear' => 'izquierda'], 0);
+    $blk($lam, 'titulo', 9.2, 0.8, 24.7, 2.6, ['texto' => $titulo], 1);
+    $blk($lam, 'logo', 33.9, 0.8, 8.2, 2.6, ['cual' => 'empresa', 'alinear' => 'derecha'], 2);
+};
+$pie = function (int $lam) use ($blk): void {
+    $blk($lam, 'supervisor', 1.0, 26.4, 20.0, 0.7, [], 90);
+    $blk($lam, 'fecha', 21.2, 26.4, 20.9, 0.7, [], 91);
+};
+$nueva = function (string $titulo, string $grupo, ?string $plano, int $rec, int $restr, ?int $partida = null) use ($q, $str, $pid, $paquete, &$orden): int {
+    return (int)$q("INSERT INTO vplan_laminas (proyecto_id, paquete_id, partida_id, titulo, supervisor, ancho_mm, alto_mm, preset, recovery_n, restr_auto, plano, orden, grupo)
+        VALUES ($pid, $paquete, " . ($partida ?: 'NULL') . ", {$str($titulo)}, 'Valeria Sotomayor', 432, 279, 'tabloide', $rec, $restr, " . ($plano ? $str($plano) : 'NULL') . ", " . (++$orden) . ", {$str($grupo)})");
+};
+$tabla = function (string $titulo, string $interno, string $tipo, array $columnas, array $filas, bool $claves = false) use ($q, $str, $pid): int {
+    $id = (int)$q("INSERT INTO vplan_tablas (proyecto_id, titulo, nombre_interno, tipo, columnas_json) VALUES ($pid, {$str($titulo)}, {$str($interno)}, '$tipo', " . ($columnas ? $str(json_encode($columnas, JSON_UNESCAPED_UNICODE)) : 'NULL') . ')');
+    foreach ($filas as $i => $f) {
+        $datos = $f;
+        if (!$claves) {
+            $datos = [];
+            foreach (array_values($f) as $j => $v) $datos['c' . $j] = $v;
+        }
+        $q("INSERT INTO vplan_tabla_filas (tabla_id, orden, datos) VALUES ($id, $i, {$str(json_encode($datos, JSON_UNESCAPED_UNICODE))})");
+    }
+    return $id;
+};
+$unir = function (int $lam, int $tabla) use ($q): void {
+    $q("INSERT IGNORE INTO vplan_lamina_tablas (lamina_id, tabla_id, orden) VALUES ($lam, $tabla, 1)");
+};
 
-// Estampas inteligentes y lámina «Last Planner del día» (también se puede correr solo: php database/seed_demo_estampas.php)
+// Tablas adicionales
+$tPunch = $tabla('PUNCH LIST · SALA BLANCA', 'Demo · Punch list sala blanca', 'punch', [], [
+    ['descripcion' => 'Corregir nivelación de piso técnico en pasillo frío A-3', 'inicio' => $dia(-4), 'fin' => $dia(2), 'pct' => 60],
+    ['descripcion' => 'Resanar y pintar muro cortafuego del eje C', 'inicio' => $dia(-1), 'fin' => $dia(4), 'pct' => 25],
+    ['descripcion' => 'Ajustar puertas cortafuego del cuarto de UPS', 'inicio' => $dia(0), 'fin' => $dia(6), 'pct' => 0],
+    ['descripcion' => 'Limpieza y retiro de escombro de la Nave A', 'inicio' => $dia(1), 'fin' => $dia(3), 'pct' => 10],
+    ['descripcion' => 'Sellar paso de charolas en muro de sala eléctrica', 'inicio' => $dia(-2), 'fin' => $dia(3), 'pct' => 40],
+], true);
+$tEquipos = $tabla('PROGRAMA DE EQUIPOS · PATIO', 'Demo · Programa de equipos', 'otro',
+    ['Equipo', 'Servicio', 'Capacidad', 'Cant.', 'Ubicación', 'Estado'], [
+    ['CH-01…03', 'Chiller enfriado por agua', '250 TR', '3', 'Patio oriente', 'En montaje'],
+    ['CT-01…02', 'Torre de enfriamiento', '300 TR', '2', 'Azotea', 'En tránsito'],
+    ['BC-01…04', 'Bomba centrífuga', '120 m³/h', '4', 'Cuarto de bombas', 'Instalada'],
+    ['GEN-01…02', 'Generador diésel', '2.5 MW', '2', 'Patio norte', 'En pruebas'],
+    ['TR-01…02', 'Transformador', '2,500 kVA', '2', 'Subestación', 'Instalado'],
+    ['TG-01…04', 'Tablero general', '800 A', '4', 'Sala eléctrica', 'En montaje'],
+    ['TQ-01', 'Tanque de diésel', '20,000 L', '1', 'Patio norte', 'Instalado'],
+]);
+$tPuertas = $tabla('PUERTAS Y CANCELERÍA', 'Demo · Puertas y cancelería', 'otro',
+    ['Clave', 'Tipo', 'Medidas', 'Cant.'], [
+    ['P-01', 'Puerta cortafuego 90 min', '1.20 × 2.40', '6'],
+    ['P-02', 'Puerta de acceso principal', '2.40 × 2.60', '2'],
+    ['P-03', 'Puerta de servicio', '1.00 × 2.20', '4'],
+    ['C-01', 'Muro cortina', '6.00 × 4.50', '2'],
+    ['C-02', 'Ventana fija', '2.00 × 1.20', '8'],
+    ['H-01', 'Rejilla de ventilación', '1.00 × 0.60', '12'],
+]);
+$tMat = $tabla('MATERIALES Y ACABADOS', 'Demo · Materiales y acabados', 'otro',
+    ['Código', 'Material', 'Cantidad', 'Estado'], [
+    ['M-01', 'Piso técnico modular', '1,850 m²', 'En proceso'],
+    ['M-02', 'Pintura epóxica', '3,200 m²', 'Pendiente'],
+    ['M-03', 'Plafón acústico', '480 m²', 'Pendiente'],
+    ['M-04', 'Porcelanato técnico', '320 m²', 'En proceso'],
+    ['M-05', 'Sello cortafuego', '180 pza', 'En proceso'],
+    ['M-06', 'Concreto pulido', '620 m²', 'Instalado'],
+    ['M-07', 'Cancelería de aluminio', '620 m²', 'En proceso'],
+    ['M-08', 'Pintura intumescente', '2,100 m²', 'Pendiente'],
+    ['M-09', 'Impermeabilización', '2,400 m²', 'Pendiente'],
+    ['M-10', 'Porcelanato exterior', '260 m²', 'Pendiente'],
+    ['M-11', 'Muro cortina', '1,240 m²', 'En proceso'],
+    ['M-12', 'Señalización de evacuación', '96 pza', 'Pendiente'],
+]);
+$tSec = $tabla('ACTIVIDADES SECUNDARIAS', 'Demo · Secundarias patio', 'secundarias', [], [
+    ['elemento' => 'Anclaje de chillers en plataforma', 'fecha' => $dia(40), 'recovery' => $dia(46), 'estado' => 'espera'],
+    ['elemento' => 'Prueba de estanqueidad de agua helada', 'fecha' => $dia(48), 'recovery' => $dia(50), 'estado' => 'espera'],
+    ['elemento' => 'Montaje de torres de enfriamiento', 'fecha' => $dia(30), 'recovery' => $dia(36), 'estado' => 'proceso'],
+    ['elemento' => 'Sellos cortafuego en muros de sala blanca', 'fecha' => $dia(18), 'recovery' => $dia(22), 'estado' => 'completo'],
+], true);
+$tLog = $tabla('ZONAS LOGÍSTICAS', 'Demo · Zonas logísticas', 'otro',
+    ['Clave', 'Zona', 'Estado'], [
+    ['A-01', 'Acceso principal', 'Abierto'],
+    ['A-02', 'Acopio de acero', 'Habilitado'],
+    ['A-03', 'Oficinas y vestidores', 'Habilitado'],
+    ['A-04', 'Residuos y escombro', 'Habilitado'],
+    ['A-05', 'Grúa torre', 'Operando'],
+]);
+
+$tColados = $tabla('CONTROL DE COLADOS', 'Demo · Control de colados', 'otro',
+    ['Fecha', 'Elemento', 'Volumen m³', 'Resistencia', 'Revenimiento', 'Resultado'], [
+    [$dia(-12), 'Losa de cubierta técnica', '210', '350 kg/cm²', '12 cm', 'Aprobado'],
+    [$dia(-7), 'Columnas eje C-4', '18', '350 kg/cm²', '11 cm', 'Aprobado'],
+    [$dia(-3), 'Losa de sala blanca', '185', '350 kg/cm²', '13 cm', 'Aprobado'],
+    [$dia(1), 'Dados de anclaje', '12', '300 kg/cm²', '12 cm', 'En prueba'],
+    [$dia(4), 'Muro cortafuego', '34', '300 kg/cm²', '12 cm', 'Pendiente'],
+]);
+$vtCol = Sheetflow::aVplan($sfCol);
+$q("UPDATE vplan_tablas SET nombre_interno = 'Demo · Control de colados' WHERE id = " . (int)$vtCol->id);
+
+// 1. Planta arquitectónica
+$l1 = $nueva('PLANTA ARQUITECTÓNICA · SALA BLANCA', 'Arquitectura', $imgSala, 0, 0, $partidaId('9.0'));
+$cab($l1, "NEXO DATA CAMPUS\nPLANTA ARQUITECTÓNICA · SALA BLANCA");
+$blk($l1, 'plano', 1.0, 3.8, 28.0, 18.3, [], 5);
+$blk($l1, 'texto', 30.0, 3.8, 12.2, 7.5, ['texto' => "ALCANCE DE LA LÁMINA\n• Sala blanca de 48 racks en 4 pods.\n• Pasillos fríos con suministro por piso técnico.\n• Retorno por plenum y CRAC N+1.\n• Salas eléctrica, UPS, telecom y almacén.", 'tamano' => 8, 'color' => '#334155', 'alinear' => 'izquierda'], 10);
+$blk($l1, 'tabla', 30.0, 12.0, 12.2, 7.5, ['tabla_id' => $tPunch], 11);
+$unir($l1, $tPunch);
+$blk($l1, 'schedule', 30.0, 20.2, 12.2, 4.5, [], 12);
+$pie($l1);
+
+// 2. Corte
+$l2 = $nueva('CORTE TRANSVERSAL A-A · SALA BLANCA', 'Arquitectura', $imgCorte, 0, 0, $partidaId('3.0'));
+$cab($l2, "NEXO DATA CAMPUS\nCORTE TRANSVERSAL A-A · SALA BLANCA");
+$blk($l2, 'plano', 1.0, 3.8, 41.2, 17.5, [], 5);
+$blk($l2, 'tabla', 1.0, 21.6, 41.2, 4.4, ['tabla_id' => $tColados], 10);
+$unir($l2, $tColados);
+$pie($l2);
+
+// 3. Alzado
+$l3 = $nueva('ALZADO SUR · MURO CORTINA', 'Arquitectura', $imgAlzado, 0, 0, $partidaId('4.0'));
+$cab($l3, "NEXO DATA CAMPUS\nALZADO SUR · MURO CORTINA");
+$blk($l3, 'plano', 1.0, 3.8, 31.0, 13.1, [], 5);
+$blk($l3, 'tabla', 32.5, 10.6, 9.7, 9.6, ['tabla_id' => $tPuertas], 11);
+$unir($l3, $tPuertas);
+$blk($l3, 'texto', 1.0, 17.5, 31.0, 7.0, ['texto' => "ESPECIFICACIONES DE FACHADA\n• Cristal templado de 10 mm con control solar y sello EPDM.\n• Aluminio anodizado, modulación de 1.50 m y anclaje a losa.\n• Pruebas de hermeticidad al agua por muestreo antes de retirar andamio.\n• Garantía de 10 años en perfiles y cristal.", 'tamano' => 8, 'color' => '#334155', 'alinear' => 'izquierda'], 12);
+$blk($l3, 'schedule', 32.5, 20.6, 9.7, 4.8, [], 13);
+$pie($l3);
+
+// 4. Patio de equipos
+$l4 = $nueva('PLANTA DE EQUIPOS · PATIO DE ENFRIAMIENTO', 'Instalaciones', $imgPatio, 0, 0, $partidaId('7.0'));
+$cab($l4, "NEXO DATA CAMPUS\nPLANTA DE EQUIPOS · PATIO DE ENFRIAMIENTO");
+$blk($l4, 'plano', 1.0, 3.8, 22.0, 18.3, [], 5);
+$blk($l4, 'tabla', 23.5, 3.8, 18.2, 12.5, ['tabla_id' => $tEquipos], 10);
+$unir($l4, $tEquipos);
+$blk($l4, 'tareas', 23.5, 16.8, 18.2, 5.0, ['fuentes' => [['partida' => $partidaId('7.0'), 'actividades' => null]], 'seq' => 'continuo', 'titulo' => 'MONTAJE'], 11);
+$blk($l4, 'schedule', 23.5, 22.3, 18.2, 3.5, [], 12);
+$pie($l4);
+
+// 5. Planta de instalaciones
+$l5 = $nueva('PLANTA DE INSTALACIONES · HVAC, ELÉCTRICA Y DATOS', 'Instalaciones', $imgInst, 0, 0, $partidaId('7.0'));
+$cab($l5, "NEXO DATA CAMPUS\nPLANTA DE INSTALACIONES · HVAC, ELÉCTRICA Y DATOS");
+$blk($l5, 'plano', 1.0, 3.8, 41.2, 22.0, [], 5);
+$pie($l5);
+
+// 6. Detalles
+$l6 = $nueva('DETALLES CONSTRUCTIVOS', 'Detalles', $imgDet, 0, 0, $partidaId('9.0'));
+$cab($l6, "NEXO DATA CAMPUS\nDETALLES CONSTRUCTIVOS");
+$blk($l6, 'plano', 1.0, 3.8, 28.0, 17.2, [], 5);
+$blk($l6, 'texto', 29.5, 3.8, 12.7, 16.2, ['texto' => "ESPECIFICACIONES\n• Pedestal de acero galvanizado con nivelación ±25 mm.\n• Anclaje químico M12 en losa de concreto f'c 350 kg/cm².\n• Sello cortafuego de 2 h en cada penetración.\n• Aislador de vibración en bases de chiller.\n• Placa de acero y perno M16 para anclaje sísmico.\n\nSECUENCIA\n1. Trazo y nivelación del pedestal.\n2. Anclaje de stringers y paneles.\n3. Sello de penetraciones antes de cerrar.\n4. Prueba de carga y liberación.", 'tamano' => 8, 'color' => '#334155', 'alinear' => 'izquierda'], 11);
+$blk($l6, 'schedule', 29.5, 20.6, 12.7, 5.0, [], 12);
+$pie($l6);
+
+// 7. Materiales y acabados
+$l7 = $nueva('MATERIALES Y ACABADOS', 'Acabados', $imgAcab, 0, 0, $partidaId('9.0'));
+$cab($l7, "NEXO DATA CAMPUS\nMATERIALES Y ACABADOS");
+$blk($l7, 'plano', 1.0, 3.8, 17.5, 13.0, [], 5);
+$fotos = [
+    ['porcelanato', 'M-01 · PISO TÉCNICO'], ['concreto', 'M-06 · CONCRETO PULIDO'],
+    ['varilla', 'M-08 · ACERO DE REFUERZO'], ['perfil-ipr', 'M-08 · PERFIL A992'],
+    ['canceleria', 'M-07 · CANCELERÍA'], ['solar', 'M-09 · FOTOVOLTAICO'],
+    ['ducto', 'HVAC · DUCTO GALVANIZADO'], ['charola', 'DATOS · CHAROLA'],
+    ['rack', 'M-01 · RACK 42U'], ['luminaria', 'M-03 · LUMINARIA LED'],
+    ['fibra', 'M-11 · FIBRA ÓPTICA'], ['rociadores', 'M-05 · ROCIADORES'],
+];
+$colX = [19.0, 24.9, 30.8, 36.7];
+$rowY = [3.8, 8.2, 12.6];
+foreach ($fotos as $i => [$clave, $label]) {
+    $arch = $guardarImg(demo_material_imagen($clave), 900);
+    $x = $colX[$i % 4];
+    $y = $rowY[intdiv($i, 4)];
+    $blk($l7, 'imagen', $x, $y, 5.6, 3.8, ['archivo' => $arch, 'nombre' => $label, 'alinear' => 'centro'], 10 + $i * 2);
+    $blk($l7, 'texto', $x, $y + 3.9, 5.6, 0.5, ['texto' => $label, 'tamano' => 6.5, 'color' => '#334155', 'alinear' => 'centro'], 11 + $i * 2);
+}
+$blk($l7, 'tabla', 1.0, 17.4, 41.2, 7.6, ['tabla_id' => $tMat], 60);
+$unir($l7, $tMat);
+$pie($l7);
+
+// 8. Localización y logística
+$l8 = $nueva('PLANO DE LOCALIZACIÓN Y LOGÍSTICA', 'Obra', $imgLoc, 0, 0, $partidaId('1.0'));
+$cab($l8, "NEXO DATA CAMPUS\nPLANO DE LOCALIZACIÓN Y LOGÍSTICA");
+$blk($l8, 'plano', 1.0, 3.8, 30.0, 19.6, [], 5);
+$blk($l8, 'tabla', 31.5, 3.8, 10.7, 10.0, ['tabla_id' => $tLog], 11);
+$unir($l8, $tLog);
+$blk($l8, 'schedule', 31.5, 14.5, 10.7, 5.0, [], 12);
+$pie($l8);
+
+// Estampas inteligentes y lámina «Last Planner del día» (se agrega al final del paquete)
 require __DIR__ . '/seed_demo_estampas.php';
+
+
 
 // El demo solo muestra el MSR configurable (el «MSR 1» clásico se quita; seed_demo.php lo vuelve a crear)
 $q("DELETE FROM msrs WHERE proyecto_id = $pid AND nombre = 'MSR 1'");
