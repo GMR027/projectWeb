@@ -1,4 +1,4 @@
--- vPlan: notas por lámina (la fecha se pone sola al crearlas)
+-- Vplan: notas por lámina (la fecha se pone sola al crearlas)
 CREATE TABLE IF NOT EXISTS vplan_notas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lamina_id INT NOT NULL,

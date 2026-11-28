@@ -50,6 +50,11 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             <?php endforeach; ?>
         </div>
         <label class="exp-nomen-cod text-sm"><input type="checkbox" id="nom-cod" checked> Incluir el código y la empresa del proyecto después del nombre</label>
+        <div class="exp-fecha-emision">
+            <label for="exp-fecha">Fecha de emisión <input type="date" id="exp-fecha" value="<?php echo s($fechaExportacion); ?>"></label>
+            <label class="text-sm"><input type="checkbox" id="exp-corte"<?php echo $corteVisible ? ' checked' : ''; ?>> Mostrar «Corte» en el documento</label>
+        </div>
+        <p class="text-sm text-muted exp-fecha-nota">Se usa para el nombre del archivo, Lookahead, Vplan, Línea de tiempo, curvas, MSR y presupuesto. No modifica las fechas ni el avance del proyecto.</p>
         <p class="exp-nomen-vista text-sm">Así quedará: <strong class="mono" id="exp-nomen-ejemplo"></strong></p>
     </section>
 
@@ -68,7 +73,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
                         'presupuesto' => ['Presupuesto · Catálogo de conceptos (PDF)', 'conceptos'],
                         'la_pdf' => ['Lookahead · PDF', 'lookahead'], 'la_xlsx' => ['Lookahead · Excel', 'lookahead'],
                         'msr_pdf' => ['MSR · PDF', 'msr'], 'msr_xlsx' => ['MSR · Excel', 'msr'],
-                        'curvas' => ['Curvas de productividad · PDF', 'curvas'], 'vplan' => ['vPlan · PDF', 'vplan'],
+                        'curvas' => ['Curvas de productividad · PDF', 'curvas'], 'vplan' => ['Vplan · PDF', 'vplan'],
                     ] as $k => [$etq, $tool]): if (!herramienta_permitida($tool)) continue; if ($k === 'presupuesto' && !\Classes\Conceptos::disponible()) continue; ?>
                         <label><input type="checkbox" name="incluir[]" value="<?php echo $k; ?>" checked> <span><?php echo s($etq); ?></span></label>
                     <?php endforeach; ?>
@@ -143,24 +148,24 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
 
         <div class="exportador-card"<?php echo herramienta_permitida('vplan') ? '' : ' hidden'; ?>>
             <div class="exportador-icono pdf">🗺️</div>
-            <h4>vPlan · láminas</h4>
+            <h4>Vplan · láminas</h4>
             <p class="text-sm text-muted">Plano con tablas del programa, recovery y tablas adicionales. Una lámina por página, con el tamaño de hoja de cada una. «Todas» lleva solo las láminas <strong>visibles</strong>.</p>
             <form method="POST" action="/exportar/generar">
                 <input type="hidden" name="proyecto_id" value="<?php echo s($proyecto->id); ?>">
                 <input type="hidden" name="formato" value="vplan">
-                <label class="text-sm text-muted" for="vp_paquete">vPlan</label>
+                <label class="text-sm text-muted" for="vp_paquete">Vplan</label>
                 <select id="vp_paquete" name="paquete_id">
-                    <option value="0">Todos los vPlan</option>
+                    <option value="0">Todos los Vplan</option>
                     <?php foreach ($paquetesVplan as $pv): ?><option value="<?php echo s($pv->id); ?>"<?php echo (int)$vplanElegido === (int)$pv->id ? ' selected' : ''; ?>><?php echo s($pv->nombre); ?> (<?php echo (int)$pv->visibles; ?> visible(s))</option><?php endforeach; ?>
                 </select>
                 <input type="hidden" name="lamina_id" value="todas">
                 <?php if (count($laminasVplan) > 1): ?>
-                    <?php echo $casillas('lamina_ids[]', 'Láminas', array_map(fn($lv) => [$lv->id, $lv->titulo . ((int)$lv->visible ? '' : ' (oculta)'), false], $laminasVplan), 'Sin marcar ninguna se exportan todas las visibles del vPlan elegido. Con varias marcadas, se entregan juntas en un solo PDF.'); ?>
+                    <?php echo $casillas('lamina_ids[]', 'Láminas', array_map(fn($lv) => [$lv->id, $lv->titulo . ((int)$lv->visible ? '' : ' (oculta)'), false], $laminasVplan), 'Sin marcar ninguna se exportan todas las visibles del Vplan elegido. Con varias marcadas, se entregan juntas en un solo PDF.'); ?>
                 <?php elseif ($laminasVplan): ?>
                     <input type="hidden" name="lamina_ids[]" value="<?php echo s($laminasVplan[0]->id); ?>">
                 <?php endif; ?>
-                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="vPlan" placeholder="Nombre base" required>
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar vPlan</button>
+                <input aria-label="Nombre del archivo a exportar" type="text" name="nombre_base" value="Vplan" placeholder="Nombre base" required>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-file-pdf"></i> Exportar Vplan</button>
             </form>
         </div>
 
@@ -434,6 +439,11 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
         piezas[el.dataset.pieza] = { tipo: el.querySelector('[data-tipo]'), texto: el.querySelector('[data-valor-texto]'), numBox: el.querySelector('[data-valor-num]'), num: el.querySelector('[data-valor-num] input') };
     });
     const cod = document.getElementById('nom-cod');
+    const fechaInput = document.getElementById('exp-fecha');
+    const corteCheck = document.getElementById('exp-corte');
+    const hoyISO = () => { const d = new Date(), p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+    const fechaRef = () => /^\d{4}-\d{2}-\d{2}$/.test(fechaInput?.value || '') ? fechaInput.value : hoyISO();
+    const lunesISO = (f) => { const d = new Date(f + 'T12:00:00'), dia = (d.getDay() + 6) % 7; d.setDate(d.getDate() - dia); const p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
     const memoria = { get() { try { return JSON.parse(localStorage.getItem(clave) || 'null'); } catch (_) { return null; } }, set(v) { try { localStorage.setItem(clave, JSON.stringify(v)); } catch (_) {} } };
 
     const leer = () => ({
@@ -447,7 +457,7 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
         cod.checked = c.cod !== false;
     };
     const pad = (n) => String(Math.max(1, parseInt(n, 10) || 1)).padStart(3, '0');
-    const fecha = (dmy) => { const d = new Date(), p = (n) => String(n).padStart(2, '0'); return dmy ? p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear() : d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+    const fecha = (dmy) => { const d = new Date(fechaRef() + 'T12:00:00'), p = (n) => String(n).padStart(2, '0'); return dmy ? p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear() : d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
     const pieza = (p) => ({ fecha_ymd: () => fecha(false), fecha_dmy: () => fecha(true), numerador: () => pad(p.num), texto: () => (p.texto.trim() ? slug(p.texto) : '') }[p.tipo] || (() => ''))();
     const nombre = (base, ext, curva) => {
         const c = leer();
@@ -489,6 +499,27 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
     panel.addEventListener('change', refrescar);
     formularios.forEach((f) => { f.addEventListener('input', refrescar); f.addEventListener('change', refrescar); });
 
+    // La fecha de emisión y el check «Corte» viajan con todos los formularios; el campo
+    // «Semana de referencia» del Lookahead se sincroniza con el lunes de la fecha elegida.
+    const sincronizarFecha = () => {
+        const f = fechaRef(), mostrarCorte = !!corteCheck?.checked;
+        formularios.forEach((form) => {
+            const pon = (n, v) => {
+                let i = form.querySelector('input[type=hidden][name="' + n + '"][data-exp-fecha]');
+                if (!i) { i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.dataset.expFecha = '1'; form.appendChild(i); }
+                i.value = v;
+            };
+            pon('fecha_corte', f);
+            if (mostrarCorte) pon('mostrar_corte', '1');
+            else { const i = form.querySelector('input[data-exp-fecha][name="mostrar_corte"]'); if (i) i.remove(); }
+        });
+        const la = document.getElementById('fecha_ref');
+        if (la) la.value = lunesISO(f);
+        refrescar();
+    };
+    fechaInput?.addEventListener('change', sincronizarFecha);
+    corteCheck?.addEventListener('change', sincronizarFecha);
+
     // casillas «Todos»
     document.querySelectorAll('[data-exp-checks]').forEach((g) => {
         const todos = g.querySelector('[data-exp-todos]');
@@ -503,6 +534,14 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
     formularios.forEach((f) => f.addEventListener('submit', (e) => {
         // en «Exportar todo» debe haber al menos un formato marcado
         if (f.classList.contains('exportar-todo') && !f.querySelector('input[name="incluir[]"]:checked')) { e.preventDefault(); window.avisoModal('Exportar todo', 'Marca al menos un formato para exportar.'); return; }
+        let fechaOculta = f.querySelector('input[name="fecha_corte"]');
+        if (!fechaOculta) { fechaOculta = document.createElement('input'); fechaOculta.type = 'hidden'; fechaOculta.name = 'fecha_corte'; f.appendChild(fechaOculta); }
+        fechaOculta.value = fechaRef();
+        let corteOculto = f.querySelector('input[name="mostrar_corte"]');
+        if (corteCheck?.checked) {
+            if (!corteOculto) { corteOculto = document.createElement('input'); corteOculto.type = 'hidden'; corteOculto.name = 'mostrar_corte'; f.appendChild(corteOculto); }
+            corteOculto.value = '1';
+        } else if (corteOculto) corteOculto.remove();
         f.querySelectorAll('.nom-hid').forEach((x) => x.remove());
         const c = leer();
         const pone = (n, v) => { const i = document.createElement('input'); i.type = 'hidden'; i.className = 'nom-hid'; i.name = n; i.value = v; f.appendChild(i); };
@@ -514,6 +553,6 @@ $partidasExport = isset($proyecto) && $proyecto instanceof \Model\Proyecto ? $pr
             refrescar();
         }, 600);
     }));
-    refrescar();
+    sincronizarFecha();
 })();
 </script>

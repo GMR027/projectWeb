@@ -1,4 +1,4 @@
-<?php // Modal de crear/editar nota (lo usan vPlan y View360 con public/vendor/notas.js). Variable: $maxLargo ?>
+<?php // Modal de crear/editar nota (lo usan Vplan y View360 con public/vendor/notas.js). Variable: $maxLargo ?>
 <div class="modal-overlay" id="vp-nota-modal" aria-hidden="true">
     <form class="modal-card ventana-modal vp-nota-card" id="vp-nota-form" role="dialog" aria-modal="true" aria-labelledby="vp-nota-titulo">
         <header class="ventana-cab">

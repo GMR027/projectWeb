@@ -3,7 +3,7 @@
  * Ilustraciones de catálogo de los materiales del proyecto DEMO (solo datos de ejemplo).
  *
  * Se dibujan con GD, sin red ni marcas reales: son fichas de producto consistentes para
- * el catálogo de materiales, el MSR y la lámina de acabados del vPlan. No forman parte
+ * el catálogo de materiales, el MSR y la lámina de acabados del Vplan. No forman parte
  * del runtime de la aplicación.
  */
 

@@ -41,7 +41,7 @@ class HistorialCambios
      */
     public const HERRAMIENTAS = [
         'programa' => 'Programa', 'dependencias' => 'Dependencias de obra', 'lineatiempo' => 'Línea de tiempo activa',
-        'lookahead' => 'Lookahead', 'planificador' => 'Planificador', 'vplan' => 'vPlan', 'lastplanner' => 'Last Planner',
+        'lookahead' => 'Lookahead', 'planificador' => 'Planificador', 'vplan' => 'Vplan', 'lastplanner' => 'Last Planner',
         'recursos' => 'Recursos y cuadrillas', 'calendario' => 'Calendario', 'reportes' => 'Reporte diario',
         'bitacora' => 'Bitácora de obra', 'minutas' => 'Minutas', 'evidencias' => 'Evidencias',
         'curvas' => 'Curvas de productividad', 'seguridad' => 'Seguridad y permisos', 'punch' => 'Punch list',
@@ -106,9 +106,9 @@ class HistorialCambios
         'cajetines' => ['editor', 'cajetin', 'Cajetín', ['nombre'], null],
         'redactor_documentos' => ['redactor', 'documento', 'Documento del Redactor', ['nombre'], null],
         'sheetflow_hojas' => ['sheetflow', 'hoja', 'Hoja de SheetFlow', ['nombre'], null],
-        'vplan_laminas' => ['vplan', 'lamina', 'Lámina de vPlan', ['titulo'], null],
-        'vplan_tablas' => ['vplan', 'tabla', 'Tabla de vPlan', ['titulo'], ['vplan_laminas', 'lamina_id']],
-        'vplan_notas' => ['vplan', 'nota', 'Nota de vPlan', ['texto'], ['vplan_laminas', 'lamina_id']],
+        'vplan_laminas' => ['vplan', 'lamina', 'Lámina de Vplan', ['titulo'], null],
+        'vplan_tablas' => ['vplan', 'tabla', 'Tabla de Vplan', ['titulo'], ['vplan_laminas', 'lamina_id']],
+        'vplan_notas' => ['vplan', 'nota', 'Nota de Vplan', ['texto'], ['vplan_laminas', 'lamina_id']],
         'view360_graficos' => ['view360', 'vista', 'Vista 360', ['nombre'], null],
         'normativa_documentos' => ['normativa', 'norma', 'Documento de normativa', ['titulo'], null],
         'normativa_aplicaciones' => ['normativa', 'vinculo', 'Vínculo de normativa', ['referencia'], null],

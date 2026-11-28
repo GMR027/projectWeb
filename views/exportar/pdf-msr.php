@@ -25,8 +25,10 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
     .prov { color: #1F497D; text-align: center; }
     thead { display: table-header-group; } tr { page-break-inside: avoid; }
 </style></head><body>
-<?php $encEst = isset($msr) && $msr ? $msr->encabezado() : null; if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 802.0 / $Wu; ?>
-<div style="position:relative;width:802pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1], 'pt', $Kenc); ?></div>
+<?php $encEst = isset($msr) && $msr ? $msr->encabezado() : null; if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 802.0 / $Wu;
+$optsEnc = ['lamina_n' => 1, 'lamina_total' => 1, 'corte' => $fechaReporte, 'fecha' => $fechaReporte]; ?>
+<div style="position:relative;width:802pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, $optsEnc, 'pt', $Kenc); ?></div>
+<?php if (corte_exportacion_visible()): ?><div style="text-align:right;font-size:6pt;color:#555">Corte: <?php echo s(date('d/m/Y', strtotime($fechaReporte))); ?></div><?php endif; ?>
 <?php else: ?>
 <table class="cab">
     <tr>
@@ -38,7 +40,7 @@ $nomC = mb_strtoupper($proyecto->contratista ?: 'CONTRATISTA');
         <td style="width:25%" class="caja c"><?php if ($logoE): ?><img src="<?php echo $logoE; ?>" style="max-height:36pt;max-width:110pt;margin:2pt"><?php endif; ?></td>
         <td style="width:22%;padding-left:6pt">
             <table class="datos">
-                <tr><td class="text-right" colspan="2"><b>FECHA:</b> <b><?php echo s(fecha_larga_es()); ?></b></td></tr>
+                <tr><td class="text-right" colspan="2"><b>FECHA:</b> <b><?php echo s(fecha_larga_es($fechaReporte)); ?></b><?php echo s(etiqueta_corte_exportacion()); ?></td></tr>
                 <tr><td style="width:30%">CLIENTE:</td><td><b><?php echo s($proyecto->contratista); ?></b></td></tr>
                 <tr><td>PROYECTO:</td><td><b><?php echo s($proyecto->nombre); ?></b></td></tr>
                 <tr><td>JOB No.</td><td><b><?php echo s($proyecto->numero_trabajo); ?></b></td></tr>

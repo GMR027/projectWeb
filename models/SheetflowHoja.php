@@ -53,7 +53,7 @@ class SheetflowHoja extends ActiveRecord
         return \Classes\Catalogo::departamentos($proyectoId);
     }
 
-    /** Lista corta (id, nombre, tamaño) para ofrecerlas en vPlan, Editor y Redactor */
+    /** Lista corta (id, nombre, tamaño) para ofrecerlas en Vplan, Editor y Redactor */
     public static function resumen(int $proyectoId): array
     {
         $out = [];
@@ -67,7 +67,7 @@ class SheetflowHoja extends ActiveRecord
         return $out;
     }
 
-    /** Tablas de vPlan creadas desde esta hoja: [id, titulo, laminas donde se usa] */
+    /** Tablas de Vplan creadas desde esta hoja: [id, titulo, laminas donde se usa] */
     public function usosVplan(): array
     {
         $out = [];

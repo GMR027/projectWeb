@@ -1,6 +1,6 @@
 // ============================================================
 // Estados vacíos ilustrados — pieza compartida entre herramientas
-// Origen: vPlan/Editor/Símbolos (2026-10-25). Una lista sin datos ya no es un renglón gris:
+// Origen: Vplan/Editor/Símbolos (2026-10-25). Una lista sin datos ya no es un renglón gris:
 // se pinta con `estado_vacio()` (includes/funciones.php) → icono, título, texto y botón de acción.
 // ============================================================
 .estado-vacio { display: grid; justify-items: center; gap: .6rem; padding: 4.5rem 1.6rem; text-align: center;

@@ -91,8 +91,8 @@ class Partida extends ActiveRecord
 
     /**
      * Elimina la partida junto con todas sus actividades y lo que depende de ellas: restricciones, dependencias, materiales
-     * vinculados, avance, recovery y capas del vPlan/mapa de avance (en cascada); evidencias, punch, permisos, incidentes y
-     * órdenes de cambio conservan su registro sin actividad. Además retira la partida de los bloques de tareas del vPlan y
+     * vinculados, avance, recovery y capas del Vplan/mapa de avance (en cascada); evidencias, punch, permisos, incidentes y
+     * órdenes de cambio conservan su registro sin actividad. Además retira la partida de los bloques de tareas del Vplan y
      * refresca las fechas de instalación del MSR.
      */
     public function eliminarConActividades(): bool
@@ -116,7 +116,7 @@ class Partida extends ActiveRecord
         return (bool)$ok;
     }
 
-    /** Quita la partida de las fuentes de los bloques de tareas del vPlan (si un bloque se queda sin fuentes, queda vacío) */
+    /** Quita la partida de las fuentes de los bloques de tareas del Vplan (si un bloque se queda sin fuentes, queda vacío) */
     private static function quitarDeBloquesVplan(int $proyectoId, int $partidaId): void
     {
         $r = self::$db->query(

@@ -1,6 +1,6 @@
 <?php
 /**
- * Agrega a un proyecto la plantilla «Last Planner · Post-its del día» (estampa inteligente) y una lámina del vPlan que la usa.
+ * Agrega a un proyecto la plantilla «Last Planner · Post-its del día» (estampa inteligente) y una lámina del Vplan que la usa.
  *
  *   php database/ejemplo_last_planner.php GRX            (crea/recrea solo esto)
  *   php database/ejemplo_last_planner.php GRX --limpiar  (quita lo que creó)
@@ -56,9 +56,9 @@ foreach ($claves as $c) {
     $estId[$c] = (int)($e->guardar()['id'] ?? 0);
 }
 
-// vPlan del proyecto (si no tiene, se crea uno)
+// Vplan del proyecto (si no tiene, se crea uno)
 $paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid ORDER BY orden, id LIMIT 1")[0]['id'] ?? 0);
-if (!$paquete) $paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'vPlan', 1)");
+if (!$paquete) $paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'Vplan', 1)");
 $orden = 1 + (int)($rows("SELECT COALESCE(MAX(orden),0) m FROM vplan_laminas WHERE paquete_id = $paquete")[0]['m'] ?? 0);
 $sup = $db->escape_string((string)($proyecto->supervisor ?? ''));
 $l = (int)$q("INSERT INTO vplan_laminas (proyecto_id, paquete_id, partida_id, titulo, supervisor, ancho_mm, alto_mm, preset, recovery_n, restr_auto, plano, orden, grupo)
@@ -80,4 +80,4 @@ foreach ($bl as $z => [$tipo, $x, $y, $w, $h, $cfg]) {
     $b->setConfig($cfg);
     $b->guardar();
 }
-echo ($fechaEjemplo !== '' ? "Hoy no hay actividades: la plantilla usa la fecha fija $fechaEjemplo (cámbiala en la estampa para volver a «hoy»).\n" : '') . "Proyecto {$proyecto->codigo} (id $pid): estampas creadas y lámina $l en el vPlan $paquete.\nVer: /vplan/ver?proyecto=$pid&id=$l   y   /simbolos?proyecto=$pid#estampas\n";
+echo ($fechaEjemplo !== '' ? "Hoy no hay actividades: la plantilla usa la fecha fija $fechaEjemplo (cámbiala en la estampa para volver a «hoy»).\n" : '') . "Proyecto {$proyecto->codigo} (id $pid): estampas creadas y lámina $l en el Vplan $paquete.\nVer: /vplan/ver?proyecto=$pid&id=$l   y   /simbolos?proyecto=$pid#estampas\n";

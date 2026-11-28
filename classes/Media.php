@@ -6,7 +6,7 @@ use Model\Proyecto;
 
 /**
  * Entrega las imágenes de los proyectos que viven en `public/uploads` (evidencias, reportes, punch,
- * materiales, personal, planos del vPlan, símbolos, firmas y fotos de soporte).
+ * materiales, personal, planos del Vplan, símbolos, firmas y fotos de soporte).
  *
  * Antes se servían como archivos estáticos: cualquiera con la URL las veía. Ahora `/uploads/…` se reescribe
  * a `index.php` (Apache y servidor de desarrollo) y solo se entrega el archivo si la persona puede ver el
@@ -86,7 +86,7 @@ class Media
             $id = (int)(self::filas($sql)[0]['proyecto_id'] ?? 0);
             return $id ?: null;
         }
-        // vPlan/Editor: primero las columnas exactas (rápido). El LIKE sobre el JSON
+        // Vplan/Editor: primero las columnas exactas (rápido). El LIKE sobre el JSON
         // queda como último recurso, solo para imágenes insertadas dentro de una lámina.
         if ($carpeta === 'vplan') {
             // Imagen recién subida por este usuario: el autoguardado aún no la incluye en el JSON.

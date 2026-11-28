@@ -520,6 +520,36 @@ function generar_nombre_archivo(string $nombre_base, string $extension, ?\Model\
 const NOMENCLATURA_TIPOS = ['ninguno', 'fecha_ymd', 'fecha_dmy', 'numerador', 'texto'];
 
 /**
+ * Fecha de referencia de la exportación (Y-m-d). Se fija una vez por petición desde el Centro de
+ * Exportación y solo afecta a cómo se calcula el documento; nunca modifica datos del proyecto.
+ * Sin fijar (o con una fecha inválida) devuelve la fecha real.
+ */
+function fecha_referencia_exportacion(?string $fijar = null): string
+{
+    static $actual = null;
+    if ($fijar !== null) {
+        $d = \DateTime::createFromFormat('!Y-m-d', $fijar);
+        $actual = $d && $d->format('Y-m-d') === $fijar ? $fijar : date('Y-m-d');
+    }
+    return $actual ?? date('Y-m-d');
+}
+
+/** ¿Se pidió imprimir la etiqueta adicional «Corte» en el documento? (check del Centro de Exportación) */
+function corte_exportacion_visible(?bool $fijar = null): bool
+{
+    static $visible = false;
+    if ($fijar !== null) $visible = $fijar;
+    return $visible;
+}
+
+/** Texto para pies/cabeceras: " · Corte: 30/11/2026" solo si el check está activo; si no, vacío */
+function etiqueta_corte_exportacion(string $separador = ' · '): string
+{
+    if (!corte_exportacion_visible()) return '';
+    return $separador . 'Corte: ' . date('d/m/Y', strtotime(fecha_referencia_exportacion()));
+}
+
+/**
  * Nomenclatura vigente de la exportación (prefijo y sufijo + código/empresa). Sin configurar es la de siempre:
  * fecha año-mes-día al inicio y CÓDIGO-EMPRESA al final. Se fija con nomenclatura_desde_post().
  */
@@ -545,8 +575,8 @@ function nomenclatura_desde_post(array $p): void
 function nomenclatura_pieza(array $pz): string
 {
     return match ($pz['tipo']) {
-        'fecha_ymd' => date('Y-m-d'),
-        'fecha_dmy' => date('d-m-Y'),
+        'fecha_ymd' => fecha_referencia_exportacion(),
+        'fecha_dmy' => date('d-m-Y', strtotime(fecha_referencia_exportacion())),
         'numerador' => str_pad((string)max(1, (int)$pz['valor']), 3, '0', STR_PAD_LEFT),
         'texto' => trim((string)$pz['valor']) !== '' ? slug_archivo($pz['valor']) : '',
         default => '',
@@ -955,18 +985,18 @@ function glosario(string $termino): string
 {
     static $G = null;
     $G ??= [
-        'vplan' => ['vPlan', 'Grupo de láminas que se gestionan juntas (p. ej. una por área o disciplina): cada lámina lleva su plano, sus tablas y su programa.', 'vplan'],
-        'lamina' => ['Lámina', 'Cada hoja del vPlan: un plano de fondo con bloques (tablas, títulos, estampas) colocados donde tú quieras.', 'vplan'],
+        'vplan' => ['Vplan', 'Grupo de láminas que se gestionan juntas (p. ej. una por área o disciplina): cada lámina lleva su plano, sus tablas y su programa.', 'vplan'],
+        'lamina' => ['Lámina', 'Cada hoja del Vplan: un plano de fondo con bloques (tablas, títulos, estampas) colocados donde tú quieras.', 'vplan'],
         'bloque' => ['Bloque', 'Cada cosa que vive en una lámina: tabla del programa, título, logo, plano, estampa… Se mueve y redimensiona en «Acomodar bloques».', 'vplan'],
         'marcas' => ['Marcas', 'Lo que se dibuja sobre el plano (líneas, formas, textos, símbolos) con «Dibujar sobre el plano». Se guarda como imagen de la lámina.', 'vplan'],
-        'partida' => ['Partida', 'Grupo de actividades del programa de obra (p. ej. «Cimentación»). Las tablas de tareas del vPlan salen de aquí.', 'programa'],
+        'partida' => ['Partida', 'Grupo de actividades del programa de obra (p. ej. «Cimentación»). Las tablas de tareas del Vplan salen de aquí.', 'programa'],
         'plano' => ['Plano', 'La imagen de fondo de la lámina: el dibujo técnico de la obra sobre el que se marcan cosas.', 'vplan'],
         'simbologia' => ['Simbología', 'La leyenda del dibujo (COMPLETE, IN PROGRESS, ON HOLD…). Se dibuja con el Editor y se elige por lámina.', 'simbolos'],
         'cajetin' => ['Cajetín', 'La tablita con los datos del dibujo (proyecto, título, fecha, revisión…) que se inserta con un clic y se llena sola.', 'simbolos'],
         'estampa' => ['Estampa inteligente', 'Bloque que se llena solo con datos del proyecto (fecha, avance, restricciones, actividades del día) y se actualiza en cada visita.', 'simbolos'],
         'recovery' => ['Recovery', 'Recuperación de una actividad: cuánto se recuperó cada día que se retrasó (las 5R del programa).', 'programa'],
-        'tabla' => ['Tabla adicional', 'Tabla reutilizable del vPlan (punch list, restricciones, secundarias…) que se crea una vez y se inserta en cuantas láminas quieras.', 'vplan'],
-        'sheetflow' => ['SheetFlow', 'Hojas de cálculo del proyecto: se crean aquí y se usan en vPlan, Editor y Redactor; las enlazadas se actualizan solas.', 'sheetflow'],
+        'tabla' => ['Tabla adicional', 'Tabla reutilizable del Vplan (punch list, restricciones, secundarias…) que se crea una vez y se inserta en cuantas láminas quieras.', 'vplan'],
+        'sheetflow' => ['SheetFlow', 'Hojas de cálculo del proyecto: se crean aquí y se usan en Vplan, Editor y Redactor; las enlazadas se actualizan solas.', 'sheetflow'],
         'grafico' => ['Gráfico', 'Dibujo libre (croquis, diagrama, leyenda) hecho en el Editor; puede tener varias láminas, como una presentación.', 'editor'],
         'documento' => ['Documento', 'Documento de texto del proyecto (oficio, minuta, RFI…) con corrector, plantillas y exportación a Word, LibreOffice o PDF.', 'redactor'],
         'plantilla' => ['Plantilla', 'Punto de partida listo para editar: trae el formato armado y las marcas (proyecto, fecha, tu nombre) se llenan solas.', null],

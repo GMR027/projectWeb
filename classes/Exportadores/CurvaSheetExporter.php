@@ -16,10 +16,17 @@ class CurvaSheetExporter extends BaseExporter
 {
     private ?Curva $curva = null;
     private string $formato = 'xlsx';
+    private ?string $fechaReferencia = null;
 
     public function setCurva(?Curva $c): self
     {
         $this->curva = $c;
+        return $this;
+    }
+
+    public function setFechaReferencia(string $fecha): self
+    {
+        $this->fechaReferencia = $fecha;
         return $this;
     }
 
@@ -36,7 +43,7 @@ class CurvaSheetExporter extends BaseExporter
 
     public function generar(string $nombreBase): string
     {
-        $d = CurvaPdfExporter::armar($this->proyecto, $this->curva);
+        $d = CurvaPdfExporter::armar($this->proyecto, $this->curva, $this->fechaReferencia);
         $libro = new Spreadsheet();
         $h = $libro->getActiveSheet();
         $h->setTitle(mb_substr(preg_replace('/[\\\\\/?*:\[\]]/', ' ', $this->curva ? $this->curva->nombre : 'Gráfica maestra'), 0, 31));

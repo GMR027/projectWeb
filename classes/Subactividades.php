@@ -11,13 +11,13 @@ use Model\SubactividadHoja;
 
 /**
  * Reglas de negocio de las subactividades, en un solo sitio para que el programa,
- * la línea de tiempo, las dependencias, SheetFlow/vPlan y la importación no
+ * la línea de tiempo, las dependencias, SheetFlow/Vplan y la importación no
  * recalculen cada uno a su manera:
  *
  *  - el avance de la actividad es el promedio simple de sus subactividades;
  *  - las fechas de la actividad son el envolvente (mínimo inicio / máximo fin);
  *  - al mover el inicio de la actividad se desplazan todas sus subactividades;
- *  - después de un cambio se refrescan partida, materiales, vPlan y dependencias.
+ *  - después de un cambio se refrescan partida, materiales, Vplan y dependencias.
  */
 class Subactividades
 {
@@ -176,7 +176,7 @@ class Subactividades
         ];
     }
 
-    /** Refresca partida, materiales, vPlan y dependencias tras un cambio de la actividad */
+    /** Refresca partida, materiales, Vplan y dependencias tras un cambio de la actividad */
     private static function efectos(Actividad $actividad, array $subs, bool $cambioFechas, bool $propagar, bool $hoja): array
     {
         $errores = [];

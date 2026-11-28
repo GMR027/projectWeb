@@ -4,7 +4,7 @@ namespace Classes;
 
 use Model\Proyecto;
 
-/** Reglas comunes de los editores de marcas (vPlan «Editar marcas» y Editor de gráficos): validar lo que llega del navegador y subir imágenes */
+/** Reglas comunes de los editores de marcas (Vplan «Editar marcas» y Editor de gráficos): validar lo que llega del navegador y subir imágenes */
 class MarcasLienzo
 {
     public const MAX_JSON = 3_000_000;
@@ -44,7 +44,7 @@ class MarcasLienzo
         return self::binarioDeDataUrl(texto_param($_POST[$campo] ?? ''), 'png|jpeg');
     }
 
-    /** Guarda el binario como imagen del vPlan (lado mayor $lado) y devuelve su nombre o null */
+    /** Guarda el binario como imagen del Vplan (lado mayor $lado) y devuelve su nombre o null */
     public static function guardarBinario(string $bin, int $lado): ?string
     {
         $tmp = tempnam(sys_get_temp_dir(), 'mar');

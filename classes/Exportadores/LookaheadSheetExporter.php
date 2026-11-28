@@ -15,12 +15,14 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class LookaheadSheetExporter extends BaseExporter
 {
     private \DateTime $lunes;
+    private ?string $fechaRef = null;
     private string $formato = 'xlsx';
 
     private const COLOR_X = ['completada' => '16A34A', 'en_proceso' => 'B7791F', 'no_iniciada' => '555555', 'restriccion' => 'DC2626'];
 
     public function setFechaReferencia(string $fechaYmd): self
     {
+        $this->fechaRef = $fechaYmd;
         $this->lunes = LookaheadController::lunesDe($fechaYmd);
         return $this;
     }
@@ -35,7 +37,7 @@ class LookaheadSheetExporter extends BaseExporter
     {
         $p = $this->proyecto;
         $lunes = $this->lunes ?? LookaheadController::lunesDe('');
-        $d = LookaheadController::datos($p, $lunes, $this->incluirSubactividades);
+        $d = LookaheadController::datos($p, $lunes, $this->incluirSubactividades, $this->fechaRef);
         $semanas = $d['semanas'];
         $tipos = $d['tipos'];
 
@@ -71,7 +73,7 @@ class LookaheadSheetExporter extends BaseExporter
         $hoja->mergeCells('A1:B5');
         $hoja->setCellValue('A1', $p->nombre . "\nInicio: " . date('d/m/Y', strtotime($p->fecha_inicio))
             . '   Fin: ' . date('d/m/Y', strtotime($p->fecha_fin))
-            . "\nGenerado: " . date('d/m/Y H:i'));
+            . "\nGenerado: " . date('d/m/Y H:i') . etiqueta_corte_exportacion(' · '));
         $hoja->getStyle('A1')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_BOTTOM);
         // Logos en la parte superior del bloque: empresa a la izquierda y contratista a su derecha
         foreach ([[$p->logoEmpresa(), 'A1', 4], [$p->contratista_logo, 'B1', 260]] as [$logo, $celda, $offX]) {

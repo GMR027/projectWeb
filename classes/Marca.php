@@ -8,7 +8,7 @@ use Classes\Exportadores\MsrPdfExporter;
 /**
  * Marca del cliente (Fase 4.4): logo, nombre y dos colores del proyecto que se aplican a los PDF de reportes.
  * Los exportadores pasan `'marca' => $proyecto` a Pdf::generar y Pdf::preparar inserta una banda con el logo y los colores
- * (títulos y encabezados de tabla). Los documentos que el usuario redacta (Redactor, SheetFlow, láminas del vPlan) no la llevan.
+ * (títulos y encabezados de tabla). Los documentos que el usuario redacta (Redactor, SheetFlow, láminas del Vplan) no la llevan.
  * Las columnas viven en proyectos (marca_*); si la migración aún no está aplicada simplemente no hay marca.
  */
 class Marca

@@ -24,13 +24,13 @@
         <h3 class="mt-2">¿Cómo quieres empezar?</h3>
         <div class="rd-plantillas">
             <label class="rd-plantilla"><input type="radio" name="plantilla" value="" checked><span><i class="fa-regular fa-file"></i><strong>En blanco</strong><small>4 columnas × 10 renglones</small></span></label>
-            <label class="rd-plantilla"><input type="radio" name="plantilla" value="inteligente"><span><i class="fa-solid fa-wand-magic-sparkles"></i><strong>Tabla inteligente</strong><small>Define columnas con tipo y color; se llena desde vPlan</small></span></label>
+            <label class="rd-plantilla"><input type="radio" name="plantilla" value="inteligente"><span><i class="fa-solid fa-wand-magic-sparkles"></i><strong>Tabla inteligente</strong><small>Define columnas con tipo y color; se llena desde Vplan</small></span></label>
             <?php foreach ($plantillas as $k => [$n, $desc, $ico]): ?>
                 <label class="rd-plantilla"><input type="radio" name="plantilla" value="<?php echo s($k); ?>"><span><i class="fa-solid <?php echo s($ico); ?>"></i><strong><?php echo s($n); ?></strong><small><?php echo s($desc); ?></small></span></label>
             <?php endforeach; ?>
         </div>
         <div class="campo campo-full mt-2 sf-int" id="sf-inteligente" hidden>
-            <div class="sf-int-tit"><strong>Diseña las columnas</strong><span class="text-sm text-muted">Se llenan desde vPlan y se pueden usar en el Editor y el Redactor.</span></div>
+            <div class="sf-int-tit"><strong>Diseña las columnas</strong><span class="text-sm text-muted">Se llenan desde Vplan y se pueden usar en el Editor y el Redactor.</span></div>
             <div class="sf-int-previa" id="sf-int-previa" aria-label="Vista previa del encabezado"></div>
             <div class="sf-int-cab"><span>#</span><span>Nombre</span><span>Tipo</span><span>Color</span><span></span></div>
             <div id="sf-int-cols" class="sf-int-cols"></div>

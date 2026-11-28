@@ -1,6 +1,6 @@
 // ============================================================
 // Espacio de trabajo — capa visual compartida de TODA la app
-// Nació en vPlan · Editor · SheetFlow · Anotador · Archivo (+ Visor)
+// Nació en Vplan · Editor · SheetFlow · Anotador · Archivo (+ Visor)
 // y ahora se aplica a todas las herramientas: cabecera, superficies,
 // barras, pestañas y lienzos. Se scope con body[data-vista] (lo pinta
 // views/layout.php), así que las páginas públicas y el login no cambian.
@@ -649,7 +649,7 @@ $herr: 'body[data-vista]';
   }
 
   // ------------------------------------------------------------
-  // vPlan y Editor
+  // Vplan y Editor
   // ------------------------------------------------------------
   .vp-paquetes {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
@@ -715,7 +715,7 @@ $herr: 'body[data-vista]';
     }
   }
 
-  // Navegador de láminas / panel lateral del vPlan
+  // Navegador de láminas / panel lateral del Vplan
   .vp-nav,
   .vp-dis-panel {
     border-color: var(--ws-line-soft);

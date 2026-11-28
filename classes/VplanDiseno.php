@@ -8,7 +8,7 @@ use Model\VplanTabla;
 use Classes\Exportadores\VplanPdfExporter;
 
 /**
- * Diseño de las láminas de vPlan: tamaños de lienzo, escala de las tablas según el espacio de su bloque y el
+ * Diseño de las láminas de Vplan: tamaños de lienzo, escala de las tablas según el espacio de su bloque y el
  * diseño por defecto (el mismo que tenían las láminas antes de ser libres).
  *
  * Todo se calcula en "espacio de referencia" (tabloide horizontal, 432 mm de ancho): la letra real de una hoja

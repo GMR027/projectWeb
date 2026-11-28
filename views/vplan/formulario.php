@@ -1,6 +1,6 @@
 <?php $esNueva = !$lamina->id; ?>
 <div class="page-header">
-    <h2><?php echo $esNueva ? '<i class="fa-solid fa-wand-sparkles"></i> ' . s(t('Nueva lámina de vPlan')) : '<i class="fa-solid fa-sliders"></i> ' . s(t('Editar lámina')); ?></h2>
+    <h2><?php echo $esNueva ? '<i class="fa-solid fa-wand-sparkles"></i> ' . s(t('Nueva lámina de Vplan')) : '<i class="fa-solid fa-sliders"></i> ' . s(t('Editar lámina')); ?></h2>
     <a href="<?php echo $lamina->paquete_id ? '/vplan/paquete?proyecto=' . s($proyecto->id) . '&id=' . s($lamina->paquete_id) : '/vplan?proyecto=' . s($proyecto->id); ?>" class="btn btn-ghost">← <?php echo s(t('Volver')); ?></a>
 </div>
 <div class="card suite-form">
@@ -53,7 +53,7 @@
                         <?php foreach ($hojasSheetflow as $h): ?><option value="sf:<?php echo (int)$h['id']; ?>"<?php echo $tablaInicial === 'sf:' . $h['id'] ? ' selected' : ''; ?>><?php echo s($h['nombre'] . ' (' . $h['filas'] . ' renglones, ' . $h['cols'] . ' col.)'); ?></option><?php endforeach; ?>
                     </optgroup><?php endif; ?>
                 </select>
-                <small class="text-muted">La tabla se edita en SheetFlow y se ve igual aquí. ¿Tienes un documento (Excel, Word, PDF)? Después usa «Tabla en base a documento» en el vPlan.</small>
+                <small class="text-muted">La tabla se edita en SheetFlow y se ve igual aquí. ¿Tienes un documento (Excel, Word, PDF)? Después usa «Tabla en base a documento» en el Vplan.</small>
             </div>
             </div>
         </div>
@@ -107,7 +107,7 @@
         <?php // ---- Datos de la lámina (paso 3 al crear; sección normal al editar) ---- ?>
         <div class="form-grid">
             <div class="campo"><label for="titulo"><?php echo s(t('Título de la lámina')); ?></label><input type="text" id="titulo" name="titulo" value="<?php echo s($lamina->titulo); ?>" placeholder="Por defecto, el nombre de la partida inicial"></div>
-            <div class="campo"><label for="grupo">Grupo (disciplina, nivel…)</label><input type="text" id="grupo" name="grupo" value="<?php echo s($lamina->grupo); ?>" maxlength="100" placeholder="Opcional: agrupa las láminas en el vPlan"></div>
+            <div class="campo"><label for="grupo">Grupo (disciplina, nivel…)</label><input type="text" id="grupo" name="grupo" value="<?php echo s($lamina->grupo); ?>" maxlength="100" placeholder="Opcional: agrupa las láminas en el Vplan"></div>
             <div class="campo"><label for="supervisor">Supervisor</label><input type="text" id="supervisor" name="supervisor" value="<?php echo s($lamina->supervisor); ?>" placeholder="Ej: JUAN PÉREZ / ANA LÓPEZ"></div>
             <div class="campo">
                 <label for="plano"<?php echo glosario('plano'); ?>><?php echo s(t('Imagen del plano')); ?> (hasta Full HD o 4K)</label>

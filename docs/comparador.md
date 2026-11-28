@@ -1,6 +1,6 @@
 # Comparador de documentos
 
-Empareja dos PDF o imágenes para revisar cambios entre revisiones, con deslizador, fundido y diferencias con tolerancia. Las fuentes pueden ser archivos del proyecto, **láminas de vPlan**, **gráficos del Editor**, **documentos del Redactor** (convertidos a PDF) o archivos externos. Incluye anotaciones con hilo de revisión, medición con escala, análisis de páginas, historial de versiones y enlace público de solo lectura.
+Empareja dos PDF o imágenes para revisar cambios entre revisiones, con deslizador, fundido y diferencias con tolerancia. Las fuentes pueden ser archivos del proyecto, **láminas de Vplan**, **gráficos del Editor**, **documentos del Redactor** (convertidos a PDF) o archivos externos. Incluye anotaciones con hilo de revisión, medición con escala, análisis de páginas, historial de versiones y enlace público de solo lectura.
 
 ## Piezas
 
@@ -20,7 +20,7 @@ Empareja dos PDF o imágenes para revisar cambios entre revisiones, con deslizad
 
 - `Comparador::fuentes($pid)` arma el catálogo agrupado que pinta el selector **Del proyecto**: archivos de `Archivo`, láminas de `vplan_laminas` (su `marcas_png` o, si falta, el `plano`), láminas de `editor_laminas` con `marcas_png` y documentos de `redactor_documentos`.
 - En **Archivo**, cada elemento incluye `prev` cuando existe otra revisión del mismo documento (se agrupan por nombre sin «Rev. A/R2» y se ordenan por número de revisión). El botón **Usar la revisión anterior en B** carga esa revisión con un clic.
-- `Comparador::fuenteDeProyecto($pid, $tipo, $id)` valida que el documento pertenezca al proyecto y lo entrega. El Redactor se convierte a PDF con `Redactor::pdf()`; vPlan y Editor usan la imagen ya guardada de la lámina.
+- `Comparador::fuenteDeProyecto($pid, $tipo, $id)` valida que el documento pertenezca al proyecto y lo entrega. El Redactor se convierte a PDF con `Redactor::pdf()`; Vplan y Editor usan la imagen ya guardada de la lámina.
 - `/comparador/fuente?proyecto=…&tipo=archivo|vplan|editor|redactor&id=…` exige `puede_descargar()` y sirve el documento inline (nunca como archivo estático). Los tipos válidos están en `Comparador::FUENTES_PROYECTO`.
 - Las fuentes del proyecto **se referencian, no se copian**: si la lámina o el documento cambia, la comparación guardada muestra la versión actual. Solo los archivos externos se copian al guardar.
 - Al guardar se validan igual que al abrir (`fuenteValida()`): un id de otro proyecto o una lámina sin imagen se rechazan.

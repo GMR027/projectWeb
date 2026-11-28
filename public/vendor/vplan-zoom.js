@@ -1,4 +1,4 @@
-// vPlan: zoom de la lámina.
+// Vplan: zoom de la lámina.
 //   100 % = el tamaño real de la hoja (1 mm = 1 mm), que es como se ve la lámina en el PDF.
 //   «Ajustar» la mete en el ancho disponible; el modo automático además sube el zoom si la letra
 //   quedaría tan pequeña que no se puede leer (típico cuando la tabla tiene mucha información).

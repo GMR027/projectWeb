@@ -1,4 +1,4 @@
-<?php // Variables: $proyecto, $fuentes (Archivo, vPlan, Editor y Redactor), $guardados, $abrir, $puedeGuardar, $aviso, $publico, $token, $historial ?>
+<?php // Variables: $proyecto, $fuentes (Archivo, Vplan, Editor y Redactor), $guardados, $abrir, $puedeGuardar, $aviso, $publico, $token, $historial ?>
 <?php
 $pid = (int)$proyecto->id;
 $publico = !empty($publico);
@@ -8,7 +8,7 @@ $fecha = fn($f) => $f ? date('d/m/Y H:i', strtotime($f)) : '—';
     <div>
         <h2><i class="fa-solid fa-code-compare"></i> <?php echo s($publico ? 'Comparación de documentos' : t('Comparador de documentos')); ?></h2>
         <?php if (!$publico): ?>
-            <p class="text-muted"><?php echo s($proyecto->nombre); ?> · compara dos documentos: PDF o imágenes del Archivo, láminas de vPlan y del Editor, y documentos del Redactor (en PDF), además de archivos externos.</p>
+            <p class="text-muted"><?php echo s($proyecto->nombre); ?> · compara dos documentos: PDF o imágenes del Archivo, láminas de Vplan y del Editor, y documentos del Redactor (en PDF), además de archivos externos.</p>
             <?php if ($puedeGuardar): $nGuardados = count($guardados); $nAnot = array_sum(array_map(fn($x) => (int)$x['anotaciones'], $guardados)); $nAbiertas = array_sum(array_map(fn($x) => (int)$x['abiertas'], $guardados)); ?>
             <div class="herr-meta">
                 <span class="herr-chip"><i class="fa-solid fa-code-compare"></i><b><?php echo $nGuardados; ?></b> comparaciones</span>

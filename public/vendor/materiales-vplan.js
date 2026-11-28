@@ -1,4 +1,4 @@
-/* Instalación de materiales en vPlan (JavaScript puro, sin build).
+/* Instalación de materiales en Vplan (JavaScript puro, sin build).
  * Asigna actividades/subactividades a las líneas y formas del plano, crea la tabla de
  * SheetFlow de la lámina y muestra las fotos de los materiales sobre cada marca. */
 (function () {

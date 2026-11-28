@@ -26,7 +26,7 @@ const TablaDoc = (() => {
       t.append(tr);
     }
     $('#tdoc-tabla').replaceChildren(t);
-    $('#tdoc-resumen').textContent = nc + ' columnas · ' + (filas.length - 1) + ' renglones' + (nc > 8 ? ' (el vPlan usa las primeras 8 columnas)' : '');
+    $('#tdoc-resumen').textContent = nc + ' columnas · ' + (filas.length - 1) + ' renglones' + (nc > 8 ? ' (el Vplan usa las primeras 8 columnas)' : '');
   }
 
   async function leer(usarIA) {
@@ -56,9 +56,9 @@ const TablaDoc = (() => {
     try {
       const r = await pw.tdoc.crear(meta.pid, { nombre, origen: meta.origen, metodo: meta.metodo, modelo: meta.modelo, filas });
       $('#tdoc-previa').hidden = true;
-      const web = el('button', 'Abrir en vPlan', 'sec'); web.type = 'button';
+      const web = el('button', 'Abrir en Vplan', 'sec'); web.type = 'button';
       web.addEventListener('click', () => abrirWeb(r.url, '/vplan'));
-      $('#tdoc-fin').replaceChildren(el('strong', '✔ Tabla creada en el catálogo de vPlan'), web);
+      $('#tdoc-fin').replaceChildren(el('strong', '✔ Tabla creada en el catálogo de Vplan'), web);
       msg.textContent = '';
     } catch (e) { msg.textContent = '✘ ' + err(e); }
     $('#tdoc-crear').disabled = false;

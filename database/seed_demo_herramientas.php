@@ -7,7 +7,7 @@
  *    (permisos de trabajo, tipos propios e incidentes), RFI, calidad/ITP, equipo y mapa de avance.
  *  - Administración: contratos/fianzas/seguros con vencimientos y cierre de obra con su acta.
  *  - Planeación: recursos y cuadrillas con carga semanal, subactividades de una actividad
- *    (con su tabla vinculada de SheetFlow), notas de vPlan y ajustes del Lookahead.
+ *    (con su tabla vinculada de SheetFlow), notas de Vplan y ajustes del Lookahead.
  *  - Costos: presupuesto por partida y movimientos reales/estimaciones ligados a las OC.
  *  - Documentos: carpetas del Archivo, un ensamble de «Unir documentos (PDF)», plantillas
  *    y versiones del Redactor, y láminas del Editor adjuntas a submittals y RFI.
@@ -382,10 +382,10 @@ if ($tabla('redactor_plantillas')) {
     }
 }
 
-// ---------------------------------------------------------------- vPlan: notas y mapa de avance
-echo "vPlan (notas y mapa de avance)...\n";
+// ---------------------------------------------------------------- Vplan: notas y mapa de avance
+echo "Vplan (notas y mapa de avance)...\n";
 $laminas = [];
-foreach ($rg("SELECT l.id, l.titulo FROM vplan_laminas l JOIN vplan_paquetes p ON p.id = l.paquete_id WHERE l.proyecto_id = $pid AND p.nombre = 'vPlan · NEXO Data Campus · Nave A' ORDER BY l.orden") as $l) $laminas[] = $l;
+foreach ($rg("SELECT l.id, l.titulo FROM vplan_laminas l JOIN vplan_paquetes p ON p.id = l.paquete_id WHERE l.proyecto_id = $pid AND p.nombre = 'Vplan · NEXO Data Campus · Nave A' ORDER BY l.orden") as $l) $laminas[] = $l;
 if ($laminas && $tabla('vplan_notas')) {
     $notas = [
         [0, -2, 'Se liberó el armado de acero de la losa de cubierta; falta la revisión de instalaciones ahogadas antes del colado.'],

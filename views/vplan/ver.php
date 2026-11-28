@@ -153,7 +153,7 @@ include __DIR__ . '/../lienzo/_cabecera.php';
 </script>
 <script src="/vendor/lienzo-modos.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/lienzo-modos.js'); ?>"></script>
 
-<?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del vPlan.</div><?php endif; ?>
+<?php if (!(int)$lamina->visible): ?><div class="alerta alerta-error no-print">Esta lámina está <strong>oculta</strong>: no aparece en las listas de los visitantes ni en el PDF. Muéstrala desde el gestor del Vplan.</div><?php endif; ?>
 <?php if ($puedeEditar && $desactualizada): ?>
 <div class="alerta alerta-error no-print">El avance del programa cambió desde que se dibujaron las marcas: el plano está desactualizado.
     <a href="/vplan/ver?<?php echo $q; ?>&modo=dibujar&auto=1" class="btn btn-sm btn-primary" style="margin-left:1rem">Actualizar plano</a></div>

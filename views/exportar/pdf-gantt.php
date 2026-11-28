@@ -88,7 +88,7 @@
             <div class="header-meta">
                 <div><strong>Inicio:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_inicio)); ?></div>
                 <div><strong>Fin:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_fin)); ?></div>
-                <div><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?></div>
+                <div><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?><?php echo htmlspecialchars(etiqueta_corte_exportacion(), ENT_QUOTES, 'UTF-8'); ?></div>
             </div>
         </div>
 
@@ -169,7 +169,7 @@
                         </p>
                     </div>
                     <div class="header-meta">
-                        <div><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?></div>
+                        <div><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?><?php echo htmlspecialchars(etiqueta_corte_exportacion(), ENT_QUOTES, 'UTF-8'); ?></div>
                     </div>
                 </div>
             <?php else: ?>
@@ -234,7 +234,7 @@
     <?php endforeach; ?>
 
     <div class="footer">
-        <?php echo htmlspecialchars($proyecto->nombre); ?> · Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?>
+        <?php echo htmlspecialchars($proyecto->nombre); ?> · Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?><?php echo htmlspecialchars(etiqueta_corte_exportacion(), ENT_QUOTES, 'UTF-8'); ?>
     </div>
 </body>
 </html>

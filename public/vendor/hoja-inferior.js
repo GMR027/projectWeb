@@ -1,6 +1,6 @@
 /* Hoja inferior compartida (bottom sheet). Sin dependencias.
  *
- * Sirve para editar o consultar sin tapar el lienzo: vPlan (ficha de tarea) y los paneles
+ * Sirve para editar o consultar sin tapar el lienzo: Vplan (ficha de tarea) y los paneles
  * táctiles del editor y del modo diseño. El estilo vive en src/scss/componentes/_hoja-inferior.scss.
  *
  * Uso:

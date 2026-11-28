@@ -117,7 +117,7 @@ $leyenda = [
     <!-- ===================== Cabecera ===================== -->
     <div class="abs" style="left:12px;top:14px;width:<?php echo $anchoPx - 24; ?>px;white-space:normal;overflow:visible">
         <div class="cab-tit"><?php echo $h($proyecto->nombre); ?> — Línea de tiempo activa</div>
-        <div class="cab-sub"><?php echo trim($proyecto->codigo . ' · ' . $proyecto->ubicacion, ' ·'); ?> · Del <?php echo date('d/m/Y', strtotime($lt['inicio'])); ?> al <?php echo date('d/m/Y', strtotime($lt['fin'])); ?> · Generado <?php echo date('d/m/Y H:i'); ?></div>
+        <div class="cab-sub"><?php echo trim($proyecto->codigo . ' · ' . $proyecto->ubicacion, ' ·'); ?> · Del <?php echo date('d/m/Y', strtotime($lt['inicio'])); ?> al <?php echo date('d/m/Y', strtotime($lt['fin'])); ?> · Generado <?php echo date('d/m/Y H:i'); ?><?php echo s(etiqueta_corte_exportacion()); ?></div>
         <div class="cab-filtros"><b>Filtros:</b> <?php echo $h($filtrosTexto); ?> · <b><?php echo (int)$lt['total']; ?></b> actividades<?php echo $lt['conRestriccion'] ? ' (<span class="warn">' . (int)$lt['conRestriccion'] . ' con restricción</span>)' : ''; ?></div>
         <div class="leyenda">
             <?php foreach ($leyenda as [$c, $glifo, $texto]): ?>

@@ -3,7 +3,7 @@
  * Datos de ejemplo del proyecto DEMO para las herramientas nuevas que no cubren seed_demo.php ni seed_demo_extras.php:
  * órdenes de cambio, líneas base (con comparación), cruce de materiales (materiales nuevos + vínculos con actividades),
  * Redactor (documentos en carpetas), SheetFlow (tablas con fórmulas), carpetas de Minutas, un MSR configurable,
- * un vPlan de láminas libres, Comparador (dos revisiones de un plano en Archivo) y calendario con más festivos/paros.
+ * un Vplan de láminas libres, Comparador (dos revisiones de un plano en Archivo) y calendario con más festivos/paros.
  * Al final ejecuta seed_demo_herramientas.php (evidencias, punch, seguridad, RFI, recursos, costos, mapa de avance,
  * subactividades, campos personalizados, carpetas del Archivo y Unir documentos).
  *
@@ -106,7 +106,7 @@ $q("DELETE FROM sheetflow_hojas WHERE proyecto_id = $pid");
 $q("DELETE FROM ordenes_cambio WHERE proyecto_id = $pid");
 $q("DELETE FROM lineas_base WHERE proyecto_id = $pid");
 $q("DELETE FROM msrs WHERE proyecto_id = $pid AND nombre LIKE 'MSR 2%'");
-foreach ($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('vPlan · Sala blanca y patio de equipos', 'vPlan · NEXO Data Campus · Nave A')") as $paq) {
+foreach ($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('Vplan · Sala blanca y patio de equipos', 'Vplan · NEXO Data Campus · Nave A')") as $paq) {
     foreach ($rows("SELECT id, plano FROM vplan_laminas WHERE paquete_id = " . (int)$paq['id']) as $l) {
         Imagenes::eliminarVplan($l['plano']);
         foreach ($rows("SELECT config_json FROM vplan_bloques WHERE lamina_id = " . (int)$l['id'] . " AND tipo = 'imagen'") as $b) {
@@ -653,9 +653,9 @@ $vincular('CSI 08 44 00', 'Muestras', 'actividad', $act('4.4'), 'Muestra física
 $vincular('PRO-SEG-01', 'Permisos', 'actividad', $act('3.5'), 'Permiso de trabajo en altura firmado y vigente para cada turno.', 'manual', 'aceptada');
 $vincular('PRO-SEG-01', 'Andamios', 'actividad', $act('4.4'), 'Andamios con barandales y tarjeta verde; redes revisadas a diario.', 'manual', 'aceptada');
 
-// ---------------------------------------------------------------- vPlan: paquete técnico del demo
-echo "vPlan técnico...\n";
-$paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'vPlan · NEXO Data Campus · Nave A', 1)");
+// ---------------------------------------------------------------- Vplan: paquete técnico del demo
+echo "Vplan técnico...\n";
+$paquete = (int)$q("INSERT INTO vplan_paquetes (proyecto_id, nombre, orden) VALUES ($pid, 'Vplan · NEXO Data Campus · Nave A', 1)");
 $fechaPlan = $hoy->format('d/m/Y');
 
 // Planos (GD, sin red). Los mismos de Rev. A/B alimentan el Comparador del Archivo.

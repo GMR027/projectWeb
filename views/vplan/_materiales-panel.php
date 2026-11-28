@@ -1,4 +1,4 @@
-<?php // Panel lateral «Materiales» del editor de marcas de vPlan. Variables: $config, $proyecto, $lamina ?>
+<?php // Panel lateral «Materiales» del editor de marcas de Vplan. Variables: $config, $proyecto, $lamina ?>
 <div class="ve-tab-panel" data-panel="materiales" hidden>
 <aside class="card ve-materiales" id="ve-materiales">
     <div class="ve-capas-cab">

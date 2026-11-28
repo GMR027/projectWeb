@@ -113,7 +113,7 @@
                 '<div class="est-ed-pie"><button type="button" class="btn btn-primary" id="est-guardar"><i class="fa-solid fa-floppy-disk"></i> Guardar estampa</button><span class="text-sm" id="est-estado"></span></div></div>' +
                 '<div class="est-ed-prev"><h5 class="est-h5">Vista previa con datos reales</h5><div class="est-fila"><label class="est-f"><span>Actividad de ejemplo</span><select id="est-p-act">' + opciones([['0', '— Ninguna —']].concat(actividadesOpc().slice(1)), 0) + '</select></label>' +
                 '<label class="est-f"><span>Fecha de corte</span><input type="date" id="est-p-corte" value="' + hoy + '"></label></div><div class="est-prev-marco"><div id="est-prev" class="est-prev"></div></div>' +
-                '<p class="text-sm text-muted">Así se verá en la lámina. En el vPlan el bloque conserva este diseño y se actualiza solo con cada visita.</p></div></div>';
+                '<p class="text-sm text-muted">Así se verá en la lámina. En el Vplan el bloque conserva este diseño y se actualiza solo con cada visita.</p></div></div>';
             previsualizar();
         }
 
@@ -191,7 +191,7 @@
             montarGestos(marco);
         }
 
-        // Pellizco y doble toque en tablet y celular (gestos-lienzo.js), igual que en vPlan y el Editor.
+        // Pellizco y doble toque en tablet y celular (gestos-lienzo.js), igual que en Vplan y el Editor.
         const marcosConGestos = new WeakSet();
         function montarGestos(marco) {
             if (!marco || marcosConGestos.has(marco) || !window.GestosLienzo || !GestosLienzo.esTactil()) return;

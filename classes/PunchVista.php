@@ -6,7 +6,7 @@ use Model\Proyecto;
 
 /**
  * Vista configurable del Punch list: qué columnas se ven (fotos incluidas), qué pendientes entran (filtros) y cuántos. Es la única forma en que
- * el punch llega a vPlan (tabla `punchlist` de `vplan_tablas.punch_config`); los datos viven siempre en `punch_items`, la vista no guarda copias.
+ * el punch llega a Vplan (tabla `punchlist` de `vplan_tablas.punch_config`); los datos viven siempre en `punch_items`, la vista no guarda copias.
  */
 class PunchVista
 {
@@ -72,7 +72,7 @@ class PunchVista
         return array_map(fn($k) => self::COLUMNAS[$k][0], self::normalizar($cfg)['columnas']);
     }
 
-    /** Renglones para una tabla de vPlan: c0..cN (texto mostrado), v0..vN (valor crudo), _pid (pendiente) */
+    /** Renglones para una tabla de Vplan: c0..cN (texto mostrado), v0..vN (valor crudo), _pid (pendiente) */
     public static function filas(int $pid, array $cfg): array
     {
         $cfg = self::normalizar($cfg);

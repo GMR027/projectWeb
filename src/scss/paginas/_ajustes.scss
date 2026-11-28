@@ -428,6 +428,10 @@ body.body-modal { background: transparent; .modal-contenido { padding: .4rem; } 
   .exp-nomen-pieza { display: flex; flex-direction: column; gap: .6rem; input[type=text] { width: 100%; } }
   .exp-nomen-num { display: flex; align-items: center; gap: .8rem; input { width: 9rem; } }
   .exp-nomen-cod { display: flex; align-items: center; gap: .6rem; margin-top: 1.2rem; cursor: pointer; }
+  .exp-fecha-emision { display: flex; flex-wrap: wrap; align-items: center; gap: 1.2rem 2rem; margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px dashed var(--border);
+    label { display: flex; align-items: center; gap: .6rem; }
+    input[type=date] { width: auto; min-width: 15rem; } }
+  .exp-fecha-nota { margin: .6rem 0 0; }
   .exp-nomen-vista { margin: 1rem 0 0; strong { overflow-wrap: anywhere; color: var(--link); } } }
 .exp-checks { border: 1px solid var(--border); border-radius: $radius-md; background: var(--bg-primary, transparent);
   .exp-checks-cab { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .6rem 1rem; border-bottom: 1px solid var(--border); label { display: flex; align-items: center; gap: .4rem; cursor: pointer; } }

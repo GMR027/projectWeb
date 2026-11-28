@@ -361,19 +361,19 @@ $puedeConceptos = puede_gestionar_conceptos($proyecto);
             <span class="badge" style="background:rgba(0,180,216,.12);color:var(--secondary);border-color:rgba(0,180,216,.3);"><i class="fa-solid fa-table-cells"></i> Vinculada a SheetFlow</span>
             <strong class="text-sm"><?php echo s($hojaSub->nombre); ?></strong>
             <a class="btn btn-secondary btn-sm" href="/sheetflow/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&amp;id=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-up-right-from-square"></i> Abrir tabla</a>
-            <a class="btn btn-ghost btn-sm" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Usar en vPlan</a>
+            <a class="btn btn-ghost btn-sm" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hojaSub->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Usar en Vplan</a>
             <form class="inline" method="POST" action="/programa/subactividades/sheetflow/quitar" data-confirm="¿Desvincular la tabla?|La tabla se conserva como una tabla normal de SheetFlow, pero dejará de sincronizarse con las subactividades. Las subactividades no se borran.|Desvincular">
                 <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
                 <input type="hidden" name="hoja_version" value="<?php echo s($hojaVersion); ?>">
                 <button type="submit" class="btn btn-ghost btn-sm"><i class="fa-solid fa-link-slash"></i> Desvincular</button>
             </form>
-            <p class="text-muted text-sm full" style="margin:.25rem 0 0">Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos con la tabla. Las columnas extra se quedan en SheetFlow y vPlan. Si eliminas un renglón en la tabla, se elimina su subactividad.</p>
+            <p class="text-muted text-sm full" style="margin:.25rem 0 0">Los cambios de nombre, fechas y avance se sincronizan en los dos sentidos con la tabla. Las columnas extra se quedan en SheetFlow y Vplan. Si eliminas un renglón en la tabla, se elimina su subactividad.</p>
         <?php else: ?>
             <form class="inline" method="POST" action="/programa/subactividades/sheetflow">
                 <input type="hidden" name="actividad_id" value="<?php echo s($actividad->id); ?>">
                 <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-table-cells"></i> Generar tabla en SheetFlow</button>
             </form>
-            <span class="text-muted text-sm">Crea una tabla vinculada con una fila por subactividad. Se puede editar en SheetFlow y en vPlan sin que se desincronice.</span>
+            <span class="text-muted text-sm">Crea una tabla vinculada con una fila por subactividad. Se puede editar en SheetFlow y en Vplan sin que se desincronice.</span>
         <?php endif; ?>
     </div>
 

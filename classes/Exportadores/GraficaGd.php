@@ -74,11 +74,11 @@ class GraficaGd
     }
 
     /** Línea vertical punteada azul con la fecha de hoy */
-    private static function hoy($im, float $x, int $arr, int $abj): void
+    private static function hoy($im, float $x, int $arr, int $abj, ?string $fecha = null): void
     {
         $azul = imagecolorallocate($im, 0, 112, 192);
         self::linea($im, $x, $arr, $x, $abj, $azul, 4, true);
-        self::texto($im, 12, (int)$x, $arr - 10, $azul, 'HOY ' . date('d/m/y'), true, 'c');
+        self::texto($im, 12, (int)$x, $arr - 10, $azul, 'HOY ' . date('d/m/y', strtotime($fecha ?: 'today')), true, 'c');
     }
 
     /** Barras (planeado/real) + líneas acumuladas en eje derecho */
@@ -137,7 +137,7 @@ class GraficaGd
         }
         // Fecha actual
         if (($s['hoy'] ?? null) !== null) {
-            self::hoy($im, $izq + $ancho * ($s['hoy'] + .5), $arr, $abj);
+            self::hoy($im, $izq + $ancho * ($s['hoy'] + .5), $arr, $abj, $s['hoy_fecha'] ?? null);
         }
         // Leyenda
         $x = 380;
@@ -182,7 +182,7 @@ class GraficaGd
         foreach ($m['semanas'] as $i => $f) {
             if ($i % $cadaX === 0) self::texto($im, 11, (int)$x($i), $abj + 26, $negro, date('d/m/y', strtotime($f)), false, 'c');
         }
-        if (($m['hoy'] ?? null) !== null) self::hoy($im, $x($m['hoy']), $arr, $abj);
+        if (($m['hoy'] ?? null) !== null) self::hoy($im, $x($m['hoy']), $arr, $abj, $m['hoy_fecha'] ?? null);
         $lx = 110;
         $ly = 800;
         foreach ($m['series'] as $k => $s) {

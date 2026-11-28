@@ -7,7 +7,7 @@ use Model\Proyecto;
 use Classes\Dependencias;
 use Classes\MapaAvance;
 
-/** Mapa de avance: el color de las marcas de las láminas (Editor/vPlan) se traduce a avance por actividad. Ver: acceso al proyecto; calcular/configurar: quien gestiona el proyecto */
+/** Mapa de avance: el color de las marcas de las láminas (Editor/Vplan) se traduce a avance por actividad. Ver: acceso al proyecto; calcular/configurar: quien gestiona el proyecto */
 class MapaAvanceController
 {
     private static function gestion(): Proyecto

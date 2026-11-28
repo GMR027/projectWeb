@@ -7,7 +7,7 @@ use Model\Proyecto;
 use Model\VplanLamina;
 use Model\VplanNota;
 
-/** Notas de una lámina de vPlan (CRUD por JSON; la fecha la pone el servidor al crear) */
+/** Notas de una lámina de Vplan (CRUD por JSON; la fecha la pone el servidor al crear) */
 class VplanNotaController
 {
     /** Lámina de la petición, solo si el usuario puede gestionar su proyecto */

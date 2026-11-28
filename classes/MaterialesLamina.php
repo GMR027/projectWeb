@@ -9,7 +9,7 @@ use Model\VplanLamina;
 use Model\VplanTabla;
 
 /**
- * Instalación de materiales en una lámina de vPlan.
+ * Instalación de materiales en una lámina de Vplan.
  *
  * Cada línea/forma de las marcas guarda en `material.items` las actividades y
  * subactividades que representa. La lámina se vincula a UNA tabla de SheetFlow
@@ -97,7 +97,7 @@ class MaterialesLamina
         foreach ((array)($d['shapes'] ?? []) as $sh) {
             if (!is_array($sh)) continue;
             $items = (array)($sh['material']['items'] ?? []);
-            if (!$items && !empty($sh['actividad_id'])) $items = [['tipo' => 'actividad', 'id' => $sh['actividad_id']]];   // liga antigua de vPlan
+            if (!$items && !empty($sh['actividad_id'])) $items = [['tipo' => 'actividad', 'id' => $sh['actividad_id']]];   // liga antigua de Vplan
             foreach ($items as $it) {
                 $clave = self::clave($it['tipo'] ?? '', $it['id'] ?? 0);
                 if ($clave) $out[$clave] = true;

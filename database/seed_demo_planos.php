@@ -4,7 +4,7 @@
  *
  * Se dibujan con GD, sin red: planta arquitectónica, corte, alzado, patio de equipos,
  * instalaciones, detalles, plano de acabados y localización. Se usan desde
- * database/seed_demo_nuevas.php (vPlan y Comparador) y no forman parte del runtime.
+ * database/seed_demo_nuevas.php (Vplan y Comparador) y no forman parte del runtime.
  *
  * Coordenadas en píxeles de la hoja final; la clase dibuja al doble y reduce al guardar
  * para que las líneas y los textos salgan suaves.

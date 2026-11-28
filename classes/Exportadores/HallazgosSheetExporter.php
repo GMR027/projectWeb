@@ -43,7 +43,7 @@ class HallazgosSheetExporter extends BaseExporter
         $h->setCellValueExplicit('A1', $d['titulo'] . ' — ' . $this->proyecto->nombre, DataType::TYPE_STRING);
         $h->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $h->mergeCells('A2:G2');
-        $h->setCellValueExplicit('A2', 'Generado ' . $d['generado'] . ($d['corrida'] ? ' · ' . ($d['corrida']['nombre'] ?: 'Análisis') . ' · ' . date('d/m/Y H:i', strtotime($d['corrida']['creado'])) : ''), DataType::TYPE_STRING);
+        $h->setCellValueExplicit('A2', 'Generado ' . $d['generado'] . ($d['corrida'] ? ' · ' . ($d['corrida']['nombre'] ?: 'Análisis') . ' · ' . date('d/m/Y H:i', strtotime($d['corrida']['creado'])) : '') . etiqueta_corte_exportacion(), DataType::TYPE_STRING);
         $h->mergeCells('A3:G3');
         $h->setCellValueExplicit('A3', count($d['lista']) . ' hallazgo(s) · ' . count($d['grupos']) . ' problema(s) distinto(s)', DataType::TYPE_STRING);
 

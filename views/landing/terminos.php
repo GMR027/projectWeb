@@ -23,7 +23,7 @@
     </ul>
 
     <h2>3. Formatos y documentos</h2>
-    <p>Los formatos, reportes y documentos que genera la plataforma (por ejemplo programas, lookahead, Last Planner, vPlan, MSR, reportes diarios, minutas y exportaciones) <strong>están basados en prácticas y estructuras comunes de la industria, pero no son los mismos que los formatos propiedad de alguna compañía</strong>. Ningún nombre, logotipo o formato de terceros se entiende como de su propiedad ni como afiliado, aprobado o patrocinado por ellos. Cualquier marca o formato mencionado pertenece a sus respectivos titulares. El usuario es responsable de verificar que el formato generado cumpla con los requisitos contractuales de su proyecto.</p>
+    <p>Los formatos, reportes y documentos que genera la plataforma (por ejemplo programas, lookahead, Last Planner, Vplan, MSR, reportes diarios, minutas y exportaciones) <strong>están basados en prácticas y estructuras comunes de la industria, pero no son los mismos que los formatos propiedad de alguna compañía</strong>. Ningún nombre, logotipo o formato de terceros se entiende como de su propiedad ni como afiliado, aprobado o patrocinado por ellos. Cualquier marca o formato mencionado pertenece a sus respectivos titulares. El usuario es responsable de verificar que el formato generado cumpla con los requisitos contractuales de su proyecto.</p>
 
     <h2>4. Almacenamiento y resguardo de la información</h2>
     <ul>

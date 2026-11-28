@@ -63,7 +63,7 @@ class LandingController
     {
         $router->render('landing/index', [
             'titulo' => 'Programas de obra bajo control',
-            'descripcion' => 'ProjectWeb reúne programa, Gantt, lookahead, Last Planner, vPlan, materiales, reportes diarios, documentos y control de cambios en una sola plataforma. Menos programas, menos costo y una sola fuente de verdad.',
+            'descripcion' => 'ProjectWeb reúne programa, Gantt, lookahead, Last Planner, Vplan, materiales, reportes diarios, documentos y control de cambios en una sola plataforma. Menos programas, menos costo y una sola fuente de verdad.',
             'ogImage' => '/build/img/landing/hero.jpg',
             'landingLayout' => true,
             'demoDisponible' => (bool)self::proyectoDemo(),

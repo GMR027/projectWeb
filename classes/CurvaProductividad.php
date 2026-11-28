@@ -70,9 +70,10 @@ class CurvaProductividad
     }
 
     /** Posición de la fecha actual en el eje de periodos (centro del periodo k = k) o null si queda fuera */
-    public static function posicionHoy(string $inicio, int $n): ?float
+    public static function posicionHoy(string $inicio, int $n, ?string $hoy = null): ?float
     {
-        $dias = (int)(new \DateTime($inicio))->diff(new \DateTime('today'))->format('%r%a');
+        $fecha = $hoy && preg_match('/^\d{4}-\d{2}-\d{2}$/', $hoy) ? $hoy : 'today';
+        $dias = (int)(new \DateTime($inicio))->diff(new \DateTime($fecha))->format('%r%a');
         $pos = $dias / 7 - 0.5;
         return ($pos < -0.5 || $pos > $n - 0.5) ? null : round($pos, 3);
     }
@@ -92,7 +93,7 @@ class CurvaProductividad
      * Series completas de una curva.
      * actual[i] es null mientras no haya captura; el acumulado real se detiene en el último dato capturado.
      */
-    public static function series(Curva $c): array
+    public static function series(Curva $c, ?string $hoy = null): array
     {
         $n = self::numPeriodos($c->fecha_inicio, $c->fecha_fin);
         $planeado = self::planeado((int)$c->cantidad, $c->tipo_curva, $n);
@@ -117,7 +118,8 @@ class CurvaProductividad
             'planeado_acum' => self::acumular($planeado),
             'actual_acum' => $actualAcum,
             // posición de hoy sobre el eje (0 = centro del 1er periodo); null si está fuera de la curva
-            'hoy' => self::posicionHoy($c->fecha_inicio, $n),
+            'hoy' => self::posicionHoy($c->fecha_inicio, $n, $hoy),
+            'hoy_fecha' => $hoy && preg_match('/^\d{4}-\d{2}-\d{2}$/', $hoy) ? $hoy : date('Y-m-d'),
         ];
     }
 
@@ -125,7 +127,7 @@ class CurvaProductividad
      * Gráfica maestra: avance acumulado (%) por semana de cada curva entre las fechas del programa.
      * @param Curva[] $curvas
      */
-    public static function maestra(array $curvas, string $inicio, string $fin): array
+    public static function maestra(array $curvas, string $inicio, string $fin, ?string $hoy = null): array
     {
         $semanas = [];
         $f = new \DateTime($inicio);
@@ -137,7 +139,7 @@ class CurvaProductividad
         }
         $series = [];
         foreach ($curvas as $c) {
-            $s = self::series($c);
+            $s = self::series($c, $hoy);
             $cant = max(1, (int)$c->cantidad);
             $plan = $real = [];
             foreach ($semanas as $d) {
@@ -157,11 +159,12 @@ class CurvaProductividad
             $series[] = ['id' => (int)$c->id, 'nombre' => $c->nombre, 'planeado' => $plan, 'real' => $real];
         }
         // Hoy en el eje de semanas (0 = primera semana, 1 por semana) o null si queda fuera del programa
-        $hoy = null;
+        $fechaHoy = $hoy && preg_match('/^\d{4}-\d{2}-\d{2}$/', $hoy) ? $hoy : date('Y-m-d');
+        $posHoy = null;
         if ($semanas) {
-            $pos = (int)(new \DateTime($semanas[0]))->diff(new \DateTime('today'))->format('%r%a') / 7;
-            $hoy = ($pos >= 0 && $pos <= count($semanas) - 1) ? round($pos, 3) : null;
+            $pos = (int)(new \DateTime($semanas[0]))->diff(new \DateTime($fechaHoy))->format('%r%a') / 7;
+            $posHoy = ($pos >= 0 && $pos <= count($semanas) - 1) ? round($pos, 3) : null;
         }
-        return ['semanas' => $semanas, 'series' => $series, 'hoy' => $hoy];
+        return ['semanas' => $semanas, 'series' => $series, 'hoy' => $posHoy, 'hoy_fecha' => $fechaHoy];
     }
 }

@@ -41,8 +41,11 @@ $nDias = count($semanas) * 7;
 </head>
 <body>
 <?php $encEst = $config->encabezado(); $pta = $config->pta();
-if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 1184.0 / $Wu; ?>
-<div style="position:relative;width:1184pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt;margin-bottom:4pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1], 'pt', $Kenc); ?></div>
+if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $Kenc = 1184.0 / $Wu;
+$optsEnc = ['lamina_n' => 1, 'lamina_total' => 1];
+if (!empty($fechaReferencia)) $optsEnc += ['corte' => $fechaReferencia, 'fecha' => $fechaReferencia]; ?>
+<div style="position:relative;width:1184pt;height:<?php echo round($Hu * $Kenc, 2); ?>pt;margin-bottom:4pt"><?php echo \Classes\Estampas::renderGuardada($encEst, $proyecto, null, $optsEnc, 'pt', $Kenc); ?></div>
+<?php if (corte_exportacion_visible()): ?><div style="text-align:right;font-size:6pt;color:#555;margin-bottom:3pt">Corte: <?php echo s(date('d/m/Y', strtotime($fechaReferencia))); ?></div><?php endif; ?>
 <?php endif; ?>
 <table>
     <thead>
@@ -58,7 +61,7 @@ if ($encEst): [$Wu, $Hu] = \Classes\Estampas::dimensiones($encEst->config()); $K
                 <?php if ($logoBase64): ?><img src="<?php echo $logoBase64; ?>" style="height:22pt; float:right;"><?php endif; ?>
                 <?php echo s($proyecto->nombre); ?><br>
                 <small><strong>Inicio:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_inicio)); ?> &nbsp; <strong>Fin:</strong> <?php echo date('d/m/Y', strtotime($proyecto->fecha_fin)); ?></small><br>
-                <small><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?></small>
+                <small><strong>Generado:</strong> <?php echo date('d/m/Y H:i'); ?><?php echo s(etiqueta_corte_exportacion()); ?></small>
                 <?php endif; ?>
             </th>
             <th colspan="<?php echo $nDias + 2; ?>" class="banner"><?php echo s($config->tituloBanner($proyecto)); ?></th>

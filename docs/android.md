@@ -274,7 +274,7 @@ Las herramientas que no son de campo ya **no se abren en el navegador externo**:
 ### Pendiente de la Fase 1
 
 - Push con la app cerrada: **no incluido** por decisión (sin Google/FCM); los avisos se muestran al abrir o sincronizar.
-- Las herramientas web ya se abren dentro de la app con el puente de sesión; siguen necesitando conexión y las de lienzo (vPlan, Editor, Anotador) son más cómodas en tablet.
+- Las herramientas web ya se abren dentro de la app con el puente de sesión; siguen necesitando conexión y las de lienzo (Vplan, Editor, Anotador) son más cómodas en tablet.
 
 ## Fase 0 — lo que ya está hecho
 

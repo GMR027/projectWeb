@@ -1,4 +1,4 @@
-// vPlan: ajusta la letra de las tablas (tareas y tablas adicionales) para que se vean completas dentro de su bloque.
+// Vplan: ajusta la letra de las tablas (tareas y tablas adicionales) para que se vean completas dentro de su bloque.
 // Se vuelve a ejecutar al redimensionar un bloque (modo diseño), al agregar/quitar renglones y al cambiar el texto.
 (function () {
     const sheet = document.getElementById('vp-sheet');

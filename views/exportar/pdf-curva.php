@@ -18,6 +18,7 @@ $muchas = count($d['cols']) > 10;   // la maestra tiene muchas columnas: solo se
     th.f { text-align: right; font-weight: normal; }
     .caja { border: 0.6pt solid #888; padding: 4pt; margin-top: 6pt; }
 </style></head><body>
+<?php if (corte_exportacion_visible()): ?><div style="text-align:right;font-size:6.5pt;color:#555">Corte: <?php echo s(date('d/m/Y', strtotime(fecha_referencia_exportacion()))); ?></div><?php endif; ?>
 <?php if ($tablaCorta): ?>
     <h1><?php echo s($d['titulo']); ?></h1>
     <table class="<?php echo $muchas ? 'densa' : ''; ?>">

@@ -36,7 +36,7 @@ class Sheetflow
         'restriccion_tipo', 'restriccion_fecha', 'restriccion_motivo',
         'pta', 'hito', 'fecha_fija',
     ];
-    /** Columnas base de la tabla de instalación de materiales de una lámina de vPlan */
+    /** Columnas base de la tabla de instalación de materiales de una lámina de Vplan */
     public const ROLES_MATERIALES = ['material', 'fecha_material', 'status_material'];
     /** Roles que sobreviven a las herramientas (los demás se descartan) */
     public const ROLES = [
@@ -969,9 +969,9 @@ class Sheetflow
         return $dompdf->output();
     }
 
-    // ---------- Vínculo con vPlan ----------
+    // ---------- Vínculo con Vplan ----------
 
-    /** Crea (o actualiza, si $existente) una tabla «otro» de vPlan con los valores ya formateados de la hoja. Máx. 8 columnas */
+    /** Crea (o actualiza, si $existente) una tabla «otro» de Vplan con los valores ya formateados de la hoja. Máx. 8 columnas */
     public static function aVplan(SheetflowHoja $h, ?VplanTabla $existente = null): VplanTabla
     {
         // Una tabla especial (materiales, punch…) que apunte a esta hoja no se convierte en «otro»:
@@ -999,7 +999,7 @@ class Sheetflow
         return $t;
     }
 
-    /** Tabla de vPlan que ya muestra esta hoja, o una nueva vinculada (nunca duplica).
+    /** Tabla de Vplan que ya muestra esta hoja, o una nueva vinculada (nunca duplica).
      *  Solo considera tablas «otro»: la tabla de materiales también apunta a una hoja, pero no es intercambiable. */
     public static function tablaVplanDe(SheetflowHoja $h): VplanTabla
     {
@@ -1017,7 +1017,7 @@ class Sheetflow
         return $h;
     }
 
-    /** Pasa una tabla «otro» de vPlan con datos propios a una hoja de SheetFlow y la vincula. Los renglones propios se conservan como respaldo */
+    /** Pasa una tabla «otro» de Vplan con datos propios a una hoja de SheetFlow y la vincula. Los renglones propios se conservan como respaldo */
     public static function deTablaVplan(VplanTabla $t, ?int $usuarioId = null): ?SheetflowHoja
     {
         if ($t->tipo !== 'otro' || $t->sheetflow_id || $t->esPunchVista()) return null;
@@ -1280,7 +1280,7 @@ class Sheetflow
 
     // ---------- Vínculos vivos ----------
 
-    /** Renglones de la hoja como los lee una tabla de vPlan: claves c0..cN, máx. 200 (con la fila de totales al final) */
+    /** Renglones de la hoja como los lee una tabla de Vplan: claves c0..cN, máx. 200 (con la fila de totales al final) */
     public static function filasVplan(SheetflowHoja $h, int $nc): array
     {
         $m = self::matriz($h);
@@ -1322,7 +1322,7 @@ class Sheetflow
         return $out;
     }
 
-    /** CSS de una celda para vPlan: sin tamaño de letra ni bordes (la lámina escala sola); la alineación de la columna si la celda no trae la suya */
+    /** CSS de una celda para Vplan: sin tamaño de letra ni bordes (la lámina escala sola); la alineación de la columna si la celda no trae la suya */
     public static function cssVplan(array $f, string $alinCol): string
     {
         unset($f['fs'], $f['im'], $f['bt'], $f['br'], $f['bb'], $f['bl']);
@@ -1330,7 +1330,7 @@ class Sheetflow
         return self::cssFmt($f, true);
     }
 
-    /** CSS de los encabezados de una hoja para vPlan: ['c0' => css, …] (color del encabezado de la hoja si la celda no trae el suyo) */
+    /** CSS de los encabezados de una hoja para Vplan: ['c0' => css, …] (color del encabezado de la hoja si la celda no trae el suyo) */
     public static function estiloEncabezados(SheetflowHoja $h, int $nc): array
     {
         $m = self::matriz($h);
@@ -1355,13 +1355,13 @@ class Sheetflow
         }, $html);
     }
 
-    /** Fila de la hoja que corresponde al renglón $i de la vista de vPlan (la fila de totales no es editable); null si no se puede */
+    /** Fila de la hoja que corresponde al renglón $i de la vista de Vplan (la fila de totales no es editable); null si no se puede */
     private static function filaReal(array $d, int $i): ?int
     {
         return $i >= 0 && $i < count($d['rows']) ? $i : null;
     }
 
-    /** Escribe desde vPlan el valor mostrado de una celda. Devuelve un mensaje de error o null */
+    /** Escribe desde Vplan el valor mostrado de una celda. Devuelve un mensaje de error o null */
     public static function cambiarCelda(SheetflowHoja $h, int $fila, int $col, string $valor): ?string
     {
         $d = $h->contenido();
@@ -1391,7 +1391,7 @@ class Sheetflow
         return null;
     }
 
-    /** Quita desde vPlan el renglón $fila de la hoja. Devuelve un mensaje de error o null */
+    /** Quita desde Vplan el renglón $fila de la hoja. Devuelve un mensaje de error o null */
     public static function quitarFila(SheetflowHoja $h, int $fila): ?string
     {
         $d = $h->contenido();

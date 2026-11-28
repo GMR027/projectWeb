@@ -7,7 +7,7 @@
  * - Crea (o recrea) el proyecto ficticio "DEMO" (campus de centro de datos Tier III: movimiento de tierras,
  *   cimentación, estructura y envolvente, obra exterior, instalación eléctrica y respaldo, hidrosanitaria y contra
  *   incendio, enfriamiento de precisión, fibra/seguridad/DCIM, acabados técnicos y comisionamiento) con programa,
- *   restricciones, reportes diarios, bitácora, minutas, materiales, submittals/MSR, curvas de productividad y vPlan
+ *   restricciones, reportes diarios, bitácora, minutas, materiales, submittals/MSR, curvas de productividad y Vplan
  *   (y, con seed_demo_extras.php, dependencias, Archivo, Editor, Símbolos y View360). Al final, seed_demo_nuevas.php y
  *   seed_demo_herramientas.php completan las herramientas de campo, planeación, costos y documentos. Las fechas son
  *   relativas a hoy.
@@ -437,7 +437,7 @@ foreach ($curvas as [$nombre, $ref, $cant, $uni, $tipoC, $semIni, $semFin]) {
     }
 }
 
-// vPlan lo arma seed_demo_nuevas.php (paquete de láminas, tablas y cajetines)
+// Vplan lo arma seed_demo_nuevas.php (paquete de láminas, tablas y cajetines)
 
 $q("UPDATE proyectos SET fecha_fin = (SELECT MAX(fecha_fin) FROM partidas WHERE proyecto_id = $pid) WHERE id = $pid");
 
@@ -448,7 +448,7 @@ $uid = (int)$q("INSERT INTO usuarios (nombre, email, password, rol, confirmado) 
 $q("INSERT INTO proyecto_accesos (proyecto_id, usuario_id) VALUES ($pid, $uid)");
 
 require __DIR__ . '/seed_demo_extras.php';       // dependencias, Archivo, Editor, Símbolos y View360
-require __DIR__ . '/seed_demo_nuevas.php';       // órdenes de cambio, líneas base, Redactor, SheetFlow, MSR configurable, vPlan libre, Comparador
+require __DIR__ . '/seed_demo_nuevas.php';       // órdenes de cambio, líneas base, Redactor, SheetFlow, MSR configurable, Vplan libre, Comparador
 // seed_demo_nuevas.php (que ya ejecuta seed_demo_estampas.php) termina con seed_demo_herramientas.php (campo, costos, recursos, RFI, seguridad, punch, evidencias…)
 
 echo "Listo. Demo: proyecto $pid · usuario demo $uid (entra por /demo)\n";

@@ -1,6 +1,6 @@
 @use '../base/variables' as *;
 
-// Acento de la interfaz de vPlan: sigue la paleta del proyecto (--primary) en vez de un azul fijo.
+// Acento de la interfaz de Vplan: sigue la paleta del proyecto (--primary) en vez de un azul fijo.
 // El contenido de la lámina (tablas, colores de estado) no se toca: debe verse igual que el PDF.
 :root {
   --vplan-acento: var(--primary);
@@ -9,7 +9,7 @@
 }
 
 // ============================================================
-// vPlan · botones de listas, navegador de láminas y modo diseño
+// Vplan · botones de listas, navegador de láminas y modo diseño
 // ============================================================
 
 // Botón de icono cuadrado (también sirve como <a>)
@@ -282,7 +282,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
 .vp-nav-abrir { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem; height: auto; min-height: 9rem; padding: 1rem 0; font-size: 1.5rem;
   &::after { content: 'Láminas'; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 1.1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); } }
 
-// ---------- Tarjeta de vPlan (lista) ----------
+// ---------- Tarjeta de Vplan (lista) ----------
 .vp-paquetes { grid-template-columns: repeat(auto-fill, minmax(34rem, 1fr)); gap: 2rem; }
 .vp-paquete { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
   &:hover { transform: translateY(-.3rem); box-shadow: var(--shadow-lg); border-color: var(--border-accent, var(--border)); }
@@ -404,7 +404,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
     i { color: var(--vplan-acento); }
     &:hover { border-color: var(--vplan-acento-borde); transform: translateY(-1px); box-shadow: var(--shadow); } } }
 
-// ---------- Materiales de una lámina de vPlan (editor de marcas) ----------
+// ---------- Materiales de una lámina de Vplan (editor de marcas) ----------
 .ve-materiales { padding: 1rem; overflow: auto;
   > p { margin: .4rem 0 1rem; } }
 .mat-acciones { flex-wrap: wrap; margin-bottom: .6rem; }
@@ -474,7 +474,7 @@ body.vp-arrastrando { user-select: none; cursor: grabbing; }
   > summary { cursor: pointer; color: var(--text-muted); font-size: 1.02rem; padding: .25rem 0; } }
 
 // ============================================================
-// Pantallas táctiles: hoja y barras de vPlan
+// Pantallas táctiles: hoja y barras de Vplan
 // ============================================================
 @media (pointer: coarse) {
   // El pellizco y el paneo de dos dedos los resuelve gestos-lienzo.js: el navegador no debe
@@ -628,7 +628,7 @@ body.vp-ver-tareas .vp-zoom-flot { display: none; }
 body.vp-paneando, body.vp-paneando * { cursor: grabbing !important; user-select: none; }
 
 // ============================================================
-// vPlan hub (lista de vPlan) — rediseño
+// Vplan hub (lista de Vplan) — rediseño
 // ============================================================
 .vplan-page {
   .vplan-hub-grid {
@@ -772,7 +772,7 @@ body.vp-paneando, body.vp-paneando * { cursor: grabbing !important; user-select:
 }
 
 // ============================================================
-// vPlan · gestor de láminas del paquete
+// Vplan · gestor de láminas del paquete
 // ============================================================
 .vplan-paquete-page {
   .vp-ayuda-lista {
@@ -927,7 +927,7 @@ body.vp-paneando, body.vp-paneando * { cursor: grabbing !important; user-select:
 }
 
 // ============================================================
-// vPlan · espacio de trabajo de la lámina, editor y ventanas
+// Vplan · espacio de trabajo de la lámina, editor y ventanas
 // ============================================================
 body[data-vista^="vplan"] {
   .lz-modos {

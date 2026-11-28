@@ -34,7 +34,7 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
     <i class="fa-solid fa-link"></i>
     Esta tabla está <strong>vinculada a las subactividades</strong> de la actividad
     <strong><?php echo s(trim($actividadVinculo->codigo . ' ' . $actividadVinculo->nombre)); ?></strong>.
-    Los cambios de Nombre, Inicio, Fin y Avance se guardan también en la actividad; las columnas adicionales se quedan en SheetFlow y vPlan.
+    Los cambios de Nombre, Inicio, Fin y Avance se guardan también en la actividad; las columnas adicionales se quedan en SheetFlow y Vplan.
     <?php if (puede_gestionar_proyecto($proyecto)): ?>
         <a href="/programa/actividades/editar?id=<?php echo (int)$actividadVinculo->id; ?>#subactividades">Abrir la actividad</a>
     <?php endif; ?>
@@ -360,9 +360,9 @@ $q = 'proyecto=' . $id . '&id=' . (int)$hoja->id;
 <div class="suite-panel sf-usos">
     <h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla</h3>
     <ul class="sf-lista-usos">
-        <li><strong>vPlan:</strong>
-            <form class="inline" method="POST" action="/sheetflow/a-vplan" data-sf-guardar><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en vPlan</button></form>
-            <a class="btn btn-sm btn-ghost" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hoja->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Crear lámina vPlan con esta tabla</a>
+        <li><strong>Vplan:</strong>
+            <form class="inline" method="POST" action="/sheetflow/a-vplan" data-sf-guardar><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en Vplan</button></form>
+            <a class="btn btn-sm btn-ghost" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hoja->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Crear lámina Vplan con esta tabla</a>
             <?php foreach ($usos as $u): ?>
                 <form class="inline" method="POST" action="/sheetflow/a-vplan" data-sf-guardar><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><input type="hidden" name="tabla" value="<?php echo (int)$u['id']; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-rotate"></i> Vinculada: «<?php echo s($u['titulo']); ?>» (<?php echo (int)$u['laminas']; ?> lámina<?php echo (int)$u['laminas'] === 1 ? '' : 's'; ?>)</button></form>
             <?php endforeach; ?></li>
@@ -386,7 +386,7 @@ window.Tour.registrar('sheetflow-editor', {
         { sel: '#sf-fx', icono: 'fa-square-root-variable', titulo: 'Fórmulas', texto: 'En la barra de abajo: empieza con <b>=</b> y usa SUMA, SI, SUMAR.SI… Mientras escribes aparecen <b>sugerencias de funciones</b> (Enter o Tab para aceptarlas) y a la derecha se ve el <b>resultado</b>. <b>F4</b> fija la referencia ($A$1) y «Funciones…» abre el catálogo con la sintaxis. Con la fórmula abierta, haz <b>clic en las celdas</b> (o arrastra) para insertar sus referencias.' },
         { sel: '#sf-historial', icono: 'fa-clock-rotate-left', titulo: 'Historial y búsqueda', texto: '«Historial» guarda una copia al editar y permite volver atrás. Con <b>Ctrl + F</b> buscas y reemplazas en toda la tabla.' },
         { sel: '#sf-guardar', icono: 'fa-floppy-disk', titulo: 'Guardar y exportar', texto: 'Guarda la hoja (también con <b>Ctrl + S</b>). «Exportar» entrega el Excel, el CSV o el PDF con los formatos.' },
-        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Recuerda: la tabla puede irse a una lámina del vPlan con «A vPlan», y las enlazadas se actualizan solas cuando cambia la hoja.' }
+        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Recuerda: la tabla puede irse a una lámina del Vplan con «A Vplan», y las enlazadas se actualizan solas cuando cambia la hoja.' }
     ]
 });
 </script>

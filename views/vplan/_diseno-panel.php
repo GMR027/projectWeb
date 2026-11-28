@@ -135,14 +135,14 @@ $prop = fn(array $p, bool $vert): float => $vert ? round($p[2] / max(1, $p[1]), 
 
         <section class="pn-secc" data-ins="tablas">
             <h4 class="pn-tit"<?php echo glosario('tabla'); ?>><i class="fa-solid fa-table"></i> Tablas adicionales</h4>
-            <p class="text-sm text-muted">Tablas del proyecto creadas en vPlan. Las que están <strong>enlazadas a una hoja de SheetFlow</strong> se actualizan solas.</p>
+            <p class="text-sm text-muted">Tablas del proyecto creadas en Vplan. Las que están <strong>enlazadas a una hoja de SheetFlow</strong> se actualizan solas.</p>
             <a href="/vplan/tablas/crear?proyecto=<?php echo s($proyecto->id); ?>" class="btn btn-sm btn-ghost vp-ins-nueva"><i class="fa-solid fa-plus"></i> Crear tabla nueva</a>
             <div id="vp-ins-tablas" class="vp-ins-tablas"></div>
         </section>
 
         <section class="pn-secc" data-ins="tablas-sf">
             <h4 class="pn-tit"<?php echo glosario('sheetflow'); ?>><i class="fa-solid fa-table-cells"></i> Tablas SheetFlow</h4>
-            <p class="text-sm text-muted">Hojas de <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">SheetFlow</a> que todavía no están en el vPlan. Al insertarlas se crea la tabla y quedan <strong>enlazadas</strong>: sus datos se leen en vivo y se actualizan solos.</p>
+            <p class="text-sm text-muted">Hojas de <a href="/sheetflow?proyecto=<?php echo s($proyecto->id); ?>" target="_blank" rel="noopener">SheetFlow</a> que todavía no están en el Vplan. Al insertarlas se crea la tabla y quedan <strong>enlazadas</strong>: sus datos se leen en vivo y se actualizan solos.</p>
             <div id="vp-ins-tablas-sf" class="vp-ins-tablas"></div>
         </section>
     </section>

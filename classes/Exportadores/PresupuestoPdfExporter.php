@@ -8,6 +8,7 @@ use Classes\Pdf;
 class PresupuestoPdfExporter extends BaseExporter
 {
     private array $datos = [];
+    private ?string $fecha = null;
 
     public function setDatos(array $datos): self
     {
@@ -15,10 +16,18 @@ class PresupuestoPdfExporter extends BaseExporter
         return $this;
     }
 
+    /** Fecha de emisión del presupuesto */
+    public function setFecha(string $fecha): self
+    {
+        $this->fecha = $fecha;
+        return $this;
+    }
+
     public function generar(string $nombreBase): string
     {
         $proyecto = $this->proyecto;
         $datos = $this->datos;
+        $fechaDocumento = $this->fecha ?: date('Y-m-d');
         $dueno = \Model\Usuario::find($proyecto->usuario_id);
         $img = fn(?string $a, string $c) => MsrPdfExporter::imagenBase64($a, $c);
         $logoE = $img($dueno && $dueno->logo ? $dueno->logo : $proyecto->logo, 'build/img/logos');

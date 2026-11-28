@@ -100,13 +100,13 @@ class RedactorController
         ]);
     }
 
-    /** Gráficos del Editor y láminas del vPlan con imagen, para insertarlos en el documento */
+    /** Gráficos del Editor y láminas del Vplan con imagen, para insertarlos en el documento */
     private static function imagenesInsertables(int $proyectoId): array
     {
         $out = Grafico::paraInsertar($proyectoId);
         try {
             foreach (\Model\VplanLamina::deProyecto($proyectoId) as $l) {
-                if ($l->marcas_png) $out[] = ['id' => 0, 'nombre' => 'vPlan · ' . $l->titulo, 'src' => '/uploads/vplan/' . $l->marcas_png];
+                if ($l->marcas_png) $out[] = ['id' => 0, 'nombre' => 'Vplan · ' . $l->titulo, 'src' => '/uploads/vplan/' . $l->marcas_png];
             }
         } catch (\Throwable $e) {
         }

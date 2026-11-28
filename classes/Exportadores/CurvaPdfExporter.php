@@ -11,6 +11,7 @@ use Classes\Pdf;
 class CurvaPdfExporter extends BaseExporter
 {
     private ?Curva $curva = null;
+    private ?string $fechaReferencia = null;
 
     /** null = gráfica maestra */
     public function setCurva(?Curva $c): self
@@ -19,11 +20,18 @@ class CurvaPdfExporter extends BaseExporter
         return $this;
     }
 
+    /** Fecha de emisión: mueve la línea «HOY» de la gráfica */
+    public function setFechaReferencia(string $fecha): self
+    {
+        $this->fechaReferencia = $fecha;
+        return $this;
+    }
+
     /** Estructura común para PDF y hoja: título, columnas, filas de tabla y PNG de la gráfica */
-    public static function armar(\Model\Proyecto $proyecto, ?Curva $curva): array
+    public static function armar(\Model\Proyecto $proyecto, ?Curva $curva, ?string $hoy = null): array
     {
         if ($curva) {
-            $s = CurvaProductividad::series($curva);
+            $s = CurvaProductividad::series($curva, $hoy);
             $u = $curva->unidad;
             return [
                 'titulo' => mb_strtoupper($curva->nombre),
@@ -36,7 +44,7 @@ class CurvaPdfExporter extends BaseExporter
                 'decimales' => 0,
             ];
         }
-        $m = CurvaController::datosMaestra($proyecto);
+        $m = CurvaController::datosMaestra($proyecto, $hoy);
         $filas = [];
         foreach ($m['series'] as $s) {
             $filas[$s['nombre'] . ' · plan %'] = $s['planeado'];
@@ -58,7 +66,7 @@ class CurvaPdfExporter extends BaseExporter
 
     public function generar(string $nombreBase): string
     {
-        $d = self::armar($this->proyecto, $this->curva);
+        $d = self::armar($this->proyecto, $this->curva, $this->fechaReferencia);
         $proyecto = $this->proyecto;
         $png = 'data:image/png;base64,' . base64_encode($d['png']);
         $esMaestra = $this->curva === null;

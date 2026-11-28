@@ -1,5 +1,5 @@
 <?php
-$descripcion = $descripcion ?? 'ProjectWeb: programa de obra con Gantt, lookahead, Last Planner, vPlan, materiales, reportes diarios, documentos y control de cambios en una sola plataforma.';
+$descripcion = $descripcion ?? 'ProjectWeb: programa de obra con Gantt, lookahead, Last Planner, Vplan, materiales, reportes diarios, documentos y control de cambios en una sola plataforma.';
 $ogImage = $ogImage ?? '/build/img/landing/hero.jpg';
 $appUrl = rtrim((string)(getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? '')), '/');
 $rutaActual = strtok((string)($_SERVER['REQUEST_URI'] ?? '/'), '?');

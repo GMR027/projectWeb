@@ -30,7 +30,7 @@ function ayudas_herramientas(): array
         '/evidencias' => ['Fotos de avance ligadas a cada actividad.', 'evidencias'],
         '/curvas' => ['Curvas de productividad: rendimiento real contra lo planeado por actividad.', 'curvas'],
         '/seguridad' => ['Permisos de trabajo, pláticas e inspecciones de seguridad.', 'seguridad'],
-        '/punch' => ['Lista de pendientes y detalles por corregir antes de entregar la obra. Se puede insertar como tabla en vPlan, Redactor y Editor, eligiendo qué ver.', 'punch'],
+        '/punch' => ['Lista de pendientes y detalles por corregir antes de entregar la obra. Se puede insertar como tabla en Vplan, Redactor y Editor, eligiendo qué ver.', 'punch'],
         '/calidad' => ['Planes de inspección y pruebas por actividad, con sus puntos, resultados y no conformidades.', 'calidad'],
         '/riesgos' => ['Registro de riesgos de la obra: probabilidad, impacto, responsable, plan de acción y fecha compromiso; el riesgo alto marca la actividad «En riesgo».', 'riesgos'],
         '/equipo' => ['Horas, costo y mantenimiento de la maquinaria y el equipo de la obra.', 'equipo'],
@@ -52,9 +52,9 @@ function ayudas_herramientas(): array
         '/graficos' => ['Editor de gráficos y planos: dibuja, anota y enlaza zonas. La biblioteca de símbolos, estampas y cajetines está en su pestaña «Símbolos».', 'editor'],
         '/redactor' => ['Procesador de texto del proyecto: documentos con tablas e imágenes, exportables a DOCX, ODT y PDF.', 'redactor'],
         '/sheetflow' => ['Tablas con fórmulas; importa y exporta XLSX, CSV y PDF.', 'sheetflow'],
-        '/simbolos' => ['Biblioteca de símbolos para usar en el Editor y el vPlan.', 'simbolos'],
+        '/simbolos' => ['Biblioteca de símbolos para usar en el Editor y el Vplan.', 'simbolos'],
         '/view360' => ['Gráficos interactivos con zonas que abren vistas 360 de la obra.', 'view360'],
-        '/comparador' => ['Compara dos documentos del proyecto (Archivo, láminas de vPlan, gráficos del Editor, documentos del Redactor) o externos con deslizador, fundido o diferencias con tolerancia; agrega globos, textos, flechas, medidas con escala y nubes, revisa con hilos y punch/RFI, analiza páginas, guarda versiones y comparte un enlace de solo lectura.', 'comparador'],
+        '/comparador' => ['Compara dos documentos del proyecto (Archivo, láminas de Vplan, gráficos del Editor, documentos del Redactor) o externos con deslizador, fundido o diferencias con tolerancia; agrega globos, textos, flechas, medidas con escala y nubes, revisa con hilos y punch/RFI, analiza páginas, guarda versiones y comparte un enlace de solo lectura.', 'comparador'],
         '/anotador' => ['Anota planos y documentos PDF sobre el propio documento: globos, textos, resaltados, formas, polígonos con áreas y volúmenes, imágenes, estampas inteligentes y firmas. Exporta el PDF anotado y finaliza la firma.', 'anotador'],
         '/ensamblador-documentos' => ['Une en un solo PDF documentos del Redactor y PDF del Archivo; el PDF se actualiza solo cuando cambian las fuentes.', 'ensamblador-documentos'],
         '/traductor' => ['Traduce español ↔ inglés un texto o un documento completo (PDF, Word, Excel, PowerPoint…).', 'traductor'],
@@ -101,7 +101,7 @@ function herramientas_proyecto($proyecto): array
         ['Planeación', '/lineatiempo', 'fa-chart-gantt', 'Línea de tiempo activa'],
         ['Planeación', '/balance', 'fa-chart-column', 'Línea de balance'],
         ['Planeación', '/lookahead', 'fa-binoculars', 'Lookahead', true, ['/planificador']],
-        ['Planeación', '/vplan', 'fa-sheet-plastic', 'vPlan'],
+        ['Planeación', '/vplan', 'fa-sheet-plastic', 'Vplan'],
         ['Planeación', '/lastplanner', 'fa-note-sticky', 'Last Planner'],
         ['Planeación', '/calendario', 'fa-calendar-days', 'Calendario'],
         ['Planeación', '/lineas-base', 'fa-timeline', 'Líneas base'],
@@ -161,7 +161,7 @@ function herramientas_proyecto($proyecto): array
     // Etiqueta corta para la barra compacta: el nombre completo sigue en el menú y en la ayuda.
     $cortos = [
         '/programa' => 'Programa', '/dependencias' => 'Dependencias', '/lineatiempo' => 'Línea tiempo',
-        '/balance' => 'Balance', '/lookahead' => 'Lookahead', '/vplan' => 'vPlan', '/lastplanner' => 'Last Planner',
+        '/balance' => 'Balance', '/lookahead' => 'Lookahead', '/vplan' => 'Vplan', '/lastplanner' => 'Last Planner',
         '/calendario' => 'Calendario', '/lineas-base' => 'L. base', '/plantillas' => 'Tipo obra',
         '/reportes' => 'Reporte', '/bitacora' => 'Bitácora', '/minutas' => 'Minutas', '/evidencias' => 'Evidencias',
         '/curvas' => 'Curvas', '/seguridad' => 'Seguridad', '/punch' => 'Punch', '/calidad' => 'Calidad', '/rfi' => 'RFI',
@@ -206,7 +206,7 @@ function pestanas_herramienta(string $grupo, string $activa, $proyecto): void
         'lookahead' => ['fa-binoculars', 'Lookahead y planificador', [['/lookahead', 'fa-binoculars', 'Lookahead'], ['/planificador', 'fa-diagram-next', 'Planificador']]],
         'archivo' => ['fa-folder-open', 'Documentos', [['/archivos', 'fa-folder-open', 'Archivo'], ['/visor', 'fa-eye', 'Visor'], ['/transmittals', 'fa-paper-plane', 'Envíos']]],
         'revision' => ['fa-magnifying-glass-chart', 'Revisión de datos (IA)', [['/inconsistencias', 'fa-magnifying-glass-chart', 'Inconsistencias'], ['/analisis-materiales', 'fa-boxes-stacked', 'Análisis de materiales']]],
-        'planos' => ['fa-sheet-plastic', 'Planos y láminas', [['/vplan', 'fa-sheet-plastic', 'Láminas (vPlan)'], ['/vplan/tablas', 'fa-table', 'Tablas adicionales'], ['/graficos', 'fa-pen-ruler', 'Editor'], ['/simbolos', 'fa-shapes', 'Símbolos']]],
+        'planos' => ['fa-sheet-plastic', 'Planos y láminas', [['/vplan', 'fa-sheet-plastic', 'Láminas (Vplan)'], ['/vplan/tablas', 'fa-table', 'Tablas adicionales'], ['/graficos', 'fa-pen-ruler', 'Editor'], ['/simbolos', 'fa-shapes', 'Símbolos']]],
         'materiales' => ['fa-cubes', 'Materiales', [['/materiales', 'fa-cubes', 'Catálogo'], ['/materiales/dependencias', 'fa-link', 'Dependencias de materiales']]],
     ];
     if (!isset($grupos[$grupo]) || !$proyecto) return;

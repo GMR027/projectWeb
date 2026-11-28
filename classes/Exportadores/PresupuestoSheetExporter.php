@@ -51,7 +51,7 @@ class PresupuestoSheetExporter extends BaseExporter
         $texto('A2', $proy);
         $h->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('334155');
         $h->mergeCells('A3:H3');
-        $texto('A3', 'Generado el ' . date('d/m/Y H:i') . ' · ' . count($d['grupos']) . ' partida(s) · ' . ($d['sinPartida'] ? 'incluye conceptos generales' : 'sin conceptos generales'));
+        $texto('A3', 'Generado el ' . date('d/m/Y H:i') . etiqueta_corte_exportacion() . ' · ' . count($d['grupos']) . ' partida(s) · ' . ($d['sinPartida'] ? 'incluye conceptos generales' : 'sin conceptos generales'));
         $h->getStyle('A3')->getFont()->setSize(8)->getColor()->setRGB('64748B');
 
         $cab = ['Clave', 'Concepto', 'Unidad', 'Cantidad', 'P. unitario', 'Importe', 'Programado', 'Pendiente'];

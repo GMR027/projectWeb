@@ -62,7 +62,7 @@ de fechas en móvil y el tema claro/oscuro.
 ## Fase 2: suite de planeación
 
 El mismo lenguaje visual se extendió a **Dependencias**, **Línea de tiempo activa**, **Línea de
-balance (takt)** y **vPlan**, incluyendo sus ventanas, paneles y formularios.
+balance (takt)** y **Vplan**, incluyendo sus ventanas, paneles y formularios.
 
 - **Capa compartida** `src/scss/componentes/_suite.scss` (importada en `app-base.scss` y
   `app.scss`): hero compacto, KPIs, barra de herramientas, paneles, leyendas, estados vacíos,
@@ -76,14 +76,14 @@ balance (takt)** y **vPlan**, incluyendo sus ventanas, paneles y formularios.
 - **Balance** (bloque `.balance-page` al final de `src/scss/paginas/_fase3.scss`): configuración
   en tarjetas, diagrama con leyenda por oficio, generador y tabla de cruces con desfase. La
   rejilla se adapta sola cuando el visitante solo ve una tarjeta.
-- **vPlan** (bloque al final de `src/scss/paginas/_vplan.scss`): hub con guía/resumen, tarjetas
-  de vPlan, galería de láminas en cuadrícula plana (el grupo ya se lee en cada tarjeta), espacio
+- **Vplan** (bloque al final de `src/scss/paginas/_vplan.scss`): hub con guía/resumen, tarjetas
+  de Vplan, galería de láminas en cuadrícula plana (el grupo ya se lee en cada tarjeta), espacio
   de trabajo con modos Ver · Acomodar · Dibujar, panel de diseño, materiales y formularios.
-- **Sin cambios de rutas, permisos, selectores ni esquema.** La galería de vPlan sigue siendo
+- **Sin cambios de rutas, permisos, selectores ni esquema.** La galería de Vplan sigue siendo
   la vista inicial y el reordenamiento por arrastre guarda el orden con la API existente.
 
 Para revisar: `npx gulp`, abrir cada herramienta con un proyecto con datos y alternar tema
-claro/oscuro, móvil, los modos de vPlan y los modales de Dependencias/notas/materiales.
+claro/oscuro, móvil, los modos de Vplan y los modales de Dependencias/notas/materiales.
 
 ## Fase 3: herramientas de campo y seguimiento
 
@@ -165,7 +165,7 @@ diálogos propios de cada página sin pelearse con sus estilos.
 
 - **Estructura reutilizable**: `.ventana-cab` (icono, eyebrow, título, descripción y cierre),
   `.ventana-cuerpo` con scroll y `.ventana-pie` para acciones. Se usa en la confirmación global,
-  el modal de dato, Archivo (carpetas), MSR (columna/partida), Calendario, notas de vPlan/View360
+  el modal de dato, Archivo (carpetas), MSR (columna/partida), Calendario, notas de Vplan/View360
   y el asistente Por dónde empezar.
 - **Modales superpuestos**: fondo con degradado y desenfoque, borde/radio/sombra comunes,
   cabeceras a sangre en `.bj-card`, animación de entrada y scroll interno controlado.

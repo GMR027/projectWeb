@@ -9,7 +9,7 @@ use Model\VplanBloque;
 use Model\VplanLamina;
 
 /**
- * Datos de una lámina de vPlan. La lámina es un lienzo de bloques: cada bloque de tareas lista actividades de una o varias
+ * Datos de una lámina de Vplan. La lámina es un lienzo de bloques: cada bloque de tareas lista actividades de una o varias
  * partidas (todas o solo algunas), con recovery por actividad, restricciones numeradas en toda la lámina y tablas adicionales.
  */
 class Vplan
@@ -153,10 +153,11 @@ class Vplan
         });
     }
 
-    public static function textoFecha(): string
+    public static function textoFecha(?string $fecha = null): string
     {
         $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-        return $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
+        $base = $fecha && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) ? $fecha : date('Y-m-d');
+        return $meses[(int)date('n', strtotime($base))] . ' | ' . date('d', strtotime($base)) . ' | ' . date('Y', strtotime($base));
     }
 
     /** Filas [etiqueta, valor] de un cajetín (0 = el estándar) con sus variables resueltas para esta lámina, y su forma */
@@ -171,21 +172,22 @@ class Vplan
         return ['banda' => $c['orientacion'] === 'banda', 'filas' => array_map(fn($f) => [$val($f[0]), $val($f[1])], $c['filas'])];
     }
 
-    /** Opciones de contexto de un bloque de estampa: fecha de corte fija (o la de hoy) y actividad de las etiquetas «de la actividad del bloque» */
-    public static function opcionesEstampa(array $cfg): array
+    /** Opciones de contexto de un bloque de estampa: fecha de corte fija, la de la exportación o la de hoy; actividad de las etiquetas «de la actividad del bloque» */
+    public static function opcionesEstampa(array $cfg, ?string $fecha = null): array
     {
-        return ['corte' => ($cfg['fecha_modo'] ?? '') === 'fija' ? (string)($cfg['fecha'] ?? '') : '', 'actividad' => (int)($cfg['actividad_id'] ?? 0)];
+        $corte = ($cfg['fecha_modo'] ?? '') === 'fija' ? (string)($cfg['fecha'] ?? '') : (string)($fecha ?? '');
+        return ['corte' => $corte, 'fecha' => (string)($fecha ?? ''), 'actividad' => (int)($cfg['actividad_id'] ?? 0)];
     }
 
     /** Textos que se calculan solos si el bloque no trae uno propio */
-    public static function textoDeBloque(VplanBloque $b, VplanLamina $lamina, Proyecto $proyecto): string
+    public static function textoDeBloque(VplanBloque $b, VplanLamina $lamina, Proyecto $proyecto, ?string $fecha = null): string
     {
         $c = $b->config();
         $propio = trim((string)($c['texto'] ?? ''));
         return match ($b->tipo) {
             'titulo' => $propio !== '' ? $propio : ($proyecto->codigo ?: $proyecto->nombre) . "\n" . mb_strtoupper((string)$lamina->titulo),
             'supervisor' => $propio !== '' ? $propio : ($lamina->supervisor ? 'SUPERVISOR: ' . $lamina->supervisor : ''),
-            'fecha' => $propio !== '' ? $propio : 'UPDATED: ' . self::textoFecha(),
+            'fecha' => $propio !== '' ? $propio : 'UPDATED: ' . self::textoFecha($fecha),
             default => $propio,
         };
     }
@@ -203,7 +205,7 @@ class Vplan
     public static function datos(VplanLamina $lamina, Proyecto $proyecto, ?array $bloques = null): array
     {
         $bloques ??= $lamina->bloques();
-        try { $lamina->sincronizarImagenes($bloques); } catch (\Throwable $e) { error_log('vPlan imágenes vinculadas: ' . $e->getMessage()); }
+        try { $lamina->sincronizarImagenes($bloques); } catch (\Throwable $e) { error_log('Vplan imágenes vinculadas: ' . $e->getMessage()); }
         $partida = $lamina->partida_id ? Partida::find($lamina->partida_id) : null;
         if ($partida && (int)$partida->proyecto_id !== (int)$proyecto->id) $partida = null;
         $rec = $lamina->recovery();

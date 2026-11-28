@@ -64,7 +64,7 @@ class LineatiempoSheetExporter extends BaseExporter
         $hoja->mergeCells('A2:' . $L($ultima) . '2');
         $hoja->setCellValue('A2', trim($this->proyecto->codigo . ' · ' . $this->proyecto->ubicacion, ' ·')
             . ' · Del ' . date('d/m/Y', strtotime($lt['inicio'])) . ' al ' . date('d/m/Y', strtotime($lt['fin']))
-            . ' · Generado ' . date('d/m/Y H:i'));
+            . ' · Generado ' . date('d/m/Y H:i') . etiqueta_corte_exportacion());
         $hoja->mergeCells('A3:' . $L($ultima) . '3');
         $hoja->setCellValue('A3', 'Filtros: ' . LineatiempoPdfExporter::textoFiltros($this->filtros, $this->partidasSel)
             . ' · ' . (int)$lt['total'] . ' actividades' . ($lt['conRestriccion'] ? ' (' . (int)$lt['conRestriccion'] . ' con restricción)' : ''));

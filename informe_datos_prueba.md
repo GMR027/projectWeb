@@ -80,7 +80,7 @@ Proyecto cargado: **GRX - Información de prueba** (id 7, código `GRX-PRUEBA`),
 
 ### Fecha corregida (1)
 
-- id 27 «Canalización para bajada conduit… área L» termina 10/07/2026 → 10/06/2026 (el vPlan p.10 dice 10/06 y 29 días no cuadran con las demás áreas de 3 días)
+- id 27 «Canalización para bajada conduit… área L» termina 10/07/2026 → 10/06/2026 (el Vplan p.10 dice 10/06 y 29 días no cuadran con las demás áreas de 3 días)
 
 ### Duración 0 días (2)
 
@@ -89,27 +89,27 @@ Proyecto cargado: **GRX - Información de prueba** (id 7, código `GRX-PRUEBA`),
 
 ### Año incorrecto (4)
 
-- vPlan p.17 CONTROL DE ACCESO FASE 1 tarea 2 pi: «29/04/2025» → 29/04/2026 (el año 2025 es un error de captura)
-- vPlan p.17 CONTROL DE ACCESO FASE 1 tarea 2 pf: «30/04/2025» → 30/04/2026 (el año 2025 es un error de captura)
-- vPlan p.17 CONTROL DE ACCESO FASE 1 tarea 2 r1i: «20/05/2025» → 20/05/2026 (el año 2025 es un error de captura)
-- vPlan p.17 CONTROL DE ACCESO FASE 1 tarea 2 r1f: «10/06/2025» → 10/06/2026 (el año 2025 es un error de captura)
+- Vplan p.17 CONTROL DE ACCESO FASE 1 tarea 2 pi: «29/04/2025» → 29/04/2026 (el año 2025 es un error de captura)
+- Vplan p.17 CONTROL DE ACCESO FASE 1 tarea 2 pf: «30/04/2025» → 30/04/2026 (el año 2025 es un error de captura)
+- Vplan p.17 CONTROL DE ACCESO FASE 1 tarea 2 r1i: «20/05/2025» → 20/05/2026 (el año 2025 es un error de captura)
+- Vplan p.17 CONTROL DE ACCESO FASE 1 tarea 2 r1f: «10/06/2025» → 10/06/2026 (el año 2025 es un error de captura)
 
 ### Fecha mal formada (3)
 
-- vPlan p.17 CONTROL DE ACCESO FASE 1 tarea 4 r1i: «10/06/06» → 10/06/2026 (año de 2 dígitos que era 2006)
-- vPlan p.18 CONTROL DE ACCESO FASE 2 tarea 6 r2f: «2509/2026» → 25/09/2026
-- vPlan p.18 CONTROL DE ACCESO FASE 2 «DC (IN-01-05)»: recovery «21/01/2026 / 23/10/2026» → «21/10/2026 / 23/10/2026»
+- Vplan p.17 CONTROL DE ACCESO FASE 1 tarea 4 r1i: «10/06/06» → 10/06/2026 (año de 2 dígitos que era 2006)
+- Vplan p.18 CONTROL DE ACCESO FASE 2 tarea 6 r2f: «2509/2026» → 25/09/2026
+- Vplan p.18 CONTROL DE ACCESO FASE 2 «DC (IN-01-05)»: recovery «21/01/2026 / 23/10/2026» → «21/10/2026 / 23/10/2026»
 
 ### Fecha "TBD" (4)
 
-- vPlan p.18 CONTROL DE ACCESO FASE 2 tarea 7 r2i: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
-- vPlan p.18 CONTROL DE ACCESO FASE 2 tarea 7 r2f: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
-- vPlan p.20 VIDEO VIGILANCIA 60 Y 9 BAHIAS tarea 4 r1i: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
-- vPlan p.20 VIDEO VIGILANCIA 60 Y 9 BAHIAS tarea 4 r1f: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
+- Vplan p.18 CONTROL DE ACCESO FASE 2 tarea 7 r2i: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
+- Vplan p.18 CONTROL DE ACCESO FASE 2 tarea 7 r2f: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
+- Vplan p.20 VIDEO VIGILANCIA 60 Y 9 BAHIAS tarea 4 r1i: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
+- Vplan p.20 VIDEO VIGILANCIA 60 Y 9 BAHIAS tarea 4 r1f: «TBD» (por definir) → se deja vacío; el sistema no soporta 'por definir'
 
 ### Dato ambiguo (1)
 
-- vPlan p.18 CONTROL DE ACCESO FASE 2 punch «Colocación de Abrazadera de Overheads»: % leído como «2» (es el rombo 2 encimado) → 100 %
+- Vplan p.18 CONTROL DE ACCESO FASE 2 punch «Colocación de Abrazadera de Overheads»: % leído como «2» (es el rombo 2 encimado) → 100 %
 
 ### Código de submittal (6)
 
@@ -127,21 +127,21 @@ Proyecto cargado: **GRX - Información de prueba** (id 7, código `GRX-PRUEBA`),
 
 ## 3. Lo que no cuadra y necesita tu decisión
 
-1. **Fechas del programa vs. vPlan.** En 21 actividades las fechas del programa no coinciden con las del vPlan (tabla abajo). El programa mezcla criterios: a veces toma el último recovery, a veces el inicio original y el último fin, a veces ninguno. Además el vPlan muestra *START/FINISH* originales (línea base) y el programa guarda las fechas vigentes.
-2. **Línea base.** Para reproducir el vPlan hace falta guardar fechas de línea base; hoy la tabla de la lámina muestra las del programa y los recovery aparte.
-3. **Tablas del 4WLA y el vPlan con estructura distinta al programa.** El programa repite por área 4 tareas finales (prueba, servidor, licencia, remate); el 4WLA y el vPlan las agrupan en «VIDEOVIGILANCIA 60 Y 9 BAHIAS». También faltan en el programa «Cableado horizontal ACP → IT-HUB» y el panel de control de acceso de la Fase 1. El vPlan tiene 13 láminas para 9 partidas (CAM-19 y 60 y 9 bahías no tienen partida).
+1. **Fechas del programa vs. Vplan.** En 21 actividades las fechas del programa no coinciden con las del Vplan (tabla abajo). El programa mezcla criterios: a veces toma el último recovery, a veces el inicio original y el último fin, a veces ninguno. Además el Vplan muestra *START/FINISH* originales (línea base) y el programa guarda las fechas vigentes.
+2. **Línea base.** Para reproducir el Vplan hace falta guardar fechas de línea base; hoy la tabla de la lámina muestra las del programa y los recovery aparte.
+3. **Tablas del 4WLA y el Vplan con estructura distinta al programa.** El programa repite por área 4 tareas finales (prueba, servidor, licencia, remate); el 4WLA y el Vplan las agrupan en «VIDEOVIGILANCIA 60 Y 9 BAHIAS». También faltan en el programa «Cableado horizontal ACP → IT-HUB» y el panel de control de acceso de la Fase 1. El Vplan tiene 13 láminas para 9 partidas (CAM-19 y 60 y 9 bahías no tienen partida).
 4. **Hitos de 0 días.** Dos tareas tienen 0 días (id 41 y 60); el sistema pide mínimo 1 día.
 5. **«Fecha de contrato JOB-…»** (09/02 a 30/06, 122 días) está como actividad: en el 4WLA llena de X toda la hoja.
 6. **Actividades vencidas sin terminar** a hoy (13/10/2026): 14 (servidor, licencia, remate, dispositivos y puesta en operación). Dos «Remate… por otro contratista» están vencidas desde marzo y abril.
 7. **MSR.** Faltan códigos de submittal (4 renglones), hay códigos con formato distinto (ALTA-002, 0010 vs 010), 14 renglones con instalación programada antes de la entrega programada, 17 con compra real antes de la aprobación del submittal, 20 con entrega real >30 días después de la programada y 7 >30 días antes, 4 entregas vencidas sin fecha real. Fechas de entrega real repetidas (15/04, 18/04, 20/04) en muchos renglones, probablemente copiadas.
 8. **Submittals del programa vs. MSR.** El programa cierra «Submittals» el 10/02 y el MSR muestra respuestas hasta el 05/03 y documentos hasta el 30/05.
 9. **Curvas (trackers).** El planeado de los trackers es manual (p. ej. 350/398/350 en las 3 primeras semanas y luego 0), el sistema lo calcula con una curva automática y no se parece. El tracker de videovigilancia empieza en jueves y el de control de acceso en viernes. No se indica qué material mide cada curva.
-10. **vPlan.** El % de dispositivos de control de acceso difiere por fase (85 % / 0 % / 33 %); en el programa es una sola actividad (se cargó 39 %, el promedio). La lámina de Fase 2 lista las restricciones 2 y 3 pero no la 1. Fechas «TBD» (por definir) no tienen dónde guardarse. Los punch list suman 44 renglones por lámina; el 4WLA tiene uno global de 12.
-11. **Fechas en domingo** (22 en vPlan y 4 en el programa, p. ej. 28/06/2026 como inicio): el calendario del proyecto no trabaja domingos.
+10. **Vplan.** El % de dispositivos de control de acceso difiere por fase (85 % / 0 % / 33 %); en el programa es una sola actividad (se cargó 39 %, el promedio). La lámina de Fase 2 lista las restricciones 2 y 3 pero no la 1. Fechas «TBD» (por definir) no tienen dónde guardarse. Los punch list suman 44 renglones por lámina; el 4WLA tiene uno global de 12.
+11. **Fechas en domingo** (22 en Vplan y 4 en el programa, p. ej. 28/06/2026 como inicio): el calendario del proyecto no trabaja domingos.
 
-### Programa vs vPlan (tras normalizar)
+### Programa vs Vplan (tras normalizar)
 
-| id | Actividad | Programa | vPlan | Págs. |
+| id | Actividad | Programa | Vplan | Págs. |
 |---|---|---|---|---|
 | 28 | Instalación de cámaras de videovigilancia | 03/07–06/07 | 11/06–06/07 | 10 |
 | 35 | Instalación de cableado UTP | 29/05–15/06 | 11/05–15/06 | 9 |
@@ -194,16 +194,16 @@ Proyecto cargado: **GRX - Información de prueba** (id 7, código `GRX-PRUEBA`),
 ## 4. Hallazgos del sistema
 
 **Corregidos durante la prueba**
-- El PDF del vPlan se partía en 21 páginas (8 sobraban) con textos largos: ahora comprueba cada lámina y elige la letra más grande que cabe en una hoja (13 páginas).
+- El PDF del Vplan se partía en 21 páginas (8 sobraban) con textos largos: ahora comprueba cada lámina y elige la letra más grande que cabe en una hoja (13 páginas).
 - La tabla de restricciones automática se compartía entre láminas y los renglones manuales de una aparecían en otra: ahora cada lámina tiene la suya.
 - El MSR ordenaba las secciones alfabéticamente (los documentos salían antes que los materiales): ahora respeta el orden de captura.
 - El encabezado «Identificación tiempo de entrega» del MSR no se veía en tema oscuro.
 - Los nombres de archivo exportados reemplazaban acentos por «_» (Informaci_n): ahora los quitan (Informacion).
-- Las descripciones largas de las tablas adicionales del vPlan se cortaban en pantalla: ahora se ajustan al contenido.
+- Las descripciones largas de las tablas adicionales del Vplan se cortaban en pantalla: ahora se ajustan al contenido.
 
 **Pendientes (necesitan tu OK)**
 - Las curvas no admiten planeado manual por periodo.
-- Fechas de línea base en el vPlan y valor «por definir».
+- Fechas de línea base en el Vplan y valor «por definir».
 - Hitos de 0 días.
 - Un visitante puede abrir /ajustes por URL (no puede cambiar nada, pero ve el formulario).
 - El catálogo de tablas adicionales repite títulos («PUNCH LIST» ×11): conviene un nombre interno distinto del título impreso.
@@ -212,8 +212,8 @@ Proyecto cargado: **GRX - Información de prueba** (id 7, código `GRX-PRUEBA`),
 ---
 ## Actualización (carga v3 · proyecto id 10)
 
-Decisiones aplicadas: fechas del programa = START/FINISH del vPlan (recovery se guarda en cada lámina); domingo trabajable (L–D = 1) con duraciones recalculadas; hitos (Fecha de contrato, servidor Fase 2, prueba de cableado 60/9 bahías); partidas nuevas CAM-19 y «60 y 9 bahías»; partidas de **Desmantelamiento** (control de acceso y videovigilancia, 7 tareas del vPlan p.1-7, 2 láminas); actividades «Cableado horizontal ACP → IT-HUB» y «Panel de control de acceso - Fase 1» (fechas del panel Fase 1 **supuestas**: 25–26/05/2026); fin de los Submittals = fecha más larga de respuesta del MSR; MSR con instalación = entrega cuando era anterior; curvas medidas con nodos / tubería IMC 3/4" / cable UTP Cat 6A; sin tablas Punch list; nombre interno en tablas del vPlan.
+Decisiones aplicadas: fechas del programa = START/FINISH del Vplan (recovery se guarda en cada lámina); domingo trabajable (L–D = 1) con duraciones recalculadas; hitos (Fecha de contrato, servidor Fase 2, prueba de cableado 60/9 bahías); partidas nuevas CAM-19 y «60 y 9 bahías»; partidas de **Desmantelamiento** (control de acceso y videovigilancia, 7 tareas del Vplan p.1-7, 2 láminas); actividades «Cableado horizontal ACP → IT-HUB» y «Panel de control de acceso - Fase 1» (fechas del panel Fase 1 **supuestas**: 25–26/05/2026); fin de los Submittals = fecha más larga de respuesta del MSR; MSR con instalación = entrega cuando era anterior; curvas medidas con nodos / tubería IMC 3/4" / cable UTP Cat 6A; sin tablas Punch list; nombre interno en tablas del Vplan.
 
-Cambios del sistema: hitos; fechas editables desde vPlan (misma actividad que el programa); /ajustes solo para quien gestiona; Last Planner «Mostrar todas» (pantalla y PDF, opción «juntas»); /submittals ordenado por número; nombre interno de tablas adicionales; ZIP sin acentos rotos.
+Cambios del sistema: hitos; fechas editables desde Vplan (misma actividad que el programa); /ajustes solo para quien gestiona; Last Planner «Mostrar todas» (pantalla y PDF, opción «juntas»); /submittals ordenado por número; nombre interno de tablas adicionales; ZIP sin acentos rotos.
 
 Pendientes de confirmar: ¿quitar las 16 tareas finales por área ahora duplicadas con «60 y 9 bahías»?; fechas del panel Fase 1; interpretación del Submittal 3.3 (08/03/2026); fechas «TBD» sin soporte y baseline no implementada; las láminas de desmantelamiento son 2 (en el PDF son 7, una por tarea).

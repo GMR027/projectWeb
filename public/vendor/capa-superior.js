@@ -1,7 +1,7 @@
 /* Capa superior compartida: dónde deben colgarse los flotantes (paletas, menús, hojas, docks).
  *
  * En pantalla completa el navegador solo pinta lo que cuelga del elemento ampliado. Por eso los
- * flotantes que viven en <body> desaparecían («Ampliar» en vPlan y en el editor de marcas).
+ * flotantes que viven en <body> desaparecían («Ampliar» en Vplan y en el editor de marcas).
  *
  * Uso:
  *   (CapaSuperior ? CapaSuperior.actual() : document.body).appendChild(nodo);

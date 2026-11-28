@@ -11,7 +11,7 @@ use Classes\SheetflowFormulas;
  * La hoja guarda en `datos.meta.subactividad.ids` el id de la subactividad de cada renglón
  * y en `datos.cols[].rol` el papel de las columnas base (nombre, inicio, fin, status).
  * Así el vínculo sobrevive a renombrar/insertar columnas y a reordenar renglones.
- * Las columnas adicionales se quedan solo en SheetFlow (y en vPlan): nunca se escriben
+ * Las columnas adicionales se quedan solo en SheetFlow (y en Vplan): nunca se escriben
  * en `subactividades`.
  */
 class SubactividadHoja extends ActiveRecord

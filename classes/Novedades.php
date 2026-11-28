@@ -46,14 +46,14 @@ class Novedades
         [
             'fecha'  => '2026-10-26 12:00',
             'tipo'   => 'mejora',
-            'titulo' => 'vPlan, Editor y Símbolos más fáciles de usar',
-            'texto'  => 'Al entrar por primera vez, vPlan, el Editor y la biblioteca de Símbolos explican qué se puede hacer y cómo empezar; el modo diseño del vPlan muestra el tamaño real de la hoja y los paneles estrenan la misma cabecera, pestañas y buscador en todas las herramientas.',
+            'titulo' => 'Vplan, Editor y Símbolos más fáciles de usar',
+            'texto'  => 'Al entrar por primera vez, Vplan, el Editor y la biblioteca de Símbolos explican qué se puede hacer y cómo empezar; el modo diseño del Vplan muestra el tamaño real de la hoja y los paneles estrenan la misma cabecera, pestañas y buscador en todas las herramientas.',
         ],
         [
             'fecha'  => '2026-10-25 09:00',
             'tipo'   => 'mejora',
-            'titulo' => 'Tablas de vPlan y filtros de Last Planner en el PDF',
-            'texto'  => 'Las tablas dentro de las láminas de vPlan se imprimen completas, sin encimarse ni salirse de su bloque, y la lámina y su PDF usan la misma letra. El PDF del Last Planner respeta los filtros de partida, periodo y restricción que tengas puestos en pantalla, y el Historial de cambios muestra nombres legibles en lugar de códigos internos.',
+            'titulo' => 'Tablas de Vplan y filtros de Last Planner en el PDF',
+            'texto'  => 'Las tablas dentro de las láminas de Vplan se imprimen completas, sin encimarse ni salirse de su bloque, y la lámina y su PDF usan la misma letra. El PDF del Last Planner respeta los filtros de partida, periodo y restricción que tengas puestos en pantalla, y el Historial de cambios muestra nombres legibles en lugar de códigos internos.',
         ],
         [
             'fecha'  => '2026-10-22 11:00',
@@ -123,8 +123,8 @@ class Novedades
         [
             'fecha'  => '2026-10-15 09:00',
             'tipo'   => 'nuevo',
-            'titulo' => 'Tablas dentro de las láminas de vPlan',
-            'texto'  => 'Las láminas de vPlan pueden llevar tablas (SheetFlow) con tareas, materiales o cualquier dato del proyecto, y agregar campos del programa desde el modo diseño.',
+            'titulo' => 'Tablas dentro de las láminas de Vplan',
+            'texto'  => 'Las láminas de Vplan pueden llevar tablas (SheetFlow) con tareas, materiales o cualquier dato del proyecto, y agregar campos del programa desde el modo diseño.',
         ],
         [
             'fecha'  => '2026-10-10 11:00',

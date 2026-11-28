@@ -6,7 +6,7 @@ use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 
 /**
- * Procesamiento de imágenes subidas (materiales, símbolos, vPlan y Editor).
+ * Procesamiento de imágenes subidas (materiales, símbolos, Vplan y Editor).
  *
  * El tipo se detecta por la firma del archivo (getimagesize) y no solo por mime_content_type:
  * así un JPG/PNG no se rechaza cuando fileinfo devuelve un valor raro. Si Intervention Image
@@ -132,7 +132,7 @@ class Imagenes
         return $r ? self::guardarBinario(self::CARPETA_VPLAN, $r['bin'], $r['ext']) : null;
     }
 
-    /** Copia un archivo de vPlan con otro nombre (para que cada lámina sea dueña del suyo); null si no existe */
+    /** Copia un archivo de Vplan con otro nombre (para que cada lámina sea dueña del suyo); null si no existe */
     public static function copiarVplan(?string $nombre): ?string
     {
         $ruta = $nombre ? self::CARPETA_VPLAN . '/' . basename($nombre) : null;
@@ -146,7 +146,7 @@ class Imagenes
         if ($nombre) @unlink(self::CARPETA_VPLAN . '/' . basename($nombre));
     }
 
-    /** data URI de una imagen de vPlan reducida (para PDF); null si no existe */
+    /** data URI de una imagen de Vplan reducida (para PDF); null si no existe */
     public static function vplanBase64(?string $nombre, int $maxAncho = 2000): ?string
     {
         $ruta = $nombre ? self::CARPETA_VPLAN . '/' . basename($nombre) : null;

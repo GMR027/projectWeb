@@ -2,7 +2,7 @@
 
 namespace Model;
 
-/** Bloque posicionable de una lámina de vPlan. x, y, w, h van en % de la hoja. */
+/** Bloque posicionable de una lámina de Vplan. x, y, w, h van en % de la hoja. */
 class VplanBloque extends ActiveRecord
 {
     protected static $tabla = 'vplan_bloques';

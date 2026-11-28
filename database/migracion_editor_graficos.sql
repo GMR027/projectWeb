@@ -1,4 +1,4 @@
--- Editor: gráficos/láminas libres (mismo editor de marcas que el vPlan, sobre un lienzo en blanco o con fondo de plantilla)
+-- Editor: gráficos/láminas libres (mismo editor de marcas que el Vplan, sobre un lienzo en blanco o con fondo de plantilla)
 CREATE TABLE IF NOT EXISTS editor_graficos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,

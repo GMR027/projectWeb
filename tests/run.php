@@ -1440,12 +1440,37 @@ $ok('el Centro de Exportación filtra por herramienta', \Controllers\AjustesCont
     && \Controllers\AjustesController::herramientaExportacion('reportes', 'evidencia') === 'evidencias'
     && \Controllers\AjustesController::herramientaExportacion('msr') === 'msr');
 $ok('exportar no está atado a Ajustes y sí es ruta general', herramienta_de_ruta('/exportar') === null && ruta_general('/exportar'));
+
+echo "Centro de Exportación: fecha de emisión y corte\n";
+$ok('la fecha de emisión se valida y alimenta el nombre del archivo', (function () {
+    $antes = fecha_referencia_exportacion();
+    fecha_referencia_exportacion('2026-11-30');
+    $okFecha = fecha_referencia_exportacion() === '2026-11-30';
+    $okYmd = nomenclatura_pieza(['tipo' => 'fecha_ymd', 'valor' => '']) === '2026-11-30';
+    $okDmy = nomenclatura_pieza(['tipo' => 'fecha_dmy', 'valor' => '']) === '30-11-2026';
+    fecha_referencia_exportacion('2026-02-30');
+    $okInvalida = fecha_referencia_exportacion() === date('Y-m-d');
+    fecha_referencia_exportacion($antes);
+    return $okFecha && $okYmd && $okDmy && $okInvalida;
+})());
+$ok('la etiqueta Corte solo aparece si se activa el check', (function () {
+    corte_exportacion_visible(false);
+    $apagada = etiqueta_corte_exportacion() === '';
+    corte_exportacion_visible(true);
+    $encendida = str_starts_with(etiqueta_corte_exportacion(), ' · Corte: ');
+    corte_exportacion_visible(false);
+    return $apagada && $encendida;
+})());
+$ok('la semana de referencia del 30/11/2026 es la 49', (new \DateTime(\Controllers\LookaheadController::lunesDe('2026-11-30')->format('Y-m-d')))->format('W') === '49');
+$ok('las curvas aceptan una fecha de corte para la línea HOY', \Classes\CurvaProductividad::posicionHoy('2026-11-02', 10, '2026-11-30') === 3.5);
+$ok('el Centro de Exportación muestra fecha de emisión y check de corte', str_contains($asset('views/exportar/index.php'), 'id="exp-fecha"')
+    && str_contains($asset('views/exportar/index.php'), 'id="exp-corte"') && str_contains($asset('controllers/AjustesController.php'), 'fecha_corte'));
 $ok('el menú de Ajustes tiene la pestaña de accesos del proyecto', str_contains((string)file_get_contents(__DIR__ . '/../views/ajustes/index.php'), "id=\"accesos\""));
 $ok('la columna «Editar» se oculta de verdad (hidden vence al display:flex)', str_contains((string)file_get_contents(__DIR__ . '/../public/build/css/app.css'), '.herr-grid [hidden]'));
 
 $ok('la contraseña mínima es de 10 y rechaza las comunes', \Model\Usuario::passwordDebil('corta') !== null && \Model\Usuario::passwordDebil('1234567890') !== null && \Model\Usuario::passwordDebil('Obra2026-segura') === null);
 
-echo "Interfaz táctil de vPlan y editor\n";
+echo "Interfaz táctil de Vplan y editor\n";
 $asset = fn(string $p): string => (string)@file_get_contents(__DIR__ . '/../' . $p);
 $gestos = $asset('public/vendor/gestos-lienzo.js');
 $hoja = $asset('public/vendor/hoja-inferior.js');
@@ -1521,7 +1546,7 @@ $ok('el motor dibuja globos, textos, flechas, formas y nubes', str_contains($ass
 $ok('el motor guarda y reabre comparaciones', str_contains($cmpJs, '/comparador/guardar') && str_contains($cmpJs, 'restaurarGuardado') && str_contains($cmpJs, 'dibujarAnotaciones'));
 $ok('las formas comprueban el tipo recibido (sin variable global)', str_contains($cmpJs, 'const vacia = sh =>') && !preg_match('/\bvacia\(\)/', $cmpJs));
 $ok('las anotaciones se dibujan nítidas en la ventana (no dentro del documento)', str_contains($cmpJs, 'function redibujarAnot') && str_contains($cmpJs, 'window.devicePixelRatio') && str_contains($cmpJs, 'anotCtx.scale(vista.k, vista.k)') && !str_contains($asset('views/comparador/index.php'), 'cmp-mundo-anot'));
-$ok('el selector admite documentos de Archivo, vPlan, Editor y Redactor', str_contains($asset('classes/Comparador.php'), 'FUENTES_PROYECTO') && str_contains($asset('classes/Comparador.php'), 'VplanLamina::deProyecto') && str_contains($asset('classes/Comparador.php'), 'editor_laminas') && str_contains($asset('classes/Comparador.php'), 'RedactorDocumento::deProyecto') && str_contains($asset('public/index.php'), "/comparador/fuente") && str_contains($asset('views/comparador/index.php'), 'optgroup'));
+$ok('el selector admite documentos de Archivo, Vplan, Editor y Redactor', str_contains($asset('classes/Comparador.php'), 'FUENTES_PROYECTO') && str_contains($asset('classes/Comparador.php'), 'VplanLamina::deProyecto') && str_contains($asset('classes/Comparador.php'), 'editor_laminas') && str_contains($asset('classes/Comparador.php'), 'RedactorDocumento::deProyecto') && str_contains($asset('public/index.php'), "/comparador/fuente") && str_contains($asset('views/comparador/index.php'), 'optgroup'));
 $ok('las fuentes del proyecto se validan al guardar', str_contains($asset('classes/Comparador.php'), "in_array(\$tipo, ['vplan', 'editor', 'redactor'], true)") && str_contains($asset('classes/Comparador.php'), 'fuenteDeProyecto($pid, $tipo'));
 $ok('las copias del comparador cuentan para el almacenamiento', str_contains($asset('classes/Almacenamiento.php'), 'Comparador::bytes'));
 $ok('el historial de versiones y el enlace público están en el esquema y su migración', str_contains($asset('database/schema.sql'), 'CREATE TABLE IF NOT EXISTS comparador_versiones') && str_contains($asset('database/schema.sql'), 'uq_cmp_token') && str_contains($asset('database/migracion_comparador_revisiones.sql'), 'comparador_versiones'));
@@ -1614,7 +1639,7 @@ $ok('la subida muestra progreso y pausa el autoguardado', str_contains($asset('p
 $ok('el lienzo viaja como archivo y el servidor lo acepta', str_contains($asset('public/vendor/vplan-editor.js'), "fd.append('png_file'") && str_contains($asset('classes/MarcasLienzo.php'), 'function binarioDePost'));
 $ok('el tope se mide con el archivo final, no con el original', str_contains($asset('classes/MarcasLienzo.php'), 'filesize($ruta)') && str_contains($asset('classes/MarcasLienzo.php'), 'sumarCuentaProyecto'));
 $ok('el total de la organización usa un contador en vez de recorrer todas las obras', str_contains($asset('classes/Almacenamiento.php'), 'function usadoConContador') && str_contains($asset('classes/Almacenamiento.php'), 'function sumarCuentaProyecto'));
-$ok('las imágenes de vPlan buscan primero por columna exacta', str_contains($asset('classes/Media.php'), "if (\$carpeta === 'vplan')") && str_contains($asset('classes/Media.php'), 'editor_graficos'));
+$ok('las imágenes de Vplan buscan primero por columna exacta', str_contains($asset('classes/Media.php'), "if (\$carpeta === 'vplan')") && str_contains($asset('classes/Media.php'), 'editor_graficos'));
 $ok('la imagen recién subida se autoriza en la sesión hasta que el autoguardado la referencia', str_contains($asset('classes/MarcasLienzo.php'), 'vplan_uploads') && str_contains($asset('classes/Media.php'), 'vplan_uploads'));
 $ok('el editor avisa si la imagen subida no se puede mostrar', str_contains($asset('public/vendor/vplan-editor.js'), 'img.onerror'));
 

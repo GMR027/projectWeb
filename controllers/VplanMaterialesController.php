@@ -7,7 +7,7 @@ use Model\Proyecto;
 use Model\VplanLamina;
 use Model\VplanTabla;
 
-/** API de la tabla de instalación de materiales de una lámina de vPlan */
+/** API de la tabla de instalación de materiales de una lámina de Vplan */
 class VplanMaterialesController
 {
     private static function lamina(Proyecto $proyecto): ?VplanLamina
@@ -30,7 +30,7 @@ class VplanMaterialesController
         try {
             MaterialesLamina::crear($proyecto, $l, (int)($_SESSION['id'] ?? 0) ?: null);
         } catch (\Throwable $e) {
-            error_log('Materiales vPlan (crear): ' . $e->getMessage());
+            error_log('Materiales Vplan (crear): ' . $e->getMessage());
             json_respuesta(['success' => false, 'error' => 'No se pudo crear la tabla de materiales'], 500);
         }
         self::salida($proyecto, VplanLamina::find((int)$l->id));
@@ -44,7 +44,7 @@ class VplanMaterialesController
         try {
             MaterialesLamina::sincronizar($proyecto, $l, !empty($_POST['refrescar']));
         } catch (\Throwable $e) {
-            error_log('Materiales vPlan (sincronizar): ' . $e->getMessage());
+            error_log('Materiales Vplan (sincronizar): ' . $e->getMessage());
             json_respuesta(['success' => false, 'error' => 'No se pudo actualizar la tabla de materiales'], 500);
         }
         self::salida($proyecto, VplanLamina::find((int)$l->id));

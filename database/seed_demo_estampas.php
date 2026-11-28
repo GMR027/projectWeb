@@ -1,7 +1,7 @@
 <?php
 /**
  * Estampas inteligentes del proyecto DEMO: seis estampas de ejemplo (cajetín de plano, sello de actividad, etiqueta de restricción,
- * pie de reporte con SPI, semáforo y la plantilla de Last Planner), un cajetín dinámico y la lámina «LAST PLANNER DEL DÍA» del vPlan.
+ * pie de reporte con SPI, semáforo y la plantilla de Last Planner), un cajetín dinámico y la lámina «LAST PLANNER DEL DÍA» del Vplan.
  *
  *   php database/seed_demo_estampas.php            (crea/recrea solo esto)
  *   php database/seed_demo_estampas.php --limpiar  (solo borra lo que sembró)
@@ -49,8 +49,8 @@ $cajDin = (int)$q("INSERT INTO cajetines (proyecto_id, nombre, orientacion, anch
     ['Órdenes de cambio abiertas', '{oc_abiertas}'], ['Retiros pendientes', '{retiros_pendientes}'], ['Último reporte', '{reporte_ultimo}'],
 ], JSON_UNESCAPED_UNICODE))})");
 
-// Lámina «Last Planner del día» en el mismo vPlan que las láminas libres del demo
-$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('vPlan · NEXO Data Campus · Nave A', 'vPlan · Sala blanca y patio de equipos') ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
+// Lámina «Last Planner del día» en el mismo Vplan que las láminas libres del demo
+$paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid AND nombre IN ('Vplan · NEXO Data Campus · Nave A', 'Vplan · Sala blanca y patio de equipos') ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
 if (!$paquete) $paquete = (int)($rows("SELECT id FROM vplan_paquetes WHERE proyecto_id = $pid ORDER BY id DESC LIMIT 1")[0]['id'] ?? 0);
 $orden = 1 + (int)($rows("SELECT COALESCE(MAX(orden),0) m FROM vplan_laminas WHERE paquete_id = $paquete")[0]['m'] ?? 0);
 $actEjemplo = (int)($rows("SELECT a.id FROM actividades a JOIN partidas p ON p.id = a.partida_id JOIN restricciones r ON r.actividad_id = a.id AND r.estado = 'activa'

@@ -9,22 +9,30 @@ use Dompdf\Dompdf;
 use Classes\Pdf;
 use Classes\ShellTools;
 
-/** Láminas de vPlan en PDF, cada una al tamaño de hoja que tenga (una lámina por página) */
+/** Láminas de Vplan en PDF, cada una al tamaño de hoja que tenga (una lámina por página) */
 class VplanPdfExporter extends BaseExporter
 {
     private string $lamina = 'todas';
     private int $paquete = 0;
     /** @var int[] láminas elegidas (vacío = usar «lamina») */
     private array $ids = [];
+    private ?string $fechaReferencia = null;
 
-    /** Limita «todas» a las láminas de un vPlan (0 = todos los vPlan del proyecto) */
+    /** Fecha de emisión elegida en el Centro de Exportación (UPDATED y estampas con corte) */
+    public function setFechaReferencia(string $fecha): self
+    {
+        $this->fechaReferencia = $fecha;
+        return $this;
+    }
+
+    /** Limita «todas» a las láminas de un Vplan (0 = todos los Vplan del proyecto) */
     public function setPaquete(int $paquete): self
     {
         $this->paquete = $paquete;
         return $this;
     }
 
-    /** Varias láminas a la vez (se exportan aunque estén ocultas, en el orden de los vPlan) */
+    /** Varias láminas a la vez (se exportan aunque estén ocultas, en el orden de los Vplan) */
     public function setLaminas(array $ids): self
     {
         $this->ids = array_values(array_filter(array_map('intval', $ids)));
@@ -167,7 +175,7 @@ class VplanPdfExporter extends BaseExporter
     public function generar(string $nombreBase): string
     {
         $proyecto = $this->proyecto;
-        // Una lámina elegida se exporta aunque esté oculta; «todas» lleva solo las visibles, en el orden de los vPlan
+        // Una lámina elegida se exporta aunque esté oculta; «todas» lleva solo las visibles, en el orden de los Vplan
         if ($this->ids) {
             $laminas = array_values(array_filter(VplanLamina::deProyecto((int)$proyecto->id), fn($l) => in_array((int)$l->id, $this->ids, true)));
         } elseif ($this->lamina !== 'todas') {
@@ -180,6 +188,7 @@ class VplanPdfExporter extends BaseExporter
         $logoC = MsrPdfExporter::imagenBase64($proyecto->contratista_logo, 'build/img/logos');
         $logoE = MsrPdfExporter::imagenBase64($proyecto->logoEmpresa(), 'build/img/logos');
         $htmlDe = function (array $paginas) use ($proyecto, $logoC, $logoE): string {
+            $fechaReferencia = $this->fechaReferencia;
             ob_start();
             include __DIR__ . '/../../views/exportar/pdf-vplan.php';
             return ob_get_clean();

@@ -1,5 +1,5 @@
 <?php // Barra de herramientas, lienzo, propiedades y gestor de capas del editor de marcas (Konva). Variables: $config
-// Lo usan el editor de marcas del vPlan y el Editor de gráficos. ?>
+// Lo usan el editor de marcas del Vplan y el Editor de gráficos. ?>
 <div class="ve-hoja" id="ve-hoja">
 <button type="button" class="ve-cerrar-ampliado" id="ve-cerrar-ampliado" aria-label="Cerrar vista ampliada" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 <?php // Lienzo en blanco (solo el Editor de gráficos): cuatro arranques rápidos; se oculta al primer trazo ?>
@@ -123,7 +123,7 @@ $tool = fn(string $t, string $titulo) => '<button type="button" data-tool="' . $
         </div>
     </div>
     <?php
-    // Cambiar el fondo (Editor) o el plano (vPlan): guarda lo hecho y abre la pantalla correspondiente
+    // Cambiar el fondo (Editor) o el plano (Vplan): guarda lo hecho y abre la pantalla correspondiente
     $hrefFondo = isset($grafico) && isset($q) ? '/graficos/fondo?' . $q : (isset($lamina, $proyecto) ? '/vplan/editar?proyecto=' . $proyecto->id . '&id=' . $lamina->id : '');
     if ($hrefFondo): ?>
     <div class="ve-grupo" data-pan="insertar" data-nombre="Fondo">

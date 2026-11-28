@@ -7,7 +7,7 @@ use Model\Grafico;
 use Model\Simbolo;
 
 /**
- * Vínculo de una imagen colocada (bloque «imagen» de vPlan, imagen del Editor) con su origen: una lámina de gráfico/simbología
+ * Vínculo de una imagen colocada (bloque «imagen» de Vplan, imagen del Editor) con su origen: una lámina de gráfico/simbología
  * (`g:<gráfico>:<lámina>`) o un símbolo de la biblioteca del proyecto (`s:<símbolo>`). La copia colocada guarda el `token` del origen
  * con que se hizo; si el origen cambia (se vuelve a guardar la simbología, se reemplaza el símbolo), el token es otro y la copia se renueva.
  */

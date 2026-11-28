@@ -27,7 +27,7 @@ class Anotador
     ];
     public const ESTILOS = ['solida', 'punteada', 'guiones', 'guion_punto'];
 
-    /** Catálogo de fuentes del proyecto (se reutiliza el del Comparador: Archivo, vPlan, Editor y Redactor) */
+    /** Catálogo de fuentes del proyecto (se reutiliza el del Comparador: Archivo, Vplan, Editor y Redactor) */
     public static function fuentes(int $pid): array
     {
         return Comparador::fuentes($pid);

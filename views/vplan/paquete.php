@@ -20,7 +20,7 @@ $nOcultas = count(array_filter($laminas, fn($l) => !(int)$l->visible));
         </div>
     </div>
     <div class="la-controles">
-        <a href="/vplan?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> vPlans</a>
+        <a href="/vplan?<?php echo $q; ?>" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Vplans</a>
         <a href="/exportar?<?php echo $q; ?>&vplan=<?php echo s($paquete->id); ?>" class="btn btn-ghost"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</a>
         <span class="vp-seg" role="group" aria-label="Vista de la lista">
             <button type="button" class="btn btn-sm btn-ghost" id="vp-vista-galeria" title="Tarjetas con miniatura"><i class="fa-solid fa-table-cells-large"></i> <span class="hide-m">Galería</span></button>
@@ -33,7 +33,7 @@ $nOcultas = count(array_filter($laminas, fn($l) => !(int)$l->visible));
 <?php include __DIR__ . '/_tabs.php'; ?>
 
 <?php if (!$laminas): ?>
-    <div class="card"><?php echo estado_vacio('fa-layer-group', 'Este vPlan aún no tiene láminas', 'Cada lámina lleva su plano, sus tablas, su título y su simbología: una por área es lo normal.', $puedeEditar ? ['texto' => '+ Nueva lámina', 'url' => '/vplan/crear?' . $q . '&paquete=' . s($paquete->id), 'icono' => 'fa-plus'] : null, $puedeEditar ? ['texto' => 'Guía de 1 minuto', 'url' => '/manual?proyecto=' . (int)$proyecto->id . '#vplan', 'icono' => 'fa-circle-play'] : null); ?></div>
+    <div class="card"><?php echo estado_vacio('fa-layer-group', 'Este Vplan aún no tiene láminas', 'Cada lámina lleva su plano, sus tablas, su título y su simbología: una por área es lo normal.', $puedeEditar ? ['texto' => '+ Nueva lámina', 'url' => '/vplan/crear?' . $q . '&paquete=' . s($paquete->id), 'icono' => 'fa-plus'] : null, $puedeEditar ? ['texto' => 'Guía de 1 minuto', 'url' => '/manual?proyecto=' . (int)$proyecto->id . '#vplan', 'icono' => 'fa-circle-play'] : null); ?></div>
 <?php else: ?>
 <?php if ($puedeEditar): ?><p class="text-sm text-muted vp-ayuda vp-ayuda-lista">Usa el ojo para mostrar u ocultar una lámina (lo oculto no se ve ni se exporta, pero se conserva). «Grupo» las reúne por disciplina, nivel o lo que prefieras.</p><?php endif; ?>
 <datalist id="vp-grupos"><?php foreach ($grupos as $g): ?><option value="<?php echo s($g); ?>"><?php endforeach; ?></datalist>
@@ -61,7 +61,7 @@ $nOcultas = count(array_filter($laminas, fn($l) => !(int)$l->visible));
                 <?php endif; ?>
                 <td class="vp-mini-celda"><?php if ($img): ?><img class="vp-mini" src="/uploads/vplan/<?php echo s($img); ?>" alt=""><?php endif; ?></td>
                 <td>
-                    <a class="nombre-archivo" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>"><?php echo archivo_icono_html('png', 'Lámina del vPlan'); ?> <?php echo s($l->titulo); ?></a>
+                    <a class="nombre-archivo" href="/vplan/ver?<?php echo $q; ?>&id=<?php echo s($l->id); ?>"><?php echo archivo_icono_html('png', 'Lámina del Vplan'); ?> <?php echo s($l->titulo); ?></a>
                     <div class="text-sm text-muted"><?php echo (int)$l->ancho_mm; ?> × <?php echo (int)$l->alto_mm; ?> mm<?php echo $l->supervisor ? ' · ' . s($l->supervisor) : ''; ?><?php echo $oculta ? ' · <strong>oculta</strong>' : ''; ?></div>
                 </td>
                 <?php if ($puedeEditar): ?>
@@ -182,7 +182,7 @@ $nOcultas = count(array_filter($laminas, fn($l) => !(int)$l->visible));
 <?php if ($puedeEditar): ?>
 <form method="POST" action="/vplan/paquete/renombrar" class="card vp-nuevo-paquete">
     <input type="hidden" name="proyecto" value="<?php echo s($proyecto->id); ?>"><input type="hidden" name="id" value="<?php echo s($paquete->id); ?>">
-    <label for="vp-pq-nombre" class="text-sm">Nombre de este vPlan:</label>
+    <label for="vp-pq-nombre" class="text-sm">Nombre de este Vplan:</label>
     <input type="text" id="vp-pq-nombre" name="nombre" value="<?php echo s($paquete->nombre); ?>" maxlength="200" required>
     <button type="submit" class="btn btn-ghost btn-sm">Renombrar</button>
 </form>

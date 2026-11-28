@@ -1,4 +1,4 @@
--- vPlan: lienzo de tamaño libre y láminas hechas de bloques posicionables (título, plano, tareas de varias partidas,
+-- Vplan: lienzo de tamaño libre y láminas hechas de bloques posicionables (título, plano, tareas de varias partidas,
 -- tablas, simbología, supervisor, fecha, textos). Las láminas existentes se convierten solas al abrirlas
 -- (VplanLamina::bloques) con el mismo diseño que tenían; partida_id queda como "partida principal" opcional.
 ALTER TABLE vplan_laminas ADD COLUMN ancho_mm SMALLINT UNSIGNED NOT NULL DEFAULT 432 AFTER supervisor;

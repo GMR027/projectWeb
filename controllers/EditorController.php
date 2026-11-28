@@ -14,7 +14,7 @@ use Classes\Almacenamiento;
 use Classes\EnlacesLamina;
 use Classes\Exportadores\OdpExporter;
 
-/** Editor: gráficos libres con el mismo editor de marcas del vPlan (lista, alta, edición, descarga, copia y baja) */
+/** Editor: gráficos libres con el mismo editor de marcas del Vplan (lista, alta, edición, descarga, copia y baja) */
 class EditorController
 {
     private static function graficoDe(Proyecto $proyecto, $id): ?Grafico
@@ -423,7 +423,7 @@ class EditorController
         if ($g = self::graficoDe($proyecto, $_POST['id'] ?? null)) {
             $simb = $g->tipo === 'simbologia';
             $g->eliminarArchivos();
-            $g->eliminar();   // las láminas del vPlan que la usaban vuelven a la tabla estándar (ON DELETE SET NULL)
+            $g->eliminar();   // las láminas del Vplan que la usaban vuelven a la tabla estándar (ON DELETE SET NULL)
         }
         header('Location: ' . ($simb ? '/simbolos?proyecto=' . $proyecto->id . '&ok=' . urlencode('Simbología eliminada') . '#simbologias' : '/graficos?proyecto=' . $proyecto->id));
         exit;
@@ -431,7 +431,7 @@ class EditorController
 
     // ---------- JSON ----------
 
-    /** Gráfico de la petición (campo «lamina», igual que el editor del vPlan) si el usuario puede gestionarlo (o verlo/descargarlo) */
+    /** Gráfico de la petición (campo «lamina», igual que el editor del Vplan) si el usuario puede gestionarlo (o verlo/descargarlo) */
     private static function graficoApi(bool $soloVer = false): array
     {
         header('Content-Type: application/json');
@@ -572,7 +572,7 @@ class EditorController
         json_respuesta(['success' => false, 'error' => 'Acción no válida'], 422);
     }
 
-    /** Imagen insertada dentro del gráfico (misma regla que en el vPlan) */
+    /** Imagen insertada dentro del gráfico (misma regla que en el Vplan) */
     public static function subirImagen()
     {
         [, $p] = self::graficoApi();

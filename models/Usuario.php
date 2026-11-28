@@ -43,7 +43,7 @@ class Usuario extends ActiveRecord
         'lineatiempo' => ['Línea de tiempo activa', ['/lineatiempo', '/api/lineatiempo']],
         'planificador' => ['Planificador', ['/planificador']],
         'lookahead' => ['Lookahead', ['/lookahead', '/api/lookahead']],
-        'vplan' => ['vPlan', ['/vplan', '/api/vplan']],
+        'vplan' => ['Vplan', ['/vplan', '/api/vplan']],
         'lastplanner' => ['Last Planner', ['/lastplanner']],
         'reportes' => ['Reporte diario', ['/reportes']],
         'bitacora' => ['Bitácora de obra', ['/bitacora']],

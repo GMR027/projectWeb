@@ -4,7 +4,7 @@ namespace Model;
 
 use Classes\Imagenes;
 
-/** Gráfico del Editor: lienzo libre (tamaño y fondo de plantilla) con las mismas marcas del editor del vPlan */
+/** Gráfico del Editor: lienzo libre (tamaño y fondo de plantilla) con las mismas marcas del editor del Vplan */
 class Grafico extends ActiveRecord
 {
     protected static $tabla = 'editor_graficos';
@@ -79,7 +79,7 @@ class Grafico extends ActiveRecord
             'carta' => ['Carta 11 × 8.5 in', 3300, 2550],
             'a4' => ['A4 297 × 210 mm', 3508, 2480],
             'a3' => ['A3 420 × 297 mm', 4961, 3508],
-            'tabloide' => ['Tabloide 17 × 11 in (como el vPlan)', 5100, 3300],
+            'tabloide' => ['Tabloide 17 × 11 in (como el Vplan)', 5100, 3300],
         ],
         'Simbología (leyenda)' => [
             'simb-schedule' => ['Leyenda del schedule 1200 × 700', 1200, 700],
@@ -165,7 +165,7 @@ class Grafico extends ActiveRecord
         return array_values(array_unique($out));
     }
 
-    /** Simbologías del proyecto con su imagen (primera lámina): para listarlas y para elegirlas en una lámina del vPlan */
+    /** Simbologías del proyecto con su imagen (primera lámina): para listarlas y para elegirlas en una lámina del Vplan */
     public static function simbologias(int $proyectoId): array
     {
         return self::deProyecto($proyectoId, 'simbologia');

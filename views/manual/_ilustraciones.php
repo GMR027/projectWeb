@@ -53,7 +53,7 @@ return [
 'pantalla' => ['Así se organiza la pantalla: ① menú lateral, ② encabezado del proyecto, ③ barra de herramientas, ④ contenido y ⑤ Manual.',
     mf_svg(640, 300, 'Organización de la pantalla', mf_lateral(0, 23, 277, $menuApp, 5)
         . mf_r(130, 34, 498, 54, 'fg-panel') . mf_t(144, 56, 'PO-001 · Torre Norte', 'fg-txt', 14, 'start', true) . mf_t(144, 74, '184 días · 6 meses · 01/02/2026 → 31/07/2026', 'fg-mut', 10)
-        . mf_r(130, 96, 498, 24, 'fg-panel') . mf_t(142, 112, 'Programa  Dependencias  Lookahead  vPlan  Reporte  Bitácora  Exportar…', 'fg-mut', 10)
+        . mf_r(130, 96, 498, 24, 'fg-panel') . mf_t(142, 112, 'Programa  Dependencias  Lookahead  Vplan  Reporte  Bitácora  Exportar…', 'fg-mut', 10)
         . mf_r(130, 128, 498, 138, 'fg-panel') . mf_t(144, 148, 'Aquí aparece la herramienta que abriste', 'fg-mut', 11)
         . mf_r(144, 158, 470, 14, 'fg-input', 3) . mf_r(144, 178, 470, 14, 'fg-input', 3) . mf_r(144, 198, 470, 14, 'fg-input', 3) . mf_r(144, 218, 300, 14, 'fg-input', 3)
         . mf_r(6, 252, 106, 18, 'fg-act', 4) . mf_t(59, 265, 'Manual de usuario', 'fg-blanco', 10, 'middle')
@@ -81,7 +81,7 @@ return [
         . mf_r(134, 196, 240, 72, 'fg-panel') . mf_t(144, 212, 'Proyectos con acceso', 'fg-mut', 10)
         . mf_r(146, 220, 10, 10, 'fg-chk', 2) . mf_t(162, 229, 'PO-001 Torre Norte', 'fg-txt', 10) . mf_r(146, 236, 10, 10, 'fg-chk', 2) . mf_t(162, 245, 'PO-002 Plaza Sur', 'fg-txt', 10) . mf_r(146, 252, 10, 10, 'fg-input', 2) . mf_t(162, 261, 'PO-003 Nave 4', 'fg-txt', 10)
         . mf_r(386, 196, 240, 72, 'fg-panel') . mf_t(396, 212, 'Herramientas (solo visitante)', 'fg-mut', 10)
-        . mf_r(398, 220, 10, 10, 'fg-chk', 2) . mf_t(414, 229, 'Programa', 'fg-txt', 10) . mf_r(398, 236, 10, 10, 'fg-chk', 2) . mf_t(414, 245, 'vPlan', 'fg-txt', 10) . mf_r(500, 220, 10, 10, 'fg-input', 2) . mf_t(516, 229, 'Archivo', 'fg-txt', 10)
+        . mf_r(398, 220, 10, 10, 'fg-chk', 2) . mf_t(414, 229, 'Programa', 'fg-txt', 10) . mf_r(398, 236, 10, 10, 'fg-chk', 2) . mf_t(414, 245, 'Vplan', 'fg-txt', 10) . mf_r(500, 220, 10, 10, 'fg-input', 2) . mf_t(516, 229, 'Archivo', 'fg-txt', 10)
         . mf_btn(540, 62, 86, 'Guardar')
         . mf_n(1, 128, 66) . mf_n(2, 128, 154) . mf_n(3, 128, 200) . mf_n(4, 380, 200))],
 

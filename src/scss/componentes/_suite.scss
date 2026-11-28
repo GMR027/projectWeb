@@ -2,7 +2,7 @@
 
 // ============================================================
 // Suite de herramientas — capa visual compartida
-// Dependencias · Línea de tiempo · Línea de balance · vPlan
+// Dependencias · Línea de tiempo · Línea de balance · Vplan
 // Se apoya en las variables del tema para respetar la paleta del
 // proyecto y el modo claro/oscuro.
 // ============================================================
@@ -297,7 +297,7 @@ $suite: 'body[data-vista^="dependencias"], body[data-vista^="lineatiempo"], body
     .suite-empty-acciones { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .4rem; }
   }
 
-  // Formularios de herramienta (vPlan, balance, tablas…)
+  // Formularios de herramienta (Vplan, balance, tablas…)
   .suite-form {
     &.card { padding: 1.2rem 1.4rem; overflow: visible; }
 

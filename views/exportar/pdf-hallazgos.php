@@ -50,7 +50,7 @@ $params = function ($x) {
 <div class="sub">
     <strong><?php echo htmlspecialchars($proyecto->nombre, ENT_QUOTES, 'UTF-8'); ?></strong>
     <?php echo $proyecto->codigo ? ' · ' . htmlspecialchars($proyecto->codigo, ENT_QUOTES, 'UTF-8') : ''; ?>
-    · Generado <?php echo htmlspecialchars($datos['generado'], ENT_QUOTES, 'UTF-8'); ?>
+    · Generado <?php echo htmlspecialchars($datos['generado'], ENT_QUOTES, 'UTF-8'); ?><?php echo htmlspecialchars(etiqueta_corte_exportacion(), ENT_QUOTES, 'UTF-8'); ?>
     <?php if ($datos['corrida']): ?><br>Análisis: <?php echo htmlspecialchars(($datos['corrida']['nombre'] ?: 'Análisis') . ' · ' . date('d/m/Y H:i', strtotime($datos['corrida']['creado'])), ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
     <?php if ($filtrosTxt): ?><br>Filtros: <?php echo htmlspecialchars(implode(' · ', $filtrosTxt), ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
 </div>
@@ -119,6 +119,6 @@ $rec = count(array_filter($datos['lista'], fn($x) => $x['estado'] === 'rechazada
     </table>
 <?php endforeach; ?>
 
-<div class="pie"><?php echo htmlspecialchars($proyecto->nombre, ENT_QUOTES, 'UTF-8'); ?> · Reporte generado por ProjectWeb · <?php echo htmlspecialchars($datos['generado'], ENT_QUOTES, 'UTF-8'); ?></div>
+<div class="pie"><?php echo htmlspecialchars($proyecto->nombre, ENT_QUOTES, 'UTF-8'); ?> · Reporte generado por ProjectWeb · <?php echo htmlspecialchars($datos['generado'], ENT_QUOTES, 'UTF-8'); ?><?php echo htmlspecialchars(etiqueta_corte_exportacion(), ENT_QUOTES, 'UTF-8'); ?></div>
 </body>
 </html>

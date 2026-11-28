@@ -5,11 +5,11 @@ $nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-table-cells"></i> SheetFlow</h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · tablas del proyecto que se usan en vPlan, Editor y Redactor.</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · tablas del proyecto que se usan en Vplan, Editor y Redactor.</p>
         <div class="herr-meta">
             <span class="herr-chip"><i class="fa-solid fa-table-list"></i><b><?php echo $totalHojas; ?></b> <?php echo $totalHojas === 1 ? 'tabla' : 'tablas'; ?></span>
             <span class="herr-chip"><i class="fa-solid fa-folder-open"></i><b><?php echo count($porDepto); ?></b> <?php echo count($porDepto) === 1 ? 'carpeta' : 'carpetas'; ?></span>
-            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-arrows-rotate"></i> se actualizan solas en vPlan</span>
+            <span class="herr-chip herr-chip-suave"><i class="fa-solid fa-arrows-rotate"></i> se actualizan solas en Vplan</span>
         </div>
     </div>
     <div class="la-controles">
@@ -29,7 +29,7 @@ $nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
     </div>
     <div class="suite-kpi">
         <span class="suite-kpi-icono"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></span>
-        <span class="suite-kpi-txt"><small>Vinculadas</small><strong>vPlan</strong><span>las tablas en vivo se actualizan solas</span></span>
+        <span class="suite-kpi-txt"><small>Vinculadas</small><strong>Vplan</strong><span>las tablas en vivo se actualizan solas</span></span>
     </div>
     <div class="suite-kpi is-success">
         <span class="suite-kpi-icono"><i class="fa-solid fa-file-export" aria-hidden="true"></i></span>
@@ -38,7 +38,7 @@ $nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
 </div>
 
 <?php if (!$porDepto): ?>
-    <div class="suite-panel"><?php echo estado_vacio('fa-table-cells', 'Aún no hay tablas', 'Hojas de cálculo del proyecto que se reutilizan en vPlan, Editor y Redactor: en blanco, desde una plantilla de obra o importando tu Excel.',
+    <div class="suite-panel"><?php echo estado_vacio('fa-table-cells', 'Aún no hay tablas', 'Hojas de cálculo del proyecto que se reutilizan en Vplan, Editor y Redactor: en blanco, desde una plantilla de obra o importando tu Excel.',
         $puedeEditar ? ['texto' => 'Crear la primera tabla', 'url' => '/sheetflow/crear?proyecto=' . $id, 'icono' => 'fa-plus'] : null); ?></div>
 <?php endif; ?>
 
@@ -72,9 +72,9 @@ $nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?><span class="hide-m"><?php echo \Classes\Carpetas::selector('sheetflow', (int)$h->id, (string)$h->departamento, $carpetas); ?><?php endif; ?>
                         <?php if ($puedeEditar): ?>
-                            <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-ghost" title="Crea una tabla en el catálogo de vPlan con estos datos"<?php echo glosario('vplan'); ?>><i class="fa-solid fa-table-list"></i> A vPlan</button></form>
+                            <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-ghost" title="Crea una tabla en el catálogo de Vplan con estos datos"<?php echo glosario('vplan'); ?>><i class="fa-solid fa-table-list"></i> A Vplan</button></form>
                             <form class="inline" method="POST" action="/sheetflow/duplicar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> Duplicar</button></form>
-                            <form method="POST" action="/sheetflow/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($h->nombre); ?>»?|Las tablas de vPlan que se crearon con ella conservan sus datos. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar</button></form>
+                            <form method="POST" action="/sheetflow/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($h->nombre); ?>»?|Las tablas de Vplan que se crearon con ella conservan sus datos. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo $id; ?>"><input type="hidden" name="id" value="<?php echo (int)$h->id; ?>"><button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> Eliminar</button></form>
                         </span><?php endif; ?>
                     </td>
                 </tr>
@@ -91,10 +91,10 @@ $nDeptos = count(array_diff(array_keys($porDepto), [\Classes\Carpetas::SIN]));
 window.Tour.registrar('sheetflow-lista', {
     auto: true,
     pasos: [
-        { icono: 'fa-table-cells', titulo: 'SheetFlow', texto: 'Las <b>hojas de cálculo</b> del proyecto: control de materiales, presupuesto, asistencia… Se usan en el vPlan, el Editor y el Redactor; las enlazadas se actualizan solas.' },
+        { icono: 'fa-table-cells', titulo: 'SheetFlow', texto: 'Las <b>hojas de cálculo</b> del proyecto: control de materiales, presupuesto, asistencia… Se usan en el Vplan, el Editor y el Redactor; las enlazadas se actualizan solas.' },
         { sel: '.rd-grupo h3', icono: 'fa-folder-open', titulo: 'Carpetas por departamento', texto: 'Como en el Redactor: las tablas se agrupan por <b>departamento</b>, se renombra con el lápiz y se mueven con «Mover a…».' },
-        { sel: 'a[href*="/sheetflow/crear"]', icono: 'fa-plus', titulo: 'Nueva tabla', texto: 'En blanco, <b>inteligente</b> (columnas con tipo que se llenan desde vPlan), de una <b>plantilla de obra</b> o importando tu Excel, CSV u otra tabla .sheetflow.', alEntrar: () => document.querySelector('.rd-grupo')?.scrollIntoView({ block: 'center' }) },
-        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Cada tabla se <b>Ver</b>, <b>Editar</b>, pasa <b>A vPlan</b> con un clic y se descarga en Excel, CSV o PDF. El botón «Guía rápida» repite este recorrido.' }
+        { sel: 'a[href*="/sheetflow/crear"]', icono: 'fa-plus', titulo: 'Nueva tabla', texto: 'En blanco, <b>inteligente</b> (columnas con tipo que se llenan desde Vplan), de una <b>plantilla de obra</b> o importando tu Excel, CSV u otra tabla .sheetflow.', alEntrar: () => document.querySelector('.rd-grupo')?.scrollIntoView({ block: 'center' }) },
+        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Cada tabla se <b>Ver</b>, <b>Editar</b>, pasa <b>A Vplan</b> con un clic y se descarga en Excel, CSV o PDF. El botón «Guía rápida» repite este recorrido.' }
     ]
 });
 </script>

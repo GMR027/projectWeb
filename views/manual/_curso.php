@@ -58,7 +58,7 @@ HTML,
 <p>El curso sigue el orden real de una obra:</p>
 <ol>
 <li><strong>Preparar</strong> la organización, el plan, los usuarios y el proyecto.</li>
-<li><strong>Planear</strong>: programa, dependencias, lookahead, vPlan y curvas.</li>
+<li><strong>Planear</strong>: programa, dependencias, lookahead, Vplan y curvas.</li>
 <li><strong>Ejecutar</strong>: reporte diario, bitácora, restricciones, calidad y seguridad.</li>
 <li><strong>Abastecer y controlar</strong>: materiales, costos, cambios y líneas base.</li>
 <li><strong>Documentar</strong>: archivo, redactor, planos, comparador y anotador.</li>
@@ -188,7 +188,7 @@ HTML,
     'id' => 'm2',
     'titulo' => 'Módulo 2 · Planeación',
     'icono' => 'fa-chart-gantt',
-    'objetivo' => 'Construir el programa, calcular la ruta crítica y preparar las juntas semanales con lookahead, Last Planner y vPlan.',
+    'objetivo' => 'Construir el programa, calcular la ruta crítica y preparar las juntas semanales con lookahead, Last Planner y Vplan.',
     'duracion' => '120 min',
     'lecciones' => [
         [
@@ -266,11 +266,11 @@ HTML,
         ],
         [
             'id' => 'm2-l5',
-            'titulo' => 'vPlan y láminas para juntas',
+            'titulo' => 'Vplan y láminas para juntas',
             'cuerpo' => <<<'HTML'
-<p>vPlan convierte el programa en una lámina visual para la junta de obra.</p>
+<p>Vplan convierte el programa en una lámina visual para la junta de obra.</p>
 <ol>
-<li>Abre <strong>vPlan</strong> y crea una lámina del tamaño que necesites.</li>
+<li>Abre <strong>Vplan</strong> y crea una lámina del tamaño que necesites.</li>
 <li>Inserta bloques: plano, tabla del programa, recovery, restricciones, punch list, texto o imágenes.</li>
 <li>Entra al <strong>modo diseño</strong> para mover, alinear, usar capas y guías.</li>
 <li>Marca zonas del plano y asígnalas a actividades o partidas.</li>
@@ -279,7 +279,7 @@ HTML,
 <p>Una buena lámina reemplaza tres reportes y una discusión de media hora.</p>
 HTML,
             'ejercicio' => 'Crea una lámina con un plano, una tabla del programa y una tabla de restricciones.',
-            'ensenar' => 'Pregunta al cliente qué imprime hoy para la junta. Esa hoja es la primera lámina que debes reconstruir en vPlan.',
+            'ensenar' => 'Pregunta al cliente qué imprime hoy para la junta. Esa hoja es la primera lámina que debes reconstruir en Vplan.',
         ],
         [
             'id' => 'm2-l6',
@@ -955,7 +955,7 @@ HTML,
 <li>Armar partidas, actividades, hitos y dependencias.</li>
 <li>Guardar una línea base y comparar.</li>
 <li>Preparar lookahead y Last Planner.</li>
-<li>Crear una lámina de vPlan.</li>
+<li>Crear una lámina de Vplan.</li>
 <li>Capturar un parte diario con foto y PDF.</li>
 <li>Registrar una restricción y resolverla.</li>
 <li>Crear un ITP y una no conformidad.</li>
@@ -980,7 +980,7 @@ HTML,
 <li>Un proyecto con calendario y dos usuarios.</li>
 <li>Una partida con cinco actividades y un hito.</li>
 <li>Dos dependencias y una línea base.</li>
-<li>Un lookahead y una lámina de vPlan.</li>
+<li>Un lookahead y una lámina de Vplan.</li>
 <li>Un parte diario con foto y PDF.</li>
 <li>Un material, un submittal y una orden de cambio.</li>
 <li>Un enlace de solo lectura y el PDF del programa.</li>

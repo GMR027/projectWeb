@@ -5,7 +5,7 @@ $pid = (int)$proyecto->id;
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-palette"></i> <?php echo s(t('Marca del cliente')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · el logo, el nombre y los colores del cliente salen en la cabecera de los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos). Las láminas del vPlan y los documentos del Redactor llevan su propio diseño.</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · el logo, el nombre y los colores del cliente salen en la cabecera de los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos). Las láminas del Vplan y los documentos del Redactor llevan su propio diseño.</p>
     </div>
 </div>
 <?php if (!$marca['disponible']): ?><div class="card"><p><?php echo s(t('Falta aplicar la migración')); ?> <code>database/migracion_personalizacion_columnas.sql</code>.</p></div><?php return; endif; ?>

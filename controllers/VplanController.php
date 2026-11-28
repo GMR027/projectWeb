@@ -13,7 +13,7 @@ use Classes\Vplan;
 use Classes\MarcasLienzo;
 use Model\Grafico;
 
-/** vPlan: láminas de plan visual por partida */
+/** Vplan: láminas de plan visual por partida */
 class VplanController
 {
     private static function laminaDe($proyecto): ?VplanLamina
@@ -30,7 +30,7 @@ class VplanController
         return $p && (int)$p->proyecto_id === (int)$proyecto->id ? $p : null;
     }
 
-    /** Lista de los vPlan del proyecto */
+    /** Lista de los Vplan del proyecto */
     public static function index(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -45,12 +45,12 @@ class VplanController
             }
         }
         $router->render('vplan/index', [
-            'titulo' => 'vPlan - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'paquetes' => $paquetes, 'portadas' => $portadas,
+            'titulo' => 'Vplan - ' . $proyecto->nombre, 'proyecto' => $proyecto, 'paquetes' => $paquetes, 'portadas' => $portadas,
             'puedeEditar' => $puedeEditar, 'alertas' => [],
         ]);
     }
 
-    /** Gestor de un vPlan: sus láminas (áreas) con visibilidad, orden, grupo, duplicar… */
+    /** Gestor de un Vplan: sus láminas (áreas) con visibilidad, orden, grupo, duplicar… */
     public static function paquete(Router $router)
     {
         $proyecto = proyecto_de_peticion();
@@ -63,7 +63,7 @@ class VplanController
         $laminas = $paquete->laminas(!$puedeEditar);
         $grupos = array_values(array_unique(array_filter(array_map(fn($l) => trim((string)$l->grupo), $paquete->laminas()))));
         $router->render('vplan/paquete', [
-            'titulo' => 'vPlan - ' . $paquete->nombre, 'proyecto' => $proyecto, 'paquete' => $paquete, 'laminas' => $laminas,
+            'titulo' => 'Vplan - ' . $paquete->nombre, 'proyecto' => $proyecto, 'paquete' => $paquete, 'laminas' => $laminas,
             'grupos' => $grupos, 'puedeEditar' => $puedeEditar,
         ]);
     }
@@ -71,7 +71,7 @@ class VplanController
     public static function paqueteCrear()
     {
         $proyecto = proyecto_de_peticion(true);
-        $nombre = mb_substr(trim($_POST['nombre'] ?? ''), 0, 200) ?: 'vPlan';
+        $nombre = mb_substr(trim($_POST['nombre'] ?? ''), 0, 200) ?: 'Vplan';
         $p = new VplanPaquete(['proyecto_id' => $proyecto->id, 'nombre' => $nombre, 'orden' => count(VplanPaquete::deProyecto((int)$proyecto->id))]);
         $p->id = $p->guardar()['id'];
         header('Location: /vplan/paquete?proyecto=' . $proyecto->id . '&id=' . $p->id);
@@ -100,7 +100,7 @@ class VplanController
         exit;
     }
 
-    /** Muestra u oculta todas las láminas de un grupo del vPlan */
+    /** Muestra u oculta todas las láminas de un grupo del Vplan */
     public static function paqueteGrupoVisible()
     {
         $proyecto = proyecto_de_peticion(true);
@@ -131,7 +131,7 @@ class VplanController
         if (isset($_POST['visible'])) $l->visible = (int)(!empty($_POST['visible']));
         if (isset($_POST['grupo'])) $l->grupo = mb_substr(trim((string)$_POST['grupo']), 0, 100);
         if (isset($_POST['titulo']) && trim((string)$_POST['titulo']) !== '') $l->titulo = mb_substr(trim((string)$_POST['titulo']), 0, 200);
-        if (isset($_POST['orden']) && ($_POST['orden'] = filter_var($_POST['orden'], FILTER_VALIDATE_INT)) !== false) $l->ordenar(max(0, $_POST['orden']));   // galería del vPlan: arrastrar para reordenar
+        if (isset($_POST['orden']) && ($_POST['orden'] = filter_var($_POST['orden'], FILTER_VALIDATE_INT)) !== false) $l->ordenar(max(0, $_POST['orden']));   // galería del Vplan: arrastrar para reordenar
         $l->guardar();
         echo json_encode(['success' => true, 'visible' => (int)$l->visible, 'grupo' => $l->grupo, 'titulo' => $l->titulo]);
         exit;
@@ -348,7 +348,7 @@ class VplanController
             header('Location: /vplan?proyecto=' . $proyecto->id);
             exit;
         }
-        if (!puede_gestionar_proyecto($proyecto) && !(int)$l->visible) {   // una lámina oculta solo la ve quien administra el vPlan
+        if (!puede_gestionar_proyecto($proyecto) && !(int)$l->visible) {   // una lámina oculta solo la ve quien administra el Vplan
             header('Location: /vplan?proyecto=' . $proyecto->id);
             exit;
         }
@@ -363,7 +363,7 @@ class VplanController
         if (!$edita && $modo !== 'ver') $modo = 'ver';
         if ($modo === 'dibujar' && !$l->plano) $modo = 'ver';
         $router->render('vplan/ver', $datos + [
-            'titulo' => 'vPlan - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l, 'paquete' => $paquete, 'hermanas' => $hermanas,
+            'titulo' => 'Vplan - ' . $l->titulo, 'proyecto' => $proyecto, 'lamina' => $l, 'paquete' => $paquete, 'hermanas' => $hermanas,
             'puedeEditar' => $edita,
             'modoInicial' => $modo,
             'config' => $edita && $l->plano ? self::configMarcas($proyecto, $l, $datos, '/vplan/ver?proyecto=' . $proyecto->id . '&id=' . $l->id . '&modo=' . (!empty($_GET['auto']) ? 'ver' : 'dibujar'), !empty($_GET['auto'])) : null,
@@ -463,7 +463,7 @@ class VplanController
         exit;
     }
 
-    /** Todas las tablas que se pueden insertar, de todos los tipos: las del catálogo y las hojas de SheetFlow que aún no son tabla del vPlan */
+    /** Todas las tablas que se pueden insertar, de todos los tipos: las del catálogo y las hojas de SheetFlow que aún no son tabla del Vplan */
     private static function catalogoTablas($proyecto, array $enLamina): array
     {
         $out = [];
@@ -497,7 +497,7 @@ class VplanController
         return $out;
     }
 
-    /** Configuración del editor de marcas (Konva): la comparten el editor del vPlan y la lámina unificada */
+    /** Configuración del editor de marcas (Konva): la comparten el editor del Vplan y la lámina unificada */
     private static function configMarcas(\Model\Proyecto $proyecto, VplanLamina $l, array $datos, string $volver, bool $auto = false): array
     {
         return [
@@ -591,7 +591,7 @@ class VplanController
                 \Classes\MaterialesLamina::sincronizar($proyecto, $l, false);
                 $materiales = \Classes\MaterialesLamina::datos($proyecto, VplanLamina::find((int)$l->id));
             } catch (\Throwable $e) {
-                error_log('Materiales vPlan (auto-sincronizar): ' . $e->getMessage());
+                error_log('Materiales Vplan (auto-sincronizar): ' . $e->getMessage());
             }
         }
         echo json_encode(['success' => true] + ($materiales ? ['materiales' => $materiales] : []), JSON_UNESCAPED_UNICODE);
@@ -637,7 +637,7 @@ class VplanController
         $proyecto = proyecto_de_peticion(true);
         $l = self::laminaDe($proyecto);
         $t = VplanTabla::find(filter_var($_POST['tabla_id'] ?? null, FILTER_VALIDATE_INT));
-        if (!$t && $l && !empty($_POST['sheetflow_id'])) {   // hoja de SheetFlow: se crea (o reutiliza) su tabla de vPlan
+        if (!$t && $l && !empty($_POST['sheetflow_id'])) {   // hoja de SheetFlow: se crea (o reutiliza) su tabla de Vplan
             $h = \Model\SheetflowHoja::find(filter_var($_POST['sheetflow_id'], FILTER_VALIDATE_INT));
             if ($h && (int)$h->proyecto_id === (int)$proyecto->id) {
                 $t = \Classes\Sheetflow::tablaVplanDe($h);
@@ -893,7 +893,7 @@ class VplanController
                     }
                     $escala[$clave] = $cqw($fz);
                 } catch (\Throwable $e) {
-                    error_log('vPlan escala de bloque: ' . $e->getMessage());
+                    error_log('Vplan escala de bloque: ' . $e->getMessage());
                 }
             }
         }

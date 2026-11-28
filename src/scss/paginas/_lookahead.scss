@@ -226,7 +226,7 @@ $e: 1.7;
 }
 
 // ============================================================
-// vPlan (láminas)
+// Vplan (láminas)
 // ============================================================
 // Mismos colores de estado que el programa de obra (completada / en proceso / en espera)
 $vp-verde: var(--success);
@@ -892,7 +892,7 @@ body.gr-editor-page {
   .fg-globo { fill: var(--primary); stroke: #fff; stroke-width: 1.5; } .fg-globo-t { fill: #fff; } }
 .sidebar-footer .manual-link { margin-bottom: .6rem; }
 
-// vPlan como paquete de láminas (áreas): lista de vPlan, gestor y navegación entre áreas
+// Vplan como paquete de láminas (áreas): lista de Vplan, gestor y navegación entre áreas
 .vp-nuevo-paquete { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.6rem; input[type=text] { min-width: 24rem; flex: 1; max-width: 48rem; } }
 .vp-paquetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr)); gap: 1.6rem; }
 .vp-paquete { h3 { margin: .8rem 0 .2rem; } .acciones { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; } }
@@ -1050,7 +1050,7 @@ body.gr-editor-page {
 .prg-chip { display: inline-flex; align-items: center; gap: .4rem; }
 @media (max-width: 64rem) { .prg-regla { input[type=number] { width: 7rem; } } }
 
-// vPlan: indicador condicional del programa en las tablas de tareas
+// Vplan: indicador condicional del programa en las tablas de tareas
 .vp-ind { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 50%; vertical-align: middle; border: 1px solid rgba(0, 0, 0, .25); }
 .vp-sel-prog { max-width: 100%; margin-top: .6rem; }
 
@@ -1074,7 +1074,7 @@ body.gr-editor-page {
   .ve-lam-acc .ve-cb { width: 3rem; height: 3rem; }
   .ve-lam { grid-template-columns: 2rem 9rem minmax(0, 1fr) auto auto; }
 
-  // Asas del modo diseño del vPlan: 2 rem visibles + 0.7 rem de área de golpe por lado.
+  // Asas del modo diseño del Vplan: 2 rem visibles + 0.7 rem de área de golpe por lado.
   .vp-sheet.vp-diseno .vp-h { width: 2rem; height: 2rem; }  .vp-sheet.vp-diseno .vp-h::after { content: ''; position: absolute; inset: -.7rem; }
   .vp-sheet.vp-diseno .vp-h-n, .vp-sheet.vp-diseno .vp-h-s { left: calc(50% - 1rem); }
   .vp-sheet.vp-diseno .vp-h-n { top: -1rem; } .vp-sheet.vp-diseno .vp-h-s { bottom: -1rem; }

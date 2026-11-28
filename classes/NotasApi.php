@@ -2,7 +2,7 @@
 
 namespace Classes;
 
-/** Crear, editar y borrar notas (vPlan y View360): misma validación y mismas respuestas JSON; la fecha la pone el servidor al crear */
+/** Crear, editar y borrar notas (Vplan y View360): misma validación y mismas respuestas JSON; la fecha la pone el servidor al crear */
 class NotasApi
 {
     /**

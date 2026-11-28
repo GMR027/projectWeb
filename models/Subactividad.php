@@ -202,7 +202,7 @@ class Subactividad extends ActiveRecord
 
     /**
      * Subactividades del proyecto agrupadas por actividad: [actividad_id => [Subactividad, …]].
-     * Una sola consulta para no repetirla por cada actividad (programa, vPlan, materiales…).
+     * Una sola consulta para no repetirla por cada actividad (programa, Vplan, materiales…).
      */
     public static function deProyecto(int $proyectoId): array
     {

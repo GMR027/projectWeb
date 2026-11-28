@@ -3,7 +3,9 @@
 use Model\VplanTabla;
 $fd = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '';
 $meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-$actualizado = $meses[(int)date('n')] . ' | ' . date('d') . ' | ' . date('Y');
+$fechaReferencia = $fechaReferencia ?? null;
+$fechaBase = $fechaReferencia ?: date('Y-m-d');
+$actualizado = $meses[(int)date('n', strtotime($fechaBase))] . ' | ' . date('d', strtotime($fechaBase)) . ' | ' . date('Y', strtotime($fechaBase));
 /**
  * Dompdf ignora <colgroup> (sus anchos se pierden): repite el reparto de columnas de `VplanDiseno::repartoColumnas()`
  * en la celda de la PRIMERA fila de datos de cada tabla adicional, así las columnas quedan como en la lámina de trabajo.
@@ -78,7 +80,8 @@ foreach ($paginas as $pi => $d):
     $caja = 'left:' . round((float)$b->x / 100 * $W, 2) . 'pt;top:' . round((float)$b->y / 100 * $H, 2) . 'pt;width:' . round($bw, 2) . 'pt;height:' . round($bh, 2) . 'pt;';
     switch ($b->tipo):
         case 'titulo': case 'supervisor': case 'fecha': case 'texto':
-            $texto = \Classes\Vplan::textoDeBloque($b, $l, $proyecto);
+            $texto = \Classes\Vplan::textoDeBloque($b, $l, $proyecto, $fechaReferencia);
+            if ($b->tipo === 'fecha' && corte_exportacion_visible()) $texto .= etiqueta_corte_exportacion();
             $propio = trim((string)($cfg['texto'] ?? '')) !== '';
             $def = ['titulo' => 20, 'supervisor' => 7.5, 'fecha' => 7.5, 'texto' => 10][$b->tipo];
             $al = $cfg['alinear'] ?? ['titulo' => 'centro', 'supervisor' => 'izquierda', 'fecha' => 'derecha', 'texto' => 'izquierda'][$b->tipo];
@@ -130,7 +133,7 @@ foreach ($paginas as $pi => $d):
         case 'estampa':
             $est = \Model\Estampa::disponible() ? \Model\Estampa::find((int)($cfg['estampa_id'] ?? 0)) : null;
             if ($est && (int)$est->proyecto_id === (int)$proyecto->id): ?>
-                <div class="blk" style="<?php echo $caja; ?>"><?php echo \Classes\Estampas::renderGuardada($est, $proyecto, $l, \Classes\Vplan::opcionesEstampa($cfg), 'pt', $K); ?></div>
+                <div class="blk" style="<?php echo $caja; ?>"><?php echo \Classes\Estampas::renderGuardada($est, $proyecto, $l, \Classes\Vplan::opcionesEstampa($cfg, $fechaReferencia), 'pt', $K); ?></div>
             <?php endif;
             break;
         case 'schedule':

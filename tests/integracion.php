@@ -839,7 +839,7 @@ $ok('la sección se refleja en la hoja', $errF === null && in_array((int)$sfC->i
     && in_array('Tramo D', array_column($shd['rows'], 0), true));
 $ok('la columna extra sigue después de reflejar', in_array('Columna extra', array_column($shd['cols'], 'n'), true));
 
-// Quitar un renglón desde vPlan borra su subactividad y no desalinea los ids
+// Quitar un renglón desde Vplan borra su subactividad y no desalinea los ids
 $rC = array_search((int)$subsF[1]->id, $shd['meta']['subactividad']['ids'], true);
 $errQ = \Classes\Sheetflow::quitarFila(Model\SheetflowHoja::find((int)$sh->id), (int)$rC);
 $ok('quitar un renglón elimina su subactividad y conserva las demás', $errQ === null

@@ -55,7 +55,7 @@ class Estampa extends ActiveRecord
         return self::consultarSQL("SELECT * FROM estampas WHERE proyecto_id = $proyectoId ORDER BY nombre, id");
     }
 
-    /** Lista corta para insertar en el modo diseño del vPlan */
+    /** Lista corta para insertar en el modo diseño del Vplan */
     public static function paraInsertar(int $proyectoId): array
     {
         return array_map(function ($e) {

@@ -25,7 +25,7 @@ class LandingContenido
                 ['Lookahead 4S', 'fa-binoculars', 'La semana actual y las cuatro siguientes con PTA y limitaciones.'],
                 ['Planificador por material', 'fa-diagram-next', 'Cruza actividades pendientes con materiales comprados y dice qué puedes adelantar.'],
                 ['Last Planner', 'fa-note-sticky', 'Tarjetas por día y partida, listas para imprimir, calculadas desde tu programa.'],
-                ['vPlan', 'fa-sheet-plastic', 'Láminas libres con plano, tabla del programa, recovery, restricciones y punch list.'],
+                ['Vplan', 'fa-sheet-plastic', 'Láminas libres con plano, tabla del programa, recovery, restricciones y punch list.'],
                 ['Líneas base', 'fa-timeline', 'Guarda una foto del programa y compara qué se movió, qué entró a la ruta crítica y por qué.'],
                 ['Tipo de obra y plantillas', 'fa-layer-group', 'Programas base por tipología para arrancar sin capturar todo de nuevo.'],
             ],
@@ -44,7 +44,7 @@ class LandingContenido
                 ['Punch list', 'fa-screwdriver-wrench', 'Pendientes con foto antes y después, inspección por ubicación y PDF por contratista.'],
                 ['Calidad e inspecciones', 'fa-clipboard-check', 'ITP, ensayos, no conformidades y expediente con compuerta de calidad.'],
                 ['RFI', 'fa-circle-question', 'Preguntas y respuestas ligadas a actividades y planos, con control de revisión.'],
-                ['Mapa de avance', 'fa-map-location-dot', 'Avance marcado sobre el plano o el vPlan por zona y frente.'],
+                ['Mapa de avance', 'fa-map-location-dot', 'Avance marcado sobre el plano o el Vplan por zona y frente.'],
             ],
         ],
         'abastecer' => [

@@ -1,4 +1,4 @@
--- Cajetines (título del dibujo) reutilizables por proyecto, para insertar en el Editor y en el editor del vPlan
+-- Cajetines (título del dibujo) reutilizables por proyecto, para insertar en el Editor y en el editor del Vplan
 CREATE TABLE IF NOT EXISTS cajetines (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,

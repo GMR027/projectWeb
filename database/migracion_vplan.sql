@@ -1,4 +1,4 @@
--- vPlan: láminas de plan visual y tablas adicionales
+-- Vplan: láminas de plan visual y tablas adicionales
 CREATE TABLE IF NOT EXISTS vplan_laminas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,

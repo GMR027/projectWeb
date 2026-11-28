@@ -106,7 +106,8 @@ class LineatiempoController
         }
         $soloRestriccion = !empty($f['restriccion']);
         $iconoActivo = !empty($f['icono']);   // casilla «Icono de actividad»: disco circular sobre cada barra
-        $hoy = date('Y-m-d');
+        $fechaRef = (string)($f['fecha'] ?? '');
+        $hoy = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaRef) ? $fechaRef : date('Y-m-d');
 
         // Mes aislado (Centro de Exportación): el diagrama cubre ese mes completo
         $mes = $mesInicio = $mesFin = null;

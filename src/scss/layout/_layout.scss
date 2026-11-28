@@ -341,7 +341,7 @@ html.sin-ayuda-burbujas .burbuja-ayuda { display: none !important; }
 
 // ============ BARRA DE PROGRESO DE NAVEGACIÓN ============
 // Se muestra al cambiar de herramienta o al enviar un formulario: las páginas pesadas
-// (programa, vPlan, Línea de tiempo) tardan y sin señal el usuario cree que no pasó nada.
+// (programa, Vplan, Línea de tiempo) tardan y sin señal el usuario cree que no pasó nada.
 .barra-progreso {
   position: fixed; top: 0; left: 0; z-index: 3000;
   height: .3rem; width: 0; opacity: 0;

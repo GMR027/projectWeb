@@ -1,4 +1,4 @@
-/* Editor de marcas de vPlan sobre el plano (Konva, JavaScript puro).
+/* Editor de marcas de Vplan sobre el plano (Konva, JavaScript puro).
  * Diseño como el ejemplo oficial de Konva: el documento es una lista de datos planos con id (nunca nodos),
  * historial past/present/future y un Transformer para mover, redimensionar y rotar. */
 (function () {
@@ -2140,7 +2140,7 @@
         }
         if (!d.success) { status('Error: ' + (d.error || 'no se pudo guardar')); return false; }
         if (sl) { sl.dirty = false; if (d.version) sl.version = d.version; }
-        // En vPlan, el servidor mantiene sola la tabla de materiales al guardar: el panel se refresca con lo que devuelve
+        // En Vplan, el servidor mantiene sola la tabla de materiales al guardar: el panel se refresca con lo que devuelve
         if (d.materiales) document.dispatchEvent(new CustomEvent('vplan:marcas-guardadas', { detail: d }));
       }
       autoPausado = false;
@@ -2751,7 +2751,7 @@
         e.preventDefault();
         h.setPointerCapture(e.pointerId);
         const r = area.getBoundingClientRect();
-        // En la lámina de vPlan el panel va a la derecha (order 1): el ancho se mide desde el borde derecho.
+        // En la lámina de Vplan el panel va a la derecha (order 1): el ancho se mide desde el borde derecho.
         const aLaDerecha = () => {
           const lat = document.getElementById('ve-lateral');
           return !!lat && getComputedStyle(lat).order === '1';

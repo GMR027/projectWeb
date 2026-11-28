@@ -1,5 +1,5 @@
 <?php
-// Pestaña «Materiales» de la barra superior del editor de marcas de vPlan.
+// Pestaña «Materiales» de la barra superior del editor de marcas de Vplan.
 // Variables: $config (con materiales), $tool, $svg, $ic.
 $lineasMat = [['line', 'Línea continua'], ['dash', 'Línea discontinua'], ['dashdot', 'Línea trazo y punto'], ['dot', 'Línea punteada'],
     ['poly', 'Polilínea: clic en cada punto, doble clic o Enter para terminar'], ['pencil', 'Lápiz (trazo libre)'], ['arrow', 'Flecha'], ['darrow', 'Flecha doble']];

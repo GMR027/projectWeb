@@ -51,5 +51,5 @@ $tabla = function (string $titulo, string $col1, array $filas) { ?>
 
 <?php if ($temas) $tabla('Temas vistos', 'Tema', $temas); ?>
 <?php if ($compromisos) $tabla('Compromisos', 'Compromiso', $compromisos); ?>
-<div class="peq" style="margin-top:16pt">Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?></div>
+<div class="peq" style="margin-top:16pt">Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?><?php echo s(etiqueta_corte_exportacion()); ?></div>
 </body></html>

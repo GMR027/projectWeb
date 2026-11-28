@@ -9,6 +9,7 @@ use Classes\Pdf;
 class MsrPdfExporter extends BaseExporter
 {
     private ?\Model\Msr $msr = null;
+    private ?string $fechaReporte = null;
 
     public function setMsr(?\Model\Msr $msr): self
     {
@@ -16,11 +17,19 @@ class MsrPdfExporter extends BaseExporter
         return $this;
     }
 
+    /** Fecha de emisión del reporte (cabecera FECHA y estampas con corte) */
+    public function setFechaReporte(string $fecha): self
+    {
+        $this->fechaReporte = $fecha;
+        return $this;
+    }
+
     public function generar(string $nombreBase): string
     {
         $datos = MsrController::datos($this->proyecto, $this->msr);
         $datos['img'] = fn(?string $archivo, string $carpeta) => self::imagenBase64($archivo, $carpeta);
-        $datos['fechaReporte'] = date('d/m/Y');
+        $fechaReporte = $this->fechaReporte ?: date('Y-m-d');
+        $datos['fechaReporte'] = $fechaReporte;
         extract($datos);
 
         ob_start();

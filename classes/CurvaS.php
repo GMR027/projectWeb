@@ -104,7 +104,7 @@ class CurvaS
     }
 
     /** @return array{periodos: array, resumen: array, hayDatos: bool} */
-    public static function calcular(Proyecto $proyecto, ?array $alterno = null): array
+    public static function calcular(Proyecto $proyecto, ?array $alterno = null, ?string $corte = null): array
     {
         $pid = (int)$proyecto->id;
         $acts = self::actividades($pid);
@@ -122,7 +122,7 @@ class CurvaS
         $cal = new Calendario($pid);
         $hist = self::historial($pid);
         $manual = self::manual($pid);
-        $hoy = date('Y-m-d');
+        $hoy = $corte && preg_match('/^\d{4}-\d{2}-\d{2}$/', $corte) ? $corte : date('Y-m-d');
         $cache = [];
         $cacheAlt = [];
         $periodos = [];

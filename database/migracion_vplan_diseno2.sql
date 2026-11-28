@@ -1,4 +1,4 @@
--- vPlan: guías del modo diseño (por lámina) y Recovery dinámico (1 o más columnas).
+-- Vplan: guías del modo diseño (por lámina) y Recovery dinámico (1 o más columnas).
 ALTER TABLE vplan_laminas ADD COLUMN guias_json TEXT NULL AFTER marcas_estados_hash;
 ALTER TABLE vplan_laminas ADD COLUMN recovery_n TINYINT NOT NULL DEFAULT 0 AFTER recovery_cols;
 

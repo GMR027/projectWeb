@@ -2,7 +2,7 @@
 // Copiar y pegar fechas con Ctrl+C / Ctrl+V
 // ------------------------------------------------------------
 // - Ctrl+C sobre una fecha visible (tablas, Gantt, programa,
-//   vPlan, etc.) copia el día completo en formato ISO (AAAA-MM-DD),
+//   Vplan, etc.) copia el día completo en formato ISO (AAAA-MM-DD),
 //   aunque solo se haya seleccionado una parte del texto.
 // - Ctrl+V sobre cualquier campo de fecha (input type="date" o
 //   campos de texto que son fechas) acepta AAAA-MM-DD, DD/MM/AAAA,

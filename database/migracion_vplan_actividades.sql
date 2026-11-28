@@ -1,4 +1,4 @@
--- vPlan: una lámina puede mostrar solo una parte de las actividades de su partida.
+-- Vplan: una lámina puede mostrar solo una parte de las actividades de su partida.
 -- Sin filas para la lámina = se muestra la partida completa (comportamiento anterior).
 CREATE TABLE IF NOT EXISTS vplan_lamina_actividades (
     lamina_id INT NOT NULL,

@@ -74,7 +74,7 @@ class Ahorro
         ['PDF y planos', 'fa-file-pdf', 350, 'Acrobat Pro, Bluebeam o similar', 'Archivo, visor, comparador, anotador y unir PDF'],
         ['Campo y reportes', 'fa-clipboard-list', 300, 'App de campo, reportes y evidencias', 'Reporte diario, bitácora, evidencias, seguridad, calidad y punch'],
         ['Tablero y gestión', 'fa-table-columns', 250, 'Smartsheet, monday o similar', 'Lookahead, restricciones, portafolio, salud y tablero'],
-        ['Almacenamiento', 'fa-cloud', 100, 'Drive, SharePoint o similar', 'Archivo, vPlan, View360 y respaldos'],
+        ['Almacenamiento', 'fa-cloud', 100, 'Drive, SharePoint o similar', 'Archivo, Vplan, View360 y respaldos'],
     ];
 
     /** Roles listos para la calculadora. */

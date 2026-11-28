@@ -114,7 +114,7 @@ $herramientas = [
             </label>
             <button type="button" class="btn btn-primary" id="ant-abrir"><i class="fa-solid fa-arrow-right-to-bracket"></i> Abrir y anotar</button>
         </div>
-        <p class="text-sm text-muted ant-nota-pie"><i class="fa-solid fa-circle-info"></i> Fuentes: PDF o imágenes del Archivo, láminas de vPlan, gráficos del Editor y documentos del Redactor. Los archivos externos se copian al proyecto al guardar.</p>
+        <p class="text-sm text-muted ant-nota-pie"><i class="fa-solid fa-circle-info"></i> Fuentes: PDF o imágenes del Archivo, láminas de Vplan, gráficos del Editor y documentos del Redactor. Los archivos externos se copian al proyecto al guardar.</p>
     </section>
     <?php endif; ?>
 

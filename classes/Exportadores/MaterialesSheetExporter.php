@@ -64,7 +64,7 @@ class MaterialesSheetExporter extends BaseExporter
         $texto('A2', trim($this->proyecto->nombre . ($this->proyecto->codigo ? ' · ' . $this->proyecto->codigo : '') . ($this->proyecto->ubicacion ? ' · ' . $this->proyecto->ubicacion : '')));
         $h->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('334155');
         $h->mergeCells('A3:H3');
-        $texto('A3', count($this->materiales) . ' material(es) · ' . MaterialesCatalogo::textoFiltros($this->filtros) . ' · Generado el ' . date('d/m/Y H:i'));
+        $texto('A3', count($this->materiales) . ' material(es) · ' . MaterialesCatalogo::textoFiltros($this->filtros) . ' · Generado el ' . date('d/m/Y H:i') . etiqueta_corte_exportacion());
         $h->getStyle('A3')->getFont()->setSize(8)->getColor()->setRGB('64748B');
 
         // Encabezados

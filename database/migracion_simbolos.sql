@@ -1,4 +1,4 @@
--- Biblioteca de símbolos por proyecto (se insertan en el editor del vPlan y en el Editor de gráficos)
+-- Biblioteca de símbolos por proyecto (se insertan en el editor del Vplan y en el Editor de gráficos)
 CREATE TABLE IF NOT EXISTS simbolos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,

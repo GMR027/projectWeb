@@ -16,7 +16,7 @@ $grupos = [
     'Planear' => [
         ['fa-chart-gantt', 'Control del programa de obra', 'Avance real contra lo planeado, ruta crítica, holguras y proyección a cuatro semanas, sobre el calendario real de tu obra.', ['Gantt y calendario', 'Ruta crítica', 'Curva S']],
         ['fa-binoculars', 'Lookahead y Last Planner', 'Preparamos el lookahead semanal con sus limitaciones y los post-its del día, listos para la junta de planeación y para imprimir.', ['4 semanas', 'PTA', 'Post-its']],
-        ['fa-sheet-plastic', 'Láminas visuales para juntas', 'Planos con el avance marcado, tablas del programa, recovery y restricciones, en láminas del tamaño que pidas.', ['vPlan', 'Tabloide a A0', 'PDF por lámina']],
+        ['fa-sheet-plastic', 'Láminas visuales para juntas', 'Planos con el avance marcado, tablas del programa, recovery y restricciones, en láminas del tamaño que pidas.', ['Vplan', 'Tabloide a A0', 'PDF por lámina']],
     ],
     'Ejecutar' => [
         ['fa-clipboard-list', 'Reportes, bitácora y minutas', 'Reporte diario con personal y fotografías, bitácora por departamento y minutas con compromisos, fechados y listos para el cliente.', ['PDF en un clic', 'Evidencias', 'Compromisos']],
@@ -59,7 +59,7 @@ $entregables = [
     ['Lookahead y Last Planner', 'Las próximas semanas con sus limitaciones y los post-its del día.', 'Semanal', 'check', 'check', 'check'],
     ['Minutas con compromisos', 'Temas, responsables y fechas, en PDF.', 'Después de cada junta', 'check', 'check', 'check'],
     ['Archivo ordenado del proyecto', 'Planos, contratos y documentos por revisión, con acceso controlado.', 'Permanente', 'check', 'check', 'check'],
-    ['Láminas vPlan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta', 'medida', 'check', 'check'],
+    ['Láminas Vplan', 'Planos con el avance marcado por frente o por área.', 'Para cada junta', 'medida', 'check', 'check'],
     ['Tablero de materiales', 'Qué falta aprobar, comprar o entregar, y qué lo frena.', 'Semanal', 'medida', 'check', 'check'],
     ['Registro de cambios', 'Órdenes de cambio, líneas base y desviaciones justificadas.', 'Al ocurrir cada cambio', 'medida', 'check', 'check'],
     ['Cierre y punch list', 'Pendientes de calidad con foto antes y después, y acta de entrega.', 'Al cierre de etapa', 'medida', 'medida', 'check'],

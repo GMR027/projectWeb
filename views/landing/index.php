@@ -36,7 +36,7 @@ $tour = [
     ['programa', 'Programa y Gantt', 'fa-chart-gantt', 'Partidas por disciplina, actividades e hitos con avance, prioridad y restricciones. Las fechas respetan el calendario real de la obra.'],
     ['4wla', 'Lookahead 4 semanas', 'fa-binoculars', 'La semana actual y las 4 siguientes con PTA y limitaciones: qué puede arrancar y qué no.'],
     ['lastplanner', 'Last Planner', 'fa-note-sticky', 'Tarjetas por día y por partida listas para imprimir, calculadas desde tu programa.'],
-    ['vplan', 'vPlan', 'fa-sheet-plastic', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
+    ['vplan', 'Vplan', 'fa-sheet-plastic', 'Láminas con plano, tabla del programa, recovery, restricciones y punch list para las juntas de obra.'],
     ['reportes', 'Reporte diario', 'fa-clipboard-list', 'Personal, actividades y fotografías de cada día, listos para compartir con el cliente.'],
     ['msr', 'MSR · materiales', 'fa-truck-ramp-box', 'Estatus de submittals, compra y entrega de materiales con fotos y proveedores.'],
     ['lineas-base', 'Líneas base', 'fa-timeline', 'Compara el programa actual contra una foto anterior y explica qué se movió.'],
@@ -74,11 +74,11 @@ $comparativa = [
 $pilares = [
     ['1', 'plataforma', 'en lugar de hasta 8 tipos de software', 'Programación, ofimática, PDF, campo, materiales, tablero y almacenamiento en el mismo lugar.'],
     ['65–87', '% menos', 'en costo de software, según el tamaño del equipo', 'Con las licencias que realmente reemplazas, no con una suma de todo para cada persona.'],
-    ['1', 'captura, 7 vistas', 'un dato alimenta toda la obra', 'Actualizas una actividad y cambian el Gantt, el lookahead, el vPlan, el reporte, el MSR y la Curva S.'],
+    ['1', 'captura, 7 vistas', 'un dato alimenta toda la obra', 'Actualizas una actividad y cambian el Gantt, el lookahead, el Vplan, el reporte, el MSR y la Curva S.'],
 ];
 $ventajas = [
     ['fa-layer-group', 'Una plataforma, no tres o cuatro programas', 'Lo que antes exigía varios programas y archivos sueltos ahora comparte los mismos datos y la misma forma de trabajar.'],
-    ['fa-shield-halved', 'Información que cuadra a la primera', 'Capturas una vez y el programa, el lookahead, el reporte, el vPlan y las curvas hablan del mismo proyecto.'],
+    ['fa-shield-halved', 'Información que cuadra a la primera', 'Capturas una vez y el programa, el lookahead, el reporte, el Vplan y las curvas hablan del mismo proyecto.'],
     ['fa-mobile-screen-button', 'En cualquier equipo, sin reinstalar', 'Cambia de computadora o entra desde el celular: no recompras licencias ni reinstalas nada.'],
     ['fa-people-roof', 'Hecha para el control de obra', 'Last Planner, lookahead, restricciones, MSR y submittals vienen pensados para el contratista, no adaptados desde un gestor genérico de tareas.'],
     ['fa-lock', 'Control de quién ve qué', 'Tres roles y accesos de visitante por herramienta: el cliente consulta avance y evidencias sin tocar el programa.'],
@@ -87,7 +87,7 @@ $ventajas = [
 $pasos = [
     ['Crea tu proyecto', 'Define fechas, jornada semanal y festivos. El sistema prepara el calendario operativo.'],
     ['Arma el programa', 'Captura partidas, actividades y restricciones. Se calculan fechas, Gantt, 4WLA y Last Planner.'],
-    ['Da seguimiento', 'Registra avance, reportes diarios, materiales y evidencias. Todo se refleja en el programa, el vPlan y las curvas.'],
+    ['Da seguimiento', 'Registra avance, reportes diarios, materiales y evidencias. Todo se refleja en el programa, el Vplan y las curvas.'],
     ['Controla, documenta y comparte', 'Lleva los cambios contra una línea base, redacta actas, da acceso de solo lectura al cliente y exporta.'],
 ];
 $serviciosLanding = [
@@ -218,7 +218,7 @@ $frentesResumen = $frentes;
                     ['fa-chart-gantt', 'Gantt', 'La barra y el avance de la partida cambian.'],
                     ['fa-binoculars', 'Lookahead 4S', 'La actividad entra o sale de la ventana semanal.'],
                     ['fa-note-sticky', 'Last Planner', 'El post-it del día refleja el avance real.'],
-                    ['fa-sheet-plastic', 'vPlan', 'La lámina de la junta muestra el mismo dato.'],
+                    ['fa-sheet-plastic', 'Vplan', 'La lámina de la junta muestra el mismo dato.'],
                     ['fa-clipboard-list', 'Reporte diario', 'El reporte del día queda con la actividad actualizada.'],
                     ['fa-chart-line', 'Curva S', 'La curva planeada contra real se recalcula.'],
                 ] as [$ico, $t, $d]): ?>
@@ -271,7 +271,7 @@ $frentesResumen = $frentes;
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Funciones</span>
             <h2>Todo lo que tu obra necesita,<br>conectado entre sí</h2>
-            <p>Un solo programa alimenta el Gantt, el lookahead, los post-its, el vPlan y los reportes. Actualizas una vez y se refleja en todo.</p>
+            <p>Un solo programa alimenta el Gantt, el lookahead, los post-its, el Vplan y los reportes. Actualizas una vez y se refleja en todo.</p>
         </div>
 
         <div class="lp-explorer lp-rev" id="lp-explorer" data-filtro-inicial="<?php echo s($filtroInicial); ?>">
@@ -285,7 +285,7 @@ $frentesResumen = $frentes;
                 <label class="lp-explorer-busca">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                     <span class="sr-only">Buscar herramienta</span>
-                    <input type="search" id="lp-busca" placeholder="Busca una herramienta: Last Planner, MSR, vPlan…" autocomplete="off">
+                    <input type="search" id="lp-busca" placeholder="Busca una herramienta: Last Planner, MSR, Vplan…" autocomplete="off">
                 </label>
             </div>
             <p class="lp-explorer-count" id="lp-explorer-count" role="status" aria-live="polite">Mostrando <?php echo (int)$totalHerramientas; ?> herramientas</p>
@@ -455,7 +455,7 @@ $frentesResumen = $frentes;
         </details>
 
         <ul class="lp-ahorro-extra lp-rev">
-            <li><i class="fa-solid fa-clock"></i><span><strong>Menos horas de captura.</strong> Capturas una vez y el programa, el lookahead, los reportes y el vPlan se actualizan juntos.</span></li>
+            <li><i class="fa-solid fa-clock"></i><span><strong>Menos horas de captura.</strong> Capturas una vez y el programa, el lookahead, los reportes y el Vplan se actualizan juntos.</span></li>
             <li><i class="fa-solid fa-file-word"></i><span><strong>Menos licencias de ofimática y de dibujo.</strong> Actas, tablas con fórmulas y comparación de planos viven dentro de la misma plataforma.</span></li>
             <li><i class="fa-solid fa-people-arrows"></i><span><strong>Menos retrabajo.</strong> Todos ven la misma información, así no se corrigen datos distintos entre archivos.</span></li>
             <li><i class="fa-solid fa-user-plus"></i><span><strong>Crece sin volver a cotizar.</strong> Sumar usuarios, obras o disciplinas no obliga a comprar otro paquete ni a migrar de sistema.</span></li>
@@ -469,13 +469,13 @@ $frentesResumen = $frentes;
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Planeación</span>
             <h2>Del plano a la junta,<br>sin saltos</h2>
-            <p>Programa con calendario real, revisa las próximas semanas, lleva la junta con vPlan y Last Planner y compara contra tu línea base. Todo sale del mismo programa.</p>
+            <p>Programa con calendario real, revisa las próximas semanas, lleva la junta con Vplan y Last Planner y compara contra tu línea base. Todo sale del mismo programa.</p>
         </div>
         <div class="lp-plan-flow lp-rev">
             <?php foreach ([
                 ['01', 'Programa', 'Partidas, actividades, dependencias y ruta crítica.', 'fa-list-check'],
                 ['02', 'Mira la obra', 'Lookahead 4S y planificador por material.', 'fa-binoculars'],
-                ['03', 'Lleva la junta', 'Last Planner, vPlan y minutas con compromisos.', 'fa-handshake'],
+                ['03', 'Lleva la junta', 'Last Planner, Vplan y minutas con compromisos.', 'fa-handshake'],
                 ['04', 'Compara y ajusta', 'Líneas base, cambios y curvas de avance.', 'fa-code-compare'],
             ] as [$n, $t, $d, $ico]): ?>
                 <article class="lp-plan-paso">
@@ -491,7 +491,7 @@ $frentesResumen = $frentes;
                 ['programa', 'Programa y Gantt', 'Fechas, avance, prioridad y restricciones en una tabla WBS.'],
                 ['4wla', 'Lookahead 4S', 'La semana actual y las cuatro siguientes con sus limitaciones.'],
                 ['lastplanner', 'Last Planner', 'Tarjetas del día listas para imprimir y llevar a la junta.'],
-                ['vplan', 'vPlan', 'Planos, tablas, recovery y punch list en la misma lámina.'],
+                ['vplan', 'Vplan', 'Planos, tablas, recovery y punch list en la misma lámina.'],
             ] as [$id, $t, $d]): ?>
                 <figure class="lp-plan-shot">
                     <img src="/build/img/landing/tour-<?php echo s($id); ?>.jpg" alt="<?php echo s($t); ?> del proyecto demo" loading="lazy" decoding="async">
@@ -512,7 +512,7 @@ $frentesResumen = $frentes;
         <div class="lp-head lp-rev">
             <span class="lp-eyebrow">Recorrido por el producto</span>
             <h2>Así se ve una obra<br>multidisciplinaria en ProjectWeb</h2>
-            <p>Pantallas reales del proyecto demo: programa, lookahead, Last Planner, vPlan, reportes, materiales y más.</p>
+            <p>Pantallas reales del proyecto demo: programa, lookahead, Last Planner, Vplan, reportes, materiales y más.</p>
         </div>
         <div class="lp-tabs lp-rev" role="tablist">
             <?php foreach ($tour as $i => [$id, $nom, $ico, $txt]): ?>
@@ -547,7 +547,7 @@ $frentesResumen = $frentes;
 <section class="lp-band" style="--bg: url('/build/img/landing/grua.jpg')">
     <div class="lp-wrap lp-rev">
         <h2>Míralo funcionando con un proyecto de ejemplo</h2>
-        <p>Entra al demo sin registrarte: recorre el programa, el vPlan, los reportes diarios, el MSR, las órdenes de cambio y los documentos. Es de solo lectura.</p>
+        <p>Entra al demo sin registrarte: recorre el programa, el Vplan, los reportes diarios, el MSR, las órdenes de cambio y los documentos. Es de solo lectura.</p>
         <a href="/demo" class="lp-btn lp-btn-primary lp-btn-lg"><i class="fa-solid fa-play"></i> Entrar al demo</a>
     </div>
 </section>

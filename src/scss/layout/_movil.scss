@@ -102,7 +102,7 @@
     p { margin: 0; font-size: 1.35rem; line-height: 1.5; }
     strong { font-size: 1.45rem; }
   }
-  // Editores de lienzo: el Editor de gráficos y el editor de marcas del vPlan ya funcionan en el
+  // Editores de lienzo: el Editor de gráficos y el editor de marcas del Vplan ya funcionan en el
   // celular (dock inferior + hoja de propiedades); el resto conserva el aviso de consulta.
   body.gr-editor-page .aviso-escritorio { display: none !important; }
 
@@ -112,7 +112,7 @@
   body.gr-editor-page .nav-inferior,
   body.rd-movil-dock .nav-inferior { display: none !important; }
 
-  // El modo diseño del vPlan conserva su barra en el celular: una sola fila que se desliza.
+  // El modo diseño del Vplan conserva su barra en el celular: una sola fila que se desliza.
   .vp-dis-barra { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: .6rem .8rem; gap: .6rem;
     > * { flex: 0 0 auto; }
     .vp-ib-ayuda { margin-left: .4rem; } }
@@ -224,7 +224,7 @@
   .dep-agregar { flex-wrap: wrap; select, .btn { flex: 1 1 100%; } }
   .dep-modal-card { width: calc(100vw - 2rem); max-width: none; }
 
-  // ---------- vPlan: lista de láminas ----------
+  // ---------- Vplan: lista de láminas ----------
   // Solo miniatura, título y los botones Abrir y Editar; el resto de acciones vive en el escritorio
   .vp-ayuda-lista { display: none; }
   .vp-paginas {

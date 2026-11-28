@@ -688,7 +688,7 @@ $router->post('/api/redactor/hoja', [RedactorController::class, 'hoja']);
 $router->post('/api/redactor/exportar-seleccion', [RedactorController::class, 'exportarSeleccion']);
 $router->post('/redactor/plantilla/eliminar', [RedactorController::class, 'eliminarPlantilla']);
 
-// SheetFlow (tablas reutilizables en vPlan, Editor y Redactor)
+// SheetFlow (tablas reutilizables en Vplan, Editor y Redactor)
 $router->get('/sheetflow', [SheetflowController::class, 'index']);
 $router->get('/sheetflow/crear', [SheetflowController::class, 'crear']);
 $router->post('/sheetflow/crear', [SheetflowController::class, 'crear']);

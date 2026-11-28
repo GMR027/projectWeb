@@ -99,7 +99,7 @@ HTML],
 <li>Escribe y repite la contraseña. Al editar, deja los campos de contraseña vacíos para conservar la actual.</li>
 </ol>
 <h4>Herramientas de un visitante</h4>
-<p>Al crear o editar un visitante puedes marcar <strong>qué herramientas puede ver</strong> (Programa, vPlan, Lookahead, etc.). Si dejas todas marcadas no tiene restricción; si desmarcas alguna, desaparece de su menú. El visitante nunca puede editar ni descargar.</p>
+<p>Al crear o editar un visitante puedes marcar <strong>qué herramientas puede ver</strong> (Programa, Vplan, Lookahead, etc.). Si dejas todas marcadas no tiene restricción; si desmarcas alguna, desaparece de su menú. El visitante nunca puede editar ni descargar.</p>
 <h4>Colaboradores y topes de equipo</h4>
 <p>En la ficha del cliente defines además <strong>cuántos visitantes</strong> y <strong>cuántos colaboradores</strong> puede crear (2 y 3 por defecto). Un colaborador es un visitante con «tipo de acceso: colaborador»: el dueño le marca qué herramientas puede <em>ver</em> y en cuáles puede <em>editar</em>. Nunca puede borrar ni entrar a Ajustes, Compartir, Integraciones, Marca, Directorio o al Centro de IA. Todo lo que cambia queda en el <em>Historial de cambios</em> con su nombre.</p>
 HTML],
@@ -236,13 +236,13 @@ HTML],
 <h4>Cambiar las fechas rápidamente</h4>
 <p>En el celular, el icono de <em>Cambiar fechas</em> de una actividad abre una ventana con las fechas de inicio y fin, la duración en días hábiles y atajos <em>Hoy</em>, <em>+1 día</em> y <em>+1 semana</em>. En escritorio puedes editar las fechas directamente en la tabla; si mueves el inicio, el fin se corre con la misma duración.</p>
 <h4>Copiar y pegar fechas</h4>
-<p>Haz clic sobre cualquier fecha visible (en el programa, en tablas, en el vPlan o en el Gantt) y pulsa <strong>Ctrl + C</strong>; se copia el día completo como <span class="mono">AAAA-MM-DD</span>, aunque solo hayas seleccionado una parte del texto. Después entra al campo de fecha de destino y pulsa <strong>Ctrl + V</strong>. Acepta fechas escritas como <span class="mono">AAAA-MM-DD</span>, <span class="mono">DD/MM/AAAA</span>, <span class="mono">20 oct 2026</span> o <span class="mono">20 de octubre de 2026</span>. Al pegar en una fecha editable se guarda igual que si la escribieras; el campo se marca en verde un instante para confirmar.</p>
+<p>Haz clic sobre cualquier fecha visible (en el programa, en tablas, en el Vplan o en el Gantt) y pulsa <strong>Ctrl + C</strong>; se copia el día completo como <span class="mono">AAAA-MM-DD</span>, aunque solo hayas seleccionado una parte del texto. Después entra al campo de fecha de destino y pulsa <strong>Ctrl + V</strong>. Acepta fechas escritas como <span class="mono">AAAA-MM-DD</span>, <span class="mono">DD/MM/AAAA</span>, <span class="mono">20 oct 2026</span> o <span class="mono">20 de octubre de 2026</span>. Al pegar en una fecha editable se guarda igual que si la escribieras; el campo se marca en verde un instante para confirmar.</p>
 <h4>Restricciones</h4>
 <p>Una <strong>restricción</strong> es algo que impide o pone en riesgo una actividad (un RFI, un material pendiente, un permiso…).</p>
 <ol>
 <li>Desde una actividad pulsa el triángulo de <em>Agregar restricción</em> (o entra a la actividad completa).</li>
 <li>Elige el <strong>tipo*</strong>, un código opcional (ej. RFI-04), la fecha y una <strong>descripción*</strong>.</li>
-<li>Cuando se resuelva, pulsa <strong>Resolver</strong>. Las restricciones activas aparecen en el Gantt, en el Lookahead (columna de limitaciones), en vPlan y en las Acciones rápidas.</li>
+<li>Cuando se resuelva, pulsa <strong>Resolver</strong>. Las restricciones activas aparecen en el Gantt, en el Lookahead (columna de limitaciones), en Vplan y en las Acciones rápidas.</li>
 </ol>
 <h4>Subactividades</h4>
 <p>Una actividad se puede dividir en <strong>subactividades</strong> con su propio nombre, fechas y avance (0–100 %). Se agregan, editan y eliminan desde la actividad completa o desde su ficha en el Programa.</p>
@@ -252,7 +252,7 @@ HTML],
 <li>Con el check <strong>«Mostrar subactividades»</strong> del programa (y el ajuste por defecto en Ajustes → General) aparecen como filas indentadas bajo su actividad. Se editan sus fechas y su avance en línea, o todos sus campos en su ficha.</li>
 <li>La actividad es el resumen: su inicio es el mínimo de las subactividades y su fin el máximo. Al mover el inicio de la actividad se desplazan todas sus hijas; el fin y la duración de la actividad no se escriben a mano mientras tenga subactividades.</li>
 </ul>
-<p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad: las columnas base <em>Nombre, Inicio, Fin y Avance (%)</em> y los campos nuevos (descripción, prioridad, responsable, recuperación, libres, fechas reales, duración restante, restricción, PTA, hito y fecha fija). La tabla se abre en <a href="#sheetflow">SheetFlow</a> y se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en vPlan. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
+<p>Con el botón <strong>Generar tabla en SheetFlow</strong> se crea una tabla vinculada con una fila por subactividad: las columnas base <em>Nombre, Inicio, Fin y Avance (%)</em> y los campos nuevos (descripción, prioridad, responsable, recuperación, libres, fechas reales, duración restante, restricción, PTA, hito y fecha fija). La tabla se abre en <a href="#sheetflow">SheetFlow</a> y se edita en los dos sentidos: lo que cambies en la tabla se guarda en la subactividad (y en el avance de la actividad) y lo que cambies en la actividad se refleja en la tabla. Las columnas adicionales que agregues se quedan solo en SheetFlow y en Vplan. Si eliminas un renglón de la tabla, se elimina su subactividad (el editor lo pide confirmar). <strong>Desvincular</strong> conserva la tabla como una tabla normal y no borra las subactividades.</p>
 <h4>Buscar, filtrar y cambiar de vista</h4>
 <p>La barra superior busca por <strong>código, nombre de actividad o responsable</strong> y filtra con un clic por <strong>estatus</strong> o desde <strong>Filtros</strong> por partida, prioridad, restricción, riesgo y campos personalizados. Los filtros activos aparecen como chips que se pueden quitar uno a uno. <strong>Tabla · Gantt · Ambos</strong> cambia la vista, y «Mostrar subactividades» y «Contraer» controlan el detalle de la tabla.</p>
 <h4>Importar desde otro programa</h4>
@@ -393,16 +393,16 @@ HTML],
 <p>Los datos salen del programa de obra: si cambias fechas o avances, el Lookahead se ajusta solo. Para imprimirlo o editarlo usa <em>Exportar</em> → <strong>Lookahead</strong> (PDF tabloide, o .xlsx / .ods editable).</p>
 HTML],
 
-['id' => 'vplan', 'titulo' => 'vPlan (láminas)', 'icono' => 'fa-sheet-plastic', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
-<p>El vPlan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
+['id' => 'vplan', 'titulo' => 'Vplan (láminas)', 'icono' => 'fa-sheet-plastic', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
+<p>El Vplan es una <strong>lámina libre</strong>: un plano sobre el que marcas visualmente el avance, acompañado de las tablas del programa (de una o varias partidas), el recovery y otras tablas. Cada elemento es un <strong>bloque</strong> que colocas donde quieras, en la hoja del tamaño que elijas.</p>
 <p class="manual-nota">Una lámina se trabaja en <strong>tres modos</strong>, sin salir de la página: <strong>Ver</strong> (zoom, buscar, tareas y notas), <strong>Acomodar</strong> (mover y estirar bloques) y <strong>Dibujar</strong> (el editor de marcas sobre el plano). Cambiar de modo no recarga ni pierde el zoom, y al salir de Acomodar tus cambios se <strong>guardan solos</strong>. Guardar el diseño, insertar una tabla o agregar recovery tampoco recarga la página.</p>
-<h4>vPlans y áreas</h4>
-<p>Puedes tener <strong>varios vPlan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada vPlan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del vPlan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
-<p>Es la primera vez que usas estas herramientas: el botón <strong>Guía rápida</strong> (o <em>abrir con <code>?tour=1</code></em>) recorre la pantalla paso a paso; se muestra sola la primera vez y se puede repetir cuando quieras. En el gestor del vPlan hay dos vistas: <strong>Galería</strong> (tarjetas con miniatura que se reordenan arrastrando) y <strong>Lista</strong> (detallada, con orden y grupos).</p>
+<h4>Vplans y áreas</h4>
+<p>Puedes tener <strong>varios Vplan por proyecto</strong> (por ejemplo, uno por disciplina o por fase). Dentro de cada Vplan hay <strong>una lámina por área</strong>, cada una con su plano, tablas, título, simbología y distribución. En el gestor del Vplan usa el <strong>ojo</strong> para mostrar u ocultar láminas (lo oculto no se ve ni se exporta, pero se conserva), las flechas para ordenarlas, el campo <strong>Grupo</strong> para reunirlas por disciplina o nivel, y <strong>Duplicar</strong> para crear otra área con el mismo diseño y tablas (solo subes el plano nuevo). Dentro de una lámina, la lista <strong>Capas</strong> del modo diseño oculta o muestra cada bloque.</p>
+<p>Es la primera vez que usas estas herramientas: el botón <strong>Guía rápida</strong> (o <em>abrir con <code>?tour=1</code></em>) recorre la pantalla paso a paso; se muestra sola la primera vez y se puede repetir cuando quieras. En el gestor del Vplan hay dos vistas: <strong>Galería</strong> (tarjetas con miniatura que se reordenan arrastrando) y <strong>Lista</strong> (detallada, con orden y grupos).</p>
 <h4>Crear una lámina</h4>
 <p>Al crearla se abre un <strong>asistente de tres pasos</strong> (qué lleva · tamaño de hoja · datos y plano) y, al terminar, la lámina entra directa a <strong>Acomodar bloques</strong> con la guía encima: ahí colocas el plano y las tablas.</p>
 <ol>
-<li>En <strong>vPlan</strong> pulsa para crear una lámina. La <strong>partida inicial</strong> es opcional: solo arma el primer bloque de tareas.</li>
+<li>En <strong>Vplan</strong> pulsa para crear una lámina. La <strong>partida inicial</strong> es opcional: solo arma el primer bloque de tareas.</li>
 <li>Elige el <strong>tamaño de la hoja</strong> con las tarjetas de proporción (tabloide ★ es la más usada, carta, A4, A3, A2, A1, Arch D u otra medida en mm, cm o pulgadas) y su orientación.</li>
 <li>Escribe el <strong>título</strong> y el <strong>supervisor</strong>.</li>
 <li>Sube el <strong>plano</strong> (imagen) y, si quieres, la <strong>simbología</strong> (imagen con la leyenda). También puedes dejarlo para después y <strong>arrastrar la imagen</strong> hasta el bloque Plano vacío de la lámina.</li>
@@ -415,7 +415,7 @@ HTML],
 <li><strong>Título, supervisor, fecha y texto libre:</strong> se escriben a mano (o quedan automáticos), con tamaño de letra, alineación, negrita y color.</li>
 <li><strong>Logos, plano, simbología y simbología del schedule:</strong> se ajustan al bloque sin deformarse. Puedes agregar más logos o textos desde «Insertar».</li>
 <li><strong>Tareas (partidas):</strong> un bloque puede mostrar <strong>varias partidas</strong>, completas o solo algunas actividades, con su propio título y color. La numeración (SEQ) es <strong>continua 1..n</strong> o <strong>la de cada partida</strong>, con un subtítulo por partida. Puedes tener varios bloques de tareas en la misma lámina.</li>
-<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos, con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos. En «Insertar» hay dos apartados: <strong>Tablas adicionales</strong> (las creadas en vPlan; llevan la etiqueta «SheetFlow» si están enlazadas a una hoja) y <strong>Tablas SheetFlow</strong> (las hojas de SheetFlow que todavía no están en el vPlan: al insertarlas se crea la tabla y quedan enlazadas).</li>
+<li><strong>Tablas adicionales:</strong> cada una es un bloque; en «Insertar» aparecen todas las tablas del proyecto de todos los tipos, con buscador y la opción de insertar una copia independiente. Su letra se ajusta sola al espacio del bloque: se reduce si falta lugar y <strong>crece</strong> si sobra, para que nunca quede un texto diminuto. Las tablas vinculadas a SheetFlow se <strong>actualizan en tiempo real</strong> cuando alguien cambia sus datos. En «Insertar» hay dos apartados: <strong>Tablas adicionales</strong> (las creadas en Vplan; llevan la etiqueta «SheetFlow» si están enlazadas a una hoja) y <strong>Tablas SheetFlow</strong> (las hojas de SheetFlow que todavía no están en el Vplan: al insertarlas se crea la tabla y quedan enlazadas).</li>
 <li><strong>Insertar:</strong> el buscador de arriba filtra <em>todo</em> a la vez (bloques, símbolos, cajetines, estampas y tablas) y los chips (Bloques, Símbolos, Cajetines, Estampas, Tablas, Todo) muestran una categoría a la vez; lo último que insertaste queda en «Recientes». Un clic pone el bloque en el centro de la hoja y <strong>arrastrarlo hasta la hoja</strong> lo deja exactamente donde lo sueltes (se pega a las guías como los demás bloques).</li>
 <li><strong>Colores:</strong> donde hay un selector de color aparece también el botón <strong>Paleta</strong> con los colores básicos, la maestra Pantone y tus colores guardados.</li>
 <li><strong>Capas:</strong> lista de todos los objetos; arrástralos para cambiar el orden (arriba = al frente), ocúltalos con el ojo, bloquéalos con el candado para no moverlos por error y renómbralos con doble clic.</li>
@@ -428,8 +428,8 @@ HTML],
 <ul>
 <li>El <strong>plano con sus marcas</strong> y las tablas del programa: SEQ, tarea, inicio, fin, recovery, % y restricciones, según el diseño de la lámina.</li>
 <li>Las fechas de <strong>recovery</strong> se editan directamente en la tabla (con permiso de edición).</li>
-<li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>vPlan → Tablas</em>.</li>
-<li><strong>Tabla en base a documento:</strong> en <em>vPlan › Tablas adicionales</em>, el botón «Tabla en base a documento» (a la izquierda de «+ Nueva tabla») lee un Excel, CSV, Word o PDF con texto y arma la tabla sola, detectando las columnas. Antes de crearla ves una vista previa que puedes corregir (quitar renglones o columnas, editar celdas). Las imágenes y los PDF escaneados no se pueden leer en la web sin OCR: el administrador los procesa con IA desde la app de escritorio (<em>Herramientas IA › Tabla desde documento</em>), que además puede corregir la lectura de cualquier archivo.</li>
+<li>Puedes agregar <strong>tablas adicionales</strong> (punch list, restricciones, secundarias u otras) desde el catálogo de tablas; el catálogo se administra en <em>Vplan → Tablas</em>.</li>
+<li><strong>Tabla en base a documento:</strong> en <em>Vplan › Tablas adicionales</em>, el botón «Tabla en base a documento» (a la izquierda de «+ Nueva tabla») lee un Excel, CSV, Word o PDF con texto y arma la tabla sola, detectando las columnas. Antes de crearla ves una vista previa que puedes corregir (quitar renglones o columnas, editar celdas). Las imágenes y los PDF escaneados no se pueden leer en la web sin OCR: el administrador los procesa con IA desde la app de escritorio (<em>Herramientas IA › Tabla desde documento</em>), que además puede corregir la lectura de cualquier archivo.</li>
 <li><strong>Buscar en la lámina:</strong> en el modo <strong>Ver</strong>, el buscador filtra por el texto de las tareas, tablas y bloques; al elegir un resultado la vista se desplaza hasta ese bloque y lo resalta un momento.</li>
 <li><strong>Tareas:</strong> muestra las tareas del programa como una lista legible (nombre, fechas y avance); tocar una abre su ficha. Es la forma más cómoda de consultar en el celular.</li>
 <li><strong>Ficha de tarea (tablet y celular):</strong> toca una fila de la lámina y se abre una hoja inferior con sus datos en tamaño normal (inicio, fin, avance, recovery, responsable, columnas de texto…). Se guardan al instante y puedes pasar a la tarea <em>anterior</em> o <em>siguiente</em>. En el lienzo esos campos ya no se editan directamente en táctil.</li>
@@ -443,11 +443,11 @@ HTML],
 <h4>Notas de la lámina</h4>
 <p>En la barra de la lámina pulsa <strong>Nota</strong>: escribe una descripción y se guarda con la fecha del día. Puedes editar o borrar notas; la más reciente queda arriba.</p>
 <p class="manual-nota">Las fechas visibles en la lámina se copian con un clic + <strong>Ctrl + C</strong> y se pegan en cualquier fecha editable con <strong>Ctrl + V</strong>, igual que en el programa.</p>
-<p class="manual-nota">El botón <strong>PDF</strong> de la cabecera de la lámina descarga esa lámina en un clic. Para varias láminas o más opciones usa <em>Exportar → vPlan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
+<p class="manual-nota">El botón <strong>PDF</strong> de la cabecera de la lámina descarga esa lámina en un clic. Para varias láminas o más opciones usa <em>Exportar → Vplan</em>: una lámina por página, con el tamaño de hoja de cada lámina (si mezclas tamaños, el PDF las une en orden).</p>
 HTML],
 
 ['id' => 'materiales', 'titulo' => 'Materiales en el plano', 'icono' => 'fa-cubes', 'roles' => $todos, 'herr' => 'vplan', 'cuerpo' => <<<'HTML'
-<p>En el editor de marcas de vPlan, la pestaña <strong>Materiales</strong> sirve para marcar en el plano <em>dónde</em> se instala cada material y <em>cuándo</em>. Sustituye a la liga simple de una actividad por una relación múltiple.</p>
+<p>En el editor de marcas de Vplan, la pestaña <strong>Materiales</strong> sirve para marcar en el plano <em>dónde</em> se instala cada material y <em>cuándo</em>. Sustituye a la liga simple de una actividad por una relación múltiple.</p>
 <h4>Dibujar y asignar</h4>
 <ol>
 <li>Abre la lámina, entra en el modo <strong>Dibujar</strong> y elige la pestaña <strong>Materiales</strong>. Si prefieres otra herramienta (polígono, flecha, rectángulo…), activa el interruptor <strong>Material</strong> de la barra: lo que dibujes nacerá como marca de material.</li>
@@ -673,7 +673,7 @@ HTML],
 <li>En el listado, los botones de <strong>Compra</strong> y <strong>Entregado</strong> registran esos eventos con un clic.</li>
 <li>Puedes importar materiales desde el MSR.</li>
 <li><strong>Exportar</strong> (junto a «+ Nuevo material») descarga el catálogo con los filtros actuales en PDF A4 horizontal o en LibreOffice Calc (.ods), agrupado por especialidad y con imagen, referencia, material, status de compra y fechas.</li>
-<li>Las imágenes de los materiales aparecen solas en <a href="#simbolos">Símbolos → Materiales</a>, con la especialidad como categoría; se pueden insertar en vPlan y Editor.</li>
+<li>Las imágenes de los materiales aparecen solas en <a href="#simbolos">Símbolos → Materiales</a>, con la especialidad como categoría; se pueden insertar en Vplan y Editor.</li>
 </ul>
 <h4>Especialidades</h4>
 <p>Con el botón <strong>Especialidades</strong> administras las categorías técnicas del proyecto (eléctrica, hidráulica, etc.). Son propias de cada proyecto y no las ven otros. Muestra cuántos materiales y submittals usa cada una.</p>
@@ -824,7 +824,7 @@ HTML],
 HTML],
 
 ['id' => 'editor', 'titulo' => 'Editor (gráficos)', 'icono' => 'fa-pen-ruler', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'
-<p>Un lienzo libre para hacer <strong>diagramas, croquis, esquemas y láminas</strong> con las mismas herramientas de dibujo del vPlan. Cada gráfico puede tener varias <strong>láminas</strong>, como una presentación.</p>
+<p>Un lienzo libre para hacer <strong>diagramas, croquis, esquemas y láminas</strong> con las mismas herramientas de dibujo del Vplan. Cada gráfico puede tener varias <strong>láminas</strong>, como una presentación.</p>
 <h4>El listado</h4>
 <p>Tiene dos vistas: <strong>Galería</strong> (tarjetas con la portada y las acciones en el menú <em>⋮</em>: descargar, duplicar, guardar como simbología, eliminar) y <strong>Lista</strong> (tabla detallada). La vista se recuerda para la próxima vez.</p>
 <h4>Categorías</h4>
@@ -876,7 +876,7 @@ HTML],
 <h4>Hipervínculos</h4>
 <ol>
 <li>Elige la herramienta <strong>Hipervínculo</strong> y dibuja un área sobre el plano.</li>
-<li>En Propiedades elige el tipo: <strong>enlace externo</strong> (Google Maps, una web, un correo) o <strong>sección del proyecto</strong> (Programa, una lámina de vPlan, un submittal, etc.).</li>
+<li>En Propiedades elige el tipo: <strong>enlace externo</strong> (Google Maps, una web, un correo) o <strong>sección del proyecto</strong> (Programa, una lámina de Vplan, un submittal, etc.).</li>
 <li>Elige un <strong>icono</strong> (enlace, ubicación, documento, foto, video, bandera, información, estrella, número o sin icono), su color y tamaño (con deslizador o escribiendo el valor), y una etiqueta.</li>
 <li>El área es invisible al exportar; el icono se ve en las páginas de lectura y <strong>no sale en el PDF</strong>. Si marcas <em>Incluir el icono al exportar</em>, sí sale en PNG, JPG y WebP. En el PDF solo viajan los enlaces externos (como área clicable).</li>
 </ol>
@@ -948,7 +948,7 @@ HTML],
 HTML],
 
 ['id' => 'sheetflow', 'titulo' => 'SheetFlow (tablas)', 'icono' => 'fa-table-cells', 'roles' => $todos, 'herr' => 'sheetflow', 'cuerpo' => <<<'HTML'
-<p>Crea <strong>tablas</strong> como en una hoja de cálculo (materiales, presupuestos, asistencias, registros) y úsalas en el <strong>vPlan</strong>, el <strong>Editor</strong> y el <strong>Redactor</strong> sin volver a capturarlas.</p>
+<p>Crea <strong>tablas</strong> como en una hoja de cálculo (materiales, presupuestos, asistencias, registros) y úsalas en el <strong>Vplan</strong>, el <strong>Editor</strong> y el <strong>Redactor</strong> sin volver a capturarlas.</p>
 <p>Primera vez: el botón <strong>Guía rápida</strong> (lista y editor) recorre la herramienta paso a paso, y los términos con línea punteada (SheetFlow, fórmulas, departamento…) muestran su definición al pasar el cursor.</p>
 <h4>Crear una tabla</h4>
 <ol>
@@ -965,13 +965,13 @@ HTML],
 <li><strong>Pegar solo valores o solo formato:</strong> en <em>Inicio › Pegar</em>; «Valores» pega el resultado sin fórmula y «Formato» pega colores, letra, bordes y formato de número sin tocar el contenido.</li>
 <li><strong>Buscar y reemplazar:</strong> <kbd>Ctrl</kbd>+<kbd>F</kbd> abre el buscador; recorre las coincidencias, reemplaza una o todas (marca «En fórmulas» si quieres entrar en el texto de la fórmula).</li>
 <li><strong>Filtrar e inmovilizar:</strong> el <strong>embudo</strong> de cada letra de columna abre la lista de valores para mostrar solo los que elijas (la barra inferior dice cuántos renglones se ven y permite quitar el filtro). En <em>Vista › Inmovilizar</em> congela los renglones de arriba y las columnas de la izquierda de la celda elegida, como en Excel.</li>
-<li><strong>Formato de número y condicional:</strong> en <em>Inicio › Número</em> eliges decimales, miles, moneda, porcentaje o fecha para las celdas elegidas. En <em>Inicio › Condicional</em> defines reglas por rango (mayor, menor, igual, entre, contiene, duplicados, <strong>escala de color</strong> o <strong>barra de datos</strong>) que se ven también en el PDF, Excel y vPlan.</li>
+<li><strong>Formato de número y condicional:</strong> en <em>Inicio › Número</em> eliges decimales, miles, moneda, porcentaje o fecha para las celdas elegidas. En <em>Inicio › Condicional</em> defines reglas por rango (mayor, menor, igual, entre, contiene, duplicados, <strong>escala de color</strong> o <strong>barra de datos</strong>) que se ven también en el PDF, Excel y Vplan.</li>
 <li><strong>Gráficos:</strong> elige un rango (primera columna = etiquetas, siguientes = series) y usa <em>Insertar › Gráfico › Crear</em>; se dibuja debajo de la tabla y sale en el PDF. La <strong>×</strong> del gráfico lo quita.</li>
 <li><strong>Historial:</strong> el botón <em>Historial</em> guarda una copia al editar (como mucho una por minuto) y permite <strong>restaurar</strong> cualquier versión; la versión actual se conserva antes de volver atrás.</li>
 <li><strong>Fórmulas:</strong> empieza con <code>=</code>. Operadores <code>+ − * / ^</code>, referencias como <code>C2</code> o <code>C2:C10</code> (el encabezado es la fila 1) y funciones de matemáticas, estadística, condicionales, texto, búsqueda, fechas y finanzas (en <em>Datos › Insertar función</em> hay ejemplos; el glosario de fórmulas de la tabla las lista). Con la fórmula abierta, <strong>haz clic en las celdas para insertar sus referencias</strong> (arrastra para un rango; un clic en la letra de la columna toma toda la columna). Al insertar o eliminar renglones y columnas las referencias se ajustan solas. Al elegir una función de <em>Datos › Insertar función</em>, sus referencias se adaptan a la <strong>columna y el renglón</strong> donde estás: si eliges <code>SUMA</code> en la columna B, suma los datos de B y no los de A.</li>
 <li><strong>Ayudas de fórmula y edición como Excel:</strong> al escribir después de <code>=</code> aparecen <strong>sugerencias</strong> de funciones (nombre, argumentos y qué hacen); <kbd>Enter</kbd> o <kbd>Tab</kbd> las aceptan y <kbd>Esc</kbd> cierra. Junto a la barra se ve el <strong>resultado en vivo</strong> de la fórmula y, si hay error, su explicación. <kbd>F4</kbd> fija la referencia bajo el cursor (<code>A1 → $A$1 → A$1 → $A1</code>) y <em>Datos › Funciones…</em> abre un buscador con todas las funciones y su sintaxis. El cuadro de la izquierda de la barra acepta <code>C5</code> o <code>A1:C10</code> para saltar. Arrastra el borde del <strong>número de fila</strong> para cambiar el alto (doble clic: automático), usa <strong>Ajustar texto</strong> y <kbd>Alt</kbd>+<kbd>Enter</kbd> para varias líneas, y el <strong>clic derecho</strong> abre el menú de insertar, eliminar, combinar y formato. <kbd>Ctrl</kbd>+flechas salta al borde de los datos.</li>
 <li><strong>Fórmulas del proyecto:</strong> la tabla puede leer el programa de obra sin copiar datos: <code>=AVANCE("1.2.3")</code> (avance de la partida o actividad), <code>=INICIO("1.2.3")</code>, <code>=FIN("1.2.3")</code>, <code>=DIAS.REST("1.2.3")</code> (días naturales que faltan para su fin, negativos si ya pasó), <code>=PARTIDA("1.2.3")</code> (nombre) y <code>=TIPO("1.2.3")</code> (partida o actividad). Se busca por código o por nombre.</li>
-<li><strong>Celdas combinadas:</strong> elige varias celdas y usa <em>Inicio › Combinar</em> (une el rectángulo, conserva el valor de la esquina superior izquierda y centra) o <em>Separar</em> para deshacerlo. Se ven igual en la tabla, el PDF, el Redactor y Excel; en vPlan y CSV solo queda el valor de la esquina. No se pueden ordenar tablas con celdas combinadas.</li>
+<li><strong>Celdas combinadas:</strong> elige varias celdas y usa <em>Inicio › Combinar</em> (une el rectángulo, conserva el valor de la esquina superior izquierda y centra) o <em>Separar</em> para deshacerlo. Se ven igual en la tabla, el PDF, el Redactor y Excel; en Vplan y CSV solo queda el valor de la esquina. No se pueden ordenar tablas con celdas combinadas.</li>
 <li><strong>Formato de celdas</strong> (pestaña <em>Inicio</em>): tamaño de letra, negrita, cursiva, subrayado, color de letra y de relleno, alineación y <strong>bordes</strong> (todos, exterior, arriba, abajo, izquierda, derecha o ninguno, con color, grosor y estilo: continuo, guiones, puntos o doble). El ancho de cada columna se cambia arrastrando el borde de su letra.</li>
 <li><strong>Imagen en una celda:</strong> pestaña <em>Insertar › Insertar en celda…</em> (logotipos, fotos). La imagen se ve también en el PDF, Excel y las tablas del Redactor.</li>
 <li><strong>Funciones condicionales:</strong> <code>SI, Y, O, NO, SI.ERROR, SUMAR.SI, CONTAR.SI, PROMEDIO.SI</code>; en <em>Datos › Insertar función</em> hay un ejemplo de cada una. Por ejemplo <code>=SI(E2&gt;=D2;"Completo";"Pendiente")</code> o <code>=SUMAR.SI(B2:B9;"Estructura";E2:E9)</code>.</li>
@@ -982,33 +982,33 @@ HTML],
 <ul>
 <li>En <em>Nueva tabla › Tabla inteligente</em> un constructor guiado te deja nombrar la tabla, elegir el <strong>tipo y el color de encabezado de cada columna</strong>, reordenarlas y definir cuántos renglones vacíos trae.</li>
 <li>Además de texto, número, moneda, porcentaje y fecha, una columna puede ser <strong>lista</strong> (menú desplegable con hasta 20 opciones que defines en <em>Datos › Columna</em>), <strong>casilla</strong> (✔ o vacío) o <strong>semáforo</strong> (Verde, Amarillo, Rojo con su color).</li>
-<li>Esos controles funcionan también cuando la tabla se edita desde una lámina del vPlan: la lista solo acepta sus opciones, la casilla se marca con un clic y el semáforo se pinta del color elegido.</li>
+<li>Esos controles funcionan también cuando la tabla se edita desde una lámina del Vplan: la lista solo acepta sus opciones, la casilla se marca con un clic y el semáforo se pinta del color elegido.</li>
 </ul>
 <h4>En tablet y celular</h4>
 <p>La tabla se edita también desde el celular. En <strong>tablet</strong> las pestañas y la barra de herramientas van en una <strong>cinta compacta de una sola fila</strong> que se desliza en horizontal, con el botón <strong>⌃</strong> a la derecha para plegarla y dejar solo las pestañas (se recuerda en el navegador). En <strong>tablet</strong>, toca una celda para elegirla y tócala otra vez para <strong>escribir en ella misma</strong> (como en Excel), con el campo agrandado para el dedo. En <strong>celular</strong>, al tocarla por segunda vez se abre una <strong>hoja inferior</strong> con la referencia (por ejemplo <code>C5</code>) y un campo grande, así el teclado no tapa la tabla; <kbd>Enter</kbd> guarda y baja de renglón. <strong>Pellizca con dos dedos</strong> sobre la tabla para el zoom (el mismo del control de <em>Vista</em>).</p>
 <h4>Que se adapte a cualquier tamaño</h4>
 <ul>
-<li><strong>vPlan:</strong> la letra de la tabla se calcula para llenar el bloque. Si el bloque es pequeño, la letra se reduce hasta que todo quepa; si lo agrandas, <strong>crece</strong> (hasta 48 pt) en lugar de dejar un texto diminuto en un cuadro enorme. Lo mismo ocurre en el PDF de la lámina.</li>
+<li><strong>Vplan:</strong> la letra de la tabla se calcula para llenar el bloque. Si el bloque es pequeño, la letra se reduce hasta que todo quepa; si lo agrandas, <strong>crece</strong> (hasta 48 pt) en lugar de dejar un texto diminuto en un cuadro enorme. Lo mismo ocurre en el PDF de la lámina.</li>
 <li><strong>Editor:</strong> al escalar una tabla con las asas de la esquina, la <strong>letra se escala con ella</strong> y los renglones se reajustan para que el texto siempre quepa. Si solo estiras un lado, la letra cambia a la mitad del camino.</li>
 <li><strong>Vista de la tabla:</strong> el tamaño de la letra sigue el ancho disponible de la pantalla, así que se lee bien en un monitor grande y no se desborda en el celular.</li>
 </ul>
 <h4>Siempre al día: cambios en tiempo real</h4>
 <ul>
-<li>Cuando alguien modifica una tabla vinculada (en SheetFlow o desde una lámina del vPlan), las demás vistas <strong>se actualizan solas</strong> sin que tengas que recargar: la lámina del vPlan y la vista de la tabla consultan los cambios cada pocos segundos y se refrescan (conservan tu posición en la página). Si estás escribiendo en un campo o tienes un diálogo abierto, esperan a que termines para no interrumpirte.</li>
+<li>Cuando alguien modifica una tabla vinculada (en SheetFlow o desde una lámina del Vplan), las demás vistas <strong>se actualizan solas</strong> sin que tengas que recargar: la lámina del Vplan y la vista de la tabla consultan los cambios cada pocos segundos y se refrescan (conservan tu posición en la página). Si estás escribiendo en un campo o tienes un diálogo abierto, esperan a que termines para no interrumpirte.</li>
 <li>El <strong>Editor</strong> vuelve a leer las tablas vinculadas al regresar a su ventana y cada 15 segundos; respeta el tamaño y la letra que les diste, y deja el gráfico marcado como «sin guardar» para que conserves el cambio con <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li>
 <li>El <strong>Redactor</strong> las actualiza al abrir, ver y exportar el documento (no se recarga solo para no hacerte perder lo que estás escribiendo).</li>
 </ul>
 <h4>Usar la tabla en otras herramientas (vínculos vivos)</h4>
 <ul>
-<li><strong>vPlan:</strong> en SheetFlow (<em>A vPlan</em>) o en <em>vPlan › Tablas adicionales › Crear desde SheetFlow</em> se crea una tabla vinculada (hasta 8 columnas y 200 renglones) que luego agregas a las láminas. Lo que cambies en SheetFlow se ve en la lámina, y lo que edites en la lámina se escribe en SheetFlow (no se pueden editar celdas con fórmula ni el renglón de totales desde la lámina).</li>
+<li><strong>Vplan:</strong> en SheetFlow (<em>A Vplan</em>) o en <em>Vplan › Tablas adicionales › Crear desde SheetFlow</em> se crea una tabla vinculada (hasta 8 columnas y 200 renglones) que luego agregas a las láminas. Lo que cambies en SheetFlow se ve en la lámina, y lo que edites en la lámina se escribe en SheetFlow (no se pueden editar celdas con fórmula ni el renglón de totales desde la lámina).</li>
 <li><strong>Redactor:</strong> <em>Insertar › Tabla › Origen › Tablas de SheetFlow</em>. La tabla se actualiza sola al abrir, ver y exportar el documento; para cambiarla, edítala en SheetFlow.</li>
 <li><strong>Editor:</strong> panel <em>Símbolos › Tablas de SheetFlow</em>. Se actualiza al abrir el gráfico (guarda para conservar el cambio) y la puedes mover y cambiar de tamaño.</li>
 </ul>
-<p class="manual-nota">Si borras la tabla de SheetFlow, la de vPlan se queda con sus últimos datos y las del Redactor y el Editor con lo último que se guardó.</p>
+<p class="manual-nota">Si borras la tabla de SheetFlow, la de Vplan se queda con sus últimos datos y las del Redactor y el Editor con lo último que se guardó.</p>
 HTML],
 
 ['id' => 'simbolos', 'titulo' => 'Símbolos', 'icono' => 'fa-shapes', 'roles' => $todos, 'herr' => 'graficos', 'cuerpo' => <<<'HTML'
-<p>Está en la segunda pestaña del <strong>Editor</strong> (<em>Documentos y diseño › Editor › Símbolos, estampas y cajetines</em>). La <strong>biblioteca de símbolos</strong> del proyecto: imágenes reutilizables que insertas en el vPlan y en el Editor (cámaras, extintores, tableros, señales…).</p>
+<p>Está en la segunda pestaña del <strong>Editor</strong> (<em>Documentos y diseño › Editor › Símbolos, estampas y cajetines</em>). La <strong>biblioteca de símbolos</strong> del proyecto: imágenes reutilizables que insertas en el Vplan y en el Editor (cámaras, extintores, tableros, señales…).</p>
 <ul>
 <li><strong>Nuevo símbolo:</strong> escribe el <em>nombre*</em>, una categoría y sube la imagen (PNG con fondo transparente o SVG funcionan mejor). Pulsa <strong>Agregar símbolo</strong>.</li>
 <li><strong>Importar símbolos:</strong> sube un <strong>.zip</strong> de biblioteca o varias imágenes de una vez. <strong>Exportar biblioteca</strong> descarga la tuya para reusarla en otro proyecto.</li>
@@ -1019,14 +1019,14 @@ HTML],
 <h4>Cajetines</h4>
 <p>Un <strong>cajetín</strong> es el cuadro de datos de un plano (proyecto, título, fecha, revisión…) que insertas de un clic. Cada <strong>renglón</strong> tiene un <em>título</em> (a la izquierda) y un <em>dato</em> (a la derecha). El dato puede ser un texto fijo o un <strong>campo</strong> que se llena solo: elígelo con el botón <em>＋ Campo…</em> (nombre del proyecto, fecha, avance, SPI, restricciones activas…). Puedes añadir, quitar y mover renglones, empezar con una <em>plantilla</em> y ver abajo la <strong>vista previa con datos reales</strong>.</p>
 <h4>Estampas inteligentes</h4>
-<p>Una <strong>estampa</strong> es un bloque que colocas en una lámina del vPlan y que <strong>se actualiza solo</strong>. Está hecha de <em>etiquetas</em>, y cada etiqueta junta un texto antes (<em>prefijo</em>), un <em>dato</em> del proyecto (la fecha, el avance, una actividad, las restricciones…) y un texto después (<em>sufijo</em>). Por ejemplo: «Avance: » + <em>avance de la actividad</em> + « %».</p>
+<p>Una <strong>estampa</strong> es un bloque que colocas en una lámina del Vplan y que <strong>se actualiza solo</strong>. Está hecha de <em>etiquetas</em>, y cada etiqueta junta un texto antes (<em>prefijo</em>), un <em>dato</em> del proyecto (la fecha, el avance, una actividad, las restricciones…) y un texto después (<em>sufijo</em>). Por ejemplo: «Avance: » + <em>avance de la actividad</em> + « %».</p>
 <ul>
 <li><strong>Nueva estampa</strong> o <strong>empieza con un ejemplo</strong>: cajetín de plano, sello de estatus de actividad, etiqueta de restricción, pie de reporte con corte y SPI, semáforo de avance y <strong>Last Planner · Post-its del día</strong>.</li>
 <li><strong>Tipos de etiqueta:</strong> <em>Campo inteligente</em>, <em>Texto libre</em> (admite campos como <code>{proyecto}</code> o <code>{corte:largo}</code>), <em>Semáforo</em> (verde, amarillo o rojo según dos umbrales que tú eliges) y <em>Actividades del día</em>.</li>
 <li><strong>Actividades del día (post-its):</strong> una tarjeta por cada actividad que cae en la fecha de hoy (o en una fecha fija). Eliges las partidas o el responsable, cuántas tarjetas, cuántas columnas, el color y qué datos muestra cada una. Cambia sola cada día; en fin de semana o festivo muestra el siguiente día hábil.</li>
 <li>La <strong>vista previa</strong> a la derecha usa los datos reales del proyecto y te deja probar con otra actividad o fecha de corte.</li>
 <li>En el <strong>lienzo de la estampa</strong> (estampas hechas con formas y textos) puedes <strong>pellizcar con dos dedos</strong> para acercar o alejar y <strong>tocar dos veces</strong> para volver a ajustar a la ventana; con un dedo arrastras y mueves los elementos como con el ratón.</li>
-<li><strong>En el vPlan:</strong> abre una lámina → <em>Modo diseño</em> → pestaña <em>Insertar</em> → <em>Estampas inteligentes</em>. En <em>Propiedades</em> eliges la estampa, la fecha y la actividad de las etiquetas «de la actividad». También sale en el PDF de la lámina.</li>
+<li><strong>En el Vplan:</strong> abre una lámina → <em>Modo diseño</em> → pestaña <em>Insertar</em> → <em>Estampas inteligentes</em>. En <em>Propiedades</em> eliges la estampa, la fecha y la actividad de las etiquetas «de la actividad». También sale en el PDF de la lámina.</li>
 </ul>
 HTML],
 
@@ -1058,7 +1058,7 @@ HTML],
 <h4>Elegir los documentos</h4>
 <ul>
 <li><strong>Documento A</strong> es la base (el fondo) y <strong>Documento B</strong> es el que se superpone y se mueve.</li>
-<li>El selector <strong>Del proyecto</strong> reúne lo que ya vive en la obra: archivos de <a href="#archivos">Archivo</a>, <strong>láminas de vPlan</strong>, <strong>gráficos y símbolos del Editor</strong> y <strong>documentos del Redactor</strong> (se convierten a PDF al abrirlos). Así puedes comparar dos revisiones de un plano, una lámina con su versión anterior o dos versiones de un informe.</li>
+<li>El selector <strong>Del proyecto</strong> reúne lo que ya vive en la obra: archivos de <a href="#archivos">Archivo</a>, <strong>láminas de Vplan</strong>, <strong>gráficos y símbolos del Editor</strong> y <strong>documentos del Redactor</strong> (se convierten a PDF al abrirlos). Así puedes comparar dos revisiones de un plano, una lámina con su versión anterior o dos versiones de un informe.</li>
 <li>También puedes usar un archivo <strong>externo</strong> de tu equipo. Los externos se quedan en tu navegador mientras comparas; solo se suben si guardas la comparación.</li>
 <li>En un PDF elige la <strong>página</strong> que quieres comparar. Las flechas ‹ › cambian de hoja sin perder las anotaciones: cada una pertenece a su página.</li>
 <li>Si el documento A es de <strong>Archivo</strong> y tiene otra revisión, aparece <strong>Usar la revisión anterior en B</strong> para comparar las dos versiones con un clic.</li>
@@ -1096,7 +1096,7 @@ HTML],
 <p>Trabaja <strong>encima de un plano o documento PDF</strong>: anota, mide, marca áreas y volúmenes, inserta imágenes, estampas y firmas, y descarga el PDF anotado. Es distinto del <a href="#editor">Editor</a> (que crea dibujos desde cero) y del <a href="#comparador">Comparador</a> (que enfrenta dos revisiones).</p>
 <h4>Abrir un documento</h4>
 <ul>
-<li>Elige <strong>Del proyecto</strong>: Archivo, láminas de vPlan, gráficos del Editor o documentos del Redactor (se convierten a PDF).</li>
+<li>Elige <strong>Del proyecto</strong>: Archivo, láminas de Vplan, gráficos del Editor o documentos del Redactor (se convierten a PDF).</li>
 <li>O sube un <strong>archivo externo</strong> (PDF, PNG, JPG, GIF o WEBP). La copia se guarda en el proyecto solo al guardar.</li>
 <li>Si el PDF tiene varias hojas, usa las <strong>miniaturas</strong> o las flechas del pie para cambiar de página. Cada anotación pertenece a su página.</li>
 </ul>
@@ -1170,12 +1170,14 @@ HTML],
 
 ['id' => 'exportar', 'titulo' => 'Exportar', 'icono' => 'fa-file-export', 'roles' => $gestion, 'herr' => null, 'cuerpo' => <<<'HTML'
 <p>El <strong>Centro de Exportación</strong> genera los documentos del proyecto. Los archivos se nombran solos como <code>AAAA_MM_DD_NombreUsuario.ext</code>.</p>
+<p>Si necesitas emitir el documento con otra fecha (por ejemplo, el lunes siguiente), ajusta <strong>Fecha de emisión</strong> en «Nombre de los archivos». Esa fecha se usa en el nombre del archivo, la semana del 4WLA, el <code>UPDATED</code> de Vplan, el marcador <em>Hoy</em> de la Línea de tiempo, la línea <em>HOY</em> de las curvas y la fecha de MSR y presupuesto. No cambia las fechas del programa ni el avance capturado.</p>
+<p>El check <strong>Mostrar «Corte» en el documento</strong> agrega la leyenda <code>Corte: 30/11/2026</code> a los PDF y hojas de cálculo; si no lo marcas, la etiqueta no aparece.</p>
 <table class="tabla manual-tabla">
 <thead><tr><th>Documento</th><th>Qué genera</th></tr></thead>
 <tbody>
 <tr><td><strong>Programa de obra</strong></td><td>Eliges el formato: <em>PDF ejecutivo</em> (Gantt + tabla en tabloide 11×17" horizontal, paginado según la duración), <em>Microsoft Project (.xml)</em> en formato MSPDI (ábrelo en Project y guárdalo como .mpp; no es un .mpp binario) o <em>ProjectLibre (.pod)</em>.</td></tr>
 <tr><td><strong>4WLA</strong></td><td>Lookahead de 4 semanas: semana actual + 4 con X por día, PTA y limitaciones. Tabloide horizontal; en .xlsx / .ods queda editable. Eliges el formato y la <em>semana de referencia</em>.</td></tr>
-<tr><td><strong>vPlan</strong></td><td>Plano con la tabla del programa, recovery y tablas adicionales; una lámina por página, al tamaño de hoja de cada lámina. Eliges la lámina.</td></tr>
+<tr><td><strong>Vplan</strong></td><td>Plano con la tabla del programa, recovery y tablas adicionales; una lámina por página, al tamaño de hoja de cada lámina. Eliges la lámina.</td></tr>
 <tr><td><strong>Last Planner</strong></td><td>Post-its de 7×7 cm por día y partida, en hojas carta con marcas de corte. Eliges la partida y las tarjetas por fila.</td></tr>
 <tr><td><strong>Curvas de productividad</strong></td><td>Una curva con su tabla y gráfica, o la gráfica maestra con todas. PDF carta horizontal; .xlsx / .ods con tabla y gráfica.</td></tr>
 <tr><td><strong>MSR</strong></td><td>Status de submittals y entrega de materiales con fotos. PDF en A4 horizontal; .xlsx / .ods editables.</td></tr>
@@ -1288,7 +1290,7 @@ HTML],
 <p>Desde <strong>Plantillas de proyecto</strong> guardas la estructura de un proyecto terminado: partidas, actividades, dependencias, jornada, diseños, campos, catálogos y materiales (sin avance, reportes, fotos ni costos). Al crear un proyecto nuevo eliges la plantilla y las fechas se cuentan desde su inicio. Una plantilla también se puede aplicar a un proyecto vacío. El administrador puede compartirlas con todos.</p>
 <p>También puedes crear una plantilla sin abrir un proyecto: en <strong>Empezar desde un tipo de obra</strong> eliges un proceso (videovigilancia, control de acceso, cableado, edificación, vivienda, nave industrial, remodelación o urbanización) y ajustas nombres y duraciones antes de guardarla. En <strong>Leer un proceso constructivo</strong> subes el pliego, la memoria o el procedimiento en PDF, Word, PowerPoint, OpenDocument o texto: el sistema detecta el tipo de obra y propone la plantilla. Esa lectura es local, sin IA ni internet; un PDF escaneado sin texto no se puede leer. Para procesos que no están en el catálogo, el administrador puede usar la app de escritorio: en el <strong>Ensamblador</strong> elige <em>Plantilla de proyecto</em>, revisa y aplica la propuesta y pulsa <em>Guardar como plantilla</em>.</p>
 <h4>Marca del cliente</h4>
-<p>En <strong>Marca del cliente</strong> subes el logo y eliges el nombre y dos colores. Al activarla, los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos) llevan una cabecera con el logo y los colores en títulos y encabezados de tabla. Las exportaciones XML/POD y las láminas del vPlan no cambian.</p>
+<p>En <strong>Marca del cliente</strong> subes el logo y eliges el nombre y dos colores. Al activarla, los PDF de reportes (programa, Lookahead, Last Planner, curvas, MSR, submittals, minutas, reportes diarios, punch, informes y permisos) llevan una cabecera con el logo y los colores en títulos y encabezados de tabla. Las exportaciones XML/POD y las láminas del Vplan no cambian.</p>
 <h4>Mi inicio</h4>
 <p>En el inicio, <strong>Personalizar inicio</strong> te deja elegir qué bloques ves (resumen, actividades de hoy, atrasadas, proyectos recientes, novedades, accesos rápidos) y su orden. Solo afecta tu cuenta.</p>
 HTML],

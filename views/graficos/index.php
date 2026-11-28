@@ -82,7 +82,7 @@ $nLaminas = 0; foreach ($graficos as $g) $nLaminas += max(1, (int)$g->num_lamina
                         <?php endif; ?>
                         <?php if ($puedeEditar): ?>
                             <form method="POST" action="/graficos/duplicar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button></form>
-                            <form method="POST" action="/graficos/tipo"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia"><button type="submit" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"<?php echo glosario('simbologia'); ?>><i class="fa-solid fa-list-check"></i> Guardar como simbología</button></form>
+                            <form method="POST" action="/graficos/tipo"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia"><button type="submit" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del Vplan"<?php echo glosario('simbologia'); ?>><i class="fa-solid fa-list-check"></i> Guardar como simbología</button></form>
                             <form method="POST" action="/graficos/eliminar" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit" class="peligro"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button></form>
                         <?php endif; ?>
                     </div>
@@ -130,7 +130,7 @@ $nLaminas = 0; foreach ($graficos as $g) $nLaminas += max(1, (int)$g->num_lamina
                             </form>
                             <form class="inline" method="POST" action="/graficos/tipo">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="simbologia">
-                                <button type="submit" class="btn btn-sm btn-ghost" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del vPlan"><i class="fa-solid fa-list-check"></i> Guardar como simbología</button>
+                                <button type="submit" class="btn btn-sm btn-ghost" title="Pasa este gráfico a Símbolos → Simbologías para usarlo en las láminas del Vplan"><i class="fa-solid fa-list-check"></i> Guardar como simbología</button>
                             </form>
                             <form method="POST" action="/graficos/eliminar" style="display:inline" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Se borrarán también sus imágenes. Esta acción no se puede deshacer.|Sí, eliminar">
                                 <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">

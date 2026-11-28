@@ -55,12 +55,12 @@ class ProgramaColumnas
         ['min' => 51, 'max' => 100, 'color' => '#10b981'],
     ];
 
-    /** Campos del programa que una tabla de tareas del vPlan puede mostrar además de las columnas de siempre */
+    /** Campos del programa que una tabla de tareas del Vplan puede mostrar además de las columnas de siempre */
     public const EN_VPLAN = ['responsable', 'rec_inicio', 'rec_fin', 'predecesora', 'sucesora', 'libre_texto', 'libre_numero', 'libre_fecha', 'indicador'];
     /** Campos de EN_VPLAN que se editan en línea (el resto solo se lee) */
     public const EDITABLES_VPLAN = ['responsable', 'rec_inicio', 'rec_fin', 'libre_texto', 'libre_numero', 'libre_fecha'];
 
-    /** Título de cada campo del programa en el vPlan: el nombre que el usuario le puso en «Diseñar programa» (o el genérico) */
+    /** Título de cada campo del programa en el Vplan: el nombre que el usuario le puso en «Diseñar programa» (o el genérico) */
     public static function titulosVplan(Proyecto $p): array
     {
         $out = [];

@@ -2,7 +2,7 @@
 
 namespace Model;
 
-/** Un vPlan: agrupa las láminas (una por área) de un proyecto */
+/** Un Vplan: agrupa las láminas (una por área) de un proyecto */
 class VplanPaquete extends ActiveRecord
 {
     protected static $tabla = 'vplan_paquetes';
@@ -23,11 +23,11 @@ class VplanPaquete extends ActiveRecord
     public function validar(): array
     {
         self::$alertas = [];
-        if (!trim($this->nombre)) self::$alertas['error'][] = 'El nombre del vPlan es obligatorio';
+        if (!trim($this->nombre)) self::$alertas['error'][] = 'El nombre del Vplan es obligatorio';
         return self::$alertas;
     }
 
-    /** Los vPlan del proyecto con cuántas láminas tienen; las láminas sin vPlan pasan al primero (o a uno nuevo) */
+    /** Los Vplan del proyecto con cuántas láminas tienen; las láminas sin Vplan pasan al primero (o a uno nuevo) */
     public static function deProyecto(int $proyectoId): array
     {
         self::adoptarHuerfanas($proyectoId);
@@ -38,30 +38,30 @@ class VplanPaquete extends ActiveRecord
         );
     }
 
-    /** Toda lámina debe pertenecer a un vPlan (las anteriores a esta función, o creadas por otras vías, se agrupan aquí) */
+    /** Toda lámina debe pertenecer a un Vplan (las anteriores a esta función, o creadas por otras vías, se agrupan aquí) */
     public static function adoptarHuerfanas(int $proyectoId): void
     {
         $n = (int)self::$db->query("SELECT COUNT(*) FROM vplan_laminas WHERE proyecto_id = $proyectoId AND paquete_id IS NULL")->fetch_row()[0];
         if (!$n) return;
         $p = self::consultarSQL("SELECT * FROM vplan_paquetes WHERE proyecto_id = $proyectoId ORDER BY orden, id LIMIT 1")[0] ?? null;
         if (!$p) {
-            $p = new self(['proyecto_id' => $proyectoId, 'nombre' => 'vPlan']);
+            $p = new self(['proyecto_id' => $proyectoId, 'nombre' => 'Vplan']);
             $p->id = $p->guardar()['id'];
         }
         self::$db->query("UPDATE vplan_laminas SET paquete_id = " . (int)$p->id . " WHERE proyecto_id = $proyectoId AND paquete_id IS NULL");
     }
 
-    /** El primer vPlan del proyecto; se crea uno si no hay */
+    /** El primer Vplan del proyecto; se crea uno si no hay */
     public static function principal(int $proyectoId): self
     {
         $lista = self::deProyecto($proyectoId);
         if ($lista) return $lista[0];
-        $p = new self(['proyecto_id' => $proyectoId, 'nombre' => 'vPlan']);
+        $p = new self(['proyecto_id' => $proyectoId, 'nombre' => 'Vplan']);
         $p->id = $p->guardar()['id'];
         return $p;
     }
 
-    /** Láminas del vPlan en su orden; $soloVisibles las deja sin las ocultas */
+    /** Láminas del Vplan en su orden; $soloVisibles las deja sin las ocultas */
     public function laminas(bool $soloVisibles = false): array
     {
         return VplanLamina::consultarSQL(

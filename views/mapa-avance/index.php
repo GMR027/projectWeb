@@ -69,7 +69,7 @@ $difMedia = $diferencias ? round(array_sum($diferencias) / count($diferencias), 
 <?php endif; ?>
 
 <?php if (!$calc['laminas']): ?>
-    <div class="suite-panel"><?php echo estado_vacio('fa-map-location-dot', 'Aún no hay láminas', 'Crea láminas en vPlan, dibuja líneas y círculos sobre el plano y píntalos de rojo, amarillo o verde según el avance de cada zona.', ['texto' => 'Ir a vPlan', 'url' => '/vplan?proyecto=' . $pid, 'icono' => 'fa-sheet-plastic']); ?></div>
+    <div class="suite-panel"><?php echo estado_vacio('fa-map-location-dot', 'Aún no hay láminas', 'Crea láminas en Vplan, dibuja líneas y círculos sobre el plano y píntalos de rojo, amarillo o verde según el avance de cada zona.', ['texto' => 'Ir a Vplan', 'url' => '/vplan?proyecto=' . $pid, 'icono' => 'fa-sheet-plastic']); ?></div>
 <?php else: ?>
     <?php foreach ($calc['laminas'] as $l): ?>
         <div class="suite-panel">

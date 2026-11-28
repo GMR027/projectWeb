@@ -1,4 +1,4 @@
-/* Gestos de lienzo compartidos (vPlan y Editor de marcas). Sin dependencias.
+/* Gestos de lienzo compartidos (Vplan y Editor de marcas). Sin dependencias.
  *
  * Resuelve lo que antes solo hacía la rueda del ratón:
  *   - pellizco con dos dedos (zoom)

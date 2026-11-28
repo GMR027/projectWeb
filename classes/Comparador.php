@@ -85,7 +85,7 @@ class Comparador
             }
         } catch (\Throwable $e) {   // migración pendiente o tabla ausente
         }
-        if ($items) $grupos[] = ['grupo' => 'vPlan · láminas', 'items' => $items];
+        if ($items) $grupos[] = ['grupo' => 'Vplan · láminas', 'items' => $items];
 
         $items = [];
         try {
@@ -135,7 +135,7 @@ class Comparador
         return 0;
     }
 
-    /** Imagen guardada de una lámina de vPlan/Editor (png, jpg…) */
+    /** Imagen guardada de una lámina de Vplan/Editor (png, jpg…) */
     private static function lamina($nombre): ?array
     {
         $n = basename((string)$nombre);

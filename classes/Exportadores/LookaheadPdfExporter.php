@@ -9,9 +9,11 @@ use Classes\Pdf;
 class LookaheadPdfExporter extends BaseExporter
 {
     private \DateTime $lunes;
+    private ?string $fechaRef = null;
 
     public function setFechaReferencia(string $fechaYmd): self
     {
+        $this->fechaRef = $fechaYmd;
         $this->lunes = LookaheadController::lunesDe($fechaYmd);
         return $this;
     }
@@ -20,7 +22,8 @@ class LookaheadPdfExporter extends BaseExporter
     {
         $proyecto = $this->proyecto;
         $lunes = $this->lunes ?? LookaheadController::lunesDe('');
-        $datos = LookaheadController::datos($proyecto, $lunes, $this->incluirSubactividades);
+        $datos = LookaheadController::datos($proyecto, $lunes, $this->incluirSubactividades, $this->fechaRef);
+        $fechaReferencia = $this->fechaRef ?: $lunes->format('Y-m-d');
         extract($datos);
 
         // Logos (empresa y contratista) en base64; webp se convierte a PNG

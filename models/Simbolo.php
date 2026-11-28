@@ -4,7 +4,7 @@ namespace Model;
 
 use Classes\Imagenes;
 
-/** Símbolo de la biblioteca de un proyecto (imagen reutilizable en el vPlan y en el Editor) */
+/** Símbolo de la biblioteca de un proyecto (imagen reutilizable en el Vplan y en el Editor) */
 class Simbolo extends ActiveRecord
 {
     protected static $tabla = 'simbolos';
@@ -141,7 +141,7 @@ class Simbolo extends ActiveRecord
 
     /**
      * Cuántas láminas usan cada símbolo (id => nº). Se cuenta en PHP sobre el JSON de las marcas
-     * (vPlan y Editor): un símbolo insertado queda como imagen con su `src`, así que sirve aunque
+     * (Vplan y Editor): un símbolo insertado queda como imagen con su `src`, así que sirve aunque
      * la marca no lleve la referencia `s:<id>`. Solo lectura, para la tarjeta de la biblioteca.
      */
     public static function usos(int $proyectoId): array

@@ -1,4 +1,4 @@
--- SheetFlow: tablas (hojas de cálculo ligeras) del proyecto, reutilizables en vPlan, Editor y Redactor
+-- SheetFlow: tablas (hojas de cálculo ligeras) del proyecto, reutilizables en Vplan, Editor y Redactor
 CREATE TABLE IF NOT EXISTS sheetflow_hojas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS sheetflow_hojas (
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Tabla de vPlan creada desde SheetFlow (permite «Actualizar desde SheetFlow»); si se borra la hoja solo se pierde el vínculo
+-- Tabla de Vplan creada desde SheetFlow (permite «Actualizar desde SheetFlow»); si se borra la hoja solo se pierde el vínculo
 ALTER TABLE vplan_tablas ADD COLUMN sheetflow_id INT NULL;
 ALTER TABLE vplan_tablas ADD CONSTRAINT fk_vplan_tabla_sheetflow FOREIGN KEY (sheetflow_id) REFERENCES sheetflow_hojas(id) ON DELETE SET NULL;

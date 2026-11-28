@@ -1811,7 +1811,7 @@
     $('sf-guardar').addEventListener('click', function () { guardar(true); });
     ['sf-nombre', 'sf-fecha', 'sf-depto', 'sf-desc'].forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'sf-nombre') $('sf-titulo').textContent = this.value; cambio(); }); });
     window.addEventListener('beforeunload', function (e) { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
-    // Exportar / usar en vPlan: se guarda primero para que el archivo y las copias lleven lo último
+    // Exportar / usar en Vplan: se guarda primero para que el archivo y las copias lleven lo último
     document.querySelectorAll('[data-guardar-antes]').forEach(function (a) {
         a.addEventListener('click', function (e) { if (!sucio) return; e.preventDefault(); var url = a.href, nueva = a.target === '_blank'; guardar(true).then(function (ok) { if (ok) { if (nueva) window.open(url, '_blank'); else location.href = url; } }); });
     });

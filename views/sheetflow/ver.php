@@ -32,9 +32,9 @@
     <div class="suite-panel-cab"><h3><i class="fa-solid fa-share-nodes"></i> Usar esta tabla en otras herramientas</h3></div>
     <div class="suite-panel-cuerpo">
     <ul class="sf-lista-usos">
-        <li><strong>vPlan:</strong> crea una tabla vinculada del catálogo de vPlan (en vivo, hasta 8 columnas y 200 renglones).
-            <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en vPlan</button></form>
-            <a class="btn btn-sm btn-ghost" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hoja->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Crear lámina vPlan con esta tabla</a>
+        <li><strong>Vplan:</strong> crea una tabla vinculada del catálogo de Vplan (en vivo, hasta 8 columnas y 200 renglones).
+            <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-table-list"></i> Crear tabla en Vplan</button></form>
+            <a class="btn btn-sm btn-ghost" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&amp;sheetflow=<?php echo (int)$hoja->id; ?>"><i class="fa-solid fa-file-circle-plus"></i> Crear lámina Vplan con esta tabla</a>
             <?php foreach ($vplan as $u): ?>
                 <form class="inline" method="POST" action="/sheetflow/a-vplan"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$hoja->id; ?>"><input type="hidden" name="tabla" value="<?php echo (int)$u['id']; ?>"><button type="submit" class="btn btn-sm btn-ghost" title="Reemplaza los renglones de esa tabla con los actuales"><i class="fa-solid fa-rotate"></i> Vinculada: «<?php echo s($u['titulo']); ?>» (<?php echo (int)$u['laminas']; ?> lámina<?php echo (int)$u['laminas'] === 1 ? '' : 's'; ?>)</button></form>
             <?php endforeach; ?></li>

@@ -1,4 +1,4 @@
--- vPlan: columnas de texto propias en los bloques de tareas (valor por lámina, actividad y columna).
+-- Vplan: columnas de texto propias en los bloques de tareas (valor por lámina, actividad y columna).
 CREATE TABLE IF NOT EXISTS vplan_col_texto (
     lamina_id INT NOT NULL,
     actividad_id INT NOT NULL,

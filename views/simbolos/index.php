@@ -3,7 +3,7 @@
 <div class="page-header">
     <div>
         <h2><i class="fa-solid fa-shapes"></i> <?php echo s(t('Símbolos')); ?></h2>
-        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · biblioteca para insertar en el vPlan y en el Editor</p>
+        <p class="text-muted"><?php echo s($proyecto->nombre); ?> · biblioteca para insertar en el Vplan y en el Editor</p>
     </div>
     <div class="la-controles">
         <?php if ($puedeEditar): ?>
@@ -69,7 +69,7 @@ $pestanas = [
 
 
     <?php if (!$simbolos): ?>
-        <?php echo estado_vacio('fa-shapes', 'Aún no hay símbolos propios', 'Los símbolos se insertan con un clic en el vPlan y en el Editor. Trae los tuyos con «Importar símbolos» (arriba) o usa los incluidos con la aplicación en la pestaña «Predeterminados».', null, null, '', 'estado-vacio-sm'); ?>
+        <?php echo estado_vacio('fa-shapes', 'Aún no hay símbolos propios', 'Los símbolos se insertan con un clic en el Vplan y en el Editor. Trae los tuyos con «Importar símbolos» (arriba) o usa los incluidos con la aplicación en la pestaña «Predeterminados».', null, null, '', 'estado-vacio-sm'); ?>
     <?php else: ?>
         <div class="sim-admin" id="sim-l-proyecto">
         <?php foreach ($simbolos as $sim): $usos = (int)($usosSimbolos[$sim->id] ?? 0); ?>
@@ -95,7 +95,7 @@ $pestanas = [
 </section>
 
 <section class="sim-panel" id="sim-p-materiales" role="tabpanel" hidden>
-    <p class="text-muted text-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Se genera solo con las imágenes del catálogo de materiales: el nombre es el del material y la categoría es su especialidad. Si cambias la imagen, el nombre, la especialidad o eliminas el material, esta lista se actualiza. Se pueden insertar en el vPlan y en el Editor; al insertarlas se copian al dibujo.</p>
+    <p class="text-muted text-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Se genera solo con las imágenes del catálogo de materiales: el nombre es el del material y la categoría es su especialidad. Si cambias la imagen, el nombre, la especialidad o eliminas el material, esta lista se actualiza. Se pueden insertar en el Vplan y en el Editor; al insertarlas se copian al dibujo.</p>
     <?php if (!$materialesSimbolos): ?>
         <?php echo estado_vacio('fa-cubes', 'Aún no hay imágenes de materiales', 'Agrega una imagen al catálogo de materiales y aparecerá aquí automáticamente. Las imágenes nuevas se guardan a 640 px para que también sirvan como símbolo.', null, null, '<a class="btn btn-primary" href="/materiales?proyecto=' . (int)$proyecto->id . '"><i class="fa-solid fa-cubes"></i> Ir al catálogo</a>', 'estado-vacio-sm'); ?>
     <?php else: ?>
@@ -121,7 +121,7 @@ $pestanas = [
 
 <section class="sim-panel" id="sim-p-simbologias" role="tabpanel" hidden>
     <div id="simbologias"></div>
-    <p class="text-muted text-sm">Las miniaturas son la imagen guardada: revísala aquí antes de usarla en una lámina. Leyendas (p. ej. «SYMBOLOGY FOR SCHEDULE») dibujadas con el Editor: formas, líneas, textos e imágenes. Se eligen en cada lámina del vPlan; si editas una, cambia en todas las láminas que la usan.</p>
+    <p class="text-muted text-sm">Las miniaturas son la imagen guardada: revísala aquí antes de usarla en una lámina. Leyendas (p. ej. «SYMBOLOGY FOR SCHEDULE») dibujadas con el Editor: formas, líneas, textos e imágenes. Se eligen en cada lámina del Vplan; si editas una, cambia en todas las láminas que la usan.</p>
     <?php if ($puedeEditar): ?>
     <div class="la-controles">
         <a href="/graficos/crear?proyecto=<?php echo (int)$proyecto->id; ?>&tipo=simbologia" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva simbología</a>
@@ -145,7 +145,7 @@ $pestanas = [
                 <a href="/graficos/abrir?proyecto=<?php echo (int)$proyecto->id; ?>&id=<?php echo (int)$g->id; ?>" class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-ruler"></i> Editar</a>
                 <form class="inline" method="POST" action="/graficos/duplicar"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><button type="submit" class="btn btn-sm btn-ghost"><i class="fa-regular fa-copy"></i> <?php echo s(t('Duplicar')); ?></button></form>
                 <form class="inline" method="POST" action="/graficos/tipo"><input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>"><input type="hidden" name="tipo" value="grafico"><button type="submit" class="btn btn-sm btn-ghost" title="Devolverla a la lista de gráficos del Editor">Pasar a gráfico</button></form>
-                <form method="POST" action="/graficos/eliminar" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Las láminas del vPlan que la usan volverán a la tabla estándar.|Sí, eliminar">
+                <form method="POST" action="/graficos/eliminar" data-confirm="¿Eliminar «<?php echo s($g->nombre); ?>»?|Las láminas del Vplan que la usan volverán a la tabla estándar.|Sí, eliminar">
                     <input type="hidden" name="proyecto" value="<?php echo (int)$proyecto->id; ?>"><input type="hidden" name="id" value="<?php echo (int)$g->id; ?>">
                     <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash-can"></i> <?php echo s(t('Eliminar')); ?></button>
                 </form>
@@ -158,7 +158,7 @@ $pestanas = [
 
 <section class="sim-panel" id="sim-p-cajetines" role="tabpanel" hidden>
     <div id="cajetines"></div>
-    <p class="text-muted text-sm">El cajetín es la tablita con los datos del dibujo (proyecto, título, fecha, revisión…) que se inserta con un clic en el vPlan y en el Editor. Los datos se llenan solos, así que no hay que escribirlos en cada lámina. Ya existe uno «Estándar» para todos los proyectos. ¿Quieres algo con más libertad (semáforos, post-its, varios estilos)? Usa las <a href="#estampas" data-ir-tab="estampas">Estampas inteligentes</a>.</p>
+    <p class="text-muted text-sm">El cajetín es la tablita con los datos del dibujo (proyecto, título, fecha, revisión…) que se inserta con un clic en el Vplan y en el Editor. Los datos se llenan solos, así que no hay que escribirlos en cada lámina. Ya existe uno «Estándar» para todos los proyectos. ¿Quieres algo con más libertad (semáforos, post-its, varios estilos)? Usa las <a href="#estampas" data-ir-tab="estampas">Estampas inteligentes</a>.</p>
     <?php if ($puedeEditar): ?>
     <details class="sim-nuevo"><summary class="btn btn-primary"<?php echo glosario('cajetin'); ?>><i class="fa-solid fa-plus"></i> Nuevo cajetín</summary><div class="sim-nuevo-in">
     <form method="POST" action="/simbolos/cajetin" class="formulario cj-form">
@@ -219,7 +219,7 @@ $pestanas = [
 <?php $laminasProbar = $puedeEditar ? \Model\VplanLamina::deProyecto((int)$proyecto->id) : []; ?>
 <section class="sim-panel" id="sim-p-estampas" role="tabpanel" hidden>
     <div id="estampas"></div>
-    <p class="text-muted text-sm">Una <strong>estampa</strong> es un bloque que se coloca en cualquier lámina del vPlan y <strong>se actualiza solo</strong>: está hecha de etiquetas, y cada etiqueta combina un texto antes (prefijo), un dato del proyecto que se llena solo (fecha, avance, actividad, restricciones…) y un texto después (sufijo). También puede traer semáforos y los <strong>post-its de las actividades del día</strong> del Last Planner.</p>
+    <p class="text-muted text-sm">Una <strong>estampa</strong> es un bloque que se coloca en cualquier lámina del Vplan y <strong>se actualiza solo</strong>: está hecha de etiquetas, y cada etiqueta combina un texto antes (prefijo), un dato del proyecto que se llena solo (fecha, avance, actividad, restricciones…) y un texto después (sufijo). También puede traer semáforos y los <strong>post-its de las actividades del día</strong> del Last Planner.</p>
     <?php if ($puedeEditar): ?>
     <div class="est-barra">
         <button type="button" class="btn btn-primary" data-est="nueva"<?php echo glosario('estampa'); ?>><i class="fa-solid fa-plus"></i> Nueva estampa (lienzo)</button>
@@ -241,7 +241,7 @@ $pestanas = [
     <div id="est-editor" class="est-editor card" hidden></div>
     <?php endif; ?>
     <?php if (!$estampas): ?>
-        <?php echo estado_vacio('fa-wand-magic-sparkles', 'Aún no hay estampas en este proyecto', 'Una estampa es un bloque que se llena solo con datos del proyecto (fecha, avance, actividades del día…) y se coloca en cualquier lámina del vPlan. Empieza con uno de los ejemplos de abajo.', null, null,
+        <?php echo estado_vacio('fa-wand-magic-sparkles', 'Aún no hay estampas en este proyecto', 'Una estampa es un bloque que se llena solo con datos del proyecto (fecha, avance, actividades del día…) y se coloca en cualquier lámina del Vplan. Empieza con uno de los ejemplos de abajo.', null, null,
             $puedeEditar ? '<div class="estado-vacio-acciones"><button type="button" class="btn btn-primary" data-est="nueva"><i class="fa-solid fa-plus"></i> Nueva estampa</button><a class="btn btn-ghost" href="/simbolos?proyecto=' . (int)$proyecto->id . '&tour=1"><i class="fa-solid fa-circle-play"></i> Ver la guía</a></div>' : '', 'estado-vacio-sm'); ?>
     <?php else:
         $ctxEst = new \Classes\EstampaContexto($proyecto, null, ['lamina_n' => 1, 'lamina_total' => 1]); ?>
@@ -447,12 +447,12 @@ window.EST_DATA = <?php echo json_encode(['proyecto' => (int)$proyecto->id, 'gru
 window.Tour.registrar('simbolos', {
     auto: true,
     pasos: [
-        { icono: 'fa-shapes', titulo: 'La biblioteca del proyecto', texto: 'Aquí viven los símbolos que se insertan en el vPlan y en el Editor con un clic, y sus dos primos: los <b>cajetines</b> (la tablita de datos del dibujo) y las <b>estampas inteligentes</b> (bloques que se llenan solos).' },
+        { icono: 'fa-shapes', titulo: 'La biblioteca del proyecto', texto: 'Aquí viven los símbolos que se insertan en el Vplan y en el Editor con un clic, y sus dos primos: los <b>cajetines</b> (la tablita de datos del dibujo) y las <b>estampas inteligentes</b> (bloques que se llenan solos).' },
         { sel: '#sim-tabs', icono: 'fa-table-columns', titulo: 'Seis pestañas', texto: 'Los símbolos del proyecto, las imágenes de materiales (se generan solas desde el catálogo), los incluidos con la aplicación, las simbologías (leyendas), los cajetines y las estampas. Cada una tiene su contador.' },
         { sel: '#sim-imp-btn', icono: 'fa-file-import', titulo: 'Importar en bloque', texto: 'Sube un .zip con varias imágenes (o varias sueltas) y quedan en la pestaña «Del proyecto», con categorías y buscador.' },
         { sel: '#sim-p-predeterminados', icono: 'fa-shapes', titulo: 'Predeterminados', texto: 'Los símbolos que ya vienen con la aplicación: cámaras, extintores, señalética… Se insertan igual que los tuyos.', alEntrar: () => document.querySelector('.sim-tab[data-tab="predeterminados"]')?.click() },
-        { sel: '#sim-p-estampas', icono: 'fa-wand-magic-sparkles', titulo: 'Estampas inteligentes', texto: 'Se colocan en una lámina del vPlan y se actualizan solas: fecha, avance, restricciones, las actividades del día… Empieza con una de las plantillas.', alEntrar: () => document.querySelector('.sim-tab[data-tab="estampas"]')?.click() },
-        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Los símbolos se usan desde el panel «Insertar» del modo diseño del vPlan y desde la pestaña de símbolos del Editor. Edita cualquier tarjeta con su botón «Editar».' }
+        { sel: '#sim-p-estampas', icono: 'fa-wand-magic-sparkles', titulo: 'Estampas inteligentes', texto: 'Se colocan en una lámina del Vplan y se actualizan solas: fecha, avance, restricciones, las actividades del día… Empieza con una de las plantillas.', alEntrar: () => document.querySelector('.sim-tab[data-tab="estampas"]')?.click() },
+        { icono: 'fa-circle-check', titulo: 'Listo', texto: 'Los símbolos se usan desde el panel «Insertar» del modo diseño del Vplan y desde la pestaña de símbolos del Editor. Edita cualquier tarjeta con su botón «Editar».' }
     ]
 });
 </script>

@@ -38,7 +38,7 @@ Controlador de 4.1 y 4.2: `controllers/PersonalizacionController.php`.
 - `resumen_json` no necesita migración: las claves nuevas (`fuente`) son opcionales.
 
 ## 4.4 Marca
-- `proyectos.marca_activa/nombre/logo/color/color2`. `Pdf::preparar` recibe `'marca' => Proyecto` y llama a `Marca::aplicar()` (banda con logo + CSS de títulos y `th`). Lo piden: Pdf (programa), Lookahead, Last Planner, Curva, MSR, Submittal, Minuta, Reportes, Punch, Informes y Seguridad. **No** lo piden los documentos que el usuario diseña (Redactor, SheetFlow, Editor, láminas del vPlan, Ensamblador).
+- `proyectos.marca_activa/nombre/logo/color/color2`. `Pdf::preparar` recibe `'marca' => Proyecto` y llama a `Marca::aplicar()` (banda con logo + CSS de títulos y `th`). Lo piden: Pdf (programa), Lookahead, Last Planner, Curva, MSR, Submittal, Minuta, Reportes, Punch, Informes y Seguridad. **No** lo piden los documentos que el usuario diseña (Redactor, SheetFlow, Editor, láminas del Vplan, Ensamblador).
 - El logo se sube con `guardar_imagen_subida('marca_logo', 'logos')`; el respaldo del proyecto lo recoge por el nombre del archivo.
 
 ## 4.5 Inicio

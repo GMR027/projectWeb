@@ -25,7 +25,7 @@ Herramienta `/anotador` (menú **Documentos y diseño**). Abre un PDF o una imag
 
 ## Fuentes
 
-- `Anotador::fuentes()` y `Anotador::fuenteDeProyecto()` reutilizan el catálogo del Comparador: Archivo, láminas de vPlan, gráficos del Editor y documentos del Redactor (convertidos a PDF).
+- `Anotador::fuentes()` y `Anotador::fuenteDeProyecto()` reutilizan el catálogo del Comparador: Archivo, láminas de Vplan, gráficos del Editor y documentos del Redactor (convertidos a PDF).
 - `/anotador/fuente?proyecto=…&doc=ID` entrega la fuente de un documento guardado (incluye la copia externa). `/anotador/fuente?proyecto=…&tipo=archivo|vplan|editor|redactor&id=…` entrega una fuente del proyecto para abrirla como borrador.
 - Los archivos externos se leen en el navegador mientras se anota y se copian al proyecto **solo al guardar** (PDF con nombre aleatorio o imagen re-codificada). Límite: 80 MB.
 - Las fuentes del proyecto **se referencian, no se copian**: si la lámina o el documento cambia, al reabrir se usa la versión actual.

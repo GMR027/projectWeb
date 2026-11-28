@@ -13,7 +13,7 @@ use Classes\Sheetflow;
 use Classes\Imagenes;
 use Classes\Almacenamiento;
 
-/** SheetFlow: tablas del proyecto (lista por departamento, alta con plantilla o importación, edición, vista, descarga y uso en vPlan/Editor/Redactor) */
+/** SheetFlow: tablas del proyecto (lista por departamento, alta con plantilla o importación, edición, vista, descarga y uso en Vplan/Editor/Redactor) */
 class SheetflowController
 {
     private static function hojaDe(Proyecto $proyecto, $id): ?SheetflowHoja
@@ -172,7 +172,7 @@ class SheetflowController
         if ($h = self::hojaDe($proyecto, $_POST['id'] ?? null)) {
             $h->eliminar();
             Sheetflow::limpiarImagenes($h->imagenes(), [], (int)$proyecto->id, (int)$h->id);
-        }   // las tablas de vPlan que la usaban se quedan con sus datos (solo pierden el vínculo)
+        }   // las tablas de Vplan que la usaban se quedan con sus datos (solo pierden el vínculo)
         header('Location: /sheetflow?proyecto=' . $proyecto->id . '&ok=1');
         exit;
     }
@@ -283,7 +283,7 @@ class SheetflowController
         json_respuesta(['success' => true, 'version' => md5($h->actualizado . '|' . $h->nombre . '|' . strlen((string)$h->datos))]);
     }
 
-    /** Crea una tabla de vPlan con esta hoja, o (con «tabla») la actualiza con los datos actuales */
+    /** Crea una tabla de Vplan con esta hoja, o (con «tabla») la actualiza con los datos actuales */
     public static function aVplan()
     {
         $proyecto = proyecto_de_peticion(true);

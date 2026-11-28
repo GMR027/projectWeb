@@ -1,4 +1,4 @@
-/* vPlan · modo diseño: mueve y redimensiona los bloques de la lámina, gestiona capas y guías, inserta bloques/tablas/recovery,
+/* Vplan · modo diseño: mueve y redimensiona los bloques de la lámina, gestiona capas y guías, inserta bloques/tablas/recovery,
    cambia el tamaño de la hoja y guarda.
    Datos que espera en window.VP_DISENO: { lamina, proyecto, volver, bloques, partidas, presets, tamano, tablas, tipos, guias, catalogo, recovery, etiquetasRecovery } */
 (function () {
@@ -1137,15 +1137,15 @@
             (t.enLamina ? '<span class="vp-chip" title="Ya está en esta lámina">En la lámina</span>' : '<button type="button" class="btn btn-sm btn-primary" data-acc="ins"><i class="fa-solid fa-plus"></i> Insertar</button>') +
             (t.id ? '<button type="button" class="vp-ib vp-ib-sm" data-acc="copia" title="Insertar una copia independiente (sus cambios no afectan a las demás láminas)" aria-label="Insertar copia"><i class="fa-regular fa-copy"></i></button>' : '') +
             '</div>';
-        // Las tablas del vPlan (las del catálogo del proyecto, incluidas las enlazadas a SheetFlow)…
+        // Las tablas del Vplan (las del catálogo del proyecto, incluidas las enlazadas a SheetFlow)…
         const propias = lista.filter(({ t }) => !t.sheetflow || t.id > 0);
-        // …y las hojas de SheetFlow que aún no están en el vPlan (al insertarlas se crean y quedan enlazadas)
+        // …y las hojas de SheetFlow que aún no están en el Vplan (al insertarlas se crean y quedan enlazadas)
         const hojaSf = lista.filter(({ t }) => t.sheetflow && !t.id);
         cuenta.tablas = propias.length;
         cuenta['tablas-sf'] = hojaSf.length;
         const caja = $('vp-ins-tablas');
         if (!propias.length) {
-            caja.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ninguna tabla coincide.' : 'Aún no hay tablas en el vPlan. Crea la primera arriba.') + '</p>';
+            caja.innerHTML = '<p class="text-sm text-muted">' + (q ? 'Ninguna tabla coincide.' : 'Aún no hay tablas en el Vplan. Crea la primera arriba.') + '</p>';
         } else {
             const grupos = {};
             propias.forEach(x => { (grupos[x.t.tipoNombre] = grupos[x.t.tipoNombre] || []).push(x); });
@@ -1155,7 +1155,7 @@
         const cajaSf = $('vp-ins-tablas-sf');
         if (cajaSf) cajaSf.innerHTML = hojaSf.length ? hojaSf.map(fila).join('')
             : '<p class="text-sm text-muted">' + (q ? 'Ninguna hoja coincide.'
-                : catalogo.some(t => t.sheetflow) ? 'Todas las hojas de SheetFlow del proyecto ya están en el vPlan.'
+                : catalogo.some(t => t.sheetflow) ? 'Todas las hojas de SheetFlow del proyecto ya están en el Vplan.'
                     : 'Este proyecto no tiene hojas de SheetFlow.') + '</p>';
     }
     // Un solo buscador para todas las categorías

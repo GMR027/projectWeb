@@ -1,4 +1,4 @@
-/* Notas de una lámina de vPlan o de un gráfico de View360: lista, modal para crear/editar y borrado.
+/* Notas de una lámina de Vplan o de un gráfico de View360: lista, modal para crear/editar y borrado.
    window.Notas.iniciar({ campo: 'lamina' | 'grafico', id, puedeEditar, notas, urlGuardar, urlEliminar }). El modal viene de views/templates/_notas-modal.php */
 (function () {
     'use strict';

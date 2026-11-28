@@ -60,11 +60,13 @@ class LookaheadController
     }
 
     /** Datos del 4WLA (también los usan los exportadores PDF/Excel) */
-    public static function datos(Proyecto $proyecto, \DateTime $lunes, ?bool $incluirSub = null): array
+    public static function datos(Proyecto $proyecto, \DateTime $lunes, ?bool $incluirSub = null, ?string $fechaReferencia = null): array
     {
         $calendario = new Calendario((int)$proyecto->id);
         $config = LookaheadConfig::deProyecto((int)$proyecto->id);
-        $semanas = self::armarSemanas($lunes, $calendario, (int)$config->semanas);
+        $hoy = $fechaReferencia && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaReferencia) ? $fechaReferencia : date('Y-m-d');
+        $refAtraso = $fechaReferencia ? $hoy : $lunes->format('Y-m-d');
+        $semanas = self::armarSemanas($lunes, $calendario, (int)$config->semanas, $hoy);
         $tipos = TipoRestriccion::all('id ASC');
         $restricciones = self::restriccionesActivas((int)$proyecto->id);
         $restriccionesSub = self::restriccionesActivasSub((int)$proyecto->id);
@@ -80,7 +82,7 @@ class LookaheadController
             $partida = $bloque['partida'];
             $acts = [];
             foreach ($bloque['actividades'] as $act) {
-                $atrasada = $act->fecha_fin < $lunes->format('Y-m-d') && (int)$act->progreso < 100;
+                $atrasada = $act->fecha_fin < $refAtraso && (int)$act->progreso < 100;
                 $porTipo = $restricciones[$act->id] ?? [];
                 $celdas = [];
                 foreach ($semanas as $sem) {
@@ -115,7 +117,7 @@ class LookaheadController
                         'tipos' => $restriccionesSub[(int)$sub->id] ?? [],
                         'pta_ok' => (int)$sub->pta === 1,
                         'con_restriccion' => !empty($restriccionesSub[(int)$sub->id]),
-                        'atrasada' => $sub->fecha_fin < $lunes->format('Y-m-d') && (int)$sub->progreso < 100,
+                        'atrasada' => $sub->fecha_fin < $refAtraso && (int)$sub->progreso < 100,
                     ];
                 }
             }
@@ -230,7 +232,7 @@ class LookaheadController
     }
 
     /** Bloques de 7 días: la semana actual + las $siguientes que pida la configuración (1-8) */
-    private static function armarSemanas(\DateTime $lunes, Calendario $calendario, int $siguientes = 4): array
+    private static function armarSemanas(\DateTime $lunes, Calendario $calendario, int $siguientes = 4, ?string $fechaReferencia = null): array
     {
         $semanas = [];
         $cursor = clone $lunes;
@@ -246,7 +248,7 @@ class LookaheadController
                     'numero' => (int)$cursor->format('j'),
                     'letra' => self::DIAS[(int)$cursor->format('N')],
                     'habil' => $calendario->esHabil($fecha),
-                    'hoy' => $fecha === date('Y-m-d'),
+                    'hoy' => $fecha === ($fechaReferencia ?: date('Y-m-d')),
                 ];
                 $cursor->modify('+1 day');
             }

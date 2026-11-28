@@ -53,7 +53,7 @@
 <script>
 (function () {
     // «Lienzo en blanco» del Editor de gráficos: cuatro arranques rápidos que pulsan la herramienta
-    // de la barra. Solo en el Editor (en el vPlan hay plano de fondo); se oculta al primer trazo.
+    // de la barra. Solo en el Editor (en el Vplan hay plano de fondo); se oculta al primer trazo.
     const ov = document.getElementById('ve-lienzo-vacio');
     if (!ov || !window.VPLAN_CONFIG || window.VPLAN_CONFIG.plano) return;
     // La lámina activa se busca por id (no por índice): `laminaActiva` es el id de la lámina.
@@ -79,7 +79,7 @@
 <?php // En la lámina unificada tour.js ya se cargó antes de registrar la guía del modo diseño ?>
 <?php if (($config['modo'] ?? '') !== 'vplan'): ?><script src="/vendor/tour.js?v=<?php echo filemtime(__DIR__ . '/../../public/vendor/tour.js'); ?>"></script><?php endif; ?>
 <script>
-// Guía rápida del lienzo (Editor de gráficos y editor de marcas del vPlan comparten la barra)
+// Guía rápida del lienzo (Editor de gráficos y editor de marcas del Vplan comparten la barra)
 if (window.Tour) window.Tour.registrar('editor-canvas', {
     auto: <?php echo (($config['modo'] ?? '') === 'vplan') ? 'false' : 'true'; ?>,
     pasos: [

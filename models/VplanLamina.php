@@ -49,7 +49,7 @@ class VplanLamina extends ActiveRecord
         );
     }
 
-    /** Láminas visibles del proyecto en el orden de los vPlan (lo que sale en el PDF de «todas») */
+    /** Láminas visibles del proyecto en el orden de los Vplan (lo que sale en el PDF de «todas») */
     public static function visiblesDeProyecto(int $proyectoId, ?int $paqueteId = null): array
     {
         return array_values(array_filter(self::deProyecto($proyectoId), fn($l) => (int)$l->visible === 1 && (!$paqueteId || (int)$l->paquete_id === $paqueteId)));
@@ -60,7 +60,7 @@ class VplanLamina extends ActiveRecord
         return (int)self::$db->query("SELECT COALESCE(MAX(orden),0)+1 FROM vplan_laminas WHERE paquete_id = $paqueteId")->fetch_row()[0];
     }
 
-    /** Intercambia el lugar con la lámina vecina del mismo vPlan (dir -1 sube, +1 baja) */
+    /** Intercambia el lugar con la lámina vecina del mismo Vplan (dir -1 sube, +1 baja) */
     public function mover(int $dir): void
     {
         $ids = array_map(fn($l) => (int)$l->id, VplanPaquete::find($this->paquete_id)?->laminas() ?? []);
@@ -71,7 +71,7 @@ class VplanLamina extends ActiveRecord
         foreach ($ids as $orden => $id) self::$db->query("UPDATE vplan_laminas SET orden = " . ($orden + 1) . " WHERE id = $id");
     }
 
-    /** La coloca en la posición $pos (0 = primera) del vPlan: la Galería del gestor la arrastra hasta ahí */
+    /** La coloca en la posición $pos (0 = primera) del Vplan: la Galería del gestor la arrastra hasta ahí */
     public function ordenar(int $pos): void
     {
         $ids = array_map(fn($l) => (int)$l->id, VplanPaquete::find($this->paquete_id)?->laminas() ?? []);
@@ -84,7 +84,7 @@ class VplanLamina extends ActiveRecord
     }
 
     /**
-     * Copia el diseño de la lámina como una lámina nueva del mismo vPlan: tamaño, bloques, tablas (copias
+     * Copia el diseño de la lámina como una lámina nueva del mismo Vplan: tamaño, bloques, tablas (copias
      * independientes con sus renglones), simbología y supervisor. NO copia el plano ni las marcas: se sube el del área nueva.
      */
     public function duplicar(): self

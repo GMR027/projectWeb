@@ -318,7 +318,7 @@ class Dependencias
         return count($cambios);
     }
 
-    /** Escribe fechas en actividades o subactividades y refresca partidas, materiales y vPlan */
+    /** Escribe fechas en actividades o subactividades y refresca partidas, materiales y Vplan */
     private static function escribir(Proyecto $proyecto, array $fechas): void
     {
         $partidas = [];

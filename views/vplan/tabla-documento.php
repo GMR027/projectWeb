@@ -26,7 +26,7 @@
         <label class="campo flex-2"><span>Nombre de la tabla *</span><input type="text" id="td-nombre" maxlength="140"></label>
         <span class="text-muted text-sm" id="td-resumen"></span>
     </div>
-    <p class="text-muted text-sm">Corrige lo que haga falta: la primera fila es el encabezado. Usa ✕ para quitar un renglón o una columna. La tabla del vPlan toma las primeras 8 columnas y 200 renglones.</p>
+    <p class="text-muted text-sm">Corrige lo que haga falta: la primera fila es el encabezado. Usa ✕ para quitar un renglón o una columna. La tabla del Vplan toma las primeras 8 columnas y 200 renglones.</p>
     <div class="td-scroll"><table class="tabla td-tabla" id="td-tabla"></table></div>
     <div class="vp-tab-acc-fija">
         <button type="button" class="btn btn-ghost btn-sm" id="td-mas">+ Renglón</button>
@@ -51,7 +51,7 @@
             h += '</tr>';
         }
         $('td-tabla').innerHTML = h + '</tbody>';
-        $('td-resumen').textContent = nc + ' columnas · ' + (filas.length - 1) + ' renglones' + (nc > 8 ? ' (el vPlan usará las primeras 8 columnas)' : '');
+        $('td-resumen').textContent = nc + ' columnas · ' + (filas.length - 1) + ' renglones' + (nc > 8 ? ' (el Vplan usará las primeras 8 columnas)' : '');
     };
     const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     $('td-tabla').addEventListener('input', e => { const i = e.target; if (i.dataset.f !== undefined) filas[+i.dataset.f][+i.dataset.c] = i.value; });

@@ -139,9 +139,9 @@ class CurvaController
     }
 
     /** Datos de la gráfica maestra (también para exportar): fechas del programa de obra */
-    public static function datosMaestra($proyecto): array
+    public static function datosMaestra($proyecto, ?string $hoy = null): array
     {
-        return CurvaProductividad::maestra(Curva::deProyecto((int)$proyecto->id), $proyecto->fecha_inicio, $proyecto->fecha_fin);
+        return CurvaProductividad::maestra(Curva::deProyecto((int)$proyecto->id), $proyecto->fecha_inicio, $proyecto->fecha_fin, $hoy);
     }
 
     /** Guarda el real de un periodo (vacío = sin captura) */

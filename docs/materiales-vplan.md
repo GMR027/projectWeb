@@ -1,9 +1,9 @@
-# Materiales en el plano de vPlan
+# Materiales en el plano de Vplan
 
 _Se lee solo al trabajar en este módulo._
 
 ## Qué es
-La pestaña **Materiales** del editor de marcas de vPlan (`/vplan/editor?id=…`) permite dibujar **líneas y formas** (incluido el **polígono libre**: clic en cada vértice y doble clic, Enter o clic en el primer punto para cerrar) sobre el plano y relacionarlas con **varias actividades y subactividades** del programa. Con ellas se crea **una tabla de instalación de materiales por lámina**, guardada en SheetFlow, que se imprime como un bloque más de la lámina.
+La pestaña **Materiales** del editor de marcas de Vplan (`/vplan/editor?id=…`) permite dibujar **líneas y formas** (incluido el **polígono libre**: clic en cada vértice y doble clic, Enter o clic en el primer punto para cerrar) sobre el plano y relacionarlas con **varias actividades y subactividades** del programa. Con ellas se crea **una tabla de instalación de materiales por lámina**, guardada en SheetFlow, que se imprime como un bloque más de la lámina.
 
 - Herramientas: `controllers/VplanMaterialesController.php`, lógica `classes/MaterialesLamina.php`, JS `public/vendor/materiales-vplan.js` (sin build).
 - Vistas: `views/vplan/_materiales-barra.php`, `_materiales-panel.php`, `_materiales-props.php`, `_materiales-modal.php` (se incluyen desde `_editor-lienzo.php`).
@@ -49,7 +49,7 @@ Cada marca guarda en su JSON (`vplan_laminas.marcas_json`):
 
 ## Lámina y PDF
 - El bloque de tabla es de tipo `materiales`; `_tabla-adicional.php` lo trata como tabla genérica (`otro`) y muestra «Marcar materiales» y «Editar en SheetFlow».
-- Las tablas de vPlan muestran hasta 8 columnas por defecto; **materiales** sube el tope a 30 (`VplanTabla::maxColumnas()`), pero conviene mover/ampliar el bloque o reducir la letra si hay muchas.
+- Las tablas de Vplan muestran hasta 8 columnas por defecto; **materiales** sube el tope a 30 (`VplanTabla::maxColumnas()`), pero conviene mover/ampliar el bloque o reducir la letra si hay muchas.
 - La celda del material lleva una **barra del color** de la marca (`MaterialesLamina::coloresDeMarcas()` en `Vplan::datos`), para reconocerla también en la lámina y en el PDF.
 - Al duplicar una lámina **no** se copia su tabla de materiales (la lámina nueva no tiene marcas). Al borrar la lámina se borra su tabla y se conserva la hoja de SheetFlow.
 

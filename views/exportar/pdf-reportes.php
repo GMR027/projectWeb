@@ -163,5 +163,5 @@ case 'evidencias':
     <?php endforeach; endforeach;
     break;
 endswitch; ?>
-<div class="peq" style="margin-top:14pt">Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?></div>
+<div class="peq" style="margin-top:14pt">Generado por ProjectWeb · <?php echo date('d/m/Y H:i'); ?><?php echo s(etiqueta_corte_exportacion()); ?></div>
 </body></html>

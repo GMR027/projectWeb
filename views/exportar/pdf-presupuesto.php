@@ -50,7 +50,7 @@ if ($datos['sinPartida']) $grupos[] = $datos['sinPartida'];
     </tr>
     <tr>
         <td class="k">Ubicación</td><td><?php echo s($proyecto->ubicacion ?: '—'); ?></td>
-        <td class="k">Fecha</td><td><?php echo date('d/m/Y'); ?></td>
+        <td class="k">Fecha</td><td><?php echo date('d/m/Y', strtotime($fechaDocumento)); ?><?php echo s(etiqueta_corte_exportacion()); ?></td>
     </tr>
 </table>
 

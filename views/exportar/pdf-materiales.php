@@ -36,7 +36,7 @@ $compra = fn($c) => \Model\Material::COMPRA[$c ?? ''] ?? 'Pendiente';
 <div class="cab">
     <h1>Catálogo de materiales</h1>
     <div class="sub"><?php echo $e($proyecto->nombre); ?><?php echo $proyecto->codigo ? ' · ' . $e($proyecto->codigo) : ''; ?><?php echo $proyecto->ubicacion ? ' · ' . $e($proyecto->ubicacion) : ''; ?></div>
-    <div class="meta"><?php echo (int)$total; ?> material(es) · <?php echo $e(\Classes\MaterialesCatalogo::textoFiltros($filtros)); ?> · Generado el <?php echo date('d/m/Y H:i'); ?></div>
+    <div class="meta"><?php echo (int)$total; ?> material(es) · <?php echo $e(\Classes\MaterialesCatalogo::textoFiltros($filtros)); ?> · Generado el <?php echo date('d/m/Y H:i'); ?><?php echo $e(etiqueta_corte_exportacion()); ?></div>
 </div>
 
 <?php if (!$secciones): ?>

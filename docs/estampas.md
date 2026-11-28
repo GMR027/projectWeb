@@ -3,7 +3,7 @@
 _Se lee solo al trabajar en este módulo._ Migración: `database/migracion_estampas.sql` (también en `schema.sql`; **aplicar en el clúster**).
 
 ## Qué es
-Una **estampa** es un bloque reutilizable cuyas etiquetas (prefijo + campo + sufijo) se llenan solas con datos del proyecto. Se guarda en `estampas` (`proyecto_id, nombre, config_json`), se administra en **Símbolos › Estampas inteligentes** y se coloca en el vPlan como bloque `estampa` (`config: estampa_id, fecha_modo hoy|fija, fecha, actividad_id`). Se dibuja en la hoja y en el PDF (`Estampas::renderGuardada(..., 'cq'|'pt')`) y se actualiza en cada visita.
+Una **estampa** es un bloque reutilizable cuyas etiquetas (prefijo + campo + sufijo) se llenan solas con datos del proyecto. Se guarda en `estampas` (`proyecto_id, nombre, config_json`), se administra en **Símbolos › Estampas inteligentes** y se coloca en el Vplan como bloque `estampa` (`config: estampa_id, fecha_modo hoy|fija, fecha, actividad_id`). Se dibuja en la hoja y en el PDF (`Estampas::renderGuardada(..., 'cq'|'pt')`) y se actualiza en cada visita.
 
 ## Piezas
 - `classes/Estampas.php`: catálogo `CAMPOS` (clave => grupo, etiqueta, tipo texto|fecha|num|pct, ejemplo; los `act_*` necesitan una actividad), **piezas puras** (`formatear`, `semaforo`, `reemplazar` — con pruebas en `tests/run.php`), `limpiarConfig` (sanea: campos del catálogo, colores, rangos, partidas/actividades del proyecto), `render` (HTML con tablas y estilos en línea para que Dompdf y el navegador lo dibujen igual; unidades `cq` = cqw de la hoja, `pt` × K en el PDF, `px` en la vista previa) y `plantillas()` (los ejemplos, entre ellos **Last Planner · Post-its del día** y los post-it de obra).

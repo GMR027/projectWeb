@@ -5,7 +5,7 @@ namespace Classes;
 /**
  * Estampas inteligentes: bloques reutilizables cuyas etiquetas (prefijo + campo + sufijo) se llenan solas con los datos
  * del proyecto. Este archivo trae el catálogo de campos, las piezas puras (formato, semáforo, variables {campo}), el
- * saneado de la configuración y el dibujo en HTML (para la hoja del vPlan, el PDF y la vista previa).
+ * saneado de la configuración y el dibujo en HTML (para la hoja del Vplan, el PDF y la vista previa).
  */
 class Estampas
 {
@@ -449,7 +449,7 @@ class Estampas
 
     // ------------------------------------------------------------------ dibujo
 
-    /** Unidades de tamaño: 'cq' = hoja del vPlan (cqw), 'pt' = PDF (pt × $K), 'px' = vista previa (px × $K) */
+    /** Unidades de tamaño: 'cq' = hoja del Vplan (cqw), 'pt' = PDF (pt × $K), 'px' = vista previa (px × $K) */
     public static function unidad(string $modo, float $K = 1.0): callable
     {
         return match ($modo) {

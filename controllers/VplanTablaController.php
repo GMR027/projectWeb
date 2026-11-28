@@ -9,7 +9,7 @@ use Classes\Sheetflow;
 use Classes\TablaDeDocumento;
 use Classes\Auditoria;
 
-/** Catálogo de tablas adicionales de vPlan (punch list, restricciones, actividades secundarias, otro) */
+/** Catálogo de tablas adicionales de Vplan (punch list, restricciones, actividades secundarias, otro) */
 class VplanTablaController
 {
     private static function tablaDe($proyecto): ?VplanTabla
@@ -310,7 +310,7 @@ class VplanTablaController
         ]);
     }
 
-    /** Crea la tabla de SheetFlow con la matriz ya revisada y la deja en el catálogo de vPlan */
+    /** Crea la tabla de SheetFlow con la matriz ya revisada y la deja en el catálogo de Vplan */
     public static function apiDocumentoCrear()
     {
         $proyecto = self::proyectoApi();

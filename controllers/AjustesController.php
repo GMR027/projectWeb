@@ -456,6 +456,15 @@ class AjustesController
         };
     }
 
+    /** URL de vuelta al Centro de Exportación conservando fecha de emisión y etiqueta «Corte» */
+    private static function urlExportar(int $proyectoId, string $fecha, bool $corte, ?string $error = null): string
+    {
+        $q = ['proyecto' => $proyectoId, 'fecha' => $fecha];
+        if ($corte) $q['corte'] = '1';
+        if ($error !== null) $q['error'] = $error;
+        return '/exportar?' . http_build_query($q);
+    }
+
     public static function exportarIndex(Router $router)
     {
         redirigir_si_no_auth();
@@ -471,10 +480,14 @@ class AjustesController
         }
 
         exigir_ver_proyecto($proyecto);
+        $fecha = fecha_referencia_exportacion(texto_param($_GET['fecha'] ?? ''));
+        $corte = corte_exportacion_visible(!empty($_GET['corte']));
         $router->render('exportar/index', [
             'titulo' => 'Exportar - ' . $proyecto->nombre,
             'proyecto' => $proyecto,
-            'lunes' => \Controllers\LookaheadController::lunesDe(''),
+            'lunes' => \Controllers\LookaheadController::lunesDe($fecha),
+            'fechaExportacion' => $fecha,
+            'corteVisible' => $corte,
             'curvas' => \Model\Curva::deProyecto((int)$proyecto->id),
             'laminasVplan' => \Model\VplanLamina::deProyecto((int)$proyecto->id),
             'paquetesVplan' => \Model\VplanPaquete::deProyecto((int)$proyecto->id),
@@ -505,6 +518,9 @@ class AjustesController
             exit;
         }
         exigir_ver_proyecto($proyecto);
+        $fecha = fecha_referencia_exportacion(texto_param($_POST['fecha_corte'] ?? ''));
+        $corte = corte_exportacion_visible(!empty($_POST['mostrar_corte']));
+        $volverError = fn(string $msg) => self::urlExportar((int)$proyecto->id, $fecha, $corte, $msg);
         nomenclatura_desde_post($_POST);
         // qué entregables lleva el ZIP (sin la lista se incluyen todos)
         $incluir = isset($_POST['incluir']) ? array_map('strval', (array)$_POST['incluir']) : (isset($_POST['elegir']) ? [] : null);
@@ -514,11 +530,11 @@ class AjustesController
             'curvas' => 'curvas', 'vplan' => 'vplan'];
         $quiere = fn(string $k) => ($incluir === null || in_array($k, $incluir, true)) && herramienta_permitida($toolDe[$k] ?? 'programa');
         if ($incluir === []) {
-            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('Marca al menos un formato para exportar'));
+            header('Location: ' . $volverError('Marca al menos un formato para exportar'));
             exit;
         }
         if (!class_exists('ZipArchive')) {
-            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('El servidor no tiene habilitada la extensión ZIP de PHP'));
+            header('Location: ' . $volverError('El servidor no tiene habilitada la extensión ZIP de PHP'));
             exit;
         }
         @set_time_limit(600);
@@ -526,7 +542,7 @@ class AjustesController
 
         $nombreBase = trim($_POST['nombre_base'] ?? '') ?: 'Exportacion';
         $incluirSub = !empty($_POST['subactividades']);
-        $lunes = \Controllers\LookaheadController::lunesDe('')->format('Y-m-d');
+        $lunes = \Controllers\LookaheadController::lunesDe($fecha)->format('Y-m-d');
 
         $zipRuta = __DIR__ . '/../public/exportaciones/' . generar_nombre_archivo($nombreBase, 'zip', $proyecto);
         if (!is_dir(dirname($zipRuta))) mkdir(dirname($zipRuta), 0775, true);
@@ -554,13 +570,13 @@ class AjustesController
         if ($quiere('presupuesto') && \Classes\Conceptos::disponible()) {
             $datos = \Classes\Conceptos::presupuesto((int)$proyecto->id);
             if ($datos['grupos'] || $datos['sinPartida']) {
-                $agregar('06_Presupuesto', 'Catálogo de conceptos PDF', fn() => (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)->generar("Presupuesto"));
+                $agregar('06_Presupuesto', 'Catálogo de conceptos PDF', fn() => (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)->setFecha($fecha)->generar("Presupuesto"));
             } else {
                 $omitidos[] = 'Presupuesto: el catálogo está vacío';
             }
         }
-        if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFechaReferencia($lunes)->generar("4WLA"));
-        if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFormato('xlsx')->setFechaReferencia($lunes)->generar("4WLA"));
+        if ($quiere('la_pdf')) $agregar('02_4WLA', '4WLA PDF', fn() => (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFechaReferencia($fecha)->generar("4WLA"));
+        if ($quiere('la_xlsx')) $agregar('02_4WLA', '4WLA Excel', fn() => (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))->setIncluirSubactividades($incluirSub)->setFormato('xlsx')->setFechaReferencia($fecha)->generar("4WLA"));
 
         if ($quiere('msr_pdf') || $quiere('msr_xlsx')) {
             $hayMsr = false;
@@ -568,7 +584,7 @@ class AjustesController
                 if (!$msr->n_renglones) continue;
                 $hayMsr = true;
                 $base = 'MSR_' . slug_archivo($msr->nombre);
-                if ($quiere('msr_pdf')) $agregar('03_MSR', "MSR PDF ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->generar($base));
+                if ($quiere('msr_pdf')) $agregar('03_MSR', "MSR PDF ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->setFechaReporte($fecha)->generar($base));
                 if ($quiere('msr_xlsx')) $agregar('03_MSR', "MSR Excel ($msr->nombre)", fn() => (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato('xlsx')->generar($base));
             }
             if (!$hayMsr) {
@@ -580,9 +596,9 @@ class AjustesController
         if (!$quiere('curvas')) {
             // no se pidieron
         } elseif ($curvas) {
-            $agregar('04_Curvas', 'Gráfica maestra PDF', fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva(null)->generar("Curva"));
+            $agregar('04_Curvas', 'Gráfica maestra PDF', fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva(null)->setFechaReferencia($fecha)->generar("Curva"));
             foreach ($curvas as $c) {
-                $agregar('04_Curvas', 'Curva ' . $c->nombre, fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($c)->generar('Curva'));
+                $agregar('04_Curvas', 'Curva ' . $c->nombre, fn() => (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($c)->setFechaReferencia($fecha)->generar('Curva'));
             }
         } else {
             $omitidos[] = 'Curvas de productividad: el proyecto no tiene curvas';
@@ -591,12 +607,13 @@ class AjustesController
         if (!$quiere('vplan')) {
             // no se pidió
         } elseif (\Model\VplanLamina::visiblesDeProyecto((int)$proyecto->id)) {
-            $agregar('05_vPlan', 'vPlan PDF (todas las láminas)', fn() => (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina('todas')->generar("vPlan"));
+            $agregar('05_Vplan', 'Vplan PDF (todas las láminas)', fn() => (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina('todas')->setFechaReferencia($fecha)->generar("Vplan"));
         } else {
-            $omitidos[] = 'vPlan: el proyecto no tiene láminas visibles';
+            $omitidos[] = 'Vplan: el proyecto no tiene láminas visibles';
         }
 
         $leeme = "Exportación completa de {$proyecto->nombre} ({$proyecto->codigo})\r\nGenerada: " . date('d/m/Y H:i') . "\r\n"
+            . "Fecha de emisión: " . date('d/m/Y', strtotime($fecha)) . ($corte ? " (con etiqueta «Corte»)" : '') . "\r\n"
             . "No incluye Last Planner (se exporta aparte).\r\n\r\nArchivos incluidos:\r\n- " . implode("\r\n- ", $incluidos ?: ['(ninguno)'])
             . ($omitidos ? "\r\n\r\nOmitidos:\r\n- " . implode("\r\n- ", $omitidos) : '') . "\r\n";
         $zip->addFromString('LEEME.txt', $leeme);
@@ -605,7 +622,7 @@ class AjustesController
 
         if (!$incluidos || !is_file($zipRuta)) {
             @unlink($zipRuta);
-            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('No se pudo generar ningún archivo'));
+            header('Location: ' . $volverError('No se pudo generar ningún archivo'));
             exit;
         }
         header('Content-Type: application/zip');
@@ -670,10 +687,13 @@ class AjustesController
             exit;
         }
         exigir_ver_proyecto($proyecto);
+        $fecha = fecha_referencia_exportacion(texto_param($_POST['fecha_corte'] ?? ''));
+        $corte = corte_exportacion_visible(!empty($_POST['mostrar_corte']));
+        $volverError = fn(string $msg) => self::urlExportar((int)$proyecto->id, $fecha, $corte, $msg);
         // El formato debe pertenecer a una herramienta que el usuario vea (colaboradores y visitantes)
         $tool = self::herramientaExportacion((string)$formato, texto_param($_POST['tipo'] ?? ''));
         if ($tool !== null && !herramienta_permitida($tool)) {
-            header('Location: /exportar?proyecto=' . $proyecto->id . '&error=' . urlencode('No tienes acceso a esa herramienta, así que no puedes exportar ese formato'));
+            header('Location: ' . $volverError('No tienes acceso a esa herramienta, así que no puedes exportar ese formato'));
             exit;
         }
 
@@ -686,19 +706,21 @@ class AjustesController
                 case 'lookahead':
                     $salida = $_POST['salida'] ?? 'pdf';
                     $incluirSubLt = !empty($_POST['subactividades']);
+                    // La fecha global manda; el campo «Semana de referencia» queda como override opcional.
+                    $fechaRef = texto_param($_POST['fecha_ref'] ?? '') ?: $fecha;
                     if (in_array($salida, ['xlsx', 'ods'], true)) {
                         $exporter = (new \Classes\Exportadores\LookaheadSheetExporter($proyecto))
                             ->setIncluirSubactividades($incluirSubLt)
                             ->setFormato($salida)
-                            ->setFechaReferencia($_POST['fecha_ref'] ?? '');
+                            ->setFechaReferencia($fechaRef);
                     } else {
                         $exporter = (new \Classes\Exportadores\LookaheadPdfExporter($proyecto))
                             ->setIncluirSubactividades($incluirSubLt)
-                            ->setFechaReferencia($_POST['fecha_ref'] ?? '');
+                            ->setFechaReferencia($fechaRef);
                     }
                     break;
                 case 'vplan':
-                    $exporter = (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina($_POST['lamina_id'] ?? 'todas')->setPaquete((int)($_POST['paquete_id'] ?? 0));
+                    $exporter = (new \Classes\Exportadores\VplanPdfExporter($proyecto))->setLamina($_POST['lamina_id'] ?? 'todas')->setPaquete((int)($_POST['paquete_id'] ?? 0))->setFechaReferencia($fecha);
                     if (!empty($_POST['lamina_ids'])) {
                         $propias = array_map(fn($l) => (int)$l->id, \Model\VplanLamina::deProyecto((int)$proyecto->id));
                         $exporter->setLaminas(array_intersect(array_map('intval', (array)$_POST['lamina_ids']), $propias));
@@ -723,9 +745,11 @@ class AjustesController
                             $curva = \Model\Curva::find(filter_var($cid, FILTER_VALIDATE_INT));
                             if (!$curva || (int)$curva->proyecto_id !== (int)$proyecto->id) throw new \Exception('Curva no encontrada');
                         }
-                        $lista[] = [in_array($salida, ['xlsx', 'ods'], true)
+                        $expCurva = in_array($salida, ['xlsx', 'ods'], true)
                             ? (new \Classes\Exportadores\CurvaSheetExporter($proyecto))->setCurva($curva)->setFormato($salida)
-                            : (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($curva), $nombreBase];
+                            : (new \Classes\Exportadores\CurvaPdfExporter($proyecto))->setCurva($curva);
+                        $expCurva->setFechaReferencia($fecha);
+                        $lista[] = [$expCurva, $nombreBase];
                     }
                     if (count($lista) > 1) $varios = $lista; else $exporter = $lista[0][0];
                     break;
@@ -735,9 +759,10 @@ class AjustesController
                     foreach (array_values(array_unique((array)($_POST['msr_ids'] ?? [$_POST['msr_id'] ?? null]))) as $mid) {
                         $msr = \Model\Msr::deProyectoPorId((int)$proyecto->id, $mid);
                         if (!$msr) throw new \Exception('MSR no encontrado');
-                        $lista[] = [in_array($salida, ['xlsx', 'ods'], true)
+                        $expMsr = in_array($salida, ['xlsx', 'ods'], true)
                             ? (new \Classes\Exportadores\MsrSheetExporter($proyecto))->setMsr($msr)->setFormato($salida)
-                            : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr), $nombreBase . '-' . $msr->nombre];
+                            : (new \Classes\Exportadores\MsrPdfExporter($proyecto))->setMsr($msr)->setFechaReporte($fecha);
+                        $lista[] = [$expMsr, $nombreBase . '-' . $msr->nombre];
                     }
                     if (count($lista) > 1) $varios = $lista; else $exporter = $lista[0][0];
                     break;
@@ -751,6 +776,7 @@ class AjustesController
                         'restriccion' => !empty($_POST['restriccion']),
                         'icono' => !empty($_POST['icono']),
                         'sub' => !empty($_POST['subactividades']) ? '1' : '0',
+                        'fecha' => $fecha,
                     ];
                     $nuevoExportador = function (array $d) use ($proyecto, $salida) {
                         $e = in_array($salida, ['ods', 'xlsx'], true)
@@ -804,7 +830,7 @@ class AjustesController
                     $datos = \Classes\Conceptos::presupuesto((int)$proyecto->id);
                     if (!$datos['grupos'] && !$datos['sinPartida']) throw new \Exception('El catálogo de conceptos está vacío');
                     $exporter = $salida === 'pdf'
-                        ? (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)
+                        ? (new \Classes\Exportadores\PresupuestoPdfExporter($proyecto))->setDatos($datos)->setFecha($fecha)
                         : (new \Classes\Exportadores\PresupuestoSheetExporter($proyecto))->setFormato($salida)->setDatos($datos);
                     break;
                 case 'xml':
@@ -832,7 +858,7 @@ class AjustesController
             @unlink($ruta);
             exit;
         } catch (\Exception $e) {
-            header('Location: /exportar?proyecto=' . $proyectoId . '&error=' . urlencode($e->getMessage()));
+            header('Location: ' . $volverError($e->getMessage()));
             exit;
         }
     }

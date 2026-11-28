@@ -1,6 +1,6 @@
 <?php
 /**
- * Cabecera compartida de un lienzo (vPlan y Editor).
+ * Cabecera compartida de un lienzo (Vplan y Editor).
  * Variables: $lz = [
  *   icono, titulo, subtitulo | subtitulo_html,
  *   chips  => [['icono', 'texto' (HTML ya escapado), 'suave' => bool]],

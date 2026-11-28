@@ -6,7 +6,7 @@
 # Configuración local: cada equipo/entorno tiene sus propias credenciales. Se versiona solo .env.example
 /.env
 
-# Subidas de los usuarios (evidencias, fotos de materiales, símbolos, láminas de vPlan, firmas):
+# Subidas de los usuarios (evidencias, fotos de materiales, símbolos, láminas de Vplan, firmas):
 # son datos, no código. Viven en el volumen del clúster y se copian con ./deploy.sh --files
 /public/uploads/**
 !/public/uploads/

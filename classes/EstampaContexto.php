@@ -143,7 +143,7 @@ class EstampaContexto
     {
         return $this->memo('curva', function () {
             try {
-                $c = CurvaS::calcular($this->proyecto);
+                $c = CurvaS::calcular($this->proyecto, null, $this->corte());
                 if (!empty($c['resumen'])) return $c['resumen'];
             } catch (\Throwable $e) {
             }
@@ -267,7 +267,7 @@ class EstampaContexto
             'ubicacion' => (string)$p->ubicacion, 'trabajo' => (string)$p->numero_trabajo,
             'titulo' => $this->lamina ? (string)$this->lamina->titulo : (string)($this->opts['titulo'] ?? ''),
             'lamina' => $this->lamina('n'), 'total' => $this->lamina('total'), 'escala' => (string)($this->opts['escala'] ?? ''), 'revision' => (string)($this->opts['revision'] ?? ''),
-            'fecha' => date('Y-m-d'), 'corte' => $corte, 'autor' => (string)($this->opts['autor'] ?? ($_SESSION['nombre'] ?? '')),
+            'fecha' => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($this->opts['fecha'] ?? '')) ? (string)$this->opts['fecha'] : date('Y-m-d'), 'corte' => $corte, 'autor' => (string)($this->opts['autor'] ?? ($_SESSION['nombre'] ?? '')),
             'inicio' => (string)$p->fecha_inicio, 'fin' => (string)$p->fecha_fin,
             'duracion' => max(0, (int)floor((strtotime($p->fecha_fin) - strtotime($p->fecha_inicio)) / 86400) + 1),
             'dias_transcurridos' => max(0, (int)floor((strtotime($corte) - strtotime($p->fecha_inicio)) / 86400)),

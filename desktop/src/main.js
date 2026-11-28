@@ -186,7 +186,7 @@ app.whenReady().then(() => {
     return ens.mensaje({ pid: idEns(o.pid), ses: parseInt(o.ses, 10), texto: String(o.texto || '').slice(0, 1000), modos: Array.isArray(o.modos) ? o.modos.map(String) : [], submittalId: parseInt(o.submittalId, 10) || 0, conexion, clave: cfg.secreto(conexion.id), revisar: !!o.revisar });
   });
   ipcMain.handle('ens:cancelar', () => ens.cancelar());
-  // Tabla desde documento: el motor del servidor o la IA leen el archivo; el admin revisa y crea la tabla en el catálogo de vPlan
+  // Tabla desde documento: el motor del servidor o la IA leen el archivo; el admin revisa y crea la tabla en el catálogo de Vplan
   const ocr = ocrLocal.crear({ dir: path.join(app.getPath('userData'), 'ocr') });
   app.once('will-quit', () => { ocr.cerrar(); });
   ipcMain.handle('ocr:estado', () => ({ instalado: ocr.instalados() }));

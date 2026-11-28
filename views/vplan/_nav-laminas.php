@@ -1,5 +1,5 @@
 <?php
-// Navegador de láminas del vPlan (miniaturas agrupadas, como la lista de documentos del Redactor).
+// Navegador de láminas del Vplan (miniaturas agrupadas, como la lista de documentos del Redactor).
 // Variables: $proyecto, $lamina, $paquete, $navLaminas, $modoDiseno, $puedeEditar
 $hayGrupos = false;
 $porGrupo = [];
@@ -11,7 +11,7 @@ foreach ($navLaminas as $n) {
 uksort($porGrupo, fn($a, $b) => ($a === '' ? -1 : ($b === '' ? 1 : 0)));
 $urlDe = fn($id) => '/vplan/ver?proyecto=' . (int)$proyecto->id . '&id=' . (int)$id . ($modoDiseno ? '&diseno=1' : '');
 ?>
-<aside class="vp-nav no-print" id="vp-nav" aria-label="Láminas del vPlan">
+<aside class="vp-nav no-print" id="vp-nav" aria-label="Láminas del Vplan">
     <div class="vp-nav-cab">
         <strong title="<?php echo s($paquete ? $paquete->nombre : 'Láminas'); ?>"><i class="fa-solid fa-layer-group"></i> <?php echo s($paquete ? $paquete->nombre : 'Láminas'); ?> <small class="text-muted">(<?php echo count($navLaminas); ?>)</small></strong>
         <button type="button" class="vp-ib vp-ib-sm" id="vp-nav-cerrar" title="Ocultar el panel de láminas" aria-label="Ocultar láminas"><i class="fa-solid fa-angles-left"></i></button>
@@ -36,7 +36,7 @@ $urlDe = fn($id) => '/vplan/ver?proyecto=' . (int)$proyecto->id . '&id=' . (int)
         <a class="btn btn-sm btn-ghost vp-nav-nueva" href="/vplan/crear?proyecto=<?php echo (int)$proyecto->id; ?>&paquete=<?php echo (int)$paquete->id; ?>"><i class="fa-solid fa-plus"></i> Nueva lámina</a>
     <?php endif; ?>
 </aside>
-<button type="button" class="vp-nav-abrir no-print" id="vp-nav-abrir" title="Mostrar las láminas del vPlan" aria-label="Mostrar láminas" hidden><i class="fa-solid fa-layer-group"></i></button>
+<button type="button" class="vp-nav-abrir no-print" id="vp-nav-abrir" title="Mostrar las láminas del Vplan" aria-label="Mostrar láminas" hidden><i class="fa-solid fa-layer-group"></i></button>
 <script>
 (function () {
     const shell = document.getElementById('vp-shell'), abrir = document.getElementById('vp-nav-abrir');

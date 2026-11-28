@@ -1,4 +1,4 @@
-/* Piezas comunes de los editores (vPlan modo diseño, marcas del Editor y Estampas). Sin build.
+/* Piezas comunes de los editores (Vplan modo diseño, marcas del Editor y Estampas). Sin build.
    Antes cada editor tenía su copia de deshacer/rehacer, aviso de salida sin guardar y rasterizado de SVG. */
 (function () {
     'use strict';

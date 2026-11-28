@@ -8,7 +8,7 @@ use Classes\Imagenes;
 use Classes\Almacenamiento;
 use Model\Cajetin;
 
-/** Biblioteca de símbolos por proyecto: imágenes reutilizables en el editor del vPlan y en el Editor de gráficos */
+/** Biblioteca de símbolos por proyecto: imágenes reutilizables en el editor del Vplan y en el Editor de gráficos */
 class SimboloController
 {
     public static function index(Router $router)

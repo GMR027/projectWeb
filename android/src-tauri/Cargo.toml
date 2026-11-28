@@ -1,6 +1,6 @@
 [package]
 name = "projectweb_android"
-version = "0.2.20"
+version = "0.2.21"
 description = "Project Web para Android: obras, asistente local y modo sin conexión"
 authors = ["Project Web"]
 license = "UNLICENSED"
