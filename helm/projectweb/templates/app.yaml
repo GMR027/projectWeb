@@ -33,11 +33,10 @@ spec:
             - -c
             - |
               until nc -z mysql 3306; do echo "esperando mysql"; sleep 2; done
-              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones
+              mkdir -p /files/uploads /files/exportaciones /files/archivos /files/fichas /files/import /files/respaldos /files/instaladores /files/sesiones-app /files/normativa /files/grabaciones /files/android
               chown -R 33:33 /files
           volumeMounts:
             - { name: files, mountPath: /files }
-      initContainers:
         - name: preparar-android
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           command: ["sh", "-c", "mkdir -p /files/android && chown -R www-data:www-data /files/android"]

@@ -19,13 +19,40 @@ class Volumen
         'Grabaciones (audio)' => 'storage/grabaciones',
     ];
 
+    /** Carpetas del volumen que no se pudieron medir por permisos (rutas relativas a la raíz) */
+    private static array $sinPermiso = [];
+
+    /** Ruta legible para el administrador («storage/normativa/19») */
+    private static function relativa(string $ruta): string
+    {
+        $prefijo = self::RAIZ . '/';
+        return str_starts_with($ruta, $prefijo) ? substr($ruta, strlen($prefijo)) : $ruta;
+    }
+
     private static function tamCarpeta(string $ruta): int
     {
         if (!is_dir($ruta)) return 0;
+        if (!is_readable($ruta)) {
+            self::$sinPermiso[] = self::relativa($ruta);
+            return 0;
+        }
         $total = 0;
-        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($ruta, \FilesystemIterator::SKIP_DOTS));
-        foreach ($it as $f) {
-            if ($f->isFile()) $total += $f->getSize();
+        try {
+            $dir = new \RecursiveDirectoryIterator($ruta, \FilesystemIterator::SKIP_DOTS);
+            // Una carpeta sin permiso se omite (y se avisa en Sistema) en vez de tumbar la medición completa.
+            $filtro = new \RecursiveCallbackFilterIterator($dir, function (\SplFileInfo $f) {
+                if ($f->isDir() && !$f->isReadable()) {
+                    self::$sinPermiso[] = self::relativa($f->getPathname());
+                    return false;
+                }
+                return true;
+            });
+            foreach (new \RecursiveIteratorIterator($filtro, \RecursiveIteratorIterator::LEAVES_ONLY, \RecursiveIteratorIterator::CATCH_GET_CHILD) as $f) {
+                if ($f->isFile()) $total += $f->getSize();
+            }
+        } catch (\Throwable $e) {
+            self::$sinPermiso[] = self::relativa($ruta);
+            error_log('Volumen: no se pudo medir ' . $ruta . ': ' . $e->getMessage());
         }
         return $total;
     }
@@ -38,15 +65,17 @@ class Volumen
         return (int)(@disk_total_space($rutaRespaldo) ?: 0);
     }
 
-    /** ['usado', 'capacidad', 'desglose' => [nombre => bytes]] del volumen de archivos */
+    /** ['usado', 'capacidad', 'desglose' => [nombre => bytes], 'sin_permiso' => [rutas]] del volumen de archivos */
     public static function archivos(): array
     {
+        self::$sinPermiso = [];
         $desglose = [];
         foreach (self::CARPETAS as $nombre => $rel) $desglose[$nombre] = self::tamCarpeta(self::RAIZ . '/' . $rel);
         return [
             'usado' => array_sum($desglose),
             'capacidad' => self::capacidad('VOLUMEN_ARCHIVOS_GB', self::RAIZ . '/public/uploads'),
             'desglose' => $desglose,
+            'sin_permiso' => array_values(array_unique(self::$sinPermiso)),
         ];
     }
 

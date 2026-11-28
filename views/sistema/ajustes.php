@@ -126,6 +126,14 @@ $volsUsados = (int)$archivos['usado'] + (int)$bd['usado'];
         <?php endforeach; ?>
         </tbody>
     </table>
+    <?php if ($i === 0 && !empty($v['sin_permiso'])): ?>
+        <div class="alerta alerta-error" role="alert" style="margin-top:1.2rem">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            No se pudieron medir <?php echo count($v['sin_permiso']); ?> carpeta(s) por falta de permisos:
+            <span class="mono"><?php echo s(implode(', ', $v['sin_permiso'])); ?></span>.
+            Revisa que el usuario del servidor pueda leerlas para que el espacio y los respaldos sean completos.
+        </div>
+    <?php endif; ?>
 </div>
 <?php endforeach; ?>
 
